@@ -126,8 +126,11 @@ app.post('/api/competency-analysis', async (req, res) => {
         res.json({ analysis: analysisText });
 
     } catch (error) {
-        console.error('Competency analysis error:', error);
-        res.status(500).json({ error: 'Failed to analyze competency' });
+        console.error('Competency analysis error:', error.message, error.stack);
+        res.status(500).json({
+            error: 'Failed to analyze competency',
+            details: error.message
+        });
     }
 });
 
@@ -243,15 +246,45 @@ Key Evidence:
         }
 
         const data = await response.json();
+
+        // Validate response structure
+        if (!data.content || !data.content[0] || !data.content[0].text) {
+            console.error('Unexpected API response structure:', JSON.stringify(data).substring(0, 200));
+            throw new Error('Invalid response format from Anthropic API');
+        }
+
         const resultText = data.content[0].text;
 
         // Parse the response to extract speaker identification and coding
         const speakerMatch = resultText.match(/Parent:\s*Speaker\s*(\d+)/i);
         const parentSpeaker = speakerMatch ? parseInt(speakerMatch[1], 10) : null;
 
-        // Extract coding section
-        const codingMatch = resultText.match(/=== PCIT CODING ===([\s\S]*)/);
-        const coding = codingMatch ? codingMatch[1].trim() : resultText;
+        // Extract coding section with multiple fallback patterns
+        let coding = null;
+        const codingPatterns = [
+            /=== PCIT CODING ===\s*([\s\S]*)/i,
+            /PCIT CODING[:\s]*([\s\S]*)/i,
+            /\*\*Parent:\*\*\s*".*?"\s*->\s*\*\*\[.*?\]\*\*([\s\S]*)/i
+        ];
+
+        for (const pattern of codingPatterns) {
+            const match = resultText.match(pattern);
+            if (match) {
+                coding = match[1].trim();
+                break;
+            }
+        }
+
+        // Fallback to full response if no pattern matched
+        if (!coding) {
+            console.warn('Could not parse PCIT coding section, using full response');
+            coding = resultText;
+        }
+
+        // Warn if parent speaker couldn't be identified
+        if (parentSpeaker === null) {
+            console.warn('Could not identify parent speaker from response');
+        }
 
         res.json({
             parentSpeaker,
@@ -260,8 +293,11 @@ Key Evidence:
         });
 
     } catch (error) {
-        console.error('Speaker and coding error:', error);
-        res.status(500).json({ error: 'Failed to analyze and code transcript' });
+        console.error('Speaker and coding error:', error.message, error.stack);
+        res.status(500).json({
+            error: 'Failed to analyze and code transcript',
+            details: error.message
+        });
     }
 });
 

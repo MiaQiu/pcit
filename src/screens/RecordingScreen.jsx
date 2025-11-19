@@ -246,17 +246,27 @@ const RecordingScreen = ({ setActiveScreen }) => {
           )}
 
           <div className="space-y-3 mb-6">
-            {transcript && transcript.map((utterance, index) => (
-              <div
-                key={index}
-                className={`p-3 rounded-xl border ${getSpeakerColor(utterance.speaker)}`}
-              >
-                <p className="text-xs font-semibold text-gray-600 mb-1">
-                  {getSpeakerName(utterance.speaker)}
-                </p>
-                <p className="text-gray-800 text-sm">{utterance.text}</p>
-              </div>
-            ))}
+            {transcript && transcript.map((utterance, index) => {
+              // Validate utterance has required properties
+              if (!utterance || typeof utterance.speaker !== 'number' || !utterance.text) {
+                return (
+                  <div key={index} className="p-3 rounded-xl border bg-gray-100 border-gray-300">
+                    <p className="text-gray-500 text-sm italic">Invalid utterance data</p>
+                  </div>
+                );
+              }
+              return (
+                <div
+                  key={index}
+                  className={`p-3 rounded-xl border ${getSpeakerColor(utterance.speaker)}`}
+                >
+                  <p className="text-xs font-semibold text-gray-600 mb-1">
+                    {getSpeakerName(utterance.speaker)}
+                  </p>
+                  <p className="text-gray-800 text-sm">{utterance.text}</p>
+                </div>
+              );
+            })}
           </div>
 
           {/* PCIT Analysis */}
