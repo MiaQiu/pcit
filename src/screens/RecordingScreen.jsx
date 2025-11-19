@@ -1,29 +1,32 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, Mic, Square, Loader2 } from 'lucide-react';
+import useAudioRecorder from '../hooks/useAudioRecorder';
+import useTranscription from '../hooks/useTranscription';
+import usePCITAnalysis from '../hooks/usePCITAnalysis';
 
 const RecordingScreen = ({ setActiveScreen }) => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [transcript, setTranscript] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [pcitCoding, setPcitCoding] = useState(null);
   const [competencyAnalysis, setCompetencyAnalysis] = useState(null);
   const [parentSpeaker, setParentSpeaker] = useState(null);
-  const [error, setError] = useState(null);
-  const [waveformBars, setWaveformBars] = useState(
-    Array.from({ length: 40 }, () => 20)
-  );
+  const [processingError, setProcessingError] = useState(null);
 
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-  const timerRef = useRef(null);
-  const analyserRef = useRef(null);
-  const animationRef = useRef(null);
-  const mimeTypeRef = useRef('audio/webm');
+  const {
+    isRecording,
+    elapsed,
+    progress,
+    waveformBars,
+    error: recorderError,
+    startRecording,
+    stopRecording,
+    reset: resetRecorder,
+    maxDuration
+  } = useAudioRecorder(300);
 
-  const total = 300; // 5:00 in seconds
-  const progress = (elapsed / total) * 100;
+  const { transcribe } = useTranscription();
+  const { analyzeAndCode, getCompetencyAnalysis, countPcitTags } = usePCITAnalysis();
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -31,467 +34,31 @@ const RecordingScreen = ({ setActiveScreen }) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
-      }
-    };
-  }, []);
-
-  // Update waveform visualization
-  const updateWaveform = () => {
-    if (analyserRef.current) {
-      const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-      analyserRef.current.getByteFrequencyData(dataArray);
-
-      const bars = [];
-      const step = Math.floor(dataArray.length / 40);
-      for (let i = 0; i < 40; i++) {
-        const value = dataArray[i * step];
-        bars.push(Math.max(20, (value / 255) * 100));
-      }
-      setWaveformBars(bars);
-    }
-    animationRef.current = requestAnimationFrame(updateWaveform);
+  const handleStartRecording = () => {
+    setTranscript(null);
+    setAnalysis(null);
+    setPcitCoding(null);
+    setCompetencyAnalysis(null);
+    setParentSpeaker(null);
+    setProcessingError(null);
+    startRecording(handleAudioReady);
   };
 
-  const startRecording = async () => {
-    try {
-      setError(null);
-      setTranscript(null);
-      audioChunksRef.current = [];
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Set up audio analyser for visualization
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      analyserRef.current = analyser;
-
-      // Start waveform animation
-      updateWaveform();
-
-      // Detect supported MIME type
-      const mimeTypes = [
-        'audio/webm;codecs=opus',
-        'audio/webm',
-        'audio/ogg;codecs=opus',
-        'audio/mp4',
-        'audio/mpeg'
-      ];
-
-      let selectedMimeType = '';
-      for (const type of mimeTypes) {
-        if (MediaRecorder.isTypeSupported(type)) {
-          selectedMimeType = type;
-          break;
-        }
-      }
-
-      mimeTypeRef.current = selectedMimeType || 'audio/webm';
-
-      const mediaRecorder = new MediaRecorder(stream,
-        selectedMimeType ? { mimeType: selectedMimeType } : undefined
-      );
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
-
-        // Stop animation
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-        }
-
-        // Reset waveform
-        setWaveformBars(Array.from({ length: 40 }, () => 20));
-
-        // Process audio with the actual recorded MIME type
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeTypeRef.current });
-        await transcribeAudio(audioBlob);
-      };
-
-      mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start(1000); // Collect data every second
-      setIsRecording(true);
-
-      // Start timer
-      setElapsed(0);
-      timerRef.current = setInterval(() => {
-        setElapsed(prev => {
-          if (prev >= total - 1) {
-            stopRecording();
-            return total;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-
-    } catch (err) {
-      console.error('Error starting recording:', err);
-      setError('Could not access microphone. Please grant permission and try again.');
-    }
-  };
-
-  const stopRecording = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-
-    setIsRecording(false);
-  };
-
-  // ElevenLabs Scribe transcription - best for similar voices
-  const sendToElevenLabs = async (audioBlob) => {
-    const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
-
-    if (!apiKey) {
-      throw new Error('ElevenLabs API key not configured');
-    }
-
-    // Create form data
-    const formData = new FormData();
-    formData.append('file', audioBlob, 'recording.webm');
-    formData.append('model_id', 'scribe_v1');
-    formData.append('diarize', 'true');
-    formData.append('num_speakers', '2');
-    formData.append('timestamps_granularity', 'word');
-
-    const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
-      method: 'POST',
-      headers: {
-        'xi-api-key': apiKey
-      },
-      body: formData
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail?.message || `API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    // Group words by speaker into utterances
-    if (result.words && result.words.length > 0) {
-      // Parse speaker_id string (e.g., "speaker_0") to number
-      const parseSpeakerId = (speakerId) => {
-        if (!speakerId) return 0;
-        const match = speakerId.match(/speaker_(\d+)/);
-        return match ? parseInt(match[1], 10) : 0;
-      };
-
-      const utterances = [];
-      let currentUtterance = {
-        speaker: parseSpeakerId(result.words[0].speaker_id),
-        text: '',
-        start: result.words[0].start,
-        end: result.words[0].end
-      };
-
-      for (const word of result.words) {
-        const speakerId = parseSpeakerId(word.speaker_id);
-
-        if (speakerId === currentUtterance.speaker) {
-          // Same speaker, append word
-          currentUtterance.text += (currentUtterance.text ? ' ' : '') + word.text;
-          currentUtterance.end = word.end;
-        } else {
-          // New speaker, save current utterance and start new one
-          if (currentUtterance.text) {
-            utterances.push(currentUtterance);
-          }
-          currentUtterance = {
-            speaker: speakerId,
-            text: word.text,
-            start: word.start,
-            end: word.end
-          };
-        }
-      }
-
-      // Add last utterance
-      if (currentUtterance.text) {
-        utterances.push(currentUtterance);
-      }
-
-      return utterances;
-    } else if (result.text) {
-      return [{
-        speaker: 0,
-        text: result.text,
-        start: 0,
-        end: 0
-      }];
-    }
-
-    return null;
-  };
-
-  // AssemblyAI transcription with better speaker diarization
-  const sendToAssemblyAI = async (audioBlob) => {
-    const apiKey = import.meta.env.VITE_ASSEMBLYAI_API_KEY;
-
-    if (!apiKey) {
-      throw new Error('AssemblyAI API key not configured');
-    }
-
-    // Step 1: Upload audio
-    const uploadResponse = await fetch('https://api.assemblyai.com/v2/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': apiKey,
-        'Content-Type': 'application/octet-stream'
-      },
-      body: audioBlob
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error(`Upload failed: ${uploadResponse.status}`);
-    }
-
-    const { upload_url } = await uploadResponse.json();
-
-    // Step 2: Request transcription with speaker diarization
-    const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
-      method: 'POST',
-      headers: {
-        'Authorization': apiKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        audio_url: upload_url,
-        speaker_labels: true,
-        speakers_expected: 2
-      })
-    });
-
-    if (!transcriptResponse.ok) {
-      throw new Error(`Transcription request failed: ${transcriptResponse.status}`);
-    }
-
-    const { id } = await transcriptResponse.json();
-
-    // Step 3: Poll for completion
-    let result;
-    while (true) {
-      const pollResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${id}`, {
-        headers: { 'Authorization': apiKey }
-      });
-
-      result = await pollResponse.json();
-
-      if (result.status === 'completed') {
-        break;
-      } else if (result.status === 'error') {
-        throw new Error(result.error || 'Transcription failed');
-      }
-
-      // Wait 1 second before polling again
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-
-    // Step 4: Format utterances
-    if (result.utterances && result.utterances.length > 0) {
-      return result.utterances.map(utterance => ({
-        speaker: utterance.speaker.charCodeAt(0) - 65, // Convert 'A', 'B', 'C' to 0, 1, 2
-        text: utterance.text,
-        start: utterance.start,
-        end: utterance.end
-      }));
-    } else if (result.text) {
-      return [{
-        speaker: 0,
-        text: result.text,
-        start: 0,
-        end: 0
-      }];
-    }
-
-    return null;
-  };
-
-  // Deepgram transcription (fallback)
-  const sendToDeepgram = async (audioBlob) => {
-    const apiKey = import.meta.env.VITE_DEEPGRAM_API_KEY;
-
-    if (!apiKey) {
-      throw new Error('Deepgram API key not configured');
-    }
-
-    const arrayBuffer = await audioBlob.arrayBuffer();
-
-    const contentTypeMap = {
-      'audio/webm;codecs=opus': 'audio/webm',
-      'audio/webm': 'audio/webm',
-      'audio/ogg;codecs=opus': 'audio/ogg',
-      'audio/mp4': 'audio/mp4',
-      'audio/mpeg': 'audio/mpeg'
-    };
-
-    const contentType = contentTypeMap[audioBlob.type] || 'audio/webm';
-
-    const response = await fetch(
-      'https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&diarize=true&punctuate=true&utterances=true&multichannel=false',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Token ${apiKey}`,
-          'Content-Type': contentType
-        },
-        body: arrayBuffer
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.err_msg || `API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (result.results?.utterances) {
-      return result.results.utterances.map(utterance => ({
-        speaker: utterance.speaker,
-        text: utterance.transcript,
-        start: utterance.start,
-        end: utterance.end
-      }));
-    } else if (result.results?.channels?.[0]?.alternatives?.[0]?.transcript) {
-      return [{
-        speaker: 0,
-        text: result.results.channels[0].alternatives[0].transcript,
-        start: 0,
-        end: 0
-      }];
-    }
-
-    return null;
-  };
-
-  // Combined speaker identification and PCIT coding via backend proxy
-  const analyzeAndCode = async (transcriptData) => {
-    try {
-      const response = await fetch('http://localhost:3001/api/speaker-and-coding', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          transcript: transcriptData
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API error: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return {
-        parentSpeaker: result.parentSpeaker,
-        coding: result.coding,
-        fullResponse: result.fullResponse
-      };
-
-    } catch (err) {
-      console.error('Analysis and coding error:', err);
-      return null;
-    }
-  };
-
-  // Get competency analysis from Claude
-  const getCompetencyAnalysis = async (counts) => {
-    try {
-      const response = await fetch('http://localhost:3001/api/competency-analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ counts })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API error: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.analysis;
-
-    } catch (err) {
-      console.error('Competency analysis error:', err);
-      return null;
-    }
-  };
-
-  // Main transcription function - tries ElevenLabs first, then Deepgram, then AssemblyAI
-  const transcribeAudio = async (audioBlob) => {
+  const handleAudioReady = async (audioBlob) => {
     setIsProcessing(true);
-    setError(null);
+    setProcessingError(null);
 
     try {
-      let formattedTranscript = null;
-
-      // Try ElevenLabs first (best for similar voices)
-      const elevenLabsKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
-      if (elevenLabsKey) {
-        try {
-          console.log('Trying ElevenLabs Scribe...');
-          formattedTranscript = await sendToElevenLabs(audioBlob);
-        } catch (elevenLabsErr) {
-          console.error('ElevenLabs failed:', elevenLabsErr);
-          // Fall through to Deepgram
-        }
-      }
-
-      // Fallback to Deepgram
-      if (!formattedTranscript) {
-        const deepgramKey = import.meta.env.VITE_DEEPGRAM_API_KEY;
-        if (deepgramKey) {
-          try {
-            console.log('Trying Deepgram...');
-            formattedTranscript = await sendToDeepgram(audioBlob);
-          } catch (deepgramErr) {
-            console.error('Deepgram failed:', deepgramErr);
-            // Fall through to AssemblyAI
-          }
-        }
-      }
-
-      // Fallback to AssemblyAI
-      if (!formattedTranscript) {
-        const assemblyKey = import.meta.env.VITE_ASSEMBLYAI_API_KEY;
-        if (assemblyKey) {
-          console.log('Trying AssemblyAI...');
-          formattedTranscript = await sendToAssemblyAI(audioBlob);
-        }
-      }
+      // Transcribe audio
+      const formattedTranscript = await transcribe(audioBlob);
 
       if (formattedTranscript && formattedTranscript.length > 0) {
         setTranscript(formattedTranscript);
 
-        // Combined speaker identification and PCIT coding (single API call)
+        // Combined speaker identification and PCIT coding
         console.log('Analyzing and coding transcript with Claude...');
         const result = await analyzeAndCode(formattedTranscript);
+
         if (result) {
           setAnalysis(result.fullResponse);
 
@@ -503,16 +70,7 @@ const RecordingScreen = ({ setActiveScreen }) => {
             setPcitCoding(result.coding);
 
             // Calculate tag counts for competency analysis
-            const counts = {
-              praise: (result.coding.match(/\[DO:\s*Praise\]/gi) || []).length,
-              reflect: (result.coding.match(/\[DO:\s*Reflect\]/gi) || []).length,
-              describe: (result.coding.match(/\[DO:\s*Describe\]/gi) || []).length,
-              imitate: (result.coding.match(/\[DO:\s*Imitate\]/gi) || []).length,
-              question: (result.coding.match(/\[DON'T:\s*Question\]/gi) || []).length,
-              command: (result.coding.match(/\[DON'T:\s*Command\]/gi) || []).length,
-              criticism: (result.coding.match(/\[DON'T:\s*Criticism\]/gi) || []).length,
-              neutral: (result.coding.match(/\[Neutral\]/gi) || []).length
-            };
+            const counts = countPcitTags(result.coding);
 
             // Get competency analysis
             console.log('Getting competency analysis...');
@@ -523,15 +81,24 @@ const RecordingScreen = ({ setActiveScreen }) => {
           }
         }
       } else {
-        setError('No speech detected in the recording.');
+        setProcessingError('No speech detected in the recording.');
       }
-
     } catch (err) {
-      console.error('Transcription error:', err);
-      setError(err.message || 'Failed to transcribe audio. Please try again.');
+      console.error('Processing error:', err);
+      setProcessingError(err.message || 'Failed to process audio. Please try again.');
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleNewRecording = () => {
+    setTranscript(null);
+    setAnalysis(null);
+    setPcitCoding(null);
+    setCompetencyAnalysis(null);
+    setParentSpeaker(null);
+    setProcessingError(null);
+    resetRecorder();
   };
 
   const getSpeakerColor = (speaker) => {
@@ -545,36 +112,14 @@ const RecordingScreen = ({ setActiveScreen }) => {
   };
 
   const getSpeakerName = (speaker) => {
-    // If we've identified the parent, use Parent/Child labels
     if (parentSpeaker !== null) {
       return speaker === parentSpeaker ? 'Parent' : 'Child';
     }
-    // Default to Speaker 0, Speaker 1, etc.
     const names = ['Speaker 0', 'Speaker 1', 'Speaker 2', 'Speaker 3'];
     return names[speaker % names.length];
   };
 
-  // Count PCIT tags from coding result
-  const countPcitTags = (codingText) => {
-    if (!codingText) return null;
-
-    const counts = {
-      describe: (codingText.match(/\[DO:\s*Describe\]/gi) || []).length,
-      reflect: (codingText.match(/\[DO:\s*Reflect\]/gi) || []).length,
-      praise: (codingText.match(/\[DO:\s*Praise\]/gi) || []).length,
-      imitate: (codingText.match(/\[DO:\s*Imitate\]/gi) || []).length,
-      question: (codingText.match(/\[DON'T:\s*Question\]/gi) || []).length,
-      command: (codingText.match(/\[DON'T:\s*Command\]/gi) || []).length,
-      criticism: (codingText.match(/\[DON'T:\s*Criticism\]/gi) || []).length,
-      neutral: (codingText.match(/\[Neutral\]/gi) || []).length
-    };
-
-    counts.totalPride = counts.describe + counts.reflect + counts.praise + counts.imitate;
-    counts.totalAvoid = counts.question + counts.command + counts.criticism;
-
-    return counts;
-  };
-
+  const error = recorderError || processingError;
   const tagCounts = countPcitTags(pcitCoding);
 
   return (
@@ -593,7 +138,7 @@ const RecordingScreen = ({ setActiveScreen }) => {
       <div className="px-6 mt-4">
         <div className="flex justify-between text-sm text-gray-500 mb-2">
           <span>{formatTime(elapsed)}</span>
-          <span>{formatTime(total)}</span>
+          <span>{formatTime(maxDuration)}</span>
         </div>
         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
@@ -663,7 +208,7 @@ const RecordingScreen = ({ setActiveScreen }) => {
           <div className="flex justify-center mb-8">
             {!isRecording ? (
               <button
-                onClick={startRecording}
+                onClick={handleStartRecording}
                 className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors"
               >
                 <Mic size={32} className="text-white" />
@@ -811,15 +356,7 @@ const RecordingScreen = ({ setActiveScreen }) => {
           {/* New Recording Button */}
           <div className="flex justify-center mb-8">
             <button
-              onClick={() => {
-                setTranscript(null);
-                setAnalysis(null);
-                setPcitCoding(null);
-                setCompetencyAnalysis(null);
-                setParentSpeaker(null);
-                setElapsed(0);
-                setError(null);
-              }}
+              onClick={handleNewRecording}
               className="bg-green-500 text-white px-6 py-3 rounded-full font-medium hover:bg-green-600 transition-colors"
             >
               New Recording
