@@ -12,20 +12,38 @@ const useAudioRecorder = (maxDuration = 300) => {
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
   const analyserRef = useRef(null);
+  const audioContextRef = useRef(null);
   const animationRef = useRef(null);
   const mimeTypeRef = useRef('audio/webm');
   const onStopCallbackRef = useRef(null);
+  const isStoppingRef = useRef(false); // Guard against multiple stops
 
   const progress = (elapsed / maxDuration) * 100;
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      // Clear timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      // Cancel animation
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      // Stop recording
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop();
       }
+      // Close audio context to prevent memory leak
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      // Clear callback ref
+      onStopCallbackRef.current = null;
     };
   }, []);
 
@@ -47,15 +65,28 @@ const useAudioRecorder = (maxDuration = 300) => {
   }, []);
 
   const startRecording = useCallback(async (onStop) => {
+    // Guard against starting while already recording
+    if (isRecording) {
+      console.warn('Already recording');
+      return;
+    }
+
     try {
       setError(null);
       audioChunksRef.current = [];
       onStopCallbackRef.current = onStop;
+      isStoppingRef.current = false;
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
+      // Close previous audio context if exists
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        await audioContextRef.current.close();
+      }
+
       // Set up audio analyser for visualization
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      audioContextRef.current = audioContext;
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
@@ -82,11 +113,13 @@ const useAudioRecorder = (maxDuration = 300) => {
         }
       }
 
-      mimeTypeRef.current = selectedMimeType || 'audio/webm';
+      if (!selectedMimeType) {
+        throw new Error('No supported audio format found');
+      }
 
-      const mediaRecorder = new MediaRecorder(stream,
-        selectedMimeType ? { mimeType: selectedMimeType } : undefined
-      );
+      mimeTypeRef.current = selectedMimeType;
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: selectedMimeType });
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -101,6 +134,13 @@ const useAudioRecorder = (maxDuration = 300) => {
         // Stop animation
         if (animationRef.current) {
           cancelAnimationFrame(animationRef.current);
+          animationRef.current = null;
+        }
+
+        // Close audio context
+        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+          await audioContextRef.current.close();
+          audioContextRef.current = null;
         }
 
         // Reset waveform
@@ -108,8 +148,18 @@ const useAudioRecorder = (maxDuration = 300) => {
 
         // Create audio blob and call callback
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeTypeRef.current });
-        if (onStopCallbackRef.current) {
-          onStopCallbackRef.current(audioBlob);
+
+        // Validate blob has content
+        if (audioBlob.size === 0) {
+          setError('No audio was recorded');
+          return;
+        }
+
+        // Call callback and clear ref
+        const callback = onStopCallbackRef.current;
+        onStopCallbackRef.current = null;
+        if (callback) {
+          callback(audioBlob);
         }
       };
 
@@ -131,16 +181,24 @@ const useAudioRecorder = (maxDuration = 300) => {
 
     } catch (err) {
       console.error('Error starting recording:', err);
-      setError('Could not access microphone. Please grant permission and try again.');
+      setError(err.message || 'Could not access microphone. Please grant permission and try again.');
     }
-  }, [maxDuration, updateWaveform]);
+  }, [isRecording, maxDuration, updateWaveform]);
 
   const stopRecording = useCallback(() => {
+    // Guard against multiple stop calls
+    if (isStoppingRef.current) {
+      return;
+    }
+    isStoppingRef.current = true;
+
+    // Clear timer
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
 
+    // Stop media recorder
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
@@ -151,6 +209,7 @@ const useAudioRecorder = (maxDuration = 300) => {
   const reset = useCallback(() => {
     setElapsed(0);
     setError(null);
+    isStoppingRef.current = false;
   }, []);
 
   return {

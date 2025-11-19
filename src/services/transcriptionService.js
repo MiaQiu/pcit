@@ -1,6 +1,8 @@
 // Transcription service - handles all STT API calls
 // Easily mockable for testing
 
+import fetchWithTimeout from '../utils/fetchWithTimeout';
+
 const API_KEYS = {
   get elevenLabs() {
     return import.meta.env.VITE_ELEVENLABS_API_KEY;
@@ -20,10 +22,24 @@ const parseSpeakerId = (speakerId) => {
   return match ? parseInt(match[1], 10) : 0;
 };
 
+// Validate audio blob input
+const validateAudioBlob = (audioBlob) => {
+  if (!audioBlob) {
+    throw new Error('No audio data provided');
+  }
+  if (!(audioBlob instanceof Blob)) {
+    throw new Error('Invalid audio format');
+  }
+  if (audioBlob.size === 0) {
+    throw new Error('Audio recording is empty');
+  }
+};
+
 // ElevenLabs Scribe - best for similar voices
 export const transcribeWithElevenLabs = async (audioBlob) => {
-  const apiKey = API_KEYS.elevenLabs;
+  validateAudioBlob(audioBlob);
 
+  const apiKey = API_KEYS.elevenLabs;
   if (!apiKey) {
     throw new Error('ElevenLabs API key not configured');
   }
@@ -35,17 +51,21 @@ export const transcribeWithElevenLabs = async (audioBlob) => {
   formData.append('num_speakers', '2');
   formData.append('timestamps_granularity', 'word');
 
-  const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
-    method: 'POST',
-    headers: {
-      'xi-api-key': apiKey
+  const response = await fetchWithTimeout(
+    'https://api.elevenlabs.io/v1/speech-to-text',
+    {
+      method: 'POST',
+      headers: {
+        'xi-api-key': apiKey
+      },
+      body: formData
     },
-    body: formData
-  });
+    60000 // 60s timeout for audio processing
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail?.message || `API error: ${response.status}`);
+    throw new Error(errorData.detail?.message || `ElevenLabs API error: ${response.status}`);
   }
 
   const result = await response.json();
@@ -98,8 +118,9 @@ export const transcribeWithElevenLabs = async (audioBlob) => {
 
 // Deepgram Nova-2
 export const transcribeWithDeepgram = async (audioBlob) => {
-  const apiKey = API_KEYS.deepgram;
+  validateAudioBlob(audioBlob);
 
+  const apiKey = API_KEYS.deepgram;
   if (!apiKey) {
     throw new Error('Deepgram API key not configured');
   }
@@ -116,7 +137,7 @@ export const transcribeWithDeepgram = async (audioBlob) => {
 
   const contentType = contentTypeMap[audioBlob.type] || 'audio/webm';
 
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     'https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&diarize=true&punctuate=true&utterances=true&multichannel=false',
     {
       method: 'POST',
@@ -125,12 +146,13 @@ export const transcribeWithDeepgram = async (audioBlob) => {
         'Content-Type': contentType
       },
       body: arrayBuffer
-    }
+    },
+    60000 // 60s timeout
   );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.err_msg || `API error: ${response.status}`);
+    throw new Error(errorData.err_msg || `Deepgram API error: ${response.status}`);
   }
 
   const result = await response.json();
@@ -154,66 +176,102 @@ export const transcribeWithDeepgram = async (audioBlob) => {
   return null;
 };
 
-// AssemblyAI
+// AssemblyAI with timeout and max retries
 export const transcribeWithAssemblyAI = async (audioBlob) => {
-  const apiKey = API_KEYS.assemblyAI;
+  validateAudioBlob(audioBlob);
 
+  const apiKey = API_KEYS.assemblyAI;
   if (!apiKey) {
     throw new Error('AssemblyAI API key not configured');
   }
 
   // Step 1: Upload audio
-  const uploadResponse = await fetch('https://api.assemblyai.com/v2/upload', {
-    method: 'POST',
-    headers: {
-      'Authorization': apiKey,
-      'Content-Type': 'application/octet-stream'
+  const uploadResponse = await fetchWithTimeout(
+    'https://api.assemblyai.com/v2/upload',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': apiKey,
+        'Content-Type': 'application/octet-stream'
+      },
+      body: audioBlob
     },
-    body: audioBlob
-  });
+    60000 // 60s timeout for upload
+  );
 
   if (!uploadResponse.ok) {
-    throw new Error(`Upload failed: ${uploadResponse.status}`);
+    throw new Error(`AssemblyAI upload failed: ${uploadResponse.status}`);
   }
 
   const { upload_url } = await uploadResponse.json();
 
   // Step 2: Request transcription
-  const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
-    method: 'POST',
-    headers: {
-      'Authorization': apiKey,
-      'Content-Type': 'application/json'
+  const transcriptResponse = await fetchWithTimeout(
+    'https://api.assemblyai.com/v2/transcript',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        audio_url: upload_url,
+        speaker_labels: true,
+        speakers_expected: 2
+      })
     },
-    body: JSON.stringify({
-      audio_url: upload_url,
-      speaker_labels: true,
-      speakers_expected: 2
-    })
-  });
+    30000
+  );
 
   if (!transcriptResponse.ok) {
-    throw new Error(`Transcription request failed: ${transcriptResponse.status}`);
+    throw new Error(`AssemblyAI transcription request failed: ${transcriptResponse.status}`);
   }
 
   const { id } = await transcriptResponse.json();
 
-  // Step 3: Poll for completion
+  // Step 3: Poll for completion with timeout and max retries
+  const maxAttempts = 60; // 60 attempts
+  const pollInterval = 2000; // 2 seconds between polls
+  let attempts = 0;
   let result;
-  while (true) {
-    const pollResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${id}`, {
-      headers: { 'Authorization': apiKey }
-    });
 
-    result = await pollResponse.json();
+  while (attempts < maxAttempts) {
+    attempts++;
 
-    if (result.status === 'completed') {
-      break;
-    } else if (result.status === 'error') {
-      throw new Error(result.error || 'Transcription failed');
+    try {
+      const pollResponse = await fetchWithTimeout(
+        `https://api.assemblyai.com/v2/transcript/${id}`,
+        {
+          headers: { 'Authorization': apiKey }
+        },
+        10000 // 10s timeout per poll
+      );
+
+      if (!pollResponse.ok) {
+        throw new Error(`Poll request failed: ${pollResponse.status}`);
+      }
+
+      result = await pollResponse.json();
+
+      if (result.status === 'completed') {
+        break;
+      } else if (result.status === 'error') {
+        throw new Error(result.error || 'AssemblyAI transcription failed');
+      }
+
+      // Wait before next poll
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    } catch (err) {
+      // If it's a timeout on poll, continue trying
+      if (err.message.includes('timeout') && attempts < maxAttempts) {
+        continue;
+      }
+      throw err;
     }
+  }
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+  if (attempts >= maxAttempts) {
+    throw new Error('AssemblyAI transcription timed out after 2 minutes');
   }
 
   // Step 4: Format utterances
@@ -238,7 +296,11 @@ export const transcribeWithAssemblyAI = async (audioBlob) => {
 
 // Main transcription function with automatic fallbacks
 export const transcribe = async (audioBlob) => {
+  // Validate input first
+  validateAudioBlob(audioBlob);
+
   let result = null;
+  const errors = [];
 
   // Try ElevenLabs first (best for similar voices)
   if (API_KEYS.elevenLabs) {
@@ -247,7 +309,8 @@ export const transcribe = async (audioBlob) => {
       result = await transcribeWithElevenLabs(audioBlob);
       if (result) return result;
     } catch (err) {
-      console.error('ElevenLabs failed:', err);
+      console.error('ElevenLabs failed:', err.message);
+      errors.push(`ElevenLabs: ${err.message}`);
     }
   }
 
@@ -258,15 +321,26 @@ export const transcribe = async (audioBlob) => {
       result = await transcribeWithDeepgram(audioBlob);
       if (result) return result;
     } catch (err) {
-      console.error('Deepgram failed:', err);
+      console.error('Deepgram failed:', err.message);
+      errors.push(`Deepgram: ${err.message}`);
     }
   }
 
   // Fallback to AssemblyAI
   if (API_KEYS.assemblyAI) {
-    console.log('Trying AssemblyAI...');
-    result = await transcribeWithAssemblyAI(audioBlob);
-    if (result) return result;
+    try {
+      console.log('Trying AssemblyAI...');
+      result = await transcribeWithAssemblyAI(audioBlob);
+      if (result) return result;
+    } catch (err) {
+      console.error('AssemblyAI failed:', err.message);
+      errors.push(`AssemblyAI: ${err.message}`);
+    }
+  }
+
+  // If all services failed, throw with details
+  if (errors.length > 0) {
+    throw new Error(`All transcription services failed: ${errors.join('; ')}`);
   }
 
   return null;

@@ -43,6 +43,18 @@ app.post('/api/competency-analysis', async (req, res) => {
     try {
         const { counts } = req.body;
 
+        // Validate request body
+        if (!counts || typeof counts !== 'object') {
+            return res.status(400).json({ error: 'Missing or invalid counts object' });
+        }
+
+        const requiredFields = ['praise', 'reflect', 'describe', 'imitate', 'question', 'command', 'criticism', 'neutral'];
+        for (const field of requiredFields) {
+            if (typeof counts[field] !== 'number') {
+                return res.status(400).json({ error: `Missing or invalid count for: ${field}` });
+            }
+        }
+
         if (!ANTHROPIC_API_KEY) {
             return res.status(500).json({ error: 'Anthropic API key not configured' });
         }
@@ -123,6 +135,26 @@ app.post('/api/competency-analysis', async (req, res) => {
 app.post('/api/speaker-and-coding', async (req, res) => {
     try {
         const { transcript } = req.body;
+
+        // Validate request body
+        if (!transcript || !Array.isArray(transcript)) {
+            return res.status(400).json({ error: 'Missing or invalid transcript array' });
+        }
+
+        if (transcript.length === 0) {
+            return res.status(400).json({ error: 'Transcript is empty' });
+        }
+
+        // Validate each utterance
+        for (let i = 0; i < transcript.length; i++) {
+            const utterance = transcript[i];
+            if (typeof utterance.speaker !== 'number') {
+                return res.status(400).json({ error: `Invalid speaker at index ${i}` });
+            }
+            if (typeof utterance.text !== 'string' || !utterance.text.trim()) {
+                return res.status(400).json({ error: `Invalid or empty text at index ${i}` });
+            }
+        }
 
         if (!ANTHROPIC_API_KEY) {
             return res.status(500).json({ error: 'Anthropic API key not configured' });

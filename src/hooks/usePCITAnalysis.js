@@ -3,21 +3,13 @@ import * as pcitService from '../services/pcitService';
 
 const usePCITAnalysis = () => {
   const analyzeAndCode = useCallback(async (transcriptData) => {
-    try {
-      return await pcitService.analyzeAndCode(transcriptData);
-    } catch (err) {
-      console.error('Analysis and coding error:', err);
-      return null;
-    }
+    // Let errors propagate to caller for proper handling
+    return await pcitService.analyzeAndCode(transcriptData);
   }, []);
 
   const getCompetencyAnalysis = useCallback(async (counts) => {
-    try {
-      return await pcitService.getCompetencyAnalysis(counts);
-    } catch (err) {
-      console.error('Competency analysis error:', err);
-      return null;
-    }
+    // Let errors propagate to caller for proper handling
+    return await pcitService.getCompetencyAnalysis(counts);
   }, []);
 
   const countPcitTags = useCallback((codingText) => {
