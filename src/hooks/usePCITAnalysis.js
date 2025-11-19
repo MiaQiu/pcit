@@ -16,10 +16,20 @@ const usePCITAnalysis = () => {
     return pcitService.countPcitTags(codingText);
   }, []);
 
+  const extractNegativePhraseFlags = useCallback((codingText, transcript) => {
+    return pcitService.extractNegativePhraseFlags(codingText, transcript);
+  }, []);
+
+  const sendCoachAlert = useCallback(async (flaggedItems, sessionInfo) => {
+    return await pcitService.sendCoachAlert(flaggedItems, sessionInfo);
+  }, []);
+
   return {
     analyzeAndCode,
     getCompetencyAnalysis,
-    countPcitTags
+    countPcitTags,
+    extractNegativePhraseFlags,
+    sendCoachAlert
   };
 };
 

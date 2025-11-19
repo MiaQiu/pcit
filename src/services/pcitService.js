@@ -33,7 +33,7 @@ const validateCounts = (counts) => {
   if (!counts || typeof counts !== 'object') {
     throw new Error('Invalid counts object');
   }
-  const requiredFields = ['praise', 'reflect', 'describe', 'imitate', 'question', 'command', 'criticism', 'neutral'];
+  const requiredFields = ['praise', 'reflect', 'describe', 'imitate', 'question', 'command', 'criticism', 'negative_phrases', 'neutral'];
   for (const field of requiredFields) {
     if (typeof counts[field] !== 'number') {
       throw new Error(`Missing or invalid count for: ${field}`);
@@ -111,13 +111,86 @@ export const countPcitTags = (codingText) => {
     question: (codingText.match(/\[DON'T:\s*Question\]/gi) || []).length,
     command: (codingText.match(/\[DON'T:\s*Command\]/gi) || []).length,
     criticism: (codingText.match(/\[DON'T:\s*Criticism\]/gi) || []).length,
+    negative_phrases: (codingText.match(/\[DON'T:\s*Negative\s*Phrases?\]/gi) || []).length,
     neutral: (codingText.match(/\[Neutral\]/gi) || []).length
   };
 
   counts.totalPride = counts.describe + counts.reflect + counts.praise + counts.imitate;
-  counts.totalAvoid = counts.question + counts.command + counts.criticism;
+  counts.totalAvoid = counts.question + counts.command + counts.criticism + counts.negative_phrases;
 
   return counts;
+};
+
+// Extract utterances flagged with negative phrases for human review
+export const extractNegativePhraseFlags = (codingText, transcript) => {
+  if (!codingText || !transcript || !Array.isArray(transcript)) {
+    return [];
+  }
+
+  const flaggedItems = [];
+
+  // Find all lines with negative phrases tag
+  const lines = codingText.split('\n');
+  for (const line of lines) {
+    if (/\[DON'T:\s*Negative\s*Phrases?\]/i.test(line)) {
+      // Extract the quoted dialogue from the line
+      const dialogueMatch = line.match(/[""]([^""]+)[""]/);
+      if (dialogueMatch) {
+        const dialogue = dialogueMatch[1].trim().toLowerCase();
+
+        // Find matching utterance in transcript to get timestamp
+        for (const utterance of transcript) {
+          if (utterance.text && utterance.text.toLowerCase().includes(dialogue.substring(0, 20))) {
+            flaggedItems.push({
+              text: utterance.text,
+              speaker: utterance.speaker,
+              timestamp: utterance.start || utterance.timestamp || 0,
+              reason: 'Negative phrase detected - requires human coach review'
+            });
+            break;
+          }
+        }
+
+        // If no timestamp match found, still flag it without timestamp
+        if (flaggedItems.length === 0 || flaggedItems[flaggedItems.length - 1].text !== dialogueMatch[1]) {
+          flaggedItems.push({
+            text: dialogueMatch[1],
+            speaker: null,
+            timestamp: null,
+            reason: 'Negative phrase detected - requires human coach review'
+          });
+        }
+      }
+    }
+  }
+
+  return flaggedItems;
+};
+
+// Send coach alert email
+export const sendCoachAlert = async (flaggedItems, sessionInfo = null) => {
+  if (!flaggedItems || flaggedItems.length === 0) {
+    throw new Error('No flagged items to send');
+  }
+
+  const response = await fetchWithTimeout(
+    `${API_BASE_URL}/send-coach-alert`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ flaggedItems, sessionInfo })
+    },
+    30000 // 30s timeout for email
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to send alert: ${response.status}`);
+  }
+
+  return response.json();
 };
 
 // Health check
@@ -137,5 +210,7 @@ export default {
   analyzeAndCode,
   getCompetencyAnalysis,
   countPcitTags,
+  extractNegativePhraseFlags,
+  sendCoachAlert,
   checkHealth
 };

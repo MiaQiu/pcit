@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mic, Square, Loader2 } from 'lucide-react';
+import { ArrowLeft, Mic, Square, Loader2, Mail, Check } from 'lucide-react';
 import useAudioRecorder from '../hooks/useAudioRecorder';
 import useTranscription from '../hooks/useTranscription';
 import usePCITAnalysis from '../hooks/usePCITAnalysis';
@@ -11,7 +11,10 @@ const RecordingScreen = ({ setActiveScreen }) => {
   const [pcitCoding, setPcitCoding] = useState(null);
   const [competencyAnalysis, setCompetencyAnalysis] = useState(null);
   const [parentSpeaker, setParentSpeaker] = useState(null);
+  const [flaggedItems, setFlaggedItems] = useState([]);
   const [processingError, setProcessingError] = useState(null);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const {
     isRecording,
@@ -26,7 +29,7 @@ const RecordingScreen = ({ setActiveScreen }) => {
   } = useAudioRecorder(300);
 
   const { transcribe } = useTranscription();
-  const { analyzeAndCode, getCompetencyAnalysis, countPcitTags } = usePCITAnalysis();
+  const { analyzeAndCode, getCompetencyAnalysis, countPcitTags, extractNegativePhraseFlags, sendCoachAlert } = usePCITAnalysis();
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -40,7 +43,10 @@ const RecordingScreen = ({ setActiveScreen }) => {
     setPcitCoding(null);
     setCompetencyAnalysis(null);
     setParentSpeaker(null);
+    setFlaggedItems([]);
     setProcessingError(null);
+    setEmailSending(false);
+    setEmailSent(false);
     startRecording(handleAudioReady);
   };
 
@@ -68,6 +74,13 @@ const RecordingScreen = ({ setActiveScreen }) => {
 
           if (result.coding) {
             setPcitCoding(result.coding);
+
+            // Extract flagged negative phrases for human review
+            const flags = extractNegativePhraseFlags(result.coding, formattedTranscript);
+            if (flags.length > 0) {
+              setFlaggedItems(flags);
+              console.warn(`Found ${flags.length} negative phrase(s) requiring review`);
+            }
 
             // Calculate tag counts for competency analysis
             const counts = countPcitTags(result.coding);
@@ -97,8 +110,35 @@ const RecordingScreen = ({ setActiveScreen }) => {
     setPcitCoding(null);
     setCompetencyAnalysis(null);
     setParentSpeaker(null);
+    setFlaggedItems([]);
     setProcessingError(null);
+    setEmailSending(false);
+    setEmailSent(false);
     resetRecorder();
+  };
+
+  const handleSendCoachAlert = async () => {
+    if (flaggedItems.length === 0) return;
+
+    setEmailSending(true);
+    try {
+      await sendCoachAlert(flaggedItems, {
+        date: new Date().toLocaleDateString()
+      });
+      setEmailSent(true);
+    } catch (err) {
+      console.error('Failed to send coach alert:', err);
+      setProcessingError(err.message || 'Failed to send email to coach');
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
+  const formatTimestamp = (seconds) => {
+    if (seconds === null || seconds === undefined) return '--:--';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const getSpeakerColor = (speaker) => {
@@ -269,6 +309,69 @@ const RecordingScreen = ({ setActiveScreen }) => {
             })}
           </div>
 
+          {/* Flagged Items for Human Coach Review */}
+          {flaggedItems.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-md font-bold text-red-700 mb-3 flex items-center">
+                <span className="mr-2">⚠️</span>
+                Flagged for Human Coach Review
+              </h3>
+              <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4">
+                <p className="text-red-700 text-sm font-medium mb-3">
+                  The following utterances contain negative phrases and require immediate review:
+                </p>
+                <div className="space-y-3">
+                  {flaggedItems.map((item, index) => (
+                    <div key={index} className="bg-white border border-red-200 rounded-lg p-3">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded">
+                          Timestamp: {formatTimestamp(item.timestamp)}
+                        </span>
+                        {item.speaker !== null && (
+                          <span className="text-xs text-gray-500">
+                            Speaker {item.speaker}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-800 text-sm font-medium">"{item.text}"</p>
+                      <p className="text-red-600 text-xs mt-2 italic">{item.reason}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex justify-center">
+                  <button
+                    onClick={handleSendCoachAlert}
+                    disabled={emailSending || emailSent}
+                    className={`flex items-center px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                      emailSent
+                        ? 'bg-green-100 text-green-700 cursor-default'
+                        : emailSending
+                        ? 'bg-gray-100 text-gray-500 cursor-wait'
+                        : 'bg-red-600 text-white hover:bg-red-700'
+                    }`}
+                  >
+                    {emailSent ? (
+                      <>
+                        <Check size={16} className="mr-2" />
+                        Alert Sent to Coach
+                      </>
+                    ) : emailSending ? (
+                      <>
+                        <Loader2 size={16} className="mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail size={16} className="mr-2" />
+                        Send Alert to Coach
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* PCIT Analysis */}
           {analysis && (
             <div className="mb-6">
@@ -326,6 +429,10 @@ const RecordingScreen = ({ setActiveScreen }) => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Criticism</span>
                       <span className="font-medium">{tagCounts.criticism}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Negative Phrases</span>
+                      <span className="font-medium">{tagCounts.negative_phrases}</span>
                     </div>
                   </div>
                   <div className="flex justify-between mt-2 pt-2 border-t border-gray-100">
