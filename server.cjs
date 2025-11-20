@@ -1,12 +1,23 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// Security middleware
+app.use(helmet());
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Body parser
 app.use(express.json());
 
 // Configuration
@@ -51,6 +62,10 @@ const fetchWithRetry = async (url, options, maxRetries = 3) => {
         }
     }
 };
+
+// Mount auth routes
+const authRoutes = require('./server/routes/auth.cjs');
+app.use('/api/auth', authRoutes);
 
 // Competency Analysis endpoint
 app.post('/api/competency-analysis', async (req, res) => {
