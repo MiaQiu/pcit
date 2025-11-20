@@ -319,6 +319,291 @@ Key Evidence:
     }
 });
 
+// PDI (Parent-Directed Interaction) Speaker ID + Coding endpoint
+app.post('/api/pdi-speaker-and-coding', async (req, res) => {
+    try {
+        const { transcript } = req.body;
+
+        // Validate request body
+        if (!transcript || !Array.isArray(transcript)) {
+            return res.status(400).json({ error: 'Missing or invalid transcript array' });
+        }
+
+        if (transcript.length === 0) {
+            return res.status(400).json({ error: 'Transcript is empty' });
+        }
+
+        // Validate each utterance
+        for (let i = 0; i < transcript.length; i++) {
+            const utterance = transcript[i];
+            if (typeof utterance.speaker !== 'number') {
+                return res.status(400).json({ error: `Invalid speaker at index ${i}` });
+            }
+            if (typeof utterance.text !== 'string' || !utterance.text.trim()) {
+                return res.status(400).json({ error: `Invalid or empty text at index ${i}` });
+            }
+        }
+
+        if (!ANTHROPIC_API_KEY) {
+            return res.status(500).json({ error: 'Anthropic API key not configured' });
+        }
+
+        // Format transcript for the prompt
+        const formattedScript = transcript
+            .map(u => `Speaker ${u.speaker}: "${u.text}"`)
+            .join('\n');
+
+        const prompt = `You are an expert PCIT (Parent-Child Interaction Therapy) Supervisor and Coder specializing in PDI (Parent-Directed Interaction). You will perform TWO tasks on the provided conversation script.
+
+**TASK 1: SPEAKER IDENTIFICATION**
+
+Analyze the conversation to determine which speaker is the Parent and which is the Child.
+
+Guidelines for Identification:
+
+Look for Parent behaviors in PDI:
+- Giving commands or instructions to the child
+- Using warning phrases about time-out
+- Giving praise after child compliance
+- Calm, firm tone when giving directions
+
+Look for Child behaviors:
+- Responding to commands (complying or not)
+- Asking questions
+- Making requests
+- Expressing emotions or protests
+
+**TASK 2: PDI CODING**
+
+After identifying the Parent, code EVERY line spoken by the Parent with one of these tags:
+
+**Effective Command Skills (DO):**
+* **[DO: Direct Command]:** A clear, direct statement telling the child what to do. Not a question or suggestion. (e.g., "Please hand me the block", "Put your shoes on")
+* **[DO: Positive Command]:** States what the child should DO, not what they should NOT do. (e.g., "Walk please" instead of "Don't run")
+* **[DO: Specific Command]:** Clear and precise instruction the child can understand. (e.g., "Put your shoes in the box by the door")
+* **[DO: Labeled Praise]:** Immediate, specific praise after child complies. (e.g., "Thank you for listening right away!", "Great job putting that away!")
+* **[DO: Correct Warning]:** Uses the exact PDI warning phrase: "If you don't [command], you will have to sit on the time-out chair."
+* **[DO: Correct Time-Out Statement]:** Uses exact phrase when starting time-out: "You didn't do what I told you to do, so you have to sit on the time-out chair."
+
+**Ineffective Command Skills (DON'T):**
+* **[DON'T: Indirect Command]:** Phrased as a question or suggestion rather than direct command. (e.g., "Will you hand me the block?", "Can you put that away?", "Let's clean up")
+* **[DON'T: Negative Command]:** Tells child what NOT to do. (e.g., "Don't run", "Stop hitting", "No yelling")
+* **[DON'T: Vague Command]:** Unclear or imprecise instruction. (e.g., "Be good", "Behave", "Act nice", "Settle down")
+* **[DON'T: Chained Command]:** Multiple commands given at once. (e.g., "Pick up your toys and put on your shoes and come here")
+* **[DON'T: Harsh Tone]:** Yelling, threatening, or aggressive language. (e.g., "I SAID SIT DOWN NOW!", "Do it or else!")
+
+* **[Neutral]:** Conversation that is not a command, praise, or warning. (e.g., "Okay", "I see", "The timer went off")
+
+**Input Script:**
+${formattedScript}
+
+**Output Format:**
+
+=== SPEAKER IDENTIFICATION ===
+Parent: Speaker [X]
+Child: Speaker [Y]
+Confidence: [0-100]%
+Key Evidence:
+1. [First specific example]
+2. [Second specific example]
+3. [Third specific example]
+
+=== PDI CODING ===
+**Parent:** "Dialogue" -> **[TAG]**
+[Continue for all parent utterances]`;
+
+        const response = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 3072,
+                messages: [
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ]
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Anthropic API error:', response.status, errorText);
+            throw new Error(`Anthropic API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Validate response structure
+        if (!data.content || !data.content[0] || !data.content[0].text) {
+            console.error('Unexpected API response structure:', JSON.stringify(data).substring(0, 200));
+            throw new Error('Invalid response format from Anthropic API');
+        }
+
+        const resultText = data.content[0].text;
+
+        // Parse the response to extract speaker identification and coding
+        const speakerMatch = resultText.match(/Parent:\s*Speaker\s*(\d+)/i);
+        const parentSpeaker = speakerMatch ? parseInt(speakerMatch[1], 10) : null;
+
+        // Extract coding section with multiple fallback patterns
+        let coding = null;
+        const codingPatterns = [
+            /=== PDI CODING ===\s*([\s\S]*)/i,
+            /PDI CODING[:\s]*([\s\S]*)/i,
+            /\*\*Parent:\*\*\s*".*?"\s*->\s*\*\*\[.*?\]\*\*([\s\S]*)/i
+        ];
+
+        for (const pattern of codingPatterns) {
+            const match = resultText.match(pattern);
+            if (match) {
+                coding = match[1].trim();
+                break;
+            }
+        }
+
+        // Fallback to full response if no pattern matched
+        if (!coding) {
+            console.warn('Could not parse PDI coding section, using full response');
+            coding = resultText;
+        }
+
+        // Warn if parent speaker couldn't be identified
+        if (parentSpeaker === null) {
+            console.warn('Could not identify parent speaker from response');
+        }
+
+        res.json({
+            parentSpeaker,
+            coding,
+            fullResponse: resultText
+        });
+
+    } catch (error) {
+        console.error('PDI speaker and coding error:', error.message, error.stack);
+        res.status(500).json({
+            error: 'Failed to analyze and code PDI transcript',
+            details: error.message
+        });
+    }
+});
+
+// PDI Competency Analysis endpoint
+app.post('/api/pdi-competency-analysis', async (req, res) => {
+    try {
+        const { counts } = req.body;
+
+        // Validate request body
+        if (!counts || typeof counts !== 'object') {
+            return res.status(400).json({ error: 'Missing or invalid counts object' });
+        }
+
+        const requiredFields = ['direct_command', 'positive_command', 'specific_command', 'labeled_praise', 'correct_warning', 'correct_timeout', 'indirect_command', 'negative_command', 'vague_command', 'chained_command', 'harsh_tone', 'neutral'];
+        for (const field of requiredFields) {
+            if (typeof counts[field] !== 'number') {
+                return res.status(400).json({ error: `Missing or invalid count for: ${field}` });
+            }
+        }
+
+        if (!ANTHROPIC_API_KEY) {
+            return res.status(500).json({ error: 'Anthropic API key not configured' });
+        }
+
+        const totalEffective = counts.direct_command + counts.positive_command + counts.specific_command;
+        const totalIneffective = counts.indirect_command + counts.negative_command + counts.vague_command + counts.chained_command;
+        const totalCommands = totalEffective + totalIneffective;
+        const effectivePercent = totalCommands > 0 ? Math.round((totalEffective / totalCommands) * 100) : 0;
+
+        const prompt = `You are an expert PCIT (Parent-Child Interaction Therapy) Supervisor and Coder. Your task is to analyze raw PDI (Parent-Directed Interaction) tag counts from a session and provide a comprehensive competency analysis, including recommendations.
+
+**1. Data Input (Raw Counts for PDI session):**
+
+**Effective Command Skills:**
+- Direct Commands: ${counts.direct_command}
+- Positive Commands: ${counts.positive_command}
+- Specific Commands: ${counts.specific_command}
+- Labeled Praises (after compliance): ${counts.labeled_praise}
+- Correct Warnings: ${counts.correct_warning}
+- Correct Time-Out Statements: ${counts.correct_timeout}
+
+**Ineffective Command Skills:**
+- Indirect Commands (questions): ${counts.indirect_command}
+- Negative Commands (don't/stop): ${counts.negative_command}
+- Vague Commands: ${counts.vague_command}
+- Chained Commands: ${counts.chained_command}
+- Harsh Tone: ${counts.harsh_tone}
+
+- Neutral Talk: ${counts.neutral}
+
+**Calculated Metrics:**
+- Total Commands: ${totalCommands}
+- Effective Commands: ${totalEffective} (${effectivePercent}%)
+- Ineffective Commands: ${totalIneffective}
+
+**2. PDI Competency Criteria:**
+
+* **Effective Commands:** ≥ 75% of all commands should be effective (direct, positive, specific)
+* **Labeled Praise after Compliance:** Should praise compliance consistently
+* **Correct Warning Sequence:** Must use exact PDI warning wording when needed
+* **Harsh Tone:** = 0 (never acceptable)
+
+**3. Output Requirements:**
+
+* **Performance Table:** Create a clear table comparing the **Actual Counts** against the **Target Goals** for effective command percentage, labeled praises, and ineffective commands.
+
+* **Command Quality Analysis:** Evaluate the ratio of effective to ineffective commands and identify patterns.
+
+* **Analysis and Feedback:** Write a concise, professional analysis for the parent.
+    * Identify which goals were met and which were missed.
+    * Highlight the parent's **strongest skill** (e.g., direct commands, positive phrasing) and the area needing **most improvement**.
+    * Provide **one specific, actionable recommendation** for practice (e.g., "Convert question commands like 'Can you...?' to direct statements like 'Please...'").
+    * If harsh tone was used, address this as a priority concern.
+    * Praise progress in giving clear, calm commands.`;
+
+        const response = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 2048,
+                messages: [
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ]
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Anthropic API error:', response.status, errorText);
+            throw new Error(`Anthropic API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const analysisText = data.content[0].text;
+
+        res.json({ analysis: analysisText });
+
+    } catch (error) {
+        console.error('PDI competency analysis error:', error.message, error.stack);
+        res.status(500).json({
+            error: 'Failed to analyze PDI competency',
+            details: error.message
+        });
+    }
+});
+
 // Send flagged items to coach via email
 app.post('/api/send-coach-alert', async (req, res) => {
     try {

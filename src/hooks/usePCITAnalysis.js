@@ -20,15 +20,39 @@ const usePCITAnalysis = () => {
     return pcitService.extractNegativePhraseFlags(codingText, transcript);
   }, []);
 
+  const checkCdiMastery = useCallback((counts) => {
+    return pcitService.checkCdiMastery(counts);
+  }, []);
+
   const sendCoachAlert = useCallback(async (flaggedItems, sessionInfo) => {
     return await pcitService.sendCoachAlert(flaggedItems, sessionInfo);
   }, []);
 
+  // PDI functions
+  const pdiAnalyzeAndCode = useCallback(async (transcriptData) => {
+    return await pcitService.pdiAnalyzeAndCode(transcriptData);
+  }, []);
+
+  const getPdiCompetencyAnalysis = useCallback(async (counts) => {
+    return await pcitService.getPdiCompetencyAnalysis(counts);
+  }, []);
+
+  const countPdiTags = useCallback((codingText) => {
+    return pcitService.countPdiTags(codingText);
+  }, []);
+
   return {
+    // CDI functions
     analyzeAndCode,
     getCompetencyAnalysis,
     countPcitTags,
     extractNegativePhraseFlags,
+    checkCdiMastery,
+    // PDI functions
+    pdiAnalyzeAndCode,
+    getPdiCompetencyAnalysis,
+    countPdiTags,
+    // Shared
     sendCoachAlert
   };
 };
