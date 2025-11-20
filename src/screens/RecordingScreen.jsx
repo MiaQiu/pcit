@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mic, Square, Loader2, Mail, Check } from 'lucide-react';
+import { ArrowLeft, Mic, Square, Loader2, Mail, Check, Award } from 'lucide-react';
 import useAudioRecorder from '../hooks/useAudioRecorder';
 import useTranscription from '../hooks/useTranscription';
 import usePCITAnalysis from '../hooks/usePCITAnalysis';
 
 const RecordingScreen = ({ setActiveScreen }) => {
+  const [mode, setMode] = useState('CDI'); // 'CDI' or 'PDI'
   const [isProcessing, setIsProcessing] = useState(false);
   const [transcript, setTranscript] = useState(null);
   const [analysis, setAnalysis] = useState(null);
@@ -15,6 +16,7 @@ const RecordingScreen = ({ setActiveScreen }) => {
   const [processingError, setProcessingError] = useState(null);
   const [emailSending, setEmailSending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [cdiMastery, setCdiMastery] = useState(null);
 
   const {
     isRecording,
@@ -29,7 +31,20 @@ const RecordingScreen = ({ setActiveScreen }) => {
   } = useAudioRecorder(300);
 
   const { transcribe } = useTranscription();
-  const { analyzeAndCode, getCompetencyAnalysis, countPcitTags, extractNegativePhraseFlags, sendCoachAlert } = usePCITAnalysis();
+  const {
+    // CDI functions
+    analyzeAndCode,
+    getCompetencyAnalysis,
+    countPcitTags,
+    extractNegativePhraseFlags,
+    checkCdiMastery,
+    // PDI functions
+    pdiAnalyzeAndCode,
+    getPdiCompetencyAnalysis,
+    countPdiTags,
+    // Shared
+    sendCoachAlert
+  } = usePCITAnalysis();
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -47,6 +62,7 @@ const RecordingScreen = ({ setActiveScreen }) => {
     setProcessingError(null);
     setEmailSending(false);
     setEmailSent(false);
+    setCdiMastery(null);
     startRecording(handleAudioReady);
   };
 
@@ -61,35 +77,67 @@ const RecordingScreen = ({ setActiveScreen }) => {
       if (formattedTranscript && formattedTranscript.length > 0) {
         setTranscript(formattedTranscript);
 
-        // Combined speaker identification and PCIT coding
-        console.log('Analyzing and coding transcript with Claude...');
-        const result = await analyzeAndCode(formattedTranscript);
+        if (mode === 'CDI') {
+          // CDI Mode: PRIDE skills analysis
+          console.log('Analyzing CDI transcript with Claude...');
+          const result = await analyzeAndCode(formattedTranscript);
 
-        if (result) {
-          setAnalysis(result.fullResponse);
+          if (result) {
+            setAnalysis(result.fullResponse);
 
-          if (result.parentSpeaker !== null) {
-            setParentSpeaker(result.parentSpeaker);
-          }
-
-          if (result.coding) {
-            setPcitCoding(result.coding);
-
-            // Extract flagged negative phrases for human review
-            const flags = extractNegativePhraseFlags(result.coding, formattedTranscript);
-            if (flags.length > 0) {
-              setFlaggedItems(flags);
-              console.warn(`Found ${flags.length} negative phrase(s) requiring review`);
+            if (result.parentSpeaker !== null) {
+              setParentSpeaker(result.parentSpeaker);
             }
 
-            // Calculate tag counts for competency analysis
-            const counts = countPcitTags(result.coding);
+            if (result.coding) {
+              setPcitCoding(result.coding);
 
-            // Get competency analysis
-            console.log('Getting competency analysis...');
-            const competencyResult = await getCompetencyAnalysis(counts);
-            if (competencyResult) {
-              setCompetencyAnalysis(competencyResult);
+              // Extract flagged negative phrases for human review
+              const flags = extractNegativePhraseFlags(result.coding, formattedTranscript);
+              if (flags.length > 0) {
+                setFlaggedItems(flags);
+                console.warn(`Found ${flags.length} negative phrase(s) requiring review`);
+              }
+
+              // Calculate tag counts for competency analysis
+              const counts = countPcitTags(result.coding);
+
+              // Check CDI mastery
+              const mastery = checkCdiMastery(counts);
+              setCdiMastery(mastery);
+
+              // Get competency analysis
+              console.log('Getting CDI competency analysis...');
+              const competencyResult = await getCompetencyAnalysis(counts);
+              if (competencyResult) {
+                setCompetencyAnalysis(competencyResult);
+              }
+            }
+          }
+        } else {
+          // PDI Mode: Command quality analysis
+          console.log('Analyzing PDI transcript with Claude...');
+          const result = await pdiAnalyzeAndCode(formattedTranscript);
+
+          if (result) {
+            setAnalysis(result.fullResponse);
+
+            if (result.parentSpeaker !== null) {
+              setParentSpeaker(result.parentSpeaker);
+            }
+
+            if (result.coding) {
+              setPcitCoding(result.coding);
+
+              // Calculate PDI tag counts
+              const counts = countPdiTags(result.coding);
+
+              // Get PDI competency analysis
+              console.log('Getting PDI competency analysis...');
+              const competencyResult = await getPdiCompetencyAnalysis(counts);
+              if (competencyResult) {
+                setCompetencyAnalysis(competencyResult);
+              }
             }
           }
         }
@@ -114,6 +162,7 @@ const RecordingScreen = ({ setActiveScreen }) => {
     setProcessingError(null);
     setEmailSending(false);
     setEmailSent(false);
+    setCdiMastery(null);
     resetRecorder();
   };
 
@@ -160,7 +209,7 @@ const RecordingScreen = ({ setActiveScreen }) => {
   };
 
   const error = recorderError || processingError;
-  const tagCounts = countPcitTags(pcitCoding);
+  const tagCounts = mode === 'CDI' ? countPcitTags(pcitCoding) : countPdiTags(pcitCoding);
 
   return (
     <div className="min-h-screen bg-white pb-24 flex flex-col">
@@ -217,6 +266,39 @@ const RecordingScreen = ({ setActiveScreen }) => {
               </div>
             </div>
           </div>
+
+          {/* Mode Selector */}
+          {!isRecording && (
+            <div className="px-6 mb-4">
+              <div className="bg-gray-100 rounded-xl p-3">
+                <p className="text-xs text-gray-500 text-center mb-2">Session Mode</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setMode('CDI')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                      mode === 'CDI'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    CDI
+                    <span className="block text-xs font-normal opacity-80">Relationship</span>
+                  </button>
+                  <button
+                    onClick={() => setMode('PDI')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                      mode === 'PDI'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    PDI
+                    <span className="block text-xs font-normal opacity-80">Discipline</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Audio Visualizer */}
           <div className="px-6 mb-6">
@@ -309,6 +391,50 @@ const RecordingScreen = ({ setActiveScreen }) => {
             })}
           </div>
 
+          {/* CDI Mastery Congratulations */}
+          {mode === 'CDI' && cdiMastery && cdiMastery.mastered && (
+            <div className="mb-6">
+              <div className="bg-gradient-to-r from-yellow-50 to-green-50 border-2 border-yellow-400 rounded-xl p-4">
+                <div className="flex items-center mb-3">
+                  <Award size={24} className="text-yellow-500 mr-2" />
+                  <h3 className="text-lg font-bold text-green-700">CDI Mastery Achieved!</h3>
+                </div>
+                <p className="text-gray-700 text-sm mb-3">
+                  Congratulations! You have met all CDI criteria and are ready to move on to
+                  Parent-Directed Interaction (PDI) training.
+                </p>
+                <div className="bg-white rounded-lg p-3 text-sm">
+                  <p className="font-medium text-gray-700 mb-2">Criteria Met:</p>
+                  <ul className="space-y-1 text-gray-600">
+                    <li className="flex items-center">
+                      <Check size={14} className="text-green-500 mr-2" />
+                      Labeled Praise: {tagCounts?.praise} (target: 10+)
+                    </li>
+                    <li className="flex items-center">
+                      <Check size={14} className="text-green-500 mr-2" />
+                      Reflection: {tagCounts?.reflect} (target: 10+)
+                    </li>
+                    <li className="flex items-center">
+                      <Check size={14} className="text-green-500 mr-2" />
+                      Description: {tagCounts?.describe} (target: 10+)
+                    </li>
+                    <li className="flex items-center">
+                      <Check size={14} className="text-green-500 mr-2" />
+                      Total Avoid Skills: {tagCounts?.totalAvoid} (target: 3 or less)
+                    </li>
+                    <li className="flex items-center">
+                      <Check size={14} className="text-green-500 mr-2" />
+                      Negative Phrases: {tagCounts?.negative_phrases} (target: 0)
+                    </li>
+                  </ul>
+                </div>
+                <p className="text-sm text-green-600 mt-3 font-medium">
+                  Select PDI mode for your next session to begin discipline training.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Flagged Items for Human Coach Review */}
           {flaggedItems.length > 0 && (
             <div className="mb-6">
@@ -385,67 +511,160 @@ const RecordingScreen = ({ setActiveScreen }) => {
           {/* PCIT Tag Counts */}
           {tagCounts && (
             <div className="mb-6">
-              <h3 className="text-md font-bold text-gray-800 mb-3">PCIT Summary</h3>
+              <h3 className="text-md font-bold text-gray-800 mb-3">
+                {mode === 'CDI' ? 'CDI Summary' : 'PDI Summary'}
+              </h3>
               <div className="bg-white border border-gray-200 rounded-xl p-4">
-                {/* Pride Skills (DOs) */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-green-600 mb-2">Pride Skills (DO)</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Labeled Praise</span>
-                      <span className="font-medium">{tagCounts.praise}</span>
+                {mode === 'CDI' ? (
+                  <>
+                    {/* Pride Skills (DOs) */}
+                    <div className="mb-4">
+                      <h4 className="text-sm font-semibold text-green-600 mb-2">Pride Skills (DO)</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Labeled Praise</span>
+                          <span className="font-medium">{tagCounts.praise}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Reflection</span>
+                          <span className="font-medium">{tagCounts.reflect}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Imitation</span>
+                          <span className="font-medium">{tagCounts.imitate}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Description</span>
+                          <span className="font-medium">{tagCounts.describe}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between mt-2 pt-2 border-t border-gray-100">
+                        <span className="font-semibold text-green-600">Total "Pride" Skills</span>
+                        <span className="font-bold text-green-600">{tagCounts.totalPride}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Reflection</span>
-                      <span className="font-medium">{tagCounts.reflect}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Imitation</span>
-                      <span className="font-medium">{tagCounts.imitate}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Description</span>
-                      <span className="font-medium">{tagCounts.describe}</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between mt-2 pt-2 border-t border-gray-100">
-                    <span className="font-semibold text-green-600">Total "Pride" Skills</span>
-                    <span className="font-bold text-green-600">{tagCounts.totalPride}</span>
-                  </div>
-                </div>
 
-                {/* Avoid Skills (DON'Ts) */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-red-600 mb-2">Avoid Skills (DON'T)</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Question</span>
-                      <span className="font-medium">{tagCounts.question}</span>
+                    {/* Avoid Skills (DON'Ts) */}
+                    <div className="mb-4">
+                      <h4 className="text-sm font-semibold text-red-600 mb-2">Avoid Skills (DON'T)</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Question</span>
+                          <span className="font-medium">{tagCounts.question}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Command</span>
+                          <span className="font-medium">{tagCounts.command}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Criticism</span>
+                          <span className="font-medium">{tagCounts.criticism}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Negative Phrases</span>
+                          <span className="font-medium">{tagCounts.negative_phrases}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between mt-2 pt-2 border-t border-gray-100">
+                        <span className="font-semibold text-red-600">Total "Avoid" Skills</span>
+                        <span className="font-bold text-red-600">{tagCounts.totalAvoid}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Command</span>
-                      <span className="font-medium">{tagCounts.command}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Criticism</span>
-                      <span className="font-medium">{tagCounts.criticism}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Negative Phrases</span>
-                      <span className="font-medium">{tagCounts.negative_phrases}</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between mt-2 pt-2 border-t border-gray-100">
-                    <span className="font-semibold text-red-600">Total "Avoid" Skills</span>
-                    <span className="font-bold text-red-600">{tagCounts.totalAvoid}</span>
-                  </div>
-                </div>
 
-                {/* Neutral */}
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Neutral Talk</span>
-                  <span className="font-medium">{tagCounts.neutral}</span>
-                </div>
+                    {/* Neutral */}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Neutral Talk</span>
+                      <span className="font-medium">{tagCounts.neutral}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Effective Commands Percentage */}
+                    <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-gray-700">Effective Commands</span>
+                        <span className={`text-2xl font-bold ${
+                          tagCounts.effectivePercent >= 75 ? 'text-green-600' : 'text-orange-500'
+                        }`}>
+                          {tagCounts.effectivePercent}%
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Target: 75% or higher</p>
+                    </div>
+
+                    {/* Effective Commands (DOs) */}
+                    <div className="mb-4">
+                      <h4 className="text-sm font-semibold text-green-600 mb-2">Effective Commands (DO)</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Direct Command</span>
+                          <span className="font-medium">{tagCounts.direct_command}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Positive Command</span>
+                          <span className="font-medium">{tagCounts.positive_command}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Specific Command</span>
+                          <span className="font-medium">{tagCounts.specific_command}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Labeled Praise</span>
+                          <span className="font-medium">{tagCounts.labeled_praise}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Correct Warning</span>
+                          <span className="font-medium">{tagCounts.correct_warning}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Correct Time-Out</span>
+                          <span className="font-medium">{tagCounts.correct_timeout}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between mt-2 pt-2 border-t border-gray-100">
+                        <span className="font-semibold text-green-600">Total Effective</span>
+                        <span className="font-bold text-green-600">{tagCounts.totalEffective}</span>
+                      </div>
+                    </div>
+
+                    {/* Ineffective Commands (DON'Ts) */}
+                    <div className="mb-4">
+                      <h4 className="text-sm font-semibold text-red-600 mb-2">Ineffective Commands (DON'T)</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Indirect Command</span>
+                          <span className="font-medium">{tagCounts.indirect_command}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Negative Command</span>
+                          <span className="font-medium">{tagCounts.negative_command}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Vague Command</span>
+                          <span className="font-medium">{tagCounts.vague_command}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Chained Command</span>
+                          <span className="font-medium">{tagCounts.chained_command}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Harsh Tone</span>
+                          <span className="font-medium">{tagCounts.harsh_tone}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between mt-2 pt-2 border-t border-gray-100">
+                        <span className="font-semibold text-red-600">Total Ineffective</span>
+                        <span className="font-bold text-red-600">{tagCounts.totalIneffective}</span>
+                      </div>
+                    </div>
+
+                    {/* Neutral */}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Neutral Talk</span>
+                      <span className="font-medium">{tagCounts.neutral}</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
