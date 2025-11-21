@@ -72,6 +72,10 @@ app.use('/api/auth', authRoutes);
 const sessionRoutes = require('./server/routes/sessions.cjs');
 app.use('/api/sessions', sessionRoutes);
 
+// Mount learning progress routes
+const learningRoutes = require('./server/routes/learning.cjs');
+app.use('/api/learning', learningRoutes);
+
 // Competency Analysis endpoint
 app.post('/api/competency-analysis', async (req, res) => {
     try {

@@ -3,13 +3,14 @@ import BottomNav from './BottomNav';
 import HomeScreen from '../screens/HomeScreen';
 import LearnScreen from '../screens/LearnScreen';
 import RecordingScreen from '../screens/RecordingScreen';
-import ReportScreen from '../screens/ReportScreen';
+import ProgressScreen from '../screens/ProgressScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { checkHealth } from '../services/pcitService';
 
 const MainApp = () => {
   const [activeScreen, setActiveScreen] = useState('learn');
   const [backendStatus, setBackendStatus] = useState(null);
+  const [selectedDeck, setSelectedDeck] = useState(null);
 
   // Check backend health on app startup
   useEffect(() => {
@@ -28,20 +29,26 @@ const MainApp = () => {
     verifyBackend();
   }, []);
 
+  // Function to navigate to a specific deck in HomeScreen
+  const navigateToDeck = (deckNumber) => {
+    setSelectedDeck(deckNumber);
+    setActiveScreen('home');
+  };
+
   const renderScreen = () => {
     switch (activeScreen) {
       case 'home':
-        return <HomeScreen />;
+        return <HomeScreen selectedDeck={selectedDeck} />;
       case 'progress':
-        return <ReportScreen />;
+        return <ProgressScreen />;
       case 'learn':
-        return <LearnScreen />;
+        return <LearnScreen setActiveScreen={setActiveScreen} navigateToDeck={navigateToDeck} />;
       case 'profile':
         return <ProfileScreen />;
       case 'recording':
         return <RecordingScreen setActiveScreen={setActiveScreen} />;
       default:
-        return <LearnScreen />;
+        return <LearnScreen setActiveScreen={setActiveScreen} navigateToDeck={navigateToDeck} />;
     }
   };
 

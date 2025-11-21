@@ -4,8 +4,16 @@ import authService from '../services/authService';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // TEMPORARY: Mock user for UI development (bypass login)
+  const mockUser = {
+    id: 'mock-user-123',
+    email: 'demo@happypillar.com',
+    name: 'Demo User',
+    childName: 'Alex'
+  };
+
+  const [user, setUser] = useState(mockUser); // Set mock user by default
+  const [loading, setLoading] = useState(false); // No loading needed
   const [error, setError] = useState(null);
 
   // Load user on mount
@@ -14,6 +22,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const loadUser = async () => {
+    // TEMPORARY: Skip authentication, use mock user
+    setUser(mockUser);
+    setLoading(false);
+
+    /* Original auth code - uncomment to re-enable login:
     if (!authService.isAuthenticated()) {
       setLoading(false);
       return;
@@ -28,6 +41,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
+    */
   };
 
   const login = async (email, password) => {

@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id           String         @id @default(uuid())
-  email        String         @unique
-  passwordHash String
-  name         String
-  therapistId  String?
-  childName    String?
-  createdAt    DateTime       @default(now())
-  riskLogs     RiskAuditLog[]
-  sessions     Session[]
+  id              String            @id @default(uuid())
+  email           String            @unique
+  passwordHash    String
+  name            String
+  therapistId     String?
+  childName       String?
+  createdAt       DateTime          @default(now())
+  riskLogs        RiskAuditLog[]
+  sessions        Session[]
+  learningProgress LearningProgress?
 
   @@index([email])
   @@index([therapistId])
@@ -70,6 +71,17 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@index([tokenHash])
+}
+
+model LearningProgress {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  currentDeck   Int      @default(1)
+  unlockedDecks Int      @default(1)
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum SessionMode {

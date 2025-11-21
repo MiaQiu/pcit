@@ -4,6 +4,7 @@ import useAudioRecorder from '../hooks/useAudioRecorder';
 import useTranscription from '../hooks/useTranscription';
 import usePCITAnalysis from '../hooks/usePCITAnalysis';
 import sessionService from '../services/sessionService';
+import dinoImage from '../assets/dino.png';
 
 const RecordingScreen = ({ setActiveScreen }) => {
   const [mode, setMode] = useState('CDI'); // 'CDI' or 'PDI'
@@ -301,31 +302,13 @@ const RecordingScreen = ({ setActiveScreen }) => {
       {/* Main Content Area */}
       {!transcript && !isProcessing ? (
         <>
-          {/* Caterpillar Mascot */}
+          {/* Dino Mascot */}
           <div className="flex-1 flex items-center justify-center px-6">
-            <div className="relative">
-              <div className="flex items-end">
-                <div className="flex">
-                  {[...Array(4)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-12 h-12 bg-green-400 rounded-full -ml-3 first:ml-0"
-                      style={{
-                        backgroundColor: i === 0 ? '#4ade80' : '#86efac',
-                        zIndex: 4 - i
-                      }}
-                    ></div>
-                  ))}
-                </div>
-                <div className="w-16 h-16 bg-green-500 rounded-full -ml-4 relative z-10">
-                  <div className="absolute top-4 left-3 w-2 h-2 bg-gray-800 rounded-full"></div>
-                  <div className="absolute top-4 right-3 w-2 h-2 bg-gray-800 rounded-full"></div>
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-4 h-2 border-b-2 border-gray-800 rounded-b-full"></div>
-                  <div className="absolute -top-3 left-4 w-1 h-4 bg-green-600 rounded-full transform -rotate-12"></div>
-                  <div className="absolute -top-3 right-4 w-1 h-4 bg-green-600 rounded-full transform rotate-12"></div>
-                </div>
-              </div>
-            </div>
+            <img
+              src={dinoImage}
+              alt="Happy Dino Mascot"
+              className="w-48 h-48 object-contain"
+            />
           </div>
 
           {/* Mode Selector */}

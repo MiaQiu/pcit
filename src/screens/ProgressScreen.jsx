@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Award, Calendar, Clock, ChevronRight, Loader2 } from 'lucide-react';
+import { Award, Calendar, Clock, ChevronRight, Loader2, BookOpen, CheckCircle, Lock } from 'lucide-react';
 import sessionService from '../services/sessionService';
+import learningService from '../services/learningService';
 
 const ProgressScreen = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('ALL'); // 'ALL', 'CDI', 'PDI'
+  const [learningProgress, setLearningProgress] = useState(null);
+  const [learningLoading, setLearningLoading] = useState(true);
 
   useEffect(() => {
     loadSessions();
+    loadLearningProgress();
   }, [filter]);
 
   const loadSessions = async () => {
@@ -26,6 +30,44 @@ const ProgressScreen = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadLearningProgress = async () => {
+    setLearningLoading(true);
+    try {
+      const progress = await learningService.getProgress();
+      setLearningProgress(progress);
+    } catch (err) {
+      console.error('Failed to load learning progress:', err);
+    } finally {
+      setLearningLoading(false);
+    }
+  };
+
+  // Deck titles for display
+  const deckTitles = {
+    1: "Introduction of PCIT",
+    2: "Introduction of CDI",
+    3: "Praise",
+    4: "Reflecting",
+    5: "Imitating",
+    6: "Describing",
+    7: "Enjoyment",
+    8: "Avoid Command",
+    9: "Avoid Questions",
+    10: "Avoid Criticism",
+    11: "Introduction of PDI",
+    12: "Effective Command",
+    13: "The Command Sequence",
+    14: "Advanced Application 1",
+    15: "Advanced Application 2"
+  };
+
+  const getDeckPhase = (deckNumber) => {
+    if (deckNumber === 1) return "Introduction";
+    if (deckNumber >= 2 && deckNumber <= 10) return "CDI";
+    if (deckNumber >= 11 && deckNumber <= 15) return "PDI";
+    return "";
   };
 
   const formatDate = (dateString) => {
@@ -53,6 +95,82 @@ const ProgressScreen = () => {
     <div className="min-h-screen bg-gray-50 pb-24">
       <div className="px-6 pt-12">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Your Progress</h1>
+
+        {/* Learning Journey Progress */}
+        {!learningLoading && learningProgress && (
+          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 mb-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <BookOpen className="w-6 h-6 text-green-600" />
+              <h2 className="text-lg font-bold text-gray-800">Learning Journey</h2>
+            </div>
+
+            {/* Current Deck */}
+            <div className="bg-white rounded-xl p-4 mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-gray-600">Current Deck</span>
+                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-green-600 text-white">
+                  {getDeckPhase(learningProgress.currentDeck)}
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">
+                Deck {learningProgress.currentDeck}: {deckTitles[learningProgress.currentDeck]}
+              </h3>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <div className="flex justify-between text-sm text-gray-600 mb-2">
+                <span>Progress</span>
+                <span>{learningProgress.unlockedDecks} / 15 Decks Unlocked</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className="bg-green-600 h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${(learningProgress.unlockedDecks / 15) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Deck Grid */}
+            <div className="grid grid-cols-5 gap-2">
+              {Array.from({ length: 15 }, (_, i) => i + 1).map((deckNum) => {
+                const isUnlocked = deckNum <= learningProgress.unlockedDecks;
+                const isCurrent = deckNum === learningProgress.currentDeck;
+                const isCompleted = deckNum < learningProgress.currentDeck;
+
+                return (
+                  <div
+                    key={deckNum}
+                    className={`relative aspect-square rounded-lg flex items-center justify-center text-sm font-bold transition-all ${
+                      isCurrent
+                        ? 'bg-green-600 text-white ring-2 ring-green-400 ring-offset-2'
+                        : isCompleted
+                        ? 'bg-green-200 text-green-800'
+                        : isUnlocked
+                        ? 'bg-green-100 text-green-700 border-2 border-green-300'
+                        : 'bg-gray-200 text-gray-400'
+                    }`}
+                  >
+                    {isCompleted ? (
+                      <CheckCircle className="w-5 h-5" />
+                    ) : !isUnlocked ? (
+                      <Lock className="w-4 h-4" />
+                    ) : (
+                      deckNum
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 text-xs text-gray-600 text-center">
+              Complete each deck to unlock the next one
+            </div>
+          </div>
+        )}
+
+        {/* Session History Header */}
+        <h2 className="text-lg font-bold text-gray-800 mb-4">Practice Sessions</h2>
 
         {/* Mode Filter */}
         <div className="flex gap-2 mb-6">
