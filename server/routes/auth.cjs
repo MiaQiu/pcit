@@ -10,9 +10,10 @@ const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = requir
 const router = express.Router();
 
 // Rate limiter for auth endpoints
+// More lenient in development, stricter in production
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts
+  max: process.env.NODE_ENV === 'production' ? 10 : 100, // 100 attempts in dev, 10 in prod
   message: 'Too many authentication attempts, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
