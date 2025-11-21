@@ -6,9 +6,12 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div style={styles.container}>
-        <div style={styles.spinner}></div>
-        <p style={styles.text}>Loading...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <div className="relative w-12 h-12">
+          <div className="absolute top-0 left-0 w-full h-full border-4 border-gray-200 rounded-full"></div>
+          <div className="absolute top-0 left-0 w-full h-full border-4 border-green-500 rounded-full border-t-transparent animate-spin"></div>
+        </div>
+        <p className="mt-5 text-base text-gray-600">Loading...</p>
       </div>
     );
   }
@@ -19,39 +22,5 @@ function ProtectedRoute({ children }) {
 
   return children;
 }
-
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
-  },
-  spinner: {
-    width: '50px',
-    height: '50px',
-    border: '4px solid #f3f3f3',
-    borderTop: '4px solid #4CAF50',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-  },
-  text: {
-    marginTop: '20px',
-    fontSize: '16px',
-    color: '#666',
-  },
-};
-
-// Add keyframes for spinner animation
-const styleSheet = document.styleSheets[0];
-const keyframes = `
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
 
 export default ProtectedRoute;
