@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,56 +7,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User table for authentication and metadata
 model User {
-  id              String    @id @default(uuid())
-  email           String    @unique
-  passwordHash    String    // Hashed using bcrypt (factor 12)
-  name            String
-  therapistId     String?   // For clinical case management
-  childName       String?
-  createdAt       DateTime  @default(now())
-
-  // Relationships
-  sessions        Session[]
-  riskLogs        RiskAuditLog[]
+  id           String         @id @default(uuid())
+  email        String         @unique
+  passwordHash String
+  name         String
+  therapistId  String?
+  childName    String?
+  createdAt    DateTime       @default(now())
+  riskLogs     RiskAuditLog[]
+  sessions     Session[]
 
   @@index([email])
   @@index([therapistId])
 }
 
-// Stores metadata and analysis results for each PCIT session
 model Session {
-  id                  String      @id @default(uuid())
-  userId              String      // CRITICAL for access control
-  mode                SessionMode
-
-  // Audio Data - ONLY store path, not raw audio (Data Minimization)
-  storagePath         String      // Path to raw audio in GCS
-  durationSeconds     Int
-
-  // AI Analysis Results (Core PHI)
-  transcript          String      @db.Text
-  aiFeedbackJSON      Json        // Structured JSON from Claude
-  pcitCoding          Json        // Detailed coding data
-
-  // Tag counts (denormalized for quick queries)
-  tagCounts           Json        // CDI or PDI tag counts
-
-  // Mastery tracking
-  masteryAchieved     Boolean     @default(false)
-
-  // Risk Flagging
-  riskScore           Int         @default(0)  // 0=low, 10=critical
-  flaggedForReview    Boolean     @default(false)
-
-  // Coach alerts
-  coachAlertSent      Boolean     @default(false)
-  coachAlertSentAt    DateTime?
-
-  createdAt           DateTime    @default(now())
-
-  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String      @id @default(uuid())
+  userId           String
+  mode             SessionMode
+  storagePath      String
+  durationSeconds  Int
+  transcript       String
+  aiFeedbackJSON   Json
+  pcitCoding       Json
+  tagCounts        Json
+  masteryAchieved  Boolean     @default(false)
+  riskScore        Int         @default(0)
+  flaggedForReview Boolean     @default(false)
+  coachAlertSent   Boolean     @default(false)
+  coachAlertSentAt DateTime?
+  createdAt        DateTime    @default(now())
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
@@ -67,40 +46,33 @@ model Session {
   @@index([flaggedForReview])
 }
 
-enum SessionMode {
-  CDI
-  PDI
-}
-
-// Dedicated, IMMUTABLE table for Duty-to-Warn auditing
 model RiskAuditLog {
-  id              String    @id @default(uuid())
-  userId          String    // Identifies the user involved
-  sessionId       String?   // Reference to triggering session
-  timestamp       DateTime  @default(now())
-
-  triggerSource   String    // e.g., "Claude Analysis", "Manual User Report"
-  riskLevel       String    // e.g., "IMMINENT_HARM", "SUICIDAL_IDEATION"
-
-  // MUST BE APPLICATION-LEVEL ENCRYPTED
-  triggerExcerpt  String?   // Sensitive excerpt that triggered flag
-
-  actionTaken     String    // e.g., "Displayed Hotline", "Escalated to Clinician"
-
-  user            User      @relation(fields: [userId], references: [id])
+  id             String   @id @default(uuid())
+  userId         String
+  sessionId      String?
+  timestamp      DateTime @default(now())
+  triggerSource  String
+  riskLevel      String
+  triggerExcerpt String?
+  actionTaken    String
+  user           User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([riskLevel])
   @@index([timestamp])
 }
 
-// Refresh Tokens for JWT security
 model RefreshToken {
-  id          String    @id @default(uuid())
-  userId      String    @unique
-  tokenHash   String    @unique
-  expiresAt   DateTime
-  createdAt   DateTime  @default(now())
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 
   @@index([tokenHash])
+}
+
+enum SessionMode {
+  CDI
+  PDI
 }

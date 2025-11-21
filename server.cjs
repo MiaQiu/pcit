@@ -67,6 +67,10 @@ const fetchWithRetry = async (url, options, maxRetries = 3) => {
 const authRoutes = require('./server/routes/auth.cjs');
 app.use('/api/auth', authRoutes);
 
+// Mount session routes
+const sessionRoutes = require('./server/routes/sessions.cjs');
+app.use('/api/sessions', sessionRoutes);
+
 // Competency Analysis endpoint
 app.post('/api/competency-analysis', async (req, res) => {
     try {
