@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mic, Square, Loader2, Mail, Check, Award } from 'lucide-react';
+import { ArrowLeft, Mic, Square, Loader2, Mail, Check, Award, Save } from 'lucide-react';
 import useAudioRecorder from '../hooks/useAudioRecorder';
 import useTranscription from '../hooks/useTranscription';
 import usePCITAnalysis from '../hooks/usePCITAnalysis';
+import sessionService from '../services/sessionService';
 
 const RecordingScreen = ({ setActiveScreen }) => {
   const [mode, setMode] = useState('CDI'); // 'CDI' or 'PDI'
@@ -17,6 +18,10 @@ const RecordingScreen = ({ setActiveScreen }) => {
   const [emailSending, setEmailSending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [cdiMastery, setCdiMastery] = useState(null);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [sessionDuration, setSessionDuration] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [sessionSaved, setSessionSaved] = useState(false);
 
   const {
     isRecording,
@@ -69,6 +74,11 @@ const RecordingScreen = ({ setActiveScreen }) => {
   const handleAudioReady = async (audioBlob) => {
     setIsProcessing(true);
     setProcessingError(null);
+    setSessionSaved(false);
+
+    // Store audio blob and duration for saving
+    setAudioBlob(audioBlob);
+    setSessionDuration(elapsed);
 
     try {
       // Transcribe audio
@@ -163,7 +173,58 @@ const RecordingScreen = ({ setActiveScreen }) => {
     setEmailSending(false);
     setEmailSent(false);
     setCdiMastery(null);
+    setAudioBlob(null);
+    setSessionDuration(0);
+    setIsSaving(false);
+    setSessionSaved(false);
     resetRecorder();
+  };
+
+  const handleSaveSession = async () => {
+    if (!pcitCoding || !transcript || !audioBlob) {
+      setProcessingError('Cannot save: missing session data');
+      return;
+    }
+
+    setIsSaving(true);
+    setProcessingError(null);
+
+    try {
+      // Prepare tag counts based on mode
+      const tagCounts = mode === 'CDI'
+        ? countPcitTags(pcitCoding)
+        : countPdiTags(pcitCoding);
+
+      const sessionData = {
+        audioBlob,
+        mode,
+        transcript: typeof transcript === 'string' ? transcript : JSON.stringify(transcript),
+        pcitCoding,
+        tagCounts,
+        durationSeconds: sessionDuration,
+        aiFeedback: {
+          analysis,
+          competencyAnalysis,
+          parentSpeaker,
+          flaggedItems,
+          ...(mode === 'CDI' && { cdiMastery })
+        }
+      };
+
+      const result = await sessionService.uploadSession(sessionData);
+      console.log('Session saved:', result);
+      setSessionSaved(true);
+
+      // Auto-redirect to progress screen after 2 seconds
+      setTimeout(() => {
+        setActiveScreen('progress');
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to save session:', err);
+      setProcessingError(err.message || 'Failed to save session');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSendCoachAlert = async () => {
@@ -689,8 +750,39 @@ const RecordingScreen = ({ setActiveScreen }) => {
             </div>
           )}
 
-          {/* New Recording Button */}
-          <div className="flex justify-center mb-8">
+          {/* Action Buttons */}
+          <div className="flex gap-4 justify-center mb-8">
+            {!sessionSaved && (
+              <button
+                onClick={handleSaveSession}
+                disabled={isSaving}
+                className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-colors ${
+                  isSaving
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    Save Session
+                  </>
+                )}
+              </button>
+            )}
+
+            {sessionSaved && (
+              <div className="flex items-center gap-2 px-6 py-3 rounded-full font-medium bg-green-100 text-green-700 border border-green-300">
+                <Check className="w-5 h-5" />
+                Session Saved!
+              </div>
+            )}
+
             <button
               onClick={handleNewRecording}
               className="bg-green-500 text-white px-6 py-3 rounded-full font-medium hover:bg-green-600 transition-colors"
