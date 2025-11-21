@@ -1,60 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import BottomNav from './components/BottomNav';
-import HomeScreen from './screens/HomeScreen';
-import LearnScreen from './screens/LearnScreen';
-import RecordingScreen from './screens/RecordingScreen';
-import ReportScreen from './screens/ReportScreen';
-import ProfileScreen from './screens/ProfileScreen';
-import { checkHealth } from './services/pcitService';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import LoginScreen from './screens/LoginScreen';
+import SignupScreen from './screens/SignupScreen';
+import MainApp from './components/MainApp';
 
 const App = () => {
-  const [activeScreen, setActiveScreen] = useState('learn');
-  const [backendStatus, setBackendStatus] = useState(null);
-
-  // Check backend health on app startup
-  useEffect(() => {
-    const verifyBackend = async () => {
-      try {
-        const health = await checkHealth();
-        setBackendStatus(health);
-        if (!health.services?.anthropic) {
-          console.warn('Anthropic API key not configured on backend');
-        }
-      } catch (error) {
-        console.error('Backend health check failed:', error.message);
-        setBackendStatus({ status: 'error', error: error.message });
-      }
-    };
-    verifyBackend();
-  }, []);
-
-  const renderScreen = () => {
-    switch (activeScreen) {
-      case 'home':
-        return <HomeScreen />;
-      case 'progress':
-        return <ReportScreen />;
-      case 'learn':
-        return <LearnScreen />;
-      case 'profile':
-        return <ProfileScreen />;
-      case 'recording':
-        return <RecordingScreen setActiveScreen={setActiveScreen} />;
-      default:
-        return <LearnScreen />;
-    }
-  };
-
   return (
-    <div className="font-sans antialiased">
-      {renderScreen()}
-      {activeScreen !== 'recording' && (
-        <BottomNav
-          activeScreen={activeScreen}
-          setActiveScreen={setActiveScreen}
-        />
-      )}
-    </div>
+    <Router>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginScreen />} />
+          <Route path="/signup" element={<SignupScreen />} />
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute>
+                <MainApp />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </AuthProvider>
+    </Router>
   );
 };
 
