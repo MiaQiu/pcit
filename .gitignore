@@ -4,3 +4,7 @@ node_modules/
 dist/
 
 /src/generated/prisma
+
+# Google Cloud Service Account Keys (DO NOT COMMIT)
+gcp-service-account.json
+*.json
