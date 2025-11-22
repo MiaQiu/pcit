@@ -9,13 +9,35 @@ const app = express();
 // Security middleware
 app.use(helmet());
 
-// CORS configuration
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+// CORS configuration - allow any localhost port in development
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+
+    // In production, use FRONTEND_URL from env
+    if (process.env.NODE_ENV === 'production') {
+      const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+      if (origin === allowedOrigin) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    } else {
+      // In development, allow any localhost port
+      if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Body parser (increase limit for audio file uploads)
 app.use(express.json({ limit: '50mb' }));

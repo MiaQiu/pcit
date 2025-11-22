@@ -4,6 +4,7 @@ const { requireAuth } = require('../middleware/auth.cjs');
 const prisma = require('../services/db.cjs');
 const storage = require('../services/storage.cjs');
 const { encrypt } = require('../utils/encryption.cjs');
+const { updateUserStreak, getUserStreak } = require('../utils/streak.cjs');
 
 const router = express.Router();
 
@@ -94,11 +95,21 @@ router.post('/upload', async (req, res) => {
       await logRiskDetection(req.userId, session.id, riskDetection, transcript);
     }
 
+    // Update user's streak
+    let streakInfo = null;
+    try {
+      streakInfo = await updateUserStreak(req.userId);
+    } catch (error) {
+      console.error('Failed to update streak:', error);
+      // Don't fail the whole request if streak update fails
+    }
+
     res.status(201).json({
       sessionId: session.id,
       masteryAchieved,
       riskDetected: riskDetection.flagged,
-      storagePath: storage.isGCSEnabled() ? storagePath : undefined
+      storagePath: storage.isGCSEnabled() ? storagePath : undefined,
+      streak: streakInfo
     });
 
   } catch (error) {
@@ -145,6 +156,21 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Get sessions error:', error);
     res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
+});
+
+/**
+ * GET /api/sessions/streak
+ * Get user's current streak information
+ * IMPORTANT: Must be before /:id route
+ */
+router.get('/streak', async (req, res) => {
+  try {
+    const streakInfo = await getUserStreak(req.userId);
+    res.json(streakInfo);
+  } catch (error) {
+    console.error('Get streak error:', error);
+    res.status(500).json({ error: 'Failed to fetch streak information' });
   }
 });
 

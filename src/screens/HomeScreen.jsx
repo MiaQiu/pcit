@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flame, Calendar, TrendingUp, Award } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import learningService from '../services/learningService';
+import sessionService from '../services/sessionService';
+import streakService from '../services/streakService';
 
 const HomeScreen = ({ selectedDeck }) => {
+  const { user } = useAuth();
   const [deckStarted, setDeckStarted] = useState(false);
   const [currentDeck, setCurrentDeck] = useState(selectedDeck || 1); // Which deck (1-15)
   const [currentCardInDeck, setCurrentCardInDeck] = useState(0); // Which card in the deck (0-3)
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
   const [unlockedDecks, setUnlockedDecks] = useState(1); // How many decks are unlocked
+  const [streak, setStreak] = useState(0);
+  const [longestStreak, setLongestStreak] = useState(0);
+  const [totalSessions, setTotalSessions] = useState(0);
+  const [latestCDISession, setLatestCDISession] = useState(null);
+  const [latestPDISession, setLatestPDISession] = useState(null);
+  const [cdiProgress, setCdiProgress] = useState(null);
+  const [pdiProgress, setPdiProgress] = useState(null);
 
   // PCIT Learning Deck Content - 15 Decks with 4 Cards Each
   const learningDeck = [
@@ -659,7 +670,61 @@ const HomeScreen = ({ selectedDeck }) => {
     }
   };
 
-  // Load progress from database on mount
+  // Calculate CDI mastery progress
+  const calculateCDIProgress = (tagCounts) => {
+    if (!tagCounts) return null;
+
+    const criteria = {
+      praise: { current: tagCounts.praise || 0, target: 10 },
+      reflect: { current: tagCounts.reflect || 0, target: 10 },
+      describe: { current: tagCounts.describe || 0, target: 10 },
+      avoid: { current: tagCounts.totalAvoid || 0, target: 3 }
+    };
+
+    const praiseProgress = Math.min((criteria.praise.current / criteria.praise.target) * 100, 100);
+    const reflectProgress = Math.min((criteria.reflect.current / criteria.reflect.target) * 100, 100);
+    const describeProgress = Math.min((criteria.describe.current / criteria.describe.target) * 100, 100);
+    // For avoid, it's inverted - lower is better
+    const avoidProgress = criteria.avoid.current <= criteria.avoid.target ? 100 : Math.max(100 - ((criteria.avoid.current - criteria.avoid.target) * 20), 0);
+
+    const overallProgress = (praiseProgress + reflectProgress + describeProgress + avoidProgress) / 4;
+
+    return {
+      criteria,
+      overallProgress: Math.round(overallProgress),
+      praiseProgress: Math.round(praiseProgress),
+      reflectProgress: Math.round(reflectProgress),
+      describeProgress: Math.round(describeProgress),
+      avoidProgress: Math.round(avoidProgress)
+    };
+  };
+
+  // Calculate PDI mastery progress
+  const calculatePDIProgress = (tagCounts) => {
+    if (!tagCounts) return null;
+
+    const criteria = {
+      directCommand: { current: tagCounts.direct_command || 0, target: 10 },
+      labeledPraise: { current: tagCounts.labeled_praise || 0, target: 5 },
+      effectivePercent: { current: tagCounts.effectivePercent || 0, target: 75 }
+    };
+
+    const directProgress = Math.min((criteria.directCommand.current / criteria.directCommand.target) * 100, 100);
+    const praiseProgress = Math.min((criteria.labeledPraise.current / criteria.labeledPraise.target) * 100, 100);
+    const effectiveProgress = Math.min((criteria.effectivePercent.current / criteria.effectivePercent.target) * 100, 100);
+
+    const overallProgress = (directProgress + praiseProgress + effectiveProgress) / 3;
+
+    return {
+      criteria,
+      overallProgress: Math.round(overallProgress),
+      directProgress: Math.round(directProgress),
+      praiseProgress: Math.round(praiseProgress),
+      effectiveProgress: Math.round(effectiveProgress)
+    };
+  };
+
+  // Load progress, sessions, and streak from database on mount
   useEffect(() => {
     const loadProgress = async () => {
       try {
@@ -675,7 +740,42 @@ const HomeScreen = ({ selectedDeck }) => {
       }
     };
 
+    const loadSessions = async () => {
+      try {
+        const data = await sessionService.getSessions({ limit: 100 });
+        setTotalSessions(data.total || 0);
+
+        // Find latest CDI and PDI sessions
+        const cdiSessions = data.sessions?.filter(s => s.mode === 'CDI') || [];
+        const pdiSessions = data.sessions?.filter(s => s.mode === 'PDI') || [];
+
+        if (cdiSessions.length > 0) {
+          setLatestCDISession(cdiSessions[0]);
+          setCdiProgress(calculateCDIProgress(cdiSessions[0].tagCounts));
+        }
+
+        if (pdiSessions.length > 0) {
+          setLatestPDISession(pdiSessions[0]);
+          setPdiProgress(calculatePDIProgress(pdiSessions[0].tagCounts));
+        }
+      } catch (error) {
+        console.error('Failed to load sessions:', error);
+      }
+    };
+
+    const loadStreak = async () => {
+      try {
+        const streakData = await streakService.getStreak();
+        setStreak(streakData.currentStreak || 0);
+        setLongestStreak(streakData.longestStreak || 0);
+      } catch (error) {
+        console.error('Failed to load streak:', error);
+      }
+    };
+
     loadProgress();
+    loadSessions();
+    loadStreak();
   }, [selectedDeck]);
 
   // Update current deck when selectedDeck changes
@@ -710,6 +810,59 @@ const HomeScreen = ({ selectedDeck }) => {
   return (
     <div className="min-h-screen bg-purple-50 pb-24">
       <div className="px-6 pt-8">
+        {/* Welcome Header with Streak */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">
+                Welcome back, {user?.name?.split(' ')[0] || 'Parent'}!
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
+            </div>
+
+            {/* Streak Badge */}
+            <div className="flex flex-col items-center">
+              <div className="relative">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                  streak > 0 ? 'bg-gradient-to-br from-orange-400 to-red-500' : 'bg-gray-200'
+                }`}>
+                  {streak > 0 ? (
+                    <Flame className="w-8 h-8 text-white" />
+                  ) : (
+                    <Calendar className="w-8 h-8 text-gray-400" />
+                  )}
+                </div>
+                <div className="absolute -bottom-1 -right-1 bg-white rounded-full px-2 py-0.5 shadow-md border-2 border-orange-400">
+                  <span className="text-xs font-bold text-gray-800">{streak}</span>
+                </div>
+              </div>
+              <p className="text-xs font-semibold text-gray-600 mt-1">
+                {streak === 0 ? 'Start streak' : streak === 1 ? 'day' : 'days'}
+              </p>
+            </div>
+          </div>
+
+          {/* Streak Message */}
+          {streak > 0 && (
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl p-3 mt-3">
+              <p className="text-sm font-medium text-orange-800">
+                {streak === 1
+                  ? "Great start! Come back tomorrow to build your streak 🎯"
+                  : streak < 7
+                  ? `Amazing! You're on a ${streak}-day streak! Keep it going 🔥`
+                  : `Incredible! ${streak} days strong! You're building lasting habits ⭐`
+                }
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* Today's Deck Header */}
         <div className="mb-4">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
@@ -767,7 +920,7 @@ const HomeScreen = ({ selectedDeck }) => {
         ) : (
           // Full Deck State - Show swipeable cards with simple design
           <div
-            className="relative"
+            className="relative mb-6"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -881,6 +1034,226 @@ const HomeScreen = ({ selectedDeck }) => {
             >
               Close Deck
             </button>
+          </div>
+        )}
+
+        {/* CDI Mastery Progress */}
+        {cdiProgress && (
+          <div className="mb-6">
+            <div className="bg-white rounded-2xl shadow-sm p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-md font-bold text-gray-800">CDI Mastery Progress</h3>
+                    <p className="text-xs text-gray-500">Your latest CDI session</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-green-600">{cdiProgress.overallProgress}%</div>
+                  <p className="text-xs text-gray-500">Overall</p>
+                </div>
+              </div>
+
+              {/* Overall Progress Bar */}
+              <div className="mb-4">
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div
+                    className={`h-3 rounded-full transition-all duration-500 ${
+                      cdiProgress.overallProgress >= 100 ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-green-500'
+                    }`}
+                    style={{ width: `${cdiProgress.overallProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Individual Skills */}
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-600">Labeled Praise</span>
+                    <span className="font-medium">
+                      {cdiProgress.criteria.praise.current}/{cdiProgress.criteria.praise.target}
+                      {cdiProgress.criteria.praise.current >= cdiProgress.criteria.praise.target && ' ✓'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-green-400 h-2 rounded-full transition-all"
+                      style={{ width: `${cdiProgress.praiseProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-600">Reflection</span>
+                    <span className="font-medium">
+                      {cdiProgress.criteria.reflect.current}/{cdiProgress.criteria.reflect.target}
+                      {cdiProgress.criteria.reflect.current >= cdiProgress.criteria.reflect.target && ' ✓'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-green-400 h-2 rounded-full transition-all"
+                      style={{ width: `${cdiProgress.reflectProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-600">Description</span>
+                    <span className="font-medium">
+                      {cdiProgress.criteria.describe.current}/{cdiProgress.criteria.describe.target}
+                      {cdiProgress.criteria.describe.current >= cdiProgress.criteria.describe.target && ' ✓'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-green-400 h-2 rounded-full transition-all"
+                      style={{ width: `${cdiProgress.describeProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-600">Avoid Skills</span>
+                    <span className="font-medium">
+                      {cdiProgress.criteria.avoid.current}/{cdiProgress.criteria.avoid.target} or less
+                      {cdiProgress.criteria.avoid.current <= cdiProgress.criteria.avoid.target && ' ✓'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-orange-400 h-2 rounded-full transition-all"
+                      style={{ width: `${cdiProgress.avoidProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mastery Message */}
+              {cdiProgress.overallProgress >= 100 ? (
+                <div className="mt-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-300 rounded-lg p-3 flex items-center gap-2">
+                  <Award className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <p className="text-sm font-medium text-green-800">
+                    Congratulations! You've achieved CDI mastery! Ready for PDI? 🎉
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800">
+                    Keep practicing! You're {100 - cdiProgress.overallProgress}% away from CDI mastery.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* PDI Mastery Progress */}
+        {pdiProgress && (
+          <div className="mb-6">
+            <div className="bg-white rounded-2xl shadow-sm p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-md font-bold text-gray-800">PDI Mastery Progress</h3>
+                    <p className="text-xs text-gray-500">Your latest PDI session</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-purple-600">{pdiProgress.overallProgress}%</div>
+                  <p className="text-xs text-gray-500">Overall</p>
+                </div>
+              </div>
+
+              {/* Overall Progress Bar */}
+              <div className="mb-4">
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div
+                    className={`h-3 rounded-full transition-all duration-500 ${
+                      pdiProgress.overallProgress >= 100 ? 'bg-gradient-to-r from-purple-500 to-indigo-600' : 'bg-purple-500'
+                    }`}
+                    style={{ width: `${pdiProgress.overallProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Individual Skills */}
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-600">Direct Commands</span>
+                    <span className="font-medium">
+                      {pdiProgress.criteria.directCommand.current}/{pdiProgress.criteria.directCommand.target}
+                      {pdiProgress.criteria.directCommand.current >= pdiProgress.criteria.directCommand.target && ' ✓'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-purple-400 h-2 rounded-full transition-all"
+                      style={{ width: `${pdiProgress.directProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-600">Labeled Praise</span>
+                    <span className="font-medium">
+                      {pdiProgress.criteria.labeledPraise.current}/{pdiProgress.criteria.labeledPraise.target}
+                      {pdiProgress.criteria.labeledPraise.current >= pdiProgress.criteria.labeledPraise.target && ' ✓'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-purple-400 h-2 rounded-full transition-all"
+                      style={{ width: `${pdiProgress.praiseProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-600">Effective Commands</span>
+                    <span className="font-medium">
+                      {pdiProgress.criteria.effectivePercent.current}%/{pdiProgress.criteria.effectivePercent.target}%
+                      {pdiProgress.criteria.effectivePercent.current >= pdiProgress.criteria.effectivePercent.target && ' ✓'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-purple-400 h-2 rounded-full transition-all"
+                      style={{ width: `${pdiProgress.effectiveProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mastery Message */}
+              {pdiProgress.overallProgress >= 100 ? (
+                <div className="mt-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-300 rounded-lg p-3 flex items-center gap-2">
+                  <Award className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                  <p className="text-sm font-medium text-purple-800">
+                    Amazing! You've achieved PDI mastery! 🎉
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800">
+                    Keep practicing! You're {100 - pdiProgress.overallProgress}% away from PDI mastery.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

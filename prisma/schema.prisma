@@ -14,6 +14,9 @@ model User {
   name            String
   therapistId     String?
   childName       String?
+  currentStreak   Int               @default(0)
+  longestStreak   Int               @default(0)
+  lastSessionDate DateTime?
   createdAt       DateTime          @default(now())
   riskLogs        RiskAuditLog[]
   sessions        Session[]

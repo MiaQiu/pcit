@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Mic, Square, Loader2, Mail, Check, Award, Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Mic, Square, Loader2, Mail, Check, Award, Save, CheckCircle, TrendingUp, Target, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import useAudioRecorder from '../hooks/useAudioRecorder';
 import useTranscription from '../hooks/useTranscription';
 import usePCITAnalysis from '../hooks/usePCITAnalysis';
 import sessionService from '../services/sessionService';
 import dinoImage from '../assets/dino.png';
 
-const RecordingScreen = ({ setActiveScreen }) => {
+const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
   const [mode, setMode] = useState('CDI'); // 'CDI' or 'PDI'
   const [isProcessing, setIsProcessing] = useState(false);
   const [transcript, setTranscript] = useState(null);
@@ -23,6 +23,8 @@ const RecordingScreen = ({ setActiveScreen }) => {
   const [sessionDuration, setSessionDuration] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [sessionSaved, setSessionSaved] = useState(false);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(false);
 
   const {
     isRecording,
@@ -37,6 +39,110 @@ const RecordingScreen = ({ setActiveScreen }) => {
   } = useAudioRecorder(300);
 
   const { transcribe } = useTranscription();
+
+  // Load preview session if previewSessionId is provided
+  useEffect(() => {
+    if (previewSessionId) {
+      loadPreviewSession(previewSessionId);
+    }
+  }, [previewSessionId]);
+
+  const loadPreviewSession = async (sessionId) => {
+    setIsProcessing(true);
+    setPreviewMode(true);
+
+    try {
+      // DEVELOPMENT: Use mock data for session preview
+      // In production, this would load from API: await sessionService.getSessionById(sessionId)
+
+      const mockSessionData = {
+        id: "67264850-64fe-4ca2-b21d-3fbe84398d51",
+        mode: "CDI",
+        durationSeconds: 35,
+        transcript: [
+          {"speaker":0,"text":"build. (blocks clattering) You're gonna build. I'm gonna build with you. (blocks clattering) We are building orange, brown, and red tower.","start":0.079,"end":13.079},
+          {"speaker":1,"text":"Look, it's a s- this could be a slide.","start":13.079,"end":15.959},
+          {"speaker":0,"text":"It could be a slide. That's a great idea.","start":15.959,"end":17.799},
+          {"speaker":1,"text":"You could climb up here and then go like this, and then you could ride off. Whee.","start":17.799,"end":21.339},
+          {"speaker":0,"text":"Whee.","start":21.339,"end":21.379},
+          {"speaker":1,"text":"And this could be the pool.","start":21.379,"end":22.799},
+          {"speaker":0,"text":"And that could be the pool. I love that idea. I'm gonna add to your pool. (blocks clattering)","start":22.799,"end":28.119},
+          {"speaker":1,"text":"Yeah.","start":28.119,"end":28.119},
+          {"speaker":0,"text":"I'm gonna make a blue, high tower.","start":28.119,"end":34.479}
+        ],
+        pcitCoding: `**Parent:** "build. (blocks clattering) You're gonna build. I'm gonna build with you. (blocks clattering) We are building orange, brown, and red tower." -> **[DO: Describe]**
+
+**Parent:** "It could be a slide. That's a great idea." -> **[DO: Reflect]** and **[DO: Praise]**
+
+**Parent:** "Whee." -> **[DO: Reflect]**
+
+**Parent:** "And that could be the pool. I love that idea. I'm gonna add to your pool. (blocks clattering)" -> **[DO: Reflect]** and **[DO: Praise]** and **[Neutral]**
+
+**Parent:** "I'm gonna make a blue, high tower." -> **[Neutral]**`,
+        tagCounts: {
+          praise: 2,
+          command: 0,
+          imitate: 0,
+          neutral: 2,
+          reflect: 3,
+          describe: 1,
+          question: 0,
+          criticism: 0,
+          totalAvoid: 0,
+          totalPride: 6,
+          negative_phrases: 0
+        },
+        aiFeedbackJSON: {
+          analysis: "Based on the conversation, Speaker 0 demonstrates characteristics of a parent engaging in child-directed interaction:\n\n1. Provides descriptions of the activity\n2. Reflects the child's ideas\n3. Gives labeled praise\n4. Imitates the child's sounds and actions\n\nSpeaker 1 appears to be the child, showing:\n1. Creative play and imagination\n2. Initiating ideas\n3. Responding to parent's engagement\n\nTherefore, **Speaker 0 is the Parent** and **Speaker 1 is the Child**.",
+          competencyAnalysis: "Great job using PRIDE skills during this play session! Here's your analysis:\n\n**Strengths:**\n✓ Excellent reflection skills - you mirrored your child's ideas 3 times\n✓ Good use of labeled praise - acknowledged creativity\n✓ Strong behavioral description - narrated your building activity\n✓ No commands, questions, or criticism - perfect CDI!\n\n**Areas for Growth:**\n• To achieve mastery, aim for 10+ of each DO skill in a 5-minute session\n• Current: Praise (2), Reflect (3), Describe (1)\n• Try to increase praise and description frequency\n\n**Next Steps:**\n• Practice giving more specific labeled praise (\"I like how you...\", \"You did a great job...\")\n• Describe more of what you and your child are doing\n• Keep avoiding commands and questions - you're doing this perfectly!",
+          parentSpeaker: 0,
+          flaggedItems: [],
+          cdiMastery: {
+            mastered: false,
+            criteria: {
+              praise: { current: 2, target: 10, met: false },
+              reflect: { current: 3, target: 10, met: false },
+              describe: { current: 1, target: 10, met: false },
+              totalAvoid: { current: 0, target: 3, met: true },
+              negative_phrases: { current: 0, target: 0, met: true }
+            }
+          }
+        }
+      };
+
+      setMode(mockSessionData.mode);
+      setTranscript(mockSessionData.transcript);
+      setPcitCoding(mockSessionData.pcitCoding);
+
+      if (mockSessionData.aiFeedbackJSON) {
+        if (mockSessionData.aiFeedbackJSON.analysis) {
+          setAnalysis(mockSessionData.aiFeedbackJSON.analysis);
+        }
+        if (mockSessionData.aiFeedbackJSON.competencyAnalysis) {
+          setCompetencyAnalysis(mockSessionData.aiFeedbackJSON.competencyAnalysis);
+        }
+        if (mockSessionData.aiFeedbackJSON.parentSpeaker !== undefined) {
+          setParentSpeaker(mockSessionData.aiFeedbackJSON.parentSpeaker);
+        }
+        if (mockSessionData.aiFeedbackJSON.flaggedItems) {
+          setFlaggedItems(mockSessionData.aiFeedbackJSON.flaggedItems);
+        }
+        if (mockSessionData.aiFeedbackJSON.cdiMastery) {
+          setCdiMastery(mockSessionData.aiFeedbackJSON.cdiMastery);
+        }
+      }
+
+      setSessionDuration(mockSessionData.durationSeconds);
+      setSessionSaved(true);
+
+      console.log('Preview session loaded:', sessionId);
+    } catch (err) {
+      console.error('Failed to load preview session:', err);
+      setProcessingError('Failed to load session for preview');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
   const {
     // CDI functions
     analyzeAndCode,
@@ -270,6 +376,104 @@ const RecordingScreen = ({ setActiveScreen }) => {
     return names[speaker % names.length];
   };
 
+  // Parse PCIT coding to extract tags for each utterance
+  const parseTagsFromCoding = (pcitCoding, transcript) => {
+    if (!pcitCoding || !transcript) return {};
+
+    const utteranceTags = {};
+
+    // Split coding by lines and parse each parent utterance
+    const lines = pcitCoding.split('\n');
+
+    lines.forEach(line => {
+      // Look for pattern: **Parent:** "text" -> **[tags]**
+      const match = line.match(/\*\*Parent:\*\*\s*"([^"]+)"\s*->\s*(.+)/);
+      if (match) {
+        const utteranceText = match[1].trim();
+        const tagsText = match[2];
+
+        // Extract all tags from the line
+        const tagMatches = tagsText.matchAll(/\*\*\[([^\]]+)\]\*\*/g);
+        const tags = Array.from(tagMatches, m => m[1]);
+
+        // Find matching utterance in transcript
+        transcript.forEach((utterance, index) => {
+          // Normalize text for comparison (remove extra spaces, punctuation differences)
+          const normalizedUtterance = utterance.text
+            .toLowerCase()
+            .replace(/[.,!?;()]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          const normalizedCoding = utteranceText
+            .toLowerCase()
+            .replace(/[.,!?;()]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          if (normalizedUtterance.includes(normalizedCoding) || normalizedCoding.includes(normalizedUtterance)) {
+            utteranceTags[index] = tags;
+          }
+        });
+      }
+    });
+
+    return utteranceTags;
+  };
+
+  // Get tag styling
+  const getTagStyle = (tag) => {
+    if (tag.startsWith('DO:')) {
+      return 'bg-green-100 text-green-700 border-green-300';
+    } else if (tag.startsWith('DON\'T:')) {
+      return 'bg-red-100 text-red-700 border-red-300';
+    } else if (tag === 'Neutral') {
+      return 'bg-gray-100 text-gray-600 border-gray-300';
+    }
+    return 'bg-blue-100 text-blue-700 border-blue-300';
+  };
+
+  const utteranceTags = parseTagsFromCoding(pcitCoding, transcript);
+
+  // Parse competency analysis into sections
+  const parseCompetencyAnalysis = (analysisText) => {
+    if (!analysisText) return null;
+
+    const sections = {
+      intro: '',
+      strengths: [],
+      areasForGrowth: [],
+      nextSteps: []
+    };
+
+    const lines = analysisText.split('\n');
+    let currentSection = 'intro';
+
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+
+      if (trimmed.includes('**Strengths:**')) {
+        currentSection = 'strengths';
+      } else if (trimmed.includes('**Areas for Growth:**')) {
+        currentSection = 'areasForGrowth';
+      } else if (trimmed.includes('**Next Steps:**')) {
+        currentSection = 'nextSteps';
+      } else if (trimmed.startsWith('✓') || trimmed.startsWith('•')) {
+        // Remove bullet points and trim
+        const item = trimmed.replace(/^[✓•]\s*/, '').trim();
+        if (item && currentSection !== 'intro') {
+          sections[currentSection].push(item);
+        }
+      } else if (currentSection === 'intro' && trimmed) {
+        sections.intro += (sections.intro ? ' ' : '') + trimmed;
+      }
+    });
+
+    return sections;
+  };
+
+  const competencySections = parseCompetencyAnalysis(competencyAnalysis);
+
   const error = recorderError || processingError;
   const tagCounts = mode === 'CDI' ? countPcitTags(pcitCoding) : countPdiTags(pcitCoding);
 
@@ -277,12 +481,19 @@ const RecordingScreen = ({ setActiveScreen }) => {
     <div className="min-h-screen bg-white pb-24 flex flex-col">
       {/* Header */}
       <div className="px-6 pt-12">
-        <button
-          onClick={() => setActiveScreen('learn')}
-          className="p-2 -ml-2"
-        >
-          <ArrowLeft size={24} className="text-gray-600" />
-        </button>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setActiveScreen('learn')}
+            className="p-2 -ml-2"
+          >
+            <ArrowLeft size={24} className="text-gray-600" />
+          </button>
+          {previewMode && (
+            <div className="text-xs font-semibold px-3 py-1 bg-purple-100 text-purple-700 rounded-full border border-purple-300">
+              PREVIEW MODE
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Timer */}
@@ -403,37 +614,79 @@ const RecordingScreen = ({ setActiveScreen }) => {
       ) : (
         /* Transcript Display */
         <div className="flex-1 px-6 mt-4 overflow-y-auto">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Conversation Transcript</h2>
-
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
               <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
 
-          <div className="space-y-3 mb-6">
-            {transcript && transcript.map((utterance, index) => {
-              // Validate utterance has required properties
-              if (!utterance || typeof utterance.speaker !== 'number' || !utterance.text) {
+          {/* Collapsible Transcript Button */}
+          <button
+            onClick={() => setShowTranscript(!showTranscript)}
+            className="w-full mb-4 bg-white border-2 border-gray-300 hover:border-gray-400 rounded-xl p-4 transition-all flex items-center justify-between group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+                <Mic className="w-5 h-5 text-gray-600" />
+              </div>
+              <div className="text-left">
+                <h2 className="text-md font-bold text-gray-800">Conversation Transcript</h2>
+                <p className="text-xs text-gray-500">
+                  {transcript?.length || 0} utterances • Click to {showTranscript ? 'hide' : 'view'}
+                </p>
+              </div>
+            </div>
+            {showTranscript ? (
+              <ChevronUp className="w-5 h-5 text-gray-600" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-600" />
+            )}
+          </button>
+
+          {/* Transcript Content - Collapsible */}
+          {showTranscript && (
+            <div className="space-y-3 mb-6 animate-fadeIn">
+              {transcript && transcript.map((utterance, index) => {
+                // Validate utterance has required properties
+                if (!utterance || typeof utterance.speaker !== 'number' || !utterance.text) {
+                  return (
+                    <div key={index} className="p-3 rounded-xl border bg-gray-100 border-gray-300">
+                      <p className="text-gray-500 text-sm italic">Invalid utterance data</p>
+                    </div>
+                  );
+                }
+
+                const isParent = parentSpeaker !== null && utterance.speaker === parentSpeaker;
+                const tags = utteranceTags[index] || [];
+
                 return (
-                  <div key={index} className="p-3 rounded-xl border bg-gray-100 border-gray-300">
-                    <p className="text-gray-500 text-sm italic">Invalid utterance data</p>
+                  <div
+                    key={index}
+                    className={`p-3 rounded-xl border ${getSpeakerColor(utterance.speaker)}`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs font-semibold text-gray-600">
+                        {getSpeakerName(utterance.speaker)}
+                      </p>
+                      {isParent && tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {tags.map((tag, tagIndex) => (
+                            <span
+                              key={tagIndex}
+                              className={`text-xs px-2 py-0.5 rounded-full border font-medium ${getTagStyle(tag)}`}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-gray-800 text-sm">{utterance.text}</p>
                   </div>
                 );
-              }
-              return (
-                <div
-                  key={index}
-                  className={`p-3 rounded-xl border ${getSpeakerColor(utterance.speaker)}`}
-                >
-                  <p className="text-xs font-semibold text-gray-600 mb-1">
-                    {getSpeakerName(utterance.speaker)}
-                  </p>
-                  <p className="text-gray-800 text-sm">{utterance.text}</p>
-                </div>
-              );
-            })}
-          </div>
+              })}
+            </div>
+          )}
 
           {/* CDI Mastery Congratulations */}
           {mode === 'CDI' && cdiMastery && cdiMastery.mastered && (
@@ -542,12 +795,50 @@ const RecordingScreen = ({ setActiveScreen }) => {
             </div>
           )}
 
-          {/* PCIT Analysis */}
-          {analysis && (
+          {/* Speaker Identification - Hidden per user request */}
+          {/* {analysis && (
             <div className="mb-6">
               <h3 className="text-md font-bold text-gray-800 mb-3">Speaker Identification</h3>
               <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
                 <p className="text-gray-700 text-sm whitespace-pre-wrap">{analysis}</p>
+              </div>
+            </div>
+          )} */}
+
+          {/* CDI Mastery Criteria Info Box */}
+          {mode === 'CDI' && (
+            <div className="mb-6">
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-300 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Info className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-md font-bold text-purple-900 mb-2">CDI Mastery Criteria</h3>
+                    <p className="text-sm text-purple-800 mb-3">
+                      Before graduating from CDI, it is ideal to show mastery of the CDI skills during 5 minutes of Special Time:
+                    </p>
+                    <div className="bg-white rounded-lg p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="text-sm text-gray-700"><strong>10</strong> Labeled Praises</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="text-sm text-gray-700"><strong>10</strong> Descriptions</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="text-sm text-gray-700"><strong>10</strong> Reflections</span>
+                      </div>
+                      <div className="h-px bg-gray-200 my-2"></div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                        <span className="text-sm text-gray-700"><strong>3 or fewer</strong> total Questions, Commands, and Criticisms</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -567,11 +858,17 @@ const RecordingScreen = ({ setActiveScreen }) => {
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Labeled Praise</span>
-                          <span className="font-medium">{tagCounts.praise}</span>
+                          <span className={`font-medium ${tagCounts.praise >= 10 ? 'text-green-600 font-bold' : ''}`}>
+                            {tagCounts.praise}
+                            {tagCounts.praise >= 10 && ' ✓'}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Reflection</span>
-                          <span className="font-medium">{tagCounts.reflect}</span>
+                          <span className={`font-medium ${tagCounts.reflect >= 10 ? 'text-green-600 font-bold' : ''}`}>
+                            {tagCounts.reflect}
+                            {tagCounts.reflect >= 10 && ' ✓'}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Imitation</span>
@@ -579,7 +876,10 @@ const RecordingScreen = ({ setActiveScreen }) => {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Description</span>
-                          <span className="font-medium">{tagCounts.describe}</span>
+                          <span className={`font-medium ${tagCounts.describe >= 10 ? 'text-green-600 font-bold' : ''}`}>
+                            {tagCounts.describe}
+                            {tagCounts.describe >= 10 && ' ✓'}
+                          </span>
                         </div>
                       </div>
                       <div className="flex justify-between mt-2 pt-2 border-t border-gray-100">
@@ -611,7 +911,10 @@ const RecordingScreen = ({ setActiveScreen }) => {
                       </div>
                       <div className="flex justify-between mt-2 pt-2 border-t border-gray-100">
                         <span className="font-semibold text-red-600">Total "Avoid" Skills</span>
-                        <span className="font-bold text-red-600">{tagCounts.totalAvoid}</span>
+                        <span className={`font-bold ${tagCounts.totalAvoid <= 3 ? 'text-green-600' : 'text-red-600'}`}>
+                          {tagCounts.totalAvoid}
+                          {tagCounts.totalAvoid <= 3 && ' ✓'}
+                        </span>
                       </div>
                     </div>
 
@@ -713,25 +1016,91 @@ const RecordingScreen = ({ setActiveScreen }) => {
             </div>
           )}
 
-          {/* Competency Analysis */}
-          {competencyAnalysis && (
+          {/* Competency Analysis - Redesigned */}
+          {competencySections && (
             <div className="mb-6">
-              <h3 className="text-md font-bold text-gray-800 mb-3">Competency Analysis & Recommendations</h3>
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <p className="text-gray-700 text-sm whitespace-pre-wrap">{competencyAnalysis}</p>
+              <h3 className="text-lg font-bold text-gray-800 mb-3">Your Feedback & Recommendations</h3>
+
+              {/* Intro Message */}
+              {competencySections.intro && (
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 mb-4 border border-green-200">
+                  <p className="text-gray-700 text-sm font-medium">{competencySections.intro}</p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {/* Strengths */}
+                {competencySections.strengths.length > 0 && (
+                  <div className="bg-white border-2 border-green-300 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                        <CheckCircle className="w-5 h-5 text-white" />
+                      </div>
+                      <h4 className="text-md font-bold text-green-700">Strengths</h4>
+                    </div>
+                    <ul className="space-y-2">
+                      {competencySections.strengths.map((item, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm text-gray-700">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Areas for Growth */}
+                {competencySections.areasForGrowth.length > 0 && (
+                  <div className="bg-white border-2 border-orange-300 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                        <TrendingUp className="w-5 h-5 text-white" />
+                      </div>
+                      <h4 className="text-md font-bold text-orange-700">Areas for Growth</h4>
+                    </div>
+                    <ul className="space-y-2">
+                      {competencySections.areasForGrowth.map((item, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <div className="w-4 h-4 rounded-full border-2 border-orange-500 mt-0.5 flex-shrink-0"></div>
+                          <span className="text-sm text-gray-700">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Next Steps */}
+                {competencySections.nextSteps.length > 0 && (
+                  <div className="bg-white border-2 border-blue-300 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                        <Target className="w-5 h-5 text-white" />
+                      </div>
+                      <h4 className="text-md font-bold text-blue-700">Next Steps</h4>
+                    </div>
+                    <ul className="space-y-2">
+                      {competencySections.nextSteps.map((item, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                          <span className="text-sm text-gray-700">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* PCIT Coding */}
-          {pcitCoding && (
+          {/* PCIT Coding Details - Hidden, tags now shown inline in transcript */}
+          {/* {pcitCoding && (
             <div className="mb-6">
               <h3 className="text-md font-bold text-gray-800 mb-3">PCIT Coding Details</h3>
               <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                 <p className="text-gray-700 text-sm whitespace-pre-wrap">{pcitCoding}</p>
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Action Buttons */}
           <div className="flex gap-4 justify-center mb-8">

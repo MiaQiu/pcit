@@ -46,7 +46,9 @@ const MainApp = () => {
       case 'profile':
         return <ProfileScreen />;
       case 'recording':
-        return <RecordingScreen setActiveScreen={setActiveScreen} />;
+        // TEMP: Preview mode for session - set to null to disable preview
+        const previewSessionId = '67264850-64fe-4ca2-b21d-3fbe84398d51';
+        return <RecordingScreen setActiveScreen={setActiveScreen} previewSessionId={previewSessionId} />;
       default:
         return <LearnScreen setActiveScreen={setActiveScreen} navigateToDeck={navigateToDeck} />;
     }
