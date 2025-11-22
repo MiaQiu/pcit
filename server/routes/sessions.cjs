@@ -133,6 +133,7 @@ router.get('/', async (req, res) => {
         riskScore: true,
         flaggedForReview: true,
         tagCounts: true,
+        childMetrics: true,
         createdAt: true
       }
     });

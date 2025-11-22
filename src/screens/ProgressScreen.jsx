@@ -1,28 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Award, Calendar, Clock, ChevronRight, Loader2, BookOpen, CheckCircle, Lock } from 'lucide-react';
+import { TrendingUp, TrendingDown, User, Baby, Calendar, Loader2, ChevronRight } from 'lucide-react';
 import sessionService from '../services/sessionService';
-import learningService from '../services/learningService';
 
 const ProgressScreen = () => {
-  const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sessions, setSessions] = useState([]);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('ALL'); // 'ALL', 'CDI', 'PDI'
-  const [learningProgress, setLearningProgress] = useState(null);
-  const [learningLoading, setLearningLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('parent'); // 'parent' or 'child'
+  const [timeRange] = useState(14); // Past 2 weeks
 
   useEffect(() => {
     loadSessions();
-    loadLearningProgress();
-  }, [filter]);
+  }, []);
 
   const loadSessions = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const options = filter !== 'ALL' ? { mode: filter } : {};
-      const data = await sessionService.getSessions(options);
+      const data = await sessionService.getSessions({});
       setSessions(data.sessions || []);
     } catch (err) {
       console.error('Failed to load sessions:', err);
@@ -32,274 +28,583 @@ const ProgressScreen = () => {
     }
   };
 
-  const loadLearningProgress = async () => {
-    setLearningLoading(true);
-    try {
-      const progress = await learningService.getProgress();
-      setLearningProgress(progress);
-    } catch (err) {
-      console.error('Failed to load learning progress:', err);
-    } finally {
-      setLearningLoading(false);
-    }
+  // Filter sessions from past 2 weeks
+  const getRecentSessions = () => {
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - timeRange);
+
+    return sessions.filter(session => {
+      const sessionDate = new Date(session.createdAt);
+      return sessionDate >= twoWeeksAgo;
+    }).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
   };
 
-  // Deck titles for display
-  const deckTitles = {
-    1: "Introduction of PCIT",
-    2: "Introduction of CDI",
-    3: "Praise",
-    4: "Reflecting",
-    5: "Imitating",
-    6: "Describing",
-    7: "Enjoyment",
-    8: "Avoid Command",
-    9: "Avoid Questions",
-    10: "Avoid Criticism",
-    11: "Introduction of PDI",
-    12: "Effective Command",
-    13: "The Command Sequence",
-    14: "Advanced Application 1",
-    15: "Advanced Application 2"
-  };
-
-  const getDeckPhase = (deckNumber) => {
-    if (deckNumber === 1) return "Introduction";
-    if (deckNumber >= 2 && deckNumber <= 10) return "CDI";
-    if (deckNumber >= 11 && deckNumber <= 15) return "PDI";
-    return "";
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+  // Group sessions by date
+  const groupSessionsByDate = (sessions) => {
+    const grouped = {};
+    sessions.forEach(session => {
+      // Use ISO date string (YYYY-MM-DD) as key for consistent parsing
+      const date = new Date(session.createdAt);
+      const dateKey = date.toISOString().split('T')[0]; // "2025-11-22"
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(session);
     });
+    return grouped;
   };
 
-  const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  // Calculate parent's progress timeline
+  const calculateParentTimeline = () => {
+    const recentSessions = getRecentSessions();
+    const cdiSessions = recentSessions.filter(s => s.mode === 'CDI');
+    const pdiSessions = recentSessions.filter(s => s.mode === 'PDI');
+
+    // Group by date
+    const cdiByDate = groupSessionsByDate(cdiSessions);
+    const pdiByDate = groupSessionsByDate(pdiSessions);
+
+    // Calculate daily totals for CDI
+    const cdiTimeline = Object.entries(cdiByDate).map(([date, sessions]) => {
+      const metrics = {
+        date,
+        praise: 0,
+        reflect: 0,
+        imitate: 0,
+        describe: 0,
+        command: 0,
+        question: 0,
+        criticism: 0,
+        sessionCount: sessions.length
+      };
+
+      sessions.forEach(session => {
+        if (session.tagCounts) {
+          metrics.praise += session.tagCounts.praise || 0;
+          metrics.reflect += session.tagCounts.reflect || 0;
+          metrics.imitate += session.tagCounts.imitate || 0;
+          metrics.describe += session.tagCounts.describe || 0;
+          metrics.command += session.tagCounts.command || 0;
+          metrics.question += session.tagCounts.question || 0;
+          metrics.criticism += session.tagCounts.criticism || 0;
+        }
+      });
+
+      return metrics;
+    });
+
+    // Calculate daily totals for PDI
+    const pdiTimeline = Object.entries(pdiByDate).map(([date, sessions]) => {
+      const metrics = {
+        date,
+        directCommand: 0,
+        indirectCommand: 0,
+        correctTimeout: 0,
+        incorrectTimeout: 0,
+        sessionCount: sessions.length
+      };
+
+      sessions.forEach(session => {
+        if (session.tagCounts) {
+          metrics.directCommand += session.tagCounts.direct_command || 0;
+          metrics.indirectCommand += session.tagCounts.indirect_command || 0;
+          metrics.correctTimeout += session.tagCounts.correct_timeout || 0;
+        }
+      });
+
+      return metrics;
+    });
+
+    return { cdiTimeline, pdiTimeline };
   };
 
-  const getModeColor = (mode) => {
-    return mode === 'CDI'
-      ? 'bg-blue-100 text-blue-700 border-blue-300'
-      : 'bg-purple-100 text-purple-700 border-purple-300';
+  // Calculate child's progress timeline
+  const calculateChildTimeline = () => {
+    const recentSessions = getRecentSessions();
+    const cdiSessions = recentSessions.filter(s => s.mode === 'CDI');
+    const pdiSessions = recentSessions.filter(s => s.mode === 'PDI');
+
+    // Group by date
+    const cdiByDate = groupSessionsByDate(cdiSessions);
+    const pdiByDate = groupSessionsByDate(pdiSessions);
+
+    // Calculate daily totals for CDI
+    const cdiTimeline = Object.entries(cdiByDate).map(([date, sessions]) => {
+      const metrics = {
+        date,
+        utteranceRate: 0,
+        speechDuration: 0,
+        reflectionRate: 0,
+        sessionCount: sessions.length
+      };
+
+      // Extract child metrics from sessions if available
+      sessions.forEach(session => {
+        if (session.childMetrics) {
+          metrics.utteranceRate += session.childMetrics.utteranceRate || 0;
+          metrics.speechDuration += session.childMetrics.speechDuration || 0;
+          metrics.reflectionRate += session.childMetrics.reflectionRate || 0;
+        }
+      });
+
+      // Average utteranceRate across sessions
+      if (sessions.length > 0 && metrics.utteranceRate > 0) {
+        metrics.utteranceRate = metrics.utteranceRate / sessions.length;
+      }
+
+      return metrics;
+    });
+
+    // Calculate daily totals for PDI
+    const pdiTimeline = Object.entries(pdiByDate).map(([date, sessions]) => {
+      const metrics = {
+        date,
+        complianceRate: 0,
+        positiveResponses: 0,
+        negativeResponses: 0,
+        deescalationTime: 0,
+        sessionCount: sessions.length
+      };
+
+      // Extract child metrics from sessions if available
+      sessions.forEach(session => {
+        if (session.childMetrics) {
+          metrics.complianceRate += session.childMetrics.complianceRate || 0;
+          metrics.positiveResponses += session.childMetrics.positiveResponses || 0;
+          metrics.negativeResponses += session.childMetrics.negativeResponses || 0;
+          metrics.deescalationTime += session.childMetrics.deescalationTime || 0;
+        }
+      });
+
+      // Average across sessions
+      if (sessions.length > 0) {
+        if (metrics.complianceRate > 0) {
+          metrics.complianceRate = metrics.complianceRate / sessions.length;
+        }
+        if (metrics.deescalationTime > 0) {
+          metrics.deescalationTime = metrics.deescalationTime / sessions.length;
+        }
+      }
+
+      return metrics;
+    });
+
+    return { cdiTimeline, pdiTimeline };
   };
+
+  // Calculate trend (comparing first half vs second half of timeline)
+  const calculateTrend = (timeline, metric) => {
+    if (timeline.length < 2) return 'neutral';
+    const midpoint = Math.floor(timeline.length / 2);
+    const firstHalf = timeline.slice(0, midpoint);
+    const secondHalf = timeline.slice(midpoint);
+
+    const firstAvg = firstHalf.reduce((sum, item) => sum + (item[metric] || 0), 0) / firstHalf.length;
+    const secondAvg = secondHalf.reduce((sum, item) => sum + (item[metric] || 0), 0) / secondHalf.length;
+
+    if (secondAvg > firstAvg * 1.1) return 'up';
+    if (secondAvg < firstAvg * 0.9) return 'down';
+    return 'neutral';
+  };
+
+  const parentTimeline = calculateParentTimeline();
+  const childTimeline = calculateChildTimeline();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-24 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-green-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading progress...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <div className="px-6 pt-12">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Your Progress</h1>
-
-        {/* Learning Journey Progress */}
-        {!learningLoading && learningProgress && (
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 mb-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <BookOpen className="w-6 h-6 text-green-600" />
-              <h2 className="text-lg font-bold text-gray-800">Learning Journey</h2>
-            </div>
-
-            {/* Current Deck */}
-            <div className="bg-white rounded-xl p-4 mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-gray-600">Current Deck</span>
-                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-green-600 text-white">
-                  {getDeckPhase(learningProgress.currentDeck)}
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-gray-800">
-                Deck {learningProgress.currentDeck}: {deckTitles[learningProgress.currentDeck]}
-              </h3>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="mb-4">
-              <div className="flex justify-between text-sm text-gray-600 mb-2">
-                <span>Progress</span>
-                <span>{learningProgress.unlockedDecks} / 15 Decks Unlocked</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className="bg-green-600 h-3 rounded-full transition-all duration-500"
-                  style={{ width: `${(learningProgress.unlockedDecks / 15) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Deck Grid */}
-            <div className="grid grid-cols-5 gap-2">
-              {Array.from({ length: 15 }, (_, i) => i + 1).map((deckNum) => {
-                const isUnlocked = deckNum <= learningProgress.unlockedDecks;
-                const isCurrent = deckNum === learningProgress.currentDeck;
-                const isCompleted = deckNum < learningProgress.currentDeck;
-
-                return (
-                  <div
-                    key={deckNum}
-                    className={`relative aspect-square rounded-lg flex items-center justify-center text-sm font-bold transition-all ${
-                      isCurrent
-                        ? 'bg-green-600 text-white ring-2 ring-green-400 ring-offset-2'
-                        : isCompleted
-                        ? 'bg-green-200 text-green-800'
-                        : isUnlocked
-                        ? 'bg-green-100 text-green-700 border-2 border-green-300'
-                        : 'bg-gray-200 text-gray-400'
-                    }`}
-                  >
-                    {isCompleted ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : !isUnlocked ? (
-                      <Lock className="w-4 h-4" />
-                    ) : (
-                      deckNum
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-4 text-xs text-gray-600 text-center">
-              Complete each deck to unlock the next one
-            </div>
-          </div>
-        )}
-
-        {/* Session History Header */}
-        <h2 className="text-lg font-bold text-gray-800 mb-4">Practice Sessions</h2>
-
-        {/* Mode Filter */}
-        <div className="flex gap-2 mb-6">
-          {['ALL', 'CDI', 'PDI'].map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setFilter(mode)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === mode
-                  ? 'bg-green-500 text-white'
-                  : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              {mode}
-            </button>
-          ))}
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Progress Timeline</h1>
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-6">
+          <Calendar className="w-4 h-4" />
+          <span>Past 2 Weeks</span>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-green-500 animate-spin mb-4" />
-            <p className="text-gray-600">Loading your sessions...</p>
-          </div>
-        )}
-
-        {/* Error State */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
             <p className="text-red-700">{error}</p>
-            <button
-              onClick={loadSessions}
-              className="mt-2 text-red-600 underline text-sm"
-            >
-              Try again
-            </button>
           </div>
         )}
 
-        {/* Empty State */}
-        {!loading && !error && sessions.length === 0 && (
-          <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Calendar className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              No sessions yet
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Start recording your first PCIT session to see progress here!
-            </p>
-          </div>
-        )}
+        {/* Tab Selector */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setActiveTab('parent')}
+            className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'parent'
+                ? 'bg-green-500 text-white shadow-md'
+                : 'bg-white text-gray-600 border border-gray-200'
+            }`}
+          >
+            <User className="w-5 h-5" />
+            Parent's Progress
+          </button>
+          <button
+            onClick={() => setActiveTab('child')}
+            className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'child'
+                ? 'bg-blue-500 text-white shadow-md'
+                : 'bg-white text-gray-600 border border-gray-200'
+            }`}
+          >
+            <Baby className="w-5 h-5" />
+            Child's Progress
+          </button>
+        </div>
 
-        {/* Sessions List */}
-        {!loading && !error && sessions.length > 0 && (
-          <div className="space-y-3">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    {/* Mode Badge */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <span
-                        className={`text-xs font-semibold px-3 py-1 rounded-full border ${getModeColor(
-                          session.mode
-                        )}`}
-                      >
-                        {session.mode}
-                      </span>
-                      {session.masteryAchieved && (
-                        <div className="flex items-center gap-1 text-xs font-semibold text-green-600">
-                          <Award className="w-4 h-4" />
-                          <span>Mastery!</span>
-                        </div>
-                      )}
-                      {session.flaggedForReview && (
-                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-300">
-                          Flagged
-                        </span>
-                      )}
-                    </div>
+        {/* Parent's Progress Timeline */}
+        {activeTab === 'parent' && (
+          <div className="space-y-6">
+            {/* CDI Section */}
+            {parentTimeline.cdiTimeline.length > 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm p-6">
+                <h2 className="text-lg font-bold text-gray-800 mb-4">CDI Skills Timeline</h2>
 
-                    {/* Date and Duration */}
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{formatDate(session.createdAt)}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{formatDuration(session.durationSeconds)}</span>
-                      </div>
-                    </div>
+                {/* DO Skills */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-green-600 mb-4 flex items-center">
+                    <span className="w-2 h-2 bg-green-600 rounded-full mr-2"></span>
+                    DO Skills (PRIDE)
+                  </h3>
+                  <MetricTimeline
+                    timeline={parentTimeline.cdiTimeline}
+                    metric="praise"
+                    label="Labeled Praise"
+                    color="green"
+                  />
+                  <MetricTimeline
+                    timeline={parentTimeline.cdiTimeline}
+                    metric="reflect"
+                    label="Reflection"
+                    color="green"
+                  />
+                  <MetricTimeline
+                    timeline={parentTimeline.cdiTimeline}
+                    metric="imitate"
+                    label="Imitation"
+                    color="green"
+                  />
+                  <MetricTimeline
+                    timeline={parentTimeline.cdiTimeline}
+                    metric="describe"
+                    label="Description"
+                    color="green"
+                  />
+                </div>
 
-                    {/* Tag Counts Summary */}
-                    {session.tagCounts && (
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                        {Object.entries(session.tagCounts).map(([tag, count]) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-1 bg-gray-100 rounded text-gray-700"
-                          >
-                            {tag}: {count}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                {/* DON'T Skills */}
+                <div>
+                  <h3 className="text-sm font-semibold text-red-600 mb-4 flex items-center">
+                    <span className="w-2 h-2 bg-red-600 rounded-full mr-2"></span>
+                    DON'T Skills (Avoid)
+                  </h3>
+                  <MetricTimeline
+                    timeline={parentTimeline.cdiTimeline}
+                    metric="command"
+                    label="Commands"
+                    color="red"
+                    inverse
+                  />
+                  <MetricTimeline
+                    timeline={parentTimeline.cdiTimeline}
+                    metric="question"
+                    label="Questions"
+                    color="red"
+                    inverse
+                  />
+                  <MetricTimeline
+                    timeline={parentTimeline.cdiTimeline}
+                    metric="criticism"
+                    label="Criticism"
+                    color="red"
+                    inverse
+                  />
                 </div>
               </div>
-            ))}
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
+                <p className="text-gray-600">No CDI sessions in the past 2 weeks</p>
+              </div>
+            )}
+
+            {/* PDI Section */}
+            {parentTimeline.pdiTimeline.length > 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm p-6">
+                <h2 className="text-lg font-bold text-gray-800 mb-4">PDI Skills Timeline</h2>
+
+                <MetricTimeline
+                  timeline={parentTimeline.pdiTimeline}
+                  metric="directCommand"
+                  label="Direct Commands"
+                  color="green"
+                />
+                <MetricTimeline
+                  timeline={parentTimeline.pdiTimeline}
+                  metric="indirectCommand"
+                  label="Indirect Commands"
+                  color="red"
+                  inverse
+                />
+                <MetricTimeline
+                  timeline={parentTimeline.pdiTimeline}
+                  metric="correctTimeout"
+                  label="Correct Time-Out"
+                  color="green"
+                />
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
+                <p className="text-gray-600">No PDI sessions in the past 2 weeks</p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Session Count */}
-        {!loading && !error && sessions.length > 0 && (
-          <div className="mt-6 text-center text-sm text-gray-600">
-            Total sessions: {sessions.length}
+        {/* Child's Progress Timeline */}
+        {activeTab === 'child' && (
+          <div className="space-y-6">
+            {/* CDI Section */}
+            {childTimeline.cdiTimeline.length > 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm p-6">
+                <h2 className="text-lg font-bold text-gray-800 mb-4">CDI Metrics Timeline</h2>
+
+                <MetricTimeline
+                  timeline={childTimeline.cdiTimeline}
+                  metric="utteranceRate"
+                  label="Child Utterance Rate"
+                  color="blue"
+                  unit="per min"
+                />
+                <MetricTimeline
+                  timeline={childTimeline.cdiTimeline}
+                  metric="speechDuration"
+                  label="Speech Duration"
+                  color="purple"
+                  unit="sec"
+                />
+                <MetricTimeline
+                  timeline={childTimeline.cdiTimeline}
+                  metric="reflectionRate"
+                  label="Reflection/Imitation"
+                  color="green"
+                />
+
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-xs text-blue-800">
+                    <strong>Info:</strong> Child metrics are now stored in the database. Metrics will appear here once sessions are processed with child tracking enabled.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
+                <p className="text-gray-600">No CDI sessions in the past 2 weeks</p>
+              </div>
+            )}
+
+            {/* PDI Section */}
+            {childTimeline.pdiTimeline.length > 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm p-6">
+                <h2 className="text-lg font-bold text-gray-800 mb-4">PDI Metrics Timeline</h2>
+
+                <MetricTimeline
+                  timeline={childTimeline.pdiTimeline}
+                  metric="complianceRate"
+                  label="Compliance Rate"
+                  color="green"
+                  unit="%"
+                />
+                <MetricTimeline
+                  timeline={childTimeline.pdiTimeline}
+                  metric="positiveResponses"
+                  label="Positive Responses"
+                  color="green"
+                />
+                <MetricTimeline
+                  timeline={childTimeline.pdiTimeline}
+                  metric="negativeResponses"
+                  label="Negative Responses"
+                  color="red"
+                  inverse
+                />
+                <MetricTimeline
+                  timeline={childTimeline.pdiTimeline}
+                  metric="deescalationTime"
+                  label="De-escalation Time"
+                  color="orange"
+                  unit="sec"
+                  inverse
+                />
+
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-xs text-blue-800">
+                    <strong>Info:</strong> Child metrics are now stored in the database. Metrics will appear here once sessions are processed with child tracking enabled.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
+                <p className="text-gray-600">No PDI sessions in the past 2 weeks</p>
+              </div>
+            )}
           </div>
         )}
       </div>
     </div>
   );
+};
+
+// Timeline component for each metric
+const MetricTimeline = ({ timeline, metric, label, color, unit = '', inverse = false }) => {
+  const trend = calculateTrend(timeline, metric);
+
+  // For rate-based metrics (with units like %, per min), show average instead of sum
+  // For deescalation time (sec), also show average since it's an average time metric
+  const isRateMetric = unit === '%' || unit === 'per min';
+  const isAverageMetric = isRateMetric || (unit === 'sec' && metric === 'deescalationTime');
+  const values = timeline.map(item => item[metric] || 0).filter(v => v > 0);
+  const total = values.length > 0
+    ? (isAverageMetric
+        ? values.reduce((sum, val) => sum + val, 0) / values.length
+        : values.reduce((sum, val) => sum + val, 0))
+    : 0;
+
+  const maxValue = Math.max(...timeline.map(item => item[metric] || 0), 1);
+
+  const colorClasses = {
+    green: {
+      bg: 'bg-green-500',
+      light: 'bg-green-100',
+      text: 'text-green-700',
+      border: 'border-green-200'
+    },
+    red: {
+      bg: 'bg-red-500',
+      light: 'bg-red-100',
+      text: 'text-red-700',
+      border: 'border-red-200'
+    },
+    blue: {
+      bg: 'bg-blue-500',
+      light: 'bg-blue-100',
+      text: 'text-blue-700',
+      border: 'border-blue-200'
+    },
+    purple: {
+      bg: 'bg-purple-500',
+      light: 'bg-purple-100',
+      text: 'text-purple-700',
+      border: 'border-purple-200'
+    },
+    orange: {
+      bg: 'bg-orange-500',
+      light: 'bg-orange-100',
+      text: 'text-orange-700',
+      border: 'border-orange-200'
+    }
+  };
+
+  const colors = colorClasses[color];
+
+  // Determine if trend is good based on metric type
+  const getTrendIcon = () => {
+    if (trend === 'neutral') return null;
+
+    const isGoodTrend = inverse ? trend === 'down' : trend === 'up';
+
+    if (isGoodTrend) {
+      return <TrendingUp className="w-4 h-4 text-green-600" />;
+    } else {
+      return <TrendingDown className="w-4 h-4 text-red-600" />;
+    }
+  };
+
+  return (
+    <div className="mb-6 pb-6 border-b border-gray-100 last:border-0">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-gray-700">{label}</span>
+          {getTrendIcon()}
+        </div>
+        <div className="text-right">
+          <span className="text-lg font-bold text-gray-900">
+            {isAverageMetric ? total.toFixed(1) : Math.round(total)}
+          </span>
+          {unit && <span className="text-xs text-gray-500 ml-1">{unit}</span>}
+          <p className="text-xs text-gray-500">{isAverageMetric ? 'avg' : 'total'}</p>
+        </div>
+      </div>
+
+      {/* Bar Chart */}
+      <div className="flex items-end justify-around gap-1 h-32 mb-2 bg-gray-50 rounded p-2">
+        {timeline.map((item, index) => {
+          const value = item[metric] || 0;
+          const heightPx = maxValue > 0 ? Math.max((value / maxValue) * 112, value > 0 ? 8 : 0) : 0; // 112px = 128px - 16px padding
+
+          return (
+            <div key={index} className="flex-1 flex items-end justify-center" style={{ maxWidth: '60px' }}>
+              <div className="w-full relative group">
+                {value > 0 && (
+                  <div
+                    className={`w-full ${colors.bg} rounded-t transition-all hover:opacity-80 cursor-pointer`}
+                    style={{ height: `${heightPx}px` }}
+                  ></div>
+                )}
+                {/* Tooltip */}
+                {value > 0 && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10 pointer-events-none">
+                    <div className={`${colors.light} ${colors.border} border rounded px-2 py-1 text-xs whitespace-nowrap shadow-lg`}>
+                      <p className="font-semibold">
+                        {isAverageMetric ? value.toFixed(1) : Math.round(value)}{unit}
+                      </p>
+                      <p className="text-gray-600 text-xs">
+                        {new Date(item.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Date labels */}
+      <div className="flex gap-1">
+        {timeline.map((item, index) => (
+          <div key={index} className="flex-1 text-center">
+            <p className="text-xs text-gray-500 transform rotate-0">
+              {new Date(item.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Calculate trend helper
+const calculateTrend = (timeline, metric) => {
+  if (timeline.length < 2) return 'neutral';
+  const midpoint = Math.floor(timeline.length / 2);
+  const firstHalf = timeline.slice(0, midpoint);
+  const secondHalf = timeline.slice(midpoint);
+
+  const firstAvg = firstHalf.reduce((sum, item) => sum + (item[metric] || 0), 0) / firstHalf.length;
+  const secondAvg = secondHalf.reduce((sum, item) => sum + (item[metric] || 0), 0) / secondHalf.length;
+
+  if (secondAvg > firstAvg * 1.1) return 'up';
+  if (secondAvg < firstAvg * 0.9) return 'down';
+  return 'neutral';
 };
 
 export default ProgressScreen;
