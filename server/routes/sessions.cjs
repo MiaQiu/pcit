@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { requireAuth } = require('../middleware/auth.cjs');
 const prisma = require('../services/db.cjs');
 const storage = require('../services/storage.cjs');
-const { encrypt } = require('../utils/encryption.cjs');
+const { encrypt, encryptSensitiveData, decryptSensitiveData, encryptJSON, decryptJSON, decryptSessionData } = require('../utils/encryption.cjs');
 const { updateUserStreak, getUserStreak } = require('../utils/streak.cjs');
 
 const router = express.Router();
@@ -39,6 +39,9 @@ router.post('/upload', async (req, res) => {
       return res.status(400).json({ error: 'Invalid mode. Must be CDI or PDI' });
     }
 
+    // Encrypt sensitive transcript data
+    const encryptedTranscript = encryptSensitiveData(transcript);
+
     // Create session record first to get ID
     const session = await prisma.session.create({
       data: {
@@ -47,7 +50,7 @@ router.post('/upload', async (req, res) => {
         mode,
         storagePath: 'pending', // Will update after GCS upload
         durationSeconds: durationSeconds || 0,
-        transcript,
+        transcript: encryptedTranscript,
         aiFeedbackJSON: {},
         pcitCoding,
         tagCounts,
@@ -77,8 +80,8 @@ router.post('/upload', async (req, res) => {
 
     // Calculate mastery based on mode
     const masteryAchieved = calculateMastery(mode, tagCounts);
-    
-    // Detect risk
+
+    // Detect risk (use original transcript, not encrypted)
     const riskDetection = detectRisk(transcript, pcitCoding);
     
     // Update session with analysis results
@@ -153,7 +156,13 @@ router.get('/', async (req, res) => {
 
     const total = await prisma.session.count({ where });
 
-    res.json({ sessions, total });
+    // Decrypt sensitive session data
+    const decryptedSessions = sessions.map(session => ({
+      ...session,
+      childMetrics: session.childMetrics ? decryptJSON(session.childMetrics) : null
+    }));
+
+    res.json({ sessions: decryptedSessions, total });
 
   } catch (error) {
     console.error('Get sessions error:', error);
@@ -203,8 +212,11 @@ router.get('/:id', async (req, res) => {
       }
     }
 
+    // Decrypt sensitive session data
+    const decryptedSession = decryptSessionData(session);
+
     res.json({
-      ...session,
+      ...decryptedSession,
       audioUrl
     });
 

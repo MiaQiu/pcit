@@ -30,7 +30,97 @@ function decrypt(text) {
   return decrypted;
 }
 
+/**
+ * Encrypt sensitive child data fields
+ * Handles null/undefined values gracefully
+ */
+function encryptSensitiveData(data) {
+  if (!data) return null;
+  return encrypt(data);
+}
+
+/**
+ * Decrypt sensitive child data fields
+ * Handles null/undefined values gracefully
+ */
+function decryptSensitiveData(data) {
+  if (!data) return null;
+  return decrypt(data);
+}
+
+/**
+ * Encrypt JSON data (for childMetrics, etc.)
+ */
+function encryptJSON(jsonData) {
+  if (!jsonData) return null;
+  const jsonString = typeof jsonData === 'string' ? jsonData : JSON.stringify(jsonData);
+  return encrypt(jsonString);
+}
+
+/**
+ * Decrypt JSON data
+ */
+function decryptJSON(encryptedData) {
+  if (!encryptedData) return null;
+  const decryptedString = decrypt(encryptedData);
+  return decryptedString ? JSON.parse(decryptedString) : null;
+}
+
+/**
+ * Prepare user data for storage (encrypt sensitive fields)
+ */
+function encryptUserData(userData) {
+  return {
+    ...userData,
+    childName: userData.childName ? encryptSensitiveData(userData.childName) : null,
+    childCondition: userData.childCondition ? encryptSensitiveData(userData.childCondition) : null
+  };
+}
+
+/**
+ * Prepare user data for response (decrypt sensitive fields)
+ */
+function decryptUserData(userData) {
+  if (!userData) return null;
+  return {
+    ...userData,
+    childName: userData.childName ? decryptSensitiveData(userData.childName) : null,
+    childCondition: userData.childCondition ? decryptSensitiveData(userData.childCondition) : null
+  };
+}
+
+/**
+ * Prepare session data for storage (encrypt sensitive fields)
+ */
+function encryptSessionData(sessionData) {
+  return {
+    ...sessionData,
+    transcript: sessionData.transcript ? encryptSensitiveData(sessionData.transcript) : null,
+    childMetrics: sessionData.childMetrics ? encryptJSON(sessionData.childMetrics) : null
+  };
+}
+
+/**
+ * Prepare session data for response (decrypt sensitive fields)
+ */
+function decryptSessionData(sessionData) {
+  if (!sessionData) return null;
+  return {
+    ...sessionData,
+    transcript: sessionData.transcript ? decryptSensitiveData(sessionData.transcript) : null,
+    childMetrics: sessionData.childMetrics ? decryptJSON(sessionData.childMetrics) : null
+  };
+}
+
 module.exports = {
   encrypt,
-  decrypt
+  decrypt,
+  encryptSensitiveData,
+  decryptSensitiveData,
+  encryptJSON,
+  decryptJSON,
+  encryptUserData,
+  decryptUserData,
+  encryptSessionData,
+  decryptSessionData
 };

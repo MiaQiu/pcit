@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const prisma = require('../services/db.cjs');
 const { hashPassword, verifyPassword } = require('../utils/password.cjs');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt.cjs');
+const { encryptSensitiveData, decryptSensitiveData, decryptUserData } = require('../utils/encryption.cjs');
 
 const router = express.Router();
 
@@ -61,6 +62,10 @@ router.post('/signup', async (req, res) => {
     // Hash password
     const passwordHash = await hashPassword(password);
 
+    // Encrypt sensitive child data
+    const encryptedChildName = childName ? encryptSensitiveData(childName) : null;
+    const encryptedChildCondition = childCondition ? encryptSensitiveData(childCondition) : null;
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -68,9 +73,9 @@ router.post('/signup', async (req, res) => {
         email,
         passwordHash,
         name,
-        childName,
+        childName: encryptedChildName,
         childAge,
-        childCondition,
+        childCondition: encryptedChildCondition,
         therapistId
       }
     });
@@ -99,14 +104,17 @@ router.post('/signup', async (req, res) => {
       }
     });
 
+    // Decrypt sensitive data for response
+    const decryptedUser = decryptUserData(user);
+
     res.status(201).json({
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        childName: user.childName,
-        childAge: user.childAge,
-        childCondition: user.childCondition
+        id: decryptedUser.id,
+        email: decryptedUser.email,
+        name: decryptedUser.name,
+        childName: decryptedUser.childName,
+        childAge: decryptedUser.childAge,
+        childCondition: decryptedUser.childCondition
       },
       accessToken,
       refreshToken
@@ -173,14 +181,17 @@ router.post('/login', authLimiter, async (req, res) => {
       }
     });
 
+    // Decrypt sensitive data for response
+    const decryptedUser = decryptUserData(user);
+
     res.json({
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        childName: user.childName,
-        childAge: user.childAge,
-        childCondition: user.childCondition
+        id: decryptedUser.id,
+        email: decryptedUser.email,
+        name: decryptedUser.name,
+        childName: decryptedUser.childName,
+        childAge: decryptedUser.childAge,
+        childCondition: decryptedUser.childCondition
       },
       accessToken,
       refreshToken
@@ -285,7 +296,10 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ user });
+    // Decrypt sensitive data for response
+    const decryptedUser = decryptUserData(user);
+
+    res.json({ user: decryptedUser });
 
   } catch (error) {
     console.error('Get user error:', error);
