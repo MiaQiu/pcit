@@ -1,5 +1,6 @@
 // Session management routes - Phase 3: AI Orchestration & Object Storage
 const express = require('express');
+const crypto = require('crypto');
 const { requireAuth } = require('../middleware/auth.cjs');
 const prisma = require('../services/db.cjs');
 const storage = require('../services/storage.cjs');
@@ -41,6 +42,7 @@ router.post('/upload', async (req, res) => {
     // Create session record first to get ID
     const session = await prisma.session.create({
       data: {
+        id: crypto.randomUUID(),
         userId: req.userId,
         mode,
         storagePath: 'pending', // Will update after GCS upload
@@ -339,6 +341,7 @@ async function logRiskDetection(userId, sessionId, riskDetection, transcript) {
 
     await prisma.riskAuditLog.create({
       data: {
+        id: crypto.randomUUID(),
         userId,
         sessionId,
         triggerSource: 'automated-detection',

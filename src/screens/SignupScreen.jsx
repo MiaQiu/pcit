@@ -12,6 +12,8 @@ function SignupScreen() {
     password: '',
     confirmPassword: '',
     childName: '',
+    childAge: '',
+    childCondition: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -60,7 +62,9 @@ function SignupScreen() {
       formData.email,
       formData.password,
       formData.name,
-      formData.childName
+      formData.childName,
+      formData.childAge ? parseInt(formData.childAge) : null,
+      formData.childCondition
     );
     setLoading(false);
 
@@ -148,6 +152,34 @@ function SignupScreen() {
               onChange={handleChange}
               style={styles.input}
               placeholder="Enter child's name"
+              disabled={loading}
+            />
+          </div>
+
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Child's Age (Optional)</label>
+            <input
+              type="number"
+              name="childAge"
+              value={formData.childAge}
+              onChange={handleChange}
+              style={styles.input}
+              placeholder="Enter child's age"
+              min="0"
+              max="18"
+              disabled={loading}
+            />
+          </div>
+
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Child's Condition (Optional)</label>
+            <input
+              type="text"
+              name="childCondition"
+              value={formData.childCondition}
+              onChange={handleChange}
+              style={styles.input}
+              placeholder="e.g., suspect ADHD, diagnosed ADHD"
               disabled={loading}
             />
           </div>

@@ -1,5 +1,6 @@
 // Learning Progress routes
 const express = require('express');
+const crypto = require('crypto');
 const Joi = require('joi');
 const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
@@ -26,9 +27,11 @@ router.get('/progress', requireAuth, async (req, res) => {
     if (!progress) {
       progress = await prisma.learningProgress.create({
         data: {
+          id: crypto.randomUUID(),
           userId,
           currentDeck: 1,
-          unlockedDecks: 1
+          unlockedDecks: 1,
+          updatedAt: new Date()
         }
       });
     }
@@ -72,12 +75,15 @@ router.put('/progress', requireAuth, async (req, res) => {
       where: { userId },
       update: {
         currentDeck,
-        unlockedDecks
+        unlockedDecks,
+        updatedAt: new Date()
       },
       create: {
+        id: crypto.randomUUID(),
         userId,
         currentDeck,
-        unlockedDecks
+        unlockedDecks,
+        updatedAt: new Date()
       }
     });
 

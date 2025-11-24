@@ -7,68 +7,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id              String            @id @default(uuid())
-  email           String            @unique
-  passwordHash    String
-  name            String
-  therapistId     String?
-  childName       String?
-  currentStreak   Int               @default(0)
-  longestStreak   Int               @default(0)
-  lastSessionDate DateTime?
-  createdAt       DateTime          @default(now())
-  riskLogs        RiskAuditLog[]
-  sessions        Session[]
-  learningProgress LearningProgress?
-
-  @@index([email])
-  @@index([therapistId])
-}
-
-model Session {
-  id               String      @id @default(uuid())
-  userId           String
-  mode             SessionMode
-  storagePath      String
-  durationSeconds  Int
-  transcript       String
-  aiFeedbackJSON   Json
-  pcitCoding       Json
-  tagCounts        Json
-  childMetrics     Json?
-  masteryAchieved  Boolean     @default(false)
-  riskScore        Int         @default(0)
-  flaggedForReview Boolean     @default(false)
-  coachAlertSent   Boolean     @default(false)
-  coachAlertSentAt DateTime?
-  createdAt        DateTime    @default(now())
-  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+model LearningProgress {
+  id            String   @id
+  userId        String   @unique
+  currentDeck   Int      @default(1)
+  unlockedDecks Int      @default(1)
+  updatedAt     DateTime
+  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([createdAt])
-  @@index([mode])
-  @@index([flaggedForReview])
-}
-
-model RiskAuditLog {
-  id             String   @id @default(uuid())
-  userId         String
-  sessionId      String?
-  timestamp      DateTime @default(now())
-  triggerSource  String
-  riskLevel      String
-  triggerExcerpt String?
-  actionTaken    String
-  user           User     @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-  @@index([riskLevel])
-  @@index([timestamp])
 }
 
 model RefreshToken {
-  id        String   @id @default(uuid())
+  id        String   @id
   userId    String   @unique
   tokenHash String   @unique
   expiresAt DateTime
@@ -77,15 +28,66 @@ model RefreshToken {
   @@index([tokenHash])
 }
 
-model LearningProgress {
-  id            String   @id @default(uuid())
-  userId        String   @unique
-  currentDeck   Int      @default(1)
-  unlockedDecks Int      @default(1)
-  updatedAt     DateTime @updatedAt
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model RiskAuditLog {
+  id             String   @id
+  userId         String
+  sessionId      String?
+  timestamp      DateTime @default(now())
+  triggerSource  String
+  riskLevel      String
+  triggerExcerpt String?
+  actionTaken    String
+  User           User     @relation(fields: [userId], references: [id])
 
+  @@index([riskLevel])
+  @@index([timestamp])
   @@index([userId])
+}
+
+model Session {
+  id               String      @id
+  userId           String
+  mode             SessionMode
+  storagePath      String
+  durationSeconds  Int
+  transcript       String
+  aiFeedbackJSON   Json
+  pcitCoding       Json
+  tagCounts        Json
+  masteryAchieved  Boolean     @default(false)
+  riskScore        Int         @default(0)
+  flaggedForReview Boolean     @default(false)
+  coachAlertSent   Boolean     @default(false)
+  coachAlertSentAt DateTime?
+  createdAt        DateTime    @default(now())
+  childMetrics     Json?
+  User             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([flaggedForReview])
+  @@index([mode])
+  @@index([userId])
+}
+
+model User {
+  id               String            @id
+  email            String            @unique
+  passwordHash     String
+  name             String
+  therapistId      String?
+  childName        String?
+  childAge         Int?
+  childCondition   String?
+  createdAt        DateTime          @default(now())
+  currentStreak    Int               @default(0)
+  lastSessionDate  DateTime?
+  longestStreak    Int               @default(0)
+  LearningProgress LearningProgress?
+  RiskAuditLog     RiskAuditLog[]
+  Session          Session[]
+
+  @@index([email])
+  @@index([therapistId])
 }
 
 enum SessionMode {

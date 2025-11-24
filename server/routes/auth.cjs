@@ -28,6 +28,8 @@ const signupSchema = Joi.object({
     }),
   name: Joi.string().min(2).max(100).required(),
   childName: Joi.string().max(50).optional(),
+  childAge: Joi.number().integer().min(0).max(18).optional(),
+  childCondition: Joi.string().max(200).optional(),
   therapistId: Joi.string().uuid().optional()
 });
 
@@ -45,7 +47,7 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const { email, password, name, childName, therapistId } = value;
+    const { email, password, name, childName, childAge, childCondition, therapistId } = value;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -62,10 +64,13 @@ router.post('/signup', async (req, res) => {
     // Create user
     const user = await prisma.user.create({
       data: {
+        id: crypto.randomUUID(),
         email,
         passwordHash,
         name,
         childName,
+        childAge,
+        childCondition,
         therapistId
       }
     });
@@ -87,6 +92,7 @@ router.post('/signup', async (req, res) => {
 
     await prisma.refreshToken.create({
       data: {
+        id: crypto.randomUUID(),
         userId: user.id,
         tokenHash: refreshTokenHash,
         expiresAt
@@ -98,7 +104,9 @@ router.post('/signup', async (req, res) => {
         id: user.id,
         email: user.email,
         name: user.name,
-        childName: user.childName
+        childName: user.childName,
+        childAge: user.childAge,
+        childCondition: user.childCondition
       },
       accessToken,
       refreshToken
@@ -158,6 +166,7 @@ router.post('/login', authLimiter, async (req, res) => {
         expiresAt
       },
       create: {
+        id: crypto.randomUUID(),
         userId: user.id,
         tokenHash: refreshTokenHash,
         expiresAt
@@ -169,7 +178,9 @@ router.post('/login', authLimiter, async (req, res) => {
         id: user.id,
         email: user.email,
         name: user.name,
-        childName: user.childName
+        childName: user.childName,
+        childAge: user.childAge,
+        childCondition: user.childCondition
       },
       accessToken,
       refreshToken
@@ -263,6 +274,8 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
         email: true,
         name: true,
         childName: true,
+        childAge: true,
+        childCondition: true,
         therapistId: true,
         createdAt: true
       }
