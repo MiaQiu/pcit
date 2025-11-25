@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { playSound } from '../utils/soundEffects';
 
 const useAudioRecorder = (maxDuration = 300) => {
   const [isRecording, setIsRecording] = useState(false);
@@ -172,6 +173,10 @@ const useAudioRecorder = (maxDuration = 300) => {
       timerRef.current = setInterval(() => {
         setElapsed(prev => {
           if (prev >= maxDuration - 1) {
+            // Play end sound when recording completes
+            const savedSound = localStorage.getItem('recordingEndSound') || 'gentle-ding';
+            playSound(savedSound);
+
             stopRecording();
             return maxDuration;
           }

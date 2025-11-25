@@ -5,6 +5,7 @@ import LearnScreen from '../screens/LearnScreen';
 import RecordingScreen from '../screens/RecordingScreen';
 import ProgressScreen from '../screens/ProgressScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import SoundSettingsScreen from '../screens/SoundSettingsScreen';
 import { checkHealth } from '../services/pcitService';
 
 const MainApp = () => {
@@ -44,7 +45,9 @@ const MainApp = () => {
       case 'learn':
         return <LearnScreen setActiveScreen={setActiveScreen} navigateToDeck={navigateToDeck} />;
       case 'profile':
-        return <ProfileScreen />;
+        return <ProfileScreen setActiveScreen={setActiveScreen} />;
+      case 'sound-settings':
+        return <SoundSettingsScreen setActiveScreen={setActiveScreen} />;
       case 'recording':
         // TEMP: Preview mode for session - set to null to disable preview
         const previewSessionId = '67264850-64fe-4ca2-b21d-3fbe84398d51';
