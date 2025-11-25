@@ -70,24 +70,42 @@ model Session {
 }
 
 model User {
-  id               String            @id
-  email            String            @unique
-  passwordHash     String
-  name             String
-  therapistId      String?
-  childName        String?
-  childAge         Int?
-  childCondition   String?
-  createdAt        DateTime          @default(now())
-  currentStreak    Int               @default(0)
-  lastSessionDate  DateTime?
-  longestStreak    Int               @default(0)
-  LearningProgress LearningProgress?
-  RiskAuditLog     RiskAuditLog[]
-  Session          Session[]
+  id                 String               @id
+  email              String               @unique
+  passwordHash       String
+  name               String
+  therapistId        String?
+  childName          String?
+  childAge           Int?
+  childCondition     String?
+  createdAt          DateTime             @default(now())
+  currentStreak      Int                  @default(0)
+  lastSessionDate    DateTime?
+  longestStreak      Int                  @default(0)
+  LearningProgress   LearningProgress?
+  RiskAuditLog       RiskAuditLog[]
+  Session            Session[]
+  ThirdPartyRequest  ThirdPartyRequest[]
 
   @@index([email])
   @@index([therapistId])
+}
+
+model ThirdPartyRequest {
+  id            String   @id
+  requestId     String   @unique
+  userId        String
+  provider      String
+  requestType   String
+  dataHash      String?
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([expiresAt])
 }
 
 enum SessionMode {

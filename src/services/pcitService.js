@@ -1,7 +1,8 @@
-// PCIT Analysis service - handles Claude API calls
-// Easily mockable for testing
+// PCIT Analysis service - PDPA compliant with backend proxy
+// All Claude API requests go through anonymization proxy
 
 import fetchWithTimeout from '../utils/fetchWithTimeout';
+import authService from './authService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
@@ -45,16 +46,15 @@ const validateCounts = (counts) => {
 export const analyzeAndCode = async (transcript) => {
   validateTranscript(transcript);
 
-  const response = await fetchWithTimeout(
-    `${API_BASE_URL}/speaker-and-coding`,
+  const response = await authService.authenticatedRequest(
+    `${API_BASE_URL}/pcit/speaker-and-coding`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ transcript })
-    },
-    120000 // 2 min timeout for Claude API
+    }
   );
 
   if (!response.ok) {
@@ -74,16 +74,15 @@ export const analyzeAndCode = async (transcript) => {
 export const getCompetencyAnalysis = async (counts) => {
   validateCounts(counts);
 
-  const response = await fetchWithTimeout(
-    `${API_BASE_URL}/competency-analysis`,
+  const response = await authService.authenticatedRequest(
+    `${API_BASE_URL}/pcit/competency-analysis`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ counts })
-    },
-    120000 // 2 min timeout for Claude API
+    }
   );
 
   if (!response.ok) {
@@ -125,16 +124,15 @@ export const countPcitTags = (codingText) => {
 export const pdiAnalyzeAndCode = async (transcript) => {
   validateTranscript(transcript);
 
-  const response = await fetchWithTimeout(
-    `${API_BASE_URL}/pdi-speaker-and-coding`,
+  const response = await authService.authenticatedRequest(
+    `${API_BASE_URL}/pcit/pdi-speaker-and-coding`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ transcript })
-    },
-    120000 // 2 min timeout for Claude API
+    }
   );
 
   if (!response.ok) {
@@ -163,16 +161,15 @@ export const getPdiCompetencyAnalysis = async (counts) => {
     }
   }
 
-  const response = await fetchWithTimeout(
-    `${API_BASE_URL}/pdi-competency-analysis`,
+  const response = await authService.authenticatedRequest(
+    `${API_BASE_URL}/pcit/pdi-competency-analysis`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ counts })
-    },
-    120000 // 2 min timeout for Claude API
+    }
   );
 
   if (!response.ok) {

@@ -98,6 +98,17 @@ app.use('/api/sessions', sessionRoutes);
 const learningRoutes = require('./server/routes/learning.cjs');
 app.use('/api/learning', learningRoutes);
 
+// Mount transcription proxy routes (PDPA compliant with anonymization)
+const transcriptionProxyRoutes = require('./server/routes/transcription-proxy.cjs');
+app.use('/api/transcription', transcriptionProxyRoutes);
+
+// Mount PCIT analysis proxy routes (PDPA compliant with anonymization)
+const pcitProxyRoutes = require('./server/routes/pcit-proxy.cjs');
+app.use('/api/pcit', pcitProxyRoutes);
+
+// DEPRECATED: Old PCIT endpoints (will be removed after frontend migration)
+// TODO: Remove these after frontend is updated to use /api/pcit/* endpoints
+
 // Competency Analysis endpoint
 app.post('/api/competency-analysis', async (req, res) => {
     try {
