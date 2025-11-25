@@ -49,9 +49,7 @@ const MainApp = () => {
       case 'sound-settings':
         return <SoundSettingsScreen setActiveScreen={setActiveScreen} />;
       case 'recording':
-        // TEMP: Preview mode for session - set to null to disable preview
-        const previewSessionId = '67264850-64fe-4ca2-b21d-3fbe84398d51';
-        return <RecordingScreen setActiveScreen={setActiveScreen} previewSessionId={previewSessionId} />;
+        return <RecordingScreen setActiveScreen={setActiveScreen} />;
       default:
         return <LearnScreen setActiveScreen={setActiveScreen} navigateToDeck={navigateToDeck} />;
     }

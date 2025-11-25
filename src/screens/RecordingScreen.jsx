@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Mic, Square, Loader2, Mail, Check, Award, Save, CheckCircle, TrendingUp, Target, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import useAudioRecorder from '../hooks/useAudioRecorder';
 import useTranscription from '../hooks/useTranscription';
@@ -25,6 +25,10 @@ const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
   const [sessionSaved, setSessionSaved] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [previewEnabled, setPreviewEnabled] = useState(false);
+
+  // Use ref for cancelling flag to ensure synchronous access in handleAudioReady
+  const isCancellingRef = useRef(false);
 
   const {
     isRecording,
@@ -40,12 +44,31 @@ const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
 
   const { transcribe } = useTranscription();
 
-  // Load preview session if previewSessionId is provided
+  // Load preview session when preview mode is enabled
   useEffect(() => {
-    if (previewSessionId) {
-      loadPreviewSession(previewSessionId);
+    if (previewEnabled) {
+      const mockSessionId = '67264850-64fe-4ca2-b21d-3fbe84398d51';
+      loadPreviewSession(mockSessionId);
+    } else {
+      // Reset to normal recording mode when preview is disabled
+      setTranscript(null);
+      setAnalysis(null);
+      setPcitCoding(null);
+      setCompetencyAnalysis(null);
+      setParentSpeaker(null);
+      setFlaggedItems([]);
+      setProcessingError(null);
+      setEmailSending(false);
+      setEmailSent(false);
+      setCdiMastery(null);
+      setAudioBlob(null);
+      setSessionDuration(0);
+      setIsSaving(false);
+      setSessionSaved(false);
+      setPreviewMode(false);
+      setIsProcessing(false);
     }
-  }, [previewSessionId]);
+  }, [previewEnabled]);
 
   const loadPreviewSession = async (sessionId) => {
     setIsProcessing(true);
@@ -179,6 +202,14 @@ const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
   };
 
   const handleAudioReady = async (audioBlob) => {
+    // Skip processing if user cancelled the recording
+    if (isCancellingRef.current) {
+      console.log('Recording cancelled - discarding audio blob and skipping all processing');
+      // Audio blob will be garbage collected, no file is saved
+      isCancellingRef.current = false; // Reset for next recording
+      return;
+    }
+
     setIsProcessing(true);
     setProcessingError(null);
     setSessionSaved(false);
@@ -285,6 +316,22 @@ const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
     setIsSaving(false);
     setSessionSaved(false);
     resetRecorder();
+  };
+
+  const handleCancelRecording = () => {
+    console.log('Recording cancelled by user - discarding audio data');
+
+    // Set cancelling flag to prevent audio processing (using ref for synchronous access)
+    isCancellingRef.current = true;
+
+    // Stop recording (will trigger audio cleanup but won't process)
+    stopRecording();
+
+    // Reset all state and discard any recorded audio
+    setTimeout(() => {
+      handleNewRecording();
+      console.log('Recording screen reset - ready for new recording');
+    }, 100);
   };
 
   const handleSaveSession = async () => {
@@ -481,18 +528,23 @@ const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
     <div className="min-h-screen bg-white pb-24 flex flex-col">
       {/* Header */}
       <div className="px-6 pt-12">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <button
             onClick={() => setActiveScreen('learn')}
             className="p-2 -ml-2"
           >
             <ArrowLeft size={24} className="text-gray-600" />
           </button>
-          {previewMode && (
-            <div className="text-xs font-semibold px-3 py-1 bg-purple-100 text-purple-700 rounded-full border border-purple-300">
-              PREVIEW MODE
-            </div>
-          )}
+          <button
+            onClick={() => setPreviewEnabled(!previewEnabled)}
+            className={`text-xs font-semibold px-3 py-1 rounded-full border transition-colors ${
+              previewEnabled
+                ? 'bg-purple-100 text-purple-700 border-purple-300'
+                : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+            }`}
+          >
+            {previewEnabled ? '✓ PREVIEW MODE' : 'PREVIEW MODE'}
+          </button>
         </div>
       </div>
 
@@ -582,27 +634,38 @@ const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
           )}
 
           {/* Recording Controls */}
-          <div className="flex justify-center mb-8">
-            {!isRecording ? (
+          <div className="flex flex-col items-center gap-4 mb-8">
+            <div className="flex justify-center">
+              {!isRecording ? (
+                <button
+                  onClick={handleStartRecording}
+                  className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors"
+                >
+                  <Mic size={32} className="text-white" />
+                </button>
+              ) : (
+                <button
+                  onClick={stopRecording}
+                  className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors animate-pulse"
+                >
+                  <Square size={28} className="text-white" />
+                </button>
+              )}
+            </div>
+
+            <p className="text-center text-gray-500 text-sm">
+              {isRecording ? 'Tap to stop recording' : 'Tap to start recording'}
+            </p>
+
+            {isRecording && (
               <button
-                onClick={handleStartRecording}
-                className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors"
+                onClick={handleCancelRecording}
+                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-300 transition-colors"
               >
-                <Mic size={32} className="text-white" />
-              </button>
-            ) : (
-              <button
-                onClick={stopRecording}
-                className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors animate-pulse"
-              >
-                <Square size={28} className="text-white" />
+                Cancel Recording
               </button>
             )}
           </div>
-
-          <p className="text-center text-gray-500 text-sm mb-4">
-            {isRecording ? 'Tap to stop recording' : 'Tap to start recording'}
-          </p>
         </>
       ) : isProcessing ? (
         /* Processing State */
