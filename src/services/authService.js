@@ -8,13 +8,13 @@ class AuthService {
   }
 
   // Sign up new user
-  async signup(email, password, name, childName = '', childAge = null, childCondition = '') {
+  async signup(email, password, name, childName, childBirthYear, childConditions) {
     const response = await fetch(`${API_URL}/api/auth/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password, name, childName, childAge, childCondition }),
+      body: JSON.stringify({ email, password, name, childName, childBirthYear, childConditions }),
     });
 
     if (!response.ok) {

@@ -75,9 +75,9 @@ model User {
   passwordHash       String
   name               String
   therapistId        String?
-  childName          String?
-  childAge           Int?
-  childCondition     String?
+  childName          String
+  childBirthYear     Int
+  childConditions    String
   createdAt          DateTime             @default(now())
   currentStreak      Int                  @default(0)
   lastSessionDate    DateTime?

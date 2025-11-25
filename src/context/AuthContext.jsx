@@ -56,10 +56,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (email, password, name, childName, childAge, childCondition) => {
+  const signup = async (email, password, name, childName, childBirthYear, childConditions) => {
     try {
       setError(null);
-      const data = await authService.signup(email, password, name, childName, childAge, childCondition);
+      const data = await authService.signup(email, password, name, childName, childBirthYear, childConditions);
       setUser(data.user);
       return { success: true };
     } catch (err) {

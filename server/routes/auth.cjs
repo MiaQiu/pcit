@@ -28,9 +28,9 @@ const signupSchema = Joi.object({
       'string.pattern.base': 'Password must contain at least 1 uppercase, 1 lowercase, and 1 number'
     }),
   name: Joi.string().min(2).max(100).required(),
-  childName: Joi.string().max(50).optional(),
-  childAge: Joi.number().integer().min(0).max(18).optional(),
-  childCondition: Joi.string().max(200).optional(),
+  childName: Joi.string().min(1).max(50).required(),
+  childBirthYear: Joi.number().integer().min(1900).max(new Date().getFullYear()).required(),
+  childConditions: Joi.array().items(Joi.string().max(200)).min(1).required(),
   therapistId: Joi.string().uuid().optional()
 });
 
@@ -48,7 +48,7 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const { email, password, name, childName, childAge, childCondition, therapistId } = value;
+    const { email, password, name, childName, childBirthYear, childConditions, therapistId } = value;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -63,8 +63,8 @@ router.post('/signup', async (req, res) => {
     const passwordHash = await hashPassword(password);
 
     // Encrypt sensitive child data
-    const encryptedChildName = childName ? encryptSensitiveData(childName) : null;
-    const encryptedChildCondition = childCondition ? encryptSensitiveData(childCondition) : null;
+    const encryptedChildName = encryptSensitiveData(childName);
+    const encryptedChildConditions = encryptSensitiveData(JSON.stringify(childConditions));
 
     // Create user
     const user = await prisma.user.create({
@@ -74,8 +74,8 @@ router.post('/signup', async (req, res) => {
         passwordHash,
         name,
         childName: encryptedChildName,
-        childAge,
-        childCondition: encryptedChildCondition,
+        childBirthYear,
+        childConditions: encryptedChildConditions,
         therapistId
       }
     });
@@ -113,8 +113,8 @@ router.post('/signup', async (req, res) => {
         email: decryptedUser.email,
         name: decryptedUser.name,
         childName: decryptedUser.childName,
-        childAge: decryptedUser.childAge,
-        childCondition: decryptedUser.childCondition
+        childBirthYear: decryptedUser.childBirthYear,
+        childConditions: decryptedUser.childConditions
       },
       accessToken,
       refreshToken
@@ -190,8 +190,8 @@ router.post('/login', authLimiter, async (req, res) => {
         email: decryptedUser.email,
         name: decryptedUser.name,
         childName: decryptedUser.childName,
-        childAge: decryptedUser.childAge,
-        childCondition: decryptedUser.childCondition
+        childBirthYear: decryptedUser.childBirthYear,
+        childConditions: decryptedUser.childConditions
       },
       accessToken,
       refreshToken
@@ -285,8 +285,8 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
         email: true,
         name: true,
         childName: true,
-        childAge: true,
-        childCondition: true,
+        childBirthYear: true,
+        childConditions: true,
         therapistId: true,
         createdAt: true
       }

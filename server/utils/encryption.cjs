@@ -68,12 +68,12 @@ function decryptJSON(encryptedData) {
 
 /**
  * Prepare user data for storage (encrypt sensitive fields)
+ * NOTE: childConditions encryption is handled manually in auth routes
  */
 function encryptUserData(userData) {
   return {
     ...userData,
-    childName: userData.childName ? encryptSensitiveData(userData.childName) : null,
-    childCondition: userData.childCondition ? encryptSensitiveData(userData.childCondition) : null
+    childName: userData.childName ? encryptSensitiveData(userData.childName) : null
   };
 }
 
@@ -82,10 +82,30 @@ function encryptUserData(userData) {
  */
 function decryptUserData(userData) {
   if (!userData) return null;
+
+  // Handle childConditions: might be encrypted or plain JSON (for migrated data)
+  let childConditions = null;
+  if (userData.childConditions) {
+    try {
+      // Try to decrypt first (new data)
+      childConditions = decryptSensitiveData(userData.childConditions);
+      // If decryption succeeds, parse as JSON
+      childConditions = JSON.parse(childConditions);
+    } catch (e) {
+      // If decryption fails, it might be plain JSON (migrated data)
+      try {
+        childConditions = JSON.parse(userData.childConditions);
+      } catch (e2) {
+        console.error('Failed to parse childConditions:', e2);
+        childConditions = null;
+      }
+    }
+  }
+
   return {
     ...userData,
     childName: userData.childName ? decryptSensitiveData(userData.childName) : null,
-    childCondition: userData.childCondition ? decryptSensitiveData(userData.childCondition) : null
+    childConditions
   };
 }
 
