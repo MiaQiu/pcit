@@ -6,7 +6,8 @@
 import * as amplitude from '@amplitude/analytics-browser';
 import { sessionReplayPlugin } from '@amplitude/plugin-session-replay-browser';
 
-const AMPLITUDE_API_KEY = '2d00252b4409bf740cf0b657745ea50b';
+// Get API key from environment variable or use empty string (will disable if not set)
+const AMPLITUDE_API_KEY = import.meta.env.VITE_AMPLITUDE_API_KEY || '';
 
 class AmplitudeService {
   constructor() {
@@ -19,6 +20,12 @@ class AmplitudeService {
   init() {
     if (this.initialized) {
       console.log('Amplitude already initialized');
+      return;
+    }
+
+    // Skip initialization if no API key is provided
+    if (!AMPLITUDE_API_KEY) {
+      console.warn('Amplitude API key not configured. Analytics tracking is disabled.');
       return;
     }
 
