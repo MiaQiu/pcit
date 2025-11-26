@@ -93,13 +93,13 @@ const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
           {"speaker":1,"text":"Yeah.","start":28.119,"end":28.119},
           {"speaker":0,"text":"I'm gonna make a blue, high tower.","start":28.119,"end":34.479}
         ],
-        pcitCoding: `**Parent:** "build. (blocks clattering) You're gonna build. I'm gonna build with you. (blocks clattering) We are building orange, brown, and red tower." -> **[DO: Describe]**
+        pcitCoding: `**Parent:** "build. (blocks clattering) You're gonna build. I'm gonna build with you. (blocks clattering) We are building orange, brown, and red tower." -> **[DO: Narration]**
 
-**Parent:** "It could be a slide. That's a great idea." -> **[DO: Reflect]** and **[DO: Praise]**
+**Parent:** "It could be a slide. That's a great idea." -> **[DO: Echo]** and **[DO: Praise]**
 
-**Parent:** "Whee." -> **[DO: Reflect]**
+**Parent:** "Whee." -> **[DO: Echo]**
 
-**Parent:** "And that could be the pool. I love that idea. I'm gonna add to your pool. (blocks clattering)" -> **[DO: Reflect]** and **[DO: Praise]** and **[Neutral]**
+**Parent:** "And that could be the pool. I love that idea. I'm gonna add to your pool. (blocks clattering)" -> **[DO: Echo]** and **[DO: Praise]** and **[Neutral]**
 
 **Parent:** "I'm gonna make a blue, high tower." -> **[Neutral]**`,
         tagCounts: {

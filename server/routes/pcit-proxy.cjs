@@ -118,7 +118,7 @@ Then, for EACH parent utterance, provide:
 
 Example:
 PARENT_SPEAKER: 0
-"You're building a tall tower!" [DO: Describe] - Describing ongoing play
+"You're building a tall tower!" [DO: Narration] - Narrating ongoing play
 "Great job stacking those blocks neatly!" [DO: Praise] - Labeled praise
 "What color should we use next?" [DON'T: Question] - Asking a question
 `;

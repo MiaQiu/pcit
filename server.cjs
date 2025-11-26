@@ -271,10 +271,9 @@ Look for Child Behaviors:
 After identifying the Parent, code EVERY line spoken by the Parent with one of these tags:
 
 Category Definitions:
-* **[DO: Describe]:** Behavioral Description. The parent describes what the child is doing, holding, or seeing (e.g., "You are building a tall tower"). *Note: Describing the parent's own behavior does not count; it must be the child's behavior.*
-* **[DO: Reflect]:** Reflection. The parent repeats or paraphrases what the child just said with the same meaning.
+* **[DO: Narration]:** Behavioral Narration. The parent narrates what the child is doing, holding, or seeing (e.g., "You are building a tall tower"). *Note: Narrating the parent's own behavior does not count; it must be the child's behavior.*
+* **[DO: Echo]:** Echo. The parent repeats or paraphrases what the child just said with the same meaning.
 * **[DO: Praise]:** Labeled Praise. The parent praises a specific behavior or attribute (e.g., "Great job sitting still").
-* **[DO: Imitate]:** Copying play. The parent explicitly states they are copying the child (e.g., "I'm going to draw a circle just like you"). *Note: In text-only scripts, this is rare; only use if the dialogue explicitly confirms imitation.*
 * **[DON'T: Question]:** Asking for info. Any sentence that requires an answer or ends in a rising inflection, including "tag" questions (e.g., "It's blue, right?").
 * **[DON'T: Command]:** Telling the child what to do. Includes direct orders ("Sit down") and indirect suggestions ("Let's play with the blocks").
 * **[DON'T: Criticism]:** Negative correction. Words like "No," "Don't," "Stop," or pointing out a mistake.

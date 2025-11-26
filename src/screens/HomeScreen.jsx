@@ -217,7 +217,7 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
     {
       title: "Describing: Be a Sportscaster",
       deck: 6,
-      deckTitle: "Describing",
+      deckTitle: "Narration",
       phase: "CDI",
       focus: "Strategy & Principle",
       content: "Act like a sportscaster. Describe what the child is doing without asking questions.",
@@ -226,7 +226,7 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
     {
       title: "The Script & The Teaching",
       deck: 6,
-      deckTitle: "Describing",
+      deckTitle: "Narration",
       phase: "CDI",
       focus: "Specific Script & Benefit",
       content: "Your Script: 'You are putting the blue block on top.' Benefit: This holds the child's attention and teaches concepts.",
@@ -235,7 +235,7 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
     {
       title: "The Description Challenge",
       deck: 6,
-      deckTitle: "Describing",
+      deckTitle: "Narration",
       phase: "CDI",
       focus: "Active Tool & Practice",
       content: "Avoid asking 'What are you doing?'",
@@ -244,7 +244,7 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
     {
       title: "Anchor: The Attention Holder",
       deck: 6,
-      deckTitle: "Describing",
+      deckTitle: "Narration",
       phase: "CDI",
       focus: "Daily Anchor & Reflection",
       content: "My words are holding their attention and teaching them without testing.",
