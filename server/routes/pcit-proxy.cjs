@@ -133,7 +133,7 @@ PARENT_SPEAKER: 0
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-5-20250929',
         max_tokens: 8192,
         temperature: 0.3,
         messages: [{
@@ -261,7 +261,7 @@ Keep the tone warm, encouraging, and constructive. Focus on progress and next st
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-5-20250929',
         max_tokens: 2048,
         temperature: 0.5,
         messages: [{
@@ -390,7 +390,7 @@ PARENT_SPEAKER: 0
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-5-20250929',
         max_tokens: 8192,
         temperature: 0.3,
         messages: [{
@@ -530,7 +530,7 @@ Keep the tone warm, encouraging, and constructive. Focus on progress and next st
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-5-20250929',
         max_tokens: 2048,
         temperature: 0.5,
         messages: [{

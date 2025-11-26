@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { requireAuth } = require('../middleware/auth.cjs');
 const prisma = require('../services/db.cjs');
 const storage = require('../services/storage.cjs');
-const { encrypt, encryptSensitiveData, decryptSensitiveData, encryptJSON, decryptJSON, decryptSessionData } = require('../utils/encryption.cjs');
+const { encrypt } = require('../utils/encryption.cjs');
 const { updateUserStreak, getUserStreak } = require('../utils/streak.cjs');
 
 const router = express.Router();
@@ -39,9 +39,6 @@ router.post('/upload', async (req, res) => {
       return res.status(400).json({ error: 'Invalid mode. Must be CDI or PDI' });
     }
 
-    // Encrypt sensitive transcript data
-    const encryptedTranscript = encryptSensitiveData(transcript);
-
     // Create session record first to get ID
     const session = await prisma.session.create({
       data: {
@@ -50,7 +47,7 @@ router.post('/upload', async (req, res) => {
         mode,
         storagePath: 'pending', // Will update after GCS upload
         durationSeconds: durationSeconds || 0,
-        transcript: encryptedTranscript,
+        transcript, // Stored as plaintext (no encryption)
         aiFeedbackJSON: {},
         pcitCoding,
         tagCounts,
@@ -156,13 +153,8 @@ router.get('/', async (req, res) => {
 
     const total = await prisma.session.count({ where });
 
-    // Decrypt sensitive session data
-    const decryptedSessions = sessions.map(session => ({
-      ...session,
-      childMetrics: session.childMetrics ? decryptJSON(session.childMetrics) : null
-    }));
-
-    res.json({ sessions: decryptedSessions, total });
+    // childMetrics is now stored as plaintext (no decryption needed)
+    res.json({ sessions, total });
 
   } catch (error) {
     console.error('Get sessions error:', error);
@@ -212,11 +204,9 @@ router.get('/:id', async (req, res) => {
       }
     }
 
-    // Decrypt sensitive session data
-    const decryptedSession = decryptSessionData(session);
-
+    // transcript and childMetrics are now stored as plaintext (no decryption needed)
     res.json({
-      ...decryptedSession,
+      ...session,
       audioUrl
     });
 

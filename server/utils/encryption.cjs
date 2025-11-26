@@ -68,67 +68,68 @@ function decryptJSON(encryptedData) {
 
 /**
  * Prepare user data for storage (encrypt sensitive fields)
- * NOTE: childConditions encryption is handled manually in auth routes
+ * Encrypts: email, name, childName
+ * Does NOT encrypt: childConditions (stored as plain JSON string)
  */
 function encryptUserData(userData) {
   return {
     ...userData,
+    email: userData.email ? encryptSensitiveData(userData.email) : null,
+    name: userData.name ? encryptSensitiveData(userData.name) : null,
     childName: userData.childName ? encryptSensitiveData(userData.childName) : null
   };
 }
 
 /**
  * Prepare user data for response (decrypt sensitive fields)
+ * Decrypts: email, name, childName
+ * childConditions is stored as plain JSON string
  */
 function decryptUserData(userData) {
   if (!userData) return null;
 
-  // Handle childConditions: might be encrypted or plain JSON (for migrated data)
+  // Parse childConditions as plain JSON (no longer encrypted)
   let childConditions = null;
   if (userData.childConditions) {
     try {
-      // Try to decrypt first (new data)
-      childConditions = decryptSensitiveData(userData.childConditions);
-      // If decryption succeeds, parse as JSON
-      childConditions = JSON.parse(childConditions);
+      childConditions = typeof userData.childConditions === 'string'
+        ? JSON.parse(userData.childConditions)
+        : userData.childConditions;
     } catch (e) {
-      // If decryption fails, it might be plain JSON (migrated data)
-      try {
-        childConditions = JSON.parse(userData.childConditions);
-      } catch (e2) {
-        console.error('Failed to parse childConditions:', e2);
-        childConditions = null;
-      }
+      console.error('Failed to parse childConditions:', e);
+      childConditions = null;
     }
   }
 
   return {
     ...userData,
+    email: userData.email ? decryptSensitiveData(userData.email) : null,
+    name: userData.name ? decryptSensitiveData(userData.name) : null,
     childName: userData.childName ? decryptSensitiveData(userData.childName) : null,
     childConditions
   };
 }
 
 /**
- * Prepare session data for storage (encrypt sensitive fields)
+ * Prepare session data for storage (NO encryption)
+ * transcript and childMetrics are now stored as plaintext
  */
 function encryptSessionData(sessionData) {
   return {
-    ...sessionData,
-    transcript: sessionData.transcript ? encryptSensitiveData(sessionData.transcript) : null,
-    childMetrics: sessionData.childMetrics ? encryptJSON(sessionData.childMetrics) : null
+    ...sessionData
+    // No encryption for transcript or childMetrics
   };
 }
 
 /**
- * Prepare session data for response (decrypt sensitive fields)
+ * Prepare session data for response (NO decryption)
+ * transcript and childMetrics are now stored as plaintext
  */
 function decryptSessionData(sessionData) {
   if (!sessionData) return null;
   return {
-    ...sessionData,
-    transcript: sessionData.transcript ? decryptSensitiveData(sessionData.transcript) : null,
-    childMetrics: sessionData.childMetrics ? decryptJSON(sessionData.childMetrics) : null
+    ...sessionData
+    // No decryption for transcript or childMetrics
   };
 }
 

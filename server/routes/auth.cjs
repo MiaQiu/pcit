@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const prisma = require('../services/db.cjs');
 const { hashPassword, verifyPassword } = require('../utils/password.cjs');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt.cjs');
-const { encryptSensitiveData, decryptSensitiveData, decryptUserData } = require('../utils/encryption.cjs');
+const { encryptSensitiveData, decryptSensitiveData, encryptUserData, decryptUserData } = require('../utils/encryption.cjs');
 
 const router = express.Router();
 
@@ -50,9 +50,12 @@ router.post('/signup', async (req, res) => {
 
     const { email, password, name, childName, childBirthYear, childConditions, therapistId } = value;
 
-    // Check if user already exists
+    // Create email hash for querying (since email will be encrypted)
+    const emailHash = crypto.createHash('sha256').update(email.toLowerCase()).digest('hex');
+
+    // Check if user already exists (using emailHash)
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { emailHash }
     });
 
     if (existingUser) {
@@ -62,28 +65,35 @@ router.post('/signup', async (req, res) => {
     // Hash password
     const passwordHash = await hashPassword(password);
 
-    // Encrypt sensitive child data
-    const encryptedChildName = encryptSensitiveData(childName);
-    const encryptedChildConditions = encryptSensitiveData(JSON.stringify(childConditions));
+    // Encrypt sensitive user data (email, name, childName)
+    const encryptedData = encryptUserData({
+      email,
+      name,
+      childName
+    });
 
     // Create user
     const user = await prisma.user.create({
       data: {
         id: crypto.randomUUID(),
-        email,
+        email: encryptedData.email,
+        emailHash,
         passwordHash,
-        name,
-        childName: encryptedChildName,
+        name: encryptedData.name,
+        childName: encryptedData.childName,
         childBirthYear,
-        childConditions: encryptedChildConditions,
+        childConditions: JSON.stringify(childConditions), // Stored as plain JSON
         therapistId
       }
     });
 
+    // Decrypt user data for token and response
+    const decryptedUser = decryptUserData(user);
+
     // Generate tokens
     const accessToken = generateAccessToken({
       userId: user.id,
-      email: user.email
+      email: decryptedUser.email
     });
 
     const refreshToken = generateRefreshToken({
@@ -103,9 +113,6 @@ router.post('/signup', async (req, res) => {
         expiresAt
       }
     });
-
-    // Decrypt sensitive data for response
-    const decryptedUser = decryptUserData(user);
 
     res.status(201).json({
       user: {
@@ -137,9 +144,12 @@ router.post('/login', authLimiter, async (req, res) => {
 
     const { email, password } = value;
 
-    // Find user
+    // Create email hash for lookup (email is encrypted in DB)
+    const emailHash = crypto.createHash('sha256').update(email.toLowerCase()).digest('hex');
+
+    // Find user by emailHash
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { emailHash }
     });
 
     if (!user) {
@@ -152,10 +162,13 @@ router.post('/login', authLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    // Decrypt user data for token and response
+    const decryptedUser = decryptUserData(user);
+
     // Generate tokens
     const accessToken = generateAccessToken({
       userId: user.id,
-      email: user.email
+      email: decryptedUser.email
     });
 
     const refreshToken = generateRefreshToken({
@@ -180,9 +193,6 @@ router.post('/login', authLimiter, async (req, res) => {
         expiresAt
       }
     });
-
-    // Decrypt sensitive data for response
-    const decryptedUser = decryptUserData(user);
 
     res.json({
       user: {
@@ -261,10 +271,13 @@ router.post('/refresh', async (req, res) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
+    // Decrypt email for token
+    const decryptedUser = decryptUserData(user);
+
     // Generate new access token
     const accessToken = generateAccessToken({
       userId: user.id,
-      email: user.email
+      email: decryptedUser.email
     });
 
     res.json({ accessToken });
