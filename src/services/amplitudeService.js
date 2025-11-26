@@ -65,7 +65,7 @@ class AmplitudeService {
    */
   identifyUser(userId, userProperties = {}) {
     if (!this.initialized) {
-      console.warn('Amplitude not initialized');
+      // Silently skip if not initialized (analytics disabled)
       return;
     }
 
@@ -93,7 +93,7 @@ class AmplitudeService {
    */
   trackEvent(eventName, eventProperties = {}) {
     if (!this.initialized) {
-      console.warn('Amplitude not initialized');
+      // Silently skip if not initialized (analytics disabled)
       return;
     }
 
