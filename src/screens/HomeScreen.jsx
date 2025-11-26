@@ -72,13 +72,13 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
       tip: "CDI is about building connection through positive attention."
     },
     {
-      title: "The 5 'Do's",
+      title: "The 3 'Do's",
       deck: 2,
       deckTitle: "Introduction of CDI",
       phase: "CDI",
-      focus: "The PRIDE Skills",
-      content: "P.R.I.D.E. is the key to CDI. Use these skills during 'Special Time' and throughout the day.",
-      tip: "PRIDE = Praise, Reflect, Imitate, Describe, Enjoy"
+      focus: "The PEN Skills",
+      content: "P.E.N. is the key to CDI. Use these skills during 'Special Time' and throughout the day.",
+      tip: "PEN = Praise, Echo, Narration"
     },
     {
       title: "Why CDI Works",
@@ -96,7 +96,7 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
       phase: "CDI",
       focus: "Anchor & Reflection",
       content: "I am building a relationship that makes my child want to please me.",
-      tip: "Action: Focus on noticing and mentally naming one PRIDE skill your child displays today."
+      tip: "Action: Focus on noticing and mentally naming one PEN skill your child displays today."
     },
 
     // DECK 3: Praise (P)
@@ -258,7 +258,7 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
       deckTitle: "Enjoyment",
       phase: "CDI",
       focus: "Strategy & Principle",
-      content: "Show enthusiasm! Smile, use a warm tone. This enhances every other PRIDE skill.",
+      content: "Show enthusiasm! Smile, use a warm tone. This enhances every other PEN skill.",
       tip: "Your positive energy is contagious - it makes play more rewarding."
     },
     {
@@ -268,7 +268,7 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
       phase: "CDI",
       focus: "Integration Action",
       content: "Pair your Labeled Praise with a big smile and an enthusiastic voice. Example: 'Wow, I love how you shared that toy!'",
-      tip: "Combine PRIDE skills for maximum impact."
+      tip: "Combine PEN skills for maximum impact."
     },
     {
       title: "The Non-Verbal Tool",
@@ -314,7 +314,7 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
       deckTitle: "Avoid Command",
       phase: "CDI",
       focus: "Active Tool & Practice",
-      content: "When you think of a command, filter it through a PRIDE skill instead.",
+      content: "When you think of a command, filter it through a PEN skill instead.",
       tip: "Action: Replace one command with a Description today."
     },
     {
@@ -580,7 +580,7 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
       deckTitle: "Advanced Application 2",
       phase: "PDI",
       focus: "Graduation Check",
-      content: "Check 1: Do you use PRIDE skills naturally throughout the day? Check 2: Does your child obey commands quickly?",
+      content: "Check 1: Do you use PEN skills naturally throughout the day? Check 2: Does your child obey commands quickly?",
       tip: "Graduation means the skills have become second nature."
     },
     {
@@ -676,25 +676,25 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
 
     const criteria = {
       praise: { current: tagCounts.praise || 0, target: 10 },
-      reflect: { current: tagCounts.reflect || 0, target: 10 },
-      describe: { current: tagCounts.describe || 0, target: 10 },
+      echo: { current: tagCounts.echo || 0, target: 10 },
+      narration: { current: tagCounts.narration || 0, target: 10 },
       avoid: { current: tagCounts.totalAvoid || 0, target: 3 }
     };
 
     const praiseProgress = Math.min((criteria.praise.current / criteria.praise.target) * 100, 100);
-    const reflectProgress = Math.min((criteria.reflect.current / criteria.reflect.target) * 100, 100);
-    const describeProgress = Math.min((criteria.describe.current / criteria.describe.target) * 100, 100);
+    const echoProgress = Math.min((criteria.echo.current / criteria.echo.target) * 100, 100);
+    const narrationProgress = Math.min((criteria.narration.current / criteria.narration.target) * 100, 100);
     // For avoid, it's inverted - lower is better
     const avoidProgress = criteria.avoid.current <= criteria.avoid.target ? 100 : Math.max(100 - ((criteria.avoid.current - criteria.avoid.target) * 20), 0);
 
-    const overallProgress = (praiseProgress + reflectProgress + describeProgress + avoidProgress) / 4;
+    const overallProgress = (praiseProgress + echoProgress + narrationProgress + avoidProgress) / 4;
 
     return {
       criteria,
       overallProgress: Math.round(overallProgress),
       praiseProgress: Math.round(praiseProgress),
-      reflectProgress: Math.round(reflectProgress),
-      describeProgress: Math.round(describeProgress),
+      echoProgress: Math.round(echoProgress),
+      narrationProgress: Math.round(narrationProgress),
       avoidProgress: Math.round(avoidProgress)
     };
   };
@@ -1089,32 +1089,32 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
 
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-gray-600">Reflection</span>
+                    <span className="text-gray-600">Echo</span>
                     <span className="font-medium">
-                      {cdiProgress.criteria.reflect.current}/{cdiProgress.criteria.reflect.target}
-                      {cdiProgress.criteria.reflect.current >= cdiProgress.criteria.reflect.target && ' ✓'}
+                      {cdiProgress.criteria.echo.current}/{cdiProgress.criteria.echo.target}
+                      {cdiProgress.criteria.echo.current >= cdiProgress.criteria.echo.target && ' ✓'}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-green-400 h-2 rounded-full transition-all"
-                      style={{ width: `${cdiProgress.reflectProgress}%` }}
+                      style={{ width: `${cdiProgress.echoProgress}%` }}
                     ></div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-gray-600">Description</span>
+                    <span className="text-gray-600">Narration</span>
                     <span className="font-medium">
-                      {cdiProgress.criteria.describe.current}/{cdiProgress.criteria.describe.target}
-                      {cdiProgress.criteria.describe.current >= cdiProgress.criteria.describe.target && ' ✓'}
+                      {cdiProgress.criteria.narration.current}/{cdiProgress.criteria.narration.target}
+                      {cdiProgress.criteria.narration.current >= cdiProgress.criteria.narration.target && ' ✓'}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-green-400 h-2 rounded-full transition-all"
-                      style={{ width: `${cdiProgress.describeProgress}%` }}
+                      style={{ width: `${cdiProgress.narrationProgress}%` }}
                     ></div>
                   </div>
                 </div>
@@ -1290,7 +1290,7 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
           <div className="bg-white rounded-2xl p-5 shadow-sm">
             <h4 className="font-bold text-gray-800 mb-2">📊 Track Your Progress</h4>
             <p className="text-sm text-gray-600">
-              Record a 5-minute play session today to see how many PRIDE skills you're using!
+              Record a 5-minute play session today to see how many PEN skills you're using!
             </p>
           </div>
 

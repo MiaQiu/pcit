@@ -68,14 +68,13 @@ async function seedMockData() {
             pcitCoding: 'Mock CDI coding',
             tagCounts: {
               praise,
-              reflect,
-              imitate,
-              describe,
+              echo: reflect,
+              narration: describe,
               command,
               question,
               criticism,
               neutral: randomInt(5, 15),
-              totalPride: praise + reflect + imitate + describe,
+              totalPen: praise + reflect + describe,
               totalAvoid: command + question + criticism
             },
             childMetrics: {

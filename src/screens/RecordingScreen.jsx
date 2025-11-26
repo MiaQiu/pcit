@@ -105,27 +105,26 @@ const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
         tagCounts: {
           praise: 2,
           command: 0,
-          imitate: 0,
           neutral: 2,
-          reflect: 3,
-          describe: 1,
+          echo: 3,
+          narration: 1,
           question: 0,
           criticism: 0,
           totalAvoid: 0,
-          totalPride: 6,
+          totalPen: 6,
           negative_phrases: 0
         },
         aiFeedbackJSON: {
           analysis: "Based on the conversation, Speaker 0 demonstrates characteristics of a parent engaging in child-directed interaction:\n\n1. Provides descriptions of the activity\n2. Reflects the child's ideas\n3. Gives labeled praise\n4. Imitates the child's sounds and actions\n\nSpeaker 1 appears to be the child, showing:\n1. Creative play and imagination\n2. Initiating ideas\n3. Responding to parent's engagement\n\nTherefore, **Speaker 0 is the Parent** and **Speaker 1 is the Child**.",
-          competencyAnalysis: "Great job using PRIDE skills during this play session! Here's your analysis:\n\n**Strengths:**\n✓ Excellent reflection skills - you mirrored your child's ideas 3 times\n✓ Good use of labeled praise - acknowledged creativity\n✓ Strong behavioral description - narrated your building activity\n✓ No commands, questions, or criticism - perfect CDI!\n\n**Areas for Growth:**\n• To achieve mastery, aim for 10+ of each DO skill in a 5-minute session\n• Current: Praise (2), Reflect (3), Describe (1)\n• Try to increase praise and description frequency\n\n**Next Steps:**\n• Practice giving more specific labeled praise (\"I like how you...\", \"You did a great job...\")\n• Describe more of what you and your child are doing\n• Keep avoiding commands and questions - you're doing this perfectly!",
+          competencyAnalysis: "Great job using PEN skills during this play session! Here's your analysis:\n\n**Strengths:**\n✓ Excellent echo skills - you mirrored your child's ideas 3 times\n✓ Good use of labeled praise - acknowledged creativity\n✓ Strong narration - narrated your building activity\n✓ No commands, questions, or criticism - perfect CDI!\n\n**Areas for Growth:**\n• To achieve mastery, aim for 10+ of each DO skill in a 5-minute session\n• Current: Praise (2), Echo (3), Narration (1)\n• Try to increase praise and narration frequency\n\n**Next Steps:**\n• Practice giving more specific labeled praise (\"I like how you...\", \"You did a great job...\")\n• Narrate more of what you and your child are doing\n• Keep avoiding commands and questions - you're doing this perfectly!",
           parentSpeaker: 0,
           flaggedItems: [],
           cdiMastery: {
             mastered: false,
             criteria: {
               praise: { current: 2, target: 10, met: false },
-              reflect: { current: 3, target: 10, met: false },
-              describe: { current: 1, target: 10, met: false },
+              echo: { current: 3, target: 10, met: false },
+              narration: { current: 1, target: 10, met: false },
               totalAvoid: { current: 0, target: 3, met: true },
               negative_phrases: { current: 0, target: 0, met: true }
             }
@@ -226,7 +225,7 @@ const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
         setTranscript(formattedTranscript);
 
         if (mode === 'CDI') {
-          // CDI Mode: PRIDE skills analysis
+          // CDI Mode: PEN skills analysis
           console.log('Analyzing CDI transcript with Claude...');
           const result = await analyzeAndCode(formattedTranscript);
 
@@ -772,11 +771,11 @@ const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
                     </li>
                     <li className="flex items-center">
                       <Check size={14} className="text-green-500 mr-2" />
-                      Reflection: {tagCounts?.reflect} (target: 10+)
+                      Echo: {tagCounts?.echo} (target: 10+)
                     </li>
                     <li className="flex items-center">
                       <Check size={14} className="text-green-500 mr-2" />
-                      Description: {tagCounts?.describe} (target: 10+)
+                      Narration: {tagCounts?.narration} (target: 10+)
                     </li>
                     <li className="flex items-center">
                       <Check size={14} className="text-green-500 mr-2" />
@@ -917,7 +916,7 @@ const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
                   <>
                     {/* Pride Skills (DOs) */}
                     <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-green-600 mb-2">Pride Skills (DO)</h4>
+                      <h4 className="text-sm font-semibold text-green-600 mb-2">PEN Skills (DO)</h4>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Labeled Praise</span>
@@ -927,27 +926,23 @@ const RecordingScreen = ({ setActiveScreen, previewSessionId = null }) => {
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Reflection</span>
-                          <span className={`font-medium ${tagCounts.reflect >= 10 ? 'text-green-600 font-bold' : ''}`}>
-                            {tagCounts.reflect}
-                            {tagCounts.reflect >= 10 && ' ✓'}
+                          <span className="text-gray-600">Echo</span>
+                          <span className={`font-medium ${tagCounts.echo >= 10 ? 'text-green-600 font-bold' : ''}`}>
+                            {tagCounts.echo}
+                            {tagCounts.echo >= 10 && ' ✓'}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Imitation</span>
-                          <span className="font-medium">{tagCounts.imitate}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Description</span>
-                          <span className={`font-medium ${tagCounts.describe >= 10 ? 'text-green-600 font-bold' : ''}`}>
-                            {tagCounts.describe}
-                            {tagCounts.describe >= 10 && ' ✓'}
+                          <span className="text-gray-600">Narration</span>
+                          <span className={`font-medium ${tagCounts.narration >= 10 ? 'text-green-600 font-bold' : ''}`}>
+                            {tagCounts.narration}
+                            {tagCounts.narration >= 10 && ' ✓'}
                           </span>
                         </div>
                       </div>
                       <div className="flex justify-between mt-2 pt-2 border-t border-gray-100">
-                        <span className="font-semibold text-green-600">Total "Pride" Skills</span>
-                        <span className="font-bold text-green-600">{tagCounts.totalPride}</span>
+                        <span className="font-semibold text-green-600">Total "PEN" Skills</span>
+                        <span className="font-bold text-green-600">{tagCounts.totalPen}</span>
                       </div>
                     </div>
 

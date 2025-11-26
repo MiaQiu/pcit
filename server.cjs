@@ -254,7 +254,7 @@ Analyze the conversation to determine which speaker is the Parent and which is t
 
 Guidelines for Identification:
 
-Look for Parent "PRIDE" Skills:
+Look for Parent "PEN" Skills:
 - Behavioral Descriptions: Sentences starting with "You are..." describing the other person's actions (e.g., "You are stacking the blocks").
 - Reflections: Repeating or paraphrasing what the other speaker just said (e.g., Spk A: "It crashed!" -> Spk B: "It crashed hard!").
 - Labeled Praises: Specific praise for behaviors (e.g., "Good job staying calm," "I like how gently you are playing").
@@ -279,7 +279,7 @@ Category Definitions:
 * **[DON'T: Command]:** Telling the child what to do. Includes direct orders ("Sit down") and indirect suggestions ("Let's play with the blocks").
 * **[DON'T: Criticism]:** Negative correction. Words like "No," "Don't," "Stop," or pointing out a mistake.
 * **[DON'T: Negative Phrases]:** Intense frustration, anger, despair, or verbally abusive/aggressive/shaming language. Includes high sentiment negativity, words like "hate," "terrible," "stop it now," "stupid," "bad kid," or "I hate you."
-* **[Neutral]:** "Natural" conversation fillers, information giving, or self-descriptions that do not fit the PRIDE skills or Avoid skills (e.g., "Oh, okay," "I see," "It is time to go.").
+* **[Neutral]:** "Natural" conversation fillers, information giving, or self-descriptions that do not fit the PEN skills or Avoid skills (e.g., "Oh, okay," "I see," "It is time to go.").
 
 **Input Script:**
 ${formattedScript}

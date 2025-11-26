@@ -34,7 +34,7 @@ const validateCounts = (counts) => {
   if (!counts || typeof counts !== 'object') {
     throw new Error('Invalid counts object');
   }
-  const requiredFields = ['praise', 'reflect', 'describe', 'imitate', 'question', 'command', 'criticism', 'negative_phrases', 'neutral'];
+  const requiredFields = ['praise', 'echo', 'narration', 'question', 'command', 'criticism', 'negative_phrases', 'neutral'];
   for (const field of requiredFields) {
     if (typeof counts[field] !== 'number') {
       throw new Error(`Missing or invalid count for: ${field}`);
@@ -103,10 +103,9 @@ export const countPcitTags = (codingText) => {
   }
 
   const counts = {
-    describe: (codingText.match(/\[DO:\s*Describe\]/gi) || []).length,
-    reflect: (codingText.match(/\[DO:\s*Reflect\]/gi) || []).length,
+    narration: (codingText.match(/\[DO:\s*Narration\]/gi) || []).length,
+    echo: (codingText.match(/\[DO:\s*Echo\]/gi) || []).length,
     praise: (codingText.match(/\[DO:\s*Praise\]/gi) || []).length,
-    imitate: (codingText.match(/\[DO:\s*Imitate\]/gi) || []).length,
     question: (codingText.match(/\[DON'T:\s*Question\]/gi) || []).length,
     command: (codingText.match(/\[DON'T:\s*Command\]/gi) || []).length,
     criticism: (codingText.match(/\[DON'T:\s*Criticism\]/gi) || []).length,
@@ -114,7 +113,7 @@ export const countPcitTags = (codingText) => {
     neutral: (codingText.match(/\[Neutral\]/gi) || []).length
   };
 
-  counts.totalPride = counts.describe + counts.reflect + counts.praise + counts.imitate;
+  counts.totalPen = counts.narration + counts.echo + counts.praise;
   counts.totalAvoid = counts.question + counts.command + counts.criticism + counts.negative_phrases;
 
   return counts;
@@ -222,15 +221,15 @@ export const checkCdiMastery = (counts) => {
 
   const criteria = {
     praise: { target: 10, met: counts.praise >= 10 },
-    reflect: { target: 10, met: counts.reflect >= 10 },
-    describe: { target: 10, met: counts.describe >= 10 },
+    echo: { target: 10, met: counts.echo >= 10 },
+    narration: { target: 10, met: counts.narration >= 10 },
     totalAvoid: { target: 3, met: counts.totalAvoid <= 3 },
     negative_phrases: { target: 0, met: counts.negative_phrases === 0 }
   };
 
   const mastered = criteria.praise.met &&
-                   criteria.reflect.met &&
-                   criteria.describe.met &&
+                   criteria.echo.met &&
+                   criteria.narration.met &&
                    criteria.totalAvoid.met &&
                    criteria.negative_phrases.met;
 

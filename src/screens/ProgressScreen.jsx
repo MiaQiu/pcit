@@ -69,9 +69,8 @@ const ProgressScreen = () => {
       const metrics = {
         date,
         praise: 0,
-        reflect: 0,
-        imitate: 0,
-        describe: 0,
+        echo: 0,
+        narration: 0,
         command: 0,
         question: 0,
         criticism: 0,
@@ -81,9 +80,8 @@ const ProgressScreen = () => {
       sessions.forEach(session => {
         if (session.tagCounts) {
           metrics.praise += session.tagCounts.praise || 0;
-          metrics.reflect += session.tagCounts.reflect || 0;
-          metrics.imitate += session.tagCounts.imitate || 0;
-          metrics.describe += session.tagCounts.describe || 0;
+          metrics.echo += session.tagCounts.echo || 0;
+          metrics.narration += session.tagCounts.narration || 0;
           metrics.command += session.tagCounts.command || 0;
           metrics.question += session.tagCounts.question || 0;
           metrics.criticism += session.tagCounts.criticism || 0;
@@ -274,7 +272,7 @@ const ProgressScreen = () => {
                 <div className="mb-6">
                   <h3 className="text-sm font-semibold text-green-600 mb-4 flex items-center">
                     <span className="w-2 h-2 bg-green-600 rounded-full mr-2"></span>
-                    DO Skills (PRIDE)
+                    DO Skills (PEN)
                   </h3>
                   <MetricTimeline
                     timeline={parentTimeline.cdiTimeline}
@@ -284,20 +282,14 @@ const ProgressScreen = () => {
                   />
                   <MetricTimeline
                     timeline={parentTimeline.cdiTimeline}
-                    metric="reflect"
-                    label="Reflection"
+                    metric="echo"
+                    label="Echo"
                     color="green"
                   />
                   <MetricTimeline
                     timeline={parentTimeline.cdiTimeline}
-                    metric="imitate"
-                    label="Imitation"
-                    color="green"
-                  />
-                  <MetricTimeline
-                    timeline={parentTimeline.cdiTimeline}
-                    metric="describe"
-                    label="Description"
+                    metric="narration"
+                    label="Narration"
                     color="green"
                   />
                 </div>

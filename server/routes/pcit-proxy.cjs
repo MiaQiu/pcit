@@ -100,11 +100,10 @@ router.post('/speaker-and-coding', async (req, res) => {
 **Input Transcript:**
 ${formattedScript}
 
-**PCIT Coding Rules:**
+**PCIT Coding Rules (PEN Skills):**
 [DO: Praise] - Labeled or unlabeled praise for child's behavior
-[DO: Reflect] - Repeating or paraphrasing child's words
-[DO: Describe] - Describing child's ongoing behavior
-[DO: Imitate] - Imitating child's play action
+[DO: Echo] - Repeating or paraphrasing child's words
+[DO: Narration] - Narrating child's ongoing behavior
 [DON'T: Question] - Direct or indirect questions
 [DON'T: Command] - Direct or indirect commands
 [DON'T: Criticism] - Criticism of child's behavior, appearance, or character
@@ -194,7 +193,7 @@ router.post('/competency-analysis', async (req, res) => {
       return res.status(400).json({ error: 'Missing or invalid counts object' });
     }
 
-    const requiredFields = ['praise', 'reflect', 'describe', 'imitate', 'question', 'command', 'criticism', 'negative_phrases', 'neutral'];
+    const requiredFields = ['praise', 'echo', 'narration', 'question', 'command', 'criticism', 'negative_phrases', 'neutral'];
     for (const field of requiredFields) {
       if (typeof counts[field] !== 'number') {
         return res.status(400).json({ error: `Missing or invalid count for: ${field}` });
@@ -214,16 +213,15 @@ router.post('/competency-analysis', async (req, res) => {
     );
 
     const totalDonts = counts.question + counts.command + counts.criticism + counts.negative_phrases;
-    const totalDos = counts.praise + counts.reflect + counts.describe + counts.imitate;
+    const totalDos = counts.praise + counts.echo + counts.narration;
 
     const prompt = `You are an expert PCIT (Parent-Child Interaction Therapy) Supervisor and Coder. Your task is to analyze raw PCIT tag counts from a session and provide a comprehensive competency analysis, including recommendations.
 
 **1. Data Input (Raw Counts for a 5-minute session):**
 
 - Labeled Praises: ${counts.praise}
-- Reflections: ${counts.reflect}
-- Behavioral Descriptions: ${counts.describe}
-- Imitations: ${counts.imitate}
+- Echo (Reflections): ${counts.echo}
+- Narration (Behavioral Descriptions): ${counts.narration}
 - Questions: ${counts.question}
 - Commands: ${counts.command}
 - Criticisms: ${counts.criticism}
@@ -238,14 +236,14 @@ Provide a structured analysis with:
 3. **Areas for Improvement**: What needs work (bullet points)
 4. **Specific Recommendations**: Concrete next steps (bullet points)
 
-**3. PRIDE Skills Assessment:**
-- Total DO skills (PRIDE): ${totalDos}
+**3. PEN Skills Assessment:**
+- Total DO skills (PEN): ${totalDos}
 - Total DON'T skills: ${totalDonts}
 
 **Mastery Criteria (for CDI completion):**
 - 10+ Praises per 5 minutes
-- 10+ Reflections per 5 minutes
-- 10+ Behavioral Descriptions per 5 minutes
+- 10+ Echo per 5 minutes
+- 10+ Narration per 5 minutes
 - 3 or fewer DON'Ts (Questions + Commands + Criticisms + Negative Phrases)
 - 0 Negative Phrases
 

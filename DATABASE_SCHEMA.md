@@ -56,7 +56,7 @@ Stores PCIT therapy session metadata and AI analysis results.
 | `transcript` | String (Text) | NOT NULL | Full transcript from ElevenLabs |
 | `aiFeedbackJSON` | Json | NOT NULL | Structured feedback from Claude AI |
 | `pcitCoding` | Json | NOT NULL | Detailed PCIT behavior coding data |
-| `tagCounts` | Json | NOT NULL | Summary of tag counts (praise, reflect, etc.) |
+| `tagCounts` | Json | NOT NULL | Summary of tag counts (praise, echo, narration, etc.) |
 | `masteryAchieved` | Boolean | DEFAULT false | Whether PCIT mastery criteria met |
 | `riskScore` | Int | DEFAULT 0 | Risk score (0=low, 10=critical) |
 | `flaggedForReview` | Boolean | DEFAULT false | Whether session needs clinical review |
