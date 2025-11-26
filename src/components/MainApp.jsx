@@ -6,6 +6,7 @@ import RecordingScreen from '../screens/RecordingScreen';
 import ProgressScreen from '../screens/ProgressScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SoundSettingsScreen from '../screens/SoundSettingsScreen';
+import SurveyScreen from '../screens/SurveyScreen';
 import { checkHealth } from '../services/pcitService';
 
 const MainApp = () => {
@@ -39,7 +40,7 @@ const MainApp = () => {
   const renderScreen = () => {
     switch (activeScreen) {
       case 'home':
-        return <HomeScreen selectedDeck={selectedDeck} />;
+        return <HomeScreen selectedDeck={selectedDeck} setActiveScreen={setActiveScreen} />;
       case 'progress':
         return <ProgressScreen />;
       case 'learn':
@@ -50,6 +51,8 @@ const MainApp = () => {
         return <SoundSettingsScreen setActiveScreen={setActiveScreen} />;
       case 'recording':
         return <RecordingScreen setActiveScreen={setActiveScreen} />;
+      case 'survey':
+        return <SurveyScreen setActiveScreen={setActiveScreen} />;
       default:
         return <LearnScreen setActiveScreen={setActiveScreen} navigateToDeck={navigateToDeck} />;
     }
@@ -58,7 +61,7 @@ const MainApp = () => {
   return (
     <div className="font-sans antialiased">
       {renderScreen()}
-      {activeScreen !== 'recording' && (
+      {activeScreen !== 'recording' && activeScreen !== 'survey' && (
         <BottomNav
           activeScreen={activeScreen}
           setActiveScreen={setActiveScreen}

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Flame, Calendar, TrendingUp, Award } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flame, Calendar, TrendingUp, Award, ClipboardList } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import learningService from '../services/learningService';
 import sessionService from '../services/sessionService';
 import streakService from '../services/streakService';
 
-const HomeScreen = ({ selectedDeck }) => {
+const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
   const { user } = useAuth();
   const [deckStarted, setDeckStarted] = useState(false);
   const [currentDeck, setCurrentDeck] = useState(selectedDeck || 1); // Which deck (1-15)
@@ -1256,6 +1256,27 @@ const HomeScreen = ({ selectedDeck }) => {
             </div>
           </div>
         )}
+
+        {/* Weekly Child Progress Survey Button */}
+        <div className="mb-6">
+          <button
+            onClick={() => setActiveScreen('survey')}
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-2xl p-6 shadow-lg transition-all transform hover:scale-[1.02]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                  <ClipboardList className="w-7 h-7 text-white" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold mb-1">Weekly Assessment</h3>
+                  <p className="text-sm text-white text-opacity-90">Track your child's behavior progress</p>
+                </div>
+              </div>
+              <ChevronRight className="w-6 h-6 text-white flex-shrink-0" />
+            </div>
+          </button>
+        </div>
 
         {/* More For You Section */}
         {/* <div className="mb-4">

@@ -106,6 +106,10 @@ app.use('/api/transcription', transcriptionProxyRoutes);
 const pcitProxyRoutes = require('./server/routes/pcit-proxy.cjs');
 app.use('/api/pcit', pcitProxyRoutes);
 
+// Mount WACB-N survey routes
+const wacbSurveyRoutes = require('./server/routes/wacb-survey.cjs');
+app.use('/api/wacb-survey', wacbSurveyRoutes);
+
 // DEPRECATED: Old PCIT endpoints (will be removed after frontend migration)
 // TODO: Remove these after frontend is updated to use /api/pcit/* endpoints
 
