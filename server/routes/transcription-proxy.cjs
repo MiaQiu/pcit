@@ -69,7 +69,7 @@ router.post('/elevenlabs', async (req, res) => {
     formData.append('timestamps_granularity', 'word');
 
     // Forward to ElevenLabs (NO user metadata)
-    const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
+    const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text?include_timestamps=true', {
       method: 'POST',
       headers: {
         'xi-api-key': API_KEYS.elevenLabs,
