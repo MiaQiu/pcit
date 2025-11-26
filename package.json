@@ -11,6 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@amplitude/analytics-browser": "^2.31.3",
+    "@amplitude/plugin-session-replay-browser": "^1.23.6",
     "@google-cloud/storage": "^7.17.3",
     "@prisma/client": "^5.22.0",
     "bcrypt": "^6.0.0",

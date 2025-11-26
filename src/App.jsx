@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import MainApp from './components/MainApp';
+import amplitudeService from './services/amplitudeService';
 
 const App = () => {
+  // Initialize Amplitude on app mount
+  useEffect(() => {
+    amplitudeService.init();
+  }, []);
+
   return (
     <Router>
       <AuthProvider>

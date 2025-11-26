@@ -8,6 +8,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import SoundSettingsScreen from '../screens/SoundSettingsScreen';
 import SurveyScreen from '../screens/SurveyScreen';
 import { checkHealth } from '../services/pcitService';
+import amplitudeService from '../services/amplitudeService';
 
 const MainApp = () => {
   const [activeScreen, setActiveScreen] = useState('learn');
@@ -30,6 +31,11 @@ const MainApp = () => {
     };
     verifyBackend();
   }, []);
+
+  // Track page views when screen changes
+  useEffect(() => {
+    amplitudeService.trackPageView(activeScreen);
+  }, [activeScreen]);
 
   // Function to navigate to a specific deck in HomeScreen
   const navigateToDeck = (deckNumber) => {

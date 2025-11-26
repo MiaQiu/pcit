@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import authService from '../services/authService';
+import amplitudeService from '../services/amplitudeService';
 
 const WacbSurvey = ({ onSubmitSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -118,6 +119,12 @@ const WacbSurvey = ({ onSubmitSuccess }) => {
       }
 
       const result = await response.json();
+
+      // Track survey submission in Amplitude
+      amplitudeService.trackSurveySubmission(
+        result.totalScore,
+        result.totalChangesNeeded
+      );
 
       setShowSuccess(true);
       setTimeout(() => {

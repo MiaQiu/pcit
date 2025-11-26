@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import authService from '../services/authService';
+import amplitudeService from '../services/amplitudeService';
 
 const AuthContext = createContext(null);
 
@@ -26,6 +27,13 @@ export const AuthProvider = ({ children }) => {
     setUser(mockUser);
     setLoading(false);
 
+    // Identify user in Amplitude
+    amplitudeService.identifyUser(mockUser.id, {
+      email: mockUser.email,
+      name: mockUser.name,
+      childName: mockUser.childName
+    });
+
     /* Original auth code - uncomment to re-enable login:
     if (!authService.isAuthenticated()) {
       setLoading(false);
@@ -35,6 +43,13 @@ export const AuthProvider = ({ children }) => {
     try {
       const userData = await authService.getCurrentUser();
       setUser(userData);
+
+      // Identify user in Amplitude
+      amplitudeService.identifyUser(userData.id, {
+        email: userData.email,
+        name: userData.name,
+        childName: userData.childName
+      });
     } catch (err) {
       console.error('Failed to load user:', err);
       authService.clearTokens();
@@ -49,6 +64,15 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const data = await authService.login(email, password);
       setUser(data.user);
+
+      // Identify user in Amplitude and track login
+      amplitudeService.identifyUser(data.user.id, {
+        email: data.user.email,
+        name: data.user.name,
+        childName: data.user.childName
+      });
+      amplitudeService.trackLogin('email');
+
       return { success: true };
     } catch (err) {
       setError(err.message);
@@ -61,6 +85,16 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const data = await authService.signup(email, password, name, childName, childBirthYear, childConditions);
       setUser(data.user);
+
+      // Identify user in Amplitude and track signup
+      amplitudeService.identifyUser(data.user.id, {
+        email: data.user.email,
+        name: data.user.name,
+        childName: data.user.childName,
+        childBirthYear: data.user.childBirthYear
+      });
+      amplitudeService.trackSignup();
+
       return { success: true };
     } catch (err) {
       setError(err.message);
@@ -72,6 +106,9 @@ export const AuthProvider = ({ children }) => {
     try {
       await authService.logout();
       setUser(null);
+
+      // Reset Amplitude on logout
+      amplitudeService.reset();
     } catch (err) {
       console.error('Logout error:', err);
     }
