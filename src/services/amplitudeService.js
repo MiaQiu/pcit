@@ -35,7 +35,6 @@ class AmplitudeService {
 
       // Initialize Amplitude with US server zone and autocapture
       amplitude.init(AMPLITUDE_API_KEY, undefined, {
-        fetchRemoteConfig: true,
         serverZone: 'US',
         autocapture: {
           elementInteractions: true,
