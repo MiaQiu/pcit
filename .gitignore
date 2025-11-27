@@ -8,3 +8,9 @@ dist/
 # Google Cloud Service Account Keys (DO NOT COMMIT)
 gcp-service-account.json
 *.json
+aws-resources.txt
+
+# AWS Migration files
+aws-resources.txt
+database-backup-*.json
+database-pre-migration-*.txt
