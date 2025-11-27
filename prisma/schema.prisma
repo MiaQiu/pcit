@@ -18,6 +18,19 @@ model LearningProgress {
   @@index([userId])
 }
 
+model ModuleHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  category  String   // PRAISE, ECHO, NARRATION, etc.
+  level     Int      // 1-4
+  viewedAt  DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([viewedAt])
+  @@index([userId, category])
+}
+
 model RefreshToken {
   id        String   @id
   userId    String   @unique
@@ -88,6 +101,7 @@ model User {
   Session            Session[]
   ThirdPartyRequest  ThirdPartyRequest[]
   WacbSurvey         WacbSurvey[]
+  ModuleHistory      ModuleHistory[]
 
   @@index([emailHash])
   @@index([therapistId])

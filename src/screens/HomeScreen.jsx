@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import learningService from '../services/learningService';
 import sessionService from '../services/sessionService';
 import streakService from '../services/streakService';
+import RecommendedModule from '../components/RecommendedModule';
 
 const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
   const { user } = useAuth();
@@ -862,6 +863,16 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
             </div>
           )}
         </div>
+
+        {/* Personalized Recommendation */}
+        {totalSessions > 0 && (
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Your Personalized Learning
+            </h2>
+            <RecommendedModule />
+          </div>
+        )}
 
         {/* Today's Deck Header */}
         <div className="mb-4">
