@@ -3,7 +3,7 @@ const express = require('express');
 const crypto = require('crypto');
 const { requireAuth } = require('../middleware/auth.cjs');
 const prisma = require('../services/db.cjs');
-const storage = require('../services/storage.cjs');
+const storage = require('../services/storage-s3.cjs');
 const { encrypt } = require('../utils/encryption.cjs');
 const { updateUserStreak, getUserStreak } = require('../utils/streak.cjs');
 
@@ -57,7 +57,7 @@ router.post('/upload', async (req, res) => {
       }
     });
 
-    // Upload audio to GCS if provided
+    // Upload audio to S3 if provided
     let storagePath = 'no-audio';
     if (audioData) {
       try {
