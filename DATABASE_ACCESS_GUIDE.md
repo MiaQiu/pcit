@@ -2,11 +2,21 @@
 
 ## Database Information
 
+### Production Database
 - **Endpoint:** `nora-db.cst6ygywo6de.us-east-1.rds.amazonaws.com:5432`
 - **Database:** `nora`
 - **Username:** `nora_admin`
-- **Password:** See `aws-resources.txt` (line 19) or AWS Secrets Manager
+- **Password:** See `aws-resources.txt` (DB_PASSWORD) or AWS Secrets Manager
 - **Public Access:** ❌ NO (secure - private subnet only)
+- **Used by:** AWS App Runner (production)
+
+### Development Database
+- **Endpoint:** `nora-db-dev.cst6ygywo6de.us-east-1.rds.amazonaws.com:5432`
+- **Database:** `nora_dev`
+- **Username:** `nora_admin`
+- **Password:** See `aws-resources.txt` (DB_PASSWORD_DEV)
+- **Public Access:** ❌ NO (secure - private subnet only)
+- **Used by:** Local development environment
 
 ---
 
@@ -21,11 +31,19 @@
 2. Click **"Start session"**
 3. Select instance: **`nora-bastion`** (i-0816636c6667be898)
 4. Click **"Start session"**
-5. In the terminal, run:
-   ```bash
-   PGPASSWORD=FPEBKqGY6LU4IXsxM4quqJMxfPccZCsn psql -h nora-db.cst6ygywo6de.us-east-1.rds.amazonaws.com -U nora_admin -d nora
-   ```
-6. You're now connected to the database! 🎉
+5. In the terminal, connect to the database:
+
+**For Production Database:**
+```bash
+PGPASSWORD=FPEBKqGY6LU4IXsxM4quqJMxfPccZCsn psql -h nora-db.cst6ygywo6de.us-east-1.rds.amazonaws.com -U nora_admin -d nora
+```
+
+**For Development Database:**
+```bash
+PGPASSWORD=D7upDeIjZc1S1BG6Mca1QxKzVqxF4Bbw psql -h nora-db-dev.cst6ygywo6de.us-east-1.rds.amazonaws.com -U nora_admin -d nora_dev
+```
+
+6. You're now connected! 🎉
 
 ### Common Queries
 
@@ -272,16 +290,23 @@ Your production database currently has **8 tables** (10 migrations applied):
 
 ## Connection String Format
 
+**Production:**
 ```
-postgresql://nora_admin:[PASSWORD]@nora-db.cst6ygywo6de.us-east-1.rds.amazonaws.com:5432/nora
+postgresql://nora_admin:FPEBKqGY6LU4IXsxM4quqJMxfPccZCsn@nora-db.cst6ygywo6de.us-east-1.rds.amazonaws.com:5432/nora
 ```
 
-**Get password:**
+**Development:**
+```
+postgresql://nora_admin:D7upDeIjZc1S1BG6Mca1QxKzVqxF4Bbw@nora-db-dev.cst6ygywo6de.us-east-1.rds.amazonaws.com:5432/nora_dev
+```
+
+**Get passwords:**
 ```bash
 # From aws-resources.txt
-grep DB_PASSWORD aws-resources.txt
+grep DB_PASSWORD aws-resources.txt        # Production
+grep DB_PASSWORD_DEV aws-resources.txt   # Development
 
-# Or from Secrets Manager
+# Or from Secrets Manager (production only)
 aws secretsmanager get-secret-value \
   --secret-id nora/database-url \
   --region us-east-1 \

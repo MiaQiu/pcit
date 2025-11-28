@@ -14,6 +14,7 @@
     "@amplitude/analytics-browser": "^2.31.3",
     "@amplitude/plugin-session-replay-browser": "^1.23.6",
     "@aws-sdk/client-s3": "^3.682.0",
+    "@aws-sdk/client-secrets-manager": "^3.940.0",
     "@aws-sdk/s3-request-presigner": "^3.682.0",
     "@prisma/client": "^5.22.0",
     "bcrypt": "^6.0.0",

@@ -1,8 +1,9 @@
 # AWS Infrastructure Overview
 
-**Date:** 2025-11-27
+**Last Updated:** 2025-11-28
 **Account:** 059364397483
 **Region:** us-east-1 (N. Virginia)
+**Status:** ✅ Fully Deployed & Operational
 
 ---
 
@@ -215,56 +216,67 @@ s3://nora-audio-059364397483/
 
 | Resource | Type | Cost/Month | Status |
 |----------|------|------------|--------|
-| S3 Bucket | Storage | ~$0.25 | ✅ Running |
+| **Production RDS** | db.t3.micro PostgreSQL 15.8 | ~$15.00 | ✅ Running |
+| **Development RDS** | db.t3.micro PostgreSQL 15.8 | ~$15.00 | ✅ Running |
+| **App Runner** | 1 vCPU, 2GB RAM | ~$25.00 | ✅ Running |
+| **S3 Bucket** | Storage + requests | ~$5.00 | ✅ Running |
+| **EC2 Bastion** | t3.micro (if running 24/7) | ~$7.50 | ✅ Running |
+| **ECR** | Container registry | ~$0.50 | ✅ Running |
 | VPC | Networking | FREE | ✅ Running |
 | Subnets | Networking | FREE | ✅ Running |
 | Internet Gateway | Networking | FREE | ✅ Running |
 | Security Groups | Firewall | FREE | ✅ Running |
-| **Total (Phase 1)** | | **~$0.25/mo** | ✅ Running |
+| Data Transfer | Outbound | ~$0.50 | ✅ Running |
+| **Total** | | **~$68.50/mo** | ✅ Operational |
 
-**Notes:**
-- S3 cost assumes 10GB storage + minimal requests
-- Data transfer charges apply for downloads ($0.09/GB)
-- Phase 2 (RDS) will add ~$30/month
-- Phase 5 (App Runner) will add ~$25-50/month
+**Cost Optimization Tips:**
+- Stop bastion when not in use: Save $7.50/month
+- Use RDS reserved instances: Save 40% (~$12/month)
+- S3 lifecycle policies: Reduce storage costs
+- Monitor CloudWatch metrics: Optimize App Runner instances
 
 ---
 
-## 📊 What's Next
+## 📊 Deployment Status
 
-### Phase 2: Database (Not Yet Created)
+### ✅ Phase 1: Storage & Networking (COMPLETE)
+- ✅ S3 Bucket created and configured
+- ✅ VPC with public/private subnets
+- ✅ Internet Gateway and routing
+- ✅ Security groups configured
 
-**Components to be created:**
-1. RDS Subnet Group (associate private subnets)
-2. RDS PostgreSQL Instance (db.t3.small, Multi-AZ)
-3. Database migration from local to AWS
+### ✅ Phase 2: Database (COMPLETE)
+- ✅ Production RDS (nora-db) - PostgreSQL 15.8
+- ✅ Development RDS (nora-db-dev) - PostgreSQL 15.8
+- ✅ 10 migrations applied to both databases
+- ✅ Development database populated with test data (5 users, 33 sessions)
+- ✅ Bastion host for database access
 
-**Estimated Time:** 20-30 minutes
-**Estimated Cost:** ~$30/month
+### ✅ Phase 3: Secrets Management (COMPLETE)
+- ✅ AWS Secrets Manager configured
+- ✅ Environment variables in App Runner
+- ✅ IAM roles with proper permissions
 
-### Phase 3: Secrets Management (Not Yet Created)
+### ✅ Phase 4: Application Updates (COMPLETE)
+- ✅ Code migrated from Google Cloud to AWS
+- ✅ S3 storage integration
+- ✅ Local development uses AWS infrastructure
 
-**Components to be created:**
-1. AWS Secrets Manager secrets (DATABASE_URL, JWT secrets, API keys)
-2. IAM role with Secrets Manager permissions
+### ✅ Phase 5: Container Deployment (COMPLETE)
+- ✅ ECR Repository created
+- ✅ Docker images built and pushed (v1.0.3)
+- ✅ App Runner service deployed
+- ✅ VPC Connector configured
+- ✅ Auto-deploy enabled
+- ✅ Production URL: https://p2tgddmyxt.us-east-1.awsapprunner.com
 
-**Estimated Time:** 15 minutes
-**Estimated Cost:** ~$0.40/month per secret (~$4/month total)
-
-### Phase 4: Application Updates (Not Yet Created)
-
-**Components to be created:**
-1. No AWS resources, just code updates
-
-### Phase 5: Deployment (Not Yet Created)
-
-**Components to be created:**
-1. ECR Repository (container registry)
-2. App Runner VPC Connector
-3. App Runner Service
-
-**Estimated Time:** 30 minutes
-**Estimated Cost:** ~$25-50/month
+### 📈 Next Steps (Optional Enhancements)
+1. Set up CloudWatch dashboards for monitoring
+2. Configure AWS WAF for additional security
+3. Implement automated backups with snapshots
+4. Set up staging environment
+5. Configure custom domain name
+6. Enable CloudFront CDN for static assets
 
 ---
 
@@ -346,17 +358,18 @@ aws s3 ls s3://$BUCKET_NAME
 
 ## ⚠️ Important Notes
 
-### What's NOT Created Yet
-- ❌ RDS PostgreSQL database
-- ❌ Secrets Manager secrets
-- ❌ App Runner service
-- ❌ ECR repository
-- ❌ IAM roles for services
+### ✅ All Resources Created
+- ✅ RDS PostgreSQL databases (production + development)
+- ✅ Secrets Manager configured
+- ✅ App Runner service deployed
+- ✅ ECR repository with Docker images
+- ✅ IAM roles for all services
+- ✅ Bastion host for database access
 
 ### Cost Monitoring
-- Set up billing alert: $50/month threshold ✅
-- Current spend: ~$0.25/month
-- Expected final spend: ~$100-150/month
+- Set up billing alert: $100/month threshold recommended
+- Current spend: ~$68.50/month
+- Can be reduced to ~$61/month by stopping bastion when not in use
 
 ### Cleanup Instructions
 If you need to delete everything and start over:
@@ -390,5 +403,15 @@ aws ec2 delete-vpc --vpc-id $VPC_ID
 ---
 
 **Document Created:** 2025-11-27
-**Last Updated:** 2025-11-27
-**Next Review:** After Phase 2 completion
+**Last Updated:** 2025-11-28
+**Status:** All phases complete - production ready
+**Next Review:** Monthly or before major changes
+
+---
+
+## 📚 Related Documentation
+
+- **AWS_RESOURCES_SUMMARY.md** - Complete resource inventory and costs
+- **DATABASE_ACCESS_GUIDE.md** - How to access databases via bastion
+- **DOCKER_DEPLOYMENT_CHECKLIST.md** - Deployment procedures
+- **aws-resources.txt** - All resource IDs and credentials (DO NOT COMMIT)

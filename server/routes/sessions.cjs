@@ -110,7 +110,7 @@ router.post('/upload', async (req, res) => {
       sessionId: session.id,
       masteryAchieved,
       riskDetected: riskDetection.flagged,
-      storagePath: storage.isGCSEnabled() ? storagePath : undefined,
+      storagePath: storagePath !== 'no-audio' ? storagePath : undefined,
       streak: streakInfo
     });
 
