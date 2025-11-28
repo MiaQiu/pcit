@@ -1,6 +1,6 @@
 // AWS S3 Storage service for audio file management
 const { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const { getSignedUrl: getSignedUrlSDK } = require('@aws-sdk/s3-request-presigner');
 
 // S3 configuration (optional for development)
 const S3_ENABLED = process.env.AWS_S3_BUCKET;
@@ -113,7 +113,7 @@ async function getSignedUrl(filePath) {
       Key: filePath
     });
 
-    const url = await getSignedUrl(s3Client, command, {
+    const url = await getSignedUrlSDK(s3Client, command, {
       expiresIn: 7 * 24 * 60 * 60 // 7 days in seconds
     });
 
