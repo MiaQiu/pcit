@@ -197,18 +197,31 @@ s3://nora-audio-059364397483/
 
 **Layer 2: Encryption**
 - S3: Data encrypted at rest (AES-256)
-- RDS: Will be encrypted at rest (when created)
+- RDS: Encrypted at rest (storage encryption enabled)
 - App Runner: HTTPS/TLS for data in transit
+- Application-level encryption: AES-256-GCM for sensitive user data (PII)
 
 **Layer 3: Access Control**
 - IAM roles for service-to-service communication
 - No hardcoded credentials
-- Secrets stored in AWS Secrets Manager
+- Secrets stored in AWS Secrets Manager:
+  - `nora/encryption-key` - Application-level encryption key (32-byte AES-256)
+  - `nora/jwt-access-secret` - JWT access token signing key
+  - `nora/jwt-refresh-secret` - JWT refresh token signing key
+  - `nora/anthropic-api-key` - Claude AI API key
+  - `nora/elevenlabs-api-key` - ElevenLabs TTS API key
+  - `nora/smtp-user` - Email service credentials
+  - `nora/smtp-pass` - Email service password
+  - `nora/coach-email` - Coach notification email
 
 **Layer 4: Application Security**
-- User data encrypted in database (AES-256-GCM)
-- Passwords hashed with bcrypt
-- JWT for authentication
+- User PII encrypted in database with AES-256-GCM:
+  - Email addresses (stored encrypted, indexed by SHA-256 hash)
+  - User names
+  - Child names and conditions
+- Passwords hashed with bcrypt (salt rounds: 10)
+- JWT-based authentication (15min access, 7d refresh)
+- Session data encrypted before storage
 
 ---
 
@@ -253,9 +266,13 @@ s3://nora-audio-059364397483/
 - ✅ Bastion host for database access
 
 ### ✅ Phase 3: Secrets Management (COMPLETE)
-- ✅ AWS Secrets Manager configured
-- ✅ Environment variables in App Runner
-- ✅ IAM roles with proper permissions
+- ✅ AWS Secrets Manager configured with 9 secrets
+  - Encryption keys (AES-256, JWT access/refresh)
+  - API keys (Anthropic Claude, ElevenLabs)
+  - Email service credentials
+- ✅ Secrets Manager integration code (`server/utils/secrets.cjs`)
+- ✅ Environment-based secret loading (AWS Secrets Manager for prod, .env for dev)
+- ✅ IAM roles with SecretsManager read permissions
 
 ### ✅ Phase 4: Application Updates (COMPLETE)
 - ✅ Code migrated from Google Cloud to AWS
