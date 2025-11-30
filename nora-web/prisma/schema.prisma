@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model LearningProgress {
+  id            String   @id
+  userId        String   @unique
+  currentDeck   Int      @default(1)
+  unlockedDecks Int      @default(1)
+  updatedAt     DateTime
+  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ModuleHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  category  String   // PRAISE, ECHO, NARRATION, etc.
+  level     Int      // 1-4
+  viewedAt  DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([viewedAt])
+  @@index([userId, category])
+}
+
+model RefreshToken {
+  id        String   @id
+  userId    String   @unique
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([tokenHash])
+}
+
+model RiskAuditLog {
+  id             String   @id
+  userId         String
+  sessionId      String?
+  timestamp      DateTime @default(now())
+  triggerSource  String
+  riskLevel      String
+  triggerExcerpt String?
+  actionTaken    String
+  User           User     @relation(fields: [userId], references: [id])
+
+  @@index([riskLevel])
+  @@index([timestamp])
+  @@index([userId])
+}
+
+model Session {
+  id               String      @id
+  userId           String
+  mode             SessionMode
+  storagePath      String
+  durationSeconds  Int
+  transcript       String
+  aiFeedbackJSON   Json
+  pcitCoding       Json
+  tagCounts        Json
+  masteryAchieved  Boolean     @default(false)
+  riskScore        Int         @default(0)
+  flaggedForReview Boolean     @default(false)
+  coachAlertSent   Boolean     @default(false)
+  coachAlertSentAt DateTime?
+  createdAt        DateTime    @default(now())
+  childMetrics     Json?
+  User             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([flaggedForReview])
+  @@index([mode])
+  @@index([userId])
+}
+
+model User {
+  id                 String               @id
+  email              String               @unique
+  emailHash          String?              @unique
+  passwordHash       String
+  name               String
+  therapistId        String?
+  childName          String
+  childBirthYear     Int
+  childConditions    String
+  createdAt          DateTime             @default(now())
+  currentStreak      Int                  @default(0)
+  lastSessionDate    DateTime?
+  longestStreak      Int                  @default(0)
+  LearningProgress   LearningProgress?
+  RiskAuditLog       RiskAuditLog[]
+  Session            Session[]
+  ThirdPartyRequest  ThirdPartyRequest[]
+  WacbSurvey         WacbSurvey[]
+  ModuleHistory      ModuleHistory[]
+
+  @@index([emailHash])
+  @@index([therapistId])
+}
+
+model ThirdPartyRequest {
+  id            String   @id
+  requestId     String   @unique
+  userId        String
+  provider      String
+  requestType   String
+  dataHash      String?
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([expiresAt])
+}
+
+model WacbSurvey {
+  id                      String   @id
+  userId                  String
+  submittedAt             DateTime @default(now())
+
+  // Step 1: Parenting Stress
+  parentingStressLevel    Int      // 1-7 scale
+  parentingStressChange   Boolean  // Yes/No
+
+  // Step 2: Child Behavior Questions (1-7 scale, Yes/No for change needed)
+  q1Dawdle                Int
+  q1Change                Boolean
+  q2MealBehavior          Int
+  q2Change                Boolean
+  q3Disobey               Int
+  q3Change                Boolean
+  q4Angry                 Int
+  q4Change                Boolean
+  q5Scream                Int
+  q5Change                Boolean
+  q6Destroy               Int
+  q6Change                Boolean
+  q7ProvokeFights         Int
+  q7Change                Boolean
+  q8Interrupt             Int
+  q8Change                Boolean
+  q9Attention             Int
+  q9Change                Boolean
+
+  // Calculated scores
+  totalScore              Int      // Sum of q1-q9 (max 63)
+  totalChangesNeeded      Int      // Count of Yes responses (max 9)
+
+  User                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([submittedAt])
+}
+
+enum SessionMode {
+  CDI
+  PDI
+}

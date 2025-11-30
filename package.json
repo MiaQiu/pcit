@@ -1,47 +1,21 @@
 {
-  "name": "happypillar",
+  "name": "nora-monorepo",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "nora-web",
+    "nora-mobile"
+  ],
   "scripts": {
-    "dev": "vite",
-    "server": "node server.cjs",
-    "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@amplitude/analytics-browser": "^2.31.3",
-    "@amplitude/plugin-session-replay-browser": "^1.23.6",
-    "@aws-sdk/client-s3": "^3.682.0",
-    "@aws-sdk/client-secrets-manager": "^3.940.0",
-    "@aws-sdk/s3-request-presigner": "^3.682.0",
-    "@prisma/client": "^5.22.0",
-    "bcrypt": "^6.0.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "express-rate-limit": "^8.2.1",
-    "form-data": "^4.0.5",
-    "helmet": "^8.1.0",
-    "joi": "^18.0.2",
-    "jsonwebtoken": "^9.0.2",
-    "lucide-react": "^0.294.0",
-    "node-fetch": "^2.7.0",
-    "nodemailer": "^7.0.10",
-    "prisma": "^5.22.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^7.9.6"
+    "dev:web": "npm run dev --workspace=nora-web",
+    "dev:mobile": "npm run start --workspace=nora-mobile",
+    "server": "npm run server --workspace=nora-web",
+    "dev:all": "npm run dev:all --workspace=nora-web",
+    "build:web": "npm run build --workspace=nora-web",
+    "build:core": "npm run build --workspace=@nora/core"
   },
   "devDependencies": {
-    "@types/react": "^18.2.43",
-    "@types/react-dom": "^18.2.17",
-    "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "^10.4.16",
-    "concurrently": "^8.2.2",
-    "postcss": "^8.4.32",
-    "tailwindcss": "^3.3.6",
-    "vite": "^5.0.8"
+    "concurrently": "^8.2.2"
   }
 }
