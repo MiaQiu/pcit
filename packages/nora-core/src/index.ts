@@ -14,6 +14,7 @@ export { default as AuthService } from './services/authService';
 export { default as SessionService } from './services/sessionService';
 export { default as PCITService } from './services/pcitService';
 export { default as TranscriptionService } from './services/transcriptionService';
+export { default as LessonService } from './services/lessonService';
 export {
   default as AmplitudeService,
   type IAmplitudeService,

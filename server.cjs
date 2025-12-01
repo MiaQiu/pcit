@@ -94,9 +94,15 @@ app.use('/api/auth', authRoutes);
 const sessionRoutes = require('./server/routes/sessions.cjs');
 app.use('/api/sessions', sessionRoutes);
 
-// Mount learning progress routes
+// Mount learning progress routes (old deck-based system + recommendations)
 const learningRoutes = require('./server/routes/learning.cjs');
 app.use('/api/learning', learningRoutes);
+
+// Mount lessons routes (new bite-size learning curriculum)
+const lessonRoutes = require('./server/routes/lessons.cjs');
+app.use('/api/lessons', lessonRoutes);
+app.use('/api/quizzes', lessonRoutes); // Quiz endpoints are in lessons.cjs
+app.use('/api/user', lessonRoutes); // User stats endpoint is in lessons.cjs
 
 // Mount transcription proxy routes (PDPA compliant with anonymization)
 const transcriptionProxyRoutes = require('./server/routes/transcription-proxy.cjs');

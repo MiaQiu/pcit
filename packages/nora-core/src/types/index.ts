@@ -165,3 +165,146 @@ export interface APIError {
   message?: string;
   statusCode?: number;
 }
+
+// ============================================================================
+// LEARNING SYSTEM TYPES
+// Bite-size learning curriculum types
+// ============================================================================
+
+export type LessonPhase = 'CONNECT' | 'DISCIPLINE';
+export type ContentType = 'TEXT' | 'EXAMPLE' | 'TIP' | 'SCRIPT' | 'CALLOUT';
+export type ProgressStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'LOCKED';
+
+export interface Lesson {
+  id: string;
+  phase: LessonPhase;
+  phaseNumber: number;
+  dayNumber: number;
+  title: string;
+  subtitle?: string;
+  shortDescription: string;
+  objectives: string[];
+  estimatedMinutes: number;
+  isBooster: boolean;
+  prerequisites: string[];
+  teachesCategories: string[]; // Links to ModuleHistory categories (PRAISE, ECHO, etc.)
+
+  // UI assets
+  dragonImageUrl?: string;
+  backgroundColor: string;
+  ellipse77Color: string;
+  ellipse78Color: string;
+
+  // Content (populated in detail endpoint)
+  segments?: LessonSegment[];
+  quiz?: Quiz;
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface LessonSegment {
+  id: string;
+  lessonId: string;
+  order: number;
+  sectionTitle?: string;
+  contentType: ContentType;
+  bodyText: string;
+  imageUrl?: string;
+  iconType?: string;
+}
+
+export interface Quiz {
+  id: string;
+  lessonId: string;
+  question: string;
+  options: QuizOption[];
+  correctAnswer: string; // The correct option ID
+  explanation: string;
+}
+
+export interface QuizOption {
+  id: string;
+  optionLabel: string; // 'A', 'B', 'C', 'D'
+  optionText: string;
+  order: number;
+}
+
+export interface UserLessonProgress {
+  id: string;
+  userId: string;
+  lessonId: string;
+  status: ProgressStatus;
+  currentSegment: number;
+  totalSegments: number;
+  completedAt?: Date;
+  startedAt: Date;
+  lastViewedAt: Date;
+  timeSpentSeconds: number;
+}
+
+export interface QuizResponse {
+  id: string;
+  userId: string;
+  quizId: string;
+  selectedAnswer: string;
+  isCorrect: boolean;
+  attemptNumber: number;
+  respondedAt: Date;
+}
+
+// API Response types for lessons
+
+export interface LessonCardData {
+  id: string;
+  phase: string;
+  phaseName: string;
+  title: string;
+  subtitle?: string;
+  description: string;
+  dragonImageUrl?: string;
+  backgroundColor: string;
+  ellipse77Color: string;
+  ellipse78Color: string;
+  isLocked: boolean;
+  progress?: UserLessonProgress;
+}
+
+export interface LessonListResponse {
+  lessons: LessonCardData[];
+  userProgress: Record<string, UserLessonProgress>;
+}
+
+export interface LessonDetailResponse {
+  lesson: Lesson;
+  userProgress?: UserLessonProgress;
+}
+
+export interface UpdateProgressRequest {
+  currentSegment: number;
+  timeSpentSeconds?: number;
+  status?: ProgressStatus;
+}
+
+export interface SubmitQuizRequest {
+  selectedAnswer: string;
+}
+
+export interface SubmitQuizResponse {
+  isCorrect: boolean;
+  correctAnswer: string;
+  explanation: string;
+  attemptNumber: number;
+  quizResponse: QuizResponse;
+}
+
+export interface LearningStatsResponse {
+  totalLessons: number;
+  completedLessons: number;
+  inProgressLessons: number;
+  currentPhase: LessonPhase;
+  currentDayNumber: number;
+  totalTimeSpentMinutes: number;
+  averageQuizScore: number;
+  streak: number;
+}

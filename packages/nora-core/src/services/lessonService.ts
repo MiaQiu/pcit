@@ -1,0 +1,256 @@
+import type { StorageAdapter } from '../adapters/storage';
+import type {
+  Lesson,
+  LessonListResponse,
+  LessonDetailResponse,
+  UpdateProgressRequest,
+  SubmitQuizRequest,
+  SubmitQuizResponse,
+  LearningStatsResponse,
+  UserLessonProgress,
+  LessonPhase,
+} from '../types';
+import { fetchWithTimeout } from '../utils/fetchWithTimeout';
+
+/**
+ * Lesson Service
+ * Handles bite-size learning curriculum interactions
+ */
+class LessonService {
+  private storage: StorageAdapter;
+  private apiUrl: string;
+  private getAccessToken: () => Promise<string | null>;
+
+  constructor(
+    storage: StorageAdapter,
+    apiUrl: string,
+    getAccessToken: () => Promise<string | null>
+  ) {
+    this.storage = storage;
+    this.apiUrl = apiUrl;
+    this.getAccessToken = getAccessToken;
+  }
+
+  /**
+   * Get authorization header
+   */
+  private async getAuthHeader(): Promise<HeadersInit> {
+    const token = await this.getAccessToken();
+    if (!token) {
+      throw new Error('No access token available');
+    }
+    return {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
+  /**
+   * Get all lessons with user progress
+   * @param phase Optional filter by phase (CONNECT or DISCIPLINE)
+   */
+  async getLessons(phase?: LessonPhase): Promise<LessonListResponse> {
+    const headers = await this.getAuthHeader();
+    const queryParam = phase ? `?phase=${phase}` : '';
+
+    const response = await fetchWithTimeout(
+      `${this.apiUrl}/api/lessons${queryParam}`,
+      {
+        method: 'GET',
+        headers,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch lessons');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get lesson detail with segments and quiz
+   * @param lessonId Lesson ID
+   */
+  async getLessonDetail(lessonId: string): Promise<LessonDetailResponse> {
+    const headers = await this.getAuthHeader();
+
+    const response = await fetchWithTimeout(
+      `${this.apiUrl}/api/lessons/${lessonId}`,
+      {
+        method: 'GET',
+        headers,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch lesson detail');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get the next lesson user should complete
+   * Considers prerequisites and current progress
+   */
+  async getNextLesson(): Promise<Lesson | null> {
+    const headers = await this.getAuthHeader();
+
+    const response = await fetchWithTimeout(
+      `${this.apiUrl}/api/lessons/next`,
+      {
+        method: 'GET',
+        headers,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch next lesson');
+    }
+
+    const data = await response.json();
+    return data.lesson || null;
+  }
+
+  /**
+   * Get lessons that teach a specific category
+   * Useful for showing "Review these lessons" when module recommended
+   * @param category Recommendation category (PRAISE, ECHO, NARRATION, etc.)
+   */
+  async getLessonsByCategory(category: string): Promise<Lesson[]> {
+    const headers = await this.getAuthHeader();
+
+    const response = await fetchWithTimeout(
+      `${this.apiUrl}/api/lessons/by-category/${category}`,
+      {
+        method: 'GET',
+        headers,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch lessons by category');
+    }
+
+    const data = await response.json();
+    return data.lessons || [];
+  }
+
+  /**
+   * Update lesson progress
+   * @param lessonId Lesson ID
+   * @param progress Progress update data
+   */
+  async updateProgress(
+    lessonId: string,
+    progress: UpdateProgressRequest
+  ): Promise<UserLessonProgress> {
+    const headers = await this.getAuthHeader();
+
+    const response = await fetchWithTimeout(
+      `${this.apiUrl}/api/lessons/${lessonId}/progress`,
+      {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(progress),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update progress');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Submit quiz answer
+   * @param quizId Quiz ID
+   * @param answer Selected answer (option ID)
+   */
+  async submitQuizAnswer(
+    quizId: string,
+    answer: string
+  ): Promise<SubmitQuizResponse> {
+    const headers = await this.getAuthHeader();
+
+    const request: SubmitQuizRequest = {
+      selectedAnswer: answer,
+    };
+
+    const response = await fetchWithTimeout(
+      `${this.apiUrl}/api/quizzes/${quizId}/submit`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(request),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to submit quiz answer');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get user's learning statistics
+   */
+  async getLearningStats(): Promise<LearningStatsResponse> {
+    const headers = await this.getAuthHeader();
+
+    const response = await fetchWithTimeout(
+      `${this.apiUrl}/api/user/learning-stats`,
+      {
+        method: 'GET',
+        headers,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch learning stats');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Mark a lesson as completed
+   * Convenience method that updates progress with COMPLETED status
+   * @param lessonId Lesson ID
+   */
+  async completeLesson(lessonId: string): Promise<UserLessonProgress> {
+    return this.updateProgress(lessonId, {
+      currentSegment: 4, // Assuming 4 segments total
+      status: 'COMPLETED',
+    });
+  }
+
+  /**
+   * Resume a lesson (update last viewed time)
+   * @param lessonId Lesson ID
+   * @param currentSegment Current segment number
+   */
+  async resumeLesson(
+    lessonId: string,
+    currentSegment: number,
+    timeSpentSeconds?: number
+  ): Promise<UserLessonProgress> {
+    return this.updateProgress(lessonId, {
+      currentSegment,
+      timeSpentSeconds,
+      status: 'IN_PROGRESS',
+    });
+  }
+}
+
+export default LessonService;

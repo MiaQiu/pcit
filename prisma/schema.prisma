@@ -102,6 +102,8 @@ model User {
   ThirdPartyRequest  ThirdPartyRequest[]
   WacbSurvey         WacbSurvey[]
   ModuleHistory      ModuleHistory[]
+  UserLessonProgress UserLessonProgress[]
+  QuizResponse       QuizResponse[]
 
   @@index([emailHash])
   @@index([therapistId])
@@ -166,4 +168,163 @@ model WacbSurvey {
 enum SessionMode {
   CDI
   PDI
+}
+
+// ============================================================================
+// LEARNING SYSTEM MODELS
+// Bite-size learning curriculum with lessons, segments, quizzes, and progress
+// ============================================================================
+
+model Lesson {
+  id                String              @id @default(cuid())
+  phase             LessonPhase         // CONNECT or DISCIPLINE
+  phaseNumber       Int                 // 1 or 2
+  dayNumber         Int                 // 1-41 (15 Connect + 26 Discipline)
+  title             String
+  subtitle          String?
+  shortDescription  String              // For lesson cards
+
+  // Content structure
+  objectives        String[]            // Array of learning objectives
+  segments          LessonSegment[]     // Relationship to segments
+
+  // Metadata
+  estimatedMinutes  Int                 @default(2)
+  isBooster         Boolean             @default(false) // True for booster content
+  prerequisites     String[]            // IDs of lessons that must be completed first
+
+  // Integration with recommendation engine
+  teachesCategories String[]            // e.g., ["PRAISE", "ECHO"] - links to ModuleHistory categories
+
+  // Asset references
+  dragonImageUrl    String?
+  backgroundColor   String              @default("#E4E4FF")
+  ellipse77Color    String              @default("#9BD4DF")
+  ellipse78Color    String              @default("#A6E0CB")
+
+  // Relationships
+  quiz              Quiz?
+  userProgress      UserLessonProgress[]
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([phaseNumber, dayNumber])
+  @@index([phase, dayNumber])
+  @@index([phaseNumber])
+}
+
+model LessonSegment {
+  id              String          @id @default(cuid())
+  lessonId        String
+  lesson          Lesson          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  order           Int             // Segment order within lesson (1-4)
+  sectionTitle    String?         // Optional section header (e.g., "Key Concepts", "Examples")
+  contentType     ContentType     // TEXT, EXAMPLE, TIP, etc.
+  bodyText        String          @db.Text
+
+  // Optional multimedia
+  imageUrl        String?
+  iconType        String?         // For emoji/icon display
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([lessonId, order])
+  @@index([lessonId])
+}
+
+model Quiz {
+  id              String          @id @default(cuid())
+  lessonId        String          @unique
+  lesson          Lesson          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  question        String          @db.Text
+  options         QuizOption[]
+  correctAnswer   String          // The correct option ID
+  explanation     String          @db.Text // Explanation shown after answering
+
+  // User responses
+  responses       QuizResponse[]
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([lessonId])
+}
+
+model QuizOption {
+  id              String          @id @default(cuid())
+  quizId          String
+  quiz            Quiz            @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  optionLabel     String          // A, B, C, D
+  optionText      String          @db.Text
+  order           Int             // Display order (1, 2, 3, 4)
+
+  @@unique([quizId, optionLabel])
+  @@index([quizId])
+}
+
+model UserLessonProgress {
+  id              String          @id @default(cuid())
+  userId          String
+  lessonId        String
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson          Lesson          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  // Progress tracking
+  status          ProgressStatus  // NOT_STARTED, IN_PROGRESS, COMPLETED, LOCKED
+  currentSegment  Int             @default(1) // Which segment they're viewing (1-4)
+  totalSegments   Int             @default(4)
+  completedAt     DateTime?
+
+  // Time tracking
+  startedAt       DateTime        @default(now())
+  lastViewedAt    DateTime        @default(now())
+  timeSpentSeconds Int            @default(0)
+
+  @@unique([userId, lessonId])
+  @@index([userId, status])
+  @@index([lessonId])
+}
+
+model QuizResponse {
+  id              String          @id @default(cuid())
+  userId          String
+  quizId          String
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz            Quiz            @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  selectedAnswer  String          // The option ID they selected
+  isCorrect       Boolean
+  attemptNumber   Int             @default(1) // Allow retakes
+  respondedAt     DateTime        @default(now())
+
+  @@index([userId, quizId])
+  @@index([quizId])
+}
+
+// Enums for Learning System
+enum LessonPhase {
+  CONNECT
+  DISCIPLINE
+}
+
+enum ContentType {
+  TEXT          // Regular paragraph content
+  EXAMPLE       // Sample script/scenario
+  TIP           // Practice tip
+  SCRIPT        // Sample dialogue
+  CALLOUT       // Important highlighted content
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  LOCKED
 }
