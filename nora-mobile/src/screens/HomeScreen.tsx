@@ -4,49 +4,76 @@
  */
 
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LessonCard, LessonCardProps } from '../components/LessonCard';
+import { DRAGON_PURPLE } from '../constants/assets';
+// import { StreakWidget } from '../components/StreakWidget';
+
+// Mock data - will be replaced with API calls later
+const MOCK_LESSONS: LessonCardProps[] = [
+  {
+    id: '1',
+    phase: 'PHASE',
+    phaseName: 'Connect',
+    title: 'Read your first 2-minute Lesson',
+    subtitle: 'Start your journey',
+    description: 'Lessons are short 2 min reads about how important connection is during playtime.',
+    dragonImageUrl: DRAGON_PURPLE,
+    backgroundColor: '#E4E4FF',
+    ellipseColor: '#9BD4DF', // Cyan ellipse from Figma
+    isLocked: false,
+  },
+  {
+    id: '2',
+    phase: 'PHASE',
+    phaseName: 'Discipline',
+    title: 'Read your first 2-minute Lesson',
+    subtitle: 'Start your journey',
+    description: 'Lessons are short 2 min reads about how important connection is during playtime.',
+    dragonImageUrl: DRAGON_PURPLE,
+    backgroundColor: '#FFE4C0',
+    ellipseColor: '#FFB380', // Orange ellipse
+    isLocked: true,
+  },
+];
 
 export const HomeScreen: React.FC = () => {
+  // Mock streak data - will be replaced with real user data
+  const completedDays = [true, true, true, true, true, true, false];
+  const dragonImageUrl = 'https://www.figma.com/api/mcp/asset/fb9ddced-cfdb-4414-a8e4-d1dcfb1b40d7';
+
+  const handleLessonPress = (lessonId: string) => {
+    console.log('Lesson pressed:', lessonId);
+    // Navigate to lesson viewer
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <Text style={styles.title}>Home</Text>
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>
-            Lesson cards will appear here
-          </Text>
-        </View>
+    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+      <ScrollView
+        className="flex-1 px-6"
+        contentContainerStyle={{ paddingTop: 8, paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Streak Widget */}
+        {/* <View style={{ marginBottom: 16 }}>
+          <StreakWidget
+            streak={6}
+            completedDays={completedDays}
+            dragonImageUrl={dragonImageUrl}
+          />
+        </View> */}
+
+        {/* Lesson Cards */}
+        {MOCK_LESSONS.map((lesson, index) => (
+          <View key={lesson.id} style={{ marginBottom: index < MOCK_LESSONS.length - 1 ? 8 : 0 }}>
+            <LessonCard
+              {...lesson}
+              onPress={() => handleLessonPress(lesson.id)}
+            />
+          </View>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 16,
-  },
-  title: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 32,
-    color: '#1E2939',
-    marginBottom: 24,
-  },
-  placeholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    minHeight: 400,
-  },
-  placeholderText: {
-    fontSize: 16,
-    color: '#9CA3AF',
-    textAlign: 'center',
-  },
-});

@@ -25,30 +25,41 @@ export const Button: React.FC<ButtonProps> = ({
   icon,
 }) => {
   const isPrimary = variant === 'primary';
+  const bgColor = disabled
+    ? 'rgba(30, 41, 57, 0.6)'
+    : isPrimary
+    ? '#1E2939'
+    : '#F3F4F6';
 
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled || loading}
-      className={`
-        h-16 rounded-full px-11 py-4
-        flex-row items-center justify-center
-        ${isPrimary ? 'bg-[#8C49D5]' : 'bg-gray-200'}
-        ${disabled ? 'opacity-50' : ''}
-      `}
+      style={{
+        backgroundColor: bgColor,
+        height: 64,
+        borderRadius: 112,
+        paddingHorizontal: 42,
+        paddingVertical: 15,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
       activeOpacity={0.8}
     >
-      <View className="flex-row items-center justify-center gap-2">
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         {loading ? (
           <ActivityIndicator color={isPrimary ? '#FFFFFF' : '#1E2939'} />
         ) : (
           <>
             <Text
-              style={{ fontFamily: 'PlusJakartaSans_700Bold' }}
-              className={`
-                text-base text-center
-                ${isPrimary ? 'text-white' : 'text-[#1E2939]'}
-              `}
+              style={{
+                fontFamily: 'PlusJakartaSans_700Bold',
+                fontSize: 16,
+                color: isPrimary || disabled ? '#FFFFFF' : '#1E2939',
+                textAlign: 'center',
+                letterSpacing: -0.15,
+              }}
             >
               {children}
             </Text>
