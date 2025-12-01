@@ -200,10 +200,10 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       await updateProgress(currentSegmentIndex + 1);
 
       if (lessonData.lesson.quiz) {
-        // Navigate to quiz screen
+        // Replace current screen with quiz (no stacking effect)
         const contentSegments = lessonData.lesson.segments?.length || 0;
         const totalSegs = contentSegments + 1; // +1 for quiz
-        navigation.navigate('Quiz', {
+        navigation.replace('Quiz', {
           quizId: lessonData.lesson.quiz.id,
           lessonId,
           quiz: lessonData.lesson.quiz,
