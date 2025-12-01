@@ -224,6 +224,16 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     navigation.goBack();
   };
 
+  const handleBack = () => {
+    if (currentSegmentIndex > 0) {
+      // Go to previous segment
+      setCurrentSegmentIndex(currentSegmentIndex - 1);
+    } else {
+      // First segment, close the lesson
+      handleClose();
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -298,11 +308,24 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Footer with Continue Button */}
+      {/* Footer with Back and Continue Buttons */}
       <View style={styles.footer}>
-        <Button onPress={handleContinue}>
-          {currentSegmentIndex < totalSegments - 1 ? 'Continue →' : 'Take Quiz →'}
-        </Button>
+        <View style={styles.buttonRow}>
+          <View style={styles.halfButton}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleBack}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.backButtonText}>← Back</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.halfButton}>
+            <Button onPress={handleContinue}>
+              {currentSegmentIndex < totalSegments - 1 ? 'Continue →' : 'Take Quiz →'}
+            </Button>
+          </View>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -407,5 +430,27 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  halfButton: {
+    flex: 1,
+  },
+  backButton: {
+    height: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: 112,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  backButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: COLORS.textDark,
   },
 });

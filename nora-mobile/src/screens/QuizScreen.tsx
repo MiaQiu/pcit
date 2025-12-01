@@ -155,14 +155,16 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
           </Button>
         ) : (
           <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={handleClose}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.backButtonText}>← Back</Text>
-            </TouchableOpacity>
-            <View style={styles.continueButton}>
+            <View style={styles.halfButton}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={handleClose}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.backButtonText}>← Back</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.halfButton}>
               <Button onPress={handleContinue}>
                 Continue →
               </Button>
@@ -246,9 +248,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  halfButton: {
+    flex: 1,
+  },
   backButton: {
     height: 64,
-    paddingHorizontal: 24,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: COLORS.white,
@@ -260,8 +264,5 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: 16,
     color: COLORS.textDark,
-  },
-  continueButton: {
-    flex: 1,
   },
 });
