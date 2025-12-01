@@ -26,14 +26,16 @@ interface QuizScreenProps {
     params: {
       quizId: string;
       lessonId: string;
-      quiz: Quiz; // Pass quiz data directly for now
+      quiz: Quiz;
+      totalSegments: number;
+      currentSegment: number;
     };
   };
   navigation: any;
 }
 
 export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => {
-  const { quizId, lessonId, quiz } = route.params;
+  const { quizId, lessonId, quiz, totalSegments, currentSegment } = route.params;
 
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -85,8 +87,8 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
       {/* Header with Progress Bar and Close Button */}
       <View style={styles.header}>
         <ProgressBar
-          totalSegments={4}
-          currentSegment={4}
+          totalSegments={totalSegments}
+          currentSegment={currentSegment}
         />
         <TouchableOpacity
           style={styles.closeButton}

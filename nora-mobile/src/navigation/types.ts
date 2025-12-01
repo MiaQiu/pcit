@@ -23,6 +23,8 @@ export type RootStackParamList = {
     quizId: string;
     lessonId: string;
     quiz: Quiz;
+    totalSegments: number;
+    currentSegment: number;
   };
 };
 

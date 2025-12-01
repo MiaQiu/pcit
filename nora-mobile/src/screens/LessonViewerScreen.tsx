@@ -201,10 +201,14 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
       if (lessonData.lesson.quiz) {
         // Navigate to quiz screen
+        const contentSegments = lessonData.lesson.segments?.length || 0;
+        const totalSegs = contentSegments + 1; // +1 for quiz
         navigation.navigate('Quiz', {
           quizId: lessonData.lesson.quiz.id,
           lessonId,
           quiz: lessonData.lesson.quiz,
+          totalSegments: totalSegs,
+          currentSegment: totalSegs, // Quiz is the last segment
         });
       } else {
         // No quiz, lesson complete
@@ -238,7 +242,8 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const { lesson, userProgress } = lessonData;
   const segments = lesson.segments || [];
   const currentSegment = segments[currentSegmentIndex];
-  const totalSegments = segments.length;
+  // Total segments includes content segments + quiz (if exists)
+  const totalSegments = segments.length + (lesson.quiz ? 1 : 0);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
