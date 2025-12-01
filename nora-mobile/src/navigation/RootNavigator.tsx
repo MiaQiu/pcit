@@ -7,6 +7,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { TabNavigator } from './TabNavigator';
 import { LessonViewerScreen } from '../screens/LessonViewerScreen';
+import { QuizScreen } from '../screens/QuizScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -22,6 +23,14 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="LessonViewer"
         component={LessonViewerScreen}
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="Quiz"
+        component={QuizScreen}
         options={{
           presentation: 'modal',
           animation: 'slide_from_bottom',

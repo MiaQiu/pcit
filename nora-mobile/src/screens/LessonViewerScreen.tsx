@@ -200,9 +200,12 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       await updateProgress(currentSegmentIndex + 1);
 
       if (lessonData.lesson.quiz) {
-        // TODO: Navigate to quiz screen when it's implemented
-        Alert.alert('Quiz', 'Quiz screen coming soon!');
-        navigation.goBack();
+        // Navigate to quiz screen
+        navigation.navigate('Quiz', {
+          quizId: lessonData.lesson.quiz.id,
+          lessonId,
+          quiz: lessonData.lesson.quiz,
+        });
       } else {
         // No quiz, lesson complete
         Alert.alert('Complete!', 'You finished this lesson!');
