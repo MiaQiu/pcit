@@ -4,9 +4,7 @@
  */
 
 // Lesson Card Assets
-export const DRAGON_PURPLE = require('../../assets/images/dragon-purple.png');
-export const ELLIPSE_77 = require('../../assets/images/ellipse-77.png');
-export const ELLIPSE_78 = require('../../assets/images/ellipse-78.png');
+export const DRAGON_PURPLE = require('../../assets/images/dragon_image.png');
 
 // Button/Icon Assets
 export const ARROW_ICON_1 = require('../../assets/images/arrow-icon-1.png');

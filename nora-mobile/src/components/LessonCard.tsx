@@ -27,7 +27,8 @@ export interface LessonCardProps {
   description: string;
   dragonImageUrl: ImageSourcePropType; // Changed to support local images
   backgroundColor: string;
-  ellipseColor?: string; // Color for decorative ellipses (not used with local images)
+  ellipse77Color?: string; // Color for bottom ellipse
+  ellipse78Color?: string; // Color for top ellipse
   isLocked?: boolean;
   onPress?: () => void;
 }
@@ -40,7 +41,8 @@ export const LessonCard: React.FC<LessonCardProps> = ({
   description,
   dragonImageUrl,
   backgroundColor,
-  ellipseColor = '#9BD4DF',
+  ellipse77Color = '#9BD4DF',
+  ellipse78Color = '#A6E0CB',
   isLocked = false,
   onPress,
 }) => {
@@ -52,11 +54,11 @@ export const LessonCard: React.FC<LessonCardProps> = ({
       style={styles.card}
     >
       <View style={styles.container}>
-        {/* Ellipse 78 - Top decorative background */}
-        <Ellipse color={ellipseColor} style={styles.ellipse78} />
+        {/* Ellipse 78 - Top decorative background - #A6E0CB */}
+        <Ellipse color={ellipse78Color} style={styles.ellipse78} />
 
         {/* Ellipse 77 - Bottom decorative background */}
-        <Ellipse color={ellipseColor} style={styles.ellipse77} />
+        <Ellipse color={ellipse77Color} style={styles.ellipse77} />
 
         {/* Dragon Image - Figma node 35:798 */}
         <View style={styles.dragonContainer}>

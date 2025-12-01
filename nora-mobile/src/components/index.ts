@@ -9,3 +9,5 @@ export { Badge } from './Badge';
 export { StreakWidget } from './StreakWidget';
 export { LessonCard } from './LessonCard';
 export type { LessonCardProps } from './LessonCard';
+export { ProgressBar } from './ProgressBar';
+export type { ProgressBarProps } from './ProgressBar';

@@ -2,11 +2,18 @@ import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useFonts, PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans';
-import { TabNavigator } from './src/navigation/TabNavigator';
+import {
+  useFonts,
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+} from '@expo-google-fonts/plus-jakarta-sans';
+import { RootNavigator } from './src/navigation/RootNavigator';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
   });
 
@@ -21,7 +28,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <TabNavigator />
+        <RootNavigator />
         <StatusBar style="dark" />
       </NavigationContainer>
     </SafeAreaProvider>

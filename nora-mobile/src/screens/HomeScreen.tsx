@@ -6,8 +6,10 @@
 import React from 'react';
 import { View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { LessonCard, LessonCardProps } from '../components/LessonCard';
 import { DRAGON_PURPLE } from '../constants/assets';
+import { RootStackNavigationProp } from '../navigation/types';
 // import { StreakWidget } from '../components/StreakWidget';
 
 // Mock data - will be replaced with API calls later
@@ -21,7 +23,8 @@ const MOCK_LESSONS: LessonCardProps[] = [
     description: 'Lessons are short 2 min reads about how important connection is during playtime.',
     dragonImageUrl: DRAGON_PURPLE,
     backgroundColor: '#E4E4FF',
-    ellipseColor: '#9BD4DF', // Cyan ellipse from Figma
+    ellipse77Color: '#9BD4DF', // Bottom ellipse - cyan
+    ellipse78Color: '#A6E0CB', // Top ellipse - light green
     isLocked: false,
   },
   {
@@ -33,19 +36,32 @@ const MOCK_LESSONS: LessonCardProps[] = [
     description: 'Lessons are short 2 min reads about how important connection is during playtime.',
     dragonImageUrl: DRAGON_PURPLE,
     backgroundColor: '#FFE4C0',
-    ellipseColor: '#FFB380', // Orange ellipse
+    ellipse77Color: '#FFB380', // Bottom ellipse - orange
+    ellipse78Color: '#A6E0CB', // Top ellipse - light green
     isLocked: true,
   },
 ];
 
 export const HomeScreen: React.FC = () => {
+  const navigation = useNavigation<RootStackNavigationProp>();
+
   // Mock streak data - will be replaced with real user data
   const completedDays = [true, true, true, true, true, true, false];
   const dragonImageUrl = 'https://www.figma.com/api/mcp/asset/fb9ddced-cfdb-4414-a8e4-d1dcfb1b40d7';
 
   const handleLessonPress = (lessonId: string) => {
-    console.log('Lesson pressed:', lessonId);
-    // Navigate to lesson viewer
+    // Navigate to lesson viewer with mock content
+    navigation.navigate('LessonViewer', {
+      lesson: {
+        id: lessonId,
+        phase: 'The Power of Praise',
+        title: 'Praise is rocket fuel for good behavior.',
+        bodyText: 'When you praise your child for positive behaviors, you\'re not just making them feel good—you\'re teaching them what to do more of.\n\nSpecific praise like "I love how you shared your toy!" is more effective than general praise like "Good job!" because it shows your child exactly what they did right.\n\nThink of praise as fuel for their confidence and motivation to keep trying.',
+        imageUrl: DRAGON_PURPLE,
+        totalSegments: 4,
+        currentSegment: 1,
+      },
+    });
   };
 
   return (
