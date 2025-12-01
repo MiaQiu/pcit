@@ -50,13 +50,16 @@ export const ResponseButton: React.FC<ResponseButtonProps> = ({
       disabled={isSubmitted}
       activeOpacity={0.7}
     >
-      <View style={[styles.labelCircle, stateStyles.labelCircle]}>
-        <Text style={[styles.labelText, stateStyles.labelText]}>
-          {label}
-        </Text>
-      </View>
+      {/* Show label only when not selected or when submitted */}
+      {(!isSelected || isSubmitted) && (
+        <View style={[styles.labelCircle, stateStyles.labelCircle]}>
+          <Text style={[styles.labelText, stateStyles.labelText]}>
+            {label}
+          </Text>
+        </View>
+      )}
 
-      <Text style={[styles.optionText, stateStyles.optionText]}>
+      <Text style={[styles.optionText, stateStyles.optionText, (isSelected && !isSubmitted) && { marginLeft: 0 }]}>
         {text}
       </Text>
 
@@ -72,11 +75,12 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 28,
     marginBottom: 12,
     borderWidth: 2,
-    minHeight: 64,
+    minHeight: 56,
   },
   labelCircle: {
     width: 32,
@@ -122,8 +126,8 @@ const styles = StyleSheet.create({
   // State: Selected (before submission)
   selected: {
     container: {
-      backgroundColor: '#F5F0FF',
-      borderColor: COLORS.mainPurple,
+      backgroundColor: COLORS.white,
+      borderColor: '#047857',
     },
     labelCircle: {
       backgroundColor: COLORS.mainPurple,

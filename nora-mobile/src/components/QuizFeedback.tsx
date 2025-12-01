@@ -19,17 +19,12 @@ export const QuizFeedback: React.FC<QuizFeedbackProps> = ({
 }) => {
   return (
     <View style={[styles.container, isCorrect ? styles.correctContainer : styles.incorrectContainer]}>
-      {/* Emoji Icon */}
-      <Text style={styles.emoji}>
-        {isCorrect ? '🎉' : '💡'}
-      </Text>
-
-      {/* Heading */}
+      {/* Heading - left aligned */}
       <Text style={[styles.heading, isCorrect ? styles.correctHeading : styles.incorrectHeading]}>
         {isCorrect ? 'Correct!' : 'Not quite!'}
       </Text>
 
-      {/* Explanation */}
+      {/* Explanation - left aligned */}
       <Text style={styles.explanation}>
         {explanation}
       </Text>
@@ -42,39 +37,30 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 16,
     marginBottom: 24,
-    alignItems: 'center',
   },
   correctContainer: {
-    backgroundColor: '#F0FFF4',
-    borderWidth: 1,
-    borderColor: '#48BB78',
+    backgroundColor: '#E6F9F0',
   },
   incorrectContainer: {
     backgroundColor: '#FFF5F5',
-    borderWidth: 1,
-    borderColor: '#F56565',
-  },
-  emoji: {
-    fontSize: 48,
-    marginBottom: 12,
   },
   heading: {
     fontFamily: FONTS.bold,
     fontSize: 20,
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   correctHeading: {
-    color: '#22543D',
+    color: '#047857',
   },
   incorrectHeading: {
     color: '#742A2A',
   },
   explanation: {
     fontFamily: FONTS.regular,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 22,
     color: COLORS.textDark,
-    textAlign: 'center',
+    textAlign: 'left',
   },
 });

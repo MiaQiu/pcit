@@ -16,6 +16,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ResponseButton } from '../components/ResponseButton';
 import { QuizFeedback } from '../components/QuizFeedback';
+import { ProgressBar } from '../components/ProgressBar';
 import { Button } from '../components/Button';
 import { COLORS, FONTS } from '../constants/assets';
 import { LessonService, Quiz, QuizOption, SubmitQuizResponse } from '@nora/core';
@@ -81,8 +82,12 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      {/* Header with Close Button */}
+      {/* Header with Progress Bar and Close Button */}
       <View style={styles.header}>
+        <ProgressBar
+          totalSegments={4}
+          currentSegment={4}
+        />
         <TouchableOpacity
           style={styles.closeButton}
           onPress={handleClose}
@@ -99,12 +104,12 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
         showsVerticalScrollIndicator={false}
       >
         {/* Quiz Icon */}
-        <View style={styles.iconContainer}>
+        {/* <View style={styles.iconContainer}>
           <Text style={styles.icon}>🧠</Text>
-        </View>
+        </View> */}
 
         {/* Badge */}
-        <Text style={styles.badge}>DAILY QUIZ</Text>
+        <Text style={styles.badge}>Just a quick check</Text>
 
         {/* Question */}
         <Text style={styles.question}>{quiz.question}</Text>
@@ -147,9 +152,20 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
             Check Answer
           </Button>
         ) : (
-          <Button onPress={handleContinue}>
-            Continue →
-          </Button>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleClose}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.backButtonText}>← Back</Text>
+            </TouchableOpacity>
+            <View style={styles.continueButton}>
+              <Button onPress={handleContinue}>
+                Continue →
+              </Button>
+            </View>
+          </View>
         )}
       </View>
     </SafeAreaView>
@@ -222,5 +238,28 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backButton: {
+    height: 64,
+    paddingHorizontal: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: 112,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  backButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: COLORS.textDark,
+  },
+  continueButton: {
+    flex: 1,
   },
 });
