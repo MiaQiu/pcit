@@ -50,17 +50,9 @@ export const HomeScreen: React.FC = () => {
   const dragonImageUrl = 'https://www.figma.com/api/mcp/asset/fb9ddced-cfdb-4414-a8e4-d1dcfb1b40d7';
 
   const handleLessonPress = (lessonId: string) => {
-    // Navigate to lesson viewer with mock content
+    // Navigate to lesson viewer with lessonId
     navigation.navigate('LessonViewer', {
-      lesson: {
-        id: lessonId,
-        phase: 'The Power of Praise',
-        title: 'Praise is rocket fuel for good behavior.',
-        bodyText: 'When you praise your child for positive behaviors, you\'re not just making them feel good—you\'re teaching them what to do more of.\n\nSpecific praise like "I love how you shared your toy!" is more effective than general praise like "Good job!" because it shows your child exactly what they did right.\n\nThink of praise as fuel for their confidence and motivation to keep trying.',
-        imageUrl: DRAGON_PURPLE,
-        totalSegments: 4,
-        currentSegment: 1,
-      },
+      lessonId,
     });
   };
 

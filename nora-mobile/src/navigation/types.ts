@@ -5,7 +5,6 @@
 
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { LessonContent } from '../screens/LessonViewerScreen';
 
 export type RootTabParamList = {
   Home: undefined;
@@ -17,7 +16,7 @@ export type RootTabParamList = {
 export type RootStackParamList = {
   MainTabs: undefined;
   LessonViewer: {
-    lesson: LessonContent;
+    lessonId: string;
   };
 };
 
