@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { View, Text, Image } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 
 interface StreakWidgetProps {
   streak: number;
@@ -21,51 +21,42 @@ export const StreakWidget: React.FC<StreakWidgetProps> = ({
   dragonImageUrl,
 }) => {
   return (
-    <View className="flex-row items-end" style={{ gap: 8 }}>
+    <View style={styles.container}>
       {/* Dragon Avatar */}
       {dragonImageUrl && (
-        <View className="w-20 h-20 rounded-full bg-gray-300 overflow-hidden">
+        <View style={styles.avatarContainer}>
           <Image
             source={{ uri: dragonImageUrl }}
-            className="w-full h-full"
+            style={styles.avatar}
             resizeMode="cover"
           />
         </View>
       )}
 
       {/* Streak Info */}
-      <View className="flex-1">
-        <View className="flex-row items-center justify-between px-1 mb-1">
-          <Text
-            style={{ fontFamily: 'PlusJakartaSans_700Bold' }}
-            className="text-base text-[#364153] tracking-tight"
-          >
-            Streak
-          </Text>
+      <View style={styles.streakContainer}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Streak</Text>
         </View>
 
         {/* Days Grid */}
-        <View className="flex-row px-1" style={{ gap: 8 }}>
+        <View style={styles.daysGrid}>
           {DAYS.map((day, index) => {
             const isCompleted = completedDays[index];
             return (
-              <View key={day} className="items-center" style={{ gap: 0 }}>
-                <Text
-                  style={{ fontFamily: 'PlusJakartaSans_400Regular' }}
-                  className="text-xs text-[#1E2939] text-center tracking-tight"
-                >
-                  {day}
-                </Text>
-                <View className="w-[30px] h-[30px] items-center justify-center">
+              <View key={day} style={styles.dayColumn}>
+                <Text style={styles.dayLabel}>{day}</Text>
+                <View style={styles.circleContainer}>
                   {/* Circle */}
                   <View
-                    className={`absolute w-[30px] h-[30px] rounded-full ${
-                      isCompleted ? 'bg-[#8C49D5]' : 'bg-gray-200'
-                    }`}
+                    style={[
+                      styles.circle,
+                      isCompleted ? styles.circleCompleted : styles.circleIncomplete,
+                    ]}
                   />
                   {/* Checkmark */}
                   {isCompleted && (
-                    <Text className="text-white text-sm font-bold">✓</Text>
+                    <Text style={styles.checkmark}>✓</Text>
                   )}
                 </View>
               </View>
@@ -76,3 +67,77 @@ export const StreakWidget: React.FC<StreakWidgetProps> = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  avatarContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#E5E5E5',
+    overflow: 'hidden',
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
+  },
+  streakContainer: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    marginBottom: 4,
+  },
+  headerText: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 16,
+    color: '#364153',
+    letterSpacing: -0.5,
+  },
+  daysGrid: {
+    flexDirection: 'row',
+    paddingHorizontal: 4,
+    gap: 8,
+  },
+  dayColumn: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  dayLabel: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 12,
+    color: '#1E2939',
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  circleContainer: {
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circle: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  },
+  circleCompleted: {
+    backgroundColor: '#FFA726', // Orange/yellow from Figma
+  },
+  circleIncomplete: {
+    backgroundColor: '#E0E0E0', // Light gray
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+});
