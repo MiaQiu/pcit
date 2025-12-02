@@ -24,16 +24,16 @@ export const RootNavigator: React.FC = () => {
         name="LessonViewer"
         component={LessonViewerScreen}
         options={{
-          presentation: 'modal',
-          animation: 'slide_from_bottom',
+          animation: 'none',
         }}
       />
       <Stack.Screen
         name="Quiz"
         component={QuizScreen}
         options={{
-          presentation: 'modal',
-          animation: 'slide_from_bottom',
+          //presentation: 'modal',
+          //animation: 'slide_from_bottom',
+          animation: 'none',
         }}
       />
     </Stack.Navigator>

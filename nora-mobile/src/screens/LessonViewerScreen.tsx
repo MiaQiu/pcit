@@ -1,6 +1,6 @@
 /**
  * LessonViewerScreen
- * Display lesson content with progress tracking and multi-segment support
+ * Display lesson content with progress tracking, multi-segment support, and integrated quiz
  * Based on Figma design (36:1210)
  *
  * Features:
@@ -9,6 +9,7 @@
  * - Scrollable content with phase badge, title, body text, and images
  * - Continue button at bottom
  * - Multi-segment navigation
+ * - Integrated quiz as final segment
  * - Progress tracking via API
  */
 
@@ -17,8 +18,10 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProgressBar } from '../components/ProgressBar';
 import { Button } from '../components/Button';
+import { ResponseButton } from '../components/ResponseButton';
+import { QuizFeedback } from '../components/QuizFeedback';
 import { COLORS, FONTS } from '../constants/assets';
-import { LessonService, LessonDetailResponse, LessonSegment } from '@nora/core';
+import { LessonService, LessonDetailResponse, LessonSegment, SubmitQuizResponse } from '@nora/core';
 
 interface LessonViewerScreenProps {
   route: {
@@ -36,6 +39,12 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const [lessonData, setLessonData] = useState<LessonDetailResponse | null>(null);
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
   const [startTime, setStartTime] = useState<Date>(new Date());
+
+  // Quiz state
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
+  const [quizFeedback, setQuizFeedback] = useState<SubmitQuizResponse | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load lesson detail from API
   useEffect(() => {
@@ -185,36 +194,78 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     }
   };
 
+  const handleSubmitQuiz = async () => {
+    if (!selectedOption || !lessonData?.lesson.quiz) return;
+
+    try {
+      setIsSubmitting(true);
+
+      // TODO: Get lessonService instance from App context
+      // const lessonService = getLessonService();
+      // const response = await lessonService.submitQuizAnswer(lessonData.lesson.quiz.id, selectedOption);
+
+      // Mock response - replace with actual API call
+      const isCorrect = selectedOption === lessonData.lesson.quiz.correctAnswer;
+      const mockResponse: SubmitQuizResponse = {
+        isCorrect,
+        explanation: lessonData.lesson.quiz.explanation,
+        attemptNumber: 1,
+        correctAnswer: lessonData.lesson.quiz.correctAnswer,
+        quizResponse: {
+          id: 'mock-quiz-response',
+          userId: 'mock-user',
+          quizId: lessonData.lesson.quiz.id,
+          selectedAnswer: selectedOption,
+          isCorrect,
+          attemptNumber: 1,
+          respondedAt: new Date(),
+        },
+      };
+
+      setQuizFeedback(mockResponse);
+      setIsQuizSubmitted(true);
+      setIsSubmitting(false);
+    } catch (error) {
+      console.error('Failed to submit quiz:', error);
+      Alert.alert('Error', 'Failed to submit quiz. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
   const handleContinue = async () => {
     if (!lessonData) return;
 
     const segments = lessonData.lesson.segments || [];
+    const isOnQuiz = currentSegmentIndex === segments.length;
 
+    // If on quiz and submitted, complete the lesson
+    if (isOnQuiz && isQuizSubmitted) {
+      // Lesson complete, go back to home
+      await updateProgress(currentSegmentIndex + 1);
+      navigation.replace('MainTabs', { screen: 'Home' });
+      return;
+    }
+
+    // If on quiz but not submitted, need to submit first
+    if (isOnQuiz && !isQuizSubmitted) {
+      await handleSubmitQuiz();
+      return;
+    }
+
+    // Move to next segment or quiz
     if (currentSegmentIndex < segments.length - 1) {
-      // Move to next segment
+      // Move to next content segment
       const nextIndex = currentSegmentIndex + 1;
       await updateProgress(nextIndex);
       setCurrentSegmentIndex(nextIndex);
-    } else {
-      // All segments complete, navigate to quiz
+    } else if (lessonData.lesson.quiz) {
+      // Move to quiz (last segment)
       await updateProgress(currentSegmentIndex + 1);
-
-      if (lessonData.lesson.quiz) {
-        // Replace current screen with quiz (no stacking effect)
-        const contentSegments = lessonData.lesson.segments?.length || 0;
-        const totalSegs = contentSegments + 1; // +1 for quiz
-        navigation.replace('Quiz', {
-          quizId: lessonData.lesson.quiz.id,
-          lessonId,
-          quiz: lessonData.lesson.quiz,
-          totalSegments: totalSegs,
-          currentSegment: totalSegs, // Quiz is the last segment
-        });
-      } else {
-        // No quiz, lesson complete
-        Alert.alert('Complete!', 'You finished this lesson!');
-        navigation.goBack();
-      }
+      setCurrentSegmentIndex(segments.length);
+    } else {
+      // No quiz, lesson complete
+      Alert.alert('Complete!', 'You finished this lesson!');
+      navigation.replace('MainTabs', { screen: 'Home' });
     }
   };
 
@@ -228,6 +279,13 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     if (currentSegmentIndex > 0) {
       // Go to previous segment
       setCurrentSegmentIndex(currentSegmentIndex - 1);
+      // Reset quiz state if going back from quiz
+      const segments = lessonData?.lesson.segments || [];
+      if (currentSegmentIndex === segments.length) {
+        setSelectedOption(null);
+        setIsQuizSubmitted(false);
+        setQuizFeedback(null);
+      }
     } else {
       // First segment, close the lesson
       handleClose();
@@ -251,9 +309,17 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
   const { lesson, userProgress } = lessonData;
   const segments = lesson.segments || [];
-  const currentSegment = segments[currentSegmentIndex];
-  // Total segments includes content segments + quiz (if exists)
   const totalSegments = segments.length + (lesson.quiz ? 1 : 0);
+  const isOnQuiz = currentSegmentIndex === segments.length;
+  const currentSegment = !isOnQuiz ? segments[currentSegmentIndex] : null;
+
+  // Determine button text
+  let buttonText = 'Continue →';
+  if (isOnQuiz) {
+    buttonText = isQuizSubmitted ? 'Continue →' : 'Check Answer';
+  } else if (currentSegmentIndex === segments.length - 1 && lesson.quiz) {
+    buttonText = 'Take Quiz →';
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -280,28 +346,65 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Phase Badge */}
-        <Text style={styles.phaseBadge}>{lesson.phase}</Text>
+        {isOnQuiz && lesson.quiz ? (
+          /* Quiz Content */
+          <>
+            {/* Badge */}
+            <Text style={styles.quizBadge}>Just a quick check</Text>
 
-        {/* Title */}
-        <Text style={styles.title}>{lesson.title}</Text>
+            {/* Question */}
+            <Text style={styles.quizQuestion}>{lesson.quiz.question}</Text>
 
-        {/* Section Title (if present) */}
-        {currentSegment?.sectionTitle && (
-          <Text style={styles.sectionTitle}>{currentSegment.sectionTitle}</Text>
-        )}
-
-        {/* Body Text */}
-        <Text style={styles.bodyText}>{currentSegment?.bodyText || ''}</Text>
-
-        {/* Dragon Image (show on first segment) */}
-        {currentSegmentIndex === 0 && lesson.dragonImageUrl && (
-          <View style={styles.imageContainer}>
-            {/* TODO: Replace with actual Image component when assets are ready */}
-            <View style={styles.imagePlaceholder}>
-              <Text style={styles.imagePlaceholderText}>🐉</Text>
+            {/* Options */}
+            <View style={styles.optionsContainer}>
+              {[...lesson.quiz.options].sort((a, b) => a.order - b.order).map((option) => (
+                <ResponseButton
+                  key={option.id}
+                  label={option.optionLabel}
+                  text={option.optionText}
+                  isSelected={selectedOption === option.id}
+                  isSubmitted={isQuizSubmitted}
+                  isCorrect={option.id === lesson.quiz!.correctAnswer}
+                  onPress={() => !isQuizSubmitted && setSelectedOption(option.id)}
+                />
+              ))}
             </View>
-          </View>
+
+            {/* Feedback */}
+            {quizFeedback && (
+              <QuizFeedback
+                isCorrect={quizFeedback.isCorrect}
+                explanation={quizFeedback.explanation}
+              />
+            )}
+          </>
+        ) : (
+          /* Lesson Content */
+          <>
+            {/* Phase Badge */}
+            <Text style={styles.phaseBadge}>{lesson.phase}</Text>
+
+            {/* Title */}
+            <Text style={styles.title}>{lesson.title}</Text>
+
+            {/* Section Title (if present) */}
+            {currentSegment?.sectionTitle && (
+              <Text style={styles.sectionTitle}>{currentSegment.sectionTitle}</Text>
+            )}
+
+            {/* Body Text */}
+            <Text style={styles.bodyText}>{currentSegment?.bodyText || ''}</Text>
+
+            {/* Dragon Image (show on first segment) */}
+            {currentSegmentIndex === 0 && lesson.dragonImageUrl && (
+              <View style={styles.imageContainer}>
+                {/* TODO: Replace with actual Image component when assets are ready */}
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.imagePlaceholderText}>🐉</Text>
+                </View>
+              </View>
+            )}
+          </>
         )}
 
         {/* Spacer for button */}
@@ -321,8 +424,12 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
             </TouchableOpacity>
           </View>
           <View style={styles.halfButton}>
-            <Button onPress={handleContinue}>
-              {currentSegmentIndex < totalSegments - 1 ? 'Continue →' : 'Take Quiz →'}
+            <Button
+              onPress={handleContinue}
+              disabled={isOnQuiz && !isQuizSubmitted && !selectedOption}
+              loading={isSubmitting}
+            >
+              {buttonText}
             </Button>
           </View>
         </View>
@@ -422,6 +529,26 @@ const styles = StyleSheet.create({
   },
   imagePlaceholderText: {
     fontSize: 80,
+  },
+  quizBadge: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.mainPurple,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 16,
+  },
+  quizQuestion: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 20,
+    lineHeight: 28,
+    color: COLORS.textDark,
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  optionsContainer: {
+    marginBottom: 24,
   },
   footer: {
     paddingHorizontal: 24,
