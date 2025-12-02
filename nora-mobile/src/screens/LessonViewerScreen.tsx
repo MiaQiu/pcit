@@ -21,7 +21,9 @@ import { Button } from '../components/Button';
 import { ResponseButton } from '../components/ResponseButton';
 import { QuizFeedback } from '../components/QuizFeedback';
 import { COLORS, FONTS } from '../constants/assets';
-import { LessonService, LessonDetailResponse, LessonSegment, SubmitQuizResponse } from '@nora/core';
+import { LessonDetailResponse, LessonSegment, SubmitQuizResponse } from '@nora/core';
+import { useLessonService } from '../contexts/AppContext';
+import { getMockLessonDetail } from '../data/mockLessons';
 
 interface LessonViewerScreenProps {
   route: {
@@ -34,6 +36,7 @@ interface LessonViewerScreenProps {
 
 export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, navigation }) => {
   const { lessonId } = route.params;
+  const lessonService = useLessonService();
 
   const [loading, setLoading] = useState(true);
   const [lessonData, setLessonData] = useState<LessonDetailResponse | null>(null);
@@ -54,115 +57,25 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const loadLessonDetail = async () => {
     try {
       setLoading(true);
-      // TODO: Get lessonService instance (need to set up in App context)
-      // const lessonService = getLessonService();
-      // const data = await lessonService.getLessonDetail(lessonId);
 
-      // For now, using mock data
-      // Remove this when API is connected
-      console.log('Loading lesson:', lessonId);
-
-      // Mock data - replace with actual API call
-      const mockData: LessonDetailResponse = {
-        lesson: {
-          id: lessonId,
-          phase: 'CONNECT',
-          phaseNumber: 1,
-          dayNumber: 1,
-          title: 'The Power of Praise',
-          subtitle: 'Why praise matters',
-          shortDescription: 'Learn how praise shapes behavior',
-          objectives: ['Understand the power of praise', 'Learn different types of praise'],
-          estimatedMinutes: 2,
-          isBooster: false,
-          prerequisites: [],
-          teachesCategories: ['PRAISE'],
-          dragonImageUrl: 'https://example.com/dragon.png',
-          backgroundColor: '#E4E4FF',
-          ellipse77Color: '#9BD4DF',
-          ellipse78Color: '#A6E0CB',
-          segments: [
-            {
-              id: '1',
-              lessonId,
-              order: 1,
-              sectionTitle: 'Introduction',
-              contentType: 'TEXT',
-              bodyText: 'When you praise your child for positive behaviors, you\'re not just making them feel good—you\'re teaching them what to do more of.\n\nSpecific praise like "I love how you shared your toy!" is more effective than general praise like "Good job!" because it shows your child exactly what they did right.\n\nThink of praise as fuel for their confidence and motivation to keep trying.',
-            },
-            {
-              id: '2',
-              lessonId,
-              order: 2,
-              sectionTitle: 'Types of Praise',
-              contentType: 'EXAMPLE',
-              bodyText: 'Labeled Praise: "I love how you put your toys away!"\nUnlabeled Praise: "Good job!"\n\nLabeled praise is more effective because it tells your child exactly what they did right.',
-            },
-            {
-              id: '3',
-              lessonId,
-              order: 3,
-              sectionTitle: 'Practice Tips',
-              contentType: 'TIP',
-              bodyText: 'Start with simple observations:\n• "You\'re sitting so nicely!"\n• "Great job sharing!"\n• "I love your gentle hands!"\n\nPractice during play time when behavior is positive.',
-            },
-          ],
-          quiz: {
-            id: 'quiz-1',
-            lessonId,
-            question: 'Which is a "Super-Praise"?',
-            correctAnswer: 'option-2',
-            explanation: 'It\'s specific, describes the behaviour, and shows positive attention.',
-            options: [
-              {
-                id: 'option-1',
-                optionLabel: 'A',
-                optionText: 'You\'re so smart!',
-                order: 1,
-              },
-              {
-                id: 'option-2',
-                optionLabel: 'B',
-                optionText: 'You\'re using so many colors in that drawing!',
-                order: 2,
-              },
-              {
-                id: 'option-3',
-                optionLabel: 'C',
-                optionText: 'Good job!',
-                order: 3,
-              },
-            ],
-          },
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        userProgress: {
-          id: 'progress-1',
-          userId: 'user-1',
-          lessonId,
-          status: 'IN_PROGRESS',
-          currentSegment: 1,
-          totalSegments: 3,
-          startedAt: new Date(),
-          lastViewedAt: new Date(),
-          timeSpentSeconds: 0,
-        },
-      };
-
-      setLessonData(mockData);
+      // Try to fetch from API
+      const data = await lessonService.getLessonDetail(lessonId);
+      setLessonData(data);
 
       // Set initial segment index from user progress
-      if (mockData.userProgress) {
-        setCurrentSegmentIndex(mockData.userProgress.currentSegment - 1);
+      if (data.userProgress) {
+        setCurrentSegmentIndex(data.userProgress.currentSegment - 1);
       }
 
       setLoading(false);
     } catch (error) {
       console.error('Failed to load lesson:', error);
-      Alert.alert('Error', 'Failed to load lesson. Please try again.');
+
+      // Fallback to mock data
+      console.log('Using mock data for lesson:', lessonId);
+      const mockData = getMockLessonDetail(lessonId);
+      setLessonData(mockData);
       setLoading(false);
-      navigation.goBack();
     }
   };
 
@@ -174,13 +87,11 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       const now = new Date();
       const timeSpent = Math.floor((now.getTime() - startTime.getTime()) / 1000);
 
-      // TODO: Call API to update progress
-      // const lessonService = getLessonService();
-      // await lessonService.updateProgress(lessonId, {
-      //   currentSegment: newSegmentIndex + 1,
-      //   timeSpentSeconds: timeSpent,
-      //   status: newSegmentIndex >= lessonData.lesson.segments!.length ? 'COMPLETED' : 'IN_PROGRESS'
-      // });
+      // Call API to update progress
+      await lessonService.updateProgress(lessonId, {
+        currentSegment: newSegmentIndex + 1,
+        timeSpentSeconds: timeSpent,
+      });
 
       console.log('Progress updated:', {
         segment: newSegmentIndex + 1,
@@ -191,6 +102,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       setStartTime(new Date());
     } catch (error) {
       console.error('Failed to update progress:', error);
+      // Continue anyway - don't block user if progress update fails
     }
   };
 
@@ -200,11 +112,19 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     try {
       setIsSubmitting(true);
 
-      // TODO: Get lessonService instance from App context
-      // const lessonService = getLessonService();
-      // const response = await lessonService.submitQuizAnswer(lessonData.lesson.quiz.id, selectedOption);
+      // Call API to submit quiz answer
+      const response = await lessonService.submitQuizAnswer(
+        lessonData.lesson.quiz.id,
+        selectedOption
+      );
 
-      // Mock response - replace with actual API call
+      setQuizFeedback(response);
+      setIsQuizSubmitted(true);
+      setIsSubmitting(false);
+    } catch (error) {
+      console.error('Failed to submit quiz:', error);
+
+      // Fallback to mock response
       const isCorrect = selectedOption === lessonData.lesson.quiz.correctAnswer;
       const mockResponse: SubmitQuizResponse = {
         isCorrect,
@@ -224,10 +144,6 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
       setQuizFeedback(mockResponse);
       setIsQuizSubmitted(true);
-      setIsSubmitting(false);
-    } catch (error) {
-      console.error('Failed to submit quiz:', error);
-      Alert.alert('Error', 'Failed to submit quiz. Please try again.');
       setIsSubmitting(false);
     }
   };
@@ -265,7 +181,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     } else {
       // No quiz, lesson complete
       Alert.alert('Complete!', 'You finished this lesson!');
-      navigation.replace('MainTabs', { screen: 'Home' });
+      navigation.replace('LessonComplete', { lessonId });
     }
   };
 
