@@ -22,26 +22,29 @@ export const TabNavigator: React.FC = () => {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#8C49D5', // Main purple
-        tabBarInactiveTintColor: '#9CA3AF', // Gray
+        tabBarInactiveTintColor: '#7C7C7C', // Gray to match Figma
         tabBarStyle: {
           height: 74,
-          paddingTop: 4,
-          paddingBottom: 20,
+          paddingTop: 4.5,
+          paddingBottom: 15,
+          paddingHorizontal: 30,
           backgroundColor: '#FFFFFF',
           borderTopWidth: 0,
           elevation: 0,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
+          shadowColor: '#C0C0C0',
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.4,
+          shadowRadius: 9,
         },
         tabBarLabelStyle: {
-          fontSize: 14,
-          fontWeight: '400',
+          fontSize: 10,
+          fontFamily: 'PlusJakartaSans_600SemiBold',
           marginTop: 4,
+          letterSpacing: -0.3125,
         },
         tabBarItemStyle: {
-          paddingTop: 8,
+          paddingTop: 0,
+          paddingBottom: 0,
         },
       }}
     >
@@ -50,8 +53,12 @@ export const TabNavigator: React.FC = () => {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={24} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'home' : 'home-outline'}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
@@ -60,8 +67,12 @@ export const TabNavigator: React.FC = () => {
         component={RecordScreen}
         options={{
           tabBarLabel: 'Record',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="mic" size={24} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'mic' : 'mic-outline'}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
@@ -70,8 +81,12 @@ export const TabNavigator: React.FC = () => {
         component={LearnScreen}
         options={{
           tabBarLabel: 'Learn',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="book-outline" size={24} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'book' : 'book-outline'}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
@@ -80,8 +95,12 @@ export const TabNavigator: React.FC = () => {
         component={ProgressScreen}
         options={{
           tabBarLabel: 'Progress',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart-outline" size={24} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'bar-chart' : 'bar-chart-outline'}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />

@@ -53,10 +53,22 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
       // const response = await lessonService.submitQuizAnswer(quizId, selectedOption);
 
       // Mock response - replace with actual API call
+      const isCorrect = selectedOption === quiz.correctAnswer;
       const mockResponse: SubmitQuizResponse = {
-        isCorrect: selectedOption === quiz.correctAnswer,
+        isCorrect,
         explanation: quiz.explanation,
         attemptNumber: 1,
+        // Provide required fields from the full SubmitQuizResponse type
+        correctAnswer: quiz.correctAnswer,
+        quizResponse: {
+          id: 'mock-quiz-response',
+          userId: 'mock-user',
+          quizId,
+          selectedAnswer: selectedOption,
+          isCorrect,
+          attemptNumber: 1,
+          respondedAt: new Date(),
+        },
       };
 
       setFeedback(mockResponse);
@@ -71,7 +83,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
 
   const handleContinue = () => {
     // Navigate back to home screen
-    navigation.navigate('MainTabs', { screen: 'Home' });
+    navigation.replace('MainTabs', { screen: 'Home' });
   };
 
   const handleClose = () => {

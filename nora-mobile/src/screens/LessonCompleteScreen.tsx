@@ -5,12 +5,12 @@
  */
 
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { LessonCard } from '../components/LessonCard';
+import { NextActionCard } from '../components/NextActionCard';
 import { StreakWidget } from '../components/StreakWidget';
-import { DRAGON_PURPLE } from '../constants/assets';
+import { ProfileCircle } from '../components/ProfileCircle';
 import { RootStackParamList, RootStackNavigationProp } from '../navigation/types';
 
 type LessonCompleteScreenRouteProp = RouteProp<RootStackParamList, 'LessonComplete'>;
@@ -21,25 +21,9 @@ export const LessonCompleteScreen: React.FC = () => {
 
   // Mock streak data - will be replaced with real user data
   const completedDays = [true, true, true, true, true, true, false];
-  const dragonImageUrl = 'https://www.figma.com/api/mcp/asset/fb9ddced-cfdb-4414-a8e4-d1dcfb1b40d7';
-
-  // Mock "up next" lesson data - will be replaced with API call
-  const upNextLesson = {
-    id: 'record-session',
-    phase: 'PHASE',
-    phaseName: 'Connect',
-    title: 'Record your play session',
-    subtitle: 'Up next',
-    description: 'Learning is 2x faster when put into practice. Practice your new skills by recording the session with Zoey.',
-    dragonImageUrl: DRAGON_PURPLE,
-    backgroundColor: '#E4E4FF',
-    ellipse77Color: '#9BD4DF',
-    ellipse78Color: '#A6E0CB',
-    isLocked: false,
-  };
 
   const handleContinue = () => {
-    // Navigate to Record tab
+    // Navigate to Record tab to record play session
     navigation.navigate('MainTabs', { screen: 'Record' });
   };
 
@@ -55,24 +39,22 @@ export const LessonCompleteScreen: React.FC = () => {
         contentContainerStyle={{ paddingTop: 8, paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Streak Widget */}
-        <View style={{ marginBottom: 16 }}>
+        {/* Profile Circle and Streak Widget */}
+        <View style={styles.streakContainer}>
+          <ProfileCircle size={60} />
           <StreakWidget
             streak={6}
             completedDays={completedDays}
-            dragonImageUrl={dragonImageUrl}
           />
         </View>
 
-        {/* Empty Card Area - just decorative background */}
-        <View style={styles.emptyCardContainer}>
-          <View style={styles.emptyCard} />
-        </View>
-
-        {/* Up Next Section */}
+        {/* Next Action Card */}
         <View style={{ marginTop: 16 }}>
-          <LessonCard
-            {...upNextLesson}
+          <NextActionCard
+            badge="Up next"
+            title="Record your play session"
+            description="Learning is 2x faster when put into practice. Practice your new skills by recording the session with Zoey."
+            buttonText="Continue"
             onPress={handleContinue}
           />
         </View>
@@ -82,16 +64,11 @@ export const LessonCompleteScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  emptyCardContainer: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  emptyCard: {
-    width: '90%',
-    height: 200,
-    backgroundColor: '#D5F5E3', // Light green/cyan from Figma
-    borderRadius: 24,
-    // Could add decorative elements here if needed
+  streakContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+    marginBottom: 16,
+    marginLeft: 20,
   },
 });

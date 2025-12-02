@@ -22,17 +22,6 @@ export const StreakWidget: React.FC<StreakWidgetProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      {/* Dragon Avatar */}
-      {dragonImageUrl && (
-        <View style={styles.avatarContainer}>
-          <Image
-            source={{ uri: dragonImageUrl }}
-            style={styles.avatar}
-            resizeMode="cover"
-          />
-        </View>
-      )}
-
       {/* Streak Info */}
       <View style={styles.streakContainer}>
         <View style={styles.header}>
@@ -72,18 +61,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 8,
-  },
-  avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#E5E5E5',
-    overflow: 'hidden',
-  },
-  avatar: {
-    width: '100%',
-    height: '100%',
   },
   streakContainer: {
     flex: 1,

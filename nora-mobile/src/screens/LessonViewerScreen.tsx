@@ -24,6 +24,7 @@ import { COLORS, FONTS } from '../constants/assets';
 import { LessonDetailResponse, LessonSegment, SubmitQuizResponse } from '@nora/core';
 import { useLessonService } from '../contexts/AppContext';
 import { getMockLessonDetail } from '../data/mockLessons';
+import { LessonCache } from '../lib/LessonCache';
 
 interface LessonViewerScreenProps {
   route: {
@@ -47,7 +48,6 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
   const [quizFeedback, setQuizFeedback] = useState<SubmitQuizResponse | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load lesson detail from API
   useEffect(() => {
@@ -58,20 +58,83 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     try {
       setLoading(true);
 
-      // Try to fetch from API
+      // Try to get from cache first for instant loading
+      const cachedData = await LessonCache.get(lessonId);
+      if (cachedData) {
+        console.log('Loading lesson from cache:', lessonId);
+
+        // Validate cached data - check if segment index is valid
+        const segments = cachedData.lesson.segments || [];
+        const totalSegments = segments.length + (cachedData.lesson.quiz ? 1 : 0);
+        const savedSegment = cachedData.userProgress?.currentSegment ?? 1;
+        const segmentIndex = savedSegment - 1;
+
+        // If cached data has invalid segment index, invalidate cache and fetch fresh
+        if (segmentIndex < 0 || segmentIndex > totalSegments) {
+          console.log('⚠️ Cache validation failed: invalid segment index, fetching fresh data');
+          await LessonCache.remove(lessonId);
+          // Continue to fetch from API below
+        } else {
+          console.log('✅ Cache validation passed, using cached data');
+          setLessonData(cachedData);
+          setLoading(false);
+
+          // Set initial segment index from cached data
+          const validSegment = segmentIndex >= totalSegments ? 0 : segmentIndex;
+          setCurrentSegmentIndex(validSegment);
+
+          // Fetch fresh data in background to update cache and progress
+          lessonService.getLessonDetail(lessonId)
+            .then(freshData => {
+              setLessonData(freshData);
+
+              // Update segment index if progress changed
+              if (freshData.userProgress) {
+                const freshSegmentIndex = freshData.userProgress.currentSegment - 1;
+                const freshValidSegment = freshSegmentIndex >= totalSegments ? 0 : freshSegmentIndex;
+                setCurrentSegmentIndex(freshValidSegment);
+              }
+
+              LessonCache.set(lessonId, freshData);
+            })
+            .catch(err => console.log('Background refresh failed:', err));
+
+          return;
+        }
+      }
+
+      // No cache, fetch from API
       const data = await lessonService.getLessonDetail(lessonId);
       setLessonData(data);
 
+      // Cache the data for future use
+      await LessonCache.set(lessonId, data);
+
       // Set initial segment index from user progress
       if (data.userProgress) {
-        setCurrentSegmentIndex(data.userProgress.currentSegment - 1);
+        const segments = data.lesson.segments || [];
+        const totalSegments = segments.length + (data.lesson.quiz ? 1 : 0);
+        const savedSegment = data.userProgress.currentSegment - 1;
+
+        // Bounds check: if saved segment is beyond total, reset to first segment
+        const validSegment = savedSegment >= totalSegments ? 0 : savedSegment;
+        setCurrentSegmentIndex(validSegment);
       }
 
       setLoading(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load lesson:', error);
 
-      // Fallback to mock data
+      // Check if lesson is locked (403 error)
+      if (error.message?.includes('Prerequisites not met') || error.message?.includes('403')) {
+        setLoading(false);
+        // Navigate back and show error
+        navigation.goBack();
+        // Note: In a production app, you might want to show an Alert here
+        return;
+      }
+
+      // Fallback to mock data for other errors
       console.log('Using mock data for lesson:', lessonId);
       const mockData = getMockLessonDetail(lessonId);
       setLessonData(mockData);
@@ -79,7 +142,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     }
   };
 
-  const updateProgress = async (newSegmentIndex: number) => {
+  const updateProgress = async (newSegmentIndex: number, saveImmediately = false) => {
     if (!lessonData) return;
 
     try {
@@ -87,16 +150,24 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       const now = new Date();
       const timeSpent = Math.floor((now.getTime() - startTime.getTime()) / 1000);
 
-      // Call API to update progress
-      await lessonService.updateProgress(lessonId, {
-        currentSegment: newSegmentIndex + 1,
-        timeSpentSeconds: timeSpent,
-      });
+      // Only save to API if explicitly requested (e.g., on lesson close or completion)
+      // Otherwise, just track locally for better performance
+      if (saveImmediately) {
+        await lessonService.updateProgress(lessonId, {
+          currentSegment: newSegmentIndex + 1,
+          timeSpentSeconds: timeSpent,
+        });
 
-      console.log('Progress updated:', {
-        segment: newSegmentIndex + 1,
-        timeSpent,
-      });
+        console.log('Progress saved to server:', {
+          segment: newSegmentIndex + 1,
+          timeSpent,
+        });
+      } else {
+        console.log('Progress tracked locally:', {
+          segment: newSegmentIndex + 1,
+          timeSpent,
+        });
+      }
 
       // Reset timer for next segment
       setStartTime(new Date());
@@ -109,43 +180,36 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const handleSubmitQuiz = async () => {
     if (!selectedOption || !lessonData?.lesson.quiz) return;
 
-    try {
-      setIsSubmitting(true);
-
-      // Call API to submit quiz answer
-      const response = await lessonService.submitQuizAnswer(
-        lessonData.lesson.quiz.id,
-        selectedOption
-      );
-
-      setQuizFeedback(response);
-      setIsQuizSubmitted(true);
-      setIsSubmitting(false);
-    } catch (error) {
-      console.error('Failed to submit quiz:', error);
-
-      // Fallback to mock response
-      const isCorrect = selectedOption === lessonData.lesson.quiz.correctAnswer;
-      const mockResponse: SubmitQuizResponse = {
+    // Provide immediate feedback using client-side validation
+    const isCorrect = selectedOption === lessonData.lesson.quiz.correctAnswer;
+    const immediateResponse: SubmitQuizResponse = {
+      isCorrect,
+      explanation: lessonData.lesson.quiz.explanation,
+      attemptNumber: 1,
+      correctAnswer: lessonData.lesson.quiz.correctAnswer,
+      quizResponse: {
+        id: 'pending',
+        userId: 'current-user',
+        quizId: lessonData.lesson.quiz.id,
+        selectedAnswer: selectedOption,
         isCorrect,
-        explanation: lessonData.lesson.quiz.explanation,
         attemptNumber: 1,
-        correctAnswer: lessonData.lesson.quiz.correctAnswer,
-        quizResponse: {
-          id: 'mock-quiz-response',
-          userId: 'mock-user',
-          quizId: lessonData.lesson.quiz.id,
-          selectedAnswer: selectedOption,
-          isCorrect,
-          attemptNumber: 1,
-          respondedAt: new Date(),
-        },
-      };
+        respondedAt: new Date(),
+      },
+    };
 
-      setQuizFeedback(mockResponse);
-      setIsQuizSubmitted(true);
-      setIsSubmitting(false);
-    }
+    // Show feedback immediately
+    setQuizFeedback(immediateResponse);
+    setIsQuizSubmitted(true);
+
+    // Submit to API in background (don't wait)
+    lessonService.submitQuizAnswer(
+      lessonData.lesson.quiz.id,
+      selectedOption
+    ).catch(error => {
+      console.error('Failed to submit quiz to server (non-blocking):', error);
+      // Don't show error to user since they already got immediate feedback
+    });
   };
 
   const handleContinue = async () => {
@@ -157,7 +221,12 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     // If on quiz and submitted, complete the lesson
     if (isOnQuiz && isQuizSubmitted) {
       // Lesson complete, navigate to completion screen
-      await updateProgress(currentSegmentIndex + 1);
+      // Save final progress to server before navigating away
+      updateProgress(currentSegmentIndex + 1, true);
+
+      // DON'T invalidate cache - keep it so user can review completed lesson instantly
+      // Cache will be cleaned up when app opens and lesson is completed
+
       navigation.replace('LessonComplete', { lessonId });
       return;
     }
@@ -172,12 +241,14 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     if (currentSegmentIndex < segments.length - 1) {
       // Move to next content segment
       const nextIndex = currentSegmentIndex + 1;
-      await updateProgress(nextIndex);
+      // Update UI immediately, save progress in background
       setCurrentSegmentIndex(nextIndex);
+      updateProgress(nextIndex);
     } else if (lessonData.lesson.quiz) {
       // Move to quiz (last segment)
-      await updateProgress(currentSegmentIndex + 1);
+      // Update UI immediately, save progress in background
       setCurrentSegmentIndex(segments.length);
+      updateProgress(currentSegmentIndex + 1);
     } else {
       // No quiz, lesson complete
       Alert.alert('Complete!', 'You finished this lesson!');
@@ -186,8 +257,8 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   };
 
   const handleClose = () => {
-    // Save progress before closing
-    updateProgress(currentSegmentIndex);
+    // Save progress to server before closing
+    updateProgress(currentSegmentIndex, true);
     navigation.goBack();
   };
 
@@ -343,7 +414,6 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
             <Button
               onPress={handleContinue}
               disabled={isOnQuiz && !isQuizSubmitted && !selectedOption}
-              loading={isSubmitting}
             >
               {buttonText}
             </Button>

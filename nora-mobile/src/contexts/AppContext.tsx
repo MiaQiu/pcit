@@ -8,7 +8,7 @@ import { LessonService, AuthService } from '@nora/core';
 import { SecureStoreAdapter } from '../lib/SecureStoreAdapter';
 
 // Get API URL from environment variable or use default
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface AppContextType {
   lessonService: LessonService;

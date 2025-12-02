@@ -112,31 +112,59 @@ router.get('/', async (req, res) => {
       progressMap[p.lessonId] = p;
     });
 
-    // Check prerequisites and determine lock status for each lesson
-    const lessonCards = await Promise.all(
-      lessons.map(async (lesson) => {
-        let progress = progressMap[lesson.id];
+    // Get all prerequisite lesson IDs
+    const allPrerequisiteIds = new Set();
+    lessons.forEach(lesson => {
+      if (lesson.prerequisites && lesson.prerequisites.length > 0) {
+        lesson.prerequisites.forEach(prereqId => allPrerequisiteIds.add(prereqId));
+      }
+    });
 
-        // If no progress exists, create initial state
-        if (!progress) {
-          const prerequisitesMet = await checkPrerequisites(userId, lesson);
-          const status = prerequisitesMet ? 'NOT_STARTED' : 'LOCKED';
+    // Fetch all prerequisite progress in ONE query (instead of N queries)
+    const prerequisiteProgress = await prisma.userLessonProgress.findMany({
+      where: {
+        userId,
+        lessonId: { in: Array.from(allPrerequisiteIds) }
+      }
+    });
 
-          progress = {
-            lessonId: lesson.id,
-            userId,
-            status,
-            currentSegment: 1,
-            totalSegments: 4, // Default, will be updated when lesson is opened
-            startedAt: new Date(),
-            lastViewedAt: new Date(),
-            timeSpentSeconds: 0
-          };
+    // Create prerequisite progress map
+    const prereqProgressMap = {};
+    prerequisiteProgress.forEach(p => {
+      prereqProgressMap[p.lessonId] = p;
+    });
+
+    // Check prerequisites and determine lock status for each lesson (no async needed now)
+    const lessonCards = lessons.map((lesson) => {
+      let progress = progressMap[lesson.id];
+
+      // If no progress exists, create initial state
+      if (!progress) {
+        // Check prerequisites using the pre-fetched data
+        let prerequisitesMet = true;
+        if (lesson.prerequisites && lesson.prerequisites.length > 0) {
+          prerequisitesMet = lesson.prerequisites.every(prereqId => {
+            const prereqProgress = prereqProgressMap[prereqId];
+            return prereqProgress && prereqProgress.status === 'COMPLETED';
+          });
         }
 
-        return formatLessonCard(lesson, progress);
-      })
-    );
+        const status = prerequisitesMet ? 'NOT_STARTED' : 'LOCKED';
+
+        progress = {
+          lessonId: lesson.id,
+          userId,
+          status,
+          currentSegment: 1,
+          totalSegments: 4, // Default, will be updated when lesson is opened
+          startedAt: new Date(),
+          lastViewedAt: new Date(),
+          timeSpentSeconds: 0
+        };
+      }
+
+      return formatLessonCard(lesson, progress);
+    });
 
     res.json({
       lessons: lessonCards,
@@ -399,13 +427,23 @@ router.post('/:quizId/submit', async (req, res) => {
     const { quizId } = req.params;
     const { selectedAnswer } = value;
 
-    // Get quiz with correct answer
-    const quiz = await prisma.quiz.findUnique({
-      where: { id: quizId },
-      include: {
-        options: true
-      }
-    });
+    // Fetch quiz and previous attempts in parallel for better performance
+    const [quiz, previousAttempts] = await Promise.all([
+      prisma.quiz.findUnique({
+        where: { id: quizId },
+        select: {
+          id: true,
+          correctAnswer: true,
+          explanation: true
+        }
+      }),
+      prisma.quizResponse.findMany({
+        where: { userId, quizId },
+        orderBy: { attemptNumber: 'desc' },
+        take: 1,
+        select: { attemptNumber: true }
+      })
+    ]);
 
     if (!quiz) {
       return res.status(404).json({ error: 'Quiz not found' });
@@ -413,13 +451,6 @@ router.post('/:quizId/submit', async (req, res) => {
 
     // Check if answer is correct
     const isCorrect = selectedAnswer === quiz.correctAnswer;
-
-    // Get previous attempts for this quiz
-    const previousAttempts = await prisma.quizResponse.findMany({
-      where: { userId, quizId },
-      orderBy: { attemptNumber: 'desc' },
-      take: 1
-    });
 
     const attemptNumber = previousAttempts.length > 0
       ? previousAttempts[0].attemptNumber + 1

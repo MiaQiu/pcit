@@ -20,6 +20,7 @@ class LessonService {
   private storage: StorageAdapter;
   private apiUrl: string;
   private getAccessToken: () => Promise<string | null>;
+  private lessonCache: Map<string, LessonDetailResponse> = new Map();
 
   constructor(
     storage: StorageAdapter,
@@ -82,6 +83,12 @@ class LessonService {
    * @param lessonId Lesson ID
    */
   async getLessonDetail(lessonId: string): Promise<LessonDetailResponse> {
+    // Check cache first
+    if (this.lessonCache.has(lessonId)) {
+      console.log('Returning cached lesson:', lessonId);
+      return this.lessonCache.get(lessonId)!;
+    }
+
     const headers = await this.getAuthHeader();
 
     const response = await fetchWithTimeout(
@@ -97,7 +104,13 @@ class LessonService {
       throw new Error(error.error || 'Failed to fetch lesson detail');
     }
 
-    return response.json();
+    const data = await response.json();
+
+    // Cache the response
+    this.lessonCache.set(lessonId, data);
+    console.log('Cached lesson:', lessonId);
+
+    return data;
   }
 
   /**
