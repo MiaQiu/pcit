@@ -146,6 +146,29 @@ Currently using mock data (needs API integration):
 
 ---
 
+## ⚠️ Security Note: Authentication Temporarily Disabled
+
+**Date:** December 2, 2025
+**Status:** TEMPORARY - FOR DEVELOPMENT ONLY
+
+The `requireAuth` middleware has been **temporarily removed** from the following lesson endpoints in `/Users/mia/nora/server/routes/lessons.cjs`:
+
+- `GET /api/lessons` (line 84)
+- `GET /api/lessons/:id` (line 161)
+- `PUT /api/lessons/:id/progress` (line 323)
+- `POST /api/lessons/:quizId/submit` (line 390)
+
+**Reason:** To allow development and testing of the mobile app without authentication while the onboarding screen is not yet implemented.
+
+**IMPORTANT:** This is a **security risk** and authentication MUST be re-enabled before production deployment. When implementing Phase 2B (Authentication/Onboarding), restore the `requireAuth` middleware to all these endpoints.
+
+**TODO:**
+- [ ] Build onboarding/login screen (Phase 2B)
+- [ ] Re-enable `requireAuth` on all lesson endpoints
+- [ ] Remove `test-user-id` fallback from all routes
+
+---
+
 ## 📝 Next Phase: Phase 3 - Backend API Integration
 
 ### Goal: Connect mobile app to backend services

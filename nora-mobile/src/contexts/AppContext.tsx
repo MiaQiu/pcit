@@ -25,17 +25,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const services = useMemo(() => {
     const storage = new SecureStoreAdapter();
 
-    // Initialize LessonService
-    const lessonService = new LessonService({
-      baseUrl: API_URL,
-      storage,
+    // Initialize AuthService first
+    const authService = new AuthService(storage, API_URL);
+
+    // Initialize AuthService (load tokens from storage)
+    authService.initialize().catch(err => {
+      console.log('AuthService initialization (no tokens yet):', err);
     });
 
-    // Initialize AuthService
-    const authService = new AuthService({
-      baseUrl: API_URL,
+    // Initialize LessonService with getAccessToken callback
+    const lessonService = new LessonService(
       storage,
-    });
+      API_URL,
+      async () => {
+        // Since we removed auth requirement, return null for now
+        // When auth is re-enabled, this will call authService.getAccessToken()
+        return null;
+      }
+    );
 
     return {
       lessonService,

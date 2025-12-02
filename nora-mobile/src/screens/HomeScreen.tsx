@@ -31,7 +31,17 @@ export const HomeScreen: React.FC = () => {
       setError(null);
 
       // Try to fetch from API
-      const apiLessons = await lessonService.getLessons();
+      const response = await lessonService.getLessons();
+
+      // Extract lessons array from response
+      const apiLessons = response.lessons || [];
+
+      // If API returns empty, use mock data for development
+      if (apiLessons.length === 0) {
+        console.log('No lessons in database, using mock data for development');
+        setLessons(MOCK_HOME_LESSONS);
+        return;
+      }
 
       // Map API lessons to LessonCardProps
       const mappedLessons: LessonCardProps[] = apiLessons.map((lesson) => ({

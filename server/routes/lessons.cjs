@@ -77,10 +77,13 @@ function formatLessonCard(lesson, userProgress) {
  * GET /api/lessons
  * Get all lessons with user progress
  * Query params: ?phase=CONNECT or ?phase=DISCIPLINE
+ *
+ * TODO: SECURITY - Re-enable requireAuth middleware when onboarding screen is implemented
+ * Currently disabled for development/testing without authentication
  */
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId || 'test-user-id'; // Fallback for testing without auth
     const { phase } = req.query;
 
     // Build where clause
@@ -152,10 +155,12 @@ router.get('/', requireAuth, async (req, res) => {
 /**
  * GET /api/lessons/:id
  * Get lesson detail with segments and quiz
+ *
+ * TODO: SECURITY - Re-enable requireAuth middleware when onboarding screen is implemented
  */
-router.get('/:id', requireAuth, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId || 'test-user-id'; // Fallback for testing without auth
     const { id } = req.params;
 
     // Get lesson with segments and quiz
@@ -312,8 +317,10 @@ router.get('/by-category/:category', requireAuth, async (req, res) => {
 /**
  * PUT /api/lessons/:id/progress
  * Update lesson progress
+ *
+ * TODO: SECURITY - Re-enable requireAuth middleware when onboarding screen is implemented
  */
-router.put('/:id/progress', requireAuth, async (req, res) => {
+router.put('/:id/progress', async (req, res) => {
   try {
     // Validate input
     const { error, value } = updateProgressSchema.validate(req.body);
@@ -321,7 +328,7 @@ router.put('/:id/progress', requireAuth, async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const userId = req.userId;
+    const userId = req.userId || 'test-user-id'; // Fallback for testing without auth
     const { id } = req.params;
     const { currentSegment, timeSpentSeconds, status } = value;
 
@@ -377,8 +384,10 @@ router.put('/:id/progress', requireAuth, async (req, res) => {
 /**
  * POST /api/quizzes/:id/submit
  * Submit quiz answer
+ *
+ * TODO: SECURITY - Re-enable requireAuth middleware when onboarding screen is implemented
  */
-router.post('/:quizId/submit', requireAuth, async (req, res) => {
+router.post('/:quizId/submit', async (req, res) => {
   try {
     // Validate input
     const { error, value } = submitQuizSchema.validate(req.body);
@@ -386,7 +395,7 @@ router.post('/:quizId/submit', requireAuth, async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const userId = req.userId;
+    const userId = req.userId || 'test-user-id'; // Fallback for testing without auth
     const { quizId } = req.params;
     const { selectedAnswer } = value;
 
