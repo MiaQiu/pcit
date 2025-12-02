@@ -15,7 +15,7 @@ export type RootTabParamList = {
 };
 
 export type RootStackParamList = {
-  MainTabs: undefined;
+  MainTabs: { screen?: string } | undefined;
   LessonViewer: {
     lessonId: string;
   };
@@ -25,6 +25,9 @@ export type RootStackParamList = {
     quiz: Quiz;
     totalSegments: number;
     currentSegment: number;
+  };
+  LessonComplete: {
+    lessonId: string;
   };
 };
 

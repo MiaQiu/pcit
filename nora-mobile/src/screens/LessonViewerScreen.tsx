@@ -240,9 +240,9 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
     // If on quiz and submitted, complete the lesson
     if (isOnQuiz && isQuizSubmitted) {
-      // Lesson complete, go back to home
+      // Lesson complete, navigate to completion screen
       await updateProgress(currentSegmentIndex + 1);
-      navigation.replace('MainTabs', { screen: 'Home' });
+      navigation.replace('LessonComplete', { lessonId });
       return;
     }
 

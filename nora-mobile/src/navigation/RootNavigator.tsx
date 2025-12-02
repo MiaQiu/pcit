@@ -8,6 +8,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { TabNavigator } from './TabNavigator';
 import { LessonViewerScreen } from '../screens/LessonViewerScreen';
 import { QuizScreen } from '../screens/QuizScreen';
+import { LessonCompleteScreen } from '../screens/LessonCompleteScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -33,6 +34,13 @@ export const RootNavigator: React.FC = () => {
         options={{
           //presentation: 'modal',
           //animation: 'slide_from_bottom',
+          animation: 'none',
+        }}
+      />
+      <Stack.Screen
+        name="LessonComplete"
+        component={LessonCompleteScreen}
+        options={{
           animation: 'none',
         }}
       />

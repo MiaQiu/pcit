@@ -7,3 +7,4 @@ export { RecordScreen } from './RecordScreen';
 export { LearnScreen } from './LearnScreen';
 export { ProgressScreen } from './ProgressScreen';
 export { LessonViewerScreen } from './LessonViewerScreen';
+export { LessonCompleteScreen } from './LessonCompleteScreen';
