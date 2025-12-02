@@ -9,6 +9,7 @@ import {
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { AppProvider } from './src/contexts/AppContext';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -27,10 +28,12 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <RootNavigator />
-        <StatusBar style="dark" />
-      </NavigationContainer>
+      <AppProvider>
+        <NavigationContainer>
+          <RootNavigator />
+          <StatusBar style="dark" />
+        </NavigationContainer>
+      </AppProvider>
     </SafeAreaProvider>
   );
 }

@@ -3,58 +3,79 @@
  * Main home/learn screen with lesson cards
  */
 
-import React from 'react';
-import { View, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, ScrollView, ActivityIndicator, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { LessonCard, LessonCardProps } from '../components/LessonCard';
 import { DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
-// import { StreakWidget } from '../components/StreakWidget';
-
-// Mock data - will be replaced with API calls later
-const MOCK_LESSONS: LessonCardProps[] = [
-  {
-    id: '1',
-    phase: 'PHASE',
-    phaseName: 'Connect',
-    title: 'Read your first 2-minute Lesson',
-    subtitle: 'Start your journey',
-    description: 'Lessons are short 2 min reads about how important connection is during playtime.',
-    dragonImageUrl: DRAGON_PURPLE,
-    backgroundColor: '#E4E4FF',
-    ellipse77Color: '#9BD4DF', // Bottom ellipse - cyan
-    ellipse78Color: '#A6E0CB', // Top ellipse - light green
-    isLocked: false,
-  },
-  {
-    id: '2',
-    phase: 'PHASE',
-    phaseName: 'Discipline',
-    title: 'Read your first 2-minute Lesson',
-    subtitle: 'Start your journey',
-    description: 'Lessons are short 2 min reads about how important connection is during playtime.',
-    dragonImageUrl: DRAGON_PURPLE,
-    backgroundColor: '#FFE4C0',
-    ellipse77Color: '#FFB380', // Bottom ellipse - orange
-    ellipse78Color: '#A6E0CB', // Top ellipse - light green
-    isLocked: true,
-  },
-];
+import { useLessonService } from '../contexts/AppContext';
+import { MOCK_HOME_LESSONS } from '../data/mockLessons';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const lessonService = useLessonService();
 
-  // Mock streak data - will be replaced with real user data
-  const completedDays = [true, true, true, true, true, true, false];
-  const dragonImageUrl = 'https://www.figma.com/api/mcp/asset/fb9ddced-cfdb-4414-a8e4-d1dcfb1b40d7';
+  const [lessons, setLessons] = useState<LessonCardProps[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadLessons();
+  }, []);
+
+  const loadLessons = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Try to fetch from API
+      const apiLessons = await lessonService.getLessons();
+
+      // Map API lessons to LessonCardProps
+      const mappedLessons: LessonCardProps[] = apiLessons.map((lesson) => ({
+        id: lesson.id,
+        phase: 'PHASE',
+        phaseName: lesson.phase,
+        title: lesson.title,
+        subtitle: lesson.subtitle,
+        description: lesson.shortDescription,
+        dragonImageUrl: lesson.dragonImageUrl || DRAGON_PURPLE,
+        backgroundColor: lesson.backgroundColor,
+        ellipse77Color: lesson.ellipse77Color,
+        ellipse78Color: lesson.ellipse78Color,
+        isLocked: false, // TODO: Implement prerequisite checking
+      }));
+
+      setLessons(mappedLessons);
+    } catch (err) {
+      console.error('Failed to load lessons:', err);
+      setError('Failed to load lessons. Using offline data.');
+
+      // Fallback to mock data
+      setLessons(MOCK_HOME_LESSONS);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLessonPress = (lessonId: string) => {
-    // Navigate to lesson viewer with lessonId
-    navigation.navigate('LessonViewer', {
+    navigation.push('LessonViewer', {
       lessonId,
     });
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#8C49D5" />
+          <Text className="mt-4 text-base text-gray-600">Loading lessons...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
@@ -63,6 +84,13 @@ export const HomeScreen: React.FC = () => {
         contentContainerStyle={{ paddingTop: 8, paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Error Message */}
+        {error && (
+          <View className="mb-4 p-4 bg-yellow-100 rounded-lg">
+            <Text className="text-sm text-yellow-800">{error}</Text>
+          </View>
+        )}
+
         {/* Streak Widget */}
         {/* <View style={{ marginBottom: 16 }}>
           <StreakWidget
@@ -73,8 +101,8 @@ export const HomeScreen: React.FC = () => {
         </View> */}
 
         {/* Lesson Cards */}
-        {MOCK_LESSONS.map((lesson, index) => (
-          <View key={lesson.id} style={{ marginBottom: index < MOCK_LESSONS.length - 1 ? 8 : 0 }}>
+        {lessons.map((lesson, index) => (
+          <View key={lesson.id} style={{ marginBottom: index < lessons.length - 1 ? 8 : 0 }}>
             <LessonCard
               {...lesson}
               onPress={() => handleLessonPress(lesson.id)}
