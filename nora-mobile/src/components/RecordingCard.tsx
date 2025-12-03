@@ -1,0 +1,230 @@
+/**
+ * RecordingCard Component
+ * Card for displaying recording in progress with waveform
+ * Based on LessonCard design
+ */
+
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Card } from './Card';
+import { Ellipse } from './Ellipse';
+import { AudioWaveform } from './AudioWaveform';
+import { RecordingTimer } from './RecordingTimer';
+import { FONTS, COLORS } from '../constants/assets';
+
+const dragonImageUrl = require('../../assets/images/dragon_image.png');
+
+interface RecordingCardProps {
+  isRecording: boolean;
+  durationMillis: number;
+  onRecordPress: () => void;
+  canRecord: boolean;
+  backgroundColor?: string;
+  ellipse77Color?: string;
+  ellipse78Color?: string;
+}
+
+export const RecordingCard: React.FC<RecordingCardProps> = ({
+  isRecording,
+  durationMillis,
+  onRecordPress,
+  canRecord,
+  backgroundColor = '#E4E4FF',
+  ellipse77Color = '#9BD4DF',
+  ellipse78Color = '#A6E0CB',
+}) => {
+  return (
+    <Card
+      backgroundColor={backgroundColor}
+      variant="default"
+      style={styles.card}
+    >
+      <View style={styles.container}>
+        {/* Ellipse 78 - Top decorative background */}
+        <Ellipse color={ellipse78Color} style={styles.ellipse78} />
+
+        {/* Ellipse 77 - Bottom decorative background */}
+        <Ellipse color={ellipse77Color} style={styles.ellipse77} />
+
+        {/* Dragon Image - Figma node 35:798 */}
+        <View style={styles.dragonContainer}>
+          <Image
+            source={dragonImageUrl}
+            style={styles.dragonImage}
+            resizeMode="contain"
+          />
+        </View>
+
+        {/* Recording Timer - Top */}
+        <View style={styles.timerContainer}>
+          <RecordingTimer
+            isRecording={isRecording}
+            durationMillis={durationMillis}
+          />
+        </View>
+
+        {/* Waveform - Center */}
+        <View style={styles.waveformContainer}>
+          <AudioWaveform isRecording={isRecording} />
+        </View>
+
+        {/* Hint Text - Bottom */}
+        <View style={styles.hintContainer}>
+          <Text style={styles.hintText}>
+            {isRecording
+              ? 'Recording in progress...\nSpeak naturally during play time!'
+              : 'Start recording your play session'}
+          </Text>
+        </View>
+
+        {/* Record Button */}
+        {!isRecording && (
+          <View style={styles.recordButtonContainer}>
+            <TouchableOpacity
+              style={[styles.recordButton, !canRecord && styles.recordButtonDisabled]}
+              onPress={onRecordPress}
+              disabled={!canRecord}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.recordButtonText}>Record</Text>
+              <Ionicons name="mic" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Stop Button */}
+        {isRecording && (
+          <View style={styles.recordButtonContainer}>
+            <TouchableOpacity
+              style={styles.stopButton}
+              onPress={onRecordPress}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.stopButtonText}>Stop</Text>
+              <Ionicons name="stop" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </Card>
+  );
+};
+
+const styles = StyleSheet.create({
+  card: {
+    width: '90%',
+    height: 660,
+    alignSelf: 'center',
+  },
+  container: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Ellipse 78: x=-45, y=-88, w=473, h=259
+  ellipse78: {
+    position: 'absolute',
+    left: -45,
+    top: -88,
+    width: 473,
+    height: 259,
+  },
+  // Ellipse 77: x=-45, y=153, w=473, h=175
+  ellipse77: {
+    position: 'absolute',
+    left: -45,
+    top: 153,
+    width: 473,
+    height: 175,
+  },
+  // Dragon image: x=0, y=42, w=382, h=223
+  dragonContainer: {
+    position: 'absolute',
+    left: 0,
+    top: 42,
+    width: 350, //adjusted
+    height: 223,
+
+    // width: 382, //original
+
+  },
+  dragonImage: {
+    width: '100%',
+    height: '100%',
+  },
+  timerContainer: {
+    position: 'absolute',
+    top: 300,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  waveformContainer: {
+    position: 'absolute',
+    top: '65%',
+    marginTop: -50,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  hintContainer: {
+    position: 'absolute',
+    bottom: 100,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  hintText: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: COLORS.textDark,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  recordButtonContainer: {
+    position: 'absolute',
+    bottom: 24,
+    alignSelf: 'center',
+    zIndex: 10,
+  },
+  recordButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.textDark,
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 100,
+    gap: 8,
+    minWidth: 160,
+  },
+  recordButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+  },
+  recordButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+  },
+  stopButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E74C3C',
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 100,
+    gap: 8,
+    minWidth: 160,
+  },
+  stopButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+  },
+});
