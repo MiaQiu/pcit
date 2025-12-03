@@ -5,12 +5,14 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
+import { Badge } from './Badge';
 
 interface NextActionCardProps {
-  badge?: string;
+  phase?: string;
+  phaseName?: string;
   title: string;
   description: string;
   buttonText: string;
@@ -18,7 +20,8 @@ interface NextActionCardProps {
 }
 
 export const NextActionCard: React.FC<NextActionCardProps> = ({
-  badge = 'Up next',
+  phase = 'PHASE',
+  phaseName = '',
   title,
   description,
   buttonText,
@@ -26,21 +29,29 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      {/* Decorative Background Waves */}
+      {/* Decorative Background with Ellipse Images */}
       <View style={styles.decorativeBackground}>
-        <View style={styles.waveGreen} />
-        <View style={styles.waveCyan} />
-        <View style={styles.wavePurple} />
+        <Image
+          source={require('../../assets/images/ellipse-77.png')}
+          style={styles.ellipse77}
+          resizeMode="cover"
+        />
+        <Image
+          source={require('../../assets/images/ellipse-78.png')}
+          style={styles.ellipse78}
+          resizeMode="cover"
+        />
       </View>
 
       {/* Content */}
       <View style={styles.content}>
-        {/* Badge */}
-        {badge && (
-          <View style={styles.badgeContainer}>
-            <Text style={styles.badgeText}>{badge}</Text>
-          </View>
-        )}
+        {/* Phase Badge */}
+        <View style={styles.badgeContainer}>
+          <Badge label={phase} subtitle={phaseName} />
+        </View>
+
+        {/* Up next label */}
+        <Text style={styles.upNextLabel}>Up next</Text>
 
         {/* Title */}
         <Text style={styles.title}>{title}</Text>
@@ -60,8 +71,9 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
+    width: '90%',
+    alignSelf: 'center',
+    backgroundColor: '#E4E4FF',
     borderRadius: 24,
     overflow: 'hidden',
     minHeight: 380,
@@ -72,79 +84,62 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 200,
+    bottom: 0,
   },
-  waveGreen: {
+  // Ellipse 78: x=-45, y=-88, w=473, h=259 (Figma image asset)
+  ellipse78: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 120,
-    backgroundColor: '#B4E0CB', // Light mint green
-    borderBottomLeftRadius: 100,
-    borderBottomRightRadius: 100,
+    left: '50%',
+    marginLeft: -236.5, // Half of 473 to center
+    top: -120,
+    width: 473,
+    height: 259,
   },
-  waveCyan: {
+  // Ellipse 77: x=-45, y=153, w=473, h=175 (Figma image asset)
+  ellipse77: {
     position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: '#9BD4DF', // Light cyan
-    borderBottomLeftRadius: 120,
-    borderBottomRightRadius: 120,
-    opacity: 0.8,
-  },
-  wavePurple: {
-    position: 'absolute',
-    top: 100,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: '#E4E4FF', // Light purple
-    borderBottomLeftRadius: 140,
-    borderBottomRightRadius: 140,
+    left: '50%',
+    marginLeft: -236.5, // Half of 473 to center
+    top: -40,
+    width: 473,
+    height: 259,
   },
   content: {
     position: 'relative',
     zIndex: 10,
     paddingHorizontal: 24,
-    paddingTop: 180,
+    paddingTop: 200,
     paddingBottom: 24,
   },
   badgeContainer: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 100,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    alignItems: 'center',
+    marginBottom: 26,
+    marginTop:-10
   },
-  badgeText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    color: COLORS.mainPurple,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+  upNextLabel: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 16,
+    color: '#1E2939',
+    lineHeight: 24,
+    textAlign: 'left',
+    marginBottom: 8,
   },
   title: {
-    fontFamily: FONTS.bold,
-    fontSize: 28,
-    lineHeight: 34,
-    color: COLORS.textDark,
-    marginBottom: 12,
-    letterSpacing: -0.5,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 32,
+    color: '#1E2939',
+    lineHeight: 38,
+    letterSpacing: -0.2,
+    textAlign: 'left',
+    marginBottom: 16,
   },
   description: {
-    fontFamily: FONTS.regular,
-    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 16,
+    color: '#1E2939',
     lineHeight: 22,
-    color: '#666666',
+    letterSpacing: -0.31,
+    textAlign: 'left',
     marginBottom: 24,
   },
   button: {
@@ -156,6 +151,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 100,
     gap: 8,
+    marginTop: 18,
   },
   buttonText: {
     fontFamily: FONTS.semiBold,
