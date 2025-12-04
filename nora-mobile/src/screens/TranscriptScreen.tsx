@@ -28,20 +28,34 @@ interface PCITTag {
 
 // PCIT tag color mapping
 const TAG_COLORS: { [key: string]: string } = {
+  // CDI - DO tags (green/blue/purple)
   'Praise': '#10B981',
-  'Labeled Praise': '#10B981',
-  'Reflection': '#3B82F6',
-  'Behavioral Description': '#8B5CF6',
+  'Echo': '#3B82F6',
   'Narration': '#8B5CF6',
-  'Imitation': '#F59E0B',
-  'Enjoyment': '#EC4899',
+
+  // CDI - DON'T tags (red/orange)
   'Question': '#EF4444',
   'Command': '#EF4444',
-  'Direct Command': '#EF4444',
-  'Indirect Command': '#F97316',
   'Criticism': '#DC2626',
-  'Negative Talk': '#DC2626',
-  'Sarcasm': '#DC2626',
+  'Negative Phrases': '#DC2626',
+
+  // PDI - DO tags (green)
+  'Direct Command': '#10B981',
+  'Positive Command': '#10B981',
+  'Specific Command': '#10B981',
+  'Labeled Praise': '#10B981',
+  'Correct Warning': '#3B82F6',
+  'Correct Time-Out Statement': '#3B82F6',
+
+  // PDI - DON'T tags (red/orange)
+  'Indirect Command': '#F97316',
+  'Negative Command': '#EF4444',
+  'Vague Command': '#F97316',
+  'Chained Command': '#F97316',
+  'Harsh Tone': '#DC2626',
+
+  // Neutral (gray)
+  'Neutral': '#6B7280',
 };
 
 export const TranscriptScreen: React.FC = () => {
@@ -92,19 +106,26 @@ export const TranscriptScreen: React.FC = () => {
     const tags: PCITTag[] = [];
     const codingLines = pcitCoding.coding.split('\n');
 
-    // Find the line that matches this utterance
+    // Find the line that matches this utterance by looking for quoted text
     for (const line of codingLines) {
-      // Check if this line contains the utterance text (partial match)
-      const textMatch = text.substring(0, 50); // Match first 50 chars
-      if (line.includes(textMatch)) {
-        // Extract tags from brackets [DO: ...] or [AVOID: ...]
-        const tagMatches = line.match(/\[(DO|AVOID):\s*([^\]]+)\]/g);
-        if (tagMatches) {
-          tagMatches.forEach((match: string) => {
-            const tagName = match.replace(/\[(DO|AVOID):\s*|\]/g, '');
-            const color = TAG_COLORS[tagName] || '#6B7280';
-            tags.push({ tag: tagName, color });
-          });
+      // Look for quoted text in the coding line
+      const quoteMatch = line.match(/"([^"]+)"/);
+      if (quoteMatch) {
+        const quotedText = quoteMatch[1];
+        // Check if this matches our utterance (allowing for partial matches)
+        const textToMatch = text.substring(0, Math.min(50, text.length)).toLowerCase();
+        const quotedToMatch = quotedText.substring(0, Math.min(50, quotedText.length)).toLowerCase();
+
+        if (textToMatch.includes(quotedToMatch) || quotedToMatch.includes(textToMatch)) {
+          // Extract tags from brackets [DO: ...] or [DON'T: ...] or [Neutral]
+          const tagMatches = line.match(/\[(DO|DON'T):\s*([^\]]+)\]|\[Neutral\]/g);
+          if (tagMatches) {
+            tagMatches.forEach((match: string) => {
+              let tagName = match.replace(/\[(DO|DON'T):\s*|\[|\]/g, '');
+              const color = TAG_COLORS[tagName] || (match.includes("DON'T") ? '#EF4444' : '#10B981');
+              tags.push({ tag: tagName, color });
+            });
+          }
         }
       }
     }
