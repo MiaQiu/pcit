@@ -6,8 +6,17 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { Button } from '../components/Button';
+import { RootStackNavigationProp } from '../navigation/types';
 
 export const ProgressScreen: React.FC = () => {
+  const navigation = useNavigation<RootStackNavigationProp>();
+
+  const handleViewReport = () => {
+    navigation.navigate('Report');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -16,6 +25,13 @@ export const ProgressScreen: React.FC = () => {
           <Text style={styles.placeholderText}>
             Progress stats and calendar will appear here
           </Text>
+
+          {/* Temporary button to view mock report */}
+          <View style={styles.buttonContainer}>
+            <Button onPress={handleViewReport} variant="primary">
+              View Report (Mock)
+            </Button>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -48,5 +64,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#9CA3AF',
     textAlign: 'center',
+    marginBottom: 24,
+  },
+  buttonContainer: {
+    width: '100%',
+    paddingHorizontal: 24,
+    marginTop: 16,
   },
 });

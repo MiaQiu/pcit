@@ -8,7 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { NextActionCard } from '../components/NextActionCard';
+import { RecordingGuideCard } from '../components/RecordingGuideCard';
 import { StreakWidget } from '../components/StreakWidget';
 import { ProfileCircle } from '../components/ProfileCircle';
 import { RootStackParamList, RootStackNavigationProp } from '../navigation/types';
@@ -83,16 +83,9 @@ export const LessonCompleteScreen: React.FC = () => {
           />
         </View>
 
-        {/* Next Action Card */}
+        {/* Recording Guide Card */}
         <View style={{ marginTop: 16 }}>
-          <NextActionCard
-            phase="PHASE"
-            phaseName={lessonData?.lesson.phase || 'Up next'}
-            title="Record your play session"
-            description="Learning is 2x faster when put into practice. Practice your new skills by recording the session with Zoey."
-            buttonText="Continue"
-            onPress={handleContinue}
-          />
+          <RecordingGuideCard onRecordPress={handleContinue} />
         </View>
       </ScrollView>
     </SafeAreaView>

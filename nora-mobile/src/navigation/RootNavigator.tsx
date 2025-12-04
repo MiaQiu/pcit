@@ -9,6 +9,7 @@ import { TabNavigator } from './TabNavigator';
 import { LessonViewerScreen } from '../screens/LessonViewerScreen';
 import { QuizScreen } from '../screens/QuizScreen';
 import { LessonCompleteScreen } from '../screens/LessonCompleteScreen';
+import { ReportScreen } from '../screens/ReportScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -42,6 +43,13 @@ export const RootNavigator: React.FC = () => {
         component={LessonCompleteScreen}
         options={{
           animation: 'none',
+        }}
+      />
+      <Stack.Screen
+        name="Report"
+        component={ReportScreen}
+        options={{
+          animation: 'slide_from_right',
         }}
       />
     </Stack.Navigator>

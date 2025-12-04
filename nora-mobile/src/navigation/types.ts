@@ -29,6 +29,7 @@ export type RootStackParamList = {
   LessonComplete: {
     lessonId: string;
   };
+  Report: undefined;
 };
 
 export type RootTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;

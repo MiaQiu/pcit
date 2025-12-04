@@ -220,14 +220,14 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
     // If on quiz and submitted, complete the lesson
     if (isOnQuiz && isQuizSubmitted) {
-      // Lesson complete, navigate to completion screen
+      // Lesson complete, navigate to Record screen
       // Save final progress to server before navigating away
       updateProgress(currentSegmentIndex + 1, true);
 
       // DON'T invalidate cache - keep it so user can review completed lesson instantly
       // Cache will be cleaned up when app opens and lesson is completed
 
-      navigation.replace('LessonComplete', { lessonId });
+      navigation.navigate('MainTabs', { screen: 'Record' });
       return;
     }
 

@@ -1,0 +1,33 @@
+# AWS Migration Resources - NORA
+# Created: Thu Nov 27 17:14:28 +08 2025
+# Account: 059364397483
+
+AWS_ACCOUNT_ID=059364397483
+AWS_REGION=us-east-1
+BUCKET_NAME=nora-audio-059364397483
+VPC_ID=vpc-0efa6ad4007e9573b
+IGW_ID=igw-0f175550cc43332e4
+PUBLIC_SUBNET_1=subnet-0efbc747bd1d3ba95
+PUBLIC_SUBNET_2=subnet-0065993c9cebe2ede
+PRIVATE_SUBNET_1=subnet-04da84d88d747b277
+PRIVATE_SUBNET_2=subnet-097ff1040953e9084
+PUBLIC_RT=rtb-097dd98905dd11c34
+RDS_SG=sg-0f302445ddfce40f3
+APPRUNNER_SG=sg-0dd55a292ee0e2fb9
+DB_USERNAME=nora_admin
+DB_NAME=nora
+DB_PASSWORD=FPEBKqGY6LU4IXsxM4quqJMxfPccZCsn
+RDS_ENDPOINT=nora-db.cst6ygywo6de.us-east-1.rds.amazonaws.com
+DATABASE_URL=postgresql://nora_admin:FPEBKqGY6LU4IXsxM4quqJMxfPccZCsn@nora-db.cst6ygywo6de.us-east-1.rds.amazonaws.com:5432/nora
+JWT_ACCESS_SECRET=56dcee7ffee2e3d91801d8c58a2f55ac488091524cbdcad34048031a366cac210eca9c48c05df425a3f61c1f0e37aef84cbdc413aba09ca46ff9710c48a23043
+JWT_REFRESH_SECRET=2d8fbfa874df249c8421eb5ee6365ac5fe42870454142e50082b5c49522fdb844a6d360e52bad7ad65611648a13818e2872c769be99b57bce674f9c4dc9beb4b
+ENCRYPTION_KEY=40a4a693d81fb245c30804ba32fba693194dcf4c4a1df5f6b5e7b349c900dcc5
+ROLE_ARN=arn:aws:iam::059364397483:role/NoraAppRunnerTaskRole
+ECR_REPO=059364397483.dkr.ecr.us-east-1.amazonaws.com/nora
+CONNECTOR_ARN=arn:aws:apprunner:us-east-1:059364397483:vpcconnector/nora-vpc-connector/1/c142f56b0b7545e4a8cf1cd5b3d68061
+ECR_ACCESS_ROLE_ARN=arn:aws:iam::059364397483:role/service-role/AppRunnerECRAccessRole
+# Updated App Runner service
+SERVICE_ARN=arn:aws:apprunner:us-east-1:059364397483:service/nora-api/0f1877f0a2d8454da6a4ebde1979fec6
+SERVICE_URL=p2tgddmyxt.us-east-1.awsapprunner.com
+BASTION_SG=sg-0364406d185c3e293
+BASTION_ID=i-0515e23fb1cc66132

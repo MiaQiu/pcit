@@ -4,10 +4,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
+import { RootStackNavigationProp } from '../navigation/types';
 import { RecordButton } from '../components/RecordButton';
 import { AudioWaveform } from '../components/AudioWaveform';
 import { RecordingTimer } from '../components/RecordingTimer';
@@ -18,13 +20,19 @@ import { HowToRecordCard } from '../components/HowToRecordCard';
 import { RecordingCard } from '../components/RecordingCard';
 import { FONTS, COLORS, DRAGON_PURPLE } from '../constants/assets';
 
-type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed';
+type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed' | 'uploading' | 'success';
+
+// Get API URL from environment
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 export const RecordScreen: React.FC = () => {
+  const navigation = useNavigation<RootStackNavigationProp>();
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [recordingId, setRecordingId] = useState<string | null>(null);
 
   useEffect(() => {
     requestPermissions();
@@ -90,26 +98,129 @@ export const RecordScreen: React.FC = () => {
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
 
+      // Get recording status for duration
+      const status = await recording.getStatusAsync();
+      const durationSeconds = status.durationMillis
+        ? Math.floor(status.durationMillis / 1000)
+        : Math.floor(recordingDuration / 1000);
+
       setRecording(null);
-      setRecordingState('completed');
+      setRecordingState('uploading');
 
       console.log('Recording saved to:', uri);
+      console.log('Duration:', durationSeconds, 'seconds');
 
-      // TODO: Upload to backend for analysis
-      Alert.alert(
-        'Recording Complete!',
-        'Your play session has been recorded. Analysis coming soon!',
-        [{ text: 'OK', onPress: resetRecording }]
-      );
+      // Upload to backend
+      if (uri) {
+        await uploadRecording(uri, durationSeconds);
+      }
     } catch (error) {
       console.error('Failed to stop recording:', error);
       Alert.alert('Error', 'Failed to stop recording.');
+      setRecordingState('completed');
+    }
+  };
+
+  const uploadRecording = async (uri: string, durationSeconds: number) => {
+    try {
+      console.log('Starting upload...', { uri, durationSeconds });
+
+      // Create FormData
+      const formData = new FormData();
+
+      // Add audio file
+      const filename = uri.split('/').pop() || 'recording.m4a';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `audio/${match[1]}` : 'audio/m4a';
+
+      formData.append('audio', {
+        uri: uri,
+        name: filename,
+        type: type,
+      } as any);
+
+      formData.append('durationSeconds', durationSeconds.toString());
+
+      // Upload with progress tracking using XMLHttpRequest
+      const uploadPromise = new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(progress);
+            console.log('Upload progress:', progress + '%');
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 201) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              console.log('Upload successful:', response);
+              resolve(response.recordingId);
+            } catch (error) {
+              reject(new Error('Invalid response from server'));
+            }
+          } else {
+            try {
+              const error = JSON.parse(xhr.responseText);
+              reject(new Error(error.details || error.error || 'Upload failed'));
+            } catch {
+              reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'));
+        });
+
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Upload cancelled'));
+        });
+
+        // Open connection and send
+        xhr.open('POST', `${API_URL}/api/recordings/upload`);
+
+        // Note: Since auth is temporarily disabled, we don't need the Authorization header
+        // When auth is re-enabled, add: xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+
+        xhr.send(formData);
+      });
+
+      const uploadedRecordingId = await uploadPromise;
+      setRecordingId(uploadedRecordingId);
+
+      console.log('Upload complete, recording ID:', uploadedRecordingId);
+
+      // Navigate to Report screen
+      navigation.navigate('Report');
+
+    } catch (error) {
+      console.error('Upload failed:', error);
+
+      Alert.alert(
+        'Upload Failed',
+        error instanceof Error ? error.message : 'Failed to upload recording. Please try again.',
+        [
+          { text: 'Cancel', onPress: resetRecording, style: 'cancel' },
+          {
+            text: 'Retry',
+            onPress: () => uploadRecording(uri, durationSeconds)
+          }
+        ]
+      );
+
+      setRecordingState('completed');
     }
   };
 
   const resetRecording = () => {
     setRecordingState('idle');
     setRecordingDuration(0);
+    setUploadProgress(0);
+    setRecordingId(null);
   };
 
   const handleStartSession = () => {
@@ -169,14 +280,21 @@ export const RecordScreen: React.FC = () => {
             <RecordingCard
               isRecording={recordingState === 'recording'}
               durationMillis={recordingDuration}
-              onRecordPress={handleRecordButtonPress}
-              canRecord={canRecord}
             />
           </View>
         )}
 
-        {/* Spacer */}
-        <View style={{ flex: 1, minHeight: 40 }} />
+        {/* Upload Progress */}
+        {recordingState === 'uploading' && (
+          <View style={styles.uploadContainer}>
+            <ActivityIndicator size="large" color={COLORS.textDark} />
+            <Text style={styles.uploadText}>Uploading recording...</Text>
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${uploadProgress}%` }]} />
+            </View>
+            <Text style={styles.progressText}>{uploadProgress}%</Text>
+          </View>
+        )}
 
         {!permissionGranted && recordingState === 'idle' && (
           <Text style={styles.permissionText}>
@@ -185,17 +303,44 @@ export const RecordScreen: React.FC = () => {
         )}
       </ScrollView>
 
-      {/* Fixed Start Session Button at Bottom */}
+      {/* Fixed Bottom Action Buttons */}
       {recordingState === 'idle' && (
         <View style={styles.fixedButtonContainer}>
           <TouchableOpacity
-            style={styles.recordButton}
+            style={styles.actionButton}
             onPress={handleStartSession}
             disabled={!canStartSession}
             activeOpacity={0.8}
           >
-            <Text style={styles.recordButtonText}>Start Session</Text>
+            <Text style={styles.actionButtonText}>Start Session</Text>
             <Ionicons name="play" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {recordingState === 'ready' && (
+        <View style={styles.fixedButtonContainer}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleRecordButtonPress}
+            disabled={!canRecord}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.actionButtonText}>Record</Text>
+            <Ionicons name="mic" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {recordingState === 'recording' && (
+        <View style={styles.fixedButtonContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.stopButton]}
+            onPress={handleRecordButtonPress}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.actionButtonText}>Stop</Text>
+            <Ionicons name="stop" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       )}
@@ -206,8 +351,10 @@ export const RecordScreen: React.FC = () => {
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
-    paddingBottom: 24,
+  },
+  contentFillHeight: {
     flexGrow: 1,
+    paddingHorizontal: 24,
   },
   headerSection: {
     paddingTop: 24,
@@ -227,9 +374,28 @@ const styles = StyleSheet.create({
     marginTop: 26,
   },
   dragonIcon: {
-    width: '100%',
-    height: '100%',
+    // width: '100%',
+    // height: '100%',
+    width: 90,
+    height: 90,
+    marginLeft: 25,
   },
+  // itemIconContainer: {
+  //   width: 50,
+  //   height: 50,
+  //   borderRadius: 25,
+  //   overflow: 'hidden',
+  //   backgroundColor: '#F5F0FF',
+  //   justifyContent: 'center',
+  //   alignItems: 'center',
+  // },
+  // itemIcon: {
+  //   width: 90,
+  //   height: 90,
+  //   marginLeft: 25,
+  // },
+
+  
   headerTextBox: {
     flex: 1,
     flexDirection: 'row',
@@ -256,7 +422,7 @@ const styles = StyleSheet.create({
   },
   recordingCardContainer: {
     marginTop: 24,
-    marginBottom: 24,
+    marginBottom: 120,
   },
   buttonContainer: {
     marginTop: 'auto',
@@ -274,7 +440,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
   },
-  recordButton: {
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -284,11 +450,14 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     gap: 8,
   },
-  recordButtonText: {
+  actionButtonText: {
     fontFamily: FONTS.semiBold,
     fontSize: 16,
     color: '#FFFFFF',
     letterSpacing: -0.3,
+  },
+  stopButton: {
+    backgroundColor: '#E74C3C',
   },
   permissionText: {
     fontFamily: FONTS.regular,
@@ -296,5 +465,65 @@ const styles = StyleSheet.create({
     color: '#E74C3C',
     textAlign: 'center',
     marginTop: 12,
+  },
+  uploadContainer: {
+    marginTop: 40,
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  uploadText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 18,
+    color: COLORS.textDark,
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  progressBarContainer: {
+    width: '100%',
+    height: 8,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: COLORS.textDark,
+    borderRadius: 4,
+  },
+  progressText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginTop: 12,
+  },
+  successContainer: {
+    marginBottom: 66,
+},
+  // guideCardContainer: {
+  //   marginBottom: 24,
+  // },
+  successHeaderSection: {
+    marginBottom: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  successHeaderTextBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 8,
+    backgroundColor: 'rgba(140, 73, 213, 0.1)',
+    borderWidth: 2,
+    borderColor: '#8C49D5',
+    borderRadius: 24,
+    minHeight: 80,
+  },
+  successHeaderText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: '#8C49D5',
+    lineHeight: 24,
   },
 });

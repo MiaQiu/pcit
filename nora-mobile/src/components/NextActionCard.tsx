@@ -15,8 +15,8 @@ interface NextActionCardProps {
   phaseName?: string;
   title: string;
   description: string;
-  buttonText: string;
-  onPress: () => void;
+  buttonText?: string;
+  onPress?: () => void;
 }
 
 export const NextActionCard: React.FC<NextActionCardProps> = ({
@@ -59,11 +59,13 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
         {/* Description */}
         <Text style={styles.description}>{description}</Text>
 
-        {/* CTA Button */}
-        <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
-          <Text style={styles.buttonText}>{buttonText}</Text>
-          <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
-        </TouchableOpacity>
+        {/* CTA Button - Only show if onPress is provided */}
+        {onPress && buttonText && (
+          <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
+            <Text style={styles.buttonText}>{buttonText}</Text>
+            <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -71,7 +73,7 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: '90%',
+    width: '100%',
     alignSelf: 'center',
     backgroundColor: '#E4E4FF',
     borderRadius: 24,

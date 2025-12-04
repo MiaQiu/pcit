@@ -24,12 +24,8 @@ const corsOptions = {
         callback(new Error('Not allowed by CORS'));
       }
     } else {
-      // In development, allow any localhost port
-      if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
+      // In development, allow all origins (for mobile app, web, etc.)
+      callback(null, true);
     }
   },
   credentials: true,
@@ -115,6 +111,10 @@ app.use('/api/pcit', pcitProxyRoutes);
 // Mount WACB-N survey routes
 const wacbSurveyRoutes = require('./server/routes/wacb-survey.cjs');
 app.use('/api/wacb-survey', wacbSurveyRoutes);
+
+// Mount recording upload routes (mobile app)
+const recordingRoutes = require('./server/routes/recordings.cjs');
+app.use('/api/recordings', recordingRoutes);
 
 // DEPRECATED: Old PCIT endpoints (will be removed after frontend migration)
 // TODO: Remove these after frontend is updated to use /api/pcit/* endpoints

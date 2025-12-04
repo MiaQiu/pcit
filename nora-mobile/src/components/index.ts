@@ -15,3 +15,7 @@ export type { LessonListItemProps } from './LessonListItem';
 export { NextActionCard } from './NextActionCard';
 export { ProgressBar } from './ProgressBar';
 export type { ProgressBarProps } from './ProgressBar';
+export { RecordButton } from './RecordButton';
+export { AudioWaveform } from './AudioWaveform';
+export { RecordingTimer } from './RecordingTimer';
+export { SkillProgressBar } from './SkillProgressBar';

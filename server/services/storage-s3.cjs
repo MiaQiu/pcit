@@ -28,27 +28,41 @@ if (S3_ENABLED) {
  * @param {Buffer} fileBuffer - Audio file buffer
  * @param {string} userId - User ID for path organization
  * @param {string} sessionId - Session ID for file naming
+ * @param {string} mimeType - MIME type of the audio file (e.g., 'audio/m4a', 'audio/webm')
  * @returns {Promise<string>} - S3 file path or local mock path
  */
-async function uploadAudioFile(fileBuffer, userId, sessionId) {
+async function uploadAudioFile(fileBuffer, userId, sessionId, mimeType = 'audio/m4a') {
+  // Extract file extension from MIME type
+  // Examples: 'audio/m4a' -> 'm4a', 'audio/x-m4a' -> 'm4a', 'audio/mpeg' -> 'mpeg'
+  let extension = 'm4a'; // Default for mobile recordings
+
+  if (mimeType) {
+    const parts = mimeType.split('/');
+    if (parts.length === 2) {
+      // Handle 'audio/x-m4a' -> 'm4a'
+      extension = parts[1].replace('x-', '');
+    }
+  }
+
   if (!S3_ENABLED || !s3Client) {
-    // Development mode: return mock path
+    // Development mode: return mock path with correct extension
     console.warn('S3 not configured, using mock storage path');
-    return `mock://audio/${userId}/${sessionId}.webm`;
+    return `mock://audio/${userId}/${sessionId}.${extension}`;
   }
 
   try {
-    const key = `audio/${userId}/${sessionId}.webm`;
+    const key = `audio/${userId}/${sessionId}.${extension}`;
 
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: key,
       Body: fileBuffer,
-      ContentType: 'audio/webm',
+      ContentType: mimeType, // Use actual MIME type from uploaded file
       Metadata: {
         userId: userId,
         sessionId: sessionId,
-        uploadedAt: new Date().toISOString()
+        uploadedAt: new Date().toISOString(),
+        originalMimeType: mimeType
       },
       // Server-side encryption (uses default bucket encryption)
       ServerSideEncryption: 'AES256'
@@ -56,7 +70,7 @@ async function uploadAudioFile(fileBuffer, userId, sessionId) {
 
     await s3Client.send(command);
 
-    console.log(`Audio uploaded to S3: ${key}`);
+    console.log(`Audio uploaded to S3: ${key} (${mimeType})`);
     return key;
   } catch (error) {
     console.error('S3 upload error:', error);

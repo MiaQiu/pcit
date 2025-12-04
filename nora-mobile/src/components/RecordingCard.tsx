@@ -18,8 +18,8 @@ const dragonImageUrl = require('../../assets/images/dragon_image.png');
 interface RecordingCardProps {
   isRecording: boolean;
   durationMillis: number;
-  onRecordPress: () => void;
-  canRecord: boolean;
+  onRecordPress?: () => void;
+  canRecord?: boolean;
   backgroundColor?: string;
   ellipse77Color?: string;
   ellipse78Color?: string;
@@ -78,8 +78,8 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
           </Text>
         </View>
 
-        {/* Record Button */}
-        {!isRecording && (
+        {/* Record Button - Only show if onRecordPress is provided */}
+        {!isRecording && onRecordPress && (
           <View style={styles.recordButtonContainer}>
             <TouchableOpacity
               style={[styles.recordButton, !canRecord && styles.recordButtonDisabled]}
@@ -93,8 +93,8 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
           </View>
         )}
 
-        {/* Stop Button */}
-        {isRecording && (
+        {/* Stop Button - Only show if onRecordPress is provided */}
+        {isRecording && onRecordPress && (
           <View style={styles.recordButtonContainer}>
             <TouchableOpacity
               style={styles.stopButton}
@@ -113,8 +113,8 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    width: '90%',
-    height: 660,
+    width: '95%',
+    height: 560,
     alignSelf: 'center',
   },
   container: {
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   waveformContainer: {
     position: 'absolute',
-    top: '65%',
+    top: '75%',
     marginTop: -50,
     width: '100%',
     alignItems: 'center',
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   },
   hintContainer: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 50,
     paddingHorizontal: 24,
     alignItems: 'center',
     zIndex: 10,
