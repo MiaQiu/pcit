@@ -106,17 +106,24 @@ export const TranscriptScreen: React.FC = () => {
     const tags: PCITTag[] = [];
     const codingLines = pcitCoding.coding.split('\n');
 
+    // Normalize text by removing extra spaces
+    const normalizeText = (str: string) => str.replace(/\s+/g, ' ').trim().toLowerCase();
+    const normalizedUtterance = normalizeText(text);
+
     // Find the line that matches this utterance by looking for quoted text
     for (const line of codingLines) {
       // Look for quoted text in the coding line
       const quoteMatch = line.match(/"([^"]+)"/);
       if (quoteMatch) {
         const quotedText = quoteMatch[1];
-        // Check if this matches our utterance (allowing for partial matches)
-        const textToMatch = text.substring(0, Math.min(50, text.length)).toLowerCase();
-        const quotedToMatch = quotedText.substring(0, Math.min(50, quotedText.length)).toLowerCase();
+        const normalizedQuoted = normalizeText(quotedText);
 
-        if (textToMatch.includes(quotedToMatch) || quotedToMatch.includes(textToMatch)) {
+        // Check if this matches our utterance (allowing for partial matches)
+        // Use first 30 words or characters for matching
+        const utteranceStart = normalizedUtterance.split(' ').slice(0, 30).join(' ');
+        const quotedStart = normalizedQuoted.split(' ').slice(0, 30).join(' ');
+
+        if (utteranceStart.includes(quotedStart) || quotedStart.includes(utteranceStart)) {
           // Extract tags from brackets [DO: ...] or [DON'T: ...] or [Neutral]
           const tagMatches = line.match(/\[(DO|DON'T):\s*([^\]]+)\]|\[Neutral\]/g);
           if (tagMatches) {
