@@ -110,6 +110,9 @@ export const TranscriptScreen: React.FC = () => {
     const normalizeText = (str: string) => str.replace(/\s+/g, ' ').trim().toLowerCase();
     const normalizedUtterance = normalizeText(text);
 
+    // Track best match
+    let bestMatch: { line: string; score: number } | null = null;
+
     // Find the line that matches this utterance by looking for quoted text
     for (const line of codingLines) {
       // Look for quoted text in the coding line
@@ -118,22 +121,36 @@ export const TranscriptScreen: React.FC = () => {
         const quotedText = quoteMatch[1];
         const normalizedQuoted = normalizeText(quotedText);
 
-        // Check if this matches our utterance (allowing for partial matches)
-        // Use first 30 words or characters for matching
-        const utteranceStart = normalizedUtterance.split(' ').slice(0, 30).join(' ');
-        const quotedStart = normalizedQuoted.split(' ').slice(0, 30).join(' ');
-
-        if (utteranceStart.includes(quotedStart) || quotedStart.includes(utteranceStart)) {
-          // Extract tags from brackets [DO: ...] or [DON'T: ...] or [Neutral]
-          const tagMatches = line.match(/\[(DO|DON'T):\s*([^\]]+)\]|\[Neutral\]/g);
-          if (tagMatches) {
-            tagMatches.forEach((match: string) => {
-              let tagName = match.replace(/\[(DO|DON'T):\s*|\[|\]/g, '');
-              const color = TAG_COLORS[tagName] || (match.includes("DON'T") ? '#EF4444' : '#10B981');
-              tags.push({ tag: tagName, color });
-            });
-          }
+        // Calculate match score
+        // Prefer exact matches, then utterance contains quoted, then quoted contains utterance
+        let score = 0;
+        if (normalizedUtterance === normalizedQuoted) {
+          score = 100; // Exact match
+        } else if (normalizedUtterance.includes(normalizedQuoted)) {
+          // Utterance contains the quoted text (quoted text is a subset)
+          score = 50 + (normalizedQuoted.length / normalizedUtterance.length) * 40;
+        } else if (normalizedQuoted.includes(normalizedUtterance)) {
+          // Quoted text contains the utterance (less likely but possible)
+          score = 30;
         }
+
+        // Update best match if this is better
+        if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+          bestMatch = { line, score };
+        }
+      }
+    }
+
+    // Extract tags from best matching line
+    if (bestMatch) {
+      // Extract tags from brackets [DO: ...] or [DON'T: ...] or [Neutral]
+      const tagMatches = bestMatch.line.match(/\[(DO|DON'T):\s*([^\]]+)\]|\[Neutral\]/g);
+      if (tagMatches) {
+        tagMatches.forEach((match: string) => {
+          let tagName = match.replace(/\[(DO|DON'T):\s*|\[|\]/g, '');
+          const color = TAG_COLORS[tagName] || (match.includes("DON'T") ? '#EF4444' : '#10B981');
+          tags.push({ tag: tagName, color });
+        });
       }
     }
 
