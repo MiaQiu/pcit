@@ -15,6 +15,7 @@ export { default as SessionService } from './services/sessionService';
 export { default as PCITService } from './services/pcitService';
 export { default as TranscriptionService } from './services/transcriptionService';
 export { default as LessonService } from './services/lessonService';
+export { default as RecordingService } from './services/recordingService';
 export {
   default as AmplitudeService,
   type IAmplitudeService,
@@ -28,3 +29,6 @@ export { fetchWithTimeout } from './utils/fetchWithTimeout';
 
 // Export session-related types
 export type { SessionUploadData, SessionListOptions } from './services/sessionService';
+
+// Export recording-related types
+export type { RecordingAnalysis } from './services/recordingService';

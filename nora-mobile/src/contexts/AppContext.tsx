@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
-import { LessonService, AuthService } from '@nora/core';
+import { LessonService, AuthService, RecordingService } from '@nora/core';
 import { SecureStoreAdapter } from '../lib/SecureStoreAdapter';
 
 // Get API URL from environment variable or use default
@@ -13,6 +13,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 interface AppContextType {
   lessonService: LessonService;
   authService: AuthService;
+  recordingService: RecordingService;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -44,9 +45,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       }
     );
 
+    // Initialize RecordingService
+    const recordingService = new RecordingService(authService, API_URL);
+
     return {
       lessonService,
       authService,
+      recordingService,
     };
   }, []);
 
@@ -75,4 +80,9 @@ export const useLessonService = () => {
 export const useAuthService = () => {
   const { authService } = useServices();
   return authService;
+};
+
+export const useRecordingService = () => {
+  const { recordingService } = useServices();
+  return recordingService;
 };

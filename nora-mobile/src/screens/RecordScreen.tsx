@@ -194,8 +194,8 @@ export const RecordScreen: React.FC = () => {
 
       console.log('Upload complete, recording ID:', uploadedRecordingId);
 
-      // Navigate to Report screen
-      navigation.navigate('Report');
+      // Navigate to Report screen with recordingId
+      navigation.navigate('Report', { recordingId: uploadedRecordingId });
 
     } catch (error) {
       console.error('Upload failed:', error);

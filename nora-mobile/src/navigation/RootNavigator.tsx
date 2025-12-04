@@ -10,6 +10,7 @@ import { LessonViewerScreen } from '../screens/LessonViewerScreen';
 import { QuizScreen } from '../screens/QuizScreen';
 import { LessonCompleteScreen } from '../screens/LessonCompleteScreen';
 import { ReportScreen } from '../screens/ReportScreen';
+import { TranscriptScreen } from '../screens/TranscriptScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -48,6 +49,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="Report"
         component={ReportScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="Transcript"
+        component={TranscriptScreen}
         options={{
           animation: 'slide_from_right',
         }}

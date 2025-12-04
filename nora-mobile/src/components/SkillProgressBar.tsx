@@ -10,20 +10,25 @@ import { COLORS, FONTS } from '../constants/assets';
 
 interface SkillProgressBarProps {
   label: string;
-  progress: number; // 0-100
+  progress: number; // Integer score value
+  maxValue?: number; // Maximum value for the progress bar (default: 10)
   color?: string;
 }
 
 export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
   label,
   progress,
+  maxValue = 10,
   color = COLORS.mainPurple,
 }) => {
+  // Calculate percentage for progress bar (cap at 100%)
+  const percentage = Math.min((progress / maxValue) * 100, 100);
+
   return (
     <View style={styles.container}>
       <View style={styles.labelRow}>
         <Text style={styles.label}>{label}</Text>
-        <Text style={styles.percentage}>{progress}%</Text>
+        <Text style={styles.percentage}>{Math.round(progress)}/10</Text>
       </View>
       <View style={styles.trackContainer}>
         <View style={styles.track}>
@@ -31,7 +36,7 @@ export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
             style={[
               styles.fill,
               {
-                width: `${progress}%`,
+                width: `${percentage}%`,
                 backgroundColor: color,
               }
             ]}
