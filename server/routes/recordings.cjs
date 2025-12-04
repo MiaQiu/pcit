@@ -215,6 +215,107 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
 }
 
 /**
+ * Generate CDI competency analysis prompt
+ */
+function generateCDICompetencyPrompt(counts) {
+  const totalDonts = counts.question + counts.command + counts.criticism + counts.negative_phrases;
+  const totalDos = counts.praise + counts.echo + counts.narration;
+
+  return `You are an expert PCIT (Parent-Child Interaction Therapy) Supervisor and Coder. Your task is to analyze raw PCIT tag counts from a session and provide a comprehensive competency analysis, including recommendations.
+
+**1. Data Input (Raw Counts for a 5-minute session):**
+
+- Labeled Praises: ${counts.praise}
+- Echo (Reflections): ${counts.echo}
+- Narration (Behavioral Descriptions): ${counts.narration}
+- Questions: ${counts.question}
+- Commands: ${counts.command}
+- Criticisms: ${counts.criticism}
+- Negative Phrases: ${counts.negative_phrases}
+- Neutral: ${counts.neutral}
+
+**2. Analysis Instructions:**
+
+Provide a structured analysis with:
+1. **Overall Performance**: Brief summary (2-3 sentences)
+2. **Strengths**: What's going well (bullet points)
+3. **Areas for Improvement**: What needs work (bullet points)
+4. **Specific Recommendations**: Concrete next steps (bullet points)
+
+**3. PEN Skills Assessment:**
+- Total DO skills (PEN): ${totalDos}
+- Total DON'T skills: ${totalDonts}
+
+**Mastery Criteria (for CDI completion):**
+- 10+ Praises per 5 minutes
+- 10+ Echo per 5 minutes
+- 10+ Narration per 5 minutes
+- 3 or fewer DON'Ts (Questions + Commands + Criticisms + Negative Phrases)
+- 0 Negative Phrases
+
+**Output Format:**
+Keep the tone warm, encouraging, and constructive. Focus on progress and next steps.
+`;
+}
+
+/**
+ * Generate PDI competency analysis prompt
+ */
+function generatePDICompetencyPrompt(counts) {
+  const totalEffective = counts.direct_command + counts.positive_command + counts.specific_command;
+  const totalIneffective = counts.indirect_command + counts.negative_command + counts.vague_command + counts.chained_command;
+  const totalCommands = totalEffective + totalIneffective;
+  const effectivePercent = totalCommands > 0 ? Math.round((totalEffective / totalCommands) * 100) : 0;
+
+  return `You are an expert PCIT (Parent-Child Interaction Therapy) Supervisor and Coder. Your task is to analyze raw PDI (Parent-Directed Interaction) tag counts from a session and provide a comprehensive competency analysis, including recommendations.
+
+**1. Data Input (Raw Counts for PDI session):**
+
+**Effective Command Skills:**
+- Direct Commands: ${counts.direct_command}
+- Positive Commands: ${counts.positive_command}
+- Specific Commands: ${counts.specific_command}
+- Labeled Praise: ${counts.labeled_praise}
+- Correct Warnings: ${counts.correct_warning}
+- Correct Timeout Statements: ${counts.correct_timeout}
+
+**Ineffective Command Skills:**
+- Indirect Commands: ${counts.indirect_command}
+- Negative Commands: ${counts.negative_command}
+- Vague Commands: ${counts.vague_command}
+- Chained Commands: ${counts.chained_command}
+- Harsh Tone: ${counts.harsh_tone}
+
+**Neutral:** ${counts.neutral}
+
+**Summary Statistics:**
+- Total Effective Commands: ${totalEffective}
+- Total Ineffective Commands: ${totalIneffective}
+- Total Commands: ${totalCommands}
+- Effective Command Percentage: ${effectivePercent}%
+
+**2. Analysis Instructions:**
+
+Provide a structured analysis with:
+1. **Overall Performance**: Brief summary (2-3 sentences)
+2. **Command Effectiveness**: Assessment of command quality and compliance likelihood
+3. **Strengths**: What's going well (bullet points)
+4. **Areas for Improvement**: What needs work (bullet points)
+5. **Specific Recommendations**: Concrete next steps (bullet points)
+
+**PDI Mastery Criteria:**
+- 75%+ of commands should be Effective (Direct + Positive + Specific)
+- Minimize Indirect Commands (phrased as questions)
+- Eliminate Negative Commands (focus on what TO do)
+- No Chained Commands (one command at a time)
+- No Harsh Tone
+
+**Output Format:**
+Keep the tone warm, encouraging, and constructive. Focus on progress and next steps.
+`;
+}
+
+/**
  * Analyze PCIT coding for transcript
  * Called after transcription completes
  */
@@ -372,7 +473,50 @@ Then, for EACH parent utterance, provide:
     tagCounts.neutral = (coding.match(/\[Neutral\]/gi) || []).length;
   }
 
-  // Store PCIT coding in database
+  // Get competency analysis based on tag counts
+  let competencyAnalysis = null;
+  try {
+    const competencyPrompt = isCDI ? generateCDICompetencyPrompt(tagCounts) : generatePDICompetencyPrompt(tagCounts);
+
+    const competencyResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 4096,
+        temperature: 0.5,
+        messages: [{
+          role: 'user',
+          content: competencyPrompt
+        }]
+      })
+    });
+
+    if (competencyResponse.ok) {
+      const competencyData = await competencyResponse.json();
+      const analysisText = competencyData.content[0].text;
+
+      // Parse the analysis into structured format
+      competencyAnalysis = {
+        rawAnalysis: analysisText,
+        analyzedAt: new Date().toISOString(),
+        mode: session.mode
+      };
+
+      console.log(`Competency analysis generated for session ${sessionId}`);
+    } else {
+      console.error(`Competency analysis failed for session ${sessionId}`);
+    }
+  } catch (compError) {
+    console.error('Error generating competency analysis:', compError.message);
+    // Continue without competency analysis - not critical
+  }
+
+  // Store PCIT coding and competency analysis in database
   await prisma.session.update({
     where: { id: sessionId },
     data: {
@@ -382,7 +526,8 @@ Then, for EACH parent utterance, provide:
         fullResponse,
         analyzedAt: new Date().toISOString()
       },
-      tagCounts
+      tagCounts,
+      competencyAnalysis
     }
   });
 
@@ -643,6 +788,9 @@ router.get('/:id/analysis', async (req, res) => {
     let skills = [];
     let areasToAvoid = [];
 
+    // Calculate Nora Score
+    let noraScore = 0;
+
     if (isCDI) {
       // CDI mode - PRN skills
       const tagCounts = session.tagCounts || {};
@@ -658,6 +806,22 @@ router.get('/:id/analysis', async (req, res) => {
         { label: 'Commands', count: tagCounts.command || 0 },
         { label: 'Criticism', count: tagCounts.criticism || 0 }
       ];
+
+      // Calculate Nora Score for CDI mode
+      // PEN Skills: 60 points total (20 points each, max at 10 counts)
+      const praiseScore = Math.min(20, ((tagCounts.praise || 0) / 10) * 20);
+      const echoScore = Math.min(20, ((tagCounts.echo || 0) / 10) * 20);
+      const narrationScore = Math.min(20, ((tagCounts.narration || 0) / 10) * 20);
+      const penScore = praiseScore + echoScore + narrationScore;
+
+      // Avoid Penalty: 40 points if total < 3, decreasing by 10 for each additional
+      const totalAvoid = (tagCounts.question || 0) + (tagCounts.command || 0) + (tagCounts.criticism || 0);
+      let avoidScore = 40;
+      if (totalAvoid >= 3) {
+        avoidScore = Math.max(0, 40 - (totalAvoid - 2) * 10);
+      }
+
+      noraScore = Math.round(penScore + avoidScore);
     } else {
       // PDI mode - Command skills
       const tagCounts = session.tagCounts || {};
@@ -721,6 +885,7 @@ router.get('/:id/analysis', async (req, res) => {
       createdAt: session.createdAt,
       status: 'completed',
       encouragement: "Amazing job on your session! Here is how it went.",
+      noraScore,
       skills,
       areasToAvoid,
       topMoment: {
@@ -735,7 +900,8 @@ router.get('/:id/analysis', async (req, res) => {
         ...session.tagCounts
       },
       transcript: transcriptSegments,
-      pcitCoding: session.pcitCoding
+      pcitCoding: session.pcitCoding,
+      competencyAnalysis: session.competencyAnalysis || null
     });
 
   } catch (error) {

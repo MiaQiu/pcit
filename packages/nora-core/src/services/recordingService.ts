@@ -10,6 +10,7 @@ export interface RecordingAnalysis {
   createdAt: string;
   status: 'completed' | 'processing';
   encouragement: string;
+  noraScore: number;
   skills: Array<{
     label: string;
     progress: number;
@@ -31,6 +32,11 @@ export interface RecordingAnalysis {
   };
   transcript?: any[];
   pcitCoding?: any;
+  competencyAnalysis?: {
+    rawAnalysis: string;
+    analyzedAt: string;
+    mode: string;
+  } | null;
 }
 
 /**

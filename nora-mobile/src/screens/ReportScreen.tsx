@@ -141,9 +141,22 @@ export const ReportScreen: React.FC = () => {
           </View>
         </View>
 
+        {/* Nora Score */}
+        <View style={styles.scoreSection}>
+          <Text style={styles.sectionTitle}>Nora Score</Text>
+          <View style={styles.skillsContainer}>
+            <SkillProgressBar
+              label="Overall"
+              progress={reportData.noraScore || 75}
+              maxValue={100}
+              color={COLORS.mainPurple}
+            />
+          </View>
+        </View>
+
         {/* PRN Skills Section */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Your PRN Skills</Text>
+        <View style={styles.skillsSection}>
+          <Text style={styles.sectionTitle}>Your PEN Skills</Text>
           <View style={styles.skillsContainer}>
             {reportData.skills.map((skill, index) => (
               <SkillProgressBar
@@ -157,7 +170,7 @@ export const ReportScreen: React.FC = () => {
         </View>
 
         {/* Areas to Avoid */}
-        <View style={styles.card}>
+        <View style={styles.avoidSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Areas to avoid</Text>
             <Text style={styles.totalText}>Total &lt; 3</Text>
@@ -199,7 +212,11 @@ export const ReportScreen: React.FC = () => {
         <View>
           <Text style={styles.cardTitle}>Tips for next time</Text>
           <View style={styles.card}>
-            <Text style={styles.tipsText}>{reportData.tips}</Text>
+            {reportData.competencyAnalysis?.rawAnalysis ? (
+              <Text style={styles.tipsText}>{reportData.competencyAnalysis.rawAnalysis}</Text>
+            ) : (
+              <Text style={styles.tipsText}>{reportData.tips}</Text>
+            )}
 
             {/* Divider Line */}
             <View style={styles.divider} />
@@ -335,6 +352,44 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 8,
     marginLeft: 4,
+  },
+  scoreSection: {
+    marginBottom: 24,
+  },
+  scoreTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 12,
+  },
+  scoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  scoreValue: {
+    fontFamily: FONTS.bold,
+    fontSize: 32,
+    color: COLORS.mainPurple,
+    minWidth: 100,
+  },
+  scoreBarContainer: {
+    flex: 1,
+    height: 12,
+    backgroundColor: '#E8E8E8',
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  scoreBar: {
+    height: '100%',
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 6,
+  },
+  skillsSection: {
+    marginBottom: 24,
+  },
+  avoidSection: {
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',

@@ -67,6 +67,7 @@ model Session {
   aiFeedbackJSON   Json
   pcitCoding       Json
   tagCounts        Json
+  competencyAnalysis Json?
   masteryAchieved  Boolean     @default(false)
   riskScore        Int         @default(0)
   flaggedForReview Boolean     @default(false)
