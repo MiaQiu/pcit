@@ -60,12 +60,16 @@ export const RecordScreen: React.FC = () => {
     };
   }, []);
 
-  // Reset state when screen comes back into focus
+  // Track if user has navigated to report
+  const hasNavigatedToReport = useRef(false);
+
+  // Reset state when screen comes back into focus (after viewing report)
   useFocusEffect(
     React.useCallback(() => {
-      // Only reset if we're in success state (user came back from report)
-      if (recordingState === 'success') {
+      // Only reset if we've navigated away and are coming back
+      if (recordingState === 'success' && hasNavigatedToReport.current) {
         resetRecording();
+        hasNavigatedToReport.current = false;
       }
     }, [recordingState])
   );
@@ -295,6 +299,7 @@ export const RecordScreen: React.FC = () => {
 
   const handleViewReport = () => {
     if (recordingId) {
+      hasNavigatedToReport.current = true;
       navigation.navigate('Report', { recordingId });
     }
   };
