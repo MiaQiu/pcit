@@ -18,6 +18,7 @@ import { ProfileCircle } from '../components/ProfileCircle';
 import { RecordingGuideCard } from '../components/RecordingGuideCard';
 import { HowToRecordCard } from '../components/HowToRecordCard';
 import { RecordingCard } from '../components/RecordingCard';
+import { NextActionCard } from '../components/NextActionCard';
 import { FONTS, COLORS, DRAGON_PURPLE } from '../constants/assets';
 import { useRecordingService } from '../contexts/AppContext';
 
@@ -263,8 +264,8 @@ export const RecordScreen: React.FC = () => {
     const maxAttempts = 40; // 40 attempts * 3 seconds = 2 minutes max
 
     if (attempt >= maxAttempts) {
-      console.log('Polling timeout - navigating to report anyway');
-      navigation.navigate('Report', { recordingId });
+      console.log('Polling timeout - showing success screen anyway');
+      setRecordingState('success');
       return;
     }
 
@@ -272,10 +273,9 @@ export const RecordScreen: React.FC = () => {
       // Check if analysis is complete
       const analysis = await recordingService.getAnalysis(recordingId);
 
-      // If we got the analysis successfully, navigate to report
-      console.log('Analysis complete! Navigating to report...');
+      // If we got the analysis successfully, show success screen
+      console.log('Analysis complete! Showing success screen...');
       setRecordingState('success');
-      navigation.navigate('Report', { recordingId });
     } catch (error: any) {
       // If still processing or transcribing, wait and try again
       const errorMsg = error.message.toLowerCase();
@@ -286,10 +286,16 @@ export const RecordScreen: React.FC = () => {
         }, 3000);
         timeoutRef.current = timeout;
       } else {
-        // Other error - navigate to report screen which will show the error
+        // Other error - show success screen anyway, report will handle the error
         console.error('Error checking analysis status:', error);
-        navigation.navigate('Report', { recordingId });
+        setRecordingState('success');
       }
+    }
+  };
+
+  const handleViewReport = () => {
+    if (recordingId) {
+      navigation.navigate('Report', { recordingId });
     }
   };
 
@@ -381,6 +387,20 @@ export const RecordScreen: React.FC = () => {
               Nora is reviewing your play session and preparing your personalized report...
             </Text>
             <ActivityIndicator size="large" color={COLORS.mainPurple} style={styles.processingSpinner} />
+          </View>
+        )}
+
+        {/* Success State */}
+        {recordingState === 'success' && (
+          <View style={styles.successContainer}>
+            <NextActionCard
+              phase="SESSION COMPLETE"
+              phaseName=""
+              title="Read your report and insights"
+              description="Your session has been analyzed! Review your personalized feedback, tips, and progress."
+              buttonText="View Report"
+              onPress={handleViewReport}
+            />
           </View>
         )}
 
@@ -610,8 +630,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   successContainer: {
+    marginTop: 40,
+    paddingHorizontal: 24,
     marginBottom: 66,
-},
+  },
   // guideCardContainer: {
   //   marginBottom: 24,
   // },
