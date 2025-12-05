@@ -8,7 +8,7 @@
 
 ## Overview
 
-Implement a complete 12-screen onboarding flow that guides new users through account creation, profile setup, program introduction, and subscription selection. This is a **critical prerequisite** for re-enabling authentication in the app.
+Implement a complete 11-screen onboarding flow that guides new users through account creation, profile setup, program introduction, and subscription selection. This is a **critical prerequisite** for re-enabling authentication in the app.
 
 ---
 
@@ -749,7 +749,7 @@ const signInWithFacebook = async () => {
 
 ### Phase 1: Foundation (2-3 days)
 **Priority:** HIGH
-- [ ] Create AuthStack navigation (12 screens)
+- [ ] Create AuthStack navigation (11 screens)
 - [ ] Implement OnboardingLayout component (3 variants: welcome, card, subscription)
 - [ ] Create ProgressIndicator component
 - [ ] Setup OnboardingContext with state management

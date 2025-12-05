@@ -14,7 +14,22 @@ export type RootTabParamList = {
   Progress: undefined;
 };
 
+export type OnboardingStackParamList = {
+  Welcome: undefined;
+  Start: undefined;
+  CreateAccount: undefined;
+  NameInput: undefined;
+  ChildName: undefined;
+  ChildBirthday: undefined;
+  ChildIssue: undefined;
+  Intro1: undefined;
+  Intro2: undefined;
+  Intro3: undefined;
+  Subscription: undefined;
+};
+
 export type RootStackParamList = {
+  Onboarding: undefined;
   MainTabs: { screen?: string } | undefined;
   LessonViewer: {
     lessonId: string;
@@ -39,6 +54,7 @@ export type RootStackParamList = {
 
 export type RootTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;
 export type RootStackNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+export type OnboardingStackNavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
 declare global {
   namespace ReactNavigation {

@@ -1,7 +1,7 @@
 # UI Implementation Plan - Nora Mobile
 
-**Date:** December 1, 2025 (Updated: December 4, 2025 - 12:00 PM)
-**Status:** Phase 4A Complete ✅ | Recording Upload & Navigation Implemented
+**Date:** December 1, 2025 (Updated: December 5, 2025 - 3:20 PM)
+**Status:** Phase 2D Complete ✅ | Progress Screen Fully Implemented
 
 ---
 
@@ -52,8 +52,8 @@
    - ✅ LessonViewerScreen (multi-segment + quiz, cache-first loading)
    - ✅ LessonCompleteScreen (completion card with next action)
    - ✅ QuizScreen (standalone - deprecated, quiz now integrated in LessonViewer)
-   - 🚧 RecordScreen (two-step recording flow UI complete, needs audio backend)
-   - ⏸️ ProgressScreen (placeholder)
+   - ✅ RecordScreen (complete recording flow with upload and navigation)
+   - ✅ ProgressScreen (stats, calendar, score chart, view report)
 
 7. **Recording Components** 🚧
    - ✅ RecordingCard (dragon image, waveform, timer, Record/Stop buttons)
@@ -137,6 +137,11 @@
 **Completed:** December 4, 2025 - 12:00 PM
 **Status:** ✅ Complete - Navigates to Report Screen
 
+### Phase 2D: Progress Screen ✅
+**Started:** December 5, 2025 - 1:00 PM
+**Completed:** December 5, 2025 - 3:20 PM
+**Status:** ✅ Complete - Full stats, calendar, and score visualization
+
 #### ✅ Completed Tasks:
 1. **Two-Step Recording Flow** ✅
    - Idle state: "Start Session" button transitions to ready state
@@ -199,6 +204,51 @@
    - Direct navigation to ReportScreen: `navigation.navigate('Report')`
    - Clean user flow: Record → Upload → View Report
    - ReportScreen shows mock data (ready for backend integration)
+
+#### ✅ Completed Components & Features:
+
+1. **Stats Cards** ✅
+   - Sessions completed count
+   - Playsessions recorded count
+   - Current streak counter
+   - Clean card design with transparent borders
+
+2. **Calendar View** ✅
+   - Monthly calendar with current month display
+   - Orange dots for days with recordings
+   - Month navigation (left/right arrows)
+   - Day headers (MON-SUN)
+   - Gray dots for inactive days
+   - Purple border for today's date
+   - Automatic streak calculation from consecutive days
+
+3. **Overall Nora Score Chart** ✅
+   - Line chart showing score progression over time
+   - Fixed 10 data points on x-axis
+   - Y-axis from 0-100 with labels (100, 80, 60, 40, 20, 0)
+   - Day numbers on x-axis (e.g., 4, 5, 6...)
+   - Month label below axis (e.g., "Dec")
+   - Purple line connecting data points
+   - Circle markers at each data point
+   - Axis lines for better readability
+   - Plots highest score per day when multiple sessions exist
+   - Real data from database (overallScore field)
+
+4. **Database Integration** ✅
+   - Added `overallScore` field to Session table
+   - Calculate and store score during PCIT analysis
+   - CDI mode: PEN skills (60 points) + Avoid penalty (40 points)
+   - PDI mode: Command effectiveness percentage
+   - Backfill script created to populate existing sessions
+   - API returns overallScore in recordings list
+   - Client fetches scores grouped by date
+
+5. **UI Enhancements** ✅
+   - Dragon header with encouragement message
+   - "View Latest Report" button at bottom
+   - Responsive layout with proper spacing
+   - Loading states with ActivityIndicator
+   - No data states for empty charts
 
 #### ⏳ Pending Tasks:
 1. **End-to-End Testing** ⬅️ **NEXT STEP**
@@ -487,11 +537,12 @@ When ready to implement:
 
 ## 📱 Other Screens (Future Phases)
 
-### Phase 2D: Progress Screen (Priority 4)
-- Streak calendar (more detailed than widget)
-- Stats cards (lessons completed, sessions recorded)
-- Nora Score chart
-- **Dependency:** Chart library (react-native-chart-kit)
+### Phase 2D: Progress Screen ✅ COMPLETE
+- ✅ Streak calendar with month navigation
+- ✅ Stats cards (lessons completed, sessions recorded, current streak)
+- ✅ Overall Nora Score chart with 10 data points
+- ✅ Real data from database (overallScore field)
+- ✅ No external chart library needed (custom SVG implementation)
 
 ### Phase 2F: Record Screen (Priority 6 - Most Complex)
 - Audio recording interface
@@ -514,7 +565,7 @@ When ready to implement:
 - @expo/vector-icons (Ionicons)
 
 ### Need to Install (Phase 2D):
-- [ ] react-native-chart-kit or victory-native (Charts)
+- ✅ ~~react-native-chart-kit or victory-native~~ (Not needed - built custom SVG chart)
 
 ### Need to Install (Phase 2F):
 - [ ] expo-av (Audio recording)
@@ -539,11 +590,15 @@ When ready to implement:
 - ✅ Loading states throughout app
 - ✅ Recording screen with upload functionality
 - ✅ Real-time upload progress tracking
+- ✅ Progress screen with stats, calendar, and score chart
+- ✅ Database schema with overallScore field
+- ✅ Score calculation and storage during PCIT analysis
 
 ### Current Status:
+- 🎯 **Phase 2D Complete** - Progress screen fully implemented with real data
 - 🎯 **Phase 4A Complete** - Recording upload functionality implemented
 - 🧪 **Testing Phase** - Ready to test upload from mobile device
-- 📱 **5 Screens:** Home ✅, Learn ✅, LessonViewer ✅, LessonComplete ✅, Record ✅
+- 📱 **6 Screens:** Home ✅, Learn ✅, LessonViewer ✅, LessonComplete ✅, Record ✅, Progress ✅
 - 🚀 **Production-Ready Features:** Lesson reading, quiz taking, progress tracking, audio recording & upload
 - ⚡ **Performance:** Instant loading with caching, <500ms API responses
 - ⚠️ **Security:** Authentication temporarily disabled for development (must re-enable before production)
@@ -551,14 +606,11 @@ When ready to implement:
 ### Next Phase:
 - 🧪 **Phase 4B: Recording Testing** - Test upload from device, verify S3 integration
 - 🎙️ **Phase 4C: Transcription & Analysis** - Trigger transcription, display results, PCIT analysis
-- 📊 **Phase 2D: Progress Screen** - Stats, charts, detailed streak calendar
 - 🔐 **Phase 2B: Authentication** - Login/signup flows and re-enable security
 
 ### Deferred:
 - ⏸️ Authentication (Phase 2B - must implement before production)
-- ⏸️ Progress Screen (Phase 2D - waiting for design specs)
 - ⏸️ Transcription & PCIT Analysis (Phase 4C - backend integration needed)
-- ⏸️ Real user streak tracking (backend schema needs update)
 
 ---
 
@@ -629,24 +681,7 @@ When ready to implement:
    - **Blockers:** Waiting for upload testing completion
    - **Value:** Completes core recording feature, enables PCIT coaching
 
-2. **User Streak Tracking Backend** ⏳
-   - Add user streak schema to database
-   - Create API endpoints for streak data
-   - Implement daily completion tracking
-   - Connect StreakWidget to real data
-   - **Estimated Time:** 1 day
-   - **Value:** Gamification, user engagement
-
-3. **Progress Screen (Phase 2D)** ⏳
-   - Design implementation based on Figma specs
-   - Stats cards (lessons completed, time spent)
-   - Detailed streak calendar view
-   - Nora Score chart/progress visualization
-   - Install chart library (react-native-chart-kit or victory-native)
-   - **Estimated Time:** 2-3 days
-   - **Dependency:** Streak tracking backend
-
-4. **Authentication (Phase 2B)** ⚠️ CRITICAL FOR PRODUCTION
+2. **Authentication (Phase 2B)** ⚠️ CRITICAL FOR PRODUCTION
    - LoginScreen design and implementation
    - SignupScreen with validation
    - **Re-enable `requireAuth` middleware on ALL endpoints** (lessons + recordings)
@@ -699,21 +734,31 @@ When ready to implement:
 
 ---
 
-**Status:** Phase 4A Complete ✅ | Recording Flow End-to-End Implemented
+**Status:** Phase 2D Complete ✅ | Progress Screen Fully Implemented
 
 **Backend Status:**
 - 41 lessons with 123 segments, 41 quizzes fully integrated
 - Recording upload endpoint ready with S3 integration
-- ReportScreen ready for backend data integration
+- Progress data API with overallScore field
+- Session table includes overallScore (CDI/PDI scoring)
+- Backfill script populated 68 existing sessions
 - ⚠️ Authentication temporarily disabled on all endpoints
 
 **Next Priority:** 🎙️ Transcription & PCIT Analysis (Phase 4C)
 
-**Recent Achievement (Dec 4, 12:00 PM):**
+**Recent Achievement (Dec 5, 3:20 PM):**
+- Built complete Progress screen with stats, calendar, and score chart
+- Added overallScore field to Session database table
+- Implemented score calculation during PCIT analysis (CDI: PEN + avoid, PDI: command effectiveness)
+- Created custom SVG line chart (no external dependencies)
+- Calendar with month navigation showing recording days
+- Real-time data from database with highest score per day
+- Created backfill script to populate existing 68 sessions
+
+**Previous Achievement (Dec 4, 12:00 PM):**
 - Fixed bottom button UI pattern across all recording states
 - Automatic navigation to ReportScreen after upload
 - Consistent button styling (Start Session, Record, Stop)
 - RecordingCard height optimized (560px)
-- Removed NextActionCard success state in favor of direct navigation
 
 **⚠️ CRITICAL:** Re-enable authentication before production deployment

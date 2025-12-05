@@ -10,6 +10,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AppProvider } from './src/contexts/AppContext';
+import { OnboardingProvider } from './src/contexts/OnboardingContext';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -29,10 +30,12 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AppProvider>
-        <NavigationContainer>
-          <RootNavigator />
-          <StatusBar style="dark" />
-        </NavigationContainer>
+        <OnboardingProvider>
+          <NavigationContainer>
+            <RootNavigator />
+            <StatusBar style="dark" />
+          </NavigationContainer>
+        </OnboardingProvider>
       </AppProvider>
     </SafeAreaProvider>
   );
