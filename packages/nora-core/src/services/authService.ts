@@ -215,6 +215,35 @@ class AuthService {
 
     return response;
   }
+
+  /**
+   * Complete onboarding by updating user profile
+   */
+  async completeOnboarding(data: {
+    name?: string;
+    childName?: string;
+    childBirthday?: Date;
+    issue?: string;
+  }): Promise<User> {
+    const response = await this.authenticatedRequest(
+      `${this.apiUrl}/api/auth/complete-onboarding`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to complete onboarding');
+    }
+
+    const result = await response.json();
+    return result.user;
+  }
 }
 
 export default AuthService;

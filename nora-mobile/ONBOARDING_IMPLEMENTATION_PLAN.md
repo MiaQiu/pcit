@@ -770,25 +770,39 @@ const signInWithFacebook = async () => {
 - All screens fully functional with navigation flow
 - Commit: b237f96
 
-### Phase 2: Authentication (2-3 days)
+### Phase 2: Database Schema & API ✅ COMPLETED
 **Priority:** HIGH
-- [ ] Implement CreateAccountScreen
-- [ ] Setup email/password validation
-- [ ] Create API endpoint: POST /api/auth/signup
-- [ ] Integrate with backend authentication
-- [ ] Store auth token in SecureStore
-- [ ] Update AppContext with authentication state
-- [ ] Build basic LoginScreen (for returning users)
+- [x] Updated User table schema (added childBirthday, issue fields)
+- [x] Pushed schema changes to database
+- [x] Updated POST /api/auth/signup to accept new fields
+- [x] Created PATCH /api/auth/complete-onboarding endpoint
+- [x] Updated GET /api/auth/me to return new fields
 
-### Phase 3: Profile Collection (2-3 days)
+**Notes:**
+- Schema updated successfully via prisma db push
+- API validates issue field against 7 allowed values
+- Encrypts sensitive data (name, childName)
+- Backwards compatible - updates childBirthYear when birthday provided
+- Commit: de790c5
+
+### Phase 3: API Integration ⚠️ BLOCKED
 **Priority:** MEDIUM
-- [ ] Build NameInputScreen (card style with dragon)
-- [ ] Build ChildNameScreen (card style with dragon)
-- [ ] Build ChildBirthdayScreen with DatePicker (card style with dragon)
-- [ ] Build ChildIssueScreen with SelectionCard (card style with dragon, 7 options)
-- [ ] Create API endpoint: POST /api/children
-- [ ] Create API endpoint: PATCH /api/children/:id
-- [ ] Update database schema (Child table with issue field)
+**Status:** BLOCKED - Requires authentication to be implemented first
+
+- [x] Added completeOnboarding() method to AuthService
+- [ ] Update SubscriptionScreen to call API before completing onboarding
+- [ ] Call authService.completeOnboarding() with collected data
+- [ ] Handle API errors and show user feedback
+
+**Blocker:**
+- CreateAccountScreen currently shows "Coming Soon" alerts for all auth methods
+- Need to implement actual email/password signup OR social authentication first
+- Without auth, we can't get an access token to call the authenticated endpoint
+- Onboarding data is currently stored in OnboardingContext but never sent to backend
+
+**Workaround for Testing:**
+- For now, users can test onboarding flow but data won't persist to database
+- Authentication and API integration needs to be completed in Phase 5
 
 ### Phase 4: Program Introduction (1-2 days)
 **Priority:** MEDIUM
