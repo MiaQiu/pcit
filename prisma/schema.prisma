@@ -75,6 +75,7 @@ model Session {
   coachAlertSentAt DateTime?
   createdAt        DateTime    @default(now())
   childMetrics     Json?
+  overallScore     Int?
   User             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])

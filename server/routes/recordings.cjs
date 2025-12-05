@@ -560,7 +560,33 @@ Then, for EACH parent utterance, provide:
     // Continue without competency analysis - not critical
   }
 
-  // Store PCIT coding and competency analysis in database
+  // Calculate Nora Score
+  let overallScore = 0;
+
+  if (isCDI) {
+    // CDI mode - PEN skills (60 points) + Avoid penalty (40 points)
+    const praiseScore = Math.min(20, ((tagCounts.praise || 0) / 10) * 20);
+    const echoScore = Math.min(20, ((tagCounts.echo || 0) / 10) * 20);
+    const narrationScore = Math.min(20, ((tagCounts.narration || 0) / 10) * 20);
+    const penScore = praiseScore + echoScore + narrationScore;
+
+    // Avoid Penalty: 40 points if total < 3, decreasing by 10 for each additional
+    const totalAvoid = (tagCounts.question || 0) + (tagCounts.command || 0) + (tagCounts.criticism || 0);
+    let avoidScore = 40;
+    if (totalAvoid >= 3) {
+      avoidScore = Math.max(0, 40 - (totalAvoid - 2) * 10);
+    }
+
+    overallScore = Math.round(penScore + avoidScore);
+  } else {
+    // PDI mode - Command effectiveness
+    const totalCommands = (tagCounts.direct_command || 0) + (tagCounts.indirect_command || 0) +
+      (tagCounts.vague_command || 0) + (tagCounts.chained_command || 0);
+    const effectiveCommands = tagCounts.direct_command || 0;
+    overallScore = totalCommands > 0 ? Math.round((effectiveCommands / totalCommands) * 100) : 0;
+  }
+
+  // Store PCIT coding, competency analysis, and overall score in database
   await prisma.session.update({
     where: { id: sessionId },
     data: {
@@ -571,11 +597,12 @@ Then, for EACH parent utterance, provide:
         analyzedAt: new Date().toISOString()
       },
       tagCounts,
-      competencyAnalysis
+      competencyAnalysis,
+      overallScore
     }
   });
 
-  console.log(`PCIT coding stored for session ${sessionId}`);
+  console.log(`PCIT coding and overall score (${overallScore}) stored for session ${sessionId}`);
 }
 
 // Configure multer for file uploads (store in memory)
@@ -976,7 +1003,8 @@ router.get('/', async (req, res) => {
         durationSeconds: true,
         masteryAchieved: true,
         createdAt: true,
-        transcript: true
+        transcript: true,
+        overallScore: true
       }
     });
 
@@ -987,7 +1015,8 @@ router.get('/', async (req, res) => {
       durationSeconds: session.durationSeconds,
       masteryAchieved: session.masteryAchieved,
       createdAt: session.createdAt,
-      status: session.transcript ? 'transcribed' : 'uploaded'
+      status: session.transcript ? 'transcribed' : 'uploaded',
+      overallScore: session.overallScore
     }));
 
     res.json({ recordings });
