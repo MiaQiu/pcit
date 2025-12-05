@@ -30,7 +30,9 @@ const signupSchema = Joi.object({
   name: Joi.string().min(2).max(100).required(),
   childName: Joi.string().min(1).max(50).required(),
   childBirthYear: Joi.number().integer().min(1900).max(new Date().getFullYear()).required(),
+  childBirthday: Joi.date().optional(),
   childConditions: Joi.array().items(Joi.string().max(200)).min(1).required(),
+  issue: Joi.string().valid('tantrums', 'defiance', 'aggression', 'social', 'emotional', 'routine', 'general').optional(),
   therapistId: Joi.string().uuid().optional()
 });
 
@@ -48,7 +50,7 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const { email, password, name, childName, childBirthYear, childConditions, therapistId } = value;
+    const { email, password, name, childName, childBirthYear, childBirthday, childConditions, issue, therapistId } = value;
 
     // Create email hash for querying (since email will be encrypted)
     const emailHash = crypto.createHash('sha256').update(email.toLowerCase()).digest('hex');
@@ -82,7 +84,9 @@ router.post('/signup', async (req, res) => {
         name: encryptedData.name,
         childName: encryptedData.childName,
         childBirthYear,
+        childBirthday: childBirthday ? new Date(childBirthday) : null,
         childConditions: JSON.stringify(childConditions), // Stored as plain JSON
+        issue,
         therapistId
       }
     });
@@ -299,7 +303,9 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
         name: true,
         childName: true,
         childBirthYear: true,
+        childBirthday: true,
         childConditions: true,
+        issue: true,
         therapistId: true,
         createdAt: true
       }
@@ -317,6 +323,74 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to get user info' });
+  }
+});
+
+// PATCH /api/auth/complete-onboarding
+// Update user profile with onboarding data
+router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAuth, async (req, res) => {
+  try {
+    const { name, childName, childBirthday, issue } = req.body;
+
+    // Validate at least one field is provided
+    if (!name && !childName && !childBirthday && !issue) {
+      return res.status(400).json({ error: 'At least one field required' });
+    }
+
+    // Build update data
+    const updateData = {};
+
+    if (name) {
+      const encryptedName = encryptSensitiveData(name);
+      updateData.name = encryptedName;
+    }
+
+    if (childName) {
+      const encryptedChildName = encryptSensitiveData(childName);
+      updateData.childName = encryptedChildName;
+    }
+
+    if (childBirthday) {
+      updateData.childBirthday = new Date(childBirthday);
+      // Also update childBirthYear for backwards compatibility
+      updateData.childBirthYear = new Date(childBirthday).getFullYear();
+    }
+
+    if (issue) {
+      // Validate issue value
+      const validIssues = ['tantrums', 'defiance', 'aggression', 'social', 'emotional', 'routine', 'general'];
+      if (!validIssues.includes(issue)) {
+        return res.status(400).json({ error: 'Invalid issue value' });
+      }
+      updateData.issue = issue;
+    }
+
+    // Update user
+    const user = await prisma.user.update({
+      where: { id: req.userId },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        childName: true,
+        childBirthYear: true,
+        childBirthday: true,
+        childConditions: true,
+        issue: true,
+        therapistId: true,
+        createdAt: true
+      }
+    });
+
+    // Decrypt sensitive data for response
+    const decryptedUser = decryptUserData(user);
+
+    res.json({ user: decryptedUser });
+
+  } catch (error) {
+    console.error('Complete onboarding error:', error);
+    res.status(500).json({ error: 'Failed to update user profile' });
   }
 });
 
