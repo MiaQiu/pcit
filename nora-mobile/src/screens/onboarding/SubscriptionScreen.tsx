@@ -13,10 +13,13 @@ import {
   ScrollView,
   Image,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { useAuthService } from '../../contexts/AppContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -37,14 +40,55 @@ const TIMELINE_ITEMS = [
 
 export const SubscriptionScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
-  const { completeOnboarding } = useOnboarding();
+  const { data, completeOnboarding } = useOnboarding();
+  const authService = useAuthService();
   const [selectedPlan, setSelectedPlan] = useState<'annual' | 'monthly'>('annual');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleStartTrial = async () => {
-    // TODO: Implement subscription logic
-    // For now, complete onboarding and navigate to MainTabs
-    await completeOnboarding();
-    navigation.replace('MainTabs');
+    setIsLoading(true);
+
+    try {
+      // Send onboarding data to backend
+      await authService.completeOnboarding({
+        name: data.name,
+        childName: data.childName,
+        childBirthday: data.childBirthday || undefined,
+        issue: data.issue || undefined,
+      });
+
+      // TODO: Implement subscription/in-app purchase logic
+      // For now, just mark onboarding as complete
+
+      // Mark onboarding as complete in AsyncStorage
+      await completeOnboarding();
+
+      // Navigate to MainTabs
+      navigation.replace('MainTabs');
+    } catch (error: any) {
+      console.error('Complete onboarding error:', error);
+      Alert.alert(
+        'Error',
+        'Failed to complete setup. Please try again.',
+        [
+          {
+            text: 'Retry',
+            onPress: handleStartTrial,
+          },
+          {
+            text: 'Skip for Now',
+            onPress: async () => {
+              // Mark complete anyway and continue
+              await completeOnboarding();
+              navigation.replace('MainTabs');
+            },
+            style: 'cancel',
+          },
+        ]
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRestore = () => {
@@ -147,11 +191,16 @@ export const SubscriptionScreen: React.FC = () => {
       {/* Bottom CTA */}
       <View style={styles.bottomContainer}>
         <TouchableOpacity
-          style={styles.startButton}
+          style={[styles.startButton, isLoading && styles.startButtonDisabled]}
           onPress={handleStartTrial}
+          disabled={isLoading}
           activeOpacity={0.8}
         >
-          <Text style={styles.startButtonText}>Try for $0.00</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.startButtonText}>Try for $0.00</Text>
+          )}
         </TouchableOpacity>
 
         <Text style={styles.disclaimer}>
@@ -303,6 +352,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  startButtonDisabled: {
+    backgroundColor: '#C4B5FD',
+    shadowOpacity: 0.1,
   },
   startButtonText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',

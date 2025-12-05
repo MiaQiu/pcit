@@ -1,118 +1,240 @@
 /**
  * Create Account Screen
- * Social authentication options (Google, Apple, Facebook)
+ * Email/password signup
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
+  TextInput,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { useAuthService } from '../../contexts/AppContext';
 
 export const CreateAccountScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { updateData } = useOnboarding();
+  const authService = useAuthService();
 
-  const handleGoogleAuth = async () => {
-    try {
-      // TODO: Implement Google authentication
-      Alert.alert('Coming Soon', 'Google authentication will be implemented');
-      // For now, mock the auth and continue
-      updateData({ authMethod: 'google' });
-      navigation.navigate('NameInput');
-    } catch (error) {
-      console.error('Google auth error:', error);
-      Alert.alert('Error', 'Failed to authenticate with Google');
-    }
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+  const validateEmail = (text: string) => {
+    return emailRegex.test(text);
   };
 
-  const handleAppleAuth = async () => {
-    try {
-      // TODO: Implement Apple authentication
-      Alert.alert('Coming Soon', 'Apple authentication will be implemented');
-      // For now, mock the auth and continue
-      updateData({ authMethod: 'apple' });
-      navigation.navigate('NameInput');
-    } catch (error) {
-      console.error('Apple auth error:', error);
-      Alert.alert('Error', 'Failed to authenticate with Apple');
-    }
+  const validatePassword = (text: string) => {
+    return passwordRegex.test(text);
   };
 
-  const handleFacebookAuth = async () => {
+  const isFormValid =
+    email.length > 0 &&
+    validateEmail(email) &&
+    password.length >= 8 &&
+    validatePassword(password) &&
+    password === confirmPassword;
+
+  const handleSignup = async () => {
+    if (!isFormValid) {
+      if (!validateEmail(email)) {
+        Alert.alert('Invalid Email', 'Please enter a valid email address');
+        return;
+      }
+      if (!validatePassword(password)) {
+        Alert.alert(
+          'Weak Password',
+          'Password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number'
+        );
+        return;
+      }
+      if (password !== confirmPassword) {
+        Alert.alert('Password Mismatch', 'Passwords do not match');
+        return;
+      }
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      // TODO: Implement Facebook authentication
-      Alert.alert('Coming Soon', 'Facebook authentication will be implemented');
-      // For now, mock the auth and continue
-      updateData({ authMethod: 'facebook' });
+      // For now, we'll create a temporary account with minimal data
+      // The full profile will be filled in during the next steps
+      await authService.signup({
+        email: email.toLowerCase().trim(),
+        password,
+        name: 'User', // Placeholder, will be updated in NameInputScreen
+        childName: 'Child', // Placeholder, will be updated in ChildNameScreen
+        childBirthYear: new Date().getFullYear() - 5, // Placeholder
+        childConditions: ['none'], // Placeholder
+      });
+
+      // Store email in onboarding context
+      updateData({ email: email.toLowerCase().trim() });
+
+      // Navigate to next step
       navigation.navigate('NameInput');
-    } catch (error) {
-      console.error('Facebook auth error:', error);
-      Alert.alert('Error', 'Failed to authenticate with Facebook');
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      Alert.alert('Signup Failed', error.message || 'Failed to create account. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Create your account</Text>
-          <Text style={styles.subtitle}>
-            Choose your preferred sign-in method
-          </Text>
-        </View>
-
-        {/* Auth Buttons */}
-        <View style={styles.authButtons}>
-          {/* Google */}
-          <TouchableOpacity
-            style={[styles.authButton, styles.googleButton]}
-            onPress={handleGoogleAuth}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="logo-google" size={24} color="#EA4335" />
-            <Text style={styles.authButtonText}>Continue with Google</Text>
-          </TouchableOpacity>
-
-          {/* Apple */}
-          <TouchableOpacity
-            style={[styles.authButton, styles.appleButton]}
-            onPress={handleAppleAuth}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="logo-apple" size={24} color="#FFFFFF" />
-            <Text style={[styles.authButtonText, styles.appleButtonText]}>
-              Continue with Apple
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Create your account</Text>
+            <Text style={styles.subtitle}>
+              Enter your email and password to get started
             </Text>
-          </TouchableOpacity>
+          </View>
 
-          {/* Facebook */}
+          {/* Email Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="your@email.com"
+              placeholderTextColor="#9CA3AF"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              returnKeyType="next"
+              editable={!isLoading}
+            />
+            {email.length > 0 && !validateEmail(email) && (
+              <Text style={styles.errorText}>Please enter a valid email</Text>
+            )}
+          </View>
+
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="At least 8 characters"
+                placeholderTextColor="#9CA3AF"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="next"
+                editable={!isLoading}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color="#6B7280"
+                />
+              </TouchableOpacity>
+            </View>
+            {password.length > 0 && !validatePassword(password) && (
+              <Text style={styles.errorText}>
+                Must have 8+ characters, 1 uppercase, 1 lowercase, 1 number
+              </Text>
+            )}
+          </View>
+
+          {/* Confirm Password Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Confirm Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Re-enter password"
+                placeholderTextColor="#9CA3AF"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="done"
+                onSubmitEditing={handleSignup}
+                editable={!isLoading}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                <Ionicons
+                  name={showConfirmPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color="#6B7280"
+                />
+              </TouchableOpacity>
+            </View>
+            {confirmPassword.length > 0 && password !== confirmPassword && (
+              <Text style={styles.errorText}>Passwords do not match</Text>
+            )}
+          </View>
+
+          {/* Spacer */}
+          <View style={styles.spacer} />
+
+          {/* Create Account Button */}
           <TouchableOpacity
-            style={[styles.authButton, styles.facebookButton]}
-            onPress={handleFacebookAuth}
+            style={[styles.button, (!isFormValid || isLoading) && styles.buttonDisabled]}
+            onPress={handleSignup}
+            disabled={!isFormValid || isLoading}
             activeOpacity={0.8}
           >
-            <Ionicons name="logo-facebook" size={24} color="#1877F2" />
-            <Text style={styles.authButtonText}>Continue with Facebook</Text>
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={[styles.buttonText, (!isFormValid || isLoading) && styles.buttonTextDisabled]}>
+                Create Account
+              </Text>
+            )}
           </TouchableOpacity>
-        </View>
 
-        {/* Terms */}
-        <Text style={styles.terms}>
-          By continuing, you agree to our{'\n'}
-          <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-          <Text style={styles.termsLink}>Privacy Policy</Text>
-        </Text>
-      </View>
+          {/* Terms */}
+          <Text style={styles.terms}>
+            By continuing, you agree to our{'\n'}
+            <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
+            <Text style={styles.termsLink}>Privacy Policy</Text>
+          </Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -122,13 +244,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  content: {
+  keyboardView: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 32,
     paddingTop: 60,
+    paddingBottom: 32,
   },
   header: {
-    marginBottom: 48,
+    marginBottom: 32,
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
@@ -142,44 +270,79 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     lineHeight: 24,
   },
-  authButtons: {
-    gap: 16,
+  inputContainer: {
+    marginBottom: 24,
   },
-  authButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 56,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 12,
-  },
-  googleButton: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E5E7EB',
-  },
-  appleButton: {
-    backgroundColor: '#000000',
-    borderColor: '#000000',
-  },
-  facebookButton: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E5E7EB',
-  },
-  authButtonText: {
+  label: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 14,
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  input: {
+    height: 56,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 16,
     color: '#1F2937',
   },
-  appleButtonText: {
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    height: 56,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 20,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  eyeIcon: {
+    paddingHorizontal: 16,
+  },
+  errorText: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 4,
+  },
+  spacer: {
+    flex: 1,
+    minHeight: 24,
+  },
+  button: {
+    width: '100%',
+    height: 56,
+    backgroundColor: '#8C49D5',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  buttonDisabled: {
+    backgroundColor: '#E5E7EB',
+  },
+  buttonText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 18,
     color: '#FFFFFF',
+  },
+  buttonTextDisabled: {
+    color: '#9CA3AF',
   },
   terms: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 12,
     color: '#9CA3AF',
     textAlign: 'center',
-    marginTop: 32,
+    marginTop: 8,
     lineHeight: 18,
   },
   termsLink: {
