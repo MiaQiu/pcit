@@ -609,12 +609,12 @@ When ready to implement:
 ### Immediate Priorities:
 
 1. **Test Recording Upload (Phase 4B)** 🎯 HIGHEST PRIORITY
-   - [ ] Test upload from physical mobile device
-   - [ ] Verify audio file arrives in S3 bucket (`nora-audio-059364397483`)
-   - [ ] Confirm session record created in database
-   - [ ] Test progress bar updates correctly
-   - [ ] Test error handling (network failure, S3 errors)
-   - [ ] Verify upload works on both iOS and Android
+   - [ ] Test upload from physical mobile device ✅
+   - [ ] Verify audio file arrives in S3 bucket (`nora-audio-059364397483`) ✅
+   - [ ] Confirm session record created in database ✅
+   - [ ] Test progress bar updates correctly ✅
+   - [ ] Test error handling (network failure, S3 errors) - later 
+   - [ ] Verify upload works on both iOS and Android - IOS✅ Android later
    - **Estimated Time:** 1-2 hours
    - **Blockers:** None - ready to test
    - **Value:** Validates end-to-end recording upload flow
@@ -624,8 +624,7 @@ When ready to implement:
    - [ ] Store transcription results in database
    - [ ] Implement PCIT analysis logic
    - [ ] Create analysis results endpoint (`GET /api/recordings/:id/analysis`)
-   - [ ] Display transcription and PEN skills breakdown in mobile
-   - [ ] Create RecordingResultsScreen for analysis display
+   - [ ] Display transcription and PEN skills breakdown in reportscreen.
    - **Estimated Time:** 2-3 days
    - **Blockers:** Waiting for upload testing completion
    - **Value:** Completes core recording feature, enables PCIT coaching

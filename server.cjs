@@ -167,7 +167,7 @@ app.post('/api/competency-analysis', async (req, res) => {
 * **Total Don't Skills (Q+C+Crit):** ≤ 3
 * **Negative Phrases (NP):** = 0
 
-**3. Output Requirements:**
+**3. Analysis
 
 * **Performance Table:** Create a clear table comparing the **Actual Counts** against the **Target Goal** for Labeled Praise, Reflections, Descriptions, and Total Don't Skills, noting whether each goal was met.
 
@@ -177,7 +177,11 @@ app.post('/api/competency-analysis', async (req, res) => {
     * Identify which goals were met and which were missed.
     * Highlight the parent's **strongest skill** and the area where they demonstrated the **most difficulty**.
     * Provide **one specific, actionable recommendation** for practice to meet the unmet goals (e.g., *increase the frequency of X by Y*).
-    * When there is negative phrase used, guide the parent back to PCIT skills (e.g., ignoring mild negative behavior, using attention to positive).`;
+    * When there is negative phrase used, guide the parent back to PCIT skills (e.g., ignoring mild negative behavior, using attention to positive).
+
+**4. Output Requirements:**
+    Tips: 1 most important tip for improvement, using 2-3 sentences;
+    Reminder: 1 brief motivational reminder, using 1-2 sentences.`;
 
         const response = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
             method: 'POST',

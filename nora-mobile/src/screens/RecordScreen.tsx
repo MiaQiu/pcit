@@ -3,10 +3,10 @@
  * Audio recording screen for play sessions with PCIT skills tracking
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackNavigationProp } from '../navigation/types';
@@ -20,7 +20,7 @@ import { HowToRecordCard } from '../components/HowToRecordCard';
 import { RecordingCard } from '../components/RecordingCard';
 import { FONTS, COLORS, DRAGON_PURPLE } from '../constants/assets';
 
-type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed' | 'uploading' | 'success';
+type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed' | 'uploading' | 'processing' | 'success';
 
 // Get API URL from environment
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -33,15 +33,39 @@ export const RecordScreen: React.FC = () => {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [recordingId, setRecordingId] = useState<string | null>(null);
+  const [navigationTimeout, setNavigationTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  // Use ref to track current recording for cleanup
+  const recordingRef = useRef<Audio.Recording | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     requestPermissions();
+
+    // Cleanup on unmount only
     return () => {
-      if (recording) {
-        recording.stopAndUnloadAsync().catch(console.error);
+      // Clean up recording if component unmounts
+      if (recordingRef.current) {
+        recordingRef.current.stopAndUnloadAsync().catch(() => {
+          // Ignore errors - recording may already be stopped
+        });
+      }
+      // Clean up navigation timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
     };
   }, []);
+
+  // Reset state when screen comes back into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      // Only reset if we're in processing state (user came back from report)
+      if (recordingState === 'processing' || recordingState === 'uploading') {
+        resetRecording();
+      }
+    }, [recordingState])
+  );
 
   const requestPermissions = async () => {
     try {
@@ -77,6 +101,7 @@ export const RecordScreen: React.FC = () => {
       );
 
       setRecording(newRecording);
+      recordingRef.current = newRecording; // Track in ref
       setRecordingState('recording');
 
       // Update duration periodically
@@ -95,16 +120,17 @@ export const RecordScreen: React.FC = () => {
     try {
       if (!recording) return;
 
-      await recording.stopAndUnloadAsync();
+      // Get URI and status before stopping
       const uri = recording.getURI();
-
-      // Get recording status for duration
       const status = await recording.getStatusAsync();
       const durationSeconds = status.durationMillis
         ? Math.floor(status.durationMillis / 1000)
         : Math.floor(recordingDuration / 1000);
 
+      // Stop and unload, then clear references
+      await recording.stopAndUnloadAsync();
       setRecording(null);
+      recordingRef.current = null; // Clear ref
       setRecordingState('uploading');
 
       console.log('Recording saved to:', uri);
@@ -194,8 +220,15 @@ export const RecordScreen: React.FC = () => {
 
       console.log('Upload complete, recording ID:', uploadedRecordingId);
 
-      // Navigate to Report screen with recordingId
-      navigation.navigate('Report', { recordingId: uploadedRecordingId });
+      // Show processing state and wait a bit before navigating
+      setRecordingState('processing');
+
+      // Wait 2 seconds to show the processing screen, then navigate
+      const timeout = setTimeout(() => {
+        navigation.navigate('Report', { recordingId: uploadedRecordingId });
+      }, 2000);
+      setNavigationTimeout(timeout);
+      timeoutRef.current = timeout; // Track in ref
 
     } catch (error) {
       console.error('Upload failed:', error);
@@ -293,6 +326,24 @@ export const RecordScreen: React.FC = () => {
               <View style={[styles.progressBar, { width: `${uploadProgress}%` }]} />
             </View>
             <Text style={styles.progressText}>{uploadProgress}%</Text>
+          </View>
+        )}
+
+        {/* Processing State */}
+        {recordingState === 'processing' && (
+          <View style={styles.processingContainer}>
+            <View style={styles.dragonIconContainer}>
+              <Image
+                source={require('../../assets/images/dragon_image.png')}
+                style={styles.dragonIcon}
+                resizeMode="contain"
+              />
+            </View>
+            <Text style={styles.processingTitle}>Analyzing Your Session</Text>
+            <Text style={styles.processingSubtitle}>
+              Nora is reviewing your play session and preparing your personalized report...
+            </Text>
+            <ActivityIndicator size="large" color={COLORS.mainPurple} style={styles.processingSpinner} />
           </View>
         )}
 
@@ -495,6 +546,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textDark,
     marginTop: 12,
+  },
+  processingContainer: {
+    marginTop: 60,
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  processingTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 24,
+    color: COLORS.textDark,
+    marginTop: 32,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  processingSubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: '#666666',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+    paddingHorizontal: 16,
+  },
+  processingSpinner: {
+    marginTop: 16,
   },
   successContainer: {
     marginBottom: 66,
