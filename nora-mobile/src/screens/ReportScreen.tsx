@@ -228,10 +228,16 @@ export const ReportScreen: React.FC = () => {
 
         {/* Reminder */}
         {reportData.reminder && (
-          <View>
-            <Text style={styles.cardTitle}>Reminder</Text>
-            <View style={styles.card}>
-              <Text style={styles.tipsText}>{reportData.reminder}</Text>
+          <View style={styles.headerSection}>
+            <View style={styles.dragonIconContainer}>
+              <Image
+                source={DRAGON_PURPLE}
+                style={styles.dragonIcon}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.headerTextBox}>
+              <Text style={styles.headerText}>{reportData.reminder}</Text>
             </View>
           </View>
         )}
