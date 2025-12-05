@@ -277,9 +277,10 @@ export const RecordScreen: React.FC = () => {
       setRecordingState('success');
       navigation.navigate('Report', { recordingId });
     } catch (error: any) {
-      // If still processing, wait and try again
-      if (error.message.includes('processing')) {
-        console.log(`Analysis still processing... (attempt ${attempt + 1}/${maxAttempts})`);
+      // If still processing or transcribing, wait and try again
+      const errorMsg = error.message.toLowerCase();
+      if (errorMsg.includes('processing') || errorMsg.includes('transcription') || errorMsg.includes('in progress')) {
+        console.log(`Analysis still processing... (attempt ${attempt + 1}/${maxAttempts}): ${error.message}`);
         const timeout = setTimeout(() => {
           pollForAnalysisCompletion(recordingId, attempt + 1);
         }, 3000);
