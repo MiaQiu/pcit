@@ -212,11 +212,7 @@ export const ReportScreen: React.FC = () => {
         <View>
           <Text style={styles.cardTitle}>Tips for next time</Text>
           <View style={styles.card}>
-            {reportData.competencyAnalysis?.rawAnalysis ? (
-              <Text style={styles.tipsText}>{reportData.competencyAnalysis.rawAnalysis}</Text>
-            ) : (
-              <Text style={styles.tipsText}>{reportData.tips}</Text>
-            )}
+            <Text style={styles.tipsText}>{reportData.tips}</Text>
 
             {/* Divider Line */}
             <View style={styles.divider} />
@@ -230,6 +226,15 @@ export const ReportScreen: React.FC = () => {
           </View>
         </View>
 
+        {/* Reminder */}
+        {reportData.reminder && (
+          <View>
+            <Text style={styles.cardTitle}>Reminder</Text>
+            <View style={styles.card}>
+              <Text style={styles.tipsText}>{reportData.reminder}</Text>
+            </View>
+          </View>
+        )}
 
         {/* Back to Home Button */}
         <View style={styles.buttonContainer}>

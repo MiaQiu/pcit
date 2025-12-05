@@ -217,14 +217,15 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
 /**
  * Generate CDI competency analysis prompt
  */
-function generateCDICompetencyPrompt(counts) {
+function generateCDICompetencyPrompt(counts, transcript, pcitCoding) {
   const totalDonts = counts.question + counts.command + counts.criticism + counts.negative_phrases;
   const totalDos = counts.praise + counts.echo + counts.narration;
 
-  return `You are an expert PCIT (Parent-Child Interaction Therapy) Supervisor and Coder. Your task is to analyze raw PCIT tag counts from a session and provide a comprehensive competency analysis, including recommendations.
+  return `You are an expert PCIT (Parent-Child Interaction Therapy) Supervisor and Coder. Your task is to analyze a parent-child play session and provide three specific outputs.
 
-**1. Data Input (Raw Counts for a 5-minute session):**
+**Session Data:**
 
+Raw Counts (5-minute session):
 - Labeled Praises: ${counts.praise}
 - Echo (Reflections): ${counts.echo}
 - Narration (Behavioral Descriptions): ${counts.narration}
@@ -234,17 +235,8 @@ function generateCDICompetencyPrompt(counts) {
 - Negative Phrases: ${counts.negative_phrases}
 - Neutral: ${counts.neutral}
 
-**2. Analysis Instructions:**
-
-Provide a structured analysis with:
-1. **Overall Performance**: Brief summary (2-3 sentences)
-2. **Strengths**: What's going well (bullet points)
-3. **Areas for Improvement**: What needs work (bullet points)
-4. **Specific Recommendations**: Concrete next steps (bullet points)
-
-**3. PEN Skills Assessment:**
-- Total DO skills (PEN): ${totalDos}
-- Total DON'T skills: ${totalDonts}
+Total DO skills (PEN): ${totalDos}
+Total DON'T skills: ${totalDonts}
 
 **Mastery Criteria (for CDI completion):**
 - 10+ Praises per 5 minutes
@@ -253,25 +245,43 @@ Provide a structured analysis with:
 - 3 or fewer DON'Ts (Questions + Commands + Criticisms + Negative Phrases)
 - 0 Negative Phrases
 
+**Conversation Transcript:**
+${transcript}
+
+**Your Task:**
+Generate a JSON object with exactly these three fields:
+
+1. **topMoment**: One sentence from the conversation that highlights bonding between child and parent. Can be from either speaker. Choose a moment showing connection, joy, or positive interaction.
+
+2. **tips**: 2-3 sentences of the MOST important tips for improvement. Be specific and actionable.
+
+3. **reminder**: 2-3 sentences of encouragement or reminder for the parent. Keep it warm and supportive.
+
 **Output Format:**
-Keep the tone warm, encouraging, and constructive. Focus on progress and next steps.
-`;
+Return ONLY valid JSON in this exact structure:
+{
+  "topMoment": "exact quote from transcript",
+  "tips": "2-3 sentences of specific tips",
+  "reminder": "2-3 sentences of encouragement"
+}
+
+Keep the tone warm, encouraging, and constructive.`;
 }
 
 /**
  * Generate PDI competency analysis prompt
  */
-function generatePDICompetencyPrompt(counts) {
+function generatePDICompetencyPrompt(counts, transcript, pcitCoding) {
   const totalEffective = counts.direct_command + counts.positive_command + counts.specific_command;
   const totalIneffective = counts.indirect_command + counts.negative_command + counts.vague_command + counts.chained_command;
   const totalCommands = totalEffective + totalIneffective;
   const effectivePercent = totalCommands > 0 ? Math.round((totalEffective / totalCommands) * 100) : 0;
 
-  return `You are an expert PCIT (Parent-Child Interaction Therapy) Supervisor and Coder. Your task is to analyze raw PDI (Parent-Directed Interaction) tag counts from a session and provide a comprehensive competency analysis, including recommendations.
+  return `You are an expert PCIT (Parent-Child Interaction Therapy) Supervisor and Coder. Your task is to analyze a PDI (Parent-Directed Interaction) session and provide three specific outputs.
 
-**1. Data Input (Raw Counts for PDI session):**
+**Session Data:**
 
-**Effective Command Skills:**
+Effective Command Skills:
 - Direct Commands: ${counts.direct_command}
 - Positive Commands: ${counts.positive_command}
 - Specific Commands: ${counts.specific_command}
@@ -279,29 +289,19 @@ function generatePDICompetencyPrompt(counts) {
 - Correct Warnings: ${counts.correct_warning}
 - Correct Timeout Statements: ${counts.correct_timeout}
 
-**Ineffective Command Skills:**
+Ineffective Command Skills:
 - Indirect Commands: ${counts.indirect_command}
 - Negative Commands: ${counts.negative_command}
 - Vague Commands: ${counts.vague_command}
 - Chained Commands: ${counts.chained_command}
 - Harsh Tone: ${counts.harsh_tone}
 
-**Neutral:** ${counts.neutral}
+Neutral: ${counts.neutral}
 
-**Summary Statistics:**
+Summary:
 - Total Effective Commands: ${totalEffective}
 - Total Ineffective Commands: ${totalIneffective}
-- Total Commands: ${totalCommands}
 - Effective Command Percentage: ${effectivePercent}%
-
-**2. Analysis Instructions:**
-
-Provide a structured analysis with:
-1. **Overall Performance**: Brief summary (2-3 sentences)
-2. **Command Effectiveness**: Assessment of command quality and compliance likelihood
-3. **Strengths**: What's going well (bullet points)
-4. **Areas for Improvement**: What needs work (bullet points)
-5. **Specific Recommendations**: Concrete next steps (bullet points)
 
 **PDI Mastery Criteria:**
 - 75%+ of commands should be Effective (Direct + Positive + Specific)
@@ -310,9 +310,27 @@ Provide a structured analysis with:
 - No Chained Commands (one command at a time)
 - No Harsh Tone
 
+**Conversation Transcript:**
+${transcript}
+
+**Your Task:**
+Generate a JSON object with exactly these three fields:
+
+1. **topMoment**: One sentence from the conversation that highlights bonding or positive interaction between child and parent. Can be from either speaker. Choose a moment showing connection, compliance, or positive interaction.
+
+2. **tips**: 2-3 sentences of the MOST important tips for improvement. Be specific and actionable.
+
+3. **reminder**: 2-3 sentences of encouragement or reminder for the parent. Keep it warm and supportive.
+
 **Output Format:**
-Keep the tone warm, encouraging, and constructive. Focus on progress and next steps.
-`;
+Return ONLY valid JSON in this exact structure:
+{
+  "topMoment": "exact quote from transcript",
+  "tips": "2-3 sentences of specific tips",
+  "reminder": "2-3 sentences of encouragement"
+}
+
+Keep the tone warm, encouraging, and constructive.`;
 }
 
 /**
@@ -473,10 +491,17 @@ Then, for EACH parent utterance, provide:
     tagCounts.neutral = (coding.match(/\[Neutral\]/gi) || []).length;
   }
 
-  // Get competency analysis based on tag counts
+  // Get competency analysis based on tag counts and transcript
   let competencyAnalysis = null;
   try {
-    const competencyPrompt = isCDI ? generateCDICompetencyPrompt(tagCounts) : generatePDICompetencyPrompt(tagCounts);
+    // Format transcript for the prompt
+    const transcriptText = formattedTranscript
+      .map(u => `Speaker ${u.speaker}: "${u.text}"`)
+      .join('\n');
+
+    const competencyPrompt = isCDI
+      ? generateCDICompetencyPrompt(tagCounts, transcriptText, coding)
+      : generatePDICompetencyPrompt(tagCounts, transcriptText, coding);
 
     const competencyResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -488,7 +513,7 @@ Then, for EACH parent utterance, provide:
       body: JSON.stringify({
         model: 'claude-sonnet-4-5-20250929',
         max_tokens: 4096,
-        temperature: 0.5,
+        temperature: 0.7,
         messages: [{
           role: 'user',
           content: competencyPrompt
@@ -500,9 +525,28 @@ Then, for EACH parent utterance, provide:
       const competencyData = await competencyResponse.json();
       const analysisText = competencyData.content[0].text;
 
-      // Parse the analysis into structured format
+      // Try to parse as JSON
+      let parsedAnalysis = null;
+      try {
+        // Remove markdown code blocks if present
+        const cleanJson = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        parsedAnalysis = JSON.parse(cleanJson);
+      } catch (parseError) {
+        console.error('Failed to parse competency analysis as JSON:', parseError.message);
+        console.log('Raw response:', analysisText);
+        // Fallback to raw text
+        parsedAnalysis = {
+          topMoment: null,
+          tips: analysisText,
+          reminder: null
+        };
+      }
+
+      // Store structured analysis
       competencyAnalysis = {
-        rawAnalysis: analysisText,
+        topMoment: parsedAnalysis.topMoment,
+        tips: parsedAnalysis.tips,
+        reminder: parsedAnalysis.reminder,
         analyzedAt: new Date().toISOString(),
         mode: session.mode
       };
@@ -841,36 +885,37 @@ router.get('/:id/analysis', async (req, res) => {
       if (tagCounts.harsh_tone > 0) areasToAvoid.push('Harsh Tone');
     }
 
-    // Find a top moment (first praise or positive statement)
-    const pcitCoding = session.pcitCoding;
-    const codingLines = pcitCoding.coding ? pcitCoding.coding.split('\n') : [];
-    let topMoment = null;
-    for (const line of codingLines) {
-      if (line.includes('[DO: Praise]') || line.includes('[DO: Labeled Praise]') || line.includes('[DO: Narration]')) {
-        // Extract quote
-        const quoteMatch = line.match(/"([^"]+)"/);
-        if (quoteMatch) {
-          topMoment = {
-            quote: quoteMatch[1],
-            tag: line.match(/\[(.*?)\]/)?.[1] || 'Positive moment'
-          };
-          break;
+    // Get top moment from competency analysis or fallback to rule-based
+    let topMomentQuote = null;
+    if (session.competencyAnalysis?.topMoment) {
+      topMomentQuote = session.competencyAnalysis.topMoment;
+    } else {
+      // Fallback: find first praise or positive statement
+      const pcitCoding = session.pcitCoding;
+      const codingLines = pcitCoding.coding ? pcitCoding.coding.split('\n') : [];
+      for (const line of codingLines) {
+        if (line.includes('[DO: Praise]') || line.includes('[DO: Labeled Praise]') || line.includes('[DO: Narration]')) {
+          const quoteMatch = line.match(/"([^"]+)"/);
+          if (quoteMatch) {
+            topMomentQuote = quoteMatch[1];
+            break;
+          }
         }
+      }
+      if (!topMomentQuote && transcriptSegments.length > 0) {
+        topMomentQuote = transcriptSegments[0].text;
       }
     }
 
-    if (!topMoment && transcriptSegments.length > 0) {
-      // Fallback to first segment
-      topMoment = {
-        quote: transcriptSegments[0].text,
-        tag: 'Session moment'
-      };
-    }
+    // Get tips from competency analysis or fallback to rule-based
+    const tips = session.competencyAnalysis?.tips
+      ? session.competencyAnalysis.tips
+      : isCDI
+        ? `Focus on increasing your use of ${skills[0].progress < 50 ? 'Praise' : skills[1].progress < 50 ? 'Reflections' : 'Narrations'}. Try to describe what your child is doing without asking questions or giving commands.`
+        : `Work on making your commands more direct and specific. Avoid phrasing commands as questions.`;
 
-    // Generate tips based on analysis
-    const tips = isCDI
-      ? `Focus on increasing your use of ${skills[0].progress < 50 ? 'Praise' : skills[1].progress < 50 ? 'Reflections' : 'Narrations'}. Try to describe what your child is doing without asking questions or giving commands.`
-      : `Work on making your commands more direct and specific. Avoid phrasing commands as questions.`;
+    // Get reminder from competency analysis
+    const reminder = session.competencyAnalysis?.reminder || null;
 
     // Calculate tomorrow's goal
     const tomorrowGoal = isCDI
@@ -889,11 +934,12 @@ router.get('/:id/analysis', async (req, res) => {
       skills,
       areasToAvoid,
       topMoment: {
-        quote: topMoment?.quote || "Great session!",
+        quote: topMomentQuote || "Great session!",
         audioUrl: '', // TODO: Add audio segment URL
         duration: '0:12'
       },
       tips,
+      reminder,
       tomorrowGoal,
       stats: {
         totalPlayTime: `${Math.floor(session.durationSeconds / 60)} min ${session.durationSeconds % 60} sec`,

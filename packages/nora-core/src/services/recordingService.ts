@@ -25,6 +25,7 @@ export interface RecordingAnalysis {
     duration: string;
   };
   tips: string;
+  reminder?: string | null;
   tomorrowGoal: string;
   stats: {
     totalPlayTime: string;
@@ -33,7 +34,9 @@ export interface RecordingAnalysis {
   transcript?: any[];
   pcitCoding?: any;
   competencyAnalysis?: {
-    rawAnalysis: string;
+    topMoment?: string | null;
+    tips?: string | null;
+    reminder?: string | null;
     analyzedAt: string;
     mode: string;
   } | null;
