@@ -19,6 +19,7 @@ import { RecordingGuideCard } from '../components/RecordingGuideCard';
 import { HowToRecordCard } from '../components/HowToRecordCard';
 import { RecordingCard } from '../components/RecordingCard';
 import { FONTS, COLORS, DRAGON_PURPLE } from '../constants/assets';
+import { useRecordingService } from '../contexts/AppContext';
 
 type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed' | 'uploading' | 'processing' | 'success';
 
@@ -27,6 +28,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 export const RecordScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const recordingService = useRecordingService();
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -60,8 +62,8 @@ export const RecordScreen: React.FC = () => {
   // Reset state when screen comes back into focus
   useFocusEffect(
     React.useCallback(() => {
-      // Only reset if we're in processing state (user came back from report)
-      if (recordingState === 'processing' || recordingState === 'uploading') {
+      // Only reset if we're in success state (user came back from report)
+      if (recordingState === 'success') {
         resetRecording();
       }
     }, [recordingState])
@@ -220,15 +222,11 @@ export const RecordScreen: React.FC = () => {
 
       console.log('Upload complete, recording ID:', uploadedRecordingId);
 
-      // Show processing state and wait a bit before navigating
+      // Show processing state and poll for analysis completion
       setRecordingState('processing');
 
-      // Wait 2 seconds to show the processing screen, then navigate
-      const timeout = setTimeout(() => {
-        navigation.navigate('Report', { recordingId: uploadedRecordingId });
-      }, 2000);
-      setNavigationTimeout(timeout);
-      timeoutRef.current = timeout; // Track in ref
+      // Poll for analysis completion
+      pollForAnalysisCompletion(uploadedRecordingId);
 
     } catch (error) {
       console.error('Upload failed:', error);
@@ -254,6 +252,44 @@ export const RecordScreen: React.FC = () => {
     setRecordingDuration(0);
     setUploadProgress(0);
     setRecordingId(null);
+    // Clear any pending timeouts
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const pollForAnalysisCompletion = async (recordingId: string, attempt: number = 0) => {
+    const maxAttempts = 40; // 40 attempts * 3 seconds = 2 minutes max
+
+    if (attempt >= maxAttempts) {
+      console.log('Polling timeout - navigating to report anyway');
+      navigation.navigate('Report', { recordingId });
+      return;
+    }
+
+    try {
+      // Check if analysis is complete
+      const analysis = await recordingService.getAnalysis(recordingId);
+
+      // If we got the analysis successfully, navigate to report
+      console.log('Analysis complete! Navigating to report...');
+      setRecordingState('success');
+      navigation.navigate('Report', { recordingId });
+    } catch (error: any) {
+      // If still processing, wait and try again
+      if (error.message.includes('processing')) {
+        console.log(`Analysis still processing... (attempt ${attempt + 1}/${maxAttempts})`);
+        const timeout = setTimeout(() => {
+          pollForAnalysisCompletion(recordingId, attempt + 1);
+        }, 3000);
+        timeoutRef.current = timeout;
+      } else {
+        // Other error - navigate to report screen which will show the error
+        console.error('Error checking analysis status:', error);
+        navigation.navigate('Report', { recordingId });
+      }
+    }
   };
 
   const handleStartSession = () => {
