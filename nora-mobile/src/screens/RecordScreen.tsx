@@ -265,33 +265,37 @@ export const RecordScreen: React.FC = () => {
   };
 
   const pollForAnalysisCompletion = async (recordingId: string, attempt: number = 0) => {
+    console.log(`[POLLING] Attempt ${attempt + 1}/40 for recording ${recordingId}`);
     const maxAttempts = 40; // 40 attempts * 3 seconds = 2 minutes max
 
     if (attempt >= maxAttempts) {
-      console.log('Polling timeout - showing success screen anyway');
+      console.log('[POLLING] Timeout - showing success screen anyway');
       setRecordingState('success');
       return;
     }
 
     try {
       // Check if analysis is complete
+      console.log('[POLLING] Calling getAnalysis...');
       const analysis = await recordingService.getAnalysis(recordingId);
 
       // If we got the analysis successfully, show success screen
-      console.log('Analysis complete! Showing success screen...');
+      console.log('[POLLING] Analysis complete! Setting state to success...');
       setRecordingState('success');
+      console.log('[POLLING] State set to success');
     } catch (error: any) {
       // If still processing or transcribing, wait and try again
       const errorMsg = error.message.toLowerCase();
+      console.log(`[POLLING] Error: ${error.message}`);
       if (errorMsg.includes('processing') || errorMsg.includes('transcription') || errorMsg.includes('in progress')) {
-        console.log(`Analysis still processing... (attempt ${attempt + 1}/${maxAttempts}): ${error.message}`);
+        console.log(`[POLLING] Still processing, will retry in 3s (attempt ${attempt + 1}/${maxAttempts})`);
         const timeout = setTimeout(() => {
           pollForAnalysisCompletion(recordingId, attempt + 1);
         }, 3000);
         timeoutRef.current = timeout;
       } else {
         // Other error - show success screen anyway, report will handle the error
-        console.error('Error checking analysis status:', error);
+        console.error('[POLLING] Unexpected error - showing success screen:', error);
         setRecordingState('success');
       }
     }
@@ -399,8 +403,8 @@ export const RecordScreen: React.FC = () => {
         {recordingState === 'success' && (
           <View style={styles.successContainer}>
             <NextActionCard
-              phase="SESSION COMPLETE"
-              phaseName=""
+              phase="Phase"
+              phaseName="Connect"
               title="Read your report and insights"
               description="Your session has been analyzed! Review your personalized feedback, tips, and progress."
               buttonText="View Report"
@@ -636,7 +640,7 @@ const styles = StyleSheet.create({
   },
   successContainer: {
     marginTop: 40,
-    paddingHorizontal: 24,
+    paddingHorizontal: 0,
     marginBottom: 66,
   },
   // guideCardContainer: {
