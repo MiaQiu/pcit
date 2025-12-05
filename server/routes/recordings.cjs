@@ -253,19 +253,19 @@ Generate a JSON object with exactly these three fields:
 
 1. **topMoment**: One sentence from the conversation that highlights bonding between child and parent. Can be from either speaker. Choose a moment showing connection, joy, or positive interaction.
 
-2. **tips**: 2-3 sentences of the MOST important tips for improvement. Be specific and actionable.
+2. **tips**: EXACTLY 2 sentences of the MOST important tips for improvement. Be specific and actionable.
 
-3. **reminder**: 2-3 sentences of encouragement or reminder for the parent. Keep it warm and supportive.
+3. **reminder**: EXACTLY 2 sentences of encouragement or reminder for the parent. Keep it warm and supportive.
 
 **Output Format:**
 Return ONLY valid JSON in this exact structure:
 {
   "topMoment": "exact quote from transcript",
-  "tips": "2-3 sentences of specific tips",
-  "reminder": "2-3 sentences of encouragement"
+  "tips": "Exactly 2 sentences of specific tips.",
+  "reminder": "Exactly 2 sentences of encouragement."
 }
 
-Keep the tone warm, encouraging, and constructive.`;
+Keep the tone warm, encouraging, and constructive. Each field must be concise.`;
 }
 
 /**
@@ -318,19 +318,19 @@ Generate a JSON object with exactly these three fields:
 
 1. **topMoment**: One sentence from the conversation that highlights bonding or positive interaction between child and parent. Can be from either speaker. Choose a moment showing connection, compliance, or positive interaction.
 
-2. **tips**: 2-3 sentences of the MOST important tips for improvement. Be specific and actionable.
+2. **tips**: EXACTLY 2 sentences of the MOST important tips for improvement. Be specific and actionable.
 
-3. **reminder**: 2-3 sentences of encouragement or reminder for the parent. Keep it warm and supportive.
+3. **reminder**: EXACTLY 2 sentences of encouragement or reminder for the parent. Keep it warm and supportive.
 
 **Output Format:**
 Return ONLY valid JSON in this exact structure:
 {
   "topMoment": "exact quote from transcript",
-  "tips": "2-3 sentences of specific tips",
-  "reminder": "2-3 sentences of encouragement"
+  "tips": "Exactly 2 sentences of specific tips.",
+  "reminder": "Exactly 2 sentences of encouragement."
 }
 
-Keep the tone warm, encouraging, and constructive.`;
+Keep the tone warm, encouraging, and constructive. Each field must be concise.`;
 }
 
 /**
