@@ -4,16 +4,18 @@
  */
 
 import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface ProfileCircleProps {
   imageUrl?: string;
   size?: number;
+  onPress?: () => void;
 }
 
 export const ProfileCircle: React.FC<ProfileCircleProps> = ({
   imageUrl,
   size = 80,
+  onPress,
 }) => {
   const dynamicStyles = {
     container: {
@@ -23,7 +25,7 @@ export const ProfileCircle: React.FC<ProfileCircleProps> = ({
     },
   };
 
-  return (
+  const content = (
     <View style={[styles.container, dynamicStyles.container]}>
       {imageUrl ? (
         <Image
@@ -36,6 +38,16 @@ export const ProfileCircle: React.FC<ProfileCircleProps> = ({
       )}
     </View>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return content;
 };
 
 const styles = StyleSheet.create({

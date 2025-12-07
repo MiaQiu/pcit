@@ -11,98 +11,96 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Platform,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { Picker } from '@react-native-picker/picker';
 
 export const ChildBirthdayScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
-  const [date, setDate] = useState<Date>(data.childBirthday || new Date());
-  const [showPicker, setShowPicker] = useState(false);
 
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowPicker(false);
-    }
-    if (selectedDate) {
-      setDate(selectedDate);
-    }
-  };
+  // Get current date for defaults
+  const currentDate = new Date();
+  const initialMonth = data.childBirthday ? data.childBirthday.getMonth() : currentDate.getMonth();
+  const initialYear = data.childBirthday ? data.childBirthday.getFullYear() : currentDate.getFullYear() - 3;
+
+  const [selectedMonth, setSelectedMonth] = useState(initialMonth);
+  const [selectedYear, setSelectedYear] = useState(initialYear);
 
   const handleContinue = () => {
-    updateData({ childBirthday: date });
+    // Create a date from month and year (set day to 1st)
+    const birthday = new Date(selectedYear, selectedMonth, 1);
+    updateData({ childBirthday: birthday });
     navigation.navigate('ChildIssue');
   };
 
-  const formatDate = (date: Date) => {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    const month = months[date.getMonth()];
-    const day = date.getDate();
-    const year = date.getFullYear();
-    return `${month} ${day}, ${year}`;
-  };
+  // Generate months array (short form)
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
 
-  const calculateAge = (birthDate: Date) => {
-    const today = new Date();
-    const diffTime = Math.abs(today.getTime() - birthDate.getTime());
-    const diffMonths = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30.44));
-    const years = Math.floor(diffMonths / 12);
-    const months = diffMonths % 12;
-
-    if (years === 0) {
-      return `${months} month${months !== 1 ? 's' : ''} old`;
-    } else if (months === 0) {
-      return `${years} year${years !== 1 ? 's' : ''} old`;
-    } else {
-      return `${years} year${years !== 1 ? 's' : ''}, ${months} month${months !== 1 ? 's' : ''} old`;
-    }
-  };
-
-  const maxDate = new Date();
-  const minDate = new Date();
-  minDate.setFullYear(minDate.getFullYear() - 12); // Max 12 years old
+  // Generate years array (from 12 years ago to current year)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 13 }, (_, i) => currentYear - 12 + i);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        {/* Dragon Header with Text Box */}
+        <View style={styles.headerSection}>
+          <View style={styles.dragonIconContainer}>
+            <Image
+              source={require('../../../assets/images/dragon_image.png')}
+              style={styles.dragonIcon}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.headerTextBox}>
+            <Text style={styles.headerText}>
+              Last question!
+            </Text>
+          </View>
+        </View>
+
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>When is {data.childName}'s birthday?</Text>
-          <Text style={styles.subtitle}>
-            PCIT is most effective for children ages 2-7
-          </Text>
         </View>
 
-        {/* Date Display */}
-        <TouchableOpacity
-          style={styles.dateButton}
-          onPress={() => setShowPicker(true)}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.dateText}>{formatDate(date)}</Text>
-          <Text style={styles.ageText}>{calculateAge(date)}</Text>
-        </TouchableOpacity>
-
-        {/* Date Picker */}
-        {(showPicker || Platform.OS === 'ios') && (
-          <View style={styles.pickerContainer}>
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={handleDateChange}
-              maximumDate={maxDate}
-              minimumDate={minDate}
-              textColor="#1F2937"
-            />
+        {/* Month and Year Pickers */}
+        <View style={styles.pickersContainer}>
+          {/* Month Picker */}
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={selectedMonth}
+              onValueChange={(itemValue) => setSelectedMonth(itemValue)}
+              style={styles.picker}
+              itemStyle={styles.pickerItem}
+            >
+              {months.map((month, index) => (
+                <Picker.Item key={index} label={month} value={index} />
+              ))}
+            </Picker>
           </View>
-        )}
+
+          {/* Year Picker */}
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={selectedYear}
+              onValueChange={(itemValue) => setSelectedYear(itemValue)}
+              style={styles.picker}
+              itemStyle={styles.pickerItem}
+            >
+              {years.map((year) => (
+                <Picker.Item key={year} label={year.toString()} value={year} />
+              ))}
+            </Picker>
+          </View>
+        </View>
 
         {/* Spacer */}
         <View style={styles.spacer} />
@@ -130,47 +128,70 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingTop: 60,
   },
+  headerSection: {
+    marginBottom: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dragonIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    overflow: 'hidden',
+    backgroundColor: '#F5F0FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 48,
+  },
+  dragonIcon: {
+    width: 90,
+    height: 90,
+    marginLeft: 25,
+  },
+  headerTextBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 8,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  headerText: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 16,
+    color: '#364153',
+    lineHeight: 24,
+  },
   header: {
+    marginTop: 32,
     marginBottom: 32,
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 32,
-    color: '#1F2937',
+    fontSize: 24,
+    color: '#4A5565',
     marginBottom: 12,
   },
-  subtitle: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 16,
-    color: '#6B7280',
-    lineHeight: 24,
-  },
-  dateButton: {
-    height: 80,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
+  pickersContainer: {
+    flexDirection: 'row',
+    gap: 12,
     marginBottom: 24,
   },
-  dateText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 20,
+  pickerWrapper: {
+    flex: 1,
+  },
+  picker: {
+    height: 170,
+  },
+  pickerItem: {
+    height: 170,
+    fontSize: 28,
+    fontWeight: '700',
     color: '#1F2937',
-    marginBottom: 4,
-  },
-  ageText: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 24,
   },
   spacer: {
     flex: 1,
@@ -179,7 +200,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: '#8C49D5',
-    borderRadius: 16,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 32,

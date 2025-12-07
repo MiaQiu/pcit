@@ -6,34 +6,78 @@
 import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import { TabNavigator } from './TabNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
+import { ProfileScreen } from '../screens/ProfileScreen';
 import { LessonViewerScreen } from '../screens/LessonViewerScreen';
 import { QuizScreen } from '../screens/QuizScreen';
 import { LessonCompleteScreen } from '../screens/LessonCompleteScreen';
 import { ReportScreen } from '../screens/ReportScreen';
 import { TranscriptScreen } from '../screens/TranscriptScreen';
 import { RootStackParamList } from './types';
-import { checkOnboardingStatus } from '../contexts/OnboardingContext';
+import { useAuthService } from '../contexts/AppContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
+  const authService = useAuthService();
   const [isLoading, setIsLoading] = useState(true);
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState<string | null>(null);
 
   useEffect(() => {
-    checkOnboarding();
+    checkAuthStatus();
   }, []);
 
-  const checkOnboarding = async () => {
+  const checkAuthStatus = async () => {
     try {
-      const completed = await checkOnboardingStatus();
-      setHasCompletedOnboarding(completed);
+      // Initialize auth service (loads tokens from storage)
+      await authService.initialize();
+
+      // Check if user has valid authentication tokens
+      const authenticated = authService.isAuthenticated();
+      setIsAuthenticated(authenticated);
+
+      // If authenticated, check onboarding completion
+      if (authenticated) {
+        const incompleteStep = await checkOnboardingCompletion();
+        setOnboardingStep(incompleteStep);
+      }
     } catch (error) {
-      console.error('Error checking onboarding:', error);
+      console.error('Error checking auth status:', error);
+      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const checkOnboardingCompletion = async (): Promise<string | null> => {
+    try {
+      const user = await authService.getCurrentUser();
+
+      // Check which step is incomplete
+      // Default values from signup are 'User' and 'Child'
+      if (!user.name || user.name === 'User') {
+        return 'NameInput';
+      }
+      if (!user.childName || user.childName === 'Child') {
+        return 'ChildName';
+      }
+      if (!user.childBirthday) {
+        return 'ChildBirthday';
+      }
+      if (!user.issue) {
+        return 'ChildIssue';
+      }
+
+      // All steps complete, need to do subscription
+      // Check if they've seen the intro screens
+      // For now, return null to indicate onboarding is complete
+      return null;
+    } catch (error) {
+      console.error('Error checking onboarding completion:', error);
+      return null;
     }
   };
 
@@ -45,15 +89,36 @@ export const RootNavigator: React.FC = () => {
     );
   }
 
+  const shouldShowOnboarding = !isAuthenticated || onboardingStep !== null;
+
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
       }}
-      initialRouteName={hasCompletedOnboarding ? 'MainTabs' : 'Onboarding'}
     >
-      <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
-      <Stack.Screen name="MainTabs" component={TabNavigator} />
+      {shouldShowOnboarding ? (
+        <>
+          <Stack.Screen
+            name="Onboarding"
+            component={OnboardingNavigator}
+            initialParams={onboardingStep ? { initialStep: onboardingStep } : undefined}
+          />
+          <Stack.Screen name="MainTabs" component={TabNavigator} />
+        </>
+      ) : (
+        <>
+          <Stack.Screen name="MainTabs" component={TabNavigator} />
+          <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
+        </>
+      )}
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
       <Stack.Screen
         name="LessonViewer"
         component={LessonViewerScreen}

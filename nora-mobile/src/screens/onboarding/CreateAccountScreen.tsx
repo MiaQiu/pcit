@@ -113,12 +113,21 @@ export const CreateAccountScreen: React.FC = () => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Back Button */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          </TouchableOpacity>
+
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Create your account</Text>
-            <Text style={styles.subtitle}>
+            {/* <Text style={styles.subtitle}>
               Enter your email and password to get started
-            </Text>
+            </Text> */}
           </View>
 
           {/* Email Input */}
@@ -228,11 +237,11 @@ export const CreateAccountScreen: React.FC = () => {
           </TouchableOpacity>
 
           {/* Terms */}
-          <Text style={styles.terms}>
+          {/* <Text style={styles.terms}>
             By continuing, you agree to our{'\n'}
             <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
             <Text style={styles.termsLink}>Privacy Policy</Text>
-          </Text>
+          </Text> */}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -252,17 +261,27 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 32,
-    paddingTop: 60,
+    paddingTop: 30,
     paddingBottom: 32,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    marginLeft: -8,
   },
   header: {
     marginBottom: 32,
+    marginTop: 28,
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 32,
     color: '#1F2937',
-    marginBottom: 12,
+    marginBottom: 32,
+    marginTop: 8,
   },
   subtitle: {
     fontFamily: 'PlusJakartaSans_400Regular',
@@ -320,11 +339,12 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 56,
-    backgroundColor: '#8C49D5',
-    borderRadius: 16,
+    backgroundColor: '#1E1E1E',
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
+    marginTop: 32,
   },
   buttonDisabled: {
     backgroundColor: '#E5E7EB',

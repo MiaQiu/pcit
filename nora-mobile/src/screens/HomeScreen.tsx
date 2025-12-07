@@ -12,25 +12,43 @@ import { StreakWidget } from '../components/StreakWidget';
 import { ProfileCircle } from '../components/ProfileCircle';
 import { DRAGON_PURPLE, FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
-import { useLessonService } from '../contexts/AppContext';
+import { useLessonService, useAuthService } from '../contexts/AppContext';
 import { MOCK_HOME_LESSONS } from '../data/mockLessons';
 import { LessonCache } from '../lib/LessonCache';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const lessonService = useLessonService();
+  const authService = useAuthService();
 
   const [lessons, setLessons] = useState<LessonCardProps[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>();
 
   useEffect(() => {
     // Clean up completed lessons from cache on app open
     LessonCache.cleanupCompletedLessons();
 
     loadLessons();
+    loadUserProfile();
   }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      // Only try to load profile if user is authenticated
+      if (!authService.isAuthenticated()) {
+        return;
+      }
+
+      const user = await authService.getCurrentUser();
+      setProfileImageUrl(user.profileImageUrl);
+    } catch (error) {
+      // Silently fail - user profile is optional for HomeScreen
+      console.log('Could not load user profile:', error);
+    }
+  };
 
   // Prefetch and cache today's and next day's lessons
   useEffect(() => {
@@ -123,6 +141,10 @@ export const HomeScreen: React.FC = () => {
     });
   };
 
+  const handleProfilePress = () => {
+    navigation.push('Profile');
+  };
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
@@ -157,7 +179,11 @@ export const HomeScreen: React.FC = () => {
 
         {/* Profile Circle and Streak Widget */}
         <View style={styles.streakContainer}>
-          <ProfileCircle size={60} />
+          <ProfileCircle
+            size={60}
+            imageUrl={profileImageUrl}
+            onPress={handleProfilePress}
+          />
           <StreakWidget
             streak={6}
             completedDays={[true, true, true, true, true, true, false]}

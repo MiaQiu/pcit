@@ -17,6 +17,8 @@ export type RootTabParamList = {
 export type OnboardingStackParamList = {
   Welcome: undefined;
   Start: undefined;
+  Login: undefined;
+  SignupOptions: undefined;
   CreateAccount: undefined;
   NameInput: undefined;
   ChildName: undefined;
@@ -29,8 +31,9 @@ export type OnboardingStackParamList = {
 };
 
 export type RootStackParamList = {
-  Onboarding: undefined;
+  Onboarding: { initialStep?: string } | undefined;
   MainTabs: { screen?: string } | undefined;
+  Profile: undefined;
   LessonViewer: {
     lessonId: string;
   };

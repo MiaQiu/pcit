@@ -13,6 +13,7 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
@@ -39,19 +40,34 @@ export const NameInputScreen: React.FC = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.content}>
+          {/* Dragon Header with Text Box */}
+          <View style={styles.headerSection}>
+            <View style={styles.dragonIconContainer}>
+              <Image
+                source={require('../../../assets/images/dragon_image.png')}
+                style={styles.dragonIcon}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.headerTextBox}>
+              <Text style={styles.headerText}>
+                Just answer 3 questions so we can tailor the experience for you!
+              </Text>
+            </View>
+          </View>
+
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>What's your name?</Text>
-            <Text style={styles.subtitle}>
+            {/* <Text style={styles.subtitle}>
               We'll use this to personalize your experience
-            </Text>
+            </Text> */}
           </View>
 
           {/* Input */}
           <TextInput
             style={styles.input}
-            placeholder="Enter your name"
-            placeholderTextColor="#9CA3AF"
+            placeholder=""
             value={name}
             onChangeText={setName}
             autoFocus
@@ -94,13 +110,51 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingTop: 60,
   },
+  headerSection: {
+    marginBottom: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dragonIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    overflow: 'hidden',
+    backgroundColor: '#F5F0FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 48,
+  },
+  dragonIcon: {
+    width: 90,
+    height: 90,
+    marginLeft: 25,
+  },
+  headerTextBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 8,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  headerText: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 16,
+    color: '#364153',
+    lineHeight: 24,
+  },
   header: {
     marginBottom: 32,
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 32,
-    color: '#1F2937',
+    fontSize: 24,
+    color: '#4A5565',
     marginBottom: 12,
   },
   subtitle: {
@@ -111,13 +165,10 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 56,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 16,
-    color: '#1F2937',
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 40,
+    color: '#4A5565',
+    textAlign: 'center',
   },
   spacer: {
     flex: 1,
@@ -126,7 +177,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: '#8C49D5',
-    borderRadius: 16,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 32,

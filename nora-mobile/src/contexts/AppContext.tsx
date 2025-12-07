@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
-import { LessonService, AuthService, RecordingService } from '@nora/core';
+import { LessonService, AuthService, RecordingService, SocialAuthService } from '@nora/core';
 import { SecureStoreAdapter } from '../lib/SecureStoreAdapter';
 
 // Get API URL from environment variable or use default
@@ -14,6 +14,7 @@ interface AppContextType {
   lessonService: LessonService;
   authService: AuthService;
   recordingService: RecordingService;
+  socialAuthService: SocialAuthService;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -29,10 +30,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     // Initialize AuthService first
     const authService = new AuthService(storage, API_URL);
 
-    // Initialize AuthService (load tokens from storage)
-    authService.initialize().catch(err => {
-      console.log('AuthService initialization (no tokens yet):', err);
-    });
+    // Note: AuthService.initialize() will be called by RootNavigator
+    // to check authentication status before navigation
 
     // Initialize LessonService with getAccessToken callback
     const lessonService = new LessonService(
@@ -48,10 +47,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     // Initialize RecordingService
     const recordingService = new RecordingService(authService, API_URL);
 
+    // Initialize SocialAuthService
+    const socialAuthService = new SocialAuthService(storage, API_URL);
+    socialAuthService.initialize().catch(err => {
+      console.log('SocialAuthService initialization:', err);
+    });
+
     return {
       lessonService,
       authService,
       recordingService,
+      socialAuthService,
     };
   }, []);
 
@@ -85,4 +91,9 @@ export const useAuthService = () => {
 export const useRecordingService = () => {
   const { recordingService } = useServices();
   return recordingService;
+};
+
+export const useSocialAuthService = () => {
+  const { socialAuthService } = useServices();
+  return socialAuthService;
 };

@@ -12,6 +12,7 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 
@@ -49,7 +50,10 @@ export const WelcomeScreen: React.FC = () => {
   }, [navigation, fadeAnim, scaleAnim]);
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#A2DFCB', '#96D0E0']}
+      style={styles.container}
+    >
       <Animated.View
         style={[
           styles.content,
@@ -66,14 +70,13 @@ export const WelcomeScreen: React.FC = () => {
         />
         <Text style={styles.title}>Nora</Text>
       </Animated.View>
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -58,12 +58,8 @@ export const SubscriptionScreen: React.FC = () => {
       });
 
       // TODO: Implement subscription/in-app purchase logic
-      // For now, just mark onboarding as complete
 
-      // Mark onboarding as complete in AsyncStorage
-      await completeOnboarding();
-
-      // Navigate to MainTabs
+      // Navigate to MainTabs (user is already authenticated from signup)
       navigation.replace('MainTabs');
     } catch (error: any) {
       console.error('Complete onboarding error:', error);
@@ -78,8 +74,7 @@ export const SubscriptionScreen: React.FC = () => {
           {
             text: 'Skip for Now',
             onPress: async () => {
-              // Mark complete anyway and continue
-              await completeOnboarding();
+              // Continue anyway (user is already authenticated from signup)
               navigation.replace('MainTabs');
             },
             style: 'cancel',

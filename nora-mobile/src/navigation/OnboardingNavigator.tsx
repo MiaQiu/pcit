@@ -5,11 +5,14 @@
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { OnboardingStackParamList } from './types';
+import { OnboardingStackParamList, RootStackParamList } from './types';
+import { RouteProp } from '@react-navigation/native';
 
 // Import onboarding screens (will be created next)
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { StartScreen } from '../screens/onboarding/StartScreen';
+import { LoginScreen } from '../screens/onboarding/LoginScreen';
+import { SignupOptionsScreen } from '../screens/onboarding/SignupOptionsScreen';
 import { CreateAccountScreen } from '../screens/onboarding/CreateAccountScreen';
 import { NameInputScreen } from '../screens/onboarding/NameInputScreen';
 import { ChildNameScreen } from '../screens/onboarding/ChildNameScreen';
@@ -22,13 +25,30 @@ import { SubscriptionScreen } from '../screens/onboarding/SubscriptionScreen';
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
-export const OnboardingNavigator: React.FC = () => {
+interface OnboardingNavigatorProps {
+  route?: RouteProp<RootStackParamList, 'Onboarding'>;
+}
+
+export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route }) => {
+  const initialStep = route?.params?.initialStep;
+
+  // Determine initial route name based on the incomplete step
+  const getInitialRouteName = (): keyof OnboardingStackParamList => {
+    if (initialStep) {
+      // User has incomplete onboarding, start from that step
+      return initialStep as keyof OnboardingStackParamList;
+    }
+    // Default to Welcome screen for new users
+    return 'Welcome';
+  };
+
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',
       }}
+      initialRouteName={getInitialRouteName()}
     >
       <Stack.Screen
         name="Welcome"
@@ -36,6 +56,8 @@ export const OnboardingNavigator: React.FC = () => {
         options={{ animation: 'none' }}
       />
       <Stack.Screen name="Start" component={StartScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="SignupOptions" component={SignupOptionsScreen} />
       <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
       <Stack.Screen name="NameInput" component={NameInputScreen} />
       <Stack.Screen name="ChildName" component={ChildNameScreen} />
