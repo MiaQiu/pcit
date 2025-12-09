@@ -18,7 +18,6 @@ import { ProfileCircle } from '../components/ProfileCircle';
 import { RecordingGuideCard } from '../components/RecordingGuideCard';
 import { HowToRecordCard } from '../components/HowToRecordCard';
 import { RecordingCard } from '../components/RecordingCard';
-import { NextActionCard } from '../components/NextActionCard';
 import { FONTS, COLORS, DRAGON_PURPLE } from '../constants/assets';
 import { useRecordingService } from '../contexts/AppContext';
 
@@ -60,18 +59,12 @@ export const RecordScreen: React.FC = () => {
     };
   }, []);
 
-  // Track if user has navigated to report
-  const hasNavigatedToReport = useRef(false);
-
-  // Reset state when screen comes back into focus (after viewing report)
+  // Reset state when screen comes back into focus
   useFocusEffect(
     React.useCallback(() => {
-      // Only reset if we've navigated away and are coming back
-      if (recordingState === 'success' && hasNavigatedToReport.current) {
-        resetRecording();
-        hasNavigatedToReport.current = false;
-      }
-    }, [recordingState])
+      // Reset recording state when coming back to this screen
+      resetRecording();
+    }, [])
   );
 
   const requestPermissions = async () => {
@@ -269,8 +262,8 @@ export const RecordScreen: React.FC = () => {
     const maxAttempts = 40; // 40 attempts * 3 seconds = 2 minutes max
 
     if (attempt >= maxAttempts) {
-      console.log('[POLLING] Timeout - showing success screen anyway');
-      setRecordingState('success');
+      console.log('[POLLING] Timeout - navigating to home screen');
+      navigation.navigate('MainTabs', { screen: 'Home' });
       return;
     }
 
@@ -279,10 +272,10 @@ export const RecordScreen: React.FC = () => {
       console.log('[POLLING] Calling getAnalysis...');
       const analysis = await recordingService.getAnalysis(recordingId);
 
-      // If we got the analysis successfully, show success screen
-      console.log('[POLLING] Analysis complete! Setting state to success...');
-      setRecordingState('success');
-      console.log('[POLLING] State set to success');
+      // If we got the analysis successfully, navigate to home screen
+      console.log('[POLLING] Analysis complete! Navigating to home...');
+      navigation.navigate('MainTabs', { screen: 'Home' });
+      console.log('[POLLING] Navigated to home');
     } catch (error: any) {
       // If still processing or transcribing, wait and try again
       const errorMsg = error.message.toLowerCase();
@@ -294,19 +287,14 @@ export const RecordScreen: React.FC = () => {
         }, 3000);
         timeoutRef.current = timeout;
       } else {
-        // Other error - show success screen anyway, report will handle the error
-        console.error('[POLLING] Unexpected error - showing success screen:', error);
-        setRecordingState('success');
+        // Other error - navigate to home screen anyway
+        console.error('[POLLING] Unexpected error - navigating to home screen:', error);
+        navigation.navigate('MainTabs', { screen: 'Home' });
       }
     }
   };
 
-  const handleViewReport = () => {
-    if (recordingId) {
-      hasNavigatedToReport.current = true;
-      navigation.navigate('Report', { recordingId });
-    }
-  };
+  // handleViewReport removed - now navigates directly to home after recording
 
   const handleStartSession = () => {
     // Transition to ready state without starting recording
@@ -399,19 +387,7 @@ export const RecordScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Success State */}
-        {recordingState === 'success' && (
-          <View style={styles.successContainer}>
-            <NextActionCard
-              phase="Phase"
-              phaseName="Connect"
-              title="Read your report and insights"
-              description="Your session has been analyzed! Review your personalized feedback, tips, and progress."
-              buttonText="View Report"
-              onPress={handleViewReport}
-            />
-          </View>
-        )}
+        {/* Success State - Now navigates directly to home */}
 
         {!permissionGranted && recordingState === 'idle' && (
           <Text style={styles.permissionText}>

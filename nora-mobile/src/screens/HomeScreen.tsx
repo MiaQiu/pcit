@@ -7,7 +7,9 @@ import React, { useState, useEffect } from 'react';
 import { View, ScrollView, ActivityIndicator, Text, RefreshControl, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { LessonCard, LessonCardProps } from '../components/LessonCard';
+// import { LessonCard } from '../components/LessonCard'; // Keeping LessonCard component for later use
+import { LessonCardProps } from '../components/LessonCard'; // Import type for lesson data
+import { NextActionCard } from '../components/NextActionCard';
 import { StreakWidget } from '../components/StreakWidget';
 import { ProfileCircle } from '../components/ProfileCircle';
 import { DRAGON_PURPLE, FONTS, COLORS } from '../constants/assets';
@@ -30,6 +32,15 @@ export const HomeScreen: React.FC = () => {
   const [relationshipToChild, setRelationshipToChild] = useState<'MOTHER' | 'FATHER' | 'GRANDMOTHER' | 'GRANDFATHER' | 'GUARDIAN' | 'OTHER' | undefined>();
   const [currentStreak, setCurrentStreak] = useState(0);
   const [completedDaysThisWeek, setCompletedDaysThisWeek] = useState<boolean[]>([false, false, false, false, false, false, false]);
+  const [yesterdayScore, setYesterdayScore] = useState<{ score: number; maxScore: number; recordingId: string } | null>(null);
+  const [encouragementMessage, setEncouragementMessage] = useState<string>('You\'re so close! Don\'t give up!');
+
+  // State tracking for card display logic (L / S / R)
+  const [isLessonCompleted, setIsLessonCompleted] = useState(false);
+  const [hasRecordedSession, setHasRecordedSession] = useState(false);
+  const [isReportRead, setIsReportRead] = useState(false);
+  const [todayLessonId, setTodayLessonId] = useState<string | null>(null);
+  const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
 
   useEffect(() => {
     // Clean up completed lessons from cache on app open
@@ -38,7 +49,19 @@ export const HomeScreen: React.FC = () => {
     loadLessons();
     loadUserProfile();
     loadStreakData();
+    loadYesterdayReport();
+    loadTodayState();
   }, []);
+
+  // Reload state when screen comes into focus (after completing lesson/recording/reading report)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadTodayState();
+      loadStreakData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const loadUserProfile = async () => {
     try {
@@ -126,6 +149,55 @@ export const HomeScreen: React.FC = () => {
     return weekDays;
   };
 
+  const loadYesterdayReport = async () => {
+    try {
+      // Get recordings from yesterday
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+
+      const tomorrow = new Date(yesterday);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const { recordings } = await recordingService.getRecordings().catch(() => ({ recordings: [] }));
+
+      // Find yesterday's recordings
+      const yesterdayRecordings = recordings.filter((r: any) => {
+        const recordingDate = new Date(r.createdAt);
+        return recordingDate >= yesterday && recordingDate < tomorrow;
+      });
+
+      if (yesterdayRecordings.length > 0) {
+        // Get the most recent recording from yesterday
+        const latestRecording = yesterdayRecordings.sort(
+          (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )[0];
+
+        // Try to get the analysis for this recording
+        try {
+          const analysis = await recordingService.getAnalysis(latestRecording.id);
+          if (analysis && analysis.noraScore !== undefined) {
+            setYesterdayScore({
+              score: Math.round(analysis.noraScore),
+              maxScore: 30,
+              recordingId: latestRecording.id,
+            });
+
+            // Set encouragement message if available
+            if (analysis.encouragement) {
+              setEncouragementMessage(analysis.encouragement);
+            }
+          }
+        } catch (err) {
+          // Analysis might not be ready yet, that's okay
+          console.log('Could not load yesterday\'s analysis:', err);
+        }
+      }
+    } catch (error) {
+      console.log('Failed to load yesterday\'s report:', error);
+    }
+  };
+
   /**
    * Calculate streak based on consecutive days with BOTH a completed lesson AND a recording
    */
@@ -174,6 +246,91 @@ export const HomeScreen: React.FC = () => {
     }
 
     return streak;
+  };
+
+  /**
+   * Load today's state (L/S/R) to determine which card to show
+   */
+  const loadTodayState = async () => {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      // Check if lesson completed today
+      const { lessons } = await lessonService.getLessons().catch(() => ({ lessons: [], userProgress: {} }));
+      const todayCompletedLesson = lessons.find((lesson: any) => {
+        if (lesson.progress?.status === 'COMPLETED' && lesson.progress?.completedAt) {
+          const completedDate = new Date(lesson.progress.completedAt);
+          return completedDate >= today && completedDate < tomorrow;
+        }
+        return false;
+      });
+
+      const lessonCompleted = !!todayCompletedLesson;
+      setIsLessonCompleted(lessonCompleted);
+      if (todayCompletedLesson) {
+        setTodayLessonId(todayCompletedLesson.id);
+      }
+
+      // Check if recorded session today
+      const { recordings } = await recordingService.getRecordings().catch(() => ({ recordings: [] }));
+      const todayRecordings = recordings.filter((r: any) => {
+        const recordingDate = new Date(r.createdAt);
+        return recordingDate >= today && recordingDate < tomorrow;
+      });
+
+      const hasRecording = todayRecordings.length > 0;
+      setHasRecordedSession(hasRecording);
+      if (hasRecording) {
+        // Get the most recent recording
+        const latestRecording = todayRecordings.sort(
+          (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )[0];
+        setLatestRecordingId(latestRecording.id);
+      }
+
+      // Check if report was read today (using AsyncStorage or similar)
+      // For now, we'll check if the user has viewed the report screen today
+      // This could be tracked via AsyncStorage
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const reportReadKey = `report_read_${today.toDateString()}`;
+      const reportReadValue = await AsyncStorage.getItem(reportReadKey);
+      setIsReportRead(reportReadValue === 'true');
+
+    } catch (error) {
+      console.log('Failed to load today\'s state:', error);
+    }
+  };
+
+  /**
+   * Determine which card type to show based on L/S/R state
+   * Returns: 'lesson' | 'record' | 'readReport' | 'recordAgain'
+   */
+  const getCardType = (): 'lesson' | 'record' | 'readReport' | 'recordAgain' => {
+    // State 1: L=F, S=F, R=F → Show Lesson
+    if (!isLessonCompleted && !hasRecordedSession && !isReportRead) {
+      return 'lesson';
+    }
+
+    // State 2: L=T, S=F, R=F → Show Record Session
+    if (isLessonCompleted && !hasRecordedSession && !isReportRead) {
+      return 'record';
+    }
+
+    // State 3 & 5: L=T, S=T, R=F → Show Read Report
+    if (isLessonCompleted && hasRecordedSession && !isReportRead) {
+      return 'readReport';
+    }
+
+    // State 4 & 6: L=T, S=T, R=T → Show Record Again
+    if (isLessonCompleted && hasRecordedSession && isReportRead) {
+      return 'recordAgain';
+    }
+
+    // Default to lesson
+    return 'lesson';
   };
 
   // Prefetch and cache today's and next day's lessons
@@ -270,18 +427,82 @@ export const HomeScreen: React.FC = () => {
     navigation.push('LessonViewer', {
       lessonId,
     });
+    // Note: isLessonCompleted will be updated when we return from LessonViewer
+    // via the loadTodayState function in useEffect with focus listener
   };
 
   const handleProfilePress = () => {
     navigation.push('Profile');
   };
 
+  const handleReadYesterdayReport = () => {
+    if (yesterdayScore?.recordingId) {
+      navigation.push('Report', { recordingId: yesterdayScore.recordingId });
+    }
+  };
+
+  const handleRecordSession = () => {
+    // Navigate to recording tab
+    navigation.navigate('MainTabs', { screen: 'Record' });
+    // Note: hasRecordedSession will be updated when we return from Record screen
+  };
+
+  const handleReadTodayReport = async () => {
+    if (latestRecordingId) {
+      // Mark report as read
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const reportReadKey = `report_read_${today.toDateString()}`;
+      await AsyncStorage.setItem(reportReadKey, 'true');
+      setIsReportRead(true);
+
+      // Navigate to report
+      navigation.push('Report', { recordingId: latestRecordingId });
+    }
+  };
+
+  const handleRecordAgain = async () => {
+    // Reset report read state (since we're recording again, we'll have a new report to read)
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const reportReadKey = `report_read_${today.toDateString()}`;
+    await AsyncStorage.setItem(reportReadKey, 'false');
+    setIsReportRead(false);
+
+    // Navigate to recording tab
+    navigation.navigate('MainTabs', { screen: 'Record' });
+  };
+
+  const handleNextAction = () => {
+    const cardType = getCardType();
+
+    switch (cardType) {
+      case 'lesson':
+        // Find the first unlocked lesson
+        const todayLesson = lessons.find(l => !l.isLocked);
+        if (todayLesson) {
+          handleLessonPress(todayLesson.id);
+        }
+        break;
+      case 'record':
+        handleRecordSession();
+        break;
+      case 'readReport':
+        handleReadTodayReport();
+        break;
+      case 'recordAgain':
+        handleRecordAgain();
+        break;
+    }
+  };
+
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
-        <View className="flex-1 justify-center items-center">
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8C49D5" />
-          <Text className="mt-4 text-base text-gray-600">Loading lessons...</Text>
         </View>
       </SafeAreaView>
     );
@@ -327,7 +548,35 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.heading}>Today's deck</Text>
         )} */}
 
-        {/* Today's Lesson Card - Show only the first incomplete lesson */}
+        {/* Next Action Card - Dynamic based on L/S/R state */}
+        {lessons.length > 0 && (() => {
+          const cardType = getCardType();
+
+          // For lesson type, we need the lesson data
+          const todayLesson = lessons.find(l => !l.isLocked);
+          const displayLesson = todayLesson || lessons[0];
+
+          return (
+            <View style={{ marginBottom: 8 }}>
+              <NextActionCard
+                type={cardType}
+                // Lesson-specific props (only used when type='lesson')
+                phase={displayLesson.phase}
+                phaseName={displayLesson.phaseName}
+                title={displayLesson.title}
+                description={displayLesson.description}
+                // Action handler
+                onPress={handleNextAction}
+                // Yesterday's score section (optional)
+                yesterdayScore={yesterdayScore || undefined}
+                encouragementMessage={yesterdayScore ? encouragementMessage : undefined}
+                onReadReport={yesterdayScore ? handleReadYesterdayReport : undefined}
+              />
+            </View>
+          );
+        })()}
+
+        {/* KEPT FOR LATER USE - Today's Lesson Card
         {lessons.length > 0 && (() => {
           // Find the first unlocked and not completed lesson
           const todayLesson = lessons.find(l => !l.isLocked);
@@ -352,13 +601,22 @@ export const HomeScreen: React.FC = () => {
               />
             </View>
           );
-        })()}
+        })()} */}
       </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   streakContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',

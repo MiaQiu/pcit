@@ -185,10 +185,9 @@ export const LearnScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color={COLORS.mainPurple} />
-          <Text className="mt-4 text-base text-gray-600">Loading lessons...</Text>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#8C49D5" />
         </View>
       </SafeAreaView>
     );
@@ -281,6 +280,15 @@ export const LearnScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   header: {
     paddingHorizontal: 24,
     paddingTop: 8,
