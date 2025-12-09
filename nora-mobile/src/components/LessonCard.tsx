@@ -44,6 +44,10 @@ export interface LessonCardProps {
   ellipse77Color?: string; // Color for bottom ellipse
   ellipse78Color?: string; // Color for top ellipse
   isLocked?: boolean;
+  progress?: {
+    status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'LOCKED';
+    completedAt?: Date | string;
+  };
   onPress?: () => void;
 }
 
@@ -83,7 +87,10 @@ export const LessonCard: React.FC<LessonCardProps> = ({
         <Ellipse color={finalEllipse77Color} style={styles.ellipse77} />
 
         {/* Dragon Image - Figma node 35:798 */}
-        <View style={styles.dragonContainer}>
+        <View style={[
+          styles.dragonContainer,
+          normalizedPhaseName === 'DISCIPLINE' && styles.dragonContainerDiscipline
+        ]}>
           <Image
             source={dragonImageUrl}
             style={styles.dragonImage}
@@ -120,7 +127,7 @@ export const LessonCard: React.FC<LessonCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     width: '90%', //adjusted
-    height: 620, //adjusted
+    height: 660, //adjusted
     alignSelf: 'center', //added
     // height: 679, //original
     //width: '100%', //original
@@ -152,10 +159,17 @@ const styles = StyleSheet.create({
     left: 0,
     top: 42,
     width: 350, //adjusted
-    height: 223, 
+    height: 223,
 
     // width: 382, //original
-  
+
+  },
+  // Discipline phase dragon (dino) - adjusted positioning
+  dragonContainerDiscipline: {
+    left: 0,
+    top: -30,
+    width: 360,
+    height: 360,
   },
   dragonImage: {
     width: '100%',

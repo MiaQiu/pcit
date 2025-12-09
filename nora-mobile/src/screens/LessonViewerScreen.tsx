@@ -264,7 +264,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       // DON'T invalidate cache - keep it so user can review completed lesson instantly
       // Cache will be cleaned up when app opens and lesson is completed
 
-      navigation.navigate('MainTabs', { screen: 'Record' });
+      navigation.navigate('MainTabs', { screen: 'Home' });
       return;
     }
 
@@ -289,7 +289,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     } else {
       // No quiz, lesson complete
       Alert.alert('Complete!', 'You finished this lesson!');
-      navigation.replace('LessonComplete', { lessonId });
+      navigation.navigate('MainTabs', { screen: 'Home' });
     }
   };
 

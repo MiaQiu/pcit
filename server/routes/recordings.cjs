@@ -646,7 +646,7 @@ const upload = multer({
  */
 // TEMPORARY: Auth disabled for development
 // TODO: Re-enable requireAuth when authentication is implemented
-router.post('/upload', upload.single('audio'), async (req, res) => {
+router.post('/upload', requireAuth, upload.single('audio'), async (req, res) => {
   try {
     // Validate file was uploaded
     if (!req.file) {
@@ -656,8 +656,7 @@ router.post('/upload', upload.single('audio'), async (req, res) => {
       });
     }
 
-    // TEMPORARY: Use test user ID when auth is disabled
-    const userId = req.userId || 'test-user-id';
+    const userId = req.userId;
 
     console.log('Received audio upload:', {
       originalName: req.file.originalname,

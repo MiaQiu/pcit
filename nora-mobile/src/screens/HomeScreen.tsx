@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, ActivityIndicator, Text, RefreshControl, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LessonCard } from '../components/LessonCard';
 import { LessonCardProps } from '../components/LessonCard'; // Import type for lesson data
 import { NextActionCard } from '../components/NextActionCard';
@@ -32,8 +32,8 @@ export const HomeScreen: React.FC = () => {
   const [relationshipToChild, setRelationshipToChild] = useState<'MOTHER' | 'FATHER' | 'GRANDMOTHER' | 'GRANDFATHER' | 'GUARDIAN' | 'OTHER' | undefined>();
   const [currentStreak, setCurrentStreak] = useState(0);
   const [completedDaysThisWeek, setCompletedDaysThisWeek] = useState<boolean[]>([false, false, false, false, false, false, false]);
-  const [yesterdayScore, setYesterdayScore] = useState<{ score: number; maxScore: number; recordingId: string } | null>(null);
-  const [encouragementMessage, setEncouragementMessage] = useState<string>('You\'re so close! Don\'t give up!');
+  const [latestScore, setLatestScore] = useState<{ score: number; maxScore: number; recordingId: string } | null>(null);
+  const [encouragementMessage, setEncouragementMessage] = useState<string>('');
 
   // State tracking for card display logic (L / S / R)
   const [isLessonCompleted, setIsLessonCompleted] = useState(false);
@@ -42,6 +42,7 @@ export const HomeScreen: React.FC = () => {
   const [todayLessonId, setTodayLessonId] = useState<string | null>(null);
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
   const [hasAnyRecordingsEver, setHasAnyRecordingsEver] = useState(false);
+  const [hasCompletedAnyLesson, setHasCompletedAnyLesson] = useState(false);
 
   useEffect(() => {
     // Clean up completed lessons from cache on app open
@@ -50,19 +51,19 @@ export const HomeScreen: React.FC = () => {
     loadLessons();
     loadUserProfile();
     loadStreakData();
-    loadYesterdayReport();
+    loadLatestReport();
     loadTodayState();
   }, []);
 
   // Reload state when screen comes into focus (after completing lesson/recording/reading report)
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
+  // useFocusEffect is more reliable for tab navigation than addListener
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reload today's state and streak when tab comes into focus
       loadTodayState();
       loadStreakData();
-    });
-
-    return unsubscribe;
-  }, [navigation]);
+    }, [])
+  );
 
   const loadUserProfile = async () => {
     try {
@@ -150,27 +151,13 @@ export const HomeScreen: React.FC = () => {
     return weekDays;
   };
 
-  const loadYesterdayReport = async () => {
+  const loadLatestReport = async () => {
     try {
-      // Get recordings from yesterday
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      yesterday.setHours(0, 0, 0, 0);
-
-      const tomorrow = new Date(yesterday);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-
       const { recordings } = await recordingService.getRecordings().catch(() => ({ recordings: [] }));
 
-      // Find yesterday's recordings
-      const yesterdayRecordings = recordings.filter((r: any) => {
-        const recordingDate = new Date(r.createdAt);
-        return recordingDate >= yesterday && recordingDate < tomorrow;
-      });
-
-      if (yesterdayRecordings.length > 0) {
-        // Get the most recent recording from yesterday
-        const latestRecording = yesterdayRecordings.sort(
+      if (recordings.length > 0) {
+        // Get the most recent recording
+        const latestRecording = recordings.sort(
           (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )[0];
 
@@ -178,9 +165,9 @@ export const HomeScreen: React.FC = () => {
         try {
           const analysis = await recordingService.getAnalysis(latestRecording.id);
           if (analysis && analysis.noraScore !== undefined) {
-            setYesterdayScore({
+            setLatestScore({
               score: Math.round(analysis.noraScore),
-              maxScore: 30,
+              maxScore: 100,
               recordingId: latestRecording.id,
             });
 
@@ -191,11 +178,11 @@ export const HomeScreen: React.FC = () => {
           }
         } catch (err) {
           // Analysis might not be ready yet, that's okay
-          console.log('Could not load yesterday\'s analysis:', err);
+          console.log('Could not load latest analysis:', err);
         }
       }
     } catch (error) {
-      console.log('Failed to load yesterday\'s report:', error);
+      console.log('Failed to load latest report:', error);
     }
   };
 
@@ -275,6 +262,10 @@ export const HomeScreen: React.FC = () => {
         setTodayLessonId(todayCompletedLesson.id);
       }
 
+      // Check if user has completed ANY lesson ever (for showing LessonCard vs NextActionCard)
+      const hasAnyCompletedLesson = lessons.some((lesson: any) => lesson.progress?.status === 'COMPLETED');
+      setHasCompletedAnyLesson(hasAnyCompletedLesson);
+
       // Check if recorded session today
       const { recordings } = await recordingService.getRecordings().catch(() => ({ recordings: [] }));
 
@@ -311,50 +302,57 @@ export const HomeScreen: React.FC = () => {
 
   /**
    * Determine which card type to show based on L/S/R state
-   * Returns: 'lesson' | 'record' | 'readReport' | 'recordAgain'
+   * Complete state machine:
+   * 1. L=F, S=F, R=F → Lesson Card
+   * 2. L=T, S=F, R=F → Record Session
+   * 3. L=T, S=T, R=F → Read Report
+   * 4. L=T, S=T, R=T → Record Again
+   * 5. L=T, S=T, R=F → Read Report (after recording again)
+   * 6. L=F, S=T, R=F → Read Report (recorded without lesson)
+   * 7. L=F, S=T, R=T → Lesson Card (force lesson before recording again)
    */
   const getCardType = (): 'lesson' | 'record' | 'readReport' | 'recordAgain' => {
-    // State 1: L=F, S=F, R=F → Show Lesson
-    if (!isLessonCompleted && !hasRecordedSession && !isReportRead) {
+    // State 7: L=F, S=T, R=T → Lesson Card (force lesson completion before recording again)
+    if (!isLessonCompleted && hasRecordedSession && isReportRead) {
       return 'lesson';
     }
 
-    // State 2: L=T, S=F, R=F → Show Record Session
-    if (isLessonCompleted && !hasRecordedSession && !isReportRead) {
-      return 'record';
-    }
-
-    // State 3 & 5: L=T, S=T, R=F → Show Read Report
-    if (isLessonCompleted && hasRecordedSession && !isReportRead) {
+    // States 3, 5, 6: S=T, R=F → Read Report (regardless of L)
+    if (hasRecordedSession && !isReportRead) {
       return 'readReport';
     }
 
-    // State 4 & 6: L=T, S=T, R=T → Show Record Again
+    // State 4: L=T, S=T, R=T → Record Again
     if (isLessonCompleted && hasRecordedSession && isReportRead) {
       return 'recordAgain';
     }
 
-    // Default to lesson
+    // State 2: L=T, S=F, R=F → Record Session
+    if (isLessonCompleted && !hasRecordedSession) {
+      return 'record';
+    }
+
+    // State 1: L=F, S=F, R=F → Lesson Card (default)
     return 'lesson';
   };
 
-  // Prefetch and cache today's and next day's lessons
+  // Prefetch and cache current lesson only
   useEffect(() => {
     if (lessons.length > 0) {
-      const unlockedLessons = lessons.filter(l => !l.isLocked);
+      // Get unlocked lessons that are not completed
+      const unlockedLessons = lessons.filter(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
 
-      // Get the first 2 unlocked lessons (today + next)
-      // This ensures we always cache the next incomplete lesson
-      const lessonsToCache = unlockedLessons.slice(0, 2);
+      // Get only the current lesson (first unlocked and not completed)
+      const currentLesson = unlockedLessons[0];
 
       // Prefetch and cache in background
-      lessonsToCache.forEach((lesson, index) => {
-        lessonService.getLessonDetail(lesson.id)
-          .then(data => LessonCache.set(lesson.id, data))
+      if (currentLesson) {
+        lessonService.getLessonDetail(currentLesson.id)
+          .then(data => LessonCache.set(currentLesson.id, data))
           .catch(err => {
-            console.log(`Prefetch failed for lesson ${index + 1}:`, err);
+            console.log('Prefetch failed for current lesson:', err);
           });
-      });
+      }
     }
   }, [lessons]);
 
@@ -366,14 +364,6 @@ export const HomeScreen: React.FC = () => {
         setIsRefreshing(true);
       }
       setError(null);
-
-      // Try to load from cache first for instant display
-      const cachedLessons = await LessonCache.getLessonsList();
-      if (cachedLessons && cachedLessons.length > 0) {
-        console.log('⚡ Displaying cached lessons list');
-        setLessons(cachedLessons);
-        setLoading(false);
-      }
 
       // Fetch fresh data from API
       const response = await lessonService.getLessons();
@@ -400,16 +390,14 @@ export const HomeScreen: React.FC = () => {
         description: lesson.description,
         // Use dino image for Discipline phase, dragon for others
         dragonImageUrl: lesson.phase === 'DISCIPLINE'
-          ? require('../../assets/images/dino_image2.png')
+          ? require('../../assets/images/dino_phase2.png')
           : (lesson.dragonImageUrl || DRAGON_PURPLE),
         // Remove backgroundColor, ellipse colors - let LessonCard determine based on phase
         isLocked: lesson.isLocked,
+        progress: lesson.progress,
       }));
 
       setLessons(mappedLessons);
-
-      // Cache the lessons list for next time
-      await LessonCache.setLessonsList(mappedLessons);
 
       // Refresh streak data when lessons are refreshed (in case a lesson was just completed)
       if (!showLoadingSpinner) {
@@ -441,9 +429,9 @@ export const HomeScreen: React.FC = () => {
     navigation.push('Profile');
   };
 
-  const handleReadYesterdayReport = () => {
-    if (yesterdayScore?.recordingId) {
-      navigation.push('Report', { recordingId: yesterdayScore.recordingId });
+  const handleReadLatestReport = () => {
+    if (latestScore?.recordingId) {
+      navigation.push('Report', { recordingId: latestScore.recordingId });
     }
   };
 
@@ -486,8 +474,8 @@ export const HomeScreen: React.FC = () => {
 
     switch (cardType) {
       case 'lesson':
-        // Find the first unlocked lesson
-        const todayLesson = lessons.find(l => !l.isLocked);
+        // Find the first unlocked lesson that is not completed
+        const todayLesson = lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
         if (todayLesson) {
           handleLessonPress(todayLesson.id);
         }
@@ -535,33 +523,35 @@ export const HomeScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Profile Circle and Streak Widget */}
-        <View style={styles.streakContainer}>
-          <ProfileCircle
-            size={60}
-            imageUrl={profileImageUrl}
-            relationshipToChild={relationshipToChild}
-            onPress={handleProfilePress}
-          />
-          <StreakWidget
-            streak={currentStreak}
-            completedDays={completedDaysThisWeek}
-          />
-        </View>
+        {/* Profile Circle and Streak Widget - Only show for experienced users */}
+        {(hasAnyRecordingsEver || hasCompletedAnyLesson) && (
+          <View style={styles.streakContainer}>
+            <ProfileCircle
+              size={60}
+              imageUrl={profileImageUrl}
+              relationshipToChild={relationshipToChild}
+              onPress={handleProfilePress}
+            />
+            <StreakWidget
+              streak={currentStreak}
+              completedDays={completedDaysThisWeek}
+            />
+          </View>
+        )}
 
         {/* Today's Deck Heading */}
         {/* {lessons.length > 0 && (
           <Text style={styles.heading}>Today's deck</Text>
         )} */}
 
-        {/* Show LessonCard for new users with no recordings, NextActionCard for experienced users */}
+        {/* Show LessonCard for new users with no recordings/lessons, NextActionCard for experienced users */}
         {lessons.length > 0 && (() => {
-          // Find the first unlocked lesson
-          const todayLesson = lessons.find(l => !l.isLocked);
+          // Find the first unlocked lesson that is not completed
+          const todayLesson = lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
           const displayLesson = todayLesson || lessons[0];
 
-          // If user has no recordings ever, show simple LessonCard
-          if (!hasAnyRecordingsEver) {
+          // If user has no recordings ever AND no completed lessons, show simple LessonCard
+          if (!hasAnyRecordingsEver && !hasCompletedAnyLesson) {
             return (
               <>
                 {/* Connect Phase Card */}
@@ -596,6 +586,10 @@ export const HomeScreen: React.FC = () => {
           // Otherwise, show NextActionCard with dynamic state
           const cardType = getCardType();
 
+          // Always show score section - use placeholder if no recording
+          const displayScore = latestScore || { score: 0, maxScore: 100, recordingId: '' };
+          const displayEncouragement = encouragementMessage || "Complete a play session to see your score!";
+
           return (
             <View style={{ marginBottom: 8 }}>
               <NextActionCard
@@ -607,10 +601,10 @@ export const HomeScreen: React.FC = () => {
                 description={displayLesson.description}
                 // Action handler
                 onPress={handleNextAction}
-                // Yesterday's score section (optional)
-                yesterdayScore={yesterdayScore || undefined}
-                encouragementMessage={yesterdayScore ? encouragementMessage : undefined}
-                onReadReport={yesterdayScore ? handleReadYesterdayReport : undefined}
+                // Latest score section - always show
+                yesterdayScore={displayScore}
+                encouragementMessage={displayEncouragement}
+                onReadReport={latestScore ? handleReadLatestReport : undefined}
               />
             </View>
           );

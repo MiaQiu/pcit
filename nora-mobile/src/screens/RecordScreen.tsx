@@ -19,7 +19,7 @@ import { RecordingGuideCard } from '../components/RecordingGuideCard';
 import { HowToRecordCard } from '../components/HowToRecordCard';
 import { RecordingCard } from '../components/RecordingCard';
 import { FONTS, COLORS, DRAGON_PURPLE } from '../constants/assets';
-import { useRecordingService } from '../contexts/AppContext';
+import { useRecordingService, useAuthService } from '../contexts/AppContext';
 
 type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed' | 'uploading' | 'processing' | 'success';
 
@@ -29,6 +29,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 export const RecordScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const recordingService = useRecordingService();
+  const authService = useAuthService();
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -206,11 +207,17 @@ export const RecordScreen: React.FC = () => {
           reject(new Error('Upload cancelled'));
         });
 
-        // Open connection and send
+        // Open connection
         xhr.open('POST', `${API_URL}/api/recordings/upload`);
 
-        // Note: Since auth is temporarily disabled, we don't need the Authorization header
-        // When auth is re-enabled, add: xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        // Add Authorization header
+        const token = authService.getAccessToken();
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        } else {
+          reject(new Error('No authentication token available'));
+          return;
+        }
 
         xhr.send(formData);
       });

@@ -41,7 +41,7 @@ interface CalendarDay {
   hasRecording: boolean;
 }
 
-const CalendarView: React.FC<{ recordingDates: Date[] }> = ({ recordingDates }) => {
+const CalendarView: React.FC<{ recordingDates: Date[]; lessonCompletionDates: Date[] }> = ({ recordingDates, lessonCompletionDates }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const goToPreviousMonth = () => {
@@ -58,29 +58,35 @@ const CalendarView: React.FC<{ recordingDates: Date[] }> = ({ recordingDates }) 
     const month = currentMonth.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    const startingDayOfWeek = firstDay.getDay();
+
+    // Adjust day of week: Monday=0, Tuesday=1, ..., Sunday=6
+    // JavaScript's getDay(): Sunday=0, Monday=1, ..., Saturday=6
+    let startingDayOfWeek = firstDay.getDay() - 1;
+    if (startingDayOfWeek < 0) startingDayOfWeek = 6; // Sunday becomes 6
 
     const days: CalendarDay[] = [];
+
+    // Convert recording dates and lesson dates to sets for faster lookup
+    const recordingDateStrings = new Set(recordingDates.map(d => d.toDateString()));
+    const lessonDateStrings = new Set(lessonCompletionDates.map(d => d.toDateString()));
 
     // Add previous month's trailing days
     for (let i = 0; i < startingDayOfWeek; i++) {
       const date = new Date(year, month, -startingDayOfWeek + i + 1);
+      const dateStr = date.toDateString();
       days.push({
         date,
-        hasRecording: recordingDates.some(
-          (d) => d.toDateString() === date.toDateString()
-        ),
+        hasRecording: recordingDateStrings.has(dateStr) && lessonDateStrings.has(dateStr),
       });
     }
 
     // Add current month's days
     for (let i = 1; i <= lastDay.getDate(); i++) {
       const date = new Date(year, month, i);
+      const dateStr = date.toDateString();
       days.push({
         date,
-        hasRecording: recordingDates.some(
-          (d) => d.toDateString() === date.toDateString()
-        ),
+        hasRecording: recordingDateStrings.has(dateStr) && lessonDateStrings.has(dateStr),
       });
     }
 
@@ -290,6 +296,7 @@ export const ProgressScreen: React.FC = () => {
     currentStreak: 0,
   });
   const [recordingDates, setRecordingDates] = useState<Date[]>([]);
+  const [lessonCompletionDates, setLessonCompletionDates] = useState<Date[]>([]);
   const [scoreData, setScoreData] = useState<Array<{ date: string; day: number; month: string; score: number }>>([]);
 
   useEffect(() => {
@@ -318,15 +325,17 @@ export const ProgressScreen: React.FC = () => {
 
       // Extract completed lesson dates
       const completedLessons = lessons.filter(l => l.progress?.status === 'COMPLETED');
-      const lessonCompletionDates = completedLessons
+      const completedLessonDates = completedLessons
         .map(l => l.progress?.completedAt ? new Date(l.progress.completedAt) : null)
         .filter((date): date is Date => date !== null && !isNaN(date.getTime()));
+
+      setLessonCompletionDates(completedLessonDates);
 
       if (recordings && recordings.length > 0) {
         setLatestRecordingId(recordings[0].id);
 
         // Calculate streak based on BOTH lessons AND recordings
-        const currentStreak = calculateCombinedStreak(recordings, lessonCompletionDates);
+        const currentStreak = calculateCombinedStreak(recordings, completedLessonDates);
 
         // Calculate stats - use lesson completion count from learning stats
         setStats({
@@ -535,7 +544,7 @@ export const ProgressScreen: React.FC = () => {
         </View>
 
         {/* Calendar */}
-        <CalendarView recordingDates={recordingDates} />
+        <CalendarView recordingDates={recordingDates} lessonCompletionDates={lessonCompletionDates} />
 
         {/* Score chart */}
         <ScoreChart data={scoreData} />
