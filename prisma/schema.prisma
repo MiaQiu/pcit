@@ -117,6 +117,7 @@ model User {
   Session            Session[]
   ThirdPartyRequest  ThirdPartyRequest[]
   WacbSurvey         WacbSurvey[]
+  Phq2Survey         Phq2Survey[]
   ModuleHistory      ModuleHistory[]
   UserLessonProgress UserLessonProgress[]
   QuizResponse       QuizResponse[]
@@ -176,6 +177,24 @@ model WacbSurvey {
   totalChangesNeeded      Int      // Count of Yes responses (max 9)
 
   User                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([submittedAt])
+}
+
+model Phq2Survey {
+  id            String   @id
+  userId        String
+  submittedAt   DateTime @default(now())
+
+  // PHQ-2 Questions (0-3 scale)
+  q1Interest    Int      // Little interest or pleasure in doing things
+  q2Depressed   Int      // Feeling down, depressed, or hopeless
+
+  // Calculated score
+  totalScore    Int      // Sum of q1+q2 (range: 0-6)
+
+  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([submittedAt])

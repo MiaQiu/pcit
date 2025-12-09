@@ -20,6 +20,10 @@ import { ChildNameScreen } from '../screens/onboarding/ChildNameScreen';
 import { ChildGenderScreen } from '../screens/onboarding/ChildGenderScreen';
 import { ChildBirthdayScreen } from '../screens/onboarding/ChildBirthdayScreen';
 import { ChildIssueScreen } from '../screens/onboarding/ChildIssueScreen';
+import { WacbSurveyScreen } from '../screens/onboarding/WacbSurveyScreen';
+import { ReassuranceScreen } from '../screens/onboarding/ReassuranceScreen';
+import { DepressionSurveyScreen } from '../screens/onboarding/DepressionSurveyScreen';
+import { SelfCareScreen } from '../screens/onboarding/SelfCareScreen';
 import { Intro1Screen } from '../screens/onboarding/Intro1Screen';
 import { Intro2Screen } from '../screens/onboarding/Intro2Screen';
 import { Intro3Screen } from '../screens/onboarding/Intro3Screen';
@@ -67,6 +71,10 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="ChildGender" component={ChildGenderScreen} />
       <Stack.Screen name="ChildBirthday" component={ChildBirthdayScreen} />
       <Stack.Screen name="ChildIssue" component={ChildIssueScreen} />
+      <Stack.Screen name="WacbSurvey" component={WacbSurveyScreen} />
+      <Stack.Screen name="Reassurance" component={ReassuranceScreen} />
+      <Stack.Screen name="DepressionSurvey" component={DepressionSurveyScreen} />
+      <Stack.Screen name="SelfCare" component={SelfCareScreen} />
       <Stack.Screen name="Intro1" component={Intro1Screen} />
       <Stack.Screen name="Intro2" component={Intro2Screen} />
       <Stack.Screen name="Intro3" component={Intro3Screen} />

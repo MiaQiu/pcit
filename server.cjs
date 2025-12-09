@@ -114,6 +114,10 @@ app.use('/api/pcit', pcitProxyRoutes);
 const wacbSurveyRoutes = require('./server/routes/wacb-survey.cjs');
 app.use('/api/wacb-survey', wacbSurveyRoutes);
 
+// Mount PHQ-2 survey routes
+const phq2SurveyRoutes = require('./server/routes/phq2-survey.cjs');
+app.use('/api/phq2-survey', phq2SurveyRoutes);
+
 // Mount recording upload routes (mobile app)
 const recordingRoutes = require('./server/routes/recordings.cjs');
 app.use('/api/recordings', recordingRoutes);

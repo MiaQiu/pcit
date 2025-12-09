@@ -78,7 +78,7 @@ export const ChildIssueScreen: React.FC = () => {
   const handleContinue = () => {
     if (selectedIssues.length > 0) {
       updateData({ issue: selectedIssues });
-      navigation.navigate('Intro1');
+      navigation.navigate('WacbSurvey');
     }
   };
 
