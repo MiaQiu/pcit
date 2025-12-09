@@ -85,8 +85,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dragon: {
-    width: SCREEN_WIDTH * 0.5,
-    height: SCREEN_WIDTH * 0.5,
+    width: SCREEN_WIDTH * 0.7,
+    height: SCREEN_WIDTH * 0.7,
     marginBottom: 20,
   },
   title: {

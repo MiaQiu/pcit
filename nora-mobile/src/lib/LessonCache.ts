@@ -33,7 +33,6 @@ export class LessonCache {
         return null;
       }
 
-      console.log('Cache hit for lesson:', lessonId);
       return JSON.parse(cachedData);
     } catch (error) {
       console.error('Error reading lesson cache:', error);
@@ -55,8 +54,6 @@ export class LessonCache {
         AsyncStorage.setItem(cacheKey, JSON.stringify(data)),
         AsyncStorage.setItem(timestampKey, Date.now().toString()),
       ]);
-
-      console.log('Cached lesson:', lessonId);
     } catch (error) {
       console.error('Error caching lesson:', error);
     }
@@ -75,8 +72,6 @@ export class LessonCache {
         AsyncStorage.removeItem(cacheKey),
         AsyncStorage.removeItem(timestampKey),
       ]);
-
-      console.log('Removed cached lesson:', lessonId);
     } catch (error) {
       console.error('Error removing lesson cache:', error);
     }
@@ -94,7 +89,6 @@ export class LessonCache {
 
       if (lessonCacheKeys.length > 0) {
         await AsyncStorage.multiRemove(lessonCacheKeys);
-        console.log('Cleared all lesson caches');
       }
     } catch (error) {
       console.error('Error clearing lesson cache:', error);
@@ -116,7 +110,6 @@ export class LessonCache {
       });
 
       await AsyncStorage.multiSet(entries);
-      console.log('Cached multiple lessons:', lessons.map(l => l.id));
     } catch (error) {
       console.error('Error caching multiple lessons:', error);
     }
@@ -161,9 +154,6 @@ export class LessonCache {
         });
 
         await AsyncStorage.multiRemove(keysToRemove);
-        console.log('Cleaned up completed lessons from cache:', completedLessonIds);
-      } else {
-        console.log('No completed lessons to clean up');
       }
     } catch (error) {
       console.error('Error cleaning up completed lessons:', error);
@@ -177,7 +167,6 @@ export class LessonCache {
   static async setLessonsList(lessons: any[]): Promise<void> {
     try {
       await AsyncStorage.setItem(LESSONS_LIST_CACHE_KEY, JSON.stringify(lessons));
-      console.log('📦 Cached lessons list:', lessons.length, 'lessons');
     } catch (error) {
       console.error('Error caching lessons list:', error);
     }
@@ -193,7 +182,6 @@ export class LessonCache {
       if (!cachedData) {
         return null;
       }
-      console.log('✅ Lessons list cache hit');
       return JSON.parse(cachedData);
     } catch (error) {
       console.error('Error reading lessons list cache:', error);
@@ -207,7 +195,6 @@ export class LessonCache {
   static async removeLessonsList(): Promise<void> {
     try {
       await AsyncStorage.removeItem(LESSONS_LIST_CACHE_KEY);
-      console.log('🗑️ Removed lessons list cache');
     } catch (error) {
       console.error('Error removing lessons list cache:', error);
     }

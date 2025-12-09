@@ -79,7 +79,6 @@ class LessonService {
   async getLessonDetail(lessonId: string): Promise<LessonDetailResponse> {
     // Check cache first
     if (this.lessonCache.has(lessonId)) {
-      console.log('Returning cached lesson:', lessonId);
       return this.lessonCache.get(lessonId)!;
     }
 
@@ -102,7 +101,6 @@ class LessonService {
 
     // Cache the response
     this.lessonCache.set(lessonId, data);
-    console.log('Cached lesson:', lessonId);
 
     return data;
   }
