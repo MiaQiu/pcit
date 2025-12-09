@@ -11,9 +11,11 @@ export interface OnboardingData {
   name: string;
   email: string;
   authMethod: 'google' | 'apple' | 'facebook' | null;
+  relationshipToChild: 'MOTHER' | 'FATHER' | 'GRANDMOTHER' | 'GRANDFATHER' | 'GUARDIAN' | 'OTHER' | null;
 
   // Child data
   childName: string;
+  childGender: 'BOY' | 'GIRL' | 'OTHER' | null;
   childBirthday: Date | null;
   issue: string;
 
@@ -32,7 +34,9 @@ const defaultOnboardingData: OnboardingData = {
   name: '',
   email: '',
   authMethod: null,
+  relationshipToChild: null,
   childName: '',
+  childGender: null,
   childBirthday: null,
   issue: '',
   hasCompletedOnboarding: false,

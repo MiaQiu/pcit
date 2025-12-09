@@ -15,7 +15,9 @@ import { LoginScreen } from '../screens/onboarding/LoginScreen';
 import { SignupOptionsScreen } from '../screens/onboarding/SignupOptionsScreen';
 import { CreateAccountScreen } from '../screens/onboarding/CreateAccountScreen';
 import { NameInputScreen } from '../screens/onboarding/NameInputScreen';
+import { RelationshipScreen } from '../screens/onboarding/RelationshipScreen';
 import { ChildNameScreen } from '../screens/onboarding/ChildNameScreen';
+import { ChildGenderScreen } from '../screens/onboarding/ChildGenderScreen';
 import { ChildBirthdayScreen } from '../screens/onboarding/ChildBirthdayScreen';
 import { ChildIssueScreen } from '../screens/onboarding/ChildIssueScreen';
 import { Intro1Screen } from '../screens/onboarding/Intro1Screen';
@@ -60,7 +62,9 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="SignupOptions" component={SignupOptionsScreen} />
       <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
       <Stack.Screen name="NameInput" component={NameInputScreen} />
+      <Stack.Screen name="Relationship" component={RelationshipScreen} />
       <Stack.Screen name="ChildName" component={ChildNameScreen} />
+      <Stack.Screen name="ChildGender" component={ChildGenderScreen} />
       <Stack.Screen name="ChildBirthday" component={ChildBirthdayScreen} />
       <Stack.Screen name="ChildIssue" component={ChildIssueScreen} />
       <Stack.Screen name="Intro1" component={Intro1Screen} />

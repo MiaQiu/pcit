@@ -18,6 +18,20 @@ import { Badge } from './Badge';
 import { Button } from './Button';
 import { Ellipse } from './Ellipse';
 
+// Phase-specific styling
+const PHASE_STYLES = {
+  CONNECT: {
+    backgroundColor: '#E4E4FF',
+    ellipse77Color: '#9BD4DF',
+    ellipse78Color: '#A6E0CB',
+  },
+  DISCIPLINE: {
+    backgroundColor: '#FFE4C0',
+    ellipse77Color: '#FFD4A3',
+    ellipse78Color: '#FFC88A',
+  },
+};
+
 export interface LessonCardProps {
   id: string;
   phase: string;
@@ -26,7 +40,7 @@ export interface LessonCardProps {
   subtitle: string;
   description: string;
   dragonImageUrl: ImageSourcePropType; // Changed to support local images
-  backgroundColor: string;
+  backgroundColor?: string; // Optional - will use phase-based color if not provided
   ellipse77Color?: string; // Color for bottom ellipse
   ellipse78Color?: string; // Color for top ellipse
   isLocked?: boolean;
@@ -41,24 +55,32 @@ export const LessonCard: React.FC<LessonCardProps> = ({
   description,
   dragonImageUrl,
   backgroundColor,
-  ellipse77Color = '#9BD4DF',
-  ellipse78Color = '#A6E0CB',
+  ellipse77Color,
+  ellipse78Color,
   isLocked = false,
   onPress,
 }) => {
+  // Determine phase-based styling (case-insensitive)
+  const normalizedPhaseName = phaseName.toUpperCase();
+  const phaseStyle = PHASE_STYLES[normalizedPhaseName as keyof typeof PHASE_STYLES] || PHASE_STYLES.CONNECT;
+
+  // Use provided colors or fall back to phase-based defaults
+  const finalBackgroundColor = backgroundColor || phaseStyle.backgroundColor;
+  const finalEllipse77Color = ellipse77Color || phaseStyle.ellipse77Color;
+  const finalEllipse78Color = ellipse78Color || phaseStyle.ellipse78Color;
   return (
     <Card
-      backgroundColor={backgroundColor}
+      backgroundColor={finalBackgroundColor}
       variant="pressable"
       onPress={!isLocked ? onPress : undefined}
       style={styles.card}
     >
       <View style={styles.container}>
-        {/* Ellipse 78 - Top decorative background - #A6E0CB */}
-        <Ellipse color={ellipse78Color} style={styles.ellipse78} />
+        {/* Ellipse 78 - Top decorative background */}
+        <Ellipse color={finalEllipse78Color} style={styles.ellipse78} />
 
         {/* Ellipse 77 - Bottom decorative background */}
-        <Ellipse color={ellipse77Color} style={styles.ellipse77} />
+        <Ellipse color={finalEllipse77Color} style={styles.ellipse77} />
 
         {/* Dragon Image - Figma node 35:798 */}
         <View style={styles.dragonContainer}>

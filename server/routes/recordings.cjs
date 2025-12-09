@@ -990,10 +990,9 @@ router.get('/:id/analysis', async (req, res) => {
  * GET /api/recordings
  * Get all recordings for the authenticated user
  */
-// TEMPORARY: Auth disabled for development
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
-    const userId = req.userId || 'test-user-id';
+    const userId = req.userId;
     const sessions = await prisma.session.findMany({
       where: { userId: userId },
       orderBy: { createdAt: 'desc' },

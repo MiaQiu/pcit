@@ -221,7 +221,9 @@ class AuthService {
    */
   async completeOnboarding(data: {
     name?: string;
+    relationshipToChild?: 'MOTHER' | 'FATHER' | 'GRANDMOTHER' | 'GRANDFATHER' | 'GUARDIAN' | 'OTHER';
     childName?: string;
+    childGender?: 'BOY' | 'GIRL' | 'OTHER';
     childBirthday?: Date;
     issue?: string | string[];
   }): Promise<User> {

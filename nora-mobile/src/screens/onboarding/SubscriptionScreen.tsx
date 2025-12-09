@@ -53,7 +53,9 @@ export const SubscriptionScreen: React.FC = () => {
       // Send onboarding data to backend
       await authService.completeOnboarding({
         name: data.name,
+        relationshipToChild: data.relationshipToChild || undefined,
         childName: data.childName,
+        childGender: data.childGender || undefined,
         childBirthday: data.childBirthday || undefined,
         issue: data.issue || undefined,
       });
@@ -98,7 +100,9 @@ export const SubscriptionScreen: React.FC = () => {
       // Send onboarding data to backend without subscription
       await authService.completeOnboarding({
         name: data.name,
+        relationshipToChild: data.relationshipToChild || undefined,
         childName: data.childName,
+        childGender: data.childGender || undefined,
         childBirthday: data.childBirthday || undefined,
         issue: data.issue || undefined,
       });

@@ -21,7 +21,9 @@ export type OnboardingStackParamList = {
   SignupOptions: undefined;
   CreateAccount: undefined;
   NameInput: undefined;
+  Relationship: undefined;
   ChildName: undefined;
+  ChildGender: undefined;
   ChildBirthday: undefined;
   ChildIssue: undefined;
   Intro1: undefined;

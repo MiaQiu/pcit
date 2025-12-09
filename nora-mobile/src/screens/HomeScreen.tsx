@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { View, ScrollView, ActivityIndicator, Text, RefreshControl, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-// import { LessonCard } from '../components/LessonCard'; // Keeping LessonCard component for later use
+import { LessonCard } from '../components/LessonCard';
 import { LessonCardProps } from '../components/LessonCard'; // Import type for lesson data
 import { NextActionCard } from '../components/NextActionCard';
 import { StreakWidget } from '../components/StreakWidget';
@@ -41,6 +41,7 @@ export const HomeScreen: React.FC = () => {
   const [isReportRead, setIsReportRead] = useState(false);
   const [todayLessonId, setTodayLessonId] = useState<string | null>(null);
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
+  const [hasAnyRecordingsEver, setHasAnyRecordingsEver] = useState(false);
 
   useEffect(() => {
     // Clean up completed lessons from cache on app open
@@ -276,6 +277,10 @@ export const HomeScreen: React.FC = () => {
 
       // Check if recorded session today
       const { recordings } = await recordingService.getRecordings().catch(() => ({ recordings: [] }));
+
+      // Check if user has ANY recordings ever (for showing LessonCard vs NextActionCard)
+      setHasAnyRecordingsEver(recordings.length > 0);
+
       const todayRecordings = recordings.filter((r: any) => {
         const recordingDate = new Date(r.createdAt);
         return recordingDate >= today && recordingDate < tomorrow;
@@ -393,10 +398,11 @@ export const HomeScreen: React.FC = () => {
         title: lesson.title,
         subtitle: lesson.subtitle || '',
         description: lesson.description,
-        dragonImageUrl: lesson.dragonImageUrl || DRAGON_PURPLE,
-        backgroundColor: lesson.backgroundColor,
-        ellipse77Color: lesson.ellipse77Color,
-        ellipse78Color: lesson.ellipse78Color,
+        // Use dino image for Discipline phase, dragon for others
+        dragonImageUrl: lesson.phase === 'DISCIPLINE'
+          ? require('../../assets/images/dino_image2.png')
+          : (lesson.dragonImageUrl || DRAGON_PURPLE),
+        // Remove backgroundColor, ellipse colors - let LessonCard determine based on phase
         isLocked: lesson.isLocked,
       }));
 
@@ -548,13 +554,47 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.heading}>Today's deck</Text>
         )} */}
 
-        {/* Next Action Card - Dynamic based on L/S/R state */}
+        {/* Show LessonCard for new users with no recordings, NextActionCard for experienced users */}
         {lessons.length > 0 && (() => {
-          const cardType = getCardType();
-
-          // For lesson type, we need the lesson data
+          // Find the first unlocked lesson
           const todayLesson = lessons.find(l => !l.isLocked);
           const displayLesson = todayLesson || lessons[0];
+
+          // If user has no recordings ever, show simple LessonCard
+          if (!hasAnyRecordingsEver) {
+            return (
+              <>
+                {/* Connect Phase Card */}
+                <View style={{ marginBottom: 16 }}>
+                  <LessonCard
+                    {...displayLesson}
+                    onPress={() => handleLessonPress(displayLesson.id)}
+                  />
+                </View>
+
+                {/* Discipline Phase Card (Locked) */}
+                {(() => {
+                  // Find the first Discipline phase lesson
+                  const disciplineLesson = lessons.find(l => l.phaseName === 'DISCIPLINE');
+                  if (disciplineLesson) {
+                    return (
+                      <View style={{ marginBottom: 8 }}>
+                        <LessonCard
+                          {...disciplineLesson}
+                          isLocked={true}
+                          onPress={() => {}} // No action when locked
+                        />
+                      </View>
+                    );
+                  }
+                  return null;
+                })()}
+              </>
+            );
+          }
+
+          // Otherwise, show NextActionCard with dynamic state
+          const cardType = getCardType();
 
           return (
             <View style={{ marginBottom: 8 }}>
@@ -575,33 +615,6 @@ export const HomeScreen: React.FC = () => {
             </View>
           );
         })()}
-
-        {/* KEPT FOR LATER USE - Today's Lesson Card
-        {lessons.length > 0 && (() => {
-          // Find the first unlocked and not completed lesson
-          const todayLesson = lessons.find(l => !l.isLocked);
-
-          if (todayLesson) {
-            return (
-              <View style={{ marginBottom: 8 }}>
-                <LessonCard
-                  {...todayLesson}
-                  onPress={() => handleLessonPress(todayLesson.id)}
-                />
-              </View>
-            );
-          }
-
-          // If no unlocked lesson found, show the first one
-          return (
-            <View style={{ marginBottom: 8 }}>
-              <LessonCard
-                {...lessons[0]}
-                onPress={() => handleLessonPress(lessons[0].id)}
-              />
-            </View>
-          );
-        })()} */}
       </ScrollView>
     </SafeAreaView>
   );

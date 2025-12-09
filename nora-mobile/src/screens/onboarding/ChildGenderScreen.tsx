@@ -1,6 +1,6 @@
 /**
- * Child Name Screen
- * User enters their child's name
+ * Child Gender Screen
+ * User selects their child's gender
  */
 
 import React, { useState } from 'react';
@@ -8,37 +8,46 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
+  ScrollView,
   Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
-export const ChildNameScreen: React.FC = () => {
+type Gender = 'BOY' | 'GIRL' | 'OTHER';
+
+const GENDERS: { id: Gender; label: string }[] = [
+  { id: 'BOY', label: 'Boy' },
+  { id: 'GIRL', label: 'Girl' },
+  { id: 'OTHER', label: 'Other' },
+];
+
+export const ChildGenderScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
-  const [childName, setChildName] = useState(data.childName);
+  const [selectedGender, setSelectedGender] = useState<Gender | null>(
+    data.childGender || null
+  );
+
+  const handleGenderSelect = (gender: Gender) => {
+    setSelectedGender(gender);
+  };
 
   const handleContinue = () => {
-    if (childName.trim()) {
-      updateData({ childName: childName.trim() });
-      navigation.navigate('ChildGender');
+    if (selectedGender) {
+      updateData({ childGender: selectedGender });
+      navigation.navigate('ChildBirthday');
     }
   };
 
-  const isValid = childName.trim().length > 0;
+  const isValid = selectedGender !== null;
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           {/* Dragon Header with Text Box */}
           <View style={styles.headerSection}>
@@ -51,27 +60,39 @@ export const ChildNameScreen: React.FC = () => {
             </View>
             <View style={styles.headerTextBox}>
               <Text style={styles.headerText}>
-Next question!              </Text>
+                Next question!
+              </Text>
             </View>
           </View>
 
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>What's your child's name?</Text>
+            <Text style={styles.title}>What is your child's gender?</Text>
           </View>
 
-          {/* Input */}
-          <TextInput
-            style={styles.input}
-            placeholder=""
-            value={childName}
-            onChangeText={setChildName}
-            autoFocus
-            autoCapitalize="words"
-            autoCorrect={false}
-            returnKeyType="next"
-            onSubmitEditing={handleContinue}
-          />
+          {/* Gender Options */}
+          <View style={styles.optionsContainer}>
+            {GENDERS.map((gender) => (
+              <TouchableOpacity
+                key={gender.id}
+                style={[
+                  styles.optionButton,
+                  selectedGender === gender.id && styles.optionButtonSelected,
+                ]}
+                onPress={() => handleGenderSelect(gender.id)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.optionText,
+                    selectedGender === gender.id && styles.optionTextSelected,
+                  ]}
+                >
+                  {gender.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           {/* Spacer */}
           <View style={styles.spacer} />
@@ -88,7 +109,7 @@ Next question!              </Text>
             </Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -98,13 +119,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  keyboardView: {
+  scrollView: {
     flex: 1,
   },
   content: {
     flex: 1,
     paddingHorizontal: 32,
     paddingTop: 60,
+    paddingBottom: 32,
   },
   headerSection: {
     marginBottom: 32,
@@ -145,29 +167,40 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   header: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 24,
     color: '#4A5565',
-    marginBottom: 12,
+    lineHeight: 32,
   },
-  subtitle: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+  optionsContainer: {
+    gap: 12,
+  },
+  optionButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  optionButtonSelected: {
+    backgroundColor: '#F3E8FF',
+    borderColor: '#8C49D5',
+  },
+  optionText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 16,
-    color: '#6B7280',
-    lineHeight: 24,
-  },
-  input: {
-    height: 56,
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 40,
-    color: '#1E2939',
+    color: '#4A5565',
     textAlign: 'center',
   },
+  optionTextSelected: {
+    color: '#8C49D5',
+  },
   spacer: {
-    flex: 1,
+    height: 32,
   },
   button: {
     width: '100%',
@@ -176,7 +209,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 32,
+    marginTop: 'auto',
   },
   buttonDisabled: {
     backgroundColor: '#E5E7EB',

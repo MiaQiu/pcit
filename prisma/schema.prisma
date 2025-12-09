@@ -93,6 +93,7 @@ model User {
   profileImageUrl    String?              // Profile image URL stored in GCS/S3
   therapistId        String?
   childName          String
+  childGender        ChildGender?         // Child's gender
   childBirthYear     Int
   childBirthday      DateTime?            // Added for onboarding
   childConditions    String
@@ -362,5 +363,11 @@ enum RelationshipToChild {
   GRANDMOTHER
   GRANDFATHER
   GUARDIAN
+  OTHER
+}
+
+enum ChildGender {
+  BOY
+  GIRL
   OTHER
 }

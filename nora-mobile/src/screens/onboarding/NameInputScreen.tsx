@@ -27,7 +27,7 @@ export const NameInputScreen: React.FC = () => {
   const handleContinue = () => {
     if (name.trim()) {
       updateData({ name: name.trim() });
-      navigation.navigate('ChildName');
+      navigation.navigate('Relationship');
     }
   };
 

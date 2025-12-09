@@ -331,6 +331,7 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
         profileImageUrl: true,
         relationshipToChild: true,
         childName: true,
+        childGender: true,
         childBirthYear: true,
         childBirthday: true,
         childConditions: true,
@@ -374,10 +375,10 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
 // Update user profile with onboarding data
 router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAuth, async (req, res) => {
   try {
-    const { name, childName, childBirthday, issue } = req.body;
+    const { name, relationshipToChild, childName, childGender, childBirthday, issue } = req.body;
 
     // Validate at least one field is provided
-    if (!name && !childName && !childBirthday && !issue) {
+    if (!name && !relationshipToChild && !childName && !childGender && !childBirthday && !issue) {
       return res.status(400).json({ error: 'At least one field required' });
     }
 
@@ -389,9 +390,25 @@ router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAu
       updateData.name = encryptedName;
     }
 
+    if (relationshipToChild) {
+      const validRelationships = ['MOTHER', 'FATHER', 'GRANDMOTHER', 'GRANDFATHER', 'GUARDIAN', 'OTHER'];
+      if (!validRelationships.includes(relationshipToChild)) {
+        return res.status(400).json({ error: 'Invalid relationshipToChild value' });
+      }
+      updateData.relationshipToChild = relationshipToChild;
+    }
+
     if (childName) {
       const encryptedChildName = encryptSensitiveData(childName);
       updateData.childName = encryptedChildName;
+    }
+
+    if (childGender) {
+      const validGenders = ['BOY', 'GIRL', 'OTHER'];
+      if (!validGenders.includes(childGender)) {
+        return res.status(400).json({ error: 'Invalid childGender value' });
+      }
+      updateData.childGender = childGender;
     }
 
     if (childBirthday) {
@@ -429,7 +446,9 @@ router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAu
         id: true,
         email: true,
         name: true,
+        relationshipToChild: true,
         childName: true,
+        childGender: true,
         childBirthYear: true,
         childBirthday: true,
         childConditions: true,
