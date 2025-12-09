@@ -77,13 +77,10 @@ function formatLessonCard(lesson, userProgress) {
  * GET /api/lessons
  * Get all lessons with user progress
  * Query params: ?phase=CONNECT or ?phase=DISCIPLINE
- *
- * TODO: SECURITY - Re-enable requireAuth middleware when onboarding screen is implemented
- * Currently disabled for development/testing without authentication
  */
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
-    const userId = req.userId || 'test-user-id'; // Fallback for testing without auth
+    const userId = req.userId;
     const { phase } = req.query;
 
     // Build where clause
@@ -134,12 +131,16 @@ router.get('/', async (req, res) => {
       prereqProgressMap[p.lessonId] = p;
     });
 
-    // Check prerequisites and determine lock status for each lesson (no async needed now)
-    const lessonCards = lessons.map((lesson) => {
+    // Check prerequisites and determine lock status for each lesson
+    // IMPORTANT: One lesson per day rule - a lesson unlocks the day after the previous lesson was completed
+    const lessonCards = lessons.map((lesson, index) => {
       let progress = progressMap[lesson.id];
 
       // If no progress exists, create initial state
       if (!progress) {
+        // First, check if this is the very first lesson (no prerequisites)
+        const isFirstLesson = !lesson.prerequisites || lesson.prerequisites.length === 0;
+
         // Check prerequisites using the pre-fetched data
         let prerequisitesMet = true;
         if (lesson.prerequisites && lesson.prerequisites.length > 0) {
@@ -149,7 +150,33 @@ router.get('/', async (req, res) => {
           });
         }
 
-        const status = prerequisitesMet ? 'NOT_STARTED' : 'LOCKED';
+        // ONE LESSON PER DAY RULE: Check if previous lesson was completed today
+        let isLockedByDailyLimit = false;
+        if (prerequisitesMet && !isFirstLesson && lesson.prerequisites && lesson.prerequisites.length > 0) {
+          // Get the most recent prerequisite completion date
+          const prereqCompletionDates = lesson.prerequisites
+            .map(prereqId => prereqProgressMap[prereqId]?.completedAt)
+            .filter(date => date != null)
+            .map(date => new Date(date));
+
+          if (prereqCompletionDates.length > 0) {
+            // Get the latest completion date
+            const latestCompletion = new Date(Math.max(...prereqCompletionDates.map(d => d.getTime())));
+
+            // Check if latest completion was today
+            const today = new Date();
+            const isCompletedToday =
+              latestCompletion.getDate() === today.getDate() &&
+              latestCompletion.getMonth() === today.getMonth() &&
+              latestCompletion.getFullYear() === today.getFullYear();
+
+            if (isCompletedToday) {
+              isLockedByDailyLimit = true;
+            }
+          }
+        }
+
+        const status = (prerequisitesMet && !isLockedByDailyLimit) ? 'NOT_STARTED' : 'LOCKED';
 
         progress = {
           lessonId: lesson.id,
@@ -180,15 +207,83 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ============================================================================
+// USER STATS ENDPOINT
+// Note: This must come BEFORE the /:id route to avoid matching "learning-stats" as an id
+// ============================================================================
+
+/**
+ * GET /api/user/learning-stats
+ * Get user's learning statistics
+ */
+router.get('/learning-stats', requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    // Get all lessons count
+    const totalLessons = await prisma.lesson.count();
+
+    // Get user progress
+    const userProgress = await prisma.userLessonProgress.findMany({
+      where: { userId }
+    });
+
+    const completedLessons = userProgress.filter(p => p.status === 'COMPLETED').length;
+    const inProgressLessons = userProgress.filter(p => p.status === 'IN_PROGRESS').length;
+
+    // Calculate total time spent (in minutes)
+    const totalTimeSpentSeconds = userProgress.reduce((sum, p) => sum + p.timeSpentSeconds, 0);
+    const totalTimeSpentMinutes = Math.round(totalTimeSpentSeconds / 60);
+
+    // Get current lesson
+    const currentProgress = userProgress
+      .filter(p => p.status === 'IN_PROGRESS')
+      .sort((a, b) => new Date(b.lastViewedAt) - new Date(a.lastViewedAt))[0];
+
+    let currentLesson = null;
+    if (currentProgress) {
+      currentLesson = await prisma.lesson.findUnique({
+        where: { id: currentProgress.lessonId }
+      });
+    }
+
+    // Get quiz responses
+    const quizResponses = await prisma.quizResponse.findMany({
+      where: { userId }
+    });
+
+    // Calculate average quiz score (correct / total)
+    const averageQuizScore = quizResponses.length > 0
+      ? (quizResponses.filter(r => r.isCorrect).length / quizResponses.length) * 100
+      : 0;
+
+    res.json({
+      totalLessons,
+      completedLessons,
+      inProgressLessons,
+      currentPhase: currentLesson?.phase || 'CONNECT',
+      currentDayNumber: currentLesson?.dayNumber || 1,
+      totalTimeSpentMinutes,
+      averageQuizScore: Math.round(averageQuizScore),
+      streak: 0 // TODO: Calculate streak based on daily completion
+    });
+
+  } catch (error) {
+    console.error('Get learning stats error:', error.message, error.stack);
+    res.status(500).json({
+      error: 'Failed to get learning stats',
+      details: error.message
+    });
+  }
+});
+
 /**
  * GET /api/lessons/:id
  * Get lesson detail with segments and quiz
- *
- * TODO: SECURITY - Re-enable requireAuth middleware when onboarding screen is implemented
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.userId || 'test-user-id'; // Fallback for testing without auth
+    const userId = req.userId;
     const { id } = req.params;
 
     // Get lesson with segments and quiz
@@ -345,10 +440,8 @@ router.get('/by-category/:category', requireAuth, async (req, res) => {
 /**
  * PUT /api/lessons/:id/progress
  * Update lesson progress
- *
- * TODO: SECURITY - Re-enable requireAuth middleware when onboarding screen is implemented
  */
-router.put('/:id/progress', async (req, res) => {
+router.put('/:id/progress', requireAuth, async (req, res) => {
   try {
     // Validate input
     const { error, value } = updateProgressSchema.validate(req.body);
@@ -356,7 +449,7 @@ router.put('/:id/progress', async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const userId = req.userId || 'test-user-id'; // Fallback for testing without auth
+    const userId = req.userId;
     const { id } = req.params;
     const { currentSegment, timeSpentSeconds, status } = value;
 
@@ -412,10 +505,8 @@ router.put('/:id/progress', async (req, res) => {
 /**
  * POST /api/quizzes/:id/submit
  * Submit quiz answer
- *
- * TODO: SECURITY - Re-enable requireAuth middleware when onboarding screen is implemented
  */
-router.post('/:quizId/submit', async (req, res) => {
+router.post('/:quizId/submit', requireAuth, async (req, res) => {
   try {
     // Validate input
     const { error, value } = submitQuizSchema.validate(req.body);
@@ -423,7 +514,7 @@ router.post('/:quizId/submit', async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const userId = req.userId || 'test-user-id'; // Fallback for testing without auth
+    const userId = req.userId;
     const { quizId } = req.params;
     const { selectedAnswer } = value;
 
@@ -481,75 +572,6 @@ router.post('/:quizId/submit', async (req, res) => {
     console.error('Submit quiz error:', error.message, error.stack);
     res.status(500).json({
       error: 'Failed to submit quiz',
-      details: error.message
-    });
-  }
-});
-
-// ============================================================================
-// USER STATS ENDPOINT
-// ============================================================================
-
-/**
- * GET /api/user/learning-stats
- * Get user's learning statistics
- */
-router.get('/user/learning-stats', requireAuth, async (req, res) => {
-  try {
-    const userId = req.userId;
-
-    // Get all lessons count
-    const totalLessons = await prisma.lesson.count();
-
-    // Get user progress
-    const userProgress = await prisma.userLessonProgress.findMany({
-      where: { userId }
-    });
-
-    const completedLessons = userProgress.filter(p => p.status === 'COMPLETED').length;
-    const inProgressLessons = userProgress.filter(p => p.status === 'IN_PROGRESS').length;
-
-    // Calculate total time spent (in minutes)
-    const totalTimeSpentSeconds = userProgress.reduce((sum, p) => sum + p.timeSpentSeconds, 0);
-    const totalTimeSpentMinutes = Math.round(totalTimeSpentSeconds / 60);
-
-    // Get current lesson
-    const currentProgress = userProgress
-      .filter(p => p.status === 'IN_PROGRESS')
-      .sort((a, b) => new Date(b.lastViewedAt) - new Date(a.lastViewedAt))[0];
-
-    let currentLesson = null;
-    if (currentProgress) {
-      currentLesson = await prisma.lesson.findUnique({
-        where: { id: currentProgress.lessonId }
-      });
-    }
-
-    // Get quiz responses
-    const quizResponses = await prisma.quizResponse.findMany({
-      where: { userId }
-    });
-
-    // Calculate average quiz score (correct / total)
-    const averageQuizScore = quizResponses.length > 0
-      ? (quizResponses.filter(r => r.isCorrect).length / quizResponses.length) * 100
-      : 0;
-
-    res.json({
-      totalLessons,
-      completedLessons,
-      inProgressLessons,
-      currentPhase: currentLesson?.phase || 'CONNECT',
-      currentDayNumber: currentLesson?.dayNumber || 1,
-      totalTimeSpentMinutes,
-      averageQuizScore: Math.round(averageQuizScore),
-      streak: 0 // TODO: Calculate streak based on daily completion
-    });
-
-  } catch (error) {
-    console.error('Get learning stats error:', error.message, error.stack);
-    res.status(500).json({
-      error: 'Failed to get learning stats',
       details: error.message
     });
   }

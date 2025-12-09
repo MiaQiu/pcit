@@ -2,6 +2,21 @@
  * Shared type definitions for Nora platform
  */
 
+// Subscription types
+export type SubscriptionPlan = 'TRIAL' | 'PREMIUM' | 'FREE';
+export type SubscriptionStatus = 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+export type RelationshipToChild = 'MOTHER' | 'FATHER' | 'GRANDMOTHER' | 'GRANDFATHER' | 'GUARDIAN' | 'OTHER';
+
+export interface SubscriptionInfo {
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  trialStartDate?: Date;
+  trialEndDate?: Date;
+  subscriptionStartDate?: Date;
+  subscriptionEndDate?: Date;
+  daysRemaining?: number;
+}
+
 // User types
 export interface User {
   id: string;
@@ -9,12 +24,24 @@ export interface User {
   name: string;
   childName: string;
   childBirthYear?: number;
+  childBirthday?: Date;
   childConditions?: string;
+  issue?: string | string[];
+  profileImageUrl?: string;
+  relationshipToChild?: RelationshipToChild;
   therapistId?: string | null;
   currentStreak?: number;
   lastSessionDate?: Date | null;
   longestStreak?: number;
   createdAt?: Date;
+
+  // Subscription fields
+  subscriptionPlan?: SubscriptionPlan;
+  subscriptionStatus?: SubscriptionStatus;
+  trialStartDate?: Date;
+  trialEndDate?: Date;
+  subscriptionStartDate?: Date;
+  subscriptionEndDate?: Date;
 }
 
 // Auth types

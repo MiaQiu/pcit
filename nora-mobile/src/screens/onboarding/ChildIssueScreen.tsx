@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,37 +21,37 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 const ISSUES = [
   {
     id: 'tantrums',
-    label: 'Tantrums and meltdowns',
+    label: 'Tantrums or managing big feelings',
     icon: 'thunderstorm-outline' as const,
   },
   {
-    id: 'defiance',
-    label: 'Defiance and not listening',
+    id: 'not-listening',
+    label: 'Not listening',
     icon: 'hand-left-outline' as const,
   },
   {
-    id: 'aggression',
-    label: 'Aggression or hitting',
+    id: 'arguing',
+    label: 'Arguing',
     icon: 'alert-circle-outline' as const,
   },
   {
     id: 'social',
-    label: 'Social skills and sharing',
+    label: 'Social-emotional skills',
     icon: 'people-outline' as const,
   },
   {
-    id: 'emotional',
-    label: 'Emotional regulation',
+    id: 'new_baby_in_the_house',
+    label: 'New baby in the home',
     icon: 'heart-outline' as const,
   },
   {
-    id: 'routine',
-    label: 'Following routines and transitions',
+    id: 'frustration_tolerance',
+    label: 'Low frustration tolerance',
     icon: 'calendar-outline' as const,
   },
   {
-    id: 'general',
-    label: 'General parenting support',
+    id: 'Navigating_change',
+    label: 'Navigating a big change',
     icon: 'star-outline' as const,
   },
 ];
@@ -58,30 +59,56 @@ const ISSUES = [
 export const ChildIssueScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
-  const [selectedIssue, setSelectedIssue] = useState<string>(data.issue || '');
+  const [selectedIssues, setSelectedIssues] = useState<string[]>(
+    data.issue ? (Array.isArray(data.issue) ? data.issue : [data.issue]) : []
+  );
 
   const handleIssueSelect = (issueId: string) => {
-    setSelectedIssue(issueId);
+    setSelectedIssues((prev) => {
+      if (prev.includes(issueId)) {
+        // Remove if already selected
+        return prev.filter((id) => id !== issueId);
+      } else {
+        // Add if not selected
+        return [...prev, issueId];
+      }
+    });
   };
 
   const handleContinue = () => {
-    if (selectedIssue) {
-      updateData({ issue: selectedIssue });
+    if (selectedIssues.length > 0) {
+      updateData({ issue: selectedIssues });
       navigation.navigate('Intro1');
     }
   };
 
-  const isValid = selectedIssue !== '';
+  const isValid = selectedIssues.length > 0;
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        {/* Dragon Header with Text Box */}
+        <View style={styles.headerSection}>
+          <View style={styles.dragonIconContainer}>
+            <Image
+              source={require('../../../assets/images/dragon_image.png')}
+              style={styles.dragonIcon}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.headerTextBox}>
+            <Text style={styles.headerText}>
+              Almost done!
+            </Text>
+          </View>
+        </View>
+
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>How can Nora help?</Text>
-          <Text style={styles.subtitle}>
+          {/* <Text style={styles.subtitle}>
             Choose the area you'd most like support with
-          </Text>
+          </Text> */}
         </View>
 
         {/* Issue Options */}
@@ -90,43 +117,34 @@ export const ChildIssueScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {ISSUES.map((issue) => (
-            <TouchableOpacity
-              key={issue.id}
-              style={[
-                styles.issueCard,
-                selectedIssue === issue.id && styles.issueCardSelected,
-              ]}
-              onPress={() => handleIssueSelect(issue.id)}
-              activeOpacity={0.8}
-            >
-              <View
+          {ISSUES.map((issue) => {
+            const isSelected = selectedIssues.includes(issue.id);
+            return (
+              <TouchableOpacity
+                key={issue.id}
                 style={[
-                  styles.iconContainer,
-                  selectedIssue === issue.id && styles.iconContainerSelected,
+                  styles.issueCard,
+                  isSelected && styles.issueCardSelected,
                 ]}
+                onPress={() => handleIssueSelect(issue.id)}
+                activeOpacity={0.8}
               >
-                <Ionicons
-                  name={issue.icon}
-                  size={24}
-                  color={selectedIssue === issue.id ? '#8C49D5' : '#6B7280'}
-                />
-              </View>
-              <Text
-                style={[
-                  styles.issueLabel,
-                  selectedIssue === issue.id && styles.issueLabelSelected,
-                ]}
-              >
-                {issue.label}
-              </Text>
-              {selectedIssue === issue.id && (
-                <View style={styles.checkmark}>
-                  <Ionicons name="checkmark-circle" size={24} color="#8C49D5" />
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
+                <Text
+                  style={[
+                    styles.issueLabel,
+                    isSelected && styles.issueLabelSelected,
+                  ]}
+                >
+                  {issue.label}
+                </Text>
+                {isSelected && (
+                  <View style={styles.checkmark}>
+                    <Ionicons name="checkmark-circle" size={24} color="#007866" />
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
 
         {/* Continue Button */}
@@ -155,13 +173,51 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingTop: 60,
   },
+  headerSection: {
+    marginBottom: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dragonIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    overflow: 'hidden',
+    backgroundColor: '#F5F0FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 48,
+  },
+  dragonIcon: {
+    width: 90,
+    height: 90,
+    marginLeft: 25,
+  },
+  headerTextBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 8,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  headerText: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 16,
+    color: '#364153',
+    lineHeight: 24,
+  },
   header: {
     marginBottom: 24,
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 32,
-    color: '#1F2937',
+    fontSize: 24,
+    color: '#4A5565',
     marginBottom: 12,
   },
   subtitle: {
@@ -183,34 +239,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     borderRadius: 30,
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
     marginBottom: 12,
   },
   issueCardSelected: {
-    borderColor: '#8C49D5',
+    borderColor: '#007866',
     borderWidth: 2,
-    backgroundColor: '#F9F5FF',
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  iconContainerSelected: {
-    backgroundColor: '#EDE9FE',
+    backgroundColor: '#EBF9F8',
   },
   issueLabel: {
     flex: 1,
     fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 16,
-    color: '#1F2937',
+    color: '#1E2939',
   },
   issueLabelSelected: {
-    color: '#8C49D5',
+    color: '#1E2939',
   },
   checkmark: {
     marginLeft: 8,
@@ -219,7 +263,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     backgroundColor: '#8C49D5',
-    borderRadius: 16,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 16,

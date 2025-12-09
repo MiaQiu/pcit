@@ -19,7 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
 import { RootStackNavigationProp } from '../navigation/types';
-import { useRecordingService } from '../contexts/AppContext';
+import { useRecordingService, useLessonService } from '../contexts/AppContext';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -281,10 +281,11 @@ const ScoreChart: React.FC<ScoreChartProps> = ({ data }) => {
 export const ProgressScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const recordingService = useRecordingService();
+  const lessonService = useLessonService();
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
-    sessionsCompleted: 0,
+    lessonsCompleted: 0,
     playsessionsRecorded: 0,
     currentStreak: 0,
   });
@@ -298,19 +299,40 @@ export const ProgressScreen: React.FC = () => {
   const loadProgressData = async () => {
     try {
       setLoading(true);
-      const { recordings } = await recordingService.getRecordings();
+
+      // Fetch recording data, lesson stats, and lesson list in parallel
+      const [recordingsResponse, learningStats, lessonsResponse] = await Promise.all([
+        recordingService.getRecordings(),
+        lessonService.getLearningStats().catch(err => {
+          console.log('Failed to load learning stats:', err);
+          return null;
+        }),
+        lessonService.getLessons().catch(err => {
+          console.log('Failed to load lessons:', err);
+          return { lessons: [], userProgress: {} };
+        })
+      ]);
+
+      const { recordings } = recordingsResponse;
+      const { lessons } = lessonsResponse;
+
+      // Extract completed lesson dates
+      const completedLessons = lessons.filter(l => l.progress?.status === 'COMPLETED');
+      const lessonCompletionDates = completedLessons
+        .map(l => l.progress?.completedAt ? new Date(l.progress.completedAt) : null)
+        .filter((date): date is Date => date !== null && !isNaN(date.getTime()));
 
       if (recordings && recordings.length > 0) {
         setLatestRecordingId(recordings[0].id);
 
-        // Calculate stats
-        const completed = recordings.filter(
-          (r) => r.status === 'completed' || r.status === 'analyzed'
-        ).length;
+        // Calculate streak based on BOTH lessons AND recordings
+        const currentStreak = calculateCombinedStreak(recordings, lessonCompletionDates);
+
+        // Calculate stats - use lesson completion count from learning stats
         setStats({
-          sessionsCompleted: completed,
+          lessonsCompleted: learningStats?.completedLessons || 0,
           playsessionsRecorded: recordings.length,
-          currentStreak: calculateStreak(recordings),
+          currentStreak,
         });
 
         // Extract recording dates
@@ -322,6 +344,13 @@ export const ProgressScreen: React.FC = () => {
         // Fetch real score data from analyses
         const realScoreData = await fetchScoreData(recordings);
         setScoreData(realScoreData);
+      } else {
+        // No recordings, so streak is 0 (requires both lessons and recordings)
+        setStats({
+          lessonsCompleted: learningStats?.completedLessons || 0,
+          playsessionsRecorded: 0,
+          currentStreak: 0,
+        });
       }
 
       setLoading(false);
@@ -329,6 +358,56 @@ export const ProgressScreen: React.FC = () => {
       console.error('Failed to load progress data:', error);
       setLoading(false);
     }
+  };
+
+  /**
+   * Calculate streak based on consecutive days with BOTH a completed lesson AND a recording
+   */
+  const calculateCombinedStreak = (recordings: any[], lessonCompletionDates: Date[]): number => {
+    if (recordings.length === 0 || lessonCompletionDates.length === 0) return 0;
+
+    // Get unique recording dates (as date strings)
+    const recordingDateStrings = new Set(
+      recordings
+        .map((r) => new Date(r.createdAt))
+        .filter((date) => !isNaN(date.getTime()))
+        .map((date) => date.toDateString())
+    );
+
+    // Get unique lesson completion dates (as date strings)
+    const lessonDateStrings = new Set(
+      lessonCompletionDates.map((date) => date.toDateString())
+    );
+
+    // Find days that have BOTH a recording AND a completed lesson
+    const completeDays = Array.from(recordingDateStrings)
+      .filter((dateStr) => lessonDateStrings.has(dateStr))
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+    if (completeDays.length === 0) return 0;
+
+    let streak = 0;
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+    // Streak must start from today or yesterday
+    if (completeDays[0] === today || completeDays[0] === yesterday) {
+      streak = 1;
+      let currentDate = new Date(completeDays[0]);
+
+      // Count consecutive days backwards
+      for (let i = 1; i < completeDays.length; i++) {
+        const expectedDate = new Date(currentDate.getTime() - 86400000).toDateString();
+        if (completeDays[i] === expectedDate) {
+          streak++;
+          currentDate = new Date(completeDays[i]);
+        } else {
+          break;
+        }
+      }
+    }
+
+    return streak;
   };
 
   const calculateStreak = (recordings: any[]): number => {
@@ -450,7 +529,7 @@ export const ProgressScreen: React.FC = () => {
 
         {/* Stats cards */}
         <View style={styles.statsRow}>
-          <StatCard value={stats.sessionsCompleted} label="Lessons completed" />
+          <StatCard value={stats.lessonsCompleted} label="Lessons completed" />
           <StatCard value={stats.playsessionsRecorded} label="Playsessions recorded" />
           <StatCard value={stats.currentStreak} label="Current Streak" />
         </View>

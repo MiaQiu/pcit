@@ -11,6 +11,7 @@ export { StorageAdapter, WebStorageAdapter } from './adapters/storage';
 
 // Export services
 export { default as AuthService } from './services/authService';
+export { default as SocialAuthService, type SocialAuthProvider } from './services/socialAuthService';
 export { default as SessionService } from './services/sessionService';
 export { default as PCITService } from './services/pcitService';
 export { default as TranscriptionService } from './services/transcriptionService';

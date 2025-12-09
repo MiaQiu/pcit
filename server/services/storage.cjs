@@ -108,9 +108,91 @@ async function getSignedUrl(filePath) {
   }
 }
 
+/**
+ * Upload profile image to Google Cloud Storage
+ * @param {Buffer} fileBuffer - Image file buffer
+ * @param {string} userId - User ID for path organization
+ * @param {string} extension - File extension (jpg, png, etc.)
+ * @returns {Promise<string>} - GCS file path or mock path
+ */
+async function uploadProfileImage(fileBuffer, userId, extension = 'jpg') {
+  if (!GCS_ENABLED || !bucket) {
+    // Development mode: return mock path
+    console.warn('GCS not configured, using mock storage path for profile image');
+    return `mock://profiles/${userId}/avatar.${extension}`;
+  }
+
+  try {
+    const fileName = `profiles/${userId}/avatar.${extension}`;
+    const file = bucket.file(fileName);
+
+    // Determine content type based on extension
+    const contentTypeMap = {
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'webp': 'image/webp'
+    };
+    const contentType = contentTypeMap[extension.toLowerCase()] || 'image/jpeg';
+
+    await file.save(fileBuffer, {
+      metadata: {
+        contentType,
+        metadata: {
+          userId,
+          uploadedAt: new Date().toISOString()
+        }
+      },
+      public: true // Make profile images publicly accessible
+    });
+
+    // Make the file publicly readable
+    await file.makePublic();
+
+    // Return public URL
+    const publicUrl = `https://storage.googleapis.com/${process.env.GCS_BUCKET_NAME}/${fileName}`;
+    console.log(`Profile image uploaded to GCS: ${fileName}`);
+    return publicUrl;
+  } catch (error) {
+    console.error('GCS profile image upload error:', error);
+    throw new Error('Failed to upload profile image');
+  }
+}
+
+/**
+ * Delete profile image from Google Cloud Storage
+ * @param {string} imageUrl - Profile image URL or GCS path
+ */
+async function deleteProfileImage(imageUrl) {
+  if (!GCS_ENABLED || !bucket || !imageUrl || imageUrl.startsWith('mock://')) {
+    console.warn('GCS not configured or mock path, skipping deletion');
+    return;
+  }
+
+  try {
+    // Extract file path from URL if it's a full URL
+    let filePath = imageUrl;
+    if (imageUrl.startsWith('https://storage.googleapis.com/')) {
+      const bucketName = process.env.GCS_BUCKET_NAME;
+      const prefix = `https://storage.googleapis.com/${bucketName}/`;
+      filePath = imageUrl.replace(prefix, '');
+    }
+
+    const file = bucket.file(filePath);
+    await file.delete();
+    console.log(`Profile image deleted from GCS: ${filePath}`);
+  } catch (error) {
+    console.error('GCS profile image delete error:', error);
+    // Don't throw - deletion failures shouldn't break the flow
+  }
+}
+
 module.exports = {
   uploadAudioFile,
   deleteAudioFile,
   getSignedUrl,
+  uploadProfileImage,
+  deleteProfileImage,
   isGCSEnabled: () => GCS_ENABLED
 };

@@ -34,18 +34,12 @@ class LessonService {
 
   /**
    * Get authorization header
-   *
-   * TODO: SECURITY - This currently allows requests without token for development.
-   * Restore throwing error when auth is re-enabled.
    */
   private async getAuthHeader(): Promise<HeadersInit> {
     const token = await this.getAccessToken();
 
-    // Temporarily allow requests without token (auth disabled on backend for development)
     if (!token) {
-      return {
-        'Content-Type': 'application/json',
-      };
+      throw new Error('No authentication token available');
     }
 
     return {

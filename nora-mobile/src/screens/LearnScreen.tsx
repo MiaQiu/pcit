@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, ScrollView, Text, StyleSheet, ActivityIndicator, RefreshControl, Alert, Modal, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { LessonListItem, LessonListItemProps } from '../components/LessonListItem';
@@ -30,6 +30,7 @@ export const LearnScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showLockedModal, setShowLockedModal] = useState(false);
 
   useEffect(() => {
     loadLessons();
@@ -172,7 +173,13 @@ export const LearnScreen: React.FC = () => {
     ];
   };
 
-  const handleLessonPress = (lessonId: string) => {
+  const handleLessonPress = (lessonId: string, isLocked?: boolean) => {
+    // Check if lesson is locked
+    if (isLocked) {
+      setShowLockedModal(true);
+      return;
+    }
+
     navigation.push('LessonViewer', { lessonId });
   };
 
@@ -239,13 +246,36 @@ export const LearnScreen: React.FC = () => {
                 <LessonListItem
                   key={lesson.id}
                   {...lesson}
-                  onPress={() => handleLessonPress(lesson.id)}
+                  onPress={() => handleLessonPress(lesson.id, lesson.isLocked)}
                 />
               ))}
             </View>
           </View>
         ))}
       </ScrollView>
+
+      {/* Locked Lesson Modal */}
+      <Modal
+        visible={showLockedModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLockedModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Lesson Locked</Text>
+            <Text style={styles.modalMessage}>
+              This course is paced to give you the space to reflect and retain what you learn.{'\n\n'}New lesson will unlock tomorrow!
+            </Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setShowLockedModal(false)}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -294,5 +324,52 @@ const styles = StyleSheet.create({
   },
   lessonsList: {
     paddingHorizontal: 24,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 32,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 24,
+    lineHeight: 32,
+    color: COLORS.textDark,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontFamily: FONTS.regular,
+    fontSize: 18,
+    lineHeight: 28,
+    color: COLORS.textDark,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  modalButton: {
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 18,
+    color: '#FFFFFF',
   },
 });

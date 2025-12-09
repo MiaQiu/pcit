@@ -80,8 +80,13 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
           setLoading(false);
 
           // Set initial segment index from cached data
-          const validSegment = segmentIndex >= totalSegments ? 0 : segmentIndex;
-          setCurrentSegmentIndex(validSegment);
+          // If lesson is completed, always start from beginning
+          if (cachedData.userProgress?.status === 'COMPLETED') {
+            setCurrentSegmentIndex(0);
+          } else {
+            const validSegment = segmentIndex >= totalSegments ? 0 : segmentIndex;
+            setCurrentSegmentIndex(validSegment);
+          }
 
           // Fetch fresh data in background to update cache and progress
           lessonService.getLessonDetail(lessonId)
@@ -90,9 +95,14 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
               // Update segment index if progress changed
               if (freshData.userProgress) {
-                const freshSegmentIndex = freshData.userProgress.currentSegment - 1;
-                const freshValidSegment = freshSegmentIndex >= totalSegments ? 0 : freshSegmentIndex;
-                setCurrentSegmentIndex(freshValidSegment);
+                // If lesson is completed, always start from beginning
+                if (freshData.userProgress.status === 'COMPLETED') {
+                  setCurrentSegmentIndex(0);
+                } else {
+                  const freshSegmentIndex = freshData.userProgress.currentSegment - 1;
+                  const freshValidSegment = freshSegmentIndex >= totalSegments ? 0 : freshSegmentIndex;
+                  setCurrentSegmentIndex(freshValidSegment);
+                }
               }
 
               LessonCache.set(lessonId, freshData);
@@ -116,9 +126,15 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         const totalSegments = segments.length + (data.lesson.quiz ? 1 : 0);
         const savedSegment = data.userProgress.currentSegment - 1;
 
-        // Bounds check: if saved segment is beyond total, reset to first segment
-        const validSegment = savedSegment >= totalSegments ? 0 : savedSegment;
-        setCurrentSegmentIndex(validSegment);
+        // If lesson is completed, always start from beginning
+        // Otherwise, resume from saved segment
+        if (data.userProgress.status === 'COMPLETED') {
+          setCurrentSegmentIndex(0);
+        } else {
+          // Bounds check: if saved segment is beyond total, reset to first segment
+          const validSegment = savedSegment >= totalSegments ? 0 : savedSegment;
+          setCurrentSegmentIndex(validSegment);
+        }
       }
 
       setLoading(false);
@@ -177,6 +193,27 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     }
   };
 
+  const completeLesson = async () => {
+    if (!lessonData) return;
+
+    try {
+      const now = new Date();
+      const timeSpent = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+      const segments = lessonData.lesson.segments || [];
+      const totalSegments = segments.length + (lessonData.lesson.quiz ? 1 : 0);
+
+      await lessonService.updateProgress(lessonId, {
+        currentSegment: totalSegments,
+        timeSpentSeconds: timeSpent,
+        status: 'COMPLETED',
+      });
+
+      console.log('Lesson marked as completed');
+    } catch (error) {
+      console.error('Failed to mark lesson as completed:', error);
+    }
+  };
+
   const handleSubmitQuiz = async () => {
     if (!selectedOption || !lessonData?.lesson.quiz) return;
 
@@ -222,7 +259,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     if (isOnQuiz && isQuizSubmitted) {
       // Lesson complete, navigate to Record screen
       // Save final progress to server before navigating away
-      updateProgress(currentSegmentIndex + 1, true);
+      await completeLesson();
 
       // DON'T invalidate cache - keep it so user can review completed lesson instantly
       // Cache will be cleaned up when app opens and lesson is completed
@@ -310,13 +347,8 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      {/* Header with Progress Bar */}
+      {/* Header with Close Button and Progress Bar */}
       <View style={styles.header}>
-        <ProgressBar
-          totalSegments={totalSegments}
-          currentSegment={currentSegmentIndex + 1}
-        />
-
         {/* Close Button */}
         <TouchableOpacity
           style={styles.closeButton}
@@ -325,6 +357,14 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         >
           <Text style={styles.closeIcon}>×</Text>
         </TouchableOpacity>
+
+        {/* Progress Bar */}
+        <View style={styles.progressBarContainer}>
+          <ProgressBar
+            totalSegments={totalSegments}
+            currentSegment={currentSegmentIndex + 1}
+          />
+        </View>
       </View>
 
       {/* Scrollable Content */}
@@ -441,19 +481,21 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   header: {
-    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 16,
+    gap: 12,
   },
   closeButton: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
+  },
+  progressBarContainer: {
+    flex: 1,
   },
   closeIcon: {
     fontSize: 32,

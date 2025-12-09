@@ -10,10 +10,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
+  Image,
   Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
+import { ProgressBar } from '../../components/ProgressBar';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -28,34 +30,37 @@ export const Intro2Screen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         {/* Progress Indicator */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressDot} />
-          <View style={[styles.progressDot, styles.progressDotActive]} />
-          <View style={styles.progressDot} />
-        </View>
+        <ProgressBar totalSegments={3} currentSegment={2} />
 
-        {/* Illustration */}
-        <View style={styles.illustrationContainer}>
-          <View style={styles.illustrationCircle}>
-            <Text style={styles.illustrationEmoji}>🎮</Text>
-          </View>
-        </View>
+
 
         {/* Content */}
         <View style={styles.textContent}>
-          <Text style={styles.title}>Play</Text>
-          <Text style={styles.subtitle}>
-            Record 5-minute practice sessions with your child during playtime
+        <Text style={styles.subtitle}>
+          Play
           </Text>
-          <Text style={styles.description}>
+          <Text style={styles.title}>Recrod a 5-min play session</Text>
+
+          {/* <Text style={styles.description}>
             • Practice what you've learned{'\n'}
             • Record audio during play{'\n'}
             • Get AI-powered coaching in real-time
-          </Text>
+          </Text> */}
         </View>
 
-        {/* Spacer */}
-        <View style={styles.spacer} />
+        {/* Spacer
+        <View style={styles.spacer} /> */}
+
+         {/* Illustration */}
+         <View style={styles.illustrationContainer}>
+          <View style={styles.illustrationCircle}>
+            <Image
+              source={require('../../../assets/images/dragon_image.png')}
+              style={styles.illustrationImage}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
 
         {/* Next Button */}
         <TouchableOpacity
@@ -63,17 +68,17 @@ export const Intro2Screen: React.FC = () => {
           onPress={handleNext}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>Next</Text>
+          <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>
 
         {/* Skip */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.skipButton}
           onPress={() => navigation.navigate('Subscription')}
           activeOpacity={0.8}
         >
           <Text style={styles.skipText}>Skip</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </SafeAreaView>
   );
@@ -89,37 +94,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingTop: 40,
   },
-  progressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 40,
-  },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E5E7EB',
-  },
-  progressDotActive: {
-    backgroundColor: '#8C49D5',
-    width: 24,
-  },
   illustrationContainer: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginTop: 40,
+    //marginBottom: 200,
   },
   illustrationCircle: {
-    width: SCREEN_WIDTH * 0.5,
-    height: SCREEN_WIDTH * 0.5,
+    width: SCREEN_WIDTH * 0.8,
+    height: SCREEN_WIDTH * 0.45,
     borderRadius: (SCREEN_WIDTH * 0.5) / 2,
-    backgroundColor: '#F9F5FF',
+    backgroundColor: '#A2DFCB',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  illustrationEmoji: {
-    fontSize: 100,
+  illustrationImage: {
+    width: SCREEN_WIDTH * 0.8,
+    height: SCREEN_WIDTH * 0.8,
   },
   textContent: {
     alignItems: 'center',
@@ -129,13 +120,15 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: '#1F2937',
     marginBottom: 16,
+    textAlign: 'center',
   },
   subtitle: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 18,
-    color: '#1F2937',
+    color: '#8C49D5',
     textAlign: 'center',
     marginBottom: 24,
+    marginTop:40,
     lineHeight: 26,
   },
   description: {
@@ -149,29 +142,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   button: {
-    width: '100%',
+    position: 'absolute',
+    bottom: 16,
+    left: 32,
+    right: 32,
     height: 56,
     backgroundColor: '#8C49D5',
-    borderRadius: 16,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
   },
   buttonText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 18,
     color: '#FFFFFF',
   },
-  skipButton: {
-    width: '100%',
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 32,
-  },
-  skipText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 16,
-    color: '#6B7280',
-  },
+
 });

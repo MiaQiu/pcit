@@ -1,19 +1,22 @@
 /**
  * ProfileCircle Component
- * Circular profile image or placeholder
+ * Circular profile image or placeholder with default dino images
  */
 
 import React from 'react';
 import { View, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import type { RelationshipToChild } from '@nora/core';
 
 interface ProfileCircleProps {
   imageUrl?: string;
+  relationshipToChild?: RelationshipToChild;
   size?: number;
   onPress?: () => void;
 }
 
 export const ProfileCircle: React.FC<ProfileCircleProps> = ({
   imageUrl,
+  relationshipToChild,
   size = 80,
   onPress,
 }) => {
@@ -25,6 +28,26 @@ export const ProfileCircle: React.FC<ProfileCircleProps> = ({
     },
   };
 
+  // Get default image based on relationship
+  const getDefaultImage = () => {
+    switch (relationshipToChild) {
+      case 'FATHER':
+        return require('../../assets/images/dino_papa.png');
+      case 'MOTHER':
+        return require('../../assets/images/dino_mama.png');
+      case 'GRANDMOTHER':
+        return require('../../assets/images/dino_grandma.png');
+      case 'GRANDFATHER':
+        return require('../../assets/images/dino_grandpa.png');
+      case 'GUARDIAN':
+      case 'OTHER':
+        return require('../../assets/images/dino_other_guardian.png');
+      default:
+        // Default to mother for undefined
+        return require('../../assets/images/dino_mama.png');
+    }
+  };
+
   const content = (
     <View style={[styles.container, dynamicStyles.container]}>
       {imageUrl ? (
@@ -34,7 +57,11 @@ export const ProfileCircle: React.FC<ProfileCircleProps> = ({
           resizeMode="cover"
         />
       ) : (
-        <View style={styles.placeholder} />
+        <Image
+          source={getDefaultImage()}
+          style={styles.image}
+          resizeMode="cover"
+        />
       )}
     </View>
   );

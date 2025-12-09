@@ -90,16 +90,27 @@ model User {
   emailHash          String?              @unique
   passwordHash       String
   name               String
+  profileImageUrl    String?              // Profile image URL stored in GCS/S3
   therapistId        String?
   childName          String
   childBirthYear     Int
   childBirthday      DateTime?            // Added for onboarding
   childConditions    String
   issue              String?              // Added for onboarding: tantrums, defiance, aggression, social, emotional, routine, general
+  relationshipToChild RelationshipToChild @default(MOTHER) // Relationship to child
   createdAt          DateTime             @default(now())
   currentStreak      Int                  @default(0)
   lastSessionDate    DateTime?
   longestStreak      Int                  @default(0)
+
+  // Subscription fields
+  subscriptionPlan   SubscriptionPlan     @default(TRIAL)
+  subscriptionStatus SubscriptionStatus   @default(ACTIVE)
+  trialStartDate     DateTime?
+  trialEndDate       DateTime?
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+
   LearningProgress   LearningProgress?
   RiskAuditLog       RiskAuditLog[]
   Session            Session[]
@@ -331,4 +342,25 @@ enum ProgressStatus {
   IN_PROGRESS
   COMPLETED
   LOCKED
+}
+
+enum SubscriptionPlan {
+  TRIAL
+  PREMIUM
+  FREE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum RelationshipToChild {
+  MOTHER
+  FATHER
+  GRANDMOTHER
+  GRANDFATHER
+  GUARDIAN
+  OTHER
 }

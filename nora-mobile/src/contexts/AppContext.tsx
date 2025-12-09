@@ -38,9 +38,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       storage,
       API_URL,
       async () => {
-        // Since we removed auth requirement, return null for now
-        // When auth is re-enabled, this will call authService.getAccessToken()
-        return null;
+        return authService.getAccessToken();
       }
     );
 

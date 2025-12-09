@@ -68,7 +68,7 @@ export const WelcomeScreen: React.FC = () => {
           style={styles.dragon}
           resizeMode="contain"
         />
-        <Text style={styles.title}>Nora</Text>
+        {/* <Text style={styles.title}>Nora</Text> */}
       </Animated.View>
     </LinearGradient>
   );

@@ -143,6 +143,95 @@ async function getSignedUrl(filePath) {
 }
 
 /**
+ * Upload profile image to AWS S3 (publicly accessible)
+ * @param {Buffer} fileBuffer - Image file buffer
+ * @param {string} userId - User ID for path organization
+ * @param {string} extension - File extension (jpg, png, etc.)
+ * @returns {Promise<string>} - Public S3 URL or mock path
+ */
+async function uploadProfileImage(fileBuffer, userId, extension = 'jpg') {
+  if (!S3_ENABLED || !s3Client) {
+    // Development mode: return mock path
+    console.warn('S3 not configured, using mock storage path for profile image');
+    return `mock://profiles/${userId}/avatar.${extension}`;
+  }
+
+  try {
+    const key = `profiles/${userId}/avatar.${extension}`;
+
+    // Determine content type based on extension
+    const contentTypeMap = {
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'webp': 'image/webp'
+    };
+    const contentType = contentTypeMap[extension.toLowerCase()] || 'image/jpeg';
+
+    const command = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: contentType,
+      Metadata: {
+        userId: userId,
+        uploadedAt: new Date().toISOString()
+      },
+      // Server-side encryption
+      ServerSideEncryption: 'AES256',
+      // Make publicly readable
+      ACL: 'public-read'
+    });
+
+    await s3Client.send(command);
+
+    // Return public URL
+    const publicUrl = `https://${bucketName}.s3.${AWS_REGION}.amazonaws.com/${key}`;
+    console.log(`Profile image uploaded to S3: ${key}`);
+    return publicUrl;
+  } catch (error) {
+    console.error('S3 profile image upload error:', error);
+    throw new Error('Failed to upload profile image');
+  }
+}
+
+/**
+ * Delete profile image from AWS S3
+ * @param {string} imageUrl - Profile image URL or S3 path
+ */
+async function deleteProfileImage(imageUrl) {
+  if (!S3_ENABLED || !s3Client || !imageUrl || imageUrl.startsWith('mock://')) {
+    console.warn('S3 not configured or mock path, skipping deletion');
+    return;
+  }
+
+  try {
+    // Extract key from URL if it's a full URL
+    let key = imageUrl;
+    if (imageUrl.startsWith('https://')) {
+      // Extract key from URL like: https://bucket.s3.region.amazonaws.com/profiles/userId/avatar.jpg
+      const urlPattern = /https:\/\/[^/]+\/(.+)/;
+      const match = imageUrl.match(urlPattern);
+      if (match && match[1]) {
+        key = match[1];
+      }
+    }
+
+    const command = new DeleteObjectCommand({
+      Bucket: bucketName,
+      Key: key
+    });
+
+    await s3Client.send(command);
+    console.log(`Profile image deleted from S3: ${key}`);
+  } catch (error) {
+    console.error('S3 profile image delete error:', error);
+    // Don't throw - deletion failures shouldn't break the flow
+  }
+}
+
+/**
  * Check if S3 is enabled and configured
  * @returns {boolean}
  */
@@ -154,5 +243,7 @@ module.exports = {
   uploadAudioFile,
   deleteAudioFile,
   getSignedUrl,
+  uploadProfileImage,
+  deleteProfileImage,
   isS3Enabled
 };

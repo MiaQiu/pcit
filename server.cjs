@@ -84,7 +84,9 @@ const fetchWithRetry = async (url, options, maxRetries = 3) => {
 
 // Mount auth routes
 const authRoutes = require('./server/routes/auth.cjs');
+const socialAuthRoutes = require('./server/routes/social-auth.cjs');
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', socialAuthRoutes);
 
 // Mount session routes
 const sessionRoutes = require('./server/routes/sessions.cjs');

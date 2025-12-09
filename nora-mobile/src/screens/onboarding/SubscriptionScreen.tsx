@@ -20,6 +20,7 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
+import { Ellipse } from '../../components/Ellipse';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -91,6 +92,40 @@ export const SubscriptionScreen: React.FC = () => {
     console.log('Restore purchases');
   };
 
+  const handleSkip = async () => {
+    setIsLoading(true);
+    try {
+      // Send onboarding data to backend without subscription
+      await authService.completeOnboarding({
+        name: data.name,
+        childName: data.childName,
+        childBirthday: data.childBirthday || undefined,
+        issue: data.issue || undefined,
+      });
+
+      // Navigate to MainTabs (user is already authenticated from signup)
+      navigation.replace('MainTabs');
+    } catch (error: any) {
+      console.error('Complete onboarding error:', error);
+      Alert.alert(
+        'Error',
+        'Failed to complete setup. Please try again.',
+        [
+          {
+            text: 'Retry',
+            onPress: handleSkip,
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+        ]
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -98,14 +133,23 @@ export const SubscriptionScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Dragon Image */}
-        <View style={styles.heroContainer}>
-          <Image
-            source={require('../../../assets/images/dragon_image.png')}
-            style={styles.dragon}
-            resizeMode="contain"
-          />
-        </View>
+        {/* Dragon Image Section with Ellipse Backgrounds */}
+        {/* <View style={styles.heroContainer}> */}
+          {/* Ellipse 78 - Top decorative background - #A6E0CB */}
+          {/* <Ellipse color="#A6E0CB" style={styles.ellipse78} /> */}
+
+          {/* Ellipse 77 - Bottom decorative background */}
+          {/* <Ellipse color="#9BD4DF" style={styles.ellipse77} /> */}
+
+          {/* Dragon Image */}
+          {/* <View style={styles.dragonContainer}>
+            <Image
+              source={require('../../../assets/images/dragon_image.png')}
+              style={styles.dragon}
+              resizeMode="contain"
+            />
+          </View>
+        </View> */}
 
         {/* Title */}
         <Text style={styles.title}>How your trial works</Text>
@@ -198,6 +242,15 @@ export const SubscriptionScreen: React.FC = () => {
           )}
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.skipButton}
+          onPress={handleSkip}
+          disabled={isLoading}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.skipButtonText}>Skip Now</Text>
+        </TouchableOpacity>
+
         <Text style={styles.disclaimer}>
           Cancel anytime. By continuing, you agree to our{' '}
           <Text style={styles.link}>Terms</Text> and{' '}
@@ -211,7 +264,7 @@ export const SubscriptionScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3E8FF',
+    //backgroundColor: '#F3E8FF',
   },
   scrollView: {
     flex: 1,
@@ -222,12 +275,38 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   heroContainer: {
+    position: 'relative',
+    width: SCREEN_WIDTH * 0.7,
+    height: SCREEN_WIDTH * 0.7,
+    //marginBottom: 0,
     alignItems: 'center',
-    marginBottom: 24,
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  ellipse78: {
+    position: 'absolute',
+    left: -130,
+    top: -40,
+    width: 573,
+    height: 150,
+  },
+  ellipse77: {
+    position: 'absolute',
+    left: -80,
+    top: 50,
+    width: 473,
+    height: 120,
+  },
+  dragonContainer: {
+    position: 'absolute',
+    width: '90%',
+    height: '90%',
+    alignItems: 'center',
+    marginBottom: 120,
   },
   dragon: {
-    width: SCREEN_WIDTH * 0.5,
-    height: SCREEN_WIDTH * 0.35,
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
@@ -235,6 +314,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     textAlign: 'center',
     marginBottom: 8,
+    marginTop: 70,
   },
   subtitle: {
     fontFamily: 'PlusJakartaSans_400Regular',
@@ -329,7 +409,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingTop: 16,
     paddingBottom: 32,
-    backgroundColor: '#F3E8FF',
+    //backgroundColor: '#F3E8FF',
   },
   startButton: {
     width: '100%',
@@ -356,6 +436,20 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 18,
     color: '#FFFFFF',
+  },
+  skipButton: {
+    width: '100%',
+    height: 56,
+    backgroundColor: 'transparent',
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  skipButtonText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 16,
+    color: '#6B7280',
   },
   disclaimer: {
     fontFamily: 'PlusJakartaSans_400Regular',

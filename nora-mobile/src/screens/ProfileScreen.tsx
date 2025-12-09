@@ -21,15 +21,23 @@ import { ProfileCircle } from '../components/ProfileCircle';
 import { useAuthService } from '../contexts/AppContext';
 import { RootStackNavigationProp } from '../navigation/types';
 import { FONTS, COLORS } from '../constants/assets';
+import type { SubscriptionPlan, SubscriptionStatus, RelationshipToChild } from '@nora/core';
 
 interface UserProfile {
   name: string;
   email: string;
   childName: string;
   profileImageUrl?: string;
+  relationshipToChild?: RelationshipToChild;
   childBirthYear?: number;
   childBirthday?: Date;
-  issue?: string;
+  issue?: string | string[];
+  subscriptionPlan?: SubscriptionPlan;
+  subscriptionStatus?: SubscriptionStatus;
+  trialStartDate?: Date;
+  trialEndDate?: Date;
+  subscriptionStartDate?: Date;
+  subscriptionEndDate?: Date;
 }
 
 export const ProfileScreen: React.FC = () => {
@@ -55,9 +63,16 @@ export const ProfileScreen: React.FC = () => {
         email: user.email,
         childName: user.childName,
         profileImageUrl: user.profileImageUrl,
+        relationshipToChild: user.relationshipToChild,
         childBirthYear: user.childBirthYear,
         childBirthday: user.childBirthday,
         issue: user.issue,
+        subscriptionPlan: user.subscriptionPlan,
+        subscriptionStatus: user.subscriptionStatus,
+        trialStartDate: user.trialStartDate,
+        trialEndDate: user.trialEndDate,
+        subscriptionStartDate: user.subscriptionStartDate,
+        subscriptionEndDate: user.subscriptionEndDate,
       });
     } catch (error) {
       console.error('Failed to load profile:', error);
@@ -213,18 +228,90 @@ export const ProfileScreen: React.FC = () => {
     return null;
   };
 
-  const getIssueLabel = (issue?: string) => {
+  const getIssueLabel = (issue?: string | string[]) => {
     const issueLabels: Record<string, string> = {
-      tantrums: 'Tantrums',
+      tantrums: 'Tantrums or managing big feelings',
+      'not-listening': 'Not listening',
+      arguing: 'Arguing',
+      social: 'Social-emotional skills',
+      new_baby_in_the_house: 'New baby in the home',
+      frustration_tolerance: 'Low frustration tolerance',
+      Navigating_change: 'Navigating a big change',
       defiance: 'Defiance',
       aggression: 'Aggression',
-      social: 'Social Skills',
       emotional: 'Emotional Regulation',
       routine: 'Routine & Structure',
       general: 'General Behavior',
     };
 
-    return issue ? issueLabels[issue] || issue : 'Not specified';
+    if (!issue) return 'Not specified';
+
+    if (Array.isArray(issue)) {
+      // Return comma-separated list of labels
+      return issue.map(i => issueLabels[i] || i).join(', ');
+    }
+
+    return issueLabels[issue] || issue;
+  };
+
+  const getSubscriptionInfo = () => {
+    if (!profile) return null;
+
+    const plan = profile.subscriptionPlan || 'TRIAL';
+    const status = profile.subscriptionStatus || 'ACTIVE';
+
+    // Calculate days remaining
+    let daysRemaining = 0;
+    let endDate: Date | null = null;
+
+    // Parse date strings to Date objects
+    if (plan === 'TRIAL' && profile.trialEndDate) {
+      endDate = new Date(profile.trialEndDate);
+      //console.log('Trial end date:', profile.trialEndDate, 'Parsed:', endDate);
+    } else if (profile.subscriptionEndDate) {
+      endDate = new Date(profile.subscriptionEndDate);
+      //console.log('Subscription end date:', profile.subscriptionEndDate, 'Parsed:', endDate);
+    }
+
+    if (endDate && !isNaN(endDate.getTime())) {
+      const today = new Date();
+      const diffTime = endDate.getTime() - today.getTime();
+      daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+      //console.log('Days remaining:', daysRemaining);
+    }
+
+    // Get plan display name
+    const planName = plan === 'TRIAL' ? 'Premium Trial' : plan === 'PREMIUM' ? 'Premium' : 'Free';
+
+    // Get status text
+    let statusText = '';
+    if (status === 'EXPIRED') {
+      statusText = 'Expired';
+    } else if (status === 'CANCELLED') {
+      statusText = 'Cancelled';
+    } else if (endDate && !isNaN(endDate.getTime())) {
+      // Format end date
+      const formattedDate = endDate.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      statusText = `Ends ${formattedDate}`;
+
+      // Optionally add days remaining
+      if (daysRemaining > 0) {
+        statusText += ` (${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining)`;
+      }
+    } else {
+      statusText = 'Active';
+    }
+
+    return {
+      planName,
+      statusText,
+      daysRemaining,
+      status,
+    };
   };
 
   if (loading) {
@@ -259,6 +346,7 @@ export const ProfileScreen: React.FC = () => {
             <ProfileCircle
               size={100}
               imageUrl={profile?.profileImageUrl}
+              relationshipToChild={profile?.relationshipToChild}
               onPress={handleProfileImagePress}
             />
             {uploadingImage && (
@@ -266,13 +354,13 @@ export const ProfileScreen: React.FC = () => {
                 <ActivityIndicator color="#FFFFFF" size="large" />
               </View>
             )}
-            <View style={styles.cameraIconContainer}>
+            {/* <View style={styles.cameraIconContainer}>
               <Ionicons name="camera" size={20} color="#8C49D5" />
-            </View>
+            </View> */}
           </View>
           <Text style={styles.profileName}>{profile?.name}</Text>
-          <Text style={styles.profileEmail}>{profile?.email}</Text>
-          <Text style={styles.tapToChange}>Tap to change photo</Text>
+          {/* <Text style={styles.profileEmail}>{profile?.email}</Text>
+          <Text style={styles.tapToChange}>Tap to change photo</Text> */}
         </View>
 
         {/* Account Information Section */}
@@ -280,7 +368,7 @@ export const ProfileScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Account Information</Text>
 
           <View style={styles.card}>
-            <View style={styles.infoRow}>
+            {/* <View style={styles.infoRow}>
               <View style={styles.infoIcon}>
                 <Ionicons name="person-outline" size={20} color="#8C49D5" />
               </View>
@@ -290,7 +378,7 @@ export const ProfileScreen: React.FC = () => {
               </View>
             </View>
 
-            <View style={styles.divider} />
+            <View style={styles.divider} /> */}
 
             <View style={styles.infoRow}>
               <View style={styles.infoIcon}>
@@ -358,16 +446,26 @@ export const ProfileScreen: React.FC = () => {
               <View style={styles.infoContentFlex}>
                 <View>
                   <Text style={styles.infoLabel}>Current Plan</Text>
-                  <Text style={styles.infoValue}>Premium Trial</Text>
-                  <Text style={styles.subscriptionNote}>14 days remaining</Text>
+                  <Text style={styles.infoValue}>
+                    {getSubscriptionInfo()?.planName || 'Premium Trial'}
+                  </Text>
+                  {getSubscriptionInfo()?.statusText && (
+                    <Text style={[
+                      styles.subscriptionNote,
+                      getSubscriptionInfo()?.status === 'EXPIRED' && styles.subscriptionExpired,
+                      getSubscriptionInfo()?.status === 'CANCELLED' && styles.subscriptionCancelled,
+                    ]}>
+                      {getSubscriptionInfo()?.statusText}
+                    </Text>
+                  )}
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                {/* <Ionicons name="chevron-forward" size={20} color="#9CA3AF" /> */}
               </View>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.linkButton} activeOpacity={0.7}>
-            <Text style={styles.linkButtonText}>Manage Subscription</Text>
+            <Text style={styles.linkButtonText}>Manage Subscription  (coming soon)</Text>
           </TouchableOpacity>
         </View>
 
@@ -379,7 +477,7 @@ export const ProfileScreen: React.FC = () => {
             <TouchableOpacity style={styles.settingRow} activeOpacity={0.7}>
               <View style={styles.settingLeft}>
                 <Ionicons name="notifications-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Notifications</Text>
+                <Text style={styles.settingText}>Notifications  (coming soon)</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -389,7 +487,7 @@ export const ProfileScreen: React.FC = () => {
             <TouchableOpacity style={styles.settingRow} activeOpacity={0.7}>
               <View style={styles.settingLeft}>
                 <Ionicons name="lock-closed-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Privacy & Security</Text>
+                <Text style={styles.settingText}>Privacy & Security (coming soon)</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -399,7 +497,7 @@ export const ProfileScreen: React.FC = () => {
             <TouchableOpacity style={styles.settingRow} activeOpacity={0.7}>
               <View style={styles.settingLeft}>
                 <Ionicons name="help-circle-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Help & Support</Text>
+                <Text style={styles.settingText}>Help & Support (coming soon)</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -409,7 +507,7 @@ export const ProfileScreen: React.FC = () => {
             <TouchableOpacity style={styles.settingRow} activeOpacity={0.7}>
               <View style={styles.settingLeft}>
                 <Ionicons name="document-text-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Terms & Privacy Policy</Text>
+                <Text style={styles.settingText}>Terms & Privacy Policy (coming soon)</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -596,6 +694,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#8C49D5',
     marginTop: 2,
+  },
+  subscriptionExpired: {
+    color: '#EF4444',
+  },
+  subscriptionCancelled: {
+    color: '#F59E0B',
   },
   divider: {
     height: 1,

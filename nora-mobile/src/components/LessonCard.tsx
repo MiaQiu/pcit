@@ -98,7 +98,7 @@ export const LessonCard: React.FC<LessonCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     width: '90%', //adjusted
-    height: 660, //adjusted
+    height: 620, //adjusted
     alignSelf: 'center', //added
     // height: 679, //original
     //width: '100%', //original

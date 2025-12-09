@@ -39,15 +39,16 @@ export const Button: React.FC<ButtonProps> = ({
         backgroundColor: bgColor,
         height: 64,
         borderRadius: 112,
-        paddingHorizontal: 42,
+        paddingHorizontal: 24,
         paddingVertical: 15,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+        flex: 1,
       }}
       activeOpacity={0.8}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, flexShrink: 1 }}>
         {loading ? (
           <ActivityIndicator color={isPrimary ? '#FFFFFF' : '#1E2939'} />
         ) : (
@@ -59,7 +60,11 @@ export const Button: React.FC<ButtonProps> = ({
                 color: isPrimary || disabled ? '#FFFFFF' : '#1E2939',
                 textAlign: 'center',
                 letterSpacing: -0.15,
+                flexShrink: 1,
               }}
+              numberOfLines={1}
+              adjustsFontSizeToFit={true}
+              minimumFontScale={0.8}
             >
               {children}
             </Text>

@@ -223,7 +223,7 @@ class AuthService {
     name?: string;
     childName?: string;
     childBirthday?: Date;
-    issue?: string;
+    issue?: string | string[];
   }): Promise<User> {
     const response = await this.authenticatedRequest(
       `${this.apiUrl}/api/auth/complete-onboarding`,

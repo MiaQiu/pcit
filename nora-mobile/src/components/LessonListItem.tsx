@@ -25,7 +25,8 @@ export const LessonListItem: React.FC<LessonListItemProps> = ({
   onPress,
 }) => {
   const handlePress = () => {
-    if (!isLocked && onPress) {
+    // Always call onPress - let the parent handle locked lesson logic
+    if (onPress) {
       onPress();
     }
   };
@@ -37,7 +38,6 @@ export const LessonListItem: React.FC<LessonListItemProps> = ({
         isLocked && styles.containerLocked,
       ]}
       onPress={handlePress}
-      disabled={isLocked}
       activeOpacity={0.7}
     >
       {/* Status Icon */}

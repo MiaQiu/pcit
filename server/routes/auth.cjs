@@ -3,12 +3,30 @@ const express = require('express');
 const Joi = require('joi');
 const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
+const multer = require('multer');
 const prisma = require('../services/db.cjs');
 const { hashPassword, verifyPassword } = require('../utils/password.cjs');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt.cjs');
 const { encryptSensitiveData, decryptSensitiveData, encryptUserData, decryptUserData } = require('../utils/encryption.cjs');
+const { uploadProfileImage, deleteProfileImage } = require('../services/storage-s3.cjs');
 
 const router = express.Router();
+
+// Configure multer for memory storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (!file.mimetype.startsWith('image/')) {
+      cb(new Error('Only image files are allowed'), false);
+      return;
+    }
+    cb(null, true);
+  }
+});
 
 // Rate limiter for auth endpoints
 // More lenient in development, stricter in production
@@ -74,6 +92,11 @@ router.post('/signup', async (req, res) => {
       childName
     });
 
+    // Set up trial period (30 days from now)
+    const now = new Date();
+    const trialEndDate = new Date(now);
+    trialEndDate.setDate(trialEndDate.getDate() + 30);
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -87,7 +110,11 @@ router.post('/signup', async (req, res) => {
         childBirthday: childBirthday ? new Date(childBirthday) : null,
         childConditions: JSON.stringify(childConditions), // Stored as plain JSON
         issue,
-        therapistId
+        therapistId,
+        subscriptionPlan: 'TRIAL',
+        subscriptionStatus: 'ACTIVE',
+        trialStartDate: now,
+        trialEndDate: trialEndDate
       }
     });
 
@@ -301,13 +328,21 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
         id: true,
         email: true,
         name: true,
+        profileImageUrl: true,
+        relationshipToChild: true,
         childName: true,
         childBirthYear: true,
         childBirthday: true,
         childConditions: true,
         issue: true,
         therapistId: true,
-        createdAt: true
+        createdAt: true,
+        subscriptionPlan: true,
+        subscriptionStatus: true,
+        trialStartDate: true,
+        trialEndDate: true,
+        subscriptionStartDate: true,
+        subscriptionEndDate: true
       }
     });
 
@@ -317,6 +352,15 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
 
     // Decrypt sensitive data for response
     const decryptedUser = decryptUserData(user);
+
+    // Parse issue if it's a JSON string
+    if (decryptedUser.issue && typeof decryptedUser.issue === 'string' && decryptedUser.issue.startsWith('[')) {
+      try {
+        decryptedUser.issue = JSON.parse(decryptedUser.issue);
+      } catch (e) {
+        // Keep as string if parsing fails
+      }
+    }
 
     res.json({ user: decryptedUser });
 
@@ -357,12 +401,24 @@ router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAu
     }
 
     if (issue) {
-      // Validate issue value
-      const validIssues = ['tantrums', 'defiance', 'aggression', 'social', 'emotional', 'routine', 'general'];
-      if (!validIssues.includes(issue)) {
-        return res.status(400).json({ error: 'Invalid issue value' });
+      // Handle both string and array of issues
+      const validIssues = ['tantrums', 'not-listening', 'arguing', 'social', 'new_baby_in_the_house', 'frustration_tolerance', 'Navigating_change', 'defiance', 'aggression', 'emotional', 'routine', 'general'];
+
+      if (Array.isArray(issue)) {
+        // Validate all issues in array
+        const invalidIssues = issue.filter(i => !validIssues.includes(i));
+        if (invalidIssues.length > 0) {
+          return res.status(400).json({ error: `Invalid issue values: ${invalidIssues.join(', ')}` });
+        }
+        // Store as JSON string for database
+        updateData.issue = JSON.stringify(issue);
+      } else {
+        // Single issue (backward compatibility)
+        if (!validIssues.includes(issue)) {
+          return res.status(400).json({ error: 'Invalid issue value' });
+        }
+        updateData.issue = issue;
       }
-      updateData.issue = issue;
     }
 
     // Update user
@@ -391,6 +447,71 @@ router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAu
   } catch (error) {
     console.error('Complete onboarding error:', error);
     res.status(500).json({ error: 'Failed to update user profile' });
+  }
+});
+
+// POST /api/auth/upload-profile-image
+// Upload profile image
+router.post('/upload-profile-image', require('../middleware/auth.cjs').requireAuth, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+
+    // Get current user to check for existing profile image
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { profileImageUrl: true }
+    });
+
+    // Delete old profile image if it exists
+    if (currentUser?.profileImageUrl) {
+      await deleteProfileImage(currentUser.profileImageUrl);
+    }
+
+    // Get file extension from mimetype
+    const extensionMap = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/gif': 'gif',
+      'image/webp': 'webp'
+    };
+    const extension = extensionMap[req.file.mimetype] || 'jpg';
+
+    // Upload new profile image
+    const imageUrl = await uploadProfileImage(req.file.buffer, req.userId, extension);
+
+    // Update user record with new profile image URL
+    const user = await prisma.user.update({
+      where: { id: req.userId },
+      data: { profileImageUrl: imageUrl },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        profileImageUrl: true,
+        childName: true,
+        childBirthYear: true,
+        childBirthday: true,
+        childConditions: true,
+        issue: true,
+        therapistId: true,
+        createdAt: true
+      }
+    });
+
+    // Decrypt sensitive data for response
+    const decryptedUser = decryptUserData(user);
+
+    res.json({
+      user: decryptedUser,
+      message: 'Profile image uploaded successfully'
+    });
+
+  } catch (error) {
+    console.error('Upload profile image error:', error);
+    res.status(500).json({ error: 'Failed to upload profile image' });
   }
 });
 

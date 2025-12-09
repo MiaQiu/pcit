@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     height: 56,
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 40,
-    color: '#4A5565',
+    color: '#1E2939',
     textAlign: 'center',
   },
   spacer: {
