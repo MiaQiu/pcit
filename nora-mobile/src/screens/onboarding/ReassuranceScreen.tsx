@@ -25,10 +25,9 @@ export const ReassuranceScreen: React.FC = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const bubbleAnim = useRef(new Animated.Value(0)).current;
+  const textOpacity = useRef(new Animated.Value(0)).current;
 
-  // Typewriter effect
   const fullText = "You are at the right place.";
-  const [displayedText, setDisplayedText] = React.useState('');
 
   useEffect(() => {
     // Start animations
@@ -55,33 +54,24 @@ export const ReassuranceScreen: React.FC = () => {
         useNativeDriver: true,
         delay: 200,
       }),
+      // Then fade in text over 1 second
+      Animated.timing(textOpacity, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+        delay: 200,
+      }),
     ]).start();
-
-    // Start typewriter effect after bubble appears
-    const typewriterDelay = setTimeout(() => {
-      let index = 0;
-      const typewriterInterval = setInterval(() => {
-        if (index <= fullText.length) {
-          setDisplayedText(fullText.slice(0, index));
-          index++;
-        } else {
-          clearInterval(typewriterInterval);
-        }
-      }, 50); // 50ms per character
-
-      return () => clearInterval(typewriterInterval);
-    }, 1200); // Start after bubble animation
 
     // Navigate to DepressionSurvey screen after all animations complete
     const navigationTimer = setTimeout(() => {
       navigation.replace('DepressionSurvey');
-    }, 4500); // Increased to allow time for typewriter effect
+    }, 4000);
 
     return () => {
-      clearTimeout(typewriterDelay);
       clearTimeout(navigationTimer);
     };
-  }, [navigation, fadeAnim, scaleAnim, bubbleAnim]);
+  }, [navigation, fadeAnim, scaleAnim, bubbleAnim, textOpacity]);
 
   return (
     <LinearGradient
@@ -104,25 +94,19 @@ export const ReassuranceScreen: React.FC = () => {
           resizeMode="contain"
         />
 
-        {/* Speech Bubble */}
+        {/* Message Text */}
         <Animated.View
           style={[
-            styles.speechBubbleContainer,
+            styles.textContainer,
             {
               opacity: bubbleAnim,
               transform: [{ scale: bubbleAnim }],
             },
           ]}
         >
-          <View style={styles.speechBubble}>
-            <Text style={styles.bubbleText}>
-              {displayedText}
-              {displayedText.length < fullText.length && (
-                <Text style={styles.cursor}>|</Text>
-              )}
-            </Text>
-            <View style={styles.bubbleTail} />
-          </View>
+          <Animated.Text style={[styles.messageText, { opacity: textOpacity }]}>
+            {fullText}
+          </Animated.Text>
         </Animated.View>
       </Animated.View>
     </LinearGradient>
@@ -144,47 +128,16 @@ const styles = StyleSheet.create({
     height: SCREEN_WIDTH * 0.7,
     marginBottom: 20,
   },
-  speechBubbleContainer: {
+  textContainer: {
     alignItems: 'center',
     marginTop: 20,
+    paddingHorizontal: 20,
   },
-  speechBubble: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    paddingHorizontal: 28,
-    paddingVertical: 20,
-    maxWidth: SCREEN_WIDTH * 0.8,
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  bubbleText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 20,
-    color: '#1E2939',
+  messageText: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 32,
+    color: '#FFFFFF',
     textAlign: 'center',
-    lineHeight: 28,
-    minHeight: 28, // Prevent layout shift during typing
-  },
-  cursor: {
-    opacity: 0.7,
-    color: '#8C49D5',
-  },
-  bubbleTail: {
-    position: 'absolute',
-    top: -10,
-    left: '50%',
-    marginLeft: -10,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 10,
-    borderRightWidth: 10,
-    borderBottomWidth: 10,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#FFFFFF',
+    lineHeight: 40,
   },
 });

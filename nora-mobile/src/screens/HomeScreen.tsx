@@ -59,9 +59,10 @@ export const HomeScreen: React.FC = () => {
   // useFocusEffect is more reliable for tab navigation than addListener
   useFocusEffect(
     React.useCallback(() => {
-      // Reload today's state and streak when tab comes into focus
+      // Reload today's state, streak, and latest report when tab comes into focus
       loadTodayState();
       loadStreakData();
+      loadLatestReport();
     }, [])
   );
 

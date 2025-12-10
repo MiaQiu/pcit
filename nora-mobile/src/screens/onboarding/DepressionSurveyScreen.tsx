@@ -13,6 +13,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
@@ -132,10 +133,23 @@ export const DepressionSurveyScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Introduction */}
-        <View style={styles.introBox}>
-          <Text style={styles.introText}>
-            Parenting takes a lot of energy. Before we dive into the program, we want to check in on how you have been feeling lately.
-          </Text>
+        <View style={styles.introContainer}>
+          {/* Dragon Head */}
+          <View style={styles.dragonContainer}>
+            <Image
+              source={require('../../../assets/images/dragon_image.png')}
+              style={styles.dragonIcon}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Speech Bubble */}
+          <View style={styles.speechBubble}>
+            <Text style={styles.introText}>
+              Parenting takes a lot of energy. Before we dive into the program, we want to check in on how you have been feeling lately.
+            </Text>
+            <View style={styles.bubbleTail} />
+          </View>
         </View>
 
         {/* Instructions */}
@@ -232,13 +246,52 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 24,
   },
-  introBox: {
-    backgroundColor: '#F0F9FF',
-    borderRadius: 16,
-    padding: 20,
+  introContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 24,
-    borderLeftWidth: 4,
-    borderLeftColor: '#8C49D5',
+  },
+  dragonContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    overflow: 'hidden',
+    backgroundColor: '#F5F0FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dragonIcon: {
+    width: 90,
+    height: 90,
+    marginLeft: 25,
+  },
+  speechBubble: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  bubbleTail: {
+    position: 'absolute',
+    left: -8,
+    top: 20,
+    width: 0,
+    height: 0,
+    borderTopWidth: 8,
+    borderRightWidth: 8,
+    borderBottomWidth: 8,
+    borderTopColor: 'transparent',
+    borderRightColor: '#E5E7EB',
+    borderBottomColor: 'transparent',
   },
   introText: {
     fontFamily: 'PlusJakartaSans_400Regular',
@@ -248,11 +301,12 @@ const styles = StyleSheet.create({
   },
   instructionsBox: {
     marginBottom: 24,
+    marginTop: 24,
   },
   instructionsText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 16,
-    color: '#4B5563',
+    fontSize: 18,
+    color: '#1e2923',
     lineHeight: 24,
   },
   questionBlock: {
@@ -260,8 +314,8 @@ const styles = StyleSheet.create({
   },
   questionText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
-    color: '#1E2939',
+    fontSize: 16,
+    color: '#1e2923',
     marginBottom: 16,
     lineHeight: 26,
   },
@@ -271,7 +325,7 @@ const styles = StyleSheet.create({
   optionButton: {
     borderWidth: 2,
     borderColor: '#E5E7EB',
-    borderRadius: 12,
+    borderRadius: 30,
     padding: 16,
     backgroundColor: '#FFFFFF',
   },
@@ -286,7 +340,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 16,
+    fontSize: 14,
     color: '#4B5563',
   },
   optionTextSelected: {

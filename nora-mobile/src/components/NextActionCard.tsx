@@ -39,18 +39,23 @@ const CARD_CONTENT = {
     subtitle: 'Up next',
     description: 'Learning is 2x faster when put into practice. Practice your new skills by recording the session.',
     buttonText: 'Continue',
+    encouragementMessage: 'Good job completing today\'s lesson! Let\'s record your play session now.',
+
   },
   readReport: {
     title: 'Read your report and insights',
     subtitle: 'Up next',
     description: 'Check out the analysis of your session.',
     buttonText: 'Continue',
+    encouragementMessage: 'Awesome! Your report is ready!',
+
   },
   recordAgain: {
-    title: 'Record another play session',
+    title: 'Beat your score',
     subtitle: 'Up next',
-    description: 'Ready for one more play session?',
+    description: 'Repetition builds confidence. Record another play session to practice the feedback you just received.',
     buttonText: 'Continue',
+    encouragementMessage: 'Great work! Want to practice one more time?',
   },
 };
 
@@ -71,6 +76,22 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
     ? Math.min((yesterdayScore.score / yesterdayScore.maxScore) * 100, 100)
     : 0;
 
+  // Calculate hours until midnight Singapore time (UTC+8)
+  const getHoursUntilMidnightSGT = () => {
+    const now = new Date();
+    // Get current hour and minute in Singapore time (UTC+8)
+    const sgtHour = (now.getUTCHours() + 8) % 24;
+    const sgtMinute = now.getUTCMinutes();
+
+    // Total minutes until midnight
+    const minutesUntilMidnight = (24 - sgtHour) * 60 - sgtMinute;
+
+    // Convert to hours and round up
+    return Math.ceil(minutesUntilMidnight / 60);
+  };
+
+  const hoursUntilMidnight = getHoursUntilMidnightSGT();
+
   // Determine content based on type
   const isLesson = type === 'lesson';
   const content = isLesson ? null : CARD_CONTENT[type as keyof typeof CARD_CONTENT];
@@ -80,6 +101,9 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
   const buttonText = isLesson ? (customButtonText || 'Continue') : content?.buttonText;
   const subtitle = isLesson ? 'Up next' : content?.subtitle;
 
+  // Use card-specific encouragement message for non-lesson types, fall back to prop
+  const displayEncouragementMessage = isLesson ? encouragementMessage : (content?.encouragementMessage || encouragementMessage);
+
   return (
     <View style={styles.container}>
       {/* Teal Background Section for Yesterday's PEN Skills */}
@@ -88,7 +112,7 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
           {/* Yesterday's PEN Skills Card */}
           <View style={styles.yesterdayCard}>
             <View style={styles.yesterdayHeader}>
-              <Text style={styles.yesterdayTitle}>Last Play Session</Text>
+              <Text style={styles.yesterdayTitle}>Last Session Result</Text>
               <Text style={styles.yesterdayScore}>
                 {yesterdayScore.score}/{100}
               </Text>
@@ -113,7 +137,7 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
           </View>
 
           {/* Dragon Encouragement */}
-          {encouragementMessage && (
+          {displayEncouragementMessage && (
             <View style={styles.dragonSection}>
               {/* Dragon Icon */}
               <View style={styles.dragonContainer}>
@@ -126,7 +150,7 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
 
               {/* Speech Bubble */}
               <View style={styles.speechBubble}>
-                <Text style={styles.messageText}>{encouragementMessage}</Text>
+                <Text style={styles.messageText}>{displayEncouragementMessage}</Text>
               </View>
             </View>
           )}
@@ -149,8 +173,14 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
           <Badge label={phase} subtitle={phaseName} />
         </View>
 
-        {/* Up next label */}
-        <Text style={styles.upNextLabel}>{subtitle}</Text>
+        {/* Up next label or Extra Practice badge */}
+        {type === 'recordAgain' ? (
+          <View style={styles.extraPracticeBadge}>
+            <Text style={styles.extraPracticeText}>EXTRA PRACTICE</Text>
+          </View>
+        ) : (
+          <Text style={styles.upNextLabel}>{subtitle}</Text>
+        )}
 
         {/* Title */}
         <Text style={styles.title}>{title}</Text>
@@ -160,10 +190,20 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
 
         {/* CTA Button - Only show if onPress is provided */}
         {onPress && buttonText && (
-          <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
-            <Text style={styles.buttonText}>{buttonText}</Text>
-            <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
+              <Text style={styles.buttonText}>{buttonText}</Text>
+              <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            {/* Next Lesson unlock message - Only for recordAgain */}
+            {type === 'recordAgain' && (
+              <View style={styles.unlockMessageContainer}>
+                <Ionicons name="lock-closed" size={14} color="#1E2939" />
+                <Text style={styles.unlockMessageText}>Next Lesson unlocks in {hoursUntilMidnight} hrs</Text>
+              </View>
+            )}
+          </>
         )}
       </View>
     </View>
@@ -312,6 +352,20 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     marginBottom: 8,
   },
+  extraPracticeBadge: {
+    backgroundColor: '#8C49D5',
+    borderRadius: 100,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  extraPracticeText: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 12,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 32,
@@ -339,12 +393,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 100,
     gap: 8,
-    marginTop: 18,
+    marginTop: 0,
   },
   buttonText: {
     fontFamily: FONTS.semiBold,
     fontSize: 16,
     color: '#FFFFFF',
     letterSpacing: -0.3,
+  },
+  unlockMessageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
+  },
+  unlockMessageText: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#1E2939',
   },
 });

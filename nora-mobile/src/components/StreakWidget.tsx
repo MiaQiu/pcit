@@ -20,6 +20,16 @@ export const StreakWidget: React.FC<StreakWidgetProps> = ({
   completedDays,
   dragonImageUrl,
 }) => {
+  // Calculate today's day index (0 = Monday, 6 = Sunday)
+  const getTodayIndex = () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    // Convert to Monday-based index (0 = Monday, 6 = Sunday)
+    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  };
+
+  const todayIndex = getTodayIndex();
+
   return (
     <View style={styles.container}>
       {/* Streak Info */}
@@ -32,6 +42,7 @@ export const StreakWidget: React.FC<StreakWidgetProps> = ({
         <View style={styles.daysGrid}>
           {DAYS.map((day, index) => {
             const isCompleted = completedDays[index];
+            const isToday = index === todayIndex;
             return (
               <View key={day} style={styles.dayColumn}>
                 <Text style={styles.dayLabel}>{day}</Text>
@@ -40,7 +51,9 @@ export const StreakWidget: React.FC<StreakWidgetProps> = ({
                   <View
                     style={[
                       styles.circle,
-                      isCompleted ? styles.circleCompleted : styles.circleIncomplete,
+                      isCompleted
+                        ? (isToday ? styles.circleToday : styles.circleCompleted)
+                        : styles.circleIncomplete,
                     ]}
                   />
                   {/* Checkmark */}
@@ -108,6 +121,9 @@ const styles = StyleSheet.create({
   },
   circleCompleted: {
     backgroundColor: '#FFA726', // Orange/yellow from Figma
+  },
+  circleToday: {
+    backgroundColor: '#A6E0CB', // Teal/mint for today
   },
   circleIncomplete: {
     backgroundColor: '#E0E0E0', // Light gray

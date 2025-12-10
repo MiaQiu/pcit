@@ -13,10 +13,11 @@ import {
   SafeAreaView,
   ScrollView,
   Linking,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
-import { Ionicons } from '@expo/vector-icons';
+//import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../../constants/assets';
 
 export const SelfCareScreen: React.FC = () => {
@@ -24,7 +25,7 @@ export const SelfCareScreen: React.FC = () => {
 
   const handleFindSupport = () => {
     // Open mental health resources
-    Linking.openURL('https://988lifeline.org/');
+    Linking.openURL('https://www.moh.gov.sg/seeking-healthcare/find-a-facility-or-service/mental-health-services/');
   };
 
   const handleContinue = () => {
@@ -39,11 +40,11 @@ export const SelfCareScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Icon */}
-        <View style={styles.iconContainer}>
+        {/* <View style={styles.iconContainer}>
           <View style={styles.iconCircle}>
             <Ionicons name="heart" size={56} color={COLORS.mainPurple} />
           </View>
-        </View>
+        </View> */}
 
         {/* Header */}
         <Text style={styles.title}>Let's pause and{'\n'}focus on you first.</Text>
@@ -62,22 +63,42 @@ export const SelfCareScreen: React.FC = () => {
         </View>
 
         {/* Oxygen Mask Metaphor */}
-        <View style={styles.metaphorBox}>
-          <View style={styles.metaphorIcon}>
+        <View style={styles.messageBox}>
+          {/* <View style={styles.metaphorIcon}>
             <Text style={styles.metaphorEmoji}>✈️</Text>
-          </View>
-          <Text style={styles.metaphorText}>
+          </View> */}
+          <Text style={styles.messageText}>
             Just like on an airplane, you need to put on your own oxygen mask before you can assist your child.
           </Text>
         </View>
 
+      
         {/* Recommendation */}
-        <View style={styles.recommendationBox}>
-          <Text style={styles.recommendationText}>
-            We strongly recommend speaking to a healthcare provider or a counselor to get some support for yourself.
-          </Text>
-          <Text style={styles.recommendationSubtext}>
-            Your mental health is the best gift you can give your child.
+        <View style={styles.recommendationContainer}>
+          {/* Dragon Head */}
+          <View style={styles.dragonContainer}>
+            <Image
+              source={require('../../../assets/images/dragon_image.png')}
+              style={styles.dragonIcon}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Speech Bubble */}
+          <View style={styles.recommendationBox}>
+            {/* <Text style={styles.recommendationText}>
+              We strongly recommend speaking to a healthcare provider or a counselor to get some support for yourself.
+            </Text> */}
+            <Text style={styles.recommendationSubtext}>
+              Your mental health is the best gift you can give your child.
+            </Text>
+            <View style={styles.bubbleTail} />
+          </View>
+        </View>
+
+        <View style={styles.messageBox}>
+          <Text style={styles.messageText}>
+          We strongly recommend speaking to a healthcare provider or a counselor to get some support for yourself.
           </Text>
         </View>
 
@@ -87,7 +108,7 @@ export const SelfCareScreen: React.FC = () => {
           onPress={handleFindSupport}
           activeOpacity={0.8}
         >
-          <Ionicons name="open-outline" size={20} color={COLORS.white} style={{ marginRight: 8 }} />
+          {/* <Ionicons name="open-outline" size={20} color={COLORS.white} style={{ marginRight: 8 }} /> */}
           <Text style={styles.primaryButtonText}>Find Support Resources</Text>
         </TouchableOpacity>
 
@@ -100,11 +121,11 @@ export const SelfCareScreen: React.FC = () => {
         </TouchableOpacity>
 
         {/* Crisis Hotline */}
-        <View style={styles.crisisBox}>
+        {/* <View style={styles.crisisBox}>
           <Text style={styles.crisisText}>
             🆘 If you're in crisis: Call or text <Text style={styles.crisisNumber}>988</Text> (Suicide & Crisis Lifeline)
           </Text>
-        </View>
+        </View> */}
       </ScrollView>
     </SafeAreaView>
   );
@@ -123,18 +144,6 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 40,
   },
-  iconContainer: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: COLORS.cardPurple,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   title: {
     fontFamily: FONTS.bold,
     fontSize: 32,
@@ -151,7 +160,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: COLORS.textDark,
     lineHeight: 26,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   metaphorBox: {
     backgroundColor: '#FFF7ED',
@@ -183,13 +192,52 @@ const styles = StyleSheet.create({
     color: '#92400E',
     lineHeight: 24,
   },
-  recommendationBox: {
-    backgroundColor: COLORS.cardPurple,
-    borderRadius: 20,
-    padding: 24,
+  recommendationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 36,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.mainPurple,
+  },
+  dragonContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    overflow: 'hidden',
+    backgroundColor: '#F5F0FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dragonIcon: {
+    width: 90,
+    height: 90,
+    marginLeft: 25,
+  },
+  recommendationBox: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  bubbleTail: {
+    position: 'absolute',
+    left: -8,
+    top: 20,
+    width: 0,
+    height: 0,
+    borderTopWidth: 8,
+    borderRightWidth: 8,
+    borderBottomWidth: 8,
+    borderTopColor: 'transparent',
+    borderRightColor: '#E5E7EB',
+    borderBottomColor: 'transparent',
   },
   recommendationText: {
     fontFamily: FONTS.semiBold,
@@ -213,7 +261,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 0,
   },
   primaryButtonText: {
     fontFamily: FONTS.semiBold,
