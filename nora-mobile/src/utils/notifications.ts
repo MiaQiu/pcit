@@ -7,15 +7,19 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 // Configure notification handler
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+} catch (error) {
+  console.warn('Notifications module not available:', error);
+}
 
 // Notification IDs for managing scheduled notifications
 export const NOTIFICATION_IDS = {
