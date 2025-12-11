@@ -474,10 +474,14 @@ export const ProfileScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Settings</Text>
 
           <View style={styles.card}>
-            <TouchableOpacity style={styles.settingRow} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.settingRow}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('NotificationSettings')}
+            >
               <View style={styles.settingLeft}>
                 <Ionicons name="notifications-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Notifications  (coming soon)</Text>
+                <Text style={styles.settingText}>Notifications</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>

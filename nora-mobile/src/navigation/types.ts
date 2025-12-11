@@ -40,6 +40,7 @@ export type RootStackParamList = {
   Onboarding: { initialStep?: string } | undefined;
   MainTabs: { screen?: string } | undefined;
   Profile: undefined;
+  NotificationSettings: undefined;
   LessonViewer: {
     lessonId: string;
   };

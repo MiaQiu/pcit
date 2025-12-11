@@ -10,6 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import { TabNavigator } from './TabNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
 import { LessonViewerScreen } from '../screens/LessonViewerScreen';
 import { QuizScreen } from '../screens/QuizScreen';
 import { LessonCompleteScreen } from '../screens/LessonCompleteScreen';
@@ -115,6 +116,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="Profile"
         component={ProfileScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettingsScreen}
         options={{
           animation: 'slide_from_right',
         }}

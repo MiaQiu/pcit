@@ -27,3 +27,11 @@ export const FONTS = {
   semiBold: 'PlusJakartaSans_600SemiBold',
   bold: 'PlusJakartaSans_700Bold',
 };
+
+// Sound Effects
+export const SOUNDS = {
+  voiceReminder: require('../../assets/sounds/voice_reminder.mp3'),
+  Win: require('../../assets/sounds/Win.mp3'),
+  Bell: require('../../assets/sounds/Bell.mp3'),
+  // Add more sounds here as needed
+};
