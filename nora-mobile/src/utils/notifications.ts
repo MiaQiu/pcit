@@ -12,6 +12,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -82,6 +84,7 @@ export const scheduleDailyNotification = async (
         priority: Notifications.AndroidNotificationPriority.HIGH,
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
         hour,
         minute,
         repeats: true,
@@ -114,6 +117,7 @@ export const scheduleNotificationAfter = async (
         sound: true,
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
         seconds,
       },
       identifier: id,
@@ -183,7 +187,7 @@ export const scheduleDailyLessonReminder = async (timeString: string): Promise<s
 
   return scheduleDailyNotification(
     NOTIFICATION_IDS.DAILY_LESSON_REMINDER,
-    "Time for today's lesson! 📚",
+    "Time for today's lesson!",
     "Take a few minutes to learn something new with Nora",
     hour,
     minute
@@ -204,15 +208,45 @@ export const sendTestNotification = async (): Promise<void> => {
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Test Notification 🔔",
+        title: "Test Notification",
         body: "Notifications are working!",
         sound: true,
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
         seconds: 1,
       },
     });
   } catch (error) {
     console.error('Error sending test notification:', error);
+  }
+};
+
+/**
+ * Send notification when a new session report is ready
+ */
+export const sendNewReportNotification = async (sessionType?: string): Promise<void> => {
+  try {
+    const sessionLabel = sessionType || 'play session';
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Session Report Ready!",
+        body: `Your ${sessionLabel} report is ready to view`,
+        sound: true,
+        data: {
+          type: 'new_report',
+          timestamp: Date.now(),
+        },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 2, // Small delay to ensure report is fully processed
+      },
+    });
+
+    console.log('New report notification scheduled');
+  } catch (error) {
+    console.error('Error sending new report notification:', error);
   }
 };

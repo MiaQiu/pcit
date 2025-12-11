@@ -36,6 +36,7 @@ interface NotificationPreferences {
   progressUpdates: boolean;
   weeklySummary: boolean;
   newContentAlerts: boolean;
+  newReportNotification: boolean; // Notify when session report is ready
   cdiCompleteSound: string; // Sound effect when 5 min CDI recording is done
   pdiTransitionSound: string; // Sound effect when transitioning from CDI to PDI
 }
@@ -47,6 +48,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   progressUpdates: true,
   weeklySummary: true,
   newContentAlerts: true,
+  newReportNotification: true,
   cdiCompleteSound: 'Win',
   pdiTransitionSound: 'Win',
 };
@@ -420,10 +422,10 @@ export const NotificationSettingsScreen: React.FC = () => {
         </View>
 
         {/* Practice & Progress */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Progress</Text>
 
-          <View style={styles.card}>
+          <View style={styles.card}> */}
             {/* <View style={styles.settingRow}> */}
               {/* <View style={styles.settingLeft}>
                 <Ionicons name="fitness-outline" size={22} color="#8C49D5" />
@@ -464,15 +466,15 @@ export const NotificationSettingsScreen: React.FC = () => {
               />
             </View> */}
 
-            <View style={styles.divider} />
+            {/* <View style={styles.divider} />
 
             <View style={styles.settingRow}>
               <View style={styles.settingLeft}>
                 <Ionicons name="stats-chart-outline" size={22} color="#8C49D5" />
                 <View style={styles.settingContent}>
-                  <Text style={styles.settingText}>Weekly Summary</Text>
+                  <Text style={styles.settingText}>New Report</Text>
                   <Text style={styles.settingDescription}>
-                    Get a weekly recap of your progress
+                    Get notified when latest session report is ready.
                   </Text>
                 </View>
               </View>
@@ -485,28 +487,28 @@ export const NotificationSettingsScreen: React.FC = () => {
               />
             </View>
           </View>
-        </View>
+        </View> */}
 
-        {/* Content Updates */}
+        {/* Session Reports */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Content</Text>
+          <Text style={styles.sectionTitle}>Play Session</Text>
 
           <View style={styles.card}>
             <View style={styles.settingRow}>
               <View style={styles.settingLeft}>
-                <Ionicons name="sparkles-outline" size={22} color="#8C49D5" />
+                <Ionicons name="document-text-outline" size={22} color="#8C49D5" />
                 <View style={styles.settingContent}>
-                  <Text style={styles.settingText}>New Content Alerts</Text>
+                  <Text style={styles.settingText}>New Report Ready</Text>
                   <Text style={styles.settingDescription}>
-                    Get notified when new lessons are available
+                    Get notified when your session report is ready to view
                   </Text>
                 </View>
               </View>
               <Switch
-                value={preferences.newContentAlerts}
-                onValueChange={() => handleToggle('newContentAlerts')}
+                value={preferences.newReportNotification}
+                onValueChange={() => handleToggle('newReportNotification')}
                 trackColor={{ false: '#D1D5DB', true: '#C4B5FD' }}
-                thumbColor={preferences.newContentAlerts ? '#8C49D5' : '#F3F4F6'}
+                thumbColor={preferences.newReportNotification ? '#8C49D5' : '#F3F4F6'}
                 ios_backgroundColor="#D1D5DB"
               />
             </View>

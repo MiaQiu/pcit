@@ -20,6 +20,8 @@ import { HowToRecordCard } from '../components/HowToRecordCard';
 import { RecordingCard } from '../components/RecordingCard';
 import { FONTS, COLORS, DRAGON_PURPLE } from '../constants/assets';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { sendNewReportNotification } from '../utils/notifications';
 
 type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed' | 'uploading' | 'processing' | 'success';
 
@@ -37,6 +39,7 @@ export const RecordScreen: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [navigationTimeout, setNavigationTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [childName, setChildName] = useState<string>('your child');
 
   // Use ref to track current recording for cleanup
   const recordingRef = useRef<Audio.Recording | null>(null);
@@ -44,6 +47,7 @@ export const RecordScreen: React.FC = () => {
 
   useEffect(() => {
     requestPermissions();
+    loadUserData();
 
     // Cleanup on unmount only
     return () => {
@@ -59,6 +63,18 @@ export const RecordScreen: React.FC = () => {
       }
     };
   }, []);
+
+  const loadUserData = async () => {
+    try {
+      const user = await authService.getCurrentUser();
+      if (user.childName) {
+        setChildName(user.childName);
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+      // Keep default fallback value
+    }
+  };
 
   // Reset state when screen comes back into focus
   useFocusEffect(
@@ -279,8 +295,27 @@ export const RecordScreen: React.FC = () => {
       console.log('[POLLING] Calling getAnalysis...');
       const analysis = await recordingService.getAnalysis(recordingId);
 
-      // If we got the analysis successfully, navigate to home screen
-      console.log('[POLLING] Analysis complete! Navigating to home...');
+      // If we got the analysis successfully, send notification if enabled
+      console.log('[POLLING] Analysis complete!');
+
+      // Check if new report notifications are enabled
+      try {
+        const prefsJson = await AsyncStorage.getItem('@notification_preferences');
+        if (prefsJson) {
+          const prefs = JSON.parse(prefsJson);
+          if (prefs.newReportNotification !== false) {
+            // Send notification
+            await sendNewReportNotification('play session');
+            console.log('[POLLING] New report notification sent');
+          }
+        }
+      } catch (notifError) {
+        console.error('[POLLING] Failed to send notification:', notifError);
+        // Don't block navigation if notification fails
+      }
+
+      // Navigate to home screen
+      console.log('[POLLING] Navigating to home...');
       navigation.navigate('MainTabs', { screen: 'Home' });
       console.log('[POLLING] Navigated to home');
     } catch (error: any) {
@@ -339,7 +374,7 @@ export const RecordScreen: React.FC = () => {
                 />
               </View>
               <View style={styles.headerTextBox}>
-                <Text style={styles.headerText}>Ready for a 5-minute play session with Zoey?</Text>
+                <Text style={styles.headerText}>Ready for a 5-minute play session with {childName}?</Text>
               </View>
             </View>
 
