@@ -32,24 +32,46 @@ export const RootNavigator: React.FC = () => {
 
   useEffect(() => {
     checkAuthStatus();
+
+    // Failsafe timeout - ensure loading never gets stuck
+    const timeout = setTimeout(() => {
+      console.warn('Auth check timeout - forcing app to load');
+      setIsLoading(false);
+      setIsAuthenticated(false);
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
   }, []);
 
   const checkAuthStatus = async () => {
     try {
+      console.log('Starting auth check...');
+
       // Initialize auth service (loads tokens from storage)
       await authService.initialize();
+      console.log('Auth service initialized');
 
       // Check if user has valid authentication tokens
       const authenticated = authService.isAuthenticated();
+      console.log('Authentication status:', authenticated);
       setIsAuthenticated(authenticated);
 
       // If authenticated, check onboarding completion
       if (authenticated) {
+        console.log('Checking onboarding completion...');
         const incompleteStep = await checkOnboardingCompletion();
+        console.log('Onboarding step:', incompleteStep);
         setOnboardingStep(incompleteStep);
       }
+
+      console.log('Auth check complete');
     } catch (error) {
       console.error('Error checking auth status:', error);
+      // Log full error details for debugging
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);

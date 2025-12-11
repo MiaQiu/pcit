@@ -25,38 +25,57 @@ interface AppProviderProps {
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const services = useMemo(() => {
-    const storage = new SecureStoreAdapter();
+    try {
+      console.log('Initializing AppContext services...');
+      console.log('API_URL:', API_URL);
 
-    // Initialize AuthService first
-    const authService = new AuthService(storage, API_URL);
+      const storage = new SecureStoreAdapter();
+      console.log('SecureStoreAdapter created');
 
-    // Note: AuthService.initialize() will be called by RootNavigator
-    // to check authentication status before navigation
+      // Initialize AuthService first
+      const authService = new AuthService(storage, API_URL);
+      console.log('AuthService created');
 
-    // Initialize LessonService with getAccessToken callback
-    const lessonService = new LessonService(
-      storage,
-      API_URL,
-      async () => {
-        return authService.getAccessToken();
+      // Note: AuthService.initialize() will be called by RootNavigator
+      // to check authentication status before navigation
+
+      // Initialize LessonService with getAccessToken callback
+      const lessonService = new LessonService(
+        storage,
+        API_URL,
+        async () => {
+          return authService.getAccessToken();
+        }
+      );
+      console.log('LessonService created');
+
+      // Initialize RecordingService
+      const recordingService = new RecordingService(authService, API_URL);
+      console.log('RecordingService created');
+
+      // Initialize SocialAuthService
+      const socialAuthService = new SocialAuthService(storage, API_URL);
+      socialAuthService.initialize().catch(err => {
+        console.log('SocialAuthService initialization warning:', err);
+      });
+      console.log('SocialAuthService created');
+
+      console.log('All services initialized successfully');
+
+      return {
+        lessonService,
+        authService,
+        recordingService,
+        socialAuthService,
+      };
+    } catch (error) {
+      console.error('CRITICAL: Error initializing services:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
       }
-    );
-
-    // Initialize RecordingService
-    const recordingService = new RecordingService(authService, API_URL);
-
-    // Initialize SocialAuthService
-    const socialAuthService = new SocialAuthService(storage, API_URL);
-    socialAuthService.initialize().catch(err => {
-      console.log('SocialAuthService initialization:', err);
-    });
-
-    return {
-      lessonService,
-      authService,
-      recordingService,
-      socialAuthService,
-    };
+      throw error;
+    }
   }, []);
 
   return <AppContext.Provider value={services}>{children}</AppContext.Provider>;
