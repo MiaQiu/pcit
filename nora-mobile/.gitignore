@@ -32,6 +32,8 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
+# Keep .env.production committed (contains public production URL)
 
 # typescript
 *.tsbuildinfo

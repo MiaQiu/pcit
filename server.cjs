@@ -99,6 +99,10 @@ app.use('/api/learning', learningRoutes);
 // Mount lessons routes (new bite-size learning curriculum)
 const lessonRoutes = require('./server/routes/lessons.cjs');
 app.use('/api/lessons', lessonRoutes);
+
+// Mount support routes
+const supportRoutes = require('./server/routes/support.cjs');
+app.use('/api/support', supportRoutes);
 app.use('/api/quizzes', lessonRoutes); // Quiz endpoints are in lessons.cjs
 app.use('/api/user', lessonRoutes); // User stats endpoint is in lessons.cjs
 

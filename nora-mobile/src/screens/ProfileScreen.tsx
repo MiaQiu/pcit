@@ -365,7 +365,7 @@ export const ProfileScreen: React.FC = () => {
 
         {/* Account Information Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account Information</Text>
+          <Text style={styles.sectionTitle}>Account</Text>
 
           <View style={styles.card}>
             {/* <View style={styles.infoRow}>
@@ -488,30 +488,56 @@ export const ProfileScreen: React.FC = () => {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.settingRow} activeOpacity={0.7}>
+            {/* <TouchableOpacity
+              style={styles.settingRow}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('PrivacySecurity')}
+            >
               <View style={styles.settingLeft}>
                 <Ionicons name="lock-closed-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Privacy & Security (coming soon)</Text>
+                <Text style={styles.settingText}>Privacy & Security</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
 
-            <View style={styles.divider} />
+            <View style={styles.divider} /> */}
 
-            <TouchableOpacity style={styles.settingRow} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.settingRow}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('Support')}
+            >
               <View style={styles.settingLeft}>
                 <Ionicons name="help-circle-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Help & Support (coming soon)</Text>
+                <Text style={styles.settingText}>Support</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.settingRow} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.settingRow}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('TermsAndConditions')}
+            >
               <View style={styles.settingLeft}>
                 <Ionicons name="document-text-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Terms & Privacy Policy (coming soon)</Text>
+                <Text style={styles.settingText}>Terms and Conditions</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.settingRow}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('PrivacyPolicy')}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="shield-checkmark-outline" size={22} color="#1F2937" />
+                <Text style={styles.settingText}>Privacy Policy</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>

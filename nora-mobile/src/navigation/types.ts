@@ -41,6 +41,9 @@ export type RootStackParamList = {
   MainTabs: { screen?: string } | undefined;
   Profile: undefined;
   NotificationSettings: undefined;
+  Support: undefined;
+  TermsAndConditions: undefined;
+  PrivacyPolicy: undefined;
   LessonViewer: {
     lessonId: string;
   };

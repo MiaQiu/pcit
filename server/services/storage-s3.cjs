@@ -232,6 +232,72 @@ async function deleteProfileImage(imageUrl) {
 }
 
 /**
+ * Upload support attachment to AWS S3 (publicly accessible)
+ * @param {Buffer} fileBuffer - File buffer
+ * @param {string} userId - User ID for path organization
+ * @param {string} requestId - Support request ID for path organization
+ * @param {string} fileName - Original file name
+ * @param {string} mimeType - MIME type of the file
+ * @returns {Promise<{url: string, name: string, size: number}>} - Public S3 URL and file metadata
+ */
+async function uploadSupportAttachment(fileBuffer, userId, requestId, fileName, mimeType) {
+  if (!S3_ENABLED || !s3Client) {
+    // Development mode: return mock path
+    console.warn('S3 not configured, using mock storage path for support attachment');
+    return {
+      url: `mock://support/${userId}/${requestId}/${fileName}`,
+      name: fileName,
+      size: fileBuffer.length
+    };
+  }
+
+  try {
+    // Sanitize filename to prevent path traversal
+    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const key = `support/${userId}/${requestId}/${sanitizedFileName}`;
+
+    // Use separate bucket for support attachments if configured
+    const supportBucketName = process.env.AWS_S3_SUPPORT_BUCKET || bucketName;
+    const supportRegion = process.env.AWS_S3_SUPPORT_REGION || AWS_REGION;
+
+    // Create S3 client for support bucket (may be in different region)
+    const supportS3Client = new S3Client({ region: supportRegion });
+
+    const command = new PutObjectCommand({
+      Bucket: supportBucketName,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: mimeType,
+      Metadata: {
+        userId: userId,
+        requestId: requestId,
+        originalFileName: fileName,
+        uploadedAt: new Date().toISOString()
+      },
+      // Server-side encryption
+      ServerSideEncryption: 'AES256',
+      // Make publicly readable so support staff can access
+      ACL: 'public-read'
+    });
+
+    await supportS3Client.send(command);
+
+    // Return public URL and metadata (use the support bucket name and region)
+    const publicUrl = `https://${supportBucketName}.s3.${supportRegion}.amazonaws.com/${key}`;
+    console.log(`Support attachment uploaded to S3: ${supportBucketName}/${key} (${supportRegion})`);
+
+    return {
+      url: publicUrl,
+      name: fileName,
+      size: fileBuffer.length
+    };
+  } catch (error) {
+    console.error('S3 support attachment upload error:', error);
+    throw new Error('Failed to upload support attachment');
+  }
+}
+
+/**
  * Check if S3 is enabled and configured
  * @returns {boolean}
  */
@@ -245,5 +311,6 @@ module.exports = {
   getSignedUrl,
   uploadProfileImage,
   deleteProfileImage,
+  uploadSupportAttachment,
   isS3Enabled
 };

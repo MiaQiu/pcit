@@ -539,7 +539,7 @@ export const ProgressScreen: React.FC = () => {
         {/* Stats cards */}
         <View style={styles.statsRow}>
           <StatCard value={stats.lessonsCompleted} label="Lessons completed" />
-          <StatCard value={stats.playsessionsRecorded} label="Playsessions recorded" />
+          <StatCard value={stats.playsessionsRecorded} label="Play sessions recorded" />
           <StatCard value={stats.currentStreak} label="Current Streak" />
         </View>
 

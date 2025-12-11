@@ -11,6 +11,9 @@ import { TabNavigator } from './TabNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
+import { SupportScreen } from '../screens/SupportScreen';
+import { TermsAndConditionsScreen } from '../screens/TermsAndConditionsScreen';
+import { PrivacyPolicyScreen } from '../screens/PrivacyPolicyScreen';
 import { LessonViewerScreen } from '../screens/LessonViewerScreen';
 import { QuizScreen } from '../screens/QuizScreen';
 import { LessonCompleteScreen } from '../screens/LessonCompleteScreen';
@@ -123,6 +126,27 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="NotificationSettings"
         component={NotificationSettingsScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="Support"
+        component={SupportScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="TermsAndConditions"
+        component={TermsAndConditionsScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="PrivacyPolicy"
+        component={PrivacyPolicyScreen}
         options={{
           animation: 'slide_from_right',
         }}
