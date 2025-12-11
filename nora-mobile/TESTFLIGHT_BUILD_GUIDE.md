@@ -187,11 +187,41 @@ git checkout .env
 
 ## 📱 TestFlight Checklist
 
+### Before Building for TestFlight
+
+**IMPORTANT: Check for Native Dependencies**
+
+1. **Check if any new native dependencies were added since last build**
+   - Review recent commits or package.json changes
+   - Look for packages like `expo-*`, `react-native-*`, `@react-native-*`
+
+2. **If yes: Run `cd ios && pod install`**
+   - This ensures all native iOS modules are properly linked
+   - Required whenever you add/update packages with native code
+
+3. **Clean build folder: Shift+Cmd+K in Xcode**
+   - Or: Product → Clean Build Folder
+   - Ensures fresh build with latest dependencies
+
+4. **Increment build number in Xcode**
+   - Select project → Target → General → Build number
+
+5. **Archive and upload**
+   - Follow the steps below
+
+---
+
+### Build Checklist
+
 Before submitting to TestFlight:
 
+- [ ] **Check for new native dependencies** (see above)
+- [ ] **Run `cd ios && pod install`** (if native deps added)
+- [ ] **Clean build folder** (Shift+Cmd+K)
 - [ ] Run `cp .env.production .env` to use production backend
 - [ ] Verify production URL: `grep EXPO_PUBLIC_API_URL .env`
 - [ ] Update version number in `app.json` if needed
+- [ ] **Increment build number** in Xcode
 - [ ] Open Xcode: `open nora-mobile/ios/Nora.xcodeproj`
 - [ ] Select **Release** configuration in scheme settings
 - [ ] Choose device: **Any iOS Device (arm64)**
@@ -202,6 +232,32 @@ Before submitting to TestFlight:
 ---
 
 ## ❓ Troubleshooting
+
+### White Screen on App Launch in TestFlight
+
+**Symptoms:** App shows white screen and gets stuck on launch
+
+**Cause:** Native module missing - usually because `pod install` wasn't run after adding native dependencies
+
+**Solution:**
+```bash
+cd nora-mobile/ios
+pod install
+cd ..
+
+# Clean and rebuild in Xcode
+# Shift+Cmd+K, then rebuild
+```
+
+**Check Console Logs:**
+1. Connect device to Mac
+2. Xcode → Window → Devices and Simulators
+3. Select device → Open Console
+4. Look for errors like "Cannot find native module"
+
+**Prevention:** Always run `pod install` after adding packages with native code (expo-*, react-native-*, @react-native-*)
+
+---
 
 ### "Cannot connect to backend" in TestFlight
 
