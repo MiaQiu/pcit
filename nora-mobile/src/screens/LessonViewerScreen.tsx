@@ -20,11 +20,91 @@ import { ProgressBar } from '../components/ProgressBar';
 import { Button } from '../components/Button';
 import { ResponseButton } from '../components/ResponseButton';
 import { QuizFeedback } from '../components/QuizFeedback';
+import { LessonContentCard } from '../components/LessonContentCard';
 import { COLORS, FONTS } from '../constants/assets';
 import { LessonDetailResponse, LessonSegment, SubmitQuizResponse } from '@nora/core';
 import { useLessonService } from '../contexts/AppContext';
 import { getMockLessonDetail } from '../data/mockLessons';
 import { LessonCache } from '../lib/LessonCache';
+
+/**
+ * Format body text with markdown-like formatting:
+ * - Replace * at start of lines with purple bullets
+ * - Convert **text** to bold
+ */
+const formatBodyText = (text: string) => {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+
+  lines.forEach((line, lineIndex) => {
+    // Check if line starts with * (bullet point)
+    const bulletMatch = line.match(/^(\s*)\*\s(.+)$/);
+
+    if (bulletMatch) {
+      // Line is a bullet point
+      const indent = bulletMatch[1];
+      const content = bulletMatch[2];
+      const formattedContent = formatInlineText(content);
+
+      elements.push(
+        <View key={lineIndex} style={{ flexDirection: 'row', marginBottom: 10 }}>
+          <Text style={{ color: COLORS.mainPurple, fontSize: 36, marginRight: 10, marginTop: -10 }}>•</Text>
+          <Text style={{ flex: 1, fontFamily: FONTS.regular, fontSize: 20, lineHeight: 28, color: COLORS.textDark }}>
+            {formattedContent}
+          </Text>
+        </View>
+      );
+    } else if (line.trim() === '') {
+      // Empty line
+      elements.push(<View key={lineIndex} style={{ height: 8 }} />);
+    } else {
+      // Regular text line
+      const formattedContent = formatInlineText(line);
+      elements.push(
+        <Text key={lineIndex} style={{ fontFamily: FONTS.regular, fontSize: 20, lineHeight: 28, color: COLORS.textDark, marginBottom: 10 }}>
+          {formattedContent}
+        </Text>
+      );
+    }
+  });
+
+  return <View>{elements}</View>;
+};
+
+/**
+ * Format inline text to handle **bold** markers
+ */
+const formatInlineText = (text: string) => {
+  const parts: React.ReactNode[] = [];
+  let currentIndex = 0;
+
+  // Regex to find **text** patterns
+  const boldRegex = /\*\*(.+?)\*\*/g;
+  let match;
+
+  while ((match = boldRegex.exec(text)) !== null) {
+    // Add text before the bold part
+    if (match.index > currentIndex) {
+      parts.push(text.substring(currentIndex, match.index));
+    }
+
+    // Add bold text
+    parts.push(
+      <Text key={match.index} style={{ fontFamily: FONTS.bold }}>
+        {match[1]}
+      </Text>
+    );
+
+    currentIndex = match.index + match[0].length;
+  }
+
+  // Add remaining text
+  if (currentIndex < text.length) {
+    parts.push(text.substring(currentIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+};
 
 interface LessonViewerScreenProps {
   route: {
@@ -409,18 +489,26 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
           /* Lesson Content */
           <>
             {/* Phase Badge */}
-            <Text style={styles.phaseBadge}>{lesson.phase}</Text>
+            {/* <Text style={styles.phaseBadge}>{lesson.phase}</Text> */}
 
             {/* Title */}
-            <Text style={styles.title}>{lesson.title}</Text>
+            {/* <Text style={styles.title}>{lesson.title}</Text> */}
 
-            {/* Section Title (if present) */}
-            {currentSegment?.sectionTitle && (
-              <Text style={styles.sectionTitle}>{currentSegment.sectionTitle}</Text>
-            )}
+            {/* Lesson Content Card */}
+            <LessonContentCard
+              backgroundColor={lesson.backgroundColor || '#F8F8FF'}
+              ellipseColor={lesson.ellipse77Color || COLORS.mainPurple}
+            >
+              {/* Section Title (if present) */}
+              {currentSegment?.sectionTitle && (
+                <Text style={styles.sectionTitle}>{currentSegment.sectionTitle}</Text>
+              )}
 
-            {/* Body Text */}
-            <Text style={styles.bodyText}>{currentSegment?.bodyText || ''}</Text>
+              {/* Body Text */}
+              <View style={styles.bodyTextContainer}>
+                {formatBodyText(currentSegment?.bodyText || '')}
+              </View>
+            </LessonContentCard>
 
             {/* Dragon Image (show on first segment) */}
             {currentSegmentIndex === 0 && lesson.dragonImageUrl && (
@@ -529,17 +617,20 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: FONTS.semiBold,
-    fontSize: 20,
-    lineHeight: 26,
+    fontSize: 24,
+    lineHeight: 32,
     color: COLORS.textDark,
     marginBottom: 16,
   },
   bodyText: {
     fontFamily: FONTS.regular,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 20,
+    lineHeight: 28,
     color: COLORS.textDark,
     textAlign: 'left',
+    marginBottom: 32,
+  },
+  bodyTextContainer: {
     marginBottom: 32,
   },
   imageContainer: {

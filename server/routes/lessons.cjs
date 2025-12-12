@@ -453,6 +453,16 @@ router.put('/:id/progress', requireAuth, async (req, res) => {
     const { id } = req.params;
     const { currentSegment, timeSpentSeconds, status } = value;
 
+    // Get the lesson to retrieve segment count
+    const lesson = await prisma.lesson.findUnique({
+      where: { id },
+      include: { segments: true }
+    });
+
+    if (!lesson) {
+      return res.status(404).json({ error: 'Lesson not found' });
+    }
+
     // Get existing progress
     let progress = await prisma.userLessonProgress.findUnique({
       where: {
@@ -460,32 +470,46 @@ router.put('/:id/progress', requireAuth, async (req, res) => {
       }
     });
 
+    // Create progress record if it doesn't exist
     if (!progress) {
-      return res.status(404).json({ error: 'Progress record not found' });
-    }
+      progress = await prisma.userLessonProgress.create({
+        data: {
+          id: crypto.randomUUID(),
+          userId,
+          lessonId: id,
+          status: status || 'IN_PROGRESS',
+          currentSegment: currentSegment || 1,
+          totalSegments: lesson.segments.length,
+          startedAt: new Date(),
+          lastViewedAt: new Date(),
+          timeSpentSeconds: timeSpentSeconds || 0,
+          completedAt: status === 'COMPLETED' ? new Date() : null
+        }
+      });
+    } else {
+      // Build update data
+      const updateData = {
+        currentSegment,
+        lastViewedAt: new Date()
+      };
 
-    // Build update data
-    const updateData = {
-      currentSegment,
-      lastViewedAt: new Date()
-    };
-
-    if (timeSpentSeconds !== undefined) {
-      updateData.timeSpentSeconds = progress.timeSpentSeconds + timeSpentSeconds;
-    }
-
-    if (status) {
-      updateData.status = status;
-      if (status === 'COMPLETED') {
-        updateData.completedAt = new Date();
+      if (timeSpentSeconds !== undefined) {
+        updateData.timeSpentSeconds = progress.timeSpentSeconds + timeSpentSeconds;
       }
-    }
 
-    // Update progress
-    progress = await prisma.userLessonProgress.update({
-      where: { id: progress.id },
-      data: updateData
-    });
+      if (status) {
+        updateData.status = status;
+        if (status === 'COMPLETED') {
+          updateData.completedAt = new Date();
+        }
+      }
+
+      // Update progress
+      progress = await prisma.userLessonProgress.update({
+        where: { id: progress.id },
+        data: updateData
+      });
+    }
 
     res.json(progress);
 
