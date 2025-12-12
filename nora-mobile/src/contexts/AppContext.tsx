@@ -39,13 +39,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       // Note: AuthService.initialize() will be called by RootNavigator
       // to check authentication status before navigation
 
-      // Initialize LessonService with getAccessToken callback
+      // Initialize LessonService with authService for automatic token refresh
       const lessonService = new LessonService(
         storage,
         API_URL,
-        async () => {
-          return authService.getAccessToken();
-        }
+        authService
       );
       console.log('LessonService created');
 

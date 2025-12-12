@@ -193,9 +193,18 @@ router.get('/', requireAuth, async (req, res) => {
       return formatLessonCard(lesson, progress);
     });
 
+    // Generate content version hash based on lesson IDs and update times
+    // This changes whenever lessons are added, removed, or modified
+    const contentHash = crypto
+      .createHash('md5')
+      .update(lessons.map(l => `${l.id}-${l.updatedAt}`).join('|'))
+      .digest('hex')
+      .substring(0, 8);
+
     res.json({
       lessons: lessonCards,
-      userProgress: progressMap
+      userProgress: progressMap,
+      contentVersion: contentHash
     });
 
   } catch (error) {

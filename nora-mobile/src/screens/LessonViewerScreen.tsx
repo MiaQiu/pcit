@@ -13,8 +13,8 @@
  * - Progress tracking via API
  */
 
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Share, PanResponder } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProgressBar } from '../components/ProgressBar';
 import { Button } from '../components/Button';
@@ -22,7 +22,7 @@ import { ResponseButton } from '../components/ResponseButton';
 import { QuizFeedback } from '../components/QuizFeedback';
 import { LessonContentCard } from '../components/LessonContentCard';
 import { COLORS, FONTS } from '../constants/assets';
-import { LessonDetailResponse, LessonSegment, SubmitQuizResponse } from '@nora/core';
+import { LessonDetailResponse, LessonSegment, SubmitQuizResponse, LessonNotFoundError } from '@nora/core';
 import { useLessonService } from '../contexts/AppContext';
 import { getMockLessonDetail } from '../data/mockLessons';
 import { LessonCache } from '../lib/LessonCache';
@@ -129,6 +129,43 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
   const [quizFeedback, setQuizFeedback] = useState<SubmitQuizResponse | null>(null);
 
+  // Refs to store latest function references for panResponder
+  const handleContinueRef = useRef<(() => void) | undefined>(undefined);
+  const handleBackRef = useRef<(() => void) | undefined>(undefined);
+
+  // Swipe gesture handler
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponderCapture: () => false,
+      onMoveShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+        const isHorizontalSwipe = Math.abs(gestureState.dx) > 15 &&
+                                   Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+        return isHorizontalSwipe;
+      },
+      onPanResponderGrant: () => {},
+      onPanResponderRelease: (_, gestureState) => {
+        const { dx, dy } = gestureState;
+        const swipeThreshold = 60;
+
+        console.log('Gesture detected:', { dx, dy, threshold: swipeThreshold });
+
+        if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > swipeThreshold) {
+          if (dx > 0) {
+            console.log('Swipe right detected - calling handleContinue');
+            handleContinueRef.current?.();
+          } else {
+            console.log('Swipe left detected - calling handleBack');
+            handleBackRef.current?.();
+          }
+        } else {
+          console.log('Gesture did not meet threshold requirements');
+        }
+      },
+    })
+  ).current;
+
   // Load lesson detail from API
   useEffect(() => {
     loadLessonDetail();
@@ -221,6 +258,27 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     } catch (error: any) {
       console.error('Failed to load lesson:', error);
 
+      // Handle lesson not found (404) - lesson may have been updated/deleted
+      if (error instanceof LessonNotFoundError || error.name === 'LessonNotFoundError') {
+        console.log('Lesson not found - clearing cache and returning to Learn screen');
+        setLoading(false);
+
+        // Clear all lesson caches to force refresh
+        await LessonCache.clear();
+        await LessonCache.removeLessonsList();
+
+        // Navigate back to Learn screen
+        navigation.goBack();
+
+        // Show user-friendly message
+        Alert.alert(
+          'Content Updated',
+          'This lesson has been updated. Please select it again to view the latest version.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       // Check if lesson is locked (403 error)
       if (error.message?.includes('Prerequisites not met') || error.message?.includes('403')) {
         setLoading(false);
@@ -267,9 +325,24 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
       // Reset timer for next segment
       setStartTime(new Date());
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update progress:', error);
-      // Continue anyway - don't block user if progress update fails
+
+      // Handle lesson not found (404) - lesson may have been updated/deleted
+      if (error instanceof LessonNotFoundError || error.name === 'LessonNotFoundError') {
+        console.log('Lesson not found during progress update - clearing cache');
+        await LessonCache.clear();
+        await LessonCache.removeLessonsList();
+        navigation.goBack();
+        Alert.alert(
+          'Content Updated',
+          'This lesson has been updated. Please select it again to view the latest version.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Continue anyway for other errors - don't block user if progress update fails
     }
   };
 
@@ -289,8 +362,21 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       });
 
       console.log('Lesson marked as completed');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to mark lesson as completed:', error);
+
+      // Handle lesson not found (404) - lesson may have been updated/deleted
+      if (error instanceof LessonNotFoundError || error.name === 'LessonNotFoundError') {
+        console.log('Lesson not found during completion - clearing cache');
+        await LessonCache.clear();
+        await LessonCache.removeLessonsList();
+        navigation.goBack();
+        Alert.alert(
+          'Content Updated',
+          'This lesson has been updated. Please select it again to view the latest version.',
+          [{ text: 'OK' }]
+        );
+      }
     }
   };
 
@@ -330,13 +416,19 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   };
 
   const handleContinue = async () => {
-    if (!lessonData) return;
+    console.log('handleContinue called');
+    if (!lessonData) {
+      console.log('No lesson data, returning');
+      return;
+    }
 
     const segments = lessonData.lesson.segments || [];
     const isOnQuiz = currentSegmentIndex === segments.length;
+    console.log('handleContinue:', { currentSegmentIndex, totalSegments: segments.length, isOnQuiz });
 
     // If on quiz and submitted, complete the lesson
     if (isOnQuiz && isQuizSubmitted) {
+      console.log('On quiz and submitted, completing lesson');
       // Lesson complete, navigate to Record screen
       // Save final progress to server before navigating away
       await completeLesson();
@@ -350,6 +442,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
     // If on quiz but not submitted, need to submit first
     if (isOnQuiz && !isQuizSubmitted) {
+      console.log('On quiz but not submitted, submitting first');
       await handleSubmitQuiz();
       return;
     }
@@ -358,20 +451,26 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     if (currentSegmentIndex < segments.length - 1) {
       // Move to next content segment
       const nextIndex = currentSegmentIndex + 1;
+      console.log('Moving to next segment:', nextIndex);
       // Update UI immediately, save progress in background
       setCurrentSegmentIndex(nextIndex);
       updateProgress(nextIndex);
     } else if (lessonData.lesson.quiz) {
       // Move to quiz (last segment)
+      console.log('Moving to quiz');
       // Update UI immediately, save progress in background
       setCurrentSegmentIndex(segments.length);
       updateProgress(currentSegmentIndex + 1);
     } else {
       // No quiz, lesson complete
+      console.log('Lesson complete, no quiz');
       Alert.alert('Complete!', 'You finished this lesson!');
       navigation.navigate('MainTabs', { screen: 'Home' });
     }
   };
+
+  // Update ref with latest function
+  handleContinueRef.current = handleContinue;
 
   const handleClose = () => {
     // Save progress to server before closing
@@ -395,6 +494,9 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       handleClose();
     }
   };
+
+  // Update ref with latest function
+  handleBackRef.current = handleBack;
 
   const handleShare = async () => {
     if (!lessonData) return;
@@ -464,12 +566,14 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       </View>
 
       {/* Scrollable Content */}
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {isOnQuiz && lesson.quiz ? (
+      <View style={{ flex: 1 }}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={false}
+        >
+          {isOnQuiz && lesson.quiz ? (
           /* Quiz Content */
           <>
             {/* Badge */}
@@ -537,9 +641,10 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
           </>
         )}
 
-        {/* Spacer for button */}
-        <View style={{ height: 100 }} />
-      </ScrollView>
+          {/* Spacer for button */}
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      </View>
 
       {/* Footer with Back and Continue Buttons */}
       <View style={styles.footer}>

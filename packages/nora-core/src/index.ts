@@ -15,7 +15,7 @@ export { default as SocialAuthService, type SocialAuthProvider } from './service
 export { default as SessionService } from './services/sessionService';
 export { default as PCITService } from './services/pcitService';
 export { default as TranscriptionService } from './services/transcriptionService';
-export { default as LessonService } from './services/lessonService';
+export { default as LessonService, LessonNotFoundError } from './services/lessonService';
 export { default as RecordingService } from './services/recordingService';
 export {
   default as AmplitudeService,

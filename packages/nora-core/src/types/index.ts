@@ -300,6 +300,7 @@ export interface LessonCardData {
 export interface LessonListResponse {
   lessons: LessonCardData[];
   userProgress: Record<string, UserLessonProgress>;
+  contentVersion: string; // Hash that changes when lessons are modified
 }
 
 export interface LessonDetailResponse {

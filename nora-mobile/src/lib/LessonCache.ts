@@ -16,6 +16,7 @@ import { LessonDetailResponse } from '@nora/core';
 const CACHE_PREFIX = '@nora_lesson_cache:';
 const CACHE_TIMESTAMP_PREFIX = '@nora_lesson_cache_time:';
 const LESSONS_LIST_CACHE_KEY = '@nora_lessons_list_cache';
+const CONTENT_VERSION_KEY = '@nora_content_version';
 
 export class LessonCache {
   /**
@@ -197,6 +198,60 @@ export class LessonCache {
       await AsyncStorage.removeItem(LESSONS_LIST_CACHE_KEY);
     } catch (error) {
       console.error('Error removing lessons list cache:', error);
+    }
+  }
+
+  /**
+   * Get stored content version
+   * @returns Stored content version or null
+   */
+  static async getContentVersion(): Promise<string | null> {
+    try {
+      return await AsyncStorage.getItem(CONTENT_VERSION_KEY);
+    } catch (error) {
+      console.error('Error reading content version:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Set content version
+   * @param version Content version hash
+   */
+  static async setContentVersion(version: string): Promise<void> {
+    try {
+      await AsyncStorage.setItem(CONTENT_VERSION_KEY, version);
+    } catch (error) {
+      console.error('Error setting content version:', error);
+    }
+  }
+
+  /**
+   * Check if content version has changed and clear cache if needed
+   * @param newVersion New content version from API
+   * @returns true if cache was cleared, false otherwise
+   */
+  static async checkAndUpdateVersion(newVersion: string): Promise<boolean> {
+    try {
+      const currentVersion = await this.getContentVersion();
+
+      if (currentVersion && currentVersion !== newVersion) {
+        console.log('Content version changed, clearing lesson cache...');
+        await this.clear();
+        await this.removeLessonsList();
+        await this.setContentVersion(newVersion);
+        return true;
+      }
+
+      // Set version if it doesn't exist
+      if (!currentVersion) {
+        await this.setContentVersion(newVersion);
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error checking content version:', error);
+      return false;
     }
   }
 }

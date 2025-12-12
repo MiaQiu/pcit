@@ -11,6 +11,18 @@ import type {
   LessonPhase,
 } from '../types';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
+import type AuthService from './authService';
+
+/**
+ * Custom error for lesson not found (404)
+ * Used to trigger cache invalidation in the mobile app
+ */
+export class LessonNotFoundError extends Error {
+  constructor(message: string = 'Lesson not found') {
+    super(message);
+    this.name = 'LessonNotFoundError';
+  }
+}
 
 /**
  * Lesson Service
@@ -19,33 +31,17 @@ import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 class LessonService {
   private storage: StorageAdapter;
   private apiUrl: string;
-  private getAccessToken: () => Promise<string | null>;
+  private authService: AuthService;
   private lessonCache: Map<string, LessonDetailResponse> = new Map();
 
   constructor(
     storage: StorageAdapter,
     apiUrl: string,
-    getAccessToken: () => Promise<string | null>
+    authService: AuthService
   ) {
     this.storage = storage;
     this.apiUrl = apiUrl;
-    this.getAccessToken = getAccessToken;
-  }
-
-  /**
-   * Get authorization header
-   */
-  private async getAuthHeader(): Promise<HeadersInit> {
-    const token = await this.getAccessToken();
-
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    return {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    };
+    this.authService = authService;
   }
 
   /**
@@ -53,14 +49,12 @@ class LessonService {
    * @param phase Optional filter by phase (CONNECT or DISCIPLINE)
    */
   async getLessons(phase?: LessonPhase): Promise<LessonListResponse> {
-    const headers = await this.getAuthHeader();
     const queryParam = phase ? `?phase=${phase}` : '';
 
-    const response = await fetchWithTimeout(
+    const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/lessons${queryParam}`,
       {
         method: 'GET',
-        headers,
       }
     );
 
@@ -82,17 +76,18 @@ class LessonService {
       return this.lessonCache.get(lessonId)!;
     }
 
-    const headers = await this.getAuthHeader();
-
-    const response = await fetchWithTimeout(
+    const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/lessons/${lessonId}`,
       {
         method: 'GET',
-        headers,
       }
     );
 
     if (!response.ok) {
+      // Handle 404 specifically - lesson no longer exists
+      if (response.status === 404) {
+        throw new LessonNotFoundError('Lesson not found - may have been updated');
+      }
       const error = await response.json();
       throw new Error(error.error || 'Failed to fetch lesson detail');
     }
@@ -110,13 +105,10 @@ class LessonService {
    * Considers prerequisites and current progress
    */
   async getNextLesson(): Promise<Lesson | null> {
-    const headers = await this.getAuthHeader();
-
-    const response = await fetchWithTimeout(
+    const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/lessons/next`,
       {
         method: 'GET',
-        headers,
       }
     );
 
@@ -135,13 +127,10 @@ class LessonService {
    * @param category Recommendation category (PRAISE, ECHO, NARRATION, etc.)
    */
   async getLessonsByCategory(category: string): Promise<Lesson[]> {
-    const headers = await this.getAuthHeader();
-
-    const response = await fetchWithTimeout(
+    const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/lessons/by-category/${category}`,
       {
         method: 'GET',
-        headers,
       }
     );
 
@@ -163,18 +152,22 @@ class LessonService {
     lessonId: string,
     progress: UpdateProgressRequest
   ): Promise<UserLessonProgress> {
-    const headers = await this.getAuthHeader();
-
-    const response = await fetchWithTimeout(
+    const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/lessons/${lessonId}/progress`,
       {
         method: 'PUT',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(progress),
       }
     );
 
     if (!response.ok) {
+      // Handle 404 specifically - lesson no longer exists
+      if (response.status === 404) {
+        throw new LessonNotFoundError('Lesson not found - may have been updated');
+      }
       const error = await response.json();
       throw new Error(error.error || 'Failed to update progress');
     }
@@ -191,17 +184,17 @@ class LessonService {
     quizId: string,
     answer: string
   ): Promise<SubmitQuizResponse> {
-    const headers = await this.getAuthHeader();
-
     const request: SubmitQuizRequest = {
       selectedAnswer: answer,
     };
 
-    const response = await fetchWithTimeout(
+    const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/quizzes/${quizId}/submit`,
       {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(request),
       }
     );
@@ -218,13 +211,10 @@ class LessonService {
    * Get user's learning statistics
    */
   async getLearningStats(): Promise<LearningStatsResponse> {
-    const headers = await this.getAuthHeader();
-
-    const response = await fetchWithTimeout(
+    const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/user/learning-stats`,
       {
         method: 'GET',
-        headers,
       }
     );
 

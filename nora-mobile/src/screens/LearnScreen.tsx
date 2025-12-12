@@ -13,6 +13,7 @@ import { ProfileCircle } from '../components/ProfileCircle';
 import { FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService } from '../contexts/AppContext';
+import { LessonCache } from '../lib/LessonCache';
 
 interface Phase {
   phaseNumber: number;
@@ -48,6 +49,14 @@ export const LearnScreen: React.FC = () => {
       // Fetch all lessons from API
       const response = await lessonService.getLessons();
       const apiLessons = response.lessons || [];
+
+      // Check content version and clear cache if it changed
+      if (response.contentVersion) {
+        const cacheCleared = await LessonCache.checkAndUpdateVersion(response.contentVersion);
+        if (cacheCleared) {
+          console.log('Cache cleared due to content update');
+        }
+      }
 
       // If no lessons in API, show mock data structure
       if (apiLessons.length === 0) {
