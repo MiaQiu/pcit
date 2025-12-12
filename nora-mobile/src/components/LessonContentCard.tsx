@@ -5,7 +5,8 @@
  */
 
 import React from 'react';
-import { View, Image, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, Image, StyleSheet, ViewStyle, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/assets';
 
 interface LessonContentCardProps {
@@ -13,6 +14,8 @@ interface LessonContentCardProps {
   backgroundColor?: string;
   ellipseColor?: string;
   style?: ViewStyle;
+  onShare?: () => void;
+  title?: string;
 }
 
 export const LessonContentCard: React.FC<LessonContentCardProps> = ({
@@ -20,6 +23,8 @@ export const LessonContentCard: React.FC<LessonContentCardProps> = ({
   backgroundColor = '#F8F8FF',
   ellipseColor = COLORS.mainPurple,
   style,
+  onShare,
+  title,
 }) => {
   return (
     <View style={[styles.container, style]}>
@@ -41,6 +46,22 @@ export const LessonContentCard: React.FC<LessonContentCardProps> = ({
         </View>
       </View>
 
+      {/* Title - positioned on top of ellipse, aligned with share button */}
+      {title && (
+        <Text style={styles.titleText}>{title}</Text>
+      )}
+
+      {/* Share Button - positioned outside card to avoid being covered by ellipse */}
+      {onShare && (
+        <TouchableOpacity
+          style={styles.shareButton}
+          onPress={onShare}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="share-outline" size={24} color={COLORS.mainPurple} />
+        </TouchableOpacity>
+      )}
+
       {/* Card Content */}
       <View style={[styles.card, { backgroundColor }]}>
         {children}
@@ -52,6 +73,7 @@ export const LessonContentCard: React.FC<LessonContentCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginBottom: 24,
+    position: 'relative',
   },
   ellipseContainer: {
     alignItems: 'center',
@@ -95,5 +117,37 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
+    position: 'relative',
+  },
+  titleText: {
+    position: 'absolute',
+    top: 22,
+    left: 20,
+    right: 70, // Leave space for share button
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 18,
+    lineHeight: 26,
+    color: COLORS.textDark,
+    zIndex: 100,
+  },
+  shareButton: {
+    position: 'absolute',
+    top: 16,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
     },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 10,
+    zIndex: 100,
+  },
 });

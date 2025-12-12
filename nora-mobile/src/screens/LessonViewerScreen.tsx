@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProgressBar } from '../components/ProgressBar';
 import { Button } from '../components/Button';
@@ -396,6 +396,22 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     }
   };
 
+  const handleShare = async () => {
+    if (!lessonData) return;
+
+    const { lesson } = lessonData;
+    const currentSegment = segments[currentSegmentIndex];
+
+    try {
+      await Share.share({
+        message: `${lesson.title}\n\n${currentSegment?.sectionTitle || ''}\n\n${currentSegment?.bodyText || ''}\n\nShared from Nora - Your Parenting Coach`,
+        title: lesson.title,
+      });
+    } catch (error) {
+      console.error('Error sharing lesson:', error);
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -491,13 +507,12 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
             {/* Phase Badge */}
             {/* <Text style={styles.phaseBadge}>{lesson.phase}</Text> */}
 
-            {/* Title */}
-            {/* <Text style={styles.title}>{lesson.title}</Text> */}
-
             {/* Lesson Content Card */}
             <LessonContentCard
               backgroundColor={lesson.backgroundColor || '#F8F8FF'}
               ellipseColor={lesson.ellipse77Color || COLORS.mainPurple}
+              onShare={handleShare}
+              title={lesson.title}
             >
               {/* Section Title (if present) */}
               {currentSegment?.sectionTitle && (
@@ -615,8 +630,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
+  cardTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 24,
+    lineHeight: 30,
+    letterSpacing: -0.2,
+    color: COLORS.textDark,
+    textAlign: 'left',
+    marginBottom: 20,
+  },
   sectionTitle: {
-    fontFamily: FONTS.semiBold,
+    fontFamily: FONTS.bold,
     fontSize: 24,
     lineHeight: 32,
     color: COLORS.textDark,
