@@ -2,12 +2,23 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const nodemailer = require('nodemailer');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware - allow inline scripts for share page
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'", "'unsafe-inline'"],
+      "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      "font-src": ["'self'", "https://fonts.gstatic.com"],
+      "connect-src": ["'self'"]
+    }
+  }
+}));
 
 // CORS configuration - allow any localhost port in development
 const corsOptions = {
@@ -15,10 +26,17 @@ const corsOptions = {
     // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
 
-    // In production, use FRONTEND_URL from env
+    // Allowed origins
+    const allowedOrigins = [
+      'https://hinora.co',
+      'https://www.hinora.co',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+
+    // In production, check against allowed origins
     if (process.env.NODE_ENV === 'production') {
-      const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
-      if (origin === allowedOrigin) {
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
@@ -38,6 +56,9 @@ app.use(cors(corsOptions));
 // Body parser (increase limit for audio file uploads)
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Configuration
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;

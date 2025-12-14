@@ -287,6 +287,57 @@ router.get('/learning-stats', requireAuth, async (req, res) => {
 });
 
 /**
+ * GET /api/lessons/share/:id
+ * Public endpoint to get lesson detail for sharing (no auth required)
+ * Only returns lesson content, not user progress
+ */
+router.get('/share/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get lesson with segments (no quiz for shared view)
+    const lesson = await prisma.lesson.findUnique({
+      where: { id },
+      include: {
+        segments: {
+          orderBy: { order: 'asc' }
+        }
+      }
+    });
+
+    if (!lesson) {
+      return res.status(404).json({ error: 'Lesson not found' });
+    }
+
+    // Return only lesson data (no user progress or quiz)
+    res.json({
+      lesson: {
+        id: lesson.id,
+        title: lesson.title,
+        subtitle: lesson.subtitle,
+        shortDescription: lesson.shortDescription,
+        phase: lesson.phase,
+        backgroundColor: lesson.backgroundColor,
+        ellipse77Color: lesson.ellipse77Color,
+        ellipse78Color: lesson.ellipse78Color,
+        segments: lesson.segments.map(s => ({
+          sectionTitle: s.sectionTitle,
+          bodyText: s.bodyText,
+          order: s.order
+        }))
+      }
+    });
+
+  } catch (error) {
+    console.error('Get shared lesson error:', error.message, error.stack);
+    res.status(500).json({
+      error: 'Failed to fetch lesson',
+      details: error.message
+    });
+  }
+});
+
+/**
  * GET /api/lessons/:id
  * Get lesson detail with segments and quiz
  */

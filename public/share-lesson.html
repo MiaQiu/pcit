@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nora Lesson</title>
+    <meta name="description" content="Check out this parenting lesson from Nora" />
+
+    <!-- Open Graph meta tags for rich link previews -->
+    <meta property="og:title" content="Nora Parenting Lesson" />
+    <meta property="og:description" content="Learn effective parenting strategies with Nora" />
+    <meta property="og:type" content="article" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* iPhone Frame */
+        .iphone-frame {
+            width: 390px;
+            height: 844px;
+            background: #000;
+            border-radius: 50px;
+            padding: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .iphone-notch {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 30px;
+            background: #000;
+            border-radius: 0 0 20px 20px;
+            z-index: 100;
+        }
+
+        .iphone-screen {
+            width: 100%;
+            height: 100%;
+            background: #FFFFFF;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #FFFFFF;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            padding: 12px 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 44px;
+        }
+
+        .time {
+            font-size: 17px;
+            font-weight: 600;
+            color: #000;
+        }
+
+        .status-icons {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            font-size: 17px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            gap: 12px;
+        }
+
+        .close-button {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: #1a1a2e;
+            font-weight: 300;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            flex-shrink: 0;
+        }
+
+        /* Segmented Progress Bar */
+        .progress-segments {
+            flex: 1;
+            display: flex;
+            gap: 6px;
+            height: 4px;
+        }
+
+        .progress-segment {
+            flex: 1;
+            background: #E5E7EB;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-segment.active {
+            background: #667eea;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            padding: 16px 24px;
+            overflow-y: auto;
+            padding-bottom: 100px;
+        }
+
+        /* Lesson Card */
+        .lesson-card {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .ellipse-container {
+            display: flex;
+            justify-content: center;
+            z-index: 1;
+            margin-bottom: -130px;
+        }
+
+        .ellipse-wrapper {
+            width: 100%;
+            max-width: 342px;
+            height: 160px;
+            border-radius: 24px 24px 0 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .ellipse-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            margin-top: -70px;
+            z-index: 1;
+        }
+
+        .card-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 22px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 100;
+        }
+
+        .lesson-title {
+            flex: 1;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            line-height: 26px;
+            color: #1a1a2e;
+        }
+
+        .share-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            min-height: 500px;
+            padding-top: 100px;
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-bottom: 28px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+
+        .section-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
+            line-height: 32px;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+        }
+
+        .body-text-container {
+            margin-bottom: 32px;
+        }
+
+        .body-text p {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 20px;
+            line-height: 28px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+
+        .body-text strong {
+            font-weight: 700;
+        }
+
+        .bullet-item {
+            display: flex;
+            margin-bottom: 10px;
+            align-items: flex-start;
+        }
+
+        .bullet-icon {
+            color: #667eea;
+            font-size: 36px;
+            margin-right: 10px;
+            margin-top: -10px;
+            flex-shrink: 0;
+        }
+
+        .bullet-text {
+            flex: 1;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 20px;
+            line-height: 28px;
+            color: #1a1a2e;
+        }
+
+        /* Footer */
+        .footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 16px 24px 34px;
+            border-top: 1px solid #F0F0F0;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .half-button {
+            flex: 1;
+        }
+
+        .back-button {
+            height: 64px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-radius: 112px;
+            border: 1px solid #E0E0E0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            color: #1a1a2e;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .back-button:hover {
+            background: #F9FAFB;
+        }
+
+        .back-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .continue-button {
+            height: 64px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1a1a2e;
+            border-radius: 112px;
+            border: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .continue-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(26, 26, 46, 0.3);
+        }
+
+        .continue-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+            border-radius: 24px;
+            margin: 24px 0;
+        }
+
+        .cta-section h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .cta-section p {
+            font-size: 16px;
+            opacity: 0.95;
+            margin-bottom: 24px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Loading & Error States */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(102, 126, 234, 0.3);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            margin: 40px 20px;
+        }
+
+        .error h2 {
+            color: #ef4444;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .error p {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        /* Mobile Responsive - Remove iPhone frame on small screens */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+                background: #FFFFFF;
+            }
+
+            .iphone-frame {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+
+            .iphone-notch {
+                display: none;
+            }
+
+            .iphone-screen {
+                border-radius: 0;
+            }
+
+            .status-bar {
+                background: #FFFFFF;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="iphone-frame">
+        <div class="iphone-notch"></div>
+        <div class="iphone-screen">
+            <div class="container">
+                <!-- Status Bar -->
+                <div class="status-bar">
+                    <div class="time" id="current-time">6:05</div>
+                    <!-- <div class="status-icons">
+                        <span>📶</span>
+                        <span>📡</span>
+                        <span>🔋</span>
+                    </div> -->
+                </div>
+
+                <!-- Header with Progress Bar -->
+                <div class="header">
+                    <button class="close-button" id="close-button" aria-label="Close">×</button>
+                    <div class="progress-segments" id="progress-segments"></div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading" class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading lesson...</p>
+                </div>
+
+                <!-- Content Area -->
+                <div id="content-area" class="content-area" style="display: none;">
+                    <div id="lesson-container"></div>
+                </div>
+
+                <!-- Error State -->
+                <div id="error-container" style="display: none;" class="error">
+                    <h2>Lesson Not Found</h2>
+                    <p>This lesson may have been removed or the link is invalid.</p>
+                </div>
+
+                <!-- Footer with Navigation Buttons -->
+                <div id="footer" class="footer" style="display: none;">
+                    <div class="button-row">
+                        <div class="half-button">
+                            <button class="back-button" id="back-button">← Back</button>
+                        </div>
+                        <div class="half-button">
+                            <button class="continue-button" id="continue-button">Continue →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get lesson ID from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const lessonId = urlParams.get('lesson_id');
+
+        // API URL
+        const API_URL = window.location.hostname === 'localhost'
+            ? 'http://localhost:3001'
+            : 'https://api.hinora.co'; // Update this to your actual backend API URL
+
+        // State
+        let lessonData = null;
+        let currentSegmentIndex = 0;
+
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            document.getElementById('current-time').textContent =
+                `${hours}:${minutes.toString().padStart(2, '0')}`;
+        }
+        updateTime();
+        setInterval(updateTime, 60000);
+
+        // Initialize
+        if (!lessonId) {
+            showError();
+        } else {
+            loadLesson(lessonId);
+        }
+
+        // Set up event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const closeBtn = document.getElementById('close-button');
+            const backBtn = document.getElementById('back-button');
+            const continueBtn = document.getElementById('continue-button');
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    window.history.back();
+                });
+            }
+
+            if (backBtn) {
+                backBtn.addEventListener('click', goToPreviousSegment);
+            }
+
+            if (continueBtn) {
+                continueBtn.addEventListener('click', goToNextSegment);
+            }
+        });
+
+        async function loadLesson(lessonId) {
+            try {
+                const response = await fetch(`${API_URL}/api/lessons/share/${lessonId}`);
+
+                if (!response.ok) {
+                    throw new Error('Lesson not found');
+                }
+
+                const data = await response.json();
+                lessonData = data.lesson;
+                displayLesson();
+            } catch (error) {
+                console.error('Error loading lesson:', error);
+                showError();
+            }
+        }
+
+        function displayLesson() {
+            if (!lessonData || !lessonData.segments || lessonData.segments.length === 0) {
+                showError();
+                return;
+            }
+
+            // Update page title
+            document.title = `${lessonData.title} - Nora`;
+
+            // Update Open Graph meta tags
+            document.querySelector('meta[property="og:title"]').setAttribute('content', lessonData.title);
+            if (lessonData.shortDescription) {
+                document.querySelector('meta[property="og:description"]').setAttribute('content', lessonData.shortDescription);
+            }
+
+            // Create progress segments
+            createProgressSegments();
+
+            // Show content
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content-area').style.display = 'block';
+            document.getElementById('footer').style.display = 'block';
+
+            // Render current segment
+            renderSegment();
+        }
+
+        function createProgressSegments() {
+            const container = document.getElementById('progress-segments');
+            const totalSegments = lessonData.segments.length;
+
+            container.innerHTML = '';
+            for (let i = 0; i < totalSegments; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'progress-segment';
+                segment.id = `segment-${i}`;
+                container.appendChild(segment);
+            }
+
+            updateProgressSegments();
+        }
+
+        function updateProgressSegments() {
+            const totalSegments = lessonData.segments.length;
+            for (let i = 0; i < totalSegments; i++) {
+                const segment = document.getElementById(`segment-${i}`);
+                if (i <= currentSegmentIndex) {
+                    segment.classList.add('active');
+                } else {
+                    segment.classList.remove('active');
+                }
+            }
+        }
+
+        function renderSegment() {
+            const container = document.getElementById('lesson-container');
+            const totalSegments = lessonData.segments.length;
+            const isLastSegment = currentSegmentIndex === totalSegments - 1;
+            const segment = lessonData.segments[currentSegmentIndex];
+
+            // Update progress segments
+            updateProgressSegments();
+
+            // Create ellipse solid background
+            const ellipseColor = lessonData.ellipse77Color || '#9BD4DF';
+
+            // Build lesson card HTML
+            let html = `
+                <div class="lesson-card">
+                    <div class="ellipse-container">
+                        <div class="ellipse-wrapper">
+                            <div class="ellipse-image" style="background: ${ellipseColor}"></div>
+                        </div>
+                    </div>
+
+                    <div class="card-header">
+                        <h1 class="lesson-title">${lessonData.title}</h1>
+                    </div>
+
+                    <div class="card" style="background-color: ${lessonData.backgroundColor || '#F8F8FF'}">
+            `;
+
+            // Add section title if present
+            if (segment.sectionTitle) {
+                html += `<h2 class="section-title">${segment.sectionTitle}</h2>`;
+            }
+
+            // Add body text
+            html += `<div class="body-text-container">${formatBodyText(segment.bodyText)}</div>`;
+
+            html += `</div></div>`;
+
+            // Add CTA on last segment
+            if (isLastSegment) {
+                html += `
+                    <div class="cta-section">
+                        <h3>Want to learn more?</h3>
+                        <p>Download Nora to access the full parenting curriculum</p>
+                        <a href="#" class="cta-button">Get Nora App</a>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+
+            // Update button states
+            document.getElementById('back-button').disabled = currentSegmentIndex === 0;
+            document.getElementById('continue-button').textContent = isLastSegment ? 'Complete ✓' : 'Continue →';
+        }
+
+        function formatBodyText(text) {
+            const lines = text.split('\n');
+            let html = '<div class="body-text">';
+
+            lines.forEach(line => {
+                const bulletMatch = line.match(/^\s*\*\s(.+)$/);
+                if (bulletMatch) {
+                    const content = formatInlineText(bulletMatch[1]);
+                    html += `<div class="bullet-item"><span class="bullet-icon">•</span><span class="bullet-text">${content}</span></div>`;
+                } else if (line.trim() === '') {
+                    html += '<div style="height: 8px;"></div>';
+                } else {
+                    const formatted = formatInlineText(line);
+                    html += `<p>${formatted}</p>`;
+                }
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        function formatInlineText(text) {
+            return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        }
+
+        function goToPreviousSegment() {
+            if (currentSegmentIndex > 0) {
+                currentSegmentIndex--;
+                renderSegment();
+                document.getElementById('content-area').scrollTop = 0;
+            }
+        }
+
+        function goToNextSegment() {
+            const totalSegments = lessonData.segments.length;
+
+            if (currentSegmentIndex < totalSegments - 1) {
+                currentSegmentIndex++;
+                renderSegment();
+                document.getElementById('content-area').scrollTop = 0;
+            } else {
+                alert('Lesson complete! Download the Nora app to continue your learning journey.');
+            }
+        }
+
+        function shareLesson() {
+            const shareUrl = window.location.href;
+            if (navigator.share) {
+                navigator.share({
+                    title: lessonData.title,
+                    text: `Check out this parenting lesson: ${lessonData.title}`,
+                    url: shareUrl
+                });
+            } else {
+                navigator.clipboard.writeText(shareUrl);
+                alert('Link copied to clipboard!');
+            }
+        }
+
+        function showError() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-container').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
