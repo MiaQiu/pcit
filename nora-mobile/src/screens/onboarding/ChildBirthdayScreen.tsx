@@ -191,7 +191,8 @@ const styles = StyleSheet.create({
     height: 170,
     fontSize: 28,
     fontWeight: '700',
-    color: '#1F2937',
+    //color: '#1F2937',
+    color: '#1F1F1F',
   },
   spacer: {
     flex: 1,
