@@ -85,7 +85,7 @@ export const CreateAccountScreen: React.FC = () => {
         name: 'User', // Placeholder, will be updated in NameInputScreen
         childName: 'Child', // Placeholder, will be updated in ChildNameScreen
         childBirthYear: new Date().getFullYear() - 5, // Placeholder
-        childConditions: ['none'], // Placeholder
+        childConditions: 'none', // Placeholder
       });
 
       // Store email in onboarding context
