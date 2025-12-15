@@ -14,6 +14,7 @@ import {
   Alert,
   Platform,
   Modal,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -362,19 +363,21 @@ export const NotificationSettingsScreen: React.FC = () => {
         {/* Permission Status */}
         {!notificationsEnabled && (
           <View style={styles.permissionBanner}>
-            <Ionicons name="notifications-off-outline" size={24} color="#F59E0B" />
+            <Ionicons name="notifications-off-outline" size={32} color="#F59E0B" />
             <View style={styles.permissionTextContainer}>
               <Text style={styles.permissionTitle}>Notifications Disabled</Text>
               <Text style={styles.permissionSubtitle}>
-                Enable notifications to receive reminders and updates
+                To receive reminders and updates, please enable notifications in your device Settings.
               </Text>
+              <TouchableOpacity
+                style={styles.settingsButton}
+                onPress={() => Linking.openSettings()}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="settings-outline" size={16} color="#FFFFFF" />
+                <Text style={styles.settingsButtonText}>Open Settings</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.enableButton}
-              onPress={requestNotificationPermissions}
-            >
-              <Text style={styles.enableButtonText}>Enable</Text>
-            </TouchableOpacity>
           </View>
         )}
 
@@ -385,19 +388,29 @@ export const NotificationSettingsScreen: React.FC = () => {
           <View style={styles.card}>
             <View style={styles.settingRow}>
               <View style={styles.settingLeft}>
-                <Ionicons name="calendar-outline" size={22} color="#8C49D5" />
+                <Ionicons
+                  name="calendar-outline"
+                  size={22}
+                  color={notificationsEnabled ? "#8C49D5" : "#D1D5DB"}
+                />
                 <View style={styles.settingContent}>
-                  <Text style={styles.settingText}>Daily Lesson Reminder</Text>
+                  <Text style={[
+                    styles.settingText,
+                    !notificationsEnabled && styles.settingTextDisabled
+                  ]}>
+                    Daily Lesson Reminder
+                  </Text>
                   <Text style={styles.settingDescription}>
                     Get reminded to complete your daily lesson
                   </Text>
                 </View>
               </View>
               <Switch
-                value={preferences.dailyLessonReminder}
+                value={preferences.dailyLessonReminder && notificationsEnabled}
                 onValueChange={() => handleToggle('dailyLessonReminder')}
+                disabled={!notificationsEnabled}
                 trackColor={{ false: '#D1D5DB', true: '#C4B5FD' }}
-                thumbColor={preferences.dailyLessonReminder ? '#8C49D5' : '#F3F4F6'}
+                thumbColor={preferences.dailyLessonReminder && notificationsEnabled ? '#8C49D5' : '#F3F4F6'}
                 ios_backgroundColor="#D1D5DB"
               />
             </View>
@@ -496,19 +509,29 @@ export const NotificationSettingsScreen: React.FC = () => {
           <View style={styles.card}>
             <View style={styles.settingRow}>
               <View style={styles.settingLeft}>
-                <Ionicons name="document-text-outline" size={22} color="#8C49D5" />
+                <Ionicons
+                  name="document-text-outline"
+                  size={22}
+                  color={notificationsEnabled ? "#8C49D5" : "#D1D5DB"}
+                />
                 <View style={styles.settingContent}>
-                  <Text style={styles.settingText}>New Report Ready</Text>
+                  <Text style={[
+                    styles.settingText,
+                    !notificationsEnabled && styles.settingTextDisabled
+                  ]}>
+                    New Report Ready
+                  </Text>
                   <Text style={styles.settingDescription}>
                     Get notified when your session report is ready to view
                   </Text>
                 </View>
               </View>
               <Switch
-                value={preferences.newReportNotification}
+                value={preferences.newReportNotification && notificationsEnabled}
                 onValueChange={() => handleToggle('newReportNotification')}
+                disabled={!notificationsEnabled}
                 trackColor={{ false: '#D1D5DB', true: '#C4B5FD' }}
-                thumbColor={preferences.newReportNotification ? '#8C49D5' : '#F3F4F6'}
+                thumbColor={preferences.newReportNotification && notificationsEnabled ? '#8C49D5' : '#F3F4F6'}
                 ios_backgroundColor="#D1D5DB"
               />
             </View>
@@ -730,9 +753,9 @@ const styles = StyleSheet.create({
   },
   permissionBanner: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: '#FFFBEB',
-    padding: 16,
+    padding: 20,
     marginHorizontal: 20,
     marginTop: 16,
     borderRadius: 12,
@@ -741,27 +764,32 @@ const styles = StyleSheet.create({
   },
   permissionTextContainer: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 16,
   },
   permissionTitle: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 14,
+    fontFamily: FONTS.bold,
+    fontSize: 16,
     color: '#92400E',
-    marginBottom: 2,
+    marginBottom: 6,
   },
   permissionSubtitle: {
     fontFamily: FONTS.regular,
-    fontSize: 12,
+    fontSize: 14,
     color: '#78350F',
+    lineHeight: 20,
+    marginBottom: 12,
   },
-  enableButton: {
+  settingsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
     backgroundColor: '#F59E0B',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 8,
-    marginLeft: 12,
+    gap: 6,
   },
-  enableButtonText: {
+  settingsButtonText: {
     fontFamily: FONTS.semiBold,
     fontSize: 14,
     color: '#FFFFFF',
@@ -801,6 +829,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
     marginBottom: 2,
+  },
+  settingTextDisabled: {
+    color: '#9CA3AF',
   },
   settingDescription: {
     fontFamily: FONTS.regular,
