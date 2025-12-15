@@ -34,6 +34,7 @@ export type OnboardingStackParamList = {
   Intro2: undefined;
   Intro3: undefined;
   Subscription: undefined;
+  NotificationPermission: undefined;
 };
 
 export type RootStackParamList = {

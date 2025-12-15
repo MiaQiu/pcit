@@ -28,6 +28,7 @@ import { Intro1Screen } from '../screens/onboarding/Intro1Screen';
 import { Intro2Screen } from '../screens/onboarding/Intro2Screen';
 import { Intro3Screen } from '../screens/onboarding/Intro3Screen';
 import { SubscriptionScreen } from '../screens/onboarding/SubscriptionScreen';
+import { NotificationPermissionScreen } from '../screens/onboarding/NotificationPermissionScreen';
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
@@ -79,6 +80,7 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="Intro2" component={Intro2Screen} />
       <Stack.Screen name="Intro3" component={Intro3Screen} />
       <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+      <Stack.Screen name="NotificationPermission" component={NotificationPermissionScreen} />
     </Stack.Navigator>
   );
 };

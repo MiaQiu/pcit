@@ -62,8 +62,8 @@ export const SubscriptionScreen: React.FC = () => {
 
       // TODO: Implement subscription/in-app purchase logic
 
-      // Navigate to MainTabs (user is already authenticated from signup)
-      navigation.replace('MainTabs');
+      // Navigate to NotificationPermission screen
+      navigation.navigate('NotificationPermission');
     } catch (error: any) {
       console.error('Complete onboarding error:', error);
       Alert.alert(
@@ -77,8 +77,8 @@ export const SubscriptionScreen: React.FC = () => {
           {
             text: 'Skip for Now',
             onPress: async () => {
-              // Continue anyway (user is already authenticated from signup)
-              navigation.replace('MainTabs');
+              // Continue to notification permission
+              navigation.navigate('NotificationPermission');
             },
             style: 'cancel',
           },
@@ -107,8 +107,8 @@ export const SubscriptionScreen: React.FC = () => {
         issue: data.issue || undefined,
       });
 
-      // Navigate to MainTabs (user is already authenticated from signup)
-      navigation.replace('MainTabs');
+      // Navigate to NotificationPermission screen
+      navigation.navigate('NotificationPermission');
     } catch (error: any) {
       console.error('Complete onboarding error:', error);
       Alert.alert(
