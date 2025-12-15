@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Share, PanResponder } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Share, PanResponder, Clipboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProgressBar } from '../components/ProgressBar';
 import { Button } from '../components/Button';
@@ -502,12 +502,17 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     if (!lessonData) return;
 
     const { lesson } = lessonData;
-    const currentSegment = segments[currentSegmentIndex];
+
+    // Generate shareable web link
+    // TODO: Update this URL to your production domain when deploying
+    const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
+    const shareUrl = `${webUrl}/share-lesson.html?lesson_id=${lesson.id}`;
 
     try {
       await Share.share({
-        message: `${lesson.title}\n\n${currentSegment?.sectionTitle || ''}\n\n${currentSegment?.bodyText || ''}\n\nShared from Nora - Your Parenting Coach`,
+        message: `Check out this parenting lesson: ${lesson.title}\n\n${shareUrl}`,
         title: lesson.title,
+        url: shareUrl, // iOS will use this
       });
     } catch (error) {
       console.error('Error sharing lesson:', error);

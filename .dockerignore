@@ -30,7 +30,6 @@ dist
 build
 .vite
 src
-public
 index.html
 vite.config.js
 tailwind.config.js

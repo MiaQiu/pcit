@@ -2,7 +2,7 @@
 const express = require('express');
 const Joi = require('joi');
 const multer = require('multer');
-const { nanoid } = require('nanoid');
+const crypto = require('crypto');
 const prisma = require('../services/db.cjs');
 const { uploadSupportAttachment } = require('../services/storage-s3.cjs');
 
@@ -40,7 +40,7 @@ router.post('/request',
       const userId = req.userId;
 
       // Generate unique request ID
-      const requestId = nanoid();
+      const requestId = crypto.randomUUID();
 
       // Debug: Log what we received
       console.log('Support request received:');

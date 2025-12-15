@@ -23,6 +23,7 @@ RUN npx prisma generate
 # Copy application code (backend only)
 COPY server.cjs ./
 COPY server ./server/
+COPY public ./public/
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
