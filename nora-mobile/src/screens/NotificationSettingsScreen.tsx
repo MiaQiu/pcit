@@ -3,7 +3,7 @@
  * Manage notification preferences
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -88,6 +88,38 @@ export const NotificationSettingsScreen: React.FC = () => {
     checkNotificationPermissions();
   }, []);
 
+  // Check permission status when screen comes into focus (e.g., returning from Settings)
+  useFocusEffect(
+    useCallback(() => {
+      const checkAndEnableNotifications = async () => {
+        const { status } = await Notifications.getPermissionsAsync();
+        const wasDisabled = !notificationsEnabled;
+        const isNowEnabled = status === 'granted';
+
+        if (wasDisabled && isNowEnabled) {
+          // Permission was just granted - enable key notifications
+          setNotificationsEnabled(true);
+
+          const newPreferences = {
+            ...preferences,
+            dailyLessonReminder: true,
+            newReportNotification: true,
+          };
+          await savePreferences(newPreferences);
+
+          // Schedule the daily reminder
+          if (newPreferences.dailyLessonReminder) {
+            await scheduleDailyReminder(newPreferences.dailyLessonTime);
+          }
+        } else {
+          setNotificationsEnabled(isNowEnabled);
+        }
+      };
+
+      checkAndEnableNotifications();
+    }, [notificationsEnabled, preferences])
+  );
+
   // Cleanup sound on unmount
   useEffect(() => {
     return () => {
@@ -140,6 +172,20 @@ export const NotificationSettingsScreen: React.FC = () => {
     }
 
     setNotificationsEnabled(true);
+
+    // When permission is granted for the first time, automatically enable key notifications
+    const newPreferences = {
+      ...preferences,
+      dailyLessonReminder: true,
+      newReportNotification: true,
+    };
+    await savePreferences(newPreferences);
+
+    // Schedule the daily reminder with the current time preference
+    if (newPreferences.dailyLessonReminder) {
+      await scheduleDailyReminder(newPreferences.dailyLessonTime);
+    }
+
     return true;
   };
 
