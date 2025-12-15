@@ -144,6 +144,8 @@ export const CreateAccountScreen: React.FC = () => {
               keyboardType="email-address"
               returnKeyType="next"
               editable={!isLoading}
+              textContentType="none"
+              autoComplete="off"
             />
             {email.length > 0 && !validateEmail(email) && (
               <Text style={styles.errorText}>Please enter a valid email</Text>
@@ -165,6 +167,8 @@ export const CreateAccountScreen: React.FC = () => {
                 autoCorrect={false}
                 returnKeyType="next"
                 editable={!isLoading}
+                textContentType="none"
+                autoComplete="off"
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
@@ -200,6 +204,8 @@ export const CreateAccountScreen: React.FC = () => {
                 returnKeyType="done"
                 onSubmitEditing={handleSignup}
                 editable={!isLoading}
+                textContentType="none"
+                autoComplete="off"
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
