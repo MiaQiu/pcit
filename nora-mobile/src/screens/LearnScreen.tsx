@@ -3,10 +3,10 @@
  * Shows all lessons organized by phases with completion status
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, Text, StyleSheet, ActivityIndicator, RefreshControl, Alert, Modal, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LessonListItem, LessonListItemProps } from '../components/LessonListItem';
 import { StreakWidget } from '../components/StreakWidget';
 import { ProfileCircle } from '../components/ProfileCircle';
@@ -36,6 +36,16 @@ export const LearnScreen: React.FC = () => {
   useEffect(() => {
     loadLessons();
   }, []);
+
+  // Refresh lessons when screen comes into focus (e.g., after completing a lesson)
+  useFocusEffect(
+    useCallback(() => {
+      // Only reload if we already have data (skip initial mount, which is handled by useEffect)
+      if (phases.length > 0) {
+        loadLessons(false);
+      }
+    }, [phases.length])
+  );
 
   const loadLessons = async (showLoadingSpinner = true) => {
     try {
@@ -88,14 +98,14 @@ export const LearnScreen: React.FC = () => {
           });
 
           const completedCount = sortedLessons.filter(
-            l => l.status === 'COMPLETED'
+            l => l.progress?.status === 'COMPLETED'
           ).length;
 
           const lessonItems: LessonListItemProps[] = sortedLessons.map((lesson, index) => ({
             id: lesson.id,
             dayNumber: globalDayCounter++,
             title: lesson.title,
-            isCompleted: lesson.status === 'COMPLETED',
+            isCompleted: lesson.progress?.status === 'COMPLETED',
             isLocked: lesson.isLocked || false,
           }));
 
