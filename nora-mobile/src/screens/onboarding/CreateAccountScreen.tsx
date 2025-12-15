@@ -144,8 +144,9 @@ export const CreateAccountScreen: React.FC = () => {
               keyboardType="email-address"
               returnKeyType="next"
               editable={!isLoading}
-              textContentType="none"
+              textContentType="oneTimeCode"
               autoComplete="off"
+              importantForAutofill="no"
             />
             {email.length > 0 && !validateEmail(email) && (
               <Text style={styles.errorText}>Please enter a valid email</Text>
