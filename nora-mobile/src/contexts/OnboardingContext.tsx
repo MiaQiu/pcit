@@ -17,7 +17,7 @@ export interface OnboardingData {
   childName: string;
   childGender: 'BOY' | 'GIRL' | 'OTHER' | null;
   childBirthday: Date | null;
-  issue: string;
+  issue: string | string[];
 
   // Subscription
   hasCompletedOnboarding: boolean;
