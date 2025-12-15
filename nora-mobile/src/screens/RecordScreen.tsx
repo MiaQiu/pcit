@@ -18,7 +18,7 @@ import { ProfileCircle } from '../components/ProfileCircle';
 import { RecordingGuideCard } from '../components/RecordingGuideCard';
 import { HowToRecordCard } from '../components/HowToRecordCard';
 import { RecordingCard } from '../components/RecordingCard';
-import { FONTS, COLORS, DRAGON_PURPLE } from '../constants/assets';
+import { FONTS, COLORS, DRAGON_PURPLE, SOUNDS } from '../constants/assets';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendNewReportNotification } from '../utils/notifications';
@@ -40,14 +40,18 @@ export const RecordScreen: React.FC = () => {
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [navigationTimeout, setNavigationTimeout] = useState<NodeJS.Timeout | null>(null);
   const [childName, setChildName] = useState<string>('your child');
+  const [completionSound, setCompletionSound] = useState<string>('Win');
 
   // Use ref to track current recording for cleanup
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoStopTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const soundRef = useRef<Audio.Sound | null>(null);
 
   useEffect(() => {
     requestPermissions();
     loadUserData();
+    loadSoundPreference();
 
     // Cleanup on unmount only
     return () => {
@@ -61,6 +65,16 @@ export const RecordScreen: React.FC = () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      // Clean up auto-stop timer
+      if (autoStopTimerRef.current) {
+        clearTimeout(autoStopTimerRef.current);
+      }
+      // Clean up sound
+      if (soundRef.current) {
+        soundRef.current.unloadAsync().catch(() => {
+          // Ignore errors
+        });
+      }
     };
   }, []);
 
@@ -73,6 +87,81 @@ export const RecordScreen: React.FC = () => {
     } catch (error) {
       console.error('Failed to load user data:', error);
       // Keep default fallback value
+    }
+  };
+
+  const loadSoundPreference = async () => {
+    try {
+      const prefsJson = await AsyncStorage.getItem('@notification_preferences');
+      if (prefsJson) {
+        const prefs = JSON.parse(prefsJson);
+        if (prefs.cdiCompleteSound) {
+          setCompletionSound(prefs.cdiCompleteSound);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load sound preference:', error);
+      // Keep default 'Win' sound
+    }
+  };
+
+  const playCompletionSound = async () => {
+    try {
+      console.log('[Sound] Playing completion sound:', completionSound);
+
+      // Stop and unload previous sound if any
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+
+      // Map sound ID to actual sound file
+      let soundSource;
+      switch (completionSound) {
+        case 'Win':
+          soundSource = SOUNDS.Win;
+          break;
+        case 'Bell':
+          soundSource = SOUNDS.Bell;
+          break;
+        default:
+          soundSource = SOUNDS.Win;
+      }
+
+      // Configure audio mode for playback (no recording)
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+
+      // Create and play sound
+      const { sound } = await Audio.Sound.createAsync(
+        soundSource,
+        { shouldPlay: true, volume: 1.0 }
+      );
+      soundRef.current = sound;
+
+      console.log('[Sound] Completion sound playing');
+
+      // Wait for sound to finish playing
+      await new Promise<void>((resolve) => {
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            console.log('[Sound] Completion sound finished');
+            sound.unloadAsync();
+            if (soundRef.current === sound) {
+              soundRef.current = null;
+            }
+            resolve();
+          }
+        });
+      });
+    } catch (error) {
+      console.error('[Sound] Error playing completion sound:', error);
+      // Don't block the upload if sound fails
     }
   };
 
@@ -127,6 +216,13 @@ export const RecordScreen: React.FC = () => {
           setRecordingDuration(status.durationMillis);
         }
       });
+
+      // Set up auto-stop timer for 5 minutes (300,000 milliseconds)
+      const autoStopTimer = setTimeout(() => {
+        console.log('Auto-stopping recording after 5 minutes');
+        stopRecording();
+      }, 5000); // 5 minutes 300000
+      autoStopTimerRef.current = autoStopTimer;
     } catch (error) {
       console.error('Failed to start recording:', error);
       Alert.alert('Error', 'Failed to start recording. Please try again.');
@@ -135,23 +231,36 @@ export const RecordScreen: React.FC = () => {
 
   const stopRecording = async () => {
     try {
-      if (!recording) return;
+      // Use ref instead of state to ensure we have the current recording
+      const currentRecording = recordingRef.current;
+      if (!currentRecording) return;
+
+      // Clear auto-stop timer if it exists
+      if (autoStopTimerRef.current) {
+        clearTimeout(autoStopTimerRef.current);
+        autoStopTimerRef.current = null;
+      }
 
       // Get URI and status before stopping
-      const uri = recording.getURI();
-      const status = await recording.getStatusAsync();
+      const uri = currentRecording.getURI();
+      const status = await currentRecording.getStatusAsync();
       const durationSeconds = status.durationMillis
         ? Math.floor(status.durationMillis / 1000)
         : Math.floor(recordingDuration / 1000);
 
       // Stop and unload, then clear references
-      await recording.stopAndUnloadAsync();
+      await currentRecording.stopAndUnloadAsync();
       setRecording(null);
       recordingRef.current = null; // Clear ref
-      setRecordingState('uploading');
 
       console.log('Recording saved to:', uri);
       console.log('Duration:', durationSeconds, 'seconds');
+
+      // Start uploading and play completion sound simultaneously
+      setRecordingState('uploading');
+
+      // Play completion sound (don't await - let it play in background)
+      playCompletionSound();
 
       // Upload to backend
       if (uri) {
@@ -277,6 +386,11 @@ export const RecordScreen: React.FC = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
+    }
+    // Clear auto-stop timer
+    if (autoStopTimerRef.current) {
+      clearTimeout(autoStopTimerRef.current);
+      autoStopTimerRef.current = null;
     }
   };
 
