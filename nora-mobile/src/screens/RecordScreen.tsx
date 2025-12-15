@@ -338,21 +338,16 @@ export const RecordScreen: React.FC = () => {
 
   // handleViewReport removed - now navigates directly to home after recording
 
-  const handleStartSession = () => {
-    // Transition to ready state without starting recording
-    setRecordingState('ready');
+  const handleStartSession = async () => {
+    // Start recording immediately
+    await startRecording();
   };
 
-  const handleRecordButtonPress = () => {
-    if (recordingState === 'ready') {
-      startRecording();
-    } else if (recordingState === 'recording') {
-      stopRecording();
-    }
+  const handleStopRecording = async () => {
+    await stopRecording();
   };
 
   const canStartSession = permissionGranted;
-  const canRecord = permissionGranted && (recordingState === 'ready' || recordingState === 'recording');
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right', 'bottom']}>
@@ -389,11 +384,11 @@ export const RecordScreen: React.FC = () => {
           </>
         )}
 
-        {/* Recording Card - Show when ready or recording */}
-        {(recordingState === 'ready' || recordingState === 'recording') && (
+        {/* Recording Card - Show when recording */}
+        {recordingState === 'recording' && (
           <View style={styles.recordingCardContainer}>
             <RecordingCard
-              isRecording={recordingState === 'recording'}
+              isRecording={true}
               durationMillis={recordingDuration}
             />
           </View>
@@ -453,28 +448,14 @@ export const RecordScreen: React.FC = () => {
         </View>
       )}
 
-      {recordingState === 'ready' && (
-        <View style={styles.fixedButtonContainer}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleRecordButtonPress}
-            disabled={!canRecord}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.actionButtonText}>Record</Text>
-            <Ionicons name="mic" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      )}
-
       {recordingState === 'recording' && (
         <View style={styles.fixedButtonContainer}>
           <TouchableOpacity
             style={[styles.actionButton, styles.stopButton]}
-            onPress={handleRecordButtonPress}
+            onPress={handleStopRecording}
             activeOpacity={0.8}
           >
-            <Text style={styles.actionButtonText}>Stop</Text>
+            <Text style={styles.actionButtonText}>Stop Recording</Text>
             <Ionicons name="stop" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
