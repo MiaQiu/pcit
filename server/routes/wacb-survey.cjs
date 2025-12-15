@@ -18,35 +18,22 @@ router.post('/', async (req, res) => {
     const userId = req.userId;
     const {
       parentingStressLevel,
-      parentingStressChange,
       q1Dawdle,
-      q1Change,
       q2MealBehavior,
-      q2Change,
       q3Disobey,
-      q3Change,
       q4Angry,
-      q4Change,
       q5Scream,
-      q5Change,
       q6Destroy,
-      q6Change,
       q7ProvokeFights,
-      q7Change,
       q8Interrupt,
-      q8Change,
-      q9Attention,
-      q9Change
+      q9Attention
     } = req.body;
 
     // Validate all required fields
     const requiredFields = [
-      'parentingStressLevel', 'parentingStressChange',
-      'q1Dawdle', 'q1Change', 'q2MealBehavior', 'q2Change',
-      'q3Disobey', 'q3Change', 'q4Angry', 'q4Change',
-      'q5Scream', 'q5Change', 'q6Destroy', 'q6Change',
-      'q7ProvokeFights', 'q7Change', 'q8Interrupt', 'q8Change',
-      'q9Attention', 'q9Change'
+      'parentingStressLevel',
+      'q1Dawdle', 'q2MealBehavior', 'q3Disobey', 'q4Angry',
+      'q5Scream', 'q6Destroy', 'q7ProvokeFights', 'q8Interrupt', 'q9Attention'
     ];
 
     for (const field of requiredFields) {
@@ -67,14 +54,9 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Calculate totals
+    // Calculate total score
     const totalScore = q1Dawdle + q2MealBehavior + q3Disobey + q4Angry +
                       q5Scream + q6Destroy + q7ProvokeFights + q8Interrupt + q9Attention;
-
-    const totalChangesNeeded = [
-      q1Change, q2Change, q3Change, q4Change, q5Change,
-      q6Change, q7Change, q8Change, q9Change
-    ].filter(Boolean).length;
 
     // Create survey record
     const survey = await prisma.wacbSurvey.create({
@@ -82,27 +64,16 @@ router.post('/', async (req, res) => {
         id: crypto.randomUUID(),
         userId,
         parentingStressLevel,
-        parentingStressChange,
         q1Dawdle,
-        q1Change,
         q2MealBehavior,
-        q2Change,
         q3Disobey,
-        q3Change,
         q4Angry,
-        q4Change,
         q5Scream,
-        q5Change,
         q6Destroy,
-        q6Change,
         q7ProvokeFights,
-        q7Change,
         q8Interrupt,
-        q8Change,
         q9Attention,
-        q9Change,
-        totalScore,
-        totalChangesNeeded
+        totalScore
       }
     });
 
@@ -110,7 +81,6 @@ router.post('/', async (req, res) => {
       message: 'Survey submitted successfully',
       surveyId: survey.id,
       totalScore,
-      totalChangesNeeded,
       submittedAt: survey.submittedAt
     });
 

@@ -33,7 +33,6 @@ const QUESTION_TEXTS = [
 
 type QuestionState = {
   value: number | null;
-  change: boolean | null;
 };
 
 export const WacbSurveyScreen: React.FC = () => {
@@ -43,45 +42,33 @@ export const WacbSurveyScreen: React.FC = () => {
 
   // Step 1: Parenting Stress
   const [parentingStressLevel, setParentingStressLevel] = useState<number | null>(null);
-  const [parentingStressChange, setParentingStressChange] = useState<boolean | null>(null);
 
   // Step 2: Child Behavior Questions
   const [questions, setQuestions] = useState<Record<string, QuestionState>>({
-    q1: { value: null, change: null },
-    q2: { value: null, change: null },
-    q3: { value: null, change: null },
-    q4: { value: null, change: null },
-    q5: { value: null, change: null },
-    q6: { value: null, change: null },
-    q7: { value: null, change: null },
-    q8: { value: null, change: null },
-    q9: { value: null, change: null },
+    q1: { value: null },
+    q2: { value: null },
+    q3: { value: null },
+    q4: { value: null },
+    q5: { value: null },
+    q6: { value: null },
+    q7: { value: null },
+    q8: { value: null },
+    q9: { value: null },
   });
 
   const handleQuestionChange = (questionKey: string, value: number) => {
     setQuestions(prev => ({
       ...prev,
-      [questionKey]: { ...prev[questionKey], value }
-    }));
-  };
-
-  const handleChangeNeeded = (questionKey: string, needsChange: boolean) => {
-    setQuestions(prev => ({
-      ...prev,
-      [questionKey]: { ...prev[questionKey], change: needsChange }
+      [questionKey]: { value }
     }));
   };
 
   const validateForm = (): string | null => {
     if (parentingStressLevel === null) return 'Please rate your parenting stress level';
-    if (parentingStressChange === null) return 'Please indicate if parenting stress needs to change';
 
     for (const q of QUESTION_TEXTS) {
       if (questions[q.key].value === null) {
         return `Please answer: ${q.text}`;
-      }
-      if (questions[q.key].change === null) {
-        return `Please indicate if change is needed for: ${q.text}`;
       }
     }
 
@@ -112,25 +99,15 @@ export const WacbSurveyScreen: React.FC = () => {
           },
           body: JSON.stringify({
             parentingStressLevel,
-            parentingStressChange,
             q1Dawdle: questions.q1.value,
-            q1Change: questions.q1.change,
             q2MealBehavior: questions.q2.value,
-            q2Change: questions.q2.change,
             q3Disobey: questions.q3.value,
-            q3Change: questions.q3.change,
             q4Angry: questions.q4.value,
-            q4Change: questions.q4.change,
             q5Scream: questions.q5.value,
-            q5Change: questions.q5.change,
             q6Destroy: questions.q6.value,
-            q6Change: questions.q6.change,
             q7ProvokeFights: questions.q7.value,
-            q7Change: questions.q7.change,
             q8Interrupt: questions.q8.value,
-            q8Change: questions.q8.change,
-            q9Attention: questions.q9.value,
-            q9Change: questions.q9.change
+            q9Attention: questions.q9.value
           })
         }
       );
@@ -214,7 +191,7 @@ export const WacbSurveyScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Child Progress Assessment</Text>
-        <Text style={styles.subtitle}>Weekly Assessment of Child Behavior (WACB-N)</Text>
+        {/* <Text style={styles.subtitle}>Weekly Assessment of Child Behavior (WACB-N)</Text> */}
         {/* <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
           <Text style={styles.skipButtonText}>Skip for now</Text>
         </TouchableOpacity> */}
@@ -248,14 +225,6 @@ export const WacbSurveyScreen: React.FC = () => {
               ))}
             </View>
           </View>
-
-          <View style={styles.questionBlock}>
-            <Text style={styles.questionText}>Does this need to change?</Text>
-            <View style={styles.yesNoRow}>
-              <YesNoButton label="Yes" selected={parentingStressChange} onPress={setParentingStressChange} />
-              <YesNoButton label="No" selected={parentingStressChange} onPress={setParentingStressChange} />
-            </View>
-          </View>
         </View>
 
         {/* STEP 2: Child Behavior Questions */}
@@ -285,30 +254,14 @@ export const WacbSurveyScreen: React.FC = () => {
                   />
                 ))}
               </View>
-
-              <View style={styles.changeNeededContainer}>
-                <Text style={styles.changeNeededText}>Does this need to change?</Text>
-                <View style={styles.yesNoRow}>
-                  <YesNoButton
-                    label="Yes"
-                    selected={questions[key].change}
-                    onPress={(val) => handleChangeNeeded(key, val)}
-                  />
-                  <YesNoButton
-                    label="No"
-                    selected={questions[key].change}
-                    onPress={(val) => handleChangeNeeded(key, val)}
-                  />
-                </View>
-              </View>
             </View>
           ))}
         </View>
 
         {/* Copyright Notice */}
-        <Text style={styles.copyright}>
+        {/* <Text style={styles.copyright}>
           Copyright © [2011] Dr. Susan Timmer and The Regents of the University of California, Davis campus. All Rights Reserved. Used with permission.
-        </Text>
+        </Text> */}
       </ScrollView>
 
       {/* Submit Button */}
