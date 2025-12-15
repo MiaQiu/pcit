@@ -3,8 +3,8 @@
  * Includes tab navigator and modal screens
  */
 
-import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { TabNavigator } from './TabNavigator';
@@ -29,6 +29,35 @@ export const RootNavigator: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<string | null>(null);
+  const navigationRef = useRef<any>(null);
+
+  // Handle session expiration
+  const handleSessionExpired = useCallback(() => {
+    console.log('Session expired - logging out user');
+
+    // Update auth state
+    setIsAuthenticated(false);
+    setOnboardingStep(null);
+
+    // Show alert to user
+    Alert.alert(
+      'Session Expired',
+      'Your session has expired. Please log in again to continue.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Navigation will automatically show login due to isAuthenticated = false
+          },
+        },
+      ]
+    );
+  }, []);
+
+  // Set up session expiration callback
+  useEffect(() => {
+    authService.setSessionExpiredCallback(handleSessionExpired);
+  }, [authService, handleSessionExpired]);
 
   useEffect(() => {
     checkAuthStatus();

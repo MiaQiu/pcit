@@ -15,10 +15,18 @@ class AuthService {
   private refreshToken: string | null = null;
   private storage: StorageAdapter;
   private apiUrl: string;
+  private onSessionExpired?: () => void;
 
   constructor(storage: StorageAdapter, apiUrl: string) {
     this.storage = storage;
     this.apiUrl = apiUrl;
+  }
+
+  /**
+   * Set callback for when session expires (refresh token fails)
+   */
+  setSessionExpiredCallback(callback: () => void): void {
+    this.onSessionExpired = callback;
   }
 
   /**
@@ -138,7 +146,7 @@ class AuthService {
       });
 
       if (!response.ok) {
-        await this.clearTokens();
+        await this.clearTokens(true); // true = session expired
         return false;
       }
 
@@ -148,7 +156,7 @@ class AuthService {
       return true;
     } catch (error) {
       console.error('Token refresh error:', error);
-      await this.clearTokens();
+      await this.clearTokens(true); // true = session expired
       return false;
     }
   }
@@ -168,12 +176,18 @@ class AuthService {
 
   /**
    * Clear tokens
+   * @param sessionExpired - If true, triggers session expired callback
    */
-  private async clearTokens(): Promise<void> {
+  private async clearTokens(sessionExpired: boolean = false): Promise<void> {
     this.accessToken = null;
     this.refreshToken = null;
     await this.storage.removeItem('accessToken');
     await this.storage.removeItem('refreshToken');
+
+    // Trigger session expired callback if this is due to token expiration
+    if (sessionExpired && this.onSessionExpired) {
+      this.onSessionExpired();
+    }
   }
 
   /**
