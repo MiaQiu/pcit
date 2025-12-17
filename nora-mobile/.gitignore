@@ -39,5 +39,13 @@ yarn-error.*
 *.tsbuildinfo
 
 # generated native folders
-/ios
+# /ios - Commented out because we have custom native modules
 /android
+
+# iOS build artifacts (keep source files, ignore builds)
+/ios/build/
+/ios/Pods/
+/ios/**/*.xcworkspace/xcuserdata/
+/ios/**/*.xcodeproj/xcuserdata/
+/ios/**/*.xcodeproj/project.xcworkspace/xcuserdata/
+/ios/DerivedData/

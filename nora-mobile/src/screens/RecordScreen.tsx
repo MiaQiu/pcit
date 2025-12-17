@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, ActivityIndicator, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Audio } from 'expo-av';
@@ -22,6 +22,7 @@ import { FONTS, COLORS, DRAGON_PURPLE, SOUNDS } from '../constants/assets';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendNewReportNotification } from '../utils/notifications';
+import { startRecording as startNativeRecording, stopRecording as stopNativeRecording, getRecordingStatus } from '../utils/AudioSessionManager';
 
 type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed' | 'uploading' | 'processing' | 'success';
 
@@ -53,8 +54,15 @@ export const RecordScreen: React.FC = () => {
     loadUserData();
     loadSoundPreference();
 
+    // Monitor app state changes for debugging
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      console.log('[AppState] Changed to:', nextAppState);
+      console.log('[Recording] Is recording:', recordingRef.current !== null);
+    });
+
     // Cleanup on unmount only
     return () => {
+      subscription.remove();
       // Clean up recording if component unmounts
       if (recordingRef.current) {
         recordingRef.current.stopAndUnloadAsync().catch(() => {
@@ -128,16 +136,7 @@ export const RecordScreen: React.FC = () => {
           soundSource = SOUNDS.Win;
       }
 
-      // Configure audio mode for playback (no recording)
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      });
-
-      // Create and play sound
+      // Create and play sound (audio session already configured by native module)
       const { sound } = await Audio.Sound.createAsync(
         soundSource,
         { shouldPlay: true, volume: 1.0 }
@@ -195,33 +194,40 @@ export const RecordScreen: React.FC = () => {
         return;
       }
 
-      // Configure audio mode for recording
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
+      console.log('[RecordScreen] Starting native recording...');
 
-      // Create and start recording
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      // Start native recording
+      const result = await startNativeRecording();
+      console.log('[RecordScreen] Native recording started:', result.uri);
 
-      setRecording(newRecording);
-      recordingRef.current = newRecording; // Track in ref
       setRecordingState('recording');
 
-      // Update duration periodically
-      newRecording.setOnRecordingStatusUpdate((status) => {
-        if (status.isRecording) {
-          setRecordingDuration(status.durationMillis);
+      // Update duration every 100ms
+      const durationInterval = setInterval(async () => {
+        try {
+          const status = await getRecordingStatus();
+          if (status.isRecording) {
+            setRecordingDuration(status.durationMillis);
+          } else {
+            clearInterval(durationInterval);
+          }
+        } catch (error) {
+          console.error('[RecordScreen] Error getting recording status:', error);
+          clearInterval(durationInterval);
         }
-      });
+      }, 100);
+
+      // Store interval ref for cleanup
+      if (timeoutRef.current) {
+        clearInterval(timeoutRef.current as any);
+      }
+      timeoutRef.current = durationInterval as any;
 
       // Set up auto-stop timer for 5 minutes (300,000 milliseconds)
       const autoStopTimer = setTimeout(() => {
         console.log('Auto-stopping recording after 5 minutes');
         stopRecording();
-      }, 5000); // 5 minutes 300000
+      }, 300000); // 5 minutes
       autoStopTimerRef.current = autoStopTimer;
     } catch (error) {
       console.error('Failed to start recording:', error);
@@ -231,9 +237,11 @@ export const RecordScreen: React.FC = () => {
 
   const stopRecording = async () => {
     try {
-      // Use ref instead of state to ensure we have the current recording
-      const currentRecording = recordingRef.current;
-      if (!currentRecording) return;
+      // Clear duration update interval
+      if (timeoutRef.current) {
+        clearInterval(timeoutRef.current as any);
+        timeoutRef.current = null;
+      }
 
       // Clear auto-stop timer if it exists
       if (autoStopTimerRef.current) {
@@ -241,17 +249,10 @@ export const RecordScreen: React.FC = () => {
         autoStopTimerRef.current = null;
       }
 
-      // Get URI and status before stopping
-      const uri = currentRecording.getURI();
-      const status = await currentRecording.getStatusAsync();
-      const durationSeconds = status.durationMillis
-        ? Math.floor(status.durationMillis / 1000)
-        : Math.floor(recordingDuration / 1000);
-
-      // Stop and unload, then clear references
-      await currentRecording.stopAndUnloadAsync();
-      setRecording(null);
-      recordingRef.current = null; // Clear ref
+      // Stop native recording
+      const result = await stopNativeRecording();
+      const uri = result.uri;
+      const durationSeconds = Math.floor(result.durationMillis / 1000);
 
       console.log('Recording saved to:', uri);
       console.log('Duration:', durationSeconds, 'seconds');
