@@ -20,11 +20,12 @@ import { HowToRecordCard } from '../components/HowToRecordCard';
 import { RecordingCard } from '../components/RecordingCard';
 import { FONTS, COLORS, DRAGON_PURPLE, SOUNDS } from '../constants/assets';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
+import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendNewReportNotification } from '../utils/notifications';
 import { startRecording as startNativeRecording, stopRecording as stopNativeRecording, getRecordingStatus } from '../utils/AudioSessionManager';
 
-type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed' | 'uploading' | 'processing' | 'success';
+type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed';
 
 // Get API URL from environment
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -33,12 +34,11 @@ export const RecordScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const recordingService = useRecordingService();
   const authService = useAuthService();
+  const uploadProcessing = useUploadProcessing();
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [permissionGranted, setPermissionGranted] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [recordingId, setRecordingId] = useState<string | null>(null);
   const [navigationTimeout, setNavigationTimeout] = useState<NodeJS.Timeout | null>(null);
   const [childName, setChildName] = useState<string>('your child');
   const [completionSound, setCompletionSound] = useState<string>('Win');
@@ -164,12 +164,14 @@ export const RecordScreen: React.FC = () => {
     }
   };
 
-  // Reset state when screen comes back into focus
+  // When screen comes back into focus, check if we need to reset
   useFocusEffect(
     React.useCallback(() => {
-      // Reset recording state when coming back to this screen
-      resetRecording();
-    }, [])
+      // Only reset if not currently uploading/processing in background
+      if (!uploadProcessing.isProcessing && recordingState !== 'recording') {
+        resetRecording();
+      }
+    }, [uploadProcessing.isProcessing, recordingState])
   );
 
   const requestPermissions = async () => {
@@ -257,15 +259,30 @@ export const RecordScreen: React.FC = () => {
       console.log('Recording saved to:', uri);
       console.log('Duration:', durationSeconds, 'seconds');
 
-      // Start uploading and play completion sound simultaneously
-      setRecordingState('uploading');
+      // Reset local recording state
+      setRecordingState('completed');
 
       // Play completion sound (don't await - let it play in background)
       playCompletionSound();
 
-      // Upload to backend
+      // Upload to backend using the context (will run in background)
       if (uri) {
-        await uploadRecording(uri, durationSeconds);
+        try {
+          await uploadProcessing.startUpload(uri, durationSeconds);
+        } catch (error) {
+          console.error('Upload failed:', error);
+          Alert.alert(
+            'Upload Failed',
+            error instanceof Error ? error.message : 'Failed to upload recording. Please try again.',
+            [
+              { text: 'Cancel', onPress: resetRecording, style: 'cancel' },
+              {
+                text: 'Retry',
+                onPress: () => uploadProcessing.startUpload(uri, durationSeconds)
+              }
+            ]
+          );
+        }
       }
     } catch (error) {
       console.error('Failed to stop recording:', error);
@@ -274,115 +291,10 @@ export const RecordScreen: React.FC = () => {
     }
   };
 
-  const uploadRecording = async (uri: string, durationSeconds: number) => {
-    try {
-      console.log('Starting upload...', { uri, durationSeconds });
-
-      // Create FormData
-      const formData = new FormData();
-
-      // Add audio file
-      const filename = uri.split('/').pop() || 'recording.m4a';
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `audio/${match[1]}` : 'audio/m4a';
-
-      formData.append('audio', {
-        uri: uri,
-        name: filename,
-        type: type,
-      } as any);
-
-      formData.append('durationSeconds', durationSeconds.toString());
-
-      // Upload with progress tracking using XMLHttpRequest
-      const uploadPromise = new Promise<string>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(progress);
-            console.log('Upload progress:', progress + '%');
-          }
-        });
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status === 201) {
-            try {
-              const response = JSON.parse(xhr.responseText);
-              console.log('Upload successful:', response);
-              resolve(response.recordingId);
-            } catch (error) {
-              reject(new Error('Invalid response from server'));
-            }
-          } else {
-            try {
-              const error = JSON.parse(xhr.responseText);
-              reject(new Error(error.details || error.error || 'Upload failed'));
-            } catch {
-              reject(new Error(`Upload failed with status ${xhr.status}`));
-            }
-          }
-        });
-
-        xhr.addEventListener('error', () => {
-          reject(new Error('Network error during upload'));
-        });
-
-        xhr.addEventListener('abort', () => {
-          reject(new Error('Upload cancelled'));
-        });
-
-        // Open connection
-        xhr.open('POST', `${API_URL}/api/recordings/upload`);
-
-        // Add Authorization header
-        const token = authService.getAccessToken();
-        if (token) {
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        } else {
-          reject(new Error('No authentication token available'));
-          return;
-        }
-
-        xhr.send(formData);
-      });
-
-      const uploadedRecordingId = await uploadPromise;
-      setRecordingId(uploadedRecordingId);
-
-      console.log('Upload complete, recording ID:', uploadedRecordingId);
-
-      // Show processing state and poll for analysis completion
-      setRecordingState('processing');
-
-      // Poll for analysis completion
-      pollForAnalysisCompletion(uploadedRecordingId);
-
-    } catch (error) {
-      console.error('Upload failed:', error);
-
-      Alert.alert(
-        'Upload Failed',
-        error instanceof Error ? error.message : 'Failed to upload recording. Please try again.',
-        [
-          { text: 'Cancel', onPress: resetRecording, style: 'cancel' },
-          {
-            text: 'Retry',
-            onPress: () => uploadRecording(uri, durationSeconds)
-          }
-        ]
-      );
-
-      setRecordingState('completed');
-    }
-  };
 
   const resetRecording = () => {
     setRecordingState('idle');
     setRecordingDuration(0);
-    setUploadProgress(0);
-    setRecordingId(null);
     // Clear any pending timeouts
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -392,62 +304,6 @@ export const RecordScreen: React.FC = () => {
     if (autoStopTimerRef.current) {
       clearTimeout(autoStopTimerRef.current);
       autoStopTimerRef.current = null;
-    }
-  };
-
-  const pollForAnalysisCompletion = async (recordingId: string, attempt: number = 0) => {
-    console.log(`[POLLING] Attempt ${attempt + 1}/40 for recording ${recordingId}`);
-    const maxAttempts = 40; // 40 attempts * 3 seconds = 2 minutes max
-
-    if (attempt >= maxAttempts) {
-      console.log('[POLLING] Timeout - navigating to home screen');
-      navigation.navigate('MainTabs', { screen: 'Home' });
-      return;
-    }
-
-    try {
-      // Check if analysis is complete
-      console.log('[POLLING] Calling getAnalysis...');
-      const analysis = await recordingService.getAnalysis(recordingId);
-
-      // If we got the analysis successfully, send notification if enabled
-      console.log('[POLLING] Analysis complete!');
-
-      // Check if new report notifications are enabled
-      try {
-        const prefsJson = await AsyncStorage.getItem('@notification_preferences');
-        if (prefsJson) {
-          const prefs = JSON.parse(prefsJson);
-          if (prefs.newReportNotification !== false) {
-            // Send notification
-            await sendNewReportNotification('play session');
-            console.log('[POLLING] New report notification sent');
-          }
-        }
-      } catch (notifError) {
-        console.error('[POLLING] Failed to send notification:', notifError);
-        // Don't block navigation if notification fails
-      }
-
-      // Navigate to home screen
-      console.log('[POLLING] Navigating to home...');
-      navigation.navigate('MainTabs', { screen: 'Home' });
-      console.log('[POLLING] Navigated to home');
-    } catch (error: any) {
-      // If still processing or transcribing, wait and try again
-      const errorMsg = error.message.toLowerCase();
-      console.log(`[POLLING] Error: ${error.message}`);
-      if (errorMsg.includes('processing') || errorMsg.includes('transcription') || errorMsg.includes('in progress')) {
-        console.log(`[POLLING] Still processing, will retry in 3s (attempt ${attempt + 1}/${maxAttempts})`);
-        const timeout = setTimeout(() => {
-          pollForAnalysisCompletion(recordingId, attempt + 1);
-        }, 3000);
-        timeoutRef.current = timeout;
-      } else {
-        // Other error - navigate to home screen anyway
-        console.error('[POLLING] Unexpected error - navigating to home screen:', error);
-        navigation.navigate('MainTabs', { screen: 'Home' });
-      }
     }
   };
 
@@ -510,19 +366,19 @@ export const RecordScreen: React.FC = () => {
         )}
 
         {/* Upload Progress */}
-        {recordingState === 'uploading' && (
+        {uploadProcessing.state === 'uploading' && (
           <View style={styles.uploadContainer}>
             <ActivityIndicator size="large" color={COLORS.textDark} />
             <Text style={styles.uploadText}>Uploading recording...</Text>
             <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { width: `${uploadProgress}%` }]} />
+              <View style={[styles.progressBar, { width: `${uploadProcessing.uploadProgress}%` }]} />
             </View>
-            <Text style={styles.progressText}>{uploadProgress}%</Text>
+            <Text style={styles.progressText}>{uploadProcessing.uploadProgress}%</Text>
           </View>
         )}
 
         {/* Processing State */}
-        {recordingState === 'processing' && (
+        {uploadProcessing.state === 'processing' && (
           <View style={styles.processingContainer}>
             <View style={styles.dragonIconContainer}>
               <Image
@@ -549,7 +405,7 @@ export const RecordScreen: React.FC = () => {
       </ScrollView>
 
       {/* Fixed Bottom Action Buttons */}
-      {recordingState === 'idle' && (
+      {recordingState === 'idle' && !uploadProcessing.isProcessing && (
         <View style={styles.fixedButtonContainer}>
           <TouchableOpacity
             style={styles.actionButton}
@@ -563,7 +419,7 @@ export const RecordScreen: React.FC = () => {
         </View>
       )}
 
-      {recordingState === 'recording' && (
+      {recordingState === 'recording' && !uploadProcessing.isProcessing && (
         <View style={styles.fixedButtonContainer}>
           <TouchableOpacity
             style={[styles.actionButton, styles.stopButton]}

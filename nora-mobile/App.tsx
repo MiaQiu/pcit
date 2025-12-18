@@ -1,6 +1,7 @@
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   useFonts,
@@ -11,7 +12,25 @@ import {
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AppProvider } from './src/contexts/AppContext';
 import { OnboardingProvider } from './src/contexts/OnboardingContext';
+import { UploadProcessingProvider } from './src/contexts/UploadProcessingContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { RootStackNavigationProp } from './src/navigation/types';
+
+// Helper component that provides navigation to UploadProcessingProvider
+const AppContent: React.FC = () => {
+  const navigation = useNavigation<RootStackNavigationProp>();
+
+  const handleNavigateToHome = () => {
+    navigation.navigate('MainTabs', { screen: 'Home' });
+  };
+
+  return (
+    <UploadProcessingProvider onNavigateToHome={handleNavigateToHome}>
+      <RootNavigator />
+      <StatusBar style="dark" />
+    </UploadProcessingProvider>
+  );
+};
 
 export default function App() {
   const [fontsLoaded, fontError] = useFonts({
@@ -45,8 +64,7 @@ export default function App() {
         <AppProvider>
           <OnboardingProvider>
             <NavigationContainer>
-              <RootNavigator />
-              <StatusBar style="dark" />
+              <AppContent />
             </NavigationContainer>
           </OnboardingProvider>
         </AppProvider>
