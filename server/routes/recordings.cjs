@@ -15,6 +15,99 @@ const { createAnonymizedRequest } = require('../utils/anonymization.cjs');
 
 const router = express.Router();
 
+// ============================================================================
+// Helper Functions for Utterance Management
+// ============================================================================
+
+/**
+ * @typedef {Object} UtteranceData
+ * @property {string} speaker - Speaker ID (e.g., 'speaker_0')
+ * @property {string} text - Utterance text
+ * @property {number} start - Start time in seconds
+ * @property {number} end - End time in seconds
+ * @property {string} [role] - 'adult' or 'child' (added after role identification)
+ * @property {string} [tag] - PCIT coding tag (e.g., 'DO: Praise') (added after PCIT coding)
+ */
+
+/**
+ * Create utterances in database from parsed transcript data
+ * @param {string} sessionId - Session ID
+ * @param {Array<UtteranceData>} utterancesData - Array of utterance data
+ * @returns {Promise<void>}
+ */
+async function createUtterances(sessionId, utterancesData) {
+  const utteranceRecords = utterancesData.map((utt, index) => ({
+    sessionId,
+    speaker: utt.speaker,
+    text: utt.text,
+    startTime: utt.start,
+    endTime: utt.end,
+    role: utt.role || null,
+    pcitTag: utt.tag || null,
+    order: index
+  }));
+
+  await prisma.utterance.createMany({
+    data: utteranceRecords
+  });
+}
+
+/**
+ * Get utterances for a session from database
+ * @param {string} sessionId - Session ID
+ * @returns {Promise<Array>} Array of utterance records ordered by order field
+ */
+async function getUtterances(sessionId) {
+  return await prisma.utterance.findMany({
+    where: { sessionId },
+    orderBy: { order: 'asc' }
+  });
+}
+
+/**
+ * Update utterances with role information (optimized batch update)
+ * @param {string} sessionId - Session ID
+ * @param {Object} roleMap - Map of speaker ID to role (e.g., { 'speaker_0': 'child', 'speaker_1': 'adult' })
+ * @returns {Promise<void>}
+ */
+async function updateUtteranceRoles(sessionId, roleMap) {
+  // Use updateMany for each speaker (batched by speaker ID)
+  const updatePromises = Object.entries(roleMap).map(([speakerId, role]) => {
+    return prisma.utterance.updateMany({
+      where: {
+        sessionId,
+        speaker: speakerId
+      },
+      data: { role }
+    });
+  });
+
+  await Promise.all(updatePromises);
+}
+
+/**
+ * Update utterances with PCIT tags (optimized batch update with ID-based matching)
+ * @param {string} sessionId - Session ID
+ * @param {Object} tagMap - Map of utterance ID to PCIT tag
+ * @returns {Promise<void>}
+ */
+async function updateUtteranceTags(sessionId, tagMap) {
+  // Build array of updates to perform in parallel
+  const updatePromises = [];
+
+  for (const [utteranceId, tag] of Object.entries(tagMap)) {
+    updatePromises.push(
+      prisma.utterance.update({
+        where: { id: utteranceId },
+        data: { pcitTag: tag }
+      })
+    );
+  }
+
+  // Execute all updates in parallel
+  await Promise.all(updatePromises);
+}
+
 // S3 Client for downloading audio files
 const AWS_REGION = process.env.AWS_REGION || 'us-east-1';
 const s3Client = new S3Client({ region: AWS_REGION });
@@ -25,7 +118,8 @@ const S3_BUCKET = process.env.AWS_S3_BUCKET;
  * Extracted from POST /:id/transcribe endpoint for reuse
  */
 async function transcribeRecording(sessionId, userId, storagePath, durationSeconds) {
-  console.log(`Starting background transcription for session ${sessionId}`);
+  console.log(`🎤 [TRANSCRIBE-START] Session ${sessionId.substring(0, 8)} - Starting background transcription`);
+  console.log(`🎤 [TRANSCRIBE-START] Storage: ${storagePath}, User: ${userId.substring(0, 8)}`);
 
   // Get audio file from S3
   let audioBuffer;
@@ -74,8 +168,8 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
   );
 
   // Transcribe with ElevenLabs
-  let transcriptText = '';
-  let transcriptSegments = [];
+  let utterances;
+  let transcriptFormatted;
 
   try {
     console.log(`Sending to ElevenLabs for transcription (request: ${requestId})...`);
@@ -94,7 +188,7 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
     });
     formData.append('model_id', 'scribe_v1');
     formData.append('diarize', 'true');
-    formData.append('num_speakers', '2');
+    //formData.append('num_speakers', '2');
     formData.append('timestamps_granularity', 'word');
 
     const elevenLabsResponse = await fetch(
@@ -118,106 +212,71 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
 
     console.log('ElevenLabs transcription successful');
 
-    // Parse speaker_id string to number helper function
-    const parseSpeakerId = (speakerId) => {
-      if (!speakerId) return 0;
-      const match = speakerId.match(/speaker_(\d+)/);
-      return match ? parseInt(match[1], 10) : 0;
-    };
-
-    // Extract transcript and group words by speaker into utterances
-    if (result.words && result.words.length > 0) {
-      // Group words by speaker into utterances
-      let currentUtterance = {
-        speaker: parseSpeakerId(result.words[0].speaker_id).toString(),
-        text: '',
-        start: result.words[0].start,
-        end: result.words[0].end,
-      };
-
-      for (const word of result.words) {
-        const speakerId = parseSpeakerId(word.speaker_id);
-
-        if (speakerId.toString() === currentUtterance.speaker) {
-          currentUtterance.text += (currentUtterance.text ? ' ' : '') + word.text;
-          currentUtterance.end = word.end;
-        } else {
-          if (currentUtterance.text) {
-            transcriptSegments.push(currentUtterance);
-          }
-          currentUtterance = {
-            speaker: speakerId.toString(),
-            text: word.text,
-            start: word.start,
-            end: word.end,
-          };
-        }
-      }
-
-      if (currentUtterance.text) {
-        transcriptSegments.push(currentUtterance);
-      }
-
-      // Combine all segments into full transcript
-      transcriptText = transcriptSegments.map(seg => seg.text).join(' ');
-    } else if (result.text) {
-      // No diarization, single transcript
-      transcriptText = result.text;
-      transcriptSegments = [{
-        speaker: '0',
-        text: transcriptText,
-        start: 0,
-        end: durationSeconds || 0
-      }];
-    } else {
-      throw new Error('No transcript returned from ElevenLabs');
-    }
-
-  } catch (transcriptionError) {
-    console.error('Transcription error:', transcriptionError);
-    throw new Error(`Transcription failed: ${transcriptionError.message}`);
-  }
-
-  // Store transcript in database
-  try {
+    // STEP 1: Store raw ElevenLabs JSON in database
     await prisma.session.update({
       where: { id: sessionId },
       data: {
-        transcript: transcriptText,
-        // Store segments in aiFeedbackJSON temporarily
-        aiFeedbackJSON: {
-          transcriptSegments,
-          transcribedAt: new Date().toISOString(),
-          service: 'elevenlabs'
-        }
+        elevenLabsJson: result
+      }
+    });
+    console.log(`Raw ElevenLabs JSON stored for session ${sessionId}`);
+
+    // STEP 2: Parse JSON into utterances using utility function
+    const { parseElevenLabsTranscript, formatUtterancesAsText } = require('../utils/parseElevenLabsTranscript.cjs');
+    utterances = parseElevenLabsTranscript(result);
+
+    if (utterances.length === 0) {
+      throw new Error('No utterances parsed from ElevenLabs response');
+    }
+
+    // STEP 3: Format transcript for storage
+    transcriptFormatted = formatUtterancesAsText(utterances);
+
+    // Store formatted transcript and metadata
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        transcript: transcriptFormatted,
+        transcribedAt: new Date(),
+        transcriptionService: 'elevenlabs'
       }
     });
 
-    console.log(`Transcript stored for session ${sessionId} (${transcriptText.length} chars)`);
-  } catch (dbError) {
-    console.error('Database update error:', dbError);
-    throw new Error(`Failed to save transcript: ${dbError.message}`);
+    // STEP 4: Create utterance records in database
+    await createUtterances(sessionId, utterances);
+
+    console.log(`✅ [TRANSCRIBE-DONE] Session ${sessionId.substring(0, 8)} - Formatted transcript and ${utterances.length} utterances stored`);
+
+  } catch (transcriptionError) {
+    console.error(`❌ [TRANSCRIBE-ERROR] Session ${sessionId.substring(0, 8)} - Transcription error:`, transcriptionError);
+    console.error(`❌ [TRANSCRIBE-ERROR] Error stack:`, transcriptionError.stack);
+    throw new Error(`Transcription failed: ${transcriptionError.message}`);
   }
 
   // Trigger PCIT analysis in background (non-blocking)
-  analyzePCITCoding(sessionId, userId, transcriptSegments)
+  console.log(`🔄 [ANALYSIS-TRIGGER] Session ${sessionId.substring(0, 8)} - About to trigger PCIT analysis...`);
+  console.log(`🔄 [ANALYSIS-TRIGGER] Calling analyzePCITCoding(${sessionId.substring(0, 8)}, ${userId.substring(0, 8)})`);
+  analyzePCITCoding(sessionId, userId)
     .then(() => {
-      console.log(`PCIT analysis completed for session ${sessionId}`);
+      console.log(`✅ [ANALYSIS-COMPLETE] Session ${sessionId.substring(0, 8)} - PCIT analysis completed successfully`);
     })
     .catch(err => {
-      console.error(`PCIT analysis failed for session ${sessionId}:`, err.message);
+      console.error(`❌ [ANALYSIS-FAILED] Session ${sessionId.substring(0, 8)} - PCIT analysis failed:`);
+      console.error(`❌ [ANALYSIS-FAILED] Error message:`, err.message);
+      console.error(`❌ [ANALYSIS-FAILED] Error stack:`, err.stack);
+      console.error(`❌ [ANALYSIS-FAILED] Full error:`, err);
     });
 
   return {
-    transcript: transcriptText,
-    segments: transcriptSegments
+    transcript: transcriptFormatted,
+    utterances
   };
 }
 
 /**
  * Generate CDI competency analysis prompt
  */
-function generateCDICompetencyPrompt(counts, transcript, pcitCoding) {
+function generateCDICompetencyPrompt(counts, utterances) {
   const totalDonts = counts.question + counts.command + counts.criticism + counts.negative_phrases;
   const totalDos = counts.praise + counts.echo + counts.narration;
 
@@ -245,33 +304,38 @@ Total DON'T skills: ${totalDonts}
 - 3 or fewer DON'Ts (Questions + Commands + Criticisms + Negative Phrases)
 - 0 Negative Phrases
 
-**Conversation Transcript:**
-${transcript}
+**Conversation Utterances (with PCIT coding):**
+${JSON.stringify(utterances.map(u => ({
+  speaker: u.speaker,
+  role: u.role,
+  text: u.text,
+  pcitTag: u.pcitTag
+})), null, 2)}
 
 **Your Task:**
 Generate a JSON object with exactly these three fields:
 
-1. **topMoment**: One sentence from the conversation that highlights bonding between child and parent. Can be from either speaker. Choose a moment showing connection, joy, or positive interaction.
+1. **topMoment**: An exact quote from the conversation that highlights bonding between child and parent. Can be from either speaker. Choose a moment showing connection, joy, or positive interaction. Must be a direct quote from the utterances above.
 
-2. **tips**: EXACTLY 2 sentences of the MOST important tips for improvement. Be specific and actionable.
+2. **tips**: EXACTLY 2 sentences of the MOST important tips for improvement. Be specific and actionable. Reference specific utterances or patterns you observed.
 
 3. **reminder**: EXACTLY 2 sentences of encouragement or reminder for the parent. Keep it warm and supportive.
 
 **Output Format:**
 Return ONLY valid JSON in this exact structure:
 {
-  "topMoment": "exact quote from transcript",
+  "topMoment": "exact quote from utterances",
   "tips": "Exactly 2 sentences of specific tips.",
   "reminder": "Exactly 2 sentences of encouragement."
 }
 
-Keep the tone warm, encouraging, and constructive. Each field must be concise.`;
+**CRITICAL:** Return ONLY valid JSON. Do not include markdown code blocks or any text outside the JSON structure.`;
 }
 
 /**
  * Generate PDI competency analysis prompt
  */
-function generatePDICompetencyPrompt(counts, transcript, pcitCoding) {
+function generatePDICompetencyPrompt(counts, utterances) {
   const totalEffective = counts.direct_command + counts.positive_command + counts.specific_command;
   const totalIneffective = counts.indirect_command + counts.negative_command + counts.vague_command + counts.chained_command;
   const totalCommands = totalEffective + totalIneffective;
@@ -310,50 +374,80 @@ Summary:
 - No Chained Commands (one command at a time)
 - No Harsh Tone
 
-**Conversation Transcript:**
-${transcript}
+**Conversation Utterances (with PCIT coding):**
+${JSON.stringify(utterances.map(u => ({
+  speaker: u.speaker,
+  role: u.role,
+  text: u.text,
+  pcitTag: u.pcitTag
+})), null, 2)}
 
 **Your Task:**
 Generate a JSON object with exactly these three fields:
 
-1. **topMoment**: One sentence from the conversation that highlights bonding or positive interaction between child and parent. Can be from either speaker. Choose a moment showing connection, compliance, or positive interaction.
+1. **topMoment**: An exact quote from the conversation that highlights bonding or positive interaction between child and parent. Can be from either speaker. Choose a moment showing connection, compliance, or positive interaction. Must be a direct quote from the utterances above.
 
-2. **tips**: EXACTLY 2 sentences of the MOST important tips for improvement. Be specific and actionable.
+2. **tips**: EXACTLY 2 sentences of the MOST important tips for improvement. Be specific and actionable. Reference specific utterances or patterns you observed.
 
 3. **reminder**: EXACTLY 2 sentences of encouragement or reminder for the parent. Keep it warm and supportive.
 
 **Output Format:**
 Return ONLY valid JSON in this exact structure:
 {
-  "topMoment": "exact quote from transcript",
+  "topMoment": "exact quote from utterances",
   "tips": "Exactly 2 sentences of specific tips.",
   "reminder": "Exactly 2 sentences of encouragement."
 }
 
-Keep the tone warm, encouraging, and constructive. Each field must be concise.`;
+**CRITICAL:** Return ONLY valid JSON. Do not include markdown code blocks or any text outside the JSON structure.`;
 }
 
 /**
  * Analyze PCIT coding for transcript
  * Called after transcription completes
+ * Retrieves transcript data from database
  */
-async function analyzePCITCoding(sessionId, userId, transcriptSegments) {
-  console.log(`Starting PCIT analysis for session ${sessionId}`);
+async function analyzePCITCoding(sessionId, userId) {
+  console.log(`\n${'='.repeat(80)}`);
+  console.log(`🏷️  [ANALYSIS-START] Session ${sessionId.substring(0, 8)} - Starting PCIT analysis`);
+  console.log(`🏷️  [ANALYSIS-START] User: ${userId.substring(0, 8)}`);
+  console.log(`${'='.repeat(80)}\n`);
 
-  // Get session to check mode (CDI vs PDI)
+  // Get session
+  console.log(`📊 [ANALYSIS-STEP-1] Fetching session from database...`);
   const session = await prisma.session.findUnique({
     where: { id: sessionId }
   });
 
   if (!session) {
+    console.error(`❌ [ANALYSIS-ERROR] Session ${sessionId} not found in database`);
     throw new Error('Session not found');
   }
+  console.log(`✅ [ANALYSIS-STEP-1] Session found, mode: ${session.mode}`);
+
+  // Get utterances from database
+  console.log(`📊 [ANALYSIS-STEP-2] Fetching utterances from database...`);
+  const utterances = await getUtterances(sessionId);
+  console.log(`✅ [ANALYSIS-STEP-2] Found ${utterances.length} utterances`);
+
+  if (utterances.length === 0) {
+    throw new Error('No utterances found in session data');
+  }
+
+  // Convert to format expected by role identification prompt
+  const utterancesForPrompt = utterances.map(utt => ({
+    speaker: utt.speaker,
+    text: utt.text,
+    start: utt.startTime,
+    end: utt.endTime
+  }));
 
   // Format transcript for PCIT coding
-  const formattedTranscript = transcriptSegments.map((seg, idx) => ({
-    speaker: parseInt(seg.speaker),
-    text: seg.text
-  }));
+  // Parse speaker_id (e.g., "speaker_0" -> 0)
+  // const formattedTranscript = utterances.map(utt => ({
+  //   speaker: parseInt(utt.speaker.replace('speaker_', '')),
+  //   text: utt.text
+  // }));
 
   // Call appropriate PCIT coding endpoint based on mode
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -362,48 +456,458 @@ async function analyzePCITCoding(sessionId, userId, transcriptSegments) {
   }
 
   const isCDI = session.mode === 'CDI';
-  const codingEndpoint = isCDI ? 'speaker-and-coding' : 'pdi-speaker-and-coding';
 
-  // Format transcript for the prompt
-  const formattedScript = formattedTranscript
-    .map(u => `Speaker ${u.speaker}: "${u.text}"`)
-    .join('\n');
+  // STEP 1: Identify parent speaker
+//   const identifyParentPrompt = `You are an expert in analyzing parent-child conversations. Your task is to identify which speaker is the parent in this conversation.
 
-  const prompt = isCDI
-    ? `You are an expert PCIT (Parent-Child Interaction Therapy) Coder. Your task is to:
-1. Identify which speaker is the parent (usually the one with more instructions/questions/praise)
-2. Apply PCIT coding tags to every parent utterance
+// **Input Utterances (JSON):**
+// ${JSON.stringify(utterances, null, 2)}
 
-**Input Transcript:**
-${formattedScript}
+// **Instructions:**
+// Analyze the conversation and identify which speaker is the parent. The parent is usually:
+// - The one giving more instructions, questions, or commands
+// - The one providing guidance or praise
+// - The one directing the activity
 
-**PCIT Coding Rules (PEN Skills):**
-[DO: Praise] - Labeled or unlabeled praise for child's behavior
-[DO: Echo] - Repeating or paraphrasing child's words
-[DO: Narration] - Narrating child's ongoing behavior
-[DON'T: Question] - Direct or indirect questions
-[DON'T: Command] - Direct or indirect commands
-[DON'T: Criticism] - Criticism of child's behavior, appearance, or character
-[DON'T: Negative Phrases] - Sarcasm, threats, physical control statements
-[Neutral] - Neutral statements that don't fall into DO or DON'T
+// **Output Format:**
+// Return ONLY a single number representing the parent speaker (0, 1, 2, etc.)
+// Do not include any other text or explanation.
+
+// Example output:
+// 0`;
+
+  const identifyParentPrompt = `You are an expert in child language development and parent-child interaction analysis.
+
+**TASK:** Analyze this parent-child interaction transcript and identify each speaker's role (CHILD or ADULT).
+
+**CONTEXT:** 
+- Children are ages 2-7 years old (preschool to early elementary)
+- There may be multiple adults (parents, grandparents, helpers, guests)
+- There may be multiple children
+- Conversations may include Chinese, English, or code-mixing
+
+---
+
+**IDENTIFICATION CRITERIA:**
+
+**CHILD INDICATORS (Ages 2-7):**
+
+**Strong Evidence:**
+- Repetitive/echolalic speech (repeating what adult just said)
+- Egocentric language: "I want", "mine", "me", "给我" (give me)
+- Present-focused: "now", "here", immediate needs/desires
+- Request patterns: "I want X", "可以吗?" (can I?), "给我..." (give me)
+- Play-related vocabulary: toys, animals, colors, simple actions
+- Emotional expressions: "哎呀!" (oops!), "不要!" (don't want!), whining, crying sounds
+- Questions about objects: "这是什么?" (what's this?), "在哪里?" (where is it?)
+- Incomplete sentences: missing subjects or verbs
+- Seeking approval: "好不好?" (is this OK?), "妈妈你看" (mama look)
+
+**Moderate Evidence:**
+- Simple grammar (may have errors even in older children)
+- Concrete language (rarely uses abstract concepts like "responsibility")
+- Simple connectors: prefers "and", "then" over "because", "although"
+- Echoing adult words, especially English words
+
+**DO NOT Rely Solely On:**
+- Utterance length (7-year-olds can produce long, complex sentences)
+- Character count (varies greatly by age and language)
+
+---
+
+**ADULT INDICATORS:**
+
+**Strong Evidence:**
+- Commands/directives: "把东西收起来" (put things away), "cleanup", "put it here"
+- Teaching questions: "What color is that?", "Can you count them?", "这是什么颜色?" (what color?)
+- Praise patterns: "真棒!" (great job!), "Good!", "你很棒!" (you're awesome!)
+- Conditional statements: "If you..., then...", "等一下..." (wait a moment...)
+- Explanatory language: giving reasons using "because", "so that"
+- Time references: past/future tense, planning ahead
+- Behavior management: "要听话" (be good), "listen to me", meta-talk about behavior
+- Politeness coaching: "说谢谢" (say thank you), "say please"
+- Indirect commands: "你把...好吗?" (can you... OK?) - classic adult pattern in Chinese
+- Third-person self-reference: "妈妈要..." (mama wants...) - parent speaking about themselves
+
+**Moderate Evidence:**
+- Complex syntax: embedded clauses, multiple verbs in one sentence
+- Abstract vocabulary: emotions, values, time concepts, reasoning
+- Language mixing: code-switching between English and Chinese (adults do this more frequently)
+- Checking comprehension: "明白吗?" (understand?), "好吗?" (OK?)
+- Longer average utterances (but compare relatively within this transcript)
+
+---
+
+**ANALYSIS PROCESS:**
+
+1. **Count indicators:** For each speaker, count how many utterances contain CHILD vs ADULT indicators
+
+2. **Look for patterns:** Don't judge based on single utterances; look for consistent patterns across all their speech
+
+3. **Relative comparison:** Compare speakers to each other (who is shortest/longest, simplest/most complex)
+
+4. **Consider context:** Who is giving commands to whom? Who is seeking approval from whom?
+
+5. **Flag ambiguity:** If confidence < 0.70, mark as ambiguous and explain why
+
+---
+
+**SPECIAL CASES:**
+
+**Case 1: Older sibling (6-7yo) giving commands to younger sibling**
+- Mark as CHILD if: They also play with toys, receive commands from adults, seek approval
+- Mark as ADULT if: Consistently in caregiver role, no one directs them, sustained teaching behavior
+
+**Case 2: Very quiet adult (helper/grandparent with minimal speech)**
+- Look for: Who are they responding to? Do they receive commands or give them?
+- Default to ADULT if: Responding to children, giving acknowledgments, even if brief
+
+**Case 3: Child with advanced language (5-7yo)**
+- Can produce complex sentences but still shows: request patterns, seeking approval, play focus, egocentric language
+- Mark as CHILD even if utterances are long
+
+**Case 4: Code-mixing patterns**
+- Adults: More likely to insert English commands into Chinese speech ("cleanup", "OK", "good job")
+- Children: More likely to echo English words they just heard from adults
+
+**Case 5: Very short utterances ("嗯", "好", "哦")**
+- Context matters: Are they responding to adult questions (→ likely CHILD) or acknowledging child speech (→ likely ADULT)?
+- If still unclear, mark ambiguous
+
+---
+
+**CONFIDENCE LEVELS:**
+
+- **High (0.85-1.0):** Clear, strong indicators with consistent patterns
+- **Moderate (0.70-0.84):** Some indicators present, but mixed signals or limited data
+- **Low (0.0-0.69):** Ambiguous case, flag for human review
+
+When confidence < 0.70, you MUST set "ambiguous": true and explain the reasoning.
+
+---
+
+**INPUT DATA:**
+${JSON.stringify(utterancesForPrompt, null, 2)}
+
+---
+
+**OUTPUT FORMAT (JSON only):**
+
+Return ONLY valid JSON with this exact structure:
+
+{{
+  "speaker_identification": {{
+    "speaker_0": {{
+      "role": "CHILD",
+      "confidence": 0.95,
+      "reasoning": "Strong child indicators: 4 request patterns ('我要...'), 3 emotional expressions ('哎呀!'), seeking approval ('好不好?'), play-focused vocabulary",
+      "child_indicators_count": 8,
+      "adult_indicators_count": 0,
+      "utterance_count": 12,
+      "ambiguous": false,
+      "ambiguous_reason": null
+    }},
+    "speaker_1": {{
+      "role": "ADULT",
+      "confidence": 0.98,
+      "reasoning": "Strong adult indicators: 5 commands, code-mixing ('cleanup'), teaching politeness ('谢谢'), behavior management",
+      "child_indicators_count": 0,
+      "adult_indicators_count": 9,
+      "utterance_count": 11,
+      "ambiguous": false,
+      "ambiguous_reason": null
+    }},
+    "speaker_2": {{
+      "role": "ADULT",
+      "confidence": 0.92,
+      "reasoning": "Adult indicators: indirect commands ('你把...好吗?'), praise with specificity ('阿雅在收拾啦，你真棒!'), inclusive planning ('我们一起收吧')",
+      "child_indicators_count": 0,
+      "adult_indicators_count": 7,
+      "utterance_count": 13,
+      "ambiguous": false,
+      "ambiguous_reason": null
+    }}
+  }},
+  
+  "analysis_summary": {{
+    "total_speakers": 3,
+    "total_children": 1,
+    "total_adults": 2,
+    "challenging_cases": [],
+    "notes": "Clear role differentiation. Speaker_0 shows consistent child patterns (requests, approval-seeking). Speaker_1 and speaker_2 both show strong parenting behaviors."
+  }}
+}}
+
+**CRITICAL:** Return ONLY the JSON object above. Do not include markdown code blocks, explanations, or any text outside the JSON structure.`;
+
+  console.log(`📊 [ANALYSIS-STEP-3] Calling Claude API for role identification...`);
+
+  const identifyResponse = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 2048,
+      temperature: 0.3,
+      messages: [{
+        role: 'user',
+        content: identifyParentPrompt
+      }]
+    })
+  });
+
+  if (!identifyResponse.ok) {
+    const errorData = await identifyResponse.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Claude API error (identify parent): ${identifyResponse.status}`);
+  }
+
+  const identifyData = await identifyResponse.json();
+  const roleIdentificationText = identifyData.content[0].text.trim();
+  console.log(`✅ [ANALYSIS-STEP-3] Claude API response received, length: ${roleIdentificationText.length} chars`);
+
+  // Parse the JSON response
+  console.log(`📊 [ANALYSIS-STEP-4] Parsing role identification JSON...`);
+  let roleIdentificationJson;
+  let adultSpeakers = [];
+  try {
+    // Remove markdown code blocks if present
+    const cleanJson = roleIdentificationText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    roleIdentificationJson = JSON.parse(cleanJson);
+    console.log(`✅ [ANALYSIS-STEP-4] JSON parsed successfully`);
+
+    // Extract all adult speakers from speaker_identification
+    const speakerIdentification = roleIdentificationJson.speaker_identification || {};
+
+    for (const [speakerId, speakerInfo] of Object.entries(speakerIdentification)) {
+      if (speakerInfo.role === 'ADULT') {
+        adultSpeakers.push({
+          id: speakerId,
+          confidence: speakerInfo.confidence,
+          utteranceCount: speakerInfo.utterance_count || 0
+        });
+      }
+    }
+
+    // Sort adults by utterance count (most active first)
+    adultSpeakers.sort((a, b) => b.utteranceCount - a.utteranceCount);
+
+    if (adultSpeakers.length === 0) {
+      throw new Error('No adult speakers found in role identification');
+    }
+
+    console.log(`Adult speakers identified: ${adultSpeakers.map(a => a.id).join(', ')}`);
+    console.log('Role identification:', JSON.stringify(roleIdentificationJson, null, 2));
+
+  } catch (parseError) {
+    console.error('Failed to parse role identification JSON:', parseError.message);
+    console.log('Raw response:', roleIdentificationText);
+    throw new Error(`Failed to parse role identification: ${parseError.message}`);
+  }
+
+  // Build role map from speaker identification
+  console.log(`📊 [ANALYSIS-STEP-5] Building role map and updating database...`);
+  const speakerIdentification = roleIdentificationJson.speaker_identification || {};
+  const roleMap = {};
+  for (const [speakerId, speakerInfo] of Object.entries(speakerIdentification)) {
+    roleMap[speakerId] = speakerInfo.role.toLowerCase();
+  }
+  console.log(`   Role map: ${JSON.stringify(roleMap)}`);
+
+  // Update utterances with role information in database
+  await updateUtteranceRoles(sessionId, roleMap);
+  console.log(`✅ [ANALYSIS-STEP-5] Updated roles for ${Object.keys(roleMap).length} speakers`);
+
+  // Store role identification JSON in session
+  await prisma.session.update({
+    where: { id: sessionId },
+    data: {
+      roleIdentificationJson
+    }
+  });
+  console.log(`✅ [ANALYSIS-STEP-5] Role identification JSON stored in session`);
+
+  // Get updated utterances for PCIT coding
+  console.log(`📊 [ANALYSIS-STEP-6] Fetching updated utterances with roles for PCIT coding...`);
+  const utterancesWithRoles = await getUtterances(sessionId);
+  console.log(`✅ [ANALYSIS-STEP-6] Got ${utterancesWithRoles.length} utterances with roles`);
+
+  // STEP 2: Apply PCIT coding to adult utterances
+  console.log(`📊 [ANALYSIS-STEP-7] Preparing PCIT coding prompt...`);
+  const adultSpeakerIds = adultSpeakers.map(a => a.id).join(', ');
+  console.log(`   Adult speakers: ${adultSpeakerIds}`);
+
+  const codingPrompt = isCDI
+    ? `**System Role:**
+You are an expert PCIT (Parent-Child Interaction Therapy) Coder using DPICS standards. You analyze parent verbalizations and classify them into specific codes based on the provided schema.
+
+**Instructions:**
+Analyze the conversation. Iterate through the 'codes' list. Check the 'priority_rank' (lower number = check first). If a sentence meets the criteria for multiple codes, assign the one with the lowest priority_rank (highest priority).
+
+**Coding Schema:**
+{
+  "codes": [
+    {
+      "name": "Echo",
+      "category": "DO",
+      "priority_rank": 1,
+      "definition": "A repetition or paraphrase of the child's verbalization.",
+      "rules": [
+        "Can interpret the child's meaning.",
+        "Overrides Question coding even if it has a rising tone.",
+        "Overrides Command coding if repeating a command."
+      ],
+      "examples": [
+        "Child: 'I go car.' -> Parent: 'You are going to the car.'",
+        "Child: 'No!' -> Parent: 'You don't want to.'",
+        "Child: 'Big dog.' -> Parent: 'It is a big dog?' (Rising tone implies confirmation of meaning, so it is RF)"
+      ]
+    },
+    {
+      "name": "Labeled Praise",
+      "category": "DO",
+      "priority_rank": 2,
+      "definition": "A positive evaluation of a specific behavior or attribute.",
+      "examples": [
+        "Good job sitting still.",
+        "I love how you are sharing.",
+        "Nice drawing of a star."
+      ]
+    },
+    {
+      "name": "Unlabeled Praise",
+      "category": "DO",
+      "priority_rank": 3,
+      "definition": "A general positive evaluation without specifying the behavior.",
+      "examples": [
+        "Good job!",
+        "Nice!",
+        "High five!",
+        "Thank you."
+      ]
+    },
+    {
+      "name": "Narration",
+      "category": "DO",
+      "priority_rank": 4,
+      "definition": "Verbal description of the child's current, observable behavior.",
+      "rules": [
+        "Subject must be 'You' (the child).",
+        "Verb must be present tense.",
+        "Must be observable (no thinking/feeling)."
+      ],
+      "examples": [
+        "You are drawing a red circle.",
+        "You are putting the block on top."
+      ]
+    },
+    {
+      "name": "Direct Command",
+      "category": "DONT",
+      "priority_rank": 5,
+      "definition": "A clearly stated order or direction for behavior.",
+      "keywords": ["stop", "come", "sit", "look", "watch"],
+      "rules": ["Includes 'Look', 'Watch', 'See' as commands."],
+      "examples": [
+        "Hand me that.",
+        "Sit down please.",
+        "Look at this."
+      ]
+    },
+    {
+      "name": "Indirect Command",
+      "category": "DONT",
+      "priority_rank": 6,
+      "definition": "A suggestion or polite request for behavior that implies a choice.",
+      "keywords": ["let's", "can you", "will you", "would you"],
+      "examples": [
+        "Let's clean up.",
+        "Can you hand me the toy?",
+        "How about we draw?"
+      ]
+    },
+    {
+      "name": "Question",
+      "category": "DONT",
+      "priority_rank": 7,
+      "definition": "A request for a verbal answer or information.",
+      "rules": [
+        "Includes tag questions (right?, okay?).",
+        "Excludes requests for physical action (which are Commands)."
+      ],
+      "examples": [
+        "What color is this?",
+        "Are you having fun?",
+        "It's green, right?"
+      ]
+    },
+    {
+      "name": "Negative Talk",
+      "category": "DONT",
+      "priority_rank": 8,
+      "definition": "Verbal expression of disapproval or criticism.",
+      "examples": [
+        "That's wrong.",
+        "Don't be messy.",
+        "I don't like that."
+      ]
+    },
+    {
+      "name": "NEUTRAL",
+      "category": "NEUTRAL",
+      "priority_rank": 9,
+      "definition": "Declarative sentences that do not fit other categories.",
+      "rules": [
+        "Descriptions of own behavior (I am...)",
+        "Descriptions of objects (It is...)",
+        "Past/Future descriptions."
+      ],
+      "examples": [
+        "I am going to build a tower.",
+        "It is a blue block.",
+        "We went to the park yesterday."
+      ]
+    }
+  ]
+}
+
+**Input Utterances (Array of objects with index for identification):**
+${JSON.stringify(utterancesWithRoles.map((utt, idx) => ({
+  index: idx,
+  id: utt.id,
+  speaker: utt.speaker,
+  text: utt.text,
+  role: utt.role
+})), null, 2)}
+
+**Task:**
+Classify ONLY adult utterances based on the schema above. Return valid JSON only.
 
 **Output Format:**
-First line: PARENT_SPEAKER: <number>
+Return a JSON array with one entry for EACH adult utterance:
+[
+  {
+    "id": "abc-123",
+    "tag": "Echo",
+    "reasoning": "Parent repeating child's verbalization"
+  }
+]
 
-Then, for EACH parent utterance, provide:
-"<exact quote>" [Tag] - Brief explanation
+**CRITICAL:** Return ONLY a valid JSON array. No markdown code blocks.`
 
-Example:
-PARENT_SPEAKER: 0
-"You're building a tall tower!" [DO: Narration] - Narrating ongoing play
-"Great job stacking those blocks neatly!" [DO: Praise] - Labeled praise
-"What color should we use next?" [DON'T: Question] - Asking a question`
-    : `You are an expert PCIT (Parent-Child Interaction Therapy) Coder. Your task is to:
-1. Identify which speaker is the parent (usually the one giving directions/commands)
-2. Apply PDI (Parent-Directed Interaction) coding tags to every parent utterance
+    : `You are an expert PCIT (Parent-Child Interaction Therapy) Coder. Apply PDI coding tags to every adult utterance.
 
-**Input Transcript:**
-${formattedScript}
+**Input Utterances (Array of objects with index for identification):**
+${JSON.stringify(utterancesWithRoles.map((utt, idx) => ({
+  index: idx,
+  id: utt.id,
+  speaker: utt.speaker,
+  text: utt.text,
+  role: utt.role
+})), null, 2)}
 
 **PDI Coding Rules:**
 
@@ -424,13 +928,37 @@ ${formattedScript}
 
 [Neutral] - Neutral statements that don't fall into DO or DON'T
 
+**Instructions:**
+1. Code ONLY utterances where role === "adult"
+2. Every adult utterance must receive exactly one tag
+3. Use the utterance ID to identify which utterance you're tagging
+
 **Output Format:**
-First line: PARENT_SPEAKER: <number>
+Return a JSON array with one entry for EACH adult utterance. Each entry must include:
+- id: The utterance ID from the input
+- tag: The PCIT tag (exactly as shown above, e.g., "DO: Direct Command")
+- reasoning: Brief explanation (1 sentence)
 
-Then, for EACH parent utterance, provide:
-"<exact quote>" [Tag] - Brief explanation`;
+Example output:
+[
+  {
+    "id": "abc-123",
+    "tag": "DO: Direct Command",
+    "reasoning": "Clear, specific command to put block in location"
+  },
+  {
+    "id": "def-456",
+    "tag": "DON'T: Indirect Command",
+    "reasoning": "Phrased as a question rather than direct command"
+  }
+]
 
-  // Call Claude API
+**CRITICAL:** Return ONLY a valid JSON array. Do not include markdown code blocks, explanations, or any text outside the JSON structure.`;
+
+  console.log(`📊 [ANALYSIS-STEP-8] Calling Claude API for PCIT coding...`);
+  console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
+
+  // Call Claude API for PCIT coding
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -444,64 +972,127 @@ Then, for EACH parent utterance, provide:
       temperature: 0.3,
       messages: [{
         role: 'user',
-        content: prompt
+        content: codingPrompt
       }]
     })
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `Claude API error: ${response.status}`);
+    throw new Error(errorData.error?.message || `Claude API error (PCIT coding): ${response.status}`);
   }
 
   const data = await response.json();
   const fullResponse = data.content[0].text;
 
-  // Extract parent speaker
-  const parentSpeakerMatch = fullResponse.match(/PARENT_SPEAKER:\s*(\d+)/i);
-  const parentSpeaker = parentSpeakerMatch ? parseInt(parentSpeakerMatch[1], 10) : 0;
+  // Parse JSON response
+  let codingResults;
+  try {
+    // Remove markdown code blocks if present
+    const cleanJson = fullResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    codingResults = JSON.parse(cleanJson);
 
-  // Extract coding
-  const codingStartIndex = fullResponse.indexOf('\n', fullResponse.indexOf('PARENT_SPEAKER:'));
-  const coding = codingStartIndex > 0 ? fullResponse.substring(codingStartIndex).trim() : fullResponse;
-
-  // Parse coding to count tags
-  const tagCounts = {};
-  if (isCDI) {
-    tagCounts.praise = (coding.match(/\[DO: Praise\]/gi) || []).length;
-    tagCounts.echo = (coding.match(/\[DO: Echo\]/gi) || []).length;
-    tagCounts.narration = (coding.match(/\[DO: Narration\]/gi) || []).length;
-    tagCounts.question = (coding.match(/\[DON'T: Question\]/gi) || []).length;
-    tagCounts.command = (coding.match(/\[DON'T: Command\]/gi) || []).length;
-    tagCounts.criticism = (coding.match(/\[DON'T: Criticism\]/gi) || []).length;
-    tagCounts.negative_phrases = (coding.match(/\[DON'T: Negative Phrases\]/gi) || []).length;
-    tagCounts.neutral = (coding.match(/\[Neutral\]/gi) || []).length;
-  } else {
-    tagCounts.direct_command = (coding.match(/\[DO: Direct Command\]/gi) || []).length;
-    tagCounts.positive_command = (coding.match(/\[DO: Positive Command\]/gi) || []).length;
-    tagCounts.specific_command = (coding.match(/\[DO: Specific Command\]/gi) || []).length;
-    tagCounts.labeled_praise = (coding.match(/\[DO: Labeled Praise\]/gi) || []).length;
-    tagCounts.correct_warning = (coding.match(/\[DO: Correct Warning\]/gi) || []).length;
-    tagCounts.correct_timeout = (coding.match(/\[DO: Correct Time-Out Statement\]/gi) || []).length;
-    tagCounts.indirect_command = (coding.match(/\[DON'T: Indirect Command\]/gi) || []).length;
-    tagCounts.negative_command = (coding.match(/\[DON'T: Negative Command\]/gi) || []).length;
-    tagCounts.vague_command = (coding.match(/\[DON'T: Vague Command\]/gi) || []).length;
-    tagCounts.chained_command = (coding.match(/\[DON'T: Chained Command\]/gi) || []).length;
-    tagCounts.harsh_tone = (coding.match(/\[DON'T: Harsh Tone\]/gi) || []).length;
-    tagCounts.neutral = (coding.match(/\[Neutral\]/gi) || []).length;
+    if (!Array.isArray(codingResults)) {
+      throw new Error('Expected array of coding results');
+    }
+  } catch (parseError) {
+    console.error('Failed to parse PCIT coding JSON:', parseError.message);
+    console.log('Raw response:', fullResponse);
+    throw new Error(`Failed to parse PCIT coding response: ${parseError.message}`);
   }
 
-  // Get competency analysis based on tag counts and transcript
+  // Build ID-to-tag map for efficient updates
+  const tagMap = {};
+  for (const result of codingResults) {
+    if (result.id && result.tag) {
+      tagMap[result.id] = result.tag;
+    }
+  }
+
+  // Update utterances with PCIT tags in database
+  await updateUtteranceTags(sessionId, tagMap);
+
+  console.log(`Updated tags for ${Object.keys(tagMap).length} utterances`);
+
+  // Count tags from JSON results
+  const tagCounts = {};
+  if (isCDI) {
+    tagCounts.echo = 0;
+    tagCounts.labeled_praise = 0;
+    tagCounts.unlabeled_praise = 0;
+    tagCounts.praise = 0; // Combined praise for backward compatibility
+    tagCounts.narration = 0;
+    tagCounts.direct_command = 0;
+    tagCounts.indirect_command = 0;
+    tagCounts.command = 0; // Combined commands for backward compatibility
+    tagCounts.question = 0;
+    tagCounts.negative_talk = 0;
+    tagCounts.neutral = 0;
+
+    for (const result of codingResults) {
+      const tag = result.tag;
+      if (tag === 'Echo') tagCounts.echo++;
+      else if (tag === 'Labeled Praise') {
+        tagCounts.labeled_praise++;
+        tagCounts.praise++;
+      }
+      else if (tag === 'Unlabeled Praise') {
+        tagCounts.unlabeled_praise++;
+        //tagCounts.praise++;
+      }
+      else if (tag === 'Narration') tagCounts.narration++;
+      else if (tag === 'Direct Command') {
+        tagCounts.direct_command++;
+        tagCounts.command++;
+      }
+      else if (tag === 'Indirect Command') {
+        tagCounts.indirect_command++;
+        tagCounts.command++;
+      }
+      else if (tag === 'Question') tagCounts.question++;
+      else if (tag === 'Negative Talk') tagCounts.negative_talk++;
+      else if (tag === 'NEUTRAL') tagCounts.neutral++;
+    }
+  } else {
+    tagCounts.direct_command = 0;
+    tagCounts.positive_command = 0;
+    tagCounts.specific_command = 0;
+    tagCounts.labeled_praise = 0;
+    tagCounts.correct_warning = 0;
+    tagCounts.correct_timeout = 0;
+    tagCounts.indirect_command = 0;
+    tagCounts.negative_command = 0;
+    tagCounts.vague_command = 0;
+    tagCounts.chained_command = 0;
+    tagCounts.harsh_tone = 0;
+    tagCounts.neutral = 0;
+
+    for (const result of codingResults) {
+      const tag = result.tag;
+      if (tag === 'DO: Direct Command') tagCounts.direct_command++;
+      else if (tag === 'DO: Positive Command') tagCounts.positive_command++;
+      else if (tag === 'DO: Specific Command') tagCounts.specific_command++;
+      else if (tag === 'DO: Labeled Praise') tagCounts.labeled_praise++;
+      else if (tag === 'DO: Correct Warning') tagCounts.correct_warning++;
+      else if (tag === 'DO: Correct Time-Out Statement') tagCounts.correct_timeout++;
+      else if (tag === "DON'T: Indirect Command") tagCounts.indirect_command++;
+      else if (tag === "DON'T: Negative Command") tagCounts.negative_command++;
+      else if (tag === "DON'T: Vague Command") tagCounts.vague_command++;
+      else if (tag === "DON'T: Chained Command") tagCounts.chained_command++;
+      else if (tag === "DON'T: Harsh Tone") tagCounts.harsh_tone++;
+      else if (tag === 'Neutral') tagCounts.neutral++;
+    }
+  }
+
+  // Get competency analysis based on tag counts and utterances
   let competencyAnalysis = null;
   try {
-    // Format transcript for the prompt
-    const transcriptText = formattedTranscript
-      .map(u => `Speaker ${u.speaker}: "${u.text}"`)
-      .join('\n');
+    // Get updated utterances with tags from database
+    const utterancesWithTags = await getUtterances(sessionId);
 
     const competencyPrompt = isCDI
-      ? generateCDICompetencyPrompt(tagCounts, transcriptText, coding)
-      : generatePDICompetencyPrompt(tagCounts, transcriptText, coding);
+      ? generateCDICompetencyPrompt(tagCounts, utterancesWithTags)
+      : generatePDICompetencyPrompt(tagCounts, utterancesWithTags);
 
     const competencyResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -591,8 +1182,8 @@ Then, for EACH parent utterance, provide:
     where: { id: sessionId },
     data: {
       pcitCoding: {
-        parentSpeaker,
-        coding,
+        adultSpeakers,
+        codingResults,
         fullResponse,
         analyzedAt: new Date().toISOString()
       },
@@ -724,12 +1315,14 @@ router.post('/upload', requireAuth, upload.single('audio'), async (req, res) => 
 
     // Trigger transcription automatically in the background
     // Don't wait for it to complete - return success immediately
+    console.log(`🚀 [UPLOAD] Triggering background transcription for session ${sessionId}`);
     transcribeRecording(sessionId, userId, storagePath, durationSeconds)
       .then(() => {
-        console.log(`Background transcription completed for session ${sessionId}`);
+        console.log(`✅ [UPLOAD] Background transcription completed for session ${sessionId}`);
       })
       .catch(err => {
-        console.error(`Background transcription failed for session ${sessionId}:`, err);
+        console.error(`❌ [UPLOAD] Background transcription failed for session ${sessionId}:`, err);
+        console.error(`❌ [UPLOAD] Error stack:`, err.stack);
       });
 
     // Return success response immediately
@@ -850,8 +1443,16 @@ router.get('/:id/analysis', async (req, res) => {
       });
     }
 
-    // Extract transcript segments from aiFeedbackJSON
-    const transcriptSegments = session.aiFeedbackJSON?.transcriptSegments || [];
+    // Get utterances from database
+    const utterances = await getUtterances(session.id);
+    const transcriptSegments = utterances.map(utt => ({
+      speaker: utt.speaker,
+      text: utt.text,
+      start: utt.startTime,
+      end: utt.endTime,
+      role: utt.role,
+      tag: utt.pcitTag
+    }));
 
     // Format skills data for the report
     const isCDI = session.mode === 'CDI';
@@ -862,12 +1463,12 @@ router.get('/:id/analysis', async (req, res) => {
     let noraScore = 0;
 
     if (isCDI) {
-      // CDI mode - PRN skills
+      // CDI mode - PEN skills
       const tagCounts = session.tagCounts || {};
       skills = [
-        { label: 'Praise', progress: tagCounts.praise || 0 },
-        { label: 'Reflect', progress: tagCounts.echo || 0 },
-        { label: 'Narrate', progress: tagCounts.narration || 0 }
+        { label: 'Labeled Praise', progress: tagCounts.praise || 0 },
+        { label: 'Echo', progress: tagCounts.echo || 0 },
+        { label: 'Narration', progress: tagCounts.narration || 0 }
       ];
 
       // Areas to avoid - always show all categories with counts

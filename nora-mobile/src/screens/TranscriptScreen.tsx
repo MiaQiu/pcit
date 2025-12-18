@@ -19,6 +19,8 @@ interface TranscriptSegment {
   text: string;
   start: number;
   end: number;
+  role?: string;  // 'adult' or 'child'
+  tag?: string;   // PCIT tag
 }
 
 interface PCITTag {
@@ -94,6 +96,59 @@ export const TranscriptScreen: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Light background colors for different speakers
+  const SPEAKER_COLORS = [
+    '#E3F2FD', // Light blue
+    '#FFF3E0', // Light orange
+    '#F3E5F5', // Light purple
+    '#E8F5E9', // Light green
+    '#FFF9C4', // Light yellow
+    '#FCE4EC', // Light pink
+  ];
+
+  // Build speaker label mapping and color mapping
+  const getSpeakerMappings = () => {
+    const labelMapping: { [key: string]: string } = {};
+    const colorMapping: { [key: string]: string } = {};
+    const seenSpeakers = new Set<string>();
+    const adultSpeakers: string[] = [];
+    const childSpeakers: string[] = [];
+    let colorIndex = 0;
+
+    // Group speakers by role (only add each speaker once)
+    transcriptSegments.forEach(segment => {
+      const role = segment.role;
+      if (!seenSpeakers.has(segment.speaker)) {
+        seenSpeakers.add(segment.speaker);
+        if (role === 'adult') {
+          adultSpeakers.push(segment.speaker);
+        } else if (role === 'child') {
+          childSpeakers.push(segment.speaker);
+        }
+      }
+    });
+
+    // Sort to ensure consistent ordering
+    adultSpeakers.sort();
+    childSpeakers.sort();
+
+    // Assign labels and colors
+    adultSpeakers.forEach((speaker, index) => {
+      labelMapping[speaker] = adultSpeakers.length > 1 ? `Adult ${index + 1}` : 'Adult';
+      colorMapping[speaker] = SPEAKER_COLORS[colorIndex % SPEAKER_COLORS.length];
+      colorIndex++;
+    });
+    childSpeakers.forEach((speaker, index) => {
+      labelMapping[speaker] = childSpeakers.length > 1 ? `Child ${index + 1}` : 'Child';
+      colorMapping[speaker] = SPEAKER_COLORS[colorIndex % SPEAKER_COLORS.length];
+      colorIndex++;
+    });
+
+    return { labelMapping, colorMapping };
+  };
+
+  const { labelMapping: speakerLabels, colorMapping: speakerColors } = getSpeakerMappings();
 
   const handleBack = () => {
     navigation.goBack();
@@ -222,12 +277,14 @@ export const TranscriptScreen: React.FC = () => {
         <View style={styles.legendCard}>
           <Text style={styles.legendTitle}>Speaker Legend</Text>
           <View style={styles.legendRow}>
-            <View style={[styles.speakerBadge, styles.parentBadge]}>
-              <Text style={styles.speakerBadgeText}>Parent</Text>
-            </View>
-            <View style={[styles.speakerBadge, styles.childBadge]}>
-              <Text style={styles.speakerBadgeText}>Child</Text>
-            </View>
+            {Object.entries(speakerLabels).map(([speaker, label]) => {
+              const backgroundColor = speakerColors[speaker];
+              return (
+                <View key={speaker} style={[styles.speakerLegendBadge, { backgroundColor }]}>
+                  <Text style={styles.speakerLegendText}>{label}</Text>
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -239,34 +296,54 @@ export const TranscriptScreen: React.FC = () => {
         ) : (
           <View style={styles.transcriptContainer}>
             {transcriptSegments.map((segment, index) => {
-              const isParent = segment.speaker === '0';
-              const tags = isParent ? getPCITTagsForUtterance(index, segment.text) : [];
+              const speakerLabel = speakerLabels[segment.speaker] || 'Unknown';
+              const speakerColor = speakerColors[segment.speaker] || '#FFFFFF';
+              const isAdult = speakerLabel.includes('Adult');
+              const pcitTag = segment.tag; // Get tag directly from database
+
+              // Get tag color from mapping
+              const getTagColor = (tag: string | undefined): string => {
+                if (!tag) return '#6B7280';
+
+                // New CDI tag names (without DO:/DON'T: prefix)
+                if (tag === 'Echo') return '#3B82F6'; // Blue
+                if (tag === 'Labeled Praise' || tag === 'Unlabeled Praise') return '#10B981'; // Green
+                if (tag === 'Narration') return '#8B5CF6'; // Purple
+                if (tag === 'Direct Command' || tag === 'Indirect Command') return '#EF4444'; // Red
+                if (tag === 'Question') return '#F97316'; // Orange
+                if (tag === 'Negative Talk') return '#DC2626'; // Dark red
+                if (tag === 'NEUTRAL') return '#6B7280'; // Gray
+
+                // Legacy tag names (with DO:/DON'T: prefix) for backward compatibility
+                if (tag.includes('Praise')) return '#10B981';
+                if (tag.includes('Echo') || tag.includes('Reflect')) return '#3B82F6';
+                if (tag.includes('Narration') || tag.includes('Narrate')) return '#8B5CF6';
+                if (tag.includes('Question')) return '#EF4444';
+                if (tag.includes('Command')) return '#EF4444';
+                if (tag.includes('Criticism') || tag.includes('Negative')) return '#DC2626';
+                if (tag.includes('Neutral')) return '#6B7280';
+
+                return '#6B7280'; // Default gray
+              };
 
               return (
                 <View key={index} style={styles.utteranceContainer}>
-                  {/* Speaker label and timestamp */}
+                  {/* Speaker label and PCIT tag */}
                   <View style={styles.utteranceHeader}>
-                    <View style={[styles.speakerBadge, isParent ? styles.parentBadge : styles.childBadge]}>
+                    <View style={[styles.speakerBadge, { backgroundColor: speakerColor }]}>
                       <Text style={styles.speakerBadgeText}>
-                        {isParent ? 'Parent' : 'Child'}
+                        {speakerLabel}
                       </Text>
                     </View>
-                    <Text style={styles.timestamp}>{formatTime(segment.start)}</Text>
+                    {isAdult && pcitTag && (
+                      <View style={[styles.tag, { backgroundColor: getTagColor(pcitTag) }]}>
+                        <Text style={styles.tagText}>{pcitTag}</Text>
+                      </View>
+                    )}
                   </View>
 
                   {/* Utterance text */}
                   <Text style={styles.utteranceText}>{segment.text}</Text>
-
-                  {/* PCIT tags (only for parent) */}
-                  {tags.length > 0 && (
-                    <View style={styles.tagsContainer}>
-                      {tags.map((tag, tagIndex) => (
-                        <View key={tagIndex} style={[styles.tag, { backgroundColor: tag.color }]}>
-                          <Text style={styles.tagText}>{tag.tag}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
                 </View>
               );
             })}
@@ -342,6 +419,7 @@ const styles = StyleSheet.create({
   },
   legendRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
   transcriptContainer: {
@@ -374,6 +452,18 @@ const styles = StyleSheet.create({
   speakerBadgeText: {
     fontFamily: FONTS.semiBold,
     fontSize: 12,
+    color: COLORS.textDark,
+  },
+  speakerLegendBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  speakerLegendText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
     color: COLORS.textDark,
   },
   timestamp: {

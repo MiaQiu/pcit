@@ -18,17 +18,117 @@ model LearningProgress {
   @@index([userId])
 }
 
+model Lesson {
+  id                 String               @id
+  phase              LessonPhase
+  phaseNumber        Int
+  dayNumber          Int
+  title              String
+  subtitle           String?
+  shortDescription   String
+  objectives         String[]
+  estimatedMinutes   Int                  @default(2)
+  isBooster          Boolean              @default(false)
+  prerequisites      String[]
+  teachesCategories  String[]
+  dragonImageUrl     String?
+  backgroundColor    String               @default("#E4E4FF")
+  ellipse77Color     String               @default("#9BD4DF")
+  ellipse78Color     String               @default("#A6E0CB")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  LessonSegment      LessonSegment[]
+  Quiz               Quiz?
+  UserLessonProgress UserLessonProgress[]
+
+  @@unique([phaseNumber, dayNumber])
+  @@index([phaseNumber])
+  @@index([phase, dayNumber])
+}
+
+model LessonSegment {
+  id           String      @id
+  lessonId     String
+  order        Int
+  sectionTitle String?
+  contentType  ContentType
+  bodyText     String
+  imageUrl     String?
+  iconType     String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime
+  Lesson       Lesson      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, order])
+  @@index([lessonId])
+}
+
 model ModuleHistory {
-  id       String   @id @default(cuid())
+  id       String   @id
   userId   String
-  category String // PRAISE, ECHO, NARRATION, etc.
-  level    Int // 1-4
+  category String
+  level    Int
   viewedAt DateTime @default(now())
   User     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, category])
   @@index([userId])
   @@index([viewedAt])
-  @@index([userId, category])
+}
+
+model Phq2Survey {
+  id          String   @id
+  userId      String
+  submittedAt DateTime @default(now())
+  q1Interest  Int
+  q2Depressed Int
+  totalScore  Int
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([submittedAt])
+  @@index([userId])
+}
+
+model Quiz {
+  id            String         @id
+  lessonId      String         @unique
+  question      String
+  correctAnswer String
+  explanation   String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime
+  Lesson        Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  QuizOption    QuizOption[]
+  QuizResponse  QuizResponse[]
+
+  @@index([lessonId])
+}
+
+model QuizOption {
+  id          String @id
+  quizId      String
+  optionLabel String
+  optionText  String
+  order       Int
+  Quiz        Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@unique([quizId, optionLabel])
+  @@index([quizId])
+}
+
+model QuizResponse {
+  id             String   @id
+  userId         String
+  quizId         String
+  selectedAnswer String
+  isCorrect      Boolean
+  attemptNumber  Int      @default(1)
+  respondedAt    DateTime @default(now())
+  Quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  User           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@index([userId, quizId])
 }
 
 model RefreshToken {
@@ -58,25 +158,30 @@ model RiskAuditLog {
 }
 
 model Session {
-  id                 String      @id
-  userId             String
-  mode               SessionMode
-  storagePath        String
-  durationSeconds    Int
-  transcript         String
-  aiFeedbackJSON     Json
-  pcitCoding         Json
-  tagCounts          Json
-  competencyAnalysis Json?
-  masteryAchieved    Boolean     @default(false)
-  riskScore          Int         @default(0)
-  flaggedForReview   Boolean     @default(false)
-  coachAlertSent     Boolean     @default(false)
-  coachAlertSentAt   DateTime?
-  createdAt          DateTime    @default(now())
-  childMetrics       Json?
-  overallScore       Int?
-  User               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                     String      @id
+  userId                 String
+  mode                   SessionMode
+  storagePath            String
+  durationSeconds        Int
+  transcript             String
+  aiFeedbackJSON         Json
+  pcitCoding             Json
+  tagCounts              Json
+  masteryAchieved        Boolean     @default(false)
+  riskScore              Int         @default(0)
+  flaggedForReview       Boolean     @default(false)
+  coachAlertSent         Boolean     @default(false)
+  coachAlertSentAt       DateTime?
+  createdAt              DateTime    @default(now())
+  childMetrics           Json?
+  competencyAnalysis     Json?
+  overallScore           Int?
+  elevenLabsJson         Json?
+  roleIdentificationJson Json?
+  transcriptionService   String?
+  transcribedAt          DateTime?
+  User                   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Utterance              Utterance[]
 
   @@index([createdAt])
   @@index([flaggedForReview])
@@ -84,47 +189,40 @@ model Session {
   @@index([userId])
 }
 
-model User {
-  id                  String              @id
-  email               String              @unique
-  emailHash           String?             @unique
-  passwordHash        String
-  name                String
-  profileImageUrl     String? // Profile image URL stored in GCS/S3
-  therapistId         String?
-  childName           String
-  childGender         ChildGender? // Child's gender
-  childBirthYear      Int
-  childBirthday       DateTime? // Added for onboarding
-  childConditions     String
-  issue               String? // Added for onboarding: tantrums, defiance, aggression, social, emotional, routine, general
-  relationshipToChild RelationshipToChild @default(MOTHER) // Relationship to child
-  createdAt           DateTime            @default(now())
-  currentStreak       Int                 @default(0)
-  lastSessionDate     DateTime?
-  longestStreak       Int                 @default(0)
+model Utterance {
+  id        String   @id @default(uuid())
+  sessionId String
+  speaker   String
+  text      String
+  startTime Float
+  endTime   Float
+  role      String?
+  pcitTag   String?
+  order     Int
+  createdAt DateTime @default(now())
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
-  // Subscription fields
-  subscriptionPlan      SubscriptionPlan   @default(TRIAL)
-  subscriptionStatus    SubscriptionStatus @default(ACTIVE)
-  trialStartDate        DateTime?
-  trialEndDate          DateTime?
-  subscriptionStartDate DateTime?
-  subscriptionEndDate   DateTime?
+  @@index([sessionId, order])
+  @@index([sessionId])
+}
 
-  LearningProgress   LearningProgress?
-  RiskAuditLog       RiskAuditLog[]
-  Session            Session[]
-  ThirdPartyRequest  ThirdPartyRequest[]
-  WacbSurvey         WacbSurvey[]
-  Phq2Survey         Phq2Survey[]
-  ModuleHistory      ModuleHistory[]
-  UserLessonProgress UserLessonProgress[]
-  QuizResponse       QuizResponse[]
-  SupportRequest     SupportRequest[]
+model SupportRequest {
+  id            String               @id
+  userId        String
+  email         String
+  description   String
+  attachments   Json?
+  status        SupportRequestStatus @default(OPEN)
+  priority      SupportPriority      @default(MEDIUM)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime
+  resolvedAt    DateTime?
+  resolverNotes String?
+  User          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([emailHash])
-  @@index([therapistId])
+  @@index([createdAt])
+  @@index([status])
+  @@index([userId])
 }
 
 model ThirdPartyRequest {
@@ -138,213 +236,109 @@ model ThirdPartyRequest {
   expiresAt   DateTime
   User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([requestId])
-  @@index([userId])
   @@index([createdAt])
   @@index([expiresAt])
-}
-
-model WacbSurvey {
-  id          String   @id
-  userId      String
-  submittedAt DateTime @default(now())
-
-  // Step 1: Parenting Stress
-  parentingStressLevel Int // 1-7 scale
-
-  // Step 2: Child Behavior Questions (1-7 scale)
-  q1Dawdle        Int
-  q2MealBehavior  Int
-  q3Disobey       Int
-  q4Angry         Int
-  q5Scream        Int
-  q6Destroy       Int
-  q7ProvokeFights Int
-  q8Interrupt     Int
-  q9Attention     Int
-
-  // Calculated score
-  totalScore Int // Sum of q1-q9 (max 63)
-
-  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([requestId])
   @@index([userId])
-  @@index([submittedAt])
 }
 
-model Phq2Survey {
-  id          String   @id
-  userId      String
-  submittedAt DateTime @default(now())
+model User {
+  id                    String               @id
+  email                 String               @unique
+  passwordHash          String
+  name                  String
+  therapistId           String?
+  childName             String
+  createdAt             DateTime             @default(now())
+  currentStreak         Int                  @default(0)
+  lastSessionDate       DateTime?
+  longestStreak         Int                  @default(0)
+  childBirthYear        Int
+  childConditions       String
+  emailHash             String?              @unique
+  childBirthday         DateTime?
+  issue                 String?
+  profileImageUrl       String?
+  subscriptionEndDate   DateTime?
+  subscriptionPlan      SubscriptionPlan     @default(TRIAL)
+  subscriptionStartDate DateTime?
+  subscriptionStatus    SubscriptionStatus   @default(ACTIVE)
+  trialEndDate          DateTime?
+  trialStartDate        DateTime?
+  relationshipToChild   RelationshipToChild  @default(MOTHER)
+  childGender           ChildGender?
+  LearningProgress      LearningProgress?
+  ModuleHistory         ModuleHistory[]
+  Phq2Survey            Phq2Survey[]
+  QuizResponse          QuizResponse[]
+  RiskAuditLog          RiskAuditLog[]
+  Session               Session[]
+  SupportRequest        SupportRequest[]
+  ThirdPartyRequest     ThirdPartyRequest[]
+  UserLessonProgress    UserLessonProgress[]
+  WacbSurvey            WacbSurvey[]
 
-  // PHQ-2 Questions (0-3 scale)
-  q1Interest  Int // Little interest or pleasure in doing things
-  q2Depressed Int // Feeling down, depressed, or hopeless
-
-  // Calculated score
-  totalScore Int // Sum of q1+q2 (range: 0-6)
-
-  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([submittedAt])
-}
-
-enum SessionMode {
-  CDI
-  PDI
-}
-
-// ============================================================================
-// LEARNING SYSTEM MODELS
-// Bite-size learning curriculum with lessons, segments, quizzes, and progress
-// ============================================================================
-
-model Lesson {
-  id               String      @id @default(cuid())
-  phase            LessonPhase // CONNECT or DISCIPLINE
-  phaseNumber      Int // 1 or 2
-  dayNumber        Int // 1-41 (15 Connect + 26 Discipline)
-  title            String
-  subtitle         String?
-  shortDescription String // For lesson cards
-
-  // Content structure
-  objectives String[] // Array of learning objectives
-  segments   LessonSegment[] // Relationship to segments
-
-  // Metadata
-  estimatedMinutes Int      @default(2)
-  isBooster        Boolean  @default(false) // True for booster content
-  prerequisites    String[] // IDs of lessons that must be completed first
-
-  // Integration with recommendation engine
-  teachesCategories String[] // e.g., ["PRAISE", "ECHO"] - links to ModuleHistory categories
-
-  // Asset references
-  dragonImageUrl  String?
-  backgroundColor String  @default("#E4E4FF")
-  ellipse77Color  String  @default("#9BD4DF")
-  ellipse78Color  String  @default("#A6E0CB")
-
-  // Relationships
-  quiz         Quiz?
-  userProgress UserLessonProgress[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([phaseNumber, dayNumber])
-  @@index([phase, dayNumber])
-  @@index([phaseNumber])
-}
-
-model LessonSegment {
-  id       String @id @default(cuid())
-  lessonId String
-  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-
-  order        Int // Segment order within lesson (1-4)
-  sectionTitle String? // Optional section header (e.g., "Key Concepts", "Examples")
-  contentType  ContentType // TEXT, EXAMPLE, TIP, etc.
-  bodyText     String      @db.Text
-
-  // Optional multimedia
-  imageUrl String?
-  iconType String? // For emoji/icon display
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([lessonId, order])
-  @@index([lessonId])
-}
-
-model Quiz {
-  id       String @id @default(cuid())
-  lessonId String @unique
-  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-
-  question      String       @db.Text
-  options       QuizOption[]
-  correctAnswer String // The correct option ID
-  explanation   String       @db.Text // Explanation shown after answering
-
-  // User responses
-  responses QuizResponse[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([lessonId])
-}
-
-model QuizOption {
-  id     String @id @default(cuid())
-  quizId String
-  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
-
-  optionLabel String // A, B, C, D
-  optionText  String @db.Text
-  order       Int // Display order (1, 2, 3, 4)
-
-  @@unique([quizId, optionLabel])
-  @@index([quizId])
+  @@index([emailHash])
+  @@index([therapistId])
 }
 
 model UserLessonProgress {
-  id       String @id @default(cuid())
-  userId   String
-  lessonId String
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-
-  // Progress tracking
-  status         ProgressStatus // NOT_STARTED, IN_PROGRESS, COMPLETED, LOCKED
-  currentSegment Int            @default(1) // Which segment they're viewing (1-4)
-  totalSegments  Int            @default(4)
-  completedAt    DateTime?
-
-  // Time tracking
-  startedAt        DateTime @default(now())
-  lastViewedAt     DateTime @default(now())
-  timeSpentSeconds Int      @default(0)
+  id               String         @id
+  userId           String
+  lessonId         String
+  status           ProgressStatus
+  currentSegment   Int            @default(1)
+  totalSegments    Int            @default(4)
+  completedAt      DateTime?
+  startedAt        DateTime       @default(now())
+  lastViewedAt     DateTime       @default(now())
+  timeSpentSeconds Int            @default(0)
+  Lesson           Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  User             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
-  @@index([userId, status])
   @@index([lessonId])
+  @@index([userId, status])
 }
 
-model QuizResponse {
-  id     String @id @default(cuid())
-  userId String
-  quizId String
+model WacbSurvey {
+  id                   String   @id
+  userId               String
+  submittedAt          DateTime @default(now())
+  parentingStressLevel Int
+  q1Dawdle             Int
+  q2MealBehavior       Int
+  q3Disobey            Int
+  q4Angry              Int
+  q5Scream             Int
+  q6Destroy            Int
+  q7ProvokeFights      Int
+  q8Interrupt          Int
+  q9Attention          Int
+  totalScore           Int
+  User                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
-
-  selectedAnswer String // The option ID they selected
-  isCorrect      Boolean
-  attemptNumber  Int      @default(1) // Allow retakes
-  respondedAt    DateTime @default(now())
-
-  @@index([userId, quizId])
-  @@index([quizId])
+  @@index([submittedAt])
+  @@index([userId])
 }
 
-// Enums for Learning System
-enum LessonPhase {
-  CONNECT
-  DISCIPLINE
+enum ChildGender {
+  BOY
+  GIRL
+  OTHER
 }
 
 enum ContentType {
-  TEXT // Regular paragraph content
-  EXAMPLE // Sample script/scenario
-  TIP // Practice tip
-  SCRIPT // Sample dialogue
-  CALLOUT // Important highlighted content
+  TEXT
+  EXAMPLE
+  TIP
+  SCRIPT
+  CALLOUT
+}
+
+enum LessonPhase {
+  CONNECT
+  DISCIPLINE
 }
 
 enum ProgressStatus {
@@ -352,6 +346,20 @@ enum ProgressStatus {
   IN_PROGRESS
   COMPLETED
   LOCKED
+}
+
+enum RelationshipToChild {
+  MOTHER
+  FATHER
+  GUARDIAN
+  OTHER
+  GRANDMOTHER
+  GRANDFATHER
+}
+
+enum SessionMode {
+  CDI
+  PDI
 }
 
 enum SubscriptionPlan {
@@ -366,38 +374,11 @@ enum SubscriptionStatus {
   CANCELLED
 }
 
-enum RelationshipToChild {
-  MOTHER
-  FATHER
-  GRANDMOTHER
-  GRANDFATHER
-  GUARDIAN
-  OTHER
-}
-
-enum ChildGender {
-  BOY
-  GIRL
-  OTHER
-}
-
-model SupportRequest {
-  id            String               @id @default(cuid())
-  userId        String
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  email         String // Contact email provided by user
-  description   String               @db.Text
-  attachments   Json? // Array of file URLs/paths: [{url: string, name: string, size: number}]
-  status        SupportRequestStatus @default(OPEN)
-  priority      SupportPriority      @default(MEDIUM)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  resolvedAt    DateTime?
-  resolverNotes String?              @db.Text // Internal notes from support staff
-
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
+enum SupportPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
 
 enum SupportRequestStatus {
@@ -405,11 +386,4 @@ enum SupportRequestStatus {
   IN_PROGRESS
   RESOLVED
   CLOSED
-}
-
-enum SupportPriority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
 }
