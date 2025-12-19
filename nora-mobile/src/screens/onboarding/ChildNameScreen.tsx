@@ -50,8 +50,8 @@ export const ChildNameScreen: React.FC = () => {
               />
             </View>
             <View style={styles.headerTextBox}>
-              <Text style={styles.headerText}>
-Next question!              </Text>
+              <Text style={styles.headerText}>We’ll use their name to personalize tips and messages.
+             </Text>
             </View>
           </View>
 

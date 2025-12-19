@@ -60,7 +60,7 @@ export const ChildGenderScreen: React.FC = () => {
             </View>
             <View style={styles.headerTextBox}>
               <Text style={styles.headerText}>
-                Next question!
+              Used only to personalize guidance.
               </Text>
             </View>
           </View>

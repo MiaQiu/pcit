@@ -51,7 +51,7 @@ export const NameInputScreen: React.FC = () => {
             </View>
             <View style={styles.headerTextBox}>
               <Text style={styles.headerText}>
-                Just answer 3 questions so we can tailor the experience for you!
+              Let’s get to know you a bit - So we can tailor  Nora just for you. It takes about 3-5 mins.
               </Text>
             </View>
           </View>

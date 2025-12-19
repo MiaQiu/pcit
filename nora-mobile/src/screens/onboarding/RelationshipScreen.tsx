@@ -63,7 +63,7 @@ export const RelationshipScreen: React.FC = () => {
             </View>
             <View style={styles.headerTextBox}>
               <Text style={styles.headerText}>
-                Just answer a few questions so we can tailor the experience for you!
+              This helps us tailor guidance to your role.
               </Text>
             </View>
           </View>

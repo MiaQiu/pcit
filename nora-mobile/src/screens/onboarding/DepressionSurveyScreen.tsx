@@ -122,10 +122,10 @@ export const DepressionSurveyScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <Text style={styles.title}>Check-in</Text>
         <Text style={styles.subtitle}>How have you been feeling?</Text>
-      </View>
+      </View> */}
 
       <ScrollView
         style={styles.scrollView}
@@ -146,7 +146,7 @@ export const DepressionSurveyScreen: React.FC = () => {
           {/* Speech Bubble */}
           <View style={styles.speechBubble}>
             <Text style={styles.introText}>
-              Parenting takes a lot of energy. Before we dive into the program, we want to check in on how you have been feeling lately.
+            Your answers are private and used only to personalize your experience.
             </Text>
             <View style={styles.bubbleTail} />
           </View>

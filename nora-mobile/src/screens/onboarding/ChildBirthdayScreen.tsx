@@ -61,7 +61,7 @@ export const ChildBirthdayScreen: React.FC = () => {
           </View>
           <View style={styles.headerTextBox}>
             <Text style={styles.headerText}>
-              Last question!
+            This helps us tailor guidance to your child’s age and development.
             </Text>
           </View>
         </View>
