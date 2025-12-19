@@ -19,6 +19,26 @@ export interface OnboardingData {
   childBirthday: Date | null;
   issue: string | string[];
 
+  // WACB Survey data
+  wacb?: {
+    parentingStressLevel?: number;
+    q1Dawdle?: number;
+    q2MealBehavior?: number;
+    q3Disobey?: number;
+    q4Angry?: number;
+    q5Scream?: number;
+    q6Destroy?: number;
+    q7ProvokeFights?: number;
+    q8Interrupt?: number;
+    q9Attention?: number;
+  };
+
+  // PHQ-2 Survey data
+  phq2?: {
+    q1Interest?: number;
+    q2Depressed?: number;
+  };
+
   // Subscription
   hasCompletedOnboarding: boolean;
 }

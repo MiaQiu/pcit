@@ -19,9 +19,13 @@ import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 //import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../../constants/assets';
+import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
+import { OnboardingButton } from '../../components/OnboardingButton';
 
 export const SelfCareScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+
+  const handleBack = () => navigation.goBack();
 
   const handleFindSupport = () => {
     // Open mental health resources
@@ -29,7 +33,7 @@ export const SelfCareScreen: React.FC = () => {
   };
 
   const handleContinue = () => {
-    navigation.navigate('Intro1');
+    navigation.navigate('PreIntroReassurance');
   };
 
   return (
@@ -102,23 +106,11 @@ export const SelfCareScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Buttons */}
-        <TouchableOpacity
-          style={styles.primaryButton}
+        {/* Find Support Button */}
+        <OnboardingButton
           onPress={handleFindSupport}
-          activeOpacity={0.8}
-        >
-          {/* <Ionicons name="open-outline" size={20} color={COLORS.white} style={{ marginRight: 8 }} /> */}
-          <Text style={styles.primaryButtonText}>Find Support Resources</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={handleContinue}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.secondaryButtonText}>Continue Anyway</Text>
-        </TouchableOpacity>
+          text="Find Support Resources"
+        />
 
         {/* Crisis Hotline */}
         {/* <View style={styles.crisisBox}>
@@ -127,6 +119,15 @@ export const SelfCareScreen: React.FC = () => {
           </Text>
         </View> */}
       </ScrollView>
+
+      {/* Back and Continue Buttons */}
+      <View style={styles.footer}>
+        <OnboardingButtonRow
+          onBack={handleBack}
+          onContinue={handleContinue}
+          continueText="Continue Anyway"
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 32,
+    paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 40,
   },
@@ -254,31 +255,13 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     fontStyle: 'italic',
   },
-  primaryButton: {
-    height: 56,
-    backgroundColor: COLORS.mainPurple,
-    borderRadius: 30,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 0,
-  },
-  primaryButtonText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 18,
-    color: COLORS.white,
-  },
-  secondaryButton: {
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  secondaryButtonText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 17,
-    color: '#6B7280',
-    textDecorationLine: 'underline',
+  footer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    backgroundColor: COLORS.white,
+    marginBottom: -20,
   },
   crisisBox: {
     backgroundColor: '#FEE2E2',

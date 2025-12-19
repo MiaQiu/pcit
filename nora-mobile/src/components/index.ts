@@ -19,3 +19,15 @@ export { RecordButton } from './RecordButton';
 export { AudioWaveform } from './AudioWaveform';
 export { RecordingTimer } from './RecordingTimer';
 export { SkillProgressBar } from './SkillProgressBar';
+
+// Onboarding components
+export { OnboardingLayout } from './OnboardingLayout';
+export { OnboardingDragonHeader } from './OnboardingDragonHeader';
+export { OnboardingButton } from './OnboardingButton';
+export { OnboardingBackButton } from './OnboardingBackButton';
+export { OnboardingButtonRow } from './OnboardingButtonRow';
+export { OnboardingTextInput } from './OnboardingTextInput';
+export { OnboardingMultipleChoice } from './OnboardingMultipleChoice';
+export type { Option } from './OnboardingMultipleChoice';
+export { MultipleChoiceScreen } from './MultipleChoiceScreen';
+export type { MultipleChoiceScreenProps, MultipleChoiceOption } from './MultipleChoiceScreen';

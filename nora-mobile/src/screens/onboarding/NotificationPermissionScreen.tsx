@@ -12,16 +12,20 @@ import {
   SafeAreaView,
   Alert,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import { RootStackNavigationProp } from '../../navigation/types';
 import { FONTS, COLORS } from '../../constants/assets';
+import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
 export const NotificationPermissionScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleBack = () => navigation.goBack();
 
   const requestNotificationPermission = async () => {
     setIsLoading(true);
@@ -103,26 +107,28 @@ export const NotificationPermissionScreen: React.FC = () => {
         {/* Spacer */}
         <View style={{ flex: 1 }} />
 
-        {/* Buttons */}
+        {/* Enable Button */}
         <TouchableOpacity
           style={[styles.enableButton, isLoading && styles.enableButtonDisabled]}
           onPress={requestNotificationPermission}
           disabled={isLoading}
           activeOpacity={0.8}
         >
-          <Text style={styles.enableButtonText}>
-            {isLoading ? 'Enabling...' : 'Enable Notifications'}
-          </Text>
+          {isLoading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.enableButtonText}>Enable Notifications</Text>
+          )}
         </TouchableOpacity>
+      </View>
 
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={handleSkip}
-          disabled={isLoading}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.skipButtonText}>Not Now</Text>
-        </TouchableOpacity>
+      {/* Back and Skip Buttons */}
+      <View style={styles.footer}>
+        <OnboardingButtonRow
+          onBack={handleBack}
+          onContinue={handleSkip}
+          continueText="Not Now"
+        />
       </View>
     </SafeAreaView>
   );
@@ -209,17 +215,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#FFFFFF',
   },
-  skipButton: {
-    width: '100%',
-    height: 56,
-    backgroundColor: 'transparent',
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  skipButtonText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 16,
-    color: '#6B7280',
+  footer: {
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
   },
 });

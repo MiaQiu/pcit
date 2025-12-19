@@ -34,11 +34,11 @@ export const ReassuranceScreen: React.FC = () => {
   const buttonOpacity = useRef(new Animated.Value(0)).current;
 
   const childName = data.childName || 'your child';
-  const fullText = `Nora is creating a personalized approach for you and ${childName}.`;
-  const subtitle = "Next, here's how Nora supports you day by day.";
+  const fullText = `Your wellbeing matters too!`;
+  const subtitle = "Parenting takes a lot of energy. Before we dive into the program, we want to check in on how you have been feeling";
 
   const handleContinue = () => {
-    navigation.navigate('DepressionSurvey');
+    navigation.navigate('DepressionQuestion1');
   };
 
   useEffect(() => {

@@ -157,30 +157,39 @@ export const HomeScreen: React.FC = () => {
       const { recordings } = await recordingService.getRecordings().catch(() => ({ recordings: [] }));
 
       if (recordings.length > 0) {
-        // Get the most recent recording
-        const latestRecording = recordings.sort(
+        // Sort recordings by most recent first
+        const sortedRecordings = recordings.sort(
           (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )[0];
+        );
 
-        // Try to get the analysis for this recording
-        try {
-          const analysis = await recordingService.getAnalysis(latestRecording.id);
-          if (analysis && analysis.noraScore !== undefined) {
-            setLatestScore({
-              score: Math.round(analysis.noraScore),
-              maxScore: 100,
-              recordingId: latestRecording.id,
-            });
+        // Loop through recordings until we find one with a successful analysis
+        for (const recording of sortedRecordings) {
+          try {
+            const analysis = await recordingService.getAnalysis(recording.id);
+            if (analysis && analysis.noraScore !== undefined) {
+              setLatestScore({
+                score: Math.round(analysis.noraScore),
+                maxScore: 100,
+                recordingId: recording.id,
+              });
 
-            // Set encouragement message if available
-            if (analysis.encouragement) {
-              setEncouragementMessage(analysis.encouragement);
+              // Set encouragement message if available
+              if (analysis.encouragement) {
+                setEncouragementMessage(analysis.encouragement);
+              }
+
+              // Found a successful analysis, stop looking
+              return;
             }
+          } catch (err) {
+            // This recording doesn't have analysis yet or failed, try the next one
+            console.log(`Could not load analysis for recording ${recording.id}:`, err);
+            continue;
           }
-        } catch (err) {
-          // Analysis might not be ready yet, that's okay
-          console.log('Could not load latest analysis:', err);
         }
+
+        // If we get here, none of the recordings have a successful analysis
+        console.log('No recordings with completed analysis found');
       }
     } catch (error) {
       console.log('Failed to load latest report:', error);

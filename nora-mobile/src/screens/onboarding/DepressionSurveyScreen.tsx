@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useAuthService } from '../../contexts/AppContext';
 import { Ionicons } from '@expo/vector-icons';
+import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
 const OPTIONS = [
   { label: 'Not at all', value: 0 },
@@ -34,6 +35,8 @@ export const DepressionSurveyScreen: React.FC = () => {
 
   const [q1Answer, setQ1Answer] = useState<number | null>(null);
   const [q2Answer, setQ2Answer] = useState<number | null>(null);
+
+  const handleBack = () => navigation.goBack();
 
   const handleSubmit = async () => {
     if (q1Answer === null || q2Answer === null) {
@@ -196,20 +199,17 @@ export const DepressionSurveyScreen: React.FC = () => {
 
       {/* Submit Button */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.submitButton, !isValid && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={!isValid || isSubmitting}
-          activeOpacity={0.8}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={[styles.submitButtonText, !isValid && styles.submitButtonTextDisabled]}>
-              Continue
-            </Text>
-          )}
-        </TouchableOpacity>
+        {isSubmitting ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color="#8C49D5" />
+          </View>
+        ) : (
+          <OnboardingButtonRow
+            onBack={handleBack}
+            onContinue={handleSubmit}
+            continueDisabled={!isValid}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -352,22 +352,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
   },
-  submitButton: {
+  loadingContainer: {
     height: 56,
-    backgroundColor: '#8C49D5',
-    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  submitButtonDisabled: {
-    backgroundColor: '#E5E7EB',
-  },
-  submitButtonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
-    color: '#FFFFFF',
-  },
-  submitButtonTextDisabled: {
-    color: '#9CA3AF',
   },
 });

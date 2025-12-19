@@ -4,20 +4,14 @@
  */
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-} from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { OnboardingLayout } from '../../components/OnboardingLayout';
+import { OnboardingDragonHeader } from '../../components/OnboardingDragonHeader';
+import { OnboardingTextInput } from '../../components/OnboardingTextInput';
+import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
 export const NameInputScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -31,166 +25,36 @@ export const NameInputScreen: React.FC = () => {
     }
   };
 
+  const handleBack = () => {
+    navigation.goBack();
+  };
+
   const isValid = name.trim().length > 0;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={styles.content}>
-          {/* Dragon Header with Text Box */}
-          <View style={styles.headerSection}>
-            <View style={styles.dragonIconContainer}>
-              <Image
-                source={require('../../../assets/images/dragon_image.png')}
-                style={styles.dragonIcon}
-                resizeMode="contain"
-              />
-            </View>
-            <View style={styles.headerTextBox}>
-              <Text style={styles.headerText}>
-              Let’s get to know you a bit - So we can tailor  Nora just for you. It takes about 3-5 mins.
-              </Text>
-            </View>
-          </View>
+    <OnboardingLayout useKeyboardAvoid>
+      <OnboardingDragonHeader text="Let's get to know you a bit - So we can tailor  Nora just for you. It takes about 3-5 mins." />
 
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>What's your name?</Text>
-            {/* <Text style={styles.subtitle}>
-              We'll use this to personalize your experience
-            </Text> */}
-          </View>
+      <OnboardingTextInput
+        title="What's your name?"
+        value={name}
+        onChangeText={setName}
+        onSubmitEditing={handleContinue}
+      />
 
-          {/* Input */}
-          <TextInput
-            style={styles.input}
-            placeholder=""
-            value={name}
-            onChangeText={setName}
-            autoFocus
-            autoCapitalize="words"
-            autoCorrect={false}
-            returnKeyType="next"
-            onSubmitEditing={handleContinue}
-          />
+      <View style={styles.spacer} />
 
-          {/* Spacer */}
-          <View style={styles.spacer} />
-
-          {/* Continue Button */}
-          <TouchableOpacity
-            style={[styles.button, !isValid && styles.buttonDisabled]}
-            onPress={handleContinue}
-            disabled={!isValid}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.buttonText, !isValid && styles.buttonTextDisabled]}>
-              Continue
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <OnboardingButtonRow
+        onBack={handleBack}
+        onContinue={handleContinue}
+        continueDisabled={!isValid}
+      />
+    </OnboardingLayout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 60,
-  },
-  headerSection: {
-    marginBottom: 32,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  dragonIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    overflow: 'hidden',
-    backgroundColor: '#F5F0FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 48,
-  },
-  dragonIcon: {
-    width: 90,
-    height: 90,
-    marginLeft: 25,
-  },
-  headerTextBox: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    gap: 8,
-    backgroundColor: '#FAFAFA',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  headerText: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 16,
-    color: '#364153',
-    lineHeight: 24,
-  },
-  header: {
-    marginBottom: 32,
-  },
-  title: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 24,
-    color: '#4A5565',
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 16,
-    color: '#6B7280',
-    lineHeight: 24,
-  },
-  input: {
-    height: 56,
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 40,
-    color: '#4A5565',
-    textAlign: 'center',
-  },
   spacer: {
     flex: 1,
-  },
-  button: {
-    width: '100%',
-    height: 56,
-    backgroundColor: '#8C49D5',
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 32,
-  },
-  buttonDisabled: {
-    backgroundColor: '#E5E7EB',
-  },
-  buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
-    color: '#FFFFFF',
-  },
-  buttonTextDisabled: {
-    color: '#9CA3AF',
   },
 });

@@ -113,8 +113,11 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const uploadProfileImage = async (imageUri: string) => {
-    try {
-      setUploadingImage(true);
+    const uploadWithRetry = async (isRetry: boolean = false): Promise<any> => {
+      // Refresh token before upload if not a retry
+      if (!isRetry) {
+        await authService.refreshAccessToken();
+      }
 
       // Create FormData
       const formData = new FormData();
@@ -144,12 +147,29 @@ export const ProfileScreen: React.FC = () => {
         body: formData,
       });
 
+      // Handle 401 - token expired
+      if (response.status === 401 && !isRetry) {
+        console.log('[ProfileScreen] Token expired, refreshing and retrying...');
+        const refreshed = await authService.refreshAccessToken();
+        if (refreshed) {
+          return uploadWithRetry(true);
+        } else {
+          throw new Error('Session expired. Please log in again.');
+        }
+      }
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Upload failed');
       }
 
-      const data = await response.json();
+      return await response.json();
+    };
+
+    try {
+      setUploadingImage(true);
+
+      const data = await uploadWithRetry();
 
       // Update local profile state
       setProfile(prev => prev ? {

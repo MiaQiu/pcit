@@ -100,8 +100,11 @@ export const SupportScreen: React.FC = () => {
       return;
     }
 
-    try {
-      setIsSubmitting(true);
+    const submitWithRetry = async (isRetry: boolean = false): Promise<any> => {
+      // Refresh token before submission if not a retry
+      if (!isRetry) {
+        await authService.refreshAccessToken();
+      }
 
       const token = authService.getAccessToken();
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -134,13 +137,30 @@ export const SupportScreen: React.FC = () => {
 
       console.log('Response status:', response.status);
 
+      // Handle 401 - token expired
+      if (response.status === 401 && !isRetry) {
+        console.log('[SupportScreen] Token expired, refreshing and retrying...');
+        const refreshed = await authService.refreshAccessToken();
+        if (refreshed) {
+          return submitWithRetry(true);
+        } else {
+          throw new Error('Session expired. Please log in again.');
+        }
+      }
+
       if (!response.ok) {
         const error = await response.json();
         console.error('Server error response:', error);
         throw new Error(error.error || 'Failed to submit support request');
       }
 
-      const result = await response.json();
+      return await response.json();
+    };
+
+    try {
+      setIsSubmitting(true);
+
+      const result = await submitWithRetry();
       console.log('Support request submitted successfully:', result);
 
       Alert.alert(

@@ -4,19 +4,14 @@
  */
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  Platform,
-  Image,
-} from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { Picker } from '@react-native-picker/picker';
+import { OnboardingLayout } from '../../components/OnboardingLayout';
+import { OnboardingDragonHeader } from '../../components/OnboardingDragonHeader';
+import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
 export const ChildBirthdayScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -37,6 +32,10 @@ export const ChildBirthdayScreen: React.FC = () => {
     navigation.navigate('ChildIssue');
   };
 
+  const handleBack = () => {
+    navigation.goBack();
+  };
+
   // Generate months array (short form)
   const months = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -48,124 +47,55 @@ export const ChildBirthdayScreen: React.FC = () => {
   const years = Array.from({ length: 13 }, (_, i) => currentYear - 12 + i);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Dragon Header with Text Box */}
-        <View style={styles.headerSection}>
-          <View style={styles.dragonIconContainer}>
-            <Image
-              source={require('../../../assets/images/dragon_image.png')}
-              style={styles.dragonIcon}
-              resizeMode="contain"
-            />
-          </View>
-          <View style={styles.headerTextBox}>
-            <Text style={styles.headerText}>
-            This helps us tailor guidance to your child’s age and development.
-            </Text>
-          </View>
-        </View>
+    <OnboardingLayout>
+      <OnboardingDragonHeader text="This helps us tailor guidance to your child's age and development." />
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>When is {data.childName}'s birthday?</Text>
-        </View>
-
-        {/* Month and Year Pickers */}
-        <View style={styles.pickersContainer}>
-          {/* Month Picker */}
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={selectedMonth}
-              onValueChange={(itemValue) => setSelectedMonth(itemValue)}
-              style={styles.picker}
-              itemStyle={styles.pickerItem}
-            >
-              {months.map((month, index) => (
-                <Picker.Item key={index} label={month} value={index} />
-              ))}
-            </Picker>
-          </View>
-
-          {/* Year Picker */}
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={selectedYear}
-              onValueChange={(itemValue) => setSelectedYear(itemValue)}
-              style={styles.picker}
-              itemStyle={styles.pickerItem}
-            >
-              {years.map((year) => (
-                <Picker.Item key={year} label={year.toString()} value={year} />
-              ))}
-            </Picker>
-          </View>
-        </View>
-
-        {/* Spacer */}
-        <View style={styles.spacer} />
-
-        {/* Continue Button */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleContinue}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>Continue</Text>
-        </TouchableOpacity>
+      <View style={styles.header}>
+        <Text style={styles.title}>When is {data.childName}'s birthday?</Text>
       </View>
-    </SafeAreaView>
+
+      {/* Month and Year Pickers */}
+      <View style={styles.pickersContainer}>
+        {/* Month Picker */}
+        <View style={styles.pickerWrapper}>
+          <Picker
+            selectedValue={selectedMonth}
+            onValueChange={(itemValue) => setSelectedMonth(itemValue)}
+            style={styles.picker}
+            itemStyle={styles.pickerItem}
+          >
+            {months.map((month, index) => (
+              <Picker.Item key={index} label={month} value={index} />
+            ))}
+          </Picker>
+        </View>
+
+        {/* Year Picker */}
+        <View style={styles.pickerWrapper}>
+          <Picker
+            selectedValue={selectedYear}
+            onValueChange={(itemValue) => setSelectedYear(itemValue)}
+            style={styles.picker}
+            itemStyle={styles.pickerItem}
+          >
+            {years.map((year) => (
+              <Picker.Item key={year} label={year.toString()} value={year} />
+            ))}
+          </Picker>
+        </View>
+      </View>
+
+      <View style={styles.spacer} />
+
+      <OnboardingButtonRow
+        onBack={handleBack}
+        onContinue={handleContinue}
+      />
+    </OnboardingLayout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 60,
-  },
-  headerSection: {
-    marginBottom: 32,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  dragonIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    overflow: 'hidden',
-    backgroundColor: '#F5F0FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 48,
-  },
-  dragonIcon: {
-    width: 90,
-    height: 90,
-    marginLeft: 25,
-  },
-  headerTextBox: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    gap: 8,
-    backgroundColor: '#FAFAFA',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  headerText: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 16,
-    color: '#364153',
-    lineHeight: 24,
-  },
   header: {
     marginTop: 32,
     marginBottom: 32,
@@ -175,6 +105,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#4A5565',
     marginBottom: 12,
+    textAlign: 'center',
   },
   pickersContainer: {
     flexDirection: 'row',
@@ -191,24 +122,9 @@ const styles = StyleSheet.create({
     height: 170,
     fontSize: 28,
     fontWeight: '700',
-    //color: '#1F2937',
     color: '#1F1F1F',
   },
   spacer: {
     flex: 1,
-  },
-  button: {
-    width: '100%',
-    height: 56,
-    backgroundColor: '#8C49D5',
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 32,
-  },
-  buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
-    color: '#FFFFFF',
   },
 });

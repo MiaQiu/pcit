@@ -116,9 +116,15 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     await uploadRecording(uri, durationSeconds);
   };
 
-  const uploadRecording = async (uri: string, durationSeconds: number) => {
+  const uploadRecording = async (uri: string, durationSeconds: number, isRetry: boolean = false) => {
     try {
-      console.log('[UploadProcessing] Uploading...', { uri, durationSeconds });
+      console.log('[UploadProcessing] Uploading...', { uri, durationSeconds, isRetry });
+
+      // Proactively refresh token before upload to avoid expiration issues
+      if (!isRetry) {
+        console.log('[UploadProcessing] Refreshing access token before upload...');
+        await authService.refreshAccessToken();
+      }
 
       // Create FormData
       const formData = new FormData();
@@ -167,6 +173,9 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
             } catch (error) {
               reject(new Error('Invalid response from server'));
             }
+          } else if (xhr.status === 401) {
+            // Token expired or invalid
+            reject(new Error('UNAUTHORIZED'));
           } else {
             try {
               const error = JSON.parse(xhr.responseText);
@@ -217,9 +226,23 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
       // Poll for analysis completion
       pollForAnalysisCompletion(uploadedRecordingId);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('[UploadProcessing] Upload failed:', error);
       uploadXhrRef.current = null;
+
+      // If unauthorized and not already a retry, refresh token and retry once
+      if (error.message === 'UNAUTHORIZED' && !isRetry) {
+        console.log('[UploadProcessing] Token expired, refreshing and retrying...');
+        const refreshed = await authService.refreshAccessToken();
+        if (refreshed) {
+          // Retry upload with refreshed token
+          return uploadRecording(uri, durationSeconds, true);
+        } else {
+          // Reset state
+          await reset();
+          throw new Error('Session expired. Please log in again.');
+        }
+      }
 
       // Reset state
       await reset();

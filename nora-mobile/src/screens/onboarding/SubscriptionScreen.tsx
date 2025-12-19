@@ -21,6 +21,7 @@ import { RootStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
 import { Ellipse } from '../../components/Ellipse';
+import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -45,6 +46,8 @@ export const SubscriptionScreen: React.FC = () => {
   const authService = useAuthService();
   const [selectedPlan, setSelectedPlan] = useState<'annual' | 'monthly'>('annual');
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleBack = () => navigation.goBack();
 
   const handleStartTrial = async () => {
     setIsLoading(true);
@@ -246,20 +249,20 @@ export const SubscriptionScreen: React.FC = () => {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={handleSkip}
-          disabled={isLoading}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.skipButtonText}>Skip Now</Text>
-        </TouchableOpacity>
-
         <Text style={styles.disclaimer}>
           Cancel anytime. By continuing, you agree to our{' '}
           <Text style={styles.link}>Terms</Text> and{' '}
           <Text style={styles.link}>Privacy Policy</Text>
         </Text>
+      </View>
+
+      {/* Back and Skip Buttons */}
+      <View style={styles.footer}>
+        <OnboardingButtonRow
+          onBack={handleBack}
+          onContinue={handleSkip}
+          continueText="Skip Now"
+        />
       </View>
     </SafeAreaView>
   );
@@ -441,20 +444,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#FFFFFF',
   },
-  skipButton: {
-    width: '100%',
-    height: 56,
-    backgroundColor: 'transparent',
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  skipButtonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 16,
-    color: '#6B7280',
-  },
   disclaimer: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 11,
@@ -465,5 +454,12 @@ const styles = StyleSheet.create({
   link: {
     color: '#8C49D5',
     textDecorationLine: 'underline',
+  },
+  footer: {
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
   },
 });

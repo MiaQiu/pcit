@@ -1,6 +1,6 @@
 /**
- * Initial Reassurance Screen
- * Shows reassuring message after child issue selection
+ * Pre-Intro Reassurance Screen
+ * Shows dragon with encouraging message before intro screens
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -21,7 +21,7 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-export const InitialReassuranceScreen: React.FC = () => {
+export const PreIntroReassuranceScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data } = useOnboarding();
 
@@ -33,12 +33,12 @@ export const InitialReassuranceScreen: React.FC = () => {
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
   const buttonOpacity = useRef(new Animated.Value(0)).current;
 
-  const fullText = "You're doing the right thing by being here!";
   const childName = data.childName || 'your child';
-  const subtitle = `Most parents using Nora start seeing progress in the first few weeks. Next, We'll ask a few short questions about ${childName}'s behaviour. This helps Nora understand where to focus first.`;
+  const fullText = `Nora is creating a personalized approach for you and {{child’s name}}.`.replace("{{child’s name}}", childName);
+  const subtitle = "Next, here’s how Nora supports you day by day.";
 
   const handleContinue = () => {
-    navigation.navigate('WacbQuestion1');
+    navigation.navigate('Intro1');
   };
 
   useEffect(() => {
@@ -72,18 +72,9 @@ export const InitialReassuranceScreen: React.FC = () => {
         delay: 300,
       }),
     ]).start();
-
-    // TEMPORARY: Navigation disabled for layout adjustments
-    // const navigationTimer = setTimeout(() => {
-    //   navigation.replace('WacbSurvey');
-    // }, 4000);
-
-    // return () => {
-    //   clearTimeout(navigationTimer);
-    // };
   }, [navigation, fadeAnim, scaleAnim, bubbleAnim, textOpacity, subtitleOpacity, buttonOpacity]);
 
-  return ( 
+  return (
     <LinearGradient
       colors={['#9CD8D6', '#96D0E0']}
       style={styles.container}
@@ -118,9 +109,11 @@ export const InitialReassuranceScreen: React.FC = () => {
             <Animated.Text style={[styles.messageText, { opacity: textOpacity }]}>
               {fullText}
             </Animated.Text>
-            <Animated.Text style={[styles.subtitleText, { opacity: subtitleOpacity }]}>
-              {subtitle}
-            </Animated.Text>
+            {subtitle && (
+              <Animated.Text style={[styles.subtitleText, { opacity: subtitleOpacity }]}>
+                {subtitle}
+              </Animated.Text>
+            )}
           </Animated.View>
         </Animated.View>
 
@@ -131,7 +124,7 @@ export const InitialReassuranceScreen: React.FC = () => {
             onPress={handleContinue}
             activeOpacity={0.8}
           >
-            <Text style={styles.buttonText}>Let's go</Text>
+            <Text style={styles.buttonText}>Continue</Text>
           </TouchableOpacity>
         </Animated.View>
       </SafeAreaView>

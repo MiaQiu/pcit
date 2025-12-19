@@ -21,10 +21,20 @@ import { ChildGenderScreen } from '../screens/onboarding/ChildGenderScreen';
 import { ChildBirthdayScreen } from '../screens/onboarding/ChildBirthdayScreen';
 import { ChildIssueScreen } from '../screens/onboarding/ChildIssueScreen';
 import { InitialReassuranceScreen } from '../screens/onboarding/InitialReassuranceScreen';
-import { WacbSurveyScreen } from '../screens/onboarding/WacbSurveyScreen';
+import { WacbQuestion1Screen } from '../screens/onboarding/WacbQuestion1Screen';
+import { WacbQuestion2Screen } from '../screens/onboarding/WacbQuestion2Screen';
+import { WacbQuestion3Screen } from '../screens/onboarding/WacbQuestion3Screen';
+import { WacbQuestion4Screen } from '../screens/onboarding/WacbQuestion4Screen';
+import { WacbQuestion5Screen } from '../screens/onboarding/WacbQuestion5Screen';
+import { WacbQuestion6Screen } from '../screens/onboarding/WacbQuestion6Screen';
+import { WacbQuestion7Screen } from '../screens/onboarding/WacbQuestion7Screen';
+import { WacbQuestion8Screen } from '../screens/onboarding/WacbQuestion8Screen';
+import { WacbQuestion9Screen } from '../screens/onboarding/WacbQuestion9Screen';
 import { ReassuranceScreen } from '../screens/onboarding/ReassuranceScreen';
-import { DepressionSurveyScreen } from '../screens/onboarding/DepressionSurveyScreen';
+import { DepressionQuestion1Screen } from '../screens/onboarding/DepressionQuestion1Screen';
+import { DepressionQuestion2Screen } from '../screens/onboarding/DepressionQuestion2Screen';
 import { SelfCareScreen } from '../screens/onboarding/SelfCareScreen';
+import { PreIntroReassuranceScreen } from '../screens/onboarding/PreIntroReassuranceScreen';
 import { Intro1Screen } from '../screens/onboarding/Intro1Screen';
 import { Intro2Screen } from '../screens/onboarding/Intro2Screen';
 import { Intro3Screen } from '../screens/onboarding/Intro3Screen';
@@ -74,10 +84,20 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="ChildBirthday" component={ChildBirthdayScreen} />
       <Stack.Screen name="ChildIssue" component={ChildIssueScreen} />
       <Stack.Screen name="InitialReassurance" component={InitialReassuranceScreen} />
-      <Stack.Screen name="WacbSurvey" component={WacbSurveyScreen} />
+      <Stack.Screen name="WacbQuestion1" component={WacbQuestion1Screen} />
+      <Stack.Screen name="WacbQuestion2" component={WacbQuestion2Screen} />
+      <Stack.Screen name="WacbQuestion3" component={WacbQuestion3Screen} />
+      <Stack.Screen name="WacbQuestion4" component={WacbQuestion4Screen} />
+      <Stack.Screen name="WacbQuestion5" component={WacbQuestion5Screen} />
+      <Stack.Screen name="WacbQuestion6" component={WacbQuestion6Screen} />
+      <Stack.Screen name="WacbQuestion7" component={WacbQuestion7Screen} />
+      <Stack.Screen name="WacbQuestion8" component={WacbQuestion8Screen} />
+      <Stack.Screen name="WacbQuestion9" component={WacbQuestion9Screen} />
       <Stack.Screen name="Reassurance" component={ReassuranceScreen} />
-      <Stack.Screen name="DepressionSurvey" component={DepressionSurveyScreen} />
+      <Stack.Screen name="DepressionQuestion1" component={DepressionQuestion1Screen} />
+      <Stack.Screen name="DepressionQuestion2" component={DepressionQuestion2Screen} />
       <Stack.Screen name="SelfCare" component={SelfCareScreen} />
+      <Stack.Screen name="PreIntroReassurance" component={PreIntroReassuranceScreen} />
       <Stack.Screen name="Intro1" component={Intro1Screen} />
       <Stack.Screen name="Intro2" component={Intro2Screen} />
       <Stack.Screen name="Intro3" component={Intro3Screen} />
