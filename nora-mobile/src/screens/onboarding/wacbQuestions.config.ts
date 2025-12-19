@@ -4,6 +4,7 @@
  */
 
 import { MultipleChoiceScreenProps } from '../../components/MultipleChoiceScreen';
+import { getOnboardingProgress } from '../../config/onboardingProgress';
 
 const SCALE_OPTIONS = [
   { value: 1, label: 'Never' },
@@ -22,6 +23,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
     options: SCALE_OPTIONS,
     dataField: 'wacb.q1Dawdle',
     nextScreen: 'WacbQuestion2',
+    progress: getOnboardingProgress('WacbQuestion1'),
   },
   {
     headerText: HEADER_TEXT,
@@ -29,6 +31,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
     options: SCALE_OPTIONS,
     dataField: 'wacb.q2MealBehavior',
     nextScreen: 'WacbQuestion3',
+    progress: getOnboardingProgress('WacbQuestion2'),
   },
   {
     headerText: HEADER_TEXT,
@@ -36,6 +39,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
     options: SCALE_OPTIONS,
     dataField: 'wacb.q3Disobey',
     nextScreen: 'WacbQuestion4',
+    progress: getOnboardingProgress('WacbQuestion3'),
   },
   {
     headerText: HEADER_TEXT,
@@ -43,6 +47,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
     options: SCALE_OPTIONS,
     dataField: 'wacb.q4Angry',
     nextScreen: 'WacbQuestion5',
+    progress: getOnboardingProgress('WacbQuestion4'),
   },
   {
     headerText: HEADER_TEXT,
@@ -50,6 +55,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
     options: SCALE_OPTIONS,
     dataField: 'wacb.q5Scream',
     nextScreen: 'WacbQuestion6',
+    progress: getOnboardingProgress('WacbQuestion5'),
   },
   {
     headerText: HEADER_TEXT,
@@ -57,6 +63,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
     options: SCALE_OPTIONS,
     dataField: 'wacb.q6Destroy',
     nextScreen: 'WacbQuestion7',
+    progress: getOnboardingProgress('WacbQuestion6'),
   },
   {
     headerText: HEADER_TEXT,
@@ -64,6 +71,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
     options: SCALE_OPTIONS,
     dataField: 'wacb.q7ProvokeFights',
     nextScreen: 'WacbQuestion8',
+    progress: getOnboardingProgress('WacbQuestion7'),
   },
   {
     headerText: HEADER_TEXT,
@@ -71,6 +79,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
     options: SCALE_OPTIONS,
     dataField: 'wacb.q8Interrupt',
     nextScreen: 'WacbQuestion9',
+    progress: getOnboardingProgress('WacbQuestion8'),
   },
   {
     headerText: HEADER_TEXT,
@@ -79,5 +88,6 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
     dataField: 'wacb.q9Attention',
     nextScreen: 'Reassurance', // Last question navigates to Reassurance
     continueText: 'Submit Survey',
+    progress: getOnboardingProgress('WacbQuestion9'),
   },
 ];

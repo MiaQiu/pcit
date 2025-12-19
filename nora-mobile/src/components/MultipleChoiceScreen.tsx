@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
-  Image,
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStackNavigationProp } from '../navigation/types';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { OnboardingButtonRow } from './OnboardingButtonRow';
+import { OnboardingDragonHeader } from './OnboardingDragonHeader';
 
 export interface MultipleChoiceOption {
   value: string | number;
@@ -35,6 +35,7 @@ export interface MultipleChoiceScreenProps {
   multiSelect?: boolean;
   continueText?: string;
   onBeforeNavigate?: (selectedValue: any, updateData: any, navigation: any) => Promise<void>;
+  progress?: number; // Progress as percentage (0-100)
 }
 
 export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
@@ -46,6 +47,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   multiSelect = false,
   continueText = 'Continue',
   onBeforeNavigate,
+  progress = 0,
 }) => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
@@ -137,18 +139,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         {/* Dragon Header */}
-        <View style={styles.headerSection}>
-          <View style={styles.dragonIconContainer}>
-            <Image
-              source={require('../../assets/images/dragon_image.png')}
-              style={styles.dragonIcon}
-              resizeMode="contain"
-            />
-          </View>
-          <View style={styles.headerTextBox}>
-            <Text style={styles.headerText}>{headerText}</Text>
-          </View>
-        </View>
+        <OnboardingDragonHeader text={headerText} progress={progress} />
 
         {/* Title */}
         <View style={styles.header}>
@@ -218,44 +209,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 30,
-  },
-  headerSection: {
-    marginBottom: 32,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  dragonIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    overflow: 'hidden',
-    backgroundColor: '#F5F0FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 48,
-  },
-  dragonIcon: {
-    width: 90,
-    height: 90,
-    marginLeft: 25,
-  },
-  headerTextBox: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    gap: 8,
-    backgroundColor: '#FAFAFA',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  headerText: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 16,
-    color: '#364153',
-    lineHeight: 24,
   },
   header: {
     marginBottom: 24,

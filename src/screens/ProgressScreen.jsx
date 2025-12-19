@@ -209,8 +209,8 @@ const ProgressScreen = () => {
   const childTimeline = calculateChildTimeline();
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 pb-24 flex items-center justify-center">
+    return ( 
+      <div className="min-h-screen bg-purple-100 pb-24 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 text-green-500 animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Loading progress...</p>
@@ -220,7 +220,7 @@ const ProgressScreen = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-purple-100 pb-24">
       <div className="px-6 pt-12">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Progress Timeline</h1>
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-6">

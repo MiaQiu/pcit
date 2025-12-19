@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
+import { getOnboardingProgress } from '../../config/onboardingProgress';
 
 export const RelationshipScreen: React.FC = () => {
   return (
@@ -19,6 +20,7 @@ export const RelationshipScreen: React.FC = () => {
       ]}
       dataField="relationshipToChild"
       nextScreen="ChildName"
+      progress={getOnboardingProgress('Relationship')}
     />
   );
 };

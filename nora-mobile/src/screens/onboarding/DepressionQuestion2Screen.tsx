@@ -9,6 +9,7 @@ import { Alert } from 'react-native';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { useAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { getOnboardingProgress } from '../../config/onboardingProgress';
 
 const OPTIONS = [
   { value: 0, label: 'Not at all' },
@@ -57,7 +58,7 @@ export const DepressionQuestion2Screen: React.FC = () => {
       if (totalScore >= 3) {
         navigation.navigate('SelfCare');
       } else {
-        navigation.navigate('Intro1');
+        navigation.navigate('PreIntroReassurance');
       }
 
       // Prevent default navigation by throwing (but after we've navigated)
@@ -74,7 +75,7 @@ export const DepressionQuestion2Screen: React.FC = () => {
         'Failed to submit survey. You can continue and complete it later from your profile.'
       );
       // Continue anyway on error
-      navigation.navigate('Intro1');
+      navigation.navigate('PreIntroReassurance');
       throw err; // Prevent default navigation
     }
   };
@@ -85,9 +86,10 @@ export const DepressionQuestion2Screen: React.FC = () => {
       title="Over the last 2 weeks, how often have you been bothered by: Feeling down, depressed, or hopeless?"
       options={OPTIONS}
       dataField="phq2.q2Depressed"
-      nextScreen="Intro1" // This will be overridden by onBeforeNavigate
+      nextScreen="PreIntroReassurance" // This will be overridden by onBeforeNavigate
       onBeforeNavigate={handleSubmitSurvey}
       continueText="Submit"
+      progress={getOnboardingProgress('DepressionQuestion2')}
     />
   );
 };

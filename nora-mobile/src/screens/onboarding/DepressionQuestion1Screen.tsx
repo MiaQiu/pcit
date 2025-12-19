@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
+import { getOnboardingProgress } from '../../config/onboardingProgress';
 
 const OPTIONS = [
   { value: 0, label: 'Not at all' },
@@ -21,6 +22,7 @@ export const DepressionQuestion1Screen: React.FC = () => {
       options={OPTIONS}
       dataField="phq2.q1Interest"
       nextScreen="DepressionQuestion2"
+      progress={getOnboardingProgress('DepressionQuestion1')}
     />
   );
 };

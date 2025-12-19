@@ -25,13 +25,13 @@ export const ReassuranceScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data } = useOnboarding();
 
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
-  const bubbleAnim = useRef(new Animated.Value(0)).current;
-  const textOpacity = useRef(new Animated.Value(0)).current;
-  const subtitleOpacity = useRef(new Animated.Value(0)).current;
-  const buttonOpacity = useRef(new Animated.Value(0)).current;
+  // Animation values - COMMENTED OUT
+  // const fadeAnim = useRef(new Animated.Value(0)).current;
+  // const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  // const bubbleAnim = useRef(new Animated.Value(0)).current;
+  // const textOpacity = useRef(new Animated.Value(0)).current;
+  // const subtitleOpacity = useRef(new Animated.Value(0)).current;
+  // const buttonOpacity = useRef(new Animated.Value(0)).current;
 
   const childName = data.childName || 'your child';
   const fullText = `Your wellbeing matters too!`;
@@ -41,47 +41,48 @@ export const ReassuranceScreen: React.FC = () => {
     navigation.navigate('DepressionQuestion1');
   };
 
-  useEffect(() => {
-    // Set dragon and button to visible immediately
-    fadeAnim.setValue(1);
-    scaleAnim.setValue(1);
-    buttonOpacity.setValue(1);
+  // ANIMATIONS COMMENTED OUT
+  // useEffect(() => {
+  //   // Set dragon and button to visible immediately
+  //   fadeAnim.setValue(1);
+  //   scaleAnim.setValue(1);
+  //   buttonOpacity.setValue(1);
 
-    // Start text animations
-    Animated.sequence([
-      // Animate bubble
-      Animated.spring(bubbleAnim, {
-        toValue: 1,
-        tension: 50,
-        friction: 7,
-        useNativeDriver: true,
-        delay: 200,
-      }),
-      // Then fade in text over 1 second
-      Animated.timing(textOpacity, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-        delay: 200,
-      }),
-      // Then fade in subtitle
-      Animated.timing(subtitleOpacity, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-        delay: 300,
-      }),
-    ]).start();
+  //   // Start text animations
+  //   Animated.sequence([
+  //     // Animate bubble
+  //     Animated.spring(bubbleAnim, {
+  //       toValue: 1,
+  //       tension: 50,
+  //       friction: 7,
+  //       useNativeDriver: true,
+  //       delay: 200,
+  //     }),
+  //     // Then fade in text over 1 second
+  //     Animated.timing(textOpacity, {
+  //       toValue: 1,
+  //       duration: 1000,
+  //       useNativeDriver: true,
+  //       delay: 200,
+  //     }),
+  //     // Then fade in subtitle
+  //     Animated.timing(subtitleOpacity, {
+  //       toValue: 1,
+  //       duration: 800,
+  //       useNativeDriver: true,
+  //       delay: 300,
+  //     }),
+  //   ]).start();
 
-    // TEMPORARY: Navigation disabled for layout adjustments
-    // const navigationTimer = setTimeout(() => {
-    //   navigation.replace('DepressionSurvey');
-    // }, 4000);
+  //   // TEMPORARY: Navigation disabled for layout adjustments
+  //   // const navigationTimer = setTimeout(() => {
+  //   //   navigation.replace('DepressionSurvey');
+  //   // }, 4000);
 
-    // return () => {
-    //   clearTimeout(navigationTimer);
-    // };
-  }, [navigation, fadeAnim, scaleAnim, bubbleAnim, textOpacity, subtitleOpacity, buttonOpacity]);
+  //   // return () => {
+  //   //   clearTimeout(navigationTimer);
+  //   // };
+  // }, [navigation, fadeAnim, scaleAnim, bubbleAnim, textOpacity, subtitleOpacity, buttonOpacity]);
 
   return (
     <LinearGradient
@@ -89,15 +90,7 @@ export const ReassuranceScreen: React.FC = () => {
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
-        <Animated.View
-          style={[
-            styles.content,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
-            },
-          ]}
-        >
+        <View style={styles.content}>
           {/* Dragon Image */}
           <Image
             source={require('../../../assets/images/dragon_waving.png')}
@@ -106,28 +99,20 @@ export const ReassuranceScreen: React.FC = () => {
           />
 
           {/* Message Text */}
-          <Animated.View
-            style={[
-              styles.textContainer,
-              {
-                opacity: bubbleAnim,
-                transform: [{ scale: bubbleAnim }],
-              },
-            ]}
-          >
-            <Animated.Text style={[styles.messageText, { opacity: textOpacity }]}>
+          <View style={styles.textContainer}>
+            <Text style={styles.messageText}>
               {fullText}
-            </Animated.Text>
+            </Text>
             {subtitle && (
-              <Animated.Text style={[styles.subtitleText, { opacity: subtitleOpacity }]}>
+              <Text style={styles.subtitleText}>
                 {subtitle}
-              </Animated.Text>
+              </Text>
             )}
-          </Animated.View>
-        </Animated.View>
+          </View>
+        </View>
 
         {/* Button */}
-        <Animated.View style={[styles.buttonContainer, { opacity: buttonOpacity }]}>
+        <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.button}
             onPress={handleContinue}
@@ -135,7 +120,7 @@ export const ReassuranceScreen: React.FC = () => {
           >
             <Text style={styles.buttonText}>Let's go</Text>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
       </SafeAreaView>
     </LinearGradient>
   );

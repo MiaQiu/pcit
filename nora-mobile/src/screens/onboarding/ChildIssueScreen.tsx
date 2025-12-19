@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
+import { getOnboardingProgress } from '../../config/onboardingProgress';
 
 export const ChildIssueScreen: React.FC = () => {
   return (
@@ -22,6 +23,7 @@ export const ChildIssueScreen: React.FC = () => {
       dataField="issue"
       nextScreen="InitialReassurance"
       multiSelect={true}
+      progress={getOnboardingProgress('ChildIssue')}
     />
   );
 };

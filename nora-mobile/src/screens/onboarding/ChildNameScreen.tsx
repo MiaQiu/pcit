@@ -12,6 +12,7 @@ import { OnboardingLayout } from '../../components/OnboardingLayout';
 import { OnboardingDragonHeader } from '../../components/OnboardingDragonHeader';
 import { OnboardingTextInput } from '../../components/OnboardingTextInput';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
+import { getOnboardingProgress } from '../../config/onboardingProgress';
 
 export const ChildNameScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -33,7 +34,10 @@ export const ChildNameScreen: React.FC = () => {
 
   return (
     <OnboardingLayout useKeyboardAvoid>
-      <OnboardingDragonHeader text="We'll use their name to personalize tips and messages." />
+      <OnboardingDragonHeader
+        text="We'll use their name to personalize tips and messages."
+        progress={getOnboardingProgress('ChildName')}
+      />
 
       <OnboardingTextInput
         title="What's your child's name?"

@@ -808,8 +808,8 @@ const HomeScreen = ({ selectedDeck, setActiveScreen }) => {
     unlockNextDeck();
   }, [currentCardInDeck, currentDeck, unlockedDecks, currentDeckCards.length]);
 
-  return (
-    <div className="min-h-screen bg-purple-50 pb-24">
+  return ( 
+    <div className="min-h-screen bg-purple-100 pb-24">
       <div className="px-6 pt-8">
         {/* Welcome Header with Streak */}
         <div className="mb-6">

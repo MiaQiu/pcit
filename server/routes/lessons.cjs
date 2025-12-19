@@ -299,7 +299,7 @@ router.get('/share/:id', async (req, res) => {
     const lesson = await prisma.lesson.findUnique({
       where: { id },
       include: {
-        segments: {
+        LessonSegment: {
           orderBy: { order: 'asc' }
         }
       }
@@ -320,7 +320,7 @@ router.get('/share/:id', async (req, res) => {
         backgroundColor: lesson.backgroundColor,
         ellipse77Color: lesson.ellipse77Color,
         ellipse78Color: lesson.ellipse78Color,
-        segments: lesson.segments.map(s => ({
+        segments: lesson.LessonSegment.map(s => ({
           sectionTitle: s.sectionTitle,
           bodyText: s.bodyText,
           order: s.order
@@ -350,12 +350,12 @@ router.get('/:id', requireAuth, async (req, res) => {
     const lesson = await prisma.lesson.findUnique({
       where: { id },
       include: {
-        segments: {
+        LessonSegment: {
           orderBy: { order: 'asc' }
         },
-        quiz: {
+        Quiz: {
           include: {
-            options: {
+            QuizOption: {
               orderBy: { order: 'asc' }
             }
           }
@@ -391,7 +391,7 @@ router.get('/:id', requireAuth, async (req, res) => {
           lessonId: id,
           status: 'IN_PROGRESS',
           currentSegment: 1,
-          totalSegments: lesson.segments.length,
+          totalSegments: lesson.LessonSegment.length,
           startedAt: new Date(),
           lastViewedAt: new Date(),
           timeSpentSeconds: 0
@@ -405,8 +405,21 @@ router.get('/:id', requireAuth, async (req, res) => {
       });
     }
 
+    // Map Prisma field names to frontend expected names
+    const lessonResponse = {
+      ...lesson,
+      segments: lesson.LessonSegment,
+      quiz: lesson.Quiz ? {
+        ...lesson.Quiz,
+        options: lesson.Quiz.QuizOption
+      } : null,
+      // Remove Prisma field names
+      LessonSegment: undefined,
+      Quiz: undefined
+    };
+
     res.json({
-      lesson,
+      lesson: lessonResponse,
       userProgress
     });
 
@@ -516,7 +529,7 @@ router.put('/:id/progress', requireAuth, async (req, res) => {
     // Get the lesson to retrieve segment count
     const lesson = await prisma.lesson.findUnique({
       where: { id },
-      include: { segments: true }
+      include: { LessonSegment: true }
     });
 
     if (!lesson) {
@@ -539,7 +552,7 @@ router.put('/:id/progress', requireAuth, async (req, res) => {
           lessonId: id,
           status: status || 'IN_PROGRESS',
           currentSegment: currentSegment || 1,
-          totalSegments: lesson.segments.length,
+          totalSegments: lesson.LessonSegment.length,
           startedAt: new Date(),
           lastViewedAt: new Date(),
           timeSpentSeconds: timeSpentSeconds || 0,

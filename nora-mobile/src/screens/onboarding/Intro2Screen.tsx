@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 16,
     color: '#6B7280',
-    textAlign: 'left',
+    textAlign: 'center',
     lineHeight: 28,
   },
   spacer: {
