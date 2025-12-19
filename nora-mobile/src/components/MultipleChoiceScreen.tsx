@@ -4,7 +4,7 @@
  * Supports both single-select and multi-select modes
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -36,6 +36,7 @@ export interface MultipleChoiceScreenProps {
   continueText?: string;
   onBeforeNavigate?: (selectedValue: any, updateData: any, navigation: any) => Promise<void>;
   progress?: number; // Progress as percentage (0-100)
+  disableAutoNavigate?: boolean; // Disable auto-navigation for single-select
 }
 
 export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
@@ -48,6 +49,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   continueText = 'Continue',
   onBeforeNavigate,
   progress = 0,
+  disableAutoNavigate = false,
 }) => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
@@ -68,6 +70,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
 
   const [selectedValue, setSelectedValue] = useState<any>(getInitialValue());
   const [isLoading, setIsLoading] = useState(false);
+  const autoNavigateTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSelect = (value: string | number) => {
     if (multiSelect) {
@@ -80,11 +83,27 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
       });
     } else {
       setSelectedValue(value);
+      // Auto-navigate for single-select after a short delay to show selection feedback
+      if (!disableAutoNavigate) {
+        if (autoNavigateTimerRef.current) {
+          clearTimeout(autoNavigateTimerRef.current);
+        }
+        autoNavigateTimerRef.current = setTimeout(() => {
+          handleContinue(value);
+        }, 50);
+      }
     }
   };
 
-  const handleContinue = async () => {
-    if (!isValid) return;
+  const handleContinue = async (valueOverride?: any) => {
+    const valueToUse = valueOverride !== undefined ? valueOverride : selectedValue;
+
+    // Validate the value
+    const isValueValid = multiSelect
+      ? Array.isArray(valueToUse) && valueToUse.length > 0
+      : valueToUse !== null && valueToUse !== undefined;
+
+    if (!isValueValid) return;
 
     // Build the update object based on dataField path
     const keys = dataField.split('.');
@@ -92,13 +111,13 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
 
     if (keys.length === 1) {
       // Simple field like "childGender"
-      updateObj[keys[0]] = selectedValue;
+      updateObj[keys[0]] = valueToUse;
     } else if (keys.length === 2) {
       // Nested field like "wacb.q1Dawdle"
       const parentValue = data[keys[0] as keyof typeof data];
       updateObj[keys[0]] = {
         ...(typeof parentValue === 'object' && parentValue !== null ? parentValue : {}),
-        [keys[1]]: selectedValue,
+        [keys[1]]: valueToUse,
       };
     }
 
@@ -108,7 +127,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
     if (onBeforeNavigate) {
       setIsLoading(true);
       try {
-        await onBeforeNavigate(selectedValue, updateData, navigation);
+        await onBeforeNavigate(valueToUse, updateData, navigation);
       } catch (error) {
         // If onBeforeNavigate throws, we don't navigate
         setIsLoading(false);
@@ -190,7 +209,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
         ) : (
           <OnboardingButtonRow
             onBack={handleBack}
-            onContinue={handleContinue}
+            onContinue={() => handleContinue()}
             continueDisabled={!isValid}
             continueText={continueText}
           />

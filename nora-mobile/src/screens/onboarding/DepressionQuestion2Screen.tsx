@@ -90,6 +90,7 @@ export const DepressionQuestion2Screen: React.FC = () => {
       onBeforeNavigate={handleSubmitSurvey}
       continueText="Submit"
       progress={getOnboardingProgress('DepressionQuestion2')}
+      disableAutoNavigate={true}
     />
   );
 };

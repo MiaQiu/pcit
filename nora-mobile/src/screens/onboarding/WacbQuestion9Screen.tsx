@@ -61,6 +61,7 @@ export const WacbQuestion9Screen: React.FC = () => {
     <MultipleChoiceScreen
       {...WACB_QUESTIONS[8]}
       onBeforeNavigate={handleSubmitSurvey}
+      disableAutoNavigate={true}
     />
   );
 };

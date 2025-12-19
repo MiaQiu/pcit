@@ -255,15 +255,6 @@ export const SubscriptionScreen: React.FC = () => {
           <Text style={styles.link}>Privacy Policy</Text>
         </Text>
       </View>
-
-      {/* Back and Skip Buttons */}
-      <View style={styles.footer}>
-        <OnboardingButtonRow
-          onBack={handleBack}
-          onContinue={handleSkip}
-          continueText="Skip Now"
-        />
-      </View>
     </SafeAreaView>
   );
 };
@@ -454,12 +445,5 @@ const styles = StyleSheet.create({
   link: {
     color: '#8C49D5',
     textDecorationLine: 'underline',
-  },
-  footer: {
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
   },
 });
