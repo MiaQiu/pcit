@@ -1,6 +1,6 @@
 /**
- * Reassurance Screen
- * Shows dragon with encouraging message after survey
+ * Initial Reassurance Screen
+ * Shows reassuring message after child issue selection
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -21,7 +21,7 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-export const ReassuranceScreen: React.FC = () => {
+export const InitialReassuranceScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data } = useOnboarding();
 
@@ -33,12 +33,12 @@ export const ReassuranceScreen: React.FC = () => {
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
   const buttonOpacity = useRef(new Animated.Value(0)).current;
 
+  const fullText = "You're doing the right thing by being here!";
   const childName = data.childName || 'your child';
-  const fullText = `Nora is creating a personalized approach for you and ${childName}.`;
-  const subtitle = "Next, here's how Nora supports you day by day.";
+  const subtitle = `Most parents using Nora start seeing progress in the first few weeks. Next, We'll ask a few short questions about ${childName}'s behaviour. This helps Nora understand where to focus first.`;
 
   const handleContinue = () => {
-    navigation.navigate('DepressionSurvey');
+    navigation.navigate('WacbSurvey');
   };
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export const ReassuranceScreen: React.FC = () => {
 
     // TEMPORARY: Navigation disabled for layout adjustments
     // const navigationTimer = setTimeout(() => {
-    //   navigation.replace('DepressionSurvey');
+    //   navigation.replace('WacbSurvey');
     // }, 4000);
 
     // return () => {
@@ -83,7 +83,7 @@ export const ReassuranceScreen: React.FC = () => {
     // };
   }, [navigation, fadeAnim, scaleAnim, bubbleAnim, textOpacity, subtitleOpacity, buttonOpacity]);
 
-  return (
+  return ( 
     <LinearGradient
       colors={['#9CD8D6', '#96D0E0']}
       style={styles.container}
@@ -118,11 +118,9 @@ export const ReassuranceScreen: React.FC = () => {
             <Animated.Text style={[styles.messageText, { opacity: textOpacity }]}>
               {fullText}
             </Animated.Text>
-            {subtitle && (
-              <Animated.Text style={[styles.subtitleText, { opacity: subtitleOpacity }]}>
-                {subtitle}
-              </Animated.Text>
-            )}
+            <Animated.Text style={[styles.subtitleText, { opacity: subtitleOpacity }]}>
+              {subtitle}
+            </Animated.Text>
           </Animated.View>
         </Animated.View>
 
@@ -191,6 +189,14 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
+    // shadowColor: '#8C49D5',
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 4,
+    // },
+    // shadowOpacity: 0.3,
+    // shadowRadius: 8,
+    // elevation: 8,
   },
   buttonText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',

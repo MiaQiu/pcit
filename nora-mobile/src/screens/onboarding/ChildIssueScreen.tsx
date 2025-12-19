@@ -78,7 +78,7 @@ export const ChildIssueScreen: React.FC = () => {
   const handleContinue = () => {
     if (selectedIssues.length > 0) {
       updateData({ issue: selectedIssues });
-      navigation.navigate('WacbSurvey');
+      navigation.navigate('InitialReassurance');
     }
   };
 
@@ -98,7 +98,7 @@ export const ChildIssueScreen: React.FC = () => {
           </View>
           <View style={styles.headerTextBox}>
             <Text style={styles.headerText}>
-              Almost done!
+            There are no right or wrong answers. Select all that applies.
             </Text>
           </View>
         </View>

@@ -16,6 +16,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { Ellipse } from '../../components/Ellipse';
+import { MaskedDinoImage } from '../../components/MaskedDinoImage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -37,18 +38,14 @@ export const StartScreen: React.FC = () => {
         {/* Dragon Image Section with Ellipse Backgrounds */}
         <View style={styles.dragonSection}>
           {/* Ellipse 78 - Top decorative background - #A6E0CB */}
-          <Ellipse color="#A6E0CB" style={styles.ellipse78} />
+          {/* <Ellipse color="#A6E0CB" style={styles.ellipse78} /> */}
 
           {/* Ellipse 77 - Bottom decorative background */}
-          <Ellipse color="#9BD4DF" style={styles.ellipse77} />
+          {/* <Ellipse color="#9BD4DF" style={styles.ellipse77} /> */}
 
           {/* Dragon Image - Figma node 35:798 */}
           <View style={styles.dragonContainer}>
-            <Image
-              source={require('../../../assets/images/dragon_image.png')}
-              style={styles.dragonImage}
-              resizeMode="contain"
-            />
+            <MaskedDinoImage style={styles.dragonImage} />
           </View>
         </View>
 
@@ -129,10 +126,10 @@ const styles = StyleSheet.create({
   },
   dragonContainer: {
     position: 'absolute',
-    width: '120%',
-    height: '120%',
+    width: '125%',
+    height: '125%',
     alignItems: 'center',
-    marginBottom: 80,
+    marginBottom: 20,
 
   },
   dragonImage: {
@@ -143,6 +140,7 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 40,
     color: '#1E2939',
+    marginTop: 10,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -159,23 +157,23 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 56,
-    backgroundColor: '#8C49D5',
+    backgroundColor: '#1E2939',
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: '#8C49D5',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    //shadowColor: '#8C49D5',
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 4,
+    // },
+    //shadowOpacity: 0.3,
+    //shadowRadius: 8,
+   //elevation: 8,
   },
   buttonText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
+    fontSize: 16,
     color: '#FFFFFF',
   },
   loginButton: {

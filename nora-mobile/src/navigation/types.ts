@@ -26,6 +26,7 @@ export type OnboardingStackParamList = {
   ChildGender: undefined;
   ChildBirthday: undefined;
   ChildIssue: undefined;
+  InitialReassurance: undefined;
   WacbSurvey: undefined;
   Reassurance: undefined;
   DepressionSurvey: undefined;

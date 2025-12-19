@@ -20,6 +20,7 @@ import { ChildNameScreen } from '../screens/onboarding/ChildNameScreen';
 import { ChildGenderScreen } from '../screens/onboarding/ChildGenderScreen';
 import { ChildBirthdayScreen } from '../screens/onboarding/ChildBirthdayScreen';
 import { ChildIssueScreen } from '../screens/onboarding/ChildIssueScreen';
+import { InitialReassuranceScreen } from '../screens/onboarding/InitialReassuranceScreen';
 import { WacbSurveyScreen } from '../screens/onboarding/WacbSurveyScreen';
 import { ReassuranceScreen } from '../screens/onboarding/ReassuranceScreen';
 import { DepressionSurveyScreen } from '../screens/onboarding/DepressionSurveyScreen';
@@ -72,6 +73,7 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="ChildGender" component={ChildGenderScreen} />
       <Stack.Screen name="ChildBirthday" component={ChildBirthdayScreen} />
       <Stack.Screen name="ChildIssue" component={ChildIssueScreen} />
+      <Stack.Screen name="InitialReassurance" component={InitialReassuranceScreen} />
       <Stack.Screen name="WacbSurvey" component={WacbSurveyScreen} />
       <Stack.Screen name="Reassurance" component={ReassuranceScreen} />
       <Stack.Screen name="DepressionSurvey" component={DepressionSurveyScreen} />
