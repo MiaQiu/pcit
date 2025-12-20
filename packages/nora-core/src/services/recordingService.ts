@@ -57,7 +57,7 @@ class RecordingService {
 
   /**
    * Get analysis for a recording
-   * Returns 202 if still processing, 200 when complete
+   * Returns 202 if still processing, 200 when complete, 500 if failed
    */
   async getAnalysis(recordingId: string): Promise<RecordingAnalysis> {
     const response = await this.authService.authenticatedRequest(
@@ -68,6 +68,27 @@ class RecordingService {
       // Still processing
       const data = await response.json();
       throw new Error(data.message || 'Analysis still processing');
+    }
+
+    if (response.status === 500) {
+      // Analysis failed
+      const errorData = await response.json();
+      const errorMessage = errorData.message || errorData.error || 'Report generation failed';
+
+      // Create error with clear message that includes "Report generation failed" for detection
+      const failedError: any = new Error(`Report generation failed: ${errorMessage}`);
+      failedError.status = 'failed';
+      failedError.userMessage = errorMessage;
+      failedError.failedAt = errorData.failedAt;
+      failedError.originalError = errorData.error;
+
+      console.error('[RecordingService] Analysis failed:', {
+        status: failedError.status,
+        message: failedError.message,
+        userMessage: failedError.userMessage
+      });
+
+      throw failedError;
     }
 
     if (!response.ok) {

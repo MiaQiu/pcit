@@ -2,6 +2,11 @@
 
 Complete these steps before archiving in Xcode for TestFlight submission.
 
+
+#######don't know what is this#########
+ npm run build:core
+
+ 
 ## 1. Check Native Dependencies
 
 ### Verify New Dependencies
@@ -112,7 +117,10 @@ npx tsc --noEmit
 ### Test Build Locally (optional but recommended)
 ```bash
 npx expo prebuild
+#for ios
+npx expo prebuild --clean --platform ios
 ```
+
 
 ## 7. Xcode Pre-Archive Checks
 

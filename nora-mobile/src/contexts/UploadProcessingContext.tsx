@@ -120,11 +120,17 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     try {
       console.log('[UploadProcessing] Uploading...', { uri, durationSeconds, isRetry });
 
-      // Proactively refresh token before upload to avoid expiration issues
-      if (!isRetry) {
-        console.log('[UploadProcessing] Refreshing access token before upload...');
-        await authService.refreshAccessToken();
+      // Verify we have an access token before attempting upload
+      const accessToken = authService.getAccessToken();
+      if (!accessToken) {
+        console.error('[UploadProcessing] No access token available - session may have expired');
+        await reset();
+        // Don't throw error - if tokens were cleared, session expired callback already triggered
+        // If user was never authenticated, they shouldn't have reached this screen
+        return;
       }
+
+      console.log('[UploadProcessing] Access token verified, proceeding with upload');
 
       // Create FormData
       const formData = new FormData();
@@ -197,14 +203,8 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         // Open connection
         xhr.open('POST', `${API_URL}/api/recordings/upload`);
 
-        // Add Authorization header
-        const token = authService.getAccessToken();
-        if (token) {
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        } else {
-          reject(new Error('No authentication token available'));
-          return;
-        }
+        // Add Authorization header (token already verified at function start)
+        xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
 
         xhr.send(formData);
       });
@@ -232,15 +232,18 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
       // If unauthorized and not already a retry, refresh token and retry once
       if (error.message === 'UNAUTHORIZED' && !isRetry) {
-        console.log('[UploadProcessing] Token expired, refreshing and retrying...');
+        console.log('[UploadProcessing] Received 401, attempting token refresh...');
         const refreshed = await authService.refreshAccessToken();
         if (refreshed) {
+          console.log('[UploadProcessing] Token refreshed successfully, retrying upload');
           // Retry upload with refreshed token
           return uploadRecording(uri, durationSeconds, true);
         } else {
-          // Reset state
+          // Refresh failed - session expired callback already triggered by authService
+          console.log('[UploadProcessing] Token refresh failed - resetting upload state');
           await reset();
-          throw new Error('Session expired. Please log in again.');
+          // Don't throw error - session expired callback already handles user notification
+          return;
         }
       }
 
@@ -257,11 +260,15 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     const maxAttempts = 40; // 40 attempts * 3 seconds = 2 minutes max
 
     if (attempt >= maxAttempts) {
-      console.log('[UploadProcessing] Timeout - completing process');
+      console.log('[UploadProcessing] Timeout - analysis took too long');
       await reset();
-      if (onNavigateToHome) {
-        onNavigateToHome();
-      }
+      // Show error message to user on timeout
+      const Alert = require('react-native').Alert;
+      Alert.alert(
+        'Report Generation Failed',
+        'Analysis is taking longer than expected. Please try recording again or contact support if the issue persists.',
+        [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
+      );
       return;
     }
 
@@ -295,9 +302,29 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         onNavigateToHome();
       }
     } catch (error: any) {
+      console.log(`[UploadProcessing] Caught error - status: ${error.status}, message: ${error.message}`);
+      console.log(`[UploadProcessing] Full error object:`, JSON.stringify(error, null, 2));
+
+      // Check if analysis failed permanently (check both error.status and message)
+      const isFailed = error.status === 'failed' ||
+                       error.message?.toLowerCase().includes('report generation failed') ||
+                       error.message?.toLowerCase().includes('analysis failed');
+
+      if (isFailed) {
+        console.error('[UploadProcessing] Analysis failed permanently:', error.message);
+        await reset();
+        // Show error alert to user
+        const Alert = require('react-native').Alert;
+        Alert.alert(
+          'Report Generation Failed',
+          error.userMessage || 'We encountered an error while analyzing your recording. Please try recording again.',
+          [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
+        );
+        return;
+      }
+
       // If still processing or transcribing, wait and try again
       const errorMsg = error.message.toLowerCase();
-      console.log(`[UploadProcessing] Error: ${error.message}`);
       if (errorMsg.includes('processing') || errorMsg.includes('transcription') || errorMsg.includes('in progress')) {
         console.log(`[UploadProcessing] Still processing, will retry in 3s (attempt ${attempt + 1}/${maxAttempts})`);
         const timeout = setTimeout(() => {
@@ -305,12 +332,15 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         }, 3000);
         pollTimeoutRef.current = timeout;
       } else {
-        // Other error - reset and navigate anyway
-        console.error('[UploadProcessing] Unexpected error - completing process:', error);
+        // Other error - show error message to user
+        console.error('[UploadProcessing] Unexpected error during analysis:', error);
         await reset();
-        if (onNavigateToHome) {
-          onNavigateToHome();
-        }
+        const Alert = require('react-native').Alert;
+        Alert.alert(
+          'Report Generation Failed',
+          'An error occurred while processing your recording. Please try recording again.',
+          [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
+        );
       }
     }
   };

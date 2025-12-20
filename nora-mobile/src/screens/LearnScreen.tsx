@@ -237,7 +237,7 @@ export const LearnScreen: React.FC = () => {
           </View>
           <Text style={styles.mainTitle}>All Lessons</Text>
         </View>
-
+ 
         {/* Error Message */}
         {error && (
           <View className="mx-6 mb-4 p-4 bg-yellow-100 rounded-lg">

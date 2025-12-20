@@ -194,7 +194,7 @@ rm -rf ios android
 npx expo prebuild
 ```
 
-### Icon looks blurry
+### Icon looks blurry 
 
 **Issue:** Source image is too small or low quality
 

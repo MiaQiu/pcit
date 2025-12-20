@@ -158,7 +158,7 @@ model RiskAuditLog {
 }
 
 model Session {
-  id                     String      @id
+  id                     String         @id
   userId                 String
   mode                   SessionMode
   storagePath            String
@@ -167,12 +167,12 @@ model Session {
   aiFeedbackJSON         Json
   pcitCoding             Json
   tagCounts              Json
-  masteryAchieved        Boolean     @default(false)
-  riskScore              Int         @default(0)
-  flaggedForReview       Boolean     @default(false)
-  coachAlertSent         Boolean     @default(false)
+  masteryAchieved        Boolean        @default(false)
+  riskScore              Int            @default(0)
+  flaggedForReview       Boolean        @default(false)
+  coachAlertSent         Boolean        @default(false)
   coachAlertSentAt       DateTime?
-  createdAt              DateTime    @default(now())
+  createdAt              DateTime       @default(now())
   childMetrics           Json?
   competencyAnalysis     Json?
   overallScore           Int?
@@ -180,13 +180,17 @@ model Session {
   roleIdentificationJson Json?
   transcriptionService   String?
   transcribedAt          DateTime?
-  User                   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysisStatus         AnalysisStatus @default(PENDING)
+  analysisError          String?
+  analysisFailedAt       DateTime?
+  User                   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   Utterance              Utterance[]
 
   @@index([createdAt])
   @@index([flaggedForReview])
   @@index([mode])
   @@index([userId])
+  @@index([analysisStatus])
 }
 
 model Utterance {
@@ -386,4 +390,11 @@ enum SupportRequestStatus {
   IN_PROGRESS
   RESOLVED
   CLOSED
+}
+
+enum AnalysisStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }

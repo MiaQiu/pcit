@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
-import { Ellipse } from '../../components/Ellipse';
 import { MaskedDinoImage } from '../../components/MaskedDinoImage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -35,14 +34,8 @@ export const StartScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        {/* Dragon Image Section with Ellipse Backgrounds */}
+        {/* Dragon Image Section */}
         <View style={styles.dragonSection}>
-          {/* Ellipse 78 - Top decorative background - #A6E0CB */}
-          {/* <Ellipse color="#A6E0CB" style={styles.ellipse78} /> */}
-
-          {/* Ellipse 77 - Bottom decorative background */}
-          {/* <Ellipse color="#9BD4DF" style={styles.ellipse77} /> */}
-
           {/* Dragon Image - Figma node 35:798 */}
           <View style={styles.dragonContainer}>
             <MaskedDinoImage style={styles.dragonImage} />
@@ -99,30 +92,16 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: 32,
   },
   dragonSection: {
     position: 'relative',
     width: SCREEN_WIDTH * 0.8,
     height: SCREEN_WIDTH * 0.8,
+    marginTop: 0,
     marginBottom: 32,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  ellipse78: {
-    position: 'absolute',
-    left: -130,
-    top: -70,
-    width: 573,
-    height: 259,
-  },
-  ellipse77: {
-    position: 'absolute',
-    left: -80,
-    top: 80,
-    width: 473,
-    height: 200,
   },
   dragonContainer: {
     position: 'absolute',

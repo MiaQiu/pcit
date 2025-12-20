@@ -256,15 +256,51 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
   // Trigger PCIT analysis in background (non-blocking)
   console.log(`🔄 [ANALYSIS-TRIGGER] Session ${sessionId.substring(0, 8)} - About to trigger PCIT analysis...`);
   console.log(`🔄 [ANALYSIS-TRIGGER] Calling analyzePCITCoding(${sessionId.substring(0, 8)}, ${userId.substring(0, 8)})`);
+
+  // Update status to PROCESSING
+  await prisma.session.update({
+    where: { id: sessionId },
+    data: { analysisStatus: 'PROCESSING' }
+  });
+
   analyzePCITCoding(sessionId, userId)
-    .then(() => {
+    .then(async () => {
       console.log(`✅ [ANALYSIS-COMPLETE] Session ${sessionId.substring(0, 8)} - PCIT analysis completed successfully`);
+      // Update status to COMPLETED
+      await prisma.session.update({
+        where: { id: sessionId },
+        data: { analysisStatus: 'COMPLETED' }
+      });
     })
-    .catch(err => {
+    .catch(async (err) => {
       console.error(`❌ [ANALYSIS-FAILED] Session ${sessionId.substring(0, 8)} - PCIT analysis failed:`);
       console.error(`❌ [ANALYSIS-FAILED] Error message:`, err.message);
       console.error(`❌ [ANALYSIS-FAILED] Error stack:`, err.stack);
       console.error(`❌ [ANALYSIS-FAILED] Full error:`, err);
+
+      // Save error to database
+      console.log(`🔄 [ANALYSIS-FAILED] About to save error to database for session ${sessionId.substring(0, 8)}...`);
+
+      try {
+        console.log(`🔄 [ANALYSIS-FAILED] Calling prisma.session.update...`);
+        const result = await prisma.session.update({
+          where: { id: sessionId },
+          data: {
+            analysisStatus: 'FAILED',
+            analysisError: err.message || 'Unknown error occurred during analysis',
+            analysisFailedAt: new Date()
+          }
+        });
+        console.log(`✅ [ANALYSIS-FAILED] Database update completed for session ${sessionId.substring(0, 8)}`);
+        console.log(`✅ [ANALYSIS-FAILED] Updated session:`, { id: result.id, status: result.analysisStatus, error: result.analysisError });
+      } catch (dbErr) {
+        console.error(`❌ [DB-ERROR] Failed to save error to database for session ${sessionId.substring(0, 8)}:`);
+        console.error(`❌ [DB-ERROR] Error details:`, dbErr);
+        console.error(`❌ [DB-ERROR] Error message:`, dbErr.message);
+        console.error(`❌ [DB-ERROR] Error stack:`, dbErr.stack);
+      }
+
+      console.log(`🏁 [ANALYSIS-FAILED] Finished error handling for session ${sessionId.substring(0, 8)}`);
     });
 
   return {
@@ -1428,20 +1464,38 @@ router.get('/:id/analysis', async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    // Log current session status for debugging
+    console.log(`[GET-ANALYSIS] Session ${id.substring(0, 8)} - Status: ${session.analysisStatus}, Has transcript: ${!!session.transcript}, Has pcitCoding: ${!!session.pcitCoding && Object.keys(session.pcitCoding).length > 0}`);
+
+    // Check if analysis failed
+    if (session.analysisStatus === 'FAILED') {
+      console.log(`[GET-ANALYSIS] Returning FAILED status for session ${id.substring(0, 8)}`);
+      return res.status(500).json({
+        status: 'failed',
+        error: 'Report generation failed',
+        message: session.analysisError || 'An error occurred while analyzing your recording. Please try recording again.',
+        failedAt: session.analysisFailedAt
+      });
+    }
+
     // Check if analysis is complete
     if (!session.transcript) {
+      console.log(`[GET-ANALYSIS] Returning PROCESSING (no transcript) for session ${id.substring(0, 8)}`);
       return res.status(202).json({
         status: 'processing',
         message: 'Transcription in progress'
       });
     }
 
-    if (!session.pcitCoding || Object.keys(session.pcitCoding).length === 0) {
+    if (session.analysisStatus !== 'COMPLETED' || !session.pcitCoding || Object.keys(session.pcitCoding).length === 0) {
+      console.log(`[GET-ANALYSIS] Returning PROCESSING (status=${session.analysisStatus}) for session ${id.substring(0, 8)}`);
       return res.status(202).json({
         status: 'processing',
         message: 'PCIT analysis in progress'
       });
     }
+
+    console.log(`[GET-ANALYSIS] Returning COMPLETED for session ${id.substring(0, 8)}`);
 
     // Get utterances from database
     const utterances = await getUtterances(session.id);

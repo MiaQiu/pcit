@@ -12,23 +12,19 @@
  */
 
 import React from 'react';
-import { View, Text, Image, StyleSheet, ImageSourcePropType } from 'react-native';
+import { View, Text, StyleSheet, ImageSourcePropType } from 'react-native';
 import { Card } from './Card';
 import { Badge } from './Badge';
 import { Button } from './Button';
-import { Ellipse } from './Ellipse';
+import { MaskedDinoImage } from './MaskedDinoImage';
 
 // Phase-specific styling
 const PHASE_STYLES = {
   CONNECT: {
     backgroundColor: '#E4E4FF',
-    ellipse77Color: '#9BD4DF',
-    ellipse78Color: '#A6E0CB',
   },
   DISCIPLINE: {
     backgroundColor: '#FFE4C0',
-    ellipse77Color: '#FFD4A3',
-    ellipse78Color: '#FFC88A',
   },
 };
 
@@ -41,8 +37,6 @@ export interface LessonCardProps {
   description: string;
   dragonImageUrl: ImageSourcePropType; // Changed to support local images
   backgroundColor?: string; // Optional - will use phase-based color if not provided
-  ellipse77Color?: string; // Color for bottom ellipse
-  ellipse78Color?: string; // Color for top ellipse
   isLocked?: boolean;
   progress?: {
     status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'LOCKED';
@@ -59,8 +53,6 @@ export const LessonCard: React.FC<LessonCardProps> = ({
   description,
   dragonImageUrl,
   backgroundColor,
-  ellipse77Color,
-  ellipse78Color,
   isLocked = false,
   onPress,
 }) => {
@@ -68,10 +60,14 @@ export const LessonCard: React.FC<LessonCardProps> = ({
   const normalizedPhaseName = phaseName.toUpperCase();
   const phaseStyle = PHASE_STYLES[normalizedPhaseName as keyof typeof PHASE_STYLES] || PHASE_STYLES.CONNECT;
 
-  // Use provided colors or fall back to phase-based defaults
+  // Use provided color or fall back to phase-based default
   const finalBackgroundColor = backgroundColor || phaseStyle.backgroundColor;
-  const finalEllipse77Color = ellipse77Color || phaseStyle.ellipse77Color;
-  const finalEllipse78Color = ellipse78Color || phaseStyle.ellipse78Color;
+
+  // Use dino_new.webp for CONNECT phase, otherwise use the provided dragonImageUrl
+  const imageSource = normalizedPhaseName === 'CONNECT'
+    ? require('../../assets/images/dino_new.webp')
+    : dragonImageUrl;
+
   return (
     <Card
       backgroundColor={finalBackgroundColor}
@@ -80,21 +76,15 @@ export const LessonCard: React.FC<LessonCardProps> = ({
       style={styles.card}
     >
       <View style={styles.container}>
-        {/* Ellipse 78 - Top decorative background */}
-        <Ellipse color={finalEllipse78Color} style={styles.ellipse78} />
-
-        {/* Ellipse 77 - Bottom decorative background */}
-        <Ellipse color={finalEllipse77Color} style={styles.ellipse77} />
-
         {/* Dragon Image - Figma node 35:798 */}
         <View style={[
           styles.dragonContainer,
           normalizedPhaseName === 'DISCIPLINE' && styles.dragonContainerDiscipline
         ]}>
-          <Image
-            source={dragonImageUrl}
+          <MaskedDinoImage
+            imageSource={imageSource}
+            maskColor={finalBackgroundColor}
             style={styles.dragonImage}
-            resizeMode="contain"
           />
         </View>
 
@@ -134,32 +124,16 @@ const styles = StyleSheet.create({
   },
   container: {
     position: 'relative',
-    width: '100%',
-    height: '100%',
-  },
-  // Ellipse 78: x=-45, y=-88, w=473, h=259 (Figma image asset)
-  ellipse78: {
-    position: 'absolute',
-    left: -45,
-    top: -88,
-    width: 473,
-    height: 259,
-  },
-  // Ellipse 77: x=-45, y=153, w=473, h=175 (Figma image asset)
-  ellipse77: {
-    position: 'absolute',
-    left: -45,
-    top: 153,
-    width: 473,
-    height: 175,
+    width: '125%',
+    height: '125%', 
   },
   // Dragon image: x=0, y=42, w=382, h=223
   dragonContainer: {
     position: 'absolute',
     left: 0,
-    top: 42,
+    top: 0,
     width: 350, //adjusted
-    height: 223,
+    height: 350,
 
     // width: 382, //original
 
@@ -167,7 +141,7 @@ const styles = StyleSheet.create({
   // Discipline phase dragon (dino) - adjusted positioning
   dragonContainerDiscipline: {
     left: 0,
-    top: -30,
+    top: 0,
     width: 360,
     height: 360,
   },
@@ -178,9 +152,10 @@ const styles = StyleSheet.create({
   // Badge: x=0, y=302 (centered with padding)
   badgeContainer: {
     position: 'absolute',
-    top: 302,
+    top: 310,
+   // width: '100%',
     left: 0,
-    width: 382,
+    right: 90,
     alignItems: 'center',
   },
   // Content: x=0, y=383
@@ -219,7 +194,7 @@ const styles = StyleSheet.create({
   // Button: x=24, y=591, w=334, h=64
   buttonContainer: {
     position: 'absolute',
-    bottom: 15, //adjusted
+    bottom: 180, // Adjusted for 125% container (165px overflow + 15px from card bottom)
     // bottom: 88, // 679 - 591 = 88 //original
     left: 24,
     width: 300, //adjusted

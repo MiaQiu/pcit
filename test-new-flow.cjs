@@ -19,6 +19,7 @@ async function testNewFlow() {
   }
 
   // Read audio file
+  //const audioPath = '/Users/mia/nora/audio3_panhu_baba_mama.m4a';
   const audioPath = '/Users/mia/nora/audio2_anya_mama_papa.m4a';
   const audioBuffer = fs.readFileSync(audioPath);
   console.log(`✓ Audio file loaded: ${audioBuffer.length} bytes\n`);
