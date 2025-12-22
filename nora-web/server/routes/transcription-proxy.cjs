@@ -65,7 +65,8 @@ router.post('/elevenlabs', async (req, res) => {
     });
     formData.append('model_id', 'scribe_v1');
     formData.append('diarize', 'true');
-    formData.append('num_speakers', '2');
+    formData.append('diarization_threshold', '0.1');  // Auto-detect speakers with 0.1 threshold
+    formData.append('temperature', '0');              // Use temperature=0 for maximum accuracy
     formData.append('timestamps_granularity', 'word');
 
     // Forward to ElevenLabs (NO user metadata)

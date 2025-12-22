@@ -65,7 +65,8 @@ router.post('/elevenlabs', async (req, res) => {
     });
     formData.append('model_id', 'scribe_v1');
     formData.append('diarize', 'true');
-    formData.append('num_speakers', '2');
+    formData.append('diarization_threshold', '0.1');  // Auto-detect speakers with 0.1 threshold
+    formData.append('temperature', '0');              // Use temperature=0 for maximum accuracy
     formData.append('timestamps_granularity', 'word');
 
     // Forward to ElevenLabs (NO user metadata)
@@ -181,7 +182,7 @@ router.post('/assemblyai', async (req, res) => {
     );
 
     // Get audio from request body
-    const { audioData } = req.body;
+    const { audioData, numSpeakers } = req.body;
     if (!audioData) {
       return res.status(400).json({ error: 'No audio data provided' });
     }
@@ -208,17 +209,27 @@ router.post('/assemblyai', async (req, res) => {
     const { upload_url } = await uploadResponse.json();
 
     // Step 2: Request transcription
+    // Build transcription config with optional speaker count
+    const transcriptConfig = {
+      audio_url: upload_url,
+      speaker_labels: true
+    };
+
+    // Only add speakers_expected if specified (otherwise AssemblyAI auto-detects)
+    if (numSpeakers && numSpeakers > 0) {
+      transcriptConfig.speakers_expected = numSpeakers;
+      console.log(`[PROXY] AssemblyAI requesting ${numSpeakers} speakers for ${requestId}`);
+    } else {
+      console.log(`[PROXY] AssemblyAI auto-detecting speakers for ${requestId}`);
+    }
+
     const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
         'Authorization': API_KEYS.assemblyAI,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        audio_url: upload_url,
-        speaker_labels: true,
-        speakers_expected: 2
-      })
+      body: JSON.stringify(transcriptConfig)
     });
 
     if (!transcriptResponse.ok) {
