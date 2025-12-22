@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Linking from 'expo-linking';
 import {
   useFonts,
   PlusJakartaSans_400Regular,
@@ -15,6 +16,28 @@ import { OnboardingProvider } from './src/contexts/OnboardingContext';
 import { UploadProcessingProvider } from './src/contexts/UploadProcessingContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { RootStackNavigationProp } from './src/navigation/types';
+
+// Deep linking configuration
+const linking = {
+  prefixes: [Linking.createURL('/'), 'nora://', 'https://hinora.co'],
+  config: {
+    screens: {
+      Onboarding: {
+        screens: {
+          ResetPassword: 'reset-password',
+        },
+      },
+      MainTabs: {
+        screens: {
+          Home: 'home',
+          Record: 'record',
+          Learn: 'learn',
+          Progress: 'progress',
+        },
+      },
+    },
+  },
+};
 
 // Helper component that provides navigation to UploadProcessingProvider
 const AppContent: React.FC = () => {
@@ -63,7 +86,7 @@ export default function App() {
       <SafeAreaProvider>
         <AppProvider>
           <OnboardingProvider>
-            <NavigationContainer>
+            <NavigationContainer linking={linking}>
               <AppContent />
             </NavigationContainer>
           </OnboardingProvider>

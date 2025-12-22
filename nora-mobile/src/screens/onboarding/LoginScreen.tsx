@@ -122,6 +122,14 @@ export const LoginScreen: React.FC = () => {
             </View>
           </View>
 
+          {/* Forgot Password Link */}
+          <TouchableOpacity
+            style={styles.forgotPasswordContainer}
+            onPress={() => navigation.navigate('ForgotPassword')}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
+
           {/* Spacer */}
           <View style={styles.spacer} />
 
@@ -224,6 +232,16 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     paddingHorizontal: 16,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  forgotPasswordText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 14,
+    color: '#8C49D5',
   },
   spacer: {
     flex: 1,

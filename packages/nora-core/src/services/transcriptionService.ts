@@ -196,14 +196,26 @@ class TranscriptionService {
 
   /**
    * AssemblyAI with timeout and max retries
+   * @param audioBlob - Audio to transcribe
+   * @param numSpeakers - Optional number of expected speakers (auto-detects if not specified)
    */
-  async transcribeWithAssemblyAI(audioBlob: Blob): Promise<TranscriptionSegment[] | null> {
+  async transcribeWithAssemblyAI(audioBlob: Blob, numSpeakers?: number): Promise<TranscriptionSegment[] | null> {
     this.validateAudioBlob(audioBlob);
 
     // Convert to base64
     const audioData = await this.blobToBase64(audioBlob);
 
     // Step 1: Submit transcription request
+    const requestBody: any = {
+      audioData,
+      audioSize: audioBlob.size,
+    };
+
+    // Add numSpeakers if specified
+    if (numSpeakers && numSpeakers > 0) {
+      requestBody.numSpeakers = numSpeakers;
+    }
+
     const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/transcription/assemblyai`,
       {
@@ -211,10 +223,7 @@ class TranscriptionService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          audioData,
-          audioSize: audioBlob.size,
-        }),
+        body: JSON.stringify(requestBody),
       }
     );
 

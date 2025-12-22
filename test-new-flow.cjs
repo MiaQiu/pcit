@@ -10,8 +10,12 @@ const { parseElevenLabsTranscript, formatUtterancesAsText } = require('./server/
 
 require('dotenv').config();
 
-async function testNewFlow() {
-  console.log('=== Testing New ElevenLabs Flow ===\n');
+async function testNewFlow(diarizationThreshold = 0.1, audioPath = '/Users/mia/nora/audio3_panhu_baba_mama.m4a', numSpeakers = null, temperature = null) {
+  console.log(`=== Testing New ElevenLabs Flow ===`);
+  console.log(`Audio: ${audioPath}`);
+  console.log(`Diarization threshold: ${diarizationThreshold}`);
+  console.log(`Num speakers: ${numSpeakers || 'auto'}`);
+  console.log(`Temperature: ${temperature !== null ? temperature : 'default'}\n`);
 
   const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
   if (!ELEVENLABS_API_KEY) {
@@ -19,8 +23,6 @@ async function testNewFlow() {
   }
 
   // Read audio file
-  //const audioPath = '/Users/mia/nora/audio3_panhu_baba_mama.m4a';
-  const audioPath = '/Users/mia/nora/audio2_anya_mama_papa.m4a';
   const audioBuffer = fs.readFileSync(audioPath);
   console.log(`✓ Audio file loaded: ${audioBuffer.length} bytes\n`);
 
@@ -33,8 +35,18 @@ async function testNewFlow() {
   });
   formData.append('model_id', 'scribe_v1');
   formData.append('diarize', 'true');
- //formData.append('num_speakers', '2');
+  // Note: ElevenLabs API doesn't allow both diarization_threshold and num_speakers
+  if (numSpeakers) {
+    formData.append('num_speakers', numSpeakers.toString());
+  } else {
+    formData.append('diarization_threshold', diarizationThreshold.toString());
+  }
   formData.append('timestamps_granularity', 'word');
+
+  // Add temperature if specified (0.0-2.0)
+  if (temperature !== null) {
+    formData.append('temperature', temperature.toString());
+  }
 
   const response = await fetch(
     'https://api.elevenlabs.io/v1/speech-to-text?include_timestamps=true',
@@ -97,28 +109,46 @@ async function testNewFlow() {
   // Save outputs
   console.log('\n=== SAVING OUTPUTS ===\n');
 
+  // Extract filename without extension for output naming
+  const audioFilename = audioPath.split('/').pop().replace('.m4a', '');
+  let outputSuffix = numSpeakers
+    ? `${audioFilename}_${diarizationThreshold}_ns${numSpeakers}`
+    : `${audioFilename}_${diarizationThreshold}`;
+
+  // Add temperature to suffix if specified
+  if (temperature !== null) {
+    outputSuffix += `_temp${temperature}`;
+  }
+
   fs.writeFileSync(
-    '/Users/mia/nora/test_new_flow_raw.json',
+    `/Users/mia/nora/test_new_flow_raw_${outputSuffix}.json`,
     JSON.stringify(result, null, 2)
   );
-  console.log('✓ Raw JSON saved to: test_new_flow_raw.json');
+  console.log(`✓ Raw JSON saved to: test_new_flow_raw_${outputSuffix}.json`);
 
   fs.writeFileSync(
-    '/Users/mia/nora/test_new_flow_utterances.json',
+    `/Users/mia/nora/test_new_flow_utterances_${outputSuffix}.json`,
     JSON.stringify({ utterances }, null, 2)
   );
-  console.log('✓ Utterances saved to: test_new_flow_utterances.json');
+  console.log(`✓ Utterances saved to: test_new_flow_utterances_${outputSuffix}.json`);
 
   fs.writeFileSync(
-    '/Users/mia/nora/test_new_flow_transcript.txt',
+    `/Users/mia/nora/test_new_flow_transcript_${outputSuffix}.txt`,
     transcriptFormatted
   );
-  console.log('✓ Formatted transcript saved to: test_new_flow_transcript.txt');
+  console.log(`✓ Formatted transcript saved to: test_new_flow_transcript_${outputSuffix}.txt`);
 
   console.log('\n✓ Test completed successfully!');
 }
 
-testNewFlow()
+// Get parameters from command line arguments
+// Usage: node test-new-flow.cjs [threshold] [audioPath] [numSpeakers] [temperature]
+const threshold = parseFloat(process.argv[2]) || 0.1;
+const audioPath = process.argv[3] || '/Users/mia/nora/audio3_panhu_baba_mama.m4a';
+const numSpeakers = process.argv[4] ? parseInt(process.argv[4]) : null;
+const temperature = process.argv[5] !== undefined ? parseFloat(process.argv[5]) : null;
+
+testNewFlow(threshold, audioPath, numSpeakers, temperature)
   .then(() => {
     console.log('\n=== ALL TESTS PASSED ===');
     process.exit(0);

@@ -12,6 +12,8 @@ import { RouteProp } from '@react-navigation/native';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { StartScreen } from '../screens/onboarding/StartScreen';
 import { LoginScreen } from '../screens/onboarding/LoginScreen';
+import { ForgotPasswordScreen } from '../screens/onboarding/ForgotPasswordScreen';
+import { ResetPasswordScreen } from '../screens/onboarding/ResetPasswordScreen';
 import { SignupOptionsScreen } from '../screens/onboarding/SignupOptionsScreen';
 import { CreateAccountScreen } from '../screens/onboarding/CreateAccountScreen';
 import { NameInputScreen } from '../screens/onboarding/NameInputScreen';
@@ -75,6 +77,8 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       />
       <Stack.Screen name="Start" component={StartScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="SignupOptions" component={SignupOptionsScreen} />
       <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
       <Stack.Screen name="NameInput" component={NameInputScreen} />

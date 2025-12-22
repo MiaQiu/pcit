@@ -5,12 +5,16 @@
 import React from 'react';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { getOnboardingProgress } from '../../config/onboardingProgress';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 
 export const ChildGenderScreen: React.FC = () => {
+  const { data } = useOnboarding();
+  const childName = data.childName || 'your child';
+
   return (
     <MultipleChoiceScreen
       headerText="Used only to personalize guidance."
-      title="What is your child's gender?"
+      title={`What is ${childName}'s gender?`}
       options={[
         { value: 'BOY', label: 'Boy' },
         { value: 'GIRL', label: 'Girl' },

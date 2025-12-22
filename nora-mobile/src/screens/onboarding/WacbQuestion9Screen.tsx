@@ -5,13 +5,14 @@
 import React from 'react';
 import { Alert } from 'react-native';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
-import { WACB_QUESTIONS } from './wacbQuestions.config';
+import { getWacbQuestions } from './wacbQuestions.config';
 import { useAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
 export const WacbQuestion9Screen: React.FC = () => {
   const authService = useAuthService();
   const { data } = useOnboarding();
+  const childName = data.childName || 'your child';
 
   const handleSubmitSurvey = async (selectedValue: number) => {
     // Submit all WACB data to the backend
@@ -59,7 +60,7 @@ export const WacbQuestion9Screen: React.FC = () => {
 
   return (
     <MultipleChoiceScreen
-      {...WACB_QUESTIONS[8]}
+      {...getWacbQuestions(childName)[8]}
       onBeforeNavigate={handleSubmitSurvey}
       disableAutoNavigate={true}
     />

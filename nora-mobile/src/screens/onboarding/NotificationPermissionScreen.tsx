@@ -3,70 +3,29 @@
  * Prompts user to enable push notifications at the end of onboarding
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   SafeAreaView,
-  Alert,
-  Platform,
-  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Notifications from 'expo-notifications';
 import { RootStackNavigationProp } from '../../navigation/types';
 import { FONTS, COLORS } from '../../constants/assets';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
 export const NotificationPermissionScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleBack = () => navigation.goBack();
-
-  const requestNotificationPermission = async () => {
-    setIsLoading(true);
-
-    try {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-
-      // If permission not granted, request it
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-
-      if (finalStatus === 'granted') {
-        console.log('Notification permission granted');
-        // Navigate to main app
-        navigation.replace('MainTabs');
-      } else {
-        // Permission denied, but still continue to app
-        Alert.alert(
-          'Notifications Disabled',
-          'You can enable notifications later in Settings.',
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.replace('MainTabs'),
-            },
-          ]
-        );
-      }
-    } catch (error) {
-      console.error('Error requesting notification permission:', error);
-      // Continue to app even if there's an error
-      navigation.replace('MainTabs');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleNotNow = () => {
+    navigation.replace('MainTabs');
   };
 
-  const handleSkip = () => {
+  const handleEnable = () => {
+    Linking.openSettings();
     navigation.replace('MainTabs');
   };
 
@@ -106,28 +65,15 @@ export const NotificationPermissionScreen: React.FC = () => {
 
         {/* Spacer */}
         <View style={{ flex: 1 }} />
-
-        {/* Enable Button */}
-        <TouchableOpacity
-          style={[styles.enableButton, isLoading && styles.enableButtonDisabled]}
-          onPress={requestNotificationPermission}
-          disabled={isLoading}
-          activeOpacity={0.8}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.enableButtonText}>Enable Notifications</Text>
-          )}
-        </TouchableOpacity>
       </View>
 
-      {/* Back and Skip Buttons */}
+      {/* Not Now and Enable Buttons */}
       <View style={styles.footer}>
         <OnboardingButtonRow
-          onBack={handleBack}
-          onContinue={handleSkip}
-          continueText="Not Now"
+          onBack={handleNotNow}
+          onContinue={handleEnable}
+          backText="Not Now"
+          continueText="Enable"
         />
       </View>
     </SafeAreaView>
@@ -188,32 +134,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: COLORS.textDark,
     flex: 1,
-  },
-  enableButton: {
-    width: '100%',
-    height: 56,
-    backgroundColor: COLORS.mainPurple,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-    shadowColor: COLORS.mainPurple,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  enableButtonDisabled: {
-    backgroundColor: '#C4B5FD',
-    shadowOpacity: 0.1,
-  },
-  enableButtonText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 18,
-    color: '#FFFFFF',
   },
   footer: {
     paddingHorizontal: 32,

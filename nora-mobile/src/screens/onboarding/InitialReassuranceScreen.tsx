@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
     lineHeight: 24,
-    opacity: 0.9,
+    opacity: 1,
   },
   buttonContainer: {
     paddingHorizontal: 32,

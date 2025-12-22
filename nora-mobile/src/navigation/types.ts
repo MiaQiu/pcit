@@ -18,6 +18,8 @@ export type OnboardingStackParamList = {
   Welcome: undefined;
   Start: undefined;
   Login: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: { token?: string };
   SignupOptions: undefined;
   CreateAccount: undefined;
   NameInput: undefined;

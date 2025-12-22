@@ -4,8 +4,11 @@
 
 import React from 'react';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
-import { WACB_QUESTIONS } from './wacbQuestions.config';
+import { getWacbQuestions } from './wacbQuestions.config';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 
 export const WacbQuestion5Screen: React.FC = () => {
-  return <MultipleChoiceScreen {...WACB_QUESTIONS[4]} />;
+  const { data } = useOnboarding();
+  const childName = data.childName || 'your child';
+  return <MultipleChoiceScreen {...getWacbQuestions(childName)[4]} />;
 };

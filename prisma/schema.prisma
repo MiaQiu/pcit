@@ -141,6 +141,20 @@ model RefreshToken {
   @@index([tokenHash])
 }
 
+model PasswordResetToken {
+  id        String   @id
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
 model RiskAuditLog {
   id             String   @id
   userId         String
@@ -247,32 +261,33 @@ model ThirdPartyRequest {
 }
 
 model User {
-  id                    String               @id
-  email                 String               @unique
+  id                    String                 @id
+  email                 String                 @unique
   passwordHash          String
   name                  String
   therapistId           String?
   childName             String
-  createdAt             DateTime             @default(now())
-  currentStreak         Int                  @default(0)
+  createdAt             DateTime               @default(now())
+  currentStreak         Int                    @default(0)
   lastSessionDate       DateTime?
-  longestStreak         Int                  @default(0)
+  longestStreak         Int                    @default(0)
   childBirthYear        Int
   childConditions       String
-  emailHash             String?              @unique
+  emailHash             String?                @unique
   childBirthday         DateTime?
   issue                 String?
   profileImageUrl       String?
   subscriptionEndDate   DateTime?
-  subscriptionPlan      SubscriptionPlan     @default(TRIAL)
+  subscriptionPlan      SubscriptionPlan       @default(TRIAL)
   subscriptionStartDate DateTime?
-  subscriptionStatus    SubscriptionStatus   @default(ACTIVE)
+  subscriptionStatus    SubscriptionStatus     @default(ACTIVE)
   trialEndDate          DateTime?
   trialStartDate        DateTime?
-  relationshipToChild   RelationshipToChild  @default(MOTHER)
+  relationshipToChild   RelationshipToChild    @default(MOTHER)
   childGender           ChildGender?
   LearningProgress      LearningProgress?
   ModuleHistory         ModuleHistory[]
+  PasswordResetToken    PasswordResetToken[]
   Phq2Survey            Phq2Survey[]
   QuizResponse          QuizResponse[]
   RiskAuditLog          RiskAuditLog[]

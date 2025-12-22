@@ -10,7 +10,7 @@ import { FONTS, COLORS } from '../constants/assets';
 const STEPS = [
   'Place your phone nearby where it can hear you both clearly.',
   'Press "Start Recording" below.',
-  'Play naturally with Zoey for 5 minutes.',
+  'Play naturally with your child for 5 minutes.',
   'We\'ll automatically stop at 5 minutes and give you feedback!',
 ];
 

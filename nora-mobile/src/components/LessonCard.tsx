@@ -148,6 +148,7 @@ const styles = StyleSheet.create({
   dragonImage: {
     width: '100%',
     height: '100%',
+    marginTop: -10,
   },
   // Badge: x=0, y=302 (centered with padding)
   badgeContainer: {

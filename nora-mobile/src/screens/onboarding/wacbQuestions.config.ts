@@ -16,10 +16,10 @@ const SCALE_OPTIONS = [
 
 const HEADER_TEXT = 'There are no right or wrong answers — and this is not a diagnosis.';
 
-export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
+export const getWacbQuestions = (childName: string = 'your child'): Omit<MultipleChoiceScreenProps, 'navigation'>[] => [
   {
     headerText: HEADER_TEXT,
-    title: 'In the past two weeks, how often has your child taken too long to do things or dragged their feet on purpose?',
+    title: `In the past two weeks, how often has ${childName} taken too long to do things or dragged their feet on purpose?`,
     options: SCALE_OPTIONS,
     dataField: 'wacb.q1Dawdle',
     nextScreen: 'WacbQuestion2',
@@ -27,7 +27,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
   },
   {
     headerText: HEADER_TEXT,
-    title: 'In the past two weeks, how often has your child acted up or misbehaved while eating?',
+    title: `In the past two weeks, how often has ${childName} acted up or misbehaved while eating?`,
     options: SCALE_OPTIONS,
     dataField: 'wacb.q2MealBehavior',
     nextScreen: 'WacbQuestion3',
@@ -35,7 +35,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
   },
   {
     headerText: HEADER_TEXT,
-    title: 'In the past two weeks, how often has your child refused to listen or said "no" to rules?',
+    title: `In the past two weeks, how often has ${childName} refused to listen or said "no" to rules?`,
     options: SCALE_OPTIONS,
     dataField: 'wacb.q3Disobey',
     nextScreen: 'WacbQuestion4',
@@ -43,7 +43,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
   },
   {
     headerText: HEADER_TEXT,
-    title: 'In the past two weeks, how often has your child lost their temper or acted physically rough?',
+    title: `In the past two weeks, how often has ${childName} lost their temper or acted physically rough?`,
     options: SCALE_OPTIONS,
     dataField: 'wacb.q4Angry',
     nextScreen: 'WacbQuestion5',
@@ -51,7 +51,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
   },
   {
     headerText: HEADER_TEXT,
-    title: 'In the past two weeks, how often has your child had a screaming fit or tantrum that was hard to stop?',
+    title: `In the past two weeks, how often has ${childName} had a screaming fit or tantrum that was hard to stop?`,
     options: SCALE_OPTIONS,
     dataField: 'wacb.q5Scream',
     nextScreen: 'WacbQuestion6',
@@ -59,7 +59,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
   },
   {
     headerText: HEADER_TEXT,
-    title: 'In the past two weeks, how often has your child broken things or been too rough with other people\'s toys?',
+    title: `In the past two weeks, how often has ${childName} broken things or been too rough with other people's toys?`,
     options: SCALE_OPTIONS,
     dataField: 'wacb.q6Destroy',
     nextScreen: 'WacbQuestion7',
@@ -67,7 +67,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
   },
   {
     headerText: HEADER_TEXT,
-    title: 'In the past two weeks, how often has your child started arguments or teased others on purpose?',
+    title: `In the past two weeks, how often has ${childName} started arguments or teased others on purpose?`,
     options: SCALE_OPTIONS,
     dataField: 'wacb.q7ProvokeFights',
     nextScreen: 'WacbQuestion8',
@@ -75,7 +75,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
   },
   {
     headerText: HEADER_TEXT,
-    title: 'In the past two weeks, how often has your child interrupted conversations or demanded constant attention?',
+    title: `In the past two weeks, how often has ${childName} interrupted conversations or demanded constant attention?`,
     options: SCALE_OPTIONS,
     dataField: 'wacb.q8Interrupt',
     nextScreen: 'WacbQuestion9',
@@ -83,7 +83,7 @@ export const WACB_QUESTIONS: Omit<MultipleChoiceScreenProps, 'navigation'>[] = [
   },
   {
     headerText: HEADER_TEXT,
-    title: 'In the past two weeks, how often has your child struggled to focus or been unable to sit still?',
+    title: `In the past two weeks, how often has ${childName} struggled to focus or been unable to sit still?`,
     options: SCALE_OPTIONS,
     dataField: 'wacb.q9Attention',
     nextScreen: 'Reassurance', // Last question navigates to Reassurance

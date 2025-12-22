@@ -229,7 +229,7 @@ export const RecordScreen: React.FC = () => {
       const autoStopTimer = setTimeout(() => {
         console.log('Auto-stopping recording after 5 minutes');
         stopRecording();
-      }, 300000); // 5 minutes
+      }, 5000); // 5 minutes  300000
       autoStopTimerRef.current = autoStopTimer;
     } catch (error) {
       console.error('Failed to start recording:', error);

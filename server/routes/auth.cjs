@@ -268,6 +268,166 @@ router.post('/logout', async (req, res) => {
   }
 });
 
+// POST /api/auth/forgot-password
+router.post('/forgot-password', authLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Create email hash for lookup
+    const emailHash = crypto.createHash('sha256').update(email.toLowerCase()).digest('hex');
+
+    // Find user by emailHash
+    const user = await prisma.user.findUnique({
+      where: { emailHash },
+      select: { id: true }
+    });
+
+    // Always return success even if user not found (security best practice)
+    if (!user) {
+      return res.json({ message: 'If an account exists with this email, a password reset link has been sent.' });
+    }
+
+    // Delete any existing unused reset tokens for this user
+    await prisma.passwordResetToken.deleteMany({
+      where: {
+        userId: user.id,
+        used: false
+      }
+    });
+
+    // Generate reset token (32 random bytes = 64 hex characters)
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Token expires in 1 hour
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1);
+
+    // Store reset token
+    await prisma.passwordResetToken.create({
+      data: {
+        id: crypto.randomUUID(),
+        userId: user.id,
+        token: resetToken,
+        expiresAt
+      }
+    });
+
+    // Send reset email (use email from request, no need to decrypt from DB)
+    // Use web URL that will redirect to app or show web form
+    const resetUrl = `${process.env.WEB_APP_URL || 'https://hinora.co'}/reset-password?token=${resetToken}`;
+
+    // Get email transporter from server.cjs
+    const nodemailer = require('nodemailer');
+    const emailTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      }
+    });
+
+    await emailTransporter.sendMail({
+      from: `"Nora" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: 'Reset Your Nora Password',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #8C49D5;">Reset Your Password</h2>
+          <p>Hi there,</p>
+          <p>We received a request to reset your password for your Nora account. Click the button below to create a new password:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background-color: #8C49D5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; display: inline-block;">Reset Password</a>
+          </div>
+          <p style="color: #6B7280; font-size: 14px; text-align: center;">Or copy and paste this link into your browser:</p>
+          <p style="color: #6B7280; word-break: break-all; text-align: center; font-size: 12px;">${resetUrl}</p>
+          <p style="margin-top: 30px; color: #6B7280; font-size: 14px;">This link will expire in 1 hour.</p>
+          <p style="color: #6B7280; font-size: 14px;">If you didn't request this password reset, you can safely ignore this email.</p>
+          <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 30px 0;">
+          <p style="color: #9CA3AF; font-size: 12px; text-align: center;">Nora - Parent-Child Interaction Therapy</p>
+        </div>
+      `
+    });
+
+    res.json({ message: 'If an account exists with this email, a password reset link has been sent.' });
+
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Failed to process password reset request' });
+  }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token and new password are required' });
+    }
+
+    // Validate password strength
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+    }
+
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+      return res.status(400).json({ error: 'Password must contain at least 1 uppercase, 1 lowercase, and 1 number' });
+    }
+
+    // Find reset token
+    const resetToken = await prisma.passwordResetToken.findUnique({
+      where: { token },
+      include: { User: true }
+    });
+
+    if (!resetToken) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    // Check if token has expired
+    if (resetToken.expiresAt < new Date()) {
+      return res.status(400).json({ error: 'Reset token has expired' });
+    }
+
+    // Check if token has been used
+    if (resetToken.used) {
+      return res.status(400).json({ error: 'Reset token has already been used' });
+    }
+
+    // Hash new password
+    const newPasswordHash = await hashPassword(newPassword);
+
+    // Update user's password
+    await prisma.user.update({
+      where: { id: resetToken.userId },
+      data: { passwordHash: newPasswordHash }
+    });
+
+    // Mark token as used
+    await prisma.passwordResetToken.update({
+      where: { id: resetToken.id },
+      data: { used: true }
+    });
+
+    // Invalidate all refresh tokens for security
+    await prisma.refreshToken.deleteMany({
+      where: { userId: resetToken.userId }
+    });
+
+    res.json({ message: 'Password reset successfully' });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
 // POST /api/auth/refresh
 router.post('/refresh', async (req, res) => {
   try {

@@ -103,6 +103,42 @@ class AuthService {
   }
 
   /**
+   * Request password reset email
+   */
+  async forgotPassword(email: string): Promise<void> {
+    const response = await fetch(`${this.apiUrl}/api/auth/forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to send password reset email');
+    }
+  }
+
+  /**
+   * Reset password with token
+   */
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const response = await fetch(`${this.apiUrl}/api/auth/reset-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token, newPassword }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to reset password');
+    }
+  }
+
+  /**
    * Get current user
    */
   async getCurrentUser(): Promise<User> {
