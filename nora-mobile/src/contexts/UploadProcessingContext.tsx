@@ -25,6 +25,7 @@ interface UploadProcessingContextType {
   startUpload: (uri: string, durationSeconds: number) => Promise<void>;
   reset: () => void;
   isProcessing: boolean;
+  reportCompletedTimestamp: number | null;
 }
 
 const UploadProcessingContext = createContext<UploadProcessingContextType | null>(null);
@@ -48,6 +49,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
   const [state, setState] = useState<ProcessingState>('idle');
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [reportCompletedTimestamp, setReportCompletedTimestamp] = useState<number | null>(null);
 
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const uploadXhrRef = useRef<XMLHttpRequest | null>(null);
@@ -280,6 +282,9 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
       // If we got the analysis successfully, send notification if enabled
       console.log('[UploadProcessing] Analysis complete!');
 
+      // Update timestamp to notify subscribers (e.g., HomeScreen) that a new report is ready
+      setReportCompletedTimestamp(Date.now());
+
       // Check if new report notifications are enabled
       try {
         const prefsJson = await AsyncStorage.getItem('@notification_preferences');
@@ -379,6 +384,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     startUpload,
     reset,
     isProcessing: state === 'uploading' || state === 'processing',
+    reportCompletedTimestamp,
   };
 
   return (

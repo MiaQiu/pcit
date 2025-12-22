@@ -15,6 +15,7 @@ import { ProfileCircle } from '../components/ProfileCircle';
 import { DRAGON_PURPLE, FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
+import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { MOCK_HOME_LESSONS } from '../data/mockLessons';
 import { LessonCache } from '../lib/LessonCache';
 
@@ -23,6 +24,7 @@ export const HomeScreen: React.FC = () => {
   const lessonService = useLessonService();
   const authService = useAuthService();
   const recordingService = useRecordingService();
+  const uploadProcessing = useUploadProcessing();
 
   const [lessons, setLessons] = useState<LessonCardProps[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +67,17 @@ export const HomeScreen: React.FC = () => {
       loadLatestReport();
     }, [])
   );
+
+  // Watch for report completion and refresh data automatically
+  useEffect(() => {
+    if (uploadProcessing.reportCompletedTimestamp) {
+      console.log('[HomeScreen] New report completed, refreshing data...');
+      // Refresh all data to show the new report and updated score
+      loadTodayState();
+      loadStreakData();
+      loadLatestReport();
+    }
+  }, [uploadProcessing.reportCompletedTimestamp]);
 
   const loadUserProfile = async () => {
     try {
@@ -400,7 +413,7 @@ export const HomeScreen: React.FC = () => {
         description: lesson.description,
         // Use dino image for Discipline phase, dragon for others
         dragonImageUrl: lesson.phase === 'DISCIPLINE'
-          ? require('../../assets/images/dino_phase2.png')
+          ? require('../../assets/images/dino_phase2.webp')
           : (lesson.dragonImageUrl || DRAGON_PURPLE),
         // Remove backgroundColor, ellipse colors - let LessonCard determine based on phase
         isLocked: lesson.isLocked,
