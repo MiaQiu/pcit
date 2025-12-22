@@ -231,9 +231,21 @@ export const sendTestNotification = async (): Promise<void> => {
  */
 export const sendNewReportNotification = async (sessionType?: string): Promise<void> => {
   try {
-    const sessionLabel = sessionType || 'play session';
+    console.log('[Notifications] sendNewReportNotification called with sessionType:', sessionType);
 
-    await Notifications.scheduleNotificationAsync({
+    // Check notification permissions first
+    const { status } = await Notifications.getPermissionsAsync();
+    console.log('[Notifications] Current permission status:', status);
+
+    if (status !== 'granted') {
+      console.log('[Notifications] Notifications not granted, cannot send notification');
+      return;
+    }
+
+    const sessionLabel = sessionType || 'play session';
+    console.log('[Notifications] Scheduling notification for:', sessionLabel);
+
+    const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: "Session Report Ready!",
         body: `Your ${sessionLabel} report is ready to view`,
@@ -249,8 +261,9 @@ export const sendNewReportNotification = async (sessionType?: string): Promise<v
       },
     });
 
-    console.log('New report notification scheduled');
+    console.log('[Notifications] New report notification scheduled successfully with ID:', notificationId);
   } catch (error) {
-    console.error('Error sending new report notification:', error);
+    console.error('[Notifications] Error sending new report notification:', error);
+    throw error; // Re-throw so calling code knows it failed
   }
 };

@@ -120,7 +120,23 @@ npx expo prebuild
 #for ios
 npx expo prebuild --clean --platform ios
 ```
+  - The files are already at /Users/mia/nora/nora-mobile/ios/Nora/AudioSessionManager.swift and AudioSessionManager.m
+  Before (Why files kept getting deleted):
 
+  1. You manually added the files directly to the ios/ folder
+  2. When you ran npx expo prebuild --clean, it deleted the entire ios folder
+  3. Then it rebuilt the ios folder from scratch using only what's in app.json and installed packages
+  4. Since Expo didn't know about your custom files, they were gone forever
+  5. Repeat cycle 😞
+
+  Now (Why files survive):
+
+  1. Safe storage: Files live permanently in /Users/mia/nora/modules/audio-session-manager/ios/
+  2. Config plugin: The plugin at /Users/mia/nora/plugins/withAudioSessionManager.js is registered in your app.json
+  3. Auto-restore: During expo prebuild, the plugin automatically copies the files from modules/ → ios/
+  4. Even if prebuild --clean wipes the ios folder, the plugin runs and restores them ✅
+
+  So the files in modules/ are the permanent source, and the config plugin is the auto-copier that runs every time you rebuild.
 
 ## 7. Xcode Pre-Archive Checks
 

@@ -28,7 +28,7 @@ export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
     <View style={styles.container}>
       <View style={styles.labelRow}>
         <Text style={styles.label}>{label}</Text>
-        <Text style={styles.percentage}>{Math.round(progress)}/10</Text>
+        <Text style={styles.percentage}>{Math.round(progress)}/{maxValue}</Text>
       </View>
       <View style={styles.trackContainer}>
         <View style={styles.track}>

@@ -287,14 +287,26 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
       // Check if new report notifications are enabled
       try {
+        console.log('[UploadProcessing] Checking notification preferences...');
         const prefsJson = await AsyncStorage.getItem('@notification_preferences');
+        console.log('[UploadProcessing] Notification preferences:', prefsJson);
+
         if (prefsJson) {
           const prefs = JSON.parse(prefsJson);
+          console.log('[UploadProcessing] Parsed preferences:', prefs);
+          console.log('[UploadProcessing] newReportNotification setting:', prefs.newReportNotification);
+
           if (prefs.newReportNotification !== false) {
-            // Send notification
+            console.log('[UploadProcessing] Sending new report notification...');
             await sendNewReportNotification('play session');
-            console.log('[UploadProcessing] New report notification sent');
+            console.log('[UploadProcessing] New report notification sent successfully');
+          } else {
+            console.log('[UploadProcessing] New report notifications are disabled in preferences');
           }
+        } else {
+          console.log('[UploadProcessing] No notification preferences found, sending notification by default');
+          await sendNewReportNotification('play session');
+          console.log('[UploadProcessing] New report notification sent successfully');
         }
       } catch (notifError) {
         console.error('[UploadProcessing] Failed to send notification:', notifError);

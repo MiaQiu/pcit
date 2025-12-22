@@ -611,7 +611,11 @@ export const HomeScreen: React.FC = () => {
 
           // Always show score section - use placeholder if no recording
           const displayScore = latestScore || { score: 0, maxScore: 100, recordingId: '' };
-          const displayEncouragement = encouragementMessage || "Complete a play session to see your score!";
+
+          // Check if report is being processed
+          const displayEncouragement = uploadProcessing.isProcessing
+            ? "Latest play session processing. We'll notify you when it's ready."
+            : (encouragementMessage || "Complete a play session to see your score!");
 
           return (
             <View style={{ marginBottom: 8 }}>

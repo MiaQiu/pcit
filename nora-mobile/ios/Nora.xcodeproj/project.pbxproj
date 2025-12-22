@@ -8,25 +8,29 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		2F30CFA9D93D4ED6A4E1472E /* AudioSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F2E1B91A0524A2393F3D620 /* AudioSessionManager.swift */; };
+		35B98B309116DF036EA6096D /* libPods-Nora.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 474651BB68E6EEFC7B4450B0 /* libPods-Nora.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		4AF44297BBE78AD7D564D7C4 /* libPods-Nora.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 948DED2BC6B235FCAAD82AA7 /* libPods-Nora.a */; };
-		5D4FAE6913625C5F2F76388C /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2F6F3F3A3ED9BEF0D3EB721 /* ExpoModulesProvider.swift */; };
-		9397B565F953BCCB6E932E06 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A3ACFB05FEC2EA4B2018B131 /* PrivacyInfo.xcprivacy */; };
+		8E8A159955122F2E9EDA96AD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = BDF01B158793321AE6092037 /* PrivacyInfo.xcprivacy */; };
+		9EB0C0C4261F4DC9A5BEDF2B /* AudioSessionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 72650B377CC14E9EA6ED2BED /* AudioSessionManager.m */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		BF48D88E92F523A867132117 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53D026277E019B2A4AC4F86B /* ExpoModulesProvider.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0A06A24DAF1022E8CAE30787 /* Pods-Nora.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nora.debug.xcconfig"; path = "Target Support Files/Pods-Nora/Pods-Nora.debug.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Nora.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nora.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Nora/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Nora/Info.plist; sourceTree = "<group>"; };
-		7B2BCFCB3316EAEC024EDC17 /* Pods-Nora.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nora.release.xcconfig"; path = "Target Support Files/Pods-Nora/Pods-Nora.release.xcconfig"; sourceTree = "<group>"; };
-		948DED2BC6B235FCAAD82AA7 /* libPods-Nora.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Nora.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		A3ACFB05FEC2EA4B2018B131 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Nora/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		2090614FCCB47EA4FB002DB6 /* Pods-Nora.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nora.release.xcconfig"; path = "Target Support Files/Pods-Nora/Pods-Nora.release.xcconfig"; sourceTree = "<group>"; };
+		474651BB68E6EEFC7B4450B0 /* libPods-Nora.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Nora.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		53D026277E019B2A4AC4F86B /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Nora/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		72650B377CC14E9EA6ED2BED /* AudioSessionManager.m */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; name = AudioSessionManager.m; path = Nora/AudioSessionManager.m; sourceTree = "<group>"; };
+		8F2E1B91A0524A2393F3D620 /* AudioSessionManager.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = AudioSessionManager.swift; path = Nora/AudioSessionManager.swift; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Nora/SplashScreen.storyboard; sourceTree = "<group>"; };
+		B0B9D309D32BB42578C1F697 /* Pods-Nora.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nora.debug.xcconfig"; path = "Target Support Files/Pods-Nora/Pods-Nora.debug.xcconfig"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C2F6F3F3A3ED9BEF0D3EB721 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Nora/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		BDF01B158793321AE6092037 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Nora/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Nora/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Nora-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Nora-Bridging-Header.h"; path = "Nora/Nora-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,13 +41,21 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4AF44297BBE78AD7D564D7C4 /* libPods-Nora.a in Frameworks */,
+				35B98B309116DF036EA6096D /* libPods-Nora.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0CC06F8A0951ECE8BAE7FB92 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				8A9084610AC83C056016C164 /* Nora */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* Nora */ = {
 			isa = PBXGroup;
 			children = (
@@ -53,7 +65,9 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				A3ACFB05FEC2EA4B2018B131 /* PrivacyInfo.xcprivacy */,
+				8F2E1B91A0524A2393F3D620 /* AudioSessionManager.swift */,
+				72650B377CC14E9EA6ED2BED /* AudioSessionManager.m */,
+				BDF01B158793321AE6092037 /* PrivacyInfo.xcprivacy */,
 			);
 			name = Nora;
 			sourceTree = "<group>";
@@ -62,7 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				948DED2BC6B235FCAAD82AA7 /* libPods-Nora.a */,
+				474651BB68E6EEFC7B4450B0 /* libPods-Nora.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -81,8 +95,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				A4D0D19B0C4C22570FF44F78 /* Pods */,
-				B0708E8E2C9C64942132B043 /* ExpoModulesProviders */,
+				8F4F502DD2678C0DBF3F8717 /* Pods */,
+				0CC06F8A0951ECE8BAE7FB92 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -97,21 +111,21 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A4D0D19B0C4C22570FF44F78 /* Pods */ = {
+		8A9084610AC83C056016C164 /* Nora */ = {
 			isa = PBXGroup;
 			children = (
-				0A06A24DAF1022E8CAE30787 /* Pods-Nora.debug.xcconfig */,
-				7B2BCFCB3316EAEC024EDC17 /* Pods-Nora.release.xcconfig */,
+				53D026277E019B2A4AC4F86B /* ExpoModulesProvider.swift */,
 			);
-			path = Pods;
+			name = Nora;
 			sourceTree = "<group>";
 		};
-		B0708E8E2C9C64942132B043 /* ExpoModulesProviders */ = {
+		8F4F502DD2678C0DBF3F8717 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				C63914A4B5921E9CACC0007F /* Nora */,
+				B0B9D309D32BB42578C1F697 /* Pods-Nora.debug.xcconfig */,
+				2090614FCCB47EA4FB002DB6 /* Pods-Nora.release.xcconfig */,
 			);
-			name = ExpoModulesProviders;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -123,14 +137,6 @@
 			path = Nora/Supporting;
 			sourceTree = "<group>";
 		};
-		C63914A4B5921E9CACC0007F /* Nora */ = {
-			isa = PBXGroup;
-			children = (
-				C2F6F3F3A3ED9BEF0D3EB721 /* ExpoModulesProvider.swift */,
-			);
-			name = Nora;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -139,13 +145,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Nora" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				A247EFFC52F4C85CF742B255 /* [Expo] Configure project */,
+				9979A2C3F9C37FAF7E1ED123 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				873886269BCAF3A15E788BBC /* [CP] Embed Pods Frameworks */,
+				1EA1D184639FDB95E6CE4319 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -195,7 +201,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				9397B565F953BCCB6E932E06 /* PrivacyInfo.xcprivacy in Resources */,
+				8E8A159955122F2E9EDA96AD /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,6 +245,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		1EA1D184639FDB95E6CE4319 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Nora/Pods-Nora-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Nora/Pods-Nora-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
@@ -287,29 +315,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Nora/Pods-Nora-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		873886269BCAF3A15E788BBC /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Nora/Pods-Nora-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Nora/Pods-Nora-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		A247EFFC52F4C85CF742B255 /* [Expo] Configure project */ = {
+		9979A2C3F9C37FAF7E1ED123 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -341,7 +347,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				5D4FAE6913625C5F2F76388C /* ExpoModulesProvider.swift in Sources */,
+				2F30CFA9D93D4ED6A4E1472E /* AudioSessionManager.swift in Sources */,
+				9EB0C0C4261F4DC9A5BEDF2B /* AudioSessionManager.m in Sources */,
+				BF48D88E92F523A867132117 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -350,7 +358,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0A06A24DAF1022E8CAE30787 /* Pods-Nora.debug.xcconfig */;
+			baseConfigurationReference = B0B9D309D32BB42578C1F697 /* Pods-Nora.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -387,13 +395,12 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7B2BCFCB3316EAEC024EDC17 /* Pods-Nora.release.xcconfig */;
+			baseConfigurationReference = 2090614FCCB47EA4FB002DB6 /* Pods-Nora.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Nora/Nora.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = FJRP6385Q9;
 				INFOPLIST_FILE = Nora/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (

@@ -387,12 +387,16 @@ export const RecordScreen: React.FC = () => {
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.processingTitle}>Nora is preparing your personalized report. </Text>
-            {/* <Text style={styles.processingSubtitle}>
-              Nora is preparing your personalized report. 
-            </Text> */}
+            <Text style={styles.processingTitle}>Analyzing your play time…
+This takes a few minutes.
+
+
+</Text>
             <Text style={styles.processingSubtitle}>
-              It will take a few minutes, we will send you a notification when the report is ready!
+               Nora is listening for patterns in praise, tone, and turn-taking to personalize your tips.
+            </Text>
+            <Text style={styles.processingSubtitle}>
+             You can leave this screen — we’ll notify you when it’s ready.
             </Text>
             <ActivityIndicator size="large" color={COLORS.mainPurple} style={styles.processingSpinner} />
           </View>
