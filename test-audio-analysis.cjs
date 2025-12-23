@@ -4,6 +4,7 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const crypto = require('crypto');
 const fetch = require('node-fetch');
 const FormData = require('form-data');
@@ -245,26 +246,29 @@ Return ONLY valid JSON, no markdown.`;
       orderBy: { order: 'asc' }
     });
 
-    const codingPrompt = `You are an expert PCIT Coder. Apply CDI coding tags to every adult utterance.
+    // Load PCIT coding prompt from external file (same as recordings.cjs)
+    const promptFilePath = path.join(__dirname, 'docs/prompt/prompt1_reformatted.txt');
+    const promptTemplate = fs.readFileSync(promptFilePath, 'utf-8');
 
-**Input Utterances:**
-${JSON.stringify(utterancesWithRoles.map((u, idx) => ({
-  index: idx,
-  id: u.id,
-  speaker: u.speaker,
-  text: u.text,
-  role: u.role
-})), null, 2)}
+    // Parse system and user sections
+    const parts = promptTemplate.split('---SYSTEM---');
+    const systemPrompt = parts.length > 1 ? parts[0].trim() : '';
+    const userPromptTemplate = parts.length > 1 ? parts[1].trim() : promptTemplate;
 
-**PCIT Tags:**
-DO: Praise, DO: Echo, DO: Narration
-DON'T: Question, DON'T: Command, DON'T: Criticism, DON'T: Negative Phrases
-Neutral
+    // Prepare utterances data (input1.json format, using idx to save tokens)
+    const utterancesData = utterancesWithRoles.map((u, idx) => ({
+      id: idx,
+      role: u.role,
+      text: u.text
+    }));
 
-**Output Format:**
-[{ "id": "utterance-id", "tag": "DO: Praise", "reasoning": "brief explanation" }]
+    // Create index mapping (idx -> u.id)
+    const idxToUttId = utterancesWithRoles.map(u => u.id);
 
-Return ONLY valid JSON array, no markdown.`;
+    // Replace template variables
+    const codingPrompt = userPromptTemplate
+      .replace(/\{\{data\}\}/g, JSON.stringify(utterancesData, null, 2))
+      .replace(/\{\{batch_size\}\}/g, utterancesWithRoles.length.toString());
 
     const codingResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -276,7 +280,8 @@ Return ONLY valid JSON array, no markdown.`;
       body: JSON.stringify({
         model: 'claude-sonnet-4-5-20250929',
         max_tokens: 8192,
-        temperature: 0.3,
+        temperature: 0,
+        system: systemPrompt,
         messages: [{ role: 'user', content: codingPrompt }]
       })
     });
@@ -293,17 +298,18 @@ Return ONLY valid JSON array, no markdown.`;
     const codingTime = ((Date.now() - codingStart) / 1000).toFixed(1);
     console.log(`   ✓ PCIT coding complete in ${codingTime}s`);
 
-    // Update utterances with tags
-    const updateTagPromises = codingResults.map(result =>
-      prisma.utterance.update({
-        where: { id: result.id },
-        data: { pcitTag: result.tag }
-      })
-    );
+    // Map idx back to actual utterance IDs and update
+    const updateTagPromises = codingResults.map(result => {
+      const actualUttId = idxToUttId[result.id];
+      return prisma.utterance.update({
+        where: { id: actualUttId },
+        data: { pcitTag: result.code }
+      });
+    });
     await Promise.all(updateTagPromises);
     console.log(`   ✓ Updated ${codingResults.length} utterances with tags`);
 
-    // Count tags
+    // Count DPICS codes
     const tagCounts = {
       praise: 0, echo: 0, narration: 0,
       question: 0, command: 0, criticism: 0,
@@ -311,15 +317,31 @@ Return ONLY valid JSON array, no markdown.`;
     };
 
     for (const result of codingResults) {
-      const tag = result.tag;
-      if (tag === 'DO: Praise') tagCounts.praise++;
-      else if (tag === 'DO: Echo') tagCounts.echo++;
-      else if (tag === 'DO: Narration') tagCounts.narration++;
-      else if (tag === "DON'T: Question") tagCounts.question++;
-      else if (tag === "DON'T: Command") tagCounts.command++;
-      else if (tag === "DON'T: Criticism") tagCounts.criticism++;
-      else if (tag === "DON'T: Negative Phrases") tagCounts.negative_phrases++;
-      else if (tag === 'Neutral') tagCounts.neutral++;
+      const code = result.code;
+      if (code === 'LP') {
+        tagCounts.praise++;
+      }
+      else if (code === 'UP') {
+        tagCounts.praise++;
+      }
+      else if (code === 'RF' || code === 'RQ') {
+        tagCounts.echo++;
+      }
+      else if (code === 'BD') {
+        tagCounts.narration++;
+      }
+      else if (code === 'Q') {
+        tagCounts.question++;
+      }
+      else if (code === 'DC' || code === 'IC') {
+        tagCounts.command++;
+      }
+      else if (code === 'NTA') {
+        tagCounts.criticism++;
+      }
+      else if (code === 'ID' || code === 'AK') {
+        tagCounts.neutral++;
+      }
     }
 
     await prisma.session.update({

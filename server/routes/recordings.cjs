@@ -7,6 +7,8 @@ const crypto = require('crypto');
 const multer = require('multer');
 const fetch = require('node-fetch');
 const FormData = require('form-data');
+const fs = require('fs');
+const path = require('path');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const prisma = require('../services/db.cjs');
 const storage = require('../services/storage-s3.cjs');
@@ -776,220 +778,30 @@ Return ONLY valid JSON with this exact structure:
   const adultSpeakerIds = adultSpeakers.map(a => a.id).join(', ');
   console.log(`   Adult speakers: ${adultSpeakerIds}`);
 
-  const codingPrompt = isCDI
-    ? `**System Role:**
-You are an expert PCIT (Parent-Child Interaction Therapy) Coder using DPICS standards. You analyze parent verbalizations and classify them into specific codes based on the provided schema.
+  // Load PCIT coding prompt from external file
+  const promptFilePath = path.join(__dirname, '../docs/prompt/prompt1_reformatted.txt');
+  const promptTemplate = fs.readFileSync(promptFilePath, 'utf-8');
 
-**Instructions:**
-Analyze the conversation. Iterate through the 'codes' list. Check the 'priority_rank' (lower number = check first). If a sentence meets the criteria for multiple codes, assign the one with the lowest priority_rank (highest priority).
+  // Parse system and user sections (split on ---SYSTEM---)
+  const parts = promptTemplate.split('---SYSTEM---');
+  const systemPrompt = parts.length > 1 ? parts[0].trim() : '';
+  const userPromptTemplate = parts.length > 1 ? parts[1].trim() : promptTemplate;
 
-**Coding Schema:**
-{
-  "codes": [
-    {
-      "name": "Echo",
-      "category": "DO",
-      "priority_rank": 1,
-      "definition": "A repetition or paraphrase of the child's verbalization.",
-      "rules": [
-        "Can interpret the child's meaning.",
-        "Overrides Question coding even if it has a rising tone.",
-        "Overrides Command coding if repeating a command."
-      ],
-      "examples": [
-        "Child: 'I go car.' -> Parent: 'You are going to the car.'",
-        "Child: 'No!' -> Parent: 'You don't want to.'",
-        "Child: 'Big dog.' -> Parent: 'It is a big dog?' (Rising tone implies confirmation of meaning, so it is RF)"
-      ]
-    },
-    {
-      "name": "Labeled Praise",
-      "category": "DO",
-      "priority_rank": 2,
-      "definition": "A positive evaluation of a specific behavior or attribute.",
-      "examples": [
-        "Good job sitting still.",
-        "I love how you are sharing.",
-        "Nice drawing of a star."
-      ]
-    },
-    {
-      "name": "Unlabeled Praise",
-      "category": "DO",
-      "priority_rank": 3,
-      "definition": "A general positive evaluation without specifying the behavior.",
-      "examples": [
-        "Good job!",
-        "Nice!",
-        "High five!",
-        "Thank you."
-      ]
-    },
-    {
-      "name": "Narration",
-      "category": "DO",
-      "priority_rank": 4,
-      "definition": "Verbal description of the child's current, observable behavior.",
-      "rules": [
-        "Subject must be 'You' (the child).",
-        "Verb must be present tense.",
-        "Must be observable (no thinking/feeling)."
-      ],
-      "examples": [
-        "You are drawing a red circle.",
-        "You are putting the block on top."
-      ]
-    },
-    {
-      "name": "Direct Command",
-      "category": "DONT",
-      "priority_rank": 5,
-      "definition": "A clearly stated order or direction for behavior.",
-      "keywords": ["stop", "come", "sit", "look", "watch"],
-      "rules": ["Includes 'Look', 'Watch', 'See' as commands."],
-      "examples": [
-        "Hand me that.",
-        "Sit down please.",
-        "Look at this."
-      ]
-    },
-    {
-      "name": "Indirect Command",
-      "category": "DONT",
-      "priority_rank": 6,
-      "definition": "A suggestion or polite request for behavior that implies a choice.",
-      "keywords": ["let's", "can you", "will you", "would you"],
-      "examples": [
-        "Let's clean up.",
-        "Can you hand me the toy?",
-        "How about we draw?"
-      ]
-    },
-    {
-      "name": "Question",
-      "category": "DONT",
-      "priority_rank": 7,
-      "definition": "A request for a verbal answer or information.",
-      "rules": [
-        "Includes tag questions (right?, okay?).",
-        "Excludes requests for physical action (which are Commands)."
-      ],
-      "examples": [
-        "What color is this?",
-        "Are you having fun?",
-        "It's green, right?"
-      ]
-    },
-    {
-      "name": "Negative Talk",
-      "category": "DONT",
-      "priority_rank": 8,
-      "definition": "Verbal expression of disapproval or criticism.",
-      "examples": [
-        "That's wrong.",
-        "Don't be messy.",
-        "I don't like that."
-      ]
-    },
-    {
-      "name": "NEUTRAL",
-      "category": "NEUTRAL",
-      "priority_rank": 9,
-      "definition": "Declarative sentences that do not fit other categories.",
-      "rules": [
-        "Descriptions of own behavior (I am...)",
-        "Descriptions of objects (It is...)",
-        "Past/Future descriptions."
-      ],
-      "examples": [
-        "I am going to build a tower.",
-        "It is a blue block.",
-        "We went to the park yesterday."
-      ]
-    }
-  ]
-}
+  // Prepare utterances data for the prompt (input1.json format)
+  // Use idx instead of long utt.id to save tokens
+  const utterancesData = utterancesWithRoles.map((utt, idx) => ({
+    id: idx,
+    role: utt.role,
+    text: utt.text
+  }));
 
-**Input Utterances (Array of objects with index for identification):**
-${JSON.stringify(utterancesWithRoles.map((utt, idx) => ({
-  index: idx,
-  id: utt.id,
-  speaker: utt.speaker,
-  text: utt.text,
-  role: utt.role
-})), null, 2)}
+  // Create index mapping for later (idx -> utt.id)
+  const idxToUttId = utterancesWithRoles.map(utt => utt.id);
 
-**Task:**
-Classify ONLY adult utterances based on the schema above. Return valid JSON only.
-
-**Output Format:**
-Return a JSON array with one entry for EACH adult utterance:
-[
-  {
-    "id": "abc-123",
-    "tag": "Echo",
-    "reasoning": "Parent repeating child's verbalization"
-  }
-]
-
-**CRITICAL:** Return ONLY a valid JSON array. No markdown code blocks.`
-
-    : `You are an expert PCIT (Parent-Child Interaction Therapy) Coder. Apply PDI coding tags to every adult utterance.
-
-**Input Utterances (Array of objects with index for identification):**
-${JSON.stringify(utterancesWithRoles.map((utt, idx) => ({
-  index: idx,
-  id: utt.id,
-  speaker: utt.speaker,
-  text: utt.text,
-  role: utt.role
-})), null, 2)}
-
-**PDI Coding Rules:**
-
-**Effective Command Skills (DO):**
-[DO: Direct Command] - Clear, direct command with specific action ("Put the block here")
-[DO: Positive Command] - States what TO do, not what NOT to do ("Walk please" vs "Don't run")
-[DO: Specific Command] - Single, clear action ("Hand me the red block")
-[DO: Labeled Praise] - Praise that specifies what was done well ("Great job putting that away!")
-[DO: Correct Warning] - Proper warning before timeout ("If you don't stop, you'll have a timeout")
-[DO: Correct Time-Out Statement] - Proper timeout statement ("You need a timeout for not listening")
-
-**Ineffective Command Skills (DON'T):**
-[DON'T: Indirect Command] - Phrased as question or suggestion ("Can you clean up?", "Let's put toys away")
-[DON'T: Negative Command] - States what NOT to do ("Don't throw toys", "Stop running")
-[DON'T: Vague Command] - Unclear or general ("Be good", "Behave", "Clean up")
-[DON'T: Chained Command] - Multiple commands in one ("Pick up the toys, put them in the box, and wash your hands")
-[DON'T: Harsh Tone] - Command delivered with anger, frustration, or raised voice
-
-[Neutral] - Neutral statements that don't fall into DO or DON'T
-
-**Instructions:**
-1. Code ONLY utterances where role === "adult"
-2. Every adult utterance must receive exactly one tag
-3. Use the utterance ID to identify which utterance you're tagging
-
-**Output Format:**
-Return a JSON array with one entry for EACH adult utterance. Each entry must include:
-- id: The utterance ID from the input
-- tag: The PCIT tag (exactly as shown above, e.g., "DO: Direct Command")
-- reasoning: Brief explanation (1 sentence)
-
-Example output:
-[
-  {
-    "id": "abc-123",
-    "tag": "DO: Direct Command",
-    "reasoning": "Clear, specific command to put block in location"
-  },
-  {
-    "id": "def-456",
-    "tag": "DON'T: Indirect Command",
-    "reasoning": "Phrased as a question rather than direct command"
-  }
-]
-
-**CRITICAL:** Return ONLY a valid JSON array. Do not include markdown code blocks, explanations, or any text outside the JSON structure.`;
+  // Replace template variables in user prompt
+  const userPrompt = userPromptTemplate
+    .replace(/\{\{data\}\}/g, JSON.stringify(utterancesData, null, 2))
+    .replace(/\{\{batch_size\}\}/g, utterancesWithRoles.length.toString());
 
   console.log(`📊 [ANALYSIS-STEP-8] Calling Claude API for PCIT coding...`);
   console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
@@ -1005,10 +817,11 @@ Example output:
     body: JSON.stringify({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 8192,
-      temperature: 0.3,
+      temperature: 0,
+      system: systemPrompt,
       messages: [{
         role: 'user',
-        content: codingPrompt
+        content: userPrompt
       }]
     })
   });
@@ -1038,10 +851,14 @@ Example output:
   }
 
   // Build ID-to-tag map for efficient updates
+  // Map idx back to actual utt.id
   const tagMap = {};
   for (const result of codingResults) {
-    if (result.id && result.tag) {
-      tagMap[result.id] = result.tag;
+    if (result.id !== undefined && result.code) {
+      const actualUttId = idxToUttId[result.id];
+      if (actualUttId) {
+        tagMap[actualUttId] = result.code;
+      }
     }
   }
 
@@ -1050,73 +867,56 @@ Example output:
 
   console.log(`Updated tags for ${Object.keys(tagMap).length} utterances`);
 
-  // Count tags from JSON results
+  // Count codes from JSON results (using DPICS codes)
   const tagCounts = {};
-  if (isCDI) {
-    tagCounts.echo = 0;
-    tagCounts.labeled_praise = 0;
-    tagCounts.unlabeled_praise = 0;
-    tagCounts.praise = 0; // Combined praise for backward compatibility
-    tagCounts.narration = 0;
-    tagCounts.direct_command = 0;
-    tagCounts.indirect_command = 0;
-    tagCounts.command = 0; // Combined commands for backward compatibility
-    tagCounts.question = 0;
-    tagCounts.negative_talk = 0;
-    tagCounts.neutral = 0;
+  tagCounts.echo = 0;
+  tagCounts.labeled_praise = 0;
+  tagCounts.unlabeled_praise = 0;
+  tagCounts.praise = 0; // Combined praise
+  tagCounts.narration = 0;
+  tagCounts.direct_command = 0;
+  tagCounts.indirect_command = 0;
+  tagCounts.command = 0; // Combined commands
+  tagCounts.question = 0;
+  tagCounts.criticism = 0;
+  tagCounts.neutral = 0;
+ // tagCounts.acknowledgement = 0;
 
-    for (const result of codingResults) {
-      const tag = result.tag;
-      if (tag === 'Echo') tagCounts.echo++;
-      else if (tag === 'Labeled Praise') {
-        tagCounts.labeled_praise++;
-        tagCounts.praise++;
-      }
-      else if (tag === 'Unlabeled Praise') {
-        tagCounts.unlabeled_praise++;
-        //tagCounts.praise++;
-      }
-      else if (tag === 'Narration') tagCounts.narration++;
-      else if (tag === 'Direct Command') {
-        tagCounts.direct_command++;
-        tagCounts.command++;
-      }
-      else if (tag === 'Indirect Command') {
-        tagCounts.indirect_command++;
-        tagCounts.command++;
-      }
-      else if (tag === 'Question') tagCounts.question++;
-      else if (tag === 'Negative Talk') tagCounts.negative_talk++;
-      else if (tag === 'NEUTRAL') tagCounts.neutral++;
+  for (const result of codingResults) {
+    const code = result.code;
+    if (code === 'RF' || code === 'RQ') {
+      tagCounts.echo++;
     }
-  } else {
-    tagCounts.direct_command = 0;
-    tagCounts.positive_command = 0;
-    tagCounts.specific_command = 0;
-    tagCounts.labeled_praise = 0;
-    tagCounts.correct_warning = 0;
-    tagCounts.correct_timeout = 0;
-    tagCounts.indirect_command = 0;
-    tagCounts.negative_command = 0;
-    tagCounts.vague_command = 0;
-    tagCounts.chained_command = 0;
-    tagCounts.harsh_tone = 0;
-    tagCounts.neutral = 0;
-
-    for (const result of codingResults) {
-      const tag = result.tag;
-      if (tag === 'DO: Direct Command') tagCounts.direct_command++;
-      else if (tag === 'DO: Positive Command') tagCounts.positive_command++;
-      else if (tag === 'DO: Specific Command') tagCounts.specific_command++;
-      else if (tag === 'DO: Labeled Praise') tagCounts.labeled_praise++;
-      else if (tag === 'DO: Correct Warning') tagCounts.correct_warning++;
-      else if (tag === 'DO: Correct Time-Out Statement') tagCounts.correct_timeout++;
-      else if (tag === "DON'T: Indirect Command") tagCounts.indirect_command++;
-      else if (tag === "DON'T: Negative Command") tagCounts.negative_command++;
-      else if (tag === "DON'T: Vague Command") tagCounts.vague_command++;
-      else if (tag === "DON'T: Chained Command") tagCounts.chained_command++;
-      else if (tag === "DON'T: Harsh Tone") tagCounts.harsh_tone++;
-      else if (tag === 'Neutral') tagCounts.neutral++;
+    else if (code === 'LP') {
+      tagCounts.labeled_praise++;
+      tagCounts.praise++;
+    }
+    else if (code === 'UP') {
+      tagCounts.unlabeled_praise++;
+      //tagCounts.praise++;
+    }
+    else if (code === 'BD') {
+      tagCounts.narration++;
+    }
+    else if (code === 'DC') {
+      tagCounts.direct_command++;
+      tagCounts.command++;
+    }
+    else if (code === 'IC') {
+      tagCounts.indirect_command++;
+      tagCounts.command++;
+    }
+    else if (code === 'Q') {
+      tagCounts.question++;
+    }
+    else if (code === 'NTA') {
+      tagCounts.criticism++;
+    }
+    else if (code === 'ID') {
+      tagCounts.neutral++;
+    }
+    else if (code === 'AK') {
+      tagCounts.neutral++;
     }
   }
 

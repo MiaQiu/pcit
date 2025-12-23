@@ -5,6 +5,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import crashlytics from '@react-native-firebase/crashlytics';
 import { FONTS } from '../constants/assets';
 
 interface Props {
@@ -37,6 +38,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Error Boundary caught an error:', error, errorInfo);
+
+    // Report error to Firebase Crashlytics
+    crashlytics().recordError(error);
+    crashlytics().log('Error caught by ErrorBoundary');
+    crashlytics().log(`Component stack: ${errorInfo.componentStack}`);
+
     this.setState({
       error,
       errorInfo,

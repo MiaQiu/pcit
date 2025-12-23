@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
@@ -10,6 +10,7 @@ import {
   PlusJakartaSans_600SemiBold,
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
+import crashlytics from '@react-native-firebase/crashlytics';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AppProvider } from './src/contexts/AppContext';
 import { OnboardingProvider } from './src/contexts/OnboardingContext';
@@ -61,6 +62,13 @@ export default function App() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
   });
+
+  // Initialize Firebase Crashlytics
+  useEffect(() => {
+    // Enable crash reporting (even in development for testing)
+    crashlytics().setCrashlyticsCollectionEnabled(true);
+    console.log('Firebase Crashlytics initialized');
+  }, []);
 
   // Handle font loading error
   if (fontError) {

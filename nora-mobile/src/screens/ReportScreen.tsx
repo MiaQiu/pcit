@@ -446,7 +446,9 @@ const styles = StyleSheet.create({
   },
   circlesContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 6,
+    maxWidth: 180,
   },
   circle: {
     width: 8,
