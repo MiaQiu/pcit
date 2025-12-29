@@ -3,8 +3,8 @@
  * Real-time audio waveform visualization during recording
  */
 
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, Animated, AppState, AppStateStatus } from 'react-native';
 import { COLORS } from '../constants/assets';
 
 interface AudioWaveformProps {
@@ -27,8 +27,20 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     Array.from({ length: BAR_COUNT }, () => new Animated.Value(MIN_HEIGHT))
   ).current;
 
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
+
+  // Monitor app state to pause animations when backgrounded
   useEffect(() => {
-    if (isRecording) {
+    const subscription = AppState.addEventListener('change', setAppState);
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    // CRITICAL: Only animate when recording AND app is in foreground
+    // This prevents 400 animations/sec from running when screen is locked
+    const shouldAnimate = isRecording && appState === 'active';
+
+    if (shouldAnimate) {
       // Animate bars with random heights to simulate live audio
       const interval = setInterval(() => {
         animatedHeights.forEach((height, index) => {
@@ -45,7 +57,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       }, 100);
 
       return () => clearInterval(interval);
-    } else {
+    } else if (!isRecording) {
       // Reset to min height when not recording
       animatedHeights.forEach((height) => {
         Animated.timing(height, {
@@ -55,7 +67,8 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         }).start();
       });
     }
-  }, [isRecording, levels]);
+    // When backgrounded, simply stop animating (heights stay where they are)
+  }, [isRecording, levels, appState]);
 
   return (
     <View style={styles.container}>

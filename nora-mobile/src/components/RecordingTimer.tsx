@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
 
@@ -18,9 +18,20 @@ export const RecordingTimer: React.FC<RecordingTimerProps> = ({
   durationMillis = 0,
 }) => {
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
+
+  // Monitor app state to pause timer when backgrounded
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', setAppState);
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
-    if (isRecording) {
+    // CRITICAL: Only update timer when recording AND app is in foreground
+    // This prevents 10 re-renders/sec when screen is locked
+    const shouldUpdate = isRecording && appState === 'active';
+
+    if (shouldUpdate) {
       const startTime = Date.now() - durationMillis;
       const interval = setInterval(() => {
         setElapsedTime(Date.now() - startTime);
@@ -28,9 +39,10 @@ export const RecordingTimer: React.FC<RecordingTimerProps> = ({
 
       return () => clearInterval(interval);
     } else {
+      // When backgrounded or not recording, use the passed duration
       setElapsedTime(durationMillis);
     }
-  }, [isRecording, durationMillis]);
+  }, [isRecording, durationMillis, appState]);
 
   const formatTime = (millis: number) => {
     const totalSeconds = Math.floor(millis / 1000);
