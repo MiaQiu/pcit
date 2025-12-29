@@ -7,8 +7,6 @@ const crypto = require('crypto');
 const multer = require('multer');
 const fetch = require('node-fetch');
 const FormData = require('form-data');
-const fs = require('fs');
-const path = require('path');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const prisma = require('../services/db.cjs');
 const storage = require('../services/storage-s3.cjs');
@@ -90,18 +88,23 @@ async function updateUtteranceRoles(sessionId, roleMap) {
 /**
  * Update utterances with PCIT tags (optimized batch update with ID-based matching)
  * @param {string} sessionId - Session ID
- * @param {Object} tagMap - Map of utterance ID to PCIT tag
+ * @param {Object} pcitTagMap - Map of utterance ID to DPICS code (RF, LP, etc.)
+ * @param {Object} noraTagMap - Map of utterance ID to display name (Echo, Labeled Praise, etc.)
  * @returns {Promise<void>}
  */
-async function updateUtteranceTags(sessionId, tagMap) {
+async function updateUtteranceTags(sessionId, pcitTagMap, noraTagMap) {
   // Build array of updates to perform in parallel
   const updatePromises = [];
 
-  for (const [utteranceId, tag] of Object.entries(tagMap)) {
+  for (const [utteranceId, pcitTag] of Object.entries(pcitTagMap)) {
+    const noraTag = noraTagMap[utteranceId];
     updatePromises.push(
       prisma.utterance.update({
         where: { id: utteranceId },
-        data: { pcitTag: tag }
+        data: {
+          pcitTag: pcitTag,  // DPICS code (RF, LP, etc.)
+          noraTag: noraTag   // Display name (Echo, Labeled Praise, etc.)
+        }
       })
     );
   }
@@ -676,7 +679,14 @@ Return ONLY valid JSON with this exact structure:
   }}
 }}
 
-**CRITICAL:** Return ONLY the JSON object above. Do not include markdown code blocks, explanations, or any text outside the JSON structure.`;
+**CRITICAL INSTRUCTIONS:**
+- Return ONLY the JSON object, nothing else
+- Do NOT write any explanatory text before or after the JSON
+- Do NOT use markdown code blocks like \`\`\`json
+- Do NOT say "I'm ready" or "Here is the output" or any other text
+- Your ENTIRE response must be ONLY the JSON object starting with {{ and ending with }}
+- First character of your response MUST be {{
+- Last character of your response MUST be }}`;
 
   console.log(`📊 [ANALYSIS-STEP-3] Calling Claude API for role identification...`);
 
@@ -712,8 +722,20 @@ Return ONLY valid JSON with this exact structure:
   let roleIdentificationJson;
   let adultSpeakers = [];
   try {
+    let cleanJson = roleIdentificationText.trim();
+
     // Remove markdown code blocks if present
-    const cleanJson = roleIdentificationText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    cleanJson = cleanJson.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    // Try to extract JSON object if there's text before/after it
+    // Look for the first { and last }
+    const firstBrace = cleanJson.indexOf('{');
+    const lastBrace = cleanJson.lastIndexOf('}');
+
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+    }
+
     roleIdentificationJson = JSON.parse(cleanJson);
     console.log(`✅ [ANALYSIS-STEP-4] JSON parsed successfully`);
 
@@ -741,8 +763,9 @@ Return ONLY valid JSON with this exact structure:
     console.log('Role identification:', JSON.stringify(roleIdentificationJson, null, 2));
 
   } catch (parseError) {
-    console.error('Failed to parse role identification JSON:', parseError.message);
-    console.log('Raw response:', roleIdentificationText);
+    console.error('❌ [ROLE-ID-ERROR] Failed to parse role identification JSON:', parseError.message);
+    console.error('❌ [ROLE-ID-ERROR] Raw response (first 500 chars):', roleIdentificationText.substring(0, 500));
+    console.error('❌ [ROLE-ID-ERROR] Raw response (last 500 chars):', roleIdentificationText.substring(Math.max(0, roleIdentificationText.length - 500)));
     throw new Error(`Failed to parse role identification: ${parseError.message}`);
   }
 
@@ -778,14 +801,99 @@ Return ONLY valid JSON with this exact structure:
   const adultSpeakerIds = adultSpeakers.map(a => a.id).join(', ');
   console.log(`   Adult speakers: ${adultSpeakerIds}`);
 
-  // Load PCIT coding prompt from external file
-  const promptFilePath = path.join(__dirname, '../docs/prompt/prompt1_reformatted.txt');
-  const promptTemplate = fs.readFileSync(promptFilePath, 'utf-8');
+  // DPICS (Dyadic Parent-Child Interaction Coding System) prompt
+  const systemPrompt = `You are an expert coder for the Dyadic Parent-Child Interaction Coding System (DPICS). Your task is to analyze a chronological dialogue log and assign the correct code to every Parent verbalization.
 
-  // Parse system and user sections (split on ---SYSTEM---)
-  const parts = promptTemplate.split('---SYSTEM---');
-  const systemPrompt = parts.length > 1 ? parts[0].trim() : '';
-  const userPromptTemplate = parts.length > 1 ? parts[1].trim() : promptTemplate;
+***Coding Strategy (Context Awareness)***
+
+Analyze Sequentially: Read the list in order.
+Reflections (RF): When coding a Parent segment, look at the immediately preceding Child segment. If the Parent repeats/paraphrases it, code RF1.
+Pauses: Treat consecutive Parent segments as separate coding units3.
+
+<coding_rules>
+1. NEGATIVE TALK (NTA)
+
+Definition: Critical statements, fault-finding, or disapproval.
+
+Keywords: "No", "Don't", "Stop", "Quit", "Not" (when correcting), sarcasm.
+
+Rule: Refusals of child requests or corrections of child facts ("That's not a car") are NTA.
+
+Priority: High. If it criticizes, code NTA.
+
+2. COMMANDS (DC / IC)
+
+Direct Command (DC): Clearly stated order/demand in declarative form. Specific behavior expected.
+
+Examples: "Put that there." "Sit down." "Tell me."
+
+Note: "You are going to..." is DC unless child is already doing it (BD) or said they would (RF).
+
+Indirect Command (IC): Order implied, optional, or in question form.
+
+Keywords: "Let's...", "Can you...", "How about...", "If [behavior], then [consequence]".
+
+Bids for Attention: Calling child's name ("Johnny!") is IC (No Opportunity).
+
+Inclusive: "We need to..." is IC.
+
+Decision Rule: If uncertain between DC and IC, code IC.
+
+3. PRAISE (LP / UP)
+
+Labeled Praise (LP): Positive evaluation + Specific behavior/product/attribute labeled.
+
+Example: "Good job building that tower." "I love how quiet you are."
+
+Unlabeled Praise (UP): Nonspecific positive evaluation.
+
+Example: "Good job." "Nice!" "Awesome." "You're smart."
+
+Rule: Praise in question form ("Isn't that pretty?") is still Praise.
+
+Decision Rule: If uncertain between LP and UP, code UP.
+
+4. BEHAVIORAL DESCRIPTION (BD)
+
+Definition: Non-evaluative description of child's ongoing or immediately completed (<5s) observable behavior.
+
+Subject: Must be "You" (or implied you).
+
+Verbs: Must be action verbs. (Words like "think", "want", "know" are ID, not BD).
+
+Example: "You are putting the red block on top."
+
+Rule: If describing what child is NOT doing -> ID.
+
+5. REFLECTION (RF)
+
+Definition: Repeats or paraphrases child's immediately preceding verbalization. Retains meaning.
+
+Rule: Must be declarative. If it has rising inflection (question tone) -> RQ.
+
+6. QUESTIONS (Q / RQ)
+
+Question (Q): Request for an answer or rising inflection.
+
+Includes: "Do you want...", "Do you know...", "Remember when..."
+
+Reflective Question (RQ): Repeats child's statement but with rising inflection (verifying).
+
+7. ACKNOWLEDGEMENT (AK)
+
+Definition: Brief, non-content response to child (e.g., "Yes", "Okay", "Uh-huh", "Sure").
+
+Rule: "Yes/No" answers to child questions are AK. (Refusals are NTA).
+
+8. INFORMATIONAL DESCRIPTION (ID) - The Default Category
+
+Definition: Statements providing information about objects, events, the parent's own feelings/behavior, or the child's past (>5s) or future behavior.
+
+Decision Rule: If a statement doesn't fit the specific criteria of the codes above (e.g., BD, Praise, Command), code ID.
+
+Ambiguity Rule: If uncertain between ID and BD, code ID.
+
+</coding_rules>`;
 
   // Prepare utterances data for the prompt (input1.json format)
   // Use idx instead of long utt.id to save tokens
@@ -798,10 +906,35 @@ Return ONLY valid JSON with this exact structure:
   // Create index mapping for later (idx -> utt.id)
   const idxToUttId = utterancesWithRoles.map(utt => utt.id);
 
-  // Replace template variables in user prompt
-  const userPrompt = userPromptTemplate
-    .replace(/\{\{data\}\}/g, JSON.stringify(utterancesData, null, 2))
-    .replace(/\{\{batch_size\}\}/g, utterancesWithRoles.length.toString());
+  // User prompt with template variables replaced
+  const userPrompt = `**Input Format:**
+
+You will receive a chronological JSON list of dialogue turns with ${utterancesWithRoles.length} conversations:
+
+${JSON.stringify(utterancesData, null, 2)}
+
+Each item has:
+- role: Identify if the speaker is "parent" or "child"
+- text: The content to analyze
+
+**Output Specification:**
+
+Output only a valid JSON array of objects for the Parent segments.
+
+Format: [{"id": <int>, "code": <string>}, ...]
+
+Do not include child segments in the output.
+
+Do not include markdown or whitespace (minified JSON).
+
+**CRITICAL INSTRUCTIONS:**
+- Return ONLY the JSON array, nothing else
+- Do NOT write any explanatory text before or after the JSON
+- Do NOT use markdown code blocks like \`\`\`json
+- Do NOT say "I'm ready" or "Here is the output" or any other text
+- Your ENTIRE response must be ONLY the JSON array starting with [ and ending with ]
+- First character of your response MUST be [
+- Last character of your response MUST be ]`;
 
   console.log(`📊 [ANALYSIS-STEP-8] Calling Claude API for PCIT coding...`);
   console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
@@ -837,35 +970,68 @@ Return ONLY valid JSON with this exact structure:
   // Parse JSON response
   let codingResults;
   try {
+    let cleanJson = fullResponse.trim();
+
     // Remove markdown code blocks if present
-    const cleanJson = fullResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    cleanJson = cleanJson.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    // Try to extract JSON array if there's text before/after it
+    // Look for the first [ and last ]
+    const firstBracket = cleanJson.indexOf('[');
+    const lastBracket = cleanJson.lastIndexOf(']');
+
+    if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+      cleanJson = cleanJson.substring(firstBracket, lastBracket + 1);
+    }
+
     codingResults = JSON.parse(cleanJson);
 
     if (!Array.isArray(codingResults)) {
       throw new Error('Expected array of coding results');
     }
+
+    console.log(`✅ [ANALYSIS-STEP-8] Successfully parsed ${codingResults.length} coding results`);
   } catch (parseError) {
-    console.error('Failed to parse PCIT coding JSON:', parseError.message);
-    console.log('Raw response:', fullResponse);
+    console.error('❌ [PCIT-CODING-ERROR] Failed to parse PCIT coding JSON:', parseError.message);
+    console.error('❌ [PCIT-CODING-ERROR] Raw response (first 500 chars):', fullResponse.substring(0, 500));
+    console.error('❌ [PCIT-CODING-ERROR] Raw response (last 500 chars):', fullResponse.substring(Math.max(0, fullResponse.length - 500)));
     throw new Error(`Failed to parse PCIT coding response: ${parseError.message}`);
   }
 
-  // Build ID-to-tag map for efficient updates
+  // Map DPICS codes to display tag names
+  const DPICS_TO_TAG_MAP = {
+    'RF': 'Echo',
+    'RQ': 'Echo',
+    'LP': 'Labeled Praise',
+    'UP': 'Unlabeled Praise',
+    'BD': 'Narration',
+    'DC': 'Command',
+    'IC': 'Command',
+    'Q': 'Question',
+    'NTA': 'Criticism',
+    'ID': 'Neutral',
+    'AK': 'Neutral'
+  };
+
+  // Build ID-to-tag maps for efficient updates
   // Map idx back to actual utt.id
-  const tagMap = {};
+  const pcitTagMap = {}; // DPICS codes (RF, LP, etc.)
+  const noraTagMap = {}; // Display names (Echo, Labeled Praise, etc.)
+
   for (const result of codingResults) {
     if (result.id !== undefined && result.code) {
       const actualUttId = idxToUttId[result.id];
       if (actualUttId) {
-        tagMap[actualUttId] = result.code;
+        pcitTagMap[actualUttId] = result.code; // Store DPICS code
+        noraTagMap[actualUttId] = DPICS_TO_TAG_MAP[result.code] || result.code; // Store display name
       }
     }
   }
 
-  // Update utterances with PCIT tags in database
-  await updateUtteranceTags(sessionId, tagMap);
+  // Update utterances with both PCIT tags and Nora tags in database
+  await updateUtteranceTags(sessionId, pcitTagMap, noraTagMap);
 
-  console.log(`Updated tags for ${Object.keys(tagMap).length} utterances`);
+  console.log(`Updated tags for ${Object.keys(pcitTagMap).length} utterances`);
 
   // Count codes from JSON results (using DPICS codes)
   const tagCounts = {};
@@ -955,12 +1121,24 @@ Return ONLY valid JSON with this exact structure:
       // Try to parse as JSON
       let parsedAnalysis = null;
       try {
+        let cleanJson = analysisText.trim();
+
         // Remove markdown code blocks if present
-        const cleanJson = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        cleanJson = cleanJson.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+        // Try to extract JSON object if there's text before/after it
+        const firstBrace = cleanJson.indexOf('{');
+        const lastBrace = cleanJson.lastIndexOf('}');
+
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+        }
+
         parsedAnalysis = JSON.parse(cleanJson);
+        console.log(`✅ [COMPETENCY-ANALYSIS] Successfully parsed competency analysis JSON`);
       } catch (parseError) {
-        console.error('Failed to parse competency analysis as JSON:', parseError.message);
-        console.log('Raw response:', analysisText);
+        console.error('⚠️ [COMPETENCY-ANALYSIS] Failed to parse competency analysis as JSON:', parseError.message);
+        console.error('⚠️ [COMPETENCY-ANALYSIS] Raw response (first 300 chars):', analysisText.substring(0, 300));
         // Fallback to raw text
         parsedAnalysis = {
           topMoment: null,
@@ -1305,7 +1483,7 @@ router.get('/:id/analysis', async (req, res) => {
       start: utt.startTime,
       end: utt.endTime,
       role: utt.role,
-      tag: utt.pcitTag
+      tag: utt.noraTag  // Use display name for UI
     }));
 
     // Format skills data for the report

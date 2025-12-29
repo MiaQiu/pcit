@@ -216,6 +216,7 @@ model Utterance {
   endTime   Float
   role      String?
   pcitTag   String?
+  noraTag   String?
   order     Int
   createdAt DateTime @default(now())
   session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
