@@ -9,7 +9,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from './Card';
 import { Ellipse } from './Ellipse';
-import { AudioWaveform } from './AudioWaveform';
 import { RecordingTimer } from './RecordingTimer';
 import { FONTS, COLORS } from '../constants/assets';
 
@@ -62,11 +61,6 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
             isRecording={isRecording}
             durationMillis={durationMillis}
           />
-        </View>
-
-        {/* Waveform - Center */}
-        <View style={styles.waveformContainer}>
-          <AudioWaveform isRecording={isRecording} />
         </View>
 
         {/* Hint Text - Bottom */}
@@ -159,15 +153,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 300,
     alignItems: 'center',
-    zIndex: 10,
-  },
-  waveformContainer: {
-    position: 'absolute',
-    top: '75%',
-    marginTop: -50,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
     zIndex: 10,
   },
   hintContainer: {

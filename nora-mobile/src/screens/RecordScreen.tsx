@@ -11,7 +11,6 @@ import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackNavigationProp } from '../navigation/types';
 import { RecordButton } from '../components/RecordButton';
-import { AudioWaveform } from '../components/AudioWaveform';
 import { RecordingTimer } from '../components/RecordingTimer';
 import { ProfileCircle } from '../components/ProfileCircle';
 //import { StreakWidget } from '../components/StreakWidget';
