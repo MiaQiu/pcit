@@ -201,6 +201,10 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
     });
     formData.append('model_id', 'scribe_v1');
     formData.append('diarize', 'true');
+    formData.append('diarization_threshold', 0.1);
+    formData.append('temperature', 0);
+    formData.append('tag_audio_events', 'false');
+    
     //formData.append('num_speakers', '2');
     formData.append('timestamps_granularity', 'word');
 
@@ -427,9 +431,9 @@ Generate a JSON object with exactly these three fields:
 **Output Format:**
 Return ONLY valid JSON in this exact structure:
 {
-  "topMoment": "exact quote from utterances",
-  "tips": "Exactly 2 sentences of specific tips.",
-  "reminder": "Exactly 2 sentences of encouragement."
+  "topMoment": **topMoment**,
+  "tips": **tips**,
+  "reminder": **reminder**
 }
 
 **CRITICAL:** Return ONLY valid JSON. Do not include markdown code blocks or any text outside the JSON structure.`;
@@ -1467,9 +1471,27 @@ router.post('/upload', requireAuth, upload.single('audio'), async (req, res) => 
       .then(() => {
         console.log(`✅ [UPLOAD] Background transcription completed for session ${sessionId}`);
       })
-      .catch(err => {
+      .catch(async (err) => {
         console.error(`❌ [UPLOAD] Background transcription failed for session ${sessionId}:`, err);
         console.error(`❌ [UPLOAD] Error stack:`, err.stack);
+
+        // Update session with permanent failure
+        try {
+          await prisma.session.update({
+            where: { id: sessionId },
+            data: {
+              analysisStatus: 'FAILED',
+              analysisError: err.message || 'Transcription failed',
+              analysisFailedAt: new Date(),
+              permanentFailure: true
+            }
+          });
+
+          // Report permanent failure to team
+          await reportPermanentFailureToTeam(sessionId, err);
+        } catch (updateErr) {
+          console.error(`❌ [UPLOAD] Failed to update session status:`, updateErr);
+        }
       });
 
     // Return success response immediately
