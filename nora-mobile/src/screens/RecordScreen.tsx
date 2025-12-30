@@ -24,6 +24,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendNewReportNotification } from '../utils/notifications';
 import { startRecording as startNativeRecording, stopRecording as stopNativeRecording, getRecordingStatus, addAutoStopListener, removeAutoStopListener, getPendingRecording, endBackgroundTask } from '../utils/AudioSessionManager';
 import type { EmitterSubscription } from 'react-native';
+import { ErrorMessages } from '../utils/errorMessages';
+import { handleApiError } from '../utils/NetworkMonitor';
 
 type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed';
 
@@ -285,7 +287,7 @@ export const RecordScreen: React.FC = () => {
       startDurationPolling();
     } catch (error) {
       console.error('Failed to start recording:', error);
-      Alert.alert('Error', 'Failed to start recording. Please try again.');
+      Alert.alert('Recording Error', ErrorMessages.RECORDING.START_FAILED);
     }
   };
 
@@ -353,7 +355,7 @@ export const RecordScreen: React.FC = () => {
       console.error('[RecordScreen] Error handling auto-stop:', error);
       // End background task on error
       await endBackgroundTask();
-      Alert.alert('Error', 'Failed to process auto-stopped recording.');
+      Alert.alert('Recording Error', ErrorMessages.RECORDING.STOP_FAILED);
       setRecordingState('completed');
     }
   };
@@ -407,7 +409,7 @@ export const RecordScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to stop recording:', error);
-      Alert.alert('Error', 'Failed to stop recording.');
+      Alert.alert('Recording Error', ErrorMessages.RECORDING.STOP_FAILED);
       setRecordingState('completed');
     }
   };

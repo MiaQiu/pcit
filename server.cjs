@@ -5,6 +5,19 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 require('dotenv').config();
 
+// Custom error classes
+const {
+  AppError,
+  ValidationError,
+  UnauthorizedError,
+  ForbiddenError,
+  NotFoundError,
+  ConflictError,
+  ServiceUnavailableError,
+  UploadError,
+  ProcessingError
+} = require('./server/utils/errors.cjs');
+
 const app = express();
 
 // Security middleware - allow inline scripts for share page
@@ -799,6 +812,64 @@ app.get('/api/health', (req, res) => {
             email: !!(process.env.SMTP_USER && COACH_EMAIL)
         }
     });
+});
+
+// ============================================
+// GLOBAL ERROR HANDLING MIDDLEWARE
+// ============================================
+
+// 404 handler - must come before error handler
+app.use((req, res, next) => {
+  res.status(404).json({
+    error: 'Endpoint not found',
+    code: 'NOT_FOUND',
+    path: req.path
+  });
+});
+
+// Global error handler - must be last middleware
+app.use((err, req, res, next) => {
+  // Log error with full context
+  console.error('[ERROR]', {
+    timestamp: new Date().toISOString(),
+    path: req.path,
+    method: req.method,
+    userId: req.user?.id,
+    error: err.message,
+    code: err.code || 'INTERNAL_ERROR',
+    statusCode: err.statusCode || 500,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+
+  // TODO Phase 3: Send to Sentry (error monitoring)
+  // if (process.env.SENTRY_DSN && (!err.statusCode || err.statusCode >= 500)) {
+  //   Sentry.captureException(err, {
+  //     user: req.user ? { id: req.user.id, email: req.user.email } : undefined,
+  //     tags: { path: req.path, method: req.method, errorCode: err.code }
+  //   });
+  // }
+
+  // Determine status code
+  const statusCode = err.statusCode || 500;
+
+  // Build error response
+  const errorResponse = {
+    error: err.userMessage || 'An unexpected error occurred',
+    code: err.code || 'INTERNAL_ERROR'
+  };
+
+  // Add details in development mode
+  if (process.env.NODE_ENV === 'development') {
+    errorResponse.details = err.message;
+    errorResponse.stack = err.stack;
+  }
+
+  // Add validation details if present
+  if (err.details) {
+    errorResponse.validationErrors = err.details;
+  }
+
+  res.status(statusCode).json(errorResponse);
 });
 
 const PORT = process.env.PORT || 3001;

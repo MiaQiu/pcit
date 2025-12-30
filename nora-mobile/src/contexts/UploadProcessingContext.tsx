@@ -7,6 +7,8 @@ import React, { createContext, useContext, useState, useEffect, useRef, ReactNod
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRecordingService, useAuthService } from './AppContext';
 import { sendNewReportNotification } from '../utils/notifications';
+import { handleApiError } from '../utils/NetworkMonitor';
+import { ErrorMessages } from '../utils/errorMessages';
 
 type ProcessingState = 'idle' | 'uploading' | 'processing';
 
@@ -257,18 +259,23 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     }
   };
 
+  // Helper: Calculate exponential backoff delay
+  const getBackoffDelay = (attempt: number): number => {
+    // Start at 1s, increase by 1.5x each attempt, max 10s
+    return Math.min(1000 * Math.pow(1.5, attempt), 10000);
+  };
+
   const pollForAnalysisCompletion = async (recordingId: string, attempt: number = 0) => {
     console.log(`[UploadProcessing] Polling attempt ${attempt + 1}/40 for recording ${recordingId}`);
-    const maxAttempts = 40; // 40 attempts * 3 seconds = 2 minutes max
+    const maxAttempts = 40;
 
     if (attempt >= maxAttempts) {
-      console.log('[UploadProcessing] Timeout - analysis took too long');
+      console.log('[UploadProcessing] Polling timeout - still processing');
       await reset();
-      // Show error message to user on timeout
       const Alert = require('react-native').Alert;
       Alert.alert(
-        'Report Generation Failed',
-        'Analysis is taking longer than expected. Please try recording again or contact support if the issue persists.',
+        'Still Processing',
+        ErrorMessages.PROCESSING.TIMEOUT,
         [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
       );
       return;
@@ -343,19 +350,21 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
       // If still processing or transcribing, wait and try again
       const errorMsg = error.message.toLowerCase();
       if (errorMsg.includes('processing') || errorMsg.includes('transcription') || errorMsg.includes('in progress')) {
-        console.log(`[UploadProcessing] Still processing, will retry in 3s (attempt ${attempt + 1}/${maxAttempts})`);
+        const delay = getBackoffDelay(attempt);
+        console.log(`[UploadProcessing] Still processing, will retry in ${delay}ms (attempt ${attempt + 1}/${maxAttempts})`);
         const timeout = setTimeout(() => {
           pollForAnalysisCompletion(recordingId, attempt + 1);
-        }, 3000);
+        }, delay);
         pollTimeoutRef.current = timeout;
       } else {
-        // Other error - show error message to user
-        console.error('[UploadProcessing] Unexpected error during analysis:', error);
+        // Permanent failure - show apology (system already auto-retried on backend)
+        console.error('[UploadProcessing] Analysis failed permanently after auto-retries:', error);
         await reset();
         const Alert = require('react-native').Alert;
+        const errorMessage = error.userMessage || ErrorMessages.PROCESSING.FAILED;
         Alert.alert(
-          'Report Generation Failed',
-          'An error occurred while processing your recording. Please try recording again.',
+          'We Apologize',
+          errorMessage,
           [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
         );
       }

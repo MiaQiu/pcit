@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, ActivityIndicator, Text, RefreshControl, StyleSheet } from 'react-native';
+import { View, ScrollView, ActivityIndicator, Text, RefreshControl, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LessonCard } from '../components/LessonCard';
@@ -16,8 +16,9 @@ import { DRAGON_PURPLE, FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
-import { MOCK_HOME_LESSONS } from '../data/mockLessons';
 import { LessonCache } from '../lib/LessonCache';
+import { handleApiError } from '../utils/NetworkMonitor';
+import { ErrorMessages } from '../utils/errorMessages';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -45,6 +46,7 @@ export const HomeScreen: React.FC = () => {
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
   const [hasAnyRecordingsEver, setHasAnyRecordingsEver] = useState(false);
   const [hasCompletedAnyLesson, setHasCompletedAnyLesson] = useState(false);
+  const [failedRecordings, setFailedRecordings] = useState<any[]>([]);
 
   useEffect(() => {
     // Clean up completed lessons from cache on app open
@@ -295,6 +297,10 @@ export const HomeScreen: React.FC = () => {
       // Check if user has ANY recordings ever (for showing LessonCard vs NextActionCard)
       setHasAnyRecordingsEver(recordings.length > 0);
 
+      // Check for permanently failed recordings
+      const failed = recordings.filter((r: any) => r.analysisStatus === 'FAILED' && r.permanentFailure === true);
+      setFailedRecordings(failed);
+
       const todayRecordings = recordings.filter((r: any) => {
         const recordingDate = new Date(r.createdAt);
         return recordingDate >= today && recordingDate < tomorrow;
@@ -394,15 +400,6 @@ export const HomeScreen: React.FC = () => {
       // Extract lessons array from response
       const apiLessons = response.lessons || [];
 
-      // If API returns empty, use mock data for development
-      if (apiLessons.length === 0) {
-        console.log('No lessons in database, using mock data for development');
-        if (lessons.length === 0) {
-          setLessons(MOCK_HOME_LESSONS);
-        }
-        return;
-      }
-
       // Map API lessons to LessonCardProps
       const mappedLessons: LessonCardProps[] = apiLessons.map((lesson) => ({
         id: lesson.id,
@@ -429,11 +426,9 @@ export const HomeScreen: React.FC = () => {
     } catch (err) {
       console.error('Failed to load lessons:', err);
 
-      // Only show error if we don't have any lessons to display
-      if (lessons.length === 0) {
-        setError('Failed to load lessons. Using offline data.');
-        setLessons(MOCK_HOME_LESSONS);
-      }
+      // Show error message to user
+      const errorMessage = handleApiError(err);
+      Alert.alert('Unable to Load Lessons', errorMessage);
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -492,6 +487,31 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate('MainTabs', { screen: 'Record' });
   };
 
+  const handleDeleteRecording = async (recordingId: string) => {
+    const { Alert } = require('react-native');
+    Alert.alert(
+      'Delete Recording',
+      'Are you sure you want to delete this failed recording?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await recordingService.deleteRecording(recordingId);
+              // Refresh the recordings list
+              await loadTodayState();
+            } catch (error) {
+              console.error('Failed to delete recording:', error);
+              Alert.alert('Error', 'Failed to delete recording. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleNextAction = () => {
     const cardType = getCardType();
 
@@ -539,13 +559,6 @@ export const HomeScreen: React.FC = () => {
           />
         }
       >
-        {/* Error Message */}
-        {error && (
-          <View className="mb-4 p-4 bg-yellow-100 rounded-lg">
-            <Text className="text-sm text-yellow-800">{error}</Text>
-          </View>
-        )}
-
         {/* Profile Circle and Streak Widget - Only show for experienced users */}
         {(hasAnyRecordingsEver || hasCompletedAnyLesson) && (
           <View style={styles.streakContainer}>
@@ -636,6 +649,44 @@ export const HomeScreen: React.FC = () => {
             </View>
           );
         })()}
+
+        {/* Failed Recordings Section */}
+        {failedRecordings.length > 0 && failedRecordings.map((recording) => (
+          <View key={recording.id} style={styles.failedCard}>
+            <View style={styles.failedHeader}>
+              <Text style={styles.errorIcon}>⚠️</Text>
+              <Text style={styles.failedTitle}>Processing Failed</Text>
+            </View>
+
+            <Text style={styles.failedDate}>
+              {new Date(recording.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+              })}
+            </Text>
+
+            <Text style={styles.apologyText}>
+              We apologize for the inconvenience. Our team has been automatically
+              notified and will investigate this issue.
+            </Text>
+
+            {recording.retryCount > 0 && (
+              <Text style={styles.retryInfo}>
+                Attempted {recording.retryCount + 1} time(s)
+              </Text>
+            )}
+
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDeleteRecording(recording.id)}
+            >
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -667,5 +718,61 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginTop: 8,
     marginLeft: 20,
+  },
+  failedCard: {
+    backgroundColor: '#FEF2F2',
+    padding: 16,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#EF4444',
+    marginBottom: 12,
+    marginHorizontal: 20,
+  },
+  failedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  errorIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  failedTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#DC2626',
+    fontFamily: FONTS.semiBold,
+  },
+  failedDate: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 12,
+    fontFamily: FONTS.regular,
+  },
+  apologyText: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+    marginBottom: 12,
+    fontFamily: FONTS.regular,
+  },
+  retryInfo: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginBottom: 12,
+    fontFamily: FONTS.regular,
+  },
+  deleteButton: {
+    backgroundColor: '#EF4444',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  deleteButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: FONTS.semiBold,
   },
 });

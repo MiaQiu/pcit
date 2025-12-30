@@ -3,7 +3,7 @@ import AVFoundation
 import React
 
 @objc(AudioSessionManager)
-class AudioSessionManager: RCTEventEmitter {
+class AudioSessionManager: RCTEventEmitter, AVAudioRecorderDelegate {
 
   override static func moduleName() -> String! {
     return "AudioSessionManager"
@@ -36,15 +36,12 @@ class AudioSessionManager: RCTEventEmitter {
       object: nil
     )
 
-    // Setup silent audio player for background recording
-    setupSilentAudioPlayer()
+    // REMOVED: Silent audio player - not needed with UIBackgroundModes: audio
   }
 
   deinit {
     // CRITICAL: Remove observers to prevent memory leaks
     NotificationCenter.default.removeObserver(self)
-    stopSilentAudio()
-    silentAudioPlayer = nil
     cleanupRecording()
     endBackgroundTask()
   }
@@ -55,33 +52,22 @@ class AudioSessionManager: RCTEventEmitter {
     // Clean up non-essential resources
     if audioRecorder?.isRecording != true {
       // Not recording - safe to clean up everything
-      stopSilentAudio()
       cleanupRecording()
       recordingURL = nil
       recordingStartTime = nil
       NSLog("[AudioSessionManager] 🧹 Cleaned up non-recording resources")
     } else {
-      // Still recording - keep silent audio playing to maintain background state
-      NSLog("[AudioSessionManager] 🎙️ Still recording - keeping essential resources including silent audio")
+      // Still recording - keep essential resources
+      NSLog("[AudioSessionManager] 🎙️ Still recording - keeping essential resources")
     }
   }
 
   @objc private func appDidEnterBackground() {
-    // Audio session keeps the app alive while recording (via UIBackgroundModes: audio)
-    // We DON'T need a background task here - only after recording stops for upload
+    // SIMPLIFIED: Just log - don't interfere with audio session
+    // The test app proves we don't need to re-activate the session
+    // UIBackgroundModes: audio + AVAudioRecorder handles everything
     if let recorder = audioRecorder, recorder.isRecording {
-      NSLog("[AudioSessionManager] 📱 App entered background while recording")
-
-      // CRITICAL: Ensure audio session stays active when backgrounding
-      let audioSession = AVAudioSession.sharedInstance()
-      do {
-        // Re-activate the audio session to ensure it stays active
-        // Use .notifyOthersOnDeactivation for smooth transitions with other audio apps
-        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-        NSLog("[AudioSessionManager] ✅ Re-activated audio session in background")
-      } catch {
-        NSLog("[AudioSessionManager] ❌ Failed to re-activate audio session: %@", error.localizedDescription)
-      }
+      NSLog("[AudioSessionManager] 📱 App entered background while recording - continuing...")
     } else {
       NSLog("[AudioSessionManager] ⚠️ App backgrounded but recorder not active!")
     }
@@ -92,87 +78,6 @@ class AudioSessionManager: RCTEventEmitter {
   private var recordingURL: URL?
   private var autoStopTimer: Timer?
   private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
-  private var keepAliveTimer: Timer?
-  private var silentAudioPlayer: AVAudioPlayer?
-
-  // MARK: - Silent Audio Player (keeps app alive in background)
-
-  private func setupSilentAudioPlayer() {
-    // Create a 1-second silent audio file if it doesn't exist
-    let fileManager = FileManager.default
-    let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    let silentAudioURL = documentsPath.appendingPathComponent("silence.m4a")
-
-    // Only create the file once
-    if !fileManager.fileExists(atPath: silentAudioURL.path) {
-      NSLog("[AudioSessionManager] 🔇 Creating silent audio file...")
-
-      // Create a 1-second silent audio buffer
-      let sampleRate = 44100.0
-      let duration = 1.0
-      let frameCount = Int(sampleRate * duration)
-
-      guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32,
-                                       sampleRate: sampleRate,
-                                       channels: 1,
-                                       interleaved: false) else {
-        NSLog("[AudioSessionManager] ⚠️ Failed to create audio format")
-        return
-      }
-
-      guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frameCount)) else {
-        NSLog("[AudioSessionManager] ⚠️ Failed to create audio buffer")
-        return
-      }
-      buffer.frameLength = AVAudioFrameCount(frameCount)
-
-      // Buffer is already silent (zeros by default)
-
-      do {
-        let audioFile = try AVAudioFile(forWriting: silentAudioURL,
-                                         settings: [
-                                           AVFormatIDKey: kAudioFormatMPEG4AAC,
-                                           AVSampleRateKey: sampleRate,
-                                           AVNumberOfChannelsKey: 1,
-                                           AVEncoderAudioQualityKey: AVAudioQuality.min.rawValue
-                                         ])
-        try audioFile.write(from: buffer)
-        NSLog("[AudioSessionManager] ✅ Silent audio file created")
-      } catch {
-        NSLog("[AudioSessionManager] ❌ Failed to create silent audio file: %@", error.localizedDescription)
-        return
-      }
-    }
-
-    // Create the player
-    do {
-      silentAudioPlayer = try AVAudioPlayer(contentsOf: silentAudioURL)
-      silentAudioPlayer?.numberOfLoops = -1 // Loop indefinitely
-      silentAudioPlayer?.volume = 0.0 // Silent
-      silentAudioPlayer?.prepareToPlay()
-      NSLog("[AudioSessionManager] ✅ Silent audio player prepared")
-    } catch {
-      NSLog("[AudioSessionManager] ❌ Failed to create silent audio player: %@", error.localizedDescription)
-    }
-  }
-
-  private func startSilentAudio() {
-    guard let player = silentAudioPlayer else {
-      NSLog("[AudioSessionManager] ⚠️ Silent audio player not initialized")
-      setupSilentAudioPlayer()
-      return
-    }
-
-    if !player.isPlaying {
-      player.play()
-      NSLog("[AudioSessionManager] 🔇 Started silent audio playback (keeps app alive)")
-    }
-  }
-
-  private func stopSilentAudio() {
-    silentAudioPlayer?.stop()
-    NSLog("[AudioSessionManager] 🔇 Stopped silent audio playback")
-  }
 
   // MARK: - Audio Session Configuration
 
@@ -261,11 +166,20 @@ class AudioSessionManager: RCTEventEmitter {
 
       // Initialize the Recorder (will write to the file we just created)
       audioRecorder = try AVAudioRecorder(url: audioURL, settings: settings)
+      audioRecorder?.delegate = self  // CRITICAL: Set delegate to get auto-stop callback
       audioRecorder?.isMeteringEnabled = true
       audioRecorder?.prepareToRecord()
 
-      // Start Recording
-      guard audioRecorder?.record() == true else {
+      // ============================================================
+      // SIMPLIFIED APPROACH: Use AVFoundation's built-in duration handling
+      // ============================================================
+      // The test app proves we don't need keep-alive timers or silent audio
+      // AVFoundation + UIBackgroundModes: audio handles background recording
+
+      let autoStopDuration = autoStopSeconds.doubleValue
+
+      // Start Recording with duration (let AVFoundation handle it)
+      guard audioRecorder?.record(forDuration: autoStopDuration) == true else {
         reject("RECORDING_ERROR", "Failed to start recording", nil)
         return
       }
@@ -273,34 +187,12 @@ class AudioSessionManager: RCTEventEmitter {
       recordingStartTime = Date()
       recordingURL = audioURL
 
-      // Start silent audio to keep app alive in background
-      startSilentAudio()
-
       // ============================================================
-      // CRITICAL FIX: TIMERS MUST RUN ON MAIN THREAD
+      // DELEGATE-BASED AUTO-STOP: Reliable in background
       // ============================================================
-      // iOS suspends background queues when locked.
-      // The Main Thread is kept alive by the "Audio" entitlement.
-
-      DispatchQueue.main.async { [weak self] in
-        guard let self = self else { return }
-
-        // A. LIGHTWEIGHT Keep Alive Timer
-        // CRITICAL: No logging, no disk I/O - only updateMeters() is safe on main thread
-        // when device is locked. Any blocking operations trigger watchdog kills.
-        self.keepAliveTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            // This is the ONLY thing safe to do frequently on main thread in background
-            self?.audioRecorder?.updateMeters()
-        }
-
-        // B. Auto-Stop Timer (lightweight - just calls the stop method)
-        let autoStopDuration = autoStopSeconds.doubleValue
-        if autoStopDuration > 0 {
-            self.autoStopTimer = Timer.scheduledTimer(withTimeInterval: autoStopDuration, repeats: false) { [weak self] _ in
-                self?.autoStopRecording()
-            }
-        }
-      }
+      // AVFoundation will call audioRecorderDidFinishRecording when duration expires
+      // This is more reliable than DispatchQueue.main.asyncAfter in background
+      // No additional timers needed - the delegate method handles everything
       // ============================================================
 
       NSLog("[AudioSessionManager] 🎙️ Recording started: %@", audioURL.path)
@@ -312,56 +204,6 @@ class AudioSessionManager: RCTEventEmitter {
     } catch {
       print("[AudioSessionManager] Failed to start: \(error.localizedDescription)")
       reject("RECORDING_ERROR", "Failed to start: \(error.localizedDescription)", error)
-    }
-  }
-
-  // Auto-stop callback - saves recording info and sends event to JavaScript
-  private func autoStopRecording() {
-    NSLog("[AudioSessionManager] 🔴 autoStopRecording() called")
-
-    guard let recorder = audioRecorder, recorder.isRecording else {
-      NSLog("[AudioSessionManager] ❌ Auto-stop called but no active recording")
-      return
-    }
-
-    NSLog("[AudioSessionManager] ✅ Auto-stopping recording")
-
-    // Start background task to keep app alive for upload
-    beginBackgroundTask()
-
-    recorder.stop()
-
-    let durationMillis = recordingStartTime.map { Int(Date().timeIntervalSince($0) * 1000) } ?? 0
-    let uri = recordingURL?.path ?? ""
-
-    // Save to UserDefaults so JavaScript can pick it up when app comes to foreground
-    let defaults = UserDefaults.standard
-    defaults.set(uri, forKey: "pendingRecordingUri")
-    defaults.set(durationMillis, forKey: "pendingRecordingDuration")
-    defaults.set(true, forKey: "pendingRecordingAutoStopped")
-    defaults.synchronize()
-
-    NSLog("[AudioSessionManager] Saved auto-stopped recording to UserDefaults: %@", uri)
-    NSLog("[AudioSessionManager] Background task started - app will stay alive for upload")
-
-    // Send event to JavaScript (may not be received if app is backgrounded)
-    sendEvent(withName: "onRecordingAutoStopped", body: [
-      "uri": uri,
-      "durationMillis": durationMillis
-    ])
-
-    // Clean up
-    cleanupRecording()
-    recordingStartTime = nil
-    recordingURL = nil
-
-    // Deactivate audio session after a short delay
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-      do {
-        try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-      } catch {
-        print("[AudioSessionManager] Failed to deactivate audio session: \(error.localizedDescription)")
-      }
     }
   }
 
@@ -394,12 +236,6 @@ class AudioSessionManager: RCTEventEmitter {
     // Invalidate timers
     autoStopTimer?.invalidate()
     autoStopTimer = nil
-
-    keepAliveTimer?.invalidate()
-    keepAliveTimer = nil
-
-    // Stop silent audio
-    stopSilentAudio()
 
     // Stop recording if active
     if audioRecorder?.isRecording == true {
@@ -501,6 +337,64 @@ class AudioSessionManager: RCTEventEmitter {
       ])
     } else {
       resolve(NSNull())
+    }
+  }
+
+  // MARK: - AVAudioRecorderDelegate
+
+  // This delegate method is called automatically when recording finishes
+  // Either due to duration expiring OR manual stop
+  func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
+    NSLog("[AudioSessionManager] 🔴 audioRecorderDidFinishRecording called, success: %@", flag ? "true" : "false")
+
+    // Only handle auto-stop case here
+    // Manual stops are already handled by stopRecording() method
+    guard flag else {
+      NSLog("[AudioSessionManager] ❌ Recording finished unsuccessfully")
+      return
+    }
+
+    // Check if this was an auto-stop (recorder stopped itself after duration)
+    // vs manual stop (user clicked stop button)
+    if recorder.isRecording == false && recordingURL != nil {
+      NSLog("[AudioSessionManager] ✅ Auto-stop detected - handling cleanup")
+
+      // Start background task to keep app alive for upload
+      beginBackgroundTask()
+
+      let durationMillis = recordingStartTime.map { Int(Date().timeIntervalSince($0) * 1000) } ?? 0
+      let uri = recordingURL?.path ?? ""
+
+      // Save to UserDefaults so JavaScript can pick it up when app comes to foreground
+      let defaults = UserDefaults.standard
+      defaults.set(uri, forKey: "pendingRecordingUri")
+      defaults.set(durationMillis, forKey: "pendingRecordingDuration")
+      defaults.set(true, forKey: "pendingRecordingAutoStopped")
+      defaults.synchronize()
+
+      NSLog("[AudioSessionManager] 💾 Saved auto-stopped recording to UserDefaults: %@", uri)
+      NSLog("[AudioSessionManager] ⏱️ Duration: %d ms", durationMillis)
+
+      // Send event to JavaScript (may not be received if app is backgrounded)
+      sendEvent(withName: "onRecordingAutoStopped", body: [
+        "uri": uri,
+        "durationMillis": durationMillis
+      ])
+
+      // Clean up
+      cleanupRecording()
+      recordingStartTime = nil
+      recordingURL = nil
+
+      // Deactivate audio session after a short delay
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        do {
+          try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+          NSLog("[AudioSessionManager] 🔇 Audio session deactivated")
+        } catch {
+          NSLog("[AudioSessionManager] ❌ Failed to deactivate audio session: %@", error.localizedDescription)
+        }
+      }
     }
   }
 }

@@ -17,6 +17,7 @@ import { OnboardingProvider } from './src/contexts/OnboardingContext';
 import { UploadProcessingProvider } from './src/contexts/UploadProcessingContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { RootStackNavigationProp } from './src/navigation/types';
+import { NetworkStatusBar } from './src/components/NetworkStatusBar';
 
 // Deep linking configuration
 const linking = {
@@ -52,6 +53,7 @@ const AppContent: React.FC = () => {
     <UploadProcessingProvider onNavigateToHome={handleNavigateToHome}>
       <RootNavigator />
       <StatusBar style="dark" />
+      <NetworkStatusBar />
     </UploadProcessingProvider>
   );
 };

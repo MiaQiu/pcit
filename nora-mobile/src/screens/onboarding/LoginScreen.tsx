@@ -20,6 +20,7 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useAuthService } from '../../contexts/AppContext';
+import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -49,10 +50,8 @@ export const LoginScreen: React.FC = () => {
       );
     } catch (error: any) {
       console.error('Login error:', error);
-      Alert.alert(
-        'Login Failed',
-        error.message || 'Invalid email or password. Please try again.'
-      );
+      const errorMessage = getErrorMessage(error, ErrorMessages.AUTH.LOGIN_FAILED);
+      Alert.alert('Login Failed', errorMessage);
     } finally {
       setLoading(false);
     }

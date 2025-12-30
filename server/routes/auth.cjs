@@ -9,6 +9,13 @@ const { hashPassword, verifyPassword } = require('../utils/password.cjs');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt.cjs');
 const { encryptSensitiveData, decryptSensitiveData, encryptUserData, decryptUserData } = require('../utils/encryption.cjs');
 const { uploadProfileImage, deleteProfileImage } = require('../services/storage-s3.cjs');
+const {
+  ValidationError,
+  ConflictError,
+  UnauthorizedError,
+  NotFoundError,
+  AppError
+} = require('../utils/errors.cjs');
 
 const router = express.Router();
 
@@ -65,7 +72,8 @@ router.post('/signup', async (req, res) => {
     // Validate input
     const { error, value } = signupSchema.validate(req.body);
     if (error) {
-      return res.status(400).json({ error: error.details[0].message });
+      const errors = error.details.map(d => d.message);
+      throw new ValidationError(errors[0], errors);
     }
 
     const { email, password, name, childName, childBirthYear, childBirthday, childConditions, issue, therapistId } = value;
@@ -79,7 +87,10 @@ router.post('/signup', async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(409).json({ error: 'Email already registered' });
+      throw new ConflictError(
+        'Email already exists in database',
+        'This email is already registered. Please log in or use a different email.'
+      );
     }
 
     // Hash password
@@ -159,8 +170,18 @@ router.post('/signup', async (req, res) => {
     });
 
   } catch (error) {
+    // If it's already a custom error, pass it through to global handler
+    if (error instanceof AppError) {
+      throw error;
+    }
+
     console.error('Signup error:', error);
-    res.status(500).json({ error: 'Failed to create account' });
+    throw new AppError(
+      `Signup error: ${error.message}`,
+      500,
+      'SIGNUP_ERROR',
+      'Failed to create account. Please try again or contact support.'
+    );
   }
 });
 
@@ -170,7 +191,7 @@ router.post('/login', authLimiter, async (req, res) => {
     // Validate input
     const { error, value } = loginSchema.validate(req.body);
     if (error) {
-      return res.status(400).json({ error: error.details[0].message });
+      throw new ValidationError(error.details[0].message);
     }
 
     const { email, password } = value;
@@ -184,13 +205,19 @@ router.post('/login', authLimiter, async (req, res) => {
     });
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      throw new UnauthorizedError(
+        'User not found',
+        'Incorrect email or password. Please try again.'
+      );
     }
 
     // Verify password
     const validPassword = await verifyPassword(password, user.passwordHash);
     if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      throw new UnauthorizedError(
+        'Invalid password',
+        'Incorrect email or password. Please try again.'
+      );
     }
 
     // Decrypt user data for token and response
@@ -239,8 +266,18 @@ router.post('/login', authLimiter, async (req, res) => {
     });
 
   } catch (error) {
+    // If it's already a custom error, pass it through to global handler
+    if (error instanceof AppError) {
+      throw error;
+    }
+
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
+    throw new AppError(
+      `Login error: ${error.message}`,
+      500,
+      'LOGIN_ERROR',
+      'Login failed. Please try again.'
+    );
   }
 });
 

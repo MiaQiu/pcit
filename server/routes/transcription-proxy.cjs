@@ -13,6 +13,12 @@ const fetch = require('node-fetch');
 const FormData = require('form-data');
 const { requireAuth } = require('../middleware/auth.cjs');
 const { createAnonymizedRequest } = require('../utils/anonymization.cjs');
+const {
+  ValidationError,
+  ServiceUnavailableError,
+  ProcessingError,
+  AppError
+} = require('../utils/errors.cjs');
 
 const router = express.Router();
 
@@ -30,12 +36,15 @@ const API_KEYS = {
  * POST /api/transcription/elevenlabs
  * Anonymized proxy for ElevenLabs Scribe API
  */
-router.post('/elevenlabs', async (req, res) => {
+router.post('/elevenlabs', async (req, res, next) => {
   try {
     const userId = req.userId;
 
     if (!API_KEYS.elevenLabs) {
-      return res.status(503).json({ error: 'ElevenLabs service not configured' });
+      throw new ServiceUnavailableError(
+        'ElevenLabs',
+        'Transcription service is temporarily unavailable. Please try again later.'
+      );
     }
 
     // Create anonymized request mapping
@@ -49,7 +58,7 @@ router.post('/elevenlabs', async (req, res) => {
     // Get audio from request body (base64 or buffer)
     const { audioData } = req.body;
     if (!audioData) {
-      return res.status(400).json({ error: 'No audio data provided' });
+      throw new ValidationError('No audio data provided');
     }
 
     // Convert base64 to buffer if needed
@@ -82,9 +91,10 @@ router.post('/elevenlabs', async (req, res) => {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error(`[PROXY] ElevenLabs error for ${requestId}:`, errorData);
-      return res.status(response.status).json({
-        error: errorData.detail?.message || 'Transcription failed'
-      });
+      throw new ProcessingError(
+        `ElevenLabs API error: ${errorData.detail?.message || response.statusText}`,
+        'Transcription failed. Please try again or contact support.'
+      );
     }
 
     const result = await response.json();
@@ -94,8 +104,18 @@ router.post('/elevenlabs', async (req, res) => {
     res.json(result);
 
   } catch (error) {
+    // If it's already a custom error, pass it through
+    if (error instanceof AppError) {
+      return next(error);
+    }
+
     console.error('[PROXY] ElevenLabs proxy error:', error);
-    res.status(500).json({ error: 'Transcription proxy failed' });
+    return next(new AppError(
+      `ElevenLabs proxy error: ${error.message}`,
+      500,
+      'TRANSCRIPTION_PROXY_ERROR',
+      'Transcription service failed. Please try again.'
+    ));
   }
 });
 

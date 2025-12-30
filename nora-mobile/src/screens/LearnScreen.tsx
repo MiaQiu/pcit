@@ -14,6 +14,8 @@ import { FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService } from '../contexts/AppContext';
 import { LessonCache } from '../lib/LessonCache';
+import { handleApiError } from '../utils/NetworkMonitor';
+import { ErrorMessages } from '../utils/errorMessages';
 
 interface Phase {
   phaseNumber: number;
@@ -68,12 +70,6 @@ export const LearnScreen: React.FC = () => {
         }
       }
 
-      // If no lessons in API, show mock data structure
-      if (apiLessons.length === 0) {
-        setPhases(getMockPhases());
-        return;
-      }
-
       // Group lessons by phase
       const phaseMap = new Map<string, any[]>();
       apiLessons.forEach(lesson => {
@@ -121,75 +117,14 @@ export const LearnScreen: React.FC = () => {
       setPhases(phasesData);
     } catch (err) {
       console.error('Failed to load lessons:', err);
-      setError('Failed to load lessons');
-      // Fallback to mock data
-      setPhases(getMockPhases());
+
+      // Show error message to user
+      const errorMessage = handleApiError(err);
+      Alert.alert('Unable to Load Lessons', errorMessage);
     } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
-  };
-
-  const getMockPhases = (): Phase[] => {
-    return [
-      {
-        phaseNumber: 1,
-        phaseName: 'CONNECT',
-        totalLessons: 15,
-        completedLessons: 15,
-        lessons: [
-          { id: '1', dayNumber: 1, title: 'Introduction to Special Play Time', isCompleted: true, isLocked: false },
-          { id: '2', dayNumber: 2, title: 'The Power of Narration (PEN Skills - Part 1)', isCompleted: true, isLocked: false },
-          { id: '3', dayNumber: 3, title: 'Echoing Your Child\'s Words (PEN Skills - Part 2)', isCompleted: true, isLocked: false },
-          { id: '4', dayNumber: 4, title: 'Labeled Praise (PEN Skills - Part 3)', isCompleted: true, isLocked: false },
-          { id: '5', dayNumber: 5, title: 'What NOT to Do During Special Time', isCompleted: true, isLocked: false },
-          { id: '6', dayNumber: 6, title: 'Handling Chaos and Destruction in Special Time', isCompleted: true, isLocked: false },
-          { id: '7', dayNumber: 7, title: 'The Parent is the Most Important Ingredient', isCompleted: true, isLocked: false },
-          { id: '8', dayNumber: 8, title: 'Dealing with Whining and Tantrums During Special Time', isCompleted: true, isLocked: false },
-          { id: '9', dayNumber: 9, title: 'Building Trust Through Consistency', isCompleted: true, isLocked: false },
-          { id: '10', dayNumber: 10, title: 'When Siblings Want In', isCompleted: true, isLocked: false },
-          { id: '11', dayNumber: 11, title: 'What If My Child Ignores Me During Special Time?', isCompleted: true, isLocked: false },
-          { id: '12', dayNumber: 12, title: 'Special Time for Different Ages', isCompleted: true, isLocked: false },
-          { id: '13', dayNumber: 13, title: 'When You\'re Touched Out and Exhausted', isCompleted: true, isLocked: false },
-          { id: '14', dayNumber: 14, title: 'Celebrating Progress - You\'ve Built the Foundation', isCompleted: true, isLocked: false },
-          { id: '15', dayNumber: 15, title: 'Preparing for Phase 2 - What to Expect', isCompleted: true, isLocked: false },
-        ],
-      },
-      {
-        phaseNumber: 2,
-        phaseName: 'DISCIPLINE',
-        totalLessons: 26,
-        completedLessons: 0,
-        lessons: [
-          { id: '16', dayNumber: 16, title: 'The Foundation of Effective Commands', isCompleted: false, isLocked: false },
-          { id: '17', dayNumber: 17, title: 'The 5-Second Rule', isCompleted: false, isLocked: true },
-          { id: '18', dayNumber: 18, title: 'When Compliance Happens - Label It!', isCompleted: false, isLocked: true },
-          { id: '19', dayNumber: 19, title: 'Natural vs. Logical Consequences', isCompleted: false, isLocked: true },
-          { id: '20', dayNumber: 20, title: 'The "When/Then" Framework', isCompleted: false, isLocked: true },
-          { id: '21', dayNumber: 21, title: 'Time-Outs That Actually Work', isCompleted: false, isLocked: true },
-          { id: '22', dayNumber: 22, title: 'The Warning System', isCompleted: false, isLocked: true },
-          { id: '23', dayNumber: 23, title: 'Following Through Every Time', isCompleted: false, isLocked: true },
-          { id: '24', dayNumber: 24, title: 'Handling Public Meltdowns', isCompleted: false, isLocked: true },
-          { id: '25', dayNumber: 25, title: 'When Your Child Hits or Bites', isCompleted: false, isLocked: true },
-          { id: '26', dayNumber: 26, title: 'Dealing with Defiance', isCompleted: false, isLocked: true },
-          { id: '27', dayNumber: 27, title: 'The Power of Routines', isCompleted: false, isLocked: true },
-          { id: '28', dayNumber: 28, title: 'Visual Schedules for Success', isCompleted: false, isLocked: true },
-          { id: '29', dayNumber: 29, title: 'Bedtime Without Battles', isCompleted: false, isLocked: true },
-          { id: '30', dayNumber: 30, title: 'Morning Routines That Work', isCompleted: false, isLocked: true },
-          { id: '31', dayNumber: 31, title: 'Managing Screen Time', isCompleted: false, isLocked: true },
-          { id: '32', dayNumber: 32, title: 'Sibling Conflict Resolution', isCompleted: false, isLocked: true },
-          { id: '33', dayNumber: 33, title: 'Teaching Emotional Regulation', isCompleted: false, isLocked: true },
-          { id: '34', dayNumber: 34, title: 'The Calm-Down Corner', isCompleted: false, isLocked: true },
-          { id: '35', dayNumber: 35, title: 'Repair After Conflict', isCompleted: false, isLocked: true },
-          { id: '36', dayNumber: 36, title: 'When You Lose Your Cool', isCompleted: false, isLocked: true },
-          { id: '37', dayNumber: 37, title: 'Managing Your Own Triggers', isCompleted: false, isLocked: true },
-          { id: '38', dayNumber: 38, title: 'Co-Parenting Consistency', isCompleted: false, isLocked: true },
-          { id: '39', dayNumber: 39, title: 'Grandparents and Boundaries', isCompleted: false, isLocked: true },
-          { id: '40', dayNumber: 40, title: 'Celebrating Milestones', isCompleted: false, isLocked: true },
-          { id: '41', dayNumber: 41, title: 'The Road Ahead', isCompleted: false, isLocked: true },
-        ],
-      },
-    ];
   };
 
   const handleLessonPress = (lessonId: string, isLocked?: boolean) => {
@@ -226,24 +161,10 @@ export const LearnScreen: React.FC = () => {
           />
         }
       >
-        {/* Header with Profile and Streak */}
+        {/* Header */}
         <View style={styles.header}>
-          <View style={styles.streakContainer}>
-            {/* <ProfileCircle size={60} />
-            <StreakWidget
-              streak={6}
-              completedDays={[true, true, true, true, true, true, false]}
-            /> */}
-          </View>
           <Text style={styles.mainTitle}>All Lessons</Text>
         </View>
- 
-        {/* Error Message */}
-        {error && (
-          <View className="mx-6 mb-4 p-4 bg-yellow-100 rounded-lg">
-            <Text className="text-sm text-yellow-800">{error}</Text>
-          </View>
-        )}
 
         {/* Phases and Lessons */}
         {phases.map((phase) => (
@@ -312,12 +233,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 8,
     paddingBottom: 16,
-  },
-  streakContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-    marginBottom: 16,
   },
   mainTitle: {
     fontFamily: FONTS.bold,

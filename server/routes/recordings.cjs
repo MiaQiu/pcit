@@ -12,6 +12,14 @@ const prisma = require('../services/db.cjs');
 const storage = require('../services/storage-s3.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
 const { createAnonymizedRequest } = require('../utils/anonymization.cjs');
+const {
+  ValidationError,
+  NotFoundError,
+  ForbiddenError,
+  UploadError,
+  ProcessingError,
+  AppError
+} = require('../utils/errors.cjs');
 
 const router = express.Router();
 
@@ -258,9 +266,8 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
     throw new Error(`Transcription failed: ${transcriptionError.message}`);
   }
 
-  // Trigger PCIT analysis in background (non-blocking)
-  console.log(`🔄 [ANALYSIS-TRIGGER] Session ${sessionId.substring(0, 8)} - About to trigger PCIT analysis...`);
-  console.log(`🔄 [ANALYSIS-TRIGGER] Calling analyzePCITCoding(${sessionId.substring(0, 8)}, ${userId.substring(0, 8)})`);
+  // Trigger PCIT analysis in background with automatic retry (non-blocking)
+  console.log(`🔄 [ANALYSIS-TRIGGER] Session ${sessionId.substring(0, 8)} - Triggering PCIT analysis with auto-retry...`);
 
   // Update status to PROCESSING
   await prisma.session.update({
@@ -268,44 +275,29 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
     data: { analysisStatus: 'PROCESSING' }
   });
 
-  analyzePCITCoding(sessionId, userId)
-    .then(async () => {
-      console.log(`✅ [ANALYSIS-COMPLETE] Session ${sessionId.substring(0, 8)} - PCIT analysis completed successfully`);
-      // Update status to COMPLETED
-      await prisma.session.update({
-        where: { id: sessionId },
-        data: { analysisStatus: 'COMPLETED' }
-      });
-    })
+  // Process with automatic retry (3 attempts with 0s, 5s, 15s delays)
+  processRecordingWithRetry(sessionId, userId, 0)
     .catch(async (err) => {
-      console.error(`❌ [ANALYSIS-FAILED] Session ${sessionId.substring(0, 8)} - PCIT analysis failed:`);
-      console.error(`❌ [ANALYSIS-FAILED] Error message:`, err.message);
-      console.error(`❌ [ANALYSIS-FAILED] Error stack:`, err.stack);
-      console.error(`❌ [ANALYSIS-FAILED] Full error:`, err);
+      console.error(`❌ [PROCESSING-FAILED-PERMANENTLY] Session ${sessionId.substring(0, 8)} failed after all retries:`, err.message);
 
-      // Save error to database
-      console.log(`🔄 [ANALYSIS-FAILED] About to save error to database for session ${sessionId.substring(0, 8)}...`);
-
+      // Update session with permanent failure
       try {
-        console.log(`🔄 [ANALYSIS-FAILED] Calling prisma.session.update...`);
-        const result = await prisma.session.update({
+        await prisma.session.update({
           where: { id: sessionId },
           data: {
             analysisStatus: 'FAILED',
-            analysisError: err.message || 'Unknown error occurred during analysis',
-            analysisFailedAt: new Date()
+            analysisError: err.message || 'Unknown error occurred during processing',
+            analysisFailedAt: new Date(),
+            permanentFailure: true
           }
         });
-        console.log(`✅ [ANALYSIS-FAILED] Database update completed for session ${sessionId.substring(0, 8)}`);
-        console.log(`✅ [ANALYSIS-FAILED] Updated session:`, { id: result.id, status: result.analysisStatus, error: result.analysisError });
+        console.log(`✅ [PERMANENT-FAILURE] Database updated for session ${sessionId.substring(0, 8)}`);
       } catch (dbErr) {
-        console.error(`❌ [DB-ERROR] Failed to save error to database for session ${sessionId.substring(0, 8)}:`);
-        console.error(`❌ [DB-ERROR] Error details:`, dbErr);
-        console.error(`❌ [DB-ERROR] Error message:`, dbErr.message);
-        console.error(`❌ [DB-ERROR] Error stack:`, dbErr.stack);
+        console.error(`❌ [DB-ERROR] Failed to save error to database:`, dbErr);
       }
 
-      console.log(`🏁 [ANALYSIS-FAILED] Finished error handling for session ${sessionId.substring(0, 8)}`);
+      // Auto-report to team
+      await reportPermanentFailureToTeam(sessionId, err);
     });
 
   return {
@@ -441,6 +433,147 @@ Return ONLY valid JSON in this exact structure:
 }
 
 **CRITICAL:** Return ONLY valid JSON. Do not include markdown code blocks or any text outside the JSON structure.`;
+}
+
+/**
+ * Process recording with automatic retry logic
+ * Retries up to 3 times before giving up
+ * @param {string} sessionId - Session ID
+ * @param {string} userId - User ID
+ * @param {number} attemptNumber - Current attempt number (0-indexed)
+ * @returns {Promise<void>}
+ */
+async function processRecordingWithRetry(sessionId, userId, attemptNumber = 0) {
+  const maxAttempts = 3;
+  const retryDelays = [0, 5000, 15000]; // 0s, 5s, 15s
+
+  try {
+    console.log(`🔄 [PROCESSING] Session ${sessionId.substring(0, 8)} - Attempt ${attemptNumber + 1}/${maxAttempts}`);
+
+    // Update retry tracking in database
+    if (attemptNumber > 0) {
+      await prisma.session.update({
+        where: { id: sessionId },
+        data: {
+          retryCount: attemptNumber,
+          lastRetriedAt: new Date()
+        }
+      });
+    }
+
+    // Run the actual processing (transcription + analysis)
+    await analyzePCITCoding(sessionId, userId);
+
+    // Success! Log it
+    console.log(`✅ [PROCESSING-SUCCESS] Session ${sessionId.substring(0, 8)} completed on attempt ${attemptNumber + 1}`);
+
+    // Update status to COMPLETED
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: { analysisStatus: 'COMPLETED' }
+    });
+
+  } catch (error) {
+    console.error(`❌ [PROCESSING-ERROR] Session ${sessionId.substring(0, 8)} - Attempt ${attemptNumber + 1} failed:`, error.message);
+
+    // Check if we should retry
+    if (attemptNumber < maxAttempts - 1) {
+      const delay = retryDelays[attemptNumber + 1];
+      console.log(`⏳ [RETRY] Session ${sessionId.substring(0, 8)} - Retrying in ${delay}ms (attempt ${attemptNumber + 2}/${maxAttempts})`);
+
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, delay));
+
+      // Retry recursively
+      return processRecordingWithRetry(sessionId, userId, attemptNumber + 1);
+    }
+
+    // All retries exhausted - throw error to be caught by caller
+    throw error;
+  }
+}
+
+/**
+ * Automatically report permanent processing failure to team
+ * Sends Slack notification and logs to database
+ * @param {string} sessionId - Session ID
+ * @param {Error} error - Error that caused failure
+ * @returns {Promise<void>}
+ */
+async function reportPermanentFailureToTeam(sessionId, error) {
+  try {
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      include: { user: true }
+    });
+
+    if (!session) {
+      console.error(`❌ [AUTO-REPORT] Session ${sessionId} not found`);
+      return;
+    }
+
+    const errorReport = {
+      type: 'PERMANENT_PROCESSING_FAILURE',
+      sessionId: session.id,
+      userId: session.userId,
+      userEmail: session.user.email,
+      error: error.message,
+      stack: error.stack,
+      retryCount: session.retryCount || 0,
+      audioUrl: session.audioUrl,
+      durationSeconds: session.durationSeconds,
+      timestamp: new Date().toISOString()
+    };
+
+    // Send to Slack webhook if configured
+    if (process.env.SLACK_ERROR_WEBHOOK_URL) {
+      await fetch(process.env.SLACK_ERROR_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: `🚨 *Permanent Processing Failure* - Session ${sessionId.substring(0, 8)}`,
+          blocks: [
+            {
+              type: 'section',
+              fields: [
+                { type: 'mrkdwn', text: `*User:*\n${session.user.email}` },
+                { type: 'mrkdwn', text: `*Session:*\n${sessionId}` }
+              ]
+            },
+            {
+              type: 'section',
+              fields: [
+                { type: 'mrkdwn', text: `*Error:*\n${error.message}` },
+                { type: 'mrkdwn', text: `*Retry Attempts:*\n${(session.retryCount || 0) + 1}/3` }
+              ]
+            },
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: session.audioUrl ? `*Audio:* <${session.audioUrl}|Download>` : '*Audio:* Not available'
+              }
+            },
+            {
+              type: 'context',
+              elements: [
+                { type: 'mrkdwn', text: `Duration: ${session.durationSeconds}s | Failed at: ${new Date().toLocaleString()}` }
+              ]
+            }
+          ]
+        })
+      });
+
+      console.log(`📧 [AUTO-REPORT] Sent failure report to team for session ${sessionId.substring(0, 8)}`);
+    }
+
+    // Log to ErrorLog table (will be created in Phase 3)
+    // TODO Phase 3: Add this when ErrorLog table exists
+    // await prisma.errorLog.create({ ... });
+
+  } catch (reportError) {
+    console.error('❌ [AUTO-REPORT-FAILED] Failed to report error to team:', reportError);
+  }
 }
 
 /**

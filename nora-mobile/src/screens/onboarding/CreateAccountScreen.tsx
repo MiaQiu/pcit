@@ -22,6 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
+import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
 
 export const CreateAccountScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -95,7 +96,8 @@ export const CreateAccountScreen: React.FC = () => {
       navigation.navigate('NameInput');
     } catch (error: any) {
       console.error('Signup error:', error);
-      Alert.alert('Signup Failed', error.message || 'Failed to create account. Please try again.');
+      const errorMessage = getErrorMessage(error, ErrorMessages.AUTH.SIGNUP_FAILED);
+      Alert.alert('Signup Failed', errorMessage);
     } finally {
       setIsLoading(false);
     }

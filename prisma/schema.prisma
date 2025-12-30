@@ -197,6 +197,9 @@ model Session {
   analysisStatus         AnalysisStatus @default(PENDING)
   analysisError          String?
   analysisFailedAt       DateTime?
+  retryCount             Int            @default(0)
+  lastRetriedAt          DateTime?
+  permanentFailure       Boolean        @default(false)
   User                   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   Utterance              Utterance[]
 
