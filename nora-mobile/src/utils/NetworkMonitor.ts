@@ -50,6 +50,10 @@ class NetworkMonitor {
       if (wasConnected !== this.isConnected) {
         console.log(`[NetworkMonitor] Connection state changed: ${this.isConnected ? 'ONLINE' : 'OFFLINE'}`);
         this.listeners.forEach(listener => listener(this.isConnected));
+
+        // Also notify status listeners (for NetworkStatusBar)
+        const currentStatus = this.getConnectionStatus();
+        this.statusListeners.forEach(listener => listener(currentStatus));
       }
     });
   }

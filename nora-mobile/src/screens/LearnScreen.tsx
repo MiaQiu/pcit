@@ -177,13 +177,13 @@ export const LearnScreen: React.FC = () => {
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>Couldn't Load Lessons</Text>
             <Text style={styles.emptyMessage}>{error}</Text>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={[styles.retryButton, !isOnline && styles.retryButtonDisabled]}
               onPress={() => loadLessons()}
               disabled={!isOnline}
             >
               <Text style={styles.retryButtonText}>Try Again</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         )}
 

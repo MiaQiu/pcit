@@ -30,6 +30,8 @@ export interface NextActionCardProps {
   };
   encouragementMessage?: string;
   onReadReport?: () => void;
+  // Network status
+  isOnline?: boolean;
 }
 
 // Content definitions for each card type
@@ -70,6 +72,7 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
   yesterdayScore,
   encouragementMessage,
   onReadReport,
+  isOnline = true,
 }) => {
   const showYesterdaySection = yesterdayScore !== undefined;
   const percentage = yesterdayScore
@@ -130,8 +133,12 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
 
             {/* Read Report Link */}
             {onReadReport && (
-              <TouchableOpacity onPress={onReadReport} style={styles.linkContainer}>
-                <Text style={styles.linkText}>Read report</Text>
+              <TouchableOpacity
+                onPress={onReadReport}
+                style={styles.linkContainer}
+                disabled={!isOnline}
+              >
+                <Text style={[styles.linkText, !isOnline && styles.linkTextDisabled]}>Read report</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -191,9 +198,14 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
         {/* CTA Button - Only show if onPress is provided */}
         {onPress && buttonText && (
           <>
-            <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
-              <Text style={styles.buttonText}>{buttonText}</Text>
-              <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+            <TouchableOpacity
+              style={[styles.button, !isOnline && styles.buttonDisabled]}
+              onPress={onPress}
+              activeOpacity={0.8}
+              disabled={!isOnline}
+            >
+              <Text style={[styles.buttonText, !isOnline && styles.buttonTextDisabled]}>{buttonText}</Text>
+              <Ionicons name="chevron-forward" size={20} color={!isOnline ? "#999999" : "#FFFFFF"} />
             </TouchableOpacity>
 
             {/* Next Lesson unlock message - Only for recordAgain */}
@@ -275,6 +287,9 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: 14,
     color: COLORS.mainPurple,
+  },
+  linkTextDisabled: {
+    color: '#CCCCCC',
   },
   // Dragon encouragement section
   dragonSection: {
@@ -395,11 +410,18 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 0,
   },
+  buttonDisabled: {
+    backgroundColor: '#CCCCCC',
+    opacity: 0.6,
+  },
   buttonText: {
     fontFamily: FONTS.semiBold,
     fontSize: 16,
     color: '#FFFFFF',
     letterSpacing: -0.3,
+  },
+  buttonTextDisabled: {
+    color: '#999999',
   },
   unlockMessageContainer: {
     flexDirection: 'row',

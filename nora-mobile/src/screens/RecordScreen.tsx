@@ -485,7 +485,7 @@ export const RecordScreen: React.FC = () => {
     await stopRecording();
   };
 
-  const canStartSession = permissionGranted;
+  const canStartSession = permissionGranted && isOnline;
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right', 'bottom']}>
@@ -582,7 +582,7 @@ This takes a few minutes.
       {recordingState === 'idle' && !uploadProcessing.isProcessing && (
         <View style={styles.fixedButtonContainer}>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, !canStartSession && styles.actionButtonDisabled]}
             onPress={handleStartSession}
             disabled={!canStartSession}
             activeOpacity={0.8}
@@ -710,6 +710,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 100,
     gap: 8,
+  },
+  actionButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+    opacity: 0.6,
   },
   actionButtonText: {
     fontFamily: FONTS.semiBold,

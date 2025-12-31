@@ -18,7 +18,6 @@ import { useLessonService, useAuthService, useRecordingService } from '../contex
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { LessonCache } from '../lib/LessonCache';
 import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
-import { ErrorMessages } from '../utils/errorMessages';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
 
@@ -33,7 +32,6 @@ export const HomeScreen: React.FC = () => {
 
   const [lessons, setLessons] = useState<LessonCardProps[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>();
   const [relationshipToChild, setRelationshipToChild] = useState<'MOTHER' | 'FATHER' | 'GRANDMOTHER' | 'GRANDFATHER' | 'GUARDIAN' | 'OTHER' | undefined>();
@@ -464,7 +462,6 @@ export const HomeScreen: React.FC = () => {
       } else {
         setIsRefreshing(true);
       }
-      setError(null);
 
       // Fetch fresh data from API
       const response = await lessonService.getLessons();
@@ -499,10 +496,8 @@ export const HomeScreen: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to load lessons:', err);
-
-      // Show error message to user
-      const errorMessage = handleApiError(err);
-      Alert.alert('Unable to Load Lessons', errorMessage);
+      handleApiError(err);
+      // NetworkStatusBar already shows if it's a network issue
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -599,22 +594,12 @@ export const HomeScreen: React.FC = () => {
         }
         break;
       case 'record':
-        // Check if online before navigating to record
-        if (!isOnline) {
-          showToast('Recording requires internet connection', 'error');
-          return;
-        }
         handleRecordSession();
         break;
       case 'readReport':
         handleReadTodayReport();
         break;
       case 'recordAgain':
-        // Check if online before navigating to record
-        if (!isOnline) {
-          showToast('Recording requires internet connection', 'error');
-          return;
-        }
         handleRecordAgain();
         break;
     }
@@ -731,6 +716,8 @@ export const HomeScreen: React.FC = () => {
                 yesterdayScore={displayScore}
                 encouragementMessage={displayEncouragement}
                 onReadReport={latestScore ? handleReadLatestReport : undefined}
+                // Network status
+                isOnline={isOnline}
               />
             </View>
           );
