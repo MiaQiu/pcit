@@ -1,4 +1,5 @@
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import crashlytics from '@react-native-firebase/crashlytics';
 
 export type ConnectionStatus = 'online' | 'offline' | 'server_down';
 
@@ -134,33 +135,60 @@ export const networkMonitor = new NetworkMonitor();
  * Helper function to handle API errors with network awareness
  */
 export function handleApiError(error: any): string {
+  console.log('[handleApiError] Processing error:', {
+    code: error.code,
+    message: error.message,
+    status: error.status,
+    isConnected: networkMonitor.getIsConnected()
+  });
+
+  // Track API errors to Crashlytics (non-fatal)
+  if (error instanceof Error) {
+    crashlytics().recordError(error, 'API Error');
+    crashlytics().log(`API Error: ${error.message} (status: ${error.status || 'N/A'})`);
+  }
+
   // Check network connectivity first
   if (!networkMonitor.getIsConnected()) {
+    console.log('[handleApiError] Network is offline');
     return 'No internet connection. Please check your network and try again.';
   }
 
   // Check for server errors and update server status
+  // Industry standard: Use HTTP status codes (5xx = server error)
   const isServerError =
-    error.code === 'ECONNABORTED' ||
-    error.code === 'ECONNREFUSED' ||
-    error.code === 'SERVICE_UNAVAILABLE' ||
-    error.message?.includes('timeout') ||
-    error.message?.toLowerCase().includes('network') ||
-    error.message?.toLowerCase().includes('server') ||
-    (error.status && error.status >= 500);
+    (error.status && error.status >= 500) ||  // 5xx status codes
+    error.code === 'ECONNABORTED' ||          // Connection aborted
+    error.code === 'ECONNREFUSED' ||          // Connection refused
+    error.name === 'TypeError';                // Network errors (fetch failed)
+
+  console.log('[handleApiError] Is server error:', isServerError);
 
   if (isServerError) {
+    console.log('[handleApiError] Setting server status to DOWN');
     networkMonitor.setServerStatus('down');
   }
 
-  // Check for timeout errors
-  if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+  // Check for specific error types
+  if (error.code === 'ECONNABORTED') {
     return 'Request timed out. Please check your connection and try again.';
   }
 
-  // Check for network errors
-  if (error.code === 'NETWORK_ERROR' || error.message?.toLowerCase().includes('network')) {
-    return 'Network error. Please check your connection and try again.';
+  if (error.name === 'TypeError') {
+    return 'Unable to connect to server. Please check your connection and try again.';
+  }
+
+  // Check for specific HTTP status codes
+  if (error.status) {
+    if (error.status === 503) {
+      return 'Service temporarily unavailable. Please try again later.';
+    }
+    if (error.status === 502 || error.status === 504) {
+      return 'Server connection issue. Please try again.';
+    }
+    if (error.status >= 500) {
+      return 'Server error. Please try again later.';
+    }
   }
 
   // Return API error message if available

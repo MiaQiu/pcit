@@ -12,6 +12,7 @@ import type {
 } from '../types';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 import type AuthService from './authService';
+import { ApiError } from '../errors/ApiError';
 
 /**
  * Custom error for lesson not found (404)
@@ -59,8 +60,13 @@ class LessonService {
     );
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch lessons');
+      const error = await response.json().catch(() => ({}));
+      throw new ApiError(
+        error.error || 'Failed to fetch lessons',
+        response.status,
+        response.statusText,
+        error.code
+      );
     }
 
     return response.json();

@@ -6,6 +6,9 @@
 // Export types
 export * from './types';
 
+// Export errors
+export { ApiError } from './errors/ApiError';
+
 // Export adapters
 export { StorageAdapter, WebStorageAdapter } from './adapters/storage';
 

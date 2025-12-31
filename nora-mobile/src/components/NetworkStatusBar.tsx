@@ -22,8 +22,8 @@ export const NetworkStatusBar: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (status !== 'online') {
-      // Fade in and scale up when offline or server down
+    if (status === 'offline') {
+      // Fade in and scale up when offline
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -38,7 +38,7 @@ export const NetworkStatusBar: React.FC = () => {
         }),
       ]).start();
     } else {
-      // Fade out and scale down when back online
+      // Fade out and scale down when online (or server down but connected)
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 0,
@@ -59,14 +59,14 @@ export const NetworkStatusBar: React.FC = () => {
       case 'offline':
         return 'No Internet Connection';
       case 'server_down':
-        return 'Connection Issue';
+        return 'Server Unavailable';
       default:
         return '';
     }
   };
 
-  // Don't render anything when online
-  if (status === 'online') {
+  // Only show when offline (not for server errors)
+  if (status !== 'offline') {
     return null;
   }
 
@@ -76,7 +76,11 @@ export const NetworkStatusBar: React.FC = () => {
         styles.container,
         {
           opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }],
+          transform: [
+            { translateX: '-50%' },
+            { translateY: '-50%' },
+            { scale: scaleAnim },
+          ],
         },
       ]}
     >
@@ -92,8 +96,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    marginLeft: -120, // Half of button width to center
-    marginTop: -24, // Half of button height to center
     zIndex: 9998,
   },
   button: {

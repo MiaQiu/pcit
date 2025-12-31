@@ -156,7 +156,7 @@ export const LearnScreen: React.FC = () => {
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: 20, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

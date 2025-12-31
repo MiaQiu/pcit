@@ -163,8 +163,8 @@ export const HomeScreen: React.FC = () => {
     try {
       // Fetch recordings and lessons in parallel
       const [recordingsResponse, lessonsResponse] = await Promise.all([
-        recordingService.getRecordings().catch(() => ({ recordings: [] })),
-        lessonService.getLessons().catch(() => ({ lessons: [], userProgress: {} }))
+        recordingService.getRecordings(),
+        lessonService.getLessons()
       ]);
       handleApiSuccess(); // Mark server as up
 
@@ -232,7 +232,7 @@ export const HomeScreen: React.FC = () => {
 
   const loadLatestReport = async () => {
     try {
-      const { recordings } = await recordingService.getRecordings().catch(() => ({ recordings: [] }));
+      const { recordings } = await recordingService.getRecordings();
       handleApiSuccess(); // Mark server as up
 
       if (recordings.length > 0) {
@@ -337,7 +337,7 @@ export const HomeScreen: React.FC = () => {
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       // Check if lesson completed today
-      const { lessons } = await lessonService.getLessons().catch(() => ({ lessons: [], userProgress: {} }));
+      const { lessons } = await lessonService.getLessons();
       handleApiSuccess(); // Mark server as up
       const todayCompletedLesson = lessons.find((lesson: any) => {
         if (lesson.progress?.status === 'COMPLETED' && lesson.progress?.completedAt) {
@@ -359,7 +359,7 @@ export const HomeScreen: React.FC = () => {
       }
 
       // Check if recorded session today
-      const { recordings } = await recordingService.getRecordings().catch(() => ({ recordings: [] }));
+      const { recordings } = await recordingService.getRecordings();
       handleApiSuccess(); // Mark server as up
 
       // Mark user as experienced if they have recordings (proactive caching)
@@ -496,7 +496,9 @@ export const HomeScreen: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to load lessons:', err);
-      handleApiError(err);
+      const errorMessage = handleApiError(err);
+      console.log('[HomeScreen] Error message:', errorMessage);
+      console.log('[HomeScreen] Error details:', { code: err.code, message: err.message, status: err.status });
       // NetworkStatusBar already shows if it's a network issue
     } finally {
       setLoading(false);
@@ -619,7 +621,7 @@ export const HomeScreen: React.FC = () => {
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
       <ScrollView
         className="flex-1 px-6"
-        contentContainerStyle={{ paddingTop: 8, paddingBottom: 20 }}
+        contentContainerStyle={{ paddingTop: 8, paddingBottom: 20, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

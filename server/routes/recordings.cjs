@@ -1519,9 +1519,10 @@ router.post('/upload', requireAuth, upload.single('audio'), async (req, res) => 
       });
     }
 
+    // Never expose internal errors (Prisma, database, etc.) to clients
     res.status(500).json({
-      error: 'Internal server error',
-      details: error.message
+      error: 'Upload failed',
+      details: 'Upload failed. Please try upload again.'
     });
   }
 });

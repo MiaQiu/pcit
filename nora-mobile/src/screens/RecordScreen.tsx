@@ -382,17 +382,33 @@ export const RecordScreen: React.FC = () => {
           console.error('Upload failed:', error);
           // End background task even on failure
           await endBackgroundTask();
-          Alert.alert(
-            'Upload Failed',
-            error instanceof Error ? error.message : 'Failed to upload recording. Please try again.',
-            [
-              { text: 'Cancel', onPress: resetRecording, style: 'cancel' },
-              {
-                text: 'Retry',
-                onPress: () => uploadProcessing.startUpload(uri, durationSeconds)
-              }
-            ]
-          );
+
+          // Use handleApiError for user-friendly message
+          const userMessage = handleApiError(error);
+
+          const showUploadError = () => {
+            Alert.alert(
+              'Upload Failed',
+              userMessage || 'Unable to upload your recording. Please check your connection and try again.',
+              [
+                { text: 'Cancel', onPress: resetRecording, style: 'cancel' },
+                {
+                  text: 'Retry',
+                  onPress: async () => {
+                    try {
+                      await uploadProcessing.startUpload(uri, durationSeconds);
+                    } catch (retryError) {
+                      console.error('Retry upload failed:', retryError);
+                      const retryMessage = handleApiError(retryError);
+                      showUploadError(); // Show error again
+                    }
+                  }
+                }
+              ]
+            );
+          };
+
+          showUploadError();
         }
       }
     } catch (error) {
@@ -438,17 +454,33 @@ export const RecordScreen: React.FC = () => {
           await uploadProcessing.startUpload(uri, durationSeconds);
         } catch (error) {
           console.error('Upload failed:', error);
-          Alert.alert(
-            'Upload Failed',
-            error instanceof Error ? error.message : 'Failed to upload recording. Please try again.',
-            [
-              { text: 'Cancel', onPress: resetRecording, style: 'cancel' },
-              {
-                text: 'Retry',
-                onPress: () => uploadProcessing.startUpload(uri, durationSeconds)
-              }
-            ]
-          );
+
+          // Use handleApiError for user-friendly message
+          const userMessage = handleApiError(error);
+
+          const showUploadError = () => {
+            Alert.alert(
+              'Upload Failed',
+              userMessage || 'Unable to upload your recording. Please check your connection and try again.',
+              [
+                { text: 'Cancel', onPress: resetRecording, style: 'cancel' },
+                {
+                  text: 'Retry',
+                  onPress: async () => {
+                    try {
+                      await uploadProcessing.startUpload(uri, durationSeconds);
+                    } catch (retryError) {
+                      console.error('Retry upload failed:', retryError);
+                      const retryMessage = handleApiError(retryError);
+                      showUploadError(); // Show error again
+                    }
+                  }
+                }
+              ]
+            );
+          };
+
+          showUploadError();
         }
       }
     } catch (error) {
