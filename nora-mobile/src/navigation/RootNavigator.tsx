@@ -61,54 +61,55 @@ export const RootNavigator: React.FC = () => {
 
   useEffect(() => {
     checkAuthStatus();
-
-    // Failsafe timeout - ensure loading never gets stuck
-    const timeout = setTimeout(() => {
-      console.warn('Auth check timeout - forcing app to load');
-      setIsLoading(false);
-      setIsAuthenticated(false);
-    }, 10000); // 10 second timeout
-
-    return () => clearTimeout(timeout);
   }, []);
 
   const checkAuthStatus = async () => {
     try {
-      console.log('Starting auth check...');
+      console.log('[Auth] Starting auth check...');
 
-      // Initialize auth service (loads tokens from storage)
+      // Initialize auth service (loads tokens from storage - FAST, local only)
       await authService.initialize();
-      console.log('Auth service initialized');
+      console.log('[Auth] Auth service initialized');
 
-      // Check if user has valid authentication tokens
+      // Check if user has valid authentication tokens (local check only)
       const authenticated = authService.isAuthenticated();
-      console.log('Authentication status:', authenticated);
+      console.log('[Auth] Authentication status:', authenticated);
       setIsAuthenticated(authenticated);
 
-      // If authenticated, check onboarding completion
+      // IMPORTANT: Show app immediately, don't wait for API calls
+      setIsLoading(false);
+      console.log('[Auth] App loaded (instant startup)');
+
+      // If authenticated, check onboarding completion in BACKGROUND (non-blocking)
       if (authenticated) {
-        console.log('Checking onboarding completion...');
-        const incompleteStep = await checkOnboardingCompletion();
-        console.log('Onboarding step:', incompleteStep);
-        setOnboardingStep(incompleteStep);
+        console.log('[Auth] Checking onboarding status in background...');
+        checkOnboardingCompletion()
+          .then(incompleteStep => {
+            console.log('[Auth] Onboarding step:', incompleteStep);
+            setOnboardingStep(incompleteStep);
+          })
+          .catch(error => {
+            console.error('[Auth] Background onboarding check failed (ignored):', error);
+            // Silently fail - user can still use app
+          });
       }
 
-      console.log('Auth check complete');
+      console.log('[Auth] Auth check complete');
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error('[Auth] Error checking auth status:', error);
       // Log full error details for debugging
       if (error instanceof Error) {
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
+        console.error('[Auth] Error message:', error.message);
+        console.error('[Auth] Error stack:', error.stack);
       }
       setIsAuthenticated(false);
-    } finally {
       setIsLoading(false);
     }
   };
 
   const checkOnboardingCompletion = async (): Promise<string | null> => {
     try {
+      // Use cached user data for instant startup, refreshes in background
       const user = await authService.getCurrentUser();
 
       // Check which step is incomplete
@@ -131,7 +132,9 @@ export const RootNavigator: React.FC = () => {
       // For now, return null to indicate onboarding is complete
       return null;
     } catch (error) {
-      console.error('Error checking onboarding completion:', error);
+      console.error('[Auth] Error checking onboarding completion:', error);
+      // Return null on error - assume onboarding is complete
+      // Better to show main app than block user on network error
       return null;
     }
   };

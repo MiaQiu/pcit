@@ -99,6 +99,7 @@ class AuthService {
       console.error('Logout error:', error);
     } finally {
       await this.clearTokens();
+      await this.clearUserCache();
     }
   }
 
@@ -139,29 +140,142 @@ class AuthService {
   }
 
   /**
-   * Get current user
+   * Get current user (with caching for better UX)
+   * @param forceRefresh - If true, bypasses cache and fetches from API
    */
-  async getCurrentUser(): Promise<User> {
-    const response = await fetch(`${this.apiUrl}/api/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        // Try to refresh token
-        const refreshed = await this.refreshAccessToken();
-        if (refreshed) {
-          return this.getCurrentUser();
-        }
-        throw new Error('Unauthorized');
+  async getCurrentUser(forceRefresh: boolean = false): Promise<User> {
+    // Try to load from cache first (unless forced refresh)
+    if (!forceRefresh) {
+      const cachedUser = await this.getCachedUser();
+      if (cachedUser) {
+        console.log('[AuthService] Using cached user profile');
+        // Refresh in background for next time
+        this.refreshUserCache().catch(err =>
+          console.log('[AuthService] Background user refresh failed:', err)
+        );
+        return cachedUser;
       }
-      throw new Error('Failed to get user');
     }
 
-    const data = await response.json();
-    return data.user;
+    // Fetch from API
+    try {
+      const response = await fetch(`${this.apiUrl}/api/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Try to refresh token
+          const refreshed = await this.refreshAccessToken();
+          if (refreshed) {
+            return this.getCurrentUser(forceRefresh);
+          }
+          throw new Error('Unauthorized');
+        }
+        throw new Error('Failed to get user');
+      }
+
+      const data = await response.json();
+      const user = data.user;
+
+      // Cache the user data
+      await this.cacheUser(user);
+
+      return user;
+    } catch (error) {
+      // If we hit a network error and have a cached user (even expired), use it
+      const cachedUser = await this.storage.getItem('cachedUser');
+      if (cachedUser) {
+        console.log('[AuthService] Network error, using stale cache as fallback');
+        try {
+          const { user } = JSON.parse(cachedUser);
+          return user;
+        } catch (parseError) {
+          // Cache corrupted, throw original error
+          throw error;
+        }
+      }
+
+      // No cache available, throw the error
+      throw error;
+    }
+  }
+
+  /**
+   * Get cached user profile
+   */
+  private async getCachedUser(): Promise<User | null> {
+    try {
+      const cachedData = await this.storage.getItem('cachedUser');
+      if (!cachedData) return null;
+
+      const { user, cachedAt } = JSON.parse(cachedData);
+
+      // Cache valid for 24 hours
+      const cacheAge = Date.now() - cachedAt;
+      const maxCacheAge = 24 * 60 * 60 * 1000; // 24 hours
+
+      if (cacheAge > maxCacheAge) {
+        console.log('[AuthService] Cache expired');
+        return null;
+      }
+
+      return user;
+    } catch (error) {
+      console.error('[AuthService] Failed to load cached user:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Cache user profile
+   */
+  private async cacheUser(user: User): Promise<void> {
+    try {
+      const cacheData = {
+        user,
+        cachedAt: Date.now(),
+      };
+      await this.storage.setItem('cachedUser', JSON.stringify(cacheData));
+      console.log('[AuthService] User profile cached');
+    } catch (error) {
+      console.error('[AuthService] Failed to cache user:', error);
+    }
+  }
+
+  /**
+   * Refresh user cache in background
+   */
+  private async refreshUserCache(): Promise<void> {
+    try {
+      const response = await fetch(`${this.apiUrl}/api/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        await this.cacheUser(data.user);
+        console.log('[AuthService] User cache refreshed in background');
+      }
+    } catch (error) {
+      // Silently fail - this is a background operation
+      console.log('[AuthService] Background cache refresh failed (ignored)');
+    }
+  }
+
+  /**
+   * Clear cached user data
+   */
+  async clearUserCache(): Promise<void> {
+    try {
+      await this.storage.removeItem('cachedUser');
+    } catch (error) {
+      console.error('[AuthService] Failed to clear user cache:', error);
+    }
   }
 
   /**
@@ -182,7 +296,10 @@ class AuthService {
       });
 
       if (!response.ok) {
-        await this.clearTokens(true); // true = session expired
+        // Only trigger session expired on actual auth failures (401/403)
+        // Server errors (500+) might be temporary, don't logout
+        const shouldExpireSession = response.status === 401 || response.status === 403;
+        await this.clearTokens(shouldExpireSession);
         return false;
       }
 
@@ -191,8 +308,10 @@ class AuthService {
       await this.storage.setItem('accessToken', data.accessToken);
       return true;
     } catch (error) {
-      console.error('Token refresh error:', error);
-      await this.clearTokens(true); // true = session expired
+      // Network errors don't mean the session is expired
+      // The token might still be valid, just can't reach the server
+      console.error('Token refresh error (network issue, keeping tokens):', error);
+      // Don't clear tokens or trigger session expired on network errors
       return false;
     }
   }
@@ -219,6 +338,9 @@ class AuthService {
     this.refreshToken = null;
     await this.storage.removeItem('accessToken');
     await this.storage.removeItem('refreshToken');
+
+    // Also clear user cache when clearing tokens
+    await this.clearUserCache();
 
     // Trigger session expired callback if this is due to token expiration
     if (sessionExpired && this.onSessionExpired) {
