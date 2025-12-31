@@ -10,6 +10,48 @@ import { sendNewReportNotification } from '../utils/notifications';
 import { handleApiError } from '../utils/NetworkMonitor';
 import { ErrorMessages } from '../utils/errorMessages';
 
+/**
+ * Map technical backend error messages to user-friendly messages
+ */
+const getUserFriendlyErrorMessage = (technicalError: string): string => {
+  const errorLower = technicalError.toLowerCase();
+
+  // No speech detected / silent audio
+  if (errorLower.includes('no utterances parsed') ||
+      errorLower.includes('no speech detected') ||
+      errorLower.includes('silent') ||
+      errorLower.includes('unintelligible')) {
+    return "We couldn't detect any speech in your recording. Please make sure you and your child are speaking during the session and try again.";
+  }
+
+  // No adult speaker identified
+  if (errorLower.includes('no adult') ||
+      errorLower.includes('no parent') ||
+      errorLower.includes('adult speaker') ||
+      errorLower.includes('identify adult') ||
+      errorLower.includes('identify parent')) {
+    return "We had trouble identifying the adult speaker in your recording. Please make sure you're speaking clearly during the play session and try again.";
+  }
+
+  // Transcription service errors
+  if (errorLower.includes('elevenlabs') || errorLower.includes('deepgram')) {
+    return "We had trouble processing your audio. Please try recording again.";
+  }
+
+  // Network/timeout errors
+  if (errorLower.includes('timeout') || errorLower.includes('network')) {
+    return "The upload took too long. Please check your internet connection and try again.";
+  }
+
+  // Audio quality issues
+  if (errorLower.includes('audio quality') || errorLower.includes('corrupted')) {
+    return "There was an issue with the audio quality. Please try recording again.";
+  }
+
+  // Generic fallback
+  return "We had trouble analyzing your recording. Please try recording another session.";
+};
+
 type ProcessingState = 'idle' | 'uploading' | 'processing';
 
 interface UploadProcessingData {
@@ -87,8 +129,28 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
           // Resume upload
           uploadRecording(data.recordingUri, data.durationSeconds);
         } else if (data.state === 'processing' && data.recordingId) {
-          // Resume polling
-          pollForAnalysisCompletion(data.recordingId);
+          // Before resuming polling, check if recording has permanently failed
+          try {
+            const analysis = await recordingService.getAnalysis(data.recordingId);
+            // If we got analysis successfully, no need to poll - already complete
+            console.log('[UploadProcessing] Recording already completed, clearing state');
+            await reset();
+          } catch (error: any) {
+            // Check if it's a permanent failure
+            const isFailed = error.status === 'failed' ||
+                           error.message?.toLowerCase().includes('report generation failed') ||
+                           error.message?.toLowerCase().includes('analysis failed');
+
+            if (isFailed) {
+              // Recording has permanently failed - clear state instead of polling
+              console.log('[UploadProcessing] Recording permanently failed, clearing state:', error.message);
+              await reset();
+            } else {
+              // Still processing - resume polling
+              console.log('[UploadProcessing] Recording still processing, resuming polling');
+              pollForAnalysisCompletion(data.recordingId);
+            }
+          }
         }
       }
     } catch (error) {
@@ -357,11 +419,14 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
       if (isFailed) {
         console.error('[UploadProcessing] Analysis failed permanently:', error.message);
         await reset();
-        // Show error alert to user
+        // Show error alert to user with user-friendly message
         const Alert = require('react-native').Alert;
+        const userFriendlyMessage = getUserFriendlyErrorMessage(
+          error.userMessage || error.message || 'Unknown error'
+        );
         Alert.alert(
-          'Report Generation Failed',
-          error.userMessage || 'It looks like something went wrong. Please try recording again.',
+          'Unable to Generate Report',
+          userFriendlyMessage,
           [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
         );
         return;
@@ -381,10 +446,12 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         console.error('[UploadProcessing] Analysis failed permanently after auto-retries:', error);
         await reset();
         const Alert = require('react-native').Alert;
-        const errorMessage = error.userMessage || ErrorMessages.PROCESSING.FAILED;
+        const userFriendlyMessage = getUserFriendlyErrorMessage(
+          error.userMessage || error.message || ErrorMessages.PROCESSING.FAILED
+        );
         Alert.alert(
           'We Apologize',
-          errorMessage,
+          userFriendlyMessage,
           [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
         );
       }

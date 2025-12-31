@@ -119,10 +119,14 @@ export const HomeScreen: React.FC = () => {
   // useFocusEffect is more reliable for tab navigation than addListener
   useFocusEffect(
     React.useCallback(() => {
-      // Reload today's state, streak, and latest report when tab comes into focus
+      // Reload today's state and streak when tab comes into focus
+      // Note: loadLatestReport() is NOT called here to avoid unnecessary API calls
+      // Latest report is cached and only refreshed when:
+      // 1. Initial mount (useEffect on line 106)
+      // 2. New report completes (uploadProcessing.reportCompletedTimestamp watcher)
+      // 3. Manual pull-to-refresh
       loadTodayState();
       loadStreakData();
-      loadLatestReport();
     }, [])
   );
 
@@ -488,9 +492,10 @@ export const HomeScreen: React.FC = () => {
 
       setLessons(mappedLessons);
 
-      // Refresh streak data when lessons are refreshed (in case a lesson was just completed)
+      // Refresh streak and latest report when manually refreshing (pull-to-refresh)
       if (!showLoadingSpinner) {
         loadStreakData();
+        loadLatestReport();
       }
     } catch (err) {
       console.error('Failed to load lessons:', err);
