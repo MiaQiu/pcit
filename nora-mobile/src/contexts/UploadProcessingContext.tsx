@@ -156,6 +156,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
       const uploadPromise = new Promise<string>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         uploadXhrRef.current = xhr;
+        let uploadCompleted = false; // ✅ Track if upload already succeeded
 
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
@@ -179,6 +180,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
             try {
               const response = JSON.parse(xhr.responseText);
               console.log('[UploadProcessing] Upload successful:', response);
+              uploadCompleted = true; // ✅ Mark as completed
               resolve(response.recordingId);
             } catch (error) {
               reject(new Error('Invalid response from server'));
@@ -197,11 +199,22 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         });
 
         xhr.addEventListener('error', () => {
-          reject(new Error('Network error during upload'));
+          // ✅ Only reject if upload hasn't completed yet
+          if (!uploadCompleted) {
+            console.error('[UploadProcessing] Network error during upload');
+            reject(new Error('Network error during upload'));
+          } else {
+            console.log('[UploadProcessing] Ignoring error event - upload already completed successfully');
+          }
         });
 
         xhr.addEventListener('abort', () => {
-          reject(new Error('Upload cancelled'));
+          // ✅ Only reject if upload hasn't completed yet
+          if (!uploadCompleted) {
+            reject(new Error('Upload cancelled'));
+          } else {
+            console.log('[UploadProcessing] Ignoring abort event - upload already completed successfully');
+          }
         });
 
         // Open connection
@@ -326,8 +339,15 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         onNavigateToHome();
       }
     } catch (error: any) {
-      console.log(`[UploadProcessing] Caught error - status: ${error.status}, message: ${error.message}`);
-      console.log(`[UploadProcessing] Full error object:`, JSON.stringify(error, null, 2));
+      // Better error logging - Error objects don't serialize well with JSON.stringify
+      console.log(`[UploadProcessing] Caught error:`, {
+        status: error.status,
+        message: error.message,
+        userMessage: error.userMessage,
+        failedAt: error.failedAt,
+        name: error.name,
+        stack: error.stack?.split('\n').slice(0, 3).join('\n'), // First 3 lines of stack
+      });
 
       // Check if analysis failed permanently (check both error.status and message)
       const isFailed = error.status === 'failed' ||
@@ -341,14 +361,14 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         const Alert = require('react-native').Alert;
         Alert.alert(
           'Report Generation Failed',
-          error.userMessage || 'We encountered an error while analyzing your recording. Please try recording again.',
+          error.userMessage || 'It looks like something went wrong. Please try recording again.',
           [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
         );
         return;
       }
 
       // If still processing or transcribing, wait and try again
-      const errorMsg = error.message.toLowerCase();
+      const errorMsg = (error.message || '').toLowerCase();
       if (errorMsg.includes('processing') || errorMsg.includes('transcription') || errorMsg.includes('in progress')) {
         const delay = getBackoffDelay(attempt);
         console.log(`[UploadProcessing] Still processing, will retry in ${delay}ms (attempt ${attempt + 1}/${maxAttempts})`);

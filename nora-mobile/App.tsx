@@ -18,6 +18,7 @@ import { UploadProcessingProvider } from './src/contexts/UploadProcessingContext
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { RootStackNavigationProp } from './src/navigation/types';
 import { NetworkStatusBar } from './src/components/NetworkStatusBar';
+import { ToastProvider } from './src/components/ToastManager';
 
 // Deep linking configuration
 const linking = {
@@ -96,9 +97,11 @@ export default function App() {
       <SafeAreaProvider>
         <AppProvider>
           <OnboardingProvider>
-            <NavigationContainer linking={linking}>
-              <AppContent />
-            </NavigationContainer>
+            <ToastProvider>
+              <NavigationContainer linking={linking}>
+                <AppContent />
+              </NavigationContainer>
+            </ToastProvider>
           </OnboardingProvider>
         </AppProvider>
       </SafeAreaProvider>

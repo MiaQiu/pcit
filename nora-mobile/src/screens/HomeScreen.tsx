@@ -17,8 +17,10 @@ import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { LessonCache } from '../lib/LessonCache';
-import { handleApiError } from '../utils/NetworkMonitor';
+import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
 import { ErrorMessages } from '../utils/errorMessages';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { useToast } from '../components/ToastManager';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -26,6 +28,8 @@ export const HomeScreen: React.FC = () => {
   const authService = useAuthService();
   const recordingService = useRecordingService();
   const uploadProcessing = useUploadProcessing();
+  const { isOnline } = useNetworkStatus();
+  const { showToast } = useToast();
 
   const [lessons, setLessons] = useState<LessonCardProps[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,14 +48,66 @@ export const HomeScreen: React.FC = () => {
   const [isReportRead, setIsReportRead] = useState(false);
   const [todayLessonId, setTodayLessonId] = useState<string | null>(null);
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
-  const [hasAnyRecordingsEver, setHasAnyRecordingsEver] = useState(false);
-  const [hasCompletedAnyLesson, setHasCompletedAnyLesson] = useState(false);
+  const [isExperiencedUser, setIsExperiencedUser] = useState(false);
   const [failedRecordings, setFailedRecordings] = useState<any[]>([]);
+
+  /**
+   * Check if user is experienced (has completed a lesson or made a recording)
+   * Uses permanent AsyncStorage cache to avoid repeated API calls
+   */
+  const checkExperiencedUserStatus = async () => {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+
+      // Check permanent cache first
+      const cachedStatus = await AsyncStorage.getItem('isExperiencedUser');
+
+      if (cachedStatus === 'true') {
+        // Already marked as experienced, no need to check API
+        setIsExperiencedUser(true);
+        return;
+      }
+
+      // Not cached yet - do ONE-TIME check by fetching data
+      const [recordingsResponse, lessonsResponse] = await Promise.all([
+        recordingService.getRecordings().catch(() => ({ recordings: [] })),
+        lessonService.getLessons().catch(() => ({ lessons: [] }))
+      ]);
+
+      const hasRecordings = recordingsResponse.recordings.length > 0;
+      const hasCompletedLesson = lessonsResponse.lessons.some(
+        (l: any) => l.progress?.status === 'COMPLETED'
+      );
+
+      if (hasRecordings || hasCompletedLesson) {
+        // Mark as experienced and cache permanently
+        await AsyncStorage.setItem('isExperiencedUser', 'true');
+        setIsExperiencedUser(true);
+      }
+    } catch (error) {
+      console.log('Failed to check experienced user status:', error);
+    }
+  };
+
+  /**
+   * Mark user as experienced and cache permanently
+   * Call this when user completes first lesson or creates first recording
+   */
+  const markAsExperiencedUser = async () => {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      await AsyncStorage.setItem('isExperiencedUser', 'true');
+      setIsExperiencedUser(true);
+    } catch (error) {
+      console.log('Failed to mark user as experienced:', error);
+    }
+  };
 
   useEffect(() => {
     // Clean up completed lessons from cache on app open
     LessonCache.cleanupCompletedLessons();
 
+    checkExperiencedUserStatus();
     loadLessons();
     loadUserProfile();
     loadStreakData();
@@ -89,10 +145,14 @@ export const HomeScreen: React.FC = () => {
       }
 
       const user = await authService.getCurrentUser();
+      handleApiSuccess(); // Mark server as up
       setProfileImageUrl(user.profileImageUrl);
       setRelationshipToChild(user.relationshipToChild);
     } catch (error) {
-      // Silently fail - user profile is optional for HomeScreen
+      // Show toast if offline
+      if (!isOnline) {
+        showToast('Unable to load profile while offline', 'error');
+      }
       console.log('Could not load user profile:', error);
     }
   };
@@ -104,6 +164,7 @@ export const HomeScreen: React.FC = () => {
         recordingService.getRecordings().catch(() => ({ recordings: [] })),
         lessonService.getLessons().catch(() => ({ lessons: [], userProgress: {} }))
       ]);
+      handleApiSuccess(); // Mark server as up
 
       const { recordings } = recordingsResponse;
       const { lessons } = lessonsResponse;
@@ -170,6 +231,7 @@ export const HomeScreen: React.FC = () => {
   const loadLatestReport = async () => {
     try {
       const { recordings } = await recordingService.getRecordings().catch(() => ({ recordings: [] }));
+      handleApiSuccess(); // Mark server as up
 
       if (recordings.length > 0) {
         // Sort recordings by most recent first
@@ -181,6 +243,7 @@ export const HomeScreen: React.FC = () => {
         for (const recording of sortedRecordings) {
           try {
             const analysis = await recordingService.getAnalysis(recording.id);
+            handleApiSuccess(); // Mark server as up
             if (analysis && analysis.noraScore !== undefined) {
               setLatestScore({
                 score: Math.round(analysis.noraScore),
@@ -273,6 +336,7 @@ export const HomeScreen: React.FC = () => {
 
       // Check if lesson completed today
       const { lessons } = await lessonService.getLessons().catch(() => ({ lessons: [], userProgress: {} }));
+      handleApiSuccess(); // Mark server as up
       const todayCompletedLesson = lessons.find((lesson: any) => {
         if (lesson.progress?.status === 'COMPLETED' && lesson.progress?.completedAt) {
           const completedDate = new Date(lesson.progress.completedAt);
@@ -287,15 +351,19 @@ export const HomeScreen: React.FC = () => {
         setTodayLessonId(todayCompletedLesson.id);
       }
 
-      // Check if user has completed ANY lesson ever (for showing LessonCard vs NextActionCard)
-      const hasAnyCompletedLesson = lessons.some((lesson: any) => lesson.progress?.status === 'COMPLETED');
-      setHasCompletedAnyLesson(hasAnyCompletedLesson);
+      // Mark user as experienced if they completed a lesson (proactive caching)
+      if (lessons.some((lesson: any) => lesson.progress?.status === 'COMPLETED')) {
+        markAsExperiencedUser();
+      }
 
       // Check if recorded session today
       const { recordings } = await recordingService.getRecordings().catch(() => ({ recordings: [] }));
+      handleApiSuccess(); // Mark server as up
 
-      // Check if user has ANY recordings ever (for showing LessonCard vs NextActionCard)
-      setHasAnyRecordingsEver(recordings.length > 0);
+      // Mark user as experienced if they have recordings (proactive caching)
+      if (recordings.length > 0) {
+        markAsExperiencedUser();
+      }
 
       // Check for permanently failed recordings
       const failed = recordings.filter((r: any) => r.analysisStatus === 'FAILED' && r.permanentFailure === true);
@@ -396,6 +464,7 @@ export const HomeScreen: React.FC = () => {
 
       // Fetch fresh data from API
       const response = await lessonService.getLessons();
+      handleApiSuccess(); // Mark server as up
 
       // Extract lessons array from response
       const apiLessons = response.lessons || [];
@@ -500,6 +569,7 @@ export const HomeScreen: React.FC = () => {
           onPress: async () => {
             try {
               await recordingService.deleteRecording(recordingId);
+              handleApiSuccess(); // Mark server as up
               // Refresh the recordings list
               await loadTodayState();
             } catch (error) {
@@ -524,12 +594,22 @@ export const HomeScreen: React.FC = () => {
         }
         break;
       case 'record':
+        // Check if online before navigating to record
+        if (!isOnline) {
+          showToast('Recording requires internet connection', 'error');
+          return;
+        }
         handleRecordSession();
         break;
       case 'readReport':
         handleReadTodayReport();
         break;
       case 'recordAgain':
+        // Check if online before navigating to record
+        if (!isOnline) {
+          showToast('Recording requires internet connection', 'error');
+          return;
+        }
         handleRecordAgain();
         break;
     }
@@ -555,12 +635,13 @@ export const HomeScreen: React.FC = () => {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={() => loadLessons(false)}
+            enabled={isOnline}
             tintColor="#8C49D5"
           />
         }
       >
         {/* Profile Circle and Streak Widget - Only show for experienced users */}
-        {(hasAnyRecordingsEver || hasCompletedAnyLesson) && (
+        {isExperiencedUser && (
           <View style={styles.streakContainer}>
             <ProfileCircle
               size={60}
@@ -586,8 +667,8 @@ export const HomeScreen: React.FC = () => {
           const todayLesson = lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
           const displayLesson = todayLesson || lessons[0];
 
-          // If user has no recordings ever AND no completed lessons, show simple LessonCard
-          if (!hasAnyRecordingsEver && !hasCompletedAnyLesson) {
+          // If user is not experienced (new user), show simple LessonCard
+          if (!isExperiencedUser) {
             return (
               <>
                 {/* Connect Phase Card */}
@@ -680,8 +761,9 @@ export const HomeScreen: React.FC = () => {
             )}
 
             <TouchableOpacity
-              style={styles.deleteButton}
+              style={[styles.deleteButton, !isOnline && styles.deleteButtonDisabled]}
               onPress={() => handleDeleteRecording(recording.id)}
+              disabled={!isOnline}
             >
               <Text style={styles.deleteButtonText}>Delete</Text>
             </TouchableOpacity>
@@ -768,6 +850,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 6,
     alignSelf: 'flex-start',
+  },
+  deleteButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+    opacity: 0.6,
   },
   deleteButtonText: {
     color: '#FFFFFF',

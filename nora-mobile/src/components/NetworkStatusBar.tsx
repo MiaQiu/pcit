@@ -1,22 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import { networkMonitor } from '../utils/NetworkMonitor';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { networkMonitor, ConnectionStatus } from '../utils/NetworkMonitor';
 
 export const NetworkStatusBar: React.FC = () => {
-  const [isConnected, setIsConnected] = useState(true);
-  const [slideAnim] = useState(new Animated.Value(-50));
+  const insets = useSafeAreaInsets();
+  const [status, setStatus] = useState<ConnectionStatus>('online');
+  const [slideAnim] = useState(new Animated.Value(-100)); // Start hidden above
 
   useEffect(() => {
-    const unsubscribe = networkMonitor.addListener((connected) => {
-      setIsConnected(connected);
+    // Get initial state
+    const initialStatus = networkMonitor.getConnectionStatus();
+    console.log('[NetworkStatusBar] Initial connection status:', initialStatus);
+    setStatus(initialStatus);
+
+    const unsubscribe = networkMonitor.addStatusListener((newStatus) => {
+      console.log('[NetworkStatusBar] Status changed to:', newStatus);
+      setStatus(newStatus);
     });
 
     return unsubscribe;
   }, []);
 
   useEffect(() => {
-    if (!isConnected) {
-      // Slide down when offline
+    if (status !== 'online') {
+      // Slide down when offline or server down
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 300,
@@ -25,21 +33,35 @@ export const NetworkStatusBar: React.FC = () => {
     } else {
       // Slide up when back online
       Animated.timing(slideAnim, {
-        toValue: -50,
+        toValue: -100,
         duration: 300,
         useNativeDriver: true,
       }).start();
     }
-  }, [isConnected]);
+  }, [status]);
+
+  const getMessage = () => {
+    switch (status) {
+      case 'offline':
+        return 'No Internet Connection';
+      case 'server_down':
+        return 'Connection Issue';
+      default:
+        return '';
+    }
+  };
 
   return (
     <Animated.View
       style={[
         styles.container,
-        { transform: [{ translateY: slideAnim }] },
+        {
+          top: insets.top,
+          transform: [{ translateY: slideAnim }],
+        },
       ]}
     >
-      <Text style={styles.text}>No Internet Connection</Text>
+      <Text style={styles.text}>{getMessage()}</Text>
     </Animated.View>
   );
 };
@@ -47,17 +69,15 @@ export const NetworkStatusBar: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#EF4444',
-    paddingTop: 50, // Account for status bar
-    paddingBottom: 8,
+    backgroundColor: '#FFA500', // Amber
+    paddingVertical: 12,
     alignItems: 'center',
     zIndex: 9998,
   },
   text: {
-    color: '#FFFFFF',
+    color: '#000000', // Black text for readability
     fontSize: 14,
     fontWeight: '600',
   },

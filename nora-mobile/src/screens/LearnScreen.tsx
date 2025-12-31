@@ -14,8 +14,9 @@ import { FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService } from '../contexts/AppContext';
 import { LessonCache } from '../lib/LessonCache';
-import { handleApiError } from '../utils/NetworkMonitor';
+import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
 import { ErrorMessages } from '../utils/errorMessages';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
 interface Phase {
   phaseNumber: number;
@@ -28,6 +29,7 @@ interface Phase {
 export const LearnScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const lessonService = useLessonService();
+  const { isOnline } = useNetworkStatus();
 
   const [phases, setPhases] = useState<Phase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,7 @@ export const LearnScreen: React.FC = () => {
 
       // Fetch all lessons from API
       const response = await lessonService.getLessons();
+      handleApiSuccess(); // Mark server as up after successful API call
       const apiLessons = response.lessons || [];
 
       // Check content version and clear cache if it changed
@@ -118,9 +121,11 @@ export const LearnScreen: React.FC = () => {
     } catch (err) {
       console.error('Failed to load lessons:', err);
 
-      // Show error message to user
+      // Store error message for empty state display
       const errorMessage = handleApiError(err);
-      Alert.alert('Unable to Load Lessons', errorMessage);
+      setError(errorMessage);
+      // NetworkStatusBar already shows if it's a network issue
+      // Empty state will display the error message
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -157,6 +162,7 @@ export const LearnScreen: React.FC = () => {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={() => loadLessons(false)}
+            enabled={isOnline}
             tintColor={COLORS.mainPurple}
           />
         }
@@ -165,6 +171,21 @@ export const LearnScreen: React.FC = () => {
         <View style={styles.header}>
           <Text style={styles.mainTitle}>All Lessons</Text>
         </View>
+
+        {/* Empty state when error and no lessons loaded */}
+        {error && !loading && phases.length === 0 && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>Couldn't Load Lessons</Text>
+            <Text style={styles.emptyMessage}>{error}</Text>
+            <TouchableOpacity
+              style={[styles.retryButton, !isOnline && styles.retryButtonDisabled]}
+              onPress={() => loadLessons()}
+              disabled={!isOnline}
+            >
+              <Text style={styles.retryButtonText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Phases and Lessons */}
         {phases.map((phase) => (
@@ -312,6 +333,43 @@ const styles = StyleSheet.create({
   modalButtonText: {
     fontFamily: FONTS.semiBold,
     fontSize: 18,
+    color: '#FFFFFF',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 80,
+  },
+  emptyTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    color: COLORS.textDark,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  emptyMessage: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  retryButton: {
+    backgroundColor: COLORS.mainPurple,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+  },
+  retryButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+    opacity: 0.6,
+  },
+  retryButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
     color: '#FFFFFF',
   },
 });

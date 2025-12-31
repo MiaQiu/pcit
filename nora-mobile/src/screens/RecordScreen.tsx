@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, ActivityIndicator, AppState } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, ActivityIndicator, AppState, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Audio } from 'expo-av';
@@ -26,6 +26,8 @@ import { startRecording as startNativeRecording, stopRecording as stopNativeReco
 import type { EmitterSubscription } from 'react-native';
 import { ErrorMessages } from '../utils/errorMessages';
 import { handleApiError } from '../utils/NetworkMonitor';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { useToast } from '../components/ToastManager';
 
 type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed';
 
@@ -37,7 +39,11 @@ export const RecordScreen: React.FC = () => {
   const recordingService = useRecordingService();
   const authService = useAuthService();
   const uploadProcessing = useUploadProcessing();
+  const { isOnline } = useNetworkStatus();
+  const { showToast } = useToast();
+
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
+  const [recordingFailureCount, setRecordingFailureCount] = useState(0);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [permissionGranted, setPermissionGranted] = useState(false);
@@ -260,6 +266,12 @@ export const RecordScreen: React.FC = () => {
   };
 
   const startRecording = async () => {
+    // Check network before starting
+    if (!isOnline) {
+      showToast('Recording requires internet connection', 'error');
+      return;
+    }
+
     try {
       if (!permissionGranted) {
         await requestPermissions();
@@ -283,11 +295,43 @@ export const RecordScreen: React.FC = () => {
 
       setRecordingState('recording');
 
+      // Reset failure count on success
+      setRecordingFailureCount(0);
+
       // Start duration polling (will auto-stop when app backgrounds)
       startDurationPolling();
     } catch (error) {
       console.error('Failed to start recording:', error);
-      Alert.alert('Recording Error', ErrorMessages.RECORDING.START_FAILED);
+
+      // Progressive escalation based on failure count
+      const newCount = recordingFailureCount + 1;
+      setRecordingFailureCount(newCount);
+
+      if (newCount === 1 || newCount === 2) {
+        // First 2 failures: Non-blocking toast
+        showToast(ErrorMessages.RECORDING.START_FAILED, 'error');
+      } else if (newCount === 3) {
+        // Third failure: Modal with troubleshooting
+        Alert.alert(
+          'Recording Issue',
+          'We\'re having trouble starting the recording.\n\nPlease check:\n• Microphone permissions are enabled\n• No other apps are using the microphone\n• Your device has enough storage',
+          [
+            { text: 'Check Settings', onPress: () => Linking.openSettings() },
+            { text: 'Try Again', onPress: startRecording }
+          ]
+        );
+      } else {
+        // 4+ failures: Escalate to support
+        Alert.alert(
+          'We\'re Sorry',
+          'Recording continues to fail. This might be a device compatibility issue.',
+          [
+            { text: 'Contact Support', onPress: () => navigation.push('Support') },
+            { text: 'Try Again', onPress: startRecording },
+            { text: 'Cancel', style: 'cancel' }
+          ]
+        );
+      }
     }
   };
 
@@ -355,7 +399,7 @@ export const RecordScreen: React.FC = () => {
       console.error('[RecordScreen] Error handling auto-stop:', error);
       // End background task on error
       await endBackgroundTask();
-      Alert.alert('Recording Error', ErrorMessages.RECORDING.STOP_FAILED);
+      showToast(ErrorMessages.RECORDING.STOP_FAILED, 'error');
       setRecordingState('completed');
     }
   };
@@ -409,7 +453,7 @@ export const RecordScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to stop recording:', error);
-      Alert.alert('Recording Error', ErrorMessages.RECORDING.STOP_FAILED);
+      showToast(ErrorMessages.RECORDING.STOP_FAILED, 'error');
       setRecordingState('completed');
     }
   };
