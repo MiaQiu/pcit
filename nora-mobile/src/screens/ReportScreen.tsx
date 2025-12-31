@@ -146,7 +146,7 @@ export const ReportScreen: React.FC = () => {
           <View style={styles.skillsContainer}>
             <SkillProgressBar
               label="Overall"
-              progress={reportData.noraScore || 75}
+              progress={reportData.noraScore ?? 0}
               maxValue={100}
               color={COLORS.mainPurple}
             />

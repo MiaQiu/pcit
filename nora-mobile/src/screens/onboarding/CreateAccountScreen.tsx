@@ -23,6 +23,7 @@ import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
 import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
+import { handleApiSuccess } from '../../utils/NetworkMonitor';
 
 export const CreateAccountScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -88,6 +89,7 @@ export const CreateAccountScreen: React.FC = () => {
         childBirthYear: new Date().getFullYear() - 5, // Placeholder
         childConditions: ['none'],// Placeholder
       });
+      handleApiSuccess(); // Mark server as up
 
       // Store email in onboarding context
       updateData({ email: email.toLowerCase().trim() });

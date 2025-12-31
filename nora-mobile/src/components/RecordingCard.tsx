@@ -157,17 +157,17 @@ const styles = StyleSheet.create({
   },
   hintContainer: {
     position: 'absolute',
-    bottom: 50,
+    bottom: 90,
     paddingHorizontal: 24,
     alignItems: 'center',
     zIndex: 10,
   },
   hintText: {
     fontFamily: FONTS.regular,
-    fontSize: 16,
+    fontSize: 18,
     color: COLORS.textDark,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 32,
   },
   recordButtonContainer: {
     position: 'absolute',

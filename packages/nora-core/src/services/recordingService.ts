@@ -130,6 +130,23 @@ class RecordingService {
 
     return await response.json();
   }
+
+  /**
+   * Delete a recording
+   */
+  async deleteRecording(recordingId: string): Promise<void> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/recordings/${recordingId}`,
+      {
+        method: 'DELETE',
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete recording');
+    }
+  }
 }
 
 export default RecordingService;

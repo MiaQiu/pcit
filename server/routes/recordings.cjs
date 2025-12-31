@@ -352,11 +352,11 @@ ${JSON.stringify(utterances.map(u => ({
 **Your Task:**
 Generate a JSON object with exactly these three fields:
 
-1. **topMoment**: An exact quote from the conversation that highlights bonding between child and parent. Can be from either speaker. Choose a moment showing connection, joy, or positive interaction. Must be a direct quote from the utterances above.
+1. **topMoment**: An exact quote from the conversation that highlights bonding between child and parent. Can be from either speaker. Choose a moment showing connection, joy, or positive interaction. Must be a direct quote from the utterances above. Do not mention "PCIT" or therapy.
 
-2. **tips**: EXACTLY 2 sentences of the MOST important tips for improvement. Be specific and actionable. Reference specific utterances or patterns you observed.
+2. **tips**: EXACTLY 2 sentences of the MOST important tips for improvement. Be specific and actionable. Reference specific utterances or patterns you observed. Do not mention "PCIT" or therapy.
 
-3. **reminder**: EXACTLY 2 sentences of encouragement or reminder for the parent. Keep it warm and supportive.
+3. **reminder**: EXACTLY 2 sentences of encouragement or reminder for the parent. Keep it warm and supportive. Do not mention "PCIT" or therapy.
 
 **Output Format:**
 Return ONLY valid JSON in this exact structure:
@@ -1646,9 +1646,11 @@ router.get('/:id/analysis', async (req, res) => {
     let skills = [];
     let areasToAvoid = [];
 
-    // Calculate Nora Score
-    let noraScore = 0;
+    // Use stored overallScore from database instead of recalculating
+    // This ensures consistency with the score calculated during analysis
+    const noraScore = session.overallScore || 0;
 
+    // Format skills and areas to avoid based on mode
     if (isCDI) {
       // CDI mode - PEN skills
       const tagCounts = session.tagCounts || {};
@@ -1664,22 +1666,6 @@ router.get('/:id/analysis', async (req, res) => {
         { label: 'Commands', count: tagCounts.command || 0 },
         { label: 'Criticism', count: tagCounts.criticism || 0 }
       ];
-
-      // Calculate Nora Score for CDI mode
-      // PEN Skills: 60 points total (20 points each, max at 10 counts)
-      const praiseScore = Math.min(20, ((tagCounts.praise || 0) / 10) * 20);
-      const echoScore = Math.min(20, ((tagCounts.echo || 0) / 10) * 20);
-      const narrationScore = Math.min(20, ((tagCounts.narration || 0) / 10) * 20);
-      const penScore = praiseScore + echoScore + narrationScore;
-
-      // Avoid Penalty: 40 points if total < 3, decreasing by 10 for each additional
-      const totalAvoid = (tagCounts.question || 0) + (tagCounts.command || 0) + (tagCounts.criticism || 0);
-      let avoidScore = 40;
-      if (totalAvoid >= 3) {
-        avoidScore = Math.max(0, 40 - (totalAvoid - 2) * 10);
-      }
-
-      noraScore = Math.round(penScore + avoidScore);
     } else {
       // PDI mode - Command skills
       const tagCounts = session.tagCounts || {};

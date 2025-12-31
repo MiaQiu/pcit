@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useAuthService } from '../../contexts/AppContext';
 import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
+import { handleApiSuccess } from '../../utils/NetworkMonitor';
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -40,6 +41,7 @@ export const LoginScreen: React.FC = () => {
     try {
       setLoading(true);
       await authService.login(email.trim(), password);
+      handleApiSuccess(); // Mark server as up
 
       // Reset navigation to MainTabs after successful login
       navigation.dispatch(

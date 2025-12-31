@@ -34,7 +34,7 @@ export const ErrorMessages = {
 
   // Processing
   PROCESSING: {
-    FAILED: 'We\'re sorry, but we encountered an error while analyzing your recording. Our team has been notified and will investigate.',
+    FAILED: 'It looks like something went wrong. Please try recording again.',
     IN_PROGRESS: 'Your recording is being processed. This usually takes 1-2 minutes.',
     RETRY_IN_PROGRESS: 'We encountered a temporary issue. Automatically retrying...',
     TIMEOUT: 'Processing is taking longer than usual. Your recording will appear on your home screen when ready.',
