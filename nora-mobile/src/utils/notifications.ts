@@ -4,18 +4,26 @@
  */
 
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import { Platform, AppState } from 'react-native';
 
 // Configure notification handler
 try {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true, // Enable badge to ensure notification visibility
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
+    handleNotification: async () => {
+      // Only set badge if app is NOT in active/foreground state
+      const appState = AppState.currentState;
+      const shouldSetBadge = appState !== 'active';
+
+      console.log(`[Notifications] Received notification with app state: ${appState}, shouldSetBadge: ${shouldSetBadge}`);
+
+      return {
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge, // Only set badge when app is in background
+        shouldShowBanner: true,
+        shouldShowList: true,
+      };
+    },
   });
 } catch (error) {
   console.warn('Notifications module not available:', error);
