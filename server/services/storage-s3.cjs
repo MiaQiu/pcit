@@ -325,14 +325,10 @@ async function getPresignedUploadUrl(userId, sessionId, mimeType = 'audio/m4a') 
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: key,
-      ContentType: mimeType,
-      Metadata: {
-        userId: userId,
-        sessionId: sessionId,
-        uploadedAt: new Date().toISOString(),
-        originalMimeType: mimeType
-      },
-      ServerSideEncryption: 'AES256'
+      ContentType: mimeType
+      // Note: Do NOT include Metadata or ServerSideEncryption here
+      // These must match exactly during upload, which is hard to control from mobile
+      // Encryption should be set at bucket level instead
     });
 
     const url = await getSignedUrlSDK(s3Client, command, { expiresIn });
