@@ -1374,8 +1374,220 @@ const upload = multer({
 });
 
 /**
+ * POST /api/recordings/upload/init
+ * Initialize upload and get presigned S3 URL for direct upload
+ *
+ * Request body:
+ * - durationSeconds: Recording duration in seconds (required)
+ * - mimeType: Audio MIME type (optional, default: 'audio/m4a')
+ *
+ * Returns:
+ * - sessionId: Unique ID for the recording session
+ * - uploadUrl: Presigned S3 URL for direct upload
+ * - uploadKey: S3 key where file will be stored
+ * - expiresIn: URL expiration time in seconds
+ */
+router.post('/upload/init', requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { durationSeconds, mimeType = 'audio/m4a' } = req.body;
+
+    // Validate duration
+    if (!durationSeconds || durationSeconds < 1) {
+      return res.status(400).json({
+        error: 'Invalid duration',
+        details: 'durationSeconds must be a positive number'
+      });
+    }
+
+    // Generate session ID
+    const sessionId = crypto.randomUUID();
+
+    console.log(`[UPLOAD-INIT] Starting upload for user ${userId.substring(0, 8)}, session ${sessionId.substring(0, 8)}`);
+
+    // Create initial session record
+    const session = await prisma.session.create({
+      data: {
+        id: sessionId,
+        userId: userId,
+        mode: 'CDI', // Default to CDI for mobile recordings
+        storagePath: 'pending_upload', // Temporary status
+        durationSeconds: parseInt(durationSeconds, 10),
+        transcript: '',
+        aiFeedbackJSON: {},
+        pcitCoding: {},
+        tagCounts: {},
+        masteryAchieved: false,
+        riskScore: 0,
+        flaggedForReview: false,
+        analysisStatus: 'PENDING'
+      }
+    });
+
+    // Generate presigned upload URL
+    try {
+      const { url, key, expiresIn } = await storage.getPresignedUploadUrl(userId, sessionId, mimeType);
+
+      console.log(`[UPLOAD-INIT] Presigned URL generated for session ${sessionId.substring(0, 8)}, expires in ${expiresIn}s`);
+
+      res.json({
+        sessionId,
+        uploadUrl: url,
+        uploadKey: key,
+        expiresIn
+      });
+    } catch (presignError) {
+      console.error('[UPLOAD-INIT] Failed to generate presigned URL:', presignError);
+
+      // Delete the session record since we can't proceed
+      await prisma.session.delete({
+        where: { id: sessionId }
+      });
+
+      return res.status(500).json({
+        error: 'Failed to initialize upload',
+        details: presignError.message
+      });
+    }
+
+  } catch (error) {
+    console.error('[UPLOAD-INIT] Error:', error);
+    res.status(500).json({
+      error: 'Upload initialization failed',
+      details: 'Failed to initialize upload. Please try again.'
+    });
+  }
+});
+
+/**
+ * POST /api/recordings/upload/complete
+ * Confirm upload completion and trigger background processing
+ *
+ * Request body:
+ * - sessionId: Session ID from upload/init (required)
+ * - uploadKey: S3 key from upload/init (required)
+ *
+ * Returns:
+ * - recordingId: Session ID
+ * - status: 'uploaded'
+ * - message: Success message
+ */
+router.post('/upload/complete', requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { sessionId, uploadKey } = req.body;
+
+    // Validate input
+    if (!sessionId || !uploadKey) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        details: 'sessionId and uploadKey are required'
+      });
+    }
+
+    console.log(`[UPLOAD-COMPLETE] Verifying upload for session ${sessionId.substring(0, 8)}`);
+
+    // Get session from database
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId }
+    });
+
+    if (!session) {
+      return res.status(404).json({
+        error: 'Session not found',
+        details: 'Invalid session ID'
+      });
+    }
+
+    // Verify ownership
+    if (session.userId !== userId) {
+      return res.status(403).json({
+        error: 'Access denied',
+        details: 'You do not have permission to access this session'
+      });
+    }
+
+    // Verify file exists in S3
+    let fileInfo;
+    try {
+      fileInfo = await storage.verifyFileExists(uploadKey);
+
+      if (!fileInfo.exists) {
+        console.error(`[UPLOAD-COMPLETE] File not found in S3: ${uploadKey}`);
+        return res.status(400).json({
+          error: 'Upload verification failed',
+          details: 'File not found in S3. Please try uploading again.'
+        });
+      }
+
+      console.log(`[UPLOAD-COMPLETE] File verified in S3: ${uploadKey} (${fileInfo.size} bytes)`);
+    } catch (verifyError) {
+      console.error('[UPLOAD-COMPLETE] File verification error:', verifyError);
+      return res.status(500).json({
+        error: 'Upload verification failed',
+        details: 'Failed to verify file upload. Please try again.'
+      });
+    }
+
+    // Update session with storage path
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        storagePath: uploadKey,
+        analysisStatus: 'PROCESSING'
+      }
+    });
+
+    console.log(`[UPLOAD-COMPLETE] Session ${sessionId.substring(0, 8)} updated with storage path: ${uploadKey}`);
+
+    // Trigger transcription automatically in the background
+    console.log(`[UPLOAD-COMPLETE] Triggering background transcription for session ${sessionId.substring(0, 8)}`);
+    transcribeRecording(sessionId, userId, uploadKey, session.durationSeconds)
+      .then(() => {
+        console.log(`✅ [UPLOAD-COMPLETE] Background transcription completed for session ${sessionId.substring(0, 8)}`);
+      })
+      .catch(async (err) => {
+        console.error(`❌ [UPLOAD-COMPLETE] Background transcription failed for session ${sessionId.substring(0, 8)}:`, err);
+
+        // Update session with permanent failure
+        try {
+          await prisma.session.update({
+            where: { id: sessionId },
+            data: {
+              analysisStatus: 'FAILED',
+              analysisError: err.message || 'Transcription failed',
+              analysisFailedAt: new Date(),
+              permanentFailure: true
+            }
+          });
+
+          // Report permanent failure to team
+          await reportPermanentFailureToTeam(sessionId, err);
+        } catch (updateErr) {
+          console.error(`❌ [UPLOAD-COMPLETE] Failed to update session status:`, updateErr);
+        }
+      });
+
+    // Return success response immediately
+    res.status(201).json({
+      recordingId: sessionId,
+      status: 'uploaded',
+      message: 'Upload confirmed. Processing started in background.',
+      fileSize: fileInfo.size
+    });
+
+  } catch (error) {
+    console.error('[UPLOAD-COMPLETE] Error:', error);
+    res.status(500).json({
+      error: 'Upload completion failed',
+      details: 'Failed to complete upload. Please try again.'
+    });
+  }
+});
+
+/**
  * POST /api/recordings/upload
- * Upload audio recording from mobile app
+ * Upload audio recording from mobile app (LEGACY - kept for backward compatibility)
  *
  * Multipart form data:
  * - audio: Audio file (required)

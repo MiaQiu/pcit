@@ -184,56 +184,83 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
   const uploadRecording = async (uri: string, durationSeconds: number, isRetry: boolean = false) => {
     try {
-      console.log('[UploadProcessing] Uploading...', { uri, durationSeconds, isRetry });
+      console.log('[UploadProcessing] Starting presigned URL upload...', { uri, durationSeconds, isRetry });
 
       // Verify we have an access token before attempting upload
       const accessToken = authService.getAccessToken();
       if (!accessToken) {
         console.error('[UploadProcessing] No access token available - session may have expired');
         await reset();
-        // Don't throw error - if tokens were cleared, session expired callback already triggered
-        // If user was never authenticated, they shouldn't have reached this screen
         return;
       }
 
-      // Log token info for debugging (mask token for security)
-      const tokenPreview = accessToken ? `${accessToken.substring(0, 20)}...${accessToken.substring(accessToken.length - 10)}` : 'null';
-      console.log('[UploadProcessing] Access token verified, proceeding with upload');
-      console.log('[UploadProcessing] Token preview:', tokenPreview);
-      console.log('[UploadProcessing] Token length:', accessToken?.length);
-
-      // Create FormData
-      const formData = new FormData();
-
-      // Add audio file
+      // Extract file extension for MIME type
       const filename = uri.split('/').pop() || 'recording.m4a';
       const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `audio/${match[1]}` : 'audio/m4a';
+      const extension = match ? match[1] : 'm4a';
+      const mimeType = `audio/${extension}`;
 
-      formData.append('audio', {
-        uri: uri,
-        name: filename,
-        type: type,
-      } as any);
+      // STEP 1: Initialize upload and get presigned URL
+      console.log('[UploadProcessing] Step 1: Getting presigned URL...');
+      let sessionId: string;
+      let uploadUrl: string;
+      let uploadKey: string;
 
-      formData.append('durationSeconds', durationSeconds.toString());
+      try {
+        const initResponse = await fetch(`${API_URL}/api/recordings/upload/init`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            durationSeconds,
+            mimeType
+          })
+        });
 
-      // Upload with progress tracking using XMLHttpRequest
-      const uploadPromise = new Promise<string>((resolve, reject) => {
+        if (!initResponse.ok) {
+          const errorData = await initResponse.json().catch(() => ({}));
+          if (initResponse.status === 401) {
+            throw new ApiError('Unauthorized', 401, 'Unauthorized', 'UNAUTHORIZED');
+          }
+          throw new ApiError(
+            errorData.details || errorData.error || 'Failed to initialize upload',
+            initResponse.status,
+            initResponse.statusText
+          );
+        }
+
+        const initData = await initResponse.json();
+        sessionId = initData.sessionId;
+        uploadUrl = initData.uploadUrl;
+        uploadKey = initData.uploadKey;
+
+        console.log('[UploadProcessing] Presigned URL obtained for session:', sessionId.substring(0, 8));
+        setRecordingId(sessionId);
+      } catch (initError: any) {
+        console.error('[UploadProcessing] Failed to get presigned URL:', initError);
+        throw initError;
+      }
+
+      // STEP 2: Upload directly to S3 using presigned URL
+      console.log('[UploadProcessing] Step 2: Uploading to S3...');
+      const s3UploadPromise = new Promise<void>(async (resolve, reject) => {
         const xhr = new XMLHttpRequest();
         uploadXhrRef.current = xhr;
-        let uploadCompleted = false; // ✅ Track if upload already succeeded
+        let uploadCompleted = false;
 
+        // Track upload progress
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
             const progress = Math.round((event.loaded / event.total) * 100);
             setUploadProgress(progress);
-            console.log('[UploadProcessing] Upload progress:', progress + '%');
+            console.log('[UploadProcessing] S3 upload progress:', progress + '%');
 
             // Save progress to storage
             saveState({
               state: 'uploading',
-              recordingId: null,
+              recordingId: sessionId,
               uploadProgress: progress,
               recordingUri: uri,
               durationSeconds,
@@ -242,84 +269,97 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         });
 
         xhr.addEventListener('load', () => {
-          if (xhr.status === 201) {
-            try {
-              const response = JSON.parse(xhr.responseText);
-              console.log('[UploadProcessing] Upload successful:', response);
-              uploadCompleted = true; // ✅ Mark as completed
-              resolve(response.recordingId);
-            } catch (error) {
-              reject(new ApiError('Invalid response from server', 500, 'Internal Server Error'));
-            }
-          } else if (xhr.status === 401) {
-            // Token expired or invalid - log details for debugging
-            console.error('[UploadProcessing] 401 Unauthorized received');
-            console.error('[UploadProcessing] Response:', xhr.responseText);
-            console.error('[UploadProcessing] Token was sent:', !!accessToken);
-            console.error('[UploadProcessing] Is retry:', isRetry);
-            reject(new ApiError('Unauthorized', 401, 'Unauthorized', 'UNAUTHORIZED'));
+          if (xhr.status === 200) {
+            console.log('[UploadProcessing] S3 upload successful');
+            uploadCompleted = true;
+            resolve();
           } else {
-            try {
-              const errorResponse = JSON.parse(xhr.responseText);
-              reject(new ApiError(
-                errorResponse.details || errorResponse.error || 'Upload failed',
-                xhr.status,
-                xhr.statusText,
-                errorResponse.code
-              ));
-            } catch {
-              reject(new ApiError(`Upload failed with status ${xhr.status}`, xhr.status, xhr.statusText));
-            }
+            console.error('[UploadProcessing] S3 upload failed with status:', xhr.status);
+            reject(new ApiError(
+              `S3 upload failed with status ${xhr.status}`,
+              xhr.status,
+              xhr.statusText
+            ));
           }
         });
 
         xhr.addEventListener('error', () => {
-          // ✅ Only reject if upload hasn't completed yet
           if (!uploadCompleted) {
-            console.error('[UploadProcessing] Network error during upload');
-            // Network errors don't have HTTP status, use TypeError name for detection
-            const networkError = new Error('Network error during upload');
+            console.error('[UploadProcessing] Network error during S3 upload');
+            const networkError = new Error('Network error during S3 upload');
             networkError.name = 'TypeError';
             reject(networkError);
-          } else {
-            console.log('[UploadProcessing] Ignoring error event - upload already completed successfully');
           }
         });
 
         xhr.addEventListener('abort', () => {
-          // ✅ Only reject if upload hasn't completed yet
           if (!uploadCompleted) {
-            reject(new Error('Upload cancelled'));
-          } else {
-            console.log('[UploadProcessing] Ignoring abort event - upload already completed successfully');
+            reject(new Error('S3 upload cancelled'));
           }
         });
 
-        // Open connection
-        xhr.open('POST', `${API_URL}/api/recordings/upload`);
+        // Prepare file for upload
+        try {
+          // Fetch the file as a blob
+          const fileResponse = await fetch(uri);
+          const fileBlob = await fileResponse.blob();
 
-        // Add Authorization header (token already verified at function start)
-        xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
-
-        xhr.send(formData);
+          // Upload to S3
+          xhr.open('PUT', uploadUrl);
+          xhr.setRequestHeader('Content-Type', mimeType);
+          xhr.send(fileBlob);
+        } catch (fileError: any) {
+          reject(new Error(`Failed to read audio file: ${fileError.message}`));
+        }
       });
 
-      const uploadedRecordingId = await uploadPromise;
-      setRecordingId(uploadedRecordingId);
+      await s3UploadPromise;
       uploadXhrRef.current = null;
+      setUploadProgress(100);
 
-      console.log('[UploadProcessing] Upload complete, recording ID:', uploadedRecordingId);
+      // STEP 3: Notify backend that upload is complete
+      console.log('[UploadProcessing] Step 3: Notifying backend of upload completion...');
+      try {
+        const completeResponse = await fetch(`${API_URL}/api/recordings/upload/complete`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sessionId,
+            uploadKey
+          })
+        });
+
+        if (!completeResponse.ok) {
+          const errorData = await completeResponse.json().catch(() => ({}));
+          if (completeResponse.status === 401) {
+            throw new ApiError('Unauthorized', 401, 'Unauthorized', 'UNAUTHORIZED');
+          }
+          throw new ApiError(
+            errorData.details || errorData.error || 'Failed to confirm upload',
+            completeResponse.status,
+            completeResponse.statusText
+          );
+        }
+
+        console.log('[UploadProcessing] Upload confirmed, processing started');
+      } catch (completeError: any) {
+        console.error('[UploadProcessing] Failed to confirm upload:', completeError);
+        throw completeError;
+      }
 
       // Show processing state and poll for analysis completion
       setState('processing');
       await saveState({
         state: 'processing',
-        recordingId: uploadedRecordingId,
+        recordingId: sessionId,
         uploadProgress: 100,
       });
 
       // Poll for analysis completion
-      pollForAnalysisCompletion(uploadedRecordingId);
+      pollForAnalysisCompletion(sessionId);
 
     } catch (error: any) {
       console.error('[UploadProcessing] Upload failed:', error);
@@ -337,20 +377,12 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         const refreshed = await authService.refreshAccessToken();
         if (refreshed) {
           console.log('[UploadProcessing] Token refreshed successfully, retrying upload');
-          // Retry upload with refreshed token
           return uploadRecording(uri, durationSeconds, true);
         } else {
-          // Refresh failed - session expired callback already triggered by authService
           console.log('[UploadProcessing] Token refresh failed - resetting upload state');
           await reset();
-          // Don't throw error - session expired callback already handles user notification
           return;
         }
-      } else if (error.status === 401) {
-        // 401 error but condition didn't match - log why
-        console.error('[UploadProcessing] 401 error but token refresh not triggered:');
-        console.error('[UploadProcessing] - error.code:', error.code, '(expected: UNAUTHORIZED)');
-        console.error('[UploadProcessing] - isRetry:', isRetry, '(expected: false)');
       }
 
       // Reset state

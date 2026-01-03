@@ -298,6 +298,91 @@ async function uploadSupportAttachment(fileBuffer, userId, requestId, fileName, 
 }
 
 /**
+ * Generate presigned URL for direct upload from mobile app
+ * @param {string} userId - User ID for path organization
+ * @param {string} sessionId - Session ID for file naming
+ * @param {string} mimeType - MIME type of the audio file (default: 'audio/m4a')
+ * @returns {Promise<{url: string, key: string, expiresIn: number}>} - Presigned upload URL and metadata
+ */
+async function getPresignedUploadUrl(userId, sessionId, mimeType = 'audio/m4a') {
+  if (!S3_ENABLED || !s3Client) {
+    throw new Error('S3 is not configured. Presigned URLs are not available in development mode.');
+  }
+
+  try {
+    // Extract file extension from MIME type
+    let extension = 'm4a';
+    if (mimeType) {
+      const parts = mimeType.split('/');
+      if (parts.length === 2) {
+        extension = parts[1].replace('x-', '');
+      }
+    }
+
+    const key = `audio/${userId}/${sessionId}.${extension}`;
+    const expiresIn = 300; // 5 minutes
+
+    const command = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+      ContentType: mimeType,
+      Metadata: {
+        userId: userId,
+        sessionId: sessionId,
+        uploadedAt: new Date().toISOString(),
+        originalMimeType: mimeType
+      },
+      ServerSideEncryption: 'AES256'
+    });
+
+    const url = await getSignedUrlSDK(s3Client, command, { expiresIn });
+
+    console.log(`Generated presigned upload URL for session ${sessionId} (expires in ${expiresIn}s)`);
+
+    return {
+      url,
+      key,
+      expiresIn
+    };
+  } catch (error) {
+    console.error('S3 presigned URL generation error:', error);
+    throw new Error('Failed to generate presigned upload URL');
+  }
+}
+
+/**
+ * Verify that a file exists in S3 after upload
+ * @param {string} key - S3 file path (key)
+ * @returns {Promise<{exists: boolean, size?: number, contentType?: string}>}
+ */
+async function verifyFileExists(key) {
+  if (!S3_ENABLED || !s3Client) {
+    throw new Error('S3 is not configured');
+  }
+
+  try {
+    const command = new HeadObjectCommand({
+      Bucket: bucketName,
+      Key: key
+    });
+
+    const response = await s3Client.send(command);
+
+    return {
+      exists: true,
+      size: response.ContentLength,
+      contentType: response.ContentType
+    };
+  } catch (error) {
+    if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+      return { exists: false };
+    }
+    console.error('S3 file verification error:', error);
+    throw new Error('Failed to verify file upload');
+  }
+}
+
+/**
  * Check if S3 is enabled and configured
  * @returns {boolean}
  */
@@ -309,6 +394,8 @@ module.exports = {
   uploadAudioFile,
   deleteAudioFile,
   getSignedUrl,
+  getPresignedUploadUrl,
+  verifyFileExists,
   uploadProfileImage,
   deleteProfileImage,
   uploadSupportAttachment,
