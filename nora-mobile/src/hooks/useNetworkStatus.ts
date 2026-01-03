@@ -17,7 +17,6 @@ export const useNetworkStatus = () => {
   return {
     isOnline: status === 'online',
     isOffline: status === 'offline',
-    isServerDown: status === 'server_down',
     status,
   };
 };

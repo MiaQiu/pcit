@@ -15,7 +15,7 @@ const router = express.Router();
 // ============================================================================
 
 const updateProgressSchema = Joi.object({
-  currentSegment: Joi.number().integer().min(1).max(10).required(),
+  currentSegment: Joi.number().integer().min(1).max(100).required(), // Increased to accommodate lessons with more segments
   timeSpentSeconds: Joi.number().integer().min(0).optional(),
   status: Joi.string().valid('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED').optional()
 });
@@ -529,7 +529,10 @@ router.put('/:id/progress', requireAuth, async (req, res) => {
     // Get the lesson to retrieve segment count
     const lesson = await prisma.lesson.findUnique({
       where: { id },
-      include: { LessonSegment: true }
+      include: {
+        LessonSegment: true,
+        Quiz: true
+      }
     });
 
     if (!lesson) {
@@ -656,6 +659,55 @@ router.post('/:quizId/submit', requireAuth, async (req, res) => {
         respondedAt: new Date()
       }
     });
+
+    // Mark lesson as completed after quiz submission (regardless of correct/wrong answer)
+    const quizWithLesson = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      select: { lessonId: true }
+    });
+
+    if (quizWithLesson) {
+      // Get the lesson to determine total segments
+      const lesson = await prisma.lesson.findUnique({
+        where: { id: quizWithLesson.lessonId },
+        include: {
+          LessonSegment: true,
+          Quiz: true
+        }
+      });
+
+      if (lesson) {
+        const totalSegments = lesson.LessonSegment.length + (lesson.Quiz ? 1 : 0);
+
+        // Update or create lesson progress with COMPLETED status
+        await prisma.userLessonProgress.upsert({
+          where: {
+            userId_lessonId: {
+              userId,
+              lessonId: quizWithLesson.lessonId
+            }
+          },
+          update: {
+            status: 'COMPLETED',
+            currentSegment: totalSegments,
+            completedAt: new Date(),
+            lastViewedAt: new Date()
+          },
+          create: {
+            id: crypto.randomUUID(),
+            userId,
+            lessonId: quizWithLesson.lessonId,
+            status: 'COMPLETED',
+            currentSegment: totalSegments,
+            totalSegments: lesson.LessonSegment.length,
+            startedAt: new Date(),
+            lastViewedAt: new Date(),
+            completedAt: new Date(),
+            timeSpentSeconds: 0
+          }
+        });
+      }
+    }
 
     res.json({
       isCorrect,

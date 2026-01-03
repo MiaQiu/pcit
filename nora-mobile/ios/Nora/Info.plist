@@ -55,6 +55,8 @@
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your photos</string>
+    <key>NSUserNotificationsUsageDescription</key>
+    <string>Nora sends you helpful reminders to practice and learn, and notifies you when your session reports are ready.</string>
     <key>RCTNewArchEnabled</key>
     <true/>
     <key>UIBackgroundModes</key>

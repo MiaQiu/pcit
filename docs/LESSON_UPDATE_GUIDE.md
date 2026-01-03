@@ -31,33 +31,38 @@ Each lesson contains:
 ### Lesson Model
 ```prisma
 model Lesson {
-  id               String      @id @default(cuid())
-  phase            LessonPhase // CONNECT or DISCIPLINE
-  phaseNumber      Int         // 1 or 2
-  dayNumber        Int         // 1-26
-  title            String
-  subtitle         String?
-  shortDescription String
-  objectives       String[]    // Array of learning objectives
-  segments         LessonSegment[]
-  estimatedMinutes Int         @default(2)
-  isBooster        Boolean     @default(false)
-  prerequisites    String[]    // IDs of required lessons
-  teachesCategories String[]   // e.g., ["PRAISE", "ECHO"]
-  dragonImageUrl   String?
-  backgroundColor  String      @default("#E4E4FF")
-  ellipse77Color   String      @default("#9BD4DF")
-  ellipse78Color   String      @default("#A6E0CB")
-  quiz             Quiz?
+  id                 String               @id  // ⚠️ NO default - must provide ID
+  phase              LessonPhase          // CONNECT or DISCIPLINE
+  phaseNumber        Int                  // 1 or 2
+  dayNumber          Int                  // 1-26
+  title              String
+  subtitle           String?
+  shortDescription   String
+  objectives         String[]             // Array of learning objectives
+  LessonSegment      LessonSegment[]      // Note: PascalCase field name
+  estimatedMinutes   Int                  @default(2)
+  isBooster          Boolean              @default(false)
+  prerequisites      String[]             // IDs of required lessons
+  teachesCategories  String[]             // e.g., ["PRAISE", "ECHO"]
+  dragonImageUrl     String?
+  backgroundColor    String               @default("#E4E4FF")
+  ellipse77Color     String               @default("#9BD4DF")
+  ellipse78Color     String               @default("#A6E0CB")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  Quiz               Quiz?                // Note: PascalCase field name
+  UserLessonProgress UserLessonProgress[]
 
   @@unique([phaseNumber, dayNumber])
 }
 ```
 
+**⚠️ Important**: The `id` field does NOT have `@default(cuid())`, so you must manually generate and provide IDs when creating lessons.
+
 ### LessonSegment Model
 ```prisma
 model LessonSegment {
-  id           String      @id @default(cuid())
+  id           String      @id  // ⚠️ NO default - must provide ID
   lessonId     String
   order        Int         // 1-N
   sectionTitle String?
@@ -65,6 +70,9 @@ model LessonSegment {
   bodyText     String      @db.Text
   imageUrl     String?
   iconType     String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime
+  Lesson       Lesson      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([lessonId, order])
 }
@@ -84,20 +92,25 @@ enum ContentType {
 ### Quiz Model
 ```prisma
 model Quiz {
-  id            String        @id @default(cuid())
-  lessonId      String        @unique
-  question      String        @db.Text
-  options       QuizOption[]
-  correctAnswer String        // The correct option ID
-  explanation   String        @db.Text
+  id            String         @id  // ⚠️ NO default - must provide ID
+  lessonId      String         @unique
+  question      String
+  correctAnswer String         // The correct option ID
+  explanation   String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime
+  Lesson        Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  QuizOption    QuizOption[]   // Note: PascalCase field name
+  QuizResponse  QuizResponse[]
 }
 
 model QuizOption {
-  id          String @id @default(cuid())
+  id          String @id  // ⚠️ NO default - must provide ID
   quizId      String
   optionLabel String // A, B, C, D
-  optionText  String @db.Text
+  optionText  String
   order       Int    // 1, 2, 3, 4
+  Quiz        Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   @@unique([quizId, optionLabel])
 }
@@ -162,20 +175,30 @@ node scripts/clear-lesson-prerequisites.cjs
 **Use case**: Development, testing, or allowing free navigation
 
 ### 3. Replace Specific Lessons
-**Script**: `/scripts/replace-day-1-and-2.cjs` (example)
+**Scripts**:
+- `/scripts/replace-day-1-and-2.cjs` - Replace Days 1-2
+- `/scripts/replace-day-1-2-3.cjs` - Replace Days 1-3
 
 Template for replacing individual lessons.
 
 ```bash
 node scripts/replace-day-1-and-2.cjs
+# or
+node scripts/replace-day-1-2-3.cjs
 ```
 
 **Pattern**:
-1. Find existing lesson by phase and dayNumber
-2. Delete lesson (cascades to segments, quiz)
-3. Create new lesson with metadata
-4. Create segments using `createMany`
-5. Create quiz → create options → update with correct answer ID
+1. Generate ID helper function (use crypto.randomBytes)
+2. Find existing lesson by phase and dayNumber (use PascalCase field names)
+3. Delete lesson (cascades to segments, quiz)
+4. Create new lesson with ID, metadata, createdAt, updatedAt
+5. Create segments using `createMany` with IDs
+6. Create quiz with ID → create options with IDs → update with correct answer ID
+
+**Important Notes**:
+- Must generate IDs manually using `crypto.randomBytes` or similar
+- Must use PascalCase field names in `include`: `LessonSegment`, `Quiz`, `QuizOption`
+- Must provide `createdAt` and `updatedAt` for all records
 
 ### 4. Verify Lessons
 **Script**: `/scripts/verify-lessons.cjs`
@@ -212,8 +235,17 @@ node scripts/verify-lessons.cjs
 ### Add New Lesson
 
 ```javascript
+const crypto = require('crypto');
+
+// Helper function to generate IDs
+function generateId() {
+  return crypto.randomBytes(12).toString('base64').replace(/[+/=]/g, '').substring(0, 25);
+}
+
+// Create lesson
 const newLesson = await prisma.lesson.create({
   data: {
+    id: generateId(),
     phase: 'CONNECT',
     phaseNumber: 1,
     dayNumber: 17,
@@ -226,7 +258,9 @@ const newLesson = await prisma.lesson.create({
     isBooster: false,
     backgroundColor: '#E4E4FF',
     ellipse77Color: '#9BD4DF',
-    ellipse78Color: '#A6E0CB'
+    ellipse78Color: '#A6E0CB',
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
 });
 
@@ -234,16 +268,19 @@ const newLesson = await prisma.lesson.create({
 await prisma.lessonSegment.createMany({
   data: [
     {
+      id: generateId(),
       lessonId: newLesson.id,
       order: 1,
       sectionTitle: 'Introduction',
       contentType: 'TEXT',
-      bodyText: 'Formatted content here...'
+      bodyText: 'Formatted content here...',
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
   ]
 });
 
-// Add quiz...
+// Add quiz (see replace scripts for full example)
 ```
 
 ### Update Prerequisites
@@ -282,10 +319,10 @@ await prisma.lesson.updateMany({
 ```javascript
 const lessons = await prisma.lesson.findMany({
   include: {
-    segments: { orderBy: { order: 'asc' } },
-    quiz: {
+    LessonSegment: { orderBy: { order: 'asc' } },
+    Quiz: {
       include: {
-        options: { orderBy: { order: 'asc' } }
+        QuizOption: { orderBy: { order: 'asc' } }
       }
     }
   }
@@ -297,6 +334,8 @@ await fs.writeFile(
   JSON.stringify(lessons, null, 2)
 );
 ```
+
+**Note**: Use PascalCase field names: `LessonSegment`, `Quiz`, `QuizOption`
 
 **Backups location**: `/scripts/backups/lessons-backup-[timestamp].json`
 
@@ -414,6 +453,50 @@ node scripts/clear-lesson-prerequisites.cjs
 
 **Solution**: Ensure sequential order (1, 2, 3, ...) with no gaps or duplicates
 
+### Prisma Field Naming Errors
+
+**Symptom**: `Unknown field 'segments' for include statement` or similar errors for `quiz`, `options`
+
+**Cause**: Prisma uses PascalCase for relation field names, not camelCase
+
+**Solution**: Use correct field names in queries:
+```javascript
+// ❌ WRONG - will cause errors
+include: {
+  segments: true,
+  quiz: { include: { options: true } }
+}
+
+// ✅ CORRECT - use PascalCase
+include: {
+  LessonSegment: true,
+  Quiz: { include: { QuizOption: true } }
+}
+```
+
+### Missing ID Field Error
+
+**Symptom**: `Argument 'id' is missing` when creating lessons, segments, quizzes, or options
+
+**Cause**: The schema does NOT have `@default(cuid())` on ID fields
+
+**Solution**: Manually generate IDs using crypto:
+```javascript
+const crypto = require('crypto');
+
+function generateId() {
+  return crypto.randomBytes(12).toString('base64').replace(/[+/=]/g, '').substring(0, 25);
+}
+
+// Then use in create:
+await prisma.lesson.create({
+  data: {
+    id: generateId(),
+    // ... other fields
+  }
+});
+```
+
 ---
 
 ## Database Maintenance
@@ -527,8 +610,9 @@ cat prisma/schema.prisma
 - **Scripts**: `/scripts/`
   - `import-all-lessons.cjs` - Bulk import from text file
   - `clear-lesson-prerequisites.cjs` - Clear all prerequisites
-  - `replace-day-1-and-2.cjs` - Example replacement script
-  - `verify-lessons.cjs` - Verification tool
+  - `replace-day-1-and-2.cjs` - Replace Days 1-2
+  - `replace-day-1-2-3.cjs` - Replace Days 1-3 (example with ID generation)
+  - `verify-lessons.cjs` - Verification tool (⚠️ may need field name updates)
 
 - **Source Data**: `/Downloads/bit-size learning (50 words ver).txt`
 
@@ -550,4 +634,14 @@ For issues or questions:
 
 ---
 
-**Last Updated**: December 2025
+**Last Updated**: January 2026
+
+## Changelog
+
+### January 2026
+- ⚠️ **BREAKING**: Documented that ID fields do NOT have `@default(cuid())` - must generate IDs manually
+- ⚠️ **BREAKING**: Updated all examples to use PascalCase field names (`LessonSegment`, `Quiz`, `QuizOption`)
+- Added `replace-day-1-2-3.cjs` script as reference implementation
+- Added troubleshooting sections for Prisma field naming and ID generation
+- Updated schema documentation to reflect actual database structure
+- Added ID generation helper function examples

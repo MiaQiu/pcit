@@ -284,9 +284,15 @@ export const RecordScreen: React.FC = () => {
       if (autoStopListenerRef.current) {
         removeAutoStopListener(autoStopListenerRef.current);
       }
-      autoStopListenerRef.current = addAutoStopListener((event) => {
+      autoStopListenerRef.current = addAutoStopListener(async (event) => {
         console.log('[RecordScreen] Auto-stop triggered by native module');
-        handleAutoStop(event.uri, event.durationMillis);
+        try {
+          await handleAutoStop(event.uri, event.durationMillis);
+        } catch (error) {
+          console.error('[RecordScreen] Error in handleAutoStop:', error);
+          // Error is already handled inside handleAutoStop with Alert
+          // This catch prevents unhandled promise rejection
+        }
       });
 
       // Start native recording with 5-minute (300 second) auto-stop
@@ -349,6 +355,10 @@ export const RecordScreen: React.FC = () => {
 
   const handleAutoStop = async (uri: string, durationMillis: number) => {
     try {
+      // CRITICAL: Clear pending recording from native module immediately
+      // to prevent duplicate processing when app comes to foreground
+      await getPendingRecording();
+
       // Clear duration update interval
       if (timeoutRef.current) {
         clearInterval(timeoutRef.current as any);
@@ -527,7 +537,7 @@ export const RecordScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Recording Guide Card */}
-        {recordingState === 'idle' && (
+        {recordingState === 'idle' && !uploadProcessing.isProcessing && (
           <>
             {/* Header with Dragon Icon and Text */}
             <View style={styles.headerSection}>

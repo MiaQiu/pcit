@@ -48,7 +48,7 @@ const formatBodyText = (text: string) => {
 
       elements.push(
         <View key={lineIndex} style={{ flexDirection: 'row', marginBottom: 10 }}>
-          <Text style={{ color: COLORS.mainPurple, fontSize: 36, marginRight: 10, marginTop: -10 }}>•</Text>
+          <Text style={{ color: COLORS.mainPurple, fontSize: 20, marginRight: 10, marginTop: 0 }}>•</Text>
           <Text style={{ flex: 1, fontFamily: FONTS.regular, fontSize: 20, lineHeight: 28, color: COLORS.textDark }}>
             {formattedContent}
           </Text>
@@ -576,7 +576,6 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          scrollEnabled={false}
         >
           {isOnQuiz && lesson.quiz ? (
           /* Quiz Content */

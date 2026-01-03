@@ -7,7 +7,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, ReactNod
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRecordingService, useAuthService } from './AppContext';
 import { sendNewReportNotification } from '../utils/notifications';
-import { handleApiError } from '../utils/NetworkMonitor';
+import { handleApiError, ApiError } from '../utils/NetworkMonitor';
 import { ErrorMessages } from '../utils/errorMessages';
 
 /**
@@ -40,7 +40,7 @@ const getUserFriendlyErrorMessage = (technicalError: string): string => {
 
   // Network/timeout errors
   if (errorLower.includes('timeout') || errorLower.includes('network')) {
-    return "The upload took too long. Please check your internet connection and try again.";
+    return "The upload took too long. Please check your internet connection and try recording again.";
   }
 
   // Audio quality issues
@@ -196,7 +196,11 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         return;
       }
 
+      // Log token info for debugging (mask token for security)
+      const tokenPreview = accessToken ? `${accessToken.substring(0, 20)}...${accessToken.substring(accessToken.length - 10)}` : 'null';
       console.log('[UploadProcessing] Access token verified, proceeding with upload');
+      console.log('[UploadProcessing] Token preview:', tokenPreview);
+      console.log('[UploadProcessing] Token length:', accessToken?.length);
 
       // Create FormData
       const formData = new FormData();
@@ -245,17 +249,26 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
               uploadCompleted = true; // ✅ Mark as completed
               resolve(response.recordingId);
             } catch (error) {
-              reject(new Error('Invalid response from server'));
+              reject(new ApiError('Invalid response from server', 500, 'Internal Server Error'));
             }
           } else if (xhr.status === 401) {
-            // Token expired or invalid
-            reject(new Error('UNAUTHORIZED'));
+            // Token expired or invalid - log details for debugging
+            console.error('[UploadProcessing] 401 Unauthorized received');
+            console.error('[UploadProcessing] Response:', xhr.responseText);
+            console.error('[UploadProcessing] Token was sent:', !!accessToken);
+            console.error('[UploadProcessing] Is retry:', isRetry);
+            reject(new ApiError('Unauthorized', 401, 'Unauthorized', 'UNAUTHORIZED'));
           } else {
             try {
-              const error = JSON.parse(xhr.responseText);
-              reject(new Error(error.details || error.error || 'Upload failed'));
+              const errorResponse = JSON.parse(xhr.responseText);
+              reject(new ApiError(
+                errorResponse.details || errorResponse.error || 'Upload failed',
+                xhr.status,
+                xhr.statusText,
+                errorResponse.code
+              ));
             } catch {
-              reject(new Error(`Upload failed with status ${xhr.status}`));
+              reject(new ApiError(`Upload failed with status ${xhr.status}`, xhr.status, xhr.statusText));
             }
           }
         });
@@ -264,7 +277,10 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
           // ✅ Only reject if upload hasn't completed yet
           if (!uploadCompleted) {
             console.error('[UploadProcessing] Network error during upload');
-            reject(new Error('Network error during upload'));
+            // Network errors don't have HTTP status, use TypeError name for detection
+            const networkError = new Error('Network error during upload');
+            networkError.name = 'TypeError';
+            reject(networkError);
           } else {
             console.log('[UploadProcessing] Ignoring error event - upload already completed successfully');
           }
@@ -307,10 +323,16 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
     } catch (error: any) {
       console.error('[UploadProcessing] Upload failed:', error);
+      console.error('[UploadProcessing] Error details:', {
+        message: error.message,
+        code: error.code,
+        status: error.status,
+        name: error.name
+      });
       uploadXhrRef.current = null;
 
       // If unauthorized and not already a retry, refresh token and retry once
-      if (error.message === 'UNAUTHORIZED' && !isRetry) {
+      if (error.code === 'UNAUTHORIZED' && !isRetry) {
         console.log('[UploadProcessing] Received 401, attempting token refresh...');
         const refreshed = await authService.refreshAccessToken();
         if (refreshed) {
@@ -324,6 +346,11 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
           // Don't throw error - session expired callback already handles user notification
           return;
         }
+      } else if (error.status === 401) {
+        // 401 error but condition didn't match - log why
+        console.error('[UploadProcessing] 401 error but token refresh not triggered:');
+        console.error('[UploadProcessing] - error.code:', error.code, '(expected: UNAUTHORIZED)');
+        console.error('[UploadProcessing] - isRetry:', isRetry, '(expected: false)');
       }
 
       // Reset state
@@ -380,14 +407,14 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
           if (prefs.newReportNotification !== false) {
             console.log('[UploadProcessing] Sending new report notification...');
-            await sendNewReportNotification('play session');
+            await sendNewReportNotification('play session', recordingId);
             console.log('[UploadProcessing] New report notification sent successfully');
           } else {
             console.log('[UploadProcessing] New report notifications are disabled in preferences');
           }
         } else {
           console.log('[UploadProcessing] No notification preferences found, sending notification by default');
-          await sendNewReportNotification('play session');
+          await sendNewReportNotification('play session', recordingId);
           console.log('[UploadProcessing] New report notification sent successfully');
         }
       } catch (notifError) {

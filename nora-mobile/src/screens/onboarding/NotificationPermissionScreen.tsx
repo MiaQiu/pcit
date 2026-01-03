@@ -3,30 +3,48 @@
  * Prompts user to enable push notifications at the end of onboarding
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
-  Linking,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackNavigationProp } from '../../navigation/types';
 import { FONTS, COLORS } from '../../constants/assets';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
+import { requestNotificationPermissions } from '../../utils/notifications';
 
 export const NotificationPermissionScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const [isRequesting, setIsRequesting] = useState(false);
 
   const handleNotNow = () => {
     navigation.replace('MainTabs');
   };
 
-  const handleEnable = () => {
-    Linking.openSettings();
-    navigation.replace('MainTabs');
+  const handleEnable = async () => {
+    setIsRequesting(true);
+    try {
+      const granted = await requestNotificationPermissions();
+      if (granted) {
+        console.log('Notification permissions granted');
+      } else {
+        Alert.alert(
+          'Notifications Disabled',
+          'You can enable notifications later in Settings.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error requesting notification permissions:', error);
+    } finally {
+      setIsRequesting(false);
+      navigation.replace('MainTabs');
+    }
   };
 
   return (

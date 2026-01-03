@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, AppState } from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
+import * as Notifications from 'expo-notifications';
 import {
   useFonts,
   PlusJakartaSans_400Regular,
@@ -19,6 +20,7 @@ import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { RootStackNavigationProp } from './src/navigation/types';
 import { NetworkStatusBar } from './src/components/NetworkStatusBar';
 import { ToastProvider } from './src/components/ToastManager';
+import { clearBadge } from './src/utils/notifications';
 
 // Deep linking configuration
 const linking = {
@@ -49,6 +51,40 @@ const AppContent: React.FC = () => {
   const handleNavigateToHome = () => {
     navigation.navigate('MainTabs', { screen: 'Home' });
   };
+
+  // Handle notification taps
+  useEffect(() => {
+    // Handle notification tap when app is in foreground or background
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      console.log('[App] Notification tapped:', response);
+
+      const data = response.notification.request.content.data;
+
+      if (data.type === 'new_report' && data.recordingId) {
+        console.log('[App] Navigating to report:', data.recordingId);
+        // Navigate to the report screen
+        navigation.navigate('Report', { recordingId: data.recordingId as string });
+      }
+    });
+
+    return () => subscription.remove();
+  }, [navigation]);
+
+  // Clear badge when app comes to foreground
+  useEffect(() => {
+    // Clear badge on app mount
+    clearBadge();
+
+    // Clear badge when app comes to foreground
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        console.log('[App] App came to foreground, clearing badge');
+        clearBadge();
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   return (
     <UploadProcessingProvider onNavigateToHome={handleNavigateToHome}>

@@ -145,7 +145,7 @@ router.post('/signup', async (req, res) => {
     // Store refresh token hash
     const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+    expiresAt.setDate(expiresAt.getDate() + 180); // 180 days (matches JWT_REFRESH_EXPIRY)
 
     await prisma.refreshToken.create({
       data: {
@@ -236,7 +236,7 @@ router.post('/login', authLimiter, async (req, res) => {
     // Store refresh token hash (delete old one first)
     const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setDate(expiresAt.getDate() + 180); // 180 days (matches JWT_REFRESH_EXPIRY)
 
     await prisma.refreshToken.upsert({
       where: { userId: user.id },

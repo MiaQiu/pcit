@@ -12,7 +12,7 @@ try {
     handleNotification: async () => ({
       shouldShowAlert: true,
       shouldPlaySound: true,
-      shouldSetBadge: false,
+      shouldSetBadge: true, // Enable badge to ensure notification visibility
       shouldShowBanner: true,
       shouldShowList: true,
     }),
@@ -20,6 +20,17 @@ try {
 } catch (error) {
   console.warn('Notifications module not available:', error);
 }
+
+/**
+ * Clear notification badge
+ */
+export const clearBadge = async (): Promise<void> => {
+  try {
+    await Notifications.setBadgeCountAsync(0);
+  } catch (error) {
+    console.error('Error clearing badge:', error);
+  }
+};
 
 // Notification IDs for managing scheduled notifications
 export const NOTIFICATION_IDS = {
@@ -85,7 +96,10 @@ export const scheduleDailyNotification = async (
         title,
         body,
         sound: true,
+        badge: 1,
         priority: Notifications.AndroidNotificationPriority.HIGH,
+        // iOS-specific: ensure notification shows even when device is locked
+        interruptionLevel: 'active' as any,
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
@@ -119,6 +133,10 @@ export const scheduleNotificationAfter = async (
         title,
         body,
         sound: true,
+        badge: 1,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+        // iOS-specific: ensure notification shows even when device is locked
+        interruptionLevel: 'active' as any,
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
@@ -215,6 +233,10 @@ export const sendTestNotification = async (): Promise<void> => {
         title: "Test Notification",
         body: "Notifications are working!",
         sound: true,
+        badge: 1,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+        // iOS-specific: ensure notification shows even when device is locked
+        interruptionLevel: 'active' as any,
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
@@ -229,9 +251,9 @@ export const sendTestNotification = async (): Promise<void> => {
 /**
  * Send notification when a new session report is ready
  */
-export const sendNewReportNotification = async (sessionType?: string): Promise<void> => {
+export const sendNewReportNotification = async (sessionType?: string, recordingId?: string): Promise<void> => {
   try {
-    console.log('[Notifications] sendNewReportNotification called with sessionType:', sessionType);
+    console.log('[Notifications] sendNewReportNotification called with sessionType:', sessionType, 'recordingId:', recordingId);
 
     // Check notification permissions first
     const { status } = await Notifications.getPermissionsAsync();
@@ -250,8 +272,13 @@ export const sendNewReportNotification = async (sessionType?: string): Promise<v
         title: "Session Report Ready!",
         body: `Your ${sessionLabel} report is ready to view`,
         sound: true,
+        badge: 1,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+        // iOS-specific: ensure notification shows even when device is locked
+        interruptionLevel: 'active' as any, // 'active' lights up screen and plays sound
         data: {
           type: 'new_report',
+          recordingId: recordingId,
           timestamp: Date.now(),
         },
       },

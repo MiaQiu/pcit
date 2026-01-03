@@ -58,8 +58,6 @@ export const NetworkStatusBar: React.FC = () => {
     switch (status) {
       case 'offline':
         return 'No Internet Connection';
-      case 'server_down':
-        return 'Server Unavailable';
       default:
         return '';
     }

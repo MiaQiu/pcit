@@ -1,7 +1,27 @@
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import crashlytics from '@react-native-firebase/crashlytics';
 
-export type ConnectionStatus = 'online' | 'offline' | 'server_down';
+export type ConnectionStatus = 'online' | 'offline';
+
+/**
+ * API Error class to preserve HTTP status codes and error codes
+ */
+export class ApiError extends Error {
+  public readonly status: number;
+  public readonly statusText: string;
+  public readonly code?: string;
+
+  constructor(message: string, status: number, statusText: string = '', code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.statusText = statusText;
+    this.code = code;
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ApiError);
+    }
+  }
+}
 
 /**
  * Network connectivity monitor
@@ -9,7 +29,6 @@ export type ConnectionStatus = 'online' | 'offline' | 'server_down';
  */
 class NetworkMonitor {
   private isConnected: boolean = true;
-  private serverStatus: 'up' | 'down' = 'up';
   private listeners: Set<(connected: boolean) => void> = new Set();
   private statusListeners: Set<(status: ConnectionStatus) => void> = new Set();
   private unsubscribe: (() => void) | null = null;
@@ -67,35 +86,14 @@ class NetworkMonitor {
   }
 
   /**
-   * Get current connection status (network + server)
+   * Get current connection status (network only)
    */
   getConnectionStatus(): ConnectionStatus {
-    if (!this.isConnected) {
-      return 'offline';
-    }
-    if (this.serverStatus === 'down') {
-      return 'server_down';
-    }
-    return 'online';
+    return this.isConnected ? 'online' : 'offline';
   }
 
   /**
-   * Update server status (call this when API requests fail/succeed)
-   */
-  setServerStatus(status: 'up' | 'down') {
-    const wasDown = this.serverStatus === 'down';
-    this.serverStatus = status;
-
-    // Notify status listeners if server status changed
-    if ((status === 'down' && !wasDown) || (status === 'up' && wasDown)) {
-      console.log(`[NetworkMonitor] Server status changed: ${status.toUpperCase()}`);
-      const currentStatus = this.getConnectionStatus();
-      this.statusListeners.forEach(listener => listener(currentStatus));
-    }
-  }
-
-  /**
-   * Add listener for connection state changes (legacy - network only)
+   * Add listener for connection state changes
    * @returns Unsubscribe function
    */
   addListener(callback: (connected: boolean) => void): () => void {
@@ -104,7 +102,7 @@ class NetworkMonitor {
   }
 
   /**
-   * Add listener for full connection status changes (network + server)
+   * Add listener for connection status changes
    * @returns Unsubscribe function
    */
   addStatusListener(callback: (status: ConnectionStatus) => void): () => void {
@@ -143,30 +141,30 @@ export function handleApiError(error: any): string {
   });
 
   // Track API errors to Crashlytics (non-fatal)
-  if (error instanceof Error) {
-    crashlytics().recordError(error, 'API Error');
-    crashlytics().log(`API Error: ${error.message} (status: ${error.status || 'N/A'})`);
+  try {
+    // Convert to Error if it's not already one
+    const errorToTrack = error instanceof Error
+      ? error
+      : new Error(error.message || error.error || 'Unknown API error');
+
+    // Add error details as attributes
+    if (error.code) {
+      crashlytics().setAttribute('error_code', error.code);
+    }
+    if (error.status) {
+      crashlytics().setAttribute('http_status', String(error.status));
+    }
+
+    crashlytics().recordError(errorToTrack, 'API Error');
+    crashlytics().log(`API Error: ${error.message || error.error} (status: ${error.status || 'N/A'}, code: ${error.code || 'N/A'})`);
+  } catch (crashlyticsError) {
+    console.error('[handleApiError] Failed to track error to Crashlytics:', crashlyticsError);
   }
 
   // Check network connectivity first
   if (!networkMonitor.getIsConnected()) {
     console.log('[handleApiError] Network is offline');
     return 'No internet connection. Please check your network and try again.';
-  }
-
-  // Check for server errors and update server status
-  // Industry standard: Use HTTP status codes (5xx = server error)
-  const isServerError =
-    (error.status && error.status >= 500) ||  // 5xx status codes
-    error.code === 'ECONNABORTED' ||          // Connection aborted
-    error.code === 'ECONNREFUSED' ||          // Connection refused
-    error.name === 'TypeError';                // Network errors (fetch failed)
-
-  console.log('[handleApiError] Is server error:', isServerError);
-
-  if (isServerError) {
-    console.log('[handleApiError] Setting server status to DOWN');
-    networkMonitor.setServerStatus('down');
   }
 
   // Check for specific error types
@@ -226,8 +224,8 @@ export function handleApiError(error: any): string {
 
 /**
  * Helper function to call when API requests succeed
- * This marks the server as up and clears any server error status
+ * No-op - kept for backward compatibility
  */
 export function handleApiSuccess(): void {
-  networkMonitor.setServerStatus('up');
+  // No longer tracking server status - network connectivity is sufficient
 }

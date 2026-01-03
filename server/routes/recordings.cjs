@@ -1504,7 +1504,10 @@ router.post('/upload', requireAuth, upload.single('audio'), async (req, res) => 
     });
 
   } catch (error) {
-    console.error('Recording upload error:', error);
+    console.error('❌ [UPLOAD] Recording upload error:', error);
+    console.error('❌ [UPLOAD] Error type:', error.constructor.name);
+    console.error('❌ [UPLOAD] Error message:', error.message);
+    console.error('❌ [UPLOAD] Error stack:', error.stack);
 
     if (error instanceof multer.MulterError) {
       if (error.code === 'LIMIT_FILE_SIZE') {

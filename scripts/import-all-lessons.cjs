@@ -2,6 +2,7 @@ require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const fs = require('fs').promises;
 const path = require('path');
+const crypto = require('crypto');
 
 const prisma = new PrismaClient();
 
@@ -9,6 +10,18 @@ const prisma = new PrismaClient();
  * Import and reformat all lessons from text file
  * Usage: node scripts/import-all-lessons.cjs
  */
+
+// ============================================================================
+// ID GENERATION HELPER
+// ============================================================================
+
+/**
+ * Generate a unique ID for database records
+ * @returns {string} 25-character unique ID
+ */
+function generateId() {
+  return crypto.randomBytes(12).toString('base64').replace(/[+/=]/g, '').substring(0, 25);
+}
 
 // ============================================================================
 // BACKUP FUNCTIONALITY
@@ -21,12 +34,12 @@ class BackupManager {
 
       const lessons = await prisma.lesson.findMany({
         include: {
-          segments: {
+          LessonSegment: {
             orderBy: { order: 'asc' }
           },
-          quiz: {
+          Quiz: {
             include: {
-              options: {
+              QuizOption: {
                 orderBy: { order: 'asc' }
               }
             }
@@ -309,35 +322,8 @@ class ContentFormatter {
   addBoldEmphasis(text) {
     let formatted = text;
 
-    // Bold important parenting terms
-    const keyTerms = [
-      'Special Play Time',
-      'PEN',
-      'Praise',
-      'Echo',
-      'Narrate',
-      'Clear Command',
-      'Time-Out',
-      'Selective Ignoring',
-      'Labeled Praise',
-      'Extinction Burst',
-      'Connect',
-      'Discipline',
-      'Phase 1',
-      'Phase 2',
-      '5-Second Wait',
-      'Mental Gym',
-      'Descriptive Redirection',
-      'Play Therapy',
-      'Triple P',
-      'Behavior Management'
-    ];
-
-    keyTerms.forEach(term => {
-      // Only bold if not already bolded
-      const regex = new RegExp(`(?<!\\*)\\b(${term.replace(/\s+/g, '\\s+')})\\b(?!\\*)`, 'gi');
-      formatted = formatted.replace(regex, '**$1**');
-    });
+    // Bold formatting is now done manually in the source file
+    // This function is kept for potential future formatting needs
 
     // Bold numbers at start of sentences (for rules/steps)
     formatted = formatted.replace(/^(\d+)\.\s+/gm, '**$1.** ');
@@ -508,8 +494,10 @@ class LessonImporter {
       const colors = assignColors(lessonIndex);
 
       // 4. Create new lesson
+      const now = new Date();
       const newLesson = await tx.lesson.create({
         data: {
+          id: generateId(),
           phase: lessonData.phase,
           phaseNumber: lessonData.phaseNumber,
           dayNumber: lessonData.dayNumber,
@@ -522,7 +510,9 @@ class LessonImporter {
           prerequisites: prerequisites,
           teachesCategories: [], // Empty array per user preference
           dragonImageUrl: null,
-          ...colors
+          ...colors,
+          createdAt: now,
+          updatedAt: now
         }
       });
 
@@ -536,11 +526,14 @@ class LessonImporter {
         const formattedBodyText = this.formatter.format(card.bodyText, contentType, card.sectionTitle);
 
         return {
+          id: generateId(),
           lessonId: newLesson.id,
           order: idx + 1,
           sectionTitle: card.sectionTitle,
           contentType: contentType,
-          bodyText: formattedBodyText
+          bodyText: formattedBodyText,
+          createdAt: now,
+          updatedAt: now
         };
       });
 
@@ -550,10 +543,13 @@ class LessonImporter {
       if (lessonData.quiz) {
         const quiz = await tx.quiz.create({
           data: {
+            id: generateId(),
             lessonId: newLesson.id,
             question: lessonData.quiz.question,
             correctAnswer: 'temp',
-            explanation: lessonData.quiz.explanation
+            explanation: lessonData.quiz.explanation,
+            createdAt: now,
+            updatedAt: now
           }
         });
 
@@ -562,6 +558,7 @@ class LessonImporter {
         for (const opt of lessonData.quiz.options) {
           const option = await tx.quizOption.create({
             data: {
+              id: generateId(),
               quizId: quiz.id,
               optionLabel: opt.label,
               optionText: opt.text,
@@ -584,16 +581,36 @@ class LessonImporter {
       }
 
       console.log(`✅ ${lessonData.phase} Day ${lessonData.dayNumber}: ${lessonData.title}`);
-    });
+    }, { timeout: 10000 });
   }
 
   generatePrerequisites(lessonData) {
-    // Day 1 of each phase has no prerequisites
-    if (lessonData.dayNumber === 1) {
+    // Phase 1, Day 1 has no prerequisites
+    if (lessonData.phase === 'CONNECT' && lessonData.dayNumber === 1) {
       return [];
     }
 
-    // Find previous day's lesson ID
+    // Phase 2, Day 1 requires Phase 1 completion (last lesson of Phase 1)
+    if (lessonData.phase === 'DISCIPLINE' && lessonData.dayNumber === 1) {
+      // Find the last lesson of Phase 1 (highest day number in CONNECT phase)
+      const phase1Lessons = Object.keys(this.createdLessonIds)
+        .filter(key => key.startsWith('CONNECT-'))
+        .map(key => ({
+          key: key,
+          dayNumber: parseInt(key.split('-')[1]),
+          id: this.createdLessonIds[key]
+        }))
+        .sort((a, b) => b.dayNumber - a.dayNumber);
+
+      if (phase1Lessons.length > 0) {
+        // Return the last lesson of Phase 1 as prerequisite
+        return [phase1Lessons[0].id];
+      }
+
+      return [];
+    }
+
+    // All other lessons require the previous day in the same phase
     const prevDayNumber = lessonData.dayNumber - 1;
     const key = `${lessonData.phase}-${prevDayNumber}`;
     const prevLessonId = this.createdLessonIds[key];
@@ -619,7 +636,7 @@ async function main() {
     await backupManager.createBackup();
 
     // 2. Read and parse text file
-    const filePath = '/Users/mia/Downloads/bit-size learning (50 words ver).txt';
+    const filePath = '/Users/mia/Downloads/lessons-formatted.txt';
     console.log(`📖 Reading lesson content from: ${filePath}`);
 
     const fileContent = await fs.readFile(filePath, 'utf-8');
