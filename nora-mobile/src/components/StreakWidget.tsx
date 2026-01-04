@@ -51,9 +51,8 @@ export const StreakWidget: React.FC<StreakWidgetProps> = ({
                   <View
                     style={[
                       styles.circle,
-                      isCompleted
-                        ? (isToday ? styles.circleToday : styles.circleCompleted)
-                        : styles.circleIncomplete,
+                      isCompleted ? styles.circleCompleted : styles.circleIncomplete,
+                      isToday && styles.circleTodayOutline,
                     ]}
                   />
                   {/* Checkmark */}
@@ -122,11 +121,12 @@ const styles = StyleSheet.create({
   circleCompleted: {
     backgroundColor: '#FFA726', // Orange/yellow from Figma
   },
-  circleToday: {
-    backgroundColor: '#A6E0CB', // Teal/mint for today
-  },
   circleIncomplete: {
     backgroundColor: '#E0E0E0', // Light gray
+  },
+  circleTodayOutline: {
+    borderWidth: 2,
+    borderColor: '#8C49D5', // Main purple color
   },
   checkmark: {
     color: '#FFFFFF',

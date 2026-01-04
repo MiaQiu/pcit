@@ -76,7 +76,7 @@ const CalendarView: React.FC<{ recordingDates: Date[]; lessonCompletionDates: Da
       const dateStr = date.toDateString();
       days.push({
         date,
-        hasRecording: recordingDateStrings.has(dateStr) && lessonDateStrings.has(dateStr),
+        hasRecording: recordingDateStrings.has(dateStr),
       });
     }
 
@@ -86,7 +86,7 @@ const CalendarView: React.FC<{ recordingDates: Date[]; lessonCompletionDates: Da
       const dateStr = date.toDateString();
       days.push({
         date,
-        hasRecording: recordingDateStrings.has(dateStr) && lessonDateStrings.has(dateStr),
+        hasRecording: recordingDateStrings.has(dateStr),
       });
     }
 
@@ -334,8 +334,8 @@ export const ProgressScreen: React.FC = () => {
       if (recordings && recordings.length > 0) {
         setLatestRecordingId(recordings[0].id);
 
-        // Calculate streak based on BOTH lessons AND recordings
-        const currentStreak = calculateCombinedStreak(recordings, completedLessonDates);
+        // Calculate streak based on recordings only
+        const currentStreak = calculateStreak(recordings);
 
         // Calculate stats - use lesson completion count from learning stats
         setStats({
@@ -354,7 +354,7 @@ export const ProgressScreen: React.FC = () => {
         const realScoreData = await fetchScoreData(recordings);
         setScoreData(realScoreData);
       } else {
-        // No recordings, so streak is 0 (requires both lessons and recordings)
+        // No recordings, so streak is 0
         setStats({
           lessonsCompleted: learningStats?.completedLessons || 0,
           playsessionsRecorded: 0,
@@ -371,6 +371,7 @@ export const ProgressScreen: React.FC = () => {
 
   /**
    * Calculate streak based on consecutive days with BOTH a completed lesson AND a recording
+   * NOTE: This function is currently not used. We now use calculateStreak() which only requires recordings.
    */
   const calculateCombinedStreak = (recordings: any[], lessonCompletionDates: Date[]): number => {
     if (recordings.length === 0 || lessonCompletionDates.length === 0) return 0;

@@ -117,12 +117,14 @@ export const HomeScreen: React.FC = () => {
   // useFocusEffect is more reliable for tab navigation than addListener
   useFocusEffect(
     React.useCallback(() => {
-      // Reload today's state and streak when tab comes into focus
+      // Reload lessons, today's state and streak when tab comes into focus
+      // This ensures NextActionCard shows the correct lesson (not stale cached data)
       // Note: loadLatestReport() is NOT called here to avoid unnecessary API calls
       // Latest report is cached and only refreshed when:
       // 1. Initial mount (useEffect on line 106)
       // 2. New report completes (uploadProcessing.reportCompletedTimestamp watcher)
       // 3. Manual pull-to-refresh
+      loadLessons(false); // Refresh lessons without showing loading spinner
       loadTodayState();
       loadStreakData();
     }, [])
@@ -190,7 +192,7 @@ export const HomeScreen: React.FC = () => {
   };
 
   /**
-   * Get an array of booleans representing which days this week (Mon-Sun) had both a lesson and recording completed
+   * Get an array of booleans representing which days this week (Mon-Sun) had a recording completed
    */
   const getCompletedDaysThisWeek = (recordings: any[], lessonCompletionDates: Date[]): boolean[] => {
     // Get start of current week (Monday)
@@ -209,11 +211,6 @@ export const HomeScreen: React.FC = () => {
         .map((date) => date.toDateString())
     );
 
-    // Get unique lesson completion dates
-    const lessonDateStrings = new Set(
-      lessonCompletionDates.map((date) => date.toDateString())
-    );
-
     // Check each day of the week (Mon-Sun)
     const weekDays: boolean[] = [];
     for (let i = 0; i < 7; i++) {
@@ -221,10 +218,9 @@ export const HomeScreen: React.FC = () => {
       checkDate.setDate(monday.getDate() + i);
       const dateStr = checkDate.toDateString();
 
-      // Day is completed if it has BOTH a recording AND a completed lesson
+      // Day is completed if it has a recording
       const hasRecording = recordingDateStrings.has(dateStr);
-      const hasLesson = lessonDateStrings.has(dateStr);
-      weekDays.push(hasRecording && hasLesson);
+      weekDays.push(hasRecording);
     }
 
     return weekDays;
@@ -658,6 +654,21 @@ export const HomeScreen: React.FC = () => {
           // Find the first unlocked lesson that is not completed
           const todayLesson = lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
           const displayLesson = todayLesson || lessons[0];
+
+          // DEBUG: Log lesson data to understand the issue
+          console.log('[HomeScreen] All lessons:', lessons.map(l => ({
+            id: l.id,
+            title: l.title,
+            isLocked: l.isLocked,
+            status: l.progress?.status,
+            completedAt: l.progress?.completedAt
+          })));
+          console.log('[HomeScreen] Selected lesson:', {
+            id: displayLesson.id,
+            title: displayLesson.title,
+            isLocked: displayLesson.isLocked,
+            status: displayLesson.progress?.status
+          });
 
           // If user is not experienced (new user), show simple LessonCard
           if (!isExperiencedUser) {
