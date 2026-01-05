@@ -4,10 +4,11 @@
  * Based on Figma Frame 481517
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
+import { useAuthService } from '../contexts/AppContext';
 
 interface RecordingGuideCardProps {}
 
@@ -29,6 +30,25 @@ const DO_ITEMS = [
 const DONT_ITEMS = ['Command', 'Question', 'Criticize'];
 
 export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = () => {
+  const authService = useAuthService();
+  const [childName, setChildName] = useState<string>('your child');
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const user = await authService.getCurrentUser();
+      if (user.childName) {
+        setChildName(user.childName);
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+      // Keep default fallback value
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* DO Section */}
@@ -65,7 +85,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = () => {
         </View>
 
         <Text style={styles.reminderText}>
-          Remember, this is Child-Led Play. Just follow Zoey's lead.
+          Remember, this is Child-Led Play. Just follow {childName}'s lead.
         </Text>
       </View>
     </View>

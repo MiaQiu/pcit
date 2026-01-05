@@ -24,10 +24,22 @@ export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
   // Calculate percentage for progress bar (cap at 100%)
   const percentage = Math.min((progress / maxValue) * 100, 100);
 
+  // Check if this is a PEN skill (Praise, Echo, Narration)
+  const isPENSkill = label.match(/^(Praise|Echo|Narrate)/);
+  const firstLetter = label.charAt(0);
+  const restOfLabel = label.slice(1);
+
   return (
     <View style={styles.container}>
       <View style={styles.labelRow}>
-        <Text style={styles.label}>{label}</Text>
+        {isPENSkill ? (
+          <Text style={styles.label}>
+            <Text style={styles.boldLetter}>{firstLetter}</Text>
+            <Text style={styles.regularLabel}>{restOfLabel}</Text>
+          </Text>
+        ) : (
+          <Text style={styles.label}>{label}</Text>
+        )}
         <Text style={styles.percentage}>{Math.round(progress)}/{maxValue}</Text>
       </View>
       <View style={styles.trackContainer}>
@@ -59,7 +71,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   label: {
-    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.textDark,
+  },
+  boldLetter: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+  },
+  regularLabel: {
+    fontFamily: FONTS.regular,
     fontSize: 14,
     color: COLORS.textDark,
   },

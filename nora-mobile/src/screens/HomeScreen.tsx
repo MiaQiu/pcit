@@ -20,6 +20,7 @@ import { LessonCache } from '../lib/LessonCache';
 import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
+import { toSingaporeDateString, getTodaySingapore, getYesterdaySingapore, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -193,30 +194,31 @@ export const HomeScreen: React.FC = () => {
 
   /**
    * Get an array of booleans representing which days this week (Mon-Sun) had a recording completed
+   * Uses Singapore timezone for date comparisons
    */
   const getCompletedDaysThisWeek = (recordings: any[], lessonCompletionDates: Date[]): boolean[] => {
-    // Get start of current week (Monday)
-    const now = new Date();
-    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // If Sunday, go back 6 days; otherwise go back to Monday
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + mondayOffset);
-    monday.setHours(0, 0, 0, 0);
+    // Get start of current week (Monday) in Singapore timezone
+    const nowSgt = new Date(Date.now() + 8 * 60 * 60 * 1000);
+    const dayOfWeek = nowSgt.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const mondaySgt = new Date(nowSgt);
+    mondaySgt.setUTCDate(nowSgt.getUTCDate() + mondayOffset);
+    mondaySgt.setUTCHours(0, 0, 0, 0);
 
-    // Get unique recording dates
+    // Get unique recording dates in Singapore timezone
     const recordingDateStrings = new Set(
       recordings
         .map((r) => new Date(r.createdAt))
         .filter((date) => !isNaN(date.getTime()))
-        .map((date) => date.toDateString())
+        .map((date) => toSingaporeDateString(date))
     );
 
     // Check each day of the week (Mon-Sun)
     const weekDays: boolean[] = [];
     for (let i = 0; i < 7; i++) {
-      const checkDate = new Date(monday);
-      checkDate.setDate(monday.getDate() + i);
-      const dateStr = checkDate.toDateString();
+      const checkDate = new Date(mondaySgt);
+      checkDate.setUTCDate(mondaySgt.getUTCDate() + i);
+      const dateStr = toSingaporeDateString(checkDate);
 
       // Day is completed if it has a recording
       const hasRecording = recordingDateStrings.has(dateStr);
@@ -274,21 +276,22 @@ export const HomeScreen: React.FC = () => {
 
   /**
    * Calculate streak based on consecutive days with BOTH a completed lesson AND a recording
+   * Uses Singapore timezone for date comparisons
    */
   const calculateCombinedStreak = (recordings: any[], lessonCompletionDates: Date[]): number => {
     if (recordings.length === 0 || lessonCompletionDates.length === 0) return 0;
 
-    // Get unique recording dates
+    // Get unique recording dates in Singapore timezone
     const recordingDateStrings = new Set(
       recordings
         .map((r) => new Date(r.createdAt))
         .filter((date) => !isNaN(date.getTime()))
-        .map((date) => date.toDateString())
+        .map((date) => toSingaporeDateString(date))
     );
 
-    // Get unique lesson completion dates
+    // Get unique lesson completion dates in Singapore timezone
     const lessonDateStrings = new Set(
-      lessonCompletionDates.map((date) => date.toDateString())
+      lessonCompletionDates.map((date) => toSingaporeDateString(date))
     );
 
     // Find days that have BOTH a recording AND a completed lesson
@@ -299,8 +302,8 @@ export const HomeScreen: React.FC = () => {
     if (completeDays.length === 0) return 0;
 
     let streak = 0;
-    const today = new Date().toDateString();
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const today = getTodaySingapore();
+    const yesterday = getYesterdaySingapore();
 
     // Streak must start from today or yesterday
     if (completeDays[0] === today || completeDays[0] === yesterday) {
@@ -309,7 +312,7 @@ export const HomeScreen: React.FC = () => {
 
       // Count consecutive days backwards
       for (let i = 1; i < completeDays.length; i++) {
-        const expectedDate = new Date(currentDate.getTime() - 86400000).toDateString();
+        const expectedDate = toSingaporeDateString(currentDate.getTime() - 86400000);
         if (completeDays[i] === expectedDate) {
           streak++;
           currentDate = new Date(completeDays[i]);
@@ -324,21 +327,20 @@ export const HomeScreen: React.FC = () => {
 
   /**
    * Load today's state (L/S/R) to determine which card to show
+   * Uses Singapore timezone for date comparisons
    */
   const loadTodayState = async () => {
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const today = getStartOfTodaySingapore();
+      const tomorrow = getEndOfTodaySingapore();
 
-      // Check if lesson completed today
+      // Check if lesson completed today (in Singapore timezone)
       const { lessons } = await lessonService.getLessons();
       handleApiSuccess(); // Mark server as up
       const todayCompletedLesson = lessons.find((lesson: any) => {
         if (lesson.progress?.status === 'COMPLETED' && lesson.progress?.completedAt) {
           const completedDate = new Date(lesson.progress.completedAt);
-          return completedDate >= today && completedDate < tomorrow;
+          return completedDate >= today && completedDate <= tomorrow;
         }
         return false;
       });
@@ -369,7 +371,7 @@ export const HomeScreen: React.FC = () => {
 
       const todayRecordings = recordings.filter((r: any) => {
         const recordingDate = new Date(r.createdAt);
-        return recordingDate >= today && recordingDate < tomorrow;
+        return recordingDate >= today && recordingDate <= tomorrow;
       });
 
       const hasRecording = todayRecordings.length > 0;
@@ -383,10 +385,9 @@ export const HomeScreen: React.FC = () => {
       }
 
       // Check if report was read today (using AsyncStorage or similar)
-      // For now, we'll check if the user has viewed the report screen today
-      // This could be tracked via AsyncStorage
+      // Use Singapore timezone for the date key
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const reportReadKey = `report_read_${today.toDateString()}`;
+      const reportReadKey = `report_read_${getTodaySingapore()}`;
       const reportReadValue = await AsyncStorage.getItem(reportReadKey);
       setIsReportRead(reportReadValue === 'true');
 
@@ -528,11 +529,9 @@ export const HomeScreen: React.FC = () => {
 
   const handleReadTodayReport = async () => {
     if (latestRecordingId) {
-      // Mark report as read
+      // Mark report as read (using Singapore timezone)
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const reportReadKey = `report_read_${today.toDateString()}`;
+      const reportReadKey = `report_read_${getTodaySingapore()}`;
       await AsyncStorage.setItem(reportReadKey, 'true');
       setIsReportRead(true);
 
@@ -543,10 +542,9 @@ export const HomeScreen: React.FC = () => {
 
   const handleRecordAgain = async () => {
     // Reset report read state (since we're recording again, we'll have a new report to read)
+    // Use Singapore timezone
     const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const reportReadKey = `report_read_${today.toDateString()}`;
+    const reportReadKey = `report_read_${getTodaySingapore()}`;
     await AsyncStorage.setItem(reportReadKey, 'false');
     setIsReportRead(false);
 
@@ -654,21 +652,6 @@ export const HomeScreen: React.FC = () => {
           // Find the first unlocked lesson that is not completed
           const todayLesson = lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
           const displayLesson = todayLesson || lessons[0];
-
-          // DEBUG: Log lesson data to understand the issue
-          console.log('[HomeScreen] All lessons:', lessons.map(l => ({
-            id: l.id,
-            title: l.title,
-            isLocked: l.isLocked,
-            status: l.progress?.status,
-            completedAt: l.progress?.completedAt
-          })));
-          console.log('[HomeScreen] Selected lesson:', {
-            id: displayLesson.id,
-            title: displayLesson.title,
-            isLocked: displayLesson.isLocked,
-            status: displayLesson.progress?.status
-          });
 
           // If user is not experienced (new user), show simple LessonCard
           if (!isExperiencedUser) {

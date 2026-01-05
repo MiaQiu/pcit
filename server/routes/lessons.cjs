@@ -163,12 +163,20 @@ router.get('/', requireAuth, async (req, res) => {
             // Get the latest completion date
             const latestCompletion = new Date(Math.max(...prereqCompletionDates.map(d => d.getTime())));
 
-            // Check if latest completion was today
-            const today = new Date();
-            const isCompletedToday =
-              latestCompletion.getDate() === today.getDate() &&
-              latestCompletion.getMonth() === today.getMonth() &&
-              latestCompletion.getFullYear() === today.getFullYear();
+            // Check if latest completion was today (in Singapore time UTC+8)
+            // Convert both timestamps to Singapore time (UTC+8 = +8 hours)
+            const SGT_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+            // Get current date in Singapore time
+            const nowSgt = new Date(Date.now() + SGT_OFFSET_MS);
+            const todaySgt = Date.UTC(nowSgt.getUTCFullYear(), nowSgt.getUTCMonth(), nowSgt.getUTCDate());
+
+            // Get completion date in Singapore time
+            const completionSgt = new Date(latestCompletion.getTime() + SGT_OFFSET_MS);
+            const completionDateSgt = Date.UTC(completionSgt.getUTCFullYear(), completionSgt.getUTCMonth(), completionSgt.getUTCDate());
+
+            // Compare dates
+            const isCompletedToday = todaySgt === completionDateSgt;
 
             if (isCompletedToday) {
               isLockedByDailyLimit = true;

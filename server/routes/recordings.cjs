@@ -1871,9 +1871,9 @@ router.get('/:id/analysis', async (req, res) => {
       // CDI mode - PEN skills
       const tagCounts = session.tagCounts || {};
       skills = [
-        { label: 'Labeled Praise', progress: tagCounts.praise || 0 },
+        { label: 'Praise (Labeled)', progress: tagCounts.praise || 0 },
         { label: 'Echo', progress: tagCounts.echo || 0 },
-        { label: 'Narration', progress: tagCounts.narration || 0 }
+        { label: 'Narrate', progress: tagCounts.narration || 0 }
       ];
 
       // Areas to avoid - always show all categories with counts

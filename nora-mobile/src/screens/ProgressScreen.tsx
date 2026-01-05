@@ -21,6 +21,7 @@ import { Button } from '../components/Button';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useRecordingService, useLessonService } from '../contexts/AppContext';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
+import { toSingaporeDateString, getTodaySingapore, getYesterdaySingapore } from '../utils/timezone';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -66,14 +67,14 @@ const CalendarView: React.FC<{ recordingDates: Date[]; lessonCompletionDates: Da
 
     const days: CalendarDay[] = [];
 
-    // Convert recording dates and lesson dates to sets for faster lookup
-    const recordingDateStrings = new Set(recordingDates.map(d => d.toDateString()));
-    const lessonDateStrings = new Set(lessonCompletionDates.map(d => d.toDateString()));
+    // Convert recording dates and lesson dates to sets for faster lookup (using Singapore timezone)
+    const recordingDateStrings = new Set(recordingDates.map(d => toSingaporeDateString(d)));
+    const lessonDateStrings = new Set(lessonCompletionDates.map(d => toSingaporeDateString(d)));
 
     // Add previous month's trailing days
     for (let i = 0; i < startingDayOfWeek; i++) {
       const date = new Date(year, month, -startingDayOfWeek + i + 1);
-      const dateStr = date.toDateString();
+      const dateStr = toSingaporeDateString(date);
       days.push({
         date,
         hasRecording: recordingDateStrings.has(dateStr),
@@ -83,7 +84,7 @@ const CalendarView: React.FC<{ recordingDates: Date[]; lessonCompletionDates: Da
     // Add current month's days
     for (let i = 1; i <= lastDay.getDate(); i++) {
       const date = new Date(year, month, i);
-      const dateStr = date.toDateString();
+      const dateStr = toSingaporeDateString(date);
       days.push({
         date,
         hasRecording: recordingDateStrings.has(dateStr),
@@ -127,7 +128,7 @@ const CalendarView: React.FC<{ recordingDates: Date[]; lessonCompletionDates: Da
         <View style={styles.calendarGrid}>
           {days.map((day, index) => {
             const isCurrentMonth = day.date.getMonth() === currentMonth.getMonth();
-            const isToday = day.date.toDateString() === new Date().toDateString();
+            const isToday = toSingaporeDateString(day.date) === getTodaySingapore();
 
             return (
               <View key={index} style={styles.dayCell}>
@@ -372,21 +373,22 @@ export const ProgressScreen: React.FC = () => {
   /**
    * Calculate streak based on consecutive days with BOTH a completed lesson AND a recording
    * NOTE: This function is currently not used. We now use calculateStreak() which only requires recordings.
+   * Uses Singapore timezone for date comparisons
    */
   const calculateCombinedStreak = (recordings: any[], lessonCompletionDates: Date[]): number => {
     if (recordings.length === 0 || lessonCompletionDates.length === 0) return 0;
 
-    // Get unique recording dates (as date strings)
+    // Get unique recording dates (as date strings) in Singapore timezone
     const recordingDateStrings = new Set(
       recordings
         .map((r) => new Date(r.createdAt))
         .filter((date) => !isNaN(date.getTime()))
-        .map((date) => date.toDateString())
+        .map((date) => toSingaporeDateString(date))
     );
 
-    // Get unique lesson completion dates (as date strings)
+    // Get unique lesson completion dates (as date strings) in Singapore timezone
     const lessonDateStrings = new Set(
-      lessonCompletionDates.map((date) => date.toDateString())
+      lessonCompletionDates.map((date) => toSingaporeDateString(date))
     );
 
     // Find days that have BOTH a recording AND a completed lesson
@@ -397,8 +399,8 @@ export const ProgressScreen: React.FC = () => {
     if (completeDays.length === 0) return 0;
 
     let streak = 0;
-    const today = new Date().toDateString();
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const today = getTodaySingapore();
+    const yesterday = getYesterdaySingapore();
 
     // Streak must start from today or yesterday
     if (completeDays[0] === today || completeDays[0] === yesterday) {
@@ -407,7 +409,7 @@ export const ProgressScreen: React.FC = () => {
 
       // Count consecutive days backwards
       for (let i = 1; i < completeDays.length; i++) {
-        const expectedDate = new Date(currentDate.getTime() - 86400000).toDateString();
+        const expectedDate = toSingaporeDateString(currentDate.getTime() - 86400000);
         if (completeDays[i] === expectedDate) {
           streak++;
           currentDate = new Date(completeDays[i]);
@@ -423,16 +425,17 @@ export const ProgressScreen: React.FC = () => {
   const calculateStreak = (recordings: any[]): number => {
     if (recordings.length === 0) return 0;
 
+    // Use Singapore timezone for date comparisons
     const dates = recordings
       .map((r) => new Date(r.createdAt))
       .filter((date) => !isNaN(date.getTime()))
-      .map((date) => date.toDateString())
+      .map((date) => toSingaporeDateString(date))
       .filter((value, index, self) => self.indexOf(value) === index)
       .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
     let streak = 0;
-    const today = new Date().toDateString();
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const today = getTodaySingapore();
+    const yesterday = getYesterdaySingapore();
 
     // Check if today or yesterday has a recording
     if (dates[0] === today || dates[0] === yesterday) {
@@ -440,7 +443,7 @@ export const ProgressScreen: React.FC = () => {
       let currentDate = new Date(dates[0]);
 
       for (let i = 1; i < dates.length; i++) {
-        const expectedDate = new Date(currentDate.getTime() - 86400000).toDateString();
+        const expectedDate = toSingaporeDateString(currentDate.getTime() - 86400000);
         if (dates[i] === expectedDate) {
           streak++;
           currentDate = new Date(dates[i]);
