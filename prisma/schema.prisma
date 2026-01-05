@@ -237,7 +237,7 @@ model SupportRequest {
   status        SupportRequestStatus @default(OPEN)
   priority      SupportPriority      @default(MEDIUM)
   createdAt     DateTime             @default(now())
-  updatedAt     DateTime
+  updatedAt     DateTime             @updatedAt
   resolvedAt    DateTime?
   resolverNotes String?
   User          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)

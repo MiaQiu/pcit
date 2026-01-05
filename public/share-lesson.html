@@ -75,7 +75,7 @@
         /* Status Bar */
         .status-bar {
             padding: 12px 20px 0;
-            display: flex;
+            display: none; /* Hidden - no timer needed */
             justify-content: space-between;
             align-items: center;
             height: 44px;
@@ -140,8 +140,10 @@
         .content-area {
             flex: 1;
             padding: 16px 24px;
-            overflow-y: auto;
-            padding-bottom: 100px;
+            overflow-y: visible;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         /* Lesson Card */
@@ -158,8 +160,7 @@
         }
 
         .ellipse-wrapper {
-            width: 100%;
-            max-width: 342px;
+            width: 342px;
             height: 160px;
             border-radius: 24px 24px 0 0;
             overflow: hidden;
@@ -212,7 +213,8 @@
         .card {
             background: white;
             border-radius: 24px;
-            min-height: 500px;
+            width: 342px;
+            height: 550px;
             padding-top: 100px;
             padding-left: 16px;
             padding-right: 16px;
@@ -270,13 +272,10 @@
 
         /* Footer */
         .footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
             background: white;
-            padding: 16px 24px 34px;
-            border-top: 1px solid #F0F0F0;
+            padding: 16px 0px 34px;
+            width: 342px;
+            margin: 0 auto;
         }
 
         .button-row {
@@ -290,7 +289,7 @@
         }
 
         .back-button {
-            height: 64px;
+            height: 48px;
             width: 100%;
             display: flex;
             justify-content: center;
@@ -300,7 +299,7 @@
             border: 1px solid #E0E0E0;
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 14px;
             color: #1a1a2e;
             cursor: pointer;
             transition: background 0.2s;
@@ -316,7 +315,7 @@
         }
 
         .continue-button {
-            height: 64px;
+            height: 48px;
             width: 100%;
             display: flex;
             justify-content: center;
@@ -326,7 +325,7 @@
             border: none;
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 14px;
             color: white;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
@@ -342,44 +341,78 @@
             cursor: not-allowed;
         }
 
-        /* CTA Section */
-        .cta-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 40px 30px;
-            text-align: center;
-            color: white;
-            border-radius: 24px;
-            margin: 24px 0;
+        /* CTA Modal/Popup */
+        .cta-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
         }
 
-        .cta-section h3 {
+        .cta-modal.show {
+            display: flex;
+        }
+
+        .cta-content {
+            background: white;
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 400px;
+            margin: 20px;
+            position: relative;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .cta-content h3 {
             font-size: 24px;
             font-weight: 700;
             margin-bottom: 12px;
+            color: #1a1a2e;
         }
 
-        .cta-section p {
+        .cta-content p {
             font-size: 16px;
-            opacity: 0.95;
+            color: #6b7280;
             margin-bottom: 24px;
+            line-height: 1.5;
         }
 
         .cta-button {
             display: inline-block;
-            background: white;
-            color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             padding: 16px 32px;
             border-radius: 12px;
             text-decoration: none;
             font-weight: 600;
             font-size: 16px;
             transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            border: none;
+            cursor: pointer;
         }
 
         .cta-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
         /* Loading & Error States */
@@ -481,6 +514,18 @@
                 <!-- Content Area -->
                 <div id="content-area" class="content-area" style="display: none;">
                     <div id="lesson-container"></div>
+
+                    <!-- Footer with Navigation Buttons -->
+                    <div id="footer" class="footer" style="display: none;">
+                        <div class="button-row">
+                            <div class="half-button">
+                                <button class="back-button" id="back-button">← Back</button>
+                            </div>
+                            <div class="half-button">
+                                <button class="continue-button" id="continue-button">Continue →</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Error State -->
@@ -488,19 +533,16 @@
                     <h2>Lesson Not Found</h2>
                     <p>This lesson may have been removed or the link is invalid.</p>
                 </div>
-
-                <!-- Footer with Navigation Buttons -->
-                <div id="footer" class="footer" style="display: none;">
-                    <div class="button-row">
-                        <div class="half-button">
-                            <button class="back-button" id="back-button">← Back</button>
-                        </div>
-                        <div class="half-button">
-                            <button class="continue-button" id="continue-button">Continue →</button>
-                        </div>
-                    </div>
-                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- CTA Modal -->
+    <div id="cta-modal" class="cta-modal">
+        <div class="cta-content">
+            <h3>Want more like this?</h3>
+            <p>Download the Nora app for guided play and personalized parenting support - just 5 minutes a day.</p>
+            <a href="#" class="cta-button">Get Nora App</a>
         </div>
     </div>
 
@@ -554,6 +596,16 @@
 
             if (continueBtn) {
                 continueBtn.addEventListener('click', goToNextSegment);
+            }
+
+            // Close modal when clicking outside of it
+            const ctaModal = document.getElementById('cta-modal');
+            if (ctaModal) {
+                ctaModal.addEventListener('click', function(e) {
+                    if (e.target === ctaModal) {
+                        hideCTAModal();
+                    }
+                });
             }
         });
 
@@ -666,17 +718,6 @@
 
             html += `</div></div>`;
 
-            // Add CTA on last segment
-            if (isLastSegment) {
-                html += `
-                    <div class="cta-section">
-                        <h3>Want to learn more?</h3>
-                        <p>Download Nora to access the full parenting curriculum</p>
-                        <a href="#" class="cta-button">Get Nora App</a>
-                    </div>
-                `;
-            }
-
             container.innerHTML = html;
 
             // Update button states
@@ -725,8 +766,18 @@
                 renderSegment();
                 document.getElementById('content-area').scrollTop = 0;
             } else {
-                alert('Lesson complete! Download the Nora app to continue your learning journey.');
+                showCTAModal();
             }
+        }
+
+        function showCTAModal() {
+            const modal = document.getElementById('cta-modal');
+            modal.classList.add('show');
+        }
+
+        function hideCTAModal() {
+            const modal = document.getElementById('cta-modal');
+            modal.classList.remove('show');
         }
 
         function shareLesson() {

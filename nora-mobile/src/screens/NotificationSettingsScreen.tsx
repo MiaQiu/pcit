@@ -44,7 +44,7 @@ interface NotificationPreferences {
 
 const DEFAULT_PREFERENCES: NotificationPreferences = {
   dailyLessonReminder: true,
-  dailyLessonTime: '08:00',
+  dailyLessonTime: '18:30',
   practiceReminders: true,
   progressUpdates: true,
   weeklySummary: true,

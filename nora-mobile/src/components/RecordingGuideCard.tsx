@@ -53,7 +53,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = () => {
     <View style={styles.container}>
       {/* DO Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>DO</Text>
+        <Text style={styles.sectionTitle}>DO - PEN Skills</Text>
 
         {DO_ITEMS.map((item, index) => (
           <View key={index} style={styles.doItem}>
