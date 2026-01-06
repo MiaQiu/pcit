@@ -4,6 +4,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRecordingService, useAuthService } from './AppContext';
 import { sendNewReportNotification } from '../utils/notifications';
@@ -102,8 +103,28 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
   useEffect(() => {
     loadState();
 
+    // Add AppState listener to immediately check for completion when app comes to foreground
+    const appStateSubscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      console.log('[UploadProcessing] AppState changed to:', nextAppState);
+
+      // When app comes to foreground and we're processing, immediately check for completion
+      if (nextAppState === 'active' && state === 'processing' && recordingId) {
+        console.log('[UploadProcessing] App returned to foreground while processing, checking for completion...');
+
+        // Cancel any pending poll timeout and check immediately
+        if (pollTimeoutRef.current) {
+          clearTimeout(pollTimeoutRef.current);
+          pollTimeoutRef.current = null;
+        }
+
+        // Immediately poll for completion (with attempt=0 to restart backoff)
+        pollForAnalysisCompletion(recordingId, 0);
+      }
+    });
+
     // Cleanup on unmount
     return () => {
+      appStateSubscription.remove();
       if (pollTimeoutRef.current) {
         clearTimeout(pollTimeoutRef.current);
       }
@@ -111,7 +132,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         uploadXhrRef.current.abort();
       }
     };
-  }, []);
+  }, [state, recordingId]);
 
   const loadState = async () => {
     try {
@@ -146,9 +167,9 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
               console.log('[UploadProcessing] Recording permanently failed, clearing state:', error.message);
               await reset();
             } else {
-              // Still processing - resume polling
-              console.log('[UploadProcessing] Recording still processing, resuming polling');
-              pollForAnalysisCompletion(data.recordingId);
+              // Still processing - resume polling immediately (attempt=0 to start fresh)
+              console.log('[UploadProcessing] Recording still processing, resuming polling immediately');
+              pollForAnalysisCompletion(data.recordingId, 0);
             }
           }
         }

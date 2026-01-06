@@ -39,7 +39,7 @@ export const Intro2Screen: React.FC = () => {
         <Text style={styles.subtitle}>
           Play
           </Text>
-          <Text style={styles.title}>Recrod a 5-min play session</Text>
+          <Text style={styles.title}>Record a 5-min play session</Text>
 
           {/* <Text style={styles.description}>
             • Practice what you've learned{'\n'}

@@ -376,20 +376,26 @@ export const HomeScreen: React.FC = () => {
 
       const hasRecording = todayRecordings.length > 0;
       setHasRecordedSession(hasRecording);
+
+      // Check if report was read today by comparing recording IDs
+      // Use Singapore timezone for the date key
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const reportReadKey = `report_read_${getTodaySingapore()}`;
+      const reportReadRecordingId = await AsyncStorage.getItem(reportReadKey);
+
       if (hasRecording) {
         // Get the most recent recording
         const latestRecording = todayRecordings.sort(
           (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )[0];
         setLatestRecordingId(latestRecording.id);
-      }
 
-      // Check if report was read today (using AsyncStorage or similar)
-      // Use Singapore timezone for the date key
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const reportReadKey = `report_read_${getTodaySingapore()}`;
-      const reportReadValue = await AsyncStorage.getItem(reportReadKey);
-      setIsReportRead(reportReadValue === 'true');
+        // Report is read only if the stored recording ID matches the latest recording
+        setIsReportRead(reportReadRecordingId === latestRecording.id);
+      } else {
+        // No recording today, report cannot be read
+        setIsReportRead(false);
+      }
 
     } catch (error) {
       console.log('Failed to load today\'s state:', error);
@@ -529,10 +535,10 @@ export const HomeScreen: React.FC = () => {
 
   const handleReadTodayReport = async () => {
     if (latestRecordingId) {
-      // Mark report as read (using Singapore timezone)
+      // Mark report as read by storing the recording ID (using Singapore timezone)
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
       const reportReadKey = `report_read_${getTodaySingapore()}`;
-      await AsyncStorage.setItem(reportReadKey, 'true');
+      await AsyncStorage.setItem(reportReadKey, latestRecordingId);
       setIsReportRead(true);
 
       // Navigate to report
@@ -545,7 +551,7 @@ export const HomeScreen: React.FC = () => {
     // Use Singapore timezone
     const AsyncStorage = require('@react-native-async-storage/async-storage').default;
     const reportReadKey = `report_read_${getTodaySingapore()}`;
-    await AsyncStorage.setItem(reportReadKey, 'false');
+    await AsyncStorage.removeItem(reportReadKey);
     setIsReportRead(false);
 
     // Navigate to recording tab
@@ -711,7 +717,7 @@ export const HomeScreen: React.FC = () => {
                 // Latest score section - always show
                 yesterdayScore={displayScore}
                 encouragementMessage={displayEncouragement}
-                onReadReport={latestScore ? handleReadLatestReport : undefined}
+                onReadReport={latestScore ? (cardType === 'readReport' ? handleReadTodayReport : handleReadLatestReport) : undefined}
                 // Network status
                 isOnline={isOnline}
               />

@@ -11,8 +11,8 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { MaskedDinoImage } from '../../components/MaskedDinoImage';
@@ -32,7 +32,7 @@ export const StartScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.content}>
         {/* Dragon Image Section */}
         <View style={styles.dragonSection}>
