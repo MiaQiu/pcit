@@ -27,6 +27,7 @@ import { LessonDetailResponse, LessonSegment, SubmitQuizResponse, LessonNotFound
 import { useLessonService } from '../contexts/AppContext';
 import { getMockLessonDetail } from '../data/mockLessons';
 import { LessonCache } from '../lib/LessonCache';
+import amplitudeService from '../services/amplitudeService';
 
 /**
  * Format body text with markdown-like formatting:
@@ -364,6 +365,19 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       });
 
       console.log('Lesson marked as completed');
+
+      // Track lesson completion
+      amplitudeService.trackLessonCompleted(
+        lessonData.lesson.id,
+        lessonData.lesson.title,
+        timeSpent,
+        {
+          lessonPhase: lessonData.lesson.phase,
+          dayNumber: lessonData.lesson.dayNumber,
+          isBooster: lessonData.lesson.isBooster,
+          totalSegments,
+        }
+      );
     } catch (error: any) {
       console.error('Failed to mark lesson as completed:', error);
 
@@ -406,6 +420,21 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     // Show feedback immediately
     setQuizFeedback(immediateResponse);
     setIsQuizSubmitted(true);
+
+    // Track quiz answered
+    amplitudeService.trackQuizAnswered(
+      lessonData.lesson.id,
+      lessonData.lesson.quiz.id,
+      isCorrect,
+      1,
+      {
+        lessonPhase: lessonData.lesson.phase,
+        lessonTitle: lessonData.lesson.title,
+        dayNumber: lessonData.lesson.dayNumber,
+        selectedAnswer: selectedOption,
+        correctAnswer: lessonData.lesson.quiz.correctAnswer,
+      }
+    );
 
     // Submit to API and check for phase advancement
     try {
@@ -465,6 +494,18 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       // Update UI immediately, save progress in background
       setCurrentSegmentIndex(nextIndex);
       updateProgress(nextIndex);
+
+      // Track segment viewed
+      amplitudeService.trackLessonSegmentViewed(
+        lessonData.lesson.id,
+        nextIndex + 1, // 1-indexed for readability
+        {
+          lessonTitle: lessonData.lesson.title,
+          lessonPhase: lessonData.lesson.phase,
+          dayNumber: lessonData.lesson.dayNumber,
+          totalSegments: segments.length,
+        }
+      );
     } else if (lessonData.lesson.quiz) {
       // Move to quiz (last segment)
       console.log('Moving to quiz');

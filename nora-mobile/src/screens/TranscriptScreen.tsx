@@ -307,7 +307,8 @@ export const TranscriptScreen: React.FC = () => {
 
                 // New CDI tag names (without DO:/DON'T: prefix)
                 if (tag === 'Echo') return '#3B82F6'; // Blue
-                if (tag === 'Labeled Praise' || tag === 'Unlabeled Praise') return '#10B981'; // Green
+                if (tag === 'Labeled Praise') return '#10B981'; // Green
+                if (tag === 'Unlabeled Praise') return '#6B7280'; // Gray (same as neutral)
                 if (tag === 'Narration') return '#8B5CF6'; // Purple
                 if (tag === 'Direct Command' || tag === 'Indirect Command') return '#EF4444'; // Red
                 if (tag === 'Question') return '#F97316'; // Orange

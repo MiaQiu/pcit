@@ -159,10 +159,13 @@ export const SubscriptionScreen: React.FC = () => {
         </View> */}
 
         {/* Title */}
-        <Text style={styles.title}>How your trial works</Text>
+        <Text style={styles.title}>
+          {data.childName ? `${data.childName}'s 90 days plan` : '90 days plan'}
+        </Text>
         <Text style={styles.subtitle}>
-          First 14 days free, then ${selectedPlan === 'annual' ? '138.96' : '11.58'}/
-          {selectedPlan === 'annual' ? 'year' : 'month'}
+          {/* First 30 days free, then ${selectedPlan === 'annual' ? '138.96' : '11.58'}/
+          {selectedPlan === 'annual' ? 'year' : 'month'} */}
+          Parents with similar challenges often see real change in ~3 months.
         </Text>
 
         {/* Pricing Toggle */}
@@ -225,13 +228,13 @@ export const SubscriptionScreen: React.FC = () => {
         </View>
 
         {/* Restore Purchase Link */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.restoreButton}
           onPress={handleRestore}
           activeOpacity={0.8}
         >
           <Text style={styles.restoreText}>Restore purchase</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
 
       {/* Bottom CTA */}

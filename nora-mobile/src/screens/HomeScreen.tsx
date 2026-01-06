@@ -21,6 +21,7 @@ import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
 import { toSingaporeDateString, getTodaySingapore, getYesterdaySingapore, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
+import amplitudeService from '../services/amplitudeService';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -118,6 +119,11 @@ export const HomeScreen: React.FC = () => {
   // useFocusEffect is more reliable for tab navigation than addListener
   useFocusEffect(
     React.useCallback(() => {
+      // Track home screen viewed
+      amplitudeService.trackScreenView('Home', {
+        screen: 'home',
+      });
+
       // Reload lessons, today's state and streak when tab comes into focus
       // This ensures NextActionCard shows the correct lesson (not stale cached data)
       // Note: loadLatestReport() is NOT called here to avoid unnecessary API calls
@@ -522,6 +528,17 @@ export const HomeScreen: React.FC = () => {
   };
 
   const handleLessonPress = (lessonId: string) => {
+    // Find lesson details for tracking
+    const lesson = lessons.find(l => l.id === lessonId);
+    if (lesson) {
+      amplitudeService.trackLessonStarted(lesson.id, lesson.title, {
+        source: 'home_screen',
+        lessonPhase: lesson.phase,
+        phaseName: lesson.phaseName,
+        status: lesson.progress?.status || 'NOT_STARTED',
+      });
+    }
+
     navigation.push('LessonViewer', {
       lessonId,
     });
@@ -535,6 +552,16 @@ export const HomeScreen: React.FC = () => {
 
   const handleReadLatestReport = () => {
     if (latestScore?.recordingId) {
+      // Track report viewed from last session card
+      amplitudeService.trackReportViewed(
+        latestScore.recordingId,
+        latestScore.score,
+        {
+          source: 'home_last_session',
+          maxScore: latestScore.maxScore,
+        }
+      );
+
       navigation.push('Report', { recordingId: latestScore.recordingId });
     }
   };
@@ -545,13 +572,23 @@ export const HomeScreen: React.FC = () => {
     // Note: hasRecordedSession will be updated when we return from Record screen
   };
 
-  const handleReadTodayReport = async () => {
+  const handleReadTodayReport = async (source: 'next_action_button' | 'score_card_button' = 'next_action_button') => {
     if (latestRecordingId) {
       // Mark report as read by storing the recording ID (using Singapore timezone)
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
       const reportReadKey = `report_read_${getTodaySingapore()}`;
       await AsyncStorage.setItem(reportReadKey, latestRecordingId);
       setIsReportRead(true);
+
+      // Track report viewed with specific source
+      amplitudeService.trackReportViewed(
+        latestRecordingId,
+        latestScore?.score,
+        {
+          source: `home_${source}`,
+          maxScore: latestScore?.maxScore,
+        }
+      );
 
       // Navigate to report
       navigation.push('Report', { recordingId: latestRecordingId });
@@ -611,7 +648,7 @@ export const HomeScreen: React.FC = () => {
         handleRecordSession();
         break;
       case 'readReport':
-        handleReadTodayReport();
+        handleReadTodayReport('next_action_button');
         break;
       case 'recordAgain':
         handleRecordAgain();
@@ -729,7 +766,7 @@ export const HomeScreen: React.FC = () => {
                 // Latest score section - always show
                 yesterdayScore={displayScore}
                 encouragementMessage={displayEncouragement}
-                onReadReport={latestScore ? (cardType === 'readReport' ? handleReadTodayReport : handleReadLatestReport) : undefined}
+                onReadReport={latestScore ? (cardType === 'readReport' ? () => handleReadTodayReport('score_card_button') : handleReadLatestReport) : undefined}
                 // Network status
                 isOnline={isOnline}
               />

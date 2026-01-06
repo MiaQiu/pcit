@@ -45,11 +45,23 @@ export const LoginScreen: React.FC = () => {
       const response = await authService.login(email.trim(), password);
       handleApiSuccess(); // Mark server as up
 
-      // Track login in Amplitude
+      // Track login in Amplitude with user properties
       if (response && response.user) {
+        const daysInApp = response.user.createdAt
+          ? Math.floor((Date.now() - new Date(response.user.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+
         amplitudeService.identifyUser(response.user.id, {
           email: response.user.email,
           name: response.user.name,
+          currentPhase: response.user.subscriptionPlan, // Using subscriptionPlan as proxy for phase
+          currentStreak: response.user.currentStreak || 0,
+          longestStreak: response.user.longestStreak || 0,
+          subscriptionPlan: response.user.subscriptionPlan,
+          subscriptionStatus: response.user.subscriptionStatus,
+          childAge: response.user.childBirthYear ? new Date().getFullYear() - response.user.childBirthYear : undefined,
+          relationshipToChild: response.user.relationshipToChild,
+          daysInApp,
         });
         amplitudeService.trackLogin('email');
       }

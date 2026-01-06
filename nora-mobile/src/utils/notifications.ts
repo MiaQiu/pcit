@@ -5,16 +5,21 @@
 
 import * as Notifications from 'expo-notifications';
 import { Platform, AppState } from 'react-native';
+import amplitudeService from '../services/amplitudeService';
 
 // Configure notification handler
 try {
   Notifications.setNotificationHandler({
-    handleNotification: async () => {
+    handleNotification: async (notification) => {
       // Only set badge if app is NOT in active/foreground state
       const appState = AppState.currentState;
       const shouldSetBadge = appState !== 'active';
 
       console.log(`[Notifications] Received notification with app state: ${appState}, shouldSetBadge: ${shouldSetBadge}`);
+
+      // Track notification received
+      const notificationType = notification.request.content.data?.type || 'unknown';
+      amplitudeService.trackNotificationReceived(notificationType as string);
 
       return {
         shouldShowAlert: true,
@@ -57,8 +62,14 @@ export const requestNotificationPermissions = async (accessToken?: string): Prom
     let finalStatus = existingStatus;
 
     if (existingStatus !== 'granted') {
+      // Track permission request
+      amplitudeService.trackEvent('Notification Permission Requested', {});
+
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
+
+      // Track permission result
+      amplitudeService.trackNotificationPermission(finalStatus === 'granted');
     }
 
     if (finalStatus !== 'granted') {

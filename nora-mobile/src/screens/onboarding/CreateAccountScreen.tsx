@@ -93,10 +93,19 @@ export const CreateAccountScreen: React.FC = () => {
       });
       handleApiSuccess(); // Mark server as up
 
-      // Track signup in Amplitude
+      // Track signup in Amplitude with user properties
       if (response && response.user) {
         amplitudeService.identifyUser(response.user.id, {
           email: response.user.email,
+          name: response.user.name,
+          currentPhase: response.user.subscriptionPlan,
+          currentStreak: 0,
+          longestStreak: 0,
+          subscriptionPlan: response.user.subscriptionPlan,
+          subscriptionStatus: response.user.subscriptionStatus,
+          childAge: response.user.childBirthYear ? new Date().getFullYear() - response.user.childBirthYear : undefined,
+          relationshipToChild: response.user.relationshipToChild,
+          daysInApp: 0, // New user
         });
         amplitudeService.trackSignup('email');
       }

@@ -51,6 +51,10 @@ class AmplitudeService {
           appLifecycles: true,
           screenViews: true,
         },
+        // React Native specific configuration
+        instanceName: 'nora-mobile',
+        disableCookies: true, // Disable cookies in React Native (not supported)
+        optOut: false,
       });
 
       this.initialized = true;
@@ -136,43 +140,57 @@ class AmplitudeService {
   /**
    * Track lesson started
    */
-  trackLessonStarted(lessonId: string, lessonTitle: string) {
-    this.trackEvent('Lesson Started', { lessonId, lessonTitle });
+  trackLessonStarted(lessonId: string, lessonTitle: string, properties: Record<string, any> = {}) {
+    this.trackEvent('Lesson Started', { lessonId, lessonTitle, ...properties });
   }
 
   /**
    * Track lesson completed
    */
-  trackLessonCompleted(lessonId: string, lessonTitle: string, duration?: number) {
-    this.trackEvent('Lesson Completed', { lessonId, lessonTitle, duration });
+  trackLessonCompleted(lessonId: string, lessonTitle: string, duration?: number, properties: Record<string, any> = {}) {
+    this.trackEvent('Lesson Completed', { lessonId, lessonTitle, duration, ...properties });
+  }
+
+  /**
+   * Track lesson segment viewed
+   */
+  trackLessonSegmentViewed(lessonId: string, segmentNumber: number, properties: Record<string, any> = {}) {
+    this.trackEvent('Lesson Segment Viewed', { lessonId, segmentNumber, ...properties });
+  }
+
+  /**
+   * Track quiz answered
+   */
+  trackQuizAnswered(lessonId: string, quizId: string, isCorrect: boolean, attemptNumber: number, properties: Record<string, any> = {}) {
+    this.trackEvent('Quiz Answered', { lessonId, quizId, isCorrect, attemptNumber, ...properties });
   }
 
   /**
    * Track recording started
    */
-  trackRecordingStarted() {
-    this.trackEvent('Recording Started');
+  trackRecordingStarted(properties: Record<string, any> = {}) {
+    this.trackEvent('Recording Started', properties);
   }
 
   /**
    * Track recording completed
    */
-  trackRecordingCompleted(duration: number, fileSize?: number) {
-    this.trackEvent('Recording Completed', { duration, fileSize });
+  trackRecordingCompleted(duration: number, fileSize?: number, properties: Record<string, any> = {}) {
+    this.trackEvent('Recording Completed', { duration, fileSize, ...properties });
   }
 
   /**
    * Track recording uploaded
    */
-  trackRecordingUploaded(recordingId: string, duration: number) {
-    this.trackEvent('Recording Uploaded', { recordingId, duration });
+  trackRecordingUploaded(recordingId: string, duration: number, properties: Record<string, any> = {}) {
+    this.trackEvent('Recording Uploaded', { recordingId, duration, ...properties });
   }
 
   /**
    * Track report viewed
    */
-  trackReportViewed(recordingId: string, score?: number) {
-    this.trackEvent('Report Viewed', { recordingId, score });
+  trackReportViewed(recordingId: string, score?: number, properties: Record<string, any> = {}) {
+    this.trackEvent('Report Viewed', { recordingId, score, ...properties });
   }
 
   /**

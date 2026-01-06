@@ -60,9 +60,24 @@ const AppContent: React.FC = () => {
       console.log('[App] Notification tapped:', response);
 
       const data = response.notification.request.content.data;
+      const notificationType = (data.type || 'unknown') as string;
+
+      // Track notification opened
+      amplitudeService.trackNotificationOpened(notificationType);
 
       if (data.type === 'new_report' && data.recordingId) {
         console.log('[App] Navigating to report:', data.recordingId);
+
+        // Track report viewed from notification
+        amplitudeService.trackReportViewed(
+          data.recordingId as string,
+          undefined, // Score not available in notification data
+          {
+            source: 'notification',
+            notificationType: 'new_report',
+          }
+        );
+
         // Navigate to the report screen
         navigation.navigate('Report', { recordingId: data.recordingId as string });
       }

@@ -28,6 +28,7 @@ import { ErrorMessages } from '../utils/errorMessages';
 import { handleApiError } from '../utils/NetworkMonitor';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
+import amplitudeService from '../services/amplitudeService';
 
 type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed';
 
@@ -210,6 +211,11 @@ export const RecordScreen: React.FC = () => {
   // When screen comes back into focus, check if we need to reset
   useFocusEffect(
     React.useCallback(() => {
+      // Track record screen viewed
+      amplitudeService.trackScreenView('Record', {
+        screen: 'record',
+      });
+
       // Only reset if not currently uploading/processing in background
       if (!uploadProcessing.isProcessing && recordingState !== 'recording') {
         resetRecording();
@@ -300,6 +306,11 @@ export const RecordScreen: React.FC = () => {
       console.log('[RecordScreen] Native recording started:', result.uri);
 
       setRecordingState('recording');
+
+      // Track recording started
+      amplitudeService.trackRecordingStarted({
+        source: 'record_tab',
+      });
 
       // Reset failure count on success
       setRecordingFailureCount(0);
@@ -454,6 +465,11 @@ export const RecordScreen: React.FC = () => {
 
       // Reset local recording state
       setRecordingState('completed');
+
+      // Track recording completed
+      amplitudeService.trackRecordingCompleted(durationSeconds, undefined, {
+        source: 'record_tab',
+      });
 
       // Play completion sound (don't await - let it play in background)
       playCompletionSound();

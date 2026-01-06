@@ -2,11 +2,20 @@
  * Child Issue Screen
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { getOnboardingProgress } from '../../config/onboardingProgress';
+import amplitudeService from '../../services/amplitudeService';
 
 export const ChildIssueScreen: React.FC = () => {
+  useEffect(() => {
+    // Track onboarding screen viewed
+    amplitudeService.trackEvent('Onboarding Screen Viewed', {
+      screen: 'child_issue',
+      step: 2,
+    });
+  }, []);
+
   return (
     <MultipleChoiceScreen
       headerText="There are no right or wrong answers. Select all that applies."

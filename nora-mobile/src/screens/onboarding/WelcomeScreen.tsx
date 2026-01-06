@@ -15,6 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
+import amplitudeService from '../../services/amplitudeService';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -26,6 +27,12 @@ export const WelcomeScreen: React.FC = () => {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
+    // Track onboarding screen viewed
+    amplitudeService.trackEvent('Onboarding Screen Viewed', {
+      screen: 'welcome',
+      step: 1,
+    });
+
     // Start animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -43,6 +50,12 @@ export const WelcomeScreen: React.FC = () => {
 
     // Navigate to Start screen after 2 seconds
     const timer = setTimeout(() => {
+      // Track onboarding step completed
+      amplitudeService.trackEvent('Onboarding Step Completed', {
+        screen: 'welcome',
+        step: 1,
+      });
+
       navigation.replace('Start');
     }, 2000);
 

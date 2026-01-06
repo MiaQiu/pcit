@@ -6,9 +6,11 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import { AppState } from 'react-native';
 import { useRecordingService, useAuthService } from './AppContext';
 import { handleApiError, ApiError } from '../utils/NetworkMonitor';
 import { ErrorMessages } from '../utils/errorMessages';
+import amplitudeService from '../services/amplitudeService';
 
 /**
  * Map technical backend error messages to user-friendly messages
@@ -122,7 +124,9 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     const subscription = Notifications.addNotificationReceivedListener((notification) => {
       console.log('[UploadProcessing] Notification received:', notification);
 
-      const { type, recordingId: notificationRecordingId, error } = notification.request.content.data || {};
+      const notificationData = notification.request.content.data || {};
+      const { type, recordingId: notificationRecordingId, error } = notificationData;
+      const errorMessage = typeof error === 'string' ? error : 'Unknown error';
 
       // Check if this notification is for our current recording
       if (notificationRecordingId === recordingIdRef.current) {
@@ -144,7 +148,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
           // Show error alert to user
           const Alert = require('react-native').Alert;
-          const userFriendlyMessage = getUserFriendlyErrorMessage(error || 'Unknown error');
+          const userFriendlyMessage = getUserFriendlyErrorMessage(errorMessage);
           Alert.alert(
             'Unable to Generate Report',
             userFriendlyMessage,
@@ -159,6 +163,62 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
       subscription.remove();
     };
   }, []); // Only run once on mount
+
+  // Handle app state changes - check processing status when app comes to foreground
+  useEffect(() => {
+    console.log('[UploadProcessing] Setting up AppState listener');
+
+    const subscription = AppState.addEventListener('change', async (nextAppState) => {
+      console.log('[UploadProcessing] AppState changed to:', nextAppState);
+
+      // When app comes to foreground and we're processing, check if report is ready
+      if (nextAppState === 'active' && state === 'processing' && recordingIdRef.current) {
+        console.log('[UploadProcessing] App came to foreground while processing, checking report status...');
+
+        try {
+          // Try to get the analysis - if successful, report is ready
+          const analysis = await recordingService.getAnalysis(recordingIdRef.current);
+          console.log('[UploadProcessing] Report is ready! Updating state...');
+
+          // Update timestamp to notify subscribers (e.g., HomeScreen)
+          setReportCompletedTimestamp(Date.now());
+
+          // Clear processing state
+          await reset();
+        } catch (error: any) {
+          // Check if it's a permanent failure
+          const isFailed = error.status === 'failed' ||
+                         error.message?.toLowerCase().includes('report generation failed') ||
+                         error.message?.toLowerCase().includes('analysis failed');
+
+          if (isFailed) {
+            // Recording has permanently failed - show error to user
+            console.log('[UploadProcessing] Recording permanently failed:', error.message);
+            await reset();
+
+            // Show error alert with user-friendly message
+            const Alert = require('react-native').Alert;
+            const userFriendlyMessage = getUserFriendlyErrorMessage(
+              error.userMessage || error.message || 'Unknown error'
+            );
+            Alert.alert(
+              'Unable to Generate Report',
+              userFriendlyMessage,
+              [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
+            );
+          } else {
+            // Still processing - continue waiting for push notification
+            console.log('[UploadProcessing] Report still processing, will wait for notification');
+          }
+        }
+      }
+    });
+
+    return () => {
+      console.log('[UploadProcessing] Removing AppState listener');
+      subscription.remove();
+    };
+  }, [state]); // Re-run when state changes
 
   const loadState = async () => {
     try {
@@ -409,6 +469,11 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         }
 
         console.log('[UploadProcessing] Upload confirmed, processing started');
+
+        // Track recording uploaded
+        amplitudeService.trackRecordingUploaded(sessionId, durationSeconds, {
+          source: 'record_tab',
+        });
       } catch (completeError: any) {
         console.error('[UploadProcessing] Failed to confirm upload:', completeError);
         throw completeError;

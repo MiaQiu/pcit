@@ -22,6 +22,7 @@ import { RootStackNavigationProp } from '../navigation/types';
 import { useRecordingService, useLessonService } from '../contexts/AppContext';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { toSingaporeDateString, getTodaySingapore, getYesterdaySingapore } from '../utils/timezone';
+import amplitudeService from '../services/amplitudeService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -301,6 +302,11 @@ export const ProgressScreen: React.FC = () => {
   const [scoreData, setScoreData] = useState<Array<{ date: string; day: number; month: string; score: number }>>([]);
 
   useEffect(() => {
+    // Track progress screen viewed
+    amplitudeService.trackScreenView('Progress', {
+      screen: 'progress',
+    });
+
     loadProgressData();
   }, []);
 
@@ -505,6 +511,15 @@ export const ProgressScreen: React.FC = () => {
 
   const handleViewReport = () => {
     if (latestRecordingId) {
+      // Track report viewed from progress tab
+      amplitudeService.trackReportViewed(
+        latestRecordingId,
+        undefined, // Score not readily available here
+        {
+          source: 'progress_tab',
+        }
+      );
+
       navigation.navigate('Report', { recordingId: latestRecordingId });
     }
   };
