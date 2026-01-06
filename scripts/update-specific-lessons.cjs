@@ -7,67 +7,18 @@ const crypto = require('crypto');
 const prisma = new PrismaClient();
 
 /**
- * Import and reformat all lessons from text file
- * Usage: node scripts/import-all-lessons.cjs
+ * Update specific lesson segments from text file
+ * Usage: node scripts/update-specific-lessons.cjs CONNECT:3,CONNECT:4,CONNECT:5
+ * Or: node scripts/update-specific-lessons.cjs 1:3,1:4,1:5
+ * Or: node scripts/update-specific-lessons.cjs 3,4,5  (defaults to CONNECT phase)
  */
 
 // ============================================================================
 // ID GENERATION HELPER
 // ============================================================================
 
-/**
- * Generate a unique ID for database records
- * @returns {string} 25-character unique ID
- */
 function generateId() {
   return crypto.randomBytes(12).toString('base64').replace(/[+/=]/g, '').substring(0, 25);
-}
-
-// ============================================================================
-// BACKUP FUNCTIONALITY
-// ============================================================================
-
-class BackupManager {
-  async createBackup() {
-    try {
-      console.log('📦 Creating backup of existing lessons...');
-
-      const lessons = await prisma.lesson.findMany({
-        include: {
-          LessonSegment: {
-            orderBy: { order: 'asc' }
-          },
-          Quiz: {
-            include: {
-              QuizOption: {
-                orderBy: { order: 'asc' }
-              }
-            }
-          }
-        },
-        orderBy: [
-          { phaseNumber: 'asc' },
-          { dayNumber: 'asc' }
-        ]
-      });
-
-      const backupDir = path.join(__dirname, 'backups');
-      await fs.mkdir(backupDir, { recursive: true });
-
-      const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
-      const backupPath = path.join(backupDir, `lessons-backup-${timestamp}.json`);
-
-      await fs.writeFile(backupPath, JSON.stringify(lessons, null, 2));
-
-      console.log(`✅ Backup created: ${backupPath}`);
-      console.log(`   ${lessons.length} lessons backed up\n`);
-
-      return backupPath;
-    } catch (error) {
-      console.error('❌ Backup failed:', error.message);
-      throw error;
-    }
-  }
 }
 
 // ============================================================================
@@ -150,7 +101,6 @@ class LessonParser {
       this.finalizeLesson();
     }
 
-    console.log(`✅ Parsed ${this.lessons.length} lessons`);
     return this.lessons;
   }
 
@@ -158,7 +108,6 @@ class LessonParser {
     const match = line.match(/^Phase (\d+):/);
     this.currentPhaseNumber = parseInt(match[1]);
     this.currentPhase = this.currentPhaseNumber === 1 ? 'CONNECT' : 'DISCIPLINE';
-    console.log(`\n📖 Phase ${this.currentPhaseNumber}: ${this.currentPhase}`);
   }
 
   parseDayHeader(line) {
@@ -281,7 +230,6 @@ class LessonParser {
     }
 
     this.lessons.push(this.currentLesson);
-    console.log(`  ✓ Day ${this.currentLesson.dayNumber}: ${this.currentLesson.title} (${this.currentLesson.cards.length} cards)`);
   }
 }
 
@@ -417,63 +365,57 @@ function inferContentType(sectionTitle, bodyText) {
   return 'TEXT';
 }
 
-function assignColors(lessonIndex) {
-  const schemes = [
-    {
-      backgroundColor: '#E4E4FF',
-      ellipse77Color: '#9BD4DF',
-      ellipse78Color: '#A6E0CB'
-    },
-    {
-      backgroundColor: '#E4F0FF',
-      ellipse77Color: '#A6D4E0',
-      ellipse78Color: '#B4E0CB'
-    }
-  ];
-
-  return schemes[lessonIndex % 2];
-}
-
 // ============================================================================
-// IMPORTER - Replace lessons in database
+// UPDATER - Update specific lessons
 // ============================================================================
 
-class LessonImporter {
-  constructor(lessons) {
+class LessonUpdater {
+  constructor(lessons, lessonsToUpdate) {
     this.lessons = lessons;
+    this.lessonsToUpdate = lessonsToUpdate; // Array of {phase, dayNumber}
     this.formatter = new ContentFormatter();
-    this.createdLessonIds = {}; // Track created lesson IDs for prerequisites
   }
 
-  async import() {
-    console.log(`\n🔄 Importing ${this.lessons.length} lessons to database...\n`);
+  async update() {
+    console.log(`\n🔄 Updating ${this.lessonsToUpdate.length} lessons...\n`);
 
     let successCount = 0;
     let errorCount = 0;
+    let notFoundCount = 0;
 
-    for (let i = 0; i < this.lessons.length; i++) {
-      const lessonData = this.lessons[i];
+    for (const target of this.lessonsToUpdate) {
+      // Find lesson in parsed data
+      const lessonData = this.lessons.find(
+        l => l.phase === target.phase && l.dayNumber === target.dayNumber
+      );
+
+      if (!lessonData) {
+        console.error(`❌ Not found in text file: ${target.phase} Day ${target.dayNumber}`);
+        notFoundCount++;
+        continue;
+      }
 
       try {
-        await this.importLesson(lessonData, i);
+        await this.updateLesson(lessonData);
         successCount++;
       } catch (error) {
-        console.error(`❌ Failed to import ${lessonData.phase} Day ${lessonData.dayNumber}:`, error.message);
+        console.error(`❌ Failed to update ${lessonData.phase} Day ${lessonData.dayNumber}:`, error.message);
         errorCount++;
       }
     }
 
     console.log('\n' + '='.repeat(60));
-    console.log('📊 Import Summary:');
+    console.log('📊 Update Summary:');
     console.log(`   ✅ Success: ${successCount}`);
     console.log(`   ❌ Failed: ${errorCount}`);
-    console.log(`   📦 Total: ${this.lessons.length}`);
+    console.log(`   🔍 Not Found: ${notFoundCount}`);
+    console.log(`   📦 Total: ${this.lessonsToUpdate.length}`);
     console.log('='.repeat(60) + '\n');
   }
 
-  async importLesson(lessonData, lessonIndex) {
+  async updateLesson(lessonData) {
     await prisma.$transaction(async (tx) => {
-      // 1. Find and delete existing lesson
+      // 1. Find existing lesson
       const existing = await tx.lesson.findFirst({
         where: {
           phase: lessonData.phase,
@@ -481,51 +423,24 @@ class LessonImporter {
         }
       });
 
-      if (existing) {
-        await tx.lesson.delete({ where: { id: existing.id } });
+      if (!existing) {
+        throw new Error(`Lesson not found in database: ${lessonData.phase} Day ${lessonData.dayNumber}`);
       }
 
-      // 2. Generate prerequisites
-      const prerequisites = this.generatePrerequisites(lessonData);
-
-      // 3. Assign colors
-      const colors = assignColors(lessonIndex);
-
-      // 4. Create new lesson
-      const now = new Date();
-      const newLesson = await tx.lesson.create({
-        data: {
-          id: generateId(),
-          phase: lessonData.phase,
-          phaseNumber: lessonData.phaseNumber,
-          dayNumber: lessonData.dayNumber,
-          title: lessonData.title,
-          subtitle: null,
-          shortDescription: lessonData.shortDescription,
-          objectives: [], // Empty array per user preference
-          estimatedMinutes: 5,
-          isBooster: lessonData.isBooster,
-          prerequisites: prerequisites,
-          teachesCategories: [], // Empty array per user preference
-          dragonImageUrl: null,
-          ...colors,
-          createdAt: now,
-          updatedAt: now
-        }
+      // 2. Delete existing segments
+      await tx.lessonSegment.deleteMany({
+        where: { lessonId: existing.id }
       });
 
-      // Track lesson ID for prerequisites
-      const key = `${lessonData.phase}-${lessonData.dayNumber}`;
-      this.createdLessonIds[key] = newLesson.id;
-
-      // 5. Create segments with formatted bodyText
+      // 3. Create new segments with formatted bodyText
+      const now = new Date();
       const segments = lessonData.cards.map((card, idx) => {
         const contentType = inferContentType(card.sectionTitle, card.bodyText);
         const formattedBodyText = this.formatter.format(card.bodyText, contentType, card.sectionTitle);
 
         return {
           id: generateId(),
-          lessonId: newLesson.id,
+          lessonId: existing.id,
           order: idx + 1,
           sectionTitle: card.sectionTitle,
           contentType: contentType,
@@ -537,88 +452,70 @@ class LessonImporter {
 
       await tx.lessonSegment.createMany({ data: segments });
 
-      // 6. Create quiz
-      if (lessonData.quiz) {
-        const quiz = await tx.quiz.create({
-          data: {
-            id: generateId(),
-            lessonId: newLesson.id,
-            question: lessonData.quiz.question,
-            correctAnswer: 'temp',
-            explanation: lessonData.quiz.explanation,
-            createdAt: now,
-            updatedAt: now
-          }
-        });
+      // 4. Update lesson's updatedAt timestamp
+      await tx.lesson.update({
+        where: { id: existing.id },
+        data: { updatedAt: now }
+      });
 
-        // 7. Create quiz options
-        let correctOptionId = null;
-        for (const opt of lessonData.quiz.options) {
-          const option = await tx.quizOption.create({
-            data: {
-              id: generateId(),
-              quizId: quiz.id,
-              optionLabel: opt.label,
-              optionText: opt.text,
-              order: opt.order
-            }
-          });
-
-          if (opt.label === lessonData.quiz.correctAnswer) {
-            correctOptionId = option.id;
-          }
-        }
-
-        // 8. Update quiz with correct answer
-        if (correctOptionId) {
-          await tx.quiz.update({
-            where: { id: quiz.id },
-            data: { correctAnswer: correctOptionId }
-          });
-        }
-      }
-
-      console.log(`✅ ${lessonData.phase} Day ${lessonData.dayNumber}: ${lessonData.title}`);
+      console.log(`✅ ${lessonData.phase} Day ${lessonData.dayNumber}: ${lessonData.title} (${segments.length} segments)`);
     }, { timeout: 10000 });
   }
+}
 
-  generatePrerequisites(lessonData) {
-    // Phase 1, Day 1 has no prerequisites
-    if (lessonData.phase === 'CONNECT' && lessonData.dayNumber === 1) {
-      return [];
-    }
+// ============================================================================
+// ARGUMENT PARSER
+// ============================================================================
 
-    // Phase 2, Day 1 requires Phase 1 completion (last lesson of Phase 1)
-    if (lessonData.phase === 'DISCIPLINE' && lessonData.dayNumber === 1) {
-      // Find the last lesson of Phase 1 (highest day number in CONNECT phase)
-      const phase1Lessons = Object.keys(this.createdLessonIds)
-        .filter(key => key.startsWith('CONNECT-'))
-        .map(key => ({
-          key: key,
-          dayNumber: parseInt(key.split('-')[1]),
-          id: this.createdLessonIds[key]
-        }))
-        .sort((a, b) => b.dayNumber - a.dayNumber);
-
-      if (phase1Lessons.length > 0) {
-        // Return the last lesson of Phase 1 as prerequisite
-        return [phase1Lessons[0].id];
-      }
-
-      return [];
-    }
-
-    // All other lessons require the previous day in the same phase
-    const prevDayNumber = lessonData.dayNumber - 1;
-    const key = `${lessonData.phase}-${prevDayNumber}`;
-    const prevLessonId = this.createdLessonIds[key];
-
-    if (prevLessonId) {
-      return [prevLessonId];
-    }
-
-    return [];
+function parseLessonArguments(args) {
+  if (args.length === 0) {
+    console.error('❌ Error: No lessons specified');
+    console.log('\nUsage:');
+    console.log('  node scripts/update-specific-lessons.cjs CONNECT:3,CONNECT:4,CONNECT:5');
+    console.log('  node scripts/update-specific-lessons.cjs 1:3,1:4,1:5');
+    console.log('  node scripts/update-specific-lessons.cjs 3,4,5  (defaults to CONNECT phase)');
+    console.log('\nExamples:');
+    console.log('  CONNECT:3      - Connect phase, day 3');
+    console.log('  DISCIPLINE:10  - Discipline phase, day 10');
+    console.log('  1:3            - Phase 1 (CONNECT), day 3');
+    console.log('  2:10           - Phase 2 (DISCIPLINE), day 10');
+    console.log('  3              - Connect phase, day 3 (default)');
+    process.exit(1);
   }
+
+  const lessonsToUpdate = [];
+  const lessonSpecs = args.join(',').split(',').map(s => s.trim());
+
+  for (const spec of lessonSpecs) {
+    let phase, dayNumber;
+
+    // Format: CONNECT:3 or DISCIPLINE:10
+    if (spec.includes('CONNECT:') || spec.includes('DISCIPLINE:')) {
+      const [p, d] = spec.split(':');
+      phase = p;
+      dayNumber = parseInt(d);
+    }
+    // Format: 1:3 or 2:10
+    else if (spec.match(/^\d+:\d+$/)) {
+      const [p, d] = spec.split(':');
+      const phaseNum = parseInt(p);
+      phase = phaseNum === 1 ? 'CONNECT' : 'DISCIPLINE';
+      dayNumber = parseInt(d);
+    }
+    // Format: 3 or 10 (defaults to CONNECT)
+    else if (spec.match(/^\d+$/)) {
+      phase = 'CONNECT';
+      dayNumber = parseInt(spec);
+    }
+    else {
+      console.error(`❌ Invalid lesson format: ${spec}`);
+      process.exit(1);
+    }
+
+    lessonsToUpdate.push({ phase, dayNumber });
+  }
+
+  return lessonsToUpdate;
 }
 
 // ============================================================================
@@ -627,15 +524,21 @@ class LessonImporter {
 
 async function main() {
   try {
-    console.log('🚀 Starting lesson import process...\n');
+    console.log('🚀 Starting lesson segment update...\n');
 
-    // 1. Create backup
-    const backupManager = new BackupManager();
-    await backupManager.createBackup();
+    // 1. Parse command line arguments
+    const args = process.argv.slice(2);
+    const lessonsToUpdate = parseLessonArguments(args);
+
+    console.log('📋 Lessons to update:');
+    lessonsToUpdate.forEach(l => {
+      console.log(`   • ${l.phase} Day ${l.dayNumber}`);
+    });
+    console.log();
 
     // 2. Read and parse text file
     const filePath = '/Users/mia/Downloads/lessons-formatted.txt';
-    console.log(`📖 Reading lesson content from: ${filePath}`);
+    console.log(`📖 Reading lesson content from: ${filePath}\n`);
 
     const fileContent = await fs.readFile(filePath, 'utf-8');
     const parser = new LessonParser(fileContent);
@@ -645,11 +548,13 @@ async function main() {
       throw new Error('No lessons parsed from file');
     }
 
-    // 3. Import to database
-    const importer = new LessonImporter(lessons);
-    await importer.import();
+    console.log(`✅ Parsed ${lessons.length} lessons from file\n`);
 
-    console.log('🎉 Lesson import completed successfully!\n');
+    // 3. Update specified lessons
+    const updater = new LessonUpdater(lessons, lessonsToUpdate);
+    await updater.update();
+
+    console.log('🎉 Lesson update completed successfully!\n');
   } catch (error) {
     console.error('\n❌ Fatal error:', error);
     throw error;

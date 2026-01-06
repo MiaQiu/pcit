@@ -4,10 +4,9 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import { useRecordingService, useAuthService } from './AppContext';
-import { sendNewReportNotification } from '../utils/notifications';
 import { handleApiError, ApiError } from '../utils/NetworkMonitor';
 import { ErrorMessages } from '../utils/errorMessages';
 
@@ -96,43 +95,70 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
   const [uploadProgress, setUploadProgress] = useState(0);
   const [reportCompletedTimestamp, setReportCompletedTimestamp] = useState<number | null>(null);
 
-  const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const uploadXhrRef = useRef<XMLHttpRequest | null>(null);
+  const recordingIdRef = useRef(recordingId);
+
+  // Update ref when recordingId changes (to avoid stale closures)
+  useEffect(() => {
+    recordingIdRef.current = recordingId;
+  }, [recordingId]);
 
   // Load saved state on mount
   useEffect(() => {
     loadState();
 
-    // Add AppState listener to immediately check for completion when app comes to foreground
-    const appStateSubscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
-      console.log('[UploadProcessing] AppState changed to:', nextAppState);
-
-      // When app comes to foreground and we're processing, immediately check for completion
-      if (nextAppState === 'active' && state === 'processing' && recordingId) {
-        console.log('[UploadProcessing] App returned to foreground while processing, checking for completion...');
-
-        // Cancel any pending poll timeout and check immediately
-        if (pollTimeoutRef.current) {
-          clearTimeout(pollTimeoutRef.current);
-          pollTimeoutRef.current = null;
-        }
-
-        // Immediately poll for completion (with attempt=0 to restart backoff)
-        pollForAnalysisCompletion(recordingId, 0);
-      }
-    });
-
     // Cleanup on unmount
     return () => {
-      appStateSubscription.remove();
-      if (pollTimeoutRef.current) {
-        clearTimeout(pollTimeoutRef.current);
-      }
       if (uploadXhrRef.current) {
         uploadXhrRef.current.abort();
       }
     };
-  }, [state, recordingId]);
+  }, []);
+
+  // Handle push notifications (works in both foreground and background)
+  useEffect(() => {
+    console.log('[UploadProcessing] Setting up push notification listener');
+
+    const subscription = Notifications.addNotificationReceivedListener((notification) => {
+      console.log('[UploadProcessing] Notification received:', notification);
+
+      const { type, recordingId: notificationRecordingId, error } = notification.request.content.data || {};
+
+      // Check if this notification is for our current recording
+      if (notificationRecordingId === recordingIdRef.current) {
+        if (type === 'new_report') {
+          // Success: Report ready
+          console.log('[UploadProcessing] Report ready notification received for current recording');
+
+          // Update timestamp to notify subscribers (e.g., HomeScreen)
+          setReportCompletedTimestamp(Date.now());
+
+          // Clear processing state
+          reset();
+        } else if (type === 'report_failed') {
+          // Failure: Report generation failed
+          console.log('[UploadProcessing] Report failed notification received for current recording');
+
+          // Clear processing state
+          reset();
+
+          // Show error alert to user
+          const Alert = require('react-native').Alert;
+          const userFriendlyMessage = getUserFriendlyErrorMessage(error || 'Unknown error');
+          Alert.alert(
+            'Unable to Generate Report',
+            userFriendlyMessage,
+            [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
+          );
+        }
+      }
+    });
+
+    return () => {
+      console.log('[UploadProcessing] Removing push notification listener');
+      subscription.remove();
+    };
+  }, []); // Only run once on mount
 
   const loadState = async () => {
     try {
@@ -150,11 +176,12 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
           // Resume upload
           uploadRecording(data.recordingUri, data.durationSeconds);
         } else if (data.state === 'processing' && data.recordingId) {
-          // Before resuming polling, check if recording has permanently failed
+          // Check if recording has completed or permanently failed
           try {
             const analysis = await recordingService.getAnalysis(data.recordingId);
-            // If we got analysis successfully, no need to poll - already complete
+            // If we got analysis successfully, recording already complete
             console.log('[UploadProcessing] Recording already completed, clearing state');
+            setReportCompletedTimestamp(Date.now());
             await reset();
           } catch (error: any) {
             // Check if it's a permanent failure
@@ -163,13 +190,23 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
                            error.message?.toLowerCase().includes('analysis failed');
 
             if (isFailed) {
-              // Recording has permanently failed - clear state instead of polling
-              console.log('[UploadProcessing] Recording permanently failed, clearing state:', error.message);
+              // Recording has permanently failed - show error to user
+              console.log('[UploadProcessing] Recording permanently failed, showing error:', error.message);
               await reset();
+
+              // Show error alert with user-friendly message
+              const Alert = require('react-native').Alert;
+              const userFriendlyMessage = getUserFriendlyErrorMessage(
+                error.userMessage || error.message || 'Unknown error'
+              );
+              Alert.alert(
+                'Unable to Generate Report',
+                userFriendlyMessage,
+                [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
+              );
             } else {
-              // Still processing - resume polling immediately (attempt=0 to start fresh)
-              console.log('[UploadProcessing] Recording still processing, resuming polling immediately');
-              pollForAnalysisCompletion(data.recordingId, 0);
+              // Still processing - keep processing state, will be notified via push
+              console.log('[UploadProcessing] Recording still processing, waiting for push notification');
             }
           }
         }
@@ -188,6 +225,12 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
   };
 
   const startUpload = async (uri: string, durationSeconds: number) => {
+    // Prevent duplicate uploads - if already uploading or processing, ignore this call
+    if (state === 'uploading' || state === 'processing') {
+      console.log('[UploadProcessing] Upload already in progress, ignoring duplicate call', { currentState: state });
+      return;
+    }
+
     console.log('[UploadProcessing] Starting upload...', { uri, durationSeconds });
     setState('uploading');
     setUploadProgress(0);
@@ -371,7 +414,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         throw completeError;
       }
 
-      // Show processing state and poll for analysis completion
+      // Show processing state - will be notified via push when complete
       setState('processing');
       await saveState({
         state: 'processing',
@@ -379,8 +422,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         uploadProgress: 100,
       });
 
-      // Poll for analysis completion
-      pollForAnalysisCompletion(sessionId);
+      console.log('[UploadProcessing] Waiting for push notification when analysis completes...');
 
     } catch (error: any) {
       console.error('[UploadProcessing] Upload failed:', error);
@@ -414,138 +456,8 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     }
   };
 
-  // Helper: Calculate exponential backoff delay
-  const getBackoffDelay = (attempt: number): number => {
-    // Start at 1s, increase by 1.5x each attempt, max 10s
-    return Math.min(1000 * Math.pow(1.5, attempt), 10000);
-  };
-
-  const pollForAnalysisCompletion = async (recordingId: string, attempt: number = 0) => {
-    console.log(`[UploadProcessing] Polling attempt ${attempt + 1}/40 for recording ${recordingId}`);
-    const maxAttempts = 40;
-
-    if (attempt >= maxAttempts) {
-      console.log('[UploadProcessing] Polling timeout - still processing');
-      await reset();
-      const Alert = require('react-native').Alert;
-      Alert.alert(
-        'Still Processing',
-        ErrorMessages.PROCESSING.TIMEOUT,
-        [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
-      );
-      return;
-    }
-
-    try {
-      // Check if analysis is complete
-      console.log('[UploadProcessing] Calling getAnalysis...');
-      const analysis = await recordingService.getAnalysis(recordingId);
-
-      // If we got the analysis successfully, send notification if enabled
-      console.log('[UploadProcessing] Analysis complete!');
-
-      // Update timestamp to notify subscribers (e.g., HomeScreen) that a new report is ready
-      setReportCompletedTimestamp(Date.now());
-
-      // Check if new report notifications are enabled
-      try {
-        console.log('[UploadProcessing] Checking notification preferences...');
-        const prefsJson = await AsyncStorage.getItem('@notification_preferences');
-        console.log('[UploadProcessing] Notification preferences:', prefsJson);
-
-        if (prefsJson) {
-          const prefs = JSON.parse(prefsJson);
-          console.log('[UploadProcessing] Parsed preferences:', prefs);
-          console.log('[UploadProcessing] newReportNotification setting:', prefs.newReportNotification);
-
-          if (prefs.newReportNotification !== false) {
-            console.log('[UploadProcessing] Sending new report notification...');
-            await sendNewReportNotification('play session', recordingId);
-            console.log('[UploadProcessing] New report notification sent successfully');
-          } else {
-            console.log('[UploadProcessing] New report notifications are disabled in preferences');
-          }
-        } else {
-          console.log('[UploadProcessing] No notification preferences found, sending notification by default');
-          await sendNewReportNotification('play session', recordingId);
-          console.log('[UploadProcessing] New report notification sent successfully');
-        }
-      } catch (notifError) {
-        console.error('[UploadProcessing] Failed to send notification:', notifError);
-        // Don't block navigation if notification fails
-      }
-
-      // Clear state and navigate
-      await reset();
-      if (onNavigateToHome) {
-        onNavigateToHome();
-      }
-    } catch (error: any) {
-      // Better error logging - Error objects don't serialize well with JSON.stringify
-      console.log(`[UploadProcessing] Caught error:`, {
-        status: error.status,
-        message: error.message,
-        userMessage: error.userMessage,
-        failedAt: error.failedAt,
-        name: error.name,
-        stack: error.stack?.split('\n').slice(0, 3).join('\n'), // First 3 lines of stack
-      });
-
-      // Check if analysis failed permanently (check both error.status and message)
-      const isFailed = error.status === 'failed' ||
-                       error.message?.toLowerCase().includes('report generation failed') ||
-                       error.message?.toLowerCase().includes('analysis failed');
-
-      if (isFailed) {
-        console.error('[UploadProcessing] Analysis failed permanently:', error.message);
-        await reset();
-        // Show error alert to user with user-friendly message
-        const Alert = require('react-native').Alert;
-        const userFriendlyMessage = getUserFriendlyErrorMessage(
-          error.userMessage || error.message || 'Unknown error'
-        );
-        Alert.alert(
-          'Unable to Generate Report',
-          userFriendlyMessage,
-          [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
-        );
-        return;
-      }
-
-      // If still processing or transcribing, wait and try again
-      const errorMsg = (error.message || '').toLowerCase();
-      if (errorMsg.includes('processing') || errorMsg.includes('transcription') || errorMsg.includes('in progress')) {
-        const delay = getBackoffDelay(attempt);
-        console.log(`[UploadProcessing] Still processing, will retry in ${delay}ms (attempt ${attempt + 1}/${maxAttempts})`);
-        const timeout = setTimeout(() => {
-          pollForAnalysisCompletion(recordingId, attempt + 1);
-        }, delay);
-        pollTimeoutRef.current = timeout;
-      } else {
-        // Permanent failure - show apology (system already auto-retried on backend)
-        console.error('[UploadProcessing] Analysis failed permanently after auto-retries:', error);
-        await reset();
-        const Alert = require('react-native').Alert;
-        const userFriendlyMessage = getUserFriendlyErrorMessage(
-          error.userMessage || error.message || ErrorMessages.PROCESSING.FAILED
-        );
-        Alert.alert(
-          'We Apologize',
-          userFriendlyMessage,
-          [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
-        );
-      }
-    }
-  };
-
   const reset = async () => {
     console.log('[UploadProcessing] Resetting state');
-
-    // Clear any pending timeouts
-    if (pollTimeoutRef.current) {
-      clearTimeout(pollTimeoutRef.current);
-      pollTimeoutRef.current = null;
-    }
 
     // Abort any ongoing upload
     if (uploadXhrRef.current) {

@@ -21,6 +21,7 @@ import { Button } from '../components/Button';
 import { ResponseButton } from '../components/ResponseButton';
 import { QuizFeedback } from '../components/QuizFeedback';
 import { LessonContentCard } from '../components/LessonContentCard';
+import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
 import { COLORS, FONTS } from '../constants/assets';
 import { LessonDetailResponse, LessonSegment, SubmitQuizResponse, LessonNotFoundError } from '@nora/core';
 import { useLessonService } from '../contexts/AppContext';
@@ -128,6 +129,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
   const [quizFeedback, setQuizFeedback] = useState<SubmitQuizResponse | null>(null);
+  const [showPhaseCelebration, setShowPhaseCelebration] = useState(false);
 
   // Refs to store latest function references for panResponder
   const handleContinueRef = useRef<(() => void) | undefined>(undefined);
@@ -405,14 +407,22 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     setQuizFeedback(immediateResponse);
     setIsQuizSubmitted(true);
 
-    // Submit to API in background (don't wait)
-    lessonService.submitQuizAnswer(
-      lessonData.lesson.quiz.id,
-      selectedOption
-    ).catch(error => {
-      console.error('Failed to submit quiz to server (non-blocking):', error);
+    // Submit to API and check for phase advancement
+    try {
+      const response = await lessonService.submitQuizAnswer(
+        lessonData.lesson.quiz.id,
+        selectedOption
+      );
+
+      // Check if user advanced to DISCIPLINE phase
+      if (response.phaseAdvanced) {
+        console.log('🎉 User advanced to DISCIPLINE phase!');
+        setShowPhaseCelebration(true);
+      }
+    } catch (error) {
+      console.error('Failed to submit quiz to server:', error);
       // Don't show error to user since they already got immediate feedback
-    });
+    }
   };
 
   const handleContinue = async () => {
@@ -672,6 +682,16 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
           </View>
         </View>
       </View>
+
+      {/* Phase Celebration Modal */}
+      <PhaseCelebrationModal
+        visible={showPhaseCelebration}
+        onClose={() => {
+          setShowPhaseCelebration(false);
+          // Navigate back to home to see new lessons
+          navigation.replace('MainTabs', { screen: 'Home' });
+        }}
+      />
     </SafeAreaView>
   );
 };

@@ -22,6 +22,8 @@ import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useAuthService } from '../../contexts/AppContext';
 import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
 import { handleApiSuccess } from '../../utils/NetworkMonitor';
+import { requestNotificationPermissions } from '../../utils/notifications';
+import amplitudeService from '../../services/amplitudeService';
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -40,8 +42,26 @@ export const LoginScreen: React.FC = () => {
 
     try {
       setLoading(true);
-      await authService.login(email.trim(), password);
+      const response = await authService.login(email.trim(), password);
       handleApiSuccess(); // Mark server as up
+
+      // Track login in Amplitude
+      if (response && response.user) {
+        amplitudeService.identifyUser(response.user.id, {
+          email: response.user.email,
+          name: response.user.name,
+        });
+        amplitudeService.trackLogin('email');
+      }
+
+      // Register for push notifications (non-blocking)
+      const accessToken = authService.getAccessToken();
+      if (accessToken) {
+        requestNotificationPermissions(accessToken).catch(error => {
+          console.error('[LoginScreen] Failed to register push notifications:', error);
+          // Don't block login if push notification registration fails
+        });
+      }
 
       // Reset navigation to MainTabs after successful login
       navigation.dispatch(

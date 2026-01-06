@@ -19,10 +19,14 @@ export const ChildIssueScreen: React.FC = () => {
         { value: 'new_baby_in_the_house', label: 'New baby in the home' },
         { value: 'frustration_tolerance', label: 'Low frustration tolerance' },
         { value: 'Navigating_change', label: 'Navigating a big change' },
+        { value: 'other', label: 'Others' },
       ]}
       dataField="issue"
       nextScreen="InitialReassurance"
       multiSelect={true}
+      allowOtherOption={true}
+      otherOptionValue="other"
+      otherOptionPlaceholder="Please describe the issue..."
       progress={getOnboardingProgress('ChildIssue')}
     />
   );

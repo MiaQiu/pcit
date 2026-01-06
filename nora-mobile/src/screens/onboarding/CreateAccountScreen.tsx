@@ -24,6 +24,8 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
 import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
 import { handleApiSuccess } from '../../utils/NetworkMonitor';
+import { requestNotificationPermissions } from '../../utils/notifications';
+import amplitudeService from '../../services/amplitudeService';
 
 export const CreateAccountScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -81,7 +83,7 @@ export const CreateAccountScreen: React.FC = () => {
     try {
       // For now, we'll create a temporary account with minimal data
       // The full profile will be filled in during the next steps
-      await authService.signup({
+      const response = await authService.signup({
         email: email.toLowerCase().trim(),
         password,
         name: 'User', // Placeholder, will be updated in NameInputScreen
@@ -90,6 +92,23 @@ export const CreateAccountScreen: React.FC = () => {
         childConditions: ['none'],// Placeholder
       });
       handleApiSuccess(); // Mark server as up
+
+      // Track signup in Amplitude
+      if (response && response.user) {
+        amplitudeService.identifyUser(response.user.id, {
+          email: response.user.email,
+        });
+        amplitudeService.trackSignup('email');
+      }
+
+      // Register for push notifications (non-blocking)
+      const accessToken = authService.getAccessToken();
+      if (accessToken) {
+        requestNotificationPermissions(accessToken).catch(error => {
+          console.error('[CreateAccountScreen] Failed to register push notifications:', error);
+          // Don't block signup if push notification registration fails
+        });
+      }
 
       // Store email in onboarding context
       updateData({ email: email.toLowerCase().trim() });

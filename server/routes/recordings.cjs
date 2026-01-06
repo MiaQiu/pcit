@@ -12,6 +12,7 @@ const prisma = require('../services/db.cjs');
 const storage = require('../services/storage-s3.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
 const { createAnonymizedRequest } = require('../utils/anonymization.cjs');
+const { sendReportReadyNotification } = require('../services/pushNotifications.cjs');
 const {
   ValidationError,
   NotFoundError,
@@ -22,6 +23,83 @@ const {
 } = require('../utils/errors.cjs');
 
 const router = express.Router();
+
+// ============================================================================
+// Phase Progression Helper
+// ============================================================================
+
+/**
+ * Check and update user's phase to DISCIPLINE if conditions are met:
+ * 1. Completed Day 15 of CONNECT phase
+ * 2. Ever achieved a score of 100 in any session
+ * @returns {Promise<boolean>} - Returns true if phase was advanced, false otherwise
+ */
+async function checkAndUpdateUserPhase(userId) {
+  try {
+    // Get user's current phase
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { currentPhase: true }
+    });
+
+    // If already in DISCIPLINE phase, no need to check
+    if (user.currentPhase === 'DISCIPLINE') {
+      return false;
+    }
+
+    // Check if Day 15 of CONNECT is completed
+    const connectDay15 = await prisma.lesson.findFirst({
+      where: {
+        phase: 'CONNECT',
+        dayNumber: 15
+      }
+    });
+
+    if (!connectDay15) {
+      return false; // Day 15 doesn't exist
+    }
+
+    const day15Progress = await prisma.userLessonProgress.findUnique({
+      where: {
+        userId_lessonId: {
+          userId,
+          lessonId: connectDay15.id
+        }
+      }
+    });
+
+    if (!day15Progress || day15Progress.status !== 'COMPLETED') {
+      return false; // Day 15 not completed yet
+    }
+
+    // Check if user has ever achieved a score of 100 in any session
+    const sessions = await prisma.session.findMany({
+      where: {
+        userId,
+        overallScore: { not: null }
+      },
+      select: { overallScore: true }
+    });
+
+    const hasHundredScore = sessions.some(session => (session.overallScore || 0) >= 100);
+
+    if (!hasHundredScore) {
+      return false; // Never achieved 100 score yet
+    }
+
+    // Both conditions met - update user to DISCIPLINE phase
+    await prisma.user.update({
+      where: { id: userId },
+      data: { currentPhase: 'DISCIPLINE' }
+    });
+
+    console.log(`✅ User ${userId} advanced to DISCIPLINE phase (Day 15 completed + achieved 100 score)`);
+    return true; // Phase was advanced!
+  } catch (error) {
+    console.error('Error checking/updating user phase:', error);
+    return false;
+  }
+}
 
 // ============================================================================
 // Helper Functions for Utterance Management
@@ -296,6 +374,28 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
           }
         });
         console.log(`✅ [PERMANENT-FAILURE] Database updated for session ${sessionId.substring(0, 8)}`);
+
+        // Send push notification to inform user of failure
+        console.log(`📱 [PUSH-NOTIFICATION] Sending failure notification for session ${sessionId.substring(0, 8)}`);
+        try {
+          const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
+          const result = await sendPushNotificationToUser(userId, {
+            title: 'Recording Processing Failed',
+            body: 'We encountered an issue processing your recording. Please try again.',
+            data: {
+              type: 'report_failed',
+              recordingId: sessionId,
+              error: err.message
+            }
+          });
+          if (result.success) {
+            console.log(`✅ [PUSH-NOTIFICATION] Failure notification sent for session ${sessionId.substring(0, 8)}`);
+          } else {
+            console.log(`⚠️ [PUSH-NOTIFICATION] Failure notification failed for session ${sessionId.substring(0, 8)}:`, result.error);
+          }
+        } catch (pushError) {
+          console.error(`❌ [PUSH-NOTIFICATION] Error sending failure notification for session ${sessionId.substring(0, 8)}:`, pushError);
+        }
       } catch (dbErr) {
         console.error(`❌ [DB-ERROR] Failed to save error to database:`, dbErr);
       }
@@ -476,6 +576,20 @@ async function processRecordingWithRetry(sessionId, userId, attemptNumber = 0) {
       where: { id: sessionId },
       data: { analysisStatus: 'COMPLETED' }
     });
+
+    // Send push notification to user that report is ready
+    console.log(`📱 [PUSH-NOTIFICATION] Sending report ready notification for session ${sessionId.substring(0, 8)}`);
+    try {
+      const result = await sendReportReadyNotification(userId, sessionId, 'play session');
+      if (result.success) {
+        console.log(`✅ [PUSH-NOTIFICATION] Push notification sent successfully for session ${sessionId.substring(0, 8)}`);
+      } else {
+        console.log(`⚠️ [PUSH-NOTIFICATION] Push notification failed for session ${sessionId.substring(0, 8)}:`, result.error);
+      }
+    } catch (pushError) {
+      console.error(`❌ [PUSH-NOTIFICATION] Error sending push notification for session ${sessionId.substring(0, 8)}:`, pushError);
+      // Don't fail the whole process if push notification fails
+    }
 
   } catch (error) {
     console.error(`❌ [PROCESSING-ERROR] Session ${sessionId.substring(0, 8)} - Attempt ${attemptNumber + 1} failed:`, error.message);
@@ -1345,6 +1459,37 @@ Do not include markdown or whitespace (minified JSON).
   });
 
   console.log(`PCIT coding and overall score (${overallScore}) stored for session ${sessionId}`);
+
+  // Check if user should advance to DISCIPLINE phase
+  // Only check if user is still in CONNECT phase (no need to check if already in DISCIPLINE)
+  try {
+    const userPhase = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { currentPhase: true, pushToken: true }
+    });
+
+    if (userPhase?.currentPhase === 'CONNECT') {
+      const phaseAdvanced = await checkAndUpdateUserPhase(userId);
+
+      // If phase advanced, send celebration notification
+      if (phaseAdvanced && userPhase.pushToken) {
+        try {
+          await sendReportReadyNotification(
+            userPhase.pushToken,
+            '🎉 Congratulations!',
+            'You\'ve advanced to the Discipline Phase! New lessons are now available.',
+            { type: 'PHASE_ADVANCED', phase: 'DISCIPLINE' }
+          );
+          console.log(`📱 Sent phase advancement notification to user ${userId}`);
+        } catch (notifError) {
+          console.error('Failed to send phase advancement notification:', notifError);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error checking user phase:', error);
+    // Don't fail the analysis if phase check fails
+  }
 }
 
 // Configure multer for file uploads (store in memory)

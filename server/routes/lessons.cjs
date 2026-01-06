@@ -50,6 +50,79 @@ async function checkPrerequisites(userId, lesson) {
 }
 
 /**
+ * Check and update user's phase to DISCIPLINE if conditions are met:
+ * 1. Completed Day 15 of CONNECT phase
+ * 2. Ever achieved a score of 100 in any session
+ * @returns {Promise<boolean>} - Returns true if phase was advanced, false otherwise
+ */
+async function checkAndUpdateUserPhase(userId) {
+  try {
+    // Get user's current phase
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { currentPhase: true }
+    });
+
+    // If already in DISCIPLINE phase, no need to check
+    if (user.currentPhase === 'DISCIPLINE') {
+      return false;
+    }
+
+    // Check if Day 15 of CONNECT is completed
+    const connectDay15 = await prisma.lesson.findFirst({
+      where: {
+        phase: 'CONNECT',
+        dayNumber: 15
+      }
+    });
+
+    if (!connectDay15) {
+      return false; // Day 15 doesn't exist
+    }
+
+    const day15Progress = await prisma.userLessonProgress.findUnique({
+      where: {
+        userId_lessonId: {
+          userId,
+          lessonId: connectDay15.id
+        }
+      }
+    });
+
+    if (!day15Progress || day15Progress.status !== 'COMPLETED') {
+      return false; // Day 15 not completed yet
+    }
+
+    // Check if user has ever achieved a score of 100 in any session
+    const sessions = await prisma.session.findMany({
+      where: {
+        userId,
+        overallScore: { not: null }
+      },
+      select: { overallScore: true }
+    });
+
+    const hasHundredScore = sessions.some(session => (session.overallScore || 0) >= 100);
+
+    if (!hasHundredScore) {
+      return false; // Never achieved 100 score yet
+    }
+
+    // Both conditions met - update user to DISCIPLINE phase
+    await prisma.user.update({
+      where: { id: userId },
+      data: { currentPhase: 'DISCIPLINE' }
+    });
+
+    console.log(`✅ User ${userId} advanced to DISCIPLINE phase (Day 15 completed + achieved 100 score)`);
+    return true; // Phase was advanced!
+  } catch (error) {
+    console.error('Error checking/updating user phase:', error);
+    return false;
+  }
+}
+
+/**
  * Format lesson for lesson card (list view)
  */
 function formatLessonCard(lesson, userProgress) {
@@ -82,6 +155,16 @@ router.get('/', requireAuth, async (req, res) => {
   try {
     const userId = req.userId;
     const { phase } = req.query;
+
+    // Get user to check current phase
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { currentPhase: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
     // Build where clause
     const where = {};
@@ -131,13 +214,66 @@ router.get('/', requireAuth, async (req, res) => {
       prereqProgressMap[p.lessonId] = p;
     });
 
+    // Determine if user should see booster lessons (CONNECT days 16-22)
+    // Show boosters if: user completed Day 15 OR user is in DISCIPLINE phase
+    const connectDay15 = lessons.find(l => l.phase === 'CONNECT' && l.dayNumber === 15);
+    const hasCompletedDay15 = connectDay15 && progressMap[connectDay15.id]?.status === 'COMPLETED';
+    const isInDisciplinePhase = user.currentPhase === 'DISCIPLINE';
+
+    const shouldShowBoosters = hasCompletedDay15 || isInDisciplinePhase;
+
+    // Filter out booster lessons if user shouldn't see them
+    const filteredLessons = lessons.filter(lesson => {
+      // If this is a booster lesson and user shouldn't see boosters, filter it out
+      if (lesson.isBooster && !shouldShowBoosters) {
+        return false;
+      }
+      return true;
+    });
+
     // Check prerequisites and determine lock status for each lesson
     // IMPORTANT: One lesson per day rule - a lesson unlocks the day after the previous lesson was completed
-    const lessonCards = lessons.map((lesson, index) => {
+    const lessonCards = filteredLessons.map((lesson, index) => {
       let progress = progressMap[lesson.id];
 
       // If no progress exists, create initial state
       if (!progress) {
+        // SPECIAL CASE: If user is in DISCIPLINE phase
+        // - Unlock all CONNECT lessons (including boosters)
+        // - Unlock DISCIPLINE Day 1
+        if (isInDisciplinePhase) {
+          if (lesson.phase === 'CONNECT') {
+            // Force unlock all CONNECT lessons
+            progress = {
+              lessonId: lesson.id,
+              userId,
+              status: 'NOT_STARTED',
+              currentSegment: 1,
+              totalSegments: 4,
+              startedAt: new Date(),
+              lastViewedAt: new Date(),
+              timeSpentSeconds: 0
+            };
+            return formatLessonCard(lesson, progress);
+          }
+
+          if (lesson.phase === 'DISCIPLINE' && lesson.dayNumber === 1) {
+            // Force unlock DISCIPLINE Day 1
+            progress = {
+              lessonId: lesson.id,
+              userId,
+              status: 'NOT_STARTED',
+              currentSegment: 1,
+              totalSegments: 4,
+              startedAt: new Date(),
+              lastViewedAt: new Date(),
+              timeSpentSeconds: 0
+            };
+            return formatLessonCard(lesson, progress);
+          }
+        }
+
+        // Normal case: Apply regular prerequisite and lock logic
         // First, check if this is the very first lesson (no prerequisites)
         const isFirstLesson = !lesson.prerequisites || lesson.prerequisites.length === 0;
 
@@ -714,6 +850,28 @@ router.post('/:quizId/submit', requireAuth, async (req, res) => {
             timeSpentSeconds: 0
           }
         });
+
+        // Check if user should advance to DISCIPLINE phase
+        // Only check if user is still in CONNECT phase (no need to check if already in DISCIPLINE)
+        let phaseAdvanced = false;
+        const userPhase = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { currentPhase: true }
+        });
+
+        if (userPhase?.currentPhase === 'CONNECT') {
+          phaseAdvanced = await checkAndUpdateUserPhase(userId);
+        }
+
+        res.json({
+          isCorrect,
+          correctAnswer: quiz.correctAnswer,
+          explanation: quiz.explanation,
+          attemptNumber,
+          quizResponse,
+          phaseAdvanced // Flag to trigger celebration modal
+        });
+        return;
       }
     }
 

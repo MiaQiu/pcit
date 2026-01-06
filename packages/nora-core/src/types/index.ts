@@ -324,6 +324,7 @@ export interface SubmitQuizResponse {
   explanation: string;
   attemptNumber: number;
   quizResponse: QuizResponse;
+  phaseAdvanced?: boolean; // True if user advanced to DISCIPLINE phase
 }
 
 export interface LearningStatsResponse {

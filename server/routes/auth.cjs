@@ -57,7 +57,7 @@ const signupSchema = Joi.object({
   childBirthYear: Joi.number().integer().min(1900).max(new Date().getFullYear()).required(),
   childBirthday: Joi.date().optional(),
   childConditions: Joi.array().items(Joi.string().max(200)).min(1).required(),
-  issue: Joi.string().valid('tantrums', 'defiance', 'aggression', 'social', 'emotional', 'routine', 'general').optional(),
+  issue: Joi.string().min(1).optional(),
   therapistId: Joi.string().uuid().optional()
 });
 
@@ -616,20 +616,19 @@ router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAu
 
     if (issue) {
       // Handle both string and array of issues
-      const validIssues = ['tantrums', 'not-listening', 'arguing', 'social', 'new_baby_in_the_house', 'frustration_tolerance', 'Navigating_change', 'defiance', 'aggression', 'emotional', 'routine', 'general'];
-
+      // Note: We accept any string value to allow custom free-text input from "Others" option
       if (Array.isArray(issue)) {
-        // Validate all issues in array
-        const invalidIssues = issue.filter(i => !validIssues.includes(i));
+        // Validate all issues are non-empty strings
+        const invalidIssues = issue.filter(i => typeof i !== 'string' || i.trim() === '');
         if (invalidIssues.length > 0) {
-          return res.status(400).json({ error: `Invalid issue values: ${invalidIssues.join(', ')}` });
+          return res.status(400).json({ error: 'All issue values must be non-empty strings' });
         }
         // Store as JSON string for database
         updateData.issue = JSON.stringify(issue);
       } else {
         // Single issue (backward compatibility)
-        if (!validIssues.includes(issue)) {
-          return res.status(400).json({ error: 'Invalid issue value' });
+        if (typeof issue !== 'string' || issue.trim() === '') {
+          return res.status(400).json({ error: 'Issue value must be a non-empty string' });
         }
         updateData.issue = issue;
       }
@@ -728,6 +727,65 @@ router.post('/upload-profile-image', require('../middleware/auth.cjs').requireAu
   } catch (error) {
     console.error('Upload profile image error:', error);
     res.status(500).json({ error: 'Failed to upload profile image' });
+  }
+});
+
+/**
+ * POST /api/auth/push-token
+ * Register or update user's push notification token
+ * Requires authentication
+ */
+router.post('/push-token', async (req, res) => {
+  try {
+    const { requireAuth } = require('../middleware/auth.cjs');
+    await requireAuth(req, res, async () => {
+      const { pushToken } = req.body;
+
+      if (!pushToken || typeof pushToken !== 'string') {
+        return res.status(400).json({
+          error: 'Invalid push token',
+          details: 'pushToken is required and must be a string'
+        });
+      }
+
+      const { registerPushToken } = require('../services/pushNotifications.cjs');
+      const success = await registerPushToken(req.userId, pushToken);
+
+      if (success) {
+        console.log(`[AUTH] Push token registered for user ${req.userId.substring(0, 8)}`);
+        res.json({ success: true, message: 'Push token registered successfully' });
+      } else {
+        res.status(400).json({ error: 'Failed to register push token' });
+      }
+    });
+  } catch (error) {
+    console.error('[AUTH] Error registering push token:', error);
+    res.status(500).json({ error: 'Failed to register push token' });
+  }
+});
+
+/**
+ * DELETE /api/auth/push-token
+ * Unregister user's push notification token
+ * Requires authentication
+ */
+router.delete('/push-token', async (req, res) => {
+  try {
+    const { requireAuth } = require('../middleware/auth.cjs');
+    await requireAuth(req, res, async () => {
+      const { unregisterPushToken } = require('../services/pushNotifications.cjs');
+      const success = await unregisterPushToken(req.userId);
+
+      if (success) {
+        console.log(`[AUTH] Push token unregistered for user ${req.userId.substring(0, 8)}`);
+        res.json({ success: true, message: 'Push token unregistered successfully' });
+      } else {
+        res.status(500).json({ error: 'Failed to unregister push token' });
+      }
+    });
+  } catch (error) {
+    console.error('[AUTH] Error unregistering push token:', error);
+    res.status(500).json({ error: 'Failed to unregister push token' });
   }
 });
 

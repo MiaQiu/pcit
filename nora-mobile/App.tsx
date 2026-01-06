@@ -21,6 +21,7 @@ import { RootStackNavigationProp } from './src/navigation/types';
 import { NetworkStatusBar } from './src/components/NetworkStatusBar';
 import { ToastProvider } from './src/components/ToastManager';
 import { clearBadge } from './src/utils/notifications';
+import amplitudeService from './src/services/amplitudeService';
 
 // Deep linking configuration
 const linking = {
@@ -107,6 +108,11 @@ export default function App() {
     // Enable crash reporting (even in development for testing)
     crashlytics().setCrashlyticsCollectionEnabled(true);
     console.log('Firebase Crashlytics initialized');
+  }, []);
+
+  // Initialize Amplitude Analytics
+  useEffect(() => {
+    amplitudeService.init();
   }, []);
 
   // Handle font loading error

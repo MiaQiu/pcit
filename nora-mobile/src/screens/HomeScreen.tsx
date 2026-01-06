@@ -240,7 +240,19 @@ export const HomeScreen: React.FC = () => {
         );
 
         // Loop through recordings until we find one with a successful analysis
+        // Skip recordings that have permanently failed or are still processing to avoid unnecessary API calls and console errors
         for (const recording of sortedRecordings) {
+          // Skip recordings with failed analysis status
+          if (recording.analysisStatus === 'FAILED') {
+            continue;
+          }
+
+          // Skip recordings that are still processing (PENDING or PROCESSING status)
+          // These will trigger "Transcription in progress" errors and spam the console
+          if (recording.analysisStatus === 'PENDING' || recording.analysisStatus === 'PROCESSING') {
+            continue;
+          }
+
           try {
             const analysis = await recordingService.getAnalysis(recording.id);
             handleApiSuccess(); // Mark server as up

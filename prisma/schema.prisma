@@ -289,6 +289,9 @@ model User {
   trialStartDate        DateTime?
   relationshipToChild   RelationshipToChild    @default(MOTHER)
   childGender           ChildGender?
+  pushToken             String?
+  pushTokenUpdatedAt    DateTime?
+  currentPhase          LessonPhase            @default(CONNECT)
   LearningProgress      LearningProgress?
   ModuleHistory         ModuleHistory[]
   PasswordResetToken    PasswordResetToken[]
@@ -303,6 +306,7 @@ model User {
 
   @@index([emailHash])
   @@index([therapistId])
+  @@index([pushToken])
 }
 
 model UserLessonProgress {

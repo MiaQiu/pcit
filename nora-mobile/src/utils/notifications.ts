@@ -48,9 +48,10 @@ export const NOTIFICATION_IDS = {
 };
 
 /**
- * Request notification permissions from the user
+ * Request notification permissions from the user and register push token with backend
+ * @param {string} [accessToken] - Optional access token to register push token with backend
  */
-export const requestNotificationPermissions = async (): Promise<boolean> => {
+export const requestNotificationPermissions = async (accessToken?: string): Promise<boolean> => {
   try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
@@ -65,21 +66,91 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
       return false;
     }
 
-    // Get push token for future use (optional, for remote notifications)
+    // Get push token for remote notifications
     if (Platform.OS !== 'web') {
       try {
-        const token = await Notifications.getExpoPushTokenAsync({
-          projectId: 'your-project-id', // TODO: Replace with actual Expo project ID
+        const tokenData = await Notifications.getExpoPushTokenAsync({
+          projectId: process.env.EXPO_PUBLIC_PROJECT_ID || 'your-project-id',
         });
-        console.log('Push token:', token.data);
+        const pushToken = tokenData.data;
+        console.log('[Notifications] Push token obtained:', pushToken.substring(0, 30) + '...');
+
+        // Register push token with backend if access token is provided
+        if (accessToken) {
+          await registerPushTokenWithBackend(pushToken, accessToken);
+        }
       } catch (error) {
-        console.log('Failed to get push token:', error);
+        console.log('[Notifications] Failed to get push token:', error);
       }
     }
 
     return true;
   } catch (error) {
-    console.error('Error requesting notification permissions:', error);
+    console.error('[Notifications] Error requesting notification permissions:', error);
+    return false;
+  }
+};
+
+/**
+ * Register push token with backend
+ * @param {string} pushToken - Expo push token
+ * @param {string} accessToken - User access token
+ */
+export const registerPushTokenWithBackend = async (pushToken: string, accessToken: string): Promise<boolean> => {
+  try {
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+    console.log('[Notifications] Registering push token with backend...');
+
+    const response = await fetch(`${API_URL}/api/auth/push-token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ pushToken }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[Notifications] Failed to register push token:', errorData);
+      return false;
+    }
+
+    const data = await response.json();
+    console.log('[Notifications] Push token registered successfully:', data);
+    return true;
+  } catch (error) {
+    console.error('[Notifications] Error registering push token with backend:', error);
+    return false;
+  }
+};
+
+/**
+ * Unregister push token from backend
+ * @param {string} accessToken - User access token
+ */
+export const unregisterPushTokenFromBackend = async (accessToken: string): Promise<boolean> => {
+  try {
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+    console.log('[Notifications] Unregistering push token from backend...');
+
+    const response = await fetch(`${API_URL}/api/auth/push-token`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[Notifications] Failed to unregister push token:', errorData);
+      return false;
+    }
+
+    console.log('[Notifications] Push token unregistered successfully');
+    return true;
+  } catch (error) {
+    console.error('[Notifications] Error unregistering push token from backend:', error);
     return false;
   }
 };

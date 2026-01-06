@@ -13,6 +13,9 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,6 +40,9 @@ export interface MultipleChoiceScreenProps {
   onBeforeNavigate?: (selectedValue: any, updateData: any, navigation: any) => Promise<void>;
   progress?: number; // Progress as percentage (0-100)
   disableAutoNavigate?: boolean; // Disable auto-navigation for single-select
+  allowOtherOption?: boolean; // Enable "Others" option with text input
+  otherOptionValue?: string; // Value identifier for the "Others" option (default: 'other')
+  otherOptionPlaceholder?: string; // Placeholder text for the "Others" input
 }
 
 export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
@@ -50,6 +56,9 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   onBeforeNavigate,
   progress = 0,
   disableAutoNavigate = false,
+  allowOtherOption = false,
+  otherOptionValue = 'other',
+  otherOptionPlaceholder = 'Please specify...',
 }) => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
@@ -70,6 +79,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
 
   const [selectedValue, setSelectedValue] = useState<any>(getInitialValue());
   const [isLoading, setIsLoading] = useState(false);
+  const [otherText, setOtherText] = useState('');
   const autoNavigateTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSelect = (value: string | number) => {
@@ -96,7 +106,21 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   };
 
   const handleContinue = async (valueOverride?: any) => {
-    const valueToUse = valueOverride !== undefined ? valueOverride : selectedValue;
+    let valueToUse = valueOverride !== undefined ? valueOverride : selectedValue;
+
+    // If "other" option is selected and allowOtherOption is enabled, include the custom text
+    if (allowOtherOption && multiSelect) {
+      const hasOtherSelected = Array.isArray(valueToUse) && valueToUse.includes(otherOptionValue);
+      if (hasOtherSelected && otherText.trim()) {
+        // Replace the generic "other" value with the custom text
+        valueToUse = valueToUse
+          .filter((v: any) => v !== otherOptionValue)
+          .concat([otherText.trim()]);
+      } else if (hasOtherSelected && !otherText.trim()) {
+        // Don't allow continuing if "other" is selected but no text is provided
+        return;
+      }
+    }
 
     // Validate the value
     const isValueValid = multiSelect
@@ -150,71 +174,97 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
     return selectedValue === value;
   };
 
+  const isOtherSelected = allowOtherOption && multiSelect &&
+    Array.isArray(selectedValue) && selectedValue.includes(otherOptionValue);
+
   const isValid = multiSelect
-    ? Array.isArray(selectedValue) && selectedValue.length > 0
+    ? Array.isArray(selectedValue) && selectedValue.length > 0 &&
+      (!isOtherSelected || otherText.trim().length > 0)
     : selectedValue !== null && selectedValue !== undefined;
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Dragon Header */}
-        <OnboardingDragonHeader text={headerText} progress={progress} />
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View style={styles.content}>
+          {/* Dragon Header */}
+          <OnboardingDragonHeader text={headerText} progress={progress} />
 
-        {/* Title */}
-        <View style={styles.header}>
-          <Text style={styles.title}>{title}</Text>
-        </View>
-
-        {/* Options */}
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {options.map((option) => {
-            const selected = isSelected(option.value);
-            return (
-              <TouchableOpacity
-                key={String(option.value)}
-                style={[
-                  styles.optionCard,
-                  selected && styles.optionCardSelected,
-                ]}
-                onPress={() => handleSelect(option.value)}
-                activeOpacity={0.8}
-              >
-                <Text
-                  style={[
-                    styles.optionLabel,
-                    selected && styles.optionLabelSelected,
-                  ]}
-                >
-                  {option.label}
-                </Text>
-                {selected && (
-                  <View style={styles.checkmark}>
-                    <Ionicons name="checkmark-circle" size={24} color="#007866" />
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-        {/* Buttons */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator color="#8C49D5" />
+          {/* Title */}
+          <View style={styles.header}>
+            <Text style={styles.title}>{title}</Text>
           </View>
-        ) : (
-          <OnboardingButtonRow
-            onBack={handleBack}
-            onContinue={() => handleContinue()}
-            continueDisabled={!isValid}
-            continueText={continueText}
-          />
-        )}
-      </View>
+
+          {/* Options */}
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {options.map((option) => {
+              const selected = isSelected(option.value);
+              return (
+                <TouchableOpacity
+                  key={String(option.value)}
+                  style={[
+                    styles.optionCard,
+                    selected && styles.optionCardSelected,
+                  ]}
+                  onPress={() => handleSelect(option.value)}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.optionLabel,
+                      selected && styles.optionLabelSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                  {selected && (
+                    <View style={styles.checkmark}>
+                      <Ionicons name="checkmark-circle" size={24} color="#007866" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+
+            {/* Show text input when "Other" is selected */}
+            {isOtherSelected && (
+              <View style={styles.otherInputContainer}>
+                <TextInput
+                  style={styles.otherInput}
+                  placeholder={otherOptionPlaceholder}
+                  value={otherText}
+                  onChangeText={setOtherText}
+                  placeholderTextColor="#9CA3AF"
+                  autoFocus={true}
+                  returnKeyType="done"
+                  onSubmitEditing={() => handleContinue()}
+                />
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Buttons */}
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color="#8C49D5" />
+            </View>
+          ) : (
+            <OnboardingButtonRow
+              onBack={handleBack}
+              onContinue={() => handleContinue()}
+              continueDisabled={!isValid}
+              continueText={continueText}
+            />
+          )}
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -223,6 +273,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  keyboardAvoid: {
+    flex: 1,
   },
   content: {
     flex: 1,
@@ -271,6 +324,21 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     marginLeft: 8,
+  },
+  otherInputContainer: {
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  otherInput: {
+    height: 56,
+    borderWidth: 2,
+    borderColor: '#007866',
+    borderRadius: 36,
+    paddingHorizontal: 24,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 16,
+    color: '#1E2939',
+    backgroundColor: '#EBF9F8',
   },
   loadingContainer: {
     height: 56,
