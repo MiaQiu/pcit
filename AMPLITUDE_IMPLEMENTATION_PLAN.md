@@ -60,17 +60,25 @@ Implement comprehensive analytics tracking across the Nora mobile app to underst
 - `Report Viewed`
 
 **Event properties:**
-- `source`: `'home_last_session'` | `'home_next_action'` | `'progress_tab'` | `'notification'`
+- `source`:
+  - `'home_next_action_button'` - Continue button from NextActionCard
+  - `'home_score_card_button'` - Read Report button near score display
+  - `'home_last_session'` - Score card tap for latest report
+  - `'progress_tab'` - View from Progress/Stats screen
+  - `'notification'` - From push notification tap
 - `recordingId`: string
 - `score`: number
-- `timeSinceRecording`: number (minutes)
-- `hasViewedBefore`: boolean
+- `maxScore`: number
 
-**Files to modify:**
-- `nora-mobile/src/screens/HomeScreen.tsx` - Two different cards (last session vs next action)
-- `nora-mobile/src/screens/ProgressScreen.tsx` (or recordings list) - Add source: 'progress_tab'
-- Notification handler - Add source: 'notification'
-- `nora-mobile/src/services/amplitudeService.ts` - Update method signatures
+**Files modified:**
+- ✅ `nora-mobile/src/screens/HomeScreen.tsx` - Three different sources (next action button, score card button, last session)
+- ✅ `nora-mobile/src/screens/ProgressScreen.tsx` - Track from progress tab
+- ✅ `nora-mobile/App.tsx` - Track from notification tap
+- ✅ `nora-mobile/src/services/amplitudeService.ts` - Updated method signatures
+
+**Implementation Notes:**
+- `handleReadTodayReport()` accepts source parameter to differentiate between NextActionCard's Continue button and score card's Read Report button
+- `handleReadLatestReport()` used when viewing older reports from score card
 
 ---
 
@@ -115,10 +123,29 @@ Implement comprehensive analytics tracking across the Nora mobile app to underst
 
 ---
 
-### **2.3 Streak Tracking**
+### **2.3 Screen View Tracking**
 
 **Events to implement:**
-- `Streak Milestone Reached`
+- `Screen Viewed` - Track main tab navigation
+
+**Event properties:**
+- `screen`: `'home'` | `'record'` | `'progress'`
+
+**Files modified:**
+- ✅ `nora-mobile/src/screens/HomeScreen.tsx` - Track via useFocusEffect
+- ✅ `nora-mobile/src/screens/RecordScreen.tsx` - Track via useFocusEffect
+- ✅ `nora-mobile/src/screens/ProgressScreen.tsx` - Track on mount
+
+**Implementation Notes:**
+- Uses `useFocusEffect` for tab screens to track every time user switches to the tab
+- Helps understand navigation patterns and most visited screens
+
+---
+
+### **2.4 Streak Tracking**
+
+**Events to implement:**
+- `Streak Milestone Reached` (planned, not yet implemented)
 
 **Event properties:**
 - `streakCount`: number
@@ -127,6 +154,8 @@ Implement comprehensive analytics tracking across the Nora mobile app to underst
 **Files to modify:**
 - Server-side: `server/routes/recordings.cjs` - Track when streak updates
 - Or client-side: When streak data updates
+
+**Status:** ⏳ Not yet implemented
 
 ---
 
@@ -218,8 +247,62 @@ After implementation, you'll be able to answer:
 
 ---
 
-## **Status**
+## **Implementation Status**
 
-- [ ] Phase 1: Core Value Events
-- [ ] Phase 2: Engagement Events
-- [ ] Phase 3: Onboarding Tracking
+- ✅ **Phase 1: Core Value Events** (COMPLETED)
+  - ✅ Lesson tracking (started, segment viewed, quiz answered, completed)
+  - ✅ Recording tracking (started, completed, uploaded)
+  - ✅ Report tracking (5 different sources tracked)
+
+- ✅ **Phase 2: Engagement Events** (COMPLETED)
+  - ✅ User properties (phase, streaks, subscription, child info)
+  - ✅ Notification tracking (permission, received, opened)
+  - ✅ Screen view tracking (home, record, progress)
+  - ⏳ Streak milestone tracking (planned)
+
+- ✅ **Phase 3: Onboarding Tracking** (COMPLETED)
+  - ✅ Screen viewed (welcome, child issue)
+  - ✅ Enhanced signup/login with user properties
+
+---
+
+## **Key Insights Enabled**
+
+With this implementation, you can now answer:
+
+1. **Feature Engagement**
+   - Which features drive the most engagement? (Lessons vs Recording vs Reports)
+   - Do users who complete lessons record more sessions?
+
+2. **Navigation Patterns**
+   - Which tab do users visit most? (Home vs Record vs Progress)
+   - What's the typical user flow? (Home → Lesson → Record → Report?)
+
+3. **Report Discovery**
+   - Do users discover reports via notification or proactive checking?
+   - Which button drives more report views? (Continue vs Read Report)
+   - Are score cards or next action prompts more effective?
+
+4. **Onboarding Funnel**
+   - Where do users drop off during signup?
+   - Which onboarding step loses the most users?
+
+5. **Notification Effectiveness**
+   - What's the notification permission grant rate?
+   - What's the notification open rate by type?
+   - Do notifications drive meaningful engagement?
+
+6. **User Segmentation**
+   - How do users in CONNECT vs DISCIPLINE phase behave differently?
+   - Does child age correlate with engagement patterns?
+   - How do subscription plans affect feature usage?
+
+---
+
+## **Commit History**
+
+- **2026-01-06**: Initial comprehensive implementation (commit: 05246a2)
+  - All 3 phases implemented
+  - 15 files modified (517 insertions, 27 deletions)
+  - Added granular source tracking for reports
+  - Added screen view tracking for main tabs
