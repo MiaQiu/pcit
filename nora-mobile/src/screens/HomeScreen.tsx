@@ -49,7 +49,6 @@ export const HomeScreen: React.FC = () => {
   const [todayLessonId, setTodayLessonId] = useState<string | null>(null);
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
   const [isExperiencedUser, setIsExperiencedUser] = useState(false);
-  const [failedRecordings, setFailedRecordings] = useState<any[]>([]);
   const [lastRefreshDate, setLastRefreshDate] = useState<string>(getTodaySingapore());
 
   /**
@@ -111,9 +110,7 @@ export const HomeScreen: React.FC = () => {
     checkExperiencedUserStatus();
     loadLessons();
     loadUserProfile();
-    loadStreakData();
-    loadLatestReport();
-    loadTodayState();
+    loadDashboardData();
   }, []);
 
   // Reload state when screen comes into focus (after completing lesson/recording/reading report)
@@ -125,16 +122,10 @@ export const HomeScreen: React.FC = () => {
         screen: 'home',
       });
 
-      // Reload lessons, today's state and streak when tab comes into focus
+      // Reload lessons and dashboard data when tab comes into focus
       // This ensures NextActionCard shows the correct lesson (not stale cached data)
-      // Note: loadLatestReport() is NOT called here to avoid unnecessary API calls
-      // Latest report is cached and only refreshed when:
-      // 1. Initial mount (useEffect on line 106)
-      // 2. New report completes (uploadProcessing.reportCompletedTimestamp watcher)
-      // 3. Manual pull-to-refresh
       loadLessons(false); // Refresh lessons without showing loading spinner
-      loadTodayState();
-      loadStreakData();
+      loadDashboardData();
     }, [])
   );
 
@@ -143,9 +134,7 @@ export const HomeScreen: React.FC = () => {
     if (uploadProcessing.reportCompletedTimestamp) {
       console.log('[HomeScreen] New report completed, refreshing data...');
       // Refresh all data to show the new report and updated score
-      loadTodayState();
-      loadStreakData();
-      loadLatestReport();
+      loadDashboardData();
     }
   }, [uploadProcessing.reportCompletedTimestamp]);
 
@@ -160,9 +149,7 @@ export const HomeScreen: React.FC = () => {
           console.log('[HomeScreen] Date changed since last refresh - refreshing all data');
           setLastRefreshDate(today);
           loadLessons();
-          loadTodayState();
-          loadStreakData();
-          loadLatestReport();
+          loadDashboardData();
         }
       }
     });
@@ -192,33 +179,107 @@ export const HomeScreen: React.FC = () => {
     }
   };
 
-  const loadStreakData = async () => {
+  /**
+   * Load all dashboard data in a single optimized API call
+   * Replaces separate calls to loadTodayState, loadStreakData, and loadLatestReport
+   */
+  const loadDashboardData = async () => {
     try {
-      // Fetch recordings and lessons in parallel
-      const [recordingsResponse, lessonsResponse] = await Promise.all([
-        recordingService.getRecordings(),
+      // Fetch dashboard data and lessons in parallel
+      const [dashboardData, lessonsResponse] = await Promise.all([
+        recordingService.getDashboard(),
         lessonService.getLessons()
       ]);
       handleApiSuccess(); // Mark server as up
 
-      const { recordings } = recordingsResponse;
+      const { todayRecordings, thisWeekRecordings, latestWithReport } = dashboardData;
       const { lessons } = lessonsResponse;
 
+      // === Lesson Completion (L) ===
+      const today = getStartOfTodaySingapore();
+      const tomorrow = getEndOfTodaySingapore();
+
+      const todayCompletedLesson = lessons.find((lesson: any) => {
+        if (lesson.progress?.status === 'COMPLETED' && lesson.progress?.completedAt) {
+          const completedDate = new Date(lesson.progress.completedAt);
+          return completedDate >= today && completedDate <= tomorrow;
+        }
+        return false;
+      });
+
+      const lessonCompleted = !!todayCompletedLesson;
+      setIsLessonCompleted(lessonCompleted);
+      if (todayCompletedLesson) {
+        setTodayLessonId(todayCompletedLesson.id);
+      }
+
+      // Mark user as experienced if they completed a lesson (proactive caching)
+      if (lessons.some((lesson: any) => lesson.progress?.status === 'COMPLETED')) {
+        markAsExperiencedUser();
+      }
+
+      // === Today's Recording State (S/R) ===
+      const hasRecording = todayRecordings.length > 0;
+      setHasRecordedSession(hasRecording);
+
+      // Mark user as experienced if they have recordings (proactive caching)
+      if (todayRecordings.length > 0) {
+        markAsExperiencedUser();
+      }
+
+      // Check if report was read today by comparing recording IDs
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const reportReadKey = `report_read_${getTodaySingapore()}`;
+      const reportReadRecordingId = await AsyncStorage.getItem(reportReadKey);
+
+      if (hasRecording) {
+        // Get the most recent recording (recordings are already sorted by desc)
+        const latestRecording = todayRecordings[0];
+        setLatestRecordingId(latestRecording.id);
+
+        // Report is read only if the stored recording ID matches the latest recording
+        setIsReportRead(reportReadRecordingId === latestRecording.id);
+      } else {
+        // No recording today, report cannot be read
+        setIsReportRead(false);
+      }
+
+      // === Streak Data ===
       // Extract completed lesson dates
       const completedLessons = lessons.filter(l => l.progress?.status === 'COMPLETED');
       const lessonCompletionDates = completedLessons
         .map(l => l.progress?.completedAt ? new Date(l.progress.completedAt) : null)
         .filter((date): date is Date => date !== null && !isNaN(date.getTime()));
 
-      // Calculate streak
-      const streak = calculateCombinedStreak(recordings, lessonCompletionDates);
+      // Calculate streak using this week's recordings
+      const streak = calculateCombinedStreak(thisWeekRecordings, lessonCompletionDates);
       setCurrentStreak(streak);
 
       // Calculate which days this week were completed
-      const thisWeekCompleted = getCompletedDaysThisWeek(recordings, lessonCompletionDates);
+      const thisWeekCompleted = getCompletedDaysThisWeek(thisWeekRecordings, lessonCompletionDates);
       setCompletedDaysThisWeek(thisWeekCompleted);
+
+      // === Latest Report ===
+      if (latestWithReport && latestWithReport.overallScore !== undefined) {
+        setLatestScore({
+          score: Math.round(latestWithReport.overallScore),
+          maxScore: 100,
+          recordingId: latestWithReport.id,
+        });
+
+        // Try to fetch encouragement message from full analysis
+        try {
+          const analysis = await recordingService.getAnalysis(latestWithReport.id);
+          if (analysis && analysis.encouragement) {
+            setEncouragementMessage(analysis.encouragement);
+          }
+        } catch (err) {
+          // Analysis might not be fully available yet
+          console.log('Could not load encouragement message:', err);
+        }
+      }
     } catch (error) {
-      console.log('Failed to load streak data:', error);
+      console.log('Failed to load dashboard data:', error);
     }
   };
 
@@ -256,64 +317,6 @@ export const HomeScreen: React.FC = () => {
     }
 
     return weekDays;
-  };
-
-  const loadLatestReport = async () => {
-    try {
-      const { recordings } = await recordingService.getRecordings();
-      handleApiSuccess(); // Mark server as up
-
-      if (recordings.length > 0) {
-        // Sort recordings by most recent first
-        const sortedRecordings = recordings.sort(
-          (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-
-        // Loop through recordings until we find one with a successful analysis
-        // Skip recordings that have permanently failed or are still processing to avoid unnecessary API calls and console errors
-        for (const recording of sortedRecordings) {
-          // Skip recordings with failed analysis status
-          if (recording.analysisStatus === 'FAILED') {
-            continue;
-          }
-
-          // Skip recordings that are still processing (PENDING or PROCESSING status)
-          // These will trigger "Transcription in progress" errors and spam the console
-          if (recording.analysisStatus === 'PENDING' || recording.analysisStatus === 'PROCESSING') {
-            continue;
-          }
-
-          try {
-            const analysis = await recordingService.getAnalysis(recording.id);
-            handleApiSuccess(); // Mark server as up
-            if (analysis && analysis.noraScore !== undefined) {
-              setLatestScore({
-                score: Math.round(analysis.noraScore),
-                maxScore: 100,
-                recordingId: recording.id,
-              });
-
-              // Set encouragement message if available
-              if (analysis.encouragement) {
-                setEncouragementMessage(analysis.encouragement);
-              }
-
-              // Found a successful analysis, stop looking
-              return;
-            }
-          } catch (err) {
-            // This recording doesn't have analysis yet or failed, try the next one
-            console.log(`Could not load analysis for recording ${recording.id}:`, err);
-            continue;
-          }
-        }
-
-        // If we get here, none of the recordings have a successful analysis
-        console.log('No recordings with completed analysis found');
-      }
-    } catch (error) {
-      console.log('Failed to load latest report:', error);
-    }
   };
 
   /**
@@ -365,83 +368,6 @@ export const HomeScreen: React.FC = () => {
     }
 
     return streak;
-  };
-
-  /**
-   * Load today's state (L/S/R) to determine which card to show
-   * Uses Singapore timezone for date comparisons
-   */
-  const loadTodayState = async () => {
-    try {
-      const today = getStartOfTodaySingapore();
-      const tomorrow = getEndOfTodaySingapore();
-
-      // Check if lesson completed today (in Singapore timezone)
-      const { lessons } = await lessonService.getLessons();
-      handleApiSuccess(); // Mark server as up
-      const todayCompletedLesson = lessons.find((lesson: any) => {
-        if (lesson.progress?.status === 'COMPLETED' && lesson.progress?.completedAt) {
-          const completedDate = new Date(lesson.progress.completedAt);
-          return completedDate >= today && completedDate <= tomorrow;
-        }
-        return false;
-      });
-
-      const lessonCompleted = !!todayCompletedLesson;
-      setIsLessonCompleted(lessonCompleted);
-      if (todayCompletedLesson) {
-        setTodayLessonId(todayCompletedLesson.id);
-      }
-
-      // Mark user as experienced if they completed a lesson (proactive caching)
-      if (lessons.some((lesson: any) => lesson.progress?.status === 'COMPLETED')) {
-        markAsExperiencedUser();
-      }
-
-      // Check if recorded session today
-      const { recordings } = await recordingService.getRecordings();
-      handleApiSuccess(); // Mark server as up
-
-      // Mark user as experienced if they have recordings (proactive caching)
-      if (recordings.length > 0) {
-        markAsExperiencedUser();
-      }
-
-      // Check for permanently failed recordings
-      const failed = recordings.filter((r: any) => r.analysisStatus === 'FAILED' && r.permanentFailure === true);
-      setFailedRecordings(failed);
-
-      const todayRecordings = recordings.filter((r: any) => {
-        const recordingDate = new Date(r.createdAt);
-        return recordingDate >= today && recordingDate <= tomorrow;
-      });
-
-      const hasRecording = todayRecordings.length > 0;
-      setHasRecordedSession(hasRecording);
-
-      // Check if report was read today by comparing recording IDs
-      // Use Singapore timezone for the date key
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const reportReadKey = `report_read_${getTodaySingapore()}`;
-      const reportReadRecordingId = await AsyncStorage.getItem(reportReadKey);
-
-      if (hasRecording) {
-        // Get the most recent recording
-        const latestRecording = todayRecordings.sort(
-          (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )[0];
-        setLatestRecordingId(latestRecording.id);
-
-        // Report is read only if the stored recording ID matches the latest recording
-        setIsReportRead(reportReadRecordingId === latestRecording.id);
-      } else {
-        // No recording today, report cannot be read
-        setIsReportRead(false);
-      }
-
-    } catch (error) {
-      console.log('Failed to load today\'s state:', error);
-    }
   };
 
   /**
@@ -537,10 +463,9 @@ export const HomeScreen: React.FC = () => {
       // Update last refresh date
       setLastRefreshDate(getTodaySingapore());
 
-      // Refresh streak and latest report when manually refreshing (pull-to-refresh)
+      // Refresh dashboard data when manually refreshing (pull-to-refresh)
       if (!showLoadingSpinner) {
-        loadStreakData();
-        loadLatestReport();
+        loadDashboardData();
       }
     } catch (err) {
       console.error('Failed to load lessons:', err);
@@ -632,32 +557,6 @@ export const HomeScreen: React.FC = () => {
 
     // Navigate to recording tab
     navigation.navigate('MainTabs', { screen: 'Record' });
-  };
-
-  const handleDeleteRecording = async (recordingId: string) => {
-    const { Alert } = require('react-native');
-    Alert.alert(
-      'Delete Recording',
-      'Are you sure you want to delete this failed recording?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await recordingService.deleteRecording(recordingId);
-              handleApiSuccess(); // Mark server as up
-              // Refresh the recordings list
-              await loadTodayState();
-            } catch (error) {
-              console.error('Failed to delete recording:', error);
-              Alert.alert('Error', 'Failed to delete recording. Please try again.');
-            }
-          }
-        }
-      ]
-    );
   };
 
   const handleNextAction = () => {
@@ -800,45 +699,6 @@ export const HomeScreen: React.FC = () => {
             </View>
           );
         })()}
-
-        {/* Failed Recordings Section */}
-        {failedRecordings.length > 0 && failedRecordings.map((recording) => (
-          <View key={recording.id} style={styles.failedCard}>
-            <View style={styles.failedHeader}>
-              <Text style={styles.errorIcon}>⚠️</Text>
-              <Text style={styles.failedTitle}>Processing Failed</Text>
-            </View>
-
-            <Text style={styles.failedDate}>
-              {new Date(recording.createdAt).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit'
-              })}
-            </Text>
-
-            <Text style={styles.apologyText}>
-              We apologize for the inconvenience. Our team has been automatically
-              notified and will investigate this issue.
-            </Text>
-
-            {recording.retryCount > 0 && (
-              <Text style={styles.retryInfo}>
-                Attempted {recording.retryCount + 1} time(s)
-              </Text>
-            )}
-
-            <TouchableOpacity
-              style={[styles.deleteButton, !isOnline && styles.deleteButtonDisabled]}
-              onPress={() => handleDeleteRecording(recording.id)}
-              disabled={!isOnline}
-            >
-              <Text style={styles.deleteButtonText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -870,65 +730,5 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginTop: 8,
     marginLeft: 20,
-  },
-  failedCard: {
-    backgroundColor: '#FEF2F2',
-    padding: 16,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#EF4444',
-    marginBottom: 12,
-    marginHorizontal: 20,
-  },
-  failedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  errorIcon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  failedTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#DC2626',
-    fontFamily: FONTS.semiBold,
-  },
-  failedDate: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 12,
-    fontFamily: FONTS.regular,
-  },
-  apologyText: {
-    fontSize: 14,
-    color: '#374151',
-    lineHeight: 20,
-    marginBottom: 12,
-    fontFamily: FONTS.regular,
-  },
-  retryInfo: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginBottom: 12,
-    fontFamily: FONTS.regular,
-  },
-  deleteButton: {
-    backgroundColor: '#EF4444',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  deleteButtonDisabled: {
-    backgroundColor: '#CCCCCC',
-    opacity: 0.6,
-  },
-  deleteButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: FONTS.semiBold,
   },
 });

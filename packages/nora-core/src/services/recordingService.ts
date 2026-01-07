@@ -116,16 +116,48 @@ class RecordingService {
   }
 
   /**
-   * Get list of all recordings
+   * Get list of recordings
+   * @param options Optional filters
+   * @param options.from ISO date string for start of date range
+   * @param options.to ISO date string for end of date range
    */
-  async getRecordings(): Promise<{ recordings: any[] }> {
-    const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/recordings`
-    );
+  async getRecordings(options?: { from?: string; to?: string }): Promise<{ recordings: any[] }> {
+    let url = `${this.apiUrl}/api/recordings`;
+
+    // Add query parameters if provided
+    if (options?.from || options?.to) {
+      const params = new URLSearchParams();
+      if (options.from) params.append('from', options.from);
+      if (options.to) params.append('to', options.to);
+      url += `?${params.toString()}`;
+    }
+
+    const response = await this.authService.authenticatedRequest(url);
 
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to fetch recordings');
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Get dashboard data (optimized single call)
+   * Returns today's recordings, this week's recordings, and latest completed report
+   */
+  async getDashboard(): Promise<{
+    todayRecordings: any[];
+    thisWeekRecordings: any[];
+    latestWithReport: any | null;
+  }> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/recordings/dashboard`
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch dashboard data');
     }
 
     return await response.json();
