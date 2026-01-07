@@ -15,9 +15,10 @@ import {
   Dimensions,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { RootStackNavigationProp } from '../../navigation/types';
+import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
 import { Ellipse } from '../../components/Ellipse';
@@ -27,25 +28,33 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const TIMELINE_ITEMS = [
   {
-    day: 'Today',
-    description: 'Unlock our library of meditations, sleep sounds, and more.',
+    day: 'Month 1',
+    description: 'More connection. Building trust & safety foundation. ',
   },
   {
-    day: 'In 12 days',
-    description: "We'll send you a reminder that your trial is ending soon.",
+    day: 'Month 2',
+    description: "Fewer power struggles. Learning emotional regulation",
   },
   {
-    day: 'In 14 days',
-    description: "You'll be charged, cancel anytime before.",
+    day: 'Month 3',
+    description: "Calmer routines. Establishing lasting habits.",
   },
 ];
 
 export const SubscriptionScreen: React.FC = () => {
-  const navigation = useNavigation<RootStackNavigationProp>();
+  const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, completeOnboarding } = useOnboarding();
   const authService = useAuthService();
   const [selectedPlan, setSelectedPlan] = useState<'annual' | 'monthly'>('annual');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Calculate trial end date (1 month from today)
+  const getTrialEndDate = () => {
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setMonth(endDate.getMonth() + 1);
+    return endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
 
   const handleBack = () => navigation.goBack();
 
@@ -95,6 +104,14 @@ export const SubscriptionScreen: React.FC = () => {
   const handleRestore = () => {
     // TODO: Implement restore purchases
     console.log('Restore purchases');
+  };
+
+  const handleOpenTerms = () => {
+    Linking.openURL('https://hinora.co/terms');
+  };
+
+  const handleOpenPrivacy = () => {
+    Linking.openURL('https://hinora.co/privacy');
   };
 
   const handleSkip = async () => {
@@ -160,7 +177,7 @@ export const SubscriptionScreen: React.FC = () => {
 
         {/* Title */}
         <Text style={styles.title}>
-          {data.childName ? `${data.childName}'s 90 days plan` : '90 days plan'}
+          {data.childName ? `${data.childName}'s 3 months plan` : '90 days plan'}
         </Text>
         <Text style={styles.subtitle}>
           {/* First 30 days free, then ${selectedPlan === 'annual' ? '138.96' : '11.58'}/
@@ -169,7 +186,7 @@ export const SubscriptionScreen: React.FC = () => {
         </Text>
 
         {/* Pricing Toggle */}
-        <View style={styles.pricingToggle}>
+        {/* <View style={styles.pricingToggle}>
           <TouchableOpacity
             style={[
               styles.toggleButton,
@@ -204,7 +221,7 @@ export const SubscriptionScreen: React.FC = () => {
               Monthly
             </Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         {/* Timeline */}
         <View style={styles.timeline}>
@@ -235,10 +252,34 @@ export const SubscriptionScreen: React.FC = () => {
         >
           <Text style={styles.restoreText}>Restore purchase</Text>
         </TouchableOpacity> */}
-      </ScrollView>
 
-      {/* Bottom CTA */}
-      <View style={styles.bottomContainer}>
+        {/* Bottom CTA */}
+        {/* Recommended Program Box */}
+        <View style={styles.recommendedBox}>
+          <View style={styles.recommendedBadge}>
+            <Text style={styles.recommendedBadgeText}>RECOMMENDED</Text>
+          </View>
+          <View style={styles.programContent}>
+            <View style={styles.programIcon}>
+              <Image
+                source={require('../../../assets/images/dragon_waving.png')}
+                style={styles.iconImage}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.programDetails}>
+              <Text style={styles.programTitle}>3-Month Program</Text>
+              <Text style={styles.programPrice}>$99.98 in total</Text>
+              <View style={styles.bonusBadge}>
+                <Text style={styles.bonusBadgeText}>🎁 Beta bonus 1 month free</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <Text style={styles.noChargeText}>
+          No charge today  •  <Text style={styles.trialEndsText}>Trial ends {getTrialEndDate()}</Text>
+        </Text>
         <TouchableOpacity
           style={[styles.startButton, isLoading && styles.startButtonDisabled]}
           onPress={handleStartTrial}
@@ -248,16 +289,24 @@ export const SubscriptionScreen: React.FC = () => {
           {isLoading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.startButtonText}>Try for $0.00</Text>
+            <Text style={styles.startButtonText}>Start free trial</Text>
           )}
         </TouchableOpacity>
 
         <Text style={styles.disclaimer}>
-          Cancel anytime. By continuing, you agree to our{' '}
-          <Text style={styles.link}>Terms</Text> and{' '}
-          <Text style={styles.link}>Privacy Policy</Text>
+          After your free trial, your subscription automatically renews at $99.98/year unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our{' '}
+          <Text style={styles.link} onPress={handleOpenTerms}>Terms</Text> and{' '}
+          <Text style={styles.link} onPress={handleOpenPrivacy}>Privacy Policy</Text>.
         </Text>
-      </View>
+
+        <TouchableOpacity
+          style={styles.restorePurchasesButton}
+          onPress={handleRestore}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.restorePurchasesText}>Restore Purchases</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -311,18 +360,29 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 28,
+    fontSize: 26,
     color: '#1F2937',
     textAlign: 'center',
-    marginBottom: 8,
-    marginTop: 70,
+    marginBottom: 20,
+    marginTop: 20,
   },
   subtitle: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 14,
-    color: '#6B7280',
+    color: '#8C49D5',
     textAlign: 'center',
     marginBottom: 20,
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 32,
+    overflow: 'hidden',
+  },
+
+  bonusBadgeText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 12,
+    color: '#8C49D5',
   },
   pricingToggle: {
     flexDirection: 'row',
@@ -350,11 +410,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   timeline: {
-    marginBottom: 24,
+    marginLeft: 14,
+    marginBottom: 8,
   },
   timelineItem: {
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: 0,
   },
   iconContainer: {
     alignItems: 'center',
@@ -383,7 +444,7 @@ const styles = StyleSheet.create({
   timelineContent: {
     flex: 1,
     paddingTop: 4,
-    paddingBottom: 20,
+    paddingBottom: 18,
   },
   timelineDay: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
@@ -408,9 +469,88 @@ const styles = StyleSheet.create({
   },
   bottomContainer: {
     paddingHorizontal: 32,
-    paddingTop: 16,
+    paddingTop: 0,
     paddingBottom: 32,
     //backgroundColor: '#F3E8FF',
+  },
+  recommendedBox: {
+    position: 'relative',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#A78BFA',
+    padding: 16,
+    marginBottom: 16,
+  },
+  recommendedBadge: {
+    position: 'absolute',
+    top: -1,
+    right: -1,
+    backgroundColor: '#8C49D5',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderTopRightRadius: 14,
+    borderBottomLeftRadius: 12,
+  },
+  recommendedBadgeText: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 11,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  programContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  programIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    //backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    overflow: 'hidden',
+  },
+  iconImage: {
+    width: 50,
+    height: 50,
+  },
+  programDetails: {
+    flex: 1,
+  },
+  programTitle: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 18,
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  programPrice: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 6,
+  },
+  bonusBadge: {
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+  },
+  noChargeText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 14,
+    color: '#1F2937',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  trialEndsText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 14,
+    color: '#6B7280',
   },
   startButton: {
     width: '100%',
@@ -419,7 +559,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
     shadowColor: '#8C49D5',
     shadowOffset: {
       width: 0,
@@ -444,9 +584,20 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 16,
+    //marginBottom:0,
   },
   link: {
     color: '#8C49D5',
     textDecorationLine: 'underline',
+  },
+  restorePurchasesButton: {
+    alignSelf: 'center',
+    paddingVertical: 12,
+    marginTop: 0,
+  },
+  restorePurchasesText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 14,
+    color: '#8C49D5',
   },
 });
