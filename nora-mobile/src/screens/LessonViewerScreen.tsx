@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Share, PanResponder, Clipboard } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Share, PanResponder, Clipboard, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProgressBar } from '../components/ProgressBar';
 import { Button } from '../components/Button';
@@ -28,6 +28,7 @@ import { useLessonService } from '../contexts/AppContext';
 import { getMockLessonDetail } from '../data/mockLessons';
 import { LessonCache } from '../lib/LessonCache';
 import amplitudeService from '../services/amplitudeService';
+import { getTodaySingapore } from '../utils/timezone';
 
 /**
  * Format body text with markdown-like formatting:
@@ -131,6 +132,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
   const [quizFeedback, setQuizFeedback] = useState<SubmitQuizResponse | null>(null);
   const [showPhaseCelebration, setShowPhaseCelebration] = useState(false);
+  const [lastRefreshDate, setLastRefreshDate] = useState<string>(getTodaySingapore());
 
   // Refs to store latest function references for panResponder
   const handleContinueRef = useRef<(() => void) | undefined>(undefined);
@@ -174,6 +176,26 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     loadLessonDetail();
   }, [lessonId]);
 
+  // Listen for app coming to foreground and refresh if date changed
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        const today = getTodaySingapore();
+        console.log('[LessonViewerScreen] App came to foreground. Last refresh:', lastRefreshDate, 'Today:', today);
+
+        if (today !== lastRefreshDate) {
+          console.log('[LessonViewerScreen] Date changed since last refresh - reloading lesson data');
+          setLastRefreshDate(today);
+          loadLessonDetail();
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [lastRefreshDate, lessonId]);
+
   const loadLessonDetail = async () => {
     try {
       setLoading(true);
@@ -213,6 +235,9 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
             .then(freshData => {
               setLessonData(freshData);
 
+              // Update last refresh date after successful API fetch
+              setLastRefreshDate(getTodaySingapore());
+
               // Update segment index if progress changed
               if (freshData.userProgress) {
                 // If lesson is completed, always start from beginning
@@ -236,6 +261,9 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       // No cache, fetch from API
       const data = await lessonService.getLessonDetail(lessonId);
       setLessonData(data);
+
+      // Update last refresh date after successful API fetch
+      setLastRefreshDate(getTodaySingapore());
 
       // Cache the data for future use
       await LessonCache.set(lessonId, data);

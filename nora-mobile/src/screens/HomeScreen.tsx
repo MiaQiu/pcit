@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, ActivityIndicator, Text, RefreshControl, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, ScrollView, ActivityIndicator, Text, RefreshControl, StyleSheet, TouchableOpacity, Alert, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LessonCard } from '../components/LessonCard';
@@ -50,6 +50,7 @@ export const HomeScreen: React.FC = () => {
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
   const [isExperiencedUser, setIsExperiencedUser] = useState(false);
   const [failedRecordings, setFailedRecordings] = useState<any[]>([]);
+  const [lastRefreshDate, setLastRefreshDate] = useState<string>(getTodaySingapore());
 
   /**
    * Check if user is experienced (has completed a lesson or made a recording)
@@ -147,6 +148,29 @@ export const HomeScreen: React.FC = () => {
       loadLatestReport();
     }
   }, [uploadProcessing.reportCompletedTimestamp]);
+
+  // Listen for app coming to foreground and refresh if date changed
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        const today = getTodaySingapore();
+        console.log('[HomeScreen] App came to foreground. Last refresh:', lastRefreshDate, 'Today:', today);
+
+        if (today !== lastRefreshDate) {
+          console.log('[HomeScreen] Date changed since last refresh - refreshing all data');
+          setLastRefreshDate(today);
+          loadLessons();
+          loadTodayState();
+          loadStreakData();
+          loadLatestReport();
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [lastRefreshDate]);
 
   const loadUserProfile = async () => {
     try {
@@ -509,6 +533,9 @@ export const HomeScreen: React.FC = () => {
       }));
 
       setLessons(mappedLessons);
+
+      // Update last refresh date
+      setLastRefreshDate(getTodaySingapore());
 
       // Refresh streak and latest report when manually refreshing (pull-to-refresh)
       if (!showLoadingSpinner) {
