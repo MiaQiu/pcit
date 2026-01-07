@@ -411,6 +411,59 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
 }
 
 /**
+ * Format tips with bold keywords and bullet points
+ * @param {string} tips - Raw tips text from Claude
+ * @returns {string} - Formatted tips with bold keywords and bullet points
+ */
+function formatTips(tips) {
+  if (!tips) return tips;
+
+  // Keywords to bold (these are the PCIT skills we want to highlight)
+  const keywords = ['Praise', 'Echo', 'Narrate', 'Questions', 'Commands', 'Criticisms', 'Negative Phrases'];
+
+  // Split by double newlines first (paragraph breaks)
+  let paragraphs = tips.split('\n\n');
+
+  // If no double newlines, try single newlines
+  if (paragraphs.length === 1) {
+    paragraphs = tips.split('\n');
+  }
+
+  // Format each paragraph
+  const formattedParagraphs = paragraphs.map(paragraph => {
+    // Trim whitespace
+    let formatted = paragraph.trim();
+
+    // Skip if empty
+    if (!formatted) return '';
+
+    // First, remove any existing bold markers to avoid conflicts
+    formatted = formatted.replace(/\*\*/g, '');
+
+    // Bold keywords - use a simpler approach that handles punctuation
+    keywords.forEach(keyword => {
+      // Escape special regex characters in keyword (for "Negative Phrases" etc.)
+      const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      // Match keyword with word boundaries, case-insensitive
+      // This will match "Praise" in "Praise:", "Echo" in "Echo (Reflections):", etc.
+      const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
+      formatted = formatted.replace(regex, '**$1**');
+    });
+
+    // Add bullet point if not already present
+    if (!formatted.startsWith('-') && !formatted.startsWith('•')) {
+      formatted = `- ${formatted}`;
+    }
+
+    return formatted;
+  });
+
+  // Join with single newlines and remove empty lines
+  return formattedParagraphs.filter(p => p).join('\n');
+}
+
+/**
  * Generate CDI competency analysis prompt
  */
 function generateCDICompetencyPrompt(counts, utterances) {
@@ -454,21 +507,21 @@ Generate a JSON object with exactly these three fields:
 
 1. **topMoment**: An exact quote from the conversation that highlights bonding between child and parent. Can be from either speaker. Choose a moment showing connection, joy, or positive interaction. Must be a direct quote from the utterances above. Do not mention "PCIT" or therapy.
 
-2. **tips**: EXACTLY 2 sentences of the MOST important tips for improvement. Be specific and actionable. Reference specific utterances or patterns you observed. Do not mention "PCIT" or therapy.
+2. **tips**: highlight 2 most important area (among Praise, Echo, Narrate, Questions, Commands, Criticisms, Negative Phrases) for imporovement (add new line between for better readability). 2-3 sentences for each improvement. Be specific and actionable. Reference at least 1 specific utterances or patterns you observed. Do not mention "PCIT" or therapy.
 
 3. **reminder**: EXACTLY 2 sentences of encouragement or reminder for the parent. Keep it warm and supportive. Do not mention "PCIT" or therapy.
 
 **Output Format:**
 Return ONLY valid JSON in this exact structure:
 {
-  "topMoment": "exact quote from utterances",
-  "tips": "Exactly 2 sentences of specific tips.",
-  "reminder": "Exactly 2 sentences of encouragement."
+  "topMoment": **topMoment**,
+  "tips": **tips**,
+  "reminder": **reminder**
 }
 
 **CRITICAL:** Return ONLY valid JSON. Do not include markdown code blocks or any text outside the JSON structure.`;
 }
-
+// **tips**: EXACTLY 2 sentences of the MOST important tips for improvement. Be specific and actionable. Reference specific utterances or patterns you observed. Do not mention "PCIT" or therapy.
 /**
  * Generate PDI competency analysis prompt
  */
@@ -1398,10 +1451,10 @@ Do not include markdown or whitespace (minified JSON).
         };
       }
 
-      // Store structured analysis
+      // Store structured analysis with formatted tips
       competencyAnalysis = {
         topMoment: parsedAnalysis.topMoment,
-        tips: parsedAnalysis.tips,
+        tips: formatTips(parsedAnalysis.tips),
         reminder: parsedAnalysis.reminder,
         analyzedAt: new Date().toISOString(),
         mode: session.mode
@@ -1888,6 +1941,119 @@ router.post('/upload', requireAuth, upload.single('audio'), async (req, res) => 
 });
 
 /**
+ * GET /api/recordings/dashboard
+ * Get dashboard data for HomeScreen (optimized single call)
+ * Returns today's recordings, this week's recordings, and latest completed report
+ *
+ * All date calculations use Singapore timezone (UTC+8)
+ *
+ * IMPORTANT: This route MUST be defined before /:id routes to prevent matching "dashboard" as an ID
+ */
+router.get('/dashboard', requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    // Calculate Singapore timezone dates
+    const SGT_OFFSET_MS = 8 * 60 * 60 * 1000;
+    const now = new Date();
+    const sgtNow = new Date(now.getTime() + SGT_OFFSET_MS);
+
+    // Get start and end of today (Singapore time)
+    const todayStart = new Date(Date.UTC(
+      sgtNow.getUTCFullYear(),
+      sgtNow.getUTCMonth(),
+      sgtNow.getUTCDate(),
+      0, 0, 0, 0
+    ));
+    todayStart.setTime(todayStart.getTime() - SGT_OFFSET_MS);
+
+    const todayEnd = new Date(Date.UTC(
+      sgtNow.getUTCFullYear(),
+      sgtNow.getUTCMonth(),
+      sgtNow.getUTCDate(),
+      23, 59, 59, 999
+    ));
+    todayEnd.setTime(todayEnd.getTime() - SGT_OFFSET_MS);
+
+    // Get start of current week (Monday in Singapore time)
+    const dayOfWeek = sgtNow.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const weekStart = new Date(sgtNow);
+    weekStart.setUTCDate(sgtNow.getUTCDate() + mondayOffset);
+    weekStart.setUTCHours(0, 0, 0, 0);
+    weekStart.setTime(weekStart.getTime() - SGT_OFFSET_MS);
+
+    // Run queries in parallel for efficiency
+    const [todayRecordings, thisWeekRecordings, latestWithReport] = await Promise.all([
+      // 1. Today's recordings
+      prisma.session.findMany({
+        where: {
+          userId: userId,
+          createdAt: {
+            gte: todayStart,
+            lte: todayEnd
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          mode: true,
+          durationSeconds: true,
+          createdAt: true,
+          overallScore: true
+        }
+      }),
+
+      // 2. This week's recordings (for streak calculation)
+      prisma.session.findMany({
+        where: {
+          userId: userId,
+          createdAt: {
+            gte: weekStart
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          createdAt: true
+        }
+      }),
+
+      // 3. Latest recording with completed analysis
+      prisma.session.findFirst({
+        where: {
+          userId: userId,
+          analysisStatus: 'COMPLETED'
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        select: {
+          id: true,
+          createdAt: true,
+          overallScore: true,
+          durationSeconds: true,
+          analysisStatus: true
+        }
+      })
+    ]);
+
+    res.json({
+      todayRecordings: todayRecordings || [],
+      thisWeekRecordings: thisWeekRecordings || [],
+      latestWithReport: latestWithReport || null
+    });
+
+  } catch (error) {
+    console.error('Get dashboard error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
+});
+
+/**
  * GET /api/recordings/:id
  * Get recording details including transcription and analysis
  */
@@ -2071,9 +2237,9 @@ router.get('/:id/analysis', async (req, res) => {
     // Get tips from competency analysis or fallback to rule-based
     const tips = session.competencyAnalysis?.tips
       ? session.competencyAnalysis.tips
-      : isCDI
-        ? `Focus on increasing your use of ${skills[0].progress < 50 ? 'Praise' : skills[1].progress < 50 ? 'Reflections' : 'Narrations'}. Try to describe what your child is doing without asking questions or giving commands.`
-        : `Work on making your commands more direct and specific. Avoid phrasing commands as questions.`;
+      : formatTips(isCDI
+        ? `Focus on increasing your use of ${skills[0].progress < 50 ? 'Praise' : skills[1].progress < 50 ? 'Reflections' : 'Narrations'}. Try to describe what your child is doing without asking Questions or giving Commands.`
+        : `Work on making your Commands more direct and specific. Avoid phrasing Commands as Questions.`);
 
     // Get reminder from competency analysis
     const reminder = session.competencyAnalysis?.reminder || null;
@@ -2122,13 +2288,34 @@ router.get('/:id/analysis', async (req, res) => {
 
 /**
  * GET /api/recordings
- * Get all recordings for the authenticated user
+ * Get recordings for the authenticated user
+ *
+ * Query parameters:
+ * - from: ISO date string for start of date range (optional)
+ * - to: ISO date string for end of date range (optional)
+ *
+ * If no date range is provided, returns all recordings.
  */
 router.get('/', requireAuth, async (req, res) => {
   try {
     const userId = req.userId;
+    const { from, to } = req.query;
+
+    // Build where clause with optional date filtering
+    const where = { userId: userId };
+
+    if (from || to) {
+      where.createdAt = {};
+      if (from) {
+        where.createdAt.gte = new Date(from);
+      }
+      if (to) {
+        where.createdAt.lte = new Date(to);
+      }
+    }
+
     const sessions = await prisma.session.findMany({
-      where: { userId: userId },
+      where,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,

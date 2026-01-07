@@ -15,6 +15,7 @@ import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService } from '../contexts/AppContext';
 import type { RecordingAnalysis } from '@nora/core';
+import { MarkdownText } from '../utils/MarkdownText';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
 
@@ -211,7 +212,7 @@ export const ReportScreen: React.FC = () => {
         <View>
           <Text style={styles.cardTitle}>Tips for next time</Text>
           <View style={styles.card}>
-            <Text style={styles.tipsText}>{reportData.tips}</Text>
+            <MarkdownText style={styles.tipsText}>{reportData.tips}</MarkdownText>
 
             {/* Divider Line */}
             <View style={styles.divider} />
