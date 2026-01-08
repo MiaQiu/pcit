@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet, Text, AppState } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, AppState, Platform } from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
@@ -12,16 +12,19 @@ import {
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import crashlytics from '@react-native-firebase/crashlytics';
+import Purchases from 'react-native-purchases';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AppProvider } from './src/contexts/AppContext';
 import { OnboardingProvider } from './src/contexts/OnboardingContext';
 import { UploadProcessingProvider } from './src/contexts/UploadProcessingContext';
+import { SubscriptionProvider } from './src/contexts/SubscriptionContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { RootStackNavigationProp } from './src/navigation/types';
 import { NetworkStatusBar } from './src/components/NetworkStatusBar';
 import { ToastProvider } from './src/components/ToastManager';
 import { clearBadge } from './src/utils/notifications';
 import amplitudeService from './src/services/amplitudeService';
+import { REVENUECAT_CONFIG } from './src/config/revenuecat';
 
 // Deep linking configuration
 const linking = {
@@ -130,6 +133,30 @@ export default function App() {
     amplitudeService.init();
   }, []);
 
+  // Initialize RevenueCat
+  useEffect(() => {
+    const initRevenueCat = async () => {
+      if (Platform.OS === 'ios') {
+        try {
+          await Purchases.configure({
+            apiKey: REVENUECAT_CONFIG.apiKey.ios,
+          });
+
+          // Enable debug logs in development
+          if (__DEV__) {
+            await Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
+          }
+
+          console.log('RevenueCat initialized successfully');
+        } catch (error) {
+          console.error('Error initializing RevenueCat:', error);
+        }
+      }
+    };
+
+    initRevenueCat();
+  }, []);
+
   // Handle font loading error
   if (fontError) {
     console.error('Font loading error:', fontError);
@@ -153,13 +180,15 @@ export default function App() {
     <ErrorBoundary>
       <SafeAreaProvider>
         <AppProvider>
-          <OnboardingProvider>
-            <ToastProvider>
-              <NavigationContainer linking={linking}>
-                <AppContent />
-              </NavigationContainer>
-            </ToastProvider>
-          </OnboardingProvider>
+          <SubscriptionProvider>
+            <OnboardingProvider>
+              <ToastProvider>
+                <NavigationContainer linking={linking}>
+                  <AppContent />
+                </NavigationContainer>
+              </ToastProvider>
+            </OnboardingProvider>
+          </SubscriptionProvider>
         </AppProvider>
       </SafeAreaProvider>
     </ErrorBoundary>

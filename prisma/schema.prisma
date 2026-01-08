@@ -292,6 +292,7 @@ model User {
   pushToken             String?
   pushTokenUpdatedAt    DateTime?
   currentPhase          LessonPhase            @default(CONNECT)
+  revenueCatCustomerId  String?                @unique
   LearningProgress      LearningProgress?
   ModuleHistory         ModuleHistory[]
   PasswordResetToken    PasswordResetToken[]
@@ -303,6 +304,7 @@ model User {
   ThirdPartyRequest     ThirdPartyRequest[]
   UserLessonProgress    UserLessonProgress[]
   WacbSurvey            WacbSurvey[]
+  SubscriptionEvent     SubscriptionEvent[]
 
   @@index([emailHash])
   @@index([therapistId])
@@ -347,6 +349,25 @@ model WacbSurvey {
 
   @@index([submittedAt])
   @@index([userId])
+}
+
+model SubscriptionEvent {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  revenueCatEventId String   @unique // CRITICAL: Prevents duplicate webhook processing
+  eventType         String   // INITIAL_PURCHASE, RENEWAL, CANCELLATION, etc.
+  productId         String
+  expiresDate       DateTime?
+
+  revenueCatData    Json     // Store full webhook payload for debugging
+
+  createdAt         DateTime @default(now())
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([revenueCatEventId]) // For fast idempotency checks
 }
 
 enum ChildGender {
@@ -396,6 +417,8 @@ enum SubscriptionPlan {
 }
 
 enum SubscriptionStatus {
+  NONE
+  TRIAL
   ACTIVE
   EXPIRED
   CANCELLED

@@ -160,6 +160,10 @@ app.use('/api/phq2-survey', phq2SurveyRoutes);
 const recordingRoutes = require('./server/routes/recordings.cjs');
 app.use('/api/recordings', recordingRoutes);
 
+// Mount webhook routes (RevenueCat subscription events)
+const webhookRoutes = require('./server/routes/webhooks.cjs');
+app.use('/api/webhooks', webhookRoutes);
+
 // DEPRECATED: Old PCIT endpoints (will be removed after frontend migration)
 // TODO: Remove these after frontend is updated to use /api/pcit/* endpoints
 

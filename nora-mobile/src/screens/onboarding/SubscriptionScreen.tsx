@@ -21,6 +21,7 @@ import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
+import { useSubscription } from '../../contexts/SubscriptionContext';
 import { Ellipse } from '../../components/Ellipse';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
@@ -45,6 +46,14 @@ export const SubscriptionScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, completeOnboarding } = useOnboarding();
   const authService = useAuthService();
+  const {
+    currentPackage,
+    isLoading: subscriptionLoading,
+    purchasePackage,
+    restorePurchases,
+    error: subscriptionError
+  } = useSubscription();
+
   const [selectedPlan, setSelectedPlan] = useState<'annual' | 'monthly'>('annual');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -56,54 +65,89 @@ export const SubscriptionScreen: React.FC = () => {
     return endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  // Get actual price from RevenueCat
+  const displayPrice = currentPackage?.product.priceString || '$99.98';
+
   const handleBack = () => navigation.goBack();
 
   const handleStartTrial = async () => {
     setIsLoading(true);
 
     try {
-      // Send onboarding data to backend
-      await authService.completeOnboarding({
-        name: data.name,
-        relationshipToChild: data.relationshipToChild || undefined,
-        childName: data.childName,
-        childGender: data.childGender || undefined,
-        childBirthday: data.childBirthday || undefined,
-        issue: data.issue || undefined,
-      });
+      // Purchase subscription through RevenueCat
+      const result = await purchasePackage();
 
-      // TODO: Implement subscription/in-app purchase logic
+      if (result.success) {
+        // CRITICAL: Trust the webhook as source of truth for subscription status
+        // If completeOnboarding fails (app crash, network error, battery dies),
+        // the RevenueCat webhook will still update subscriptionStatus in backend.
+        // This prevents "zombie purchases" where user pays but stays in onboarding.
 
-      // Navigate to NotificationPermission screen
-      navigation.navigate('NotificationPermission');
+        // Fire-and-forget onboarding completion (don't block navigation)
+        authService.completeOnboarding({
+          name: data.name,
+          relationshipToChild: data.relationshipToChild || undefined,
+          childName: data.childName,
+          childGender: data.childGender || undefined,
+          childBirthday: data.childBirthday || undefined,
+          issue: data.issue || undefined,
+        }).catch(err => {
+          // Log but don't block - webhook will handle subscription status
+          console.error('Onboarding completion failed (non-critical):', err);
+          // Optional: Send to error tracking service
+        });
+
+        // Navigate immediately - user has paid, let them in
+        // Webhook will update subscriptionStatus even if above call fails
+        navigation.navigate('NotificationPermission');
+      }
     } catch (error: any) {
-      console.error('Complete onboarding error:', error);
-      Alert.alert(
-        'Error',
-        'Failed to complete setup. Please try again.',
-        [
-          {
-            text: 'Retry',
-            onPress: handleStartTrial,
-          },
-          {
-            text: 'Skip for Now',
-            onPress: async () => {
-              // Continue to notification permission
-              navigation.navigate('NotificationPermission');
-            },
-            style: 'cancel',
-          },
-        ]
-      );
+      console.error('Purchase error:', error);
+
+      // Only show error if user didn't cancel
+      if (!error.userCancelled) {
+        Alert.alert(
+          'Purchase Failed',
+          'Unable to start trial. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRestore = () => {
-    // TODO: Implement restore purchases
-    console.log('Restore purchases');
+  const handleRestore = async () => {
+    setIsLoading(true);
+
+    try {
+      const result = await restorePurchases();
+
+      if (result.restored) {
+        Alert.alert(
+          'Success',
+          'Your subscription has been restored!',
+          [{
+            text: 'OK',
+            onPress: () => navigation.navigate('NotificationPermission')
+          }]
+        );
+      } else {
+        Alert.alert(
+          'No Purchases Found',
+          'We couldn\'t find any previous purchases to restore.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Restore Failed',
+        'Unable to restore purchases. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOpenTerms = () => {
@@ -223,6 +267,20 @@ export const SubscriptionScreen: React.FC = () => {
           </TouchableOpacity>
         </View> */}
 
+        {/* Loading/Error States */}
+        {subscriptionLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#8C49D5" />
+            <Text style={styles.loadingText}>Loading subscription options...</Text>
+          </View>
+        )}
+
+        {subscriptionError && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{subscriptionError}</Text>
+          </View>
+        )}
+
         {/* Timeline */}
         <View style={styles.timeline}>
           {TIMELINE_ITEMS.map((item, index) => (
@@ -269,7 +327,7 @@ export const SubscriptionScreen: React.FC = () => {
             </View>
             <View style={styles.programDetails}>
               <Text style={styles.programTitle}>3-Month Program</Text>
-              <Text style={styles.programPrice}>$99.98 in total</Text>
+              <Text style={styles.programPrice}>{displayPrice} in total</Text>
               <View style={styles.bonusBadge}>
                 <Text style={styles.bonusBadgeText}>🎁 Beta bonus 1 month free</Text>
               </View>
@@ -599,5 +657,34 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 14,
     color: '#8C49D5',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F3E8FF',
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  loadingText: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 14,
+    color: '#8C49D5',
+    marginLeft: 8,
+  },
+  errorContainer: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 14,
+    color: '#DC2626',
+    textAlign: 'center',
   },
 });

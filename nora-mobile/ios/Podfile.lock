@@ -1,4 +1,6 @@
 PODS:
+  - amplitude-react-native (1.5.32):
+    - React-Core
   - AppAuth (2.0.0):
     - AppAuth/Core (= 2.0.0)
     - AppAuth/ExternalUserAgent (= 2.0.0)
@@ -216,6 +218,8 @@ PODS:
   - PromisesObjC (2.4.0)
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
+  - PurchasesHybridCommon (17.26.0):
+    - RevenueCat (= 5.52.0)
   - RCTDeprecation (0.81.5)
   - RCTRequired (0.81.5)
   - RCTTypeSafety (0.81.5):
@@ -1961,6 +1965,7 @@ PODS:
     - React-utils (= 0.81.5)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.81.5)
+  - RevenueCat (5.52.0)
   - RNCAsyncStorage (2.2.0):
     - hermes-engine
     - RCTRequired
@@ -2058,6 +2063,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNPurchases (9.6.13):
+    - PurchasesHybridCommon (= 17.26.0)
+    - React-Core
   - RNReanimated (4.1.5):
     - hermes-engine
     - RCTRequired
@@ -2298,6 +2306,7 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
+  - "amplitude-react-native (from `../../node_modules/@amplitude/analytics-react-native`)"
   - EXApplication (from `../../node_modules/expo-application/ios`)
   - EXAV (from `../../node_modules/expo-av/ios`)
   - EXConstants (from `../../node_modules/expo-constants/ios`)
@@ -2396,6 +2405,7 @@ DEPENDENCIES:
   - "RNFBApp (from `../../node_modules/@react-native-firebase/app`)"
   - "RNFBCrashlytics (from `../../node_modules/@react-native-firebase/crashlytics`)"
   - "RNGoogleSignin (from `../../node_modules/@react-native-google-signin/google-signin`)"
+  - RNPurchases (from `../../node_modules/react-native-purchases`)
   - RNReanimated (from `../../node_modules/react-native-reanimated`)
   - RNScreens (from `../../node_modules/react-native-screens`)
   - RNSVG (from `../../node_modules/react-native-svg`)
@@ -2422,8 +2432,12 @@ SPEC REPOS:
     - nanopb
     - PromisesObjC
     - PromisesSwift
+    - PurchasesHybridCommon
+    - RevenueCat
 
 EXTERNAL SOURCES:
+  amplitude-react-native:
+    :path: "../../node_modules/@amplitude/analytics-react-native"
   EXApplication:
     :path: "../../node_modules/expo-application/ios"
   EXAV:
@@ -2619,6 +2633,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@react-native-firebase/crashlytics"
   RNGoogleSignin:
     :path: "../../node_modules/@react-native-google-signin/google-signin"
+  RNPurchases:
+    :path: "../../node_modules/react-native-purchases"
   RNReanimated:
     :path: "../../node_modules/react-native-reanimated"
   RNScreens:
@@ -2631,6 +2647,7 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  amplitude-react-native: 042aef25456607a631fb54311eeec384491cfcac
   AppAuth: 1c1a8afa7e12f2ec3a294d9882dfa5ab7d3cb063
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
   EXApplication: 1e98d4b1dccdf30627f92917f4b2c5a53c330e5f
@@ -2673,6 +2690,7 @@ SPEC CHECKSUMS:
   NitroSound: 4546553409c68cacc9ee252808297e0a5c5e565e
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
+  PurchasesHybridCommon: 93399cb2ba29164dbab79d6398e79f7723b41653
   RCTDeprecation: 943572d4be82d480a48f4884f670135ae30bf990
   RCTRequired: 8f3cfc90cc25cf6e420ddb3e7caaaabc57df6043
   RCTTypeSafety: 16a4144ca3f959583ab019b57d5633df10b5e97c
@@ -2740,12 +2758,14 @@ SPEC CHECKSUMS:
   ReactCodegen: 68ef7a9e28cd5b1667d6fb28466882d923486e6b
   ReactCommon: 08810150b1206cc44aecf5f6ae19af32f29151a8
   ReactNativeDependencies: 71ce9c28beb282aa720ea7b46980fff9669f428a
+  RevenueCat: 946aceaf97c1eee083dd7fad65a0e0d0c64c837e
   RNCAsyncStorage: 3a4f5e2777dae1688b781a487923a08569e27fe4
   RNCPicker: a7170edbcbf8288de8edb2502e08e7fc757fa755
   RNDateTimePicker: 19ffa303c4524ec0a2dfdee2658198451c16b7f1
   RNFBApp: 0c4cadae3900893d4631ea9a9effd14f853cd8e0
   RNFBCrashlytics: 70521bbf68b69c16273ab01f901e2439f231993a
   RNGoogleSignin: 5c6ca84f819ce8dc978639b2aea804dffdc92818
+  RNPurchases: 049c027cded681054a37b4aea87d904626174c76
   RNReanimated: 6f9263cacfc5b9cb8bcd5b9f3334fc69c8d9209a
   RNScreens: d8d6f1792f6e7ac12b0190d33d8d390efc0c1845
   RNSVG: 31d6639663c249b7d5abc9728dde2041eb2a3c34
