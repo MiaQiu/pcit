@@ -30,6 +30,7 @@ export const LearnScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const lessonService = useLessonService();
   const { isOnline } = useNetworkStatus();
+  const scrollViewRef = React.useRef<ScrollView>(null);
 
   const [phases, setPhases] = useState<Phase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,9 @@ export const LearnScreen: React.FC = () => {
   // Refresh lessons when screen comes into focus (e.g., after completing a lesson)
   useFocusEffect(
     useCallback(() => {
+      // Reset scroll position to top when screen comes into focus
+      scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+
       // Only reload if we already have data (skip initial mount, which is handled by useEffect)
       if (phases.length > 0) {
         loadLessons(false);
@@ -155,8 +159,9 @@ export const LearnScreen: React.FC = () => {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
       <ScrollView
+        ref={scrollViewRef}
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 20, flexGrow: 1 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

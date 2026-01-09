@@ -31,6 +31,7 @@ export const HomeScreen: React.FC = () => {
   const uploadProcessing = useUploadProcessing();
   const { isOnline } = useNetworkStatus();
   const { showToast } = useToast();
+  const scrollViewRef = React.useRef<ScrollView>(null);
 
   const [lessons, setLessons] = useState<LessonCardProps[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,6 +118,9 @@ export const HomeScreen: React.FC = () => {
   // useFocusEffect is more reliable for tab navigation than addListener
   useFocusEffect(
     React.useCallback(() => {
+      // Reset scroll position to top when screen comes into focus
+      scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+
       // Track home screen viewed
       amplitudeService.trackScreenView('Home', {
         screen: 'home',
@@ -595,8 +599,9 @@ export const HomeScreen: React.FC = () => {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
       <ScrollView
+        ref={scrollViewRef}
         className="flex-1 px-6"
-        contentContainerStyle={{ paddingTop: 8, paddingBottom: 20, flexGrow: 1 }}
+        contentContainerStyle={{ paddingTop: 8, paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
