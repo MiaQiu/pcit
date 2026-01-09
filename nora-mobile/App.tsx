@@ -5,6 +5,7 @@ import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   useFonts,
   PlusJakartaSans_400Regular,
@@ -25,6 +26,7 @@ import { ToastProvider } from './src/components/ToastManager';
 import { clearBadge } from './src/utils/notifications';
 import amplitudeService from './src/services/amplitudeService';
 import { REVENUECAT_CONFIG } from './src/config/revenuecat';
+import { getTodaySingapore } from './src/utils/timezone';
 
 // Deep linking configuration
 const linking = {
@@ -59,7 +61,7 @@ const AppContent: React.FC = () => {
   // Handle notification taps
   useEffect(() => {
     // Handle notification tap when app is in foreground or background
-    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(async (response) => {
       console.log('[App] Notification tapped:', response);
 
       const data = response.notification.request.content.data;
@@ -80,6 +82,12 @@ const AppContent: React.FC = () => {
             notificationType: 'new_report',
           }
         );
+
+        // Mark report as read before navigating
+        // This ensures the NextActionCard updates correctly when user returns to Home screen
+        const reportReadKey = `report_read_${getTodaySingapore()}`;
+        await AsyncStorage.setItem(reportReadKey, data.recordingId as string);
+        console.log('[App] Marked report as read:', reportReadKey, data.recordingId);
 
         // Navigate to the report screen
         navigation.navigate('Report', { recordingId: data.recordingId as string });
