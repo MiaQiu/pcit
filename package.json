@@ -4,15 +4,11 @@
   "version": "0.0.0",
   "workspaces": [
     "packages/*",
-    "nora-web",
     "nora-mobile"
   ],
   "scripts": {
-    "dev:web": "npm run dev --workspace=nora-web",
     "dev:mobile": "npm run start --workspace=nora-mobile",
     "server": "node server.cjs",
-    "dev:all": "npm run dev:all --workspace=nora-web",
-    "build:web": "npm run build --workspace=nora-web",
     "build:core": "npm run build --workspace=@nora/core",
     "android": "expo run:android",
     "ios": "expo run:ios"
