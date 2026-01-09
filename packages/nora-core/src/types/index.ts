@@ -34,6 +34,7 @@ export interface User {
   lastSessionDate?: Date | null;
   longestStreak?: number;
   createdAt?: Date;
+  currentPhase?: LessonPhase;
 
   // Subscription fields
   subscriptionPlan?: SubscriptionPlan;

@@ -38,6 +38,7 @@ export const HomeScreen: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>();
   const [relationshipToChild, setRelationshipToChild] = useState<'MOTHER' | 'FATHER' | 'GRANDMOTHER' | 'GRANDFATHER' | 'GUARDIAN' | 'OTHER' | undefined>();
+  const [userCurrentPhase, setUserCurrentPhase] = useState<'CONNECT' | 'DISCIPLINE' | undefined>();
   const [currentStreak, setCurrentStreak] = useState(0);
   const [completedDaysThisWeek, setCompletedDaysThisWeek] = useState<boolean[]>([false, false, false, false, false, false, false]);
   const [latestScore, setLatestScore] = useState<{ score: number; maxScore: number; recordingId: string } | null>(null);
@@ -174,6 +175,7 @@ export const HomeScreen: React.FC = () => {
       handleApiSuccess(); // Mark server as up
       setProfileImageUrl(user.profileImageUrl);
       setRelationshipToChild(user.relationshipToChild);
+      setUserCurrentPhase(user.currentPhase);
     } catch (error) {
       // Show toast if offline
       if (!isOnline) {
@@ -568,8 +570,10 @@ export const HomeScreen: React.FC = () => {
 
     switch (cardType) {
       case 'lesson':
-        // Find the first unlocked lesson that is not completed
-        const todayLesson = lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
+        // Find the first unlocked lesson that is not completed in the user's current phase
+        const todayLesson = userCurrentPhase
+          ? lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED' && l.phaseName === userCurrentPhase)
+          : lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
         if (todayLesson) {
           handleLessonPress(todayLesson.id);
         }
@@ -635,8 +639,10 @@ export const HomeScreen: React.FC = () => {
 
         {/* Show LessonCard for new users with no recordings/lessons, NextActionCard for experienced users */}
         {lessons.length > 0 && (() => {
-          // Find the first unlocked lesson that is not completed
-          const todayLesson = lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
+          // Find the first unlocked lesson that is not completed in the user's current phase
+          const todayLesson = userCurrentPhase
+            ? lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED' && l.phaseName === userCurrentPhase)
+            : lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
           const displayLesson = todayLesson || lessons[0];
 
           // If user is not experienced (new user), show simple LessonCard
