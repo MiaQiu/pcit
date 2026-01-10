@@ -1,0 +1,4 @@
+# Don't upload parent directory contents
+../*
+# But do include this directory
+!../nora-mobile
