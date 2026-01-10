@@ -1,0 +1,5 @@
+{
+  "name": "audio-session-manager",
+  "version": "1.0.0",
+  "main": "index.ts"
+}

@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "Nora",
+    "slug": "nora-mobile",
+    "version": "1.0.0",
+    "main": "index.ts",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "nora",
+    "splash": {
+      "image": "./assets/splash_icon_dino_small.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.chromamind.nora",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ],
+        "NSUserNotificationsUsageDescription": "Nora sends you helpful reminders to practice and learn, and notifies you when your session reports are ready."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.chromamind.nora"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-font",
+      "expo-notifications",
+      "./plugins/withAudioSessionManager.js",
+      "./plugins/withModularHeaders.js",
+      "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a85b5e9f-f4c9-4650-a58f-16c3c45020c4"
+      }
+    },
+    "owner": "chromamind"
+  }
+}
