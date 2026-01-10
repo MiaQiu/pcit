@@ -569,7 +569,7 @@ export const ProfileScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.settingRow}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate('TermsAndConditions')}
+              onPress={() => Linking.openURL('https://hinora.co/terms')}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="document-text-outline" size={22} color="#1F2937" />
@@ -583,7 +583,7 @@ export const ProfileScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.settingRow}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate('PrivacyPolicy')}
+              onPress={() => Linking.openURL('https://hinora.co/privacy')}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="shield-checkmark-outline" size={22} color="#1F2937" />
