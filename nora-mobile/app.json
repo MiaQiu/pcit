@@ -43,8 +43,7 @@
       "expo-notifications",
       "./plugins/withAudioSessionManager.js",
       "./plugins/withModularHeaders.js",
-      "@react-native-firebase/app",
-      "@react-native-firebase/crashlytics"
+      "@react-native-firebase/app"
     ],
     "extra": {
       "eas": {
