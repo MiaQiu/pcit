@@ -36,6 +36,7 @@ async function handleSubscriptionActivation(userId, event) {
     where: { id: userId },
     data: {
       subscriptionStatus: isTrialPeriod ? 'TRIAL' : 'ACTIVE',
+      subscriptionPlan: 'PREMIUM', // User has paid subscription
       subscriptionEndDate: expirationDate,
       revenueCatCustomerId: event.app_user_id,
     },
@@ -52,7 +53,8 @@ async function handleSubscriptionCancellation(userId, event) {
     where: { id: userId },
     data: {
       subscriptionStatus: 'CANCELLED',
-      // Keep expiration date - user still has access until then
+      // Keep subscriptionPlan as PREMIUM - user still has access until expiration
+      // Keep subscriptionEndDate - user still has access until then
     },
   });
 
@@ -69,6 +71,7 @@ async function handleSubscriptionExpiration(userId, event) {
     where: { id: userId },
     data: {
       subscriptionStatus: 'EXPIRED',
+      subscriptionPlan: 'FREE', // Revert to free plan after expiration
     },
   });
 
@@ -112,22 +115,43 @@ router.post('/revenuecat', express.json({ type: 'application/json' }), async (re
       return res.status(401).json({ error: 'Missing signature' });
     }
 
-    // Verify signature (skip for test events)
-    if (signature && !isTestEvent) {
+    // Verify signature (skip for test events and local development)
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+
+    if (signature && !isTestEvent && !isDevelopment) {
       const rawBody = JSON.stringify(req.body);
       if (!verifyWebhook(rawBody, signature)) {
         console.error('Invalid webhook signature');
         return res.status(401).json({ error: 'Invalid signature' });
       }
-    } else if (isTestEvent) {
-      console.log('Skipping signature verification for TEST event');
+    } else {
+      if (isTestEvent) {
+        console.log('Skipping signature verification for TEST event');
+      } else if (isDevelopment) {
+        console.log('Skipping signature verification in development mode');
+      }
     }
 
     const { event } = req.body;
-    const appUserId = event.app_user_id; // This is your user.id
     const eventId = event.id; // RevenueCat provides unique event.id
 
+    // Extract user ID based on event type
+    let appUserId = event.app_user_id;
+
+    // TRANSFER events don't have app_user_id, use transferred_to instead
+    if (eventType === 'TRANSFER' && event.transferred_to && event.transferred_to.length > 0) {
+      appUserId = event.transferred_to[0];
+      console.log(`TRANSFER event: ${event.transferred_from?.[0]} -> ${appUserId}`);
+    }
+
     console.log(`Received RevenueCat webhook: ${eventType} for user ${appUserId}`);
+    console.log('Full webhook body:', JSON.stringify(req.body, null, 2));
+
+    // Handle case where app_user_id is missing
+    if (!appUserId) {
+      console.warn('No app_user_id in webhook event');
+      return res.status(200).json({ received: true, warning: 'No app_user_id' });
+    }
 
     // CRITICAL: Check for duplicate events (idempotency)
     // RevenueCat retries webhooks, so we must handle duplicates
@@ -156,6 +180,21 @@ router.post('/revenuecat', express.json({ type: 'application/json' }), async (re
       case 'INITIAL_PURCHASE':
       case 'RENEWAL':
         await handleSubscriptionActivation(user.id, event);
+        break;
+
+      case 'TRANSFER':
+        // When a subscription is transferred to a new user (e.g., after Purchases.logIn)
+        // Activate subscription for the new user
+        console.log(`Activating transferred subscription for user ${user.id}`);
+        // Note: TRANSFER events don't have expiration_at_ms, subscription is already active
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            subscriptionStatus: 'ACTIVE',
+            subscriptionPlan: 'PREMIUM',
+            revenueCatCustomerId: appUserId,
+          },
+        });
         break;
 
       case 'CANCELLATION':

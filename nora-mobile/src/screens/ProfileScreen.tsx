@@ -12,11 +12,14 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import Purchases from 'react-native-purchases';
 import { ProfileCircle } from '../components/ProfileCircle';
 import { useAuthService } from '../contexts/AppContext';
 import { RootStackNavigationProp } from '../navigation/types';
@@ -221,6 +224,29 @@ export const ProfileScreen: React.FC = () => {
       Alert.alert('Error', 'Failed to log out. Please try again.');
     } finally {
       setLoggingOut(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    try {
+      if (Platform.OS === 'ios') {
+        // iOS: Use RevenueCat's built-in method to show subscription management
+        await Purchases.showManageSubscriptions();
+      } else if (Platform.OS === 'android') {
+        // Android: Open Google Play subscription management
+        const androidPackageName = 'com.chromamind.nora';
+        const url = `https://play.google.com/store/account/subscriptions?package=${androidPackageName}`;
+        const supported = await Linking.canOpenURL(url);
+
+        if (supported) {
+          await Linking.openURL(url);
+        } else {
+          Alert.alert('Error', 'Could not open subscription management');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to open subscription management:', error);
+      Alert.alert('Error', 'Could not open subscription management. Please try again.');
     }
   };
 
@@ -484,8 +510,12 @@ export const ProfileScreen: React.FC = () => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.linkButton} activeOpacity={0.7}>
-            <Text style={styles.linkButtonText}>Manage Subscription  (coming soon)</Text>
+          <TouchableOpacity
+            style={styles.linkButton}
+            activeOpacity={0.7}
+            onPress={handleManageSubscription}
+          >
+            <Text style={styles.linkButtonText}>Manage Subscription</Text>
           </TouchableOpacity>
         </View>
 

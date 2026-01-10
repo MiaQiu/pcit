@@ -45,6 +45,7 @@ class AuthService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true', // Skip ngrok warning page
       },
       body: JSON.stringify(request),
     });
@@ -67,6 +68,7 @@ class AuthService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true', // Skip ngrok warning page
       },
       body: JSON.stringify({ email, password }),
     });
@@ -91,6 +93,7 @@ class AuthService {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true', // Skip ngrok warning page
           },
           body: JSON.stringify({ refreshToken: this.refreshToken }),
         });
@@ -111,6 +114,7 @@ class AuthService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true', // Skip ngrok warning page
       },
       body: JSON.stringify({ email }),
     });
@@ -129,6 +133,7 @@ class AuthService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true', // Skip ngrok warning page
       },
       body: JSON.stringify({ token, newPassword }),
     });
@@ -162,6 +167,7 @@ class AuthService {
       const response = await fetch(`${this.apiUrl}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
+          'ngrok-skip-browser-warning': 'true', // Skip ngrok warning page
         },
       });
 
@@ -253,6 +259,7 @@ class AuthService {
       const response = await fetch(`${this.apiUrl}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
+          'ngrok-skip-browser-warning': 'true', // Skip ngrok warning page
         },
       });
 
@@ -291,6 +298,7 @@ class AuthService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true', // Skip ngrok warning page
         },
         body: JSON.stringify({ refreshToken: this.refreshToken }),
       });
@@ -372,6 +380,7 @@ class AuthService {
     const headers = {
       ...options.headers,
       Authorization: `Bearer ${this.accessToken}`,
+      'ngrok-skip-browser-warning': 'true', // Skip ngrok warning page
     };
 
     let response = await fetch(url, { ...options, headers });

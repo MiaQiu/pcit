@@ -28,29 +28,10 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Identify user to RevenueCat when authenticated
-  useEffect(() => {
-    const identifyUser = async () => {
-      try {
-        const user = await authService.getCurrentUser();
-
-        if (user?.id) {
-          // CRITICAL: Ensure user ID is a string (RevenueCat requirement)
-          // If your database uses integers, cast to string
-          const userId = String(user.id);
-
-          // Link RevenueCat to user ID
-          await Purchases.logIn(userId);
-          console.log('User identified to RevenueCat:', userId);
-        }
-      } catch (error) {
-        console.error('Error identifying user to RevenueCat:', error);
-        // Don't throw - this is non-critical for app functionality
-      }
-    };
-
-    identifyUser();
-  }, [authService]);
+  // User identification to RevenueCat is handled in:
+  // - CreateAccountScreen: After successful signup
+  // - LoginScreen: After successful login
+  // This ensures webhooks always have the correct user ID
 
   // Load offerings and subscription status in parallel (OPTIMIZED)
   useEffect(() => {

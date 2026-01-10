@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import Purchases from 'react-native-purchases';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useAuthService } from '../../contexts/AppContext';
 import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
@@ -64,6 +65,17 @@ export const LoginScreen: React.FC = () => {
           daysInApp,
         });
         amplitudeService.trackLogin('email');
+
+        // Identify user to RevenueCat on login
+        // This restores the user's purchase history and links any purchases made while logged out
+        try {
+          const userId = String(response.user.id);
+          await Purchases.logIn(userId);
+          console.log('✅ User identified to RevenueCat on login:', userId);
+        } catch (revenueCatError) {
+          console.error('⚠️ Failed to identify user to RevenueCat:', revenueCatError);
+          // Don't block login flow if RevenueCat identification fails
+        }
       }
 
       // Register for push notifications (non-blocking)

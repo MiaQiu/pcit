@@ -24,6 +24,7 @@ import { useAuthService } from '../../contexts/AppContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { Ellipse } from '../../components/Ellipse';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
+import Purchases from 'react-native-purchases';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -74,7 +75,8 @@ export const SubscriptionScreen: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Purchase subscription through RevenueCat
+      // User was already identified to RevenueCat in CreateAccountScreen
+      // Proceed directly with purchase - webhook will have the correct user ID
       const result = await purchasePackage();
 
       if (result.success) {

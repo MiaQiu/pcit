@@ -548,7 +548,6 @@ Ineffective Command Skills:
 - Negative Commands: ${counts.negative_command}
 - Vague Commands: ${counts.vague_command}
 - Chained Commands: ${counts.chained_command}
-- Harsh Tone: ${counts.harsh_tone}
 
 Neutral: ${counts.neutral}
 
@@ -562,7 +561,6 @@ Summary:
 - Minimize Indirect Commands (phrased as questions)
 - Eliminate Negative Commands (focus on what TO do)
 - No Chained Commands (one command at a time)
-- No Harsh Tone
 
 **Conversation Utterances (with PCIT coding):**
 ${JSON.stringify(utterances.map(u => ({

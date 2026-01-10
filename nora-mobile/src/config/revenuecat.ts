@@ -7,7 +7,7 @@ export const REVENUECAT_CONFIG = {
 
   // Entitlement identifier (from RevenueCat dashboard → Entitlements)
   entitlements: {
-    premium: 'premium',
+    premium: 'Nora Premium',
   },
 
   // Offering identifier (from RevenueCat dashboard → Offerings)

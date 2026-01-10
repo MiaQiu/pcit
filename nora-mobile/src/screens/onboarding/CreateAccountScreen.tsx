@@ -19,12 +19,12 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import Purchases from 'react-native-purchases';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
 import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
 import { handleApiSuccess } from '../../utils/NetworkMonitor';
-import { requestNotificationPermissions } from '../../utils/notifications';
 import amplitudeService from '../../services/amplitudeService';
 
 export const CreateAccountScreen: React.FC = () => {
@@ -108,15 +108,18 @@ export const CreateAccountScreen: React.FC = () => {
           daysInApp: 0, // New user
         });
         amplitudeService.trackSignup('email');
-      }
 
-      // Register for push notifications (non-blocking)
-      const accessToken = authService.getAccessToken();
-      if (accessToken) {
-        requestNotificationPermissions(accessToken).catch(error => {
-          console.error('[CreateAccountScreen] Failed to register push notifications:', error);
-          // Don't block signup if push notification registration fails
-        });
+        // Identify user to RevenueCat IMMEDIATELY after account creation
+        // This ensures when user reaches subscription screen, RevenueCat knows their ID
+        // Webhooks will contain the actual user ID, not an anonymous ID
+        try {
+          const userId = String(response.user.id);
+          await Purchases.logIn(userId);
+          console.log('✅ User identified to RevenueCat:', userId);
+        } catch (revenueCatError) {
+          console.error('⚠️ Failed to identify user to RevenueCat:', revenueCatError);
+          // Don't block signup flow if RevenueCat identification fails
+        }
       }
 
       // Store email in onboarding context

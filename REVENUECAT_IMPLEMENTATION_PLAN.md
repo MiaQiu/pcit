@@ -119,7 +119,7 @@ This plan incorporates essential production-grade fixes based on real-world depl
 
 ---
 
-## Phase 1: RevenueCat Setup
+##  : RevenueCat Setup
 
 **Time: 30-60 minutes**
 
@@ -135,34 +135,18 @@ This plan incorporates essential production-grade fixes based on real-world depl
 ### Step 2: Configure iOS App
 
 1. In RevenueCat dashboard → **Apps**
-2. Click **"Add App"** or **"+ New"**
+2. Click **"Add App"**
 3. Select **iOS**
 4. Enter app details:
    - **App Name:** Nora
    - **Bundle ID:** Your iOS bundle ID (e.g., `com.yourdomain.nora`)
+   - **App Store Connect App-Specific Shared Secret:**
+     - **UPDATED PATH:** App Store Connect → My Apps → [Your App] → General → App Information → Scroll to bottom right → App-Specific Shared Secret
+     - **OLD PATH (NO LONGER WORKS):** ~~My Apps → Features → In-App Purchases~~
+     - Click "Generate" if you haven't created one yet
+     - Copy and paste into RevenueCat
 
-5. **Configure App Store Authentication (Choose ONE method):**
-
-   **✅ RECOMMENDED: In-App Purchase Key (Modern - StoreKit 2)**
-   - Go to App Store Connect → **Users and Access** → **Integrations** → **Keys** tab
-   - In the **"In-App Purchase"** section, click **"+"**
-   - Name: "RevenueCat" or "Nora IAP"
-   - Click **"Generate"**
-   - **Download the .p8 file** (you can only download once!)
-   - **Copy the Key ID** and **Issuer ID** (shown on the Keys page)
-   - In RevenueCat → Upload the **.p8 file**, enter **Key ID** and **Issuer ID**
-   - **Benefits:** StoreKit 2 support, better security, server-to-server notifications, future-proof
-
-   **OR (Legacy): App-Specific Shared Secret (Only if targeting iOS 14 or below)**
-   - App Store Connect → My Apps → [Your App] → General → App Information → Scroll to bottom right
-   - Find **"App-Specific Shared Secret"**
-   - Click "Generate" if you haven't created one yet
-   - Copy and paste into RevenueCat
-   - **Note:** This is deprecated by Apple for new apps
-
-6. Click **"Save"**
-
-**Note:** By using the In-App Purchase Key, you've also completed part of Step 17 (App Store Connect Integration) early - good job!
+5. Click **"Save"**
 
 ---
 
@@ -1003,22 +987,16 @@ app.use('/api/webhooks', webhookRoutes);
 
 **Time: 30 minutes**
 
-### Step 17: Verify App Store Connect Integration
-**Time: 5 minutes**
+### Step 17: Set Up App Store Connect Integration
+**Time: 20 minutes**
 
 This enables automatic subscription status sync from Apple.
 
-**If you already uploaded the In-App Purchase Key (.p8 file) in Step 2:**
-- ✅ You've already completed this step!
-- Verify in RevenueCat dashboard → **Integrations** → **App Store Connect**
-- Should show as "Connected" or "Configured"
-
-**If you used the legacy Shared Secret in Step 2, complete this now:**
-
 1. **Generate App Store Connect API Key:**
-   - Go to App Store Connect → Users and Access → Integrations → Keys
-   - In "In-App Purchase" section, click **"+"**
+   - Go to App Store Connect → Users and Access → Keys
+   - Click **"+"** to generate new key
    - Name: "RevenueCat Integration"
+   - Access: **App Manager** (recommended) or Admin
    - Click **"Generate"**
    - **Download the .p8 file** (you can only download once!)
    - Note the **Key ID** and **Issuer ID**
@@ -1032,7 +1010,7 @@ This enables automatic subscription status sync from Apple.
 
 3. **Benefits:**
    - Automatic subscription status updates from Apple
-   - Server-to-server notifications (StoreKit 2)
+   - Server-to-server notifications
    - Better analytics
    - Graceful handling of App Store changes
 
