@@ -10,7 +10,8 @@
     "ios:prod": "cp .env.production .env && expo run:ios --configuration Release",
     "web": "expo start --web",
     "prebuild": "expo prebuild",
-    "prebuild:prod": "cp .env.production .env && expo prebuild --clean"
+    "prebuild:prod": "cp .env.production .env && expo prebuild --clean",
+    "postinstall": "cd ../packages/nora-core && npm install && npm run build"
   },
   "dependencies": {
     "@amplitude/analytics-react-native": "^1.5.32",
