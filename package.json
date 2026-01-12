@@ -25,6 +25,8 @@
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
+    "expo": "~54.0.25",
+    "expo-dev-client": "~6.0.20",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "form-data": "^4.0.1",
@@ -36,9 +38,8 @@
     "nanoid": "^5.1.6",
     "node-fetch": "^2.7.0",
     "nodemailer": "^7.0.11",
-    "react-native-linear-gradient": "^2.8.3",
-    "expo": "~54.0.25",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-native": "0.81.5",
+    "react-native-linear-gradient": "^2.8.3"
   }
 }

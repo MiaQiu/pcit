@@ -1998,7 +1998,8 @@ router.get('/dashboard', requireAuth, async (req, res) => {
           mode: true,
           durationSeconds: true,
           createdAt: true,
-          overallScore: true
+          overallScore: true,
+          analysisStatus: true
         }
       }),
 

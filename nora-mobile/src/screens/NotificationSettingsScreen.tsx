@@ -29,6 +29,7 @@ import {
   scheduleDailyLessonReminder,
   cancelDailyLessonReminder,
 } from '../utils/notifications';
+import { useAuthService } from '../contexts/AppContext';
 
 interface NotificationPreferences {
   dailyLessonReminder: boolean;
@@ -72,6 +73,7 @@ const STORAGE_KEY = '@notification_preferences';
 
 export const NotificationSettingsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const authService = useAuthService();
 
   const [preferences, setPreferences] = useState<NotificationPreferences>(DEFAULT_PREFERENCES);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -158,7 +160,9 @@ export const NotificationSettingsScreen: React.FC = () => {
   };
 
   const requestNotificationPermissions = async () => {
-    const granted = await requestPermissions();
+    // Get access token to register push token with backend
+    const accessToken = authService.getAccessToken();
+    const granted = await requestPermissions(accessToken);
 
     if (!granted) {
       Alert.alert(

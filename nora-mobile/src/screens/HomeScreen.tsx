@@ -175,7 +175,7 @@ export const HomeScreen: React.FC = () => {
       handleApiSuccess(); // Mark server as up
       setProfileImageUrl(user.profileImageUrl);
       setRelationshipToChild(user.relationshipToChild);
-      setUserCurrentPhase(user.currentPhase);
+      setUserCurrentPhase(user.currentPhase as 'CONNECT' | 'DISCIPLINE' | undefined);
     } catch (error) {
       // Show toast if offline
       if (!isOnline) {
@@ -225,8 +225,11 @@ export const HomeScreen: React.FC = () => {
       }
 
       // === Today's Recording State (S/R) ===
-      const hasRecording = todayRecordings.length > 0;
-      setHasRecordedSession(hasRecording);
+      // Only consider recordings with COMPLETED analysis (not PENDING or FAILED)
+      const hasCompletedRecording = todayRecordings.some(
+        recording => recording.analysisStatus === 'COMPLETED'
+      );
+      setHasRecordedSession(hasCompletedRecording);
 
       // Mark user as experienced if they have recordings (proactive caching)
       if (todayRecordings.length > 0) {
@@ -238,15 +241,19 @@ export const HomeScreen: React.FC = () => {
       const reportReadKey = `report_read_${getTodaySingapore()}`;
       const reportReadRecordingId = await AsyncStorage.getItem(reportReadKey);
 
-      if (hasRecording) {
-        // Get the most recent recording (recordings are already sorted by desc)
-        const latestRecording = todayRecordings[0];
-        setLatestRecordingId(latestRecording.id);
+      if (hasCompletedRecording) {
+        // Get the most recent completed recording (recordings are already sorted by desc)
+        const latestCompletedRecording = todayRecordings.find(
+          recording => recording.analysisStatus === 'COMPLETED'
+        );
+        if (latestCompletedRecording) {
+          setLatestRecordingId(latestCompletedRecording.id);
 
-        // Report is read only if the stored recording ID matches the latest recording
-        setIsReportRead(reportReadRecordingId === latestRecording.id);
+          // Report is read only if the stored recording ID matches the latest completed recording
+          setIsReportRead(reportReadRecordingId === latestCompletedRecording.id);
+        }
       } else {
-        // No recording today, report cannot be read
+        // No completed recording today, report cannot be read
         setIsReportRead(false);
       }
 
@@ -477,7 +484,8 @@ export const HomeScreen: React.FC = () => {
       console.error('Failed to load lessons:', err);
       const errorMessage = handleApiError(err);
       console.log('[HomeScreen] Error message:', errorMessage);
-      console.log('[HomeScreen] Error details:', { code: err.code, message: err.message, status: err.status });
+      const error = err as any;
+      console.log('[HomeScreen] Error details:', { code: error.code, message: error.message, status: error.status });
       // NetworkStatusBar already shows if it's a network issue
     } finally {
       setLoading(false);

@@ -17,9 +17,11 @@ import { RootStackNavigationProp } from '../../navigation/types';
 import { FONTS, COLORS } from '../../constants/assets';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 import { requestNotificationPermissions } from '../../utils/notifications';
+import { useAuthService } from '../../contexts/AppContext';
 
 export const NotificationPermissionScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const authService = useAuthService();
   const [isRequesting, setIsRequesting] = useState(false);
 
   const handleNotNow = () => {
@@ -29,9 +31,11 @@ export const NotificationPermissionScreen: React.FC = () => {
   const handleEnable = async () => {
     setIsRequesting(true);
     try {
-      const granted = await requestNotificationPermissions();
+      // Get access token to register push token with backend
+      const accessToken = authService.getAccessToken();
+      const granted = await requestNotificationPermissions(accessToken);
       if (granted) {
-        console.log('Notification permissions granted');
+        console.log('Notification permissions granted and push token registered');
       } else {
         Alert.alert(
           'Notifications Disabled',

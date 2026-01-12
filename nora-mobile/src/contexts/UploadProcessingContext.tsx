@@ -121,39 +121,51 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
   useEffect(() => {
     console.log('[UploadProcessing] Setting up push notification listener');
 
-    const subscription = Notifications.addNotificationReceivedListener((notification) => {
+    const subscription = Notifications.addNotificationReceivedListener(async (notification) => {
       console.log('[UploadProcessing] Notification received:', notification);
 
-      const notificationData = notification.request.content.data || {};
-      const { type, recordingId: notificationRecordingId, error } = notificationData;
-      const errorMessage = typeof error === 'string' ? error : 'Unknown error';
+      try {
+        const notificationData = notification.request.content.data || {};
+        const { type, recordingId: notificationRecordingId, error } = notificationData;
+        const errorMessage = typeof error === 'string' ? error : 'Unknown error';
 
-      // Check if this notification is for our current recording
-      if (notificationRecordingId === recordingIdRef.current) {
-        if (type === 'new_report') {
-          // Success: Report ready
-          console.log('[UploadProcessing] Report ready notification received for current recording');
+        // Check if this notification is for our current recording
+        if (notificationRecordingId === recordingIdRef.current) {
+          if (type === 'new_report') {
+            // Success: Report ready
+            console.log('[UploadProcessing] Report ready notification received for current recording');
 
-          // Update timestamp to notify subscribers (e.g., HomeScreen)
-          setReportCompletedTimestamp(Date.now());
+            // Update timestamp to notify subscribers (e.g., HomeScreen)
+            setReportCompletedTimestamp(Date.now());
 
-          // Clear processing state
-          reset();
-        } else if (type === 'report_failed') {
-          // Failure: Report generation failed
-          console.log('[UploadProcessing] Report failed notification received for current recording');
+            // Clear processing state
+            await reset();
+            console.log('[UploadProcessing] State reset completed after new_report notification');
+          } else if (type === 'report_failed') {
+            // Failure: Report generation failed
+            console.log('[UploadProcessing] Report failed notification received for current recording');
 
-          // Clear processing state
-          reset();
+            // Clear processing state
+            await reset();
+            console.log('[UploadProcessing] State reset completed after report_failed notification');
 
-          // Show error alert to user
-          const Alert = require('react-native').Alert;
-          const userFriendlyMessage = getUserFriendlyErrorMessage(errorMessage);
-          Alert.alert(
-            'Unable to Generate Report',
-            userFriendlyMessage,
-            [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
-          );
+            // Show error alert to user
+            const Alert = require('react-native').Alert;
+            const userFriendlyMessage = getUserFriendlyErrorMessage(errorMessage);
+            Alert.alert(
+              'Unable to Generate Report',
+              userFriendlyMessage,
+              [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
+            );
+          }
+        }
+      } catch (error) {
+        console.error('[UploadProcessing] Error handling notification:', error);
+        // Even if there's an error, try to reset state to prevent getting stuck
+        try {
+          await reset();
+        } catch (resetError) {
+          console.error('[UploadProcessing] Error during reset in notification handler:', resetError);
         }
       }
     });
@@ -522,7 +534,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
   };
 
   const reset = async () => {
-    console.log('[UploadProcessing] Resetting state');
+    console.log('[UploadProcessing] Resetting state - clearing processing state and storage');
 
     // Abort any ongoing upload
     if (uploadXhrRef.current) {
@@ -533,10 +545,12 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     setState('idle');
     setRecordingId(null);
     setUploadProgress(0);
+    console.log('[UploadProcessing] State set to idle, recordingId and progress cleared');
 
     // Clear storage
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
+      console.log('[UploadProcessing] AsyncStorage cleared successfully');
     } catch (error) {
       console.error('[UploadProcessing] Failed to clear storage:', error);
     }
