@@ -21,6 +21,7 @@ interface TranscriptSegment {
   end: number;
   role?: string;  // 'adult' or 'child'
   tag?: string;   // PCIT tag
+  feedback?: string;  // Feedback for adult utterances
 }
 
 interface PCITTag {
@@ -308,7 +309,7 @@ export const TranscriptScreen: React.FC = () => {
                 // New CDI tag names (without DO:/DON'T: prefix)
                 if (tag === 'Echo') return '#3B82F6'; // Blue
                 if (tag === 'Labeled Praise') return '#10B981'; // Green
-                if (tag === 'Unlabeled Praise') return '#6B7280'; // Gray (same as neutral)
+                if (tag === 'Unlabeled Praise') return '#F59E0B'; // Amber
                 if (tag === 'Narration') return '#8B5CF6'; // Purple
                 if (tag === 'Direct Command' || tag === 'Indirect Command') return '#EF4444'; // Red
                 if (tag === 'Question') return '#F97316'; // Orange
@@ -326,6 +327,27 @@ export const TranscriptScreen: React.FC = () => {
 
                 return '#6B7280'; // Default gray
               };
+
+              // Determine feedback type based on tag
+              const getSkillType = (tag: string | undefined): 'desirable' | 'undesirable' | 'neutral' => {
+                if (!tag) return 'neutral';
+
+                // Desirable skills
+                if (tag === 'Echo' || tag === 'Labeled Praise' || tag === 'Narration') {
+                  return 'desirable';
+                }
+
+                // Neutral skills
+                if (tag === 'NEUTRAL' || tag === 'Neutral') {
+                  return 'neutral';
+                }
+
+                // Everything else is undesirable
+                return 'undesirable';
+              };
+
+              const skillType = getSkillType(pcitTag);
+              const shouldShowFeedback = isAdult && segment.feedback && skillType !== 'neutral';
 
               return (
                 <View key={index} style={styles.utteranceContainer}>
@@ -345,6 +367,22 @@ export const TranscriptScreen: React.FC = () => {
 
                   {/* Utterance text */}
                   <Text style={styles.utteranceText}>{segment.text}</Text>
+
+                  {/* Feedback for adult utterances */}
+                  {shouldShowFeedback && (
+                    <View style={[
+                      styles.feedbackContainer,
+                      skillType === 'desirable' ? styles.feedbackDesirable : styles.feedbackUndesirable
+                    ]}>
+                      <Text style={[
+                        styles.feedbackText,
+                        skillType === 'desirable' ? styles.feedbackTextDesirable : styles.feedbackTextUndesirable
+                      ]}>
+                        {skillType === 'desirable' ? '✓ Great!\n' : '💡 '}
+                        {segment.feedback}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               );
             })}
@@ -503,5 +541,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#9CA3AF',
     textAlign: 'center',
+  },
+  feedbackContainer: {
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+    borderLeftWidth: 3,
+  },
+  feedbackDesirable: {
+    backgroundColor: '#F0FDF4', // Light green
+    borderLeftColor: '#16A34A', // Dark green
+  },
+  feedbackUndesirable: {
+    backgroundColor: '#FAF5FF', // Light purple
+    borderLeftColor: '#9333EA', // Dark purple
+  },
+  feedbackText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  feedbackTextDesirable: {
+    color: '#15803D', // Dark green
+  },
+  feedbackTextUndesirable: {
+    color: '#7E22CE', // Dark purple
   },
 });

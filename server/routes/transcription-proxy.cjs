@@ -72,7 +72,7 @@ router.post('/elevenlabs', async (req, res, next) => {
       filename: `${requestId}.webm`,
       contentType: 'audio/webm'
     });
-    formData.append('model_id', 'scribe_v1');
+    formData.append('model_id', 'scribe_v2');
     formData.append('diarize', 'true');
     formData.append('diarization_threshold', '0.1');  // Auto-detect speakers with 0.1 threshold
     formData.append('temperature', '0');              // Use temperature=0 for maximum accuracy

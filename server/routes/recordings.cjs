@@ -172,24 +172,27 @@ async function updateUtteranceRoles(sessionId, roleMap) {
 }
 
 /**
- * Update utterances with PCIT tags (optimized batch update with ID-based matching)
+ * Update utterances with PCIT tags and feedback (optimized batch update with ID-based matching)
  * @param {string} sessionId - Session ID
  * @param {Object} pcitTagMap - Map of utterance ID to DPICS code (RF, LP, etc.)
  * @param {Object} noraTagMap - Map of utterance ID to display name (Echo, Labeled Praise, etc.)
+ * @param {Object} feedbackMap - Map of utterance ID to feedback string (optional)
  * @returns {Promise<void>}
  */
-async function updateUtteranceTags(sessionId, pcitTagMap, noraTagMap) {
+async function updateUtteranceTags(sessionId, pcitTagMap, noraTagMap, feedbackMap = {}) {
   // Build array of updates to perform in parallel
   const updatePromises = [];
 
   for (const [utteranceId, pcitTag] of Object.entries(pcitTagMap)) {
     const noraTag = noraTagMap[utteranceId];
+    const feedback = feedbackMap[utteranceId] || null;
     updatePromises.push(
       prisma.utterance.update({
         where: { id: utteranceId },
         data: {
           pcitTag: pcitTag,  // DPICS code (RF, LP, etc.)
-          noraTag: noraTag   // Display name (Echo, Labeled Praise, etc.)
+          noraTag: noraTag,   // Display name (Echo, Labeled Praise, etc.)
+          feedback: feedback  // Feedback string
         }
       })
     );
@@ -1110,7 +1113,26 @@ Return ONLY valid JSON with this exact structure:
 
 Analyze Sequentially: Read the list in order.
 Reflections (RF): When coding a Parent segment, look at the immediately preceding Child segment. If the Parent repeats/paraphrases it, code RF1.
-Pauses: Treat consecutive Parent segments as separate coding units3.
+Pauses: Treat consecutive Parent segments as separate coding units.
+
+***Feedback Generation Strategy***
+
+For desirable and undesirable coded Parent segments, you must generate a "feedback" string (1-2 sentences max) with a friendly, encouraging tone:
+
+1. DESIRABLE SKILLS (LP, BD, RF, RQ):
+   - Goal: Reinforce the positive behavior with warmth and encouragement.
+   - Action: Acknowledge or praise the parent for using the skill.
+   - Limit to 1 short sentence only.
+
+2. UNDESIRABLE SKILLS (NTA, DC, IC, Q, UP):
+   - Goal: Coach the parent to use a PRIDE skill instead (gentle, supportive tone).
+   - Action: Give a specific, friendly recommendation of what they could say differently in that context.
+   - for UP, suggest using LP instead.
+  
+3. NEUTRAL CODES (AK, ID):
+   - Action: Set feedback to an empty string "" - no feedback needed for neutral codes.
+
+Keep feedback conversational, warm, and actionable. Focus on what the parent did well or what they could try next time.
 
 <coding_rules>
 1. NEGATIVE TALK (NTA)
@@ -1223,7 +1245,7 @@ Each item has:
 
 Output only a valid JSON array of objects for the Parent segments.
 
-Format: [{"id": <int>, "code": <string>}, ...]
+Format: [{"id": <int>, "code": <string>, "feedback": <string>}, ...]
 
 Do not include child segments in the output.
 
@@ -1236,7 +1258,8 @@ Do not include markdown or whitespace (minified JSON).
 - Do NOT say "I'm ready" or "Here is the output" or any other text
 - Your ENTIRE response must be ONLY the JSON array starting with [ and ending with ]
 - First character of your response MUST be [
-- Last character of your response MUST be ]`;
+- Last character of your response MUST be ]
+- Every parent segment MUST have both "code" and "feedback" fields`;
 
   console.log(`📊 [ANALYSIS-STEP-8] Calling Claude API for PCIT coding...`);
   console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
@@ -1319,6 +1342,7 @@ Do not include markdown or whitespace (minified JSON).
   // Map idx back to actual utt.id
   const pcitTagMap = {}; // DPICS codes (RF, LP, etc.)
   const noraTagMap = {}; // Display names (Echo, Labeled Praise, etc.)
+  const feedbackMap = {}; // Feedback strings for each utterance
 
   for (const result of codingResults) {
     if (result.id !== undefined && result.code) {
@@ -1326,14 +1350,17 @@ Do not include markdown or whitespace (minified JSON).
       if (actualUttId) {
         pcitTagMap[actualUttId] = result.code; // Store DPICS code
         noraTagMap[actualUttId] = DPICS_TO_TAG_MAP[result.code] || result.code; // Store display name
+        if (result.feedback) {
+          feedbackMap[actualUttId] = result.feedback; // Store feedback
+        }
       }
     }
   }
 
-  // Update utterances with both PCIT tags and Nora tags in database
-  await updateUtteranceTags(sessionId, pcitTagMap, noraTagMap);
+  // Update utterances with PCIT tags, Nora tags, and feedback in database
+  await updateUtteranceTags(sessionId, pcitTagMap, noraTagMap, feedbackMap);
 
-  console.log(`Updated tags for ${Object.keys(pcitTagMap).length} utterances`);
+  console.log(`Updated tags and feedback for ${Object.keys(pcitTagMap).length} utterances`);
 
   // Count codes from JSON results (using DPICS codes)
   const tagCounts = {};
@@ -2164,7 +2191,8 @@ router.get('/:id/analysis', async (req, res) => {
       start: utt.startTime,
       end: utt.endTime,
       role: utt.role,
-      tag: utt.noraTag  // Use display name for UI
+      tag: utt.noraTag,  // Use display name for UI
+      feedback: utt.feedback  // Feedback for parent utterances
     }));
 
     // Format skills data for the report

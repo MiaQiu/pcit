@@ -128,7 +128,7 @@ export const ReportScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Header with Dragon Icon and Encouragement Message */}
-        <View style={styles.headerSection}>
+        {/* <View style={styles.headerSection}>
           <View style={styles.dragonIconContainer}>
             <Image
               source={DRAGON_PURPLE}
@@ -139,7 +139,7 @@ export const ReportScreen: React.FC = () => {
           <View style={styles.headerTextBox}>
             <Text style={styles.headerText}>{reportData.encouragement}</Text>
           </View>
-        </View>
+        </View> */}
 
         {/* Nora Score */}
         <View style={styles.scoreSection}>
@@ -221,7 +221,7 @@ export const ReportScreen: React.FC = () => {
               style={styles.learnMoreButton}
               onPress={() => navigation.navigate('Transcript', { recordingId })}
             >
-              <Text style={styles.learnMoreText}>Read full transcript</Text>
+              <Text style={styles.learnMoreText}>Detailed tips with transcript</Text>
             </TouchableOpacity>
           </View>
         </View>
