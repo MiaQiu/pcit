@@ -510,16 +510,26 @@ Generate a JSON object with exactly these three fields:
 
 1. **topMoment**: An exact quote from the conversation that highlights bonding between child and parent. Can be from either speaker. Choose a moment showing connection, joy, or positive interaction. Must be a direct quote from the utterances above. Do not mention "PCIT" or therapy.
 
-2. **tips**: highlight 2 most important area (among Praise, Echo, Narrate, Questions, Commands, Criticisms, Negative Phrases) for imporovement (add new line between for better readability). 2-3 sentences for each improvement. Be specific and actionable. Reference at least 1 specific utterances or patterns you observed. Do not mention "PCIT" or therapy.
+2. **tips**: A structured object with the single MOST important area for improvement. Must be a JSON object with these exact fields:
+   - "observation": A clear statement of what we observed in the session - the key area for improvement.
+   - "why": 2 sentences explaining why this area is important based on child development psychology and research. Include specific influence for the child.
+   - "example": One specific, direct quote from the utterances above that illustrates this area.
+   - "actionableTip": refer to the example, use 1-2 sentences with a concrete, specific tip on what the parent can say instead in the scenario.
+   Do not mention "PCIT" or therapy.
 
 3. **reminder**: EXACTLY 2 sentences of encouragement or reminder for the parent. Keep it warm and supportive. Do not mention "PCIT" or therapy.
 
 **Output Format:**
 Return ONLY valid JSON in this exact structure:
 {
-  "topMoment": **topMoment**,
-  "tips": **tips**,
-  "reminder": **reminder**
+  "topMoment": "exact quote from conversation",
+  "tips": {
+    "observation": "clear statement of key area for improvement",
+    "why": "psychology and research-based explanation of why this matters",
+    "example": "specific quote from the conversation",
+    "actionableTip": "concrete tip on what to do differently"
+  },
+  "reminder": "two sentences of warm encouragement"
 }
 
 **CRITICAL:** Return ONLY valid JSON. Do not include markdown code blocks or any text outside the JSON structure.`;
@@ -1477,15 +1487,22 @@ Do not include markdown or whitespace (minified JSON).
       }
 
       // Store structured analysis with formatted tips
+      // Only format tips if it's a string (old format), keep object as-is (new structured format)
+      const formattedTips = typeof parsedAnalysis.tips === 'string'
+        ? formatTips(parsedAnalysis.tips)
+        : parsedAnalysis.tips;
+
       competencyAnalysis = {
         topMoment: parsedAnalysis.topMoment,
-        tips: formatTips(parsedAnalysis.tips),
+        tips: formattedTips,
         reminder: parsedAnalysis.reminder,
         analyzedAt: new Date().toISOString(),
         mode: session.mode
       };
 
-      console.log(`Competency analysis generated for session ${sessionId}`);
+      console.log(`✅ [COMPETENCY-ANALYSIS] Generated for session ${sessionId}`);
+      console.log(`✅ [COMPETENCY-ANALYSIS] Tips type: ${typeof formattedTips}`);
+      console.log(`✅ [COMPETENCY-ANALYSIS] Tips structure:`, JSON.stringify(formattedTips, null, 2).substring(0, 200));
     } else {
       console.error(`Competency analysis failed for session ${sessionId}`);
     }
@@ -1521,6 +1538,11 @@ Do not include markdown or whitespace (minified JSON).
   }
 
   // Store PCIT coding, competency analysis, and overall score in database
+  console.log(`💾 [DATABASE-UPDATE] Saving competencyAnalysis for session ${sessionId}:`, competencyAnalysis ? 'present' : 'NULL');
+  if (competencyAnalysis && competencyAnalysis.tips) {
+    console.log(`💾 [DATABASE-UPDATE] Tips type being saved: ${typeof competencyAnalysis.tips}`);
+  }
+
   await prisma.session.update({
     where: { id: sessionId },
     data: {
@@ -1536,7 +1558,7 @@ Do not include markdown or whitespace (minified JSON).
     }
   });
 
-  console.log(`PCIT coding and overall score (${overallScore}) stored for session ${sessionId}`);
+  console.log(`✅ [DATABASE-UPDATE] PCIT coding and overall score (${overallScore}) stored for session ${sessionId}`);
 
   // Check if user should advance to DISCIPLINE phase
   // Only check if user is still in CONNECT phase (no need to check if already in DISCIPLINE)

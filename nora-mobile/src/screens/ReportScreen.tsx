@@ -212,7 +212,37 @@ export const ReportScreen: React.FC = () => {
         <View>
           <Text style={styles.cardTitle}>Tips for next time</Text>
           <View style={styles.card}>
-            <MarkdownText style={styles.tipsText}>{reportData.tips}</MarkdownText>
+            {typeof reportData.tips === 'string' ? (
+              // Old format: plain text
+              <MarkdownText style={styles.tipsText}>{reportData.tips}</MarkdownText>
+            ) : (
+              // New format: structured object
+              <View>
+                {/* Observation */}
+                <Text style={styles.observationTitle}>{reportData.tips.observation}</Text>
+
+                {/* Why it matters */}
+                <View style={styles.whySection}>
+                  <Text style={styles.whyLabel}>Why it matters:</Text>
+                  <Text style={styles.whyText}>{reportData.tips.why}</Text>
+                </View>
+
+                {/* Example and Tip combined */}
+                <Text style={styles.exampleLabel}>Example from the session:</Text>
+                <View style={styles.exampleSection}>
+                  <Text style={styles.exampleQuote}>"{reportData.tips.example}"</Text>
+                
+                <View style={styles.tipSection}>
+                  <Text style={styles.tipText}>💡 {reportData.tips.actionableTip}</Text>
+                </View>
+                </View>
+
+                {/* Fixed line about more tips */}
+                {/* <Text style={styles.moreTipsText}>
+                  Click on button below for line by line tips.
+                </Text> */}
+              </View>
+            )}
 
             {/* Divider Line */}
             <View style={styles.divider} />
@@ -221,7 +251,8 @@ export const ReportScreen: React.FC = () => {
               style={styles.learnMoreButton}
               onPress={() => navigation.navigate('Transcript', { recordingId })}
             >
-              <Text style={styles.learnMoreText}>Detailed tips with transcript</Text>
+              <Text style={styles.learnMoreText}>View full conversation with tips.
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -475,6 +506,70 @@ const styles = StyleSheet.create({
     color: '#666666',
     lineHeight: 20,
     marginBottom: 16,
+  },
+  observationTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: COLORS.textDark,
+    marginBottom: 16,
+  },
+  whySection: {
+    marginBottom: 22,
+  },
+  whyLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 6,
+  },
+  whyText: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 20,
+  },
+  exampleSection: {
+    marginBottom: 16,
+    backgroundColor: '#F9FAFB',
+    padding: 12,
+    borderRadius: 8,
+    //borderLeftWidth: 3,
+    //borderLeftColor: '#9CA3AF',
+  },
+  exampleLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 6,
+  },
+  exampleQuote: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: COLORS.textDark,
+    fontStyle: 'italic',
+    lineHeight: 20,
+  },
+  tipSection: {
+    backgroundColor: '#FAF5FF',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    marginTop: 16,
+    //borderLeftWidth: 3,
+    //borderLeftColor: '#9333EA',
+  },
+  tipText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#7E22CE',
+    lineHeight: 20,
+  },
+  moreTipsText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#666666',
+    textAlign: 'center',
+    marginBottom: 4,
   },
   divider: {
     width: '100%',

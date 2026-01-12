@@ -3,6 +3,13 @@ import type AuthService from './authService';
 /**
  * Recording analysis response from API
  */
+export interface StructuredTips {
+  observation: string;
+  why: string;
+  example: string;
+  actionableTip: string;
+}
+
 export interface RecordingAnalysis {
   id: string;
   mode: 'CDI' | 'PDI';
@@ -24,7 +31,7 @@ export interface RecordingAnalysis {
     audioUrl: string;
     duration: string;
   };
-  tips: string;
+  tips: string | StructuredTips;
   reminder?: string | null;
   tomorrowGoal: string;
   stats: {
