@@ -281,6 +281,24 @@ export interface QuizResponse {
   respondedAt: Date;
 }
 
+// ============================================================================
+// KEYWORD/GLOSSARY TYPES
+// ============================================================================
+
+export interface Keyword {
+  id: string;
+  term: string;
+  definition: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface KeywordMatch {
+  keyword: Keyword;
+  startIndex: number;
+  endIndex: number;
+}
+
 // API Response types for lessons
 
 export interface LessonCardData {
@@ -307,6 +325,7 @@ export interface LessonListResponse {
 export interface LessonDetailResponse {
   lesson: Lesson;
   userProgress?: UserLessonProgress;
+  keywords?: Keyword[];
 }
 
 export interface UpdateProgressRequest {

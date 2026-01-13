@@ -511,6 +511,15 @@ router.get('/:id', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Lesson not found' });
     }
 
+    // Fetch all keywords for glossary feature
+    const keywords = await prisma.keyword.findMany({
+      select: {
+        id: true,
+        term: true,
+        definition: true
+      }
+    });
+
     // Check prerequisites
     const prerequisitesMet = await checkPrerequisites(userId, lesson);
     if (!prerequisitesMet) {
@@ -564,7 +573,8 @@ router.get('/:id', requireAuth, async (req, res) => {
 
     res.json({
       lesson: lessonResponse,
-      userProgress
+      userProgress,
+      keywords
     });
 
   } catch (error) {

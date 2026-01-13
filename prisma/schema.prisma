@@ -131,6 +131,16 @@ model QuizResponse {
   @@index([userId, quizId])
 }
 
+model Keyword {
+  id         String   @id @default(uuid())
+  term       String   @unique
+  definition String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([term])
+}
+
 model RefreshToken {
   id        String   @id
   userId    String   @unique

@@ -23,8 +23,9 @@ import { QuizFeedback } from '../components/QuizFeedback';
 import { LessonContentCard } from '../components/LessonContentCard';
 import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
 import { COLORS, FONTS } from '../constants/assets';
-import { LessonDetailResponse, LessonSegment, SubmitQuizResponse, LessonNotFoundError } from '@nora/core';
+import { LessonDetailResponse, LessonSegment, SubmitQuizResponse, LessonNotFoundError, Keyword, KeywordMatch } from '@nora/core';
 import { useLessonService } from '../contexts/AppContext';
+import { KeywordDefinitionModal } from '../components/KeywordDefinitionModal';
 import { getMockLessonDetail } from '../data/mockLessons';
 import { LessonCache } from '../lib/LessonCache';
 import amplitudeService from '../services/amplitudeService';
@@ -34,8 +35,9 @@ import { getTodaySingapore } from '../utils/timezone';
  * Format body text with markdown-like formatting:
  * - Replace * at start of lines with purple bullets
  * - Convert **text** to bold
+ * - Highlight keywords
  */
-const formatBodyText = (text: string) => {
+const formatBodyText = (text: string, keywordsList: Keyword[], setSelectedKeyword: (k: Keyword) => void, setShowKeywordModal: (show: boolean) => void) => {
   const lines = text.split('\n');
   const elements: React.ReactNode[] = [];
 
@@ -47,7 +49,7 @@ const formatBodyText = (text: string) => {
       // Line is a bullet point
       const indent = bulletMatch[1];
       const content = bulletMatch[2];
-      const formattedContent = formatInlineText(content);
+      const formattedContent = formatInlineText(content, keywordsList, setSelectedKeyword, setShowKeywordModal);
 
       elements.push(
         <View key={lineIndex} style={{ flexDirection: 'row', marginBottom: 10 }}>
@@ -62,7 +64,7 @@ const formatBodyText = (text: string) => {
       elements.push(<View key={lineIndex} style={{ height: 8 }} />);
     } else {
       // Regular text line
-      const formattedContent = formatInlineText(line);
+      const formattedContent = formatInlineText(line, keywordsList, setSelectedKeyword, setShowKeywordModal);
       elements.push(
         <Text key={lineIndex} style={{ fontFamily: FONTS.regular, fontSize: 20, lineHeight: 28, color: COLORS.textDark, marginBottom: 10 }}>
           {formattedContent}
@@ -75,31 +77,154 @@ const formatBodyText = (text: string) => {
 };
 
 /**
- * Format inline text to handle **bold** markers
+ * Format inline text to handle **bold** markers and keyword highlighting
  */
-const formatInlineText = (text: string) => {
+const formatInlineText = (text: string, keywordsList: Keyword[] = [], setSelectedKeyword: (k: Keyword) => void, setShowKeywordModal: (show: boolean) => void) => {
   const parts: React.ReactNode[] = [];
   let currentIndex = 0;
 
-  // Regex to find **text** patterns
+  // Find all bold markers first
   const boldRegex = /\*\*(.+?)\*\*/g;
+  const boldRanges: Array<{ start: number; end: number; innerText: string; innerStart: number; innerEnd: number }> = [];
   let match;
 
   while ((match = boldRegex.exec(text)) !== null) {
-    // Add text before the bold part
-    if (match.index > currentIndex) {
-      parts.push(text.substring(currentIndex, match.index));
+    boldRanges.push({
+      start: match.index,
+      end: match.index + match[0].length,
+      innerText: match[1],
+      innerStart: match.index + 2, // After **
+      innerEnd: match.index + match[0].length - 2, // Before **
+    });
+  }
+
+  // Find keywords, excluding those inside bold markers (we'll handle them separately)
+  const keywordMatches = findKeywordMatches(text, keywordsList);
+  const nonBoldKeywords = keywordMatches.filter(km => {
+    // Check if this keyword is completely inside a bold range
+    return !boldRanges.some(br => km.startIndex >= br.innerStart && km.endIndex <= br.innerEnd);
+  });
+
+  // Combine markers, but track bold ranges separately for nested rendering
+  const allMarkers: Array<{
+    start: number;
+    end: number;
+    type: 'bold' | 'keyword';
+    data: any;
+  }> = [
+    ...boldRanges.map(m => ({
+      start: m.start,
+      end: m.end,
+      type: 'bold' as const,
+      data: m
+    })),
+    ...nonBoldKeywords.map(m => ({
+      start: m.startIndex,
+      end: m.endIndex,
+      type: 'keyword' as const,
+      data: m.keyword
+    })),
+  ].sort((a, b) => a.start - b.start);
+
+  // Render text with markers
+  allMarkers.forEach((marker, index) => {
+    // Skip if we've already passed this position
+    if (marker.start < currentIndex) {
+      return;
     }
 
-    // Add bold text
-    parts.push(
-      <Text key={match.index} style={{ fontFamily: FONTS.bold }}>
-        {match[1]}
-      </Text>
-    );
+    // Add text before this marker
+    if (marker.start > currentIndex) {
+      parts.push(text.substring(currentIndex, marker.start));
+    }
 
-    currentIndex = match.index + match[0].length;
-  }
+    if (marker.type === 'bold') {
+      const boldRange = marker.data;
+      const innerText = boldRange.innerText;
+
+      // Check if there are keywords inside this bold text
+      const keywordsInBold = keywordMatches.filter(km =>
+        km.startIndex >= boldRange.innerStart && km.endIndex <= boldRange.innerEnd
+      );
+
+      if (keywordsInBold.length > 0) {
+        // Render bold text with nested keywords
+        const boldParts: React.ReactNode[] = [];
+        let boldIndex = 0;
+
+        keywordsInBold.forEach((km, kidx) => {
+          const relativeStart = km.startIndex - boldRange.innerStart;
+          const relativeEnd = km.endIndex - boldRange.innerStart;
+
+          // Text before keyword
+          if (relativeStart > boldIndex) {
+            boldParts.push(innerText.substring(boldIndex, relativeStart));
+          }
+
+          // Keyword (bold + underlined)
+          boldParts.push(
+            <Text
+              key={`keyword-${index}-${kidx}`}
+              style={{
+                fontFamily: FONTS.bold,
+                textDecorationLine: 'underline',
+                textDecorationColor: COLORS.mainPurple,
+                color: COLORS.mainPurple,
+              }}
+              onPress={() => {
+                setSelectedKeyword(km.keyword);
+                setShowKeywordModal(true);
+              }}
+            >
+              {innerText.substring(relativeStart, relativeEnd)}
+            </Text>
+          );
+
+          boldIndex = relativeEnd;
+        });
+
+        // Remaining bold text
+        if (boldIndex < innerText.length) {
+          boldParts.push(innerText.substring(boldIndex));
+        }
+
+        parts.push(
+          <Text key={`bold-${index}`} style={{ fontFamily: FONTS.bold }}>
+            {boldParts}
+          </Text>
+        );
+      } else {
+        // Just bold, no keywords
+        parts.push(
+          <Text key={`bold-${index}`} style={{ fontFamily: FONTS.bold }}>
+            {innerText}
+          </Text>
+        );
+      }
+
+      currentIndex = marker.end;
+    } else if (marker.type === 'keyword') {
+      const keywordText = text.substring(marker.start, marker.end);
+      parts.push(
+        <Text
+          key={`keyword-${index}`}
+          style={{
+            textDecorationLine: 'underline',
+            textDecorationColor: COLORS.mainPurple,
+            color: COLORS.mainPurple,
+          }}
+          onPress={() => {
+            setSelectedKeyword(marker.data);
+            setShowKeywordModal(true);
+          }}
+        >
+          {keywordText}
+        </Text>
+      );
+
+      currentIndex = marker.end;
+    }
+  });
 
   // Add remaining text
   if (currentIndex < text.length) {
@@ -107,6 +232,56 @@ const formatInlineText = (text: string) => {
   }
 
   return parts.length > 0 ? parts : text;
+};
+
+/**
+ * Escape special regex characters
+ */
+const escapeRegex = (str: string): string => {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
+/**
+ * Find keyword matches in text
+ * @param text - The text to search
+ * @param keywords - Array of keywords to match
+ * @returns Array of matches with positions
+ */
+const findKeywordMatches = (text: string, keywords: Keyword[]): KeywordMatch[] => {
+  const matches: KeywordMatch[] = [];
+
+  // Sort keywords by term length (longest first) to match longest terms first
+  // This prevents "Play" from matching before "Play Therapy"
+  const sortedKeywords = [...keywords].sort((a, b) => b.term.length - a.term.length);
+
+  for (const keyword of sortedKeywords) {
+    // Use word boundary regex for whole-word matching
+    // Case-insensitive search
+    const regex = new RegExp(`\\b${escapeRegex(keyword.term)}\\b`, 'gi');
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      const startIndex = match.index;
+      const endIndex = startIndex + match[0].length;
+
+      // Check if this position overlaps with existing match
+      const hasOverlap = matches.some(m =>
+        (startIndex >= m.startIndex && startIndex < m.endIndex) ||
+        (endIndex > m.startIndex && endIndex <= m.endIndex)
+      );
+
+      if (!hasOverlap) {
+        matches.push({
+          keyword,
+          startIndex,
+          endIndex,
+        });
+      }
+    }
+  }
+
+  // Sort by position for sequential rendering
+  return matches.sort((a, b) => a.startIndex - b.startIndex);
 };
 
 interface LessonViewerScreenProps {
@@ -133,6 +308,11 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const [quizFeedback, setQuizFeedback] = useState<SubmitQuizResponse | null>(null);
   const [showPhaseCelebration, setShowPhaseCelebration] = useState(false);
   const [lastRefreshDate, setLastRefreshDate] = useState<string>(getTodaySingapore());
+
+  // Keyword modal state
+  const [selectedKeyword, setSelectedKeyword] = useState<Keyword | null>(null);
+  const [showKeywordModal, setShowKeywordModal] = useState(false);
+  const [keywords, setKeywords] = useState<Keyword[]>([]);
 
   // Refs to store latest function references for panResponder
   const handleContinueRef = useRef<(() => void) | undefined>(undefined);
@@ -219,6 +399,9 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         } else {
           console.log('✅ Cache validation passed, using cached data');
           setLessonData(cachedData);
+          if (cachedData.keywords) {
+            setKeywords(cachedData.keywords);
+          }
           setLoading(false);
 
           // Set initial segment index from cached data
@@ -250,6 +433,11 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
                 }
               }
 
+              // Update keywords if changed
+              if (freshData.keywords) {
+                setKeywords(freshData.keywords);
+              }
+
               LessonCache.set(lessonId, freshData);
             })
             .catch(err => console.log('Background refresh failed:', err));
@@ -261,6 +449,11 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       // No cache, fetch from API
       const data = await lessonService.getLessonDetail(lessonId);
       setLessonData(data);
+
+      // Set keywords from API response
+      if (data.keywords) {
+        setKeywords(data.keywords);
+      }
 
       // Update last refresh date after successful API fetch
       setLastRefreshDate(getTodaySingapore());
@@ -708,7 +901,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
               {/* Body Text */}
               <View style={styles.bodyTextContainer}>
-                {formatBodyText(currentSegment?.bodyText || '')}
+                {formatBodyText(currentSegment?.bodyText || '', keywords, setSelectedKeyword, setShowKeywordModal)}
               </View>
             </LessonContentCard>
 
@@ -759,6 +952,16 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
           setShowPhaseCelebration(false);
           // Navigate back to home to see new lessons
           navigation.replace('MainTabs', { screen: 'Home' });
+        }}
+      />
+
+      {/* Keyword Definition Modal */}
+      <KeywordDefinitionModal
+        visible={showKeywordModal}
+        keyword={selectedKeyword}
+        onClose={() => {
+          setShowKeywordModal(false);
+          setSelectedKeyword(null);
         }}
       />
     </SafeAreaView>
