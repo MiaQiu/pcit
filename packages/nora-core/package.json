@@ -1,0 +1,19 @@
+{
+  "name": "@nora/core",
+  "version": "0.0.1",
+  "description": "Shared business logic and services for Nora web and mobile apps",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["nora", "shared", "services"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {}
+}

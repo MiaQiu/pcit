@@ -1,0 +1,4904 @@
+{
+  "language_code": "zho",
+  "language_probability": 0.999553382396698,
+  "text": "...六分钟你打分，看你的。 好吧，你先玩吧，好，我去吧。爸爸真棒，爸爸满分。 你买了一套。 没有什么？ 妈妈买了一套。 妈妈为什么要给你买劳力套？ 然后给妈妈。 然后给妈妈买劳力套，那爸爸呢？ 没有。 爸爸没有啊。 因为只有大女生。 那你这样摆是不是你那个车，你这个轨道只能走单向了？ 因为这是，因为这边是飞机场。 哪个飞机场？ 这个边呀，那边是我们家。 飞机厂在哪？ 在这里。 你关着这个的话，你穿尿裤，那个内裤好不好？就是少提两句啊。 上面一个就是 Mr. Snake。 你想给拿去哪个就变成 Mr. Snake 了。 那这是火车。 车，火车。 火车的。 是的。 我们把这放一个下，一个小区。一个番茄。唔，这个火车的真好看！ 真好看。 说话呀。 说啥呀？这边没玩。 这，这，这个火车的真好看这个，火车上。 爸爸觉得这个火车道也好看。 爸爸觉得这个只有妈，妈妈有。 只有妈妈有啊，那爸爸想要我怎么办呀？ 这个。这是给妈妈的。 给妈妈的，谢谢胖虎。 这是一个小火车。 那这小火车去哪了？ 我就三个了。 有三个，胖虎拿这小火车跑啦。 那你这个小火车要去哪？是去机场吗？还是去去，去哪？ 去飞机场。 去飞机场，那去吧。 这边的是飞机场。 那边是机场。 到这边，这边，这边，还有这边的。往前走一下，这边的飞机场，然后跑给你。呃，行李箱是妈妈的行李箱。 是妈妈的行李箱，谢谢胖虎。 妈妈坐上火车吧。 好。 你坐好了吗？ 坐好了。 OK。 OK。 然后嘟嘟。 嘟嘟，嗯。",
+  "words": [
+    {
+      "text": "...",
+      "start": 0.1,
+      "end": 0.22,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "六",
+      "start": 0.22,
+      "end": 0.52,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "分",
+      "start": 0.52,
+      "end": 0.6,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "钟",
+      "start": 0.6,
+      "end": 0.8,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 0.8,
+      "end": 0.96,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "打",
+      "start": 0.96,
+      "end": 1.14,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "分",
+      "start": 1.14,
+      "end": 1.3,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 1.3,
+      "end": 1.42,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "看",
+      "start": 1.42,
+      "end": 1.48,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 1.48,
+      "end": 1.6,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 1.6,
+      "end": 1.84,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 1.84,
+      "end": 1.92,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 1.92,
+      "end": 1.93,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "好",
+      "start": 1.93,
+      "end": 1.93,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "吧",
+      "start": 1.93,
+      "end": 1.93,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 1.93,
+      "end": 1.94,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 1.94,
+      "end": 2.06,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "先",
+      "start": 2.06,
+      "end": 2.22,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "玩",
+      "start": 2.22,
+      "end": 2.38,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "吧",
+      "start": 2.38,
+      "end": 2.46,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 2.46,
+      "end": 2.5,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "好",
+      "start": 2.5,
+      "end": 2.78,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 2.78,
+      "end": 2.79,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "我",
+      "start": 2.79,
+      "end": 2.86,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "去",
+      "start": 2.86,
+      "end": 2.96,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "吧",
+      "start": 2.96,
+      "end": 3.1,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 3.1,
+      "end": 4.04,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 4.04,
+      "end": 4.16,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 4.16,
+      "end": 4.34,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "真",
+      "start": 4.34,
+      "end": 4.54,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "棒",
+      "start": 4.54,
+      "end": 4.7,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 4.7,
+      "end": 5,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 5,
+      "end": 5.14,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 5.14,
+      "end": 5.2,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "满",
+      "start": 5.2,
+      "end": 5.4,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "分",
+      "start": 5.4,
+      "end": 5.58,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 5.58,
+      "end": 7.06,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 7.06,
+      "end": 7.14,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 7.14,
+      "end": 7.44,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "买",
+      "start": 7.44,
+      "end": 7.58,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "了",
+      "start": 7.58,
+      "end": 7.88,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "一",
+      "start": 7.88,
+      "end": 8,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "套",
+      "start": 8,
+      "end": 8.08,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 8.08,
+      "end": 8.88,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 8.88,
+      "end": 8.96,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "没",
+      "start": 8.96,
+      "end": 9.06,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "有",
+      "start": 9.06,
+      "end": 9.18,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "什",
+      "start": 9.18,
+      "end": 9.28,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "么",
+      "start": 9.28,
+      "end": 9.399,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 10.04,
+      "end": 10.05,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 10.05,
+      "end": 10.14,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 10.14,
+      "end": 10.5,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 10.5,
+      "end": 10.52,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "买",
+      "start": 10.52,
+      "end": 10.76,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "了",
+      "start": 10.76,
+      "end": 10.98,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "一",
+      "start": 10.98,
+      "end": 11.16,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "套",
+      "start": 11.16,
+      "end": 11.32,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 11.32,
+      "end": 11.72,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 11.72,
+      "end": 11.76,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 11.76,
+      "end": 11.88,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 11.88,
+      "end": 11.96,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "为",
+      "start": 11.96,
+      "end": 12.08,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "什",
+      "start": 12.08,
+      "end": 12.16,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "么",
+      "start": 12.16,
+      "end": 12.28,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "要",
+      "start": 12.28,
+      "end": 12.3,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "给",
+      "start": 12.3,
+      "end": 12.38,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 12.38,
+      "end": 12.48,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "买",
+      "start": 12.48,
+      "end": 12.6,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "劳",
+      "start": 12.6,
+      "end": 12.76,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "力",
+      "start": 12.76,
+      "end": 12.94,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "套",
+      "start": 12.94,
+      "end": 13.26,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 13.26,
+      "end": 13.28,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 13.28,
+      "end": 13.32,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "然",
+      "start": 13.32,
+      "end": 13.54,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "后",
+      "start": 13.54,
+      "end": 13.68,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "给",
+      "start": 13.68,
+      "end": 13.98,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 13.98,
+      "end": 14.18,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 14.18,
+      "end": 14.42,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 14.42,
+      "end": 14.96,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 14.96,
+      "end": 15.02,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "然",
+      "start": 15.02,
+      "end": 15.06,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "后",
+      "start": 15.06,
+      "end": 15.14,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "给",
+      "start": 15.14,
+      "end": 15.28,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 15.28,
+      "end": 15.4,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 15.4,
+      "end": 15.48,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "买",
+      "start": 15.48,
+      "end": 15.78,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "劳",
+      "start": 15.78,
+      "end": 15.84,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "力",
+      "start": 15.84,
+      "end": 15.96,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "套",
+      "start": 15.96,
+      "end": 16.079,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 16.079,
+      "end": 16.12,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "那",
+      "start": 16.12,
+      "end": 16.219,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 16.219,
+      "end": 16.379,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 16.379,
+      "end": 16.5,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "呢",
+      "start": 16.5,
+      "end": 16.7,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 16.7,
+      "end": 18.24,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 18.24,
+      "end": 18.25,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "没",
+      "start": 18.25,
+      "end": 18.25,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "有",
+      "start": 18.25,
+      "end": 18.25,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 18.25,
+      "end": 18.25,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 18.25,
+      "end": 18.32,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 18.32,
+      "end": 18.44,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 18.44,
+      "end": 18.5,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "没",
+      "start": 18.5,
+      "end": 18.6,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "有",
+      "start": 18.6,
+      "end": 18.64,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "啊",
+      "start": 18.64,
+      "end": 18.8,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 18.88,
+      "end": 18.98,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 18.98,
+      "end": 18.99,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "因",
+      "start": 18.99,
+      "end": 19.12,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "为",
+      "start": 19.12,
+      "end": 19.28,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "只",
+      "start": 19.28,
+      "end": 19.42,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "有",
+      "start": 19.42,
+      "end": 19.6,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "大",
+      "start": 19.6,
+      "end": 19.92,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "女",
+      "start": 19.92,
+      "end": 20.24,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "生",
+      "start": 20.24,
+      "end": 20.46,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 20.46,
+      "end": 21.8,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 21.8,
+      "end": 22.94,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "那",
+      "start": 22.94,
+      "end": 23.06,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 23.06,
+      "end": 23.12,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 23.12,
+      "end": 23.24,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "样",
+      "start": 23.24,
+      "end": 23.38,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "摆",
+      "start": 23.38,
+      "end": 23.5,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 23.5,
+      "end": 23.64,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "不",
+      "start": 23.64,
+      "end": 23.72,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 23.72,
+      "end": 25.099,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 25.1,
+      "end": 25.18,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "那",
+      "start": 25.18,
+      "end": 25.32,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 25.32,
+      "end": 25.42,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 25.42,
+      "end": 25.46,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 25.46,
+      "end": 25.6,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 25.6,
+      "end": 25.7,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 25.7,
+      "end": 25.8,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 25.8,
+      "end": 25.9,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "轨",
+      "start": 25.9,
+      "end": 26.24,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "道",
+      "start": 26.24,
+      "end": 27.1,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "只",
+      "start": 27.1,
+      "end": 27.24,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "能",
+      "start": 27.24,
+      "end": 27.38,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "走",
+      "start": 27.38,
+      "end": 27.619,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "单",
+      "start": 27.62,
+      "end": 27.82,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "向",
+      "start": 27.82,
+      "end": 27.98,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "了",
+      "start": 27.98,
+      "end": 28.04,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 28.04,
+      "end": 28.68,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 28.74,
+      "end": 28.78,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "因",
+      "start": 28.78,
+      "end": 29.12,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "为",
+      "start": 29.12,
+      "end": 29.3,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 29.3,
+      "end": 29.52,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 29.52,
+      "end": 29.68,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 29.68,
+      "end": 30.48,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "因",
+      "start": 30.48,
+      "end": 30.7,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "为",
+      "start": 30.7,
+      "end": 30.98,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 30.98,
+      "end": 31.24,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "边",
+      "start": 31.24,
+      "end": 31.6,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 31.6,
+      "end": 31.76,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "飞",
+      "start": 31.76,
+      "end": 32.119,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "机",
+      "start": 32.119,
+      "end": 32.58,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "场",
+      "start": 32.58,
+      "end": 32.84,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 32.84,
+      "end": 33.4,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 33.4,
+      "end": 33.519,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "哪",
+      "start": 33.52,
+      "end": 33.68,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 33.68,
+      "end": 33.9,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "飞",
+      "start": 33.9,
+      "end": 34,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "机",
+      "start": 34,
+      "end": 34.22,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "场",
+      "start": 34.22,
+      "end": 34.44,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 34.44,
+      "end": 34.88,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 34.88,
+      "end": 34.96,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 34.96,
+      "end": 35.28,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 35.28,
+      "end": 35.48,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "边",
+      "start": 35.48,
+      "end": 35.86,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "呀",
+      "start": 35.86,
+      "end": 36.02,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 36.02,
+      "end": 36.16,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "那",
+      "start": 36.16,
+      "end": 36.42,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "边",
+      "start": 36.42,
+      "end": 37,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 37,
+      "end": 37.18,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "我",
+      "start": 37.18,
+      "end": 37.3,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "们",
+      "start": 37.3,
+      "end": 37.72,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "家",
+      "start": 37.72,
+      "end": 37.88,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 37.88,
+      "end": 38.06,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 41.56,
+      "end": 41.6,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "飞",
+      "start": 41.6,
+      "end": 41.7,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "机",
+      "start": 41.7,
+      "end": 41.82,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "厂",
+      "start": 41.82,
+      "end": 42.02,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "在",
+      "start": 42.02,
+      "end": 42.1,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "哪",
+      "start": 42.1,
+      "end": 42.2,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 42.2,
+      "end": 44.26,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 44.26,
+      "end": 45.22,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "在",
+      "start": 45.22,
+      "end": 45.46,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 45.46,
+      "end": 45.47,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "里",
+      "start": 45.47,
+      "end": 45.47,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 45.47,
+      "end": 45.48,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 45.48,
+      "end": 45.49,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 45.49,
+      "end": 45.7,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "关",
+      "start": 45.7,
+      "end": 45.86,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "着",
+      "start": 45.86,
+      "end": 45.94,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 45.94,
+      "end": 46.06,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 46.06,
+      "end": 46.12,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 46.12,
+      "end": 46.22,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "话",
+      "start": 46.22,
+      "end": 46.3,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 46.3,
+      "end": 46.54,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 46.54,
+      "end": 46.76,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "穿",
+      "start": 46.76,
+      "end": 47,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "尿",
+      "start": 47,
+      "end": 47.22,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "裤",
+      "start": 47.22,
+      "end": 47.36,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 47.36,
+      "end": 47.56,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "那",
+      "start": 47.56,
+      "end": 47.7,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 47.7,
+      "end": 47.84,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "内",
+      "start": 47.84,
+      "end": 47.92,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "裤",
+      "start": 47.96,
+      "end": 48.08,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "好",
+      "start": 48.08,
+      "end": 48.199,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "不",
+      "start": 48.2,
+      "end": 48.28,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "好",
+      "start": 48.28,
+      "end": 48.46,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 48.46,
+      "end": 49.36,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "就",
+      "start": 49.36,
+      "end": 49.48,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 49.48,
+      "end": 49.98,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "少",
+      "start": 49.98,
+      "end": 50.16,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "提",
+      "start": 50.16,
+      "end": 50.28,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "两",
+      "start": 50.28,
+      "end": 50.42,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "句",
+      "start": 50.42,
+      "end": 50.72,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "啊",
+      "start": 50.72,
+      "end": 50.94,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 50.94,
+      "end": 53.06,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 53.06,
+      "end": 58.14,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "上",
+      "start": 60.38,
+      "end": 60.54,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "面",
+      "start": 60.54,
+      "end": 60.66,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "一",
+      "start": 60.66,
+      "end": 60.84,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 60.84,
+      "end": 60.98,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "就",
+      "start": 60.98,
+      "end": 61.16,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 61.16,
+      "end": 61.92,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 61.92,
+      "end": 61.94,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "Mr.",
+      "start": 61.94,
+      "end": 62.19,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 62.19,
+      "end": 62.34,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "Snake。",
+      "start": 62.34,
+      "end": 62.4,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 62.4,
+      "end": 62.42,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 62.42,
+      "end": 62.46,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "想",
+      "start": 62.46,
+      "end": 62.58,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "给",
+      "start": 62.58,
+      "end": 62.7,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "拿",
+      "start": 62.7,
+      "end": 62.84,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "去",
+      "start": 62.84,
+      "end": 62.96,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "哪",
+      "start": 62.96,
+      "end": 63.1,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 63.1,
+      "end": 63.16,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "就",
+      "start": 63.16,
+      "end": 63.28,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "变",
+      "start": 63.28,
+      "end": 63.42,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "成",
+      "start": 63.42,
+      "end": 63.56,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 63.56,
+      "end": 63.57,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "Mr.",
+      "start": 63.57,
+      "end": 63.86,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 63.86,
+      "end": 63.88,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "Snake",
+      "start": 63.88,
+      "end": 64.18,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 64.18,
+      "end": 64.22,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "了",
+      "start": 64.22,
+      "end": 64.44,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 64.44,
+      "end": 68.08,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 68.14,
+      "end": 68.32,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "那",
+      "start": 68.32,
+      "end": 68.52,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 68.52,
+      "end": 68.53,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 68.53,
+      "end": 69.12,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "火",
+      "start": 69.12,
+      "end": 69.3,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 69.3,
+      "end": 69.66,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 69.66,
+      "end": 69.9,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 69.9,
+      "end": 70.04,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 70.04,
+      "end": 70.05,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 70.05,
+      "end": 70.05,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "火",
+      "start": 70.05,
+      "end": 70.05,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 70.05,
+      "end": 70.05,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 70.05,
+      "end": 70.05,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 70.05,
+      "end": 70.18,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "火",
+      "start": 70.18,
+      "end": 70.94,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 70.94,
+      "end": 71.08,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 71.08,
+      "end": 71.24,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 71.24,
+      "end": 71.54,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 71.54,
+      "end": 71.62,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 71.62,
+      "end": 71.7,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 71.7,
+      "end": 72.38,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 72.38,
+      "end": 73.619,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 77.5,
+      "end": 91.92,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "我",
+      "start": 91.92,
+      "end": 92.16,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "们",
+      "start": 92.16,
+      "end": 92.17,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "把",
+      "start": 92.17,
+      "end": 92.82,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 92.82,
+      "end": 93.04,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "放",
+      "start": 93.04,
+      "end": 93.05,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "一",
+      "start": 93.05,
+      "end": 93.05,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 93.05,
+      "end": 93.05,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "下",
+      "start": 93.05,
+      "end": 93.05,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 93.05,
+      "end": 93.05,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "一",
+      "start": 93.05,
+      "end": 93.05,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 93.05,
+      "end": 93.05,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "小",
+      "start": 93.05,
+      "end": 93.08,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "区",
+      "start": 93.08,
+      "end": 93.09,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 93.09,
+      "end": 93.09,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "一",
+      "start": 93.09,
+      "end": 93.09,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 93.09,
+      "end": 93.09,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "番",
+      "start": 93.09,
+      "end": 93.09,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "茄",
+      "start": 93.09,
+      "end": 93.09,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 93.09,
+      "end": 93.09,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "唔",
+      "start": 93.09,
+      "end": 93.09,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 93.09,
+      "end": 93.09,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 93.09,
+      "end": 93.09,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 93.09,
+      "end": 93.26,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "火",
+      "start": 93.26,
+      "end": 93.28,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 93.28,
+      "end": 93.29,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 93.29,
+      "end": 93.29,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "真",
+      "start": 93.29,
+      "end": 93.29,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "好",
+      "start": 93.29,
+      "end": 93.48,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "看",
+      "start": 93.48,
+      "end": 93.9,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "！",
+      "start": 93.9,
+      "end": 93.91,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 93.91,
+      "end": 94.12,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "真",
+      "start": 94.12,
+      "end": 94.48,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "好",
+      "start": 94.48,
+      "end": 94.66,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "看",
+      "start": 94.66,
+      "end": 94.78,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 94.78,
+      "end": 99.66,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 100.22,
+      "end": 100.4,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "说",
+      "start": 100.4,
+      "end": 100.54,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "话",
+      "start": 100.54,
+      "end": 100.74,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "呀",
+      "start": 100.74,
+      "end": 100.9,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 100.9,
+      "end": 100.98,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 100.98,
+      "end": 101.42,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "说",
+      "start": 101.42,
+      "end": 101.56,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "啥",
+      "start": 101.56,
+      "end": 103.12,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "呀",
+      "start": 103.12,
+      "end": 104.04,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 104.04,
+      "end": 104.94,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 104.94,
+      "end": 105.08,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "边",
+      "start": 105.08,
+      "end": 105.24,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "没",
+      "start": 105.24,
+      "end": 105.44,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "玩",
+      "start": 105.44,
+      "end": 105.6,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 105.6,
+      "end": 106.98,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 106.98,
+      "end": 108.58,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 108.64,
+      "end": 108.72,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 108.72,
+      "end": 108.73,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 108.73,
+      "end": 109.88,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 109.88,
+      "end": 109.9,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 109.9,
+      "end": 109.98,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 109.98,
+      "end": 109.99,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "火",
+      "start": 109.99,
+      "end": 109.99,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 109.99,
+      "end": 109.99,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 109.99,
+      "end": 112.54,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "真",
+      "start": 112.54,
+      "end": 112.62,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "好",
+      "start": 112.62,
+      "end": 113.74,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "看",
+      "start": 113.74,
+      "end": 115.06,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 115.06,
+      "end": 115.07,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 115.07,
+      "end": 115.07,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 115.07,
+      "end": 115.07,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "火",
+      "start": 115.07,
+      "end": 115.07,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 115.07,
+      "end": 115.07,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "上",
+      "start": 115.07,
+      "end": 115.07,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 115.07,
+      "end": 117.1,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 117.1,
+      "end": 117.16,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 117.16,
+      "end": 117.34,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 117.34,
+      "end": 117.46,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "觉",
+      "start": 117.46,
+      "end": 117.58,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "得",
+      "start": 117.58,
+      "end": 117.66,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 117.72,
+      "end": 117.82,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 117.82,
+      "end": 117.86,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "火",
+      "start": 117.86,
+      "end": 117.96,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 117.96,
+      "end": 118.06,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "道",
+      "start": 118.06,
+      "end": 118.22,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "也",
+      "start": 118.22,
+      "end": 118.32,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "好",
+      "start": 118.32,
+      "end": 118.5,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "看",
+      "start": 118.5,
+      "end": 118.78,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 118.78,
+      "end": 119.56,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 119.56,
+      "end": 119.68,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 119.68,
+      "end": 119.86,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 119.86,
+      "end": 119.9,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "觉",
+      "start": 119.9,
+      "end": 120,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "得",
+      "start": 120,
+      "end": 120.32,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 120.32,
+      "end": 120.44,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 120.44,
+      "end": 121.759,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "只",
+      "start": 121.76,
+      "end": 121.94,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "有",
+      "start": 121.94,
+      "end": 122.259,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 122.26,
+      "end": 122.6,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 122.6,
+      "end": 122.62,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 122.62,
+      "end": 122.94,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 122.94,
+      "end": 123.44,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "有",
+      "start": 123.44,
+      "end": 123.46,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 123.46,
+      "end": 123.76,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 123.76,
+      "end": 124.18,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "只",
+      "start": 124.18,
+      "end": 124.24,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "有",
+      "start": 124.24,
+      "end": 124.4,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 124.4,
+      "end": 124.58,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 124.58,
+      "end": 124.74,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "有",
+      "start": 124.74,
+      "end": 124.82,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "啊",
+      "start": 124.82,
+      "end": 125.02,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 125.02,
+      "end": 126.48,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "那",
+      "start": 126.48,
+      "end": 126.6,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 126.6,
+      "end": 126.66,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "爸",
+      "start": 126.66,
+      "end": 126.86,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "想",
+      "start": 126.86,
+      "end": 126.94,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "要",
+      "start": 126.94,
+      "end": 127.02,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "我",
+      "start": 127.02,
+      "end": 127.12,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "怎",
+      "start": 127.12,
+      "end": 127.26,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "么",
+      "start": 127.34,
+      "end": 127.4,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "办",
+      "start": 127.4,
+      "end": 127.5,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "呀",
+      "start": 127.5,
+      "end": 129.9,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 129.9,
+      "end": 132.04,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 132.04,
+      "end": 133.92,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 133.92,
+      "end": 134,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 134,
+      "end": 134.46,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 134.46,
+      "end": 136.74,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 136.74,
+      "end": 136.92,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 136.92,
+      "end": 137.16,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "给",
+      "start": 137.16,
+      "end": 137.42,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 137.5,
+      "end": 137.58,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 137.58,
+      "end": 137.94,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 137.94,
+      "end": 137.95,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 137.95,
+      "end": 138.44,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 138.44,
+      "end": 138.54,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "给",
+      "start": 138.54,
+      "end": 138.799,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 138.8,
+      "end": 139,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 139,
+      "end": 139.22,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 139.22,
+      "end": 139.24,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 139.24,
+      "end": 139.56,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "谢",
+      "start": 139.56,
+      "end": 139.92,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "谢",
+      "start": 139.92,
+      "end": 140.02,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "胖",
+      "start": 140.02,
+      "end": 140.56,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "虎",
+      "start": 140.56,
+      "end": 140.92,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 140.92,
+      "end": 141.76,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 141.76,
+      "end": 142.899,
+      "type": "spacing",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 142.9,
+      "end": 143.08,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 143.08,
+      "end": 143.14,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "一",
+      "start": 143.14,
+      "end": 143.2,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 143.2,
+      "end": 143.22,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "小",
+      "start": 143.22,
+      "end": 143.34,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "火",
+      "start": 143.34,
+      "end": 143.62,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 143.62,
+      "end": 143.7,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 143.7,
+      "end": 143.71,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 143.71,
+      "end": 143.71,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "那",
+      "start": 143.71,
+      "end": 143.71,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 143.71,
+      "end": 143.71,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "小",
+      "start": 143.71,
+      "end": 143.71,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "火",
+      "start": 143.71,
+      "end": 143.71,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 143.71,
+      "end": 143.8,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "去",
+      "start": 143.8,
+      "end": 143.94,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "哪",
+      "start": 143.94,
+      "end": 144.2,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "了",
+      "start": 144.2,
+      "end": 144.26,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 144.26,
+      "end": 145,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 145,
+      "end": 145.12,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "我",
+      "start": 145.12,
+      "end": 145.36,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "就",
+      "start": 145.36,
+      "end": 145.68,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "三",
+      "start": 145.68,
+      "end": 146.38,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 146.38,
+      "end": 146.58,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "了",
+      "start": 146.58,
+      "end": 146.78,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 146.78,
+      "end": 147.74,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 147.82,
+      "end": 148.019,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "有",
+      "start": 148.02,
+      "end": 148.16,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "三",
+      "start": 148.16,
+      "end": 148.66,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 148.66,
+      "end": 148.86,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 148.86,
+      "end": 148.92,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "胖",
+      "start": 148.92,
+      "end": 149.12,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "虎",
+      "start": 149.12,
+      "end": 149.28,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "拿",
+      "start": 149.28,
+      "end": 149.44,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 149.44,
+      "end": 149.56,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "小",
+      "start": 149.56,
+      "end": 149.74,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "火",
+      "start": 149.74,
+      "end": 149.86,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 149.86,
+      "end": 150.22,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "跑",
+      "start": 150.22,
+      "end": 150.32,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "啦",
+      "start": 150.32,
+      "end": 150.52,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 150.52,
+      "end": 150.53,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 150.53,
+      "end": 150.58,
+      "type": "spacing",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "那",
+      "start": 150.58,
+      "end": 150.68,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 150.68,
+      "end": 150.74,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 150.74,
+      "end": 150.84,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "个",
+      "start": 150.84,
+      "end": 150.94,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "小",
+      "start": 150.94,
+      "end": 151.08,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "火",
+      "start": 151.08,
+      "end": 151.22,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 151.22,
+      "end": 151.38,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "要",
+      "start": 151.38,
+      "end": 151.46,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "去",
+      "start": 151.46,
+      "end": 151.58,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "哪",
+      "start": 151.58,
+      "end": 151.7,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 151.7,
+      "end": 151.8,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 151.8,
+      "end": 152.04,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "去",
+      "start": 152.04,
+      "end": 152.06,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "机",
+      "start": 152.06,
+      "end": 152.28,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "场",
+      "start": 152.28,
+      "end": 152.44,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "吗",
+      "start": 152.44,
+      "end": 152.54,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 152.54,
+      "end": 152.62,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "还",
+      "start": 152.62,
+      "end": 152.86,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 152.86,
+      "end": 153.12,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "去",
+      "start": 153.12,
+      "end": 153.46,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "去",
+      "start": 153.46,
+      "end": 153.66,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 153.66,
+      "end": 154.799,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "去",
+      "start": 154.8,
+      "end": 154.92,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "哪",
+      "start": 154.92,
+      "end": 155.06,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 155.06,
+      "end": 156.72,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 156.78,
+      "end": 156.82,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "去",
+      "start": 156.82,
+      "end": 156.9,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "飞",
+      "start": 156.9,
+      "end": 158.78,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "机",
+      "start": 158.78,
+      "end": 159.12,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "场",
+      "start": 159.12,
+      "end": 159.42,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 159.42,
+      "end": 160.26,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 160.26,
+      "end": 160.269,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "去",
+      "start": 160.269,
+      "end": 160.269,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "飞",
+      "start": 160.269,
+      "end": 160.269,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "机",
+      "start": 160.269,
+      "end": 160.269,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "场",
+      "start": 160.269,
+      "end": 160.269,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 160.269,
+      "end": 160.28,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "那",
+      "start": 160.28,
+      "end": 160.52,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "去",
+      "start": 160.52,
+      "end": 160.72,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "吧",
+      "start": 160.72,
+      "end": 160.73,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 160.73,
+      "end": 160.73,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 160.73,
+      "end": 160.76,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 160.76,
+      "end": 160.86,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "边",
+      "start": 160.86,
+      "end": 160.87,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 160.87,
+      "end": 160.87,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 160.87,
+      "end": 160.87,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "飞",
+      "start": 160.87,
+      "end": 160.87,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "机",
+      "start": 160.87,
+      "end": 160.87,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "场",
+      "start": 160.87,
+      "end": 160.87,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 160.87,
+      "end": 160.87,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 160.87,
+      "end": 160.87,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "那",
+      "start": 160.87,
+      "end": 160.87,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "边",
+      "start": 160.87,
+      "end": 160.87,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 160.87,
+      "end": 160.87,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "机",
+      "start": 160.87,
+      "end": 160.9,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "场",
+      "start": 160.9,
+      "end": 161.08,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 161.08,
+      "end": 161.09,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 161.09,
+      "end": 161.09,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "到",
+      "start": 161.09,
+      "end": 161.1,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 161.1,
+      "end": 161.28,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "边",
+      "start": 161.28,
+      "end": 162,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 162,
+      "end": 162.4,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 162.4,
+      "end": 162.64,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "边",
+      "start": 162.64,
+      "end": 163.26,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 163.26,
+      "end": 163.28,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 163.28,
+      "end": 163.29,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "边",
+      "start": 163.29,
+      "end": 163.29,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 163.29,
+      "end": 163.32,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "还",
+      "start": 163.32,
+      "end": 163.54,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "有",
+      "start": 163.54,
+      "end": 163.56,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 163.56,
+      "end": 163.76,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "边",
+      "start": 163.76,
+      "end": 164,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 164,
+      "end": 164.22,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 164.22,
+      "end": 164.9,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "往",
+      "start": 164.9,
+      "end": 165.58,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "前",
+      "start": 165.58,
+      "end": 165.82,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "走",
+      "start": 165.82,
+      "end": 166.2,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "一",
+      "start": 166.22,
+      "end": 166.44,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "下",
+      "start": 166.44,
+      "end": 166.56,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 166.56,
+      "end": 166.6,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "这",
+      "start": 166.6,
+      "end": 166.98,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "边",
+      "start": 166.98,
+      "end": 167.2,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 167.2,
+      "end": 167.76,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "飞",
+      "start": 167.76,
+      "end": 167.86,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "机",
+      "start": 167.86,
+      "end": 168.12,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "场",
+      "start": 168.12,
+      "end": 168.82,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 168.82,
+      "end": 168.9,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "然",
+      "start": 168.9,
+      "end": 169.14,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "后",
+      "start": 169.14,
+      "end": 169.42,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "跑",
+      "start": 169.42,
+      "end": 169.6,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "给",
+      "start": 169.6,
+      "end": 169.74,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 169.74,
+      "end": 170.42,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 170.42,
+      "end": 170.44,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "呃",
+      "start": 170.44,
+      "end": 170.76,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 170.76,
+      "end": 170.82,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "行",
+      "start": 170.82,
+      "end": 171.1,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "李",
+      "start": 171.1,
+      "end": 171.299,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "箱",
+      "start": 171.3,
+      "end": 171.56,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 171.56,
+      "end": 171.84,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 171.84,
+      "end": 172,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 172,
+      "end": 172.32,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 172.32,
+      "end": 172.44,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "行",
+      "start": 172.44,
+      "end": 172.74,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "李",
+      "start": 172.74,
+      "end": 172.78,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "箱",
+      "start": 172.78,
+      "end": 172.8,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 172.8,
+      "end": 173.04,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 173.04,
+      "end": 173.14,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "是",
+      "start": 173.14,
+      "end": 173.36,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 173.36,
+      "end": 173.56,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 173.56,
+      "end": 173.72,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "的",
+      "start": 173.72,
+      "end": 173.82,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "行",
+      "start": 173.82,
+      "end": 174.019,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "李",
+      "start": 174.02,
+      "end": 174.32,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "箱",
+      "start": 174.32,
+      "end": 174.76,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 174.76,
+      "end": 174.899,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "谢",
+      "start": 174.9,
+      "end": 175.1,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "谢",
+      "start": 175.1,
+      "end": 175.2,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "胖",
+      "start": 175.2,
+      "end": 175.56,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "虎",
+      "start": 175.62,
+      "end": 175.88,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 175.88,
+      "end": 176,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 176,
+      "end": 176.02,
+      "type": "spacing",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 176.02,
+      "end": 176.3,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "妈",
+      "start": 176.3,
+      "end": 176.38,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "坐",
+      "start": 176.38,
+      "end": 176.68,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "上",
+      "start": 176.68,
+      "end": 176.86,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "火",
+      "start": 176.86,
+      "end": 177.06,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "车",
+      "start": 177.06,
+      "end": 177.38,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "吧",
+      "start": 177.38,
+      "end": 177.56,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 177.56,
+      "end": 178.44,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 178.44,
+      "end": 178.48,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "好",
+      "start": 178.48,
+      "end": 178.489,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 178.489,
+      "end": 178.489,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 178.489,
+      "end": 178.56,
+      "type": "spacing",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "你",
+      "start": 178.56,
+      "end": 178.8,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "坐",
+      "start": 178.8,
+      "end": 179.04,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "好",
+      "start": 179.04,
+      "end": 179.16,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "了",
+      "start": 179.16,
+      "end": 179.34,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "吗",
+      "start": 179.34,
+      "end": 179.5,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "？",
+      "start": 179.5,
+      "end": 179.52,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 179.52,
+      "end": 179.54,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "坐",
+      "start": 179.54,
+      "end": 179.64,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "好",
+      "start": 179.64,
+      "end": 179.88,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "了",
+      "start": 179.88,
+      "end": 179.98,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 179.98,
+      "end": 181.04,
+      "type": "word",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 181.04,
+      "end": 181.079,
+      "type": "spacing",
+      "speaker_id": "speaker_2",
+      "logprob": 0
+    },
+    {
+      "text": "OK。",
+      "start": 181.08,
+      "end": 182.08,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 182.08,
+      "end": 182.09,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "OK。",
+      "start": 182.09,
+      "end": 182.09,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 182.09,
+      "end": 182.12,
+      "type": "spacing",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "然",
+      "start": 182.12,
+      "end": 182.34,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "后",
+      "start": 182.34,
+      "end": 182.66,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "嘟",
+      "start": 182.66,
+      "end": 183.06,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "嘟",
+      "start": 183.06,
+      "end": 183.32,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 183.32,
+      "end": 183.7,
+      "type": "word",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 183.7,
+      "end": 183.82,
+      "type": "spacing",
+      "speaker_id": "speaker_0",
+      "logprob": 0
+    },
+    {
+      "text": "嘟",
+      "start": 183.82,
+      "end": 184.16,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "嘟",
+      "start": 184.16,
+      "end": 184.5,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "，",
+      "start": 184.5,
+      "end": 184.76,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "嗯",
+      "start": 184.76,
+      "end": 184.94,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    },
+    {
+      "text": "。",
+      "start": 184.94,
+      "end": 185.18,
+      "type": "word",
+      "speaker_id": "speaker_1",
+      "logprob": 0
+    }
+  ],
+  "transcription_id": "iM4UMcog3mBFsFtiTpdg"
+}

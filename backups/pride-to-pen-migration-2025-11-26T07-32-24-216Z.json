@@ -1,0 +1,1375 @@
+[
+  {
+    "id": "b04fc429-8918-47a8-ae1e-1368da40a2ad",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743571400_1.wav",
+    "durationSeconds": 197,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 13,
+      "command": 8,
+      "imitate": 2,
+      "neutral": 13,
+      "reflect": 19,
+      "describe": 15,
+      "question": 4,
+      "criticism": 3,
+      "totalAvoid": 15,
+      "totalPride": 49
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-08T16:46:11.400Z",
+    "childMetrics": {
+      "utteranceRate": 14.36131741583211,
+      "reflectionRate": 10,
+      "speechDuration": 131
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "67264850-64fe-4ca2-b21d-3fbe84398d51",
+    "userId": "b950bd37-3854-4818-bfcb-3f60919f7161",
+    "mode": "CDI",
+    "storagePath": "audio/b950bd37-3854-4818-bfcb-3f60919f7161/67264850-64fe-4ca2-b21d-3fbe84398d51.webm",
+    "durationSeconds": 0,
+    "transcript": "[{\"speaker\":0,\"text\":\"...   build.   (blocks clattering)   You're   gonna   build.   I'm   gonna   build   with   you.   (blocks clattering)   We   are   building   orange,   brown,   and   red   tower.  \",\"start\":0.079,\"end\":13.079},{\"speaker\":1,\"text\":\"Look,   it's   a   s-   this   could   be   a   slide.  \",\"start\":13.079,\"end\":15.959},{\"speaker\":0,\"text\":\"It   could   be   a   slide.   That's   a   great   idea.  \",\"start\":15.959,\"end\":17.799},{\"speaker\":1,\"text\":\"You   could   climb   up   here   and   then   go   like   this,   and   then   you   could   ride   off.   Whee.  \",\"start\":17.799,\"end\":21.339},{\"speaker\":0,\"text\":\"Whee.  \",\"start\":21.339,\"end\":21.379},{\"speaker\":1,\"text\":\"And   this   could   be   the   pool.  \",\"start\":21.379,\"end\":22.799},{\"speaker\":0,\"text\":\"And   that   could   be   the   pool.   I   love   that   idea.   I'm   gonna   add   to   your   pool.   (blocks clattering)  \",\"start\":22.799,\"end\":28.119},{\"speaker\":1,\"text\":\"Yeah.  \",\"start\":28.119,\"end\":28.119},{\"speaker\":0,\"text\":\"I'm   gonna   make   a   blue,   high   tower.\",\"start\":28.119,\"end\":34.479}]",
+    "aiFeedbackJSON": {},
+    "pcitCoding": "**Parent:** \"build. (blocks clattering) You're gonna build. I'm gonna build with you. (blocks clattering) We are building orange, brown, and red tower.\" -> **[DO: Describe]**\n\n**Parent:** \"It could be a slide. That's a great idea.\" -> **[DO: Reflect]** and **[DO: Praise]**\n\n**Parent:** \"Whee.\" -> **[DO: Reflect]**\n\n**Parent:** \"And that could be the pool. I love that idea. I'm gonna add to your pool. (blocks clattering)\" -> **[DO: Reflect]** and **[DO: Praise]** and **[Neutral]**\n\n**Parent:** \"I'm gonna make a blue, high tower.\" -> **[Neutral]**",
+    "tagCounts": {
+      "praise": 2,
+      "command": 0,
+      "imitate": 0,
+      "neutral": 2,
+      "reflect": 3,
+      "describe": 1,
+      "question": 0,
+      "criticism": 0,
+      "totalAvoid": 0,
+      "totalPride": 6,
+      "negative_phrases": 0
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-21T03:43:47.513Z",
+    "childMetrics": null,
+    "User": {
+      "id": "b950bd37-3854-4818-bfcb-3f60919f7161",
+      "email": "6c7580b368510e8f6567fd9e91680faf:3f28084da47ba035acdb67a8cfb88382252b29f72cb0d9e39eaed6ba615d8188"
+    }
+  },
+  {
+    "id": "4585454b-8204-4e14-b02f-7c562d4fc54a",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743571400_0.wav",
+    "durationSeconds": 277,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 9,
+      "harsh_tone": 0,
+      "vague_command": 3,
+      "direct_command": 12,
+      "labeled_praise": 15,
+      "totalEffective": 32,
+      "chained_command": 0,
+      "correct_timeout": 5,
+      "correct_warning": 1,
+      "effectivePercent": 100,
+      "indirect_command": 0,
+      "negative_command": 4,
+      "positive_command": 8,
+      "specific_command": 16,
+      "totalIneffective": 0
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-10T16:46:11.400Z",
+    "childMetrics": {
+      "complianceRate": 67.6874386271116,
+      "deescalationTime": 48,
+      "negativeResponses": 4,
+      "positiveResponses": 18
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "d4058efe-a2a7-4408-9a65-95ab497a1115",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743571400_0.wav",
+    "durationSeconds": 203,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 22,
+      "command": 3,
+      "imitate": 3,
+      "neutral": 13,
+      "reflect": 9,
+      "describe": 22,
+      "question": 1,
+      "criticism": 2,
+      "totalAvoid": 6,
+      "totalPride": 56
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-08T16:46:11.398Z",
+    "childMetrics": {
+      "utteranceRate": 13.80731396406123,
+      "reflectionRate": 4,
+      "speechDuration": 266
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "d7c88476-ac44-4bbe-8d91-932b6af30005",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743571400_1.wav",
+    "durationSeconds": 222,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 9,
+      "harsh_tone": 3,
+      "vague_command": 4,
+      "direct_command": 12,
+      "labeled_praise": 13,
+      "totalEffective": 30,
+      "chained_command": 3,
+      "correct_timeout": 5,
+      "correct_warning": 2,
+      "effectivePercent": 92,
+      "indirect_command": 1,
+      "negative_command": 5,
+      "positive_command": 8,
+      "specific_command": 14,
+      "totalIneffective": 1
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-11T16:46:11.400Z",
+    "childMetrics": {
+      "complianceRate": 61.70148308984383,
+      "deescalationTime": 85,
+      "negativeResponses": 4,
+      "positiveResponses": 18
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "ac74d2da-9edb-40e6-9671-edd964f7431c",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743571400_0.wav",
+    "durationSeconds": 227,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 11,
+      "harsh_tone": 2,
+      "vague_command": 1,
+      "direct_command": 12,
+      "labeled_praise": 5,
+      "totalEffective": 20,
+      "chained_command": 1,
+      "correct_timeout": 3,
+      "correct_warning": 3,
+      "effectivePercent": 86,
+      "indirect_command": 2,
+      "negative_command": 0,
+      "positive_command": 15,
+      "specific_command": 13,
+      "totalIneffective": 2
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-15T16:46:11.400Z",
+    "childMetrics": {
+      "complianceRate": 89.78968513775834,
+      "deescalationTime": 52,
+      "negativeResponses": 0,
+      "positiveResponses": 15
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "62c55160-7178-47e7-9cd9-0cf560971aac",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743571400_1.wav",
+    "durationSeconds": 299,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 20,
+      "command": 0,
+      "imitate": 12,
+      "neutral": 10,
+      "reflect": 16,
+      "describe": 22,
+      "question": 6,
+      "criticism": 2,
+      "totalAvoid": 8,
+      "totalPride": 70
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-15T16:46:11.400Z",
+    "childMetrics": {
+      "utteranceRate": 17.41957079913001,
+      "reflectionRate": 3,
+      "speechDuration": 261
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "e6ef535e-7ec3-430f-afd1-332ee9fce748",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743571400_0.wav",
+    "durationSeconds": 355,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 13,
+      "command": 2,
+      "imitate": 10,
+      "neutral": 5,
+      "reflect": 15,
+      "describe": 19,
+      "question": 5,
+      "criticism": 5,
+      "totalAvoid": 12,
+      "totalPride": 57
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-17T16:46:11.400Z",
+    "childMetrics": {
+      "utteranceRate": 19.62127822011507,
+      "reflectionRate": 6,
+      "speechDuration": 234
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "fdad719e-ec35-4df0-b45e-1e6847b5d809",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743571400_1.wav",
+    "durationSeconds": 364,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 13,
+      "command": 0,
+      "imitate": 7,
+      "neutral": 11,
+      "reflect": 7,
+      "describe": 16,
+      "question": 1,
+      "criticism": 3,
+      "totalAvoid": 4,
+      "totalPride": 43
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-17T16:46:11.400Z",
+    "childMetrics": {
+      "utteranceRate": 15.24160928024374,
+      "reflectionRate": 3,
+      "speechDuration": 131
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "b4ee1c2b-8bfe-4366-82e8-c9f172d72597",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743571400_0.wav",
+    "durationSeconds": 209,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 11,
+      "harsh_tone": 3,
+      "vague_command": 0,
+      "direct_command": 19,
+      "labeled_praise": 8,
+      "totalEffective": 31,
+      "chained_command": 2,
+      "correct_timeout": 4,
+      "correct_warning": 3,
+      "effectivePercent": 95,
+      "indirect_command": 1,
+      "negative_command": 5,
+      "positive_command": 15,
+      "specific_command": 9,
+      "totalIneffective": 1
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-14T16:46:11.400Z",
+    "childMetrics": {
+      "complianceRate": 94.183088378434,
+      "deescalationTime": 76,
+      "negativeResponses": 5,
+      "positiveResponses": 8
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "98c3cb2e-dbe2-48ac-8a87-42a8fd42e883",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743571401_0.wav",
+    "durationSeconds": 269,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 25,
+      "command": 1,
+      "imitate": 6,
+      "neutral": 12,
+      "reflect": 13,
+      "describe": 18,
+      "question": 1,
+      "criticism": 2,
+      "totalAvoid": 4,
+      "totalPride": 62
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-18T16:46:11.401Z",
+    "childMetrics": {
+      "utteranceRate": 16.51035931098788,
+      "reflectionRate": 4,
+      "speechDuration": 293
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "5d60c5c3-5d5a-4dd6-9b32-1fcd07cd4c31",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743571401_0.wav",
+    "durationSeconds": 348,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 19,
+      "command": 5,
+      "imitate": 9,
+      "neutral": 6,
+      "reflect": 11,
+      "describe": 16,
+      "question": 3,
+      "criticism": 3,
+      "totalAvoid": 11,
+      "totalPride": 55
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-20T16:46:11.401Z",
+    "childMetrics": {
+      "utteranceRate": 8.037915246695768,
+      "reflectionRate": 5,
+      "speechDuration": 243
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "b8077a84-18e6-468a-82b9-ee8a77da5950",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743571401_0.wav",
+    "durationSeconds": 347,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 15,
+      "command": 1,
+      "imitate": 11,
+      "neutral": 15,
+      "reflect": 20,
+      "describe": 9,
+      "question": 7,
+      "criticism": 5,
+      "totalAvoid": 13,
+      "totalPride": 55
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-21T16:46:11.401Z",
+    "childMetrics": {
+      "utteranceRate": 13.16557145135919,
+      "reflectionRate": 5,
+      "speechDuration": 282
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "9cfaf441-e222-4591-aa57-32f8858e5571",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743746032_1.wav",
+    "durationSeconds": 342,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 13,
+      "harsh_tone": 2,
+      "vague_command": 3,
+      "direct_command": 18,
+      "labeled_praise": 12,
+      "totalEffective": 35,
+      "chained_command": 2,
+      "correct_timeout": 5,
+      "correct_warning": 2,
+      "effectivePercent": 72,
+      "indirect_command": 7,
+      "negative_command": 3,
+      "positive_command": 18,
+      "specific_command": 18,
+      "totalIneffective": 7
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-09T16:49:06.032Z",
+    "childMetrics": {
+      "complianceRate": 70.3545640572125,
+      "deescalationTime": 25,
+      "negativeResponses": 4,
+      "positiveResponses": 14
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "3ba4db63-d8ae-4580-a904-81b1acace64c",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743746032_0.wav",
+    "durationSeconds": 292,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 16,
+      "command": 4,
+      "imitate": 4,
+      "neutral": 12,
+      "reflect": 14,
+      "describe": 22,
+      "question": 7,
+      "criticism": 1,
+      "totalAvoid": 12,
+      "totalPride": 56
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-10T16:49:06.032Z",
+    "childMetrics": {
+      "utteranceRate": 10.5081356585373,
+      "reflectionRate": 3,
+      "speechDuration": 275
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "e612ce0c-2cdf-4df0-b535-fe226effae8f",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743746032_0.wav",
+    "durationSeconds": 190,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 13,
+      "harsh_tone": 2,
+      "vague_command": 2,
+      "direct_command": 13,
+      "labeled_praise": 7,
+      "totalEffective": 22,
+      "chained_command": 3,
+      "correct_timeout": 2,
+      "correct_warning": 2,
+      "effectivePercent": 62,
+      "indirect_command": 8,
+      "negative_command": 2,
+      "positive_command": 12,
+      "specific_command": 17,
+      "totalIneffective": 8
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-15T16:49:06.032Z",
+    "childMetrics": {
+      "complianceRate": 74.9046515028881,
+      "deescalationTime": 36,
+      "negativeResponses": 0,
+      "positiveResponses": 12
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "54c12dc3-7861-440f-93d4-26e99e7a32bd",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743746032_0.wav",
+    "durationSeconds": 186,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 5,
+      "harsh_tone": 3,
+      "vague_command": 0,
+      "direct_command": 10,
+      "labeled_praise": 13,
+      "totalEffective": 24,
+      "chained_command": 1,
+      "correct_timeout": 1,
+      "correct_warning": 1,
+      "effectivePercent": 77,
+      "indirect_command": 3,
+      "negative_command": 0,
+      "positive_command": 9,
+      "specific_command": 9,
+      "totalIneffective": 3
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-17T16:49:06.032Z",
+    "childMetrics": {
+      "complianceRate": 73.23800981280102,
+      "deescalationTime": 59,
+      "negativeResponses": 4,
+      "positiveResponses": 10
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "6379c189-a55c-4ce6-8d52-80f4141ebda5",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743571401_1.wav",
+    "durationSeconds": 270,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 18,
+      "command": 4,
+      "imitate": 14,
+      "neutral": 15,
+      "reflect": 7,
+      "describe": 14,
+      "question": 1,
+      "criticism": 1,
+      "totalAvoid": 6,
+      "totalPride": 53
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-19T16:46:11.401Z",
+    "childMetrics": {
+      "utteranceRate": 15.40559922255694,
+      "reflectionRate": 10,
+      "speechDuration": 204
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "2da8b829-ccd7-4c84-a3cf-0da511f9473e",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743746032_0.wav",
+    "durationSeconds": 219,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 12,
+      "command": 6,
+      "imitate": 2,
+      "neutral": 6,
+      "reflect": 8,
+      "describe": 9,
+      "question": 0,
+      "criticism": 0,
+      "totalAvoid": 6,
+      "totalPride": 31
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-11T16:49:06.032Z",
+    "childMetrics": {
+      "utteranceRate": 12.76356661465438,
+      "reflectionRate": 8,
+      "speechDuration": 257
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "a22db994-5fe6-481a-bdf7-c9774eb6e5f9",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743746033_0.wav",
+    "durationSeconds": 397,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 23,
+      "command": 6,
+      "imitate": 12,
+      "neutral": 5,
+      "reflect": 17,
+      "describe": 15,
+      "question": 2,
+      "criticism": 5,
+      "totalAvoid": 13,
+      "totalPride": 67
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-21T16:49:06.033Z",
+    "childMetrics": {
+      "utteranceRate": 18.54881484908748,
+      "reflectionRate": 11,
+      "speechDuration": 171
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "2b20e94c-6dd1-470d-839f-022276c96dbd",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743746033_1.wav",
+    "durationSeconds": 208,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 15,
+      "harsh_tone": 3,
+      "vague_command": 5,
+      "direct_command": 17,
+      "labeled_praise": 11,
+      "totalEffective": 30,
+      "chained_command": 3,
+      "correct_timeout": 2,
+      "correct_warning": 3,
+      "effectivePercent": 100,
+      "indirect_command": 0,
+      "negative_command": 0,
+      "positive_command": 20,
+      "specific_command": 18,
+      "totalIneffective": 0
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-21T16:49:06.033Z",
+    "childMetrics": {
+      "complianceRate": 83.73935088410315,
+      "deescalationTime": 23,
+      "negativeResponses": 5,
+      "positiveResponses": 10
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "ae087f6f-6097-47f6-b2e8-4f3f6f6be0ea",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743571400_0.wav",
+    "durationSeconds": 213,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 13,
+      "harsh_tone": 3,
+      "vague_command": 1,
+      "direct_command": 14,
+      "labeled_praise": 9,
+      "totalEffective": 25,
+      "chained_command": 1,
+      "correct_timeout": 2,
+      "correct_warning": 4,
+      "effectivePercent": 70,
+      "indirect_command": 6,
+      "negative_command": 3,
+      "positive_command": 13,
+      "specific_command": 17,
+      "totalIneffective": 6
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-09T16:46:11.400Z",
+    "childMetrics": {
+      "complianceRate": 68.5876633774186,
+      "deescalationTime": 47,
+      "negativeResponses": 0,
+      "positiveResponses": 11
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "7471172f-81db-4864-ba58-871c18a5ed37",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743571400_1.wav",
+    "durationSeconds": 248,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 13,
+      "harsh_tone": 1,
+      "vague_command": 5,
+      "direct_command": 16,
+      "labeled_praise": 8,
+      "totalEffective": 26,
+      "chained_command": 2,
+      "correct_timeout": 2,
+      "correct_warning": 4,
+      "effectivePercent": 94,
+      "indirect_command": 1,
+      "negative_command": 3,
+      "positive_command": 16,
+      "specific_command": 19,
+      "totalIneffective": 1
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-10T16:46:11.400Z",
+    "childMetrics": {
+      "complianceRate": 77.67674351685423,
+      "deescalationTime": 60,
+      "negativeResponses": 2,
+      "positiveResponses": 10
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "3a572903-9ccc-47a8-8419-5ae3ae1b9535",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743571400_0.wav",
+    "durationSeconds": 370,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 14,
+      "harsh_tone": 0,
+      "vague_command": 1,
+      "direct_command": 25,
+      "labeled_praise": 14,
+      "totalEffective": 40,
+      "chained_command": 0,
+      "correct_timeout": 1,
+      "correct_warning": 2,
+      "effectivePercent": 96,
+      "indirect_command": 1,
+      "negative_command": 1,
+      "positive_command": 16,
+      "specific_command": 8,
+      "totalIneffective": 1
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-13T16:46:11.400Z",
+    "childMetrics": {
+      "complianceRate": 71.1632050281562,
+      "deescalationTime": 63,
+      "negativeResponses": 1,
+      "positiveResponses": 11
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "5b7e2122-bcc5-41fa-b181-9e5da2cd6798",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743746033_0.wav",
+    "durationSeconds": 247,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 9,
+      "command": 2,
+      "imitate": 12,
+      "neutral": 15,
+      "reflect": 9,
+      "describe": 21,
+      "question": 9,
+      "criticism": 2,
+      "totalAvoid": 13,
+      "totalPride": 51
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-18T16:49:06.033Z",
+    "childMetrics": {
+      "utteranceRate": 18.94187104978069,
+      "reflectionRate": 11,
+      "speechDuration": 139
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "7f0498c1-8cbd-4857-8dc9-2dca10aa7373",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743746033_1.wav",
+    "durationSeconds": 407,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 10,
+      "harsh_tone": 0,
+      "vague_command": 1,
+      "direct_command": 9,
+      "labeled_praise": 5,
+      "totalEffective": 16,
+      "chained_command": 0,
+      "correct_timeout": 2,
+      "correct_warning": 4,
+      "effectivePercent": 90,
+      "indirect_command": 1,
+      "negative_command": 3,
+      "positive_command": 13,
+      "specific_command": 15,
+      "totalIneffective": 1
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-19T16:49:06.033Z",
+    "childMetrics": {
+      "complianceRate": 66.82716351740912,
+      "deescalationTime": 66,
+      "negativeResponses": 0,
+      "positiveResponses": 12
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "7f4fd375-75a6-4bf8-a17c-e167c82313ae",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743571400_0.wav",
+    "durationSeconds": 228,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 8,
+      "harsh_tone": 0,
+      "vague_command": 1,
+      "direct_command": 12,
+      "labeled_praise": 13,
+      "totalEffective": 30,
+      "chained_command": 0,
+      "correct_timeout": 5,
+      "correct_warning": 4,
+      "effectivePercent": 67,
+      "indirect_command": 6,
+      "negative_command": 1,
+      "positive_command": 14,
+      "specific_command": 9,
+      "totalIneffective": 6
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-11T16:46:11.400Z",
+    "childMetrics": {
+      "complianceRate": 89.30052831983967,
+      "deescalationTime": 40,
+      "negativeResponses": 2,
+      "positiveResponses": 15
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "972e6793-a3df-4c6d-a294-6d1f6cf55543",
+    "userId": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743571401_0.wav",
+    "durationSeconds": 363,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 13,
+      "harsh_tone": 2,
+      "vague_command": 0,
+      "direct_command": 18,
+      "labeled_praise": 11,
+      "totalEffective": 31,
+      "chained_command": 0,
+      "correct_timeout": 2,
+      "correct_warning": 1,
+      "effectivePercent": 86,
+      "indirect_command": 3,
+      "negative_command": 1,
+      "positive_command": 17,
+      "specific_command": 11,
+      "totalIneffective": 3
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-19T16:46:11.401Z",
+    "childMetrics": {
+      "complianceRate": 65.8933873760424,
+      "deescalationTime": 61,
+      "negativeResponses": 1,
+      "positiveResponses": 12
+    },
+    "User": {
+      "id": "8dba03a0-4f68-4ca1-b688-5f78af18796a",
+      "email": "940ded1cf5f9ff001e180ee115cf0c44:6c42a8ddab9342d92a047134dd2b1859ea2813f009df86bf90eeafa1a6e05635"
+    }
+  },
+  {
+    "id": "c3d68721-ee3b-4104-b363-413d430ffd06",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743746032_0.wav",
+    "durationSeconds": 417,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 7,
+      "command": 1,
+      "imitate": 12,
+      "neutral": 12,
+      "reflect": 10,
+      "describe": 18,
+      "question": 1,
+      "criticism": 3,
+      "totalAvoid": 5,
+      "totalPride": 47
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-09T16:49:06.032Z",
+    "childMetrics": {
+      "utteranceRate": 16.76309856678717,
+      "reflectionRate": 7,
+      "speechDuration": 160
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "44911bb3-e45b-4227-af48-1214f1609651",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "CDI",
+    "storagePath": "mock/audio/1763743746032_0.wav",
+    "durationSeconds": 262,
+    "transcript": "Mock CDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock CDI analysis"
+    },
+    "pcitCoding": "Mock CDI coding",
+    "tagCounts": {
+      "praise": 10,
+      "command": 4,
+      "imitate": 7,
+      "neutral": 7,
+      "reflect": 5,
+      "describe": 20,
+      "question": 6,
+      "criticism": 3,
+      "totalAvoid": 13,
+      "totalPride": 42
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-14T16:49:06.032Z",
+    "childMetrics": {
+      "utteranceRate": 17.45964289125482,
+      "reflectionRate": 8,
+      "speechDuration": 232
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "52640cee-b037-4641-9383-3582abe676bd",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743746033_1.wav",
+    "durationSeconds": 358,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 11,
+      "harsh_tone": 2,
+      "vague_command": 2,
+      "direct_command": 9,
+      "labeled_praise": 10,
+      "totalEffective": 21,
+      "chained_command": 3,
+      "correct_timeout": 2,
+      "correct_warning": 3,
+      "effectivePercent": 90,
+      "indirect_command": 1,
+      "negative_command": 1,
+      "positive_command": 19,
+      "specific_command": 18,
+      "totalIneffective": 1
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-17T16:49:06.033Z",
+    "childMetrics": {
+      "complianceRate": 76.47154183066579,
+      "deescalationTime": 54,
+      "negativeResponses": 5,
+      "positiveResponses": 16
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "b12283eb-3de6-404b-ad44-9798dd79a61f",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "PDI",
+    "storagePath": "mock/audio/1763743746033_0.wav",
+    "durationSeconds": 261,
+    "transcript": "Mock PDI session transcript",
+    "aiFeedbackJSON": {
+      "analysis": "Mock PDI analysis"
+    },
+    "pcitCoding": "Mock PDI coding",
+    "tagCounts": {
+      "neutral": 6,
+      "harsh_tone": 2,
+      "vague_command": 2,
+      "direct_command": 8,
+      "labeled_praise": 5,
+      "totalEffective": 18,
+      "chained_command": 3,
+      "correct_timeout": 5,
+      "correct_warning": 3,
+      "effectivePercent": 62,
+      "indirect_command": 5,
+      "negative_command": 2,
+      "positive_command": 14,
+      "specific_command": 8,
+      "totalIneffective": 5
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-19T16:49:06.033Z",
+    "childMetrics": {
+      "complianceRate": 86.44139799361014,
+      "deescalationTime": 43,
+      "negativeResponses": 4,
+      "positiveResponses": 14
+    },
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  },
+  {
+    "id": "1dd3a0e4-8762-48db-b0ac-00dfbce57847",
+    "userId": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+    "mode": "CDI",
+    "storagePath": "audio/8a511b50-247b-43cf-86c0-2618cb02eec2/1dd3a0e4-8762-48db-b0ac-00dfbce57847.webm",
+    "durationSeconds": 0,
+    "transcript": "[{\"speaker\":0,\"text\":\"You   could   climb   up   here   and   then   go   like   this,   and   then   you   can   ride   off.   Whee.   And   this   could   be   the   pool.  \",\"start\":0.099,\"end\":5.899},{\"speaker\":1,\"text\":\"And   that   could   be   the   pool.   I   love   that   idea.   (toy clacking)   I'm   gonna   add   to   your   pool.  \",\"start\":5.9,\"end\":9.759},{\"speaker\":0,\"text\":\"Yeah.  \",\"start\":9.76,\"end\":11.96},{\"speaker\":1,\"text\":\"I'm...\",\"start\":11.96,\"end\":13.419}]",
+    "aiFeedbackJSON": {},
+    "pcitCoding": "\"And that could be the pool.\" [DO: Reflect] - Paraphrasing/reflecting child's idea about the pool\n\n\"I love that idea.\" [DO: Praise] - Unlabeled praise for child's creative idea\n\n\"I'm gonna add to your pool.\" [DO: Describe] - Describing own action that relates to child's play",
+    "tagCounts": {
+      "praise": 1,
+      "command": 0,
+      "imitate": 0,
+      "neutral": 0,
+      "reflect": 1,
+      "describe": 1,
+      "question": 0,
+      "criticism": 0,
+      "totalAvoid": 0,
+      "totalPride": 3,
+      "negative_phrases": 0
+    },
+    "masteryAchieved": false,
+    "riskScore": 0,
+    "flaggedForReview": false,
+    "coachAlertSent": false,
+    "coachAlertSentAt": null,
+    "createdAt": "2025-11-26T03:51:04.149Z",
+    "childMetrics": null,
+    "User": {
+      "id": "8a511b50-247b-43cf-86c0-2618cb02eec2",
+      "email": "5697c359b77235f0169acecf7c156914:98ef05f92df14907280c1d71091c00772eeb73be6707fbe6f8c642b1654a3d19"
+    }
+  }
+]

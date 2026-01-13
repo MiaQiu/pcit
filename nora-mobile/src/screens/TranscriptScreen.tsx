@@ -546,15 +546,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginTop: 12,
-    borderLeftWidth: 3,
+    //borderLeftWidth: 3,
   },
   feedbackDesirable: {
     backgroundColor: '#F0FDF4', // Light green
-    borderLeftColor: '#16A34A', // Dark green
+    //borderLeftColor: '#16A34A', // Dark green
   },
   feedbackUndesirable: {
     backgroundColor: '#FAF5FF', // Light purple
-    borderLeftColor: '#9333EA', // Dark purple
+    //borderLeftColor: '#9333EA', // Dark purple
   },
   feedbackText: {
     fontFamily: FONTS.regular,

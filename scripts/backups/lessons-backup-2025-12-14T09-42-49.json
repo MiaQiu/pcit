@@ -1,0 +1,4013 @@
+[
+  {
+    "id": "cmj32m09w0000mh7romm9fhac",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 1,
+    "title": "Nora's Methodology",
+    "subtitle": null,
+    "shortDescription": "The foundation behind Nora's approach and your first daily practice: Special Play Time.",
+    "objectives": [
+      "Understand the Nora Method",
+      "Learn Special Play Time rules",
+      "Practice starting scripts"
+    ],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [],
+    "teachesCategories": [
+      "PRAISE",
+      "ECHO",
+      "NARRATION"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-12T16:17:39.045Z",
+    "updatedAt": "2025-12-12T16:19:19.361Z",
+    "segments": [
+      {
+        "id": "cmj32m0q10001mh7ry5kx30nz",
+        "lessonId": "cmj32m09w0000mh7romm9fhac",
+        "order": 1,
+        "sectionTitle": "Welcome to Day 1",
+        "contentType": "TEXT",
+        "bodyText": "Welcome to your first day!\n\nToday, you'll learn the foundation behind **Nora's approach** and your very first daily practice: **Special Play Time**.\n\nOur goal is to make parenting easier by building **connections first**, then teaching discipline that actually works.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-12T16:17:39.625Z",
+        "updatedAt": "2025-12-12T16:17:39.625Z"
+      },
+      {
+        "id": "cmj32m0q10002mh7rt3yn3hy7",
+        "lessonId": "cmj32m09w0000mh7romm9fhac",
+        "order": 2,
+        "sectionTitle": "Nora's Approach",
+        "contentType": "TEXT",
+        "bodyText": "Nora blends research from:\n• **Play Therapy** (connection)\n• **Triple P** (positive parenting)\n• **Behavior Management** (calm guidance)\n\nWe focus on **two phases**:\n\n**Phase 1 - Connect:** Build safety and understanding\n\n**Phase 2 - Discipline:** Teach boundaries once the relationship is strong",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-12T16:17:39.625Z",
+        "updatedAt": "2025-12-12T16:17:39.625Z"
+      },
+      {
+        "id": "cmj32m0q10003mh7rrjn1pi1n",
+        "lessonId": "cmj32m09w0000mh7romm9fhac",
+        "order": 3,
+        "sectionTitle": "Your First Practice: Special Play Time",
+        "contentType": "TEXT",
+        "bodyText": "Your \"homework\" is **simple but powerful**:\n\n**Spend just 5 minutes a day in Special Play Time.**\n\nThink of it as your child's **emotional gym**—a small daily dose of positive attention that builds the trust required for cooperation.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-12T16:17:39.625Z",
+        "updatedAt": "2025-12-12T16:17:39.625Z"
+      },
+      {
+        "id": "cmj32m0q10004mh7r15544tyq",
+        "lessonId": "cmj32m09w0000mh7romm9fhac",
+        "order": 4,
+        "sectionTitle": "The 3 Rules",
+        "contentType": "TIP",
+        "bodyText": "**Time:** 5 minutes daily. Consistency beats length.\n\n**Child Leads:** They are the \"boss.\" No questioning or commanding.\n\n**Right Toys:** Use imagination toys (blocks, cars, dolls). Avoid rule-based games (board games) or books that tempt you to lead.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-12T16:17:39.625Z",
+        "updatedAt": "2025-12-12T16:17:39.625Z"
+      },
+      {
+        "id": "cmj32m0q20005mh7r4zulwr26",
+        "lessonId": "cmj32m09w0000mh7romm9fhac",
+        "order": 5,
+        "sectionTitle": "Sample Script",
+        "contentType": "SCRIPT",
+        "bodyText": "\"It's time for our Special Play Time! For the next 5 minutes, you get to be the boss. You can choose any of these toys for us to play with—blocks, cars, or dolls.\"",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-12T16:17:39.625Z",
+        "updatedAt": "2025-12-12T16:17:39.625Z"
+      },
+      {
+        "id": "cmj32m0q20006mh7riaezu5lb",
+        "lessonId": "cmj32m09w0000mh7romm9fhac",
+        "order": 6,
+        "sectionTitle": "Ending Special Time",
+        "contentType": "TIP",
+        "bodyText": "**After five minutes, you must end the session** to release the pressure of using high-intensity skills.\n\nIf your child struggles with ending, give warnings:\n• \"Special Time will be over in two minutes\"\n• \"One minute\"",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-12T16:17:39.625Z",
+        "updatedAt": "2025-12-12T16:17:39.625Z"
+      },
+      {
+        "id": "cmj32m0q20007mh7rja13m74f",
+        "lessonId": "cmj32m09w0000mh7romm9fhac",
+        "order": 7,
+        "sectionTitle": "The End Script",
+        "contentType": "SCRIPT",
+        "bodyText": "\"Special Time is now over. I wanted to tell you that I really liked how you [insert labeled praise about behavior].\" This transitions them back to normal time positively.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-12T16:17:39.625Z",
+        "updatedAt": "2025-12-12T16:17:39.625Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj32m1jf0009mh7ruk8klocy",
+      "lessonId": "cmj32m09w0000mh7romm9fhac",
+      "question": "Why does Nora start with the Connect phase before teaching discipline?",
+      "correctAnswer": "cmj32m1yt000bmh7rr283th1b",
+      "explanation": "In early childhood, a secure relationship is the primary driver of cooperation and willingness to listen.",
+      "createdAt": "2025-12-12T16:17:40.684Z",
+      "updatedAt": "2025-12-12T16:17:42.880Z",
+      "options": [
+        {
+          "id": "cmj32m2cq000cmh7ryc7purvu",
+          "quizId": "cmj32m1jf0009mh7ruk8klocy",
+          "optionLabel": "A",
+          "optionText": "Because kids only behave well when they're happy all the time.",
+          "order": 1
+        },
+        {
+          "id": "cmj32m1yt000bmh7rr283th1b",
+          "quizId": "cmj32m1jf0009mh7ruk8klocy",
+          "optionLabel": "B",
+          "optionText": "Because a strong parent–child connection builds trust, which makes kids more willing to listen and follow instructions.",
+          "order": 2
+        },
+        {
+          "id": "cmj32m2cq000dmh7rybvggvzq",
+          "quizId": "cmj32m1jf0009mh7ruk8klocy",
+          "optionLabel": "C",
+          "optionText": "Because playtime is more fun than learning rules.",
+          "order": 3
+        },
+        {
+          "id": "cmj32m2cq000emh7r0qvyptwj",
+          "quizId": "cmj32m1jf0009mh7ruk8klocy",
+          "optionLabel": "D",
+          "optionText": "Because young children don't understand boundaries yet.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj32m4zs000fmh7r3ff4vmyu",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 2,
+    "title": "The 3 Core Skills (PEN)",
+    "subtitle": null,
+    "shortDescription": "Learn Praise, Echo, and Narrate—the 3 skills that make Special Play Time powerful.",
+    "objectives": [
+      "Learn the PEN skills",
+      "Practice Praise, Echo, and Narrate",
+      "Understand how each skill builds connection"
+    ],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj32m09w0000mh7romm9fhac"
+    ],
+    "teachesCategories": [
+      "PRAISE",
+      "ECHO",
+      "NARRATION"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-12T16:17:45.160Z",
+    "updatedAt": "2025-12-12T16:17:45.160Z",
+    "segments": [
+      {
+        "id": "cmj32m58p000gmh7rvwma5c30",
+        "lessonId": "cmj32m4zs000fmh7r3ff4vmyu",
+        "order": 1,
+        "sectionTitle": "The PEN Skills",
+        "contentType": "TEXT",
+        "bodyText": "Today you learn the **3 skills** that make Special Play Time powerful:\n\n**P**raise, **E**cho, and **N**arrate **(PEN)**\n\nThese skills help your child feel:\n• **Understood**\n• **Confident**\n• **Connected**\n\nWhen kids feel these things, they listen better outside of playtime too.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-12T16:17:45.482Z",
+        "updatedAt": "2025-12-12T16:17:45.482Z"
+      },
+      {
+        "id": "cmj32m58p000hmh7rax581q8y",
+        "lessonId": "cmj32m4zs000fmh7r3ff4vmyu",
+        "order": 2,
+        "sectionTitle": "Skill 1 - Praise (P)",
+        "contentType": "TEXT",
+        "bodyText": "**Tell your child exactly what they are doing well.**\n\nThis builds confidence and increases positive behavior.\n\n**Examples:**\n• \"I love how gently you're playing\"\n• \"Great job sharing the blocks\"\n\n**💡 Tip:** Praise the **specific action**, not just the personality.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-12T16:17:45.482Z",
+        "updatedAt": "2025-12-12T16:17:45.482Z"
+      },
+      {
+        "id": "cmj32m58p000imh7r1khcb075",
+        "lessonId": "cmj32m4zs000fmh7r3ff4vmyu",
+        "order": 3,
+        "sectionTitle": "Skill 2 - Echo (E)",
+        "contentType": "EXAMPLE",
+        "bodyText": "**Repeat or reflect what your child says.**\n\nThis acts as a **verbal hug**.\n\n**Example 1:**\n👶 **Child:** \"The car is fast!\"\n👤 **You:** \"The car is fast!\"\n\n**Example 2:**\n👶 **Child:** \"I'm making a tower.\"\n👤 **You:** \"You're making a tower!\"\n\n**💡 Tip:** This makes your child feel truly heard.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-12T16:17:45.482Z",
+        "updatedAt": "2025-12-12T16:17:45.482Z"
+      },
+      {
+        "id": "cmj32m58p000jmh7rk22zjhht",
+        "lessonId": "cmj32m4zs000fmh7r3ff4vmyu",
+        "order": 4,
+        "sectionTitle": "Skill 3 - Narrate (N)",
+        "contentType": "TEXT",
+        "bodyText": "**Describe what your child is doing, like a sports commentator.**\n\n**Examples:**\n• \"You're stacking the blue block on the red one\"\n• \"You're feeding the baby doll\"\n\n**💡 Tip:** This keeps the child **calm and focused**, even if they aren't talking much yet.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-12T16:17:45.482Z",
+        "updatedAt": "2025-12-12T16:17:45.482Z"
+      },
+      {
+        "id": "cmj32m58p000kmh7rc7gywucz",
+        "lessonId": "cmj32m4zs000fmh7r3ff4vmyu",
+        "order": 5,
+        "sectionTitle": "Sample Script",
+        "contentType": "SCRIPT",
+        "bodyText": "**Try a mix:**\n\n👤 \"You're lining up all the cars.\" **(Narrate)**\n\n👶 **Child:** \"This one is the fastest!\"\n👤 **You:** \"The fastest one!\" **(Echo)**\n\n👤 \"I love how focused you are.\" **(Praise)**\n\n**Remember:** You don't need perfect sentences—just be **warm and present**.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-12T16:17:45.482Z",
+        "updatedAt": "2025-12-12T16:17:45.482Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj32m601000mmh7roqk3qk1h",
+      "lessonId": "cmj32m4zs000fmh7r3ff4vmyu",
+      "question": "What is the main purpose of the \"Echo\" skill?",
+      "correctAnswer": "cmj32m670000omh7r14x2b74n",
+      "explanation": "Echoing validates the child's thoughts, making them feel heard and building trust.",
+      "createdAt": "2025-12-12T16:17:46.465Z",
+      "updatedAt": "2025-12-12T16:17:48.177Z",
+      "options": [
+        {
+          "id": "cmj32m6eo000pmh7r3rjsp50u",
+          "quizId": "cmj32m601000mmh7roqk3qk1h",
+          "optionLabel": "A",
+          "optionText": "To correct what your child says.",
+          "order": 1
+        },
+        {
+          "id": "cmj32m670000omh7r14x2b74n",
+          "quizId": "cmj32m601000mmh7roqk3qk1h",
+          "optionLabel": "B",
+          "optionText": "To show your child you're listening and build their language skills.",
+          "order": 2
+        },
+        {
+          "id": "cmj32m6eo000qmh7rkhsnwmhp",
+          "quizId": "cmj32m601000mmh7roqk3qk1h",
+          "optionLabel": "C",
+          "optionText": "To give instructions.",
+          "order": 3
+        },
+        {
+          "id": "cmj32m6eo000rmh7rrv2bi4w4",
+          "quizId": "cmj32m601000mmh7roqk3qk1h",
+          "optionLabel": "D",
+          "optionText": "To speed up playtime.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq5rvs000k9ewvg384u1to",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 3,
+    "title": "Narrate the Play",
+    "subtitle": "Describing what you see",
+    "shortDescription": "Learn how describing your child's actions builds language and shows attention.",
+    "objectives": [
+      "Understand behavioral narration",
+      "Learn to describe actions as they happen",
+      "Practice non-directive commentary"
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx"
+    ],
+    "teachesCategories": [
+      "NARRATION"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#FFF4E4",
+    "ellipse77Color": "#FFD4A6",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-02T15:20:19.816Z",
+    "updatedAt": "2025-12-02T15:20:19.816Z",
+    "segments": [
+      {
+        "id": "cmioq5s2o000l9ewvb9n02txr",
+        "lessonId": "cmioq5rvs000k9ewvg384u1to",
+        "order": 1,
+        "sectionTitle": "What is Narration?",
+        "contentType": "TEXT",
+        "bodyText": "Behavioral narration means describing what your child is doing as they play—like you're a sports announcer for their playtime.\n\n\"You're stacking the blocks...\"\n\"You're putting the doll to bed...\"\n\"You're drawing a circle...\"\n\nThis technique:\n• Shows you're paying attention\n• Builds their vocabulary\n• Helps them learn to focus\n• Creates a warm, engaging atmosphere",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:20.064Z",
+        "updatedAt": "2025-12-02T15:20:20.064Z"
+      },
+      {
+        "id": "cmioq5s2o000m9ewv45jttekl",
+        "lessonId": "cmioq5rvs000k9ewvg384u1to",
+        "order": 2,
+        "sectionTitle": "Examples in Action",
+        "contentType": "EXAMPLE",
+        "bodyText": "**What they're doing → What you say:**\n\nStacking blocks → \"You're making a tall tower!\"\n\nDrawing → \"You're using the red crayon!\"\n\nPlaying with cars → \"The car is going fast!\"\n\nFeeding a doll → \"You're giving baby a bottle!\"\n\n**Remember:** Describe, don't direct. Let them lead!",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:20.064Z",
+        "updatedAt": "2025-12-02T15:20:20.064Z"
+      },
+      {
+        "id": "cmioq5s2o000n9ewvxmrhuwoz",
+        "lessonId": "cmioq5rvs000k9ewvg384u1to",
+        "order": 3,
+        "sectionTitle": "Practice Tips",
+        "contentType": "TIP",
+        "bodyText": "**Tips for narration:**\n\n• Use an interested, not bossy tone\n• Describe what you see, not what to do\n• Keep statements short and simple\n• Pause to let them respond\n• Don't narrate constantly—balance is key\n\n**Try it today:**\nSet aside 5 minutes of play time and simply describe 5-10 things your child does.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:20.064Z",
+        "updatedAt": "2025-12-02T15:20:20.064Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq5su6000p9ewv4qe49up5",
+      "lessonId": "cmioq5rvs000k9ewvg384u1to",
+      "question": "Your child is coloring. Which is behavioral narration?",
+      "correctAnswer": "cmioq5t13000q9ewvm7tph17a",
+      "explanation": "\"You're using the blue crayon!\" simply describes what you see without directing or questioning. This is pure narration.",
+      "createdAt": "2025-12-02T15:20:21.054Z",
+      "updatedAt": "2025-12-02T15:20:22.660Z",
+      "options": [
+        {
+          "id": "cmioq5t13000q9ewvm7tph17a",
+          "quizId": "cmioq5su6000p9ewv4qe49up5",
+          "optionLabel": "A",
+          "optionText": "You're using the blue crayon!",
+          "order": 1
+        },
+        {
+          "id": "cmioq5t13000r9ewvs8tm6tl3",
+          "quizId": "cmioq5su6000p9ewv4qe49up5",
+          "optionLabel": "B",
+          "optionText": "What are you drawing?",
+          "order": 2
+        },
+        {
+          "id": "cmioq5t13000s9ewvf1mr6thb",
+          "quizId": "cmioq5su6000p9ewv4qe49up5",
+          "optionLabel": "C",
+          "optionText": "Try coloring inside the lines.",
+          "order": 3
+        },
+        {
+          "id": "cmioq5t13000t9ewvq61vak2s",
+          "quizId": "cmioq5su6000p9ewv4qe49up5",
+          "optionLabel": "D",
+          "optionText": "That's beautiful!",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq5u9y000u9ewvckzygqa9",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 4,
+    "title": "Why Special Time Feels Like a Practice Gym",
+    "subtitle": "High-Intensity Skill Practice",
+    "shortDescription": "Understand why Special Time feels unnatural and how this \"mental gym\" builds lasting skills.",
+    "objectives": [
+      "Understand Special Time as high-intensity skill practice",
+      "Learn why the intensity is necessary",
+      "Practice transitioning out of \"gym mode\""
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx",
+      "cmioq5rvs000k9ewvg384u1to"
+    ],
+    "teachesCategories": [
+      "PRAISE",
+      "ECHO",
+      "NARRATION"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#FFE4F0",
+    "ellipse77Color": "#FFB4D4",
+    "ellipse78Color": "#D4A6E0",
+    "createdAt": "2025-12-02T15:20:22.918Z",
+    "updatedAt": "2025-12-02T15:20:22.918Z",
+    "segments": [
+      {
+        "id": "cmioq5uh0000v9ewvmds4foui",
+        "lessonId": "cmioq5u9y000u9ewvckzygqa9",
+        "order": 1,
+        "sectionTitle": "Think of Special Time as a Mental Gym",
+        "contentType": "TEXT",
+        "bodyText": "When you start practicing the PEN skills for 5 minutes a day, you might find yourself thinking, \"This feels so unnatural!\" or \"I would never talk like this normally.\" This is completely normal and expected.\\n\\nThe 5 minutes of Special Time is not meant to reflect your spontaneous reality; it's designed to be a **high-intensity workout** for your parenting skills.\\n\\n**Gym Analogy:** In the gym, you isolate muscles (e.g., biceps curls) to strengthen them before integrating them into complex movements (e.g., lifting groceries).\\n\\n**Nora Model Analogy:** In Special Time, you isolate positive skills (Praise, Echo, Narrate) and practice them at a high density (e.g., 10-15 positive interactions per minute) while completely avoiding the \"Don't\" skills.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:23.173Z",
+        "updatedAt": "2025-12-02T15:20:23.173Z"
+      },
+      {
+        "id": "cmioq5uh0000w9ewvgczqd8ns",
+        "lessonId": "cmioq5u9y000u9ewvckzygqa9",
+        "order": 2,
+        "sectionTitle": "The Purpose of the Intensity",
+        "contentType": "EXAMPLE",
+        "bodyText": "We use this artificial intensity because:\\n\\n1. **It Builds Muscle Memory:** Practicing skills intentionally helps you use them reflexively outside of Special Time.\\n2. **It Overwrites Old Habits:** It forces you to consciously replace old habits (commands, questions, criticism) with positive ones.\\n\\nThe goal isn't to be a \"sports commentator\" all day; the goal is to practice so effectively that you naturally sprinkle PEN skills throughout your daily life, making all interactions more positive and effective.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:23.173Z",
+        "updatedAt": "2025-12-02T15:20:23.173Z"
+      },
+      {
+        "id": "cmioq5uh1000x9ewvoxahju2h",
+        "lessonId": "cmioq5u9y000u9ewvckzygqa9",
+        "order": 3,
+        "sectionTitle": "Transitioning Out of \"Gym Mode\"",
+        "contentType": "TIP",
+        "bodyText": "**Sample Script:**\\n\\nParent: (Looks at timer) \"Wow, Special Time is over now! I really loved **how much fun we had** and **how creative you were** with the blocks! Now let's go make lunch, and I'll keep an eye out for how well you cooperate.\"\\n\\n(Return to normal communication, maybe sprinkling a few Praise statements later.)",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:23.173Z",
+        "updatedAt": "2025-12-02T15:20:23.173Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq5v8z000z9ewv4iyh7otv",
+      "lessonId": "cmioq5u9y000u9ewvckzygqa9",
+      "question": "Why does Special Time often feel unnatural or \"fake\" to parents initially?",
+      "correctAnswer": "cmioq5vfz00119ewvyy59osq7",
+      "explanation": "Special Time is intentionally an intense practice session to build skill density and muscle memory before integrating the skills into daily life.",
+      "createdAt": "2025-12-02T15:20:24.179Z",
+      "updatedAt": "2025-12-02T15:20:25.674Z",
+      "options": [
+        {
+          "id": "cmioq5vfz00109ewvb09d3cq0",
+          "quizId": "cmioq5v8z000z9ewv4iyh7otv",
+          "optionLabel": "A",
+          "optionText": "Because the child is not being spontaneous or real during the session.",
+          "order": 1
+        },
+        {
+          "id": "cmioq5vfz00119ewvyy59osq7",
+          "quizId": "cmioq5v8z000z9ewv4iyh7otv",
+          "optionLabel": "B",
+          "optionText": "Because it is designed to be an intense, isolated skill-building practice that doesn't reflect spontaneous daily life.",
+          "order": 2
+        },
+        {
+          "id": "cmioq5vfz00129ewvkxl83pgt",
+          "quizId": "cmioq5v8z000z9ewv4iyh7otv",
+          "optionLabel": "C",
+          "optionText": "Because the 5-minute time limit is too short to be effective.",
+          "order": 3
+        },
+        {
+          "id": "cmioq5vfz00139ewvzn65fwa1",
+          "quizId": "cmioq5v8z000z9ewv4iyh7otv",
+          "optionLabel": "D",
+          "optionText": "Because the parent is using too many \"Don't\" skills accidentally.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq5wm800149ewvvyo1dikj",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 5,
+    "title": "Handling Whining or Testing in Special Time",
+    "subtitle": "Selective Ignoring",
+    "shortDescription": "Learn how to handle minor attention-seeking behaviors during Special Time using Selective Ignoring.",
+    "objectives": [
+      "Understand what Selective Ignoring is",
+      "Learn when to use Selective Ignoring",
+      "Practice the immediate return after ignoring"
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx",
+      "cmioq5rvs000k9ewvg384u1to",
+      "cmioq5u9y000u9ewvckzygqa9"
+    ],
+    "teachesCategories": [
+      "SELECTIVE_IGNORING"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4FFE4",
+    "ellipse77Color": "#A6E0A6",
+    "ellipse78Color": "#D4FFB4",
+    "createdAt": "2025-12-02T15:20:25.952Z",
+    "updatedAt": "2025-12-02T15:20:25.952Z",
+    "segments": [
+      {
+        "id": "cmioq5wte00159ewvl81m8hf3",
+        "lessonId": "cmioq5wm800149ewvvyo1dikj",
+        "order": 1,
+        "sectionTitle": "What is Selective Ignoring?",
+        "contentType": "TEXT",
+        "bodyText": "This is the only tool we use for minor, attention-seeking misbehaviors (like whining, silly noises, or pouting) that happen **during** Special Play Time. It works because the currency of connection is positive attention, and you are temporarily withdrawing it.\\n\\n**Action:** Immediately withdraw **all** attention (eye contact, verbal, physical). Turn your body slightly away and focus on a neutral object (like a spot on the wall).\\n\\n**Rule:** Ignore the behavior, not the child. Remain calm, neutral, and show no frustration.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:26.210Z",
+        "updatedAt": "2025-12-02T15:20:26.210Z"
+      },
+      {
+        "id": "cmioq5wte00169ewvy54eoz4h",
+        "lessonId": "cmioq5wm800149ewvvyo1dikj",
+        "order": 2,
+        "sectionTitle": "The Immediate Return",
+        "contentType": "EXAMPLE",
+        "bodyText": "The critical step: The moment the whining stops and the child returns to neutral or positive behavior (even a moment of silence), you must **immediately** return attention with a Labeled Praise (P).\\n\\n**Example:**\\n• **Misbehavior:** Child whines, \"I don't want to play blocks!\"\\n• **Parent:** (Silent, looks away)\\n• **Child:** (Stops whining, picks up a block silently)\\n• **Parent (Immediate Praise):** \"Thank you for **using your quiet hands!**\"",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:26.210Z",
+        "updatedAt": "2025-12-02T15:20:26.210Z"
+      },
+      {
+        "id": "cmioq5wte00179ewvyzzc7mto",
+        "lessonId": "cmioq5wm800149ewvvyo1dikj",
+        "order": 3,
+        "sectionTitle": "Practice Tips",
+        "contentType": "TIP",
+        "bodyText": "**Key Principles:**\\n\\n• Withdraw attention immediately when whining starts\\n• Stay calm and neutral - no frustration\\n• Turn your body slightly away\\n• Wait for the behavior to stop\\n• **Immediately** praise when they return to positive behavior\\n\\nRemember: You're ignoring the **behavior**, not the child. The instant they stop, you reconnect with warmth and praise.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:26.210Z",
+        "updatedAt": "2025-12-02T15:20:26.210Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq5xt500199ewvk0nmcr8w",
+      "lessonId": "cmioq5wm800149ewvvyo1dikj",
+      "question": "During Special Play Time, if your child starts whining to get a certain toy, what is the best immediate response?",
+      "correctAnswer": "cmioq5y0e001c9ewvduq89r58",
+      "explanation": "Selective Ignoring is the only effective tool for minor attention-seeking behavior, followed by immediate praise when the whining stops.",
+      "createdAt": "2025-12-02T15:20:27.246Z",
+      "updatedAt": "2025-12-02T15:20:29.143Z",
+      "options": [
+        {
+          "id": "cmioq5y0e001a9ewvu6d365rn",
+          "quizId": "cmioq5xt500199ewvk0nmcr8w",
+          "optionLabel": "A",
+          "optionText": "Ask them calmly what toy they want.",
+          "order": 1
+        },
+        {
+          "id": "cmioq5y0e001b9ewvhwy0y5gh",
+          "quizId": "cmioq5xt500199ewvk0nmcr8w",
+          "optionLabel": "B",
+          "optionText": "Immediately give a Clear Command to stop whining.",
+          "order": 2
+        },
+        {
+          "id": "cmioq5y0e001c9ewvduq89r58",
+          "quizId": "cmioq5xt500199ewvk0nmcr8w",
+          "optionLabel": "C",
+          "optionText": "Withdraw all attention (Selective Ignoring) until the whining stops.",
+          "order": 3
+        },
+        {
+          "id": "cmioq5y0e001d9ewvtaiywcx1",
+          "quizId": "cmioq5xt500199ewvk0nmcr8w",
+          "optionLabel": "D",
+          "optionText": "Use a Labeled Praise to distract them.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq5zao001e9ewvjwy4b9rb",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 6,
+    "title": "Handling Chaos and Destruction in Special Time",
+    "subtitle": "Setting Boundaries During Connection",
+    "shortDescription": "Learn how to handle destructive or chaotic behavior during Special Play Time using redirection and session boundaries.",
+    "objectives": [
+      "Learn Descriptive Redirection technique",
+      "Understand when to end a session",
+      "Practice calm boundary setting"
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx",
+      "cmioq5rvs000k9ewvg384u1to",
+      "cmioq5u9y000u9ewvckzygqa9",
+      "cmioq5wm800149ewvvyo1dikj"
+    ],
+    "teachesCategories": [
+      "BOUNDARIES"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#FFF0E4",
+    "ellipse77Color": "#FFD0A6",
+    "ellipse78Color": "#A6D0E0",
+    "createdAt": "2025-12-02T15:20:29.425Z",
+    "updatedAt": "2025-12-02T15:20:29.425Z",
+    "segments": [
+      {
+        "id": "cmioq5zj1001f9ewvq6qcpkhs",
+        "lessonId": "cmioq5zao001e9ewvjwy4b9rb",
+        "order": 1,
+        "sectionTitle": "Descriptive Redirection (First Defense)",
+        "contentType": "TEXT",
+        "bodyText": "If the play is just getting too chaotic or rough, use Narrate (N) and Echo (E) to describe the appropriate or gentle alternative.\n\n**Example:**\n• Chaos: Child throws a block hard across the room.\n• Parent (Redirection): \"Wow, you are throwing that block hard! Let's see you put the block gently on the table, like this.\" (Use Copy/Imitation of the gentle action).",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:29.726Z",
+        "updatedAt": "2025-12-02T15:20:29.726Z"
+      },
+      {
+        "id": "cmioq5zj1001g9ewvl52xp3k0",
+        "lessonId": "cmioq5zao001e9ewvjwy4b9rb",
+        "order": 2,
+        "sectionTitle": "Ending the Session (Final Boundary)",
+        "contentType": "EXAMPLE",
+        "bodyText": "If Descriptive Redirection fails, or if the child is aggressive (hitting, biting) or destructive (breaking toys), the session must end immediately. This is the ultimate boundary of Connect.\n\n**Action:** Calmly state, \"Special Play Time is over now. We will try again tomorrow.\"\n\n**Rule:** Do not argue or lecture. This teaches the child that destructive behavior automatically ends access to positive attention.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:29.726Z",
+        "updatedAt": "2025-12-02T15:20:29.726Z"
+      },
+      {
+        "id": "cmioq5zj1001h9ewvzy1demlg",
+        "lessonId": "cmioq5zao001e9ewvjwy4b9rb",
+        "order": 3,
+        "sectionTitle": "Practice Tips",
+        "contentType": "TIP",
+        "bodyText": "**Key Principles:**\n\n• First try Descriptive Redirection\n• Stay calm and neutral\n• If redirection fails, end the session immediately\n• Don't lecture or argue\n• Try again the next day with a fresh start\n\nRemember: Ending the session is a teaching moment that shows destructive behavior ends positive attention.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:29.726Z",
+        "updatedAt": "2025-12-02T15:20:29.726Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq60ap001j9ewvnucujf8d",
+      "lessonId": "cmioq5zao001e9ewvjwy4b9rb",
+      "question": "If Descriptive Redirection fails and your child continues to throw blocks violently during Special Play Time, what is the correct next step?",
+      "correctAnswer": "cmioq60ii001m9ewvzk66lxus",
+      "explanation": "Since commands are avoided in Connect, ending the session is the firm boundary that teaches the child that destructive or aggressive behavior immediately ends access to positive attention.",
+      "createdAt": "2025-12-02T15:20:30.721Z",
+      "updatedAt": "2025-12-02T15:20:32.371Z",
+      "options": [
+        {
+          "id": "cmioq60ih001k9ewv1gl2pam5",
+          "quizId": "cmioq60ap001j9ewvnucujf8d",
+          "optionLabel": "A",
+          "optionText": "Give a Time-Out warning and escort them.",
+          "order": 1
+        },
+        {
+          "id": "cmioq60ih001l9ewvk9jrz8mr",
+          "quizId": "cmioq60ap001j9ewvnucujf8d",
+          "optionLabel": "B",
+          "optionText": "Immediately yell \"STOP THAT!\"",
+          "order": 2
+        },
+        {
+          "id": "cmioq60ii001m9ewvzk66lxus",
+          "quizId": "cmioq60ap001j9ewvnucujf8d",
+          "optionLabel": "C",
+          "optionText": "Calmly end the Special Play Time session immediately.",
+          "order": 3
+        },
+        {
+          "id": "cmioq60ii001n9ewvqb91if9h",
+          "quizId": "cmioq60ap001j9ewvnucujf8d",
+          "optionLabel": "D",
+          "optionText": "Continue to Narrate the throwing action.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq61tj001o9ewvdpmbtil0",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 7,
+    "title": "The Parent is the Most Important Ingredient",
+    "subtitle": "Your Presence Matters More Than Toys",
+    "shortDescription": "Discover how your attention and engagement are more powerful than any toy in building connection with your child.",
+    "objectives": [
+      "Understand that parent attention drives play",
+      "Learn how to be the \"fun factor\"",
+      "Build confidence in connection without expensive toys"
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx",
+      "cmioq5rvs000k9ewvg384u1to",
+      "cmioq5u9y000u9ewvckzygqa9",
+      "cmioq5wm800149ewvvyo1dikj",
+      "cmioq5zao001e9ewvjwy4b9rb"
+    ],
+    "teachesCategories": [
+      "PRAISE",
+      "ECHO",
+      "NARRATE"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#C7B3FF",
+    "ellipse78Color": "#9BD4DF",
+    "createdAt": "2025-12-02T15:20:32.695Z",
+    "updatedAt": "2025-12-02T15:20:32.695Z",
+    "segments": [
+      {
+        "id": "cmioq620g001p9ewvxaxwppus",
+        "lessonId": "cmioq61tj001o9ewvdpmbtil0",
+        "order": 1,
+        "sectionTitle": "You Are the Magic",
+        "contentType": "TEXT",
+        "bodyText": "Many parents worry they don't have the \"right\" toys for Special Play Time. But here's the truth: your child doesn't need expensive toys or elaborate setups.\n\nWhat makes Special Play Time powerful is YOU—your attention, your narration, your excitement. When you use Praise, Echo, and Narrate, you become the most interesting part of the play. Your child will be drawn to you, not just the toys.\n\nEven simple objects like blocks, crayons, or plastic animals become magical when you're fully engaged.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:32.945Z",
+        "updatedAt": "2025-12-02T15:20:32.945Z"
+      },
+      {
+        "id": "cmioq620g001q9ewvzsttr88m",
+        "lessonId": "cmioq61tj001o9ewvdpmbtil0",
+        "order": 2,
+        "sectionTitle": "Example: Transforming Simple Play",
+        "contentType": "EXAMPLE",
+        "bodyText": "Child is stacking blocks.\n\nWithout PEN:\n\"That's nice, sweetie.\" (parent looks at phone)\n\nWith PEN:\n\"You're building a tall tower! You chose the red block for the bottom—such a strong base! Now you're adding blue on top. You're stacking so carefully!\"\n\nNotice how the second example makes the parent the \"narrator\" of an exciting story. The child feels seen, heard, and important.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:32.945Z",
+        "updatedAt": "2025-12-02T15:20:32.945Z"
+      },
+      {
+        "id": "cmioq620g001r9ewvrd3ouk3n",
+        "lessonId": "cmioq61tj001o9ewvdpmbtil0",
+        "order": 3,
+        "sectionTitle": "Practice Tip",
+        "contentType": "TIP",
+        "bodyText": "Today, try Special Play Time with the simplest toys you have—even just paper and crayons. Focus entirely on PEN skills. Notice how your child lights up when YOU are the main ingredient, not the toys.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:32.945Z",
+        "updatedAt": "2025-12-02T15:20:32.945Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq62ul001t9ewvioixv7hp",
+      "lessonId": "cmioq61tj001o9ewvdpmbtil0",
+      "question": "What is the \"most important ingredient\" in Special Play Time?",
+      "correctAnswer": "cmioq631j001w9ewvl5t4bw2r",
+      "explanation": "Your full attention and engagement (using PEN skills) are what make Special Play Time powerful, not the toys themselves. Children crave connection with their parents more than anything else.",
+      "createdAt": "2025-12-02T15:20:34.029Z",
+      "updatedAt": "2025-12-02T15:20:35.602Z",
+      "options": [
+        {
+          "id": "cmioq631j001u9ewvfn12x513",
+          "quizId": "cmioq62ul001t9ewvioixv7hp",
+          "optionLabel": "A",
+          "optionText": "Expensive educational toys",
+          "order": 1
+        },
+        {
+          "id": "cmioq631j001v9ewv3lqpeavo",
+          "quizId": "cmioq62ul001t9ewvioixv7hp",
+          "optionLabel": "B",
+          "optionText": "A large playroom with lots of options",
+          "order": 2
+        },
+        {
+          "id": "cmioq631j001w9ewvl5t4bw2r",
+          "quizId": "cmioq62ul001t9ewvioixv7hp",
+          "optionLabel": "C",
+          "optionText": "The parent's full attention and engagement",
+          "order": 3
+        },
+        {
+          "id": "cmioq631j001x9ewvn3cxnhmf",
+          "quizId": "cmioq62ul001t9ewvioixv7hp",
+          "optionLabel": "D",
+          "optionText": "At least 30 minutes of uninterrupted time",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq649g001y9ewv9sym9xzj",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 8,
+    "title": "Dealing with Whining and Tantrums During Special Time",
+    "subtitle": "Stay Calm When Emotions Run High",
+    "shortDescription": "Learn how to handle whining, crying, and tantrums during Special Play Time without breaking connection.",
+    "objectives": [
+      "Understand why tantrums happen during connection time",
+      "Learn the \"Validate and Redirect\" technique",
+      "Maintain boundaries while staying emotionally present"
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx",
+      "cmioq5rvs000k9ewvg384u1to",
+      "cmioq5u9y000u9ewvckzygqa9",
+      "cmioq5wm800149ewvvyo1dikj",
+      "cmioq5zao001e9ewvjwy4b9rb",
+      "cmioq61tj001o9ewvdpmbtil0"
+    ],
+    "teachesCategories": [
+      "BOUNDARIES"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#FFF0E4",
+    "ellipse77Color": "#FFD0A6",
+    "ellipse78Color": "#A6D0E0",
+    "createdAt": "2025-12-02T15:20:35.860Z",
+    "updatedAt": "2025-12-02T15:20:35.860Z",
+    "segments": [
+      {
+        "id": "cmioq64i8001z9ewv0zy4xc8t",
+        "lessonId": "cmioq649g001y9ewv9sym9xzj",
+        "order": 1,
+        "sectionTitle": "Why Tantrums Happen",
+        "contentType": "TEXT",
+        "bodyText": "Sometimes during Special Play Time, your child may whine, cry, or even have a tantrum. This can feel frustrating—you're trying to connect, and they're melting down!\n\nBut here's what's happening: your focused attention is stirring up big emotions. Children who are used to getting attention through negative behavior may \"test\" whether you'll stay present when things get hard.\n\nThis is actually progress. Your child is learning that you're a safe person to express emotions with.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:36.177Z",
+        "updatedAt": "2025-12-02T15:20:36.177Z"
+      },
+      {
+        "id": "cmioq64i800209ewvjdr6wdh0",
+        "lessonId": "cmioq649g001y9ewv9sym9xzj",
+        "order": 2,
+        "sectionTitle": "Validate and Redirect",
+        "contentType": "TEXT",
+        "bodyText": "When your child whines or cries during Special Play Time:\n\n1. Validate: \"I see you're feeling frustrated.\"\n2. Redirect: \"Let's take a deep breath together. What would you like to play with next?\"\n3. Continue PEN: Return to Narrating and Praising as soon as they re-engage.\n\nDo NOT:\n- Give in to demands outside the session rules\n- End the session early (unless behavior is dangerous)\n- Lecture or scold (\"You're ruining our special time!\")",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:36.177Z",
+        "updatedAt": "2025-12-02T15:20:36.177Z"
+      },
+      {
+        "id": "cmioq64i800219ewv2tvrmqkx",
+        "lessonId": "cmioq649g001y9ewv9sym9xzj",
+        "order": 3,
+        "sectionTitle": "Practice Tip",
+        "contentType": "TIP",
+        "bodyText": "If your child has a tantrum during Special Play Time today, stay calm. Validate their feelings with one sentence, then wait quietly. When they calm down, immediately return to PEN skills. Show them you won't abandon them when emotions are big.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:36.177Z",
+        "updatedAt": "2025-12-02T15:20:36.177Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq65bi00239ewvkp3z0f43",
+      "lessonId": "cmioq649g001y9ewv9sym9xzj",
+      "question": "Your child starts crying because you won't let them play with a forbidden toy during Special Play Time. What should you do?",
+      "correctAnswer": "cmioq65ik00269ewvxs81u2ku",
+      "explanation": "Validate their emotion (\"I see you're upset\"), then redirect them to an allowed toy while staying calm. This teaches emotional regulation while maintaining boundaries.",
+      "createdAt": "2025-12-02T15:20:37.229Z",
+      "updatedAt": "2025-12-02T15:20:38.817Z",
+      "options": [
+        {
+          "id": "cmioq65ik00249ewvegscgplx",
+          "quizId": "cmioq65bi00239ewvkp3z0f43",
+          "optionLabel": "A",
+          "optionText": "End the session immediately to avoid conflict.",
+          "order": 1
+        },
+        {
+          "id": "cmioq65ik00259ewvpiqz8img",
+          "quizId": "cmioq65bi00239ewvkp3z0f43",
+          "optionLabel": "B",
+          "optionText": "Give in and let them play with the toy.",
+          "order": 2
+        },
+        {
+          "id": "cmioq65ik00269ewvxs81u2ku",
+          "quizId": "cmioq65bi00239ewvkp3z0f43",
+          "optionLabel": "C",
+          "optionText": "Validate their feelings, then calmly redirect to an allowed toy.",
+          "order": 3
+        },
+        {
+          "id": "cmioq65ik00279ewvtohqoh37",
+          "quizId": "cmioq65bi00239ewvkp3z0f43",
+          "optionLabel": "D",
+          "optionText": "Ignore the crying completely and continue playing.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq66qi00289ewvlqroxfsi",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 9,
+    "title": "Building Trust Through Consistency",
+    "subtitle": "Why Regular Special Time Changes Everything",
+    "shortDescription": "Understand how consistent Special Play Time builds deep trust and security in your relationship.",
+    "objectives": [
+      "Learn why consistency matters more than perfection",
+      "Create a sustainable Special Time routine",
+      "Handle interruptions and missed sessions"
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx",
+      "cmioq5rvs000k9ewvg384u1to",
+      "cmioq5u9y000u9ewvckzygqa9",
+      "cmioq5wm800149ewvvyo1dikj",
+      "cmioq5zao001e9ewvjwy4b9rb",
+      "cmioq61tj001o9ewvdpmbtil0",
+      "cmioq649g001y9ewv9sym9xzj"
+    ],
+    "teachesCategories": [
+      "PRAISE",
+      "ECHO",
+      "NARRATE"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#C7B3FF",
+    "ellipse78Color": "#9BD4DF",
+    "createdAt": "2025-12-02T15:20:39.067Z",
+    "updatedAt": "2025-12-02T15:20:39.067Z",
+    "segments": [
+      {
+        "id": "cmioq66xf00299ewvdz8b71py",
+        "lessonId": "cmioq66qi00289ewvlqroxfsi",
+        "order": 1,
+        "sectionTitle": "Consistency Builds Trust",
+        "contentType": "TEXT",
+        "bodyText": "One great Special Play Time session is wonderful. But *regular* Special Play Time is transformational.\n\nWhen your child knows they can count on this time with you—every day or every other day—they begin to trust that:\n- You will show up for them\n- Their needs matter\n- They don't have to \"act out\" to get your attention\n\nThis predictability creates deep emotional security.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:39.315Z",
+        "updatedAt": "2025-12-02T15:20:39.315Z"
+      },
+      {
+        "id": "cmioq66xf002a9ewv1i8o2tzq",
+        "lessonId": "cmioq66qi00289ewvlqroxfsi",
+        "order": 2,
+        "sectionTitle": "It Doesn't Have to Be Perfect",
+        "contentType": "TEXT",
+        "bodyText": "Many parents worry they need to do Special Play Time \"perfectly\" or not at all. But that's not true.\n\nWhat matters most:\n- Consistency (even 5 minutes is valuable)\n- Full attention during that time\n- Using PEN skills as best you can\n\nWhat matters less:\n- The exact time of day\n- Whether you miss a day occasionally\n- Whether every session feels \"magical\"\n\nYour child will benefit from consistent, imperfect Special Time far more than from occasional \"perfect\" sessions.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:39.315Z",
+        "updatedAt": "2025-12-02T15:20:39.315Z"
+      },
+      {
+        "id": "cmioq66xf002b9ewvxmnwl0co",
+        "lessonId": "cmioq66qi00289ewvlqroxfsi",
+        "order": 3,
+        "sectionTitle": "Practice Tip",
+        "contentType": "TIP",
+        "bodyText": "Choose a realistic time for Special Play Time—maybe right after school, or before bedtime. Put it on your calendar. Treat it like a doctor's appointment you wouldn't cancel. Even on hard days, show up for those 5-10 minutes.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:39.315Z",
+        "updatedAt": "2025-12-02T15:20:39.315Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq67ox002d9ewvwneox0ks",
+      "lessonId": "cmioq66qi00289ewvlqroxfsi",
+      "question": "What is MORE important than having \"perfect\" Special Play Time sessions?",
+      "correctAnswer": "cmioq67vw002g9ewv185zkp23",
+      "explanation": "Consistency builds trust and security in children. Regular, imperfect Special Time is far more powerful than occasional perfect sessions.",
+      "createdAt": "2025-12-02T15:20:40.306Z",
+      "updatedAt": "2025-12-02T15:20:41.802Z",
+      "options": [
+        {
+          "id": "cmioq67vw002e9ewvn47ze1zr",
+          "quizId": "cmioq67ox002d9ewvwneox0ks",
+          "optionLabel": "A",
+          "optionText": "Having expensive toys",
+          "order": 1
+        },
+        {
+          "id": "cmioq67vw002f9ewvn9htli3r",
+          "quizId": "cmioq67ox002d9ewvwneox0ks",
+          "optionLabel": "B",
+          "optionText": "Doing it at the exact same time every day",
+          "order": 2
+        },
+        {
+          "id": "cmioq67vw002g9ewv185zkp23",
+          "quizId": "cmioq67ox002d9ewvwneox0ks",
+          "optionLabel": "C",
+          "optionText": "Showing up consistently, even if imperfect",
+          "order": 3
+        },
+        {
+          "id": "cmioq67vw002h9ewvarqrsop1",
+          "quizId": "cmioq67ox002d9ewvwneox0ks",
+          "optionLabel": "D",
+          "optionText": "Making every session last 30+ minutes",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq691f002i9ewvoi9tx43u",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 10,
+    "title": "When Siblings Want In",
+    "subtitle": "Managing One-on-One Time with Multiple Kids",
+    "shortDescription": "Learn strategies for doing Special Play Time with each child individually when you have multiple children.",
+    "objectives": [
+      "Understand why one-on-one time is crucial",
+      "Create fair rotation schedules",
+      "Handle sibling jealousy and interruptions"
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx",
+      "cmioq5rvs000k9ewvg384u1to",
+      "cmioq5u9y000u9ewvckzygqa9",
+      "cmioq5wm800149ewvvyo1dikj",
+      "cmioq5zao001e9ewvjwy4b9rb",
+      "cmioq61tj001o9ewvdpmbtil0",
+      "cmioq649g001y9ewv9sym9xzj",
+      "cmioq66qi00289ewvlqroxfsi"
+    ],
+    "teachesCategories": [
+      "BOUNDARIES"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#FFF0E4",
+    "ellipse77Color": "#FFD0A6",
+    "ellipse78Color": "#A6D0E0",
+    "createdAt": "2025-12-02T15:20:42.051Z",
+    "updatedAt": "2025-12-02T15:20:42.051Z",
+    "segments": [
+      {
+        "id": "cmioq698b002j9ewvcdhgtl9t",
+        "lessonId": "cmioq691f002i9ewvoi9tx43u",
+        "order": 1,
+        "sectionTitle": "Why One-on-One Matters",
+        "contentType": "TEXT",
+        "bodyText": "If you have multiple children, you might be tempted to do Special Play Time with everyone together. But this defeats the purpose.\n\nChildren need individual attention from their parents—time when they're not competing for your focus. This is especially true for:\n- Middle children (who often feel overlooked)\n- Children with siblings who have special needs\n- Children who are quieter and get \"drowned out\"\n\nEach child deserves to feel like the most important person in your world, even if just for 10 minutes.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:42.300Z",
+        "updatedAt": "2025-12-02T15:20:42.300Z"
+      },
+      {
+        "id": "cmioq698b002k9ewvuyy638v8",
+        "lessonId": "cmioq691f002i9ewvoi9tx43u",
+        "order": 2,
+        "sectionTitle": "Creating a Fair System",
+        "contentType": "TEXT",
+        "bodyText": "Strategies for managing multiple kids:\n\n1. **Rotate days**: Child A gets Monday, Child B gets Tuesday, etc.\n2. **Use a visual schedule**: Let kids see whose \"turn\" it is\n3. **Set clear expectations**: \"This is Ella's Special Time. You'll have yours tomorrow.\"\n4. **Protect the boundary**: If a sibling interrupts, calmly redirect them: \"This is Jack's time. I'll play with you during your time tomorrow.\"\n\nConsistency is key—kids will learn to trust the system if you stick to it.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:42.300Z",
+        "updatedAt": "2025-12-02T15:20:42.300Z"
+      },
+      {
+        "id": "cmioq698b002l9ewvbdlutxex",
+        "lessonId": "cmioq691f002i9ewvoi9tx43u",
+        "order": 3,
+        "sectionTitle": "Practice Tip",
+        "contentType": "TIP",
+        "bodyText": "If you have multiple children, create a visual calendar showing whose turn it is each day. Explain the system to everyone. When interruptions happen, calmly enforce the boundary: \"This is Maya's Special Time. Your turn is tomorrow.\" Be consistent, even when it's hard.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:42.300Z",
+        "updatedAt": "2025-12-02T15:20:42.300Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq6a9m002n9ewvwyfj43b7",
+      "lessonId": "cmioq691f002i9ewvoi9tx43u",
+      "question": "Your other child keeps interrupting during Special Play Time. What should you do?",
+      "correctAnswer": "cmioq6agm002p9ewv07ff3q6k",
+      "explanation": "Protecting one-on-one time teaches both children that their individual time with you is important and will be respected. This actually reduces sibling rivalry over time.",
+      "createdAt": "2025-12-02T15:20:43.395Z",
+      "updatedAt": "2025-12-02T15:20:45.238Z",
+      "options": [
+        {
+          "id": "cmioq6agm002o9ewvqyh5u8xa",
+          "quizId": "cmioq6a9m002n9ewvwyfj43b7",
+          "optionLabel": "A",
+          "optionText": "Let them join so nobody feels left out.",
+          "order": 1
+        },
+        {
+          "id": "cmioq6agm002p9ewv07ff3q6k",
+          "quizId": "cmioq6a9m002n9ewvwyfj43b7",
+          "optionLabel": "B",
+          "optionText": "Calmly redirect them and remind them of their scheduled turn.",
+          "order": 2
+        },
+        {
+          "id": "cmioq6agm002q9ewv87vcgyc6",
+          "quizId": "cmioq6a9m002n9ewvwyfj43b7",
+          "optionLabel": "C",
+          "optionText": "End the session to avoid conflict.",
+          "order": 3
+        },
+        {
+          "id": "cmioq6agm002r9ewvc9hvoa86",
+          "quizId": "cmioq6a9m002n9ewvwyfj43b7",
+          "optionLabel": "D",
+          "optionText": "Ignore the interruption and continue playing.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq6bov002s9ewvn83roc6w",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 11,
+    "title": "What If My Child Ignores Me During Special Time?",
+    "subtitle": "When Connection Feels One-Sided",
+    "shortDescription": "Learn what to do when your child seems disengaged or uninterested during Special Play Time.",
+    "objectives": [
+      "Understand why children sometimes ignore parents",
+      "Learn the \"Stay Present and Keep Narrating\" approach",
+      "Build patience and trust in the process"
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx",
+      "cmioq5rvs000k9ewvg384u1to",
+      "cmioq5u9y000u9ewvckzygqa9",
+      "cmioq5wm800149ewvvyo1dikj",
+      "cmioq5zao001e9ewvjwy4b9rb",
+      "cmioq61tj001o9ewvdpmbtil0",
+      "cmioq649g001y9ewv9sym9xzj",
+      "cmioq66qi00289ewvlqroxfsi",
+      "cmioq691f002i9ewvoi9tx43u"
+    ],
+    "teachesCategories": [
+      "ECHO",
+      "NARRATE"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#C7B3FF",
+    "ellipse78Color": "#9BD4DF",
+    "createdAt": "2025-12-02T15:20:45.488Z",
+    "updatedAt": "2025-12-02T15:20:45.488Z",
+    "segments": [
+      {
+        "id": "cmioq6bvt002t9ewvgs8kp58n",
+        "lessonId": "cmioq6bov002s9ewvn83roc6w",
+        "order": 1,
+        "sectionTitle": "Why Children Ignore Us",
+        "contentType": "TEXT",
+        "bodyText": "It can be heartbreaking: you sit down for Special Play Time, ready to connect, and your child barely acknowledges you. They play quietly by themselves, don't respond to your comments, and seem... distant.\n\nThis happens for a few reasons:\n- They're testing whether you'll stay (especially if connection has been inconsistent)\n- They're overwhelmed by the attention and need time to adjust\n- They're used to playing alone and don't know how to engage yet\n\nThis is NORMAL. Don't take it personally.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:45.737Z",
+        "updatedAt": "2025-12-02T15:20:45.737Z"
+      },
+      {
+        "id": "cmioq6bvt002u9ewv98us646c",
+        "lessonId": "cmioq6bov002s9ewvn83roc6w",
+        "order": 2,
+        "sectionTitle": "Stay Present and Keep Narrating",
+        "contentType": "TEXT",
+        "bodyText": "What to do when your child ignores you:\n\n1. **Keep using PEN skills anyway**: \"You're lining up the cars. Now you're putting the red one first.\"\n2. **Stay calm and warm**: Don't sound hurt or frustrated\n3. **Don't force interaction**: No questions like \"Why aren't you talking to me?\"\n4. **Trust the process**: Connection takes time\n\nYour child is absorbing your presence even if they're not responding. Over days or weeks, they'll begin to open up.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:45.737Z",
+        "updatedAt": "2025-12-02T15:20:45.737Z"
+      },
+      {
+        "id": "cmioq6bvt002v9ewv6m7y94t8",
+        "lessonId": "cmioq6bov002s9ewvn83roc6w",
+        "order": 3,
+        "sectionTitle": "Practice Tip",
+        "contentType": "TIP",
+        "bodyText": "If your child is quiet or distant during Special Play Time, resist the urge to \"fix\" it. Continue Narrating their play in a warm, non-demanding voice. Think of yourself as a gentle sportscaster. Your consistent presence will eventually draw them in.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:45.737Z",
+        "updatedAt": "2025-12-02T15:20:45.737Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq6cpr002x9ewvj7vvsbec",
+      "lessonId": "cmioq6bov002s9ewvn83roc6w",
+      "question": "Your child is playing silently and not responding to your Narration during Special Time. What should you do?",
+      "correctAnswer": "cmioq6cws00309ewvs0rjkavr",
+      "explanation": "Staying present and continuing to use PEN skills without forcing interaction shows your child that your attention is unconditional. This builds trust over time.",
+      "createdAt": "2025-12-02T15:20:46.816Z",
+      "updatedAt": "2025-12-02T15:20:48.419Z",
+      "options": [
+        {
+          "id": "cmioq6cws002y9ewvvl2z0b5r",
+          "quizId": "cmioq6cpr002x9ewvj7vvsbec",
+          "optionLabel": "A",
+          "optionText": "Ask them why they're ignoring you.",
+          "order": 1
+        },
+        {
+          "id": "cmioq6cws002z9ewv4jxka3il",
+          "quizId": "cmioq6cpr002x9ewvj7vvsbec",
+          "optionLabel": "B",
+          "optionText": "End the session since they're not engaged.",
+          "order": 2
+        },
+        {
+          "id": "cmioq6cws00309ewvs0rjkavr",
+          "quizId": "cmioq6cpr002x9ewvj7vvsbec",
+          "optionLabel": "C",
+          "optionText": "Stay present and keep Narrating warmly without forcing interaction.",
+          "order": 3
+        },
+        {
+          "id": "cmioq6cws00319ewvpwx1rvhj",
+          "quizId": "cmioq6cpr002x9ewvj7vvsbec",
+          "optionLabel": "D",
+          "optionText": "Try to get them excited by suggesting different toys.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq6e5700329ewvu17u21ze",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 12,
+    "title": "Special Time for Different Ages",
+    "subtitle": "Adapting Connection for Toddlers, Preschoolers, and Big Kids",
+    "shortDescription": "Learn how to adapt Special Play Time for different developmental stages from toddlers to school-age children.",
+    "objectives": [
+      "Adapt PEN skills for toddlers (18 months - 3 years)",
+      "Adjust for preschoolers (3-5 years)",
+      "Modify for school-age children (5-10 years)"
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx",
+      "cmioq5rvs000k9ewvg384u1to",
+      "cmioq5u9y000u9ewvckzygqa9",
+      "cmioq5wm800149ewvvyo1dikj",
+      "cmioq5zao001e9ewvjwy4b9rb",
+      "cmioq61tj001o9ewvdpmbtil0",
+      "cmioq649g001y9ewv9sym9xzj",
+      "cmioq66qi00289ewvlqroxfsi",
+      "cmioq691f002i9ewvoi9tx43u",
+      "cmioq6bov002s9ewvn83roc6w"
+    ],
+    "teachesCategories": [
+      "PRAISE",
+      "ECHO",
+      "NARRATE"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#FFF0E4",
+    "ellipse77Color": "#FFD0A6",
+    "ellipse78Color": "#A6D0E0",
+    "createdAt": "2025-12-02T15:20:48.667Z",
+    "updatedAt": "2025-12-02T15:20:48.667Z",
+    "segments": [
+      {
+        "id": "cmioq6edn00339ewv9zg2qbxr",
+        "lessonId": "cmioq6e5700329ewvu17u21ze",
+        "order": 1,
+        "sectionTitle": "Toddlers (18 months - 3 years)",
+        "contentType": "TEXT",
+        "bodyText": "Toddlers have short attention spans and big emotions. With toddlers:\n\n- **Keep sessions short**: 5 minutes is plenty\n- **Use simple language**: \"You're stacking! Red block!\"\n- **Narrate movements**: \"You're walking to the toy box. You're reaching for the ball.\"\n- **Expect chaos**: Toddlers explore through dumping, throwing, and moving constantly\n- **Follow their lead completely**: They'll switch activities every 30 seconds—that's normal\n\nGoal: Help them feel seen and safe.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:48.972Z",
+        "updatedAt": "2025-12-02T15:20:48.972Z"
+      },
+      {
+        "id": "cmioq6edn00349ewv6ccef45f",
+        "lessonId": "cmioq6e5700329ewvu17u21ze",
+        "order": 2,
+        "sectionTitle": "Preschoolers (3-5 years) and School-Age (5-10 years)",
+        "contentType": "TEXT",
+        "bodyText": "Preschoolers (3-5 years):\n- More complex play (pretend scenarios, building projects)\n- Use richer vocabulary: \"You're creating a zoo for the animals!\"\n- Sessions can last 10-15 minutes\n- May start testing boundaries more\n\nSchool-Age (5-10 years):\n- May prefer structured activities (board games, crafts, sports)\n- Appreciate more detailed observations: \"You're using strategy—you're thinking ahead!\"\n- Can handle 15-20 minute sessions\n- May feel \"too old\" for Special Time at first—normalize it as \"hang out time\"\n\nGoal: Strengthen connection as they grow more independent.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:48.972Z",
+        "updatedAt": "2025-12-02T15:20:48.972Z"
+      },
+      {
+        "id": "cmioq6edn00359ewvoatlxvh5",
+        "lessonId": "cmioq6e5700329ewvu17u21ze",
+        "order": 3,
+        "sectionTitle": "Practice Tip",
+        "contentType": "TIP",
+        "bodyText": "Today, think about your child's age and adjust your expectations. If you have a toddler, celebrate 5 minutes of chaotic connection. If you have a school-age child, try a board game and Narrate their strategy choices.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:48.972Z",
+        "updatedAt": "2025-12-02T15:20:48.972Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq6fa800379ewv32v9jmho",
+      "lessonId": "cmioq6e5700329ewvu17u21ze",
+      "question": "Your 2-year-old switches activities every 30 seconds during Special Play Time. What does this mean?",
+      "correctAnswer": "cmioq6fho003a9ewvf168w1el",
+      "explanation": "Toddlers have very short attention spans and explore through rapid activity changes. This is developmentally normal and healthy—not a sign that Special Time isn't working.",
+      "createdAt": "2025-12-02T15:20:50.145Z",
+      "updatedAt": "2025-12-02T15:20:51.841Z",
+      "options": [
+        {
+          "id": "cmioq6fho00389ewviamrhxqg",
+          "quizId": "cmioq6fa800379ewv32v9jmho",
+          "optionLabel": "A",
+          "optionText": "Special Play Time isn't working for them.",
+          "order": 1
+        },
+        {
+          "id": "cmioq6fho00399ewvzoxfbotw",
+          "quizId": "cmioq6fa800379ewv32v9jmho",
+          "optionLabel": "B",
+          "optionText": "They might have attention problems.",
+          "order": 2
+        },
+        {
+          "id": "cmioq6fho003a9ewvf168w1el",
+          "quizId": "cmioq6fa800379ewv32v9jmho",
+          "optionLabel": "C",
+          "optionText": "This is completely normal for toddlers.",
+          "order": 3
+        },
+        {
+          "id": "cmioq6fho003b9ewv7rv0o0im",
+          "quizId": "cmioq6fa800379ewv32v9jmho",
+          "optionLabel": "D",
+          "optionText": "You need to redirect them to one activity.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq6gsa003c9ewvepqx08le",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 13,
+    "title": "When You're Touched Out and Exhausted",
+    "subtitle": "Self-Care So You Can Show Up",
+    "shortDescription": "Learn how to do Special Play Time even when you're exhausted, touched out, or running on empty.",
+    "objectives": [
+      "Recognize parental burnout signs",
+      "Use low-energy Special Time strategies",
+      "Protect your own nervous system"
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx",
+      "cmioq5rvs000k9ewvg384u1to",
+      "cmioq5u9y000u9ewvckzygqa9",
+      "cmioq5wm800149ewvvyo1dikj",
+      "cmioq5zao001e9ewvjwy4b9rb",
+      "cmioq61tj001o9ewvdpmbtil0",
+      "cmioq649g001y9ewv9sym9xzj",
+      "cmioq66qi00289ewvlqroxfsi",
+      "cmioq691f002i9ewvoi9tx43u",
+      "cmioq6bov002s9ewvn83roc6w",
+      "cmioq6e5700329ewvu17u21ze"
+    ],
+    "teachesCategories": [
+      "BOUNDARIES"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#C7B3FF",
+    "ellipse78Color": "#9BD4DF",
+    "createdAt": "2025-12-02T15:20:52.090Z",
+    "updatedAt": "2025-12-02T15:20:52.090Z",
+    "segments": [
+      {
+        "id": "cmioq6gzl003d9ewvg3sq0aak",
+        "lessonId": "cmioq6gsa003c9ewvepqx08le",
+        "order": 1,
+        "sectionTitle": "You Can't Pour from an Empty Cup",
+        "contentType": "TEXT",
+        "bodyText": "Some days you wake up already exhausted. You're \"touched out,\" your patience is gone, and the thought of Special Play Time feels impossible.\n\nThis is real. Parenting is relentless. And here's the truth: you STILL need to show up for connection—but you can do it in a way that doesn't drain you further.\n\nSpecial Play Time doesn't have to be high-energy. It just needs to be present.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:52.354Z",
+        "updatedAt": "2025-12-02T15:20:52.354Z"
+      },
+      {
+        "id": "cmioq6gzl003e9ewvg3000hzi",
+        "lessonId": "cmioq6gsa003c9ewvepqx08le",
+        "order": 2,
+        "sectionTitle": "Low-Energy Special Time Ideas",
+        "contentType": "TEXT",
+        "bodyText": "When you're exhausted, try these low-energy options:\n\n- **Sit on the floor and Narrate while they play**: You don't have to actively play—just be present\n- **Choose calmer activities**: Coloring, puzzles, books\n- **Shorten the session**: Even 5 minutes counts\n- **Be honest (age-appropriately)**: \"Mommy is tired today, but I still want our Special Time together.\"\n- **Use PEN skills while sitting/lying down**: \"You're drawing a purple flower. You're so focused.\"\n\nYour child benefits from your calm presence even if you're not bouncing around the room.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:52.354Z",
+        "updatedAt": "2025-12-02T15:20:52.354Z"
+      },
+      {
+        "id": "cmioq6gzl003f9ewviqy0a5nf",
+        "lessonId": "cmioq6gsa003c9ewvepqx08le",
+        "order": 3,
+        "sectionTitle": "Practice Tip",
+        "contentType": "TIP",
+        "bodyText": "On your hardest day this week, still do Special Play Time—but give yourself permission to do the lowest-energy version. Sit on the couch, let your child play nearby, and Narrate gently. This teaches you both that connection doesn't require perfection.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:52.354Z",
+        "updatedAt": "2025-12-02T15:20:52.354Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq6hss003h9ewv75vng6rr",
+      "lessonId": "cmioq6gsa003c9ewvepqx08le",
+      "question": "You're completely exhausted and \"touched out.\" What is the best approach to Special Play Time?",
+      "correctAnswer": "cmioq6hzq003k9ewv0263s6ha",
+      "explanation": "Special Play Time doesn't require high energy—it requires presence. Even sitting calmly and Narrating while your child plays nearby creates valuable connection without draining you further.",
+      "createdAt": "2025-12-02T15:20:53.404Z",
+      "updatedAt": "2025-12-02T15:20:55.160Z",
+      "options": [
+        {
+          "id": "cmioq6hzp003i9ewv0s632j8b",
+          "quizId": "cmioq6hss003h9ewv75vng6rr",
+          "optionLabel": "A",
+          "optionText": "Skip it entirely until you feel better.",
+          "order": 1
+        },
+        {
+          "id": "cmioq6hzq003j9ewvchsbqhtn",
+          "quizId": "cmioq6hss003h9ewv75vng6rr",
+          "optionLabel": "B",
+          "optionText": "Force yourself to be high-energy so your child doesn't notice.",
+          "order": 2
+        },
+        {
+          "id": "cmioq6hzq003k9ewv0263s6ha",
+          "quizId": "cmioq6hss003h9ewv75vng6rr",
+          "optionLabel": "C",
+          "optionText": "Do a low-energy version: sit nearby, Narrate gently, keep it short.",
+          "order": 3
+        },
+        {
+          "id": "cmioq6hzq003l9ewvhmbeisg2",
+          "quizId": "cmioq6hss003h9ewv75vng6rr",
+          "optionLabel": "D",
+          "optionText": "Turn on a show so you can rest instead.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq6jcy003m9ewvx7b216w6",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 14,
+    "title": "Celebrating Progress - You've Built the Foundation",
+    "subtitle": "Recognizing the Changes in Your Relationship",
+    "shortDescription": "Reflect on the connection you've built over the past two weeks and recognize the positive changes.",
+    "objectives": [
+      "Identify signs of stronger connection",
+      "Recognize your own growth as a parent",
+      "Prepare for the transition to Phase 2: Discipline"
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx",
+      "cmioq5rvs000k9ewvg384u1to",
+      "cmioq5u9y000u9ewvckzygqa9",
+      "cmioq5wm800149ewvvyo1dikj",
+      "cmioq5zao001e9ewvjwy4b9rb",
+      "cmioq61tj001o9ewvdpmbtil0",
+      "cmioq649g001y9ewv9sym9xzj",
+      "cmioq66qi00289ewvlqroxfsi",
+      "cmioq691f002i9ewvoi9tx43u",
+      "cmioq6bov002s9ewvn83roc6w",
+      "cmioq6e5700329ewvu17u21ze",
+      "cmioq6gsa003c9ewvepqx08le"
+    ],
+    "teachesCategories": [
+      "PRAISE",
+      "ECHO",
+      "NARRATE"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#FFF0E4",
+    "ellipse77Color": "#FFD0A6",
+    "ellipse78Color": "#A6D0E0",
+    "createdAt": "2025-12-02T15:20:55.427Z",
+    "updatedAt": "2025-12-02T15:20:55.427Z",
+    "segments": [
+      {
+        "id": "cmioq6jli003n9ewve37k8kz6",
+        "lessonId": "cmioq6jcy003m9ewvx7b216w6",
+        "order": 1,
+        "sectionTitle": "What You've Accomplished",
+        "contentType": "TEXT",
+        "bodyText": "Over the past two weeks, you've learned:\n\n✓ The power of PEN skills (Praise, Echo, Narrate)\n✓ How to do Special Play Time consistently\n✓ How to handle chaos, tantrums, and interruptions\n✓ How to stay present even when it's hard\n✓ That YOU are the most important ingredient in your child's growth\n\nThis is HUGE. You've built a foundation of connection that will make everything else easier.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:55.734Z",
+        "updatedAt": "2025-12-02T15:20:55.734Z"
+      },
+      {
+        "id": "cmioq6jli003o9ewvl3zg1xvg",
+        "lessonId": "cmioq6jcy003m9ewvx7b216w6",
+        "order": 2,
+        "sectionTitle": "Signs of Progress",
+        "contentType": "TEXT",
+        "bodyText": "You might be noticing:\n\n- Your child seeking you out more\n- Less attention-seeking behavior\n- More cooperation (even in small moments)\n- Your child talking more during Special Time\n- Fewer power struggles\n- You feeling more confident as a parent\n\nEven if the changes are subtle, they're real. Connection is the invisible foundation for everything else.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:55.734Z",
+        "updatedAt": "2025-12-02T15:20:55.734Z"
+      },
+      {
+        "id": "cmioq6jli003p9ewvp15wlne6",
+        "lessonId": "cmioq6jcy003m9ewvx7b216w6",
+        "order": 3,
+        "sectionTitle": "What Comes Next",
+        "contentType": "TEXT",
+        "bodyText": "You've completed Phase 1: CONNECT. Now you're ready for Phase 2: DISCIPLINE.\n\nIn the next phase, you'll learn:\n- How to set boundaries effectively\n- How to use consequences that actually work\n- How to stay calm during meltdowns\n- How to reduce power struggles\n\nBecause you've built a strong connection first, your child will be more receptive to boundaries. Connection makes discipline work.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:55.734Z",
+        "updatedAt": "2025-12-02T15:20:55.734Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq6kjn003r9ewvnfb0zyq9",
+      "lessonId": "cmioq6jcy003m9ewvx7b216w6",
+      "question": "Why is it important to build connection BEFORE focusing on discipline?",
+      "correctAnswer": "cmioq6kqj003t9ewvx3pcdqo6",
+      "explanation": "A strong connection creates trust and emotional safety. When children feel connected to their parents, they're more receptive to boundaries and discipline because they trust that their parent has their best interests at heart.",
+      "createdAt": "2025-12-02T15:20:56.963Z",
+      "updatedAt": "2025-12-02T15:20:58.602Z",
+      "options": [
+        {
+          "id": "cmioq6kqj003s9ewv8cm0g7sv",
+          "quizId": "cmioq6kjn003r9ewvnfb0zyq9",
+          "optionLabel": "A",
+          "optionText": "So children feel guilty when they misbehave.",
+          "order": 1
+        },
+        {
+          "id": "cmioq6kqj003t9ewvx3pcdqo6",
+          "quizId": "cmioq6kjn003r9ewvnfb0zyq9",
+          "optionLabel": "B",
+          "optionText": "Connection creates trust, making children more receptive to boundaries.",
+          "order": 2
+        },
+        {
+          "id": "cmioq6kqj003u9ewv91ung5yf",
+          "quizId": "cmioq6kjn003r9ewvnfb0zyq9",
+          "optionLabel": "C",
+          "optionText": "Discipline doesn't work without bribes and rewards.",
+          "order": 3
+        },
+        {
+          "id": "cmioq6kqj003v9ewvq0e72chy",
+          "quizId": "cmioq6kjn003r9ewvnfb0zyq9",
+          "optionLabel": "D",
+          "optionText": "It's not—you can start with discipline right away.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmioq6m8c003w9ewvocq04vio",
+    "phase": "CONNECT",
+    "phaseNumber": 1,
+    "dayNumber": 15,
+    "title": "Preparing for Phase 2 - What to Expect",
+    "subtitle": "Transitioning from Connection to Discipline",
+    "shortDescription": "Get ready for Phase 2 by understanding how discipline works differently when connection is strong.",
+    "objectives": [
+      "Understand the Connect → Discipline framework",
+      "Learn what makes discipline effective",
+      "Set expectations for Phase 2"
+    ],
+    "estimatedMinutes": 2,
+    "isBooster": false,
+    "prerequisites": [
+      "cmioq5mbf00009ewvhiozglu9",
+      "cmioq5pjh000a9ewvynf2zpsx",
+      "cmioq5rvs000k9ewvg384u1to",
+      "cmioq5u9y000u9ewvckzygqa9",
+      "cmioq5wm800149ewvvyo1dikj",
+      "cmioq5zao001e9ewvjwy4b9rb",
+      "cmioq61tj001o9ewvdpmbtil0",
+      "cmioq649g001y9ewv9sym9xzj",
+      "cmioq66qi00289ewvlqroxfsi",
+      "cmioq691f002i9ewvoi9tx43u",
+      "cmioq6bov002s9ewvn83roc6w",
+      "cmioq6e5700329ewvu17u21ze",
+      "cmioq6gsa003c9ewvepqx08le",
+      "cmioq6jcy003m9ewvx7b216w6"
+    ],
+    "teachesCategories": [
+      "BOUNDARIES"
+    ],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#C7B3FF",
+    "ellipse78Color": "#9BD4DF",
+    "createdAt": "2025-12-02T15:20:58.902Z",
+    "updatedAt": "2025-12-02T15:20:58.902Z",
+    "segments": [
+      {
+        "id": "cmioq6mfy003x9ewvdxzhjb9a",
+        "lessonId": "cmioq6m8c003w9ewvocq04vio",
+        "order": 1,
+        "sectionTitle": "Why Discipline Fails Without Connection",
+        "contentType": "TEXT",
+        "bodyText": "Most parenting advice jumps straight to discipline: timeouts, consequences, reward charts. But these tools often fail because there's no foundation.\n\nThink of it like building a house:\n- Connection = Foundation\n- Discipline = Walls and roof\n\nYou can't build walls without a foundation. Similarly, discipline doesn't work when children don't feel connected to their parents.\n\nBut now you've built that foundation. Your child trusts you. They feel seen and valued. This changes everything.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:59.423Z",
+        "updatedAt": "2025-12-02T15:20:59.423Z"
+      },
+      {
+        "id": "cmioq6mfy003y9ewv366c8aug",
+        "lessonId": "cmioq6m8c003w9ewvocq04vio",
+        "order": 2,
+        "sectionTitle": "What You'll Learn in Phase 2",
+        "contentType": "TEXT",
+        "bodyText": "In Phase 2, you'll learn:\n\n**Week 1: Clear Expectations**\n- How to give effective commands\n- Setting up predictable routines\n- Creating visual schedules\n\n**Week 2: Consequences That Work**\n- Natural vs. logical consequences\n- Time-outs done right\n- The \"when/then\" framework\n\n**Week 3: Staying Calm Under Pressure**\n- Managing your own emotions\n- De-escalation techniques\n- Repairing after conflict\n\nPhase 2 is NOT about becoming stricter. It's about becoming clearer and calmer.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:59.423Z",
+        "updatedAt": "2025-12-02T15:20:59.423Z"
+      },
+      {
+        "id": "cmioq6mfy003z9ewv7590cehj",
+        "lessonId": "cmioq6m8c003w9ewvocq04vio",
+        "order": 3,
+        "sectionTitle": "One Important Rule",
+        "contentType": "TEXT",
+        "bodyText": "As you move into Phase 2, remember this:\n\n**Keep doing Special Play Time.**\n\nConnection isn't something you do once and then stop. It's ongoing. Even as you set more boundaries, continue your daily Special Play Time.\n\nThis balance—connection AND boundaries—is what creates secure, confident children.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-02T15:20:59.423Z",
+        "updatedAt": "2025-12-02T15:20:59.423Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmioq6nb500419ewvqe4jjspr",
+      "lessonId": "cmioq6m8c003w9ewvocq04vio",
+      "question": "As you move into Phase 2 (Discipline), what should you continue doing?",
+      "correctAnswer": "cmioq6njo00439ewvnnktvtj6",
+      "explanation": "Connection through Special Play Time must continue throughout Phase 2 and beyond. The balance of connection AND boundaries creates secure, well-regulated children.",
+      "createdAt": "2025-12-02T15:21:00.545Z",
+      "updatedAt": "2025-12-02T15:21:02.225Z",
+      "options": [
+        {
+          "id": "cmioq6njo00429ewv9om4c0us",
+          "quizId": "cmioq6nb500419ewvqe4jjspr",
+          "optionLabel": "A",
+          "optionText": "Stop Special Play Time since the connection is built.",
+          "order": 1
+        },
+        {
+          "id": "cmioq6njo00439ewvnnktvtj6",
+          "quizId": "cmioq6nb500419ewvqe4jjspr",
+          "optionLabel": "B",
+          "optionText": "Continue daily Special Play Time while adding boundaries.",
+          "order": 2
+        },
+        {
+          "id": "cmioq6njo00449ewv11ay8uf5",
+          "quizId": "cmioq6nb500419ewvqe4jjspr",
+          "optionLabel": "C",
+          "optionText": "Only do Special Time as a reward for good behavior.",
+          "order": 3
+        },
+        {
+          "id": "cmioq6njo00459ewvkgwxe912",
+          "quizId": "cmioq6nb500419ewvqe4jjspr",
+          "optionLabel": "D",
+          "optionText": "Reduce Special Time to once per week.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jb6er000h5gtvqo15d3zr",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 1,
+    "title": "Introducing Discipline",
+    "subtitle": null,
+    "shortDescription": "Shift focus to compliance by introducing Clear Commands and Consistent Consequences.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:40:39.603Z",
+    "updatedAt": "2025-12-14T09:40:39.603Z",
+    "segments": [
+      {
+        "id": "cmj5jb6td000i5gtvloghw3ag",
+        "lessonId": "cmj5jb6er000h5gtvqo15d3zr",
+        "order": 1,
+        "sectionTitle": "A New Goal",
+        "contentType": "TEXT",
+        "bodyText": "We shift from relationship-building to Compliance.\n\nWe are installing the roof on the house.\n\nThe goal is teaching your child to follow instructions.\n\nHowever, we still use **PEN** skills during non-command times!",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:40:40.130Z",
+        "updatedAt": "2025-12-14T09:40:40.130Z"
+      },
+      {
+        "id": "cmj5jb6td000j5gtvauqxgiot",
+        "lessonId": "cmj5jb6er000h5gtvqo15d3zr",
+        "order": 2,
+        "sectionTitle": "The Tools",
+        "contentType": "TEXT",
+        "bodyText": "We introduce Clear Commands (specific instructions) and Consistent Consequences (**Time-Out**).\n\nWithout clear commands, consequences feel like random punishment.\n\nMotto: Consistent follow-through is more important than the severity of the punishment.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:40:40.130Z",
+        "updatedAt": "2025-12-14T09:40:40.130Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jb77y000l5gtvx6eyzxhl",
+      "lessonId": "cmj5jb6er000h5gtvqo15d3zr",
+      "question": "What is the primary focus of the Discipline Phase?",
+      "correctAnswer": "cmj5jb882000r5gtvkvfy72gs",
+      "explanation": "Discipline is about creating a predictable structure where the child learns that listening is the best choice.",
+      "createdAt": "2025-12-14T09:40:40.655Z",
+      "updatedAt": "2025-12-14T09:40:42.461Z",
+      "options": [
+        {
+          "id": "cmj5jb7n0000n5gtv2dl4mpt0",
+          "quizId": "cmj5jb77y000l5gtvx6eyzxhl",
+          "optionLabel": "A",
+          "optionText": "To make the child fear Time-Out.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jb80y000p5gtvpk2qq4qn",
+          "quizId": "cmj5jb77y000l5gtvx6eyzxhl",
+          "optionLabel": "B",
+          "optionText": "To teach the child using questions.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jb882000r5gtvkvfy72gs",
+          "quizId": "cmj5jb77y000l5gtvx6eyzxhl",
+          "optionLabel": "C",
+          "optionText": "To gain consistent compliance through clear structure and predictable follow-through.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jb8f5000t5gtvmp4zs5vy",
+          "quizId": "cmj5jb77y000l5gtvx6eyzxhl",
+          "optionLabel": "D",
+          "optionText": "To punish all misbehaviors.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jba1p000v5gtvhdcpxw03",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 2,
+    "title": "Play-Based Commands",
+    "subtitle": null,
+    "shortDescription": "Start with low-stakes Play-Based Commands to build a habit of saying \"yes.\"",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jb6er000h5gtvqo15d3zr"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:40:44.317Z",
+    "updatedAt": "2025-12-14T09:40:44.317Z",
+    "segments": [
+      {
+        "id": "cmj5jba8p000w5gtvr5bhkg6e",
+        "lessonId": "cmj5jba1p000v5gtvhdcpxw03",
+        "order": 1,
+        "sectionTitle": "Easy Wins",
+        "contentType": "SCRIPT",
+        "bodyText": "Start practicing with Play-Based Commands.\n\nThese are low-stakes instructions related to toys you are already using.\n\n**Example:** \"Please hand me the red block.\"\n\n**Why** : It builds a habit of saying \"Yes\" without the pressure of chores.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:40:44.569Z",
+        "updatedAt": "2025-12-14T09:40:44.569Z"
+      },
+      {
+        "id": "cmj5jba8p000x5gtvubl9sxnz",
+        "lessonId": "cmj5jba1p000v5gtvhdcpxw03",
+        "order": 2,
+        "sectionTitle": "The Practice Session",
+        "contentType": "TIP",
+        "bodyText": "Do this at the end of Special Time.\n\nSpend 5-10 minutes giving 5-7 simple commands.\n\nUse **PEN** skills in between commands to keep the mood happy.\n\nIf they refuse, use **Time-Out** (once you learn it).",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:40:44.569Z",
+        "updatedAt": "2025-12-14T09:40:44.569Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jbams000z5gtv5l8yp166",
+      "lessonId": "cmj5jba1p000v5gtvhdcpxw03",
+      "question": "Why are play-based commands introduced first?",
+      "correctAnswer": "cmj5jbb0s00135gtvqt8gb5lm",
+      "explanation": "Starting with easy commands ensures early success and builds a pattern of obedience.",
+      "createdAt": "2025-12-14T09:40:45.076Z",
+      "updatedAt": "2025-12-14T09:40:46.371Z",
+      "options": [
+        {
+          "id": "cmj5jbatr00115gtvl6kbm06g",
+          "quizId": "cmj5jbams000z5gtv5l8yp166",
+          "optionLabel": "A",
+          "optionText": "Cleanup is too hard.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jbb0s00135gtvqt8gb5lm",
+          "quizId": "cmj5jbams000z5gtv5l8yp166",
+          "optionLabel": "B",
+          "optionText": "Play-based commands are typically the easiest to follow, building initial confidence and compliance habits.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jbb7s00155gtvz76igrnt",
+          "quizId": "cmj5jbams000z5gtv5l8yp166",
+          "optionLabel": "C",
+          "optionText": "Cleanup is too important to fail.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jbbfk00175gtvbg2wjwa1",
+          "quizId": "cmj5jbams000z5gtv5l8yp166",
+          "optionLabel": "D",
+          "optionText": "Parents get bored.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jbcn300195gtv53nwgg4a",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 3,
+    "title": "Clean-Up Commands",
+    "subtitle": null,
+    "shortDescription": "Graduate to Clean-Up Commands using specific instructions and enthusiasm to motivate.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jba1p000v5gtvhdcpxw03"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:40:47.680Z",
+    "updatedAt": "2025-12-14T09:40:47.680Z",
+    "segments": [
+      {
+        "id": "cmj5jbcu4001a5gtvvod2zkrn",
+        "lessonId": "cmj5jbcn300195gtv53nwgg4a",
+        "order": 1,
+        "sectionTitle": "Level Up",
+        "contentType": "SCRIPT",
+        "bodyText": "Next, we practice Clean-Up Commands.\n\nThese are slightly harder.\n\n**Rule:** Be specific.\n\nAvoid: \"Clean up this room.\"\nUse: \"Please put the red train in the bin.\"",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:40:47.932Z",
+        "updatedAt": "2025-12-14T09:40:47.932Z"
+      },
+      {
+        "id": "cmj5jbcu4001b5gtv7niimndv",
+        "lessonId": "cmj5jbcn300195gtv53nwgg4a",
+        "order": 2,
+        "sectionTitle": "Clean-Up Excitement",
+        "contentType": "SCRIPT",
+        "bodyText": "Use **PEN** skills to keep momentum.\n\n**Script:** \"Please put the crayons in the box.\" (Child obeys). \"Wow! You are the fastest cleaner-upper! Now put the paper away.\"\nEnthusiasm makes work feel like play.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:40:47.932Z",
+        "updatedAt": "2025-12-14T09:40:47.932Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jbd82001d5gtvpx6b797b",
+      "lessonId": "cmj5jbcn300195gtv53nwgg4a",
+      "question": "When giving a clean-up command, which approach is best?",
+      "correctAnswer": "cmj5jbdq2001h5gtv55cqof0t",
+      "explanation": "Specific, bite-sized commands combined with praise prevent overwhelm and maintain motivation.",
+      "createdAt": "2025-12-14T09:40:48.434Z",
+      "updatedAt": "2025-12-14T09:40:49.840Z",
+      "options": [
+        {
+          "id": "cmj5jbdgw001f5gtvzywmbqv7",
+          "quizId": "cmj5jbd82001d5gtvpx6b797b",
+          "optionLabel": "A",
+          "optionText": "\"Clean up everything right now!\"",
+          "order": 1
+        },
+        {
+          "id": "cmj5jbdq2001h5gtv55cqof0t",
+          "quizId": "cmj5jbd82001d5gtvpx6b797b",
+          "optionLabel": "B",
+          "optionText": "\"Please put the two red cars in the bin,\" followed by PEN skills.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jbdx3001j5gtvtallrpwg",
+          "quizId": "cmj5jbd82001d5gtvpx6b797b",
+          "optionLabel": "C",
+          "optionText": "\"Do you want to clean up?\"",
+          "order": 3
+        },
+        {
+          "id": "cmj5jbe43001l5gtvoig5ksou",
+          "quizId": "cmj5jbd82001d5gtvpx6b797b",
+          "optionLabel": "D",
+          "optionText": "Wait for them to start.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jbfah001n5gtv1g31rjz7",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 4,
+    "title": "The 6 Rules of Clear Commands",
+    "subtitle": null,
+    "shortDescription": "Master the 6 rules of Clear Commands to ensure your instructions are fair and followable.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jbcn300195gtv53nwgg4a"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:40:51.114Z",
+    "updatedAt": "2025-12-14T09:40:51.114Z",
+    "segments": [
+      {
+        "id": "cmj5jbfhj001o5gtvhm5jm1a3",
+        "lessonId": "cmj5jbfah001n5gtv1g31rjz7",
+        "order": 1,
+        "sectionTitle": "The Compliance Test",
+        "contentType": "TEXT",
+        "bodyText": "A command is a test.\n\nTo be fair, the test must be clear.\n\nThe 6 Rules:\n• Direct (Say it confidently).\n• Positive (Say what to DO, not what not to do).\n• Single-step (One action).\n• Specific.\n• Age-appropriate.\n• Necessary (Don't over-command).",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:40:51.367Z",
+        "updatedAt": "2025-12-14T09:40:51.367Z"
+      },
+      {
+        "id": "cmj5jbfhj001p5gtvgv110rct",
+        "lessonId": "cmj5jbfah001n5gtv1g31rjz7",
+        "order": 2,
+        "sectionTitle": "Examples",
+        "contentType": "SCRIPT",
+        "bodyText": "Poor: \"Stop running and get ready.\" (Negative, multi-step).\n\nClear: \"Please walk to the chair.\" (Positive, specific).\n\nPoor: \"Can you sit down?\" (Question/Hidden Command).\n\nClear: \"Sit down, please.\" (Direct).",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:40:51.367Z",
+        "updatedAt": "2025-12-14T09:40:51.367Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jbfvl001r5gtvlacub0r2",
+      "lessonId": "cmj5jbfah001n5gtv1g31rjz7",
+      "question": "Why is it crucial to use Positive commands (stating what to do)?",
+      "correctAnswer": "cmj5jbg2t001t5gtvd0cvzwhc",
+      "explanation": "Telling a child exactly what action to take removes ambiguity and makes compliance easier.",
+      "createdAt": "2025-12-14T09:40:51.873Z",
+      "updatedAt": "2025-12-14T09:40:53.178Z",
+      "options": [
+        {
+          "id": "cmj5jbg2t001t5gtvd0cvzwhc",
+          "quizId": "cmj5jbfvl001r5gtvlacub0r2",
+          "optionLabel": "A",
+          "optionText": "Negative commands confuse the child about the expected behavior.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jbgai001v5gtv2drqrkcm",
+          "quizId": "cmj5jbfvl001r5gtvlacub0r2",
+          "optionLabel": "B",
+          "optionText": "Negative commands are always yelled.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jbghj001x5gtvbyqvsg2s",
+          "quizId": "cmj5jbfvl001r5gtvlacub0r2",
+          "optionLabel": "C",
+          "optionText": "Positive commands allow choice.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jbgok001z5gtvckcr1gy8",
+          "quizId": "cmj5jbfvl001r5gtvlacub0r2",
+          "optionLabel": "D",
+          "optionText": "Children learn better from \"No.\"",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jbhvj00215gtvluo2uhiw",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 5,
+    "title": "Positive Commands Practice",
+    "subtitle": null,
+    "shortDescription": "Practice phrasing commands positively to tell your child what to do, not what not to do.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jbfah001n5gtv1g31rjz7"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:40:54.464Z",
+    "updatedAt": "2025-12-14T09:40:54.464Z",
+    "segments": [
+      {
+        "id": "cmj5jbi2j00225gtv53qjcooc",
+        "lessonId": "cmj5jbhvj00215gtvluo2uhiw",
+        "order": 1,
+        "sectionTitle": "The Language of Action",
+        "contentType": "SCRIPT",
+        "bodyText": "Focus on guiding the child toward the correct action.\n\n**Don't Say:** \"Don't interrupt.\"\n\n**Say:** \"Wait until I finish talking, please.\"\n\n**Don't Say:** \"Stop throwing.\"\n\n**Say:** \"Keep the blocks on the floor.\"",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:40:54.716Z",
+        "updatedAt": "2025-12-14T09:40:54.716Z"
+      },
+      {
+        "id": "cmj5jbi2j00235gtvidghpn38",
+        "lessonId": "cmj5jbhvj00215gtvluo2uhiw",
+        "order": 2,
+        "sectionTitle": "No Hidden Commands",
+        "contentType": "SCRIPT",
+        "bodyText": "Avoid \"Would you mind...\" or \"Let's try...\"\nThese sound like choices.\n\nBe polite but direct: \"Sit down now, please.\"\nPractice: Rewrite one negative command you used today into a positive one.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:40:54.716Z",
+        "updatedAt": "2025-12-14T09:40:54.716Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jbih500255gtvv11gj2qm",
+      "lessonId": "cmj5jbhvj00215gtvluo2uhiw",
+      "question": "A parent says, \"Can you hurry up and put on your socks and shoes?\" What are the two major mistakes?",
+      "correctAnswer": "cmj5jbiv400295gtvi3m68ekh",
+      "explanation": "Phrasing it as a question implies choice, and multiple steps increase the chance of failure.",
+      "createdAt": "2025-12-14T09:40:55.242Z",
+      "updatedAt": "2025-12-14T09:40:56.502Z",
+      "options": [
+        {
+          "id": "cmj5jbio400275gtviad1v3jj",
+          "quizId": "cmj5jbih500255gtvv11gj2qm",
+          "optionLabel": "A",
+          "optionText": "Too quiet and short.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jbiv400295gtvi3m68ekh",
+          "quizId": "cmj5jbih500255gtvv11gj2qm",
+          "optionLabel": "B",
+          "optionText": "It is a hidden question (\"Can you\") and multi-step (\"socks and shoes\").",
+          "order": 2
+        },
+        {
+          "id": "cmj5jbj26002b5gtvdp0q8w89",
+          "quizId": "cmj5jbih500255gtvv11gj2qm",
+          "optionLabel": "C",
+          "optionText": "Too positive and specific.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jbj96002d5gtvqhk56nyz",
+          "quizId": "cmj5jbih500255gtvv11gj2qm",
+          "optionLabel": "D",
+          "optionText": "Not enough praise.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jbkir002f5gtvqml8idnw",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 6,
+    "title": "The 5-Second Wait",
+    "subtitle": null,
+    "shortDescription": "Learn the 5-Second Wait rule to give your child space to process and comply.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jbhvj00215gtvluo2uhiw"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:40:57.891Z",
+    "updatedAt": "2025-12-14T09:40:57.891Z",
+    "segments": [
+      {
+        "id": "cmj5jbkpz002g5gtvxkhwqs61",
+        "lessonId": "cmj5jbkir002f5gtvqml8idnw",
+        "order": 1,
+        "sectionTitle": "The Pause",
+        "contentType": "TEXT",
+        "bodyText": "After giving a **Clear Command**, you must wait 5 seconds.\n\n**Do:** Remain silent and neutral.\n\n**Don't:** Nag, repeat the command, or sigh.\n\nThis gives the child time to process and decide to obey.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:40:58.152Z",
+        "updatedAt": "2025-12-14T09:40:58.152Z"
+      },
+      {
+        "id": "cmj5jbkpz002h5gtvaxgcju2m",
+        "lessonId": "cmj5jbkir002f5gtvqml8idnw",
+        "order": 2,
+        "sectionTitle": "The Cycle",
+        "contentType": "TEXT",
+        "bodyText": "**1.** **Clear Command**.\n• **5-Second Wait**.\n• Compliance.\n• Immediate Labeled **Praise**.\n\nIf they obey, the cycle ends with **praise**.\n\nIf not, we move to warnings (coming soon).",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:40:58.152Z",
+        "updatedAt": "2025-12-14T09:40:58.152Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jbl5e002j5gtvareyej94",
+      "lessonId": "cmj5jbkir002f5gtvqml8idnw",
+      "question": "What must the parent do during the 5-second wait?",
+      "correctAnswer": "cmj5jbljf002n5gtvytj3r460",
+      "explanation": "Silence prevents nagging and clearly signals that the instruction has been given and a response is expected.",
+      "createdAt": "2025-12-14T09:40:58.707Z",
+      "updatedAt": "2025-12-14T09:40:59.972Z",
+      "options": [
+        {
+          "id": "cmj5jblce002l5gtvkbqun9va",
+          "quizId": "cmj5jbl5e002j5gtvareyej94",
+          "optionLabel": "A",
+          "optionText": "Count aloud.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jbljf002n5gtvytj3r460",
+          "quizId": "cmj5jbl5e002j5gtvareyej94",
+          "optionLabel": "B",
+          "optionText": "Remain silent and neutral, giving the child time to process.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jblqj002p5gtvebpbgha6",
+          "quizId": "cmj5jbl5e002j5gtvareyej94",
+          "optionLabel": "C",
+          "optionText": "Explain the reason.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jblxj002r5gtvnnkclfnn",
+          "quizId": "cmj5jbl5e002j5gtvareyej94",
+          "optionLabel": "D",
+          "optionText": "Use a soft voice to encourage.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jbnd0002t5gtvdmcc7pjg",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 7,
+    "title": "Praise for Compliance",
+    "subtitle": null,
+    "shortDescription": "Use immediate Labeled Praise to reinforce compliance and close the interaction positively.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jbkir002f5gtvqml8idnw"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:41:01.573Z",
+    "updatedAt": "2025-12-14T09:41:01.573Z",
+    "segments": [
+      {
+        "id": "cmj5jbnk3002u5gtv39nxg6in",
+        "lessonId": "cmj5jbnd0002t5gtvdmcc7pjg",
+        "order": 1,
+        "sectionTitle": "Reinforce Obedience",
+        "contentType": "SCRIPT",
+        "bodyText": "When your child obeys, you must instantly use Labeled **Praise**.\n\n**Script:** \"Excellent! That was wonderful how quickly you brought your shoes!\"\nThis links the obedience to your positive attention.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:01.828Z",
+        "updatedAt": "2025-12-14T09:41:01.828Z"
+      },
+      {
+        "id": "cmj5jbnk3002v5gtvqvsqztnh",
+        "lessonId": "cmj5jbnd0002t5gtvdmcc7pjg",
+        "order": 2,
+        "sectionTitle": "No Questions After",
+        "contentType": "SCRIPT",
+        "bodyText": "Never follow compliance with \"See? Was that so hard?\" or a new command immediately.\n\nEnd the interaction with the **Praise**.\n\nThis makes compliance feel rewarding, not just like a gateway to more work.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:01.828Z",
+        "updatedAt": "2025-12-14T09:41:01.828Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jbny3002x5gtv0lbym08y",
+      "lessonId": "cmj5jbnd0002t5gtvdmcc7pjg",
+      "question": "Why is immediate Labeled Praise effective after compliance?",
+      "correctAnswer": "cmj5jboc400315gtvg5ij559w",
+      "explanation": "Immediate reinforcement increases the likelihood that the compliant behavior will happen again.",
+      "createdAt": "2025-12-14T09:41:02.332Z",
+      "updatedAt": "2025-12-14T09:41:03.621Z",
+      "options": [
+        {
+          "id": "cmj5jbo55002z5gtvfv9hmb00",
+          "quizId": "cmj5jbny3002x5gtv0lbym08y",
+          "optionLabel": "A",
+          "optionText": "It avoids buying toys.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jboc400315gtvg5ij559w",
+          "quizId": "cmj5jbny3002x5gtv0lbym08y",
+          "optionLabel": "B",
+          "optionText": "It specifically reinforces the act of listening and following instructions.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jboj800335gtvwf51gkb2",
+          "quizId": "cmj5jbny3002x5gtv0lbym08y",
+          "optionLabel": "C",
+          "optionText": "It allows for follow-up questions.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jboq900355gtvxty0u4wl",
+          "quizId": "cmj5jbny3002x5gtv0lbym08y",
+          "optionLabel": "D",
+          "optionText": "It makes the child feel pretty.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jbpxg00375gtv2wlakfnu",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 8,
+    "title": "Explanations",
+    "subtitle": null,
+    "shortDescription": "Understand the right timing for explanations to prevent arguing and delay.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jbnd0002t5gtvdmcc7pjg"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:41:04.901Z",
+    "updatedAt": "2025-12-14T09:41:04.901Z",
+    "segments": [
+      {
+        "id": "cmj5jbq4m00385gtvlapl4i42",
+        "lessonId": "cmj5jbpxg00375gtv2wlakfnu",
+        "order": 1,
+        "sectionTitle": "Timing is Everything",
+        "contentType": "SCRIPT",
+        "bodyText": "Explanations are good, but timing matters.\n\nOption 1: Before. \"We need to leave for school.\n\nPlease put on your shoes.\" (Best).\n\nOption 2: After Compliance. \"Thanks for putting on your shoes! Now we can get to the park on time.\"",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:05.158Z",
+        "updatedAt": "2025-12-14T09:41:05.158Z"
+      },
+      {
+        "id": "cmj5jbq4m00395gtv8u18eug3",
+        "lessonId": "cmj5jbpxg00375gtv2wlakfnu",
+        "order": 2,
+        "sectionTitle": "The Trap",
+        "contentType": "TEXT",
+        "bodyText": "Never explain during non-compliance (while waiting).\n\nIf you explain after the command but before they obey, you are distracting them and opening a negotiation.\n\n**Rule:** Command -> Wait -> Action.\n\nNo talk in between.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:05.158Z",
+        "updatedAt": "2025-12-14T09:41:05.158Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jbqin003b5gtvywduont0",
+      "lessonId": "cmj5jbpxg00375gtv2wlakfnu",
+      "question": "Why avoid explaining immediately after a command if the child hasn't obeyed yet?",
+      "correctAnswer": "cmj5jbqxo003f5gtv6kc817gx",
+      "explanation": "Talking during the wait period breaks the pressure to comply and teaches the child they can delay by arguing.",
+      "createdAt": "2025-12-14T09:41:05.663Z",
+      "updatedAt": "2025-12-14T09:41:06.968Z",
+      "options": [
+        {
+          "id": "cmj5jbqpq003d5gtv1icb1950",
+          "quizId": "cmj5jbqin003b5gtvywduont0",
+          "optionLabel": "A",
+          "optionText": "It delays Time-Out.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jbqxo003f5gtv6kc817gx",
+          "quizId": "cmj5jbqin003b5gtvywduont0",
+          "optionLabel": "B",
+          "optionText": "Explaining during non-compliance distracts from the command and encourages negotiation.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jbr4w003h5gtvx1xzr0ts",
+          "quizId": "cmj5jbqin003b5gtvywduont0",
+          "optionLabel": "C",
+          "optionText": "The child is frustrated.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jbrbw003j5gtvfv9w4r76",
+          "quizId": "cmj5jbqin003b5gtvywduont0",
+          "optionLabel": "D",
+          "optionText": "Explanations are for the other parent.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jbsie003l5gtvjpok0if8",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 9,
+    "title": "Running Commands",
+    "subtitle": null,
+    "shortDescription": "Apply your skills to Running Commands for essential daily routines like hygiene and safety.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jbpxg00375gtv2wlakfnu"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:41:08.246Z",
+    "updatedAt": "2025-12-14T09:41:08.246Z",
+    "segments": [
+      {
+        "id": "cmj5jbspe003m5gtvygvdsarz",
+        "lessonId": "cmj5jbsie003l5gtvjpok0if8",
+        "order": 1,
+        "sectionTitle": "Real Life",
+        "contentType": "SCRIPT",
+        "bodyText": "Now we practice Running Commands.\n\nThese are for real-life routines (hygiene, safety, bedtime).\n\n**Example:** \"Please go brush your teeth.\"\nOnly use these when you have the time and energy to follow through with a consequence if they refuse.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:08.499Z",
+        "updatedAt": "2025-12-14T09:41:08.499Z"
+      },
+      {
+        "id": "cmj5jbspe003n5gtv2593doaz",
+        "lessonId": "cmj5jbsie003l5gtvjpok0if8",
+        "order": 2,
+        "sectionTitle": "Balance",
+        "contentType": "TEXT",
+        "bodyText": "Don't overuse commands.\n\nOnly use them for important things.\n\nIf you command it, you must enforce it.\n\nIf you are too tired to enforce, don't give the command.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:08.499Z",
+        "updatedAt": "2025-12-14T09:41:08.499Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jbt3u003p5gtviwnzkoom",
+      "lessonId": "cmj5jbsie003l5gtvjpok0if8",
+      "question": "Why are Running Commands considered the most realistic practice?",
+      "correctAnswer": "cmj5jbtia003t5gtvz6tp8qxx",
+      "explanation": "These commands integrate the discipline structure into the necessary flow of daily family life.",
+      "createdAt": "2025-12-14T09:41:09.019Z",
+      "updatedAt": "2025-12-14T09:41:10.368Z",
+      "options": [
+        {
+          "id": "cmj5jbtba003r5gtvbr4coies",
+          "quizId": "cmj5jbt3u003p5gtviwnzkoom",
+          "optionLabel": "A",
+          "optionText": "They are simple.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jbtia003t5gtvz6tp8qxx",
+          "quizId": "cmj5jbt3u003p5gtviwnzkoom",
+          "optionLabel": "B",
+          "optionText": "They apply compliance skills to essential, everyday routines like hygiene and safety.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jbtrd003v5gtvpr46uu89",
+          "quizId": "cmj5jbt3u003p5gtviwnzkoom",
+          "optionLabel": "C",
+          "optionText": "They are for public places.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jbtye003x5gtv2e9vkz2b",
+          "quizId": "cmj5jbt3u003p5gtviwnzkoom",
+          "optionLabel": "D",
+          "optionText": "They don't require Time-Out.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jbv49003z5gtvn5kbkuqd",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 10,
+    "title": "Selective Ignoring (Discipline Phase)",
+    "subtitle": null,
+    "shortDescription": "Use Selective Ignoring when non-compliance is accompanied by whining or arguing.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jbsie003l5gtvjpok0if8"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:41:11.625Z",
+    "updatedAt": "2025-12-14T09:41:11.625Z",
+    "segments": [
+      {
+        "id": "cmj5jbvba00405gtv7ar026iu",
+        "lessonId": "cmj5jbv49003z5gtvn5kbkuqd",
+        "order": 1,
+        "sectionTitle": "Whining After Command",
+        "contentType": "SCRIPT",
+        "bodyText": "If you give a command and the child whines or argues (\"I don't want to!\"), use **Selective Ignoring**.\n\n**Action:** Neutral face, look away.\n\n**Goal:** Ignore the whining, but not the command.\n\nYou are still waiting for compliance.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:11.879Z",
+        "updatedAt": "2025-12-14T09:41:11.879Z"
+      },
+      {
+        "id": "cmj5jbvba00415gtvjgc0qzdc",
+        "lessonId": "cmj5jbv49003z5gtvn5kbkuqd",
+        "order": 2,
+        "sectionTitle": "The Return",
+        "contentType": "SCRIPT",
+        "bodyText": "If they stop whining and obey, **praise** them: \"Thank you for moving to the sink without fussing.\"\nIf they continue to refuse (non-compliance) even after ignoring, you will move to the **Time-Out** Warning (Next Lesson).",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:11.879Z",
+        "updatedAt": "2025-12-14T09:41:11.879Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jbvph00435gtvdsalyeu6",
+      "lessonId": "cmj5jbv49003z5gtvn5kbkuqd",
+      "question": "When a child whines after a command, Selective Ignoring targets which behavior?",
+      "correctAnswer": "cmj5jbwak00495gtvss8lzbyx",
+      "explanation": "You ignore the secondary behavior (whining) to avoid reinforcing it, while still holding the expectation for the command.",
+      "createdAt": "2025-12-14T09:41:12.389Z",
+      "updatedAt": "2025-12-14T09:41:13.656Z",
+      "options": [
+        {
+          "id": "cmj5jbvwh00455gtvyr1wc0xs",
+          "quizId": "cmj5jbvph00435gtvdsalyeu6",
+          "optionLabel": "A",
+          "optionText": "Non-compliance.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jbw3h00475gtv6eu220df",
+          "quizId": "cmj5jbvph00435gtvdsalyeu6",
+          "optionLabel": "B",
+          "optionText": "Emotions.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jbwak00495gtvss8lzbyx",
+          "quizId": "cmj5jbvph00435gtvdsalyeu6",
+          "optionLabel": "C",
+          "optionText": "The whining/arguing itself.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jbwhm004b5gtvutjavvtv",
+          "quizId": "cmj5jbvph00435gtvdsalyeu6",
+          "optionLabel": "D",
+          "optionText": "Defiance.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jbxnv004d5gtvmy547nnt",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 11,
+    "title": "The Extinction Burst",
+    "subtitle": null,
+    "shortDescription": "Prepare for the Extinction Burst, where behavior gets worse before it improves.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jbv49003z5gtvn5kbkuqd"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:41:14.924Z",
+    "updatedAt": "2025-12-14T09:41:14.924Z",
+    "segments": [
+      {
+        "id": "cmj5jbxuw004e5gtv5nxf8tdh",
+        "lessonId": "cmj5jbxnv004d5gtvmy547nnt",
+        "order": 1,
+        "sectionTitle": "It Gets Worse Before Better",
+        "contentType": "SCRIPT",
+        "bodyText": "When you start ignoring whining, your child might scream louder.\n\nThis is the **Extinction Burst**.\n\nThey are testing: \"Does mom really mean it? Maybe if I yell louder, she will break.\"",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:15.177Z",
+        "updatedAt": "2025-12-14T09:41:15.177Z"
+      },
+      {
+        "id": "cmj5jbxuw004f5gtvcznkbbfo",
+        "lessonId": "cmj5jbxnv004d5gtvmy547nnt",
+        "order": 2,
+        "sectionTitle": "Hold the Line",
+        "contentType": "TEXT",
+        "bodyText": "If you give in during the burst, you teach them to yell louder next time.\n\nIf you stay consistent and neutral, the behavior will drop off quickly.\n\nWait for silence, then **praise**.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:15.177Z",
+        "updatedAt": "2025-12-14T09:41:15.177Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jby8u004h5gtv51zz2cq1",
+      "lessonId": "cmj5jbxnv004d5gtvmy547nnt",
+      "question": "What is the Extinction Burst?",
+      "correctAnswer": "cmj5jbymr004l5gtvd516vzkm",
+      "explanation": "The child ramps up the behavior to see if the old strategy (whining) will still work; consistency here is critical.",
+      "createdAt": "2025-12-14T09:41:15.679Z",
+      "updatedAt": "2025-12-14T09:41:16.937Z",
+      "options": [
+        {
+          "id": "cmj5jbyft004j5gtvfcagrge9",
+          "quizId": "cmj5jby8u004h5gtv51zz2cq1",
+          "optionLabel": "A",
+          "optionText": "The child using praise.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jbymr004l5gtvd516vzkm",
+          "quizId": "cmj5jby8u004h5gtv51zz2cq1",
+          "optionLabel": "B",
+          "optionText": "A temporary escalation of misbehavior just before it disappears.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jbytt004n5gtv5h5poqil",
+          "quizId": "cmj5jby8u004h5gtv51zz2cq1",
+          "optionLabel": "C",
+          "optionText": "A sign to use Time-Out.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jbz0t004p5gtvyde78y60",
+          "quizId": "cmj5jby8u004h5gtv51zz2cq1",
+          "optionLabel": "D",
+          "optionText": "Too much praise.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jc0e9004r5gtvwcb0nwod",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 12,
+    "title": "Time-Out Introduction",
+    "subtitle": null,
+    "shortDescription": "Introduce Time-Out as a predictable consequence for non-compliance, not a punishment.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jbxnv004d5gtvmy547nnt"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:41:18.465Z",
+    "updatedAt": "2025-12-14T09:41:18.465Z",
+    "segments": [
+      {
+        "id": "cmj5jc0l9004s5gtv164ol3oq",
+        "lessonId": "cmj5jc0e9004r5gtvwcb0nwod",
+        "order": 1,
+        "sectionTitle": "Consequence, Not Punishment",
+        "contentType": "TEXT",
+        "bodyText": "**Time-Out** is a tool for non-compliance to a **Clear Command**.\n\nDuration: 3 minutes + 5 seconds of quiet.\n\n**Why** : Long enough to calm down, short enough to remember why they are there.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:18.718Z",
+        "updatedAt": "2025-12-14T09:41:18.718Z"
+      },
+      {
+        "id": "cmj5jc0l9004t5gtvrvf2d5sd",
+        "lessonId": "cmj5jc0e9004r5gtvwcb0nwod",
+        "order": 2,
+        "sectionTitle": "Preparation",
+        "contentType": "SCRIPT",
+        "bodyText": "Pre-teach the rule: \"If you don't listen to my directions, you will have a **Time-Out**.\"\nChoose a boring, safe chair.\n\nHave them use the bathroom before starting practice so they can't use that as an excuse.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:18.718Z",
+        "updatedAt": "2025-12-14T09:41:18.718Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jc0zc004v5gtvfxyr049q",
+      "lessonId": "cmj5jc0e9004r5gtvwcb0nwod",
+      "question": "What is the exact duration of a Time-Out (ages 2-7)?",
+      "correctAnswer": "cmj5jc1f1004z5gtv0kc30sx4",
+      "explanation": "This duration is evidence-based to be effective without causing the child to forget the original incident.",
+      "createdAt": "2025-12-14T09:41:19.224Z",
+      "updatedAt": "2025-12-14T09:41:20.612Z",
+      "options": [
+        {
+          "id": "cmj5jc16b004x5gtv4eew5zlu",
+          "quizId": "cmj5jc0zc004v5gtvfxyr049q",
+          "optionLabel": "A",
+          "optionText": "1 minute per year of age.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jc1f1004z5gtv0kc30sx4",
+          "quizId": "cmj5jc0zc004v5gtvfxyr049q",
+          "optionLabel": "B",
+          "optionText": "3 minutes plus 5 seconds of quiet.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jc1nv00515gtvroxkabzy",
+          "quizId": "cmj5jc0zc004v5gtvfxyr049q",
+          "optionLabel": "C",
+          "optionText": "10 minutes.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jc1uw00535gtvm1v8drom",
+          "quizId": "cmj5jc0zc004v5gtvfxyr049q",
+          "optionLabel": "D",
+          "optionText": "Until they apologize.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jc30w00555gtv8n7071cz",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 13,
+    "title": "Time-Out Setup",
+    "subtitle": null,
+    "shortDescription": "Set up the Time-Out chair and learn to maintain emotional neutrality.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jc0e9004r5gtvwcb0nwod"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:41:21.872Z",
+    "updatedAt": "2025-12-14T09:41:21.872Z",
+    "segments": [
+      {
+        "id": "cmj5jc37w00565gtveqwfon2k",
+        "lessonId": "cmj5jc30w00555gtv8n7071cz",
+        "order": 1,
+        "sectionTitle": "The Chair Rules",
+        "contentType": "SCRIPT",
+        "bodyText": "The child must stay on the chair.\n\nThey can stand, sit, or wiggle, but must stay on it.\n\n**Script:** \"Stay on the chair until I say you can get off.\" You control the time, not them.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:22.125Z",
+        "updatedAt": "2025-12-14T09:41:22.125Z"
+      },
+      {
+        "id": "cmj5jc37w00575gtv19ug48u5",
+        "lessonId": "cmj5jc30w00555gtv8n7071cz",
+        "order": 2,
+        "sectionTitle": "Be a Neutral Robot",
+        "contentType": "TEXT",
+        "bodyText": "This is the hardest part.\n\nYou must be completely emotionless.\n\nNo scolding, no anger, no lecturing.\n\nIf you show anger, you are giving negative attention, which reinforces the bad behavior.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:22.125Z",
+        "updatedAt": "2025-12-14T09:41:22.125Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jc3lx00595gtvz473whsc",
+      "lessonId": "cmj5jc30w00555gtv8n7071cz",
+      "question": "What must the parent remain during the entire Time-Out?",
+      "correctAnswer": "cmj5jc418005d5gtvl4b50wui",
+      "explanation": "Neutrality removes the emotional payoff for the child, forcing them to focus on their own behavior.",
+      "createdAt": "2025-12-14T09:41:22.629Z",
+      "updatedAt": "2025-12-14T09:41:23.999Z",
+      "options": [
+        {
+          "id": "cmj5jc3sy005b5gtvquwjb2af",
+          "quizId": "cmj5jc3lx00595gtvz473whsc",
+          "optionLabel": "A",
+          "optionText": "Visible and talking.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jc418005d5gtvl4b50wui",
+          "quizId": "cmj5jc3lx00595gtvz473whsc",
+          "optionLabel": "B",
+          "optionText": "Perfectly calm and neutral (a \"neutral robot\").",
+          "order": 2
+        },
+        {
+          "id": "cmj5jc489005f5gtvq56zukmp",
+          "quizId": "cmj5jc3lx00595gtvz473whsc",
+          "optionLabel": "C",
+          "optionText": "Angry.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jc4f9005h5gtv0c7x1yfb",
+          "quizId": "cmj5jc3lx00595gtvz473whsc",
+          "optionLabel": "D",
+          "optionText": "Absent.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jc5mu005j5gtvncgt98s2",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 14,
+    "title": "Managing Emotions",
+    "subtitle": null,
+    "shortDescription": "Manage your own emotions and ignore all attempts to draw you in during Time-Out.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jc30w00555gtv8n7071cz"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:41:25.254Z",
+    "updatedAt": "2025-12-14T09:41:25.254Z",
+    "segments": [
+      {
+        "id": "cmj5jc5tt005k5gtvxmz9ez29",
+        "lessonId": "cmj5jc5mu005j5gtvncgt98s2",
+        "order": 1,
+        "sectionTitle": "Ignoring Everything",
+        "contentType": "SCRIPT",
+        "bodyText": "While on the chair, ignore everything.\n\"I hate you!\", \"I have to pee!\", \"I promise to be good!\"\nIgnore it all.\n\nThese are attempts to draw you back in.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:25.505Z",
+        "updatedAt": "2025-12-14T09:41:25.505Z"
+      },
+      {
+        "id": "cmj5jc5tt005l5gtv7iyrjr84",
+        "lessonId": "cmj5jc5mu005j5gtvncgt98s2",
+        "order": 2,
+        "sectionTitle": "Self-Regulation",
+        "contentType": "SCRIPT",
+        "bodyText": "**Time-Out** teaches the child to self-soothe.\n\nIt also teaches you to regulate.\n\nIf you feel angry, breathe.\n\nTell yourself: \"I am teaching them to calm down.\n\nI am safe.\n\nThey are safe.\"",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:25.505Z",
+        "updatedAt": "2025-12-14T09:41:25.505Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jc67v005n5gtv4hj0ltbp",
+      "lessonId": "cmj5jc5mu005j5gtvncgt98s2",
+      "question": "If a child says \"I have to go to the bathroom\" during Time-Out, what do you do?",
+      "correctAnswer": "cmj5jc6t5005t5gtvns86ug69",
+      "explanation": "Engaging with requests allows the child to escape the consequence; ignoring maintains the boundary.",
+      "createdAt": "2025-12-14T09:41:26.011Z",
+      "updatedAt": "2025-12-14T09:41:27.280Z",
+      "options": [
+        {
+          "id": "cmj5jc6f1005p5gtvmkm78m8w",
+          "quizId": "cmj5jc67v005n5gtv4hj0ltbp",
+          "optionLabel": "A",
+          "optionText": "Let them go.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jc6m4005r5gtv5anl3slc",
+          "quizId": "cmj5jc67v005n5gtv4hj0ltbp",
+          "optionLabel": "B",
+          "optionText": "Explain why they are there.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jc6t5005t5gtvns86ug69",
+          "quizId": "cmj5jc67v005n5gtv4hj0ltbp",
+          "optionLabel": "C",
+          "optionText": "Ignore the request (assuming pre-practice break).",
+          "order": 3
+        },
+        {
+          "id": "cmj5jc704005v5gtvpyv3r2c4",
+          "quizId": "cmj5jc67v005n5gtv4hj0ltbp",
+          "optionLabel": "D",
+          "optionText": "Ask for an apology.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jc86e005x5gtvktv7h2rs",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 15,
+    "title": "Time-Out Step 1 - The Warning",
+    "subtitle": null,
+    "shortDescription": "Deliver the Time-Out Warning to give your child one final choice to comply.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jc5mu005j5gtvncgt98s2"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:41:28.551Z",
+    "updatedAt": "2025-12-14T09:41:28.551Z",
+    "segments": [
+      {
+        "id": "cmj5jc8dh005y5gtvitmlbzkf",
+        "lessonId": "cmj5jc86e005x5gtvktv7h2rs",
+        "order": 1,
+        "sectionTitle": "The Final Choice",
+        "contentType": "SCRIPT",
+        "bodyText": "If they don't obey after 5 seconds, give the Warning.\n\n**Script:** \"You didn't [original command].\n\nYou need to [original command] or you will go to **Time-Out**.\"",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:28.805Z",
+        "updatedAt": "2025-12-14T09:41:28.805Z"
+      },
+      {
+        "id": "cmj5jc8dh005z5gtvh5zarehd",
+        "lessonId": "cmj5jc86e005x5gtvktv7h2rs",
+        "order": 2,
+        "sectionTitle": "Last Chance",
+        "contentType": "TEXT",
+        "bodyText": "This is the last verbal interaction.\n\nWait 5 more seconds.\n\nIf they obey, **praise** heavily.\n\nIf not, proceed to **Time-Out**.\n\nThis puts the choice in their hands.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:28.805Z",
+        "updatedAt": "2025-12-14T09:41:28.805Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jc8rg00615gtvmsfb4rwx",
+      "lessonId": "cmj5jc86e005x5gtvktv7h2rs",
+      "question": "What is the primary purpose of the Time-Out Warning?",
+      "correctAnswer": "cmj5jc95j00655gtv6uea1lv8",
+      "explanation": "The warning makes the consequence predictable and gives the child agency to avoid it.",
+      "createdAt": "2025-12-14T09:41:29.308Z",
+      "updatedAt": "2025-12-14T09:41:30.574Z",
+      "options": [
+        {
+          "id": "cmj5jc8yi00635gtvvn4y89qr",
+          "quizId": "cmj5jc8rg00615gtvmsfb4rwx",
+          "optionLabel": "A",
+          "optionText": "To make the child apologize.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jc95j00655gtv6uea1lv8",
+          "quizId": "cmj5jc8rg00615gtvmsfb4rwx",
+          "optionLabel": "B",
+          "optionText": "To give the child one last chance to choose compliance.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jc9cl00675gtviwe91kuf",
+          "quizId": "cmj5jc8rg00615gtvmsfb4rwx",
+          "optionLabel": "C",
+          "optionText": "To make the child angry.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jc9jk00695gtver40mvo9",
+          "quizId": "cmj5jc8rg00615gtvmsfb4rwx",
+          "optionLabel": "D",
+          "optionText": "To tell the time.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jcaqc006b5gtvp5ouz5us",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 16,
+    "title": "Time-Out Step 2 - The Escort",
+    "subtitle": null,
+    "shortDescription": "Execute the immediate, calm escort to Time-Out if the warning is ignored.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jc86e005x5gtvktv7h2rs"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:41:31.860Z",
+    "updatedAt": "2025-12-14T09:41:31.860Z",
+    "segments": [
+      {
+        "id": "cmj5jcaxe006c5gtvw07gek2b",
+        "lessonId": "cmj5jcaqc006b5gtvp5ouz5us",
+        "order": 1,
+        "sectionTitle": "Immediate Action",
+        "contentType": "SCRIPT",
+        "bodyText": "If they don't obey the warning, act immediately.\n\n**Script:** \"You didn’t do what I told you to do so you have to sit on the **time-out** chair.\"\nEscort them gently but firmly.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:32.114Z",
+        "updatedAt": "2025-12-14T09:41:32.114Z"
+      },
+      {
+        "id": "cmj5jcaxe006d5gtvirnly3o5",
+        "lessonId": "cmj5jcaqc006b5gtvp5ouz5us",
+        "order": 2,
+        "sectionTitle": "The Rules",
+        "contentType": "SCRIPT",
+        "bodyText": "Do not argue.\n\nIf they resist, lift them gently from behind.\n\nPlace them on the chair.\n\nRestart: If they get off, say: \"You got off the chair before I said you could.\n\nStay on the chair.\" Restart the timer.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:32.114Z",
+        "updatedAt": "2025-12-14T09:41:32.114Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jcbbe006f5gtvzqhg9jxm",
+      "lessonId": "cmj5jcaqc006b5gtvp5ouz5us",
+      "question": "If a child resists the escort, what is the technique?",
+      "correctAnswer": "cmj5jcbpj006j5gtvcct2lfy4",
+      "explanation": "A calm, physical escort enforces the boundary without aggression or negotiation.",
+      "createdAt": "2025-12-14T09:41:32.619Z",
+      "updatedAt": "2025-12-14T09:41:33.935Z",
+      "options": [
+        {
+          "id": "cmj5jcbih006h5gtv0qmtz4us",
+          "quizId": "cmj5jcbbe006f5gtvzqhg9jxm",
+          "optionLabel": "A",
+          "optionText": "Drag them.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jcbpj006j5gtvcct2lfy4",
+          "quizId": "cmj5jcbbe006f5gtvzqhg9jxm",
+          "optionLabel": "B",
+          "optionText": "Lift gently from behind and escort calmly.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jcbwi006l5gtve8y2kber",
+          "quizId": "cmj5jcbbe006f5gtvzqhg9jxm",
+          "optionLabel": "C",
+          "optionText": "Negotiate.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jcc3j006n5gtvnhad2n2s",
+          "quizId": "cmj5jcbbe006f5gtvzqhg9jxm",
+          "optionLabel": "D",
+          "optionText": "Walk away.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jcdi6006p5gtvk27jk905",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 17,
+    "title": "Time-Out Step 3 - Closing the Loop",
+    "subtitle": null,
+    "shortDescription": "Close the loop after Time-Out by re-issuing the command and praising compliance.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jcaqc006b5gtvp5ouz5us"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:41:35.454Z",
+    "updatedAt": "2025-12-14T09:41:35.454Z",
+    "segments": [
+      {
+        "id": "cmj5jcdp5006q5gtvmcegi8n7",
+        "lessonId": "cmj5jcdi6006p5gtvk27jk905",
+        "order": 1,
+        "sectionTitle": "It's Not Over Yet",
+        "contentType": "SCRIPT",
+        "bodyText": "After the 3 minutes + 5 seconds quiet, you return.\n\n**Script:** \"Are you ready to come back and [original command]?\"\nThey must do the original task.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:35.705Z",
+        "updatedAt": "2025-12-14T09:41:35.705Z"
+      },
+      {
+        "id": "cmj5jcdp5006r5gtvqs3hlahk",
+        "lessonId": "cmj5jcdi6006p5gtvk27jk905",
+        "order": 2,
+        "sectionTitle": "The Second Command",
+        "contentType": "SCRIPT",
+        "bodyText": "After they do the original task, say \"Okay.\" Then give a new, simple command (e.g., \"Hand me that toy\").\n\nWhen they do that, give Labeled **Praise**.\n\n**Why** : This ensures the interaction ends on a positive note: Compliance = **Praise**.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:35.705Z",
+        "updatedAt": "2025-12-14T09:41:35.705Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jce38006t5gtvwtckw0we",
+      "lessonId": "cmj5jcdi6006p5gtvk27jk905",
+      "question": "What must happen after Time-Out is finished?",
+      "correctAnswer": "cmj5jceh9006x5gtvoyikpizi",
+      "explanation": "This sequence restores the relationship and reinforces that listening is the only way to get positive attention.",
+      "createdAt": "2025-12-14T09:41:36.212Z",
+      "updatedAt": "2025-12-14T09:41:37.470Z",
+      "options": [
+        {
+          "id": "cmj5jcea8006v5gtvho4w9tq1",
+          "quizId": "cmj5jce38006t5gtvwtckw0we",
+          "optionLabel": "A",
+          "optionText": "Immediate praise.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jceh9006x5gtvoyikpizi",
+          "quizId": "cmj5jce38006t5gtvwtckw0we",
+          "optionLabel": "B",
+          "optionText": "The child obeys the original command, then a second command, followed by praise.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jceo7006z5gtvyhqbk3k8",
+          "quizId": "cmj5jce38006t5gtvwtckw0we",
+          "optionLabel": "C",
+          "optionText": "Apology.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jcev700715gtvnc7gwf7t",
+          "quizId": "cmj5jce38006t5gtvwtckw0we",
+          "optionLabel": "D",
+          "optionText": "Explanation.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jcg1j00735gtvn033wca8",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 18,
+    "title": "Public Discipline",
+    "subtitle": null,
+    "shortDescription": "Adapt your discipline tools for public places with preparation and immediate consequences.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jcdi6006p5gtvk27jk905"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:41:38.744Z",
+    "updatedAt": "2025-12-14T09:41:38.744Z",
+    "segments": [
+      {
+        "id": "cmj5jcg8k00745gtvxho97596",
+        "lessonId": "cmj5jcg1j00735gtvn033wca8",
+        "order": 1,
+        "sectionTitle": "Prep for Success",
+        "contentType": "TEXT",
+        "bodyText": "In public, prepare your child.\n\nTell them the rules and the consequences before you enter the store.\n\nPlan: Keep trips short.\n\nBring activities.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:38.997Z",
+        "updatedAt": "2025-12-14T09:41:38.997Z"
+      },
+      {
+        "id": "cmj5jcg8k00755gtvoi9fjst1",
+        "lessonId": "cmj5jcg1j00735gtvn033wca8",
+        "order": 2,
+        "sectionTitle": "Public Time-Out",
+        "contentType": "SCRIPT",
+        "bodyText": "If they disobey, use a Standing **Time-Out** (e.g., by the cart or wall).\n\nIf they escalate or refuse, the consequence is Immediate Departure. \"We are leaving now.\"",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:38.997Z",
+        "updatedAt": "2025-12-14T09:41:38.997Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jcgmr00775gtvzbtguy8z",
+      "lessonId": "cmj5jcg1j00735gtvn033wca8",
+      "question": "What is the ultimate consequence for severe public misbehavior?",
+      "correctAnswer": "cmj5jch9i007d5gtviu0yjog5",
+      "explanation": "Leaving demonstrates that misbehavior results in the loss of the privilege of being out.",
+      "createdAt": "2025-12-14T09:41:39.508Z",
+      "updatedAt": "2025-12-14T09:41:40.831Z",
+      "options": [
+        {
+          "id": "cmj5jcgtr00795gtvvbj400bm",
+          "quizId": "cmj5jcgmr00775gtvzbtguy8z",
+          "optionLabel": "A",
+          "optionText": "Yelling.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jch2j007b5gtvtldsqjaw",
+          "quizId": "cmj5jcgmr00775gtvzbtguy8z",
+          "optionLabel": "B",
+          "optionText": "Ignoring.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jch9i007d5gtviu0yjog5",
+          "quizId": "cmj5jcgmr00775gtvzbtguy8z",
+          "optionLabel": "C",
+          "optionText": "Immediate removal from the place.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jchgh007f5gtvgzmpprco",
+          "quizId": "cmj5jcgmr00775gtvzbtguy8z",
+          "optionLabel": "D",
+          "optionText": "A reward.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jcio6007h5gtv30tdz90w",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 19,
+    "title": "Summary & Balance",
+    "subtitle": null,
+    "shortDescription": "Review the full model and focus on maintaining a high ratio of connection to discipline.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jcg1j00735gtvn033wca8"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:41:42.150Z",
+    "updatedAt": "2025-12-14T09:41:42.150Z",
+    "segments": [
+      {
+        "id": "cmj5jciv7007i5gtvdcdiyvt2",
+        "lessonId": "cmj5jcio6007h5gtv30tdz90w",
+        "order": 1,
+        "sectionTitle": "The Full Toolkit",
+        "contentType": "TEXT",
+        "bodyText": "You now have **Connect** (**PEN**) and **Discipline** (Commands/Consequences).\n\nThe key is Balance.\n\n**Connect** must happen more often than **Discipline**.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:42.404Z",
+        "updatedAt": "2025-12-14T09:41:42.404Z"
+      },
+      {
+        "id": "cmj5jciv7007j5gtvqgznnajd",
+        "lessonId": "cmj5jcio6007h5gtv30tdz90w",
+        "order": 2,
+        "sectionTitle": "Path Forward",
+        "contentType": "TEXT",
+        "bodyText": "Keep practicing Special Time daily.\n\nUse commands only when necessary.\n\nCatch them being good (Positive Opposites).\n\nConsistency is your superpower.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:42.404Z",
+        "updatedAt": "2025-12-14T09:41:42.404Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jcj97007l5gtv694x9yrl",
+      "lessonId": "cmj5jcio6007h5gtv30tdz90w",
+      "question": "To maintain long-term success, what is the correct balance?",
+      "correctAnswer": "cmj5jcjn7007p5gtv4f5fmb41",
+      "explanation": "A high ratio of positive interactions maintains the \"emotional bank account\" needed for discipline to work.",
+      "createdAt": "2025-12-14T09:41:42.907Z",
+      "updatedAt": "2025-12-14T09:41:44.175Z",
+      "options": [
+        {
+          "id": "cmj5jcjg8007n5gtvnzajiemf",
+          "quizId": "cmj5jcj97007l5gtv694x9yrl",
+          "optionLabel": "A",
+          "optionText": "80% Discipline.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jcjn7007p5gtv4f5fmb41",
+          "quizId": "cmj5jcj97007l5gtv694x9yrl",
+          "optionLabel": "B",
+          "optionText": "Connect skills used more often than Discipline skills.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jcju8007r5gtvl4w0dh7s",
+          "quizId": "cmj5jcj97007l5gtv694x9yrl",
+          "optionLabel": "C",
+          "optionText": "Only Time-Out.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jck1a007t5gtvz2tce89e",
+          "quizId": "cmj5jcj97007l5gtv694x9yrl",
+          "optionLabel": "D",
+          "optionText": "Equal commands and questions.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jcl7j007v5gtvrka4s2rj",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 20,
+    "title": "Stress and Behavior",
+    "subtitle": null,
+    "shortDescription": "Recognize behavioral changes as signs of stress and respond with connection.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jcio6007h5gtv30tdz90w"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:41:45.439Z",
+    "updatedAt": "2025-12-14T09:41:45.439Z",
+    "segments": [
+      {
+        "id": "cmj5jclek007w5gtvrga7ipay",
+        "lessonId": "cmj5jcl7j007v5gtvrka4s2rj",
+        "order": 1,
+        "sectionTitle": "Behavior is Communication",
+        "contentType": "SCRIPT",
+        "bodyText": "When kids are stressed, they don't say \"I'm worried.\" They change their behavior.\n\nThey might become aggressive, clingy, or regress (e.g., wetting the bed).",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:45.693Z",
+        "updatedAt": "2025-12-14T09:41:45.693Z"
+      },
+      {
+        "id": "cmj5jclek007x5gtvp1qad6vh",
+        "lessonId": "cmj5jcl7j007v5gtvrka4s2rj",
+        "order": 2,
+        "sectionTitle": "Detective Work",
+        "contentType": "SCRIPT",
+        "bodyText": "Notice these changes.\n\nInstead of just correcting the bad behavior, recognize it as a signal: \"Something is bothering them.\" They need extra connection and Special Time.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:45.693Z",
+        "updatedAt": "2025-12-14T09:41:45.693Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jclsj007z5gtvgfiydyk1",
+      "lessonId": "cmj5jcl7j007v5gtvrka4s2rj",
+      "question": "Why do young children show stress through behavior?",
+      "correctAnswer": "cmj5jcm7100835gtv72capyo1",
+      "explanation": "Behavior is the primary language of young children who cannot yet verbally articulate emotional distress.",
+      "createdAt": "2025-12-14T09:41:46.195Z",
+      "updatedAt": "2025-12-14T09:41:47.476Z",
+      "options": [
+        {
+          "id": "cmj5jclzx00815gtvewkghndm",
+          "quizId": "cmj5jclsj007z5gtvgfiydyk1",
+          "optionLabel": "A",
+          "optionText": "To manipulate.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jcm7100835gtv72capyo1",
+          "quizId": "cmj5jclsj007z5gtvgfiydyk1",
+          "optionLabel": "B",
+          "optionText": "They lack the words to name complex feelings.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jcme300855gtvprfaks1p",
+          "quizId": "cmj5jclsj007z5gtvgfiydyk1",
+          "optionLabel": "C",
+          "optionText": "To annoy parents.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jcml500875gtvgj6v1q04",
+          "quizId": "cmj5jclsj007z5gtvgfiydyk1",
+          "optionLabel": "D",
+          "optionText": "Single emotions.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jcnt000895gtv9hmwh1z7",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 21,
+    "title": "Labeling Feelings",
+    "subtitle": null,
+    "shortDescription": "Teach emotional literacy by labeling feelings and using play to calm stress.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jcl7j007v5gtvrka4s2rj"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:41:48.805Z",
+    "updatedAt": "2025-12-14T09:41:48.805Z",
+    "segments": [
+      {
+        "id": "cmj5jco01008a5gtv7z7wxaoc",
+        "lessonId": "cmj5jcnt000895gtv9hmwh1z7",
+        "order": 1,
+        "sectionTitle": "Emotional Literacy",
+        "contentType": "SCRIPT",
+        "bodyText": "Help them by naming feelings.\n\nModel it yourself: \"I am feeling sad right now.\" This validates their feelings and teaches them it is safe to talk.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:49.058Z",
+        "updatedAt": "2025-12-14T09:41:49.058Z"
+      },
+      {
+        "id": "cmj5jco01008b5gtv72xxvk63",
+        "lessonId": "cmj5jcnt000895gtv9hmwh1z7",
+        "order": 2,
+        "sectionTitle": "Calming with Play",
+        "contentType": "TEXT",
+        "bodyText": "When stress is high, increase Special Time. 5 minutes of undirected play helps them feel safe and loved, stabilizing their behavior.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:49.058Z",
+        "updatedAt": "2025-12-14T09:41:49.058Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jcoe1008d5gtvbfdn5fjp",
+      "lessonId": "cmj5jcnt000895gtv9hmwh1z7",
+      "question": "How does modeling feelings help the child?",
+      "correctAnswer": "cmj5jcos2008h5gtvgxdxvpro",
+      "explanation": "Parental modeling normalizes emotional expression, encouraging the child to identify and share their own emotions.",
+      "createdAt": "2025-12-14T09:41:49.562Z",
+      "updatedAt": "2025-12-14T09:41:50.821Z",
+      "options": [
+        {
+          "id": "cmj5jcol2008f5gtvhqyu3mo0",
+          "quizId": "cmj5jcoe1008d5gtvbfdn5fjp",
+          "optionLabel": "A",
+          "optionText": "Solves the problem.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jcos2008h5gtvgxdxvpro",
+          "quizId": "cmj5jcoe1008d5gtvbfdn5fjp",
+          "optionLabel": "B",
+          "optionText": "Teaches the child it is safe to talk about feelings.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jcoz1008j5gtv13fchewh",
+          "quizId": "cmj5jcoe1008d5gtvbfdn5fjp",
+          "optionLabel": "C",
+          "optionText": "Takes over conversation.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jcp60008l5gtvaff0cylm",
+          "quizId": "cmj5jcoe1008d5gtvbfdn5fjp",
+          "optionLabel": "D",
+          "optionText": "Shows weakness.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jcqj6008n5gtvbyyyg541",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 22,
+    "title": "Being a Role Model",
+    "subtitle": null,
+    "shortDescription": "Embrace your role as a model for handling anger and conflict constructively.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jcnt000895gtv9hmwh1z7"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:41:52.338Z",
+    "updatedAt": "2025-12-14T09:41:52.338Z",
+    "segments": [
+      {
+        "id": "cmj5jcqq6008o5gtvenby0uy2",
+        "lessonId": "cmj5jcqj6008n5gtvbyyyg541",
+        "order": 1,
+        "sectionTitle": "Imitation",
+        "contentType": "TEXT",
+        "bodyText": "Children watch everything.\n\nIf you yell when angry, they learn to yell.\n\nIf you remain calm, they learn to handle conflict calmly.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:52.590Z",
+        "updatedAt": "2025-12-14T09:41:52.590Z"
+      },
+      {
+        "id": "cmj5jcqq6008p5gtvisdeq91u",
+        "lessonId": "cmj5jcqj6008n5gtvbyyyg541",
+        "order": 2,
+        "sectionTitle": "Positive Modeling",
+        "contentType": "TEXT",
+        "bodyText": "Use smiles and hugs to teach affection.\n\nSolve problems rationally to teach conflict resolution.\n\nYou are their primary teacher of social skills.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:52.590Z",
+        "updatedAt": "2025-12-14T09:41:52.590Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jcr48008r5gtvj5g965fu",
+      "lessonId": "cmj5jcqj6008n5gtvbyyyg541",
+      "question": "If a parent yells when angry, what does the child learn?",
+      "correctAnswer": "cmj5jcrpb008x5gtvqnhawx3i",
+      "explanation": "Children mimic their parents' coping mechanisms, adopting the behaviors they see modeled in high-stress moments.",
+      "createdAt": "2025-12-14T09:41:53.096Z",
+      "updatedAt": "2025-12-14T09:41:54.358Z",
+      "options": [
+        {
+          "id": "cmj5jcrb8008t5gtvrpym80os",
+          "quizId": "cmj5jcr48008r5gtvj5g965fu",
+          "optionLabel": "A",
+          "optionText": "To never yell.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jcrib008v5gtvsnp3g0i6",
+          "quizId": "cmj5jcr48008r5gtvj5g965fu",
+          "optionLabel": "B",
+          "optionText": "To ignore.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jcrpb008x5gtvqnhawx3i",
+          "quizId": "cmj5jcr48008r5gtvj5g965fu",
+          "optionLabel": "C",
+          "optionText": "To handle conflict by yelling.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jcrwb008z5gtvmzzwa47h",
+          "quizId": "cmj5jcr48008r5gtvj5g965fu",
+          "optionLabel": "D",
+          "optionText": "To seek support.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jct2a00915gtvlo9rzkx8",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 23,
+    "title": "Managing Anger (60-Second Escape)",
+    "subtitle": null,
+    "shortDescription": "Use the 60-Second Escape to regulate your own anger before disciplining.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jcqj6008n5gtvbyyyg541"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:41:55.618Z",
+    "updatedAt": "2025-12-14T09:41:55.618Z",
+    "segments": [
+      {
+        "id": "cmj5jct9b00925gtvapik5xmx",
+        "lessonId": "cmj5jct2a00915gtvlo9rzkx8",
+        "order": 1,
+        "sectionTitle": "The Reset Button",
+        "contentType": "TEXT",
+        "bodyText": "If you feel angry, Stop.\n• Recognize anger.\n• Leave the room for 60 seconds.\n• Distract yourself.\n• Decide on a plan.\n• Return calm.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:55.871Z",
+        "updatedAt": "2025-12-14T09:41:55.871Z"
+      },
+      {
+        "id": "cmj5jct9b00935gtvl23y38fi",
+        "lessonId": "cmj5jct2a00915gtvlo9rzkx8",
+        "order": 2,
+        "sectionTitle": "Why?",
+        "contentType": "TEXT",
+        "bodyText": "Your anger fuels the fire.\n\nA calm parent is in control.\n\nTaking 60 seconds prevents you from doing something you regret and models self-regulation.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:55.871Z",
+        "updatedAt": "2025-12-14T09:41:55.871Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jctn900955gtv4xfdoiud",
+      "lessonId": "cmj5jct2a00915gtvlo9rzkx8",
+      "question": "What is the first step when you feel angry at your child?",
+      "correctAnswer": "cmj5jcu88009b5gtvy9kfumug",
+      "explanation": "Stepping away breaks the emotional escalation and allows the parent to return with a rational, effective plan.",
+      "createdAt": "2025-12-14T09:41:56.373Z",
+      "updatedAt": "2025-12-14T09:41:57.632Z",
+      "options": [
+        {
+          "id": "cmj5jctu900975gtvj95a8xf5",
+          "quizId": "cmj5jctn900955gtv4xfdoiud",
+          "optionLabel": "A",
+          "optionText": "Use Time-Out.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jcu1800995gtvswaon6rs",
+          "quizId": "cmj5jctn900955gtv4xfdoiud",
+          "optionLabel": "B",
+          "optionText": "Yell.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jcu88009b5gtvy9kfumug",
+          "quizId": "cmj5jctn900955gtv4xfdoiud",
+          "optionLabel": "C",
+          "optionText": "Leave for 60 seconds to calm down.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jcuf8009d5gtvzykqy5w1",
+          "quizId": "cmj5jctn900955gtv4xfdoiud",
+          "optionLabel": "D",
+          "optionText": "Lecture.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jcvlh009f5gtvckg14fcn",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 24,
+    "title": "Advanced Boosters",
+    "subtitle": null,
+    "shortDescription": "Use advanced boosters like Distraction and Two Choices to prevent minor issues.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jct2a00915gtvlo9rzkx8"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:41:58.902Z",
+    "updatedAt": "2025-12-14T09:41:58.902Z",
+    "segments": [
+      {
+        "id": "cmj5jcvsn009g5gtve06wvwhr",
+        "lessonId": "cmj5jcvlh009f5gtvckg14fcn",
+        "order": 1,
+        "sectionTitle": "Distraction/Redirection",
+        "contentType": "SCRIPT",
+        "bodyText": "For minor issues, ignore the bad behavior and enthusiastically draw attention to something else.\n\n**Script:** \"I have so much fun coloring!\" (Redirects from throwing toys).",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:59.159Z",
+        "updatedAt": "2025-12-14T09:41:59.159Z"
+      },
+      {
+        "id": "cmj5jcvsn009h5gtvf085o99k",
+        "lessonId": "cmj5jcvlh009f5gtvckg14fcn",
+        "order": 2,
+        "sectionTitle": "Two Choices",
+        "contentType": "SCRIPT",
+        "bodyText": "Give control back. \"Do you want to walk or skip to the car?\" Both options are acceptable to you, but the child feels like the boss.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:41:59.159Z",
+        "updatedAt": "2025-12-14T09:41:59.159Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jcw6m009j5gtv11ss24t6",
+      "lessonId": "cmj5jcvlh009f5gtvckg14fcn",
+      "question": "When redirecting, what must you ignore?",
+      "correctAnswer": "cmj5jcwkp009n5gtvnm4nat18",
+      "explanation": "Ignoring the negative behavior ensures it receives no reinforcement, while the new activity is highlighted as rewarding.",
+      "createdAt": "2025-12-14T09:41:59.663Z",
+      "updatedAt": "2025-12-14T09:42:00.924Z",
+      "options": [
+        {
+          "id": "cmj5jcwdo009l5gtvz1qsgg8u",
+          "quizId": "cmj5jcw6m009j5gtv11ss24t6",
+          "optionLabel": "A",
+          "optionText": "The sibling.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jcwkp009n5gtvnm4nat18",
+          "quizId": "cmj5jcw6m009j5gtv11ss24t6",
+          "optionLabel": "B",
+          "optionText": "The bad behavior itself.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jcwrp009p5gtvo8c4nt9s",
+          "quizId": "cmj5jcw6m009j5gtv11ss24t6",
+          "optionLabel": "C",
+          "optionText": "The time.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jcwyo009r5gtvw5wth935",
+          "quizId": "cmj5jcw6m009j5gtv11ss24t6",
+          "optionLabel": "D",
+          "optionText": "The rules.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jcy53009t5gtvknq3b4sd",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 25,
+    "title": "Formal Systems",
+    "subtitle": null,
+    "shortDescription": "Implement formal systems like If-Then plans and Sticker Charts for persistent issues.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jcvlh009f5gtvckg14fcn"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4E4FF",
+    "ellipse77Color": "#9BD4DF",
+    "ellipse78Color": "#A6E0CB",
+    "createdAt": "2025-12-14T09:42:02.199Z",
+    "updatedAt": "2025-12-14T09:42:02.199Z",
+    "segments": [
+      {
+        "id": "cmj5jcyc3009u5gtvsudjqrne",
+        "lessonId": "cmj5jcy53009t5gtvknq3b4sd",
+        "order": 1,
+        "sectionTitle": "If-Then Plans",
+        "contentType": "SCRIPT",
+        "bodyText": "For older kids: \"If you finish homework, Then you get tablet time.\"\n\n**Rule:** Be consistent.\n\nNo work = No tablet.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:42:02.451Z",
+        "updatedAt": "2025-12-14T09:42:02.451Z"
+      },
+      {
+        "id": "cmj5jcyc3009v5gtv53xiy8gn",
+        "lessonId": "cmj5jcy53009t5gtvknq3b4sd",
+        "order": 2,
+        "sectionTitle": "Sticker Charts",
+        "contentType": "TEXT",
+        "bodyText": "For ages 5-8.\n\nFocus on 1-2 specific behaviors.\n\nReward daily.\n\nNote: **Praise** the effort, and don't criticize missed days.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:42:02.451Z",
+        "updatedAt": "2025-12-14T09:42:02.451Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jcyq9009x5gtvg0uq41uo",
+      "lessonId": "cmj5jcy53009t5gtvknq3b4sd",
+      "question": "Why stick to the \"If\" condition in If-Then plans?",
+      "correctAnswer": "cmj5jcz5q00a15gtvo0d44ikj",
+      "explanation": "Consistency creates a reliable structure where the child learns that their actions directly determine the outcome.",
+      "createdAt": "2025-12-14T09:42:02.961Z",
+      "updatedAt": "2025-12-14T09:42:04.342Z",
+      "options": [
+        {
+          "id": "cmj5jcyy7009z5gtvwfkdtnit",
+          "quizId": "cmj5jcyq9009x5gtvg0uq41uo",
+          "optionLabel": "A",
+          "optionText": "To save rewards.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jcz5q00a15gtvo0d44ikj",
+          "quizId": "cmj5jcyq9009x5gtvg0uq41uo",
+          "optionLabel": "B",
+          "optionText": "To teach that rewards must be earned and the structure is reliable.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jczcr00a35gtvkm4omrhg",
+          "quizId": "cmj5jcyq9009x5gtvg0uq41uo",
+          "optionLabel": "C",
+          "optionText": "Rewards are just for fun.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jczjr00a55gtvas4ua30d",
+          "quizId": "cmj5jcyq9009x5gtvg0uq41uo",
+          "optionLabel": "D",
+          "optionText": "Child dislike.",
+          "order": 4
+        }
+      ]
+    }
+  },
+  {
+    "id": "cmj5jd0uy00a75gtv0q948kne",
+    "phase": "DISCIPLINE",
+    "phaseNumber": 2,
+    "dayNumber": 26,
+    "title": "Social Skills & Conclusion",
+    "subtitle": null,
+    "shortDescription": "See how your home practice transfers to better social skills with peers and teachers.",
+    "objectives": [],
+    "estimatedMinutes": 5,
+    "isBooster": false,
+    "prerequisites": [
+      "cmj5jcy53009t5gtvknq3b4sd"
+    ],
+    "teachesCategories": [],
+    "dragonImageUrl": null,
+    "backgroundColor": "#E4F0FF",
+    "ellipse77Color": "#A6D4E0",
+    "ellipse78Color": "#B4E0CB",
+    "createdAt": "2025-12-14T09:42:05.722Z",
+    "updatedAt": "2025-12-14T09:42:05.722Z",
+    "segments": [
+      {
+        "id": "cmj5jd12500a85gtvdrmbgfls",
+        "lessonId": "cmj5jd0uy00a75gtv0q948kne",
+        "order": 1,
+        "sectionTitle": "Skills Transfer",
+        "contentType": "TEXT",
+        "bodyText": "Special Time teaches social skills.\n\nEchoing models listening.\n\nImitation models cooperation.\n\nYour child takes these skills to school and uses them with friends.",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:42:05.982Z",
+        "updatedAt": "2025-12-14T09:42:05.982Z"
+      },
+      {
+        "id": "cmj5jd12500a95gtvulra6sug",
+        "lessonId": "cmj5jd0uy00a75gtv0q948kne",
+        "order": 2,
+        "sectionTitle": "Final Encouragement",
+        "contentType": "TEXT",
+        "bodyText": "You have changed the dynamic.\n\nCelebrate the progress, not perfection.\n\nIf you have a bad day, apologize, reset, and start again.\n\nYou are the expert now!",
+        "imageUrl": null,
+        "iconType": null,
+        "createdAt": "2025-12-14T09:42:05.982Z",
+        "updatedAt": "2025-12-14T09:42:05.982Z"
+      }
+    ],
+    "quiz": {
+      "id": "cmj5jd1gc00ab5gtv1qvdltk4",
+      "lessonId": "cmj5jd0uy00a75gtv0q948kne",
+      "question": "How does Special Time help with peers?",
+      "correctAnswer": "cmj5jd1uq00af5gtvn24yps2b",
+      "explanation": "The relational skills experienced with the parent become the blueprint for how the child interacts with the world.",
+      "createdAt": "2025-12-14T09:42:06.493Z",
+      "updatedAt": "2025-12-14T09:42:07.790Z",
+      "options": [
+        {
+          "id": "cmj5jd1no00ad5gtv8fdj3zdz",
+          "quizId": "cmj5jd1gc00ab5gtv1qvdltk4",
+          "optionLabel": "A",
+          "optionText": "Teaches Time-Out.",
+          "order": 1
+        },
+        {
+          "id": "cmj5jd1uq00af5gtvn24yps2b",
+          "quizId": "cmj5jd1gc00ab5gtv1qvdltk4",
+          "optionLabel": "B",
+          "optionText": "Models listening and cooperation skills that transfer to peer interactions.",
+          "order": 2
+        },
+        {
+          "id": "cmj5jd21r00ah5gtvu16f8f60",
+          "quizId": "cmj5jd1gc00ab5gtv1qvdltk4",
+          "optionLabel": "C",
+          "optionText": "Gives facts.",
+          "order": 3
+        },
+        {
+          "id": "cmj5jd28t00aj5gtvr58zmmd4",
+          "quizId": "cmj5jd1gc00ab5gtv1qvdltk4",
+          "optionLabel": "D",
+          "optionText": "Teaches obedience.",
+          "order": 4
+        }
+      ]
+    }
+  }
+]
