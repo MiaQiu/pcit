@@ -114,11 +114,11 @@ cd nora-mobile
 npx tsc --noEmit
 ```
 
-### Test Build Locally (optional but recommended)
+### Test Build Locally (never never run this, unless absolutely necessary)
 ```bash
-npx expo prebuild
+npx expo prebuild 
 #for ios
-npx expo prebuild --clean --platform ios
+npx expo prebuild --clean --platform ios 
 ```
   - The files are already at /Users/mia/nora/nora-mobile/ios/Nora/AudioSessionManager.swift and AudioSessionManager.m
   Before (Why files kept getting deleted):

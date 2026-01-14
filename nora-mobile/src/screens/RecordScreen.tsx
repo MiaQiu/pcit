@@ -301,9 +301,9 @@ export const RecordScreen: React.FC = () => {
         }
       });
 
-      // Start native recording with 5-minute (300 second) auto-stop
-      const result = await startNativeRecording(300);
-      console.log('[RecordScreen] Native recording started:', result.uri);
+      // Start native recording with 5-minute (300 second) auto-stop and completion sound
+      const result = await startNativeRecording(300, completionSound);
+      console.log('[RecordScreen] Native recording started:', result.uri, 'with sound:', completionSound);
 
       setRecordingState('recording');
 

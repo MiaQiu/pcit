@@ -78,6 +78,8 @@ class AudioSessionManager: RCTEventEmitter, AVAudioRecorderDelegate {
   private var recordingURL: URL?
   private var autoStopTimer: Timer?
   private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+  private var completionSoundName: String = "Win"
+  private var audioPlayer: AVAudioPlayer?
 
   // MARK: - Audio Session Configuration
 
@@ -104,9 +106,14 @@ class AudioSessionManager: RCTEventEmitter, AVAudioRecorderDelegate {
   @objc
   func startRecording(
     _ autoStopSeconds: NSNumber,
+    soundName: String,
     withResolver resolve: @escaping RCTPromiseResolveBlock,
     withRejecter reject: @escaping RCTPromiseRejectBlock
   ) {
+    // Store the completion sound name
+    completionSoundName = soundName
+    NSLog("[AudioSessionManager] 🔊 Completion sound set to: %@", soundName)
+
     // 1. Cleanup previous state
     cleanupRecording()
 
@@ -244,6 +251,33 @@ class AudioSessionManager: RCTEventEmitter, AVAudioRecorderDelegate {
     audioRecorder = nil
   }
 
+  private func playCompletionSound() {
+    NSLog("[AudioSessionManager] 🔊 Playing completion sound: %@", completionSoundName)
+
+    // Try to find the sound file in the bundle
+    // React Native/Expo bundles assets, so we look for the sound file
+    guard let soundURL = Bundle.main.url(forResource: completionSoundName, withExtension: "mp3") else {
+      NSLog("[AudioSessionManager] ⚠️ Sound file not found: %@.mp3", completionSoundName)
+      return
+    }
+
+    do {
+      // Configure audio session for playback (it was set for recording)
+      let audioSession = AVAudioSession.sharedInstance()
+      try audioSession.setCategory(.playback, mode: .default, options: [.duckOthers])
+      try audioSession.setActive(true)
+
+      // Create and play the sound
+      audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
+      audioPlayer?.volume = 1.0
+      audioPlayer?.play()
+
+      NSLog("[AudioSessionManager] ✅ Completion sound playing")
+    } catch {
+      NSLog("[AudioSessionManager] ❌ Failed to play completion sound: %@", error.localizedDescription)
+    }
+  }
+
   @objc
   func stopRecording(
     _ resolve: @escaping RCTPromiseResolveBlock,
@@ -362,6 +396,9 @@ class AudioSessionManager: RCTEventEmitter, AVAudioRecorderDelegate {
       // Start background task to keep app alive for upload
       beginBackgroundTask()
 
+      // Play completion sound immediately (works even in background)
+      playCompletionSound()
+
       let durationMillis = recordingStartTime.map { Int(Date().timeIntervalSince($0) * 1000) } ?? 0
       let uri = recordingURL?.path ?? ""
 
@@ -386,8 +423,9 @@ class AudioSessionManager: RCTEventEmitter, AVAudioRecorderDelegate {
       recordingStartTime = nil
       recordingURL = nil
 
-      // Deactivate audio session after a short delay
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+      // Deactivate audio session after sound finishes (approx 2 seconds)
+      DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+        self?.audioPlayer = nil  // Release the player
         do {
           try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
           NSLog("[AudioSessionManager] 🔇 Audio session deactivated")

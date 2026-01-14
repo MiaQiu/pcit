@@ -6,7 +6,7 @@
 export const ErrorMessages = {
   // Authentication
   AUTH: {
-    LOGIN_FAILED: 'Incorrect email or password. Please try again.',
+    LOGIN_FAILED: 'Login failed. Please check your credentials and try again.',
     SIGNUP_FAILED: 'Failed to create account. Please try again.',
     EMAIL_EXISTS: 'This email is already registered. Please log in or use a different email.',
     INVALID_EMAIL: 'Please enter a valid email address.',

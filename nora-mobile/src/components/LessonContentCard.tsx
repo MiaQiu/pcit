@@ -76,12 +76,12 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   ellipseContainer: {
-    alignItems: 'center',
+    alignItems: 'stretch',
     zIndex: 1,
     marginBottom: -130, // Overlap with card
   },
   ellipseWrapper: {
-    width: 342,
+    width: '100%',
     height: 160,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,

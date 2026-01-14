@@ -51,6 +51,7 @@ export const ProfileScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -224,6 +225,46 @@ export const ProfileScreen: React.FC = () => {
       Alert.alert('Error', 'Failed to log out. Please try again.');
     } finally {
       setLoggingOut(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'This will permanently delete your account and all personal information associated with it. You will lose access to your play session history and feedback reports. This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: performDeleteAccount,
+        },
+      ]
+    );
+  };
+
+  const performDeleteAccount = async () => {
+    try {
+      setDeletingAccount(true);
+
+      await authService.deleteAccount();
+
+      // Navigate to onboarding after successful deletion
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Onboarding' }],
+      });
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to delete account. Please try again or contact support.'
+      );
+    } finally {
+      setDeletingAccount(false);
     }
   };
 
@@ -597,7 +638,7 @@ export const ProfileScreen: React.FC = () => {
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={handleLogout}
-          disabled={loggingOut}
+          disabled={loggingOut || deletingAccount}
           activeOpacity={0.8}
         >
           {loggingOut ? (
@@ -607,6 +648,20 @@ export const ProfileScreen: React.FC = () => {
               <Ionicons name="log-out-outline" size={20} color="#EF4444" />
               <Text style={styles.logoutText}>Log Out</Text>
             </>
+          )}
+        </TouchableOpacity>
+
+        {/* Delete Account Button */}
+        <TouchableOpacity
+          style={styles.deleteAccountButton}
+          onPress={handleDeleteAccount}
+          disabled={loggingOut || deletingAccount}
+          activeOpacity={0.8}
+        >
+          {deletingAccount ? (
+            <ActivityIndicator color="#9CA3AF" />
+          ) : (
+            <Text style={styles.deleteAccountText}>Delete Account</Text>
           )}
         </TouchableOpacity>
 
@@ -828,6 +883,19 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: 16,
     color: '#EF4444',
+  },
+  deleteAccountButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 20,
+    marginTop: 12,
+    paddingVertical: 16,
+  },
+  deleteAccountText: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#9CA3AF',
+    textDecorationLine: 'underline',
   },
   versionText: {
     fontFamily: FONTS.regular,

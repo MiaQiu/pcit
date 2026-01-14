@@ -32,7 +32,7 @@ export const StartScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.content}>
         {/* Dragon Image Section */}
         <View style={styles.dragonSection}>
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: SCREEN_WIDTH * 0.8,
     height: SCREEN_WIDTH * 0.8,
-    marginTop: 0,
+    marginTop: -20,
     marginBottom: 32,
     alignItems: 'center',
     justifyContent: 'center',

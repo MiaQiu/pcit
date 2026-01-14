@@ -107,6 +107,38 @@ class AuthService {
   }
 
   /**
+   * Delete user account permanently
+   * This removes all user data from the system
+   */
+  async deleteAccount(): Promise<void> {
+    const response = await fetch(`${this.apiUrl}/api/auth/delete-account`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Try to refresh token and retry
+        const refreshed = await this.refreshAccessToken();
+        if (refreshed) {
+          return this.deleteAccount();
+        }
+        throw new Error('Session expired. Please log in again.');
+      }
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete account');
+    }
+
+    // Clear all local data after successful deletion
+    await this.clearTokens();
+    await this.clearUserCache();
+  }
+
+  /**
    * Request password reset email
    */
   async forgotPassword(email: string): Promise<void> {

@@ -17,6 +17,8 @@
 		9B0610A8CA994509BD812FDD /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6C6C29054C1F49FD85AA344B /* GoogleService-Info.plist */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		SOUND001B1B1B1B1B0001 /* Win.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = SOUND001A1A1A1A1A0001 /* Win.mp3 */; };
+		SOUND002B2B2B2B2B0002 /* Bell.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = SOUND002A2A2A2A2A0002 /* Bell.mp3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +38,8 @@
 		F11748442D0722820044C1D9 /* Nora-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Nora-Bridging-Header.h"; path = "Nora/Nora-Bridging-Header.h"; sourceTree = "<group>"; };
 		FC159628C71B43F7B48A55ED /* AudioSessionManager.m */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; name = AudioSessionManager.m; path = Nora/AudioSessionManager.m; sourceTree = "<group>"; };
 		FEB9A952972E4141A348DFC3 /* AudioSessionManager.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = AudioSessionManager.swift; path = Nora/AudioSessionManager.swift; sourceTree = "<group>"; };
+		SOUND001A1A1A1A1A0001 /* Win.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = Win.mp3; path = Nora/Sounds/Win.mp3; sourceTree = "<group>"; };
+		SOUND002A2A2A2A2A0002 /* Bell.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = Bell.mp3; path = Nora/Sounds/Bell.mp3; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +76,8 @@
 				FEB9A952972E4141A348DFC3 /* AudioSessionManager.swift */,
 				FC159628C71B43F7B48A55ED /* AudioSessionManager.m */,
 				CF3BE64594BE8028AE49DE30 /* PrivacyInfo.xcprivacy */,
+				SOUND001A1A1A1A1A0001 /* Win.mp3 */,
+				SOUND002A2A2A2A2A0002 /* Bell.mp3 */,
 			);
 			name = Nora;
 			sourceTree = "<group>";
@@ -208,6 +214,8 @@
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				9B0610A8CA994509BD812FDD /* GoogleService-Info.plist in Resources */,
 				804E3A529C4E851BBBB9E5E2 /* PrivacyInfo.xcprivacy in Resources */,
+				SOUND001B1B1B1B1B0001 /* Win.mp3 in Resources */,
+				SOUND002B2B2B2B2B0002 /* Bell.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -306,6 +314,8 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RevenueCat/RevenueCat.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/nanopb/nanopb_Privacy.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
@@ -334,6 +344,8 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RevenueCat.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/nanopb_Privacy.bundle",
 			);
 			runOnlyForDeploymentPostprocessing = 0;

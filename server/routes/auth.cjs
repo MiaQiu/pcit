@@ -67,13 +67,13 @@ const loginSchema = Joi.object({
 });
 
 // POST /api/auth/signup
-router.post('/signup', async (req, res) => {
+router.post('/signup', async (req, res, next) => {
   try {
     // Validate input
     const { error, value } = signupSchema.validate(req.body);
     if (error) {
       const errors = error.details.map(d => d.message);
-      throw new ValidationError(errors[0], errors);
+      return next(new ValidationError(errors[0], errors));
     }
 
     const { email, password, name, childName, childBirthYear, childBirthday, childConditions, issue, therapistId } = value;
@@ -87,10 +87,10 @@ router.post('/signup', async (req, res) => {
     });
 
     if (existingUser) {
-      throw new ConflictError(
+      return next(new ConflictError(
         'Email already exists in database',
         'This email is already registered. Please log in or use a different email.'
-      );
+      ));
     }
 
     // Hash password
@@ -170,28 +170,28 @@ router.post('/signup', async (req, res) => {
     });
 
   } catch (error) {
-    // If it's already a custom error, pass it through to global handler
+    // Pass all errors to global handler
     if (error instanceof AppError) {
-      throw error;
+      return next(error);
     }
 
     console.error('Signup error:', error);
-    throw new AppError(
+    return next(new AppError(
       `Signup error: ${error.message}`,
       500,
       'SIGNUP_ERROR',
       'Failed to create account. Please try again or contact support.'
-    );
+    ));
   }
 });
 
 // POST /api/auth/login
-router.post('/login', authLimiter, async (req, res) => {
+router.post('/login', authLimiter, async (req, res, next) => {
   try {
     // Validate input
     const { error, value } = loginSchema.validate(req.body);
     if (error) {
-      throw new ValidationError(error.details[0].message);
+      return next(new ValidationError(error.details[0].message));
     }
 
     const { email, password } = value;
@@ -205,19 +205,19 @@ router.post('/login', authLimiter, async (req, res) => {
     });
 
     if (!user) {
-      throw new UnauthorizedError(
+      return next(new UnauthorizedError(
         'User not found',
-        'Incorrect email or password. Please try again.'
-      );
+        'No account found with this email. Please sign up.'
+      ));
     }
 
     // Verify password
     const validPassword = await verifyPassword(password, user.passwordHash);
     if (!validPassword) {
-      throw new UnauthorizedError(
+      return next(new UnauthorizedError(
         'Invalid password',
-        'Incorrect email or password. Please try again.'
-      );
+        'Incorrect password. Please try again.'
+      ));
     }
 
     // Decrypt user data for token and response
@@ -266,18 +266,18 @@ router.post('/login', authLimiter, async (req, res) => {
     });
 
   } catch (error) {
-    // If it's already a custom error, pass it through to global handler
+    // Pass all errors to global handler
     if (error instanceof AppError) {
-      throw error;
+      return next(error);
     }
 
     console.error('Login error:', error);
-    throw new AppError(
+    return next(new AppError(
       `Login error: ${error.message}`,
       500,
       'LOGIN_ERROR',
       'Login failed. Please try again.'
-    );
+    ));
   }
 });
 
@@ -786,6 +786,74 @@ router.delete('/push-token', async (req, res) => {
   } catch (error) {
     console.error('[AUTH] Error unregistering push token:', error);
     res.status(500).json({ error: 'Failed to unregister push token' });
+  }
+});
+
+/**
+ * DELETE /api/auth/delete-account
+ * Delete user account by anonymizing personal data
+ * Requires authentication
+ *
+ * This endpoint complies with Apple's App Store guideline 5.1.1(v) requiring
+ * apps that support account creation to also support account deletion.
+ *
+ * Instead of deleting records, we anonymize the account by wiping PII fields.
+ * This preserves session data for analytics while removing identifiable information.
+ */
+router.delete('/delete-account', require('../middleware/auth.cjs').requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+    console.log(`[AUTH] Account deletion requested for user ${userId.substring(0, 8)}`);
+
+    // Verify user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Delete all refresh tokens for this user (prevents future login)
+    await prisma.refreshToken.deleteMany({
+      where: { userId }
+    });
+
+    // Delete any password reset tokens
+    await prisma.passwordResetToken.deleteMany({
+      where: { userId }
+    });
+
+    // Anonymize the user by wiping PII fields
+    // This keeps the record and related data but removes identifiable information
+    // Use placeholder values for required fields
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        email: `deleted_${userId}`, // Placeholder for required field
+        emailHash: `deleted_${userId}`, // Unique placeholder to satisfy unique constraint
+        passwordHash: '',
+        name: '',
+        childName: '',
+        pushToken: null,
+        pushTokenUpdatedAt: null
+      }
+    });
+
+    console.log(`[AUTH] Account anonymized successfully for user ${userId.substring(0, 8)}`);
+
+    res.json({
+      success: true,
+      message: 'Account deleted successfully.'
+    });
+
+  } catch (error) {
+    console.error('[AUTH] Account deletion error:', error);
+    res.status(500).json({
+      error: 'Failed to delete account',
+      details: 'An error occurred while deleting your account. Please try again or contact support.'
+    });
   }
 });
 

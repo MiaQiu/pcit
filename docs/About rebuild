@@ -1,0 +1,64 @@
+
+1. native code changes
+npx expo run:ios (Local build)
+
+2.   npm run build (in nora-core)
+  - Compiles TypeScript → JavaScript locally
+  - Takes ~2 seconds
+  - Just transforms your shared library code
+  - Run this when you change code in packages/nora-core
+
+3. backend changes
+
+  ### Docker Rebuild and Push to ECR
+  cd /Users/mia/nora
+  # Build Docker image
+  docker build -t nora-backend .
+  # Login to ECR
+  aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 059364397483.dkr.ecr.us-east-1.amazonaws.com
+  # Tag image
+  docker tag nora-backend:latest 059364397483.dkr.ecr.us-east-1.amazonaws.com/nora:latest
+  # Push to ECR
+  docker push 059364397483.dkr.ecr.us-east-1.amazonaws.com/nora:latest
+  
+4. TestFlight/App Store distribution
+4.1 development 
+eas build --platform ios --profile development 
+4.2 production
+eas build --platform ios --profile production
+eas submit --platform ios
+
+
+4. TestFlight/App Store distribution
+4.1 development 
+eas build --platform ios --profile development 
+4.2 production
+eas build --platform ios --profile production
+eas submit --platform ios
+
+
+***Difference between eas build and expo run:ios***
+
+npx expo run:ios (Local build)
+  - Builds directly on your Mac using Xcode
+  - Fast iteration - only rebuilds changed native code
+  - Runs on simulator or connected device
+  - Requires Xcode and CocoaPods installed locally
+  - Good for development/testing native changes
+
+eas build --platform ios --profile development
+  - Builds on Expo's cloud servers (EAS)
+  - Creates a full .ipa or simulator build
+  - Slower - uploads code, queues, builds from scratch
+  - Doesn't require Xcode on your machine
+  - Produces a downloadable/installable artifact
+  - Required for TestFlight/App Store distribution
+
+
+ Run this command to update the provisioning profile:
+
+  eas device:create
+
+  This will prompt you to register new devices. Or if you already added the device in Apple Developer Portal:
+
+  eas credentials
