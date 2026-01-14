@@ -47,14 +47,8 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
-    <key>NSCameraUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your camera</string>
-    <key>NSFaceIDUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your Face ID biometric data.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your photos</string>
+    <string>Nora uses your microphone to record your and your child's conversation during play sessions. These recordings are analyzed to provide you with personalized feedback and tips to help improve communication with your child.</string>
     <key>NSUserNotificationsUsageDescription</key>
     <string>Nora sends you helpful reminders to practice and learn, and notifies you when your session reports are ready.</string>
     <key>RCTNewArchEnabled</key>

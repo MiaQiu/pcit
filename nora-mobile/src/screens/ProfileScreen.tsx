@@ -393,7 +393,6 @@ export const ProfileScreen: React.FC = () => {
               size={100}
               imageUrl={profile?.profileImageUrl}
               relationshipToChild={profile?.relationshipToChild}
-              onPress={handleProfileImagePress}
             />
             {uploadingImage && (
               <View style={styles.uploadingOverlay}>
