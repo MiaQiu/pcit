@@ -54,10 +54,18 @@ export const RootNavigator: React.FC = () => {
     );
   }, []);
 
-  // Set up session expiration callback
+  // Handle logout
+  const handleLogout = useCallback(() => {
+    console.log('User logged out - resetting auth state');
+    setIsAuthenticated(false);
+    setOnboardingStep(null);
+  }, []);
+
+  // Set up auth callbacks
   useEffect(() => {
     authService.setSessionExpiredCallback(handleSessionExpired);
-  }, [authService, handleSessionExpired]);
+    authService.setLogoutCallback(handleLogout);
+  }, [authService, handleSessionExpired, handleLogout]);
 
   useEffect(() => {
     checkAuthStatus();
@@ -76,24 +84,21 @@ export const RootNavigator: React.FC = () => {
       console.log('[Auth] Authentication status:', authenticated);
       setIsAuthenticated(authenticated);
 
-      // IMPORTANT: Show app immediately, don't wait for API calls
-      setIsLoading(false);
-      console.log('[Auth] App loaded (instant startup)');
-
-      // If authenticated, check onboarding completion in BACKGROUND (non-blocking)
+      // If authenticated, check onboarding/subscription status BEFORE showing app
       if (authenticated) {
-        console.log('[Auth] Checking onboarding status in background...');
-        checkOnboardingCompletion()
-          .then(incompleteStep => {
-            console.log('[Auth] Onboarding step:', incompleteStep);
-            setOnboardingStep(incompleteStep);
-          })
-          .catch(error => {
-            console.error('[Auth] Background onboarding check failed (ignored):', error);
-            // Silently fail - user can still use app
-          });
+        console.log('[Auth] Checking onboarding and subscription status...');
+        try {
+          const incompleteStep = await checkOnboardingCompletion();
+          console.log('[Auth] Onboarding step:', incompleteStep);
+          setOnboardingStep(incompleteStep);
+        } catch (error) {
+          console.error('[Auth] Onboarding check failed:', error);
+          // On error, allow access to app (better than blocking user)
+        }
       }
 
+      // Show app after subscription check completes
+      setIsLoading(false);
       console.log('[Auth] Auth check complete');
     } catch (error) {
       console.error('[Auth] Error checking auth status:', error);
@@ -109,8 +114,8 @@ export const RootNavigator: React.FC = () => {
 
   const checkOnboardingCompletion = async (): Promise<string | null> => {
     try {
-      // Use cached user data for instant startup, refreshes in background
-      const user = await authService.getCurrentUser();
+      // Force refresh to get latest subscription status from server
+      const user = await authService.getCurrentUser(true);
 
       // Check which step is incomplete
       // Default values from signup are 'User' and 'Child'
@@ -127,9 +132,13 @@ export const RootNavigator: React.FC = () => {
         return 'ChildIssue';
       }
 
-      // All steps complete, need to do subscription
-      // Check if they've seen the intro screens
-      // For now, return null to indicate onboarding is complete
+      // Check subscription status - if not active, show paywall
+      if (user.subscriptionStatus !== 'ACTIVE') {
+        console.log('[Auth] Subscription not active, showing paywall. Status:', user.subscriptionStatus);
+        return 'Subscription';
+      }
+
+      // All steps complete and subscription active
       return null;
     } catch (error) {
       console.error('[Auth] Error checking onboarding completion:', error);

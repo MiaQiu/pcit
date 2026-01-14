@@ -22,7 +22,7 @@ import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendNewReportNotification } from '../utils/notifications';
-import { startRecording as startNativeRecording, stopRecording as stopNativeRecording, getRecordingStatus, addAutoStopListener, removeAutoStopListener, getPendingRecording, endBackgroundTask } from '../utils/AudioSessionManager';
+import { startRecording as startNativeRecording, stopRecording as stopNativeRecording, getRecordingStatus, addAutoStopListener, removeAutoStopListener, getPendingRecording, endBackgroundTask, setCompletionSound } from '../utils/AudioSessionManager';
 import type { EmitterSubscription } from 'react-native';
 import { ErrorMessages } from '../utils/errorMessages';
 import { handleApiError } from '../utils/NetworkMonitor';
@@ -301,9 +301,12 @@ export const RecordScreen: React.FC = () => {
         }
       });
 
-      // Start native recording with 5-minute (300 second) auto-stop and completion sound
-      const result = await startNativeRecording(300, completionSound);
-      console.log('[RecordScreen] Native recording started:', result.uri, 'with sound:', completionSound);
+      // Set completion sound before starting recording
+      setCompletionSound(completionSound);
+
+      // Start native recording with 5-minute (300 second) auto-stop
+      const result = await startNativeRecording(300);
+      console.log('[RecordScreen] Native recording started:', result.uri);
 
       setRecordingState('recording');
 

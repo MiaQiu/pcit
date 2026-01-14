@@ -686,7 +686,7 @@ async function reportPermanentFailureToTeam(sessionId, error) {
   try {
     const session = await prisma.session.findUnique({
       where: { id: sessionId },
-      include: { user: true }
+      include: { User: true }
     });
 
     if (!session) {
@@ -698,7 +698,7 @@ async function reportPermanentFailureToTeam(sessionId, error) {
       type: 'PERMANENT_PROCESSING_FAILURE',
       sessionId: session.id,
       userId: session.userId,
-      userEmail: session.user.email,
+      userEmail: session.User.email,
       error: error.message,
       stack: error.stack,
       retryCount: session.retryCount || 0,
@@ -718,7 +718,7 @@ async function reportPermanentFailureToTeam(sessionId, error) {
             {
               type: 'section',
               fields: [
-                { type: 'mrkdwn', text: `*User:*\n${session.user.email}` },
+                { type: 'mrkdwn', text: `*User:*\n${session.User.email}` },
                 { type: 'mrkdwn', text: `*Session:*\n${sessionId}` }
               ]
             },
@@ -1806,6 +1806,28 @@ router.post('/upload/complete', requireAuth, async (req, res) => {
             }
           });
 
+          // Send push notification to inform user of failure
+          console.log(`📱 [PUSH-NOTIFICATION] Sending failure notification for session ${sessionId.substring(0, 8)}`);
+          try {
+            const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
+            const result = await sendPushNotificationToUser(userId, {
+              title: 'Recording Processing Failed',
+              body: 'We encountered an issue processing your recording. Please try again.',
+              data: {
+                type: 'report_failed',
+                recordingId: sessionId,
+                error: err.message
+              }
+            });
+            if (result.success) {
+              console.log(`✅ [PUSH-NOTIFICATION] Failure notification sent for session ${sessionId.substring(0, 8)}`);
+            } else {
+              console.log(`⚠️ [PUSH-NOTIFICATION] Failure notification failed for session ${sessionId.substring(0, 8)}:`, result.error);
+            }
+          } catch (pushError) {
+            console.error(`❌ [PUSH-NOTIFICATION] Failed to send failure notification:`, pushError);
+          }
+
           // Report permanent failure to team
           await reportPermanentFailureToTeam(sessionId, err);
         } catch (updateErr) {
@@ -1943,6 +1965,28 @@ router.post('/upload', requireAuth, upload.single('audio'), async (req, res) => 
               permanentFailure: true
             }
           });
+
+          // Send push notification to inform user of failure
+          console.log(`📱 [PUSH-NOTIFICATION] Sending failure notification for session ${sessionId.substring(0, 8)}`);
+          try {
+            const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
+            const result = await sendPushNotificationToUser(userId, {
+              title: 'Recording Processing Failed',
+              body: 'We encountered an issue processing your recording. Please try again.',
+              data: {
+                type: 'report_failed',
+                recordingId: sessionId,
+                error: err.message
+              }
+            });
+            if (result.success) {
+              console.log(`✅ [PUSH-NOTIFICATION] Failure notification sent for session ${sessionId.substring(0, 8)}`);
+            } else {
+              console.log(`⚠️ [PUSH-NOTIFICATION] Failure notification failed for session ${sessionId.substring(0, 8)}:`, result.error);
+            }
+          } catch (pushError) {
+            console.error(`❌ [PUSH-NOTIFICATION] Failed to send failure notification:`, pushError);
+          }
 
           // Report permanent failure to team
           await reportPermanentFailureToTeam(sessionId, err);

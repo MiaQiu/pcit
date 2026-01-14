@@ -104,16 +104,17 @@ class AudioSessionManager: RCTEventEmitter, AVAudioRecorderDelegate {
   // MARK: - Recording Control
 
   @objc
+  func setCompletionSound(_ soundName: String) {
+    completionSoundName = soundName
+    NSLog("[AudioSessionManager] 🔊 Completion sound set to: %@", soundName)
+  }
+
+  @objc
   func startRecording(
     _ autoStopSeconds: NSNumber,
-    soundName: String,
     withResolver resolve: @escaping RCTPromiseResolveBlock,
     withRejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    // Store the completion sound name
-    completionSoundName = soundName
-    NSLog("[AudioSessionManager] 🔊 Completion sound set to: %@", soundName)
-
     // 1. Cleanup previous state
     cleanupRecording()
 

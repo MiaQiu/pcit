@@ -259,7 +259,14 @@ router.post('/login', authLimiter, async (req, res, next) => {
         name: decryptedUser.name,
         childName: decryptedUser.childName,
         childBirthYear: decryptedUser.childBirthYear,
-        childConditions: decryptedUser.childConditions
+        childConditions: decryptedUser.childConditions,
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionPlan: user.subscriptionPlan,
+        subscriptionEndDate: user.subscriptionEndDate,
+        currentStreak: user.currentStreak,
+        longestStreak: user.longestStreak,
+        relationshipToChild: user.relationshipToChild,
+        createdAt: user.createdAt
       },
       accessToken,
       refreshToken

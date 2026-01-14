@@ -17,7 +17,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
@@ -85,23 +85,34 @@ export const SubscriptionScreen: React.FC = () => {
         // the RevenueCat webhook will still update subscriptionStatus in backend.
         // This prevents "zombie purchases" where user pays but stays in onboarding.
 
-        // Fire-and-forget onboarding completion (don't block navigation)
-        authService.completeOnboarding({
-          name: data.name,
-          relationshipToChild: data.relationshipToChild || undefined,
-          childName: data.childName,
-          childGender: data.childGender || undefined,
-          childBirthday: data.childBirthday || undefined,
-          issue: data.issue || undefined,
-        }).catch(err => {
-          // Log but don't block - webhook will handle subscription status
-          console.error('Onboarding completion failed (non-critical):', err);
-          // Optional: Send to error tracking service
-        });
+        // Only call completeOnboarding if user is going through initial onboarding
+        // (has onboarding data). Skip for returning users who just need to subscribe.
+        const isInitialOnboarding = data.name && data.name.trim() !== '';
 
-        // Navigate immediately - user has paid, let them in
-        // Webhook will update subscriptionStatus even if above call fails
-        navigation.navigate('NotificationPermission');
+        if (isInitialOnboarding) {
+          // Fire-and-forget onboarding completion (don't block navigation)
+          authService.completeOnboarding({
+            name: data.name,
+            relationshipToChild: data.relationshipToChild || undefined,
+            childName: data.childName,
+            childGender: data.childGender || undefined,
+            childBirthday: data.childBirthday || undefined,
+            issue: data.issue || undefined,
+          }).catch(err => {
+            // Log but don't block - webhook will handle subscription status
+            console.error('Onboarding completion failed (non-critical):', err);
+          });
+          // Navigate to notification permission for new users
+          navigation.navigate('NotificationPermission');
+        } else {
+          // Returning user - go directly to main app
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'MainTabs' as any }],
+            })
+          );
+        }
       }
     } catch (error: any) {
       console.error('Purchase error:', error);
@@ -126,12 +137,25 @@ export const SubscriptionScreen: React.FC = () => {
       const result = await restorePurchases();
 
       if (result.restored) {
+        const isInitialOnboarding = data.name && data.name.trim() !== '';
         Alert.alert(
           'Success',
           'Your subscription has been restored!',
           [{
             text: 'OK',
-            onPress: () => navigation.navigate('NotificationPermission')
+            onPress: () => {
+              if (isInitialOnboarding) {
+                navigation.navigate('NotificationPermission');
+              } else {
+                // Returning user - go directly to main app
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'MainTabs' as any }],
+                  })
+                );
+              }
+            }
           }]
         );
       } else {
@@ -193,6 +217,21 @@ export const SubscriptionScreen: React.FC = () => {
       );
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Welcome' }],
+        })
+      );
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Failed to log out. Please try again.');
     }
   };
 
@@ -365,6 +404,14 @@ export const SubscriptionScreen: React.FC = () => {
           activeOpacity={0.8}
         >
           <Text style={styles.restorePurchasesText}>Restore Purchases</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -659,6 +706,15 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 14,
     color: '#8C49D5',
+  },
+  logoutButton: {
+    alignSelf: 'center',
+    paddingVertical: 12,
+  },
+  logoutText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 14,
+    color: '#6B7280',
   },
   loadingContainer: {
     flexDirection: 'row',

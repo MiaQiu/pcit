@@ -335,13 +335,11 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 1,
+    alignItems: 'stretch',
   },
   ellipse78: {
-    position: 'absolute',
-    left: '50%',
-    marginLeft: -175.5,
     top: -10,
-    width: 350,
+    width: '100%',
     height: 300,
   },
   content: {

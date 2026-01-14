@@ -9,7 +9,6 @@ npx expo run:ios (Local build)
   - Run this when you change code in packages/nora-core
 
 3. backend changes
-
   ### Docker Rebuild and Push to ECR
   cd /Users/mia/nora
   # Build Docker image
@@ -20,7 +19,7 @@ npx expo run:ios (Local build)
   docker tag nora-backend:latest 059364397483.dkr.ecr.us-east-1.amazonaws.com/nora:latest
   # Push to ECR
   docker push 059364397483.dkr.ecr.us-east-1.amazonaws.com/nora:latest
-  
+
 4. TestFlight/App Store distribution
 4.1 development 
 eas build --platform ios --profile development 

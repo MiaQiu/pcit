@@ -33,14 +33,22 @@ export const configureAudioSessionForRecording = async (): Promise<boolean> => {
   }
 };
 
-export const startRecording = async (autoStopSeconds: number = 0, soundName: string = 'Win'): Promise<{ uri: string; status: string }> => {
+export const setCompletionSound = (soundName: string): void => {
+  if (Platform.OS !== 'ios') {
+    return;
+  }
+  AudioSessionManager.setCompletionSound(soundName);
+  console.log('[AudioSessionManager] Completion sound set to:', soundName);
+};
+
+export const startRecording = async (autoStopSeconds: number = 0): Promise<{ uri: string; status: string }> => {
   if (Platform.OS !== 'ios') {
     throw new Error('Native recording only supported on iOS');
   }
 
   try {
-    const result = await AudioSessionManager.startRecording(autoStopSeconds, soundName);
-    console.log('[AudioSessionManager] Recording started:', result.uri, 'with auto-stop:', autoStopSeconds, 'seconds, sound:', soundName);
+    const result = await AudioSessionManager.startRecording(autoStopSeconds);
+    console.log('[AudioSessionManager] Recording started:', result.uri, 'with auto-stop:', autoStopSeconds, 'seconds');
     return result;
   } catch (error) {
     console.error('[AudioSessionManager] Failed to start recording:', error);

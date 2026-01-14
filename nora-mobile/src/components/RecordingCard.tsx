@@ -5,14 +5,14 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from './Card';
-import { Ellipse } from './Ellipse';
+import { MaskedDinoImage } from './MaskedDinoImage';
 import { RecordingTimer } from './RecordingTimer';
 import { FONTS, COLORS } from '../constants/assets';
 
-const dragonImageUrl = require('../../assets/images/dragon_image.png');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface RecordingCardProps {
   isRecording: boolean;
@@ -20,8 +20,6 @@ interface RecordingCardProps {
   onRecordPress?: () => void;
   canRecord?: boolean;
   backgroundColor?: string;
-  ellipse77Color?: string;
-  ellipse78Color?: string;
 }
 
 export const RecordingCard: React.FC<RecordingCardProps> = ({
@@ -30,8 +28,6 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
   onRecordPress,
   canRecord,
   backgroundColor = '#E4E4FF',
-  ellipse77Color = '#9BD4DF',
-  ellipse78Color = '#A6E0CB',
 }) => {
   return (
     <Card
@@ -40,19 +36,9 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
       style={styles.card}
     >
       <View style={styles.container}>
-        {/* Ellipse 78 - Top decorative background */}
-        <Ellipse color={ellipse78Color} style={styles.ellipse78} />
-
-        {/* Ellipse 77 - Bottom decorative background */}
-        <Ellipse color={ellipse77Color} style={styles.ellipse77} />
-
-        {/* Dragon Image - Figma node 35:798 */}
-        <View style={styles.dragonContainer}>
-          <Image
-            source={dragonImageUrl}
-            style={styles.dragonImage}
-            resizeMode="contain"
-          />
+        {/* Dragon Image with masked background */}
+        <View style={styles.dinoSection}>
+          <MaskedDinoImage style={styles.dinoImage} maskColor={backgroundColor} />
         </View>
 
         {/* Recording Timer - Top */}
@@ -118,34 +104,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // Ellipse 78: x=-45, y=-88, w=473, h=259
-  ellipse78: {
+  dinoSection: {
     position: 'absolute',
-    left: -45,
-    top: -88,
-    width: 473,
-    height: 259,
-  },
-  // Ellipse 77: x=-45, y=153, w=473, h=175
-  ellipse77: {
-    position: 'absolute',
-    left: -45,
-    top: 153,
-    width: 473,
-    height: 175,
-  },
-  // Dragon image: x=0, y=42, w=382, h=223
-  dragonContainer: {
-    position: 'absolute',
+    top: 0,
     left: 0,
-    top: 42,
-    width: 350, //adjusted
-    height: 223,
-
-    // width: 382, //original
-
+    right: 0,
+    height: SCREEN_WIDTH * 0.9,
+    maxHeight: 350,
+    overflow: 'visible',
   },
-  dragonImage: {
+  dinoImage: {
     width: '100%',
     height: '100%',
   },

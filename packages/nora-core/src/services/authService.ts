@@ -16,6 +16,7 @@ class AuthService {
   private storage: StorageAdapter;
   private apiUrl: string;
   private onSessionExpired?: () => void;
+  private onLogout?: () => void;
 
   constructor(storage: StorageAdapter, apiUrl: string) {
     this.storage = storage;
@@ -27,6 +28,13 @@ class AuthService {
    */
   setSessionExpiredCallback(callback: () => void): void {
     this.onSessionExpired = callback;
+  }
+
+  /**
+   * Set callback for when user logs out
+   */
+  setLogoutCallback(callback: () => void): void {
+    this.onLogout = callback;
   }
 
   /**
@@ -103,6 +111,8 @@ class AuthService {
     } finally {
       await this.clearTokens();
       await this.clearUserCache();
+      // Notify listeners that logout occurred
+      this.onLogout?.();
     }
   }
 

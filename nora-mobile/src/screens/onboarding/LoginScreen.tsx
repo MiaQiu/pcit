@@ -87,13 +87,27 @@ export const LoginScreen: React.FC = () => {
         });
       }
 
-      // Reset navigation to MainTabs after successful login
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'MainTabs' as any }],
-        })
-      );
+      // Check subscription status and navigate accordingly
+      const subscriptionStatus = response?.user?.subscriptionStatus;
+
+      if (subscriptionStatus === 'ACTIVE') {
+        // User has active subscription - go to main app
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'MainTabs' as any }],
+          })
+        );
+      } else {
+        // Subscription not active (EXPIRED, CANCELLED, or undefined) - show paywall
+        console.log('[LoginScreen] Subscription not active, showing paywall. Status:', subscriptionStatus);
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Onboarding' as any, params: { initialStep: 'Subscription' } }],
+          })
+        );
+      }
     } catch (error: any) {
       console.error('Login error:', error);
       const errorMessage = getErrorMessage(error, ErrorMessages.AUTH.LOGIN_FAILED);
