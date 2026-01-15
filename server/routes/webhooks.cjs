@@ -27,22 +27,30 @@ const verifyWebhook = (body, signature) => {
 
 /**
  * Handle subscription activation (initial purchase or renewal)
+ * RevenueCat is the source of truth for subscription dates
  */
 async function handleSubscriptionActivation(userId, event) {
-  const isTrialPeriod = event.is_trial_period || false;
+  // Check multiple fields for trial status (RevenueCat may use different fields)
+  const isTrialPeriod = event.is_trial_period === true ||
+                        event.period_type === 'TRIAL' ||
+                        event.period_type === 'trial';
   const expirationDate = event.expiration_at_ms ? new Date(event.expiration_at_ms) : null;
+  const startDate = event.purchased_at_ms ? new Date(event.purchased_at_ms) : new Date();
+
+  console.log(`Processing subscription activation: is_trial_period=${event.is_trial_period}, period_type=${event.period_type}, calculated isTrialPeriod=${isTrialPeriod}`);
 
   await prisma.user.update({
     where: { id: userId },
     data: {
-      subscriptionStatus: isTrialPeriod ? 'TRIAL' : 'ACTIVE',
-      subscriptionPlan: 'PREMIUM', // User has paid subscription
+      subscriptionStatus: 'ACTIVE',
+      subscriptionPlan: isTrialPeriod ? 'TRIAL' : 'PREMIUM',
+      subscriptionStartDate: startDate,
       subscriptionEndDate: expirationDate,
       revenueCatCustomerId: event.app_user_id,
     },
   });
 
-  console.log(`Subscription activated for user ${userId} (trial: ${isTrialPeriod})`);
+  console.log(`Subscription activated for user ${userId} (trial: ${isTrialPeriod}, ends: ${expirationDate})`);
 }
 
 /**

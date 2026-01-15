@@ -341,53 +341,65 @@ export const ProfileScreen: React.FC = () => {
     return issueLabels[issue] || issue;
   };
 
+  // Format date in local timezone (avoids potential Hermes engine quirks with toLocaleDateString)
+  const formatLocalDate = (date: Date): string => {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  };
+
   const getSubscriptionInfo = () => {
     if (!profile) return null;
 
-    const plan = profile.subscriptionPlan || 'TRIAL';
-    const status = profile.subscriptionStatus || 'ACTIVE';
+    const plan = profile.subscriptionPlan || 'FREE';
+    const status = profile.subscriptionStatus || 'INACTIVE';
 
-    // Calculate days remaining
+    // Calculate days remaining using subscriptionEndDate (RevenueCat is source of truth)
     let daysRemaining = 0;
     let endDate: Date | null = null;
 
-    // Parse date strings to Date objects
-    if (plan === 'TRIAL' && profile.trialEndDate) {
-      endDate = new Date(profile.trialEndDate);
-      //console.log('Trial end date:', profile.trialEndDate, 'Parsed:', endDate);
-    } else if (profile.subscriptionEndDate) {
+    if (profile.subscriptionEndDate) {
       endDate = new Date(profile.subscriptionEndDate);
-      //console.log('Subscription end date:', profile.subscriptionEndDate, 'Parsed:', endDate);
     }
 
     if (endDate && !isNaN(endDate.getTime())) {
       const today = new Date();
       const diffTime = endDate.getTime() - today.getTime();
       daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-      //console.log('Days remaining:', daysRemaining);
     }
 
     // Get plan display name
     const planName = plan === 'TRIAL' ? 'Premium Trial' : plan === 'PREMIUM' ? 'Premium' : 'Free';
 
-    // Get status text
+    // Get status text based on plan + status combination
     let statusText = '';
-    if (status === 'EXPIRED') {
-      statusText = 'Expired';
-    } else if (status === 'CANCELLED') {
-      statusText = 'Cancelled';
-    } else if (endDate && !isNaN(endDate.getTime())) {
-      // Format end date
-      const formattedDate = endDate.toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric'
-      });
-      statusText = `Ends ${formattedDate}`;
+    const formattedDate = endDate && !isNaN(endDate.getTime()) ? formatLocalDate(endDate) : null;
 
-      // Optionally add days remaining
-      if (daysRemaining > 0) {
-        statusText += ` (${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining)`;
+    if (status === 'INACTIVE') {
+      // FREE + INACTIVE: New user who never subscribed
+      statusText = 'No active subscription';
+    } else if (status === 'EXPIRED') {
+      // Any plan + EXPIRED: Subscription ended
+      statusText = 'Subscription expired';
+    } else if (status === 'CANCELLED') {
+      // Cancelled but still has access until end date
+      if (plan === 'TRIAL' && formattedDate) {
+        statusText = `Trial cancelled, ends ${formattedDate}`;
+      } else if (formattedDate) {
+        statusText = `Cancelled, ends ${formattedDate}`;
+      } else {
+        statusText = 'Cancelled';
+      }
+    } else if (status === 'ACTIVE') {
+      // Active subscription
+      if (plan === 'TRIAL' && formattedDate) {
+        statusText = `Trial ends ${formattedDate}`;
+      } else if (plan === 'PREMIUM' && formattedDate) {
+        statusText = `Renews ${formattedDate}`;
+      } else if (formattedDate) {
+        statusText = `Ends ${formattedDate}`;
+      } else {
+        statusText = 'Active';
       }
     } else {
       statusText = 'Active';
@@ -538,6 +550,7 @@ export const ProfileScreen: React.FC = () => {
                   {getSubscriptionInfo()?.statusText && (
                     <Text style={[
                       styles.subscriptionNote,
+                      getSubscriptionInfo()?.status === 'INACTIVE' && styles.subscriptionInactive,
                       getSubscriptionInfo()?.status === 'EXPIRED' && styles.subscriptionExpired,
                       getSubscriptionInfo()?.status === 'CANCELLED' && styles.subscriptionCancelled,
                     ]}>
@@ -834,6 +847,9 @@ const styles = StyleSheet.create({
   },
   subscriptionCancelled: {
     color: '#F59E0B',
+  },
+  subscriptionInactive: {
+    color: '#6B7280',
   },
   divider: {
     height: 1,

@@ -293,9 +293,9 @@ model User {
   issue                 String?
   profileImageUrl       String?
   subscriptionEndDate   DateTime?
-  subscriptionPlan      SubscriptionPlan       @default(TRIAL)
+  subscriptionPlan      SubscriptionPlan       @default(FREE)
   subscriptionStartDate DateTime?
-  subscriptionStatus    SubscriptionStatus     @default(ACTIVE)
+  subscriptionStatus    SubscriptionStatus     @default(INACTIVE)
   trialEndDate          DateTime?
   trialStartDate        DateTime?
   relationshipToChild   RelationshipToChild    @default(MOTHER)
@@ -430,6 +430,7 @@ enum SubscriptionPlan {
 enum SubscriptionStatus {
   NONE
   TRIAL
+  INACTIVE
   ACTIVE
   EXPIRED
   CANCELLED

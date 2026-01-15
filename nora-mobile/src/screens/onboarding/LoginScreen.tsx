@@ -99,8 +99,8 @@ export const LoginScreen: React.FC = () => {
           })
         );
       } else {
-        // Subscription not active (EXPIRED, CANCELLED, or undefined) - show paywall
-        console.log('[LoginScreen] Subscription not active, showing paywall. Status:', subscriptionStatus);
+        // Subscription not active (INACTIVE, EXPIRED, CANCELLED, or undefined) - show subscription screen
+        console.log('[LoginScreen] Subscription not active, showing subscription screen. Status:', subscriptionStatus);
         navigation.dispatch(
           CommonActions.reset({
             index: 0,

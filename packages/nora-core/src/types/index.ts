@@ -4,7 +4,7 @@
 
 // Subscription types
 export type SubscriptionPlan = 'TRIAL' | 'PREMIUM' | 'FREE';
-export type SubscriptionStatus = 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+export type SubscriptionStatus = 'INACTIVE' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
 export type RelationshipToChild = 'MOTHER' | 'FATHER' | 'GRANDMOTHER' | 'GRANDFATHER' | 'GUARDIAN' | 'OTHER';
 
 export interface SubscriptionInfo {

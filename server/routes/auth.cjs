@@ -103,12 +103,8 @@ router.post('/signup', async (req, res, next) => {
       childName
     });
 
-    // Set up trial period (30 days from now)
-    const now = new Date();
-    const trialEndDate = new Date(now);
-    trialEndDate.setDate(trialEndDate.getDate() + 30);
-
-    // Create user
+    // Create user with INACTIVE subscription status
+    // Subscription will be activated by RevenueCat webhook after purchase
     const user = await prisma.user.create({
       data: {
         id: crypto.randomUUID(),
@@ -122,10 +118,8 @@ router.post('/signup', async (req, res, next) => {
         childConditions: JSON.stringify(childConditions), // Stored as plain JSON
         issue,
         therapistId,
-        subscriptionPlan: 'TRIAL',
-        subscriptionStatus: 'ACTIVE',
-        trialStartDate: now,
-        trialEndDate: trialEndDate
+        subscriptionPlan: 'FREE',
+        subscriptionStatus: 'INACTIVE',
       }
     });
 

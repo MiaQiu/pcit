@@ -132,10 +132,27 @@ export const RootNavigator: React.FC = () => {
         return 'ChildIssue';
       }
 
-      // Check subscription status - if not active, show paywall
+      // Check subscription status for returning users
+      // New users go through onboarding and reach Subscription screen naturally
       if (user.subscriptionStatus !== 'ACTIVE') {
-        console.log('[Auth] Subscription not active, showing paywall. Status:', user.subscriptionStatus);
-        return 'Subscription';
+        // INACTIVE users have never subscribed - redirect to Subscription screen
+        if (user.subscriptionStatus === 'INACTIVE') {
+          console.log('[Auth] User has no subscription, redirecting to subscription screen');
+          return 'Subscription';
+        }
+
+        // CANCELLED/EXPIRED users - check if still within paid period
+        const now = new Date();
+        const endDate = user.subscriptionEndDate
+          ? new Date(user.subscriptionEndDate)
+          : null;
+
+        if (!endDate || now > endDate) {
+          console.log('[Auth] Subscription ended, redirecting to subscription screen. Status:', user.subscriptionStatus);
+          return 'Subscription';
+        }
+
+        console.log('[Auth] Subscription cancelled but still within paid period. End date:', endDate);
       }
 
       // All steps complete and subscription active
