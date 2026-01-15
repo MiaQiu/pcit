@@ -42,6 +42,9 @@ export const StartScreen: React.FC = () => {
           </View>
         </View>
 
+        {/* Spacer before title */}
+        <View style={styles.spacer} />
+
         {/* Title */}
         <Text style={styles.title}>Nora</Text>
 
@@ -51,7 +54,7 @@ export const StartScreen: React.FC = () => {
           Happier Child.
         </Text>
 
-        {/* Spacer */}
+        {/* Spacer after title */}
         <View style={styles.spacer} />
 
         {/* Get Started Button */}
@@ -108,7 +111,7 @@ const styles = StyleSheet.create({
     width: '125%',
     height: '125%',
     alignItems: 'center',
-    marginBottom: 20,
+    //marginBottom: 20,
 
   },
   dragonImage: {
