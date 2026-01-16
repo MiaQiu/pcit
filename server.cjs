@@ -67,7 +67,16 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Body parser (increase limit for audio file uploads)
-app.use(express.json({ limit: '50mb' }));
+// Capture raw body for webhook signature verification
+app.use(express.json({
+  limit: '50mb',
+  verify: (req, res, buf) => {
+    // Store raw body for webhook signature verification
+    if (req.originalUrl.includes('/webhooks/')) {
+      req.rawBody = buf.toString();
+    }
+  }
+}));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Serve static files from public directory

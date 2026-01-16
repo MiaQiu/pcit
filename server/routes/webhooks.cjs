@@ -104,7 +104,7 @@ async function handleBillingIssue(userId, event) {
  * Handle RevenueCat webhook events
  * POST /api/webhooks/revenuecat
  */
-router.post('/revenuecat', express.json({ type: 'application/json' }), async (req, res) => {
+router.post('/revenuecat', async (req, res) => {
   try {
     // Log headers for debugging
     console.log('Received webhook headers:', Object.keys(req.headers));
@@ -123,21 +123,21 @@ router.post('/revenuecat', express.json({ type: 'application/json' }), async (re
       return res.status(401).json({ error: 'Missing signature' });
     }
 
-    // Verify signature (skip for test events and local development)
-    const isDevelopment = process.env.NODE_ENV !== 'production';
-
-    if (signature && !isTestEvent && !isDevelopment) {
-      const rawBody = JSON.stringify(req.body);
+    // Verify signature (skip for test events only)
+    if (signature && !isTestEvent) {
+      // Use raw body captured by express.json verify function
+      const rawBody = req.rawBody;
+      if (!rawBody) {
+        console.error('Raw body not captured for signature verification');
+        return res.status(500).json({ error: 'Internal error: raw body not available' });
+      }
       if (!verifyWebhook(rawBody, signature)) {
         console.error('Invalid webhook signature');
         return res.status(401).json({ error: 'Invalid signature' });
       }
-    } else {
-      if (isTestEvent) {
-        console.log('Skipping signature verification for TEST event');
-      } else if (isDevelopment) {
-        console.log('Skipping signature verification in development mode');
-      }
+      console.log('Webhook signature verified successfully');
+    } else if (isTestEvent) {
+      console.log('Skipping signature verification for TEST event');
     }
 
     const { event } = req.body;
