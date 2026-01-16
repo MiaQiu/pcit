@@ -19,6 +19,111 @@ import { MarkdownText } from '../utils/MarkdownText';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
 
+// PCIT tag color mapping
+const TAG_COLORS: { [key: string]: string } = {
+  // CDI - DO tags (green/blue/purple)
+  'Praise': '#10B981',
+  'Echo': '#3B82F6',
+  'Narration': '#8B5CF6',
+  'Labeled Praise': '#10B981',
+
+  // CDI - DON'T tags (red/orange)
+  'Question': '#EF4444',
+  'Command': '#EF4444',
+  'Criticism': '#DC2626',
+  'Negative Talk': '#DC2626',
+  'Direct Command': '#EF4444',
+  'Indirect Command': '#F97316',
+
+  // Neutral (gray)
+  'NEUTRAL': '#6B7280',
+  'Neutral': '#6B7280',
+};
+
+const getTagColor = (tag?: string): string => {
+  if (!tag) return '#6B7280';
+  return TAG_COLORS[tag] || '#6B7280';
+};
+
+const getSkillType = (tag?: string): 'desirable' | 'undesirable' | 'neutral' => {
+  if (!tag) return 'neutral';
+
+  // Desirable skills
+  if (tag === 'Echo' || tag === 'Labeled Praise' || tag === 'Narration' || tag === 'Praise') {
+    return 'desirable';
+  }
+
+  // Neutral skills
+  if (tag === 'NEUTRAL' || tag === 'Neutral') {
+    return 'neutral';
+  }
+
+  // Everything else is undesirable
+  return 'undesirable';
+};
+
+// Light background colors for different speakers
+const SPEAKER_COLORS = [
+  '#E3F2FD', // Light blue
+  '#FFF3E0', // Light orange
+  '#F3E5F5', // Light purple
+  '#E8F5E9', // Light green
+];
+
+const getSpeakerMappings = (transcript: any[]) => {
+  const labelMapping: { [key: string]: string } = {};
+  const colorMapping: { [key: string]: string } = {};
+  const seenSpeakers = new Set<string>();
+  const adultSpeakers: string[] = [];
+  const childSpeakers: string[] = [];
+  let colorIndex = 0;
+
+  // Group speakers by role (only add each speaker once)
+  transcript.forEach(segment => {
+    const role = segment.role;
+    if (!seenSpeakers.has(segment.speaker)) {
+      seenSpeakers.add(segment.speaker);
+      if (role === 'adult') {
+        adultSpeakers.push(segment.speaker);
+      } else if (role === 'child') {
+        childSpeakers.push(segment.speaker);
+      }
+    }
+  });
+
+  // Sort to ensure consistent ordering
+  adultSpeakers.sort();
+  childSpeakers.sort();
+
+  // Assign labels and colors
+  adultSpeakers.forEach((speaker, index) => {
+    labelMapping[speaker] = adultSpeakers.length > 1 ? `Adult ${index + 1}` : 'Adult';
+    colorMapping[speaker] = SPEAKER_COLORS[colorIndex % SPEAKER_COLORS.length];
+    colorIndex++;
+  });
+  childSpeakers.forEach((speaker, index) => {
+    labelMapping[speaker] = childSpeakers.length > 1 ? `Child ${index + 1}` : 'Child';
+    colorMapping[speaker] = SPEAKER_COLORS[colorIndex % SPEAKER_COLORS.length];
+    colorIndex++;
+  });
+
+  return { labelMapping, colorMapping };
+};
+
+const getExampleUtterances = (exampleIndex: number, transcript: any[]) => {
+  const result: { utterance: any; originalIndex: number }[] = [];
+  if (exampleIndex > 0 && transcript[exampleIndex - 1]) {
+    result.push({ utterance: transcript[exampleIndex - 1], originalIndex: exampleIndex - 1 });
+  }
+  if (transcript[exampleIndex]) {
+    result.push({ utterance: transcript[exampleIndex], originalIndex: exampleIndex });
+  }
+  if (exampleIndex < transcript.length - 1 && transcript[exampleIndex + 1]) {
+    result.push({ utterance: transcript[exampleIndex + 1], originalIndex: exampleIndex + 1 });
+  }
+  return result;
+};
+
 export const ReportScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<ReportScreenRouteProp>();
@@ -195,16 +300,24 @@ export const ReportScreen: React.FC = () => {
           </View>
         </View>
 
+        {/* Session Summary */}
+        {reportData.summary && (
+          <View>
+            <Text style={styles.cardTitle}>Session Summary</Text>
+            <View style={styles.card}>
+              <Text style={styles.summaryText}>{reportData.summary}</Text>
+            </View>
+          </View>
+        )}
+
         {/* Top Moment */}
         <View>
           <Text style={styles.cardTitle}>Top Moment</Text>
           <View style={styles.card}>
             <Text style={styles.quoteText}>"{reportData.topMoment.quote}"</Text>
-
-            {/* Audio Waveform */}
-            {/* <View style={styles.waveformContainer}>
-              <AudioWaveform isRecording={false} />
-            </View> */}
+            {reportData.topMoment.celebration && (
+              <Text style={styles.celebrationText}>{reportData.topMoment.celebration}</Text>
+            )}
           </View>
         </View>
 
@@ -212,47 +325,100 @@ export const ReportScreen: React.FC = () => {
         <View>
           <Text style={styles.cardTitle}>Tips for next time</Text>
           <View style={styles.card}>
-            {typeof reportData.tips === 'string' ? (
-              // Old format: plain text
-              <MarkdownText style={styles.tipsText}>{reportData.tips}</MarkdownText>
-            ) : (
-              // New format: structured object
-              <View>
-                {/* Observation */}
-                <Text style={styles.observationTitle}>{reportData.tips.observation}</Text>
+            {/* New format: simplified tip with example utterances */}
+            {reportData.tip && (
+              <Text style={styles.tipMainText}>{reportData.tip}</Text>
+            )}
 
-                {/* Why it matters */}
+            {/* Transition text */}
+            {reportData.transition && (
+              <Text style={styles.transitionText}>{reportData.transition}</Text>
+            )}
+
+            {/* Example utterances */}
+            {reportData.exampleIndex != null && reportData.transcript && reportData.transcript.length > 0 && (() => {
+              const speakerMappings = getSpeakerMappings(reportData.transcript);
+              const exampleUtterances = getExampleUtterances(reportData.exampleIndex, reportData.transcript);
+              const middleIndex = exampleUtterances.length === 3 ? 1 : (exampleUtterances.length === 2 && reportData.exampleIndex === 0 ? 0 : 1);
+
+              return (
+                <View style={styles.exampleUtterancesContainer}>
+                  <Text style={styles.exampleLabel}>Example from the session:</Text>
+                  {exampleUtterances.map((item, idx) => {
+                    const { utterance, originalIndex } = item;
+                    const speakerLabel = speakerMappings.labelMapping[utterance.speaker] || 'Unknown';
+                    const speakerColor = speakerMappings.colorMapping[utterance.speaker] || '#E3F2FD';
+                    const isAdult = speakerLabel.includes('Adult');
+                    const pcitTag = utterance.tag;
+                    const isMiddle = originalIndex === reportData.exampleIndex;
+                    const skillType = getSkillType(pcitTag);
+                    const shouldShowFeedback = isMiddle && isAdult && utterance.feedback && skillType !== 'neutral';
+
+                    return (
+                      <View key={idx} style={[styles.utteranceContainer, isMiddle && styles.utteranceHighlighted]}>
+                        <View style={styles.utteranceHeader}>
+                          <View style={[styles.speakerBadge, { backgroundColor: speakerColor }]}>
+                            <Text style={styles.speakerBadgeText}>{speakerLabel}</Text>
+                          </View>
+                          {isAdult && pcitTag && (
+                            <View style={[styles.tag, { backgroundColor: getTagColor(pcitTag) }]}>
+                              <Text style={styles.tagText}>{pcitTag}</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={styles.utteranceText}>{utterance.text}</Text>
+                        {shouldShowFeedback && (
+                          <View style={[
+                            styles.feedbackContainer,
+                            skillType === 'desirable' ? styles.feedbackDesirable : styles.feedbackUndesirable
+                          ]}>
+                            <Text style={[
+                              styles.feedbackText,
+                              skillType === 'desirable' ? styles.feedbackTextDesirable : styles.feedbackTextUndesirable
+                            ]}>
+                              {skillType === 'desirable' ? '✓ Great!\n' : '💡 '}
+                              {utterance.feedback}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              );
+            })()}
+
+            {/* Backward compatibility: old tips format */}
+            {!reportData.tip && reportData.tips && typeof reportData.tips === 'string' && (
+              <MarkdownText style={styles.tipsText}>{reportData.tips}</MarkdownText>
+            )}
+
+            {/* Backward compatibility: structured tips object */}
+            {!reportData.tip && reportData.tips && typeof reportData.tips === 'object' && (
+              <View>
+                <Text style={styles.observationTitle}>{reportData.tips.observation}</Text>
                 <View style={styles.whySection}>
                   <Text style={styles.whyLabel}>Why it matters:</Text>
                   <Text style={styles.whyText}>{reportData.tips.why}</Text>
                 </View>
-
-                {/* Example and Tip combined */}
                 <Text style={styles.exampleLabel}>Example from the session:</Text>
                 <View style={styles.exampleSection}>
                   <Text style={styles.exampleQuote}>"{reportData.tips.example}"</Text>
-                
-                <View style={styles.tipSection}>
-                  <Text style={styles.tipText}>💡 {reportData.tips.actionableTip}</Text>
+                  <View style={styles.tipSection}>
+                    <Text style={styles.tipText}>💡 {reportData.tips.actionableTip}</Text>
+                  </View>
                 </View>
-                </View>
-
-                {/* Fixed line about more tips */}
-                {/* <Text style={styles.moreTipsText}>
-                  Click on button below for line by line tips.
-                </Text> */}
               </View>
             )}
 
             {/* Divider Line */}
-            <View style={styles.divider} />
+            {/* <View style={styles.divider} /> */}
 
             <TouchableOpacity
               style={styles.learnMoreButton}
               onPress={() => navigation.navigate('Transcript', { recordingId })}
             >
-              <Text style={styles.learnMoreText}>View full conversation with tips.
-              </Text>
+              <Text style={styles.learnMoreText}>Read full conversation with tips</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -378,7 +544,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 32,
     padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
@@ -489,11 +655,11 @@ const styles = StyleSheet.create({
   },
   quoteText: {
     fontFamily: FONTS.bold,
-    fontSize: 18,
+    fontSize: 20,
     color: COLORS.textDark,
     fontStyle: 'italic',
-    lineHeight: 24,
-    marginBottom: 12,
+    //lineHeight: 24,
+    marginBottom: 24,
     textAlign: 'center',
   },
   waveformContainer: {
@@ -533,12 +699,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
     padding: 12,
     borderRadius: 8,
+    //borderColor: '#0059DB',
+    //borderWidth: 2,
     //borderLeftWidth: 3,
     //borderLeftColor: '#9CA3AF',
   },
   exampleLabel: {
     fontFamily: FONTS.semiBold,
-    fontSize: 16,
+    fontSize: 14,
     color: COLORS.textDark,
     marginBottom: 6,
   },
@@ -575,7 +743,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 1,
     backgroundColor: '#E8E8E8',
-    marginBottom: 16,
+    marginBottom: 0,
   },
   learnMoreButton: {
     alignSelf: 'center',
@@ -584,7 +752,7 @@ const styles = StyleSheet.create({
   learnMoreText: {
     fontFamily: FONTS.semiBold,
     fontSize: 14,
-    color: COLORS.mainPurple,
+    color: '#0059DB',
     textAlign: 'center',
   },
   goalCard: {
@@ -618,5 +786,134 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 8,
+  },
+  // Session summary styles
+  summaryText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: COLORS.textDark,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  summaryLabel: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#666666',
+  },
+  summaryValue: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: COLORS.textDark,
+  },
+  // Celebration text under top moment
+  celebrationText: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: '#364153',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  // New tip main text
+  tipMainText: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: COLORS.textDark,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  // Transition text between tip and example
+  transitionText: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: COLORS.textDark,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  // Example utterances container
+  exampleUtterancesContainer: {
+    marginBottom: 15,
+    backgroundColor: '#f2f2f7',
+    padding: 15,
+    borderRadius: 16,
+    //borderColor: '#0059DB',
+    //borderWidth: 2,
+
+
+  },
+  // Utterance styles (matching TranscriptScreen)
+  utteranceContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    //borderWidth: 1,
+    //borderColor: '#E5E7EB',
+    marginBottom: 12,
+  },
+  utteranceHighlighted: {
+    //borderColor: '#0059DB',
+    //borderWidth: 2,
+  },
+  utteranceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  speakerBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  speakerBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: COLORS.textDark,
+  },
+  tag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  tagText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 11,
+    color: '#FFFFFF',
+  },
+  utteranceText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: COLORS.textDark,
+    lineHeight: 22,
+  },
+  // Feedback styles
+  feedbackContainer: {
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+  },
+  feedbackDesirable: {
+    backgroundColor: '#F0FDF4', // Light green
+  },
+  feedbackUndesirable: {
+    backgroundColor: '#FAF5FF', // Light purple
+  },
+  feedbackText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  feedbackTextDesirable: {
+    color: '#15803D', // Dark green
+  },
+  feedbackTextUndesirable: {
+    color: '#7E22CE', // Dark purple
   },
 });

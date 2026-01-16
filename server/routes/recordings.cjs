@@ -280,7 +280,7 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
       filename: `${requestId}.${extension}`,
       contentType: contentType
     });
-    formData.append('model_id', 'scribe_v1');
+    formData.append('model_id', 'scribe_v2');
     formData.append('diarize', 'true');
     formData.append('diarization_threshold', 0.1);
     formData.append('temperature', 0);
@@ -506,30 +506,32 @@ ${JSON.stringify(utterances.map(u => ({
 })), null, 2)}
 
 **Your Task:**
-Generate a JSON object with exactly these three fields:
+Generate content for these seven fields:
 
-1. **topMoment**: An exact quote from the conversation that highlights bonding between child and parent. Can be from either speaker. Choose a moment showing connection, joy, or positive interaction. Must be a direct quote from the utterances above. Do not mention "PCIT" or therapy.
+1. **summary**: A brief 2-3 sentence summary of how the session went overall. Highlight key strengths and the general tone of the interaction. Be warm and encouraging. Do not mention "PCIT" or therapy.
 
-2. **tips**: A structured object with the single MOST important area for improvement. Must be a JSON object with these exact fields:
-   - "observation": A clear statement of what we observed in the session - the key area for improvement.
-   - "why": 2 sentences explaining why this area is important based on child development psychology and research. Include specific influence for the child.
-   - "example": One specific, direct quote from the utterances above that illustrates this area.
-   - "actionableTip": refer to the example, use 1-2 sentences with a concrete, specific tip on what the parent can say instead in the scenario.
-   Do not mention "PCIT" or therapy.
+2. **topMoment**: An exact quote from the conversation that highlights bonding between child and parent. Can be from either speaker. Choose a moment showing connection, joy, or positive interaction. Must be a direct quote from the utterances above. Do not mention "PCIT" or therapy.
 
-3. **reminder**: EXACTLY 2 sentences of encouragement or reminder for the parent. Keep it warm and supportive. Do not mention "PCIT" or therapy.
+3. **celebration**: EXACTLY 1 sentence celebration of the top moment. focusing on the positive experience for the child.
+
+4. **tip**: A single tip highlighting the biggest improvement area. Be warm and encouraging with a brief reason why this matters. 2-3 sentences maximum. Do not mention "PCIT" or therapy.
+
+5. **example**: The zero-based index (integer) of the utterance that best illustrates the tip.
+
+6. **transition**: Look at the tip and the example, use 2-3 sentences to summarize the tip and demonstrate with the example.
+
+7. **reminder**: EXACTLY 2 sentences focusing on the positive experience for the child. Keep it warm and supportive. Do not mention "PCIT" or therapy.
 
 **Output Format:**
 Return ONLY valid JSON in this exact structure:
 {
+  "summary": "2-3 sentence overview of the session",
   "topMoment": "exact quote from conversation",
-  "tips": {
-    "observation": "clear statement of key area for improvement",
-    "why": "psychology and research-based explanation of why this matters",
-    "example": "specific quote from the conversation",
-    "actionableTip": "concrete tip on what to do differently"
-  },
-  "reminder": "two sentences of warm encouragement"
+  "celebration": "short celebration of the top moment",
+  "tip": "single warm tip with brief reason",
+  "example": 5,
+  "transition": "2-3 sentences describe the tip and example",
+  "reminder": "two sentences about positive child experience"
 }
 
 **CRITICAL:** Return ONLY valid JSON. Do not include markdown code blocks or any text outside the JSON structure.`;
@@ -1493,7 +1495,12 @@ Do not include markdown or whitespace (minified JSON).
         : parsedAnalysis.tips;
 
       competencyAnalysis = {
+        summary: parsedAnalysis.summary || null,
         topMoment: parsedAnalysis.topMoment,
+        celebration: parsedAnalysis.celebration || null,
+        tip: parsedAnalysis.tip || null,
+        example: typeof parsedAnalysis.example === 'number' ? parsedAnalysis.example : null,
+        transition: parsedAnalysis.transition || null,
         tips: formattedTips,
         reminder: parsedAnalysis.reminder,
         analyzedAt: new Date().toISOString(),
@@ -2355,9 +2362,15 @@ router.get('/:id/analysis', async (req, res) => {
       areasToAvoid,
       topMoment: {
         quote: topMomentQuote || "Great session!",
+        celebration: session.competencyAnalysis?.celebration || null,
         audioUrl: '', // TODO: Add audio segment URL
         duration: '0:12'
       },
+      summary: session.competencyAnalysis?.summary || null,
+      tip: session.competencyAnalysis?.tip || null,
+      exampleIndex: typeof session.competencyAnalysis?.example === 'number'
+        ? session.competencyAnalysis.example : null,
+      transition: session.competencyAnalysis?.transition || null,
       tips,
       reminder,
       tomorrowGoal,

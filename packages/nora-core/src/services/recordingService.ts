@@ -28,10 +28,15 @@ export interface RecordingAnalysis {
   }>;
   topMoment: {
     quote: string;
+    celebration?: string | null;  // Celebration of the top moment
     audioUrl: string;
     duration: string;
   };
-  tips: string | StructuredTips;
+  summary?: string | null;  // Session summary
+  tip?: string | null;  // Simplified single tip
+  exampleIndex?: number | null;  // Utterance index for example
+  transition?: string | null;  // Transition text between tip and example
+  tips?: string | StructuredTips;  // KEEP for backward compatibility
   reminder?: string | null;
   tomorrowGoal: string;
   stats: {
@@ -41,7 +46,12 @@ export interface RecordingAnalysis {
   transcript?: any[];
   pcitCoding?: any;
   competencyAnalysis?: {
+    summary?: string | null;
     topMoment?: string | null;
+    celebration?: string | null;
+    tip?: string | null;
+    example?: number | null;
+    transition?: string | null;
     tips?: string | null;
     reminder?: string | null;
     analyzedAt: string;
