@@ -8,21 +8,26 @@ const router = express.Router();
 const REVENUECAT_WEBHOOK_SECRET = process.env.REVENUECAT_WEBHOOK_SECRET;
 
 /**
- * Verify webhook signature from RevenueCat
+ * Verify webhook authorization from RevenueCat
+ * RevenueCat uses a static Authorization header, not HMAC signing
  */
-const verifyWebhook = (body, signature) => {
+const verifyWebhook = (authHeader) => {
   if (!REVENUECAT_WEBHOOK_SECRET) {
     console.error('REVENUECAT_WEBHOOK_SECRET not set');
     return false;
   }
 
-  const hmac = crypto.createHmac('sha256', REVENUECAT_WEBHOOK_SECRET);
-  const digest = hmac.update(body).digest('hex');
-
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(digest)
-  );
+  // RevenueCat sends the secret directly in the Authorization header
+  // Use timing-safe comparison to prevent timing attacks
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(authHeader),
+      Buffer.from(REVENUECAT_WEBHOOK_SECRET)
+    );
+  } catch (e) {
+    // timingSafeEqual throws if lengths differ
+    return false;
+  }
 };
 
 /**
@@ -123,21 +128,15 @@ router.post('/revenuecat', async (req, res) => {
       return res.status(401).json({ error: 'Missing signature' });
     }
 
-    // Verify signature (skip for test events only)
+    // Verify authorization (skip for test events only)
     if (signature && !isTestEvent) {
-      // Use raw body captured by express.json verify function
-      const rawBody = req.rawBody;
-      if (!rawBody) {
-        console.error('Raw body not captured for signature verification');
-        return res.status(500).json({ error: 'Internal error: raw body not available' });
-      }
-      if (!verifyWebhook(rawBody, signature)) {
-        console.error('Invalid webhook signature');
+      if (!verifyWebhook(signature)) {
+        console.error('Invalid webhook authorization');
         return res.status(401).json({ error: 'Invalid signature' });
       }
-      console.log('Webhook signature verified successfully');
+      console.log('Webhook authorization verified successfully');
     } else if (isTestEvent) {
-      console.log('Skipping signature verification for TEST event');
+      console.log('Skipping authorization verification for TEST event');
     }
 
     const { event } = req.body;

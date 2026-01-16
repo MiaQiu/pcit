@@ -16,12 +16,14 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import Purchases from 'react-native-purchases';
 import { ProfileCircle } from '../components/ProfileCircle';
 import { useAuthService } from '../contexts/AppContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import { REVENUECAT_CONFIG } from '../config/revenuecat';
 import { RootStackNavigationProp } from '../navigation/types';
 import { FONTS, COLORS } from '../constants/assets';
 import type { SubscriptionPlan, SubscriptionStatus, RelationshipToChild } from '@nora/core';
@@ -46,6 +48,7 @@ interface UserProfile {
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const authService = useAuthService();
+  const { checkSubscriptionStatus } = useSubscription();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,9 +56,50 @@ export const ProfileScreen: React.FC = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  // RevenueCat real-time subscription state (source of truth for display)
+  const [rcSubscription, setRcSubscription] = useState<{
+    isActive: boolean;
+    expirationDate: Date | null;
+    willRenew: boolean;
+    periodType: string | null;
+  } | null>(null);
+
+  // Refresh profile when screen gains focus (ensures subscription status is current)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadProfile();
+      loadRevenueCatStatus();
+    }, [])
+  );
+
+  // Load real-time subscription status directly from RevenueCat SDK
+  const loadRevenueCatStatus = async () => {
+    try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      const entitlement = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium];
+
+      if (entitlement) {
+        setRcSubscription({
+          isActive: true,
+          expirationDate: entitlement.expirationDate ? new Date(entitlement.expirationDate) : null,
+          willRenew: entitlement.willRenew,
+          periodType: entitlement.periodType,
+        });
+      } else {
+        setRcSubscription({
+          isActive: false,
+          expirationDate: null,
+          willRenew: false,
+          periodType: null,
+        });
+      }
+
+      // Also refresh the context
+      checkSubscriptionStatus();
+    } catch (error) {
+      console.error('Failed to load RevenueCat status:', error);
+    }
+  };
 
   const loadProfile = async () => {
     try {
@@ -349,68 +393,78 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const getSubscriptionInfo = () => {
+    // Use RevenueCat data as source of truth (instant updates after purchase)
+    // Fall back to backend data if RevenueCat hasn't loaded yet
+    if (rcSubscription) {
+      const { isActive, expirationDate, willRenew, periodType } = rcSubscription;
+
+      // Determine plan name
+      let planName = 'Free';
+      if (isActive) {
+        planName = periodType === 'TRIAL' ? 'Premium Trial' : 'Premium';
+      }
+
+      // Calculate status
+      let status: SubscriptionStatus = 'INACTIVE';
+      if (isActive) {
+        status = willRenew ? 'ACTIVE' : 'CANCELLED';
+      } else if (expirationDate && new Date() > expirationDate) {
+        status = 'EXPIRED';
+      }
+
+      // Format status text
+      let statusText = '';
+      const formattedDate = expirationDate ? formatLocalDate(expirationDate) : null;
+
+      if (!isActive) {
+        statusText = expirationDate ? 'Subscription expired' : 'No active subscription';
+      } else if (!willRenew && formattedDate) {
+        statusText = periodType === 'TRIAL'
+          ? `Trial ends ${formattedDate}`
+          : `Cancelled, ends ${formattedDate}`;
+      } else if (formattedDate) {
+        statusText = periodType === 'TRIAL'
+          ? `Trial ends ${formattedDate}`
+          : `Renews ${formattedDate}`;
+      } else {
+        statusText = 'Active';
+      }
+
+      return { planName, statusText, daysRemaining: 0, status };
+    }
+
+    // Fallback to backend data
     if (!profile) return null;
 
     const plan = profile.subscriptionPlan || 'FREE';
     const status = profile.subscriptionStatus || 'INACTIVE';
 
-    // Calculate days remaining using subscriptionEndDate (RevenueCat is source of truth)
-    let daysRemaining = 0;
     let endDate: Date | null = null;
-
     if (profile.subscriptionEndDate) {
       endDate = new Date(profile.subscriptionEndDate);
     }
 
-    if (endDate && !isNaN(endDate.getTime())) {
-      const today = new Date();
-      const diffTime = endDate.getTime() - today.getTime();
-      daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-    }
-
-    // Get plan display name
     const planName = plan === 'TRIAL' ? 'Premium Trial' : plan === 'PREMIUM' ? 'Premium' : 'Free';
-
-    // Get status text based on plan + status combination
     let statusText = '';
     const formattedDate = endDate && !isNaN(endDate.getTime()) ? formatLocalDate(endDate) : null;
 
     if (status === 'INACTIVE') {
-      // FREE + INACTIVE: New user who never subscribed
       statusText = 'No active subscription';
     } else if (status === 'EXPIRED') {
-      // Any plan + EXPIRED: Subscription ended
       statusText = 'Subscription expired';
     } else if (status === 'CANCELLED') {
-      // Cancelled but still has access until end date
-      if (plan === 'TRIAL' && formattedDate) {
-        statusText = `Trial cancelled, ends ${formattedDate}`;
-      } else if (formattedDate) {
-        statusText = `Cancelled, ends ${formattedDate}`;
-      } else {
-        statusText = 'Cancelled';
-      }
+      statusText = formattedDate ? `Cancelled, ends ${formattedDate}` : 'Cancelled';
     } else if (status === 'ACTIVE') {
-      // Active subscription
       if (plan === 'TRIAL' && formattedDate) {
         statusText = `Trial ends ${formattedDate}`;
-      } else if (plan === 'PREMIUM' && formattedDate) {
-        statusText = `Renews ${formattedDate}`;
       } else if (formattedDate) {
-        statusText = `Ends ${formattedDate}`;
+        statusText = `Renews ${formattedDate}`;
       } else {
         statusText = 'Active';
       }
-    } else {
-      statusText = 'Active';
     }
 
-    return {
-      planName,
-      statusText,
-      daysRemaining,
-      status,
-    };
+    return { planName, statusText, daysRemaining: 0, status };
   };
 
   if (loading) {

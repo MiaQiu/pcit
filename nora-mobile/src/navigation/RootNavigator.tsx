@@ -7,8 +7,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
+import Purchases from 'react-native-purchases';
 import { TabNavigator } from './TabNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
+import { REVENUECAT_CONFIG } from '../config/revenuecat';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
 import { SupportScreen } from '../screens/SupportScreen';
@@ -114,10 +116,10 @@ export const RootNavigator: React.FC = () => {
 
   const checkOnboardingCompletion = async (): Promise<string | null> => {
     try {
-      // Force refresh to get latest subscription status from server
+      // Get user profile for onboarding steps
       const user = await authService.getCurrentUser(true);
 
-      // Check which step is incomplete
+      // Check which onboarding step is incomplete
       // Default values from signup are 'User' and 'Child'
       if (!user.name || user.name === 'User') {
         return 'NameInput';
@@ -132,27 +134,36 @@ export const RootNavigator: React.FC = () => {
         return 'ChildIssue';
       }
 
-      // Check subscription status for returning users
-      // New users go through onboarding and reach Subscription screen naturally
-      if (user.subscriptionStatus !== 'ACTIVE') {
-        // INACTIVE users have never subscribed - redirect to Subscription screen
-        if (user.subscriptionStatus === 'INACTIVE') {
-          console.log('[Auth] User has no subscription, redirecting to subscription screen');
+      // Check subscription status using RevenueCat SDK (source of truth)
+      // This is instant and doesn't depend on webhooks
+      try {
+        const customerInfo = await Purchases.getCustomerInfo();
+        const hasActiveSubscription = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium] !== undefined;
+
+        if (!hasActiveSubscription) {
+          console.log('[Auth] No active subscription (RevenueCat), redirecting to subscription screen');
           return 'Subscription';
         }
 
-        // CANCELLED/EXPIRED users - check if still within paid period
-        const now = new Date();
-        const endDate = user.subscriptionEndDate
-          ? new Date(user.subscriptionEndDate)
-          : null;
+        console.log('[Auth] Active subscription confirmed via RevenueCat');
+      } catch (rcError) {
+        console.error('[Auth] RevenueCat check failed, falling back to backend:', rcError);
 
-        if (!endDate || now > endDate) {
-          console.log('[Auth] Subscription ended, redirecting to subscription screen. Status:', user.subscriptionStatus);
-          return 'Subscription';
+        // Fallback to backend data if RevenueCat fails
+        if (user.subscriptionStatus !== 'ACTIVE') {
+          if (user.subscriptionStatus === 'INACTIVE') {
+            return 'Subscription';
+          }
+
+          const now = new Date();
+          const endDate = user.subscriptionEndDate
+            ? new Date(user.subscriptionEndDate)
+            : null;
+
+          if (!endDate || now > endDate) {
+            return 'Subscription';
+          }
         }
-
-        console.log('[Auth] Subscription cancelled but still within paid period. End date:', endDate);
       }
 
       // All steps complete and subscription active
