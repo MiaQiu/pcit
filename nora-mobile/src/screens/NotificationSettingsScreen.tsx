@@ -102,6 +102,10 @@ export const NotificationSettingsScreen: React.FC = () => {
           // Permission was just granted - enable key notifications
           setNotificationsEnabled(true);
 
+          // Register push token with backend (this was missing before!)
+          const accessToken = authService.getAccessToken();
+          await requestPermissions(accessToken);
+
           const newPreferences = {
             ...preferences,
             dailyLessonReminder: true,

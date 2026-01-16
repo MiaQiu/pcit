@@ -232,6 +232,66 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     };
   }, [state]); // Re-run when state changes
 
+  // Polling fallback for users without push notifications
+  // This ensures the UI updates even if push notifications aren't delivered
+  useEffect(() => {
+    if (state !== 'processing' || !recordingIdRef.current) {
+      return;
+    }
+
+    console.log('[UploadProcessing] Starting polling fallback for processing state');
+
+    const pollForStatus = async () => {
+      if (!recordingIdRef.current) return;
+
+      try {
+        console.log('[UploadProcessing] Polling for report status...');
+        const analysis = await recordingService.getAnalysis(recordingIdRef.current);
+
+        // Success - report is ready
+        console.log('[UploadProcessing] Polling: Report is ready!');
+        setReportCompletedTimestamp(Date.now());
+        await reset();
+      } catch (error: any) {
+        // Check if it's a permanent failure
+        const isFailed = error.status === 'failed' ||
+                        error.message?.toLowerCase().includes('report generation failed') ||
+                        error.message?.toLowerCase().includes('analysis failed');
+
+        if (isFailed) {
+          // Recording has permanently failed - show error to user
+          console.log('[UploadProcessing] Polling: Recording permanently failed:', error.message);
+          await reset();
+
+          // Show error alert with user-friendly message
+          const Alert = require('react-native').Alert;
+          const userFriendlyMessage = getUserFriendlyErrorMessage(
+            error.userMessage || error.message || 'Unknown error'
+          );
+          Alert.alert(
+            'Unable to Generate Report',
+            userFriendlyMessage,
+            [{ text: 'OK', onPress: () => onNavigateToHome?.() }]
+          );
+        } else {
+          // Still processing - continue polling
+          console.log('[UploadProcessing] Polling: Still processing, will check again...');
+        }
+      }
+    };
+
+    // Poll every 10 seconds
+    const pollInterval = setInterval(pollForStatus, 10000);
+
+    // Also poll immediately on mount (in case report finished between state changes)
+    pollForStatus();
+
+    return () => {
+      console.log('[UploadProcessing] Stopping polling fallback');
+      clearInterval(pollInterval);
+    };
+  }, [state]);
+
   const loadState = async () => {
     try {
       const savedState = await AsyncStorage.getItem(STORAGE_KEY);
