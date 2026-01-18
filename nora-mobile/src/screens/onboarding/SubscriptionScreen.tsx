@@ -368,7 +368,7 @@ export const SubscriptionScreen: React.FC = () => {
             </View>
             <View style={styles.programDetails}>
               <Text style={styles.programTitle}>3-Month Program</Text>
-              <Text style={styles.programPrice}>{displayPrice} in total</Text>
+              <Text style={styles.programPrice}>{displayPrice} • Billed every 3 months</Text>
               <View style={styles.bonusBadge}>
                 <Text style={styles.bonusBadgeText}>🎁 Beta bonus 1 month free</Text>
               </View>
@@ -393,7 +393,7 @@ export const SubscriptionScreen: React.FC = () => {
         </TouchableOpacity>
 
         <Text style={styles.disclaimer}>
-          After your free trial, your subscription automatically renews at $99.98/year unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our{' '}
+          After your free trial, your subscription automatically renews at {displayPrice} every 3 months unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our{' '}
           <Text style={styles.link} onPress={handleOpenTerms}>Terms</Text> and{' '}
           <Text style={styles.link} onPress={handleOpenPrivacy}>Privacy Policy</Text>.
         </Text>
