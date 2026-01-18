@@ -11,6 +11,7 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -78,9 +79,9 @@ export const StartScreen: React.FC = () => {
         {/* Terms and Privacy Policy */}
         <Text style={styles.termsText}>
           By continuing, you agree to Nora's{'\n'}
-          <Text style={styles.termsLink}>Terms of Service</Text>
+          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/terms')}>Terms of Service</Text>
           {' '}and{' '}
-          <Text style={styles.termsLink}>Privacy Policy</Text>
+          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/privacy')}>Privacy Policy</Text>
         </Text>
       </View>
     </SafeAreaView>
