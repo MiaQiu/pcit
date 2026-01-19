@@ -58,6 +58,10 @@ const AppContent: React.FC = () => {
     navigation.navigate('MainTabs', { screen: 'Home' });
   };
 
+  const handleNavigateToReport = (recordingId: string) => {
+    navigation.navigate('Report', { recordingId });
+  };
+
   // Handle notification taps
   useEffect(() => {
     // Handle notification tap when app is in foreground or background
@@ -114,7 +118,7 @@ const AppContent: React.FC = () => {
   }, []);
 
   return (
-    <UploadProcessingProvider onNavigateToHome={handleNavigateToHome}>
+    <UploadProcessingProvider onNavigateToHome={handleNavigateToHome} onNavigateToReport={handleNavigateToReport}>
       <RootNavigator />
       <StatusBar style="dark" />
       <NetworkStatusBar />

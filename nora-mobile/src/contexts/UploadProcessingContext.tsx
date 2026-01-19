@@ -6,7 +6,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
-import { AppState } from 'react-native';
+import { AppState, Alert } from 'react-native';
 import { useRecordingService, useAuthService } from './AppContext';
 import { handleApiError, ApiError } from '../utils/NetworkMonitor';
 import { ErrorMessages } from '../utils/errorMessages';
@@ -84,11 +84,13 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 interface UploadProcessingProviderProps {
   children: ReactNode;
   onNavigateToHome?: () => void;
+  onNavigateToReport?: (recordingId: string) => void;
 }
 
 export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> = ({
   children,
-  onNavigateToHome
+  onNavigateToHome,
+  onNavigateToReport
 }) => {
   const recordingService = useRecordingService();
   const authService = useAuthService();
@@ -250,8 +252,24 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
         // Success - report is ready
         console.log('[UploadProcessing] Polling: Report is ready!');
+        const completedRecordingId = recordingIdRef.current;
         setReportCompletedTimestamp(Date.now());
         await reset();
+
+        // Show alert only if app is in the foreground
+        if (AppState.currentState === 'active' && completedRecordingId) {
+          Alert.alert(
+            'Report Ready!',
+            'Your play session report is ready to view.',
+            [
+              { text: 'Later', style: 'cancel' },
+              {
+                text: 'Read Report',
+                onPress: () => onNavigateToReport?.(completedRecordingId)
+              }
+            ]
+          );
+        }
       } catch (error: any) {
         // Check if it's a permanent failure
         const isFailed = error.status === 'failed' ||
