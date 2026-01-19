@@ -467,7 +467,7 @@ function formatTips(tips) {
 }
 
 /**
- * Generate CDI competency analysis prompt
+ * Generate CDI competency analysis prompt (legacy - kept for fallback)
  */
 function generateCDICompetencyPrompt(counts, utterances) {
   const totalDonts = counts.question + counts.command + counts.criticism + counts.negative_phrases;
@@ -535,6 +535,203 @@ Return ONLY valid JSON in this exact structure:
 }
 
 **CRITICAL:** Return ONLY valid JSON. Do not include markdown code blocks or any text outside the JSON structure.`;
+}
+
+/**
+ * Multi-prompt CDI feedback generation
+ * Split into 3 focused prompts for better quality
+ */
+
+// Call 1: Analysis, Summary & Top Moment
+function generateAnalysisPrompt(counts, utterances) {
+  return `You are an expert parent-child interaction analyst. Analyze this 5-minute play session.
+
+**Session Metrics:**
+- Labeled Praises: ${counts.praise} (goal: 10+)
+- Reflections: ${counts.echo} (goal: 10+)
+- Behavioral Descriptions: ${counts.narration} (goal: 10+)
+- Questions: ${counts.question}
+- Commands: ${counts.command}
+- Criticisms: ${counts.criticism}
+- Negative Phrases: ${counts.negative_phrases}
+(Goal for last 4 combined: 3 or fewer)
+
+**Transcript:**
+${utterances.map((u, i) =>
+  `[${String(i).padStart(2, '0')}] ${u.speaker}: ${u.text} ${u.pcitTag || ''}`
+).join('\n')}
+
+**Task:**
+Provide two things:
+
+1. **Summary**: Write a warm, encouraging 2-3 sentence summary of how this session went. Highlight key strengths and the overall quality of interaction. Speak directly to the parent as their coach. Do not mention therapy or clinical terms.
+
+2. **Top Moment**: Find the ONE moment that shows the strongest parent-child connection, joy, or positive interaction. Look for moments of:
+   - Child and parent enjoying something together
+   - Spontaneous joy or laughter
+   - Creative play or imagination
+   - Successful cooperation
+   - Warm affection
+
+Return ONLY valid JSON:
+{
+  "summary": "2-3 sentence warm summary of the session",
+  "topMoment": {
+    "quote": "exact text from the transcript",
+    "utteranceNumber": 14,
+    "celebration": "exactly 1 sentence explaining why this moment matters for the child's experience"
+  }
+}
+
+No markdown code fences.`;
+}
+
+// Call 2: Primary Improvement Area
+function generateImprovementPrompt(counts, utterances) {
+  return `You are a parent coaching expert analyzing skill usage.
+
+**Session Metrics:**
+- Labeled Praises: ${counts.praise} (goal: 10+)
+- Reflections: ${counts.echo} (goal: 10+)
+- Behavioral Descriptions: ${counts.narration} (goal: 10+)
+- Questions: ${counts.question} (reduce)
+- Commands: ${counts.command} (reduce)
+- Criticisms: ${counts.criticism} (reduce)
+- Negative Phrases: ${counts.negative_phrases} (eliminate)
+
+**Transcript with codes:**
+${utterances.map((u, i) =>
+  `[${String(i).padStart(2, '0')}] ${u.speaker}: ${u.text} ${u.pcitTag || ''}`
+).join('\n')}
+
+**Task:**
+Identify the SINGLE most important skill to improve. Consider:
+1. Which positive skill (Praise/Reflection/Description) is furthest from goal?
+2. Which skill to reduce is most problematic?
+3. Which change would most improve the child's experience?
+
+Return ONLY valid JSON:
+{
+  "skillToImprove": "Labeled Praises | Reflections | Behavioral Descriptions | Reduce Questions | Reduce Commands | Eliminate Criticisms | Eliminate Negative Phrases",
+  "currentCount": 5,
+  "goalCount": 10,
+  "tip": "2-3 warm, encouraging sentences explaining what to practice and why it helps the child",
+  "reasoning": "1-2 sentences explaining why you chose this as the priority"
+}
+
+No markdown code fences.`;
+}
+
+// Call 3: Example & Guidance
+function generateExamplePrompt(improvementResult, utterances) {
+  return `You are helping a parent learn through examples.
+
+**The skill to improve:** ${improvementResult.skillToImprove}
+
+**The tip:** ${improvementResult.tip}
+
+**Transcript:**
+${utterances.map((u, i) =>
+  `[${String(i).padStart(2, '0')}] ${u.speaker}: ${u.text} ${u.pcitTag || ''}`
+).join('\n')}
+
+**Task:**
+Find the best utterance that demonstrates either:
+- A missed opportunity to use this skill
+- An incorrect use of this skill
+- A moment where using this skill would have been particularly beneficial
+
+Return ONLY valid JSON:
+{
+  "exampleUtteranceNumber": 14,
+  "transition": "2-3 sentences that: (1) restate the tip briefly, (2) reference the specific utterance by saying "example below", do not mention utterance number, (3) explain what could be done differently",
+  "reminder": "exactly 2 sentences about how improving this skill creates positive experiences for the child. Keep encouraging and forward-looking."
+}
+
+No markdown code fences.`;
+}
+
+// Helper function to call Claude API
+async function callClaudeForFeedback(prompt) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY not configured');
+  }
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 2048,
+      temperature: 0.7,
+      messages: [{
+        role: 'user',
+        content: prompt
+      }]
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Claude API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const text = data.content[0].text;
+
+  // Parse JSON from response
+  let cleanJson = text.trim();
+  cleanJson = cleanJson.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+  const firstBrace = cleanJson.indexOf('{');
+  const lastBrace = cleanJson.lastIndexOf('}');
+
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+  }
+
+  return JSON.parse(cleanJson);
+}
+
+// Orchestrator function for multi-prompt CDI feedback
+async function generateCDIFeedback(counts, utterances) {
+  console.log('🚀 [CDI-FEEDBACK] Starting multi-prompt feedback generation...');
+
+  // Call 1 & 2 in parallel (they're independent)
+  console.log('📝 [CDI-FEEDBACK] Running Call 1 (Analysis) and Call 2 (Improvement) in parallel...');
+  const [analysisData, improvementData] = await Promise.all([
+    callClaudeForFeedback(generateAnalysisPrompt(counts, utterances)),
+    callClaudeForFeedback(generateImprovementPrompt(counts, utterances))
+  ]);
+
+  console.log('✅ [CDI-FEEDBACK] Call 1 result:', JSON.stringify(analysisData).substring(0, 200));
+  console.log('✅ [CDI-FEEDBACK] Call 2 result:', JSON.stringify(improvementData).substring(0, 200));
+
+  // Call 3 depends on Call 2 results
+  console.log('📝 [CDI-FEEDBACK] Running Call 3 (Example) with improvement context...');
+  const exampleData = await callClaudeForFeedback(
+    generateExamplePrompt(improvementData, utterances)
+  );
+
+  console.log('✅ [CDI-FEEDBACK] Call 3 result:', JSON.stringify(exampleData).substring(0, 200));
+
+  // Assemble final result
+  const result = {
+    summary: analysisData.summary,
+    topMoment: analysisData.topMoment.quote,
+    celebration: analysisData.topMoment.celebration,
+    tip: improvementData.tip,
+    example: exampleData.exampleUtteranceNumber,
+    transition: exampleData.transition,
+    reminder: exampleData.reminder
+  };
+
+  console.log('✅ [CDI-FEEDBACK] Multi-prompt feedback generation complete');
+  return result;
 }
 // **tips**: EXACTLY 2 sentences of the MOST important tips for improvement. Be specific and actionable. Reference specific utterances or patterns you observed. Do not mention "PCIT" or therapy.
 /**
@@ -1433,85 +1630,103 @@ Do not include markdown or whitespace (minified JSON).
     // Get updated utterances with tags from database
     const utterancesWithTags = await getUtterances(sessionId);
 
-    const competencyPrompt = isCDI
-      ? generateCDICompetencyPrompt(tagCounts, utterancesWithTags)
-      : generatePDICompetencyPrompt(tagCounts, utterancesWithTags);
-
-    const competencyResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 4096,
-        temperature: 0.7,
-        messages: [{
-          role: 'user',
-          content: competencyPrompt
-        }]
-      })
-    });
-
-    if (competencyResponse.ok) {
-      const competencyData = await competencyResponse.json();
-      const analysisText = competencyData.content[0].text;
-
-      // Try to parse as JSON
-      let parsedAnalysis = null;
-      try {
-        let cleanJson = analysisText.trim();
-
-        // Remove markdown code blocks if present
-        cleanJson = cleanJson.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
-        // Try to extract JSON object if there's text before/after it
-        const firstBrace = cleanJson.indexOf('{');
-        const lastBrace = cleanJson.lastIndexOf('}');
-
-        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-          cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
-        }
-
-        parsedAnalysis = JSON.parse(cleanJson);
-        console.log(`✅ [COMPETENCY-ANALYSIS] Successfully parsed competency analysis JSON`);
-      } catch (parseError) {
-        console.error('⚠️ [COMPETENCY-ANALYSIS] Failed to parse competency analysis as JSON:', parseError.message);
-        console.error('⚠️ [COMPETENCY-ANALYSIS] Raw response (first 300 chars):', analysisText.substring(0, 300));
-        // Fallback to raw text
-        parsedAnalysis = {
-          topMoment: null,
-          tips: analysisText,
-          reminder: null
-        };
-      }
-
-      // Store structured analysis with formatted tips
-      // Only format tips if it's a string (old format), keep object as-is (new structured format)
-      const formattedTips = typeof parsedAnalysis.tips === 'string'
-        ? formatTips(parsedAnalysis.tips)
-        : parsedAnalysis.tips;
+    if (isCDI) {
+      // Use multi-prompt approach for CDI
+      console.log('🎯 [COMPETENCY-ANALYSIS] Using multi-prompt CDI feedback generation...');
+      const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags);
 
       competencyAnalysis = {
-        summary: parsedAnalysis.summary || null,
-        topMoment: parsedAnalysis.topMoment,
-        celebration: parsedAnalysis.celebration || null,
-        tip: parsedAnalysis.tip || null,
-        example: typeof parsedAnalysis.example === 'number' ? parsedAnalysis.example : null,
-        transition: parsedAnalysis.transition || null,
-        tips: formattedTips,
-        reminder: parsedAnalysis.reminder,
+        summary: feedbackResult.summary || null,
+        topMoment: feedbackResult.topMoment,
+        celebration: feedbackResult.celebration || null,
+        tip: feedbackResult.tip || null,
+        example: typeof feedbackResult.example === 'number' ? feedbackResult.example : null,
+        transition: feedbackResult.transition || null,
+        tips: null, // Not used in new format
+        reminder: feedbackResult.reminder,
         analyzedAt: new Date().toISOString(),
         mode: session.mode
       };
 
-      console.log(`✅ [COMPETENCY-ANALYSIS] Generated for session ${sessionId}`);
-      console.log(`✅ [COMPETENCY-ANALYSIS] Tips type: ${typeof formattedTips}`);
-      console.log(`✅ [COMPETENCY-ANALYSIS] Tips structure:`, JSON.stringify(formattedTips, null, 2).substring(0, 200));
+      console.log(`✅ [COMPETENCY-ANALYSIS] Multi-prompt CDI feedback complete`);
     } else {
-      console.error(`Competency analysis failed for session ${sessionId}`);
+      // Use single prompt for PDI (unchanged)
+      const competencyPrompt = generatePDICompetencyPrompt(tagCounts, utterancesWithTags);
+
+      const competencyResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-5-20250929',
+          max_tokens: 4096,
+          temperature: 0.7,
+          messages: [{
+            role: 'user',
+            content: competencyPrompt
+          }]
+        })
+      });
+
+      if (competencyResponse.ok) {
+        const competencyData = await competencyResponse.json();
+        const analysisText = competencyData.content[0].text;
+
+        // Try to parse as JSON
+        let parsedAnalysis = null;
+        try {
+          let cleanJson = analysisText.trim();
+
+          // Remove markdown code blocks if present
+          cleanJson = cleanJson.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+          // Try to extract JSON object if there's text before/after it
+          const firstBrace = cleanJson.indexOf('{');
+          const lastBrace = cleanJson.lastIndexOf('}');
+
+          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+          }
+
+          parsedAnalysis = JSON.parse(cleanJson);
+          console.log(`✅ [COMPETENCY-ANALYSIS] Successfully parsed PDI competency analysis JSON`);
+        } catch (parseError) {
+          console.error('⚠️ [COMPETENCY-ANALYSIS] Failed to parse PDI competency analysis as JSON:', parseError.message);
+          console.error('⚠️ [COMPETENCY-ANALYSIS] Raw response (first 300 chars):', analysisText.substring(0, 300));
+          // Fallback to raw text
+          parsedAnalysis = {
+            topMoment: null,
+            tips: analysisText,
+            reminder: null
+          };
+        }
+
+        // Store structured analysis with formatted tips
+        // Only format tips if it's a string (old format), keep object as-is (new structured format)
+        const formattedTips = typeof parsedAnalysis.tips === 'string'
+          ? formatTips(parsedAnalysis.tips)
+          : parsedAnalysis.tips;
+
+        competencyAnalysis = {
+          summary: parsedAnalysis.summary || null,
+          topMoment: parsedAnalysis.topMoment,
+          celebration: parsedAnalysis.celebration || null,
+          tip: parsedAnalysis.tip || null,
+          example: typeof parsedAnalysis.example === 'number' ? parsedAnalysis.example : null,
+          transition: parsedAnalysis.transition || null,
+          tips: formattedTips,
+          reminder: parsedAnalysis.reminder,
+          analyzedAt: new Date().toISOString(),
+          mode: session.mode
+        };
+
+        console.log(`✅ [COMPETENCY-ANALYSIS] PDI analysis generated for session ${sessionId}`);
+      } else {
+        console.error(`PDI competency analysis API call failed for session ${sessionId}`);
+      }
     }
   } catch (compError) {
     console.error('Error generating competency analysis:', compError.message);
@@ -1522,20 +1737,59 @@ Do not include markdown or whitespace (minified JSON).
   let overallScore = 0;
 
   if (isCDI) {
-    // CDI mode - PEN skills (60 points) + Avoid penalty (40 points)
-    const praiseScore = Math.min(20, ((tagCounts.praise || 0) / 10) * 20);
-    const echoScore = Math.min(20, ((tagCounts.echo || 0) / 10) * 20);
-    const narrationScore = Math.min(20, ((tagCounts.narration || 0) / 10) * 20);
-    const penScore = praiseScore + echoScore + narrationScore;
+    // CDI mode - Shield-based scoring system v5
+    const A = tagCounts.praise || 0;
+    const B = tagCounts.echo || 0;
+    const C = tagCounts.narration || 0;
+    const D = tagCounts.question || 0;
+    const E = tagCounts.command || 0;
+    const F = tagCounts.criticism || 0;
 
-    // Avoid Penalty: 40 points if total < 3, decreasing by 10 for each additional
-    const totalAvoid = (tagCounts.question || 0) + (tagCounts.command || 0) + (tagCounts.criticism || 0);
-    let avoidScore = 40;
-    if (totalAvoid >= 3) {
-      avoidScore = Math.max(0, 40 - (totalAvoid - 2) * 10);
+    // 1. Setup - cap effective skills at 10
+    const A_eff = Math.min(A, 10);
+    const B_eff = Math.min(B, 10);
+    const C_eff = Math.min(C, 10);
+    const totalNegs = D + E + F;
+
+    // 2. Build the Shield (Max 40 points)
+    // 30 skill points = 40 score points -> 1.333 multiplier
+    const currentShield = (A_eff + B_eff + C_eff) * (40 / 30);
+
+    // 3. Apply Damage
+    // High Impact Damage = 3.333 per negative
+    const damagePerHit = 10 / 3;
+
+    // Calculate how many "hits" the shield can take before breaking
+    const hitsToBreakShield = damagePerHit > 0 ? currentShield / damagePerHit : 0;
+
+    let rawScore;
+    if (totalNegs <= hitsToBreakShield) {
+      // Case A: Shield holds. Deduct using high penalty.
+      const penalty = totalNegs * damagePerHit;
+      rawScore = 60 + currentShield - penalty;
+    } else {
+      // Case B: Shield broken.
+      // User loses all shield points (Score resets to 60).
+      // Remaining negatives subtract 1 point each from 60.
+      const remainingNegs = totalNegs - hitsToBreakShield;
+      rawScore = 60 - remainingNegs;
     }
 
-    overallScore = Math.round(penScore + avoidScore);
+    // 4. Gate Check (Pass/Fail)
+    const passed = (A >= 10) && (B >= 10) && (C >= 10) && (totalNegs <= 3);
+
+    let finalScore = rawScore;
+    if (passed) {
+      if (finalScore > 100) finalScore = 100;
+    } else {
+      // Cap at 89 if failed
+      if (finalScore > 89) finalScore = 89;
+    }
+
+    // Floor at 0
+    if (finalScore < 0) finalScore = 0;
+
+    overallScore = Math.round(finalScore);
   } else {
     // PDI mode - Command effectiveness
     const totalCommands = (tagCounts.direct_command || 0) + (tagCounts.indirect_command || 0) +

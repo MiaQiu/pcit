@@ -13,6 +13,8 @@ interface SkillProgressBarProps {
   progress: number; // Integer score value
   maxValue?: number; // Maximum value for the progress bar (default: 10)
   color?: string;
+  textColor?: string; // Optional color for the progress text
+  suffix?: string; // Optional suffix to display after the number (e.g., "(Pay attention)")
 }
 
 export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
@@ -20,6 +22,8 @@ export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
   progress,
   maxValue = 10,
   color = COLORS.mainPurple,
+  textColor,
+  suffix,
 }) => {
   // Calculate percentage for progress bar (cap at 100%)
   const percentage = Math.min((progress / maxValue) * 100, 100);
@@ -40,7 +44,9 @@ export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
         ) : (
           <Text style={styles.label}>{label}</Text>
         )}
-        <Text style={styles.percentage}>{Math.round(progress)}/{maxValue}</Text>
+        <Text style={[styles.percentage, textColor ? { color: textColor } : null]}>
+          {Math.round(progress)}/{maxValue}{suffix ? ` ${suffix}` : ''}
+        </Text>
       </View>
       <View style={styles.trackContainer}>
         <View style={styles.track}>

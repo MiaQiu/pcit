@@ -5,7 +5,9 @@
 RCT_EXTERN_METHOD(configureAudioSessionForRecording:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
-RCT_EXTERN_METHOD(startRecording:(NSNumber)autoStopSeconds
+RCT_EXTERN_METHOD(setCompletionSound:(nonnull NSString *)soundName)
+
+RCT_EXTERN_METHOD(startRecording:(nonnull NSNumber *)autoStopSeconds
                   withResolver:(RCTPromiseResolveBlock)resolve
                   withRejecter:(RCTPromiseRejectBlock)reject)
 

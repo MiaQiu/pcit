@@ -62,6 +62,17 @@ const getSkillType = (tag?: string): 'desirable' | 'undesirable' | 'neutral' => 
   return 'undesirable';
 };
 
+// Helper to get skill rating info based on progress value
+const getSkillRating = (progress: number): { barColor?: string; textColor?: string; suffix?: string } => {
+  if (progress <= 5) {
+    return { barColor: '#852221', textColor: '#852221', suffix: '(Pay attention)' };
+  } else if (progress <= 8) {
+    return { barColor: '#6750A4', textColor: '#6750A4', suffix: '(Good)' };
+  } else {
+    return { barColor: '#6750A4', textColor: '#6750A4', suffix: '(Excellent)' };
+  }
+};
+
 // Light background colors for different speakers
 const SPEAKER_COLORS = [
   '#E3F2FD', // Light blue
@@ -250,12 +261,31 @@ export const ReportScreen: React.FC = () => {
         <View style={styles.scoreSection}>
           <Text style={styles.sectionTitle}>Nora Score</Text>
           <View style={styles.skillsContainer}>
-            <SkillProgressBar
-              label="Overall"
-              progress={reportData.noraScore ?? 0}
-              maxValue={100}
-              color={COLORS.mainPurple}
-            />
+            {(() => {
+              const score = reportData.noraScore ?? 0;
+              let scoreColor: string;
+              let suffix: string;
+              if (score < 80) {
+                scoreColor = '#852221';
+                suffix = '(Pay attention)';
+              } else if (score < 90) {
+                scoreColor = '#6750A4';
+                suffix = '(Good)';
+              } else {
+                scoreColor = '#6750A4';
+                suffix = '(Excellent)';
+              }
+              return (
+                <SkillProgressBar
+                  label="Overall"
+                  progress={score}
+                  maxValue={100}
+                  color={scoreColor}
+                  textColor={scoreColor}
+                  suffix={suffix}
+                />
+              );
+            })()}
           </View>
         </View>
 
@@ -263,36 +293,47 @@ export const ReportScreen: React.FC = () => {
         <View style={styles.skillsSection}>
           <Text style={styles.sectionTitle}>Your PEN Skills</Text>
           <View style={styles.skillsContainer}>
-            {reportData.skills.map((skill, index) => (
-              <SkillProgressBar
-                key={index}
-                label={skill.label}
-                progress={skill.progress}
-                maxValue={10}
-              />
-            ))}
+            {reportData.skills.map((skill, index) => {
+              const rating = getSkillRating(skill.progress);
+              return (
+                <SkillProgressBar
+                  key={index}
+                  label={skill.label}
+                  progress={skill.progress}
+                  maxValue={10}
+                  color={rating.barColor}
+                  textColor={rating.textColor}
+                  suffix={rating.suffix}
+                />
+              );
+            })}
           </View>
         </View>
 
         {/* Areas to Avoid */}
         <View style={styles.avoidSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Areas to avoid</Text>
-            <Text style={styles.totalText}>Total &lt; 3</Text>
+            <Text style={styles.sectionTitle}>Areas to Avoid</Text>
+            {/* <Text style={styles.totalText}>Total &lt; 3</Text> */}
           </View>
           <View style={styles.avoidContainer}>
             {reportData.areasToAvoid.map((area, index) => {
               const areaData = typeof area === 'string' ? { label: area, count: 0 } : area;
+              const needsAttention = areaData.count > 0;
               return (
-                <View key={index} style={styles.avoidRow}>
-                  <Text style={styles.avoidLabel}>{areaData.label}</Text>
-                  <View style={styles.avoidRightContainer}>
-                    <Text style={styles.countText}>{areaData.count}</Text>
-                    <View style={styles.circlesContainer}>
-                      {Array.from({ length: areaData.count }).map((_, i) => (
-                        <View key={i} style={styles.circle} />
-                      ))}
+                <View key={index} style={styles.avoidItem}>
+                  <View style={styles.avoidRow}>
+                    <Text style={styles.avoidLabel}>{areaData.label}</Text>
+                    <View style={styles.avoidRightContainer}>
+                      <Text style={[styles.countText, needsAttention ? styles.countTextAttention : styles.countTextExcellent]}>
+                        {areaData.count}{needsAttention ? ' (Pay attention)' : ' (Excellent)'}
+                      </Text>
                     </View>
+                  </View>
+                  <View style={styles.circlesContainer}>
+                    {Array.from({ length: areaData.count }).map((_, i) => (
+                      <View key={i} style={[styles.circle, needsAttention && styles.circleAttention]} />
+                    ))}
                   </View>
                 </View>
               );
@@ -323,12 +364,12 @@ export const ReportScreen: React.FC = () => {
 
         {/* Tips for Next Time */}
         <View>
-          <Text style={styles.cardTitle}>Tips for next time</Text>
+          <Text style={styles.cardTitle}>Tips for Next Time</Text>
           <View style={styles.card}>
             {/* New format: simplified tip with example utterances */}
-            {reportData.tip && (
+            {/* {reportData.tip && (
               <Text style={styles.tipMainText}>{reportData.tip}</Text>
-            )}
+            )} */}
 
             {/* Transition text */}
             {reportData.transition && (
@@ -590,7 +631,7 @@ const styles = StyleSheet.create({
   },
   scoreBar: {
     height: '100%',
-    backgroundColor: COLORS.mainPurple,
+    backgroundColor: '#CEA4FC', 
     borderRadius: 6,
   },
   skillsSection: {
@@ -603,7 +644,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 0,
   },
   sectionTitle: {
     fontFamily: FONTS.bold,
@@ -622,6 +663,9 @@ const styles = StyleSheet.create({
   avoidContainer: {
     gap: 16,
   },
+  avoidItem: {
+    gap: 8,
+  },
   avoidRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -633,7 +677,7 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
   },
   avoidRightContainer: {
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     gap: 4,
   },
   countText: {
@@ -646,12 +690,22 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 6,
     maxWidth: 180,
+    alignSelf: 'flex-start',    
   },
   circle: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#D1D5DB',
+    width: 18,
+    height: 18,
+    borderRadius: 18,
+    backgroundColor: '#852221',
+  },
+  circleAttention: {
+    backgroundColor: '#852221',
+  },
+  countTextAttention: {
+    color: '#852221',
+  },
+  countTextExcellent: {
+    color: '#6750A4',
   },
   quoteText: {
     fontFamily: FONTS.bold,

@@ -33,9 +33,15 @@
           <string>com.chromamind.nora</string>
         </array>
       </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>exp+nora-mobile</string>
+        </array>
+      </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>26</string>
+    <string>27</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
@@ -47,8 +53,14 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSCameraUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your camera</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your Face ID biometric data.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Nora uses your microphone to record your and your child's conversation during play sessions. These recordings are analyzed to provide you with personalized feedback and tips to help improve communication with your child.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your photos</string>
     <key>NSUserNotificationsUsageDescription</key>
     <string>Nora sends you helpful reminders to practice and learn, and notifies you when your session reports are ready.</string>
     <key>RCTNewArchEnabled</key>
