@@ -77,6 +77,11 @@ export type RootStackParamList = {
   Transcript: {
     recordingId: string;
   };
+  SkillExplanation: {
+    skillKey: string;
+    score?: number; // Optional score for Overall Nora Score
+    tip?: string; // Optional tip for Next Step section
+  };
 };
 
 export type RootTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;

@@ -21,6 +21,7 @@ import { QuizScreen } from '../screens/QuizScreen';
 import { LessonCompleteScreen } from '../screens/LessonCompleteScreen';
 import { ReportScreen } from '../screens/ReportScreen';
 import { TranscriptScreen } from '../screens/TranscriptScreen';
+import { SkillExplanationScreen } from '../screens/SkillExplanationScreen';
 import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
 
@@ -275,6 +276,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="Transcript"
         component={TranscriptScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="SkillExplanation"
+        component={SkillExplanationScreen}
         options={{
           animation: 'slide_from_right',
         }}

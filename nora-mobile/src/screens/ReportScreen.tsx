@@ -121,6 +121,13 @@ const getSpeakerMappings = (transcript: any[]) => {
   return { labelMapping, colorMapping };
 };
 
+// Helper to add empty lines between sentences
+const formatWithLineBreaks = (text: string): string => {
+  if (!text) return text;
+  // Replace sentence endings (. ! ?) followed by a space and capital letter with double newlines
+  return text.replace(/([.!?])\s+(?=[A-Z])/g, '$1\n\n');
+};
+
 const getExampleUtterances = (exampleIndex: number, transcript: any[]) => {
   const result: { utterance: any; originalIndex: number }[] = [];
   if (exampleIndex > 0 && transcript[exampleIndex - 1]) {
@@ -283,6 +290,7 @@ export const ReportScreen: React.FC = () => {
                   color={scoreColor}
                   textColor={scoreColor}
                   suffix={suffix}
+                  onPress={() => navigation.navigate('SkillExplanation', { skillKey: 'Overall', score, tip: reportData.tip })}
                 />
               );
             })()}
@@ -304,6 +312,7 @@ export const ReportScreen: React.FC = () => {
                   color={rating.barColor}
                   textColor={rating.textColor}
                   suffix={rating.suffix}
+                  onPress={() => navigation.navigate('SkillExplanation', { skillKey: skill.label })}
                 />
               );
             })}
@@ -324,11 +333,15 @@ export const ReportScreen: React.FC = () => {
                 <View key={index} style={styles.avoidItem}>
                   <View style={styles.avoidRow}>
                     <Text style={styles.avoidLabel}>{areaData.label}</Text>
-                    <View style={styles.avoidRightContainer}>
-                      <Text style={[styles.countText, needsAttention ? styles.countTextAttention : styles.countTextExcellent]}>
+                    <TouchableOpacity
+                      style={styles.avoidRightContainer}
+                      onPress={() => navigation.navigate('SkillExplanation', { skillKey: areaData.label })}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text style={[styles.countText, styles.countTextClickable, needsAttention ? styles.countTextAttention : styles.countTextExcellent]}>
                         {areaData.count}{needsAttention ? ' (Pay attention)' : ' (Excellent)'}
                       </Text>
-                    </View>
+                    </TouchableOpacity>
                   </View>
                   <View style={styles.circlesContainer}>
                     {Array.from({ length: areaData.count }).map((_, i) => (
@@ -346,7 +359,7 @@ export const ReportScreen: React.FC = () => {
           <View>
             <Text style={styles.cardTitle}>Session Summary</Text>
             <View style={styles.card}>
-              <Text style={styles.summaryText}>{reportData.summary}</Text>
+              <Text style={styles.summaryText}>{formatWithLineBreaks(reportData.summary)}</Text>
             </View>
           </View>
         )}
@@ -356,9 +369,9 @@ export const ReportScreen: React.FC = () => {
           <Text style={styles.cardTitle}>Top Moment</Text>
           <View style={styles.card}>
             <Text style={styles.quoteText}>"{reportData.topMoment.quote}"</Text>
-            {reportData.topMoment.celebration && (
+            {/* {reportData.topMoment.celebration && (
               <Text style={styles.celebrationText}>{reportData.topMoment.celebration}</Text>
-            )}
+            )} */}
           </View>
         </View>
 
@@ -373,7 +386,7 @@ export const ReportScreen: React.FC = () => {
 
             {/* Transition text */}
             {reportData.transition && (
-              <Text style={styles.transitionText}>{reportData.transition}</Text>
+              <Text style={styles.transitionText}>{formatWithLineBreaks(reportData.transition)}</Text>
             )}
 
             {/* Example utterances */}
@@ -393,7 +406,7 @@ export const ReportScreen: React.FC = () => {
                     const pcitTag = utterance.tag;
                     const isMiddle = originalIndex === reportData.exampleIndex;
                     const skillType = getSkillType(pcitTag);
-                    const shouldShowFeedback = isMiddle && isAdult && utterance.feedback && skillType !== 'neutral';
+                    const shouldShowFeedback = isAdult && utterance.feedback && skillType !== 'neutral';
 
                     return (
                       <View key={idx} style={[styles.utteranceContainer, isMiddle && styles.utteranceHighlighted]}>
@@ -685,6 +698,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666666',
   },
+  countTextClickable: {
+    textDecorationLine: 'underline',
+  },
   circlesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -713,7 +729,7 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
     fontStyle: 'italic',
     //lineHeight: 24,
-    marginBottom: 24,
+    //marginBottom: 24,
     textAlign: 'center',
   },
   waveformContainer: {
@@ -749,6 +765,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   exampleSection: {
+    marginTop:8,
     marginBottom: 16,
     backgroundColor: '#F9FAFB',
     padding: 12,

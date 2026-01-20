@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS } from '../constants/assets';
 
 interface SkillProgressBarProps {
@@ -15,6 +15,7 @@ interface SkillProgressBarProps {
   color?: string;
   textColor?: string; // Optional color for the progress text
   suffix?: string; // Optional suffix to display after the number (e.g., "(Pay attention)")
+  onPress?: () => void; // Optional callback when the count is pressed
 }
 
 export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
@@ -24,6 +25,7 @@ export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
   color = COLORS.mainPurple,
   textColor,
   suffix,
+  onPress,
 }) => {
   // Calculate percentage for progress bar (cap at 100%)
   const percentage = Math.min((progress / maxValue) * 100, 100);
@@ -32,6 +34,12 @@ export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
   const isPENSkill = label.match(/^(Praise|Echo|Narrate)/);
   const firstLetter = label.charAt(0);
   const restOfLabel = label.slice(1);
+
+  const PercentageContent = (
+    <Text style={[styles.percentage, textColor ? { color: textColor } : null, onPress && styles.percentageClickable]}>
+      {Math.round(progress)}/{maxValue}{suffix ? ` ${suffix}` : ''}
+    </Text>
+  );
 
   return (
     <View style={styles.container}>
@@ -44,9 +52,13 @@ export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
         ) : (
           <Text style={styles.label}>{label}</Text>
         )}
-        <Text style={[styles.percentage, textColor ? { color: textColor } : null]}>
-          {Math.round(progress)}/{maxValue}{suffix ? ` ${suffix}` : ''}
-        </Text>
+        {onPress ? (
+          <TouchableOpacity onPress={onPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            {PercentageContent}
+          </TouchableOpacity>
+        ) : (
+          PercentageContent
+        )}
       </View>
       <View style={styles.trackContainer}>
         <View style={styles.track}>
@@ -94,6 +106,9 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     fontSize: 12,
     color: '#666666',
+  },
+  percentageClickable: {
+    textDecorationLine: 'underline',
   },
   trackContainer: {
     width: '100%',
