@@ -594,7 +594,9 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       end: utt.endTime,
       role: utt.role,
       tag: utt.noraTag,
-      feedback: utt.feedback
+      feedback: utt.feedback,
+      revisedFeedback: utt.revisedFeedback,
+      additionalTip: utt.additionalTip
     }));
 
     const isCDI = session.mode === 'CDI';
@@ -676,17 +678,12 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       noraScore,
       skills,
       areasToAvoid,
-      topMoment: {
-        quote: topMomentQuote || "Great session!",
-        celebration: session.competencyAnalysis?.celebration || null,
-        audioUrl: '',
-        duration: '0:12'
-      },
-      summary: session.competencyAnalysis?.summary || null,
-      tip: session.competencyAnalysis?.tip || null,
+      topMoment: topMomentQuote || "Great session!",
+      topMomentUtteranceNumber: typeof session.competencyAnalysis?.topMomentUtteranceNumber === 'number'
+        ? session.competencyAnalysis.topMomentUtteranceNumber : null,
       exampleIndex: typeof session.competencyAnalysis?.example === 'number'
         ? session.competencyAnalysis.example : null,
-      transition: session.competencyAnalysis?.transition || null,
+      feedback: session.competencyAnalysis?.feedback || null,
       tips,
       reminder,
       tomorrowGoal,

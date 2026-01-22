@@ -128,6 +128,17 @@ const formatWithLineBreaks = (text: string): string => {
   return text.replace(/([.!?])\s+(?=[A-Z])/g, '$1\n\n');
 };
 
+// Helper to strip PCIT tags (e.g., LP, IC, DC, RF, BD) from quote text
+const stripPcitTags = (text: string): string => {
+  if (!text) return text;
+  // Remove tags at the end of lines (e.g., "Great job! LP" -> "Great job!")
+  return text
+    .split('\n')
+    .map(line => line.replace(/\s+(LP|IC|DC|RF|BD|NT|QU|CM|CR|UP|NE|EC|PR|NA)$/gi, ''))
+    .join('\n')
+    .trim();
+};
+
 const getExampleUtterances = (exampleIndex: number, transcript: any[]) => {
   const result: { utterance: any; originalIndex: number }[] = [];
   if (exampleIndex > 0 && transcript[exampleIndex - 1]) {
@@ -340,6 +351,7 @@ export const ReportScreen: React.FC = () => {
                     >
                       <Text style={[styles.countText, styles.countTextClickable, needsAttention ? styles.countTextAttention : styles.countTextExcellent]}>
                         {areaData.count}{needsAttention ? ' (Pay attention)' : ' (Excellent)'}
+                        <Ionicons name="chevron-forward" size={12} color={needsAttention ? '#852221' : '#6750A4'} />
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -354,39 +366,30 @@ export const ReportScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Session Summary */}
-        {reportData.summary && (
-          <View>
-            <Text style={styles.cardTitle}>Session Summary</Text>
-            <View style={styles.card}>
-              <Text style={styles.summaryText}>{formatWithLineBreaks(reportData.summary)}</Text>
-            </View>
-          </View>
-        )}
-
         {/* Top Moment */}
         <View>
           <Text style={styles.cardTitle}>Top Moment</Text>
           <View style={styles.card}>
-            <Text style={styles.quoteText}>"{reportData.topMoment.quote}"</Text>
-            {/* {reportData.topMoment.celebration && (
-              <Text style={styles.celebrationText}>{reportData.topMoment.celebration}</Text>
-            )} */}
+            <Text style={styles.quoteText}>
+              "{reportData.topMomentUtteranceNumber != null && reportData.transcript?.[reportData.topMomentUtteranceNumber]
+                ? stripPcitTags(reportData.transcript[reportData.topMomentUtteranceNumber].text)
+                : stripPcitTags(reportData.topMoment)}"
+            </Text>
           </View>
         </View>
 
         {/* Tips for Next Time */}
         <View>
-          <Text style={styles.cardTitle}>Tips for Next Time</Text>
+          <Text style={styles.cardTitle}>Session Overview</Text>
           <View style={styles.card}>
             {/* New format: simplified tip with example utterances */}
             {/* {reportData.tip && (
               <Text style={styles.tipMainText}>{reportData.tip}</Text>
             )} */}
 
-            {/* Transition text */}
-            {reportData.transition && (
-              <Text style={styles.transitionText}>{formatWithLineBreaks(reportData.transition)}</Text>
+            {/* Feedback text */}
+            {reportData.feedback && (
+              <Text style={styles.transitionText}>{formatWithLineBreaks(reportData.feedback)}</Text>
             )}
 
             {/* Example utterances */}
@@ -400,11 +403,38 @@ export const ReportScreen: React.FC = () => {
                   <Text style={styles.exampleLabel}>Example from the session:</Text>
                   {exampleUtterances.map((item, idx) => {
                     const { utterance, originalIndex } = item;
+                    const isMiddle = originalIndex === reportData.exampleIndex;
+
+                    // Check if this is a silent slot
+                    if (utterance.speaker === '__SILENT__') {
+                      const duration = (utterance.end || 0) - (utterance.start || 0);
+                      const durationText = duration >= 60
+                        ? `${Math.floor(duration / 60)}m ${Math.round(duration % 60)}s`
+                        : `${duration.toFixed(1)}s`;
+
+                      return (
+                        <View key={idx} style={[styles.silentSlotContainer, isMiddle && styles.utteranceHighlighted]}>
+                          <View style={styles.silentSlotHeader}>
+                            <View style={styles.silentSlotBadge}>
+                              <Text style={styles.silentSlotBadgeText}>Silent Moment</Text>
+                            </View>
+                            {/* <Text style={styles.silentSlotDuration}>{durationText}</Text> */}
+                          </View> 
+                          {utterance.feedback && (
+                            <View style={styles.silentSlotFeedback}>
+                              <Text style={styles.silentSlotFeedbackText}>
+                                💡 {utterance.feedback}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      );
+                    }
+
                     const speakerLabel = speakerMappings.labelMapping[utterance.speaker] || 'Unknown';
                     const speakerColor = speakerMappings.colorMapping[utterance.speaker] || '#E3F2FD';
                     const isAdult = speakerLabel.includes('Adult');
                     const pcitTag = utterance.tag;
-                    const isMiddle = originalIndex === reportData.exampleIndex;
                     const skillType = getSkillType(pcitTag);
                     const shouldShowFeedback = isAdult && utterance.feedback && skillType !== 'neutral';
 
@@ -443,9 +473,9 @@ export const ReportScreen: React.FC = () => {
             })()}
 
             {/* Backward compatibility: old tips format */}
-            {!reportData.tip && reportData.tips && typeof reportData.tips === 'string' && (
+            {/* {!reportData.tip && reportData.tips && typeof reportData.tips === 'string' && (
               <MarkdownText style={styles.tipsText}>{reportData.tips}</MarkdownText>
-            )}
+            )} */}
 
             {/* Backward compatibility: structured tips object */}
             {!reportData.tip && reportData.tips && typeof reportData.tips === 'object' && (
@@ -699,7 +729,7 @@ const styles = StyleSheet.create({
     color: '#666666',
   },
   countTextClickable: {
-    textDecorationLine: 'underline',
+    //textDecorationLine: 'underline',
   },
   circlesContainer: {
     flexDirection: 'row',
@@ -911,6 +941,7 @@ const styles = StyleSheet.create({
   // Example utterances container
   exampleUtterancesContainer: {
     marginBottom: 15,
+    marginTop: 15,
     backgroundColor: '#f2f2f7',
     padding: 15,
     borderRadius: 16,
@@ -986,5 +1017,45 @@ const styles = StyleSheet.create({
   },
   feedbackTextUndesirable: {
     color: '#7E22CE', // Dark purple
+  },
+  // Silent slot styles
+  silentSlotContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  silentSlotHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  silentSlotBadge: {
+    backgroundColor: '#FDE047',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  silentSlotBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: '#854D0E',
+  },
+  silentSlotDuration: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#854D0E',
+  },
+  silentSlotFeedback: {
+    backgroundColor: '#FAF5FF',
+    borderRadius: 8,
+    padding: 12,
+  },
+  silentSlotFeedbackText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#7E22CE',
   },
 });

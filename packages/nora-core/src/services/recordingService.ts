@@ -26,16 +26,18 @@ export interface RecordingAnalysis {
     label: string;
     count: number;
   }>;
-  topMoment: {
+  topMoment: string | {
     quote: string;
     celebration?: string | null;  // Celebration of the top moment
     audioUrl: string;
     duration: string;
   };
+  topMomentUtteranceNumber?: number | null;  // Utterance index for top moment
   summary?: string | null;  // Session summary
   tip?: string | null;  // Simplified single tip
   exampleIndex?: number | null;  // Utterance index for example
-  transition?: string | null;  // Transition text between tip and example
+  transition?: string | null;  // Transition text between tip and example (deprecated)
+  feedback?: string | null;  // Constructive feedback with example reference
   tips?: string | StructuredTips;  // KEEP for backward compatibility
   reminder?: string | null;
   tomorrowGoal: string;
@@ -46,12 +48,10 @@ export interface RecordingAnalysis {
   transcript?: any[];
   pcitCoding?: any;
   competencyAnalysis?: {
-    summary?: string | null;
     topMoment?: string | null;
-    celebration?: string | null;
-    tip?: string | null;
+    topMomentUtteranceNumber?: number | null;
+    feedback?: string | null;
     example?: number | null;
-    transition?: string | null;
     tips?: string | null;
     reminder?: string | null;
     analyzedAt: string;

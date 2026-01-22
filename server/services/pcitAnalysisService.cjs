@@ -5,69 +5,42 @@
 const fetch = require('node-fetch');
 const prisma = require('./db.cjs');
 const { callClaudeForFeedback, parseClaudeJsonResponse } = require('./claudeService.cjs');
-const { getUtterances, updateUtteranceRoles, updateUtteranceTags } = require('../utils/utteranceUtils.cjs');
+const { getUtterances, updateUtteranceRoles, updateUtteranceTags, updateRevisedFeedback, SILENT_SPEAKER_ID } = require('../utils/utteranceUtils.cjs');
 const { DPICS_TO_TAG_MAP, calculateNoraScore } = require('../utils/scoreConstants.cjs');
 const { loadPrompt, loadPromptWithVariables } = require('../prompts/index.cjs');
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Format utterances for prompt display
+ * Handles silent slots specially to make them visible as coaching opportunities
+ * @param {Array} utterances - Array of utterance objects
+ * @returns {string} Formatted transcript string
+ */
+function formatUtterancesForPrompt(utterances) {
+  return utterances.map((u, i) => {
+    if (u.speaker === SILENT_SPEAKER_ID) {
+      const duration = (u.endTime - u.startTime).toFixed(1);
+      return `[${String(i).padStart(2, '0')}] ⏸️ SILENCE (${duration}s) - opportunity to narrate or praise`;
+    }
+    const roleLabel = u.role === 'adult' ? 'Parent' : u.role === 'child' ? 'Child' : u.speaker;
+    const tagSuffix = u.pcitTag ? ` [${u.pcitTag}]` : '';
+    return `[${String(i).padStart(2, '0')}] ${roleLabel}: ${u.text}${tagSuffix}`;
+  }).join('\n');
+}
 
 // ============================================================================
 // CDI Feedback Generation (Multi-prompt approach)
 // ============================================================================
 
 /**
- * Generate analysis prompt for CDI session
+ * Generate combined analysis and feedback prompt for CDI session
+ * Combines analysis and improvement into a single prompt
  */
-function generateAnalysisPrompt(counts, utterances) {
-  return `You are an expert parent-child interaction analyst. Analyze this 5-minute play session.
-
-**Session Metrics:**
-- Labeled Praises: ${counts.praise} (goal: 10+)
-- Reflections: ${counts.echo} (goal: 10+)
-- Behavioral Descriptions: ${counts.narration} (goal: 10+)
-- Questions: ${counts.question}
-- Commands: ${counts.command}
-- Criticisms: ${counts.criticism}
-- Negative Phrases: ${counts.negative_phrases}
-(Goal for last 4 combined: 3 or fewer)
-
-**Transcript:**
-${utterances.map((u, i) =>
-  `[${String(i).padStart(2, '0')}] ${u.speaker}: ${u.text} ${u.pcitTag || ''}`
-).join('\n')}
-
-**Task:**
-Provide two things:
-
-1. **Summary**: Write a warm, encouraging 2-3 sentence summary of how this session went.
-   - Highlight key strengths and the overall quality of interaction.
-   - Speak directly to the parent as their coach.
-   - Do not mention therapy or clinical terms.
-
-2. **Top Moment**: Find the ONE moment that shows the strongest parent-child connection, joy, or positive interaction. Look for moments of:
-   - Child and parent enjoying something together
-   - Spontaneous joy or laughter
-   - Creative play or imagination
-   - Successful cooperation
-   - Warm affection
-   - In case of multiple utterance, use line breaks \\n between utterance to improve readability.
-
-Return ONLY valid JSON:
-{
-  "summary": "2-3 sentence warm summary of the session",
-  "topMoment": {
-    "quote": "exact text from the transcript",
-    "utteranceNumber": 14,
-    "celebration": "exactly 1 sentence explaining why this moment matters for the child's experience"
-  }
-}
-
-No markdown code fences.`;
-}
-
-/**
- * Generate improvement prompt for CDI session
- */
-function generateImprovementPrompt(counts, utterances) {
-  return `You are a parent coaching expert analyzing skill usage.
+function generateCombinedFeedbackPrompt(counts, utterances) {
+  return `You are an expert in parent-child interaction. Analyze this 5-minute play session.
 
 **Session Metrics:**
 - Labeled Praises: ${counts.praise} (goal: 10+)
@@ -78,59 +51,95 @@ function generateImprovementPrompt(counts, utterances) {
 - Criticisms: ${counts.criticism} (reduce)
 - Negative Phrases: ${counts.negative_phrases} (eliminate)
 
-**Transcript with codes:**
-${utterances.map((u, i) =>
-  `[${String(i).padStart(2, '0')}] ${u.speaker}: ${u.text} ${u.pcitTag || ''}`
-).join('\n')}
+**Transcript:**
+${formatUtterancesForPrompt(utterances)}
 
 **Task:**
-Identify the SINGLE most important skill to improve. Consider:
-1. Which positive skill (Praise/Reflection/Description) is furthest from goal?
-2. Which skill to reduce is most problematic?
-3. Which change would most improve the child's experience?
-4. Intepret what things/game the parent and the child do in the play session. If the game is not ideal for practicing the particular skill, highlight to parents in tips.
-    - Use imaginative toys (blocks, dolls, Play-Doh).
-    - Avoid rule-based games (board games) or solitary items (books, puzzles) that make you lead.
+1. **Top Moment**: Find the ONE moment that shows the strongest parent-child connection, joy, or positive interaction.
+
+2. **Feedback**: Be warm and encouraging.  Give a summary of the session, follow by constructive feedback to help parent improve. Use an example from the conversation to demonstrate the point (use phrase "below example", do not mention the utterance number). Do not mention about therapy or clinical terms.
+
+3. **Reminder**: Write exactly 2 sentences of encouragement about how improving creates positive experiences for the child. Keep it warm and forward-looking.
 
 Return ONLY valid JSON:
 {
-  "skillToImprove": "Labeled Praises | Reflections | Behavioral Descriptions | Reduce Questions | Reduce Commands | Eliminate Criticisms | Eliminate Negative Phrases",
-  "currentCount": 5,
-  "goalCount": 10,
-  "tip": "2-3 warm, encouraging sentences explaining what to practice and why it helps the child.",
-  "reasoning": "1-2 sentences explaining why you chose this as the priority"
+  "topMoment": {
+    "quote": "exact quote from the transcript",
+    "utteranceNumber": index of utterance
+  },
+  "Feedback": "5-6 sentences of constructive feedback about the session.",
+  "exampleUtteranceNumber": index of the utterance used as example,
+  "reminder": "2 sentences of encouragement"
 }
 
 No markdown code fences.`;
 }
 
+
 /**
- * Generate example prompt for CDI session
+ * Format utterances with their current feedback for review
+ * @param {Array} utterances - Utterances with tags and feedback
+ * @returns {string} Formatted string showing utterances with current feedback
  */
-function generateExamplePrompt(improvementResult, utterances) {
-  return `You are helping a parent learn through examples.
-
-**The skill to improve:** ${improvementResult.skillToImprove}
-
-**The tip:** ${improvementResult.tip}
-
-**Transcript:**
-${utterances.map((u, i) =>
-  `[${String(i).padStart(2, '0')}] ${u.speaker}: ${u.text} ${u.pcitTag || ''}`
-).join('\n')}
-
-**Task:**
-Find the best utterance that demonstrates either:
-- A missed opportunity to use this skill
-- An incorrect use of this skill
-- A moment where using this skill would have been particularly beneficial
-
-Return ONLY valid JSON:
-{
-  "exampleUtteranceNumber": 14,
-  "transition": "2-3 sentences that: (1) restate the tip briefly, (2) reference the specific utterance by saying "example below", do not mention utterance number, (3) explain what could be done differently",
-  "reminder": "exactly 2 sentences about how improving this skill creates positive experiences for the child. Keep encouraging and forward-looking."
+function formatUtterancesWithFeedback(utterances) {
+  return utterances.map((u, i) => {
+    if (u.speaker === SILENT_SPEAKER_ID) {
+      const duration = (u.endTime - u.startTime).toFixed(1);
+      return `[${String(i).padStart(2, '0')}] ⏸️ SILENCE (${duration}s)
+    Tag: SILENT
+    Current feedback: "${u.feedback || 'None'}"`;
+    }
+    return `[${String(i).padStart(2, '0')}] ${u.speaker}: "${u.text}"
+    Tag: ${u.pcitTag || 'None'}
+    Current feedback: "${u.feedback || 'None'}"`;
+  }).join('\n\n');
 }
+
+/**
+ * Generate review feedback prompt for CDI session
+ * Reviews and revises feedback for parent utterances and selects key silence slots
+ */
+function generateReviewFeedbackPrompt(counts, utterances) {
+  // Separate parent utterances and silence slots for clarity
+  const parentUtterances = utterances.filter(u =>
+    u.role === 'adult' && u.speaker !== SILENT_SPEAKER_ID
+  );
+  const silenceSlots = utterances.filter(u => u.speaker === SILENT_SPEAKER_ID);
+
+  return `You are an expert PCIT parent-child interaction therapyst.
+
+**Session Metrics:**
+- Labeled Praises: ${counts.praise} (goal: 10+)
+- Reflections/Echo: ${counts.echo} (goal: 10+)
+- Behavioral Descriptions/Narration: ${counts.narration} (goal: 10+)
+- Questions: ${counts.question} (reduce)
+- Commands: ${counts.command} (reduce)
+- Criticisms: ${counts.criticism} (reduce)
+
+**All Utterances with Current Feedback:**
+${formatUtterancesWithFeedback(utterances)}
+
+**Your Task:**
+1. Take into consideration the session metrics, knowing how well parent perform in each category, and the conversation context, lightly adjust the feedback given to parents. 
+   **For desirable skills (LP, BD, RF, RQ)**, do not change the original feedback. you may add an "additional_tip" only if it is extremely insightful, that will help the parents to improve their overall performance/metrics. 
+   **For undesirable skills ((NTA, DC, IC, Q, UP) and silence slots**, provide constructive, warm feedback with specific alternatives.
+
+2. **Select up to 3 most impactful silence slots** - Choose silences that:
+   - Are good opportunities for the parent to practice PEN skills
+   - Come at natural moments in play (not awkward pauses)
+   - Would benefit from coaching tips
+
+**Output Format:**
+Return ONLY a valid JSON array. Each item has:
+- "id": the utterance index number (from [XX] in the transcript)
+- "feedback": revised feedback string (1-2 sentences, warm and specific)
+- "additional_tip": optional extra tip for desirable skills (null if not applicable)
+
+
+**Rules:**
+- Maximum 3 silence slots
+- Keep feedback warm, specific, and actionable
+- Return ONLY the JSON array, no other text
 
 No markdown code fences.`;
 }
@@ -142,38 +151,43 @@ No markdown code fences.`;
  * @returns {Promise<Object>} Assembled feedback result
  */
 async function generateCDIFeedback(counts, utterances) {
-  console.log('🚀 [CDI-FEEDBACK] Starting multi-prompt feedback generation...');
+  console.log('🚀 [CDI-FEEDBACK] Starting feedback generation...');
 
-  // Call 1 & 2 in parallel (they're independent)
-  console.log('📝 [CDI-FEEDBACK] Running Call 1 (Analysis) and Call 2 (Improvement) in parallel...');
-  const [analysisData, improvementData] = await Promise.all([
-    callClaudeForFeedback(generateAnalysisPrompt(counts, utterances)),
-    callClaudeForFeedback(generateImprovementPrompt(counts, utterances))
-  ]);
-
-  console.log('✅ [CDI-FEEDBACK] Call 1 result:', JSON.stringify(analysisData).substring(0, 200));
-  console.log('✅ [CDI-FEEDBACK] Call 2 result:', JSON.stringify(improvementData).substring(0, 200));
-
-  // Call 3 depends on Call 2 results
-  console.log('📝 [CDI-FEEDBACK] Running Call 3 (Example) with improvement context...');
-  const exampleData = await callClaudeForFeedback(
-    generateExamplePrompt(improvementData, utterances)
+  // Call 1: Combined feedback prompt (analysis + improvement + example in one)
+  console.log('📝 [CDI-FEEDBACK] Running combined feedback prompt...');
+  const feedbackData = await callClaudeForFeedback(
+    generateCombinedFeedbackPrompt(counts, utterances)
   );
 
-  console.log('✅ [CDI-FEEDBACK] Call 3 result:', JSON.stringify(exampleData).substring(0, 200));
+  console.log('✅ [CDI-FEEDBACK] Combined feedback result:', JSON.stringify(feedbackData).substring(0, 300));
+
+  // Call 2: Review and revise feedback for utterances and silence slots
+  console.log('📝 [CDI-FEEDBACK] Running Review Feedback for utterances and silence slots...');
+  let revisedFeedback = [];
+  try {
+    const reviewData = await callClaudeForFeedback(
+      generateReviewFeedbackPrompt(counts, utterances),
+      { temperature: 0.5, responseType: 'array' }  // Lower temperature, expect array response
+    );
+    // reviewData should be an array directly since we asked for JSON array
+    revisedFeedback = Array.isArray(reviewData) ? reviewData : [];
+    console.log('✅ [CDI-FEEDBACK] Review feedback result:', JSON.stringify(revisedFeedback).substring(0, 300));
+  } catch (reviewError) {
+    console.error('⚠️ [CDI-FEEDBACK] Review feedback failed, continuing without revised feedback:', reviewError.message);
+    // Continue without revised feedback - it's an enhancement, not critical
+  }
 
   // Assemble final result
   const result = {
-    summary: analysisData.summary,
-    topMoment: analysisData.topMoment.quote,
-    celebration: analysisData.topMoment.celebration,
-    tip: improvementData.tip,
-    example: exampleData.exampleUtteranceNumber,
-    transition: exampleData.transition,
-    reminder: exampleData.reminder
+    topMoment: feedbackData.topMoment?.quote,
+    topMomentUtteranceNumber: feedbackData.topMoment?.utteranceNumber,
+    feedback: feedbackData.Feedback,
+    example: feedbackData.exampleUtteranceNumber,
+    reminder: feedbackData.reminder,
+    revisedFeedback: revisedFeedback  // Array of {id, feedback, additional_tip}
   };
 
-  console.log('✅ [CDI-FEEDBACK] Multi-prompt feedback generation complete');
+  console.log('✅ [CDI-FEEDBACK] Feedback generation complete');
   return result;
 }
 
@@ -575,13 +589,16 @@ Do not include markdown or whitespace (minified JSON).
       console.log('🎯 [COMPETENCY-ANALYSIS] Using multi-prompt CDI feedback generation...');
       const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags);
 
+      // Save revised feedback to database
+      if (feedbackResult.revisedFeedback && feedbackResult.revisedFeedback.length > 0) {
+        await updateRevisedFeedback(sessionId, feedbackResult.revisedFeedback);
+      }
+
       competencyAnalysis = {
-        summary: feedbackResult.summary || null,
         topMoment: feedbackResult.topMoment,
-        celebration: feedbackResult.celebration || null,
-        tip: feedbackResult.tip || null,
+        topMomentUtteranceNumber: typeof feedbackResult.topMomentUtteranceNumber === 'number' ? feedbackResult.topMomentUtteranceNumber : null,
+        feedback: feedbackResult.feedback || null,
         example: typeof feedbackResult.example === 'number' ? feedbackResult.example : null,
-        transition: feedbackResult.transition || null,
         tips: null,
         reminder: feedbackResult.reminder,
         analyzedAt: new Date().toISOString(),
