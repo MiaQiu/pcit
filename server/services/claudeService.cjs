@@ -40,14 +40,16 @@ function parseClaudeJsonResponse(text, type = 'object') {
  * @param {number} [options.temperature=0.7] - Response temperature
  * @param {string} [options.systemPrompt] - Optional system prompt
  * @param {string} [options.model='claude-sonnet-4-5-20250929'] - Model to use
- * @returns {Promise<Object>} Parsed JSON response
+ * @param {string} [options.responseType='object'] - 'object' for {} or 'array' for []
+ * @returns {Promise<Object|Array>} Parsed JSON response
  */
 async function callClaudeForFeedback(prompt, options = {}) {
   const {
     maxTokens = 2048,
     temperature = 0.7,
     systemPrompt = null,
-    model = 'claude-sonnet-4-5-20250929'
+    model = 'claude-sonnet-4-5-20250929',
+    responseType = 'object'
   } = options;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -87,7 +89,7 @@ async function callClaudeForFeedback(prompt, options = {}) {
   const data = await response.json();
   const text = data.content[0].text;
 
-  return parseClaudeJsonResponse(text);
+  return parseClaudeJsonResponse(text, responseType);
 }
 
 /**

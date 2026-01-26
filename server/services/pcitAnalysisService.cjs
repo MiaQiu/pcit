@@ -8,10 +8,45 @@ const { callClaudeForFeedback, parseClaudeJsonResponse } = require('./claudeServ
 const { getUtterances, updateUtteranceRoles, updateUtteranceTags, updateRevisedFeedback, SILENT_SPEAKER_ID } = require('../utils/utteranceUtils.cjs');
 const { DPICS_TO_TAG_MAP, calculateNoraScore } = require('../utils/scoreConstants.cjs');
 const { loadPrompt, loadPromptWithVariables } = require('../prompts/index.cjs');
+const { decryptSensitiveData } = require('../utils/encryption.cjs');
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+/**
+ * Calculate child's age from birth year or birthday
+ * @param {number} birthYear - Child's birth year
+ * @param {Date} birthday - Child's birthday (optional, more precise)
+ * @returns {number} Child's age in years
+ */
+function calculateChildAge(birthYear, birthday) {
+  const today = new Date();
+  if (birthday) {
+    const birthDate = new Date(birthday);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
+  return today.getFullYear() - birthYear;
+}
+
+/**
+ * Format gender enum to readable text
+ * @param {string} genderEnum - Gender enum value (BOY, GIRL, OTHER)
+ * @returns {string} Readable gender text
+ */
+function formatGender(genderEnum) {
+  const genderMap = {
+    'BOY': 'boy',
+    'GIRL': 'girl',
+    'OTHER': 'child'
+  };
+  return genderMap[genderEnum] || 'child';
+}
 
 /**
  * Format utterances for prompt display
@@ -32,6 +67,193 @@ function formatUtterancesForPrompt(utterances) {
 }
 
 // ============================================================================
+// Gemini Psychologist Feedback Generation
+// ============================================================================
+
+/**
+ * Format utterances for psychologist review
+ * @param {Array} utterances - Array of utterance objects with roles
+ * @returns {string} Formatted transcript for psychologist
+ */
+function formatUtterancesForPsychologist(utterances) {
+  return utterances
+    .filter(u => u.speaker !== SILENT_SPEAKER_ID)
+    .map((u, i) => {
+      const roleLabel = u.role === 'adult' ? 'Parent' : u.role === 'child' ? 'Child' : u.speaker;
+      return `${roleLabel}: ${u.text}`;
+    }).join('\n');
+}
+
+/**
+ * Generate psychologist feedback using Gemini API
+ * @param {Array} utterances - Utterances with roles
+ * @param {Object} childInfo - Child's info (name, age, gender)
+ * @returns {Promise<Object>} Psychologist feedback
+ */
+async function generatePsychologistFeedback(utterances, childInfo) {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) {
+    console.warn('⚠️ [PSYCHOLOGIST-FEEDBACK] Gemini API key not configured, skipping psychologist feedback');
+    return null;
+  }
+
+  const { name, age, gender } = childInfo;
+  const childDescription = `${age} year old ${gender}`;
+  const transcript = formatUtterancesForPsychologist(utterances);
+
+  const prompt = `this is the transcripts from a 5 mins parent-child play session. as a child psychologists, can you provide feedbacks to parents on the play session. can you also highlight what are the things you notice with the child?
+        **Transcript:**
+        ${transcript}
+        `;
+
+  console.log(`📊 [PSYCHOLOGIST-FEEDBACK] Calling Gemini API for psychologist feedback...`);
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2048
+          }
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('❌ [PSYCHOLOGIST-FEEDBACK] Gemini API error:', errorData);
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!responseText) {
+      throw new Error('Empty response from Gemini API');
+    }
+
+    // Parse JSON response
+    const cleanedResponse = responseText
+      .replace(/```json\s*/g, '')
+      .replace(/```\s*/g, '')
+      .trim();
+
+    const psychologistFeedback = JSON.parse(cleanedResponse);
+
+    console.log(`✅ [PSYCHOLOGIST-FEEDBACK] Gemini API response received`);
+
+    return {
+      ...psychologistFeedback,
+      childAge: age,
+      childGender: gender,
+      generatedAt: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('❌ [PSYCHOLOGIST-FEEDBACK] Error generating psychologist feedback:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Extract child portfolio insights from psychologist feedback
+ * @param {Object} psychologistFeedback - The full psychologist feedback
+ * @returns {Promise<Object>} Condensed portfolio insights for mobile display
+ */
+async function extractChildPortfolioInsights(psychologistFeedback) {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) {
+    console.warn('⚠️ [PORTFOLIO-INSIGHTS] Gemini API key not configured, skipping portfolio insights');
+    return null;
+  }
+
+  if (!psychologistFeedback) {
+    console.warn('⚠️ [PORTFOLIO-INSIGHTS] No psychologist feedback provided, skipping portfolio insights');
+    return null;
+  }
+
+  const feedbackText = JSON.stringify(psychologistFeedback, null, 2);
+
+  const prompt = `we are building child portfolio. extract insights from the report. 1-3 key points about the child. 1-3 points for the parent to improve. only pick the ones are most valuable and insightful. (if none, keep blank). keep short and concise for mobile display. output format is json.
+
+{
+  "childInsights": ["insight 1", "insight 2"],
+  "parentImprovements": ["improvement 1", "improvement 2"]
+}
+
+Report:
+${feedbackText}
+
+Return ONLY valid JSON. Do not include markdown code blocks.`;
+
+  console.log(`📊 [PORTFOLIO-INSIGHTS] Calling Gemini API for portfolio insights...`);
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 512
+          }
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('❌ [PORTFOLIO-INSIGHTS] Gemini API error:', errorData);
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!responseText) {
+      throw new Error('Empty response from Gemini API');
+    }
+
+    // Parse JSON response
+    const cleanedResponse = responseText
+      .replace(/```json\s*/g, '')
+      .replace(/```\s*/g, '')
+      .trim();
+
+    const portfolioInsights = JSON.parse(cleanedResponse);
+
+    console.log(`✅ [PORTFOLIO-INSIGHTS] Gemini API response received`);
+
+    return {
+      ...portfolioInsights,
+      generatedAt: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('❌ [PORTFOLIO-INSIGHTS] Error extracting portfolio insights:', error.message);
+    return null;
+  }
+}
+
+// ============================================================================
 // CDI Feedback Generation (Multi-prompt approach)
 // ============================================================================
 
@@ -39,8 +261,8 @@ function formatUtterancesForPrompt(utterances) {
  * Generate combined analysis and feedback prompt for CDI session
  * Combines analysis and improvement into a single prompt
  */
-function generateCombinedFeedbackPrompt(counts, utterances) {
-  return `You are an expert in parent-child interaction. Analyze this 5-minute play session.
+function generateCombinedFeedbackPrompt(counts, utterances, childName = 'the child') {
+  return `You are an expert in parent-child interaction. Analyze this 5-minute play session with ${childName}.
 
 **Session Metrics:**
 - Labeled Praises: ${counts.praise} (goal: 10+)
@@ -57,9 +279,11 @@ ${formatUtterancesForPrompt(utterances)}
 **Task:**
 1. **Top Moment**: Find the ONE moment that shows the strongest parent-child connection, joy, or positive interaction.
 
-2. **Feedback**: Be warm and encouraging.  Give a summary of the session, follow by constructive feedback to help parent improve. Use an example from the conversation to demonstrate the point (use phrase "below example", do not mention the utterance number). Do not mention about therapy or clinical terms.
+2. **Feedback**: Be warm and encouraging. within 100 words, Give a compliment, follow by one exact feedback to help parent improve. Use an example from the conversation to demonstrate the point (use phrase "below example", do not mention the utterance number). Do not mention about therapy or clinical terms.
 
 3. **Reminder**: Write exactly 2 sentences of encouragement about how improving creates positive experiences for the child. Keep it warm and forward-looking.
+
+4.  **ChildReaction**: Highlight insights about ${childName}'s behavior, to boost the parent's motivation to continue practising the desired skills and avoid undesired skills. Use ${childName}'s name in your response.
 
 Return ONLY valid JSON:
 {
@@ -67,9 +291,10 @@ Return ONLY valid JSON:
     "quote": "exact quote from the transcript",
     "utteranceNumber": index of utterance
   },
-  "Feedback": "5-6 sentences of constructive feedback about the session.",
+  "Feedback": "2-3 paragraphs, within 100 words, separated by ***.",
   "exampleUtteranceNumber": index of the utterance used as example,
   "reminder": "2 sentences of encouragement"
+  "ChildReaction":"2-3 sentences"
 }
 
 No markdown code fences.`;
@@ -120,11 +345,11 @@ function generateReviewFeedbackPrompt(counts, utterances) {
 ${formatUtterancesWithFeedback(utterances)}
 
 **Your Task:**
-1. Take into consideration the session metrics, knowing how well parent perform in each category, and the conversation context, lightly adjust the feedback given to parents. 
+1. Take into consideration the session metrics, knowing how well parent perform in each category, and the conversation context, propose revised feedback if provide additional value. 
    **For desirable skills (LP, BD, RF, RQ)**, do not change the original feedback. you may add an "additional_tip" only if it is extremely insightful, that will help the parents to improve their overall performance/metrics. 
-   **For undesirable skills ((NTA, DC, IC, Q, UP) and silence slots**, provide constructive, warm feedback with specific alternatives.
+   **For undesirable skills ((NTA, DC, IC, Q, UP)**, provide constructive, warm feedback with specific alternatives.
 
-2. **Select up to 3 most impactful silence slots** - Choose silences that:
+2. Identify any silence slots that:
    - Are good opportunities for the parent to practice PEN skills
    - Come at natural moments in play (not awkward pauses)
    - Would benefit from coaching tips
@@ -148,15 +373,16 @@ No markdown code fences.`;
  * Orchestrator function for multi-prompt CDI feedback
  * @param {Object} counts - Tag counts from PCIT coding
  * @param {Array} utterances - Utterances with tags
+ * @param {string} childName - Child's name for personalized feedback
  * @returns {Promise<Object>} Assembled feedback result
  */
-async function generateCDIFeedback(counts, utterances) {
+async function generateCDIFeedback(counts, utterances, childName) {
   console.log('🚀 [CDI-FEEDBACK] Starting feedback generation...');
 
   // Call 1: Combined feedback prompt (analysis + improvement + example in one)
   console.log('📝 [CDI-FEEDBACK] Running combined feedback prompt...');
   const feedbackData = await callClaudeForFeedback(
-    generateCombinedFeedbackPrompt(counts, utterances)
+    generateCombinedFeedbackPrompt(counts, utterances, childName)
   );
 
   console.log('✅ [CDI-FEEDBACK] Combined feedback result:', JSON.stringify(feedbackData).substring(0, 300));
@@ -183,6 +409,7 @@ async function generateCDIFeedback(counts, utterances) {
     topMomentUtteranceNumber: feedbackData.topMoment?.utteranceNumber,
     feedback: feedbackData.Feedback,
     example: feedbackData.exampleUtteranceNumber,
+    childReaction: feedbackData.ChildReaction,
     reminder: feedbackData.reminder,
     revisedFeedback: revisedFeedback  // Array of {id, feedback, additional_tip}
   };
@@ -290,6 +517,21 @@ async function analyzePCITCoding(sessionId, userId) {
     throw new Error('Session not found');
   }
   console.log(`✅ [ANALYSIS-STEP-1] Session found, mode: ${session.mode}`);
+
+  // Get user's child info for personalized feedback
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      childName: true,
+      childGender: true,
+      childBirthYear: true,
+      childBirthday: true
+    }
+  });
+  const childName = user?.childName ? decryptSensitiveData(user.childName) : 'the child';
+  const childAge = user?.childBirthYear ? calculateChildAge(user.childBirthYear, user.childBirthday) : null;
+  const childGender = user?.childGender ? formatGender(user.childGender) : 'child';
+  console.log(`✅ [ANALYSIS-STEP-1b] Child info: ${childName}, ${childAge} years old, ${childGender}`);
 
   // Get utterances from database
   console.log(`📊 [ANALYSIS-STEP-2] Fetching utterances from database...`);
@@ -578,6 +820,52 @@ Do not include markdown or whitespace (minified JSON).
     }
   }
 
+  // STEP 9: Generate psychologist feedback using Gemini API
+  console.log(`📊 [ANALYSIS-STEP-9] Generating psychologist feedback via Gemini...`);
+  let psychologistFeedback = null;
+  try {
+    // Get utterances with roles for psychologist review
+    const utterancesForPsychologist = await getUtterances(sessionId);
+
+    psychologistFeedback = await generatePsychologistFeedback(
+      utterancesForPsychologist,
+      {
+        name: childName,
+        age: childAge || 3,  // Default to 3 if not available
+        gender: childGender
+      }
+    );
+
+    if (psychologistFeedback) {
+      console.log(`✅ [ANALYSIS-STEP-9] Psychologist feedback generated successfully`);
+    } else {
+      console.log(`⚠️ [ANALYSIS-STEP-9] Psychologist feedback skipped or failed`);
+    }
+  } catch (psychError) {
+    console.error('⚠️ [ANALYSIS-STEP-9] Error generating psychologist feedback:', psychError.message);
+    // Continue without psychologist feedback - it's an enhancement, not critical
+  }
+
+  // STEP 10: Extract portfolio insights from psychologist feedback
+  console.log(`📊 [ANALYSIS-STEP-10] Extracting portfolio insights...`);
+  let childPortfolioInsights = null;
+  try {
+    if (psychologistFeedback) {
+      childPortfolioInsights = await extractChildPortfolioInsights(psychologistFeedback);
+
+      if (childPortfolioInsights) {
+        console.log(`✅ [ANALYSIS-STEP-10] Portfolio insights extracted successfully`);
+      } else {
+        console.log(`⚠️ [ANALYSIS-STEP-10] Portfolio insights extraction skipped or failed`);
+      }
+    } else {
+      console.log(`⚠️ [ANALYSIS-STEP-10] Skipping portfolio insights - no psychologist feedback available`);
+    }
+  } catch (portfolioError) {
+    console.error('⚠️ [ANALYSIS-STEP-10] Error extracting portfolio insights:', portfolioError.message);
+    // Continue without portfolio insights - it's an enhancement, not critical
+  }
+
   // Get competency analysis based on tag counts and utterances
   let competencyAnalysis = null;
   try {
@@ -587,7 +875,7 @@ Do not include markdown or whitespace (minified JSON).
     if (isCDI) {
       // Use multi-prompt approach for CDI
       console.log('🎯 [COMPETENCY-ANALYSIS] Using multi-prompt CDI feedback generation...');
-      const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags);
+      const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName);
 
       // Save revised feedback to database
       if (feedbackResult.revisedFeedback && feedbackResult.revisedFeedback.length > 0) {
@@ -599,6 +887,7 @@ Do not include markdown or whitespace (minified JSON).
         topMomentUtteranceNumber: typeof feedbackResult.topMomentUtteranceNumber === 'number' ? feedbackResult.topMomentUtteranceNumber : null,
         feedback: feedbackResult.feedback || null,
         example: typeof feedbackResult.example === 'number' ? feedbackResult.example : null,
+        childReaction: feedbackResult.childReaction || null,
         tips: null,
         reminder: feedbackResult.reminder,
         analyzedAt: new Date().toISOString(),
@@ -684,17 +973,21 @@ Do not include markdown or whitespace (minified JSON).
       },
       tagCounts,
       competencyAnalysis,
-      overallScore
+      overallScore,
+      psychologistFeedback,
+      childPortfolioInsights
     }
   });
 
   console.log(`✅ [DATABASE-UPDATE] PCIT coding and overall score (${overallScore}) stored for session ${sessionId}`);
 
-  return { tagCounts, competencyAnalysis, overallScore };
+  return { tagCounts, competencyAnalysis, overallScore, psychologistFeedback, childPortfolioInsights };
 }
 
 module.exports = {
   analyzePCITCoding,
   generateCDIFeedback,
-  generatePDICompetencyPrompt
+  generatePDICompetencyPrompt,
+  generatePsychologistFeedback,
+  extractChildPortfolioInsights
 };

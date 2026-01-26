@@ -38,6 +38,7 @@ export interface RecordingAnalysis {
   exampleIndex?: number | null;  // Utterance index for example
   transition?: string | null;  // Transition text between tip and example (deprecated)
   feedback?: string | null;  // Constructive feedback with example reference
+  childReaction?: string | null;  // What we learned about the child
   tips?: string | StructuredTips;  // KEEP for backward compatibility
   reminder?: string | null;
   tomorrowGoal: string;
@@ -51,6 +52,7 @@ export interface RecordingAnalysis {
     topMoment?: string | null;
     topMomentUtteranceNumber?: number | null;
     feedback?: string | null;
+    childReaction?: string | null;
     example?: number | null;
     tips?: string | null;
     reminder?: string | null;

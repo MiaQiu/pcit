@@ -684,6 +684,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       exampleIndex: typeof session.competencyAnalysis?.example === 'number'
         ? session.competencyAnalysis.example : null,
       feedback: session.competencyAnalysis?.feedback || null,
+      childReaction: session.competencyAnalysis?.childReaction || null,
       tips,
       reminder,
       tomorrowGoal,
@@ -693,7 +694,9 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       },
       transcript: transcriptSegments,
       pcitCoding: session.pcitCoding,
-      competencyAnalysis: session.competencyAnalysis || null
+      competencyAnalysis: session.competencyAnalysis || null,
+      psychologistFeedback: session.psychologistFeedback || null,
+      childPortfolioInsights: session.childPortfolioInsights || null
     });
 
   } catch (error) {
