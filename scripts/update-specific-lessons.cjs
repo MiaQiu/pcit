@@ -14,9 +14,23 @@ const prisma = new PrismaClient();
  */
 
 // ============================================================================
-// ID GENERATION HELPER
+// ID GENERATION HELPERS
 // ============================================================================
 
+/**
+ * Generate a stable ID for lessons based on phase and day number
+ * @param {string} phase - CONNECT or DISCIPLINE
+ * @param {number} dayNumber - Day number within the phase
+ * @returns {string} Stable lesson ID (e.g., "CONNECT-1", "DISCIPLINE-5")
+ */
+function generateStableLessonId(phase, dayNumber) {
+  return `${phase}-${dayNumber}`;
+}
+
+/**
+ * Generate a unique ID for non-lesson database records (fallback)
+ * @returns {string} 25-character unique ID
+ */
 function generateId() {
   return crypto.randomBytes(12).toString('base64').replace(/[+/=]/g, '').substring(0, 25);
 }
@@ -432,14 +446,15 @@ class LessonUpdater {
         where: { lessonId: existing.id }
       });
 
-      // 3. Create new segments with formatted bodyText
+      // 3. Create new segments with formatted bodyText (using stable IDs)
       const now = new Date();
+      const stableLessonId = generateStableLessonId(lessonData.phase, lessonData.dayNumber);
       const segments = lessonData.cards.map((card, idx) => {
         const contentType = inferContentType(card.sectionTitle, card.bodyText);
         const formattedBodyText = this.formatter.format(card.bodyText, contentType, card.sectionTitle);
 
         return {
-          id: generateId(),
+          id: `${stableLessonId}-seg-${idx + 1}`,
           lessonId: existing.id,
           order: idx + 1,
           sectionTitle: card.sectionTitle,
