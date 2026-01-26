@@ -8,6 +8,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Keyword {
+  id         String   @id
+  term       String   @unique
+  definition String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+
+  @@index([term])
+}
+
 model LearningProgress {
   id            String   @id
   userId        String   @unique
@@ -48,17 +58,20 @@ model Lesson {
 }
 
 model LessonSegment {
-  id           String      @id
-  lessonId     String
-  order        Int
-  sectionTitle String?
-  contentType  ContentType
-  bodyText     String
-  imageUrl     String?
-  iconType     String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime
-  Lesson       Lesson      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  id                String              @id
+  lessonId          String
+  order             Int
+  sectionTitle      String?
+  contentType       ContentType
+  bodyText          String
+  imageUrl          String?
+  iconType          String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  aiCheckMode       String?
+  idealAnswer       String?
+  Lesson            Lesson              @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  TextInputResponse TextInputResponse[]
 
   @@unique([lessonId, order])
   @@index([lessonId])
@@ -75,6 +88,20 @@ model ModuleHistory {
   @@index([userId, category])
   @@index([userId])
   @@index([viewedAt])
+}
+
+model PasswordResetToken {
+  id        String   @id
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([token])
+  @@index([userId])
 }
 
 model Phq2Survey {
@@ -132,16 +159,6 @@ model QuizResponse {
   @@index([userId, quizId])
 }
 
-model Keyword {
-  id         String   @id @default(uuid())
-  term       String   @unique
-  definition String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([term])
-}
-
 model RefreshToken {
   id        String   @id
   userId    String   @unique
@@ -150,20 +167,6 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@index([tokenHash])
-}
-
-model PasswordResetToken {
-  id        String   @id
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  used      Boolean  @default(false)
-  createdAt DateTime @default(now())
-  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([token])
-  @@index([userId])
-  @@index([expiresAt])
 }
 
 model RiskAuditLog {
@@ -203,41 +206,38 @@ model Session {
   overallScore           Int?
   elevenLabsJson         Json?
   roleIdentificationJson Json?
-  transcriptionService   String?
   transcribedAt          DateTime?
-  analysisStatus         AnalysisStatus @default(PENDING)
+  transcriptionService   String?
   analysisError          String?
   analysisFailedAt       DateTime?
-  retryCount             Int            @default(0)
+  analysisStatus         AnalysisStatus @default(PENDING)
   lastRetriedAt          DateTime?
   permanentFailure       Boolean        @default(false)
+  retryCount             Int            @default(0)
   User                   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   Utterance              Utterance[]
 
+  @@index([analysisStatus])
   @@index([createdAt])
   @@index([flaggedForReview])
   @@index([mode])
   @@index([userId])
-  @@index([analysisStatus])
 }
 
-model Utterance {
-  id        String   @id @default(uuid())
-  sessionId String
-  speaker   String
-  text      String
-  startTime Float
-  endTime   Float
-  role      String?
-  pcitTag   String?
-  noraTag   String?
-  feedback  String?
-  order     Int
-  createdAt DateTime @default(now())
-  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+model SubscriptionEvent {
+  id                String    @id
+  userId            String
+  revenueCatEventId String    @unique
+  eventType         String
+  productId         String
+  expiresDate       DateTime?
+  revenueCatData    Json
+  createdAt         DateTime  @default(now())
+  User              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([sessionId, order])
-  @@index([sessionId])
+  @@index([eventType])
+  @@index([revenueCatEventId])
+  @@index([userId])
 }
 
 model SupportRequest {
@@ -249,7 +249,7 @@ model SupportRequest {
   status        SupportRequestStatus @default(OPEN)
   priority      SupportPriority      @default(MEDIUM)
   createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+  updatedAt     DateTime
   resolvedAt    DateTime?
   resolverNotes String?
   User          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -257,6 +257,22 @@ model SupportRequest {
   @@index([createdAt])
   @@index([status])
   @@index([userId])
+}
+
+model TextInputResponse {
+  id            String        @id @default(uuid())
+  userId        String
+  segmentId     String
+  userAnswer    String
+  aiEvaluation  Json?
+  isCorrect     Boolean       @default(false)
+  score         Int?
+  attemptNumber Int           @default(1)
+  respondedAt   DateTime      @default(now())
+  LessonSegment LessonSegment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+  User          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, segmentId])
 }
 
 model ThirdPartyRequest {
@@ -277,34 +293,34 @@ model ThirdPartyRequest {
 }
 
 model User {
-  id                    String                 @id
-  email                 String                 @unique
+  id                    String               @id
+  email                 String               @unique
   passwordHash          String
   name                  String
   therapistId           String?
   childName             String
-  createdAt             DateTime               @default(now())
-  currentStreak         Int                    @default(0)
+  createdAt             DateTime             @default(now())
+  currentStreak         Int                  @default(0)
   lastSessionDate       DateTime?
-  longestStreak         Int                    @default(0)
+  longestStreak         Int                  @default(0)
   childBirthYear        Int
   childConditions       String
-  emailHash             String?                @unique
+  emailHash             String?              @unique
   childBirthday         DateTime?
   issue                 String?
   profileImageUrl       String?
   subscriptionEndDate   DateTime?
-  subscriptionPlan      SubscriptionPlan       @default(FREE)
+  subscriptionPlan      SubscriptionPlan     @default(FREE)
   subscriptionStartDate DateTime?
-  subscriptionStatus    SubscriptionStatus     @default(INACTIVE)
+  subscriptionStatus    SubscriptionStatus   @default(INACTIVE)
   trialEndDate          DateTime?
   trialStartDate        DateTime?
-  relationshipToChild   RelationshipToChild    @default(MOTHER)
+  relationshipToChild   RelationshipToChild  @default(MOTHER)
   childGender           ChildGender?
   pushToken             String?
   pushTokenUpdatedAt    DateTime?
-  currentPhase          LessonPhase            @default(CONNECT)
-  revenueCatCustomerId  String?                @unique
+  currentPhase          LessonPhase          @default(CONNECT)
+  revenueCatCustomerId  String?              @unique
   LearningProgress      LearningProgress?
   ModuleHistory         ModuleHistory[]
   PasswordResetToken    PasswordResetToken[]
@@ -312,15 +328,16 @@ model User {
   QuizResponse          QuizResponse[]
   RiskAuditLog          RiskAuditLog[]
   Session               Session[]
+  SubscriptionEvent     SubscriptionEvent[]
   SupportRequest        SupportRequest[]
+  TextInputResponse     TextInputResponse[]
   ThirdPartyRequest     ThirdPartyRequest[]
   UserLessonProgress    UserLessonProgress[]
   WacbSurvey            WacbSurvey[]
-  SubscriptionEvent     SubscriptionEvent[]
 
   @@index([emailHash])
-  @@index([therapistId])
   @@index([pushToken])
+  @@index([therapistId])
 }
 
 model UserLessonProgress {
@@ -340,6 +357,27 @@ model UserLessonProgress {
   @@unique([userId, lessonId])
   @@index([lessonId])
   @@index([userId, status])
+}
+
+model Utterance {
+  id              String   @id
+  sessionId       String
+  speaker         String
+  text            String
+  startTime       Float
+  endTime         Float
+  role            String?
+  pcitTag         String?
+  order           Int
+  createdAt       DateTime @default(now())
+  noraTag         String?
+  feedback        String?
+  additionalTip   String?
+  revisedFeedback String?
+  Session         Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([sessionId, order])
 }
 
 model WacbSurvey {
@@ -363,23 +401,11 @@ model WacbSurvey {
   @@index([userId])
 }
 
-model SubscriptionEvent {
-  id                String   @id @default(cuid())
-  userId            String
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  revenueCatEventId String   @unique // CRITICAL: Prevents duplicate webhook processing
-  eventType         String   // INITIAL_PURCHASE, RENEWAL, CANCELLATION, etc.
-  productId         String
-  expiresDate       DateTime?
-
-  revenueCatData    Json     // Store full webhook payload for debugging
-
-  createdAt         DateTime @default(now())
-
-  @@index([userId])
-  @@index([eventType])
-  @@index([revenueCatEventId]) // For fast idempotency checks
+enum AnalysisStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
 
 enum ChildGender {
@@ -394,6 +420,7 @@ enum ContentType {
   TIP
   SCRIPT
   CALLOUT
+  TEXT_INPUT
 }
 
 enum LessonPhase {
@@ -429,12 +456,12 @@ enum SubscriptionPlan {
 }
 
 enum SubscriptionStatus {
-  NONE
-  TRIAL
-  INACTIVE
   ACTIVE
   EXPIRED
   CANCELLED
+  NONE
+  TRIAL
+  INACTIVE
 }
 
 enum SupportPriority {
@@ -449,11 +476,4 @@ enum SupportRequestStatus {
   IN_PROGRESS
   RESOLVED
   CLOSED
-}
-
-enum AnalysisStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
 }

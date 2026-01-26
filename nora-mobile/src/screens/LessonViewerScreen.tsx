@@ -14,16 +14,17 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Share, PanResponder, Clipboard, AppState } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Share, PanResponder, Clipboard, AppState, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProgressBar } from '../components/ProgressBar';
 import { Button } from '../components/Button';
 import { ResponseButton } from '../components/ResponseButton';
 import { QuizFeedback } from '../components/QuizFeedback';
+import { TextInputFeedbackCard } from '../components/TextInputFeedbackCard';
 import { LessonContentCard } from '../components/LessonContentCard';
 import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
 import { COLORS, FONTS } from '../constants/assets';
-import { LessonDetailResponse, LessonSegment, SubmitQuizResponse, LessonNotFoundError, Keyword, KeywordMatch } from '@nora/core';
+import { LessonDetailResponse, LessonSegment, SubmitQuizResponse, SubmitTextInputResponse, LessonNotFoundError, Keyword, KeywordMatch } from '@nora/core';
 import { useLessonService } from '../contexts/AppContext';
 import { KeywordDefinitionModal } from '../components/KeywordDefinitionModal';
 import { getMockLessonDetail } from '../data/mockLessons';
@@ -308,6 +309,12 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const [quizFeedback, setQuizFeedback] = useState<SubmitQuizResponse | null>(null);
   const [showPhaseCelebration, setShowPhaseCelebration] = useState(false);
   const [lastRefreshDate, setLastRefreshDate] = useState<string>(getTodaySingapore());
+
+  // Text input state
+  const [userTextInput, setUserTextInput] = useState<string>('');
+  const [isTextInputSubmitted, setIsTextInputSubmitted] = useState(false);
+  const [isTextInputSubmitting, setIsTextInputSubmitting] = useState(false);
+  const [textInputFeedback, setTextInputFeedback] = useState<SubmitTextInputResponse | null>(null);
 
   // Keyword modal state
   const [selectedKeyword, setSelectedKeyword] = useState<Keyword | null>(null);
@@ -675,6 +682,41 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     }
   };
 
+  const handleSubmitTextInput = async () => {
+    if (!lessonData || !userTextInput.trim()) return;
+
+    const segments = lessonData.lesson.segments || [];
+    const currentSegment = segments[currentSegmentIndex];
+
+    if (!currentSegment || currentSegment.contentType !== 'TEXT_INPUT') return;
+
+    setIsTextInputSubmitting(true);
+
+    try {
+      const response = await lessonService.submitTextInputResponse(
+        currentSegment.id,
+        userTextInput.trim()
+      );
+
+      setTextInputFeedback(response);
+      setIsTextInputSubmitted(true);
+
+      // Track text input submission
+      amplitudeService.trackEvent('Text Input Submitted', {
+        lessonId: lessonData.lesson.id,
+        segmentId: currentSegment.id,
+        isCorrect: response.isCorrect,
+        score: response.score,
+        attemptNumber: response.attemptNumber,
+      });
+    } catch (error) {
+      console.error('Failed to submit text input:', error);
+      Alert.alert('Error', 'Failed to evaluate your response. Please try again.');
+    } finally {
+      setIsTextInputSubmitting(false);
+    }
+  };
+
   const handleContinue = async () => {
     console.log('handleContinue called');
     if (!lessonData) {
@@ -707,6 +749,16 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       return;
     }
 
+    // Check if current segment is TEXT_INPUT and not yet submitted
+    const currentSegment = segments[currentSegmentIndex];
+    const isOnTextInput = currentSegment?.contentType === 'TEXT_INPUT';
+
+    if (isOnTextInput && !isTextInputSubmitted) {
+      console.log('On text input but not submitted, submitting first');
+      await handleSubmitTextInput();
+      return;
+    }
+
     // Move to next segment or quiz
     if (currentSegmentIndex < segments.length - 1) {
       // Move to next content segment
@@ -715,6 +767,11 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       // Update UI immediately, save progress in background
       setCurrentSegmentIndex(nextIndex);
       updateProgress(nextIndex);
+
+      // Reset text input state for next segment
+      setUserTextInput('');
+      setIsTextInputSubmitted(false);
+      setTextInputFeedback(null);
 
       // Track segment viewed
       amplitudeService.trackLessonSegmentViewed(
@@ -761,6 +818,10 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         setIsQuizSubmitted(false);
         setQuizFeedback(null);
       }
+      // Reset text input state when navigating
+      setUserTextInput('');
+      setIsTextInputSubmitted(false);
+      setTextInputFeedback(null);
     } else {
       // First segment, close the lesson
       handleClose();
@@ -812,10 +873,15 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const isOnQuiz = currentSegmentIndex === segments.length;
   const currentSegment = !isOnQuiz ? segments[currentSegmentIndex] : null;
 
+  // Check if current segment is TEXT_INPUT
+  const isTextInputSegment = currentSegment?.contentType === 'TEXT_INPUT';
+
   // Determine button text
   let buttonText = 'Continue →';
   if (isOnQuiz) {
     buttonText = isQuizSubmitted ? 'Continue →' : 'Check Answer';
+  } else if (isTextInputSegment) {
+    buttonText = isTextInputSubmitted ? 'Continue →' : 'Check Answer';
   } else if (currentSegmentIndex === segments.length - 1 && lesson.quiz) {
     buttonText = 'Take Quiz →';
   }
@@ -903,7 +969,46 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
               <View style={styles.bodyTextContainer}>
                 {formatBodyText(currentSegment?.bodyText || '', keywords, setSelectedKeyword, setShowKeywordModal)}
               </View>
+
+              {/* Text Input Field (for TEXT_INPUT segments) */}
+              {isTextInputSegment && (
+                <View style={styles.textInputContainer}>
+                  <Text style={styles.textInputLabel}>Your response:</Text>
+                  <TextInput
+                    style={[
+                      styles.textInputField,
+                      isTextInputSubmitted && styles.textInputFieldDisabled,
+                    ]}
+                    multiline
+                    numberOfLines={4}
+                    placeholder="Type your answer here..."
+                    placeholderTextColor={COLORS.textSecondary}
+                    value={userTextInput}
+                    onChangeText={setUserTextInput}
+                    editable={!isTextInputSubmitted && !isTextInputSubmitting}
+                    textAlignVertical="top"
+                  />
+                  {isTextInputSubmitting && (
+                    <View style={styles.textInputLoadingOverlay}>
+                      <ActivityIndicator color={COLORS.mainPurple} />
+                      <Text style={styles.textInputLoadingText}>Evaluating...</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+
             </LessonContentCard>
+
+            {/* Text Input Feedback - outside card for better scrolling */}
+            {isTextInputSegment && textInputFeedback && (
+              <TextInputFeedbackCard
+                isCorrect={textInputFeedback.isCorrect}
+                score={textInputFeedback.score}
+                feedback={textInputFeedback.feedback}
+                suggestions={textInputFeedback.suggestions}
+                idealAnswer={textInputFeedback.idealAnswer}
+              />
+            )}
 
             {/* Dragon Image (show on first segment) */}
             {currentSegmentIndex === 0 && lesson.dragonImageUrl && (
@@ -937,7 +1042,11 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
           <View style={styles.halfButton}>
             <Button
               onPress={handleContinue}
-              disabled={isOnQuiz && !isQuizSubmitted && !selectedOption}
+              disabled={
+                (isOnQuiz && !isQuizSubmitted && !selectedOption) ||
+                (isTextInputSegment && !isTextInputSubmitted && !userTextInput.trim()) ||
+                isTextInputSubmitting
+              }
             >
               {buttonText}
             </Button>
@@ -1123,5 +1232,49 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: 16,
     color: COLORS.textDark,
+  },
+  // Text Input Styles
+  textInputContainer: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  textInputLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 12,
+  },
+  textInputField: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    lineHeight: 24,
+    color: COLORS.textDark,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: COLORS.mainPurple,
+    borderRadius: 16,
+    padding: 16,
+    minHeight: 120,
+  },
+  textInputFieldDisabled: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#E0E0E0',
+  },
+  textInputLoadingOverlay: {
+    position: 'absolute',
+    top: 40,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textInputLoadingText: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: COLORS.mainPurple,
+    marginTop: 8,
   },
 });

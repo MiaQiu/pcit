@@ -9,6 +9,9 @@ import type {
   LearningStatsResponse,
   UserLessonProgress,
   LessonPhase,
+  SubmitTextInputRequest,
+  SubmitTextInputResponse,
+  TextInputResponse,
 } from '../types';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 import type AuthService from './authService';
@@ -208,6 +211,60 @@ class LessonService {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to submit quiz answer');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Submit text input response for AI evaluation
+   * @param segmentId Segment ID
+   * @param userAnswer User's text response
+   */
+  async submitTextInputResponse(
+    segmentId: string,
+    userAnswer: string
+  ): Promise<SubmitTextInputResponse> {
+    const request: SubmitTextInputRequest = {
+      userAnswer,
+    };
+
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/lessons/segments/${segmentId}/text-response`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to submit text input response');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get user's previous text input responses for a segment
+   * @param segmentId Segment ID
+   */
+  async getTextInputResponses(
+    segmentId: string
+  ): Promise<{ responses: TextInputResponse[] }> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/lessons/segments/${segmentId}/text-responses`,
+      {
+        method: 'GET',
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get text input responses');
     }
 
     return response.json();

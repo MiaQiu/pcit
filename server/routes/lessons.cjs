@@ -8,6 +8,8 @@ const Joi = require('joi');
 const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
 
+const { evaluateTextInput } = require('../services/textInputEvaluationService.cjs');
+
 const router = express.Router();
 
 // ============================================================================
@@ -22,6 +24,10 @@ const updateProgressSchema = Joi.object({
 
 const submitQuizSchema = Joi.object({
   selectedAnswer: Joi.string().required()
+});
+
+const submitTextInputSchema = Joi.object({
+  userAnswer: Joi.string().required().min(1).max(2000)
 });
 
 // ============================================================================
@@ -897,6 +903,122 @@ router.post('/:quizId/submit', requireAuth, async (req, res) => {
     console.error('Submit quiz error:', error.message, error.stack);
     res.status(500).json({
       error: 'Failed to submit quiz',
+      details: error.message
+    });
+  }
+});
+
+// ============================================================================
+// TEXT INPUT ENDPOINTS
+// ============================================================================
+
+/**
+ * POST /api/lessons/segments/:segmentId/text-response
+ * Submit a text input response for AI evaluation
+ */
+router.post('/segments/:segmentId/text-response', requireAuth, async (req, res) => {
+  try {
+    // Validate input
+    const { error, value } = submitTextInputSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
+    const userId = req.userId;
+    const { segmentId } = req.params;
+    const { userAnswer } = value;
+
+    // Get the segment to retrieve prompt and ideal answer
+    const segment = await prisma.lessonSegment.findUnique({
+      where: { id: segmentId }
+    });
+
+    if (!segment) {
+      return res.status(404).json({ error: 'Segment not found' });
+    }
+
+    if (segment.contentType !== 'TEXT_INPUT') {
+      return res.status(400).json({ error: 'This segment does not accept text input' });
+    }
+
+    if (!segment.idealAnswer) {
+      return res.status(400).json({ error: 'This segment is not configured for evaluation' });
+    }
+
+    // Get previous attempts count
+    const previousAttempts = await prisma.textInputResponse.findMany({
+      where: { userId, segmentId },
+      orderBy: { attemptNumber: 'desc' },
+      take: 1,
+      select: { attemptNumber: true }
+    });
+
+    const attemptNumber = previousAttempts.length > 0
+      ? previousAttempts[0].attemptNumber + 1
+      : 1;
+
+    // Evaluate the response using Claude
+    const evaluation = await evaluateTextInput({
+      prompt: segment.bodyText,
+      idealAnswer: segment.idealAnswer,
+      userAnswer,
+      aiCheckMode: segment.aiCheckMode || 'AI-Check'
+    });
+
+    // Save the response
+    const textInputResponse = await prisma.textInputResponse.create({
+      data: {
+        id: crypto.randomUUID(),
+        userId,
+        segmentId,
+        userAnswer,
+        aiEvaluation: evaluation,
+        isCorrect: evaluation.isCorrect,
+        score: evaluation.score,
+        attemptNumber,
+        respondedAt: new Date()
+      }
+    });
+
+    res.json({
+      isCorrect: evaluation.isCorrect,
+      score: evaluation.score,
+      feedback: evaluation.feedback,
+      suggestions: evaluation.suggestions,
+      idealAnswer: segment.idealAnswer,
+      attemptNumber,
+      textInputResponse
+    });
+
+  } catch (error) {
+    console.error('Submit text input error:', error.message, error.stack);
+    res.status(500).json({
+      error: 'Failed to submit text input',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/lessons/segments/:segmentId/text-responses
+ * Get user's previous text input responses for a segment
+ */
+router.get('/segments/:segmentId/text-responses', requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { segmentId } = req.params;
+
+    const responses = await prisma.textInputResponse.findMany({
+      where: { userId, segmentId },
+      orderBy: { attemptNumber: 'desc' }
+    });
+
+    res.json({ responses });
+
+  } catch (error) {
+    console.error('Get text input responses error:', error.message, error.stack);
+    res.status(500).json({
+      error: 'Failed to get text input responses',
       details: error.message
     });
   }

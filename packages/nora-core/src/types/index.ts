@@ -200,7 +200,7 @@ export interface APIError {
 // ============================================================================
 
 export type LessonPhase = 'CONNECT' | 'DISCIPLINE';
-export type ContentType = 'TEXT' | 'EXAMPLE' | 'TIP' | 'SCRIPT' | 'CALLOUT';
+export type ContentType = 'TEXT' | 'EXAMPLE' | 'TIP' | 'SCRIPT' | 'CALLOUT' | 'TEXT_INPUT';
 export type ProgressStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'LOCKED';
 
 export interface Lesson {
@@ -240,6 +240,8 @@ export interface LessonSegment {
   bodyText: string;
   imageUrl?: string;
   iconType?: string;
+  idealAnswer?: string;  // For TEXT_INPUT segments
+  aiCheckMode?: string;  // 'AI-Check' or 'Ideal' for TEXT_INPUT segments
 }
 
 export interface Quiz {
@@ -356,4 +358,42 @@ export interface LearningStatsResponse {
   totalTimeSpentMinutes: number;
   averageQuizScore: number;
   streak: number;
+}
+
+// ============================================================================
+// TEXT INPUT TYPES
+// Interactive text input segments with AI evaluation
+// ============================================================================
+
+export interface TextInputEvaluation {
+  isCorrect: boolean;
+  score: number;
+  feedback: string;
+  suggestions: string[];
+}
+
+export interface TextInputResponse {
+  id: string;
+  userId: string;
+  segmentId: string;
+  userAnswer: string;
+  aiEvaluation?: TextInputEvaluation;
+  isCorrect: boolean;
+  score?: number;
+  attemptNumber: number;
+  respondedAt: Date;
+}
+
+export interface SubmitTextInputRequest {
+  userAnswer: string;
+}
+
+export interface SubmitTextInputResponse {
+  isCorrect: boolean;
+  score: number;
+  feedback: string;
+  suggestions: string[];
+  idealAnswer: string;
+  attemptNumber: number;
+  textInputResponse: TextInputResponse;
 }

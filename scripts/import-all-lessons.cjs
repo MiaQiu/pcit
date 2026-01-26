@@ -12,11 +12,21 @@ const prisma = new PrismaClient();
  */
 
 // ============================================================================
-// ID GENERATION HELPER
+// ID GENERATION HELPERS
 // ============================================================================
 
 /**
- * Generate a unique ID for database records
+ * Generate a stable ID for lessons based on phase and day number
+ * @param {string} phase - CONNECT or DISCIPLINE
+ * @param {number} dayNumber - Day number within the phase
+ * @returns {string} Stable lesson ID (e.g., "CONNECT-1", "DISCIPLINE-5")
+ */
+function generateStableLessonId(phase, dayNumber) {
+  return `${phase}-${dayNumber}`;
+}
+
+/**
+ * Generate a unique ID for non-lesson database records
  * @returns {string} 25-character unique ID
  */
 function generateId() {
@@ -30,7 +40,7 @@ function generateId() {
 class BackupManager {
   async createBackup() {
     try {
-      console.log('📦 Creating backup of existing lessons...');
+      console.log('📦 Creating backup of existing data...');
 
       const lessons = await prisma.lesson.findMany({
         include: {
@@ -51,18 +61,27 @@ class BackupManager {
         ]
       });
 
+      // Also backup UserLessonProgress to prevent data loss
+      const userProgress = await prisma.userLessonProgress.findMany();
+
       const backupDir = path.join(__dirname, 'backups');
       await fs.mkdir(backupDir, { recursive: true });
 
       const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
-      const backupPath = path.join(backupDir, `lessons-backup-${timestamp}.json`);
 
-      await fs.writeFile(backupPath, JSON.stringify(lessons, null, 2));
+      // Save lessons backup
+      const lessonsBackupPath = path.join(backupDir, `lessons-backup-${timestamp}.json`);
+      await fs.writeFile(lessonsBackupPath, JSON.stringify(lessons, null, 2));
 
-      console.log(`✅ Backup created: ${backupPath}`);
-      console.log(`   ${lessons.length} lessons backed up\n`);
+      // Save user progress backup
+      const progressBackupPath = path.join(backupDir, `user-progress-backup-${timestamp}.json`);
+      await fs.writeFile(progressBackupPath, JSON.stringify(userProgress, null, 2));
 
-      return backupPath;
+      console.log(`✅ Backup created:`);
+      console.log(`   Lessons: ${lessonsBackupPath} (${lessons.length} lessons)`);
+      console.log(`   Progress: ${progressBackupPath} (${userProgress.length} records)\n`);
+
+      return { lessonsBackupPath, progressBackupPath };
     } catch (error) {
       console.error('❌ Backup failed:', error.message);
       throw error;
@@ -375,6 +394,47 @@ class ContentFormatter {
 // METADATA HELPERS
 // ============================================================================
 
+/**
+ * Parse text input markers from body text
+ * Detects $$Text Input Field$$ or $$$Text Input Field$$$ markers
+ * Extracts the prompt text and ideal answer
+ * @param {string} bodyText - The raw body text to parse
+ * @returns {Object} { isTextInput, bodyText, idealAnswer, aiCheckMode }
+ */
+function parseTextInputMarkers(bodyText) {
+  const hasTextInput = bodyText.includes('$$Text Input Field$$') ||
+                       bodyText.includes('$$$Text Input Field$$$');
+
+  if (!hasTextInput) {
+    return { isTextInput: false, bodyText, idealAnswer: null, aiCheckMode: null };
+  }
+
+  // Extract prompt (text before marker)
+  let prompt = bodyText.split(/\${2,3}Text Input Field\${2,3}/)[0].trim();
+
+  // Extract ideal answer
+  let idealAnswer = null;
+  let aiCheckMode = null;
+
+  // Check for AI-Check Answer format: AI-Check Answer: "answer text"
+  const aiCheckMatch = bodyText.match(/AI-Check Answer:\s*"([^"]+)"/);
+  if (aiCheckMatch) {
+    idealAnswer = aiCheckMatch[1].trim();
+    aiCheckMode = 'AI-Check';
+  }
+
+  // Check for Ideal Answer format (multi-line text until next Card or end)
+  if (!idealAnswer) {
+    const idealMatch = bodyText.match(/Ideal Answer:\s*([\s\S]*?)(?=Card \d+:|$)/);
+    if (idealMatch) {
+      idealAnswer = idealMatch[1].trim();
+      aiCheckMode = 'Ideal';
+    }
+  }
+
+  return { isTextInput: true, bodyText: prompt, idealAnswer, aiCheckMode };
+}
+
 function inferContentType(sectionTitle, bodyText) {
   const titleLower = sectionTitle.toLowerCase();
   const bodyLower = bodyText.toLowerCase();
@@ -442,7 +502,6 @@ class LessonImporter {
   constructor(lessons) {
     this.lessons = lessons;
     this.formatter = new ContentFormatter();
-    this.createdLessonIds = {}; // Track created lesson IDs for prerequisites
   }
 
   async import() {
@@ -473,63 +532,89 @@ class LessonImporter {
 
   async importLesson(lessonData, lessonIndex) {
     await prisma.$transaction(async (tx) => {
-      // 1. Find and delete existing lesson
-      const existing = await tx.lesson.findFirst({
-        where: {
-          phase: lessonData.phase,
-          dayNumber: lessonData.dayNumber
+      const now = new Date();
+      const stableLessonId = generateStableLessonId(lessonData.phase, lessonData.dayNumber);
+
+      // 1. Check if lesson exists (by stable ID)
+      const existing = await tx.lesson.findUnique({
+        where: { id: stableLessonId },
+        include: {
+          Quiz: true
         }
       });
 
+      // 2. Delete related data ONLY (not the lesson itself to preserve UserLessonProgress)
       if (existing) {
-        await tx.lesson.delete({ where: { id: existing.id } });
+        // Delete quiz options first (if quiz exists)
+        if (existing.Quiz) {
+          await tx.quizOption.deleteMany({ where: { quizId: existing.Quiz.id } });
+          await tx.quiz.delete({ where: { id: existing.Quiz.id } });
+        }
+        // Delete segments
+        await tx.lessonSegment.deleteMany({ where: { lessonId: existing.id } });
       }
 
-      // 2. Generate prerequisites
+      // 3. Generate prerequisites and colors
       const prerequisites = this.generatePrerequisites(lessonData);
-
-      // 3. Assign colors
       const colors = assignColors(lessonIndex);
 
-      // 4. Create new lesson
-      const now = new Date();
-      const newLesson = await tx.lesson.create({
-        data: {
-          id: generateId(),
-          phase: lessonData.phase,
-          phaseNumber: lessonData.phaseNumber,
-          dayNumber: lessonData.dayNumber,
-          title: lessonData.title,
-          subtitle: null,
-          shortDescription: lessonData.shortDescription,
-          objectives: [], // Empty array per user preference
-          estimatedMinutes: 5,
-          isBooster: lessonData.isBooster,
-          prerequisites: prerequisites,
-          teachesCategories: [], // Empty array per user preference
-          dragonImageUrl: null,
-          ...colors,
-          createdAt: now,
-          updatedAt: now
+      // 4. Upsert lesson (update if exists, create if not) - preserves UserLessonProgress
+      const lessonDataToSave = {
+        phase: lessonData.phase,
+        phaseNumber: lessonData.phaseNumber,
+        dayNumber: lessonData.dayNumber,
+        title: lessonData.title,
+        subtitle: null,
+        shortDescription: lessonData.shortDescription,
+        objectives: [],
+        estimatedMinutes: 5,
+        isBooster: lessonData.isBooster,
+        prerequisites: prerequisites,
+        teachesCategories: [],
+        dragonImageUrl: null,
+        ...colors,
+        updatedAt: now
+      };
+
+      const lesson = await tx.lesson.upsert({
+        where: { id: stableLessonId },
+        update: lessonDataToSave,
+        create: {
+          id: stableLessonId,
+          ...lessonDataToSave,
+          createdAt: now
         }
       });
-
-      // Track lesson ID for prerequisites
-      const key = `${lessonData.phase}-${lessonData.dayNumber}`;
-      this.createdLessonIds[key] = newLesson.id;
 
       // 5. Create segments with formatted bodyText
       const segments = lessonData.cards.map((card, idx) => {
-        const contentType = inferContentType(card.sectionTitle, card.bodyText);
-        const formattedBodyText = this.formatter.format(card.bodyText, contentType, card.sectionTitle);
+        // Check for text input markers
+        const textInputParsed = parseTextInputMarkers(card.bodyText);
+
+        let contentType;
+        let formattedBodyText;
+        let idealAnswer = null;
+        let aiCheckMode = null;
+
+        if (textInputParsed.isTextInput) {
+          contentType = 'TEXT_INPUT';
+          formattedBodyText = this.formatter.format(textInputParsed.bodyText, contentType, card.sectionTitle);
+          idealAnswer = textInputParsed.idealAnswer;
+          aiCheckMode = textInputParsed.aiCheckMode;
+        } else {
+          contentType = inferContentType(card.sectionTitle, card.bodyText);
+          formattedBodyText = this.formatter.format(card.bodyText, contentType, card.sectionTitle);
+        }
 
         return {
-          id: generateId(),
-          lessonId: newLesson.id,
+          id: `${stableLessonId}-seg-${idx + 1}`,
+          lessonId: lesson.id,
           order: idx + 1,
           sectionTitle: card.sectionTitle,
           contentType: contentType,
           bodyText: formattedBodyText,
+          idealAnswer: idealAnswer,
+          aiCheckMode: aiCheckMode,
           createdAt: now,
           updatedAt: now
         };
@@ -541,8 +626,8 @@ class LessonImporter {
       if (lessonData.quiz) {
         const quiz = await tx.quiz.create({
           data: {
-            id: generateId(),
-            lessonId: newLesson.id,
+            id: `${stableLessonId}-quiz`,
+            lessonId: lesson.id,
             question: lessonData.quiz.question,
             correctAnswer: 'temp',
             explanation: lessonData.quiz.explanation,
@@ -554,9 +639,10 @@ class LessonImporter {
         // 7. Create quiz options
         let correctOptionId = null;
         for (const opt of lessonData.quiz.options) {
+          const optionId = `${stableLessonId}-quiz-opt-${opt.label}`;
           const option = await tx.quizOption.create({
             data: {
-              id: generateId(),
+              id: optionId,
               quizId: quiz.id,
               optionLabel: opt.label,
               optionText: opt.text,
@@ -578,7 +664,8 @@ class LessonImporter {
         }
       }
 
-      console.log(`✅ ${lessonData.phase} Day ${lessonData.dayNumber}: ${lessonData.title}`);
+      const action = existing ? '🔄' : '✅';
+      console.log(`${action} ${lessonData.phase} Day ${lessonData.dayNumber}: ${lessonData.title}`);
     }, { timeout: 10000 });
   }
 
@@ -589,35 +676,14 @@ class LessonImporter {
     }
 
     // Phase 2, Day 1 requires Phase 1 completion (last lesson of Phase 1)
+    // The booster is Day 16 in CONNECT phase
     if (lessonData.phase === 'DISCIPLINE' && lessonData.dayNumber === 1) {
-      // Find the last lesson of Phase 1 (highest day number in CONNECT phase)
-      const phase1Lessons = Object.keys(this.createdLessonIds)
-        .filter(key => key.startsWith('CONNECT-'))
-        .map(key => ({
-          key: key,
-          dayNumber: parseInt(key.split('-')[1]),
-          id: this.createdLessonIds[key]
-        }))
-        .sort((a, b) => b.dayNumber - a.dayNumber);
-
-      if (phase1Lessons.length > 0) {
-        // Return the last lesson of Phase 1 as prerequisite
-        return [phase1Lessons[0].id];
-      }
-
-      return [];
+      return [generateStableLessonId('CONNECT', 16)];
     }
 
     // All other lessons require the previous day in the same phase
     const prevDayNumber = lessonData.dayNumber - 1;
-    const key = `${lessonData.phase}-${prevDayNumber}`;
-    const prevLessonId = this.createdLessonIds[key];
-
-    if (prevLessonId) {
-      return [prevLessonId];
-    }
-
-    return [];
+    return [generateStableLessonId(lessonData.phase, prevDayNumber)];
   }
 }
 
@@ -634,7 +700,7 @@ async function main() {
     await backupManager.createBackup();
 
     // 2. Read and parse text file
-    const filePath = '/Users/mia/Downloads/lessons-formatted.txt';
+    const filePath = '/Users/yihui/Project/pcit/docs/lessons-formatted.txt';
     console.log(`📖 Reading lesson content from: ${filePath}`);
 
     const fileContent = await fs.readFile(filePath, 'utf-8');
