@@ -262,7 +262,7 @@ export const SubscriptionScreen: React.FC = () => {
 
         {/* Title */}
         <Text style={styles.title}>
-          {data.childName ? `${data.childName}'s 3-Months plan` : '3-Month plan'}
+          {data.childName ? `${data.childName}'s 3 months plan` : '3-Month plan'}
         </Text>
         <Text style={styles.subtitle}>
           {/* First 30 days free, then ${selectedPlan === 'annual' ? '138.96' : '11.58'}/
