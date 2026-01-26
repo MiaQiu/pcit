@@ -58,7 +58,13 @@ const AppContent: React.FC = () => {
     navigation.navigate('MainTabs', { screen: 'Home' });
   };
 
-  const handleNavigateToReport = (recordingId: string) => {
+  const handleNavigateToReport = async (recordingId: string) => {
+    // Mark report as read before navigating
+    // This ensures the NextActionCard updates correctly when user returns to Home screen
+    const reportReadKey = `report_read_${getTodaySingapore()}`;
+    await AsyncStorage.setItem(reportReadKey, recordingId);
+    console.log('[App] Marked report as read from alert:', reportReadKey, recordingId);
+
     navigation.navigate('Report', { recordingId });
   };
 

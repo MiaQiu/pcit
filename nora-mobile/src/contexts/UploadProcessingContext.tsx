@@ -152,7 +152,6 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
             console.log('[UploadProcessing] State reset completed after report_failed notification');
 
             // Show error alert to user
-            const Alert = require('react-native').Alert;
             const userFriendlyMessage = getUserFriendlyErrorMessage(errorMessage);
             Alert.alert(
               'Unable to Generate Report',
@@ -211,7 +210,6 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
             await reset();
 
             // Show error alert with user-friendly message
-            const Alert = require('react-native').Alert;
             const userFriendlyMessage = getUserFriendlyErrorMessage(
               error.userMessage || error.message || 'Unknown error'
             );
@@ -235,29 +233,38 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
   }, [state]); // Re-run when state changes
 
   // Polling fallback for users without push notifications
-  // This ensures the UI updates even if push notifications aren't delivered
+  // Only polls when app is in the FOREGROUND - relies on push notifications when backgrounded
   useEffect(() => {
     if (state !== 'processing' || !recordingIdRef.current) {
       return;
     }
 
-    console.log('[UploadProcessing] Starting polling fallback for processing state');
+    console.log('[UploadProcessing] Setting up polling fallback for processing state');
+
+    let pollInterval: NodeJS.Timeout | null = null;
 
     const pollForStatus = async () => {
+      // Only poll if app is active - skip if backgrounded
+      if (AppState.currentState !== 'active') {
+        console.log('[UploadProcessing] Skipping poll - app is not active');
+        return;
+      }
+
       if (!recordingIdRef.current) return;
 
       try {
         console.log('[UploadProcessing] Polling for report status...');
         const analysis = await recordingService.getAnalysis(recordingIdRef.current);
 
-        // Success - report is ready
+        // Success - report is ready (detected via polling, not push notification)
         console.log('[UploadProcessing] Polling: Report is ready!');
         const completedRecordingId = recordingIdRef.current;
         setReportCompletedTimestamp(Date.now());
         await reset();
 
-        // Show alert only if app is in the foreground
-        if (AppState.currentState === 'active' && completedRecordingId) {
+        // Show alert since this was detected via polling while app is in foreground
+        // (user did NOT receive a push notification for this)
+        if (completedRecordingId) {
           Alert.alert(
             'Report Ready!',
             'Your play session report is ready to view.',
@@ -282,7 +289,6 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
           await reset();
 
           // Show error alert with user-friendly message
-          const Alert = require('react-native').Alert;
           const userFriendlyMessage = getUserFriendlyErrorMessage(
             error.userMessage || error.message || 'Unknown error'
           );
@@ -298,15 +304,42 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
       }
     };
 
-    // Poll every 10 seconds
-    const pollInterval = setInterval(pollForStatus, 10000);
+    const startPolling = () => {
+      if (!pollInterval) {
+        console.log('[UploadProcessing] Starting polling (app is active)');
+        pollInterval = setInterval(pollForStatus, 10000);
+        pollForStatus(); // Poll immediately
+      }
+    };
 
-    // Also poll immediately on mount (in case report finished between state changes)
-    pollForStatus();
+    const stopPolling = () => {
+      if (pollInterval) {
+        console.log('[UploadProcessing] Stopping polling (app backgrounded - relying on push notifications)');
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    };
+
+    // Handle app state changes - only poll when active
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active') {
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+
+    // Start polling only if app is currently active
+    if (AppState.currentState === 'active') {
+      startPolling();
+    }
 
     return () => {
-      console.log('[UploadProcessing] Stopping polling fallback');
-      clearInterval(pollInterval);
+      console.log('[UploadProcessing] Cleaning up polling fallback');
+      stopPolling();
+      appStateSubscription.remove();
     };
   }, [state]);
 
@@ -345,7 +378,6 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
               await reset();
 
               // Show error alert with user-friendly message
-              const Alert = require('react-native').Alert;
               const userFriendlyMessage = getUserFriendlyErrorMessage(
                 error.userMessage || error.message || 'Unknown error'
               );

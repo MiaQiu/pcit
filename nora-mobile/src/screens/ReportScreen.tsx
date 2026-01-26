@@ -13,7 +13,7 @@ import { SkillProgressBar } from '../components/SkillProgressBar';
 import { Button } from '../components/Button';
 import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
-import { useRecordingService } from '../contexts/AppContext';
+import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import type { RecordingAnalysis } from '@nora/core';
 import { MarkdownText } from '../utils/MarkdownText';
 
@@ -128,6 +128,12 @@ const formatWithLineBreaks = (text: string): string => {
   return text.replace(/([.!?])\s+(?=[A-Z])/g, '$1\n\n');
 };
 
+// Helper to add new lines when seeing '***'
+const formatWithStarBreaks = (text: string): string => {
+  if (!text) return text;
+  return text.replace(/\*\*\*/g, '\n\n');
+};
+
 // Helper to strip PCIT tags (e.g., LP, IC, DC, RF, BD) from quote text
 const stripPcitTags = (text: string): string => {
   if (!text) return text;
@@ -157,16 +163,30 @@ export const ReportScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<ReportScreenRouteProp>();
   const recordingService = useRecordingService();
+  const authService = useAuthService();
   const { recordingId } = route.params;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reportData, setReportData] = useState<RecordingAnalysis | null>(null);
   const [pollingCount, setPollingCount] = useState(0);
+  const [childName, setChildName] = useState<string>('Your Child');
 
   useEffect(() => {
     loadReportData();
+    loadChildName();
   }, [recordingId]);
+
+  const loadChildName = async () => {
+    try {
+      const user = await authService.getCurrentUser();
+      if (user?.childName) {
+        setChildName(user.childName);
+      }
+    } catch (err) {
+      // Keep default "Your Child" if fetch fails
+    }
+  };
 
   const loadReportData = async () => {
     try {
@@ -301,7 +321,7 @@ export const ReportScreen: React.FC = () => {
                   color={scoreColor}
                   textColor={scoreColor}
                   suffix={suffix}
-                  onPress={() => navigation.navigate('SkillExplanation', { skillKey: 'Overall', score, tip: reportData.tip })}
+                  onPress={() => navigation.navigate('SkillExplanation', { skillKey: 'Overall', score, tip: reportData.tip ?? undefined })}
                 />
               );
             })()}
@@ -373,7 +393,7 @@ export const ReportScreen: React.FC = () => {
             <Text style={styles.quoteText}>
               "{reportData.topMomentUtteranceNumber != null && reportData.transcript?.[reportData.topMomentUtteranceNumber]
                 ? stripPcitTags(reportData.transcript[reportData.topMomentUtteranceNumber].text)
-                : stripPcitTags(reportData.topMoment)}"
+                : stripPcitTags(typeof reportData.topMoment === 'string' ? reportData.topMoment : reportData.topMoment.quote)}"
             </Text>
           </View>
         </View>
@@ -389,7 +409,7 @@ export const ReportScreen: React.FC = () => {
 
             {/* Feedback text */}
             {reportData.feedback && (
-              <Text style={styles.transitionText}>{formatWithLineBreaks(reportData.feedback)}</Text>
+              <Text style={styles.transitionText}>{formatWithStarBreaks(reportData.feedback)}</Text>
             )}
 
             {/* Example utterances */}
@@ -420,7 +440,7 @@ export const ReportScreen: React.FC = () => {
                             </View>
                             {/* <Text style={styles.silentSlotDuration}>{durationText}</Text> */}
                           </View> 
-                          {utterance.feedback && (
+                          {isMiddle && utterance.feedback && (
                             <View style={styles.silentSlotFeedback}>
                               <Text style={styles.silentSlotFeedbackText}>
                                 💡 {utterance.feedback}
@@ -436,7 +456,8 @@ export const ReportScreen: React.FC = () => {
                     const isAdult = speakerLabel.includes('Adult');
                     const pcitTag = utterance.tag;
                     const skillType = getSkillType(pcitTag);
-                    const shouldShowFeedback = isAdult && utterance.feedback && skillType !== 'neutral';
+                    // Only show feedback for the main example utterance (originalIndex)
+                    const shouldShowFeedback = isMiddle && isAdult && utterance.feedback && skillType !== 'neutral';
 
                     return (
                       <View key={idx} style={[styles.utteranceContainer, isMiddle && styles.utteranceHighlighted]}>
@@ -444,7 +465,7 @@ export const ReportScreen: React.FC = () => {
                           <View style={[styles.speakerBadge, { backgroundColor: speakerColor }]}>
                             <Text style={styles.speakerBadgeText}>{speakerLabel}</Text>
                           </View>
-                          {isAdult && pcitTag && (
+                          {isMiddle && isAdult && pcitTag && (
                             <View style={[styles.tag, { backgroundColor: getTagColor(pcitTag) }]}>
                               <Text style={styles.tagText}>{pcitTag}</Text>
                             </View>
@@ -506,6 +527,16 @@ export const ReportScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* What We Learned About Child */}
+        {reportData.childReaction && (
+          <View>
+            <Text style={styles.cardTitle}>What We Learned About {childName}</Text>
+            <View style={styles.card}>
+              <Text style={styles.childReactionText}>{formatWithLineBreaks(reportData.childReaction)}</Text>
+            </View>
+          </View>
+        )}
 
         {/* Reminder */}
         {reportData.reminder && (
@@ -937,6 +968,12 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
     lineHeight: 22,
     marginBottom: 16,
+  },
+  childReactionText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: COLORS.textDark,
+    lineHeight: 22,
   },
   // Example utterances container
   exampleUtterancesContainer: {
