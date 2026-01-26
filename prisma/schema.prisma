@@ -206,6 +206,8 @@ model Session {
   overallScore           Int?
   elevenLabsJson         Json?
   roleIdentificationJson Json?
+  psychologistFeedback   Json?
+  childPortfolioInsights Json?
   transcribedAt          DateTime?
   transcriptionService   String?
   analysisError          String?
