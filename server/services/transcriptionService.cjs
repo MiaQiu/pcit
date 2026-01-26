@@ -7,7 +7,8 @@ const FormData = require('form-data');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const prisma = require('./db.cjs');
 const { createAnonymizedRequest } = require('../utils/anonymization.cjs');
-const { createUtterances } = require('../utils/utteranceUtils.cjs');
+const { createUtterances, extractAndInsertSilentSlots } = require('../utils/utteranceUtils.cjs');
+const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { parseElevenLabsTranscript, formatUtterancesAsText } = require('../utils/parseElevenLabsTranscript.cjs');
 
 // S3 Client for downloading audio files
@@ -57,9 +58,10 @@ async function downloadAudioFromS3(storagePath) {
  * @param {Buffer} audioBuffer - Audio file buffer
  * @param {string} requestId - Anonymized request ID for logging
  * @param {string} extension - File extension
+ * @param {string} [childName] - Child's name to add as keyterm for better transcription
  * @returns {Promise<Object>} ElevenLabs transcription result
  */
-async function transcribeWithElevenLabs(audioBuffer, requestId, extension) {
+async function transcribeWithElevenLabs(audioBuffer, requestId, extension, childName) {
   const elevenLabsApiKey = process.env.ELEVENLABS_API_KEY;
   if (!elevenLabsApiKey) {
     throw new Error('ElevenLabs API key not configured');
@@ -79,6 +81,12 @@ async function transcribeWithElevenLabs(audioBuffer, requestId, extension) {
   formData.append('temperature', 0);
   formData.append('tag_audio_events', 'false');
   formData.append('timestamps_granularity', 'word');
+
+  // Add child's name as keyterm to improve transcription accuracy
+  // Note: keyterms should be appended as individual values, not JSON stringified
+  if (childName) {
+    formData.append('keyterms', childName);
+  }
 
   const elevenLabsResponse = await fetch(
     'https://api.elevenlabs.io/v1/speech-to-text?include_timestamps=true',
@@ -114,6 +122,13 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
   console.log(`🎤 [TRANSCRIBE-START] Session ${sessionId.substring(0, 8)} - Starting background transcription`);
   console.log(`🎤 [TRANSCRIBE-START] Storage: ${storagePath}, User: ${userId.substring(0, 8)}`);
 
+  // Fetch child's name from user for keyterms (decrypt since it's stored encrypted)
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { childName: true }
+  });
+  const childName = user?.childName ? decryptSensitiveData(user.childName) : null;
+
   // Get audio file from S3
   let audioBuffer;
   try {
@@ -142,7 +157,7 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
   try {
     console.log(`Sending to ElevenLabs for transcription (request: ${requestId})...`);
 
-    const result = await transcribeWithElevenLabs(audioBuffer, requestId, extension);
+    const result = await transcribeWithElevenLabs(audioBuffer, requestId, extension, childName);
 
     console.log('ElevenLabs transcription successful');
 
@@ -178,7 +193,13 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
     // STEP 4: Create utterance records in database
     await createUtterances(sessionId, utterances);
 
-    console.log(`✅ [TRANSCRIBE-DONE] Session ${sessionId.substring(0, 8)} - Formatted transcript and ${utterances.length} utterances stored`);
+    // STEP 5: Extract and insert silent slots (gaps >= 3 seconds)
+    const silentSlotResult = await extractAndInsertSilentSlots(sessionId, utterances, {
+      threshold: 3.0,
+      recordingDuration: durationSeconds
+    });
+
+    console.log(`✅ [TRANSCRIBE-DONE] Session ${sessionId.substring(0, 8)} - Formatted transcript, ${utterances.length} utterances, and ${silentSlotResult.count} silent slots stored`);
 
   } catch (transcriptionError) {
     console.error(`❌ [TRANSCRIBE-ERROR] Session ${sessionId.substring(0, 8)} - Transcription error:`, transcriptionError);

@@ -22,6 +22,8 @@ interface TranscriptSegment {
   role?: string;  // 'adult' or 'child'
   tag?: string;   // PCIT tag
   feedback?: string;  // Feedback for adult utterances
+  revisedFeedback?: string;  // Revised feedback from Call 4
+  additionalTip?: string;  // Additional tip for desirable skills
 }
 
 interface PCITTag {
@@ -297,6 +299,35 @@ export const TranscriptScreen: React.FC = () => {
         ) : (
           <View style={styles.transcriptContainer}>
             {transcriptSegments.map((segment, index) => {
+              // Check if this is a silent slot
+              const isSilentSlot = segment.speaker === '__SILENT__';
+
+              if (isSilentSlot) {
+                // Render silent slot specially
+                const duration = segment.end - segment.start;
+                const durationText = duration >= 60
+                  ? `${Math.floor(duration / 60)}m ${Math.round(duration % 60)}s`
+                  : `${duration.toFixed(1)}s`;
+
+                return (
+                  <View key={index} style={styles.silentSlotContainer}>
+                    <View style={styles.silentSlotHeader}>
+                      <View style={styles.silentSlotBadge}>
+                        <Text style={styles.silentSlotBadgeText}>Silent Moment</Text>
+                      </View>
+                      {/* <Text style={styles.silentSlotDuration}>{durationText}</Text> */}
+                    </View>
+                    {segment.feedback && (
+                      <View style={styles.silentSlotFeedback}>
+                        <Text style={styles.silentSlotFeedbackText}>
+                          💡 {segment.feedback}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              }
+
               const speakerLabel = speakerLabels[segment.speaker] || 'Unknown';
               const speakerColor = speakerColors[segment.speaker] || '#FFFFFF';
               const isAdult = speakerLabel.includes('Adult');
@@ -347,7 +378,9 @@ export const TranscriptScreen: React.FC = () => {
               };
 
               const skillType = getSkillType(pcitTag);
-              const shouldShowFeedback = isAdult && segment.feedback && skillType !== 'neutral';
+              // Prefer revisedFeedback over original feedback
+              const displayFeedback = segment.revisedFeedback || segment.feedback;
+              const shouldShowFeedback = isAdult && displayFeedback && skillType !== 'neutral';
 
               return (
                 <View key={index} style={styles.utteranceContainer}>
@@ -379,7 +412,15 @@ export const TranscriptScreen: React.FC = () => {
                         skillType === 'desirable' ? styles.feedbackTextDesirable : styles.feedbackTextUndesirable
                       ]}>
                         {skillType === 'desirable' ? '✓ Great!\n' : '💡 '}
-                        {segment.feedback}
+                        {displayFeedback}
+                      </Text>
+                    </View>
+                  )}
+                  {/* Additional tip for desirable skills */}
+                  {skillType === 'desirable' && segment.additionalTip && (
+                    <View style={styles.additionalTipContainer}>
+                      <Text style={styles.additionalTipText}>
+                        💡 Tip: {segment.additionalTip}
                       </Text>
                     </View>
                   )}
@@ -566,5 +607,58 @@ const styles = StyleSheet.create({
   },
   feedbackTextUndesirable: {
     color: '#7E22CE', // Dark purple
+  },
+  additionalTipContainer: {
+    backgroundColor: '#FAF5FF', // Light purple (same as tips)
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+  },
+  additionalTipText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#7E22CE', // Dark purple (same as tips)
+  },
+  // Silent slot styles
+  silentSlotContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  silentSlotHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  silentSlotBadge: {
+    backgroundColor: '#FDE047',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  silentSlotBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: '#854D0E',
+  },
+  silentSlotDuration: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#854D0E',
+  },
+  silentSlotFeedback: {
+    backgroundColor: '#FAF5FF', // Light purple (same as other tips)
+    borderRadius: 8,
+    padding: 12,
+  },
+  silentSlotFeedbackText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#7E22CE', // Dark purple (same as other tips)
   },
 });
