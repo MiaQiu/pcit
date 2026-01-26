@@ -8,7 +8,7 @@ source aws-resources.txt
 
 # Build Docker image
 echo "📦 Building Docker image..."
-docker build -t nora:latest .
+docker build --platform linux/amd64 -t nora:latest .
 
 # Login to ECR
 echo "🔐 Logging in to ECR..."

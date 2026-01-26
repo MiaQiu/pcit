@@ -16,11 +16,14 @@ COPY prisma ./prisma/
 # Set Prisma binary target explicitly for Alpine Linux
 ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x
 
-# Install production dependencies only
-# Note: bcrypt requires build tools, but the pre-built binary should work on alpine
-RUN npm ci --only=production
+# Install all dependencies (need prisma CLI for generate)
+RUN npm ci
 
-# NOTE: Prisma generate moved to runtime to avoid M-chip/QEMU binary corruption
+# Generate Prisma client at build time (works because we build with --platform linux/amd64)
+RUN npx prisma generate
+
+# Remove dev dependencies to reduce image size
+RUN npm prune --production
 
 # Copy application code (backend only)
 COPY server.cjs ./
@@ -41,5 +44,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Generate Prisma client at runtime (avoids M-chip/QEMU binary corruption) and start
-CMD ["sh", "-c", "npx prisma generate && node server.cjs"]
+# Start the server
+CMD ["node", "server.cjs"]
