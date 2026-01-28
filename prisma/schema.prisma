@@ -208,6 +208,7 @@ model Session {
   roleIdentificationJson Json?
   psychologistFeedback   Json?
   childPortfolioInsights Json?
+  aboutChild             Json?
   transcribedAt          DateTime?
   transcriptionService   String?
   analysisError          String?
@@ -362,7 +363,7 @@ model UserLessonProgress {
 }
 
 model Utterance {
-  id              String   @id
+  id              String   @id @default(uuid())
   sessionId       String
   speaker         String
   text            String

@@ -695,8 +695,8 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       transcript: transcriptSegments,
       pcitCoding: session.pcitCoding,
       competencyAnalysis: session.competencyAnalysis || null,
-      psychologistFeedback: session.psychologistFeedback || null,
-      childPortfolioInsights: session.childPortfolioInsights || null
+      childPortfolioInsights: session.childPortfolioInsights || null,
+      aboutChild: session.aboutChild || null
     });
 
   } catch (error) {
