@@ -23,6 +23,9 @@ For desirable and undesirable coded Parent segments, you must generate a "feedba
 3. NEUTRAL CODES (AK, ID):
    - Action: Set feedback to an empty string "" - no feedback needed for neutral codes.
 
+4. TWO CHOICES (TC)
+   - Action: Set feedback to an empty string "" - no feedback needed for neutral codes.
+
 Keep feedback conversational, warm, and actionable. Focus on what the parent did well or what they could try next time.
 
 <coding_rules>

@@ -6,7 +6,6 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 
 interface SkillProgressBarProps {
@@ -39,7 +38,7 @@ export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
   const PercentageContent = (
     <Text style={[styles.percentage, textColor ? { color: textColor } : null, onPress && styles.percentageClickable]}>
       {Math.round(progress)}/{maxValue}{suffix ? ` ${suffix}` : ''}
-      {onPress && <Ionicons name="chevron-forward" size={12} color={textColor || '#666666'} />}
+      
     </Text>
   );
 

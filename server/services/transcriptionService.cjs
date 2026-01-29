@@ -185,6 +185,82 @@ function assignSpeakerToUtterance(utterance, v1Words) {
 }
 
 /**
+ * Compare v1 and v2 diarization and return a divergence note if significantly different.
+ * "Significant" = different speaker count OR > 20% of utterances reassigned to a different speaker.
+ *
+ * @param {Array} v2Utterances - Utterances parsed from v2 (original v2 speakers)
+ * @param {Array} mergedUtterances - Same utterances with v1 speakers assigned
+ * @param {Set} v2Speakers - Unique v2 speaker IDs
+ * @param {Set} v1Speakers - Unique v1 speaker IDs
+ * @returns {Object|null} Divergence note or null if diarization is similar
+ */
+function computeDiarizationDivergence(v2Utterances, mergedUtterances, v2Speakers, v1Speakers) {
+  const v2Count = v2Speakers.size;
+  const v1Count = v1Speakers.size;
+  const speakerCountDiffers = v2Count !== v1Count;
+
+  // Build a mapping from v1 speakers -> most common v2 speaker they replace
+  // This handles the fact that speaker IDs may differ in name but map to the same person
+  const v1ToV2Map = {};
+  for (let i = 0; i < v2Utterances.length; i++) {
+    const v2Spk = v2Utterances[i].speaker;
+    const v1Spk = mergedUtterances[i].speaker;
+    if (!v1ToV2Map[v1Spk]) v1ToV2Map[v1Spk] = {};
+    const dur = v2Utterances[i].duration || (v2Utterances[i].end - v2Utterances[i].start);
+    v1ToV2Map[v1Spk][v2Spk] = (v1ToV2Map[v1Spk][v2Spk] || 0) + dur;
+  }
+
+  // For each v1 speaker, find its best v2 match (by total duration)
+  const bestV2ForV1 = {};
+  for (const [v1Spk, v2Counts] of Object.entries(v1ToV2Map)) {
+    bestV2ForV1[v1Spk] = Object.entries(v2Counts).sort((a, b) => b[1] - a[1])[0][0];
+  }
+
+  // Count utterances where the v1 speaker maps to a different v2 speaker
+  // than the original v2 assignment (i.e., actual speaker reassignment)
+  let reassignedCount = 0;
+  for (let i = 0; i < v2Utterances.length; i++) {
+    const originalV2Spk = v2Utterances[i].speaker;
+    const assignedV1Spk = mergedUtterances[i].speaker;
+    const mappedV2Spk = bestV2ForV1[assignedV1Spk];
+    if (mappedV2Spk !== originalV2Spk) {
+      reassignedCount++;
+    }
+  }
+
+  const total = v2Utterances.length;
+  const reassignedPct = total > 0 ? reassignedCount / total : 0;
+  const highReassignment = reassignedPct > 0.2;
+
+  if (!speakerCountDiffers && !highReassignment) {
+    return null;
+  }
+
+  const note = {
+    divergenceDetected: true,
+    v2SpeakerCount: v2Count,
+    v1SpeakerCount: v1Count,
+    v2Speakers: Array.from(v2Speakers),
+    v1Speakers: Array.from(v1Speakers),
+    speakerCountDiffers,
+    reassignedUtterances: reassignedCount,
+    totalUtterances: total,
+    reassignedPct: Math.round(reassignedPct * 100),
+    v1ToV2SpeakerMap: bestV2ForV1,
+    summary: []
+  };
+
+  if (speakerCountDiffers) {
+    note.summary.push(`Speaker count differs: v2=${v2Count}, v1=${v1Count}`);
+  }
+  if (highReassignment) {
+    note.summary.push(`${reassignedCount}/${total} utterances (${note.reassignedPct}%) reassigned to different speaker`);
+  }
+
+  return note;
+}
+
+/**
  * Two-pass transcription: v2 text quality + v1 3-speaker diarization
  * @param {Buffer} audioBuffer - Audio file buffer
  * @param {string} requestId - Request ID
@@ -217,7 +293,16 @@ async function transcribeTwoPass(audioBuffer, requestId, extension, childName) {
   const mergedSpeakers = new Set(mergedUtterances.map(u => u.speaker));
   console.log(`✅ [TWO-PASS] Merged: ${mergedUtterances.length} utterances, ${mergedSpeakers.size} speakers`);
 
-  // Return v2 raw result (for elevenLabsJson storage) and merged utterances
+  // Check for significant diarization divergence between v1 and v2
+  const divergence = computeDiarizationDivergence(v2Utterances, mergedUtterances, v2Speakers, v1Speakers);
+  if (divergence) {
+    console.log(`⚠️ [TWO-PASS] Diarization divergence detected: ${divergence.summary.join('; ')}`);
+    v2Result._diarizationNote = divergence;
+  } else {
+    console.log(`✅ [TWO-PASS] v1 and v2 diarization are consistent`);
+  }
+
+  // Return v2 raw result (with note if divergent) and merged utterances
   return { result: v2Result, utterances: mergedUtterances };
 }
 
@@ -350,6 +435,7 @@ module.exports = {
   transcribeWithElevenLabs,
   callElevenLabs,
   transcribeTwoPass,
+  computeDiarizationDivergence,
   CONTENT_TYPE_MAP,
   TRANSCRIPTION_MODE
 };

@@ -1,25 +1,4 @@
-i am ready to rebuild for testflight. what i need  
-  to run before eas build --platform ios --profile   
-  production. e.g. docker, npx expo run:ios
-, npm run build (in nora-core), pod install
 
-
-⏺ Before eas build --platform ios --profile          
-  production, you typically need:                    
-                                                     
-  1. Build nora-core:            
-  cd packages/nora-core && npm run build             
-  2. Install dependencies (if any changed):          
-  cd nora-mobile && npm install                      
-  3. Bump version in app.json if needed (buildNumber 
-  for TestFlight)                                    
-  4. Commit changes - EAS builds from your git state 
-                                                     
-  Not needed for EAS cloud builds:                   
-  - pod install - EAS handles this automatically     
-  - npx expo run:ios - that's for local builds       
-  - Docker - only if your server needs it            
-                              
 
 For Xcode Archive, you need:                       
                                                      
@@ -53,22 +32,23 @@ npx expo run:ios (Local build)
   - Run this when you change code in packages/nora-core
 
 3. backend changes
+  ./docker_deploy.sh 
+  
   ### Docker Rebuild and Push to ECR
   cd /Users/mia/nora
   # Build Docker image
-  docker build -t nora-backend .
-  # Login to ECR
+  #docker build -t nora-backend .
+  docker build --platform linux/amd64 -t nora-backend:latest .     
+  # Login to ECR 
   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 059364397483.dkr.ecr.us-east-1.amazonaws.com
   # Tag image
   docker tag nora-backend:latest 059364397483.dkr.ecr.us-east-1.amazonaws.com/nora:latest
   # Push to ECR
-  docker push 059364397483.dkr.ecr.us-east-1.amazonaws.com/nora:latest
+  docker push 059364397483.dkr.ecr.us-east-1.amazonaws.com/nora-backend:latest
   # Trigger an App Runner deployment (if not automatically started)
-  aws apprunner start-deployment --service-arn arn:aws:apprunner:us-ea
-      st-1:059364397483:service/nora-api/0f1877f0a2d8454da6a4ebde1979fec6  
-      --region us-east-1
+  aws apprunner start-deployment --service-arn arn:aws:apprunner:us-east-1:059364397483:service/nora-api/0f1877f0a2d8454da6a4ebde1979fec6 --region us-east-1
   #Verify ECR Deployment
-  aws ecr describe-images --repository-name nora --region us-east-1 --query 'sort_by(imageDetails,& imagePushedAt)[-1]'
+  aws ecr describe-images --repository-name nora-backend --region us-east-1 --query 'sort_by(imageDetails,& imagePushedAt)[-1]'
 
 
 4. TestFlight/App Store distribution
@@ -106,3 +86,25 @@ eas build --platform ios --profile development
   This will prompt you to register new devices. Or if you already added the device in Apple Developer Portal:
 
   eas credentials
+
+
+about docker
+  What we fixed:                                          
+  1. deploy.sh - Added --platform linux/amd64 for AWS     
+  compatibility                                           
+  2. Dockerfile - Prisma client now generated at build    
+  time, not runtime                                       
+                                                          
+  Things to note:                                         
+  - Build is slower (~30-60s) due to amd64 emulation on M4
+  - Local testing requires --platform linux/amd64 flag (or
+   won't run natively)                                    
+  - If you add new Prisma models, just rebuild - the      
+  client regenerates during build                         
+                                                          
+  If deployment fails again:                              
+  1. Check App Runner logs: aws logs tail "/aws/apprunner/
+  nora-api/0f1877f0a2d8454da6a4ebde1979fec6/application"  
+  --since 10m                                             
+  2. Verify image pushed: aws ecr describe-images         
+  --repository-name nora --image-ids imageTag=latest 

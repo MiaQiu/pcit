@@ -10,104 +10,6 @@ You are an expert in child language development and parent-child interaction ana
 
 ---
 
-**IDENTIFICATION CRITERIA:**
-
-**CHILD INDICATORS (Ages 2-7):**
-
-**Strong Evidence:**
-- Repetitive/echolalic speech (repeating what adult just said)
-- Egocentric language: "I want", "mine", "me", "给我" (give me)
-- Present-focused: "now", "here", immediate needs/desires
-- Request patterns: "I want X", "可以吗?" (can I?), "给我..." (give me)
-- Play-related vocabulary: toys, animals, colors, simple actions
-- Emotional expressions: "哎呀!" (oops!), "不要!" (don't want!), whining, crying sounds
-- Questions about objects: "这是什么?" (what's this?), "在哪里?" (where is it?)
-- Incomplete sentences: missing subjects or verbs
-- Seeking approval: "好不好?" (is this OK?), "妈妈你看" (mama look)
-
-**Moderate Evidence:**
-- Simple grammar (may have errors even in older children)
-- Concrete language (rarely uses abstract concepts like "responsibility")
-- Simple connectors: prefers "and", "then" over "because", "although"
-- Echoing adult words, especially English words
-
-**DO NOT Rely Solely On:**
-- Utterance length (7-year-olds can produce long, complex sentences)
-- Character count (varies greatly by age and language)
-
----
-
-**ADULT INDICATORS:**
-
-**Strong Evidence:**
-- Commands/directives: "把东西收起来" (put things away), "cleanup", "put it here"
-- Teaching questions: "What color is that?", "Can you count them?", "这是什么颜色?" (what color?)
-- Praise patterns: "真棒!" (great job!), "Good!", "你很棒!" (you're awesome!)
-- Conditional statements: "If you..., then...", "等一下..." (wait a moment...)
-- Explanatory language: giving reasons using "because", "so that"
-- Time references: past/future tense, planning ahead
-- Behavior management: "要听话" (be good), "listen to me", meta-talk about behavior
-- Politeness coaching: "说谢谢" (say thank you), "say please"
-- Indirect commands: "你把...好吗?" (can you... OK?) - classic adult pattern in Chinese
-- Third-person self-reference: "妈妈要..." (mama wants...) - parent speaking about themselves
-
-**Moderate Evidence:**
-- Complex syntax: embedded clauses, multiple verbs in one sentence
-- Abstract vocabulary: emotions, values, time concepts, reasoning
-- Language mixing: code-switching between English and Chinese (adults do this more frequently)
-- Checking comprehension: "明白吗?" (understand?), "好吗?" (OK?)
-- Longer average utterances (but compare relatively within this transcript)
-
----
-
-**ANALYSIS PROCESS:**
-
-1. **Count indicators:** For each speaker, count how many utterances contain CHILD vs ADULT indicators
-
-2. **Look for patterns:** Don't judge based on single utterances; look for consistent patterns across all their speech
-
-3. **Relative comparison:** Compare speakers to each other (who is shortest/longest, simplest/most complex)
-
-4. **Consider context:** Who is giving commands to whom? Who is seeking approval from whom?
-
-5. **Flag ambiguity:** If confidence < 0.70, mark as ambiguous and explain why
-
----
-
-**SPECIAL CASES:**
-
-**Case 1: Older sibling (6-7yo) giving commands to younger sibling**
-- Mark as CHILD if: They also play with toys, receive commands from adults, seek approval
-- Mark as ADULT if: Consistently in caregiver role, no one directs them, sustained teaching behavior
-
-**Case 2: Very quiet adult (helper/grandparent with minimal speech)**
-- Look for: Who are they responding to? Do they receive commands or give them?
-- Default to ADULT if: Responding to children, giving acknowledgments, even if brief
-
-**Case 3: Child with advanced language (5-7yo)**
-- Can produce complex sentences but still shows: request patterns, seeking approval, play focus, egocentric language
-- Mark as CHILD even if utterances are long
-
-**Case 4: Code-mixing patterns**
-- Adults: More likely to insert English commands into Chinese speech ("cleanup", "OK", "good job")
-- Children: More likely to echo English words they just heard from adults
-
-**Case 5: Very short utterances ("嗯", "好", "哦")**
-- Context matters: Are they responding to adult questions (→ likely CHILD) or acknowledging child speech (→ likely ADULT)?
-- If still unclear, mark ambiguous
-
----
-
-**CONFIDENCE LEVELS:**
-
-- **High (0.85-1.0):** Clear, strong indicators with consistent patterns
-- **Moderate (0.70-0.84):** Some indicators present, but mixed signals or limited data
-- **Low (0.0-0.69):** Ambiguous case, flag for human review
-
-When confidence < 0.70, you MUST set "ambiguous": true and explain the reasoning.
-
----
-
 **INPUT DATA:**
 {{UTTERANCES_JSON}}
 
@@ -122,32 +24,17 @@ Return ONLY valid JSON with this exact structure:
     "speaker_0": {
       "role": "CHILD",
       "confidence": 0.95,
-      "reasoning": "Strong child indicators: 4 request patterns ('我要...'), 3 emotional expressions ('哎呀!'), seeking approval ('好不好?'), play-focused vocabulary",
-      "child_indicators_count": 8,
-      "adult_indicators_count": 0,
-      "utterance_count": 12,
-      "ambiguous": false,
-      "ambiguous_reason": null
+      "reasoning": "Strong child indicators: 4 request patterns ('我要...'), 3 emotional expressions ('哎呀!'), seeking approval ('好不好?'), play-focused vocabulary"
     },
     "speaker_1": {
       "role": "ADULT",
       "confidence": 0.98,
-      "reasoning": "Strong adult indicators: 5 commands, code-mixing ('cleanup'), teaching politeness ('谢谢'), behavior management",
-      "child_indicators_count": 0,
-      "adult_indicators_count": 9,
-      "utterance_count": 11,
-      "ambiguous": false,
-      "ambiguous_reason": null
+      "reasoning": "code-mixing ('cleanup'), teaching politeness ('谢谢'), behavior management"
     },
     "speaker_2": {
       "role": "ADULT",
       "confidence": 0.92,
-      "reasoning": "Adult indicators: indirect commands ('你把...好吗?'), praise with specificity ('阿雅在收拾啦，你真棒!'), inclusive planning ('我们一起收吧')",
-      "child_indicators_count": 0,
-      "adult_indicators_count": 7,
-      "utterance_count": 13,
-      "ambiguous": false,
-      "ambiguous_reason": null
+      "reasoning": "praise with specificity ('阿雅在收拾啦，你真棒!'), inclusive planning ('我们一起收吧')"
     }
   },
 
