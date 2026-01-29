@@ -10,6 +10,34 @@ export interface StructuredTips {
   actionableTip: string;
 }
 
+export interface CoachInsightAnalysis {
+  observation: string;
+  impact: string;
+  result: string;
+}
+
+export interface CoachInsightExample {
+  child: string;
+  parent: string;
+}
+
+export interface CoachInsight {
+  id: number;
+  suggested_change: string;
+  analysis: CoachInsightAnalysis;
+  example_scenario: CoachInsightExample;
+}
+
+// ChildPortfolioInsights is now an array of CoachInsight
+export type ChildPortfolioInsights = CoachInsight[];
+
+export interface AboutChildItem {
+  id: number;
+  Title: string;
+  Description: string;
+  Details: string;
+}
+
 export interface RecordingAnalysis {
   id: string;
   mode: 'CDI' | 'PDI';
@@ -59,6 +87,8 @@ export interface RecordingAnalysis {
     analyzedAt: string;
     mode: string;
   } | null;
+  childPortfolioInsights?: ChildPortfolioInsights | null;
+  aboutChild?: AboutChildItem[] | null;
 }
 
 /**

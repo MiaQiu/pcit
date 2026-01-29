@@ -35,4 +35,4 @@ export { fetchWithTimeout } from './utils/fetchWithTimeout';
 export type { SessionUploadData, SessionListOptions } from './services/sessionService';
 
 // Export recording-related types
-export type { RecordingAnalysis, StructuredTips } from './services/recordingService';
+export type { RecordingAnalysis, StructuredTips, CoachInsight, CoachInsightAnalysis, CoachInsightExample, ChildPortfolioInsights, AboutChildItem } from './services/recordingService';

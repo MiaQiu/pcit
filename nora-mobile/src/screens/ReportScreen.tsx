@@ -14,7 +14,7 @@ import { Button } from '../components/Button';
 import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import type { RecordingAnalysis } from '@nora/core';
+import type { RecordingAnalysis, CoachInsight, AboutChildItem } from '@nora/core';
 import { MarkdownText } from '../utils/MarkdownText';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
@@ -145,6 +145,37 @@ const stripPcitTags = (text: string): string => {
     .trim();
 };
 
+// Icon mapping for About Child section based on index
+const ABOUT_CHILD_ICONS = [
+  'flask-outline',      // Little Scientist - beaker/flask
+  'hand-right-outline', // Sensory Seeker - hand
+  'chatbubbles-outline', // Great Communicator
+  'heart-outline',      // Big Emotions
+  'people-outline',     // Empathy & Care
+  'git-compare-outline', // Negotiator
+];
+
+const ABOUT_CHILD_COLORS = [
+  { icon: '#7C3AED', bg: '#EDE9FE' }, // Purple
+  { icon: '#EC4899', bg: '#FCE7F3' }, // Pink
+  { icon: '#3B82F6', bg: '#DBEAFE' }, // Blue
+  { icon: '#EF4444', bg: '#FEE2E2' }, // Red
+  { icon: '#10B981', bg: '#D1FAE5' }, // Green
+  { icon: '#F59E0B', bg: '#FEF3C7' }, // Amber
+];
+
+const getAboutChildIcon = (index: number): string => {
+  return ABOUT_CHILD_ICONS[index % ABOUT_CHILD_ICONS.length];
+};
+
+const getAboutChildIconColor = (index: number): string => {
+  return ABOUT_CHILD_COLORS[index % ABOUT_CHILD_COLORS.length].icon;
+};
+
+const getAboutChildBgColor = (index: number): string => {
+  return ABOUT_CHILD_COLORS[index % ABOUT_CHILD_COLORS.length].bg;
+};
+
 const getExampleUtterances = (exampleIndex: number, transcript: any[]) => {
   const result: { utterance: any; originalIndex: number }[] = [];
   if (exampleIndex > 0 && transcript[exampleIndex - 1]) {
@@ -171,6 +202,8 @@ export const ReportScreen: React.FC = () => {
   const [reportData, setReportData] = useState<RecordingAnalysis | null>(null);
   const [pollingCount, setPollingCount] = useState(0);
   const [childName, setChildName] = useState<string>('Your Child');
+  const [coachCardIndex, setCoachCardIndex] = useState(0);
+  const [expandedChildInsight, setExpandedChildInsight] = useState<number | null>(null);
 
   useEffect(() => {
     loadReportData();
@@ -398,21 +431,141 @@ export const ReportScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Tips for Next Time */}
-        <View>
-          <Text style={styles.cardTitle}>Session Overview</Text>
-          <View style={styles.card}>
-            {/* New format: simplified tip with example utterances */}
-            {/* {reportData.tip && (
-              <Text style={styles.tipMainText}>{reportData.tip}</Text>
-            )} */}
+        {/* Coach's Corner */}
+        {reportData.childPortfolioInsights && Array.isArray(reportData.childPortfolioInsights) && reportData.childPortfolioInsights.length > 0 && (() => {
+          const allInsights = reportData.childPortfolioInsights as CoachInsight[];
+          const insights = allInsights.slice(0, 3); // Show only first 3 tips
+          const currentItem = insights[coachCardIndex];
+          const totalCards = insights.length;
 
-            {/* Feedback text */}
+          return (
+            <View>
+              <Text style={styles.cardTitle}>Coach's Corner</Text>
+              <View style={styles.coachCard}>
+                {/* Card Header with Navigation */}
+                <View style={styles.coachCardHeader}>
+                  <TouchableOpacity
+                    onPress={() => setCoachCardIndex(prev => Math.max(0, prev - 1))}
+                    disabled={coachCardIndex === 0}
+                    style={[styles.coachNavButton, coachCardIndex === 0 && styles.coachNavButtonDisabled]}
+                  >
+                    <Ionicons name="chevron-back" size={24} color={coachCardIndex === 0 ? '#D1D5DB' : COLORS.mainPurple} />
+                  </TouchableOpacity>
+                  <Text style={styles.coachCardCounter}>{coachCardIndex + 1} / {totalCards}</Text>
+                  <TouchableOpacity
+                    onPress={() => setCoachCardIndex(prev => Math.min(totalCards - 1, prev + 1))}
+                    disabled={coachCardIndex === totalCards - 1}
+                    style={[styles.coachNavButton, coachCardIndex === totalCards - 1 && styles.coachNavButtonDisabled]}
+                  >
+                    <Ionicons name="chevron-forward" size={24} color={coachCardIndex === totalCards - 1 ? '#D1D5DB' : COLORS.mainPurple} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Suggested Change Title */}
+                <Text style={styles.coachTipTitle}>{currentItem.suggested_change}</Text>
+
+                {/* Analysis Section */}
+                {currentItem.analysis && (
+                  <View style={styles.coachAnalysisContainer}>
+                    {/* Observation */}
+                    <Text style={styles.coachObservation}>{currentItem.analysis.observation}</Text>
+
+                    {/* Impact */}
+                    {currentItem.analysis.impact && (
+                      <View style={styles.coachImpactItem}>
+                        <Text><Text style={styles.coachImpactLabel}>Tip: </Text><Text style={styles.coachImpactText}>{currentItem.analysis.impact}</Text></Text>
+                      </View>
+                    )}
+
+                    {/* Result */}
+                    {/* {currentItem.analysis.result && (
+                      <View style={styles.coachImpactItem}>
+                        <Text style={styles.coachImpactLabel}>Result</Text>
+                        <Text style={styles.coachImpactText}>{currentItem.analysis.result}</Text>
+                      </View>
+                    )} */}
+                  </View>
+                )}
+
+                {/* Example Scenario */}
+                {currentItem.example_scenario && (
+                  <View style={styles.coachExampleContainer}>
+                    <Text style={styles.coachExampleLabel}>Example</Text>
+                    <View style={styles.coachExampleBubble}>
+                      <Text style={styles.coachExampleRole}>Child:</Text>
+                      <Text style={styles.coachExampleText}>{currentItem.example_scenario.child}</Text>
+                    </View>
+                    <View style={[styles.coachExampleBubble, styles.coachExampleParent]}>
+                      <Text style={styles.coachExampleRole}>Parent:</Text>
+                      <Text style={styles.coachExampleText}>{currentItem.example_scenario.parent}</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </View>
+          );
+        })()}
+
+        {/* Understanding Child Today */}
+        {reportData.aboutChild && Array.isArray(reportData.aboutChild) && reportData.aboutChild.length > 0 && (
+          <View style={styles.aboutChildSection}>
+            <Text style={styles.cardTitle}>Understanding {childName} Today</Text>
+            <View style={styles.aboutChildContainer}>
+              {(reportData.aboutChild as AboutChildItem[]).map((item, index) => {
+                const isExpanded = expandedChildInsight === item.id;
+                const iconName = getAboutChildIcon(index);
+                const iconColor = getAboutChildIconColor(index);
+                const bgColor = getAboutChildBgColor(index);
+
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.aboutChildCard}
+                    onPress={() => setExpandedChildInsight(isExpanded ? null : item.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.aboutChildRow}>
+                      <View style={[styles.aboutChildIconContainer, { backgroundColor: bgColor }]}>
+                        <Ionicons name={iconName as any} size={24} color={iconColor} />
+                      </View>
+                      <View style={styles.aboutChildContent}>
+                        <Text style={styles.aboutChildTitle}>{item.Title}</Text>
+                        <Text style={styles.aboutChildDescription}>{item.Description}</Text>
+                      </View>
+                      <Ionicons
+                        name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                        size={20}
+                        color="#9CA3AF"
+                      />
+                    </View>
+                    {isExpanded && (
+                      <View style={styles.aboutChildDetails}>
+                        <Text style={styles.aboutChildDetailsText}>{item.Details}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* Read Full Conversation Button */}
+        <View style={styles.buttonContainer}>
+          <Button onPress={() => navigation.navigate('Transcript', { recordingId })} variant="primary">
+            Read full conversation with tips
+          </Button>
+        </View>
+
+        {/* Tips for Next Time - TEMPORARILY HIDDEN */}
+        {/* <View>
+          <Text style={styles.cardTitle}>Session Overview</Text>
+          {(reportData.feedback || (reportData.exampleIndex != null && reportData.transcript && reportData.transcript.length > 0) || (!reportData.tip && reportData.tips && typeof reportData.tips === 'object')) && (
+          <View style={styles.card}>
             {reportData.feedback && (
               <Text style={styles.transitionText}>{formatWithStarBreaks(reportData.feedback)}</Text>
             )}
 
-            {/* Example utterances */}
             {reportData.exampleIndex != null && reportData.transcript && reportData.transcript.length > 0 && (() => {
               const speakerMappings = getSpeakerMappings(reportData.transcript);
               const exampleUtterances = getExampleUtterances(reportData.exampleIndex, reportData.transcript);
@@ -425,7 +578,6 @@ export const ReportScreen: React.FC = () => {
                     const { utterance, originalIndex } = item;
                     const isMiddle = originalIndex === reportData.exampleIndex;
 
-                    // Check if this is a silent slot
                     if (utterance.speaker === '__SILENT__') {
                       const duration = (utterance.end || 0) - (utterance.start || 0);
                       const durationText = duration >= 60
@@ -438,8 +590,7 @@ export const ReportScreen: React.FC = () => {
                             <View style={styles.silentSlotBadge}>
                               <Text style={styles.silentSlotBadgeText}>Silent Moment</Text>
                             </View>
-                            {/* <Text style={styles.silentSlotDuration}>{durationText}</Text> */}
-                          </View> 
+                          </View>
                           {isMiddle && utterance.feedback && (
                             <View style={styles.silentSlotFeedback}>
                               <Text style={styles.silentSlotFeedbackText}>
@@ -456,7 +607,6 @@ export const ReportScreen: React.FC = () => {
                     const isAdult = speakerLabel.includes('Adult');
                     const pcitTag = utterance.tag;
                     const skillType = getSkillType(pcitTag);
-                    // Only show feedback for the main example utterance (originalIndex)
                     const shouldShowFeedback = isMiddle && isAdult && utterance.feedback && skillType !== 'neutral';
 
                     return (
@@ -493,12 +643,6 @@ export const ReportScreen: React.FC = () => {
               );
             })()}
 
-            {/* Backward compatibility: old tips format */}
-            {/* {!reportData.tip && reportData.tips && typeof reportData.tips === 'string' && (
-              <MarkdownText style={styles.tipsText}>{reportData.tips}</MarkdownText>
-            )} */}
-
-            {/* Backward compatibility: structured tips object */}
             {!reportData.tip && reportData.tips && typeof reportData.tips === 'object' && (
               <View>
                 <Text style={styles.observationTitle}>{reportData.tips.observation}</Text>
@@ -515,31 +659,22 @@ export const ReportScreen: React.FC = () => {
                 </View>
               </View>
             )}
-
-            {/* Divider Line */}
-            {/* <View style={styles.divider} /> */}
-
-            <TouchableOpacity
-              style={styles.learnMoreButton}
-              onPress={() => navigation.navigate('Transcript', { recordingId })}
-            >
-              <Text style={styles.learnMoreText}>Read full conversation with tips</Text>
-            </TouchableOpacity>
           </View>
-        </View>
+          )}
+        </View> */}
 
         {/* What We Learned About Child */}
-        {reportData.childReaction && (
+        {/* {reportData.childReaction && (
           <View>
             <Text style={styles.cardTitle}>What We Learned About {childName}</Text>
             <View style={styles.card}>
               <Text style={styles.childReactionText}>{formatWithLineBreaks(reportData.childReaction)}</Text>
             </View>
           </View>
-        )}
+        )} */}
 
         {/* Reminder */}
-        {reportData.reminder && (
+        {/* {reportData.reminder && (
           <View style={styles.headerSection}>
             <View style={styles.dragonIconContainer}>
               <Image
@@ -552,14 +687,14 @@ export const ReportScreen: React.FC = () => {
               <Text style={styles.headerText}>{reportData.reminder}</Text>
             </View>
           </View>
-        )}
+        )} */}
 
         {/* Back to Home Button */}
-        <View style={styles.buttonContainer}>
+        {/* <View style={styles.buttonContainer}>
           <Button onPress={handleBackToHome} variant="primary">
             Back to Home
           </Button>
-        </View>
+        </View> */}
       </ScrollView>
     </SafeAreaView>
   );
@@ -1094,5 +1229,162 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     color: '#7E22CE',
+  },
+  // Coach's Corner styles
+  coachCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  coachCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 16,
+  },
+  coachNavButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+    backgroundColor: '#F5F0FF',
+  },
+  coachNavButtonDisabled: {
+    backgroundColor: '#F3F4F6',
+  },
+  coachCardCounter: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  coachTipTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: COLORS.mainPurple,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  coachObservation: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: COLORS.textDark,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  coachImpactContainer: {
+    backgroundColor: '#F5F0FF',
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+  },
+  coachImpactItem: {
+    gap: 4,
+  },
+  coachImpactLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    lineHeight: 22,
+    color: COLORS.mainPurple,
+  },
+  coachImpactText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: COLORS.textDark,
+    lineHeight: 20,
+  },
+  coachAnalysisContainer: {
+    gap: 12,
+  },
+  coachExampleContainer: {
+    marginTop: 16,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 16,
+    padding: 16,
+    gap: 8,
+  },
+  coachExampleLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#166534',
+    marginBottom: 4,
+  },
+  coachExampleBubble: {
+    backgroundColor: '#DCFCE7',
+    borderRadius: 12,
+    padding: 12,
+  },
+  coachExampleParent: {
+    backgroundColor: '#BBF7D0',
+  },
+  coachExampleRole: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: '#166534',
+    marginBottom: 4,
+  },
+  coachExampleText: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#14532D',
+    lineHeight: 20,
+  },
+  // About Child section styles
+  aboutChildSection: {
+    marginBottom: 16,
+  },
+  aboutChildContainer: {
+    gap: 12,
+  },
+  aboutChildCard: {
+    backgroundColor: '#F8F7FC',
+    borderRadius: 16,
+    padding: 16,
+  },
+  aboutChildRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  aboutChildIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  aboutChildContent: {
+    flex: 1,
+  },
+  aboutChildTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 4,
+  },
+  aboutChildDescription: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+  },
+  aboutChildDetails: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  aboutChildDetailsText: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: COLORS.textDark,
+    lineHeight: 22,
   },
 });
