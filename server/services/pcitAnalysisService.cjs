@@ -250,7 +250,7 @@ async function callGeminiStreaming(contents, options = {}) {
 }
 
 // ============================================================================
-// Gemini Psychologist Feedback Generation
+// Child Profiling — Single Gemini Call (replaces Phases 5/6/7)
 // ============================================================================
 
 /**
@@ -268,48 +268,42 @@ function formatUtterancesForPsychologist(utterances) {
 }
 
 /**
- * Generate psychologist feedback using Gemini API
- * Returns chat history for follow-up extractChildPortfolioInsights call
+ * Generate child profiling using a single Gemini call
+ * Produces developmental observations (5 domains) + coaching cards for parents
+ * Replaces the old generatePsychologistFeedback + extractChildPortfolioInsights + extractAboutChild pipeline
  * @param {Array} utterances - Utterances with roles
- * @param {Object} childInfo - Child's info (name, ageMonths, gender)
+ * @param {Object} childInfo - Child's info (name, ageMonths, gender, issue)
  * @param {Object} tagCounts - Session metrics from PCIT coding
  * @param {string} childSpeaker - Speaker ID of the child (e.g., 'speaker_0')
- * @returns {Promise<Array|null>} Chat history for multi-turn conversation, or null on failure
+ * @returns {Promise<Object|null>} { developmentalObservation, coachingCards, metadata } or null on failure
  */
-async function generatePsychologistFeedback(utterances, childInfo, tagCounts = {}, childSpeaker = null) {
+async function generateChildProfiling(utterances, childInfo, tagCounts = {}, childSpeaker = null) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
   if (!GEMINI_API_KEY) {
-    console.warn('⚠️ [PSYCHOLOGIST-FEEDBACK] Gemini API key not configured, skipping');
+    console.warn('⚠️ [CHILD-PROFILING] Gemini API key not configured, skipping');
     return null;
   }
 
-  const { name, ageMonths, gender } = childInfo;
+  const { name, ageMonths, gender, issue } = childInfo;
   const transcript = formatUtterancesForPsychologist(utterances);
 
-  // Format age as months or years for readability
-  const ageDisplay = ageMonths ? `${ageMonths} months old` : 'unknown age';
-  const childSpeakerInfo = childSpeaker
-    ? `- ${childSpeaker}: ${name || 'Child'}, ${ageDisplay} ${gender || 'child'}`
-    : `- ${name || 'Child'}, ${ageDisplay} ${gender || 'child'}`;
-
-  const prompt = `this is transcripts from a 5 mins parent-child play session. as a pcit therapist and child developmental psychologist, can you provide feedbacks to parents on the play session. can you also highlight what are the things you notice with the child?
-
-**Child Info:**
-${childSpeakerInfo}
-
-**Session Metrics:**
-- Labeled Praises: ${tagCounts.praise || 0} (goal: 10+)
+  const sessionMetrics = `- Labeled Praises: ${tagCounts.praise || 0} (goal: 10+)
 - Reflections: ${tagCounts.echo || 0} (goal: 10+)
 - Behavioral Descriptions: ${tagCounts.narration || 0} (goal: 10+)
 - Questions: ${tagCounts.question || 0} (reduce)
 - Commands: ${tagCounts.command || 0} (reduce)
-- Criticisms: ${tagCounts.criticism || 0} (eliminate)
+- Criticisms: ${tagCounts.criticism || 0} (eliminate)`;
 
-**Transcript:**
-${transcript}
-`;
+  const prompt = loadPromptWithVariables('childProfiling', {
+    CHILD_NAME: name || 'the child',
+    CHILD_AGE_MONTHS: String(ageMonths || 'unknown'),
+    CHILD_GENDER: gender || 'child',
+    CHILD_ISSUE: issue || 'none specified',
+    SESSION_METRICS: sessionMetrics,
+    TRANSCRIPT: transcript
+  });
 
-  console.log(`📊 [PSYCHOLOGIST-FEEDBACK] Calling Gemini API (streaming)...`);
+  console.log(`📊 [CHILD-PROFILING] Calling Gemini API (single call, streaming)...`);
 
   try {
     const userMessage = {
@@ -317,259 +311,36 @@ ${transcript}
       parts: [{ text: prompt }]
     };
 
-    // Use streaming endpoint to avoid ECONNRESET during thinking phase
     const responseText = await callGeminiStreaming([userMessage], {
-      temperature: 0.7,
+      temperature: 0.5,
       maxOutputTokens: 8192,
-      timeout: 300000  // 5 minutes for complex analysis
+      timeout: 300000  // 5 minutes
     });
 
-    // Build chat history for follow-up questions
-    const modelMessage = {
-      role: 'model',
-      parts: [{ text: responseText }]
+    // Parse JSON response (strip markdown fences if present)
+    const cleanedResponse = responseText
+      .replace(/```json\s*/g, '')
+      .replace(/```\s*/g, '')
+      .trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error('❌ [CHILD-PROFILING] JSON parse error. Raw response (first 500 chars):', cleanedResponse.substring(0, 500));
+      throw parseError;
+    }
+
+    const result = {
+      developmentalObservation: parsed.developmental_observation || null,
+      coachingCards: parsed.pcit_coaching_cards || null,
+      metadata: parsed.session_metadata || null
     };
 
-    console.log(`✅ [PSYCHOLOGIST-FEEDBACK] Gemini API response received`);
-
-    return [userMessage, modelMessage];
+    console.log(`✅ [CHILD-PROFILING] Gemini response parsed — ${result.developmentalObservation?.domains?.length || 0} domains, ${result.coachingCards?.length || 0} coaching cards`);
+    return result;
   } catch (error) {
-    console.error('❌ [PSYCHOLOGIST-FEEDBACK] Error:', error.message);
-    return null;
-  }
-}
-
-/**
- * Extract child portfolio insights from psychologist feedback using multi-turn conversation
- * @param {Array} chatHistory - Chat history from generatePsychologistFeedback
- * @returns {Promise<Object>} Condensed portfolio insights for mobile display
- */
-async function extractChildPortfolioInsights(chatHistory) {
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  if (!GEMINI_API_KEY) {
-    console.warn('⚠️ [PORTFOLIO-INSIGHTS] Gemini API key not configured, skipping portfolio insights');
-    return null;
-  }
-
-  if (!chatHistory || chatHistory.length === 0) {
-    console.warn('⚠️ [PORTFOLIO-INSIGHTS] No chat history provided, skipping portfolio insights');
-    return null;
-  }
-
-  const followUpPrompt = `link suggestions/tips to impact to the child, based on what you have observed about the child in output json format. ranked by importance/impact.  avoid using utterance index.  Do not mention PCIT.
-
-###output json format:
-
-    [
-      {
-        "id": 1,
-        "suggested_change": "Switch from Questions to Reflections",
-        "analysis": {
-          "observation": "Towards the end of the play session, the rapid questions (\"Airport?\", \"Parcel?\") caused the child to repeat himself or go silent. Because he has some articulation struggles (saying \"Parcel\" vs \"Plaster\"), questions can feel like a test he is failing.",
-          "impact": "Reflections act as a verbal mirror. By simply repeating the correct word (\"Oh, a plaster!\") without a questioning tone, you validate his attempt rather than challenging it.",
-          "result": "This provides 'verbal scaffolding.' The child hears the correct pronunciation immediately after his attempt, which helps him self-correct his speech patterns without feeling pressure to perform. This builds linguistic confidence."
-        },
-        "example_scenario": {
-          "child": "Go bridge.",
-          "parent": "You are going to the big bridge. (Declarative statement, falling intonation)"
-        }
-      },
-      {
-        "id": 2,
-        "suggested_change": "Ignore the Whine, but Praise the Normal Voice",
-        "analysis": {
-          "observation": "Currently, whining is a high-efficiency tool for him. At the beginning of the playsession, he whines, and immediately gets attention. In the middle, he whines \"Yeah\" regarding the light, and you immediately turn it off. He has learned: Whining = Fast Action.",
-          "impact": "We need to break this association. If you intentionally delay your response by 5-10 seconds when he whines (Active Ignoring), but respond instantly with warmth when he uses a pleasant voice, his brain will re-wire.",
-          "result": "This uses 'differential reinforcement.' The child learns that emotional regulation (speaking calmly) is the only way to get needs met, leading to a rapid decrease in fussiness and an increase in self-control."
-        },
-        "example_scenario": {
-          "child": "(Whining) I want light off...",
-          "parent": "(Silence/Look away for 5 seconds)... (Child takes breath, speaks normally) 'Light off please.' -> 'Thank you for using your calm voice! I will turn it off.'"
-        }
-      },
-      {
-        "id": 3,
-        "suggested_change": "Use Behavioral Descriptions instead of Commands",
-        "analysis": {
-          "observation": "The child is highly sensory-seeking (fixated on the \"Shiny\" light). Commands like \"Drink your milk\" or \"Turn on\" interrupt his sensory exploration, which can cause resistance.",
-          "impact": "Behavioral Descriptions (\"You are touching the shiny switch,\" \"You are holding the warm cup\") allow you to join his world rather than directing it. It validates his sensory experiences.",
-          "result": "This increases 'felt safety.' When a child feels their parent understands their internal sensory state without trying to change it, their cortisol (stress) levels drop, and they become more cooperative naturally."
-        },
-        "example_scenario": {
-          "child": "(Touching the light switch)",
-          "parent": "You are making the room bright and shiny!"
-        }
-      },
-      {
-        "id": 4,
-        "suggested_change": "The 5-Second Pause (Silence)",
-        "analysis": {
-          "observation": "In the 'Airport' sequence, there were 4 verbal prompts in under 6 seconds. The child went silent. A 3-year-old's processing speed is slower than an adult's; he was likely still formulating his answer to the first question when the next two hit him.",
-          "impact": "After making a Reflection, wait for 5 full seconds (count in your head). This silence is not empty; it is 'processing time' for the child.",
-          "result": "Slowing the pace prevents cognitive overload. You will likely find he shares richer, more complex thoughts because he has the mental space to retrieve the words he wants to use."
-        },
-        "example_scenario": {
-          "child": "Airport.",
-          "parent": "You are thinking about the airport. (Wait... 1... 2... 3... 4... 5...)"
-        }
-      }
-    ]
-
-Return ONLY valid JSON. Do not include markdown code blocks.`;
-
-  console.log(`📊 [PORTFOLIO-INSIGHTS] Calling Gemini API for portfolio insights (streaming, multi-turn)...`);
-
-  try {
-    // Continue the conversation with follow-up question
-    const contents = [
-      ...chatHistory,
-      {
-        role: 'user',
-        parts: [{ text: followUpPrompt }]
-      }
-    ];
-
-    // Use streaming endpoint to avoid ECONNRESET during thinking phase
-    const responseText = await callGeminiStreaming(contents, {
-      temperature: 0.3,
-      maxOutputTokens: 4096,
-      timeout: 300000  // 5 minutes for complex analysis
-    });
-
-    // Parse JSON response
-    const cleanedResponse = responseText
-      .replace(/```json\s*/g, '')
-      .replace(/```\s*/g, '')
-      .trim();
-
-    // Log raw response for debugging if JSON parse fails
-    let portfolioInsights;
-    try {
-      portfolioInsights = JSON.parse(cleanedResponse);
-    } catch (parseError) {
-      console.error('❌ [PORTFOLIO-INSIGHTS] JSON parse error. Raw response (first 500 chars):', cleanedResponse.substring(0, 500));
-      throw parseError;
-    }
-
-    console.log(`✅ [PORTFOLIO-INSIGHTS] Gemini API response received (multi-turn)`);
-
-    // Return array directly (don't spread into object)
-    return portfolioInsights;
-  } catch (error) {
-    console.error('❌ [PORTFOLIO-INSIGHTS] Error extracting portfolio insights:', error.message);
-    return null;
-  }
-}
-
-/**
- * Extract "About Child" observations from psychologist feedback using Claude
- * @param {Array} chatHistory - Chat history from generatePsychologistFeedback
- * @returns {Promise<Array|null>} Array of child observations ranked by importance, or null on failure
- */
-async function extractAboutChild(chatHistory) {
-  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-  if (!ANTHROPIC_API_KEY) {
-    console.warn('⚠️ [ABOUT-CHILD] Anthropic API key not configured, skipping');
-    return null;
-  }
-
-  if (!chatHistory || chatHistory.length === 0) {
-    console.warn('⚠️ [ABOUT-CHILD] No chat history provided, skipping');
-    return null;
-  }
-
-  // Extract the psychologist feedback text from chat history
-  const psychologistResponse = chatHistory.find(msg => msg.role === 'model');
-  if (!psychologistResponse || !psychologistResponse.parts?.[0]?.text) {
-    console.warn('⚠️ [ABOUT-CHILD] No psychologist response found in chat history');
-    return null;
-  }
-
-  const feedbackText = psychologistResponse.parts[0].text;
-
-  const prompt = `You are analyzing a child psychologist's feedback from a parent-child play session.
-
-Extract ONLY the "Observations of the Child" section - the insights about the child's behavior, development, and characteristics observed during the session.
-
-Format the observations as a JSON array, ranked by importance/significance. Each observation should have:
-- id: sequential number starting from 1
-- Title: A short catchy title (2-4 words) describing the trait or behavior
-- Description: A brief 1-sentence summary for parents
-- Details: A longer explanation with developmental context and why this matters
-
-Here is the psychologist feedback to analyze:
-
-${feedbackText}
-
-Return ONLY a valid JSON array. No markdown code blocks or explanations.
-
-Example format:
-[
-  {
-    "id": 1,
-    "Title": "Little Scientist",
-    "Description": "Bobby was exploring physics (gravity/pouring). He wasn't trying to be messy.",
-    "Details": "His persistent desire to 'pour' and 'take out' reflects a 3-year-old's natural curiosity about cause and effect. At this age, repetitive pouring is a way of testing physical boundaries and understanding how objects occupy space."
-  },
-  {
-    "id": 2,
-    "Title": "Sensory Seeker",
-    "Description": "Bobby loves the 'squishy' texture today!",
-    "Details": "He is very focused on the tactile nature of the vitamins—calling them 'squishy, squishy'. This is a hallmark of the sensorimotor stage of development, where kids learn through touch and texture."
-  }
-]`;
-
-  console.log(`📊 [ABOUT-CHILD] Calling Claude API to extract child observations...`);
-
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 4096,
-        temperature: 0.3,
-        messages: [{
-          role: 'user',
-          content: prompt
-        }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `Claude API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const responseText = data.content[0].text.trim();
-
-    // Parse JSON response
-    const cleanedResponse = responseText
-      .replace(/```json\s*/g, '')
-      .replace(/```\s*/g, '')
-      .trim();
-
-    let aboutChild;
-    try {
-      aboutChild = JSON.parse(cleanedResponse);
-    } catch (parseError) {
-      console.error('❌ [ABOUT-CHILD] JSON parse error. Raw response (first 500 chars):', cleanedResponse.substring(0, 500));
-      throw parseError;
-    }
-
-    if (!Array.isArray(aboutChild)) {
-      throw new Error('Expected array of child observations');
-    }
-
-    console.log(`✅ [ABOUT-CHILD] Extracted ${aboutChild.length} child observations`);
-    return aboutChild;
-  } catch (error) {
-    console.error('❌ [ABOUT-CHILD] Error extracting child observations:', error.message);
+    console.error('❌ [CHILD-PROFILING] Error:', error.message);
     return null;
   }
 }
@@ -846,12 +617,14 @@ async function analyzePCITCoding(sessionId, userId) {
       childName: true,
       childGender: true,
       childBirthYear: true,
-      childBirthday: true
+      childBirthday: true,
+      issue: true
     }
   });
   const childName = user?.childName ? decryptSensitiveData(user.childName) : 'the child';
   const childAge = user?.childBirthYear ? calculateChildAge(user.childBirthYear, user.childBirthday) : null;
   const childAgeMonths = user?.childBirthYear ? calculateChildAgeInMonths(user.childBirthday, user.childBirthYear) : null;
+  const childIssue = user?.issue || null;
   const childGender = user?.childGender ? formatGender(user.childGender) : 'child';
   console.log(`✅ [ANALYSIS-STEP-1b] Child info: ${childName}, ${childAgeMonths} months old, ${childGender}`);
 
@@ -1142,53 +915,32 @@ Do not include markdown or whitespace (minified JSON).
     }
   }
 
-  // STEP 9: Generate psychologist feedback using Gemini API
-  // STEP 9, 10, 11: Generate psychologist feedback, extract portfolio insights, and extract about child
-  console.log(`📊 [ANALYSIS-STEP-9] Generating psychologist feedback via Gemini...`);
-  let childPortfolioInsights = null;
-  let aboutChild = null;
+  // STEP 9: Child Profiling — single Gemini call (replaces old Steps 9/10/11)
+  console.log(`📊 [ANALYSIS-STEP-9] Generating child profiling via Gemini (single call)...`);
+  let childProfilingResult = null;
   try {
-    const utterancesForPsychologist = await getUtterances(sessionId);
-
+    const utterancesForProfiling = await getUtterances(sessionId);
     const childSpeaker = getChildSpeaker(roleIdentificationJson);
-    const chatHistory = await generatePsychologistFeedback(
-      utterancesForPsychologist,
+
+    childProfilingResult = await generateChildProfiling(
+      utterancesForProfiling,
       {
         name: childName,
         ageMonths: childAgeMonths,
-        gender: childGender
+        gender: childGender,
+        issue: childIssue
       },
       tagCounts,
       childSpeaker
     );
 
-    if (chatHistory) {
-      console.log(`✅ [ANALYSIS-STEP-9] Psychologist chat history generated`);
-
-      // STEP 10: Extract portfolio insights (multi-turn conversation)
-      console.log(`📊 [ANALYSIS-STEP-10] Extracting portfolio insights...`);
-      childPortfolioInsights = await extractChildPortfolioInsights(chatHistory);
-
-      if (childPortfolioInsights) {
-        console.log(`✅ [ANALYSIS-STEP-10] Portfolio insights extracted successfully`);
-      } else {
-        console.log(`⚠️ [ANALYSIS-STEP-10] Portfolio insights extraction failed`);
-      }
-
-      // STEP 11: Extract about child observations using Claude
-      console.log(`📊 [ANALYSIS-STEP-11] Extracting about child observations...`);
-      aboutChild = await extractAboutChild(chatHistory);
-
-      if (aboutChild) {
-        console.log(`✅ [ANALYSIS-STEP-11] About child observations extracted successfully`);
-      } else {
-        console.log(`⚠️ [ANALYSIS-STEP-11] About child extraction failed`);
-      }
+    if (childProfilingResult) {
+      console.log(`✅ [ANALYSIS-STEP-9] Child profiling complete — ${childProfilingResult.developmentalObservation?.domains?.length || 0} domains, ${childProfilingResult.coachingCards?.length || 0} coaching cards`);
     } else {
-      console.log(`⚠️ [ANALYSIS-STEP-9] Psychologist feedback skipped or failed`);
+      console.log(`⚠️ [ANALYSIS-STEP-9] Child profiling skipped or failed`);
     }
-  } catch (psychError) {
-    console.error('⚠️ [ANALYSIS-STEP-9/10/11] Error:', psychError.message);
+  } catch (profilingError) {
+    console.error('⚠️ [ANALYSIS-STEP-9] Child profiling error:', profilingError.message);
   }
 
   // Get competency analysis based on tag counts and utterances
@@ -1299,21 +1051,42 @@ Do not include markdown or whitespace (minified JSON).
       tagCounts,
       competencyAnalysis,
       overallScore,
-      childPortfolioInsights,  // Store portfolio insights in dedicated field
-      aboutChild  // Store child observations extracted from psychologist feedback
+      coachingCards: childProfilingResult?.coachingCards || null
     }
   });
 
+  // Upsert ChildProfiling record if profiling succeeded
+  if (childProfilingResult?.developmentalObservation) {
+    try {
+      await prisma.childProfiling.upsert({
+        where: { sessionId },
+        create: {
+          userId,
+          sessionId,
+          summary: childProfilingResult.developmentalObservation.summary || null,
+          domains: childProfilingResult.developmentalObservation.domains || [],
+          metadata: childProfilingResult.metadata || null
+        },
+        update: {
+          summary: childProfilingResult.developmentalObservation.summary || null,
+          domains: childProfilingResult.developmentalObservation.domains || [],
+          metadata: childProfilingResult.metadata || null
+        }
+      });
+      console.log(`✅ [DATABASE-UPDATE] ChildProfiling record upserted for session ${sessionId}`);
+    } catch (profilingDbError) {
+      console.error('⚠️ [DATABASE-UPDATE] Failed to upsert ChildProfiling:', profilingDbError.message);
+    }
+  }
+
   console.log(`✅ [DATABASE-UPDATE] PCIT coding and overall score (${overallScore}) stored for session ${sessionId}`);
 
-  return { tagCounts, competencyAnalysis, overallScore, childPortfolioInsights, aboutChild };
+  return { tagCounts, competencyAnalysis, overallScore, childProfilingResult };
 }
 
 module.exports = {
   analyzePCITCoding,
   generateCDIFeedback,
   generatePDICompetencyPrompt,
-  generatePsychologistFeedback,
-  extractChildPortfolioInsights,
-  extractAboutChild
+  generateChildProfiling
 };

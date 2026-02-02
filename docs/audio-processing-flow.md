@@ -5,7 +5,7 @@ This document describes how recorded audio is processed and how reports are gene
 ## High-Level Pipeline
 
 ```
-Audio Upload → Transcription → Speaker Identification → PCIT Coding → Psychologist Feedback → Report Generation
+Audio Upload → Transcription (v1/v2/two-pass) → Speaker Identification → PCIT Coding → Child Profiling → Report Generation
 ```
 
 ```
@@ -19,13 +19,9 @@ MOBILE APP
     ↓
 4. PCIT Coding & Analysis (Claude)
     ↓
-5. Psychologist Feedback (Gemini)
+5. Child Profiling & Coaching Cards (Gemini — single call)
     ↓
-6. Child Portfolio Insights (Gemini - Multi-turn)
-    ↓
-7. About Child Observations (Claude)
-    ↓
-8. Report Generation & CDI/PDI Feedback
+6. Report Generation & CDI/PDI Feedback
     ↓
 MOBILE APP (Display Report)
 ```
@@ -77,32 +73,81 @@ Session {
 
 **Triggered by:** `startBackgroundProcessing()` in recordings.cjs (lines 92-109)
 
+### Transcription Modes
+
+Set via `TRANSCRIPTION_MODE` environment variable (default: `v2`):
+
+| Mode | Model(s) | Description |
+|------|----------|-------------|
+| `v1` | scribe_v1 only | Better 3-speaker diarization |
+| `v2` | scribe_v2 only | Better text quality (default) |
+| `two-pass` | scribe_v2 + scribe_v1 | Best of both: v2 text quality with v1 diarization |
+
 ### Steps
 
 1. **Download Audio:** Fetch audio file from S3 using AWS SDK (`GetObjectCommand`)
 
 2. **ElevenLabs Transcription:**
    - API Endpoint: `https://api.elevenlabs.io/v1/speech-to-text?include_timestamps=true`
-   - Model: `scribe_v2`
-   - Features: Speaker diarization enabled, word-level timestamps
+   - Shared parameters for both models:
 
    ```javascript
    FormData {
      file: audioBuffer,
-     model_id: 'scribe_v2',
+     model_id: 'scribe_v1' | 'scribe_v2',
      diarize: 'true',
      diarization_threshold: 0.1,
      temperature: 0,
+     tag_audio_events: 'true',
      timestamps_granularity: 'word',
      keyterms: [childName]
    }
    ```
 
+### Single-Pass Mode (`v1` or `v2`)
+
+Calls the selected model once, parses utterances with `parseElevenLabsTranscript()`, and stores results.
+
+### Two-Pass Mode (`two-pass`)
+
+Runs both models and merges their strengths:
+
+1. **Pass 1 — scribe_v2:** Transcribe for high-quality text. Parse into utterances.
+2. **Pass 2 — scribe_v1:** Transcribe for superior speaker diarization. Extract word-level speaker IDs.
+3. **Merge:** Assign v1 speakers to v2 utterances using **majority-vote overlap**:
+   - For each v2 utterance, find all v1 words that overlap its time range
+   - Sum overlap duration per v1 speaker
+   - Assign the speaker with the most overlap time
+   - If no overlap found, fall back to the nearest v1 word by timestamp
+
+### Diarization Divergence Detection
+
+After merging, the system compares v1 and v2 diarization and flags significant divergence:
+
+- **Speaker count differs** between v1 and v2
+- **>20% of utterances** are reassigned to a different speaker
+
+If divergence is detected, a `_diarizationNote` is attached to the stored JSON:
+```javascript
+{
+  divergenceDetected: true,
+  v2SpeakerCount: 2,
+  v1SpeakerCount: 3,
+  speakerCountDiffers: true,
+  reassignedUtterances: 5,
+  totalUtterances: 20,
+  reassignedPct: 25,
+  v1ToV2SpeakerMap: { speaker_0: 'speaker_1', ... },
+  summary: ['Speaker count differs: v2=2, v1=3', '5/20 utterances (25%) reassigned...']
+}
+```
+
+### Post-Transcription (all modes)
+
 3. **Parse & Store:**
-   - Store raw JSON to `session.elevenLabsJson`
-   - Parse utterances with `parseElevenLabsTranscript()`
+   - Store raw JSON to `session.elevenLabsJson` (v2 JSON in two-pass mode)
    - Create formatted transcript text
-   - Update `session.transcript` and `session.transcribedAt`
+   - Update `session.transcript`, `session.transcribedAt`, and `session.transcriptionService` (e.g. `elevenlabs-two-pass`)
 
 4. **Create Utterance Records:** (`server/utils/utteranceUtils.cjs:23-38`)
    ```javascript
@@ -240,260 +285,153 @@ tagCounts = {
 
 ---
 
-## Phase 5: Psychologist Feedback (Gemini)
+## Phase 5: Child Profiling & Coaching Cards (Gemini — Single Call)
 
-**File:** `server/services/pcitAnalysisService.cjs` (lines 247-308)
+**File:** `server/services/pcitAnalysisService.cjs`
 
-**Function:** `generatePsychologistFeedback()`
+**Function:** `generateChildProfiling()`
+
+**Prompt File:** `server/prompts/childProfiling.txt`
 
 ### Purpose
 
-Provides child psychology insights by analyzing the play session transcript through Google's Gemini AI model (thinking/reasoning model).
+A single Gemini call that replaces the old three-call pipeline (Phases 5/5b/5c). Produces:
+1. **Developmental observations** across 5 clinical domains → stored in `ChildProfiling` table
+2. **Coaching cards** for parents → stored in `Session.coachingCards`
 
 ### Streaming Infrastructure
 
-**Function:** `callGeminiStreaming()` (lines 113-218)
+**Function:** `callGeminiStreaming()`
 
-Due to the Gemini 3 Pro Preview model's extended thinking time (30-60 seconds of silent reasoning), the system uses streaming to prevent connection timeouts:
+Due to the Gemini 3 Pro Preview model's extended thinking time (30-60s), the system uses SSE streaming:
 
-```javascript
-// Streaming endpoint for thinking models
-POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:streamGenerateContent?alt=sse
-
-// Configuration
-{
-  timeout: 300000,  // 5-minute timeout for complex analysis
-  responseType: 'stream'
-}
-```
-
-### Child Information Used
-
-The system retrieves child data from the User model:
-- **childName:** Decrypted from encrypted storage
-- **childAge:** Calculated from `childBirthYear` or `childBirthday` (years)
-- **childAgeMonths:** Precise age in months for younger children
-- **childGender:** From enum (BOY, GIRL, OTHER) → formatted as "boy", "girl", "child"
-
-### Helper Functions (lines 31-89)
-
-```javascript
-calculateChildAge(user)        // Returns age in years
-calculateChildAgeInMonths(user) // Returns precise age in months
-getChildSpeaker(roleJson)      // Extracts child speaker ID
-formatGender(gender)           // Converts enum to readable text
-formatUtterancesForPsychologist(utterances, childSpeaker) // Format for prompt
-```
-
-### Prompt Structure
-
-```
-This is the transcript from a 5-minute parent-child play session.
-The child is {name}, a {ageMonths} month old {gender}.
-
-**Transcript:**
-{formatted utterances with speaker roles and PCIT tags}
-
-**Session Metrics:**
-{tagCounts summary}
-
-As a child psychologist, please provide:
-1. Feedback for Parents
-2. Child Observations
-3. Recommendations
-```
-
-### API Call
 ```javascript
 POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:streamGenerateContent?alt=sse
 {
   contents: [{ parts: [{ text: prompt }] }],
   generationConfig: {
-    temperature: 0.7,
+    temperature: 0.5,
     maxOutputTokens: 8192
   }
 }
+// timeout: 300,000ms (5 minutes)
 ```
 
-### Response Format
+### Child Information Used
+
+Retrieved from the User model:
+- **childName:** Decrypted from encrypted storage
+- **childAgeMonths:** Precise age in months
+- **childGender:** From enum (BOY, GIRL, OTHER) → formatted as "boy", "girl", "child"
+- **issue:** User-reported presenting concern
+
+### Prompt Template Variables
+
+| Variable | Source |
+|----------|--------|
+| `{{CHILD_NAME}}` | Decrypted `user.childName` |
+| `{{CHILD_AGE_MONTHS}}` | Calculated from `childBirthday` / `childBirthYear` |
+| `{{CHILD_GENDER}}` | `formatGender(user.childGender)` |
+| `{{CHILD_ISSUE}}` | `user.issue` |
+| `{{SESSION_METRICS}}` | Tag counts from PCIT coding |
+| `{{TRANSCRIPT}}` | Formatted via `formatUtterancesForPsychologist()` |
+
+### Output JSON Structure
+
 ```javascript
 {
-  parentFeedback: "Constructive feedback on parent's interaction style...",
-  childObservations: "Observations about child's behavior, communication, engagement...",
-  recommendations: "Specific suggestions to enhance parent-child relationship...",
-  childAge: 3,
-  childGender: "boy",
-  generatedAt: "2024-01-15T10:30:00.000Z"
+  "session_metadata": {
+    "subject": "child name",
+    "age_months": 36,
+    "overall_impression": "1-2 sentence summary"
+  },
+  "developmental_observation": {
+    "summary": "2-3 sentence developmental snapshot",
+    "domains": [
+      {
+        "category": "Language",           // or Cognitive, Social, Emotional, Connection
+        "framework": "Brown's Stages",    // clinical framework used
+        "developmental_status": "brief status",
+        "current_level": "specific level",
+        "benchmark_for_age": "what is typical",
+        "detailed_observations": [
+          { "insight": "observation title", "evidence": "transcript quote" }
+        ]
+      }
+      // ... 5 domains total
+    ]
+  },
+  "pcit_coaching_cards": [
+    {
+      "card_id": 1,
+      "title": "actionable title",
+      "icon_suggestion": "emoji",
+      "insight": "what was observed and why it matters",
+      "suggestion": "what to do differently",
+      "scenario": {
+        "context": "setup",
+        "instead_of": "what parent said",
+        "try_this": "what to say instead"
+      }
+    }
+    // ... 2-4 cards
+  ]
 }
 ```
 
-### Return Value
+### 5 Developmental Domains
 
-Returns chat history array for multi-turn conversation in Phase 5b:
+| Category | Clinical Framework |
+|----------|--------------------|
+| Language | Brown's Stages of Language Development |
+| Cognitive | Piaget's Preoperational Stage / Brown's Concepts |
+| Social | Halliday's Interactional Function |
+| Emotional | Halliday's Personal Function / Emotional Regulation |
+| Connection | Biringen's Emotional Availability Scales |
+
+### Database Storage
+
+**ChildProfiling table** (one row per session):
 ```javascript
-[
-  { role: 'user', parts: [{ text: initialPrompt }] },
-  { role: 'model', parts: [{ text: psychologistResponse }] }
-]
+ChildProfiling {
+  id: UUID,
+  userId: string,
+  sessionId: string (unique),
+  summary: string,                    // developmental_observation.summary
+  domains: JSON,                      // developmental_observation.domains array
+  metadata: JSON,                     // session_metadata
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
 ```
+
+**Session.coachingCards** field:
+```javascript
+session.coachingCards = [ ... ]  // pcit_coaching_cards array
+```
+
+### Backward Compatibility
+
+The report endpoint transforms new data into old formats for older mobile app versions:
+- `childPortfolioInsights` ← derived from `session.coachingCards` via `transformCoachingCardsToPortfolioInsights()`
+- `aboutChild` ← derived from `childProfiling.domains` via `transformDomainsToAboutChild()`
+
+Falls back to existing `session.childPortfolioInsights` / `session.aboutChild` for sessions processed before this change.
 
 ### Configuration
 
 Requires `GEMINI_API_KEY` environment variable. If not configured, this phase is skipped gracefully.
 
----
+### Performance
 
-## Phase 5b: Child Portfolio Insights (Gemini Multi-turn)
-
-**File:** `server/services/pcitAnalysisService.cjs` (lines 310-430)
-
-**Function:** `extractChildPortfolioInsights()`
-
-### Purpose
-
-Extracts detailed, actionable insights from the psychologist feedback using a multi-turn conversation approach. This builds on the chat history from Phase 5.
-
-### Input
-
-Takes the chat history array from Phase 5 (psychologist feedback) as input, continuing the conversation.
-
-### Prompt (added to conversation)
-```
-we are building child portfolio. extract insights from the report.
-1-3 key points about the child.
-1-3 points for the parent to improve.
-only pick the ones are most valuable and insightful. (if none, keep blank).
-keep short and concise for mobile display.
-```
-
-### API Call (Multi-turn)
-```javascript
-POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:streamGenerateContent?alt=sse
-{
-  contents: [
-    ...previousChatHistory,
-    { role: 'user', parts: [{ text: portfolioPrompt }] }
-  ],
-  generationConfig: {
-    temperature: 0.3,  // Lower for consistency
-    maxOutputTokens: 4096
-  }
-}
-```
-
-### Response Format
-```javascript
-[
-  {
-    "id": 1,
-    "suggested_change": "Use more Labeled Praises",
-    "analysis": "You used several unlabeled praises like 'Good job!' which are positive but less impactful...",
-    "example_scenario": {
-      "child": "(Builds a tall tower)",
-      "parent": "Wow, you stacked those blocks so carefully! (Instead of: 'Good job!')"
-    }
-  },
-  {
-    "id": 2,
-    "suggested_change": "Add more Behavioral Descriptions",
-    "analysis": "Narrating what your child is doing helps them feel seen...",
-    "example_scenario": {
-      "child": "(Drives toy car around)",
-      "parent": "You're driving the red car around the track!"
-    }
-  }
-]
-```
-
-### Database Storage
-
-Stored in dedicated `session.childPortfolioInsights` field:
-
-```javascript
-session.childPortfolioInsights = [
-  {
-    id: 1,
-    suggested_change: "Use more Labeled Praises",
-    analysis: {
-      observation: "...",
-      impact: "...",
-      result: "..."
-    },
-    example_scenario: { child: "...", parent: "..." }
-  },
-  // ... more insights
-]
-```
+| | Before | After |
+|---|--------|-------|
+| AI calls | 3 sequential (Gemini + Gemini multi-turn + Claude) | 1 Gemini call |
+| API dependencies | Gemini + Anthropic | Gemini only |
 
 ---
 
-## Phase 5c: About Child Observations (Claude)
-
-**File:** `server/services/pcitAnalysisService.cjs` (lines 437-543)
-
-**Function:** `extractAboutChild()`
-
-### Purpose
-
-Extracts child-specific observations from the psychologist feedback to build a "child portfolio" - insights about the child's development, behavior patterns, and characteristics.
-
-### Input
-
-Takes the chat history array from Phase 5 (psychologist feedback) and extracts the model's response text.
-
-### Prompt Structure
-
-```
-You are analyzing a child psychologist's feedback from a parent-child play session.
-
-Extract ONLY the "Observations of the Child" section - the insights about the child's
-behavior, development, and characteristics observed during the session.
-
-Format the observations as a JSON array, ranked by importance/significance.
-```
-
-### API Call
-```javascript
-POST https://api.anthropic.com/v1/messages
-{
-  model: 'claude-sonnet-4-5-20250929',
-  max_tokens: 4096,
-  temperature: 0.3
-}
-```
-
-### Response Format
-```javascript
-[
-  {
-    "id": 1,
-    "Title": "Little Scientist",
-    "Description": "Bobby was exploring physics (gravity/pouring). He wasn't trying to be messy.",
-    "Details": "His persistent desire to 'pour' reflects a 3-year-old's natural curiosity about cause and effect..."
-  },
-  {
-    "id": 2,
-    "Title": "Sensory Seeker",
-    "Description": "Bobby loves the 'squishy' texture today!",
-    "Details": "He is very focused on the tactile nature of the vitamins—calling them 'squishy, squishy'..."
-  }
-]
-```
-
-### Database Storage
-
-Stored in dedicated `session.aboutChild` field:
-
-```javascript
-session.aboutChild = [
-  { id: 1, Title: "...", Description: "...", Details: "..." },
-  // ... more observations
-]
-```
-
----
-
-## Phase 7: Report Generation & Competency Analysis
+## Phase 6: Report Generation & Competency Analysis
 
 **File:** `server/services/pcitAnalysisService.cjs` (lines 955-1152)
 
@@ -607,16 +545,23 @@ session.update({
     tips: 'improvement tips',
     reminder: 'encouragement'
   },
-  childPortfolioInsights: [...],  // From Phase 5b (Coach's Corner tips)
-  aboutChild: [...],              // From Phase 5c (child observations)
+  coachingCards: [...],           // From Phase 5 (coaching cards)
   overallScore: int,
   analysisStatus: 'COMPLETED'
+})
+
+// Separate table:
+ChildProfiling.upsert({
+  userId, sessionId,
+  summary: '...',
+  domains: [...],                 // 5 developmental domains
+  metadata: { ... }               // session_metadata
 })
 ```
 
 ---
 
-## Phase 8: Report Retrieval
+## Phase 7: Report Retrieval
 
 **Endpoint:** `GET /api/recordings/:id/analysis`
 
@@ -654,28 +599,39 @@ session.update({
   tips: 'improvement tips',
   transcript: [ ... ],
   competencyAnalysis: { ... },
-  childPortfolioInsights: [  // Coach's Corner tips (from Phase 5b)
+  developmentalObservation: {  // From ChildProfiling table (Phase 5)
+    summary: 'developmental snapshot',
+    domains: [
+      {
+        category: 'Language',
+        framework: "Brown's Stages",
+        developmental_status: '...',
+        current_level: '...',
+        benchmark_for_age: '...',
+        detailed_observations: [{ insight: '...', evidence: '...' }]
+      }
+      // ... 5 domains
+    ]
+  },
+  coachingCards: [  // From Session.coachingCards (Phase 5)
     {
-      id: 1,
-      suggested_change: 'suggestion',
-      analysis: { observation: '...', impact: '...', result: '...' },
-      example_scenario: { child: '...', parent: '...' }
+      card_id: 1,
+      title: 'actionable title',
+      icon_suggestion: 'emoji',
+      insight: '...',
+      suggestion: '...',
+      scenario: { context: '...', instead_of: '...', try_this: '...' }
     }
   ],
-  aboutChild: [  // Child observations (from Phase 5c)
-    {
-      id: 1,
-      Title: 'Little Scientist',
-      Description: 'short summary',
-      Details: 'detailed explanation'
-    }
-  ]
+  // Backward compat (transforms from new data, or falls back to legacy fields):
+  childPortfolioInsights: [...],
+  aboutChild: [...]
 }
 ```
 
 ---
 
-## Phase 9: Phase Progression (CONNECT → DISCIPLINE)
+## Phase 8: Phase Progression (CONNECT → DISCIPLINE)
 
 **File:** `server/services/processingService.cjs` (lines 21-86)
 
@@ -745,7 +701,8 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 | `server/utils/scoreConstants.cjs` | Nora score calculation |
 | `server/prompts/roleIdentification.txt` | Speaker role detection prompt |
 | `server/prompts/dpicsCoding.txt` | DPICS coding system prompt |
-| `prisma/schema.prisma` | Database schema (Session, Utterance) |
+| `server/prompts/childProfiling.txt` | Child profiling & coaching cards prompt |
+| `prisma/schema.prisma` | Database schema (Session, Utterance, ChildProfiling) |
 
 ---
 
@@ -753,14 +710,17 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 
 | Setting | Value | Notes |
 |---------|-------|-------|
+| Transcription Mode | `TRANSCRIPTION_MODE` env var | `v1`, `v2` (default), or `two-pass` |
+| ElevenLabs scribe_v1 | Better diarization | Used in `v1` and `two-pass` modes |
+| ElevenLabs scribe_v2 | Better text quality | Used in `v2` and `two-pass` modes |
+| Diarization Threshold | 0.1 | Speaker separation sensitivity |
+| Divergence Threshold | 20% reassigned | Flags diarization mismatch in two-pass |
 | Claude Model | `claude-sonnet-4-5-20250929` | Role ID, PCIT coding, CDI/PDI feedback |
-| Gemini Model | `gemini-3-pro-preview` | Psychologist feedback, portfolio insights |
+| Gemini Model | `gemini-3-pro-preview` | Child profiling (single call) |
 | Gemini Endpoint | Streaming (SSE) | Prevents timeout during thinking |
 | Gemini Timeout | 300,000ms (5 min) | Extended for reasoning model |
-| Gemini Temp (Psych) | 0.7 | Creative feedback |
-| Gemini Temp (Portfolio) | 0.3 | Consistent extraction |
-| Max Tokens (Psych) | 8192 | Detailed analysis |
-| Max Tokens (Portfolio) | 4096 | Structured insights |
+| Gemini Temp (Profiling) | 0.5 | Balanced creativity/consistency |
+| Max Tokens (Profiling) | 8192 | Detailed analysis |
 | Claude Temp (Coding) | 0 | Deterministic PCIT coding |
 | Claude Temp (Feedback) | 0.7 | Creative feedback |
 
@@ -773,8 +733,13 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 - **Processing:** analysisStatus (PENDING/PROCESSING/COMPLETED/FAILED)
 - **Audio:** storagePath (S3 key), elevenLabsJson (raw transcription)
 - **Analysis:** transcript, roleIdentificationJson, pcitCoding, competencyAnalysis
-- **AI Insights:** childPortfolioInsights (Coach's Corner), aboutChild (child observations)
+- **AI Insights:** coachingCards (from child profiling), childPortfolioInsights (legacy), aboutChild (legacy)
 - **Scoring:** tagCounts, overallScore
+
+### ChildProfiling Table
+- **Reference:** userId, sessionId (unique)
+- **Content:** summary, domains (JSON — 5 developmental domain objects)
+- **Metadata:** metadata (JSON — session_metadata from Gemini)
 - **Error tracking:** analysisError, analysisFailedAt, permanentFailure, retryCount
 
 ### Utterance Table

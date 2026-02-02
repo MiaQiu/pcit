@@ -38,6 +38,40 @@ export interface AboutChildItem {
   Details: string;
 }
 
+export interface DevelopmentalObservationDetail {
+  insight: string;
+  evidence: string;
+}
+
+export interface DevelopmentalDomain {
+  category: 'Language' | 'Cognitive' | 'Social' | 'Emotional' | 'Connection';
+  framework: string;
+  developmental_status: string;
+  current_level: string;
+  benchmark_for_age: string;
+  detailed_observations: DevelopmentalObservationDetail[];
+}
+
+export interface DevelopmentalObservation {
+  summary: string | null;
+  domains: DevelopmentalDomain[];
+}
+
+export interface CoachingCardScenario {
+  context: string;
+  instead_of: string;
+  try_this: string;
+}
+
+export interface CoachingCard {
+  card_id: number;
+  title: string;
+  icon_suggestion: string;
+  insight: string;
+  suggestion: string;
+  scenario: CoachingCardScenario | null;
+}
+
 export interface RecordingAnalysis {
   id: string;
   mode: 'CDI' | 'PDI';
@@ -89,6 +123,8 @@ export interface RecordingAnalysis {
   } | null;
   childPortfolioInsights?: ChildPortfolioInsights | null;
   aboutChild?: AboutChildItem[] | null;
+  developmentalObservation?: DevelopmentalObservation | null;
+  coachingCards?: CoachingCard[] | null;
 }
 
 /**

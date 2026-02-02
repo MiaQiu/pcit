@@ -217,8 +217,10 @@ model Session {
   lastRetriedAt          DateTime?
   permanentFailure       Boolean        @default(false)
   retryCount             Int            @default(0)
+  coachingCards          Json?
   User                   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   Utterance              Utterance[]
+  ChildProfiling         ChildProfiling?
 
   @@index([analysisStatus])
   @@index([createdAt])
@@ -337,6 +339,7 @@ model User {
   ThirdPartyRequest     ThirdPartyRequest[]
   UserLessonProgress    UserLessonProgress[]
   WacbSurvey            WacbSurvey[]
+  ChildProfiling        ChildProfiling[]
 
   @@index([emailHash])
   @@index([pushToken])
@@ -402,6 +405,22 @@ model WacbSurvey {
 
   @@index([submittedAt])
   @@index([userId])
+}
+
+model ChildProfiling {
+  id        String   @id @default(uuid())
+  userId    String
+  sessionId String   @unique
+  summary   String?
+  domains   Json
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt])
 }
 
 enum AnalysisStatus {

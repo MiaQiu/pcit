@@ -86,6 +86,45 @@ function formatTips(tips) {
 }
 
 /**
+ * Transform coaching cards to old childPortfolioInsights format for backward compat
+ * @param {Array|null} coachingCards - New coaching cards from child profiling
+ * @returns {Array|null} Old format portfolio insights
+ */
+function transformCoachingCardsToPortfolioInsights(coachingCards) {
+  if (!coachingCards || !Array.isArray(coachingCards)) return null;
+  return coachingCards.map((card, idx) => ({
+    id: card.card_id || idx + 1,
+    suggested_change: card.title || '',
+    analysis: {
+      observation: card.insight || '',
+      impact: card.suggestion || '',
+      result: ''
+    },
+    example_scenario: card.scenario ? {
+      child: card.scenario.context || '',
+      parent: card.scenario.try_this || ''
+    } : null
+  }));
+}
+
+/**
+ * Transform developmental domains to old aboutChild format for backward compat
+ * @param {Array|null} domains - New developmental domains from child profiling
+ * @returns {Array|null} Old format about child items
+ */
+function transformDomainsToAboutChild(domains) {
+  if (!domains || !Array.isArray(domains)) return null;
+  return domains
+    .filter(d => d.detailed_observations && d.detailed_observations.length > 0)
+    .map((domain, idx) => ({
+      id: idx + 1,
+      Title: domain.category || '',
+      Description: domain.developmental_status || '',
+      Details: domain.detailed_observations.map(o => `${o.insight}: ${o.evidence}`).join(' ')
+    }));
+}
+
+/**
  * Start transcription and analysis in background
  * Handles retry logic and failure notifications
  */
@@ -547,9 +586,10 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
     const { id } = req.params;
     const userId = req.userId;
 
-    const session = await prisma.session.findUnique({
-      where: { id }
-    });
+    const [session, childProfiling] = await Promise.all([
+      prisma.session.findUnique({ where: { id } }),
+      prisma.childProfiling.findUnique({ where: { sessionId: id } })
+    ]);
 
     if (!session) {
       return res.status(404).json({ error: 'Recording not found' });
@@ -695,8 +735,14 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       transcript: transcriptSegments,
       pcitCoding: session.pcitCoding,
       competencyAnalysis: session.competencyAnalysis || null,
-      childPortfolioInsights: session.childPortfolioInsights || null,
-      aboutChild: session.aboutChild || null
+      // New fields from child profiling
+      developmentalObservation: childProfiling
+        ? { summary: childProfiling.summary, domains: childProfiling.domains }
+        : null,
+      coachingCards: session.coachingCards || null,
+      // Backward compat (old mobile app versions)
+      childPortfolioInsights: transformCoachingCardsToPortfolioInsights(session.coachingCards) || session.childPortfolioInsights || null,
+      aboutChild: transformDomainsToAboutChild(childProfiling?.domains) || session.aboutChild || null
     });
 
   } catch (error) {
