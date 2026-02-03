@@ -3,6 +3,7 @@ const express = require('express');
 const crypto = require('crypto');
 const { requireAuth } = require('../middleware/auth.cjs');
 const prisma = require('../services/db.cjs');
+const { runPriorityEngine } = require('../services/priorityEngine.cjs');
 
 const router = express.Router();
 
@@ -75,6 +76,11 @@ router.post('/', async (req, res) => {
         q9Attention,
         totalScore
       }
+    });
+
+    // Run priority engine after WACB submission (fire-and-forget)
+    runPriorityEngine(userId).catch(err => {
+      console.error('[PRIORITY-ENGINE] Error after WACB survey:', err.message);
     });
 
     res.status(201).json({

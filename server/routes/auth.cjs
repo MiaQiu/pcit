@@ -9,6 +9,7 @@ const { hashPassword, verifyPassword } = require('../utils/password.cjs');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt.cjs');
 const { encryptSensitiveData, decryptSensitiveData, encryptUserData, decryptUserData } = require('../utils/encryption.cjs');
 const { uploadProfileImage, deleteProfileImage } = require('../services/storage-s3.cjs');
+const { runPriorityEngine } = require('../services/priorityEngine.cjs');
 const {
   ValidationError,
   ConflictError,
@@ -657,6 +658,13 @@ router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAu
 
     // Decrypt sensitive data for response
     const decryptedUser = decryptUserData(user);
+
+    // Run priority engine if issue was provided (fire-and-forget)
+    if (issue) {
+      runPriorityEngine(req.userId).catch(err => {
+        console.error('[PRIORITY-ENGINE] Error during onboarding:', err.message);
+      });
+    }
 
     res.json({ user: decryptedUser });
 

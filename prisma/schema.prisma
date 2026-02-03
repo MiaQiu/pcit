@@ -428,17 +428,21 @@ model ChildProfiling {
 }
 
 model Child {
-  id             String           @id @default(uuid())
-  userId         String
-  name           String
-  birthday       DateTime?
-  gender         ChildGender?
-  conditions     String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  User           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ChildMilestone ChildMilestone[]
-  ChildProfiling ChildProfiling[]
+  id                String                @id @default(uuid())
+  userId            String
+  name              String
+  birthday          DateTime?
+  gender            ChildGender?
+  conditions        String?
+  primaryIssue      ClinicalLevel?
+  primaryStrategy   InterventionStrategy?
+  secondaryIssue    ClinicalLevel?
+  secondaryStrategy InterventionStrategy?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  User              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ChildMilestone    ChildMilestone[]
+  ChildProfiling    ChildProfiling[]
 
   @@index([userId])
 }
@@ -561,4 +565,20 @@ enum SupportRequestStatus {
   IN_PROGRESS
   RESOLVED
   CLOSED
+}
+
+enum ClinicalLevel {
+  STABILIZE       // Level I
+  DE_ESCALATE     // Level II
+  DIRECT          // Level III
+  SUPPORT         // Level IV
+  FLOURISH        // Level V
+}
+
+enum InterventionStrategy {
+  AGGRESSIVE_DE_ESCALATION
+  DIFFERENTIAL_ATTENTION
+  POSITIVE_REINFORCEMENT
+  RELATIONSHIP_BUFFERING
+  SKILL_COACHING
 }
