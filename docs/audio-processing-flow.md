@@ -5,7 +5,7 @@ This document describes how recorded audio is processed and how reports are gene
 ## High-Level Pipeline
 
 ```
-Audio Upload → Transcription (v1/v2/two-pass) → Speaker Identification → PCIT Coding → Child Profiling → Report Generation
+Audio Upload → Transcription (v1/v2/two-pass) → Speaker Identification → PCIT Coding → Child Profiling → Milestone Detection → Report Generation
 ```
 
 ```
@@ -19,7 +19,9 @@ MOBILE APP
     ↓
 4. PCIT Coding & Analysis (Claude)
     ↓
-5. Child Profiling & Coaching Cards (Gemini — single call)
+5. Child Profiling & Coaching Cards (Gemini Pro — streaming)
+    ↓
+5b. Milestone Detection (Gemini Flash — non-blocking)
     ↓
 6. Report Generation & CDI/PDI Feedback
     ↓
@@ -389,7 +391,37 @@ Retrieved from the User model:
 | Emotional | Halliday's Personal Function / Emotional Regulation |
 | Connection | Biringen's Emotional Availability Scales |
 
+### Child Record Creation
+
+Before saving profiling results, the pipeline finds or creates a `Child` record:
+
+```javascript
+// Find existing Child for this user, or create one
+let child = await prisma.child.findFirst({ where: { userId } });
+if (!child) {
+  child = await prisma.child.create({
+    data: { userId, name: childName, birthday, gender, conditions }
+  });
+}
+```
+
+This ensures every `ChildProfiling` and `ChildMilestone` record is linked to a `Child`.
+
 ### Database Storage
+
+**Child table** (one row per child):
+```javascript
+Child {
+  id: UUID,
+  userId: string,
+  name: string,                       // decrypted from user.childName
+  birthday: DateTime?,
+  gender: ChildGender?,
+  conditions: string?,
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+```
 
 **ChildProfiling table** (one row per session):
 ```javascript
@@ -397,6 +429,7 @@ ChildProfiling {
   id: UUID,
   userId: string,
   sessionId: string (unique),
+  childId: string,                    // → Child.id
   summary: string,                    // developmental_observation.summary
   domains: JSON,                      // developmental_observation.domains array
   metadata: JSON,                     // session_metadata
@@ -428,6 +461,123 @@ Requires `GEMINI_API_KEY` environment variable. If not configured, this phase is
 |---|--------|-------|
 | AI calls | 3 sequential (Gemini + Gemini multi-turn + Claude) | 1 Gemini call |
 | API dependencies | Gemini + Anthropic | Gemini only |
+
+---
+
+## Phase 5b: Milestone Detection (Gemini Flash — Non-Blocking)
+
+**File:** `server/services/milestoneDetectionService.cjs`
+
+**Function:** `detectAndUpdateMilestones(childId, sessionId)`
+
+### Purpose
+
+After each session's ChildProfiling is saved, maps the developmental observations (domains JSON) to `MilestoneLibrary` entries and creates/updates `ChildMilestone` records. Runs as a non-blocking step — errors here never prevent the session from reaching COMPLETED.
+
+### API Call
+
+Uses Gemini 2.0 Flash (non-streaming, fast and cheap):
+
+```javascript
+POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
+{
+  contents: [{ parts: [{ text: prompt }] }],
+  generationConfig: {
+    temperature: 0.2,
+    maxOutputTokens: 4096
+  }
+}
+```
+
+### Detection Logic
+
+The prompt provides Gemini with:
+- Child's age in months
+- The profiling `domains` JSON (from Phase 5)
+- All `MilestoneLibrary` entries (key, category, stage, title, detectionMode, age range)
+- Existing milestones with status (so AI skips ACHIEVED ones)
+
+#### First Profiling — Baseline Assessment
+
+When a child has no existing `ChildMilestone` records (first session), the prompt additionally asks Gemini to identify **baseline achieved** milestones: basic milestones clearly already mastered given the child's age and observed abilities. These are created directly as `ACHIEVED`.
+
+Example: A 29-month-old using multi-word sentences → Stage I language milestones are baseline achieved.
+
+#### Subsequent Sessions — Threshold Progression
+
+| Condition | Action |
+|-----------|--------|
+| No existing record | Create `ChildMilestone` with status `EMERGING` |
+| Existing `EMERGING` + seen in > `thresholdValue` sessions | Promote to `ACHIEVED` |
+| Existing `ACHIEVED` | Skip (never downgrade) |
+
+### Response Format
+
+```javascript
+{
+  "detected_milestones": [
+    { "milestone_key": "language_brown_stage2_ing", "evidence_summary": "..." }
+  ],
+  // Only on first profiling:
+  "baseline_achieved": [
+    { "milestone_key": "language_brown_stage1_semantic", "evidence_summary": "..." }
+  ]
+}
+```
+
+### Pipeline Integration
+
+Called inside the ChildProfiling upsert try-block in `pcitAnalysisService.cjs`:
+
+```javascript
+// STEP 10: Milestone Detection (non-blocking)
+try {
+  const { detectAndUpdateMilestones } = require('./milestoneDetectionService.cjs');
+  const milestoneResult = await detectAndUpdateMilestones(child.id, sessionId);
+} catch (milestoneError) {
+  console.error('Milestone detection error (non-blocking):', milestoneError.message);
+}
+```
+
+### Database Storage
+
+**ChildMilestone table** (one row per child-milestone pair):
+```javascript
+ChildMilestone {
+  id: UUID,
+  childId: string,                    // → Child.id
+  milestoneId: string,                // → MilestoneLibrary.id
+  status: 'EMERGING' | 'ACHIEVED',
+  firstObservedAt: DateTime,
+  achievedAt: DateTime?,              // set when promoted to ACHIEVED
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+// Unique constraint: [childId, milestoneId]
+```
+
+**MilestoneLibrary table** (reference data, ~36 rows):
+```javascript
+MilestoneLibrary {
+  id: UUID,
+  key: string (unique),              // e.g. 'language_brown_stage1_semantic'
+  category: string,                  // e.g. 'Language', 'Cognitive', 'Social'
+  groupingStage: string,             // e.g. 'Brown Stage I'
+  displayTitle: string,
+  detectionMode: string,
+  thresholdValue: int,               // sessions needed for EMERGING → ACHIEVED
+  medianAgeMonths: int,
+  mastery90AgeMonths: int,
+  sourceReference: string,
+  actionTip: string?
+}
+```
+
+### Return Value
+
+```javascript
+{ detected: N, newEmerging: N, newAchieved: N }
+```
 
 ---
 
@@ -550,13 +700,17 @@ session.update({
   analysisStatus: 'COMPLETED'
 })
 
-// Separate table:
+// Separate tables:
 ChildProfiling.upsert({
-  userId, sessionId,
+  userId, sessionId, childId: child.id,
   summary: '...',
   domains: [...],                 // 5 developmental domains
   metadata: { ... }               // session_metadata
 })
+
+// Non-blocking — errors do not affect session status:
+detectAndUpdateMilestones(child.id, sessionId)
+// → Creates/updates ChildMilestone records
 ```
 
 ---
@@ -695,14 +849,17 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 |------|---------|
 | `server/routes/recordings.cjs` | Upload & report API endpoints |
 | `server/services/transcriptionService.cjs` | ElevenLabs transcription |
-| `server/services/pcitAnalysisService.cjs` | Claude & Gemini analysis, DPICS coding |
+| `server/services/pcitAnalysisService.cjs` | Claude & Gemini analysis, DPICS coding, Child record creation |
+| `server/services/milestoneDetectionService.cjs` | Gemini Flash milestone detection, EMERGING → ACHIEVED logic |
 | `server/services/processingService.cjs` | Orchestration, retry logic, phase progression |
 | `server/utils/utteranceUtils.cjs` | Utterance database operations |
 | `server/utils/scoreConstants.cjs` | Nora score calculation |
 | `server/prompts/roleIdentification.txt` | Speaker role detection prompt |
 | `server/prompts/dpicsCoding.txt` | DPICS coding system prompt |
 | `server/prompts/childProfiling.txt` | Child profiling & coaching cards prompt |
-| `prisma/schema.prisma` | Database schema (Session, Utterance, ChildProfiling) |
+| `prisma/schema.prisma` | Database schema (Session, Utterance, Child, ChildProfiling, ChildMilestone, MilestoneLibrary) |
+| `scripts/backfill-child-profiling.cjs` | Migration: re-run profiling + milestone detection on existing sessions |
+| `scripts/migrate-child-records.cjs` | Migration: create Child records, backfill childId |
 
 ---
 
@@ -716,11 +873,15 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 | Diarization Threshold | 0.1 | Speaker separation sensitivity |
 | Divergence Threshold | 20% reassigned | Flags diarization mismatch in two-pass |
 | Claude Model | `claude-sonnet-4-5-20250929` | Role ID, PCIT coding, CDI/PDI feedback |
-| Gemini Model | `gemini-3-pro-preview` | Child profiling (single call) |
-| Gemini Endpoint | Streaming (SSE) | Prevents timeout during thinking |
+| Gemini Model (Profiling) | `gemini-3-pro-preview` | Child profiling (Phase 5, streaming) |
+| Gemini Model (Milestones) | `gemini-2.0-flash` | Milestone detection (Phase 5b, non-streaming) |
+| Gemini Endpoint (Profiling) | Streaming (SSE) | Prevents timeout during thinking |
+| Gemini Endpoint (Milestones) | Non-streaming `generateContent` | Fast model, no streaming needed |
 | Gemini Timeout | 300,000ms (5 min) | Extended for reasoning model |
 | Gemini Temp (Profiling) | 0.5 | Balanced creativity/consistency |
+| Gemini Temp (Milestones) | 0.2 | Low temperature for consistent detection |
 | Max Tokens (Profiling) | 8192 | Detailed analysis |
+| Max Tokens (Milestones) | 4096 | Structured JSON response |
 | Claude Temp (Coding) | 0 | Deterministic PCIT coding |
 | Claude Temp (Feedback) | 0.7 | Creative feedback |
 
@@ -736,11 +897,25 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 - **AI Insights:** coachingCards (from child profiling), childPortfolioInsights (legacy), aboutChild (legacy)
 - **Scoring:** tagCounts, overallScore
 
+### Child Table
+- **Reference:** userId
+- **Content:** name, birthday, gender, conditions
+- **Relations:** → ChildProfiling[], ChildMilestone[]
+
 ### ChildProfiling Table
-- **Reference:** userId, sessionId (unique)
+- **Reference:** userId, sessionId (unique), childId → Child
 - **Content:** summary, domains (JSON — 5 developmental domain objects)
 - **Metadata:** metadata (JSON — session_metadata from Gemini)
-- **Error tracking:** analysisError, analysisFailedAt, permanentFailure, retryCount
+
+### ChildMilestone Table
+- **Reference:** childId → Child, milestoneId → MilestoneLibrary
+- **Unique constraint:** [childId, milestoneId]
+- **Content:** status (EMERGING | ACHIEVED), firstObservedAt, achievedAt
+- **Lifecycle:** Created as EMERGING on first detection → promoted to ACHIEVED after threshold sessions. First profiling also creates baseline ACHIEVED milestones for age-appropriate entries.
+
+### MilestoneLibrary Table
+- **Reference data:** ~36 rows, seeded
+- **Content:** key (unique), category, groupingStage, displayTitle, detectionMode, thresholdValue, medianAgeMonths, mastery90AgeMonths, sourceReference, actionTip
 
 ### Utterance Table
 - **Reference:** sessionId, order (sequence)

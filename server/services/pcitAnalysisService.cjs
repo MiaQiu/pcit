@@ -618,7 +618,8 @@ async function analyzePCITCoding(sessionId, userId) {
       childGender: true,
       childBirthYear: true,
       childBirthday: true,
-      issue: true
+      issue: true,
+      childConditions: true
     }
   });
   const childName = user?.childName ? decryptSensitiveData(user.childName) : 'the child';
@@ -1055,25 +1056,58 @@ Do not include markdown or whitespace (minified JSON).
     }
   });
 
+  // Find or create Child record
+  let child = null;
+  try {
+    child = await prisma.child.findFirst({ where: { userId } });
+    if (!child) {
+      child = await prisma.child.create({
+        data: {
+          userId,
+          name: childName || 'Child',
+          birthday: user?.childBirthday || null,
+          gender: user?.childGender || null,
+          conditions: user?.childConditions || null
+        }
+      });
+      console.log(`✅ [DATABASE-UPDATE] Created Child record ${child.id} for user ${userId.substring(0, 8)}`);
+    }
+  } catch (childError) {
+    console.error('⚠️ [DATABASE-UPDATE] Failed to find/create Child:', childError.message);
+  }
+
   // Upsert ChildProfiling record if profiling succeeded
-  if (childProfilingResult?.developmentalObservation) {
+  if (childProfilingResult?.developmentalObservation && child) {
     try {
       await prisma.childProfiling.upsert({
         where: { sessionId },
         create: {
           userId,
           sessionId,
+          childId: child.id,
           summary: childProfilingResult.developmentalObservation.summary || null,
           domains: childProfilingResult.developmentalObservation.domains || [],
           metadata: childProfilingResult.metadata || null
         },
         update: {
+          childId: child.id,
           summary: childProfilingResult.developmentalObservation.summary || null,
           domains: childProfilingResult.developmentalObservation.domains || [],
           metadata: childProfilingResult.metadata || null
         }
       });
       console.log(`✅ [DATABASE-UPDATE] ChildProfiling record upserted for session ${sessionId}`);
+
+      // STEP 10: Milestone Detection (non-blocking)
+      try {
+        const { detectAndUpdateMilestones } = require('./milestoneDetectionService.cjs');
+        const milestoneResult = await detectAndUpdateMilestones(child.id, sessionId);
+        if (milestoneResult) {
+          console.log(`✅ [ANALYSIS-STEP-10] Milestones: ${milestoneResult.newEmerging} emerging, ${milestoneResult.newAchieved} achieved`);
+        }
+      } catch (milestoneError) {
+        console.error('⚠️ [ANALYSIS-STEP-10] Milestone detection error (non-blocking):', milestoneError.message);
+      }
     } catch (profilingDbError) {
       console.error('⚠️ [DATABASE-UPDATE] Failed to upsert ChildProfiling:', profilingDbError.message);
     }
