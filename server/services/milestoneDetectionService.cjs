@@ -229,6 +229,7 @@ If no milestones are detected, return: { "detected_milestones": []${isFirstProfi
   // 8. Process each detected milestone
   let newEmerging = 0;
   let newAchieved = 0;
+  const celebrations = []; // Track celebrations for this session
 
   for (const detected of detectedMilestones) {
     const milestoneKey = detected.milestone_key;
@@ -252,6 +253,12 @@ If no milestones are detected, return: { "detected_milestones": []${isFirstProfi
         }
       });
       newEmerging++;
+      celebrations.push({
+        status: 'EMERGING',
+        category: libraryEntry.category,
+        title: libraryEntry.displayTitle,
+        actionTip: libraryEntry.actionTip
+      });
       console.log(`  ✨ [MILESTONE] NEW EMERGING: ${milestoneKey} — ${detected.evidence_summary}`);
     } else if (existing.status === 'EMERGING') {
       // Existing EMERGING → check if threshold reached
@@ -272,6 +279,12 @@ If no milestones are detected, return: { "detected_milestones": []${isFirstProfi
           }
         });
         newAchieved++;
+        celebrations.push({
+          status: 'ACHIEVED',
+          category: libraryEntry.category,
+          title: libraryEntry.displayTitle,
+          actionTip: libraryEntry.actionTip
+        });
         console.log(`  🏆 [MILESTONE] ACHIEVED: ${milestoneKey} (${sessionCountSinceFirst} sessions > threshold ${libraryEntry.thresholdValue})`);
       } else {
         console.log(`  📊 [MILESTONE] Still EMERGING: ${milestoneKey} (${sessionCountSinceFirst}/${libraryEntry.thresholdValue} sessions)`);
@@ -329,6 +342,12 @@ If no milestones are detected, return: { "detected_milestones": []${isFirstProfi
         }
       });
       newBaselineAchieved++;
+      celebrations.push({
+        status: 'ACHIEVED',
+        category: libraryEntry.category,
+        title: libraryEntry.displayTitle,
+        actionTip: libraryEntry.actionTip
+      });
       console.log(`  🏆 [MILESTONE] BASELINE ACHIEVED: ${milestoneKey} — ${baseline.evidence_summary}`);
     }
   }
@@ -338,10 +357,11 @@ If no milestones are detected, return: { "detected_milestones": []${isFirstProfi
   const result = {
     detected: detectedMilestones.length + baselineAchieved.length,
     newEmerging,
-    newAchieved
+    newAchieved,
+    celebrations
   };
 
-  console.log(`✅ [MILESTONE] Detection complete: ${result.detected} detected, ${result.newEmerging} new emerging, ${result.newAchieved} new achieved`);
+  console.log(`✅ [MILESTONE] Detection complete: ${result.detected} detected, ${result.newEmerging} new emerging, ${result.newAchieved} new achieved, ${celebrations.length} celebrations`);
   return result;
 }
 

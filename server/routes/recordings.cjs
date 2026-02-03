@@ -742,7 +742,9 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       coachingCards: session.coachingCards || null,
       // Backward compat (old mobile app versions)
       childPortfolioInsights: transformCoachingCardsToPortfolioInsights(session.coachingCards) || session.childPortfolioInsights || null,
-      aboutChild: transformDomainsToAboutChild(childProfiling?.domains) || session.aboutChild || null
+      aboutChild: transformDomainsToAboutChild(childProfiling?.domains) || session.aboutChild || null,
+      // Milestone celebrations triggered during this session
+      milestoneCelebrations: session.milestoneCelebrations || null
     });
 
   } catch (error) {

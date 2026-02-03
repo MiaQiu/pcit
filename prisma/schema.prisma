@@ -218,6 +218,7 @@ model Session {
   permanentFailure       Boolean         @default(false)
   retryCount             Int             @default(0)
   coachingCards          Json?
+  milestoneCelebrations  Json?
   User                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   Utterance              Utterance[]
   ChildProfiling         ChildProfiling?

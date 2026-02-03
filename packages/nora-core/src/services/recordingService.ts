@@ -71,6 +71,13 @@ export interface CoachingCard {
   scenario: CoachingCardScenario | null;
 }
 
+export interface MilestoneCelebration {
+  status: 'EMERGING' | 'ACHIEVED';
+  category: string;
+  title: string;
+  actionTip: string | null;
+}
+
 export interface RecordingAnalysis {
   id: string;
   mode: 'CDI' | 'PDI';
@@ -124,6 +131,7 @@ export interface RecordingAnalysis {
   aboutChild?: AboutChildItem[] | null;
   developmentalObservation?: DevelopmentalObservation | null;
   coachingCards?: CoachingCard[] | null;
+  milestoneCelebrations?: MilestoneCelebration[] | null;
 }
 
 /**

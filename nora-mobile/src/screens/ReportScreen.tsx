@@ -14,7 +14,7 @@ import { Button } from '../components/Button';
 import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import type { RecordingAnalysis, CoachInsight, AboutChildItem, CoachingCard } from '@nora/core';
+import type { RecordingAnalysis, CoachingCard, MilestoneCelebration } from '@nora/core';
 import { MarkdownText } from '../utils/MarkdownText';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
@@ -145,37 +145,6 @@ const stripPcitTags = (text: string): string => {
     .trim();
 };
 
-// Icon mapping for About Child section based on index
-const ABOUT_CHILD_ICONS = [
-  'flask-outline',      // Little Scientist - beaker/flask
-  'hand-right-outline', // Sensory Seeker - hand
-  'chatbubbles-outline', // Great Communicator
-  'heart-outline',      // Big Emotions
-  'people-outline',     // Empathy & Care
-  'git-compare-outline', // Negotiator
-];
-
-const ABOUT_CHILD_COLORS = [
-  { icon: '#7C3AED', bg: '#EDE9FE' }, // Purple
-  { icon: '#EC4899', bg: '#FCE7F3' }, // Pink
-  { icon: '#3B82F6', bg: '#DBEAFE' }, // Blue
-  { icon: '#EF4444', bg: '#FEE2E2' }, // Red
-  { icon: '#10B981', bg: '#D1FAE5' }, // Green
-  { icon: '#F59E0B', bg: '#FEF3C7' }, // Amber
-];
-
-const getAboutChildIcon = (index: number): string => {
-  return ABOUT_CHILD_ICONS[index % ABOUT_CHILD_ICONS.length];
-};
-
-const getAboutChildIconColor = (index: number): string => {
-  return ABOUT_CHILD_COLORS[index % ABOUT_CHILD_COLORS.length].icon;
-};
-
-const getAboutChildBgColor = (index: number): string => {
-  return ABOUT_CHILD_COLORS[index % ABOUT_CHILD_COLORS.length].bg;
-};
-
 const getExampleUtterances = (exampleIndex: number, transcript: any[]) => {
   const result: { utterance: any; originalIndex: number }[] = [];
   if (exampleIndex > 0 && transcript[exampleIndex - 1]) {
@@ -203,7 +172,6 @@ export const ReportScreen: React.FC = () => {
   const [pollingCount, setPollingCount] = useState(0);
   const [childName, setChildName] = useState<string>('Your Child');
 
-  const [expandedChildInsight, setExpandedChildInsight] = useState<number | null>(null);
 
   useEffect(() => {
     loadReportData();
@@ -481,47 +449,43 @@ export const ReportScreen: React.FC = () => {
           );
         })()}
 
-        {/* Understanding Child Today */}
-        {reportData.aboutChild && Array.isArray(reportData.aboutChild) && reportData.aboutChild.length > 0 && (
-          <View style={styles.aboutChildSection}>
-            <Text style={styles.cardTitle}>Understanding {childName} Today</Text>
-            <View style={styles.aboutChildContainer}>
-              {(reportData.aboutChild as AboutChildItem[]).map((item, index) => {
-                const isExpanded = expandedChildInsight === item.id;
-                const iconName = getAboutChildIcon(index);
-                const iconColor = getAboutChildIconColor(index);
-                const bgColor = getAboutChildBgColor(index);
+        {/* Milestone Celebrations */}
+        {reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations) && reportData.milestoneCelebrations.length > 0 && (
+          <View style={styles.milestoneCelebrationSection}>
+            {(reportData.milestoneCelebrations as MilestoneCelebration[]).map((milestone, index) => {
+              const isAchieved = milestone.status === 'ACHIEVED';
+              const sectionTitle = isAchieved ? 'New Milestone Achieved!' : 'New Milestone Emerging!';
+              const personalizedDescription = isAchieved
+                ? `${childName} has mastered ${milestone.title.toLowerCase()}!`
+                : `${childName} is starting to ${milestone.title.toLowerCase()}!`;
 
-                return (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.aboutChildCard}
-                    onPress={() => setExpandedChildInsight(isExpanded ? null : item.id)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.aboutChildRow}>
-                      <View style={[styles.aboutChildIconContainer, { backgroundColor: bgColor }]}>
-                        <Ionicons name={iconName as any} size={24} color={iconColor} />
+              return (
+                <View key={index}>
+                  <Text style={styles.cardTitle}>{sectionTitle}</Text>
+                  <View style={[styles.milestoneCard, isAchieved && styles.milestoneCardAchieved]}>
+                    <View style={styles.milestoneHeader}>
+                      <View style={[styles.milestoneIconContainer, isAchieved ? styles.milestoneIconAchieved : styles.milestoneIconEmerging]}>
+                        <Ionicons
+                          name={isAchieved ? 'trophy' : 'sparkles'}
+                          size={24}
+                          color={isAchieved ? '#F59E0B' : '#8B5CF6'}
+                        />
                       </View>
-                      <View style={styles.aboutChildContent}>
-                        <Text style={styles.aboutChildTitle}>{item.Title}</Text>
-                        <Text style={styles.aboutChildDescription}>{item.Description}</Text>
+                      <View style={styles.milestoneContent}>
+                        <Text style={styles.milestonePersonalizedText}>{personalizedDescription}</Text>
+                        <Text style={styles.milestoneCategory}>{milestone.category}</Text>
                       </View>
-                      <Ionicons
-                        name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                        size={20}
-                        color="#9CA3AF"
-                      />
                     </View>
-                    {isExpanded && (
-                      <View style={styles.aboutChildDetails}>
-                        <Text style={styles.aboutChildDetailsText}>{item.Details}</Text>
+                    {milestone.actionTip && (
+                      <View style={styles.milestoneActionTip}>
+                        <Ionicons name="bulb-outline" size={16} color="#6B7280" />
+                        <Text style={styles.milestoneActionTipText}>{milestone.actionTip}</Text>
                       </View>
                     )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+                  </View>
+                </View>
+              );
+            })}
           </View>
         )}
 
@@ -1333,5 +1297,72 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textDark,
     lineHeight: 22,
+  },
+  // Milestone Celebration styles
+  milestoneCelebrationSection: {
+    marginBottom: 16,
+  },
+  milestoneCelebrationContainer: {
+    gap: 12,
+  },
+  milestoneCard: {
+    backgroundColor: '#F8F7FC',
+    borderRadius: 16,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#8B5CF6',
+  },
+  milestoneCardAchieved: {
+    backgroundColor: '#FFFBEB',
+    borderLeftColor: '#F59E0B',
+  },
+  milestoneHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  milestoneIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  milestoneIconEmerging: {
+    backgroundColor: '#EDE9FE',
+  },
+  milestoneIconAchieved: {
+    backgroundColor: '#FEF3C7',
+  },
+  milestoneContent: {
+    flex: 1,
+  },
+  milestonePersonalizedText: {
+    fontFamily: FONTS.bold,
+    fontSize: 17,
+    color: COLORS.textDark,
+    marginBottom: 4,
+    lineHeight: 24,
+  },
+  milestoneCategory: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  milestoneActionTip: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  milestoneActionTipText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#4B5563',
+    flex: 1,
+    lineHeight: 20,
   },
 });

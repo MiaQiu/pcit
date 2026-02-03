@@ -272,7 +272,7 @@ function formatUtterancesForPsychologist(utterances) {
  * Produces developmental observations (5 domains) + coaching cards for parents
  * Replaces the old generatePsychologistFeedback + extractChildPortfolioInsights + extractAboutChild pipeline
  * @param {Array} utterances - Utterances with roles
- * @param {Object} childInfo - Child's info (name, ageMonths, gender, issue)
+ * @param {Object} childInfo - Child's info (name, ageMonths, gender, clinicalPriority)
  * @param {Object} tagCounts - Session metrics from PCIT coding
  * @param {string} childSpeaker - Speaker ID of the child (e.g., 'speaker_0')
  * @returns {Promise<Object|null>} { developmentalObservation, coachingCards, metadata } or null on failure
@@ -284,8 +284,12 @@ async function generateChildProfiling(utterances, childInfo, tagCounts = {}, chi
     return null;
   }
 
-  const { name, ageMonths, gender, issue } = childInfo;
+  const { name, ageMonths, gender, clinicalPriority } = childInfo;
   const transcript = formatUtterancesForPsychologist(utterances);
+
+  // Format clinical priority for prompt
+  const formatLevel = (level) => level ? level.replace(/_/g, ' ').toLowerCase() : 'none';
+  const formatStrategy = (strategy) => strategy ? strategy.replace(/_/g, ' ').toLowerCase() : 'none';
 
   const sessionMetrics = `- Labeled Praises: ${tagCounts.praise || 0} (goal: 10+)
 - Reflections: ${tagCounts.echo || 0} (goal: 10+)
@@ -298,7 +302,10 @@ async function generateChildProfiling(utterances, childInfo, tagCounts = {}, chi
     CHILD_NAME: name || 'the child',
     CHILD_AGE_MONTHS: String(ageMonths || 'unknown'),
     CHILD_GENDER: gender || 'child',
-    CHILD_ISSUE: issue || 'none specified',
+    PRIMARY_ISSUE: formatLevel(clinicalPriority?.primaryIssue),
+    PRIMARY_STRATEGY: formatStrategy(clinicalPriority?.primaryStrategy),
+    SECONDARY_ISSUE: formatLevel(clinicalPriority?.secondaryIssue),
+    SECONDARY_STRATEGY: formatStrategy(clinicalPriority?.secondaryStrategy),
     SESSION_METRICS: sessionMetrics,
     TRANSCRIPT: transcript
   });
@@ -625,9 +632,30 @@ async function analyzePCITCoding(sessionId, userId) {
   const childName = user?.childName ? decryptSensitiveData(user.childName) : 'the child';
   const childAge = user?.childBirthYear ? calculateChildAge(user.childBirthYear, user.childBirthday) : null;
   const childAgeMonths = user?.childBirthYear ? calculateChildAgeInMonths(user.childBirthday, user.childBirthYear) : null;
-  const childIssue = user?.issue || null;
   const childGender = user?.childGender ? formatGender(user.childGender) : 'child';
   console.log(`✅ [ANALYSIS-STEP-1b] Child info: ${childName}, ${childAgeMonths} months old, ${childGender}`);
+
+  // Fetch Child record early to get clinical priority fields
+  let child = await prisma.child.findFirst({ where: { userId } });
+  if (!child) {
+    child = await prisma.child.create({
+      data: {
+        userId,
+        name: childName || 'Child',
+        birthday: user?.childBirthday || null,
+        gender: user?.childGender || null,
+        conditions: user?.childConditions || null
+      }
+    });
+    console.log(`✅ [ANALYSIS-STEP-1c] Created Child record ${child.id} for user ${userId.substring(0, 8)}`);
+  }
+  const clinicalPriority = {
+    primaryIssue: child.primaryIssue,
+    primaryStrategy: child.primaryStrategy,
+    secondaryIssue: child.secondaryIssue,
+    secondaryStrategy: child.secondaryStrategy
+  };
+  console.log(`✅ [ANALYSIS-STEP-1c] Clinical priority: primary=${clinicalPriority.primaryIssue || 'none'}, secondary=${clinicalPriority.secondaryIssue || 'none'}`);
 
   // Get utterances from database
   console.log(`📊 [ANALYSIS-STEP-2] Fetching utterances from database...`);
@@ -929,7 +957,7 @@ Do not include markdown or whitespace (minified JSON).
         name: childName,
         ageMonths: childAgeMonths,
         gender: childGender,
-        issue: childIssue
+        clinicalPriority
       },
       tagCounts,
       childSpeaker
@@ -1056,27 +1084,7 @@ Do not include markdown or whitespace (minified JSON).
     }
   });
 
-  // Find or create Child record
-  let child = null;
-  try {
-    child = await prisma.child.findFirst({ where: { userId } });
-    if (!child) {
-      child = await prisma.child.create({
-        data: {
-          userId,
-          name: childName || 'Child',
-          birthday: user?.childBirthday || null,
-          gender: user?.childGender || null,
-          conditions: user?.childConditions || null
-        }
-      });
-      console.log(`✅ [DATABASE-UPDATE] Created Child record ${child.id} for user ${userId.substring(0, 8)}`);
-    }
-  } catch (childError) {
-    console.error('⚠️ [DATABASE-UPDATE] Failed to find/create Child:', childError.message);
-  }
-
-  // Upsert ChildProfiling record if profiling succeeded
+  // Upsert ChildProfiling record if profiling succeeded (child already fetched earlier)
   if (childProfilingResult?.developmentalObservation && child) {
     try {
       await prisma.childProfiling.upsert({
@@ -1104,6 +1112,15 @@ Do not include markdown or whitespace (minified JSON).
         const milestoneResult = await detectAndUpdateMilestones(child.id, sessionId);
         if (milestoneResult) {
           console.log(`✅ [ANALYSIS-STEP-10] Milestones: ${milestoneResult.newEmerging} emerging, ${milestoneResult.newAchieved} achieved`);
+
+          // Store celebrations in session if any
+          if (milestoneResult.celebrations && milestoneResult.celebrations.length > 0) {
+            await prisma.session.update({
+              where: { id: sessionId },
+              data: { milestoneCelebrations: milestoneResult.celebrations }
+            });
+            console.log(`✅ [ANALYSIS-STEP-10] Stored ${milestoneResult.celebrations.length} milestone celebrations`);
+          }
         }
       } catch (milestoneError) {
         console.error('⚠️ [ANALYSIS-STEP-10] Milestone detection error (non-blocking):', milestoneError.message);
