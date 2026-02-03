@@ -9,11 +9,44 @@ You are analyzing a 5-minute parent-child play session transcript. Your task is 
 - Presenting concern: {{CHILD_ISSUE}}
 
 **Developmental framework:**
-Language: Brown's Stages
-Cognitive: Brown's Stage IV/V
-Social: Halliday's "Interactional"
-Emotional: Halliday's "Personal"
-Connection: Biringen’s Emotional Availability (EA) Scales
+# Context: Milestone Library
+Use **only** the following dataset as your ground truth for evaluation. Do not hallucinate outside milestones.
+
+## LANGUAGE DOMAIN (Brown's Stages)
+* **Stage I (12-26m):** Semantic Roles (Agent+Action) [Key: language_brown_stage1_semantic]
+* **Stage I (12-26m):** Early Negation ('No' + X) [Key: language_brown_stage1_negation]
+* **Stage II (27-30m):** Present Progressive (-ing) [Key: language_brown_stage2_ing]
+* **Stage II (27-30m):** Regular Plurals (-s) [Key: language_brown_stage2_plurals]
+* **Stage II (27-30m):** Prepositions (In/On) [Key: language_brown_stage2_prepositions]
+* **Stage III (31-34m):** Irregular Past Tense (Fell/Ran) [Key: language_brown_stage3_past_irregular]
+* **Stage III (31-34m):** Possessives ('s) [Key: language_brown_stage3_possessive]
+* **Stage IV (35-40m):** Articles (A/The) [Key: language_brown_stage4_articles]
+* **Stage IV (35-40m):** Regular Past Tense (-ed) [Key: language_brown_stage4_past_regular]
+* **Stage V (41-46m):** 3rd Person Irregular (Does/Has) [Key: language_brown_stage5_3rd_person]
+* **Post-Stage V (47m+):** Passive Voice Construction [Key: language_post_stage5_passive]
+
+## COGNITIVE DOMAIN (Piaget/Brown Proxies)
+* **Pre-Operational (24-36m):** Immediate Naming (Here & Now) [Key: cognitive_preop_naming]
+* **Temporal Logic (36-48m):** Sequencing (First/Then) [Key: cognitive_temporal_sequencing]
+* **Temporal Logic (36-48m):** Decentering (Talking about Past) [Key: cognitive_temporal_decentering]
+* **Causal Logic (48-84m):** Causal Linking (Because/So) [Key: cognitive_causal_reasoning]
+* **Causal Logic (48-84m):** Theory of Mind Questions [Key: cognitive_tom_questions]
+
+## SOCIAL DOMAIN (Halliday Interactional)
+* **Transition (24-36m):** Initiation ('Let's') [Key: social_interaction_initiation]
+* **Transition (24-36m):** Verbal Turn Taking ('My turn') [Key: social_interaction_turntaking]
+* **Pragmatic Dev (36-60m):** Politeness Markers (Please/Thanks) [Key: social_pragmatic_politeness]
+* **Pragmatic Dev (36-60m):** Explicit Friendship Definition [Key: social_pragmatic_friendship]
+* **Interpersonal (60-84m):** Complex Play Negotiation [Key: social_interpersonal_negotiation]
+
+## EMOTIONAL DOMAIN (Halliday Personal)
+* **Assertion (24-36m):** Boundaries ('Mine'/'No') [Key: emotional_personal_boundaries]
+* **Identity (36-60m):** Self-Concept ('I am...') [Key: emotional_personal_self_concept]
+* **Regulation (60-84m):** Emotional Justification (Feel...Because) [Key: emotional_regulation_justification]
+
+## CONNECTION DOMAIN (Biringen EA)
+* **Involvement (24-48m):** Physical 'Check-in' (Pulling/Showing) [Key: connection_ea_physical_pull]
+* **Partnership (48-84m):** Verbal Role Invitation [Key: connection_ea_verbal_invite]
 
 **Session Metrics (PCIT Coding):**
 {{SESSION_METRICS}}
@@ -24,224 +57,30 @@ Connection: Biringen’s Emotional Availability (EA) Scales
 ---
 
 **Output the following JSON structure exactly. Return ONLY valid JSON. No markdown code blocks, no explanatory text.**
-
 {
   "session_metadata": {
     "subject": "child's name",
-    "age_months": number,
+    "age_months": 36,
     "overall_impression": "1-2 sentence summary of the session dynamics"
   },
-   "developmental_observation": {
-
-    "summary": "At 40 months, Panghu demonstrates advanced symbolic play and complex syntax typical of Brown's Stage V. He creates elaborate pretend scenarios (cooking noodles with eyes) and uses temporal conjunctions ('then') to sequence his actions.",
-
+  "developmental_observation": {
+    "summary": "string",
     "domains": [
-
       {
-
-        "category": "Language",
-
-        "framework": "Brown's Stages of Syntactic Development",
-
-        "developmental_status": "Advanced (Brown's Stage V - Complex Syntax)",
-
-        "current_level": "Stage V (Complex Sentences)",
-
-        "benchmark_for_age": "Stage IV/V (Use of conjunctions and irregular verbs)",
-
+        "category": "Language | Cognitive | Social | Emotional | Connection",
+        "framework": "Name of framework from Library",
+        "developmental_status": "Summary of status (e.g., Advanced, Age Appropriate)",
+        "current_level": "Specific Stage Name",
+        "benchmark_for_age": "What is expected for this age",
         "detailed_observations": [
-
           {
-
-            "insight": "Adversative Conjunctions: Ability to contrast ideas using 'But'.",
-
-            "evidence": "\"But the noodles have eyes.\" (但 是 面 条 是 有 眼 睛 的)"
-
-          },
-
-          {
-
-            "insight": "Temporal Sequencing: Organizing events in time.",
-
-            "evidence": "\"Then Panghu wants to fry rice.\" (然 后 胖 虎 想 炒 饭)"
-
-          },
-
-          {
-
-            "insight": "Taboo/Humor Language: Testing social boundaries with language.",
-
-            "evidence": "\"There is also poop inside the noodles.\" (面 条 里 面 还 有 臭 臭)"
-
+            "insight": "Name of the specific skill or behavior observed",
+            "evidence": "Direct quote or description of behavior"
           }
-
         ]
-
-      },
-
-      {
-
-        "category": "Cognitive",
-
-        "framework": "Piaget Pre-operational / Brown's Concepts",
-
-        "developmental_status": "Age Appropriate (Symbolic Function Substage)",
-
-        "current_level": "Symbolic Function Substage",
-
-        "benchmark_for_age": "Sociodramatic Play & Counting objects",
-
-        "detailed_observations": [
-
-          {
-
-            "insight": "Animism: Attributing life/consciousness to inanimate objects (Classic Piagetian trait).",
-
-            "evidence": "Asserting that the noodles 'have eyes'."
-
-          },
-
-          {
-
-            "insight": "Bilingual Numeracy: Rote counting in English and correspondence concepts.",
-
-            "evidence": "Counting 'One' through 'Nine' and 'Ten' correctly in sequence."
-
-          },
-
-          {
-
-            "insight": "Object Substitution: Using neutral objects to represent specific food items.",
-
-            "evidence": "Identifying an object as an egg: \"This is the egg.\""
-
-          }
-
-        ]
-
-      },
-
-      {
-
-        "category": "Social",
-
-        "framework": "Halliday's Interactional Function",
-
-        "developmental_status": "Advanced (Cooperative Role-Play)",
-
-        "current_level": "Collaborative/Role-Taking",
-
-        "benchmark_for_age": "Cooperative Play",
-
-        "detailed_observations": [
-
-          {
-
-            "insight": "Role Negotiation: Defining the roles in the play scheme.",
-
-            "evidence": "\"Panghu will go do it\" (assigning himself the role of cook)."
-
-          },
-
-          {
-
-            "insight": "Checking Shared Knowledge: Ensuring the listener follows the context.",
-
-            "evidence": "\"You know there are numbers, right?\" (知 道 有 数 字 的 吧)"
-
-          },
-
-          {
-
-            "insight": "Service Orientation: Modeling caregiving behavior.",
-
-            "evidence": "Asking \"Does mom want any food?\""
-
-          }
-
-        ]
-
-      },
-
-      {
-
-        "category": "Emotional",
-
-        "framework": "Halliday's Personal Function",
-
-        "developmental_status": "Age Appropriate (Testing Boundaries & Humor)",
-
-        "current_level": "Expressive/Testing",
-
-        "benchmark_for_age": "Verbalizing desires and humor",
-
-        "detailed_observations": [
-
-          {
-
-            "insight": "Humor & Shock Value: Using 'potty talk' to elicit a reaction.",
-
-            "evidence": "Mentioning 'poop' in the food to see if Mom reacts."
-
-          },
-
-          {
-
-            "insight": "Agency/Volition: Clearly stating internal desires.",
-
-            "evidence": "\"Panghu wants to fry rice.\""
-
-          },
-
-          {
-
-            "insight": "Self-Reference: Still using third-person (Panghu) rather than 'I', which is culturally common but developmentally transitioning.",
-
-            "evidence": "\"Panghu is inside the garbage truck.\""
-
-          }
-
-        ]
-
-      },
-
-      {
-
-        "category": "Connection",
-
-        "framework": "Biringen’s Emotional Availability (EA) Scales",
-
-        "developmental_status": "High (Secure & Responsive)",
-
-        "current_level": "High Mutual Regulation",
-
-        "detailed_observations": [
-
-          {
-
-            "insight": "Responsiveness: Adapts play based on parent's input.",
-
-            "evidence": "When Mom asks for eggs (after ignoring the poop comment), he immediately switches to making eggs."
-
-          },
-
-          {
-
-            "insight": "Involvement: Inviting the parent into the fantasy.",
-
-            "evidence": "Asking mom for her order (\"Mom want food?\")."
-
-          }
-
-        ]
-
       }
-
     ]
-
   },
-
- {
   "pcit_coaching_cards": [
     {
       "card_id": 1,
@@ -281,5 +120,3 @@ Connection: Biringen’s Emotional Availability (EA) Scales
     }
   ]
 }
-}
-
