@@ -186,7 +186,7 @@ model RiskAuditLog {
 }
 
 model Session {
-  id                     String         @id
+  id                     String          @id
   userId                 String
   mode                   SessionMode
   storagePath            String
@@ -195,12 +195,12 @@ model Session {
   aiFeedbackJSON         Json
   pcitCoding             Json
   tagCounts              Json
-  masteryAchieved        Boolean        @default(false)
-  riskScore              Int            @default(0)
-  flaggedForReview       Boolean        @default(false)
-  coachAlertSent         Boolean        @default(false)
+  masteryAchieved        Boolean         @default(false)
+  riskScore              Int             @default(0)
+  flaggedForReview       Boolean         @default(false)
+  coachAlertSent         Boolean         @default(false)
   coachAlertSentAt       DateTime?
-  createdAt              DateTime       @default(now())
+  createdAt              DateTime        @default(now())
   childMetrics           Json?
   competencyAnalysis     Json?
   overallScore           Int?
@@ -213,12 +213,12 @@ model Session {
   transcriptionService   String?
   analysisError          String?
   analysisFailedAt       DateTime?
-  analysisStatus         AnalysisStatus @default(PENDING)
+  analysisStatus         AnalysisStatus  @default(PENDING)
   lastRetriedAt          DateTime?
-  permanentFailure       Boolean        @default(false)
-  retryCount             Int            @default(0)
+  permanentFailure       Boolean         @default(false)
+  retryCount             Int             @default(0)
   coachingCards          Json?
-  User                   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   Utterance              Utterance[]
   ChildProfiling         ChildProfiling?
 
@@ -340,6 +340,7 @@ model User {
   UserLessonProgress    UserLessonProgress[]
   WacbSurvey            WacbSurvey[]
   ChildProfiling        ChildProfiling[]
+  Child                 Child[]
 
   @@index([emailHash])
   @@index([pushToken])
@@ -411,6 +412,7 @@ model ChildProfiling {
   id        String   @id @default(uuid())
   userId    String
   sessionId String   @unique
+  childId   String
   summary   String?
   domains   Json
   metadata  Json?
@@ -418,9 +420,70 @@ model ChildProfiling {
   updatedAt DateTime @updatedAt
   User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   Session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  Child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, createdAt])
+  @@index([childId])
+}
+
+model Child {
+  id             String           @id @default(uuid())
+  userId         String
+  name           String
+  birthday       DateTime?
+  gender         ChildGender?
+  conditions     String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  User           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ChildMilestone ChildMilestone[]
+  ChildProfiling ChildProfiling[]
+
+  @@index([userId])
+}
+
+model ChildMilestone {
+  id               String           @id @default(uuid())
+  childId          String
+  milestoneId      String
+  status           MilestoneStatus
+  firstObservedAt  DateTime         @default(now())
+  achievedAt       DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  Child            Child            @relation(fields: [childId], references: [id], onDelete: Cascade)
+  MilestoneLibrary MilestoneLibrary @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, milestoneId])
+  @@index([childId])
+  @@index([milestoneId])
+  @@index([childId, status])
+}
+
+model MilestoneLibrary {
+  id                 String           @id @default(uuid())
+  key                String           @unique
+  category           String
+  groupingStage      String           @map("grouping_stage")
+  displayTitle       String           @map("display_title")
+  detectionMode      String           @map("detection_mode")
+  thresholdValue     Int              @map("threshold_value")
+  medianAgeMonths    Int              @map("median_age_months")
+  mastery90AgeMonths Int              @map("mastery_90_age_months")
+  sourceReference    String           @map("source_reference")
+  actionTip          String?          @map("action_tip")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  ChildMilestone     ChildMilestone[]
+
+  @@index([category])
+  @@index([medianAgeMonths])
+  @@map("milestone_library")
+}
+
+enum MilestoneStatus {
+  EMERGING
+  ACHIEVED
 }
 
 enum AnalysisStatus {

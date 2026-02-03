@@ -14,7 +14,7 @@ import { Button } from '../components/Button';
 import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import type { RecordingAnalysis, CoachInsight, AboutChildItem } from '@nora/core';
+import type { RecordingAnalysis, CoachInsight, AboutChildItem, CoachingCard } from '@nora/core';
 import { MarkdownText } from '../utils/MarkdownText';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
@@ -202,7 +202,7 @@ export const ReportScreen: React.FC = () => {
   const [reportData, setReportData] = useState<RecordingAnalysis | null>(null);
   const [pollingCount, setPollingCount] = useState(0);
   const [childName, setChildName] = useState<string>('Your Child');
-  const [coachCardIndex, setCoachCardIndex] = useState(0);
+
   const [expandedChildInsight, setExpandedChildInsight] = useState<number | null>(null);
 
   useEffect(() => {
@@ -432,76 +432,51 @@ export const ReportScreen: React.FC = () => {
         </View>
 
         {/* Coach's Corner */}
-        {reportData.childPortfolioInsights && Array.isArray(reportData.childPortfolioInsights) && reportData.childPortfolioInsights.length > 0 && (() => {
-          const allInsights = reportData.childPortfolioInsights as CoachInsight[];
-          const insights = allInsights.slice(0, 3); // Show only first 3 tips
-          const currentItem = insights[coachCardIndex];
-          const totalCards = insights.length;
+        {reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
+          const cards = (reportData.coachingCards as CoachingCard[]).slice(0, 3);
+          const cardThemes = [
+            { border: '#F59E0B', iconBg: '#FEF3C7', icon: 'bulb-outline' as const, iconColor: '#D97706' },
+            { border: '#3B82F6', iconBg: '#DBEAFE', icon: 'color-wand-outline' as const, iconColor: '#2563EB' },
+            { border: '#10B981', iconBg: '#D1FAE5', icon: 'leaf-outline' as const, iconColor: '#059669' },
+          ];
 
           return (
             <View>
               <Text style={styles.cardTitle}>Coach's Corner</Text>
-              <View style={styles.coachCard}>
-                {/* Card Header with Navigation */}
-                <View style={styles.coachCardHeader}>
-                  <TouchableOpacity
-                    onPress={() => setCoachCardIndex(prev => Math.max(0, prev - 1))}
-                    disabled={coachCardIndex === 0}
-                    style={[styles.coachNavButton, coachCardIndex === 0 && styles.coachNavButtonDisabled]}
-                  >
-                    <Ionicons name="chevron-back" size={24} color={coachCardIndex === 0 ? '#D1D5DB' : COLORS.mainPurple} />
-                  </TouchableOpacity>
-                  <Text style={styles.coachCardCounter}>{coachCardIndex + 1} / {totalCards}</Text>
-                  <TouchableOpacity
-                    onPress={() => setCoachCardIndex(prev => Math.min(totalCards - 1, prev + 1))}
-                    disabled={coachCardIndex === totalCards - 1}
-                    style={[styles.coachNavButton, coachCardIndex === totalCards - 1 && styles.coachNavButtonDisabled]}
-                  >
-                    <Ionicons name="chevron-forward" size={24} color={coachCardIndex === totalCards - 1 ? '#D1D5DB' : COLORS.mainPurple} />
-                  </TouchableOpacity>
-                </View>
+              {cards.map((card, index) => {
+                const theme = cardThemes[index % cardThemes.length];
+                return (
+                  <View key={card.card_id} style={[styles.coachCard, { borderLeftColor: theme.border }]}>
+                    {/* Title Row with Icon */}
+                    <View style={styles.coachTitleRow}>
+                      <View style={[styles.coachIconContainer, { backgroundColor: theme.iconBg }]}>
+                        <Ionicons name={theme.icon} size={20} color={theme.iconColor} />
+                      </View>
+                      <Text style={styles.coachTipTitle}>{card.title}</Text>
+                    </View>
 
-                {/* Suggested Change Title */}
-                <Text style={styles.coachTipTitle}>{currentItem.suggested_change}</Text>
+                    {/* Description */}
+                    {card.coaching_tip ? (
+                      <Text style={styles.coachDescription}>{card.coaching_tip}</Text>
+                    ) : null}
 
-                {/* Analysis Section */}
-                {currentItem.analysis && (
-                  <View style={styles.coachAnalysisContainer}>
-                    {/* Observation */}
-                    <Text style={styles.coachObservation}>{currentItem.analysis.observation}</Text>
-
-                    {/* Impact */}
-                    {currentItem.analysis.impact && (
-                      <View style={styles.coachImpactItem}>
-                        <Text><Text style={styles.coachImpactLabel}>Tip: </Text><Text style={styles.coachImpactText}>{currentItem.analysis.impact}</Text></Text>
+                    {/* Scenario */}
+                    {card.scenario && (
+                      <View style={styles.coachExampleContainer}>
+                        {/* {card.scenario.context ? (
+                          <Text style={styles.coachExampleContext}>{card.scenario.context}</Text>
+                        ) : null} */}
+                        {card.scenario.instead_of ? (
+                          <Text style={styles.coachExampleInsteadOf}><Text style={styles.coachExampleInsteadOfLabel}>Instead of: </Text>{card.scenario.instead_of}</Text>
+                        ) : null}
+                        {card.scenario.try_this ? (
+                          <Text style={styles.coachExampleImproved}><Text style={styles.coachExampleImprovedLabel}>Try: </Text>{card.scenario.try_this}</Text>
+                        ) : null}
                       </View>
                     )}
-
-                    {/* Result */}
-                    {/* {currentItem.analysis.result && (
-                      <View style={styles.coachImpactItem}>
-                        <Text style={styles.coachImpactLabel}>Result</Text>
-                        <Text style={styles.coachImpactText}>{currentItem.analysis.result}</Text>
-                      </View>
-                    )} */}
                   </View>
-                )}
-
-                {/* Example Scenario */}
-                {currentItem.example_scenario && (
-                  <View style={styles.coachExampleContainer}>
-                    <Text style={styles.coachExampleLabel}>Example</Text>
-                    <View style={styles.coachExampleBubble}>
-                      <Text style={styles.coachExampleRole}>Child:</Text>
-                      <Text style={styles.coachExampleText}>{currentItem.example_scenario.child}</Text>
-                    </View>
-                    <View style={[styles.coachExampleBubble, styles.coachExampleParent]}>
-                      <Text style={styles.coachExampleRole}>Parent:</Text>
-                      <Text style={styles.coachExampleText}>{currentItem.example_scenario.parent}</Text>
-                    </View>
-                  </View>
-                )}
-              </View>
+                );
+              })}
             </View>
           );
         })()}
@@ -1233,108 +1208,80 @@ const styles = StyleSheet.create({
   // Coach's Corner styles
   coachCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 32,
+    borderRadius: 16,
     padding: 20,
-    marginBottom: 16,
+    marginBottom: 12,
+    //borderLeftWidth: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  coachCardHeader: {
+  coachTitleRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    gap: 12,
+  },
+  coachIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    gap: 16,
   },
-  coachNavButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 20,
-    backgroundColor: '#F5F0FF',
+  coachTipTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 17,
+    color: COLORS.textDark,
+    flex: 1,
   },
-  coachNavButtonDisabled: {
+  coachDescription: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#4B5563',
+    lineHeight: 22,
+    marginBottom: 4,
+  },
+  coachSuggestion: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#4B5563',
+    lineHeight: 22,
+  },
+  coachExampleContainer: {
+    marginTop: 12,
     backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 14,
   },
-  coachCardCounter: {
+  coachExampleContext: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 6,
+  },
+  coachExampleInsteadOf: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 6,
+  },
+  coachExampleInsteadOfLabel: {
     fontFamily: FONTS.semiBold,
     fontSize: 14,
     color: '#6B7280',
   },
-  coachTipTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 18,
-    color: COLORS.mainPurple,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  coachObservation: {
-    fontFamily: FONTS.regular,
-    fontSize: 15,
-    color: COLORS.textDark,
-    lineHeight: 22,
-    marginBottom: 16,
-  },
-  coachImpactContainer: {
-    backgroundColor: '#F5F0FF',
-    borderRadius: 16,
-    padding: 16,
-    gap: 12,
-  },
-  coachImpactItem: {
-    gap: 4,
-  },
-  coachImpactLabel: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 15,
-    lineHeight: 22,
-    color: COLORS.mainPurple,
-  },
-  coachImpactText: {
-    fontFamily: FONTS.regular,
-    fontSize: 15,
-    color: COLORS.textDark,
-    lineHeight: 20,
-  },
-  coachAnalysisContainer: {
-    gap: 12,
-  },
-  coachExampleContainer: {
-    marginTop: 16,
-    backgroundColor: '#F0FDF4',
-    borderRadius: 16,
-    padding: 16,
-    gap: 8,
-  },
-  coachExampleLabel: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 14,
-    color: '#166534',
-    marginBottom: 4,
-  },
-  coachExampleBubble: {
-    backgroundColor: '#DCFCE7',
-    borderRadius: 12,
-    padding: 12,
-  },
-  coachExampleParent: {
-    backgroundColor: '#BBF7D0',
-  },
-  coachExampleRole: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    color: '#166534',
-    marginBottom: 4,
-  },
-  coachExampleText: {
+  coachExampleImproved: {
     fontFamily: FONTS.regular,
     fontSize: 14,
-    color: '#14532D',
-    lineHeight: 20,
+    color: '#16A34A',
+  },
+  coachExampleImprovedLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#16A34A',
   },
   // About Child section styles
   aboutChildSection: {

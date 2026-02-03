@@ -67,8 +67,7 @@ export interface CoachingCard {
   card_id: number;
   title: string;
   icon_suggestion: string;
-  insight: string;
-  suggestion: string;
+  coaching_tip: string;
   scenario: CoachingCardScenario | null;
 }
 

@@ -96,7 +96,7 @@ function transformCoachingCardsToPortfolioInsights(coachingCards) {
     id: card.card_id || idx + 1,
     suggested_change: card.title || '',
     analysis: {
-      observation: card.insight || '',
+      observation: card.coaching_tip || card.insight || '',
       impact: card.suggestion || '',
       result: ''
     },

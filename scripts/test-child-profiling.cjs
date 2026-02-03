@@ -135,8 +135,7 @@ async function main() {
       const cards = Array.isArray(session.coachingCards) ? session.coachingCards : [];
       for (const card of cards) {
         console.log(`\n  [Card ${card.card_id}] ${card.icon_suggestion || ''} ${card.title}`);
-        console.log(`    Insight: ${card.insight}`);
-        console.log(`    Suggestion: ${card.suggestion}`);
+        console.log(`    Coaching tip: ${card.coaching_tip}`);
         if (card.scenario) {
           console.log(`    Scenario:`);
           console.log(`      Context: ${card.scenario.context}`);
