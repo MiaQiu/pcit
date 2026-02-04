@@ -87,6 +87,7 @@ export interface DevelopmentalDomainProgress {
 
 export interface DevelopmentalProgress {
   childAgeMonths: number;
+  childName: string;
   domains: Record<'Language' | 'Cognitive' | 'Social' | 'Emotional' | 'Connection', DevelopmentalDomainProgress>;
 }
 
@@ -161,6 +162,9 @@ export interface RecordingAnalysis {
     duration: string;
   };
   topMomentUtteranceNumber?: number | null;  // Utterance index for top moment
+  topMomentStartTime?: number | null;  // Start time in seconds
+  topMomentEndTime?: number | null;  // End time in seconds
+  audioUrl?: string | null;  // Presigned URL for audio playback
   summary?: string | null;  // Session summary
   tip?: string | null;  // Simplified single tip
   exampleIndex?: number | null;  // Utterance index for example

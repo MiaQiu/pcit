@@ -636,7 +636,7 @@ export const ProgressScreen: React.FC = () => {
         {/* Developmental Stage Radar Chart */}
         {developmentalProgress && (
           <View onLayout={(e) => { developmentalSectionY.current = e.nativeEvent.layout.y; }}>
-            <RadarChart data={developmentalProgress} onDomainPress={handleDomainPress} />
+            <RadarChart data={developmentalProgress} childName={developmentalProgress.childName} onDomainPress={handleDomainPress} />
           </View>
         )}
 
@@ -674,7 +674,7 @@ export const ProgressScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
+    backgroundColor: '#FFFDFF',
   },
   scrollView: {
     flex: 1,

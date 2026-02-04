@@ -352,6 +352,7 @@ router.get('/developmental-progress', requireAuth, async (req, res) => {
 
     res.json({
       childAgeMonths,
+      childName: child.name,
       domains: domainProgress
     });
 

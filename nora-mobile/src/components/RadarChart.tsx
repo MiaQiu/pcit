@@ -12,6 +12,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface RadarChartProps {
   data: DevelopmentalProgress;
+  childName?: string;
   onDomainPress?: (domain: DomainType) => void;
 }
 
@@ -84,7 +85,7 @@ const getLabelPosition = (index: number): { x: number; y: number; textAnchor: 's
   return { ...pos, textAnchor };
 };
 
-export const RadarChart: React.FC<RadarChartProps> = ({ data, onDomainPress }) => {
+export const RadarChart: React.FC<RadarChartProps> = ({ data, childName, onDomainPress }) => {
   // Calculate normalized values for each domain
   // 100% = all milestones in that domain (total)
   // Child's value = (achieved + 0.5 * emerging) / total
@@ -129,9 +130,10 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, onDomainPress }) =
   ];
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Developmental Stage</Text>
-      <View style={styles.chartWrapper}>
+    <View style={styles.outerContainer}>
+      <Text style={styles.title}>{childName ? `${childName}'s ` : ''}Developmental Milestones</Text>
+      <View style={styles.container}>
+        <View style={styles.chartWrapper}>
         <Svg width={CHART_SIZE} height={CHART_SIZE}>
           {/* Dashed line pattern for benchmark */}
           <Defs>
@@ -220,15 +222,16 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, onDomainPress }) =
         })}
       </View>
 
-      {/* Legend */}
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendLine, styles.legendChildLine]} />
-          <Text style={styles.legendText}>Your Child</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendLine, styles.legendBenchmarkLine]} />
-          <Text style={styles.legendText}>Age Benchmark</Text>
+        {/* Legend */}
+        <View style={styles.legend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendLine, styles.legendChildLine]} />
+            <Text style={styles.legendText}>{childName || 'Your Child'}</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendLine, styles.legendBenchmarkLine]} />
+            <Text style={styles.legendText}>Age Benchmark</Text>
+          </View>
         </View>
       </View>
     </View>
@@ -236,11 +239,13 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, onDomainPress }) =
 };
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    marginBottom: 24,
+  },
   container: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 24,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     alignItems: 'center',
@@ -249,8 +254,7 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 18,
     color: '#1E2939',
-    marginBottom: 16,
-    alignSelf: 'flex-start',
+    marginBottom: 12,
   },
   chartWrapper: {
     width: CHART_SIZE,
