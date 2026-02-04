@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, Text, AppState, Platform } from 'react-native';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { NavigationContainer, useNavigation, DefaultTheme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
@@ -47,6 +47,15 @@ const linking = {
         },
       },
     },
+  },
+};
+
+// Custom navigation theme with white background
+const navigationTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#FFFDFF',
   },
 };
 
@@ -201,7 +210,7 @@ export default function App() {
           <SubscriptionProvider>
             <OnboardingProvider>
               <ToastProvider>
-                <NavigationContainer linking={linking}>
+                <NavigationContainer linking={linking} theme={navigationTheme}>
                   <AppContent />
                 </NavigationContainer>
               </ToastProvider>

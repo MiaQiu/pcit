@@ -18,6 +18,7 @@ export type { ProgressBarProps } from './ProgressBar';
 export { RecordButton } from './RecordButton';
 export { RecordingTimer } from './RecordingTimer';
 export { SkillProgressBar } from './SkillProgressBar';
+export { MomentPlayer } from './MomentPlayer';
 
 // Onboarding components
 export { OnboardingLayout } from './OnboardingLayout';

@@ -708,19 +708,40 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       ? `Use ${Math.max(10, (session.tagCounts?.praise || 0) + 2)} Praises`
       : `Give ${Math.max(10, (session.tagCounts?.direct_command || 0) + 2)} Direct Commands`;
 
+    // Generate audio URL for playback
+    let audioUrl = null;
+    if (session.storagePath && !session.storagePath.startsWith('mock://')) {
+      try {
+        audioUrl = await storage.getSignedUrl(session.storagePath);
+      } catch (err) {
+        console.error('Failed to generate audio URL:', err.message);
+      }
+    }
+
+    // Get top moment timing from utterance
+    let topMomentStartTime = null;
+    let topMomentEndTime = null;
+    const topMomentIdx = session.competencyAnalysis?.topMomentUtteranceNumber;
+    if (typeof topMomentIdx === 'number' && transcriptSegments[topMomentIdx]) {
+      topMomentStartTime = transcriptSegments[topMomentIdx].start;
+      topMomentEndTime = transcriptSegments[topMomentIdx].end;
+    }
+
     res.json({
       id: session.id,
       mode: session.mode,
       durationSeconds: session.durationSeconds,
       createdAt: session.createdAt,
       status: 'completed',
-      encouragement: "Amazing job on your session! Here is how it went.",
+      encouragement: "Today’s play added only a small deposit — with a few gentle shifts, your emotional massage can feel much more soothing and connecting.",
       noraScore,
       skills,
       areasToAvoid,
       topMoment: topMomentQuote || "Great session!",
-      topMomentUtteranceNumber: typeof session.competencyAnalysis?.topMomentUtteranceNumber === 'number'
-        ? session.competencyAnalysis.topMomentUtteranceNumber : null,
+      topMomentUtteranceNumber: typeof topMomentIdx === 'number' ? topMomentIdx : null,
+      topMomentStartTime,
+      topMomentEndTime,
+      audioUrl,
       exampleIndex: typeof session.competencyAnalysis?.example === 'number'
         ? session.competencyAnalysis.example : null,
       feedback: session.competencyAnalysis?.feedback || null,

@@ -115,8 +115,8 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
           {/* Yesterday's PEN Skills Card */}
           <View style={styles.yesterdayCard}>
             <View style={styles.yesterdayHeader}>
-              <Text style={styles.yesterdayTitle}>Last Session Result</Text>
-              <Text style={styles.yesterdayScore}>
+              <Text style={styles.yesterdayTitle}>Last Session Deposits</Text>
+              <Text style={styles.yesterdayScore}>+
                 {yesterdayScore.score}/{100}
               </Text>
             </View>
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   linkText: {
     fontFamily: FONTS.semiBold,
     fontSize: 14,
-    color: COLORS.mainPurple,
+    color: '#0059DB',
   },
   linkTextDisabled: {
     color: '#CCCCCC',

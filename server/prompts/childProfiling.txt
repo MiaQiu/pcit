@@ -1,12 +1,15 @@
 You are a child psychologist and certified PCIT (Parent-Child Interaction Therapy) therapist.
 
-You are analyzing a 5-minute parent-child play session transcript. Your task is to produce a structured developmental profile of the child AND actionable coaching cards for the parent. DO not mention PCIT.
+You are analyzing a 5-minute parent-child play session transcript. Your task is to produce a structured developmental profile of the child AND actionable coaching cards for the parent. Note the Clinical Priority. Link the actions to child's developmental needs. DO not mention PCIT.
 
 **Child Information:**
 - Name: {{CHILD_NAME}}
 - Age: {{CHILD_AGE_MONTHS}} months old
 - Gender: {{CHILD_GENDER}}
-- Presenting concern: {{CHILD_ISSUE}}
+
+**Clinical Priority (from assessment):**
+- Primary Issue: {{PRIMARY_ISSUE}} — Strategy: {{PRIMARY_STRATEGY}}
+- Secondary Issue: {{SECONDARY_ISSUE}} — Strategy: {{SECONDARY_STRATEGY}}
 
 **Developmental framework:**
 # Context: Milestone Library
@@ -86,14 +89,14 @@ Use **only** the following dataset as your ground truth for evaluation. Do not h
       "card_id": 1,
       "title": "The 'Fantasy' Rule",
       "icon_suggestion": "magic_wand",
-      "coaching_tip": "Panghu is in deep symbolic play, and correcting his logic can stall his creativity. In this space, fantasy is reality, so if he says noodles have eyes, simply roll with it. Avoid using physics or biology to correct him during special play time.",
+      "coaching_tip": "Panghu is deep in symbolic play, so avoid stalling his creativity with logical corrections. In this space, fantasy is reality, so simply roll with his ideas instead of checking them against facts.",
       "scenario": null
     },
     {
       "card_id": 2,
       "title": "Turn Questions into Comments",
       "icon_suggestion": "speech_bubble",
-      "coaching_tip": "Questions can feel like a test and may interrupt a child who is already focused on a task like counting. Instead of questioning his knowledge, use descriptive comments to keep the conversation flowing. This validates his actions without putting him on the spot.",
+      "coaching_tip": "Questions can feel like a test and may interrupt a child who is already focused on a task. Instead of quizzing him, use descriptive comments to validate his actions and keep the conversation flowing.",
       "scenario": {
         "context": "When pointing out the numbers on the stickers.",
         "instead_of": "\"You know there are numbers, right?\" (知 道 有 数 字 的 吧？)",
@@ -104,14 +107,14 @@ Use **only** the following dataset as your ground truth for evaluation. Do not h
       "card_id": 3,
       "title": "Ignore the Potty Talk",
       "icon_suggestion": "prohibit",
-      "coaching_tip": "Panghu uses 'potty talk' to test boundaries and see if he can get a big reaction. By staying silent or pivoting the topic, you remove the 'reward' for the behavior. You did a great job staying neutral and focusing back on the play.",
+      "coaching_tip": "Panghu uses 'potty talk' to test boundaries, hoping to provoke a big reaction. By staying silent or pivoting the topic, you remove the reward for this behavior and keep the focus on play.",
       "scenario": null
     },
     {
       "card_id": 4,
       "title": "Pronoun Power-Up",
       "icon_suggestion": "arrow_up",
-      "coaching_tip": "While Panghu refers to himself in the third person, you can gently model the use of 'I' through your reflections. Instead of correcting him directly, simply emphasize the correct pronoun when repeating what he said. This builds his language skills naturally through mimicry.",
+      "coaching_tip": "While Panghu refers to himself in the third person, you can gently model the use of 'I' through your reflections. Simply emphasize the correct pronoun when repeating what he said to build his language skills naturally.",
       "scenario": {
         "context": "Panghu says: 'Panghu is in the garbage truck.'",
         "instead_of": "Saying 'You mean I am in the truck.'",
