@@ -11,7 +11,7 @@ export type RootTabParamList = {
   Home: undefined;
   Record: undefined;
   Learn: undefined;
-  Progress: undefined;
+  Progress: { scrollToDevelopmental?: boolean } | undefined;
 };
 
 export type OnboardingStackParamList = {

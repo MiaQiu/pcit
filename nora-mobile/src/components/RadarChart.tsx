@@ -4,18 +4,18 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import Svg, { Polygon, Line, Circle, G, Defs, Pattern, Path } from 'react-native-svg';
-import { DevelopmentalProgress } from '@nora/core';
+import { DevelopmentalProgress, DomainType } from '@nora/core';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface RadarChartProps {
   data: DevelopmentalProgress;
+  onDomainPress?: (domain: DomainType) => void;
 }
 
-const DOMAINS = ['Language', 'Cognitive', 'Social', 'Emotional', 'Connection'] as const;
-type DomainType = typeof DOMAINS[number];
+const DOMAINS: DomainType[] = ['Language', 'Cognitive', 'Social', 'Emotional', 'Connection'];
 
 // Chart configuration
 const CHART_SIZE = Math.min(SCREEN_WIDTH - 80, 280);
@@ -84,17 +84,19 @@ const getLabelPosition = (index: number): { x: number; y: number; textAnchor: 's
   return { ...pos, textAnchor };
 };
 
-export const RadarChart: React.FC<RadarChartProps> = ({ data }) => {
+export const RadarChart: React.FC<RadarChartProps> = ({ data, onDomainPress }) => {
   // Calculate normalized values for each domain
   // 100% = all milestones in that domain (total)
-  // Child's value = achieved / total
+  // Child's value = (achieved + 0.5 * emerging) / total
+  // Emerging milestones count as 50% progress
   // Benchmark value = benchmark / total
   const childValues = DOMAINS.map((domain) => {
     const domainData = data.domains[domain];
     if (!domainData || domainData.total === 0) {
       return 0;
     }
-    return (domainData.achieved / domainData.total) * 100;
+    const effectiveProgress = domainData.achieved + (domainData.emerging * 0.5);
+    return (effectiveProgress / domainData.total) * 100;
   });
 
   const benchmarkValues = DOMAINS.map((domain) => {
@@ -197,8 +199,9 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data }) => {
         {/* Domain labels positioned outside the chart */}
         {DOMAINS.map((domain, index) => {
           const pos = getLabelPosition(index);
+          const LabelWrapper = onDomainPress ? TouchableOpacity : View;
           return (
-            <View
+            <LabelWrapper
               key={domain}
               style={[
                 styles.labelContainer,
@@ -209,9 +212,10 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data }) => {
                   alignItems: pos.textAnchor === 'start' ? 'flex-start' : pos.textAnchor === 'end' ? 'flex-end' : 'center',
                 },
               ]}
+              {...(onDomainPress ? { onPress: () => onDomainPress(domain), activeOpacity: 0.7 } : {})}
             >
-              <Text style={styles.label}>{domain}</Text>
-            </View>
+              <Text style={[styles.label, onDomainPress && styles.labelTappable]}>{domain}</Text>
+            </LabelWrapper>
           );
         })}
       </View>
@@ -258,9 +262,13 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 11,
+    fontSize: 14,
     color: LABEL_COLOR,
     textAlign: 'center',
+  },
+  labelTappable: {
+    textDecorationLine: 'underline',
+    color: '#8C49D5',
   },
   legend: {
     flexDirection: 'row',

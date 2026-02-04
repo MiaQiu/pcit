@@ -364,4 +364,181 @@ router.get('/developmental-progress', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/learning/domain-milestones/:domain - Get detailed milestones for a specific domain
+router.get('/domain-milestones/:domain', requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { domain } = req.params;
+
+    // Validate domain
+    const validDomains = ['Language', 'Cognitive', 'Social', 'Emotional', 'Connection'];
+    if (!validDomains.includes(domain)) {
+      return res.status(400).json({ error: 'Invalid domain. Must be one of: ' + validDomains.join(', ') });
+    }
+
+    // Get the user's child record
+    const child = await prisma.child.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!child) {
+      return res.status(404).json({ error: 'No child record found' });
+    }
+
+    // Get all milestones for this domain from library
+    const domainMilestones = await prisma.milestoneLibrary.findMany({
+      where: { category: domain },
+      orderBy: [
+        { medianAgeMonths: 'asc' },
+        { displayTitle: 'asc' }
+      ]
+    });
+
+    // Get child's milestones for this domain
+    const childMilestones = await prisma.childMilestone.findMany({
+      where: {
+        childId: child.id,
+        MilestoneLibrary: { category: domain }
+      },
+      include: {
+        MilestoneLibrary: true
+      }
+    });
+
+    // Create a map of milestone library id to child milestone status
+    const childMilestoneMap = {};
+    childMilestones.forEach(cm => {
+      childMilestoneMap[cm.milestoneId] = cm;
+    });
+
+    // Build response with milestone details
+    const milestones = domainMilestones.map(m => {
+      const childMilestone = childMilestoneMap[m.id];
+      const status = childMilestone?.status || 'NOT_YET';
+
+      return {
+        id: m.id,
+        displayTitle: m.displayTitle,
+        groupingStage: m.groupingStage,
+        status: status,
+        achievedAt: childMilestone?.achievedAt || null,
+        firstObservedAt: childMilestone?.firstObservedAt || null,
+        actionTip: m.actionTip
+      };
+    });
+
+    // Get latest child profiling for domain-specific summary
+    const latestProfiling = await prisma.childProfiling.findFirst({
+      where: { childId: child.id },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Extract domain-specific profiling data
+    let domainProfiling = null;
+    if (latestProfiling?.domains && Array.isArray(latestProfiling.domains)) {
+      domainProfiling = latestProfiling.domains.find(d => d.category === domain) || null;
+    }
+
+    res.json({
+      domain,
+      milestones,
+      profiling: domainProfiling,
+      childName: child.name
+    });
+
+  } catch (error) {
+    console.error('Get domain milestones error:', error.message, error.stack);
+    res.status(500).json({
+      error: 'Failed to get domain milestones',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/learning/milestone-history - Get historical milestone progress over time
+router.get('/milestone-history', requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const months = parseInt(req.query.months) || 6;
+
+    // Get the user's child record
+    const child = await prisma.child.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!child) {
+      return res.status(404).json({ error: 'No child record found' });
+    }
+
+    // Calculate child's age in months
+    let childAgeMonths = 0;
+    if (child.birthday) {
+      const now = new Date();
+      const birthday = new Date(child.birthday);
+      childAgeMonths = (now.getFullYear() - birthday.getFullYear()) * 12 +
+        (now.getMonth() - birthday.getMonth());
+    }
+
+    // Get all child milestones with timestamps
+    const childMilestones = await prisma.childMilestone.findMany({
+      where: { childId: child.id },
+      orderBy: { updatedAt: 'asc' }
+    });
+
+    // Calculate start date (N months ago)
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
+
+    // Build monthly snapshots
+    const history = [];
+    for (let i = 0; i < months; i++) {
+      const snapshotDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+      const endOfMonth = new Date(snapshotDate.getFullYear(), snapshotDate.getMonth() + 1, 0, 23, 59, 59);
+
+      // Count milestones achieved and emerging by end of this month
+      let achievedCount = 0;
+      let emergingCount = 0;
+
+      childMilestones.forEach(cm => {
+        const milestoneDate = new Date(cm.updatedAt);
+        if (milestoneDate <= endOfMonth) {
+          if (cm.status === 'ACHIEVED') {
+            achievedCount++;
+          } else if (cm.status === 'EMERGING') {
+            emergingCount++;
+          }
+        }
+      });
+
+      history.push({
+        date: snapshotDate.toISOString().split('T')[0],
+        achievedCount,
+        emergingCount
+      });
+    }
+
+    // Calculate current totals
+    const totalAchieved = childMilestones.filter(cm => cm.status === 'ACHIEVED').length;
+    const totalEmerging = childMilestones.filter(cm => cm.status === 'EMERGING').length;
+
+    res.json({
+      childAgeMonths,
+      history,
+      summary: {
+        totalAchieved,
+        totalEmerging
+      }
+    });
+
+  } catch (error) {
+    console.error('Get milestone history error:', error.message, error.stack);
+    res.status(500).json({
+      error: 'Failed to get milestone history',
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;

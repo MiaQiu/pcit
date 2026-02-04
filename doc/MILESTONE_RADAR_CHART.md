@@ -24,13 +24,57 @@ The Developmental Stage Radar Chart visualizes a child's milestone progress acro
 
 The chart tracks progress across 5 developmental domains:
 
-| Domain | Description |
-|--------|-------------|
-| **Language** | Speech, vocabulary, and communication milestones |
-| **Cognitive** | Problem-solving, memory, and learning milestones |
-| **Social** | Interaction, play, and social awareness milestones |
-| **Emotional** | Emotional regulation and expression milestones |
-| **Connection** | Parent-child bonding and attachment milestones |
+| Domain | Description | Framework |
+|--------|-------------|-----------|
+| **Language** | Speech, vocabulary, and grammar | Brown's Stages |
+| **Cognitive** | Problem-solving, sequencing, reasoning | Piaget/Brown |
+| **Social** | Interaction, turn-taking, politeness | Halliday Interactional |
+| **Emotional** | Boundaries, self-concept, regulation | Halliday Personal |
+| **Connection** | Parent-child bonding and involvement | Biringen EA |
+
+## Milestone Library
+
+### Language (11 milestones - Brown's Stages)
+
+| Stage | Age Range | Milestones |
+|-------|-----------|------------|
+| Stage I | 12-26m | Semantic Roles, Early Negation |
+| Stage II | 27-30m | Present Progressive (-ing), Regular Plurals (-s), Prepositions (In/On) |
+| Stage III | 31-34m | Irregular Past Tense, Possessives ('s) |
+| Stage IV | 35-40m | Articles (A/The), Regular Past Tense (-ed) |
+| Stage V | 41-46m | 3rd Person Irregular (Does/Has) |
+| Post-Stage V | 47m+ | Passive Voice Construction |
+
+### Cognitive (5 milestones)
+
+| Stage | Age Range | Milestones |
+|-------|-----------|------------|
+| Pre-Operational | 24-36m | Immediate Naming |
+| Temporal Logic | 36-48m | Sequencing (First/Then), Decentering (Past) |
+| Causal Logic | 48-84m | Causal Linking (Because/So), Theory of Mind |
+
+### Social (5 milestones)
+
+| Stage | Age Range | Milestones |
+|-------|-----------|------------|
+| Transition | 24-36m | Initiation ("Let's"), Verbal Turn Taking |
+| Pragmatic Dev | 36-60m | Politeness Markers, Friendship Definition |
+| Interpersonal | 60-84m | Complex Play Negotiation |
+
+### Emotional (3 milestones)
+
+| Stage | Age Range | Milestones |
+|-------|-----------|------------|
+| Assertion | 24-36m | Boundaries ("Mine"/"No") |
+| Identity | 36-60m | Self-Concept ("I am...") |
+| Regulation | 60-84m | Emotional Justification |
+
+### Connection (2 milestones)
+
+| Stage | Age Range | Milestones |
+|-------|-----------|------------|
+| Involvement | 24-48m | Physical Check-in (Pulling/Showing) |
+| Partnership | 48-84m | Verbal Role Invitation |
 
 ## Data Model
 
@@ -49,7 +93,8 @@ The chart tracks progress across 5 developmental domains:
 - `achievedAt` - When milestone was fully achieved
 
 **MilestoneLibrary** - Master list of developmental milestones
-- `category` - Domain category (Language, Cognitive, Social, Emotional, Connection)
+- `category` - Domain (Language, Cognitive, Social, Emotional, Connection)
+- `groupingStage` - Stage name with age range, e.g., "Stage II (27-30m)"
 - `medianAgeMonths` - Median age when children typically achieve this milestone
 - `mastery90AgeMonths` - Age by which 90% of children achieve this milestone
 
@@ -64,37 +109,37 @@ Returns the child's developmental progress by domain with age-appropriate benchm
 **Response:**
 ```json
 {
-  "childAgeMonths": 36,
+  "childAgeMonths": 28,
   "domains": {
     "Language": {
-      "achieved": 8,
-      "emerging": 2,
-      "total": 15,
-      "benchmark": 10
+      "achieved": 4,
+      "emerging": 1,
+      "total": 11,
+      "benchmark": 3.0
     },
     "Cognitive": {
-      "achieved": 6,
-      "emerging": 1,
-      "total": 12,
-      "benchmark": 8
+      "achieved": 1,
+      "emerging": 0,
+      "total": 5,
+      "benchmark": 0.33
     },
     "Social": {
-      "achieved": 5,
-      "emerging": 3,
-      "total": 10,
-      "benchmark": 7
+      "achieved": 2,
+      "emerging": 1,
+      "total": 5,
+      "benchmark": 0.67
     },
     "Emotional": {
-      "achieved": 4,
-      "emerging": 2,
-      "total": 8,
-      "benchmark": 6
+      "achieved": 1,
+      "emerging": 0,
+      "total": 3,
+      "benchmark": 0.33
     },
     "Connection": {
-      "achieved": 7,
-      "emerging": 1,
-      "total": 10,
-      "benchmark": 8
+      "achieved": 1,
+      "emerging": 0,
+      "total": 2,
+      "benchmark": 0.17
     }
   }
 }
@@ -104,7 +149,7 @@ Returns the child's developmental progress by domain with age-appropriate benchm
 - `childAgeMonths` - Child's age in months calculated from birthday
 - `achieved` - Number of milestones with status `ACHIEVED`
 - `emerging` - Number of milestones with status `EMERGING`
-- `total` - Total milestones available in this domain
+- `total` - Total milestones in this domain
 - `benchmark` - Expected milestones for child's age (fractional, interpolated through stages)
 
 **Error Responses:**
@@ -122,8 +167,8 @@ childValue = (achieved / total) * 100
 benchmarkValue = (benchmark / total) * 100
 ```
 
-| Domain | Total Milestones | Each milestone = |
-|--------|------------------|------------------|
+| Domain | Total | Each milestone = |
+|--------|-------|------------------|
 | Language | 11 | 9.1% |
 | Cognitive | 5 | 20% |
 | Social | 5 | 20% |
@@ -134,20 +179,27 @@ benchmarkValue = (benchmark / total) * 100
 
 The benchmark is calculated by interpolating through developmental stages based on child's age:
 
-1. For each stage the child has **completed** (age >= stage end): add all milestones from that stage
-2. For the stage the child is **currently in** (age between start and end): add proportional milestones
+1. **Completed stages** (child age >= stage end): add all milestones from that stage
+2. **Current stage** (child age between start and end): add proportional milestones
+3. **Future stages** (child age < stage start): add nothing
 
-Example for a 28-month-old in Language:
-- Stage I (12-26m): 2 milestones → fully completed = 2
-- Stage II (27-30m): 3 milestones → (28-27)/(30-27) = 33% through = 1
-- **Benchmark = 3 milestones → 3/11 = 27%**
+**Example for a 28-month-old:**
+
+**Language:**
+- Stage I (12-26m): 2 milestones → completed → +2
+- Stage II (27-30m): 3 milestones → (28-27)/(30-27) = 33% → +1
+- Benchmark = 3 → 3/11 = **27%**
+
+**Cognitive:**
+- Pre-Operational (24-36m): 1 milestone → (28-24)/(36-24) = 33% → +0.33
+- Benchmark = 0.33 → 0.33/5 = **7%**
 
 ### Chart Geometry
 
 - 5 axes arranged in a regular pentagon (72° apart)
 - Axes start from top (Language) and go clockwise
 - 3 concentric grid pentagons at 33%, 66%, 100% of max radius
-- Benchmark line varies per domain (not a regular pentagon)
+- Benchmark polygon varies per domain (irregular shape based on age)
 
 ### Visual Elements
 
@@ -173,9 +225,9 @@ Example for a 28-month-old in Language:
 | Scenario | Handling |
 |----------|----------|
 | No child record | API returns 404, chart not rendered |
-| No milestones | Show empty radar (all values at 0) |
-| Zero benchmark | Display as 0% (avoids division by zero) |
-| Exceeds benchmark | Cap at 150% to prevent distortion |
+| No milestones achieved | Show empty radar (child polygon at center) |
+| Zero total milestones | Display as 0% (avoids division by zero) |
+| Child ahead of benchmark | Polygon extends beyond orange line |
 | Missing birthday | Falls back to `childBirthYear` from User table |
 
 ## Usage
@@ -185,11 +237,3 @@ The radar chart automatically appears on the Progress screen when:
 2. The API successfully returns developmental progress data
 
 No user interaction is required - the chart fetches data on screen load and renders if data is available.
-
-## Future Enhancements
-
-Potential improvements:
-- Tap on domain to see milestone details
-- Historical view showing progress over time
-- Comparison with different benchmark ages
-- Export/share functionality

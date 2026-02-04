@@ -3,7 +3,7 @@
  * User progress, stats, and streak tracking
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,16 +15,19 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
 import { RadarChart } from '../components/RadarChart';
-import { RootStackNavigationProp } from '../navigation/types';
+import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
+import { RootStackNavigationProp, RootTabParamList } from '../navigation/types';
+
+type ProgressScreenRouteProp = RouteProp<RootTabParamList, 'Progress'>;
 import { useRecordingService, useLessonService } from '../contexts/AppContext';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { toSingaporeDateString, getTodaySingapore, getYesterdaySingapore } from '../utils/timezone';
 import amplitudeService from '../services/amplitudeService';
-import { DevelopmentalProgress } from '@nora/core';
+import { DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling } from '@nora/core';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -290,8 +293,11 @@ const ScoreChart: React.FC<ScoreChartProps> = ({ data }) => {
 
 export const ProgressScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const route = useRoute<ProgressScreenRouteProp>();
   const recordingService = useRecordingService();
   const lessonService = useLessonService();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const developmentalSectionY = useRef<number>(0);
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
@@ -303,6 +309,12 @@ export const ProgressScreen: React.FC = () => {
   const [lessonCompletionDates, setLessonCompletionDates] = useState<Date[]>([]);
   const [scoreData, setScoreData] = useState<Array<{ date: string; day: number; month: string; score: number }>>([]);
   const [developmentalProgress, setDevelopmentalProgress] = useState<DevelopmentalProgress | null>(null);
+  const [selectedDomain, setSelectedDomain] = useState<DomainType | null>(null);
+  const [domainMilestones, setDomainMilestones] = useState<DomainMilestone[] | null>(null);
+  const [domainProfiling, setDomainProfiling] = useState<DomainProfiling | null>(null);
+  const [domainChildName, setDomainChildName] = useState<string | null>(null);
+  const [showDomainModal, setShowDomainModal] = useState(false);
+  const [loadingDomainMilestones, setLoadingDomainMilestones] = useState(false);
 
   useEffect(() => {
     // Track progress screen viewed
@@ -312,6 +324,19 @@ export const ProgressScreen: React.FC = () => {
 
     loadProgressData();
   }, []);
+
+  // Handle scroll to developmental section when navigating with param
+  useEffect(() => {
+    if (route.params?.scrollToDevelopmental && !loading && developmentalProgress) {
+      // Small delay to ensure layout is complete
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({
+          y: developmentalSectionY.current,
+          animated: true,
+        });
+      }, 300);
+    }
+  }, [route.params?.scrollToDevelopmental, loading, developmentalProgress]);
 
   const loadProgressData = async () => {
     try {
@@ -521,6 +546,34 @@ export const ProgressScreen: React.FC = () => {
     return filteredData.slice(-15);
   };
 
+  const handleDomainPress = async (domain: DomainType) => {
+    setSelectedDomain(domain);
+    setShowDomainModal(true);
+    setLoadingDomainMilestones(true);
+    setDomainMilestones(null);
+    setDomainProfiling(null);
+    setDomainChildName(null);
+
+    try {
+      const response = await recordingService.getDomainMilestones(domain);
+      setDomainMilestones(response.milestones);
+      setDomainProfiling(response.profiling);
+      setDomainChildName(response.childName);
+    } catch (error) {
+      console.error('Failed to load domain milestones:', error);
+    } finally {
+      setLoadingDomainMilestones(false);
+    }
+  };
+
+  const handleCloseDomainModal = () => {
+    setShowDomainModal(false);
+    setSelectedDomain(null);
+    setDomainMilestones(null);
+    setDomainProfiling(null);
+    setDomainChildName(null);
+  };
+
   const handleViewReport = () => {
     if (latestRecordingId) {
       // Track report viewed from progress tab
@@ -548,7 +601,7 @@ export const ProgressScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollViewRef} style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Progress</Text>
 
         {/* Header with Dragon Icon and Text */}
@@ -582,11 +635,13 @@ export const ProgressScreen: React.FC = () => {
 
         {/* Developmental Stage Radar Chart */}
         {developmentalProgress && (
-          <RadarChart data={developmentalProgress} />
+          <View onLayout={(e) => { developmentalSectionY.current = e.nativeEvent.layout.y; }}>
+            <RadarChart data={developmentalProgress} onDomainPress={handleDomainPress} />
+          </View>
         )}
 
         {/* View Last Report Button */}
-        <View style={styles.buttonContainer}>
+        {/* <View style={styles.buttonContainer}>
           {latestRecordingId ? (
             <Button onPress={handleViewReport} variant="primary">
               View Lastest Report
@@ -596,11 +651,22 @@ export const ProgressScreen: React.FC = () => {
               No recordings yet. Record a session to see your report!
             </Text>
           )}
-        </View>
+        </View> */}
 
         {/* Bottom spacing */}
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {/* Domain Milestone Modal */}
+      <DomainMilestoneModal
+        visible={showDomainModal}
+        domain={selectedDomain}
+        milestones={domainMilestones}
+        profiling={domainProfiling}
+        childName={domainChildName}
+        loading={loadingDomainMilestones}
+        onClose={handleCloseDomainModal}
+      />
     </SafeAreaView>
   );
 };

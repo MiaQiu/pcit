@@ -90,6 +90,54 @@ export interface DevelopmentalProgress {
   domains: Record<'Language' | 'Cognitive' | 'Social' | 'Emotional' | 'Connection', DevelopmentalDomainProgress>;
 }
 
+export type DomainType = 'Language' | 'Cognitive' | 'Social' | 'Emotional' | 'Connection';
+
+export interface DomainMilestone {
+  id: string;
+  displayTitle: string;
+  groupingStage: string;
+  status: 'ACHIEVED' | 'EMERGING' | 'NOT_YET';
+  achievedAt: string | null;
+  firstObservedAt: string | null;
+  actionTip: string | null;
+}
+
+export interface DomainProfilingObservation {
+  insight: string;
+  evidence: string;
+}
+
+export interface DomainProfiling {
+  category: string;
+  framework: string;
+  current_level: string;
+  benchmark_for_age: string;
+  developmental_status: string;
+  detailed_observations: DomainProfilingObservation[];
+}
+
+export interface DomainMilestonesResponse {
+  domain: DomainType;
+  milestones: DomainMilestone[];
+  profiling: DomainProfiling | null;
+  childName: string;
+}
+
+export interface MilestoneHistoryEntry {
+  date: string;
+  achievedCount: number;
+  emergingCount: number;
+}
+
+export interface MilestoneHistoryResponse {
+  childAgeMonths: number;
+  history: MilestoneHistoryEntry[];
+  summary: {
+    totalAchieved: number;
+    totalEmerging: number;
+  };
+}
+
 export interface RecordingAnalysis {
   id: string;
   mode: 'CDI' | 'PDI';
@@ -296,6 +344,40 @@ class RecordingService {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to fetch developmental progress');
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Get detailed milestones for a specific domain
+   * Returns all milestones with their status (ACHIEVED, EMERGING, NOT_YET)
+   */
+  async getDomainMilestones(domain: DomainType): Promise<DomainMilestonesResponse> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/learning/domain-milestones/${domain}`
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch domain milestones');
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Get milestone history over time
+   * Returns monthly snapshots of achieved/emerging counts
+   */
+  async getMilestoneHistory(months: number = 6): Promise<MilestoneHistoryResponse> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/learning/milestone-history?months=${months}`
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch milestone history');
     }
 
     return await response.json();

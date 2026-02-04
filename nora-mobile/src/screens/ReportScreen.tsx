@@ -401,7 +401,7 @@ export const ReportScreen: React.FC = () => {
 
         {/* Coach's Corner */}
         {reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
-          const cards = (reportData.coachingCards as CoachingCard[]).slice(0, 3);
+          const cards = (reportData.coachingCards as CoachingCard[]).slice(0, 1);
           const cardThemes = [
             { border: '#F59E0B', iconBg: '#FEF3C7', icon: 'bulb-outline' as const, iconColor: '#D97706' },
             { border: '#3B82F6', iconBg: '#DBEAFE', icon: 'color-wand-outline' as const, iconColor: '#2563EB' },
@@ -417,9 +417,9 @@ export const ReportScreen: React.FC = () => {
                   <View key={card.card_id} style={[styles.coachCard, { borderLeftColor: theme.border }]}>
                     {/* Title Row with Icon */}
                     <View style={styles.coachTitleRow}>
-                      <View style={[styles.coachIconContainer, { backgroundColor: theme.iconBg }]}>
+                      {/* <View style={[styles.coachIconContainer, { backgroundColor: theme.iconBg }]}>
                         <Ionicons name={theme.icon} size={20} color={theme.iconColor} />
-                      </View>
+                      </View> */}
                       <Text style={styles.coachTipTitle}>{card.title}</Text>
                     </View>
 
@@ -442,6 +442,12 @@ export const ReportScreen: React.FC = () => {
                         ) : null}
                       </View>
                     )}
+                    <TouchableOpacity
+                      style={styles.cardLinkButton}
+                      onPress={() => navigation.navigate('Transcript', { recordingId })}
+                    >
+                      <Text style={styles.cardLinkText}>Read Full Transcript</Text>
+                    </TouchableOpacity>
                   </View>
                 );
               })}
@@ -452,49 +458,45 @@ export const ReportScreen: React.FC = () => {
         {/* Milestone Celebrations */}
         {reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations) && reportData.milestoneCelebrations.length > 0 && (
           <View style={styles.milestoneCelebrationSection}>
-            {(reportData.milestoneCelebrations as MilestoneCelebration[]).map((milestone, index) => {
+            <Text style={styles.cardTitle}>New Milestone</Text>
+            {(reportData.milestoneCelebrations as MilestoneCelebration[]).slice(0, 1).map((milestone, index) => {
               const isAchieved = milestone.status === 'ACHIEVED';
-              const sectionTitle = isAchieved ? 'New Milestone Achieved!' : 'New Milestone Emerging!';
               const personalizedDescription = isAchieved
                 ? `${childName} has mastered ${milestone.title.toLowerCase()}!`
                 : `${childName} is starting to ${milestone.title.toLowerCase()}!`;
 
               return (
-                <View key={index}>
-                  <Text style={styles.cardTitle}>{sectionTitle}</Text>
-                  <View style={[styles.milestoneCard, isAchieved && styles.milestoneCardAchieved]}>
-                    <View style={styles.milestoneHeader}>
-                      <View style={[styles.milestoneIconContainer, isAchieved ? styles.milestoneIconAchieved : styles.milestoneIconEmerging]}>
-                        <Ionicons
-                          name={isAchieved ? 'trophy' : 'sparkles'}
-                          size={24}
-                          color={isAchieved ? '#F59E0B' : '#8B5CF6'}
-                        />
-                      </View>
-                      <View style={styles.milestoneContent}>
+                <View key={index} style={styles.milestoneCard}>
+                  <View style={styles.milestoneHeader}>
+                    <View style={styles.milestoneContent}>
+                      <View style={styles.milestoneTitleRow}>
                         <Text style={styles.milestonePersonalizedText}>{personalizedDescription}</Text>
-                        <Text style={styles.milestoneCategory}>{milestone.category}</Text>
+                        <View style={[styles.milestoneBadge, isAchieved ? styles.milestoneBadgeAchieved : styles.milestoneBadgeEmerging]}>
+                          <Text style={[styles.milestoneBadgeText, isAchieved ? styles.milestoneBadgeTextAchieved : styles.milestoneBadgeTextEmerging]}>
+                            {isAchieved ? 'Achieved' : 'Emerging'}
+                          </Text>
+                        </View>
                       </View>
+                      <Text style={styles.milestoneCategory}>{milestone.category}</Text>
                     </View>
-                    {milestone.actionTip && (
-                      <View style={styles.milestoneActionTip}>
-                        <Ionicons name="bulb-outline" size={16} color="#6B7280" />
-                        <Text style={styles.milestoneActionTipText}>{milestone.actionTip}</Text>
-                      </View>
-                    )}
                   </View>
+                  {milestone.actionTip && (
+                    <View style={styles.milestoneActionTip}>
+                      <Ionicons name="bulb-outline" size={16} color="#6B7280" />
+                      <Text style={styles.milestoneActionTipText}>{milestone.actionTip}</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    style={styles.cardLinkButton}
+                    onPress={() => navigation.navigate('MainTabs', { screen: 'Progress', params: { scrollToDevelopmental: true } })}
+                  >
+                    <Text style={styles.cardLinkText}>View All Milestones</Text>
+                  </TouchableOpacity>
                 </View>
               );
             })}
           </View>
         )}
-
-        {/* Read Full Conversation Button */}
-        <View style={styles.buttonContainer}>
-          <Button onPress={() => navigation.navigate('Transcript', { recordingId })} variant="primary">
-            Read full conversation with tips
-          </Button>
-        </View>
 
         {/* Tips for Next Time - TEMPORARILY HIDDEN */}
         {/* <View>
@@ -1172,7 +1174,7 @@ const styles = StyleSheet.create({
   // Coach's Corner styles
   coachCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 32,
     padding: 20,
     marginBottom: 12,
     //borderLeftWidth: 4,
@@ -1247,6 +1249,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#16A34A',
   },
+  cardLinkButton: {
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    marginTop: 16,
+    paddingTop: 16,
+    alignItems: 'center',
+  },
+  cardLinkText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#0059DB',
+  },
   // About Child section styles
   aboutChildSection: {
     marginBottom: 16,
@@ -1302,47 +1316,54 @@ const styles = StyleSheet.create({
   milestoneCelebrationSection: {
     marginBottom: 16,
   },
-  milestoneCelebrationContainer: {
-    gap: 12,
-  },
   milestoneCard: {
-    backgroundColor: '#F8F7FC',
-    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
     padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#8B5CF6',
-  },
-  milestoneCardAchieved: {
-    backgroundColor: '#FFFBEB',
-    borderLeftColor: '#F59E0B',
+    marginBottom: 16
   },
   milestoneHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
-  },
-  milestoneIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  milestoneIconEmerging: {
-    backgroundColor: '#EDE9FE',
-  },
-  milestoneIconAchieved: {
-    backgroundColor: '#FEF3C7',
   },
   milestoneContent: {
     flex: 1,
+  },
+  milestoneTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 4,
+  },
+  milestoneBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexShrink: 0,
+  },
+  milestoneBadgeAchieved: {
+    backgroundColor: '#FEF3C7',
+  },
+  milestoneBadgeEmerging: {
+    backgroundColor: '#EDE9FE',
+  },
+  milestoneBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+  },
+  milestoneBadgeTextAchieved: {
+    color: '#D97706',
+  },
+  milestoneBadgeTextEmerging: {
+    color: '#7C3AED',
   },
   milestonePersonalizedText: {
     fontFamily: FONTS.bold,
     fontSize: 17,
     color: COLORS.textDark,
-    marginBottom: 4,
     lineHeight: 24,
+    flex: 1,
   },
   milestoneCategory: {
     fontFamily: FONTS.regular,
