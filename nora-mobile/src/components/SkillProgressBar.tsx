@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 
 interface SkillProgressBarProps {
@@ -14,6 +15,7 @@ interface SkillProgressBarProps {
   maxValue?: number; // Maximum value for the progress bar (default: 10)
   color?: string;
   textColor?: string; // Optional color for the progress text
+  prefix?: string; // Optional prefix to display before the number (e.g., "+")
   suffix?: string; // Optional suffix to display after the number (e.g., "(Pay attention)")
   onPress?: () => void; // Optional callback when the count is pressed
 }
@@ -24,6 +26,7 @@ export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
   maxValue = 10,
   color = COLORS.mainPurple,
   textColor,
+  prefix,
   suffix,
   onPress,
 }) => {
@@ -37,8 +40,8 @@ export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
 
   const PercentageContent = (
     <Text style={[styles.percentage, textColor ? { color: textColor } : null, onPress && styles.percentageClickable]}>
-      {Math.round(progress)}/{maxValue}{suffix ? ` ${suffix}` : ''}
-      
+      {prefix ? prefix : ''}{Math.round(progress)}/{maxValue}{suffix ? ` ${suffix}` : ''}
+      {onPress && <Ionicons name="chevron-forward" size={12} color={textColor || '#666666'} />}
     </Text>
   );
 

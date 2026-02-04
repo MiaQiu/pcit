@@ -16,6 +16,7 @@ import { RootStackNavigationProp, RootStackParamList } from '../navigation/types
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import type { RecordingAnalysis, CoachingCard, MilestoneCelebration } from '@nora/core';
 import { MarkdownText } from '../utils/MarkdownText';
+import { MomentPlayer } from '../components/MomentPlayer';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
 
@@ -231,7 +232,7 @@ export const ReportScreen: React.FC = () => {
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Report</Text>
+          <Text style={styles.headerTitle}>Today’s Emotional Massage Recap</Text>
           <View style={{ width: 28 }} />
         </View>
         <View style={styles.loadingContainer}>
@@ -252,7 +253,7 @@ export const ReportScreen: React.FC = () => {
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Report</Text>
+          <Text style={styles.headerTitle}>Today’s Emotional Massage Recap</Text>
           <View style={{ width: 28 }} />
         </View>
         <View style={styles.errorContainer}>
@@ -273,7 +274,7 @@ export const ReportScreen: React.FC = () => {
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Report</Text>
+        <Text style={styles.headerTitle}>Today’s Emotional Massage Recap</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -283,7 +284,7 @@ export const ReportScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Header with Dragon Icon and Encouragement Message */}
-        {/* <View style={styles.headerSection}>
+        <View style={styles.headerSection}>
           <View style={styles.dragonIconContainer}>
             <Image
               source={DRAGON_PURPLE}
@@ -294,11 +295,11 @@ export const ReportScreen: React.FC = () => {
           <View style={styles.headerTextBox}>
             <Text style={styles.headerText}>{reportData.encouragement}</Text>
           </View>
-        </View> */}
+        </View>
 
         {/* Nora Score */}
         <View style={styles.scoreSection}>
-          <Text style={styles.sectionTitle}>Nora Score</Text>
+          <Text style={styles.sectionTitle}>Emotional Bank Account</Text>
           <View style={styles.skillsContainer}>
             {(() => {
               const score = reportData.noraScore ?? 0;
@@ -321,6 +322,7 @@ export const ReportScreen: React.FC = () => {
                   maxValue={100}
                   color={scoreColor}
                   textColor={scoreColor}
+                  prefix="+"
                   suffix={suffix}
                   onPress={() => navigation.navigate('SkillExplanation', { skillKey: 'Overall', score, tip: reportData.tip ?? undefined })}
                 />
@@ -396,6 +398,13 @@ export const ReportScreen: React.FC = () => {
                 ? stripPcitTags(reportData.transcript[reportData.topMomentUtteranceNumber].text)
                 : stripPcitTags(typeof reportData.topMoment === 'string' ? reportData.topMoment : reportData.topMoment.quote)}"
             </Text>
+            {reportData.audioUrl && reportData.topMomentStartTime != null && reportData.topMomentEndTime != null && (
+              <MomentPlayer
+                audioUrl={reportData.audioUrl}
+                startTime={reportData.topMomentStartTime}
+                endTime={reportData.topMomentEndTime}
+              />
+            )}
           </View>
         </View>
 
@@ -409,12 +418,12 @@ export const ReportScreen: React.FC = () => {
               {cards.map((card) => (
                   <View key={card.card_id} style={styles.coachCard}>
                     {/* Title Row with Icon */}
-                    <View style={styles.coachTitleRow}>
-                      {/* <View style={[styles.coachIconContainer, { backgroundColor: theme.iconBg }]}>
+                    {/* <View style={styles.coachTitleRow}>
+                      <View style={[styles.coachIconContainer, { backgroundColor: theme.iconBg }]}>
                         <Ionicons name={theme.icon} size={20} color={theme.iconColor} />
-                      </View> */}
+                      </View>
                       <Text style={styles.coachTipTitle}>{card.title}</Text>
-                    </View>
+                    </View> */}
 
                     {/* Description */}
                     {card.coaching_tip ? (
@@ -428,7 +437,10 @@ export const ReportScreen: React.FC = () => {
                           <Text style={styles.coachExampleContext}>{card.scenario.context}</Text>
                         ) : null} */}
                         {card.scenario.instead_of ? (
-                          <Text style={styles.coachExampleInsteadOf}><Text style={styles.coachExampleInsteadOfLabel}>Instead of: </Text>{card.scenario.instead_of}</Text>
+                          <View style={styles.coachInsteadOfRow}>
+                            <Ionicons name="bulb-outline" size={16} color="#6B7280" />
+                            <Text style={styles.coachExampleInsteadOf}><Text style={styles.coachExampleInsteadOfLabel}>Instead of: </Text>{card.scenario.instead_of}</Text>
+                          </View>
                         ) : null}
                         {card.scenario.try_this ? (
                           <Text style={styles.coachExampleImproved}><Text style={styles.coachExampleImprovedLabel}>Try: </Text>{card.scenario.try_this}</Text>
@@ -439,7 +451,7 @@ export const ReportScreen: React.FC = () => {
                       style={styles.cardLinkButton}
                       onPress={() => navigation.navigate('Transcript', { recordingId })}
                     >
-                      <Text style={styles.cardLinkText}>Read Full Transcript</Text>
+                      <Text style={styles.cardLinkText}>Read Full Transcript with Tips</Text>
                     </TouchableOpacity>
                   </View>
               ))}
@@ -463,11 +475,11 @@ export const ReportScreen: React.FC = () => {
                     <View style={styles.milestoneContent}>
                       <View style={styles.milestoneTitleRow}>
                         <Text style={styles.milestonePersonalizedText}>{personalizedDescription}</Text>
-                        <View style={[styles.milestoneBadge, isAchieved ? styles.milestoneBadgeAchieved : styles.milestoneBadgeEmerging]}>
+                        {/* <View style={[styles.milestoneBadge, isAchieved ? styles.milestoneBadgeAchieved : styles.milestoneBadgeEmerging]}>
                           <Text style={[styles.milestoneBadgeText, isAchieved ? styles.milestoneBadgeTextAchieved : styles.milestoneBadgeTextEmerging]}>
                             {isAchieved ? 'Achieved' : 'Emerging'}
                           </Text>
-                        </View>
+                        </View> */}
                       </View>
                       <Text style={styles.milestoneCategory}>{milestone.category}</Text>
                     </View>
@@ -687,7 +699,7 @@ const styles = StyleSheet.create({
   },
   headerSection: {
     paddingTop: 4,
-    marginBottom: 20,
+    marginBottom: 32,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -713,9 +725,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     gap: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: '#FFFFFF',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E5E7EB',
     borderRadius: 24,
     minHeight: 80,
   },
@@ -1205,7 +1217,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     //backgroundColor: '#F3F4F6',
     borderRadius: 12,
-    padding: 14,
+    padding: 0,
   },
   coachExampleContext: {
     fontFamily: FONTS.regular,
@@ -1213,25 +1225,34 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginBottom: 6,
   },
+  coachInsteadOfRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
   coachExampleInsteadOf: {
     fontFamily: FONTS.regular,
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 13,
+    color: '#4B5563',
+    flex: 1,
+    lineHeight: 20,
     marginBottom: 6,
   },
   coachExampleInsteadOfLabel: {
     fontFamily: FONTS.semiBold,
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 13,
+    color: '#4B5563',
   },
   coachExampleImproved: {
     fontFamily: FONTS.regular,
-    fontSize: 14,
+    fontSize: 13,
     color: '#16A34A',
+    lineHeight: 20,
+    marginLeft: 24,
   },
   coachExampleImprovedLabel: {
     fontFamily: FONTS.semiBold,
-    fontSize: 14,
+    fontSize: 13,
     color: '#16A34A',
   },
   cardLinkButton: {
