@@ -402,19 +402,12 @@ export const ReportScreen: React.FC = () => {
         {/* Coach's Corner */}
         {reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
           const cards = (reportData.coachingCards as CoachingCard[]).slice(0, 1);
-          const cardThemes = [
-            { border: '#F59E0B', iconBg: '#FEF3C7', icon: 'bulb-outline' as const, iconColor: '#D97706' },
-            { border: '#3B82F6', iconBg: '#DBEAFE', icon: 'color-wand-outline' as const, iconColor: '#2563EB' },
-            { border: '#10B981', iconBg: '#D1FAE5', icon: 'leaf-outline' as const, iconColor: '#059669' },
-          ];
 
           return (
             <View>
               <Text style={styles.cardTitle}>Coach's Corner</Text>
-              {cards.map((card, index) => {
-                const theme = cardThemes[index % cardThemes.length];
-                return (
-                  <View key={card.card_id} style={[styles.coachCard, { borderLeftColor: theme.border }]}>
+              {cards.map((card) => (
+                  <View key={card.card_id} style={styles.coachCard}>
                     {/* Title Row with Icon */}
                     <View style={styles.coachTitleRow}>
                       {/* <View style={[styles.coachIconContainer, { backgroundColor: theme.iconBg }]}>
@@ -449,8 +442,7 @@ export const ReportScreen: React.FC = () => {
                       <Text style={styles.cardLinkText}>Read Full Transcript</Text>
                     </TouchableOpacity>
                   </View>
-                );
-              })}
+              ))}
             </View>
           );
         })()}
@@ -738,11 +730,8 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
   },
   cardTitle: {
     fontFamily: FONTS.bold,
@@ -1177,12 +1166,8 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     padding: 20,
     marginBottom: 12,
-    //borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
   },
   coachTitleRow: {
     flexDirection: 'row',
@@ -1218,7 +1203,7 @@ const styles = StyleSheet.create({
   },
   coachExampleContainer: {
     marginTop: 12,
-    backgroundColor: '#F3F4F6',
+    //backgroundColor: '#F3F4F6',
     borderRadius: 12,
     padding: 14,
   },
@@ -1253,7 +1238,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
     marginTop: 16,
+    marginHorizontal: -20,
     paddingTop: 16,
+    paddingHorizontal: 20,
     alignItems: 'center',
   },
   cardLinkText: {
@@ -1319,8 +1306,10 @@ const styles = StyleSheet.create({
   milestoneCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 32,
-    padding: 16,
-    marginBottom: 16
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
   },
   milestoneHeader: {
     flexDirection: 'row',
@@ -1376,7 +1365,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 12,
     paddingTop: 12,
-    borderTopWidth: 1,
+    //borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
   },
   milestoneActionTipText: {
