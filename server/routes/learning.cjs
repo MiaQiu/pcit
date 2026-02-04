@@ -218,4 +218,150 @@ router.get('/history', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/learning/developmental-progress - Get child's developmental progress by domain
+router.get('/developmental-progress', requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    // Get the user's child record
+    const child = await prisma.child.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!child) {
+      return res.status(404).json({ error: 'No child record found' });
+    }
+
+    // Calculate child's age in months
+    let childAgeMonths = 0;
+    if (child.birthday) {
+      const now = new Date();
+      const birthday = new Date(child.birthday);
+      childAgeMonths = (now.getFullYear() - birthday.getFullYear()) * 12 +
+        (now.getMonth() - birthday.getMonth());
+    } else {
+      // Fallback: use childBirthYear from user if available
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { childBirthYear: true, childBirthday: true }
+      });
+      if (user?.childBirthday) {
+        const now = new Date();
+        const birthday = new Date(user.childBirthday);
+        childAgeMonths = (now.getFullYear() - birthday.getFullYear()) * 12 +
+          (now.getMonth() - birthday.getMonth());
+      } else if (user?.childBirthYear) {
+        const now = new Date();
+        childAgeMonths = (now.getFullYear() - user.childBirthYear) * 12 + 6; // Approximate mid-year
+      }
+    }
+
+    // Define the 5 domains
+    const domainCategories = ['Language', 'Cognitive', 'Social', 'Emotional', 'Connection'];
+
+    // Get all milestones from library grouped by category and stage
+    const allMilestones = await prisma.milestoneLibrary.findMany({
+      orderBy: [
+        { category: 'asc' },
+        { medianAgeMonths: 'asc' }
+      ]
+    });
+
+    // Get all child milestones
+    const childMilestones = await prisma.childMilestone.findMany({
+      where: { childId: child.id },
+      include: {
+        MilestoneLibrary: true
+      }
+    });
+
+    // Helper function to parse age range from grouping_stage
+    // e.g., "Stage I (12-26m)" -> { start: 12, end: 26 }
+    // e.g., "Post-Stage V (47m+)" -> { start: 47, end: 84 }
+    const parseAgeRange = (groupingStage) => {
+      const match = groupingStage.match(/\((\d+)-?(\d+)?m?\+?\)/);
+      if (match) {
+        const start = parseInt(match[1], 10);
+        const end = match[2] ? parseInt(match[2], 10) : 84; // Default max age
+        return { start, end };
+      }
+      return { start: 0, end: 84 };
+    };
+
+    // Group milestones by category and stage
+    const milestonesByDomainAndStage = {};
+    allMilestones.forEach(m => {
+      if (!milestonesByDomainAndStage[m.category]) {
+        milestonesByDomainAndStage[m.category] = {};
+      }
+      if (!milestonesByDomainAndStage[m.category][m.groupingStage]) {
+        milestonesByDomainAndStage[m.category][m.groupingStage] = [];
+      }
+      milestonesByDomainAndStage[m.category][m.groupingStage].push(m);
+    });
+
+    // Calculate benchmark for each domain based on child's age
+    // Benchmark = sum of (milestones from completed stages) + (proportional milestones from current stage)
+    const calculateBenchmark = (category) => {
+      const stages = milestonesByDomainAndStage[category];
+      if (!stages) return 0;
+
+      let benchmark = 0;
+      const stageEntries = Object.entries(stages).map(([stage, milestones]) => ({
+        stage,
+        milestones,
+        range: parseAgeRange(stage)
+      })).sort((a, b) => a.range.start - b.range.start);
+
+      for (const { milestones, range } of stageEntries) {
+        const stageCount = milestones.length;
+
+        if (childAgeMonths >= range.end) {
+          // Child has completed this stage
+          benchmark += stageCount;
+        } else if (childAgeMonths >= range.start) {
+          // Child is currently in this stage - calculate proportional progress
+          const progress = (childAgeMonths - range.start) / (range.end - range.start);
+          benchmark += stageCount * progress;
+        }
+        // If childAgeMonths < range.start, child hasn't reached this stage yet
+      }
+
+      return benchmark;
+    };
+
+    // Build domain progress data
+    const domainProgress = {};
+    domainCategories.forEach(domain => {
+      const totalMilestones = allMilestones.filter(m => m.category === domain).length;
+      const achievedMilestones = childMilestones.filter(
+        cm => cm.MilestoneLibrary.category === domain && cm.status === 'ACHIEVED'
+      ).length;
+      const emergingMilestones = childMilestones.filter(
+        cm => cm.MilestoneLibrary.category === domain && cm.status === 'EMERGING'
+      ).length;
+
+      domainProgress[domain] = {
+        achieved: achievedMilestones,
+        emerging: emergingMilestones,
+        total: totalMilestones,
+        benchmark: Math.round(calculateBenchmark(domain) * 100) / 100 // Round to 2 decimal places
+      };
+    });
+
+    res.json({
+      childAgeMonths,
+      domains: domainProgress
+    });
+
+  } catch (error) {
+    console.error('Get developmental progress error:', error.message, error.stack);
+    res.status(500).json({
+      error: 'Failed to get developmental progress',
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;

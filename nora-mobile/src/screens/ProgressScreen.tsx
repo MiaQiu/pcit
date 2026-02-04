@@ -18,11 +18,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
+import { RadarChart } from '../components/RadarChart';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useRecordingService, useLessonService } from '../contexts/AppContext';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { toSingaporeDateString, getTodaySingapore, getYesterdaySingapore } from '../utils/timezone';
 import amplitudeService from '../services/amplitudeService';
+import { DevelopmentalProgress } from '@nora/core';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -300,6 +302,7 @@ export const ProgressScreen: React.FC = () => {
   const [recordingDates, setRecordingDates] = useState<Date[]>([]);
   const [lessonCompletionDates, setLessonCompletionDates] = useState<Date[]>([]);
   const [scoreData, setScoreData] = useState<Array<{ date: string; day: number; month: string; score: number }>>([]);
+  const [developmentalProgress, setDevelopmentalProgress] = useState<DevelopmentalProgress | null>(null);
 
   useEffect(() => {
     // Track progress screen viewed
@@ -314,8 +317,8 @@ export const ProgressScreen: React.FC = () => {
     try {
       setLoading(true);
 
-      // Fetch recording data, lesson stats, and lesson list in parallel
-      const [recordingsResponse, learningStats, lessonsResponse] = await Promise.all([
+      // Fetch recording data, lesson stats, lesson list, and developmental progress in parallel
+      const [recordingsResponse, learningStats, lessonsResponse, devProgress] = await Promise.all([
         recordingService.getRecordings(),
         lessonService.getLearningStats().catch(err => {
           console.log('Failed to load learning stats:', err);
@@ -324,8 +327,17 @@ export const ProgressScreen: React.FC = () => {
         lessonService.getLessons().catch(err => {
           console.log('Failed to load lessons:', err);
           return { lessons: [], userProgress: {} };
+        }),
+        recordingService.getDevelopmentalProgress().catch(err => {
+          console.log('Failed to load developmental progress:', err);
+          return null;
         })
       ]);
+
+      // Set developmental progress if available
+      if (devProgress) {
+        setDevelopmentalProgress(devProgress);
+      }
 
       const { recordings } = recordingsResponse;
       const { lessons } = lessonsResponse;
@@ -567,6 +579,11 @@ export const ProgressScreen: React.FC = () => {
 
         {/* Score chart */}
         <ScoreChart data={scoreData} />
+
+        {/* Developmental Stage Radar Chart */}
+        {developmentalProgress && (
+          <RadarChart data={developmentalProgress} />
+        )}
 
         {/* View Last Report Button */}
         <View style={styles.buttonContainer}>

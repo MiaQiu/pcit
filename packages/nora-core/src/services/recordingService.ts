@@ -78,6 +78,18 @@ export interface MilestoneCelebration {
   actionTip: string | null;
 }
 
+export interface DevelopmentalDomainProgress {
+  achieved: number;
+  emerging: number;
+  total: number;
+  benchmark: number;
+}
+
+export interface DevelopmentalProgress {
+  childAgeMonths: number;
+  domains: Record<'Language' | 'Cognitive' | 'Social' | 'Emotional' | 'Connection', DevelopmentalDomainProgress>;
+}
+
 export interface RecordingAnalysis {
   id: string;
   mode: 'CDI' | 'PDI';
@@ -270,6 +282,23 @@ class RecordingService {
       const error = await response.json();
       throw new Error(error.error || 'Failed to delete recording');
     }
+  }
+
+  /**
+   * Get developmental progress by domain
+   * Returns child's milestone progress across 5 domains with age-appropriate benchmarks
+   */
+  async getDevelopmentalProgress(): Promise<DevelopmentalProgress> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/learning/developmental-progress`
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch developmental progress');
+    }
+
+    return await response.json();
   }
 }
 
