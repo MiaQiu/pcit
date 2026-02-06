@@ -15,6 +15,7 @@ import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import type { RecordingAnalysis, CoachingCard, MilestoneCelebration } from '@nora/core';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MarkdownText } from '../utils/MarkdownText';
 import { MomentPlayer } from '../components/MomentPlayer';
 
@@ -293,7 +294,7 @@ export const ReportScreen: React.FC = () => {
             />
           </View>
           <View style={styles.headerTextBox}>
-            <Text style={styles.headerText}>{reportData.encouragement}</Text>
+            <Text style={styles.headerText}>{reportData.feedback || reportData.encouragement}</Text>
           </View>
         </View>
 
@@ -425,9 +426,14 @@ export const ReportScreen: React.FC = () => {
                       <Text style={styles.coachTipTitle}>{card.title}</Text>
                     </View> */}
 
+                    {/* Summary */}
+                    {reportData.coachingSummary ? (
+                      <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Summary: </Text>{reportData.coachingSummary}</Text>
+                    ) : null}
+
                     {/* Description */}
                     {card.coaching_tip ? (
-                      <Text style={styles.coachDescription}>{card.coaching_tip}</Text>
+                      <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Tip for Next Session: </Text>{card.coaching_tip}</Text>
                     ) : null}
 
                     {/* Scenario */}
@@ -447,6 +453,13 @@ export const ReportScreen: React.FC = () => {
                         ) : null}
                       </View>
                     )}
+                    
+                    {/* Apply in Daily Life */}
+                    {card.apply_in_daily_life ? (
+                      <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Apply in Daily Life: </Text>{card.apply_in_daily_life}</Text>
+                    ) : null}
+
+
                     <TouchableOpacity
                       style={styles.cardLinkButton}
                       onPress={() => navigation.navigate('Transcript', { recordingId })}
@@ -458,6 +471,35 @@ export const ReportScreen: React.FC = () => {
             </View>
           );
         })()}
+
+        {/* Tomorrow's Goal */}
+        {reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (reportData.coachingCards as CoachingCard[])[0]?.next_day_goal && (
+          <View style={styles.nextDayGoalSection}>
+            <LinearGradient
+              colors={['#C7D2FE', '#DDD6FE', '#E0E7FF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.nextDayGoalGradientBorder}
+            >
+              <View style={styles.nextDayGoalInner}>
+                <View style={styles.nextDayGoalDragonContainer}>
+                  <Image
+                    source={DRAGON_PURPLE}
+                    style={styles.nextDayGoalDragonImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <View style={styles.nextDayGoalLabelRow}>
+                  <Text style={styles.nextDayGoalLabelText}>Tomorrow's Goal</Text>
+                  {/* <View style={styles.nextDayGoalHighlight}>
+                    <Text style={styles.nextDayGoalHighlightText}>Goal</Text>
+                  </View> */}
+                </View>
+                <Text style={styles.nextDayGoalText}>{(reportData.coachingCards as CoachingCard[])[0].next_day_goal}</Text>
+              </View>
+            </LinearGradient>
+          </View>
+        )}
 
         {/* Milestone Celebrations */}
         {reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations) && reportData.milestoneCelebrations.length > 0 && (
@@ -1206,6 +1248,12 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     lineHeight: 22,
     marginBottom: 4,
+    marginTop: 12,
+  },
+  coachLabelBold: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: '#4B5563',
   },
   coachSuggestion: {
     fontFamily: FONTS.regular,
@@ -1319,6 +1367,65 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textDark,
     lineHeight: 22,
+  },
+  // Tomorrow's Goal styles
+  nextDayGoalSection: {
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  nextDayGoalGradientBorder: {
+    borderRadius: 24,
+    padding: 10,
+  },
+  nextDayGoalInner: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 21,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  nextDayGoalDragonContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    overflow: 'hidden',
+    backgroundColor: '#E0F2F1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  nextDayGoalDragonImage: {
+    width: 140,
+    height: 140,
+    marginLeft: 30,
+  },
+  nextDayGoalLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  nextDayGoalLabelText: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: '#6750A4',
+  },
+  nextDayGoalHighlight: {
+    backgroundColor: '#FDE047',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  nextDayGoalHighlightText: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  nextDayGoalText: {
+    fontFamily: FONTS.bold,
+    fontSize: 22,
+    color: COLORS.textDark,
+    textAlign: 'center',
+    lineHeight: 30,
   },
   // Milestone Celebration styles
   milestoneCelebrationSection: {
