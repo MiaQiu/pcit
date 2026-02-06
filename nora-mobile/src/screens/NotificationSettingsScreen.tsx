@@ -104,7 +104,7 @@ export const NotificationSettingsScreen: React.FC = () => {
 
           // Register push token with backend (this was missing before!)
           const accessToken = authService.getAccessToken();
-          await requestPermissions(accessToken);
+          await requestPermissions(accessToken ?? undefined);
 
           const newPreferences = {
             ...preferences,
@@ -166,7 +166,7 @@ export const NotificationSettingsScreen: React.FC = () => {
   const requestNotificationPermissions = async () => {
     // Get access token to register push token with backend
     const accessToken = authService.getAccessToken();
-    const granted = await requestPermissions(accessToken);
+    const granted = await requestPermissions(accessToken ?? undefined);
 
     if (!granted) {
       Alert.alert(

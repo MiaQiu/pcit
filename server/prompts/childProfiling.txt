@@ -84,12 +84,15 @@ Use **only** the following dataset as your ground truth for evaluation. Do not h
       }
     ]
   },
+  "pcit_coaching_summary": "Give a 2-sentence summary of the play session, as you are talking to the parent. Keep in mind the mental state of the parent (e.g. whether it's a cheerful or a stressful session). do not mention pcit",
   "pcit_coaching_cards": [
     {
       "card_id": 1,
       "title": "The 'Fantasy' Rule",
       "icon_suggestion": "magic_wand",
       "coaching_tip": "Panghu is deep in symbolic play, so avoid stalling his creativity with logical corrections. In this space, fantasy is reality, so simply roll with his ideas instead of checking them against facts.",
+      "apply_in_daily_life": "A practical tip on how to apply this coaching insight in everyday routines outside of play sessions (e.g. during meals, bath time, errands).",
+      "next_day_goal": "A few phrase, short, specific, measurable mini-goal the parent can try in tomorrow's play session related to this card.",
       "scenario": null
     },
     {
@@ -97,6 +100,8 @@ Use **only** the following dataset as your ground truth for evaluation. Do not h
       "title": "Turn Questions into Comments",
       "icon_suggestion": "speech_bubble",
       "coaching_tip": "Questions can feel like a test and may interrupt a child who is already focused on a task. Instead of quizzing him, use descriptive comments to validate his actions and keep the conversation flowing.",
+      "apply_in_daily_life": "A practical tip on how to apply this coaching insight in everyday routines outside of play sessions (e.g. during meals, bath time, errands).",
+      "next_day_goal": "A few phrase, short,  measurable mini-goal the parent can try in tomorrow's play session related to this card.",
       "scenario": {
         "context": "When pointing out the numbers on the stickers.",
         "instead_of": "\"You know there are numbers, right?\" (知 道 有 数 字 的 吧？)",
@@ -108,6 +113,8 @@ Use **only** the following dataset as your ground truth for evaluation. Do not h
       "title": "Ignore the Potty Talk",
       "icon_suggestion": "prohibit",
       "coaching_tip": "Panghu uses 'potty talk' to test boundaries, hoping to provoke a big reaction. By staying silent or pivoting the topic, you remove the reward for this behavior and keep the focus on play.",
+      "apply_in_daily_life": "A practical tip on how to apply this coaching insight in everyday routines outside of play sessions (e.g. during meals, bath time, errands).",
+      "next_day_goal": "A few phrase, short,  measurable mini-goal the parent can try in tomorrow's play session related to this card.",
       "scenario": null
     },
     {
@@ -115,6 +122,8 @@ Use **only** the following dataset as your ground truth for evaluation. Do not h
       "title": "Pronoun Power-Up",
       "icon_suggestion": "arrow_up",
       "coaching_tip": "While Panghu refers to himself in the third person, you can gently model the use of 'I' through your reflections. Simply emphasize the correct pronoun when repeating what he said to build his language skills naturally.",
+      "apply_in_daily_life": "A practical tip on how to apply this coaching insight in everyday routines outside of play sessions (e.g. during meals, bath time, errands).",
+      "next_day_goal": "A few phrase, short,  measurable mini-goal the parent can try in tomorrow's play session related to this card.",
       "scenario": {
         "context": "Panghu says: 'Panghu is in the garbage truck.'",
         "instead_of": "Saying 'You mean I am in the truck.'",

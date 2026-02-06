@@ -68,6 +68,8 @@ export interface CoachingCard {
   title: string;
   icon_suggestion: string;
   coaching_tip: string;
+  apply_in_daily_life?: string | null;
+  next_day_goal?: string | null;
   scenario: CoachingCardScenario | null;
 }
 
@@ -194,6 +196,7 @@ export interface RecordingAnalysis {
   childPortfolioInsights?: ChildPortfolioInsights | null;
   aboutChild?: AboutChildItem[] | null;
   developmentalObservation?: DevelopmentalObservation | null;
+  coachingSummary?: string | null;
   coachingCards?: CoachingCard[] | null;
   milestoneCelebrations?: MilestoneCelebration[] | null;
 }

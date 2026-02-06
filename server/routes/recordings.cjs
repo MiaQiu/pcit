@@ -733,7 +733,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       durationSeconds: session.durationSeconds,
       createdAt: session.createdAt,
       status: 'completed',
-      encouragement: "Today’s play added only a small deposit — with a few gentle shifts, your emotional massage can feel much more soothing and connecting.",
+      encouragement: "Amazing job on your session! Here is how it went.",
       noraScore,
       skills,
       areasToAvoid,
@@ -760,6 +760,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       developmentalObservation: childProfiling
         ? { summary: childProfiling.summary, domains: childProfiling.domains }
         : null,
+      coachingSummary: session.coachingSummary || null,
       coachingCards: session.coachingCards || null,
       // Backward compat (old mobile app versions)
       childPortfolioInsights: transformCoachingCardsToPortfolioInsights(session.coachingCards) || session.childPortfolioInsights || null,

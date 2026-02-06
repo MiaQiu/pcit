@@ -227,7 +227,10 @@ async function main() {
         try {
           await prisma.session.update({
             where: { id: session.id },
-            data: { coachingCards: profilingResult.coachingCards }
+            data: {
+              coachingSummary: profilingResult.coachingSummary || null,
+              coachingCards: profilingResult.coachingCards,
+            }
           });
         } catch (_) { /* non-critical */ }
       }

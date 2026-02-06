@@ -340,6 +340,7 @@ async function generateChildProfiling(utterances, childInfo, tagCounts = {}, chi
 
     const result = {
       developmentalObservation: parsed.developmental_observation || null,
+      coachingSummary: parsed.pcit_coaching_summary || null,
       coachingCards: parsed.pcit_coaching_cards || null,
       metadata: parsed.session_metadata || null
     };
@@ -378,7 +379,12 @@ ${formatUtterancesForPrompt(utterances)}
 **Task:**
 1. **Top Moment**: Find the ONE moment that shows the strongest parent-child connection, joy, or positive interaction.
 
-2. **Feedback**: Be warm and encouraging. within 100 words, Give a compliment, follow by one exact feedback to help parent improve. Use an example from the conversation to demonstrate the point (use phrase "below example", do not mention the utterance number). Do not mention about therapy or clinical terms.
+2. **Feedback**: Be warm and encouraging. within 20 words. Give a opening messages to the session report. Do not mention about therapy or clinical terms.
+Example opening messages for feedback:
+- "Today's play made a net emotional deposit — your child felt seen, safe, and connected."
+- "Today's play added only a small deposit — with a few gentle shifts, your emotional massage can feel much more soothing and connecting."
+- "Today's play showed clear progress from last time — your deposits were more consistent, and your child stayed more relaxed and engaged."
+- "Today's play included big emotions and some dysregulation. When stress runs high, deposits don't always land — and that's okay. Consistent emotional massage brings the account back."
 
 3. **Reminder**: Write exactly 2 sentences of encouragement about how improving creates positive experiences for the child. Keep it warm and forward-looking.
 
@@ -390,7 +396,7 @@ Return ONLY valid JSON:
     "quote": "exact quote from the transcript",
     "utteranceNumber": index of utterance
   },
-  "Feedback": "2-3 paragraphs, within 100 words, separated by ***.",
+  "Feedback": "2 sentences of opening message",
   "exampleUtteranceNumber": index of the utterance used as example,
   "reminder": "2 sentences of encouragement"
   "ChildReaction":"2-3 sentences"
@@ -1080,6 +1086,7 @@ Do not include markdown or whitespace (minified JSON).
       tagCounts,
       competencyAnalysis,
       overallScore,
+      coachingSummary: childProfilingResult?.coachingSummary || null,
       coachingCards: childProfilingResult?.coachingCards || null
     }
   });
