@@ -79,7 +79,7 @@ router.post('/', async (req, res) => {
     });
 
     // Run priority engine after WACB submission (fire-and-forget)
-    runPriorityEngine(userId).catch(err => {
+    runPriorityEngine(userId, { wacbSurveyId: survey.id }).catch(err => {
       console.error('[PRIORITY-ENGINE] Error after WACB survey:', err.message);
     });
 

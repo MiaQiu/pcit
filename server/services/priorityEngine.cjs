@@ -132,15 +132,32 @@ async function evaluatePriorities(userId) {
   // Parse issues and get levels from issues
   const issues = parseUserIssues(user?.issue);
   const issueLevels = new Set();
+  const levelUserIssues = {};  // level -> [issue strings]
+
   for (const issue of issues) {
     const level = ISSUE_TO_LEVEL[issue];
     if (level) {
       issueLevels.add(level);
+      if (!levelUserIssues[level]) levelUserIssues[level] = [];
+      levelUserIssues[level].push(issue);
     }
   }
 
-  // Calculate WACB level scores
+  // Calculate WACB level scores and track which questions fired
   const wacbLevelScores = calculateWacbLevelScores(latestSurvey);
+  const levelWacbQuestions = {};  // level -> [question keys with signal]
+
+  if (latestSurvey) {
+    for (const [level, questions] of Object.entries(WACB_LEVEL_MAP)) {
+      for (const question of questions) {
+        const score = latestSurvey[question];
+        if (typeof score === 'number' && score >= WACB_SIGNAL_THRESHOLD) {
+          if (!levelWacbQuestions[level]) levelWacbQuestions[level] = [];
+          levelWacbQuestions[level].push(question);
+        }
+      }
+    }
+  }
 
   // Combine signals from both sources
   const activeLevels = [];
@@ -154,8 +171,12 @@ async function evaluatePriorities(userId) {
       activeLevels.push({
         level,
         priorityIndex: CLINICAL_LEVELS_BY_PRIORITY.indexOf(level),
+        fromUserIssue: fromIssue,
+        fromWacb,
         fromBothSources: fromIssue && fromWacb,
-        wacbScore
+        wacbScore,
+        userIssues: levelUserIssues[level] || [],
+        wacbQuestions: levelWacbQuestions[level] || [],
       });
     }
   }
@@ -185,7 +206,8 @@ async function evaluatePriorities(userId) {
     primaryIssue: primary?.level || null,
     primaryStrategy: primary ? LEVEL_TO_STRATEGY[primary.level] : null,
     secondaryIssue: secondary?.level || null,
-    secondaryStrategy: secondary ? LEVEL_TO_STRATEGY[secondary.level] : null
+    secondaryStrategy: secondary ? LEVEL_TO_STRATEGY[secondary.level] : null,
+    activeLevels
   };
 }
 
@@ -194,7 +216,7 @@ async function evaluatePriorities(userId) {
  * @param {string} userId - The user's ID
  * @returns {Promise<Object>} Updated Child record
  */
-async function runPriorityEngine(userId) {
+async function runPriorityEngine(userId, { wacbSurveyId } = {}) {
   // First, fetch user data to get child info for find-or-create
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -241,11 +263,35 @@ async function runPriorityEngine(userId) {
     }
   });
 
+  // Append ChildIssuePriority history rows
+  if (priorities.activeLevels.length > 0) {
+    const now = new Date();
+    const promises = priorities.activeLevels.map((entry, i) =>
+      prisma.childIssuePriority.create({
+        data: {
+          childId: child.id,
+          clinicalLevel: entry.level,
+          strategy: LEVEL_TO_STRATEGY[entry.level],
+          priorityRank: i + 1,
+          fromUserIssue: entry.fromUserIssue,
+          fromWacb: entry.fromWacb,
+          userIssues: entry.userIssues.length > 0 ? JSON.stringify(entry.userIssues) : null,
+          wacbQuestions: entry.wacbQuestions.length > 0 ? JSON.stringify(entry.wacbQuestions) : null,
+          wacbScore: entry.wacbScore || null,
+          computedAt: now,
+          wacbSurveyId: wacbSurveyId || null,
+        }
+      })
+    );
+    await Promise.all(promises);
+  }
+
   console.log(`[PRIORITY-ENGINE] Updated priorities for user ${userId.substring(0, 8)}:`, {
     primaryIssue: priorities.primaryIssue,
     primaryStrategy: priorities.primaryStrategy,
     secondaryIssue: priorities.secondaryIssue,
-    secondaryStrategy: priorities.secondaryStrategy
+    secondaryStrategy: priorities.secondaryStrategy,
+    activeLevelsCount: priorities.activeLevels.length
   });
 
   return updatedChild;

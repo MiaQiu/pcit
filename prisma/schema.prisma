@@ -404,7 +404,8 @@ model WacbSurvey {
   q8Interrupt          Int
   q9Attention          Int
   totalScore           Int
-  User                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ChildIssuePriority ChildIssuePriority[]
 
   @@index([submittedAt])
   @@index([userId])
@@ -442,11 +443,33 @@ model Child {
   secondaryStrategy InterventionStrategy?
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
-  User              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ChildMilestone    ChildMilestone[]
-  ChildProfiling    ChildProfiling[]
+  User               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ChildMilestone     ChildMilestone[]
+  ChildProfiling     ChildProfiling[]
+  ChildIssuePriority ChildIssuePriority[]
 
   @@index([userId])
+}
+
+model ChildIssuePriority {
+  id            String               @id @default(uuid())
+  childId       String
+  clinicalLevel ClinicalLevel
+  strategy      InterventionStrategy
+  priorityRank  Int
+  fromUserIssue Boolean              @default(false)
+  fromWacb      Boolean              @default(false)
+  userIssues    String?
+  wacbQuestions String?
+  wacbScore     Int?
+  computedAt    DateTime             @default(now())
+  wacbSurveyId  String?
+  Child         Child                @relation(fields: [childId], references: [id], onDelete: Cascade)
+  WacbSurvey    WacbSurvey?          @relation(fields: [wacbSurveyId], references: [id], onDelete: SetNull)
+
+  @@index([childId])
+  @@index([childId, computedAt])
+  @@index([childId, clinicalLevel, computedAt])
 }
 
 model ChildMilestone {

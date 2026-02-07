@@ -291,6 +291,28 @@ async function generateChildProfiling(utterances, childInfo, tagCounts = {}, chi
   const formatLevel = (level) => level ? level.replace(/_/g, ' ').toLowerCase() : 'none';
   const formatStrategy = (strategy) => strategy ? strategy.replace(/_/g, ' ').toLowerCase() : 'none';
 
+  // Build detail strings from ChildIssuePriority rows
+  const formatRowDetails = (row) => {
+    const parts = [];
+    if (row.fromUserIssue && row.userIssues) {
+      const issues = JSON.parse(row.userIssues).map(i => i.replace(/_/g, ' '));
+      parts.push(`User-reported: ${issues.join(', ')}`);
+    }
+    if (row.fromWacb && row.wacbQuestions) {
+      const qs = JSON.parse(row.wacbQuestions);
+      parts.push(`WACB signals: ${qs.join(', ')}${row.wacbScore ? ` (score: ${row.wacbScore})` : ''}`);
+    }
+    return parts.length > 0 ? parts.join('. ') : 'none';
+  };
+
+  const primaryDetails = (clinicalPriority?.issuePriorities || []).find(r => r.priorityRank === 1);
+  const otherPriorities = (clinicalPriority?.issuePriorities || []).filter(r => r.priorityRank > 1);
+  const otherIssuesText = otherPriorities.length > 0
+    ? otherPriorities.map(r =>
+        `  - ${formatLevel(r.clinicalLevel)} — Strategy: ${formatStrategy(r.strategy)}\n    Details: ${formatRowDetails(r)}`
+      ).join('\n')
+    : '  none';
+
   const sessionMetrics = `- Labeled Praises: ${tagCounts.praise || 0} (goal: 10+)
 - Reflections: ${tagCounts.echo || 0} (goal: 10+)
 - Behavioral Descriptions: ${tagCounts.narration || 0} (goal: 10+)
@@ -304,8 +326,8 @@ async function generateChildProfiling(utterances, childInfo, tagCounts = {}, chi
     CHILD_GENDER: gender || 'child',
     PRIMARY_ISSUE: formatLevel(clinicalPriority?.primaryIssue),
     PRIMARY_STRATEGY: formatStrategy(clinicalPriority?.primaryStrategy),
-    SECONDARY_ISSUE: formatLevel(clinicalPriority?.secondaryIssue),
-    SECONDARY_STRATEGY: formatStrategy(clinicalPriority?.secondaryStrategy),
+    PRIMARY_DETAILS: primaryDetails ? formatRowDetails(primaryDetails) : 'none',
+    OTHER_ISSUES: otherIssuesText,
     SESSION_METRICS: sessionMetrics,
     TRANSCRIPT: transcript
   });
@@ -655,13 +677,26 @@ async function analyzePCITCoding(sessionId, userId) {
     });
     console.log(`✅ [ANALYSIS-STEP-1c] Created Child record ${child.id} for user ${userId.substring(0, 8)}`);
   }
+  // Fetch latest ChildIssuePriority snapshot for detail context
+  const latestComputedAt = await prisma.childIssuePriority.findFirst({
+    where: { childId: child.id },
+    orderBy: { computedAt: 'desc' },
+    select: { computedAt: true }
+  });
+  const issuePriorities = latestComputedAt
+    ? await prisma.childIssuePriority.findMany({
+        where: { childId: child.id, computedAt: latestComputedAt.computedAt },
+        orderBy: { priorityRank: 'asc' }
+      })
+    : [];
   const clinicalPriority = {
     primaryIssue: child.primaryIssue,
     primaryStrategy: child.primaryStrategy,
     secondaryIssue: child.secondaryIssue,
-    secondaryStrategy: child.secondaryStrategy
+    secondaryStrategy: child.secondaryStrategy,
+    issuePriorities
   };
-  console.log(`✅ [ANALYSIS-STEP-1c] Clinical priority: primary=${clinicalPriority.primaryIssue || 'none'}, secondary=${clinicalPriority.secondaryIssue || 'none'}`);
+  console.log(`✅ [ANALYSIS-STEP-1c] Clinical priority: primary=${clinicalPriority.primaryIssue || 'none'}, secondary=${clinicalPriority.secondaryIssue || 'none'}, detail rows=${issuePriorities.length}`);
 
   // Get utterances from database
   console.log(`📊 [ANALYSIS-STEP-2] Fetching utterances from database...`);

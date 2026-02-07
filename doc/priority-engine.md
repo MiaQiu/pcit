@@ -107,15 +107,20 @@ Both are fire-and-forget calls that don't block the response.
 
 ## API
 
-### `runPriorityEngine(userId)`
+### `runPriorityEngine(userId, { wacbSurveyId } = {})`
 
-Main entry point. Finds or creates a `Child` record for the user, evaluates priorities, and updates the child.
+Main entry point. Finds or creates a `Child` record for the user, evaluates priorities, updates the child, and appends `ChildIssuePriority` history rows.
+
+- `wacbSurveyId` (optional) - Links the history rows to the triggering WACB survey
 
 ```js
 const { runPriorityEngine } = require('./server/services/priorityEngine.cjs');
 
 const updatedChild = await runPriorityEngine(userId);
 // Returns the updated Child record with priority fields populated
+
+// With WACB survey link:
+const updatedChild = await runPriorityEngine(userId, { wacbSurveyId: survey.id });
 ```
 
 ### `evaluatePriorities(userId)`
@@ -126,7 +131,8 @@ Evaluates priorities without updating the database. Useful for testing.
 const { evaluatePriorities } = require('./server/services/priorityEngine.cjs');
 
 const result = await evaluatePriorities(userId);
-// { primaryIssue, primaryStrategy, secondaryIssue, secondaryStrategy }
+// { primaryIssue, primaryStrategy, secondaryIssue, secondaryStrategy, activeLevels }
+// activeLevels: [{ level, priorityIndex, fromUserIssue, fromWacb, fromBothSources, wacbScore, userIssues, wacbQuestions }]
 ```
 
 ### `parseUserIssues(issueField)`
@@ -177,8 +183,9 @@ Output shows:
 | All WACB scores < 3 | No WACB signals contribute |
 | Only one level with signal | Primary set, secondary null |
 | Existing Child record | Found and updated (no duplicate) |
-| WACB re-submitted | Latest survey fetched, Child updated |
-| No signals at all | All priority fields set to null |
+| WACB re-submitted | Latest survey fetched, Child updated, new history rows appended |
+| No signals at all | All priority fields set to null, no history rows created |
+| Engine run multiple times | History rows are appended (not replaced), building a timeline |
 
 ## Database Schema
 
@@ -205,7 +212,50 @@ model Child {
   primaryStrategy   InterventionStrategy?
   secondaryIssue    ClinicalLevel?
   secondaryStrategy InterventionStrategy?
+  ChildIssuePriority ChildIssuePriority[]
 }
+
+model ChildIssuePriority {
+  id            String               @id @default(uuid())
+  childId       String
+  clinicalLevel ClinicalLevel
+  strategy      InterventionStrategy
+  priorityRank  Int                  // 1 = highest priority
+  fromUserIssue Boolean              @default(false)
+  fromWacb      Boolean              @default(false)
+  userIssues    String?              // JSON array of issue strings
+  wacbQuestions String?              // JSON array of question keys
+  wacbScore     Int?                 // Aggregate WACB score for this level
+  computedAt    DateTime             @default(now())
+  wacbSurveyId  String?              // Which WACB survey triggered this computation
+  Child         Child                @relation(...)
+  WacbSurvey    WacbSurvey?          @relation(...)
+}
+```
+
+## History Tracking
+
+The `ChildIssuePriority` table builds a historical timeline of how each issue/behavior evolves. New rows are **appended** each time the priority engine runs (not deleted/replaced), so you get a full history. The `computedAt` timestamp + optional `wacbSurveyId` link each snapshot to when/why it was computed.
+
+### Query Examples
+
+```sql
+-- Current priorities (latest snapshot)
+SELECT * FROM "ChildIssuePriority"
+WHERE "childId" = ? AND "computedAt" = (
+  SELECT MAX("computedAt") FROM "ChildIssuePriority" WHERE "childId" = ?
+)
+ORDER BY "priorityRank";
+
+-- How DE_ESCALATE priority changed over time
+SELECT "priorityRank", "wacbScore", "fromUserIssue", "fromWacb", "computedAt"
+FROM "ChildIssuePriority"
+WHERE "childId" = ? AND "clinicalLevel" = 'DE_ESCALATE'
+ORDER BY "computedAt";
+
+-- When did STABILIZE first appear?
+SELECT MIN("computedAt") FROM "ChildIssuePriority"
+WHERE "childId" = ? AND "clinicalLevel" = 'STABILIZE';
 ```
 
 ## File Locations

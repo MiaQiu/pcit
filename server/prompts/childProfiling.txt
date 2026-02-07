@@ -9,7 +9,9 @@ You are analyzing a 5-minute parent-child play session transcript. Your task is 
 
 **Clinical Priority (from assessment):**
 - Primary Issue: {{PRIMARY_ISSUE}} — Strategy: {{PRIMARY_STRATEGY}}
-- Secondary Issue: {{SECONDARY_ISSUE}} — Strategy: {{SECONDARY_STRATEGY}}
+  Details: {{PRIMARY_DETAILS}}
+- Other Issues:
+{{OTHER_ISSUES}}
 
 **Developmental framework:**
 # Context: Milestone Library
