@@ -3,21 +3,22 @@
  * "Target" - Shows personalized focus areas before PreIntroReassurance
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { IntroScreenTemplate } from './IntroScreenTemplate';
 import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
-
-const FOCUS_AREAS = [
-  'Manage Big Feelings Calmly',
-  'Improve listening and cooperation',
-  'Build stronger connection through play',
-];
+import { useOnboarding } from '../../contexts/OnboardingContext';
+import { evaluateFocusAreas } from '../../utils/focusAreas';
 
 export const FocusAreasScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const { data } = useOnboarding();
+  const focusAreas = useMemo(
+    () => evaluateFocusAreas(data.issue, data.wacb),
+    [data.issue, data.wacb]
+  );
 
   return (
     <IntroScreenTemplate
@@ -26,7 +27,7 @@ export const FocusAreasScreen: React.FC = () => {
       title="Your Focus Areas"
       description={
         <Text style={styles.description}>
-          {FOCUS_AREAS.map((area) => `  •  ${area}`).join('\n')}
+          {focusAreas.map((area) => `  •  ${area}`).join('\n')}
           {'\n\n'}These are the first areas we'll focus on together
         </Text>
       }
