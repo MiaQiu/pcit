@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     textAlign: 'center',
     marginTop: 16,
-    marginBottom: 24,
+    marginBottom: 32,
   },
   cardList: {
     gap: 16,
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F4F4',
     borderRadius: 20,
     padding: 16,
-    marginTop:16,
+    //marginTop:6,
   },
   cardIconContainer: {
     width: 80,

@@ -51,9 +51,9 @@ const LEVEL_TO_FOCUS_AREA: Record<ClinicalLevel, string> = {
 };
 
 export const DEFAULT_FOCUS_AREAS = [
-  'Manage big feelings calmly',
-  'Improve listening and cooperation',
-  'Build stronger connection through play',
+    'Build stronger connection through play',
+    'Improve listening and cooperation',
+    'Monitor & support child\'s social & emotional development',
 ];
 
 const UNIVERSAL_DEFAULT = 'Build stronger connection through play';
