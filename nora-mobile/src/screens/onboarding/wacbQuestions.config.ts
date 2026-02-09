@@ -86,7 +86,7 @@ export const getWacbQuestions = (childName: string = 'your child'): Omit<Multipl
     title: `In the past two weeks, how often has ${childName} struggled to focus or been unable to sit still?`,
     options: SCALE_OPTIONS,
     dataField: 'wacb.q9Attention',
-    nextScreen: 'Reassurance', // Last question navigates to Reassurance
+    nextScreen: 'WellbeingIntro', // Last question navigates to Wellbeing intro
     continueText: 'Submit Survey',
     progress: getOnboardingProgress('WacbQuestion9'),
   },

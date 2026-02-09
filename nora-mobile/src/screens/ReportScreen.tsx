@@ -17,6 +17,7 @@ import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import type { RecordingAnalysis, CoachingCard, MilestoneCelebration } from '@nora/core';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MarkdownText } from '../utils/MarkdownText';
+import { DragonCard } from '../components/DragonCard';
 import { MomentPlayer } from '../components/MomentPlayer';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
@@ -475,29 +476,10 @@ export const ReportScreen: React.FC = () => {
         {/* Tomorrow's Goal */}
         {reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (reportData.coachingCards as CoachingCard[])[0]?.next_day_goal && (
           <View style={styles.nextDayGoalSection}>
-            <LinearGradient
-              colors={['#C7D2FE', '#DDD6FE', '#E0E7FF']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.nextDayGoalGradientBorder}
-            >
-              <View style={styles.nextDayGoalInner}>
-                <View style={styles.nextDayGoalDragonContainer}>
-                  <Image
-                    source={DRAGON_PURPLE}
-                    style={styles.nextDayGoalDragonImage}
-                    resizeMode="contain"
-                  />
-                </View>
-                <View style={styles.nextDayGoalLabelRow}>
-                  <Text style={styles.nextDayGoalLabelText}>Tomorrow's Goal</Text>
-                  {/* <View style={styles.nextDayGoalHighlight}>
-                    <Text style={styles.nextDayGoalHighlightText}>Goal</Text>
-                  </View> */}
-                </View>
-                <Text style={styles.nextDayGoalText}>{(reportData.coachingCards as CoachingCard[])[0].next_day_goal}</Text>
-              </View>
-            </LinearGradient>
+            <DragonCard
+              label="Tomorrow's Goal"
+              text={(reportData.coachingCards as CoachingCard[])[0].next_day_goal}
+            />
           </View>
         )}
 

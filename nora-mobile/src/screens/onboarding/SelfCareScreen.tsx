@@ -33,7 +33,7 @@ export const SelfCareScreen: React.FC = () => {
   };
 
   const handleContinue = () => {
-    navigation.navigate('PreIntroReassurance');
+    navigation.navigate('Reassurance');
   };
 
   return (

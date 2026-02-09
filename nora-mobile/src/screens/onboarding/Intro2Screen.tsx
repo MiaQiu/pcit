@@ -1,84 +1,78 @@
 /**
  * Intro 2 Screen
- * "Play" - Introduction to practice sessions
+ * "When is your 5 mins?" - Time picker for play session scheduling
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
-  Image,
-  Dimensions,
+  Platform,
 } from 'react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 import { ProgressBar } from '../../components/ProgressBar';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { DragonCard } from '../../components/DragonCard';
 
 export const Intro2Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const { data } = useOnboarding();
+  const userName = data.name || '';
 
-  const handleNext = () => {
-    navigation.navigate('Intro3');
+  // Default to 7:30 PM
+  const defaultDate = new Date();
+  defaultDate.setHours(19, 30, 0, 0);
+  const [selectedTime, setSelectedTime] = useState(defaultDate);
+
+  const onTimeChange = (_event: DateTimePickerEvent, date?: Date) => {
+    if (date) {
+      setSelectedTime(date);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        {/* Progress Indicator */}
         <ProgressBar totalSegments={3} currentSegment={2} />
 
-
-
-        {/* Content */}
         <View style={styles.textContent}>
-        <Text style={styles.subtitle}>
-          Play
+          <Text style={styles.title}>
+            Hi{userName ? ` ${userName}` : ''}, When is your 5 mins?
           </Text>
-          <Text style={styles.title}>Record a 5-min play session</Text>
+          <Text style={styles.description}>
+            Many parents find the "After-School Reconnect" or "Pre-Dinner Play" or "Weekend day morning" works best.
+          </Text>
 
-          {/* <Text style={styles.description}>
-            • Practice what you've learned{'\n'}
-            • Record audio during play{'\n'}
-            • Get AI-powered coaching in real-time
-          </Text> */}
-        </View>
-
-        {/* Spacer
-        <View style={styles.spacer} /> */}
-
-         {/* Illustration */}
-         <View style={styles.illustrationContainer}>
-          <View style={styles.illustrationCircle}>
-            <Image
-              source={require('../../../assets/images/dragon_image.png')}
-              style={styles.illustrationImage}
-              resizeMode="contain"
+          <View style={styles.pickerContainer}>
+            <DateTimePicker
+              value={selectedTime}
+              mode="time"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onTimeChange}
+              minuteInterval={15}
+              textColor="#1F2937"
+              themeVariant="light"
+              style={styles.timePicker}
             />
           </View>
         </View>
 
-        {/* Next Button */}
+        <View style={styles.cardContainer}>
+          <DragonCard text="Personalized guidance that grows with your child" />
+        </View>
+
         <TouchableOpacity
           style={styles.button}
-          onPress={handleNext}
+          onPress={() => navigation.navigate('Intro3')}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>Continue</Text>
+          <Text style={styles.buttonText}>Continue  →</Text>
         </TouchableOpacity>
-
-        {/* Skip */}
-        {/* <TouchableOpacity
-          style={styles.skipButton}
-          onPress={() => navigation.navigate('Subscription')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.skipText}>Skip</Text>
-        </TouchableOpacity> */}
       </View>
     </SafeAreaView>
   );
@@ -93,54 +87,39 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 32,
     paddingTop: 40,
-  },
-  illustrationContainer: {
-    alignItems: 'center',
-    marginTop: 40,
-    //marginBottom: 200,
-  },
-  illustrationCircle: {
-    width: SCREEN_WIDTH * 0.8,
-    height: SCREEN_WIDTH * 0.45,
-    borderRadius: (SCREEN_WIDTH * 0.5) / 2,
-    backgroundColor: '#A2DFCB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  illustrationImage: {
-    width: SCREEN_WIDTH * 0.8,
-    height: SCREEN_WIDTH * 0.8,
+    paddingBottom: 112,
   },
   textContent: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 32,
+    fontSize: 28,
     color: '#1F2937',
-    marginBottom: 16,
     textAlign: 'center',
-  },
-  subtitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 18,
-    color: '#8C49D5',
-    textAlign: 'center',
-    marginBottom: 24,
-    marginTop:40,
-    lineHeight: 26,
   },
   description: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 16,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 14,
     color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 28,
+    marginTop: 8,
+    lineHeight: 22,
   },
-  spacer: {
-    flex: 1,
+  pickerContainer: {
+    alignItems: 'center',
+    marginVertical: 16,
+    height: 100,
+    overflow: 'hidden',
   },
+  timePicker: {
+    height: 100,
+    width: 300,
+    marginTop: -60
+  },
+  cardContainer: {},
   button: {
     position: 'absolute',
     bottom: 16,
@@ -157,5 +136,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#FFFFFF',
   },
-
 });

@@ -1,15 +1,14 @@
 /**
  * Reassurance Screen
- * Shows dragon with encouraging message after survey
+ * Personalized message with dragon after surveys
  */
 
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Image,
-  Animated,
   Dimensions,
   TouchableOpacity,
   SafeAreaView,
@@ -25,68 +24,13 @@ export const ReassuranceScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data } = useOnboarding();
 
-  // Animation values - COMMENTED OUT
-  // const fadeAnim = useRef(new Animated.Value(0)).current;
-  // const scaleAnim = useRef(new Animated.Value(0.8)).current;
-  // const bubbleAnim = useRef(new Animated.Value(0)).current;
-  // const textOpacity = useRef(new Animated.Value(0)).current;
-  // const subtitleOpacity = useRef(new Animated.Value(0)).current;
-  // const buttonOpacity = useRef(new Animated.Value(0)).current;
-
+  const userName = data.name || 'there';
   const childName = data.childName || 'your child';
-  const fullText = `Your wellbeing matters too!`;
-  const subtitle = "Parenting takes a lot of energy. Before we dive into the program, we want to check in on how you have been feeling";
-
-  const handleContinue = () => {
-    navigation.navigate('DepressionQuestion1');
-  };
-
-  // ANIMATIONS COMMENTED OUT
-  // useEffect(() => {
-  //   // Set dragon and button to visible immediately
-  //   fadeAnim.setValue(1);
-  //   scaleAnim.setValue(1);
-  //   buttonOpacity.setValue(1);
-
-  //   // Start text animations
-  //   Animated.sequence([
-  //     // Animate bubble
-  //     Animated.spring(bubbleAnim, {
-  //       toValue: 1,
-  //       tension: 50,
-  //       friction: 7,
-  //       useNativeDriver: true,
-  //       delay: 200,
-  //     }),
-  //     // Then fade in text over 1 second
-  //     Animated.timing(textOpacity, {
-  //       toValue: 1,
-  //       duration: 1000,
-  //       useNativeDriver: true,
-  //       delay: 200,
-  //     }),
-  //     // Then fade in subtitle
-  //     Animated.timing(subtitleOpacity, {
-  //       toValue: 1,
-  //       duration: 800,
-  //       useNativeDriver: true,
-  //       delay: 300,
-  //     }),
-  //   ]).start();
-
-  //   // TEMPORARY: Navigation disabled for layout adjustments
-  //   // const navigationTimer = setTimeout(() => {
-  //   //   navigation.replace('DepressionSurvey');
-  //   // }, 4000);
-
-  //   // return () => {
-  //   //   clearTimeout(navigationTimer);
-  //   // };
-  // }, [navigation, fadeAnim, scaleAnim, bubbleAnim, textOpacity, subtitleOpacity, buttonOpacity]);
 
   return (
     <LinearGradient
-      colors={['#9CD8D6', '#96D0E0']}
+      colors={['#96D1E1', '#FFFFFF', '#FFFFFF']}
+      locations={[0, 0.5, 1]}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
@@ -98,16 +42,14 @@ export const ReassuranceScreen: React.FC = () => {
             resizeMode="contain"
           />
 
-          {/* Message Text */}
-          <View style={styles.textContainer}>
-            <Text style={styles.messageText}>
-              {fullText}
+          {/* Text Content */}
+          <View style={styles.textContent}>
+            <Text style={styles.title}>
+              Hi {userName}, Nora is creating a personalized approach for you and {childName}.
             </Text>
-            {subtitle && (
-              <Text style={styles.subtitleText}>
-                {subtitle}
-              </Text>
-            )}
+            <Text style={styles.description}>
+              We'll focus on the skills that matter most — one step at a time.
+            </Text>
           </View>
         </View>
 
@@ -115,10 +57,10 @@ export const ReassuranceScreen: React.FC = () => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.button}
-            onPress={handleContinue}
+            onPress={() => navigation.navigate('FocusAreas')}
             activeOpacity={0.8}
           >
-            <Text style={styles.buttonText}>Let's go</Text>
+            <Text style={styles.buttonText}>Let's go!  →</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -144,26 +86,27 @@ const styles = StyleSheet.create({
     height: SCREEN_WIDTH * 0.75,
     marginBottom: 20,
   },
-  textContainer: {
+  textContent: {
     alignItems: 'center',
     marginTop: 20,
     paddingHorizontal: 32,
   },
-  messageText: {
+  title: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 28,
-    color: '#FFFFFF',
+    color: '#1E2939',
+    marginBottom: 32,
     textAlign: 'center',
-    lineHeight: 40,
-    marginBottom: 24,
+    lineHeight: 32,
   },
-  subtitleText: {
+  description: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#1E2939',
     textAlign: 'center',
     lineHeight: 24,
-    opacity: 0.9,
+    marginLeft:12,
+    marginRight:12
   },
   buttonContainer: {
     paddingHorizontal: 32,

@@ -10,7 +10,6 @@ export type OnboardingScreenName =
   | 'ChildGender'
   | 'ChildBirthday'
   | 'ChildIssue'
-  | 'InitialReassurance'
   | 'WacbQuestion1'
   | 'WacbQuestion2'
   | 'WacbQuestion3'
@@ -33,8 +32,7 @@ const ONBOARDING_STEPS: OnboardingScreenName[] = [
   'ChildGender',        // Step 4
   'ChildBirthday',      // Step 5
   'ChildIssue',         // Step 6
-  'InitialReassurance', // Step 7
-  'WacbQuestion1',      // Step 8
+  'WacbQuestion1',      // Step 7
   'WacbQuestion2',      // Step 9
   'WacbQuestion3',      // Step 10
   'WacbQuestion4',      // Step 11

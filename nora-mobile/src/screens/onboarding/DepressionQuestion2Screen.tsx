@@ -58,7 +58,7 @@ export const DepressionQuestion2Screen: React.FC = () => {
       if (totalScore >= 3) {
         navigation.navigate('SelfCare');
       } else {
-        navigation.navigate('PreIntroReassurance');
+        navigation.navigate('Reassurance');
       }
 
       // Prevent default navigation by throwing (but after we've navigated)
@@ -75,7 +75,7 @@ export const DepressionQuestion2Screen: React.FC = () => {
         'Failed to submit survey. You can continue and complete it later from your profile.'
       );
       // Continue anyway on error
-      navigation.navigate('PreIntroReassurance');
+      navigation.navigate('Reassurance');
       throw err; // Prevent default navigation
     }
   };

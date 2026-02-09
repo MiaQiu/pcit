@@ -5,12 +5,16 @@
 import React from 'react';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { getOnboardingProgress } from '../../config/onboardingProgress';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 
 export const RelationshipScreen: React.FC = () => {
+  const { data } = useOnboarding();
+  const userName = data.name || 'there';
+
   return (
     <MultipleChoiceScreen
       headerText="This helps us tailor guidance to your role."
-      title="What is your relationship to the child?"
+      title={`Hi ${userName}, what is your relationship to the child?`}
       options={[
         { value: 'MOTHER', label: 'Mother' },
         { value: 'FATHER', label: 'Father' },

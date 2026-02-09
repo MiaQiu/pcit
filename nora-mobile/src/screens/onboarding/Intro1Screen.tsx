@@ -1,6 +1,6 @@
 /**
  * Intro 1 Screen
- * "Learn" - Introduction to PCIT lessons
+ * "What to play with?" - Toy suggestions for play sessions
  */
 
 import React from 'react';
@@ -10,75 +10,49 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
-  Image,
-  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { ProgressBar } from '../../components/ProgressBar';
+import { DragonCard } from '../../components/DragonCard';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const TOYS = [
+  'Blocks or building toys',
+  'Cars, figures, or pretend play',
+  'Drawing or open-ended toys',
+  'Puzzles',
+];
 
 export const Intro1Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
 
-  const handleNext = () => {
-    navigation.navigate('Intro2');
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        {/* Progress Indicator */}
         <ProgressBar totalSegments={3} currentSegment={1} />
 
-       
-
-        {/* Content */}
         <View style={styles.textContent}>
-        <Text style={styles.subtitle}>
-          Learn
-          </Text>
-          <Text style={styles.title}>Get a 2-min tip each day</Text>
-         
-          {/* <Text style={styles.description}>
-            • Understand your child's behavior{'\n'}
-            • Learn proven communication skills{'\n'}
-            • Build a stronger parent-child bond
-          </Text> */}
-        </View>
+          <Text style={styles.title}>What to play with?</Text>
+          <Text style={styles.subtitle}>Simple, familiar toys work best</Text>
 
-        {/* Spacer
-        <View style={styles.spacer} /> */}
-
-         {/* Illustration */}
-         <View style={styles.illustrationContainer}>
-          <View style={styles.illustrationCircle}>
-            <Image
-              source={require('../../../assets/images/dragon_image.png')}
-              style={styles.illustrationImage}
-              resizeMode="contain"
-            />
+          <View style={styles.bulletList}>
+            {TOYS.map((toy) => (
+              <Text key={toy} style={styles.bulletItem}>  •  {toy}</Text>
+            ))}
           </View>
         </View>
-        
-        {/* Next Button */}
+
+        <View style={styles.cardContainer}>
+          <DragonCard text="let your child lead the play" />
+        </View>
+
         <TouchableOpacity
           style={styles.button}
-          onPress={handleNext}
+          onPress={() => navigation.navigate('Intro2')}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>Continue</Text>
+          <Text style={styles.buttonText}>Continue  →</Text>
         </TouchableOpacity>
-
-        {/* Skip */}
-        {/* <TouchableOpacity
-          style={styles.skipButton}
-          onPress={() => navigation.navigate('Subscription')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.skipText}>Skip</Text>
-        </TouchableOpacity> */}
       </View>
     </SafeAreaView>
   );
@@ -93,54 +67,38 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 32,
     paddingTop: 40,
-  },
-  illustrationContainer: {
-    alignItems: 'center',
-    marginTop: 40,
-    //marginBottom: 200,
-  },
-  illustrationCircle: {
-    width: SCREEN_WIDTH * 0.8,
-    height: SCREEN_WIDTH * 0.45,
-    borderRadius: (SCREEN_WIDTH * 0.5) / 2,
-    backgroundColor: '#A2DFCB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  illustrationImage: {
-    width: SCREEN_WIDTH * 0.8,
-    height: SCREEN_WIDTH * 0.8,
+    paddingBottom: 112,
   },
   textContent: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 32,
+    fontSize: 28,
     color: '#1F2937',
-    marginBottom: 16,
     textAlign: 'center',
   },
   subtitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 18,
-    color: '#8C49D5',
-    textAlign: 'center',
-    marginBottom: 24,
-    marginTop:40,
-    lineHeight: 26,
-  },
-  description: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  bulletList: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  bulletItem: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 16,
+    color: '#1F2937',
     lineHeight: 28,
   },
-  spacer: {
-    flex: 1,
-  },
+  cardContainer: {},
   button: {
     position: 'absolute',
     bottom: 16,
@@ -157,5 +115,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#FFFFFF',
   },
-
 });

@@ -11,9 +11,10 @@ interface SubscriptionContextType {
   isSubscribed: boolean;
   offerings: PurchasesOfferings | null;
   currentPackage: PurchasesPackage | null;
+  availablePackages: PurchasesPackage[];
   isLoading: boolean;
   error: string | null;
-  purchasePackage: () => Promise<{ success: boolean }>;
+  purchasePackage: (pkg?: PurchasesPackage) => Promise<{ success: boolean }>;
   restorePurchases: () => Promise<{ restored: boolean }>;
   checkSubscriptionStatus: () => Promise<void>;
 }
@@ -25,6 +26,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
   const [currentPackage, setCurrentPackage] = useState<PurchasesPackage | null>(null);
+  const [availablePackages, setAvailablePackages] = useState<PurchasesPackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,8 +48,8 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const offerings = await Purchases.getOfferings();
       setOfferings(offerings);
 
-      // Get the current offering's package (should be your 3-month package)
       if (offerings.current?.availablePackages.length > 0) {
+        setAvailablePackages(offerings.current.availablePackages);
         setCurrentPackage(offerings.current.availablePackages[0]);
       }
     } catch (e) {
@@ -73,8 +75,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  const purchasePackage = async () => {
-    if (!currentPackage) {
+  const purchasePackage = async (pkg?: PurchasesPackage) => {
+    const packageToPurchase = pkg || currentPackage;
+    if (!packageToPurchase) {
       throw new Error('No package available');
     }
 
@@ -82,9 +85,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setIsLoading(true);
       setError(null);
 
-      console.log('Starting purchase for package:', currentPackage.identifier);
+      console.log('Starting purchase for package:', packageToPurchase.identifier);
 
-      const { customerInfo } = await Purchases.purchasePackage(currentPackage);
+      const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
 
       // Check if purchase was successful
       const isNowSubscribed = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium] !== undefined;
@@ -138,6 +141,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         isSubscribed,
         offerings,
         currentPackage,
+        availablePackages,
         isLoading,
         error,
         purchasePackage,

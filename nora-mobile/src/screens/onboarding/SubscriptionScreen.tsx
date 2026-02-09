@@ -22,6 +22,7 @@ import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
+import { REVENUECAT_CONFIG } from '../../config/revenuecat';
 import { Ellipse } from '../../components/Ellipse';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 import Purchases from 'react-native-purchases';
@@ -48,14 +49,14 @@ export const SubscriptionScreen: React.FC = () => {
   const { data, completeOnboarding } = useOnboarding();
   const authService = useAuthService();
   const {
-    currentPackage,
+    availablePackages,
     isLoading: subscriptionLoading,
     purchasePackage,
     restorePurchases,
     error: subscriptionError
   } = useSubscription();
 
-  const [selectedPlan, setSelectedPlan] = useState<'annual' | 'monthly'>('annual');
+  const [selectedPlan, setSelectedPlan] = useState<'3month' | 'yearly'>('yearly');
   const [isLoading, setIsLoading] = useState(false);
 
   // Calculate trial end date (1 month from today)
@@ -66,8 +67,14 @@ export const SubscriptionScreen: React.FC = () => {
     return endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  // Get actual price from RevenueCat
-  const displayPrice = currentPackage?.product.priceString || '$99.98';
+  // Find packages by product ID
+  const threeMonthPackage = availablePackages.find(
+    p => p.product.identifier === REVENUECAT_CONFIG.products.threeMonth
+  );
+  const yearlyPackage = availablePackages.find(
+    p => p.product.identifier === REVENUECAT_CONFIG.products.oneYear
+  );
+  const selectedPackage = selectedPlan === 'yearly' ? yearlyPackage : threeMonthPackage;
 
   const handleBack = () => navigation.goBack();
 
@@ -77,7 +84,7 @@ export const SubscriptionScreen: React.FC = () => {
     try {
       // User was already identified to RevenueCat in CreateAccountScreen
       // Proceed directly with purchase - webhook will have the correct user ID
-      const result = await purchasePackage();
+      const result = await purchasePackage(selectedPackage || undefined);
 
       if (result.success) {
         // CRITICAL: Trust the webhook as source of truth for subscription status
@@ -262,12 +269,12 @@ export const SubscriptionScreen: React.FC = () => {
 
         {/* Title */}
         <Text style={styles.title}>
-          {data.childName ? `${data.childName}'s 3 months plan` : '3-Month plan'}
+          Unlock {data.childName ? `${data.childName}'s Potential with Nora` : 'Unlock Potential with Nora'}
         </Text>
         <Text style={styles.subtitle}>
           {/* First 30 days free, then ${selectedPlan === 'annual' ? '138.96' : '11.58'}/
           {selectedPlan === 'annual' ? 'year' : 'month'} */}
-          Parents with similar challenges often see real change in ~3 months.
+          Join thousands of parents seeing real growth.
         </Text>
 
         {/* Pricing Toggle */}
@@ -323,10 +330,10 @@ export const SubscriptionScreen: React.FC = () => {
         )}
 
         {/* Timeline */}
-        <View style={styles.timeline}>
+        {/* <View style={styles.timeline}>
           {TIMELINE_ITEMS.map((item, index) => (
             <View key={index} style={styles.timelineItem}>
-              {/* Icon */}
+            
               <View style={styles.iconContainer}>
                 <View style={styles.icon}>
                   <Text style={styles.iconText}>✓</Text>
@@ -334,14 +341,14 @@ export const SubscriptionScreen: React.FC = () => {
                 {index < TIMELINE_ITEMS.length - 1 && <View style={styles.connector} />}
               </View>
 
-              {/* Content */}
+       
               <View style={styles.timelineContent}>
                 <Text style={styles.timelineDay}>{item.day}</Text>
                 <Text style={styles.timelineDescription}>{item.description}</Text>
               </View>
             </View>
           ))}
-        </View>
+        </View> */}
 
         {/* Restore Purchase Link */}
         {/* <TouchableOpacity
@@ -353,8 +360,12 @@ export const SubscriptionScreen: React.FC = () => {
         </TouchableOpacity> */}
 
         {/* Bottom CTA */}
-        {/* Recommended Program Box */}
-        <View style={styles.recommendedBox}>
+        {/* 1-Year Growth Partner Box */}
+        <TouchableOpacity
+          style={[styles.planBox, selectedPlan === 'yearly' && styles.planBoxSelected]}
+          onPress={() => setSelectedPlan('yearly')}
+          activeOpacity={0.8}
+        >
           <View style={styles.recommendedBadge}>
             <Text style={styles.recommendedBadgeText}>RECOMMENDED</Text>
           </View>
@@ -367,14 +378,40 @@ export const SubscriptionScreen: React.FC = () => {
               />
             </View>
             <View style={styles.programDetails}>
-              <Text style={styles.programTitle}>3-Month Program</Text>
-              <Text style={styles.programPrice}>{displayPrice} • Billed every 3 months</Text>
+              <Text style={styles.programTitle}>1-Year Growth Partner</Text>
+              <Text style={styles.programPrice}>S$169.99 (14/month)</Text>
+              <Text style={styles.programDescription}>See meaningful changes in routines, cooperation, and emotional skills.</Text>
               <View style={styles.bonusBadge}>
                 <Text style={styles.bonusBadgeText}>🎁 Beta bonus 1 month free</Text>
               </View>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
+
+        {/* 3-Month Kickstart Box */}
+        <TouchableOpacity
+          style={[styles.planBox, selectedPlan === '3month' && styles.planBoxSelected]}
+          onPress={() => setSelectedPlan('3month')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.programContent}>
+            <View style={styles.programIcon}>
+              <Image
+                source={require('../../../assets/images/dragon_waving.png')}
+                style={styles.iconImage}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.programDetails}>
+              <Text style={styles.programTitle}>3-Month Kickstart</Text>
+              <Text style={styles.programPrice}>S$99.99 (33/month)</Text>
+              <Text style={styles.programDescription}>Ongoing parent tips, progress tracking, and support as your child grows.</Text>
+              <View style={styles.bonusBadge}>
+                <Text style={styles.bonusBadgeText}>🎁 Beta bonus 1 month free</Text>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
 
         <Text style={styles.noChargeText}>
           No charge today  •  <Text style={styles.trialEndsText}>Trial ends {getTrialEndDate()}</Text>
@@ -393,7 +430,7 @@ export const SubscriptionScreen: React.FC = () => {
         </TouchableOpacity>
 
         <Text style={styles.disclaimer}>
-          After your free trial, your subscription automatically renews at {displayPrice} every 3 months unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our{' '}
+          After your free trial, your subscription automatically renews at {selectedPlan === '3month' ? 'S$99.99 every 3 months' : 'S$169.99/year'} unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our{' '}
           <Text style={styles.link} onPress={handleOpenTerms}>Terms</Text> and{' '}
           <Text style={styles.link} onPress={handleOpenPrivacy}>Privacy Policy</Text>.
         </Text>
@@ -580,14 +617,18 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     //backgroundColor: '#F3E8FF',
   },
-  recommendedBox: {
+  planBox: {
     position: 'relative',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    padding: 16,
+    marginBottom: 12,
+  },
+  planBoxSelected: {
     borderWidth: 2,
     borderColor: '#A78BFA',
-    padding: 16,
-    marginBottom: 16,
   },
   recommendedBadge: {
     position: 'absolute',
@@ -615,9 +656,9 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     //backgroundColor: '#FEF3C7',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
-    marginRight: 12,
+    //marginRight: 12,
     overflow: 'hidden',
   },
   iconImage: {
@@ -637,6 +678,13 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 14,
     color: '#6B7280',
+    marginBottom: 6,
+  },
+  programDescription: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 18,
     marginBottom: 6,
   },
   bonusBadge: {
