@@ -9,10 +9,9 @@ import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { OnboardingLayout } from '../../components/OnboardingLayout';
-import { OnboardingDragonHeader } from '../../components/OnboardingDragonHeader';
+import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingTextInput } from '../../components/OnboardingTextInput';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
-import { getOnboardingProgress } from '../../config/onboardingProgress';
 
 export const NameInputScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -34,10 +33,7 @@ export const NameInputScreen: React.FC = () => {
 
   return (
     <OnboardingLayout useKeyboardAvoid>
-      <OnboardingDragonHeader
-        text="Let's get to know you a bit - So we can tailor  Nora just for you. It takes about 3-5 mins."
-        progress={getOnboardingProgress('NameInput')}
-      />
+      <OnboardingProgressHeader phase={1} step={1} totalSteps={6} />
 
       <OnboardingTextInput
         title="What's your name?"

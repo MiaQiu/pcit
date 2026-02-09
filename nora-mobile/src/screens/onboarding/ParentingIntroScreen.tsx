@@ -14,8 +14,6 @@ export const ParentingIntroScreen: React.FC = () => {
 
   return (
     <IntroScreenTemplate
-      currentSegment={1}
-      totalSegments={1}
       subtitle="Parenting is complex"
       title="Nora helps you see more clearly."
       description={

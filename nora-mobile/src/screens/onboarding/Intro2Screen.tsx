@@ -16,7 +16,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import { ProgressBar } from '../../components/ProgressBar';
+import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { DragonCard } from '../../components/DragonCard';
 
 export const Intro2Screen: React.FC = () => {
@@ -38,7 +38,7 @@ export const Intro2Screen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <ProgressBar totalSegments={3} currentSegment={2} />
+        <OnboardingProgressHeader phase={4} step={2} totalSteps={3} />
 
         <View style={styles.textContent}>
           <Text style={styles.title}>

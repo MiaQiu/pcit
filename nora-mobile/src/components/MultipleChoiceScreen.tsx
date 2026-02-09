@@ -22,7 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStackNavigationProp } from '../navigation/types';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { OnboardingButtonRow } from './OnboardingButtonRow';
-import { OnboardingDragonHeader } from './OnboardingDragonHeader';
+import { OnboardingProgressHeader } from './OnboardingProgressHeader';
 
 export interface MultipleChoiceOption {
   value: string | number;
@@ -38,7 +38,9 @@ export interface MultipleChoiceScreenProps {
   multiSelect?: boolean;
   continueText?: string;
   onBeforeNavigate?: (selectedValue: any, updateData: any, navigation: any) => Promise<void>;
-  progress?: number; // Progress as percentage (0-100)
+  phase?: number;
+  stepInPhase?: number;
+  totalStepsInPhase?: number;
   disableAutoNavigate?: boolean; // Disable auto-navigation for single-select
   allowOtherOption?: boolean; // Enable "Others" option with text input
   otherOptionValue?: string; // Value identifier for the "Others" option (default: 'other')
@@ -54,7 +56,9 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   multiSelect = false,
   continueText = 'Continue',
   onBeforeNavigate,
-  progress = 0,
+  phase = 1,
+  stepInPhase = 1,
+  totalStepsInPhase = 1,
   disableAutoNavigate = false,
   allowOtherOption = false,
   otherOptionValue = 'other',
@@ -190,8 +194,8 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <View style={styles.content}>
-          {/* Dragon Header */}
-          <OnboardingDragonHeader text={headerText} progress={progress} />
+          {/* Progress Header */}
+          <OnboardingProgressHeader phase={phase} step={stepInPhase} totalSteps={totalStepsInPhase} />
 
           {/* Title */}
           <View style={styles.header}>

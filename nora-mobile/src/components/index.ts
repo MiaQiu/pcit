@@ -22,7 +22,7 @@ export { MomentPlayer } from './MomentPlayer';
 
 // Onboarding components
 export { OnboardingLayout } from './OnboardingLayout';
-export { OnboardingDragonHeader } from './OnboardingDragonHeader';
+export { OnboardingProgressHeader } from './OnboardingProgressHeader';
 export { OnboardingButton } from './OnboardingButton';
 export { OnboardingBackButton } from './OnboardingBackButton';
 export { OnboardingButtonRow } from './OnboardingButtonRow';

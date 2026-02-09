@@ -78,3 +78,57 @@ export function getStepNumber(screenName: OnboardingScreenName): number {
   const stepIndex = ONBOARDING_STEPS.indexOf(screenName);
   return stepIndex === -1 ? 0 : stepIndex + 1;
 }
+
+/**
+ * Phase-based onboarding progress
+ */
+export interface OnboardingPhase {
+  name: string;
+  screens: string[];
+}
+
+export const ONBOARDING_PHASES: OnboardingPhase[] = [
+  {
+    name: 'Basic data',
+    screens: ['NameInput', 'Relationship', 'ChildName', 'ChildGender', 'ChildBirthday', 'ChildIssue'],
+  },
+  {
+    name: 'Developmental snapshot',
+    screens: [
+      'WacbQuestion1', 'WacbQuestion2', 'WacbQuestion3', 'WacbQuestion4', 'WacbQuestion5',
+      'WacbQuestion6', 'WacbQuestion7', 'WacbQuestion8', 'WacbQuestion9',
+      'DepressionQuestion1', 'DepressionQuestion2',
+    ],
+  },
+  {
+    name: 'Nora advantage',
+    screens: ['FocusAreas', 'GuidanceIntro', 'GrowthIntro'],
+  },
+  {
+    name: 'Setup for success',
+    screens: ['Intro1', 'Intro2', 'Intro3'],
+  },
+];
+
+export interface PhaseProgress {
+  phase: number;
+  step: number;
+  totalSteps: number;
+  phaseName: string;
+}
+
+export function getPhaseProgress(screenName: string): PhaseProgress {
+  for (let i = 0; i < ONBOARDING_PHASES.length; i++) {
+    const phase = ONBOARDING_PHASES[i];
+    const stepIndex = phase.screens.indexOf(screenName);
+    if (stepIndex !== -1) {
+      return {
+        phase: i + 1,
+        step: stepIndex + 1,
+        totalSteps: phase.screens.length,
+        phaseName: phase.name,
+      };
+    }
+  }
+  return { phase: 1, step: 1, totalSteps: 1, phaseName: 'Basic data' };
+}

@@ -14,37 +14,31 @@ import {
   ImageSourcePropType,
   Dimensions,
 } from 'react-native';
-import { ProgressBar } from '../../components/ProgressBar';
-
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface IntroScreenTemplateProps {
-  currentSegment: number;
-  totalSegments?: number;
   subtitle: string;
   title: string;
   description?: React.ReactNode;
   buttonText: string;
   image?: ImageSourcePropType;
   onNext: () => void;
+  header?: React.ReactNode;
 }
 
 export const IntroScreenTemplate: React.FC<IntroScreenTemplateProps> = ({
-  currentSegment,
-  totalSegments = 3,
   subtitle,
   title,
   description,
   buttonText,
   image = require('../../../assets/images/dragon_image.png'),
   onNext,
+  header,
 }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        {/* Progress Indicator */}
-        <ProgressBar totalSegments={totalSegments} currentSegment={currentSegment} />
-
+        {header}
         {/* Content */}
         <View style={styles.textContent}>
           <Text style={styles.subtitle}>{subtitle}</Text>

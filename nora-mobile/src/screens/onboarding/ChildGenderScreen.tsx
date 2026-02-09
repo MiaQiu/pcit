@@ -4,7 +4,6 @@
 
 import React from 'react';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
-import { getOnboardingProgress } from '../../config/onboardingProgress';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
 export const ChildGenderScreen: React.FC = () => {
@@ -22,7 +21,9 @@ export const ChildGenderScreen: React.FC = () => {
       ]}
       dataField="childGender"
       nextScreen="ChildBirthday"
-      progress={getOnboardingProgress('ChildGender')}
+      phase={1}
+      stepInPhase={4}
+      totalStepsInPhase={6}
     />
   );
 };

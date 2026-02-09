@@ -10,9 +10,8 @@ import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { Picker } from '@react-native-picker/picker';
 import { OnboardingLayout } from '../../components/OnboardingLayout';
-import { OnboardingDragonHeader } from '../../components/OnboardingDragonHeader';
+import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
-import { getOnboardingProgress } from '../../config/onboardingProgress';
 
 export const ChildBirthdayScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -65,10 +64,7 @@ export const ChildBirthdayScreen: React.FC = () => {
 
   return (
     <OnboardingLayout>
-      <OnboardingDragonHeader
-        text="This helps us tailor guidance to your child's age and development."
-        progress={getOnboardingProgress('ChildBirthday')}
-      />
+      <OnboardingProgressHeader phase={1} step={5} totalSteps={6} />
 
       <View style={styles.header}>
         <Text style={styles.title}>When is {data.childName}'s birthday?</Text>

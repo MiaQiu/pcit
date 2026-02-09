@@ -4,7 +4,6 @@
 
 import React from 'react';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
-import { getOnboardingProgress } from '../../config/onboardingProgress';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
 export const RelationshipScreen: React.FC = () => {
@@ -24,7 +23,9 @@ export const RelationshipScreen: React.FC = () => {
       ]}
       dataField="relationshipToChild"
       nextScreen="ChildName"
-      progress={getOnboardingProgress('Relationship')}
+      phase={1}
+      stepInPhase={2}
+      totalStepsInPhase={6}
     />
   );
 };

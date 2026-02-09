@@ -16,8 +16,6 @@ export const WellbeingIntroScreen: React.FC = () => {
 
   return (
     <IntroScreenTemplate
-      currentSegment={1}
-      totalSegments={1}
       subtitle="Checking in with you"
       title={`Hi${userName ? ` ${userName}` : ''}, Your wellbeing matters too!`}
       description="Parenting takes a lot of energy. Before we dive into the program, we want to check in on how you have been feeling"

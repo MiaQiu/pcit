@@ -8,6 +8,7 @@ import { Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { IntroScreenTemplate } from './IntroScreenTemplate';
+import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 
 const FOCUS_AREAS = [
   'Manage Big Feelings Calmly',
@@ -20,8 +21,7 @@ export const FocusAreasScreen: React.FC = () => {
 
   return (
     <IntroScreenTemplate
-      currentSegment={1}
-      totalSegments={1}
+      header={<OnboardingProgressHeader phase={3} step={1} totalSteps={3} />}
       subtitle="Target"
       title="Your Focus Areas"
       description={

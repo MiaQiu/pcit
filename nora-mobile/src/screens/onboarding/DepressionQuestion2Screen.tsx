@@ -9,7 +9,6 @@ import { Alert } from 'react-native';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { useAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import { getOnboardingProgress } from '../../config/onboardingProgress';
 
 const OPTIONS = [
   { value: 0, label: 'Not at all' },
@@ -89,7 +88,9 @@ export const DepressionQuestion2Screen: React.FC = () => {
       nextScreen="PreIntroReassurance" // This will be overridden by onBeforeNavigate
       onBeforeNavigate={handleSubmitSurvey}
       continueText="Submit"
-      progress={getOnboardingProgress('DepressionQuestion2')}
+      phase={2}
+      stepInPhase={11}
+      totalStepsInPhase={11}
       disableAutoNavigate={true}
     />
   );

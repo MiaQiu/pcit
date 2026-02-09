@@ -4,7 +4,6 @@
 
 import React, { useEffect } from 'react';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
-import { getOnboardingProgress } from '../../config/onboardingProgress';
 import amplitudeService from '../../services/amplitudeService';
 
 export const ChildIssueScreen: React.FC = () => {
@@ -36,7 +35,9 @@ export const ChildIssueScreen: React.FC = () => {
       allowOtherOption={true}
       otherOptionValue="other"
       otherOptionPlaceholder="Please describe the issue..."
-      progress={getOnboardingProgress('ChildIssue')}
+      phase={1}
+      stepInPhase={6}
+      totalStepsInPhase={6}
     />
   );
 };
