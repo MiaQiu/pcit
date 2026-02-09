@@ -21,7 +21,7 @@ import { DragonCard } from '../../components/DragonCard';
 
 export const Intro2Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
-  const { data } = useOnboarding();
+  const { data, updateData } = useOnboarding();
   const userName = data.name || '';
 
   // Default to 7:30 PM
@@ -68,7 +68,12 @@ export const Intro2Screen: React.FC = () => {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('Intro3')}
+          onPress={() => {
+            const hours = selectedTime.getHours().toString().padStart(2, '0');
+            const minutes = selectedTime.getMinutes().toString().padStart(2, '0');
+            updateData({ reminderTime: `${hours}:${minutes}` });
+            navigation.navigate('Intro3');
+          }}
           activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>Continue  →</Text>

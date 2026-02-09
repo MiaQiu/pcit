@@ -106,8 +106,17 @@ export const NotificationSettingsScreen: React.FC = () => {
           const accessToken = authService.getAccessToken();
           await requestPermissions(accessToken ?? undefined);
 
+          // Read saved preferences from storage to avoid overwriting with stale defaults
+          let currentPrefs = preferences;
+          try {
+            const stored = await AsyncStorage.getItem(STORAGE_KEY);
+            if (stored) {
+              currentPrefs = { ...DEFAULT_PREFERENCES, ...JSON.parse(stored) };
+            }
+          } catch (_e) { /* use closure value as fallback */ }
+
           const newPreferences = {
-            ...preferences,
+            ...currentPrefs,
             dailyLessonReminder: true,
             newReportNotification: true,
           };
@@ -139,7 +148,8 @@ export const NotificationSettingsScreen: React.FC = () => {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
-        setPreferences(JSON.parse(stored));
+        // Merge with defaults so any missing keys get filled in
+        setPreferences({ ...DEFAULT_PREFERENCES, ...JSON.parse(stored) });
       }
     } catch (error) {
       console.error('Failed to load notification preferences:', error);

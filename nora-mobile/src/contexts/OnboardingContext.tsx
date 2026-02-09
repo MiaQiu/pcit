@@ -39,6 +39,9 @@ export interface OnboardingData {
     q2Depressed?: number;
   };
 
+  // Reminder time selected in Intro2 (HH:mm format)
+  reminderTime: string;
+
   // Subscription
   hasCompletedOnboarding: boolean;
 }
@@ -59,6 +62,7 @@ const defaultOnboardingData: OnboardingData = {
   childGender: null,
   childBirthday: null,
   issue: '',
+  reminderTime: '19:30',
   hasCompletedOnboarding: false,
 };
 

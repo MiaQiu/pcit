@@ -13,15 +13,18 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackNavigationProp } from '../../navigation/types';
 import { FONTS, COLORS } from '../../constants/assets';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
-import { requestNotificationPermissions } from '../../utils/notifications';
+import { requestNotificationPermissions, scheduleDailyLessonReminder } from '../../utils/notifications';
 import { useAuthService } from '../../contexts/AppContext';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 
 export const NotificationPermissionScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const authService = useAuthService();
+  const { data } = useOnboarding();
   const [isRequesting, setIsRequesting] = useState(false);
 
   const handleNotNow = () => {
@@ -36,6 +39,23 @@ export const NotificationPermissionScreen: React.FC = () => {
       const granted = await requestNotificationPermissions(accessToken);
       if (granted) {
         console.log('Notification permissions granted and push token registered');
+
+        // Schedule daily lesson reminder using the time selected in Intro2
+        const reminderTime = data.reminderTime || '19:30';
+        await scheduleDailyLessonReminder(reminderTime);
+
+        // Save the reminder time to notification preferences so settings screen stays in sync
+        try {
+          const prefsStr = await AsyncStorage.getItem('@notification_preferences');
+          const prefs = prefsStr ? JSON.parse(prefsStr) : {};
+          prefs.dailyLessonReminder = true;
+          prefs.dailyLessonTime = reminderTime;
+          await AsyncStorage.setItem('@notification_preferences', JSON.stringify(prefs));
+        } catch (e) {
+          console.error('Error saving reminder preference:', e);
+        }
+
+        console.log(`Daily lesson reminder scheduled at ${reminderTime}`);
       } else {
         Alert.alert(
           'Notifications Disabled',
