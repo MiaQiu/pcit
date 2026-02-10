@@ -74,32 +74,7 @@ async function checkAndUpdateUserPhase(userId) {
       return false;
     }
 
-    // Check if Day 15 of CONNECT is completed
-    const connectDay15 = await prisma.lesson.findFirst({
-      where: {
-        phase: 'CONNECT',
-        dayNumber: 15
-      }
-    });
-
-    if (!connectDay15) {
-      return false; // Day 15 doesn't exist
-    }
-
-    const day15Progress = await prisma.userLessonProgress.findUnique({
-      where: {
-        userId_lessonId: {
-          userId,
-          lessonId: connectDay15.id
-        }
-      }
-    });
-
-    if (!day15Progress || day15Progress.status !== 'COMPLETED') {
-      return false; // Day 15 not completed yet
-    }
-
-    // Check if user has ever achieved a score of 100 in any session
+    // Check if user has ever achieved a mastery score of 80+ in any session
     const sessions = await prisma.session.findMany({
       where: {
         userId,
@@ -108,19 +83,19 @@ async function checkAndUpdateUserPhase(userId) {
       select: { overallScore: true }
     });
 
-    const hasHundredScore = sessions.some(session => (session.overallScore || 0) >= 100);
+    const hasMasteryScore = sessions.some(session => (session.overallScore || 0) >= 80);
 
-    if (!hasHundredScore) {
-      return false; // Never achieved 100 score yet
+    if (!hasMasteryScore) {
+      return false; // Never achieved 80 mastery score yet
     }
 
-    // Both conditions met - update user to DISCIPLINE phase
+    // Mastery achieved - update user to DISCIPLINE phase
     await prisma.user.update({
       where: { id: userId },
       data: { currentPhase: 'DISCIPLINE' }
     });
 
-    console.log(`✅ User ${userId} advanced to DISCIPLINE phase (Day 15 completed + achieved 100 score)`);
+    console.log(`✅ User ${userId} advanced to DISCIPLINE phase (achieved 80 mastery score)`);
     return true; // Phase was advanced!
   } catch (error) {
     console.error('Error checking/updating user phase:', error);

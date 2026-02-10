@@ -51,6 +51,8 @@ export const RecordScreen: React.FC = () => {
   const [navigationTimeout, setNavigationTimeout] = useState<NodeJS.Timeout | null>(null);
   const [childName, setChildName] = useState<string>('your child');
   const [completionSound, setCompletionSound] = useState<string>('Win');
+  const [sessionMode, setSessionMode] = useState<'specialTime' | 'discipline'>('specialTime');
+  const [isDisciplineLocked, setIsDisciplineLocked] = useState(false);
 
   // Use ref to track current recording for cleanup
   const recordingRef = useRef<Audio.Recording | null>(null);
@@ -304,8 +306,9 @@ export const RecordScreen: React.FC = () => {
       // Set completion sound before starting recording
       setCompletionSound(completionSound);
 
-      // Start native recording with 5-minute (300 second) auto-stop
-      const result = await startNativeRecording(300);
+      // Start native recording: 5 min for Special Time, 10 min for Discipline
+      const durationSec = sessionMode === 'discipline' ? 600 : 300;
+      const result = await startNativeRecording(durationSec);
       console.log('[RecordScreen] Native recording started:', result.uri);
 
       setRecordingState('recording');
@@ -546,7 +549,7 @@ export const RecordScreen: React.FC = () => {
     await stopRecording();
   };
 
-  const canStartSession = permissionGranted && isOnline;
+  const canStartSession = permissionGranted && isOnline && !isDisciplineLocked;
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right', 'bottom']}>
@@ -559,7 +562,7 @@ export const RecordScreen: React.FC = () => {
         {recordingState === 'idle' && !uploadProcessing.isProcessing && (
           <>
             {/* Header with Dragon Icon and Text */}
-            <View style={styles.headerSection}>
+            {/* <View style={styles.headerSection}>
               <View style={styles.dragonIconContainer}>
                 <Image
                   source={require('../../assets/images/dragon_image.png')}
@@ -568,12 +571,17 @@ export const RecordScreen: React.FC = () => {
                 />
               </View>
               <View style={styles.headerTextBox}>
-                <Text style={styles.headerText}>Ready for a 5-minute play session with {childName}?</Text>
+                <Text style={styles.headerText}>
+                  Ready for a {sessionMode === 'discipline' ? '10' : '5'}-minute {sessionMode === 'discipline' ? 'discipline' : 'play'} session with {childName}?
+                </Text>
               </View>
-            </View>
+            </View> */}
 
-            <View style={styles.guideCardContainer}>
-              <RecordingGuideCard />
+            <View style={[styles.guideCardContainer, { marginTop:24 }]}>
+              <RecordingGuideCard onModeChange={(mode, locked) => {
+                setSessionMode(mode);
+                setIsDisciplineLocked(locked);
+              }} />
             </View>
 
             {/* How to Record Card */}
@@ -648,8 +656,8 @@ This takes a few minutes.
             disabled={!canStartSession}
             activeOpacity={0.8}
           >
-            <Text style={styles.actionButtonText}>Start Session</Text>
-            <Ionicons name="play" size={20} color="#FFFFFF" />
+            <Text style={styles.actionButtonText}>Record</Text>
+            <Ionicons name="mic" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       )}
