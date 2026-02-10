@@ -220,6 +220,7 @@ model Session {
   coachingSummary        String?
   coachingCards          Json?
   milestoneCelebrations  Json?
+  userFeedback           Json?
   User                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   Utterance              Utterance[]
   ChildProfiling         ChildProfiling?

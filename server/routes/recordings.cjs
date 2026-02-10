@@ -779,6 +779,49 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
 });
 
 /**
+ * POST /api/recordings/:id/feedback
+ * Submit user feedback on a session report
+ */
+router.post('/:id/feedback', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+    const { sentiment, reasons, freeText } = req.body;
+
+    if (!sentiment || !['positive', 'negative'].includes(sentiment)) {
+      return res.status(400).json({ error: 'sentiment must be "positive" or "negative"' });
+    }
+
+    const session = await prisma.session.findUnique({ where: { id } });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Recording not found' });
+    }
+
+    if (session.userId !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    await prisma.session.update({
+      where: { id },
+      data: {
+        userFeedback: {
+          sentiment,
+          reasons: Array.isArray(reasons) ? reasons : [],
+          freeText: freeText || null,
+          submittedAt: new Date().toISOString()
+        }
+      }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Submit feedback error:', error);
+    res.status(500).json({ error: 'Failed to submit feedback' });
+  }
+});
+
+/**
  * GET /api/recordings
  * Get recordings for the authenticated user
  */

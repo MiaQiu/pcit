@@ -4,8 +4,8 @@
  * Based on Figma design
  */
 
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator, TextInput, LayoutAnimation, Platform, UIManager, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -148,6 +148,12 @@ const stripPcitTags = (text: string): string => {
     .trim();
 };
 
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const NEGATIVE_REASONS = ['Too generic', 'Not accurate', 'Hard to understand', 'Missing something'];
+
 const getExampleUtterances = (exampleIndex: number, transcript: any[]) => {
   const result: { utterance: any; originalIndex: number }[] = [];
   if (exampleIndex > 0 && transcript[exampleIndex - 1]) {
@@ -175,6 +181,56 @@ export const ReportScreen: React.FC = () => {
   const [pollingCount, setPollingCount] = useState(0);
   const [childName, setChildName] = useState<string>('Your Child');
 
+  // Feedback state
+  const [feedbackSentiment, setFeedbackSentiment] = useState<'positive' | 'negative' | null>(null);
+  const [feedbackReasons, setFeedbackReasons] = useState<string[]>([]);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  const handleSentimentPress = useCallback((sentiment: 'positive' | 'negative') => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setFeedbackSentiment(sentiment);
+
+    if (sentiment === 'positive') {
+      // Shake animation to acknowledge
+      Animated.sequence([
+        Animated.timing(shakeAnim, { toValue: 8, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -8, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 6, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -6, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+      ]).start();
+
+      // Auto-submit positive feedback (fire and forget)
+      recordingService.submitReportFeedback(recordingId, {
+        sentiment: 'positive',
+        reasons: [],
+      }).catch(err => console.log('Feedback submit error:', err));
+    }
+  }, [shakeAnim, recordingId, recordingService]);
+
+  const toggleReason = useCallback((reason: string) => {
+    setFeedbackReasons(prev =>
+      prev.includes(reason) ? prev.filter(r => r !== reason) : [...prev, reason]
+    );
+  }, []);
+
+  const handleSubmitFeedback = useCallback(async () => {
+    if (!feedbackSentiment) return;
+    try {
+      await recordingService.submitReportFeedback(recordingId, {
+        sentiment: feedbackSentiment,
+        reasons: feedbackReasons,
+        freeText: feedbackText || undefined,
+      });
+    } catch (err) {
+      // Silently fail — feedback is non-critical
+      console.log('Feedback submit error:', err);
+    }
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setFeedbackSubmitted(true);
+  }, [feedbackSentiment, feedbackReasons, feedbackText, recordingId, recordingService]);
 
   useEffect(() => {
     loadReportData();
@@ -478,7 +534,7 @@ export const ReportScreen: React.FC = () => {
           <View style={styles.nextDayGoalSection}>
             <DragonCard
               label="Tomorrow's Goal"
-              text={(reportData.coachingCards as CoachingCard[])[0].next_day_goal}
+              text={(reportData.coachingCards as CoachingCard[])[0].next_day_goal ?? ''}
             />
           </View>
         )}
@@ -657,6 +713,103 @@ export const ReportScreen: React.FC = () => {
             </View>
           </View>
         )} */}
+
+        {/* Report Feedback */}
+        {feedbackSubmitted ? (
+          <View style={styles.feedbackCard}>
+            <View style={styles.feedbackThankYou}>
+              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+              <Text style={styles.feedbackThankYouText}>Thanks for your feedback!</Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.feedbackCard}>
+            <Text style={styles.feedbackTitle}>Was this report helpful?</Text>
+
+            <View style={styles.feedbackSentimentRow}>
+              <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
+                <TouchableOpacity
+                  style={[
+                    styles.feedbackPill,
+                    styles.feedbackPillNegative,
+                    feedbackSentiment === 'positive' && styles.feedbackPillPositiveActive,
+                  ]}
+                  onPress={() => handleSentimentPress('positive')}
+                >
+                  <Ionicons
+                    name={feedbackSentiment === 'positive' ? 'thumbs-up' : 'thumbs-up-outline'}
+                    size={18}
+                    color={feedbackSentiment === 'positive' ? '#FFFFFF' : '#9CA3AF'}
+                  />
+                  <Text style={[
+                    styles.feedbackPillText,
+                    styles.feedbackPillTextNegative,
+                    feedbackSentiment === 'positive' && styles.feedbackPillTextActive,
+                  ]}>Yes</Text>
+                </TouchableOpacity>
+              </Animated.View>
+
+              <TouchableOpacity
+                style={[
+                  styles.feedbackPill,
+                  styles.feedbackPillNegative,
+                  feedbackSentiment === 'negative' && styles.feedbackPillNegativeActive,
+                ]}
+                onPress={() => handleSentimentPress('negative')}
+              >
+                <Ionicons
+                  name={feedbackSentiment === 'negative' ? 'thumbs-down' : 'thumbs-down-outline'}
+                  size={18}
+                  color={feedbackSentiment === 'negative' ? '#FFFFFF' : '#9CA3AF'}
+                />
+                <Text style={[
+                  styles.feedbackPillText,
+                  styles.feedbackPillTextNegative,
+                  feedbackSentiment === 'negative' && styles.feedbackPillTextActive,
+                ]}>Not really</Text>
+              </TouchableOpacity>
+            </View>
+
+            {feedbackSentiment === 'negative' && (
+              <View style={styles.feedbackFollowUp}>
+                <Text style={styles.feedbackFollowUpLabel}>What could be better?</Text>
+
+                <View style={styles.feedbackChipsRow}>
+                  {NEGATIVE_REASONS.map(reason => (
+                    <TouchableOpacity
+                      key={reason}
+                      style={[
+                        styles.feedbackChip,
+                        feedbackReasons.includes(reason) && styles.feedbackChipActiveNegative,
+                      ]}
+                      onPress={() => toggleReason(reason)}
+                    >
+                      <Text style={[
+                        styles.feedbackChipText,
+                        feedbackReasons.includes(reason) && styles.feedbackChipTextActive,
+                      ]}>{reason}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <TextInput
+                  style={styles.feedbackInput}
+                  placeholder="How can we improve?"
+                  placeholderTextColor="#9CA3AF"
+                  value={feedbackText}
+                  onChangeText={setFeedbackText}
+                  multiline
+                  numberOfLines={2}
+                  textAlignVertical="top"
+                />
+
+                <TouchableOpacity style={styles.feedbackSubmitButton} onPress={handleSubmitFeedback}>
+                  <Text style={styles.feedbackSubmitText}>Submit</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Back to Home Button */}
         {/* <View style={styles.buttonContainer}>
@@ -1484,5 +1637,126 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     flex: 1,
     lineHeight: 20,
+  },
+  // Feedback widget styles
+  feedbackCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 20,
+    marginTop: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  feedbackTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  feedbackSentimentRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  feedbackPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    borderWidth: 2,
+  },
+  feedbackPillPositiveActive: {
+    backgroundColor: '#6750A4',
+    borderColor: '#6750A4',
+  },
+  feedbackPillNegative: {
+    borderColor: '#9CA3AF',
+  },
+  feedbackPillNegativeActive: {
+    backgroundColor: '#852221',
+    borderColor: '#852221',
+  },
+  feedbackPillText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+  },
+  feedbackPillTextNegative: {
+    color: '#9CA3AF',
+  },
+  feedbackPillTextActive: {
+    color: '#FFFFFF',
+  },
+  feedbackFollowUp: {
+    marginTop: 20,
+  },
+  feedbackFollowUpLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.textDark,
+    marginBottom: 12,
+  },
+  feedbackChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  feedbackChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F9FAFB',
+  },
+  feedbackChipActiveNegative: {
+    borderColor: '#852221',
+    backgroundColor: '#FEF2F2',
+  },
+  feedbackChipText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  feedbackChipTextActive: {
+    color: COLORS.textDark,
+    fontFamily: FONTS.semiBold,
+  },
+  feedbackInput: {
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    padding: 14,
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: COLORS.textDark,
+    minHeight: 60,
+    marginBottom: 16,
+  },
+  feedbackSubmitButton: {
+    backgroundColor: '#6750A4',
+    borderRadius: 24,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  feedbackSubmitText: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: '#FFFFFF',
+  },
+  feedbackThankYou: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  feedbackThankYouText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: '#10B981',
   },
 });

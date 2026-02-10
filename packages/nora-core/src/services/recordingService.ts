@@ -389,6 +389,30 @@ class RecordingService {
 
     return await response.json();
   }
+  /**
+   * Submit user feedback on a session report
+   */
+  async submitReportFeedback(recordingId: string, feedback: {
+    sentiment: 'positive' | 'negative';
+    reasons: string[];
+    freeText?: string;
+  }): Promise<{ success: boolean }> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/recordings/${recordingId}/feedback`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(feedback),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to submit feedback');
+    }
+
+    return await response.json();
+  }
 }
 
 export default RecordingService;
