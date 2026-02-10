@@ -198,6 +198,15 @@ export interface RecordingAnalysis {
   developmentalObservation?: DevelopmentalObservation | null;
   coachingSummary?: string | null;
   coachingCards?: CoachingCard[] | null;
+  pdiSkills?: Array<{
+    skill: string;
+    performance: string;
+    feedback: string;
+    details: string;
+  }> | null;
+  pdiTomorrowGoal?: string | null;
+  pdiEncouragement?: string | null;
+  pdiSummary?: string | null;
   milestoneCelebrations?: MilestoneCelebration[] | null;
 }
 

@@ -660,20 +660,17 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       ];
     } else {
       const tagCounts = session.tagCounts || {};
-      const totalCommands = (tagCounts.direct_command || 0) + (tagCounts.indirect_command || 0) +
-        (tagCounts.vague_command || 0) + (tagCounts.chained_command || 0);
-      const effectiveCommands = tagCounts.direct_command || 0;
-      const effectivePercent = totalCommands > 0 ? Math.round((effectiveCommands / totalCommands) * 100) : 0;
-
       skills = [
-        { label: 'Direct Commands', progress: effectivePercent },
-        { label: 'Labeled Praise', progress: Math.min(100, (tagCounts.labeled_praise || 0) * 10) }
+        { label: 'Praise (Labeled)', progress: tagCounts.praise || 0 },
+        { label: 'Echo', progress: tagCounts.echo || 0 },
+        { label: 'Narrate', progress: tagCounts.narration || 0 }
       ];
 
-      if (tagCounts.indirect_command > 5) areasToAvoid.push('Indirect Commands');
-      if (tagCounts.negative_command > 3) areasToAvoid.push('Negative Commands');
-      if (tagCounts.vague_command > 3) areasToAvoid.push('Vague Commands');
-      if (tagCounts.harsh_tone > 0) areasToAvoid.push('Harsh Tone');
+      areasToAvoid = [
+        { label: 'Questions', count: tagCounts.question || 0 },
+        { label: 'Commands', count: tagCounts.command || 0 },
+        { label: 'Criticism', count: tagCounts.criticism || 0 }
+      ];
     }
 
     let topMomentQuote = null;
@@ -756,6 +753,11 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       transcript: transcriptSegments,
       pcitCoding: session.pcitCoding,
       competencyAnalysis: session.competencyAnalysis || null,
+      // PDI Two Choices Flow (only present for PDI sessions)
+      pdiSkills: session.competencyAnalysis?.pdiSkills || null,
+      pdiTomorrowGoal: session.competencyAnalysis?.pdiTomorrowGoal || null,
+      pdiEncouragement: session.competencyAnalysis?.pdiEncouragement || null,
+      pdiSummary: session.competencyAnalysis?.pdiSummary || null,
       // New fields from child profiling
       developmentalObservation: childProfiling
         ? { summary: childProfiling.summary, domains: childProfiling.domains }

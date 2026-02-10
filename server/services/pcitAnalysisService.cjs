@@ -546,75 +546,52 @@ async function generateCDIFeedback(counts, utterances, childName) {
 }
 
 // ============================================================================
-// PDI Feedback Generation
+// PDI Two Choices Flow Analysis
 // ============================================================================
 
 /**
- * Generate PDI competency analysis prompt
+ * Generate PDI Two Choices Flow analysis
+ * Evaluates the parent on 4 discipline skills from the Two Choices Flow framework
+ * @param {Array} utterances - Utterances with roles and PCIT tags
+ * @param {string} childName - Child's name for personalized feedback
+ * @returns {Promise<Array|null>} Array of 4 skill ratings or null on failure
  */
-function generatePDICompetencyPrompt(counts, utterances) {
-  const totalEffective = counts.direct_command + counts.positive_command + counts.specific_command;
-  const totalIneffective = counts.indirect_command + counts.negative_command + counts.vague_command + counts.chained_command;
-  const totalCommands = totalEffective + totalIneffective;
-  const effectivePercent = totalCommands > 0 ? Math.round((totalEffective / totalCommands) * 100) : 0;
+async function generatePDITwoChoicesAnalysis(utterances, childName) {
+  console.log('🎯 [PDI-TWO-CHOICES] Starting Two Choices Flow analysis...');
 
-  return `You are an expert PCIT (Parent-Child Interaction Therapy) Supervisor and Coder. Your task is to analyze a PDI (Parent-Directed Interaction) session and provide three specific outputs.
+  const transcript = utterances
+    .filter(u => u.speaker !== SILENT_SPEAKER_ID)
+    .map((u) => {
+      const roleLabel = u.role === 'adult' ? 'Parent' : u.role === 'child' ? 'Child' : u.speaker;
+      const tagSuffix = u.pcitTag ? ` [${u.pcitTag}]` : '';
+      return `${roleLabel}: ${u.text}${tagSuffix}`;
+    }).join('\n');
 
-**Session Data:**
+  const prompt = loadPromptWithVariables('pdiTwoChoicesFlow', {
+    CHILD_NAME: childName || 'the child',
+    TRANSCRIPT: transcript
+  });
 
-Effective Command Skills:
-- Direct Commands: ${counts.direct_command}
-- Positive Commands: ${counts.positive_command}
-- Specific Commands: ${counts.specific_command}
-- Labeled Praise: ${counts.labeled_praise}
-- Correct Warnings: ${counts.correct_warning}
-- Correct Timeout Statements: ${counts.correct_timeout}
+  try {
+    const result = await callClaudeForFeedback(prompt);
+    const pdiSkills = result?.pdiSkills;
 
-Ineffective Command Skills:
-- Indirect Commands: ${counts.indirect_command}
-- Negative Commands: ${counts.negative_command}
-- Vague Commands: ${counts.vague_command}
-- Chained Commands: ${counts.chained_command}
+    if (!Array.isArray(pdiSkills) || pdiSkills.length === 0) {
+      console.error('⚠️ [PDI-TWO-CHOICES] Invalid response structure, expected pdiSkills array');
+      return null;
+    }
 
-Neutral: ${counts.neutral}
-
-Summary:
-- Total Effective Commands: ${totalEffective}
-- Total Ineffective Commands: ${totalIneffective}
-- Effective Command Percentage: ${effectivePercent}%
-
-**PDI Mastery Criteria:**
-- 75%+ of commands should be Effective (Direct + Positive + Specific)
-- Minimize Indirect Commands (phrased as questions)
-- Eliminate Negative Commands (focus on what TO do)
-- No Chained Commands (one command at a time)
-
-**Conversation Utterances (with PCIT coding):**
-${JSON.stringify(utterances.map(u => ({
-  speaker: u.speaker,
-  role: u.role,
-  text: u.text,
-  pcitTag: u.pcitTag
-})), null, 2)}
-
-**Your Task:**
-Generate a JSON object with exactly these three fields:
-
-1. **topMoment**: An exact quote from the conversation that highlights bonding or positive interaction between child and parent. Can be from either speaker. Choose a moment showing connection, compliance, or positive interaction. Must be a direct quote from the utterances above.
-
-2. **tips**: EXACTLY 2 sentences of the MOST important tips for improvement. Be specific and actionable. Reference specific utterances or patterns you observed.
-
-3. **reminder**: EXACTLY 2 sentences of encouragement or reminder for the parent. Keep it warm and supportive.
-
-**Output Format:**
-Return ONLY valid JSON in this exact structure:
-{
-  "topMoment": **topMoment**,
-  "tips": **tips**,
-  "reminder": **reminder**
-}
-
-**CRITICAL:** Return ONLY valid JSON. Do not include markdown code blocks or any text outside the JSON structure.`;
+    console.log(`✅ [PDI-TWO-CHOICES] Analysis complete — ${pdiSkills.length} skills evaluated`);
+    return {
+      pdiSkills,
+      tomorrowGoal: result.tomorrowGoal || null,
+      encouragement: result.encouragement || null,
+      summary: result.summary || null,
+    };
+  } catch (error) {
+    console.error('❌ [PDI-TWO-CHOICES] Error:', error.message);
+    return null;
+  }
 }
 
 // ============================================================================
@@ -1019,84 +996,39 @@ Do not include markdown or whitespace (minified JSON).
     // Get updated utterances with tags from database
     const utterancesWithTags = await getUtterances(sessionId);
 
-    if (isCDI) {
-      // Use multi-prompt approach for CDI
-      console.log('🎯 [COMPETENCY-ANALYSIS] Using multi-prompt CDI feedback generation...');
-      const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName);
+    // Always run CDI multi-prompt feedback flow (for both CDI and PDI)
+    console.log(`🎯 [COMPETENCY-ANALYSIS] Using multi-prompt feedback generation for ${session.mode} session...`);
+    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName);
 
-      // Save revised feedback to database
-      if (feedbackResult.revisedFeedback && feedbackResult.revisedFeedback.length > 0) {
-        await updateRevisedFeedback(sessionId, feedbackResult.revisedFeedback);
-      }
+    // Save revised feedback to database
+    if (feedbackResult.revisedFeedback && feedbackResult.revisedFeedback.length > 0) {
+      await updateRevisedFeedback(sessionId, feedbackResult.revisedFeedback);
+    }
 
-      competencyAnalysis = {
-        topMoment: feedbackResult.topMoment,
-        topMomentUtteranceNumber: typeof feedbackResult.topMomentUtteranceNumber === 'number' ? feedbackResult.topMomentUtteranceNumber : null,
-        feedback: feedbackResult.feedback || null,
-        example: typeof feedbackResult.example === 'number' ? feedbackResult.example : null,
-        childReaction: feedbackResult.childReaction || null,
-        tips: null,
-        reminder: feedbackResult.reminder,
-        analyzedAt: new Date().toISOString(),
-        mode: session.mode
-      };
+    competencyAnalysis = {
+      topMoment: feedbackResult.topMoment,
+      topMomentUtteranceNumber: typeof feedbackResult.topMomentUtteranceNumber === 'number' ? feedbackResult.topMomentUtteranceNumber : null,
+      feedback: feedbackResult.feedback || null,
+      example: typeof feedbackResult.example === 'number' ? feedbackResult.example : null,
+      childReaction: feedbackResult.childReaction || null,
+      tips: null,
+      reminder: feedbackResult.reminder,
+      analyzedAt: new Date().toISOString(),
+      mode: session.mode
+    };
 
-      console.log(`✅ [COMPETENCY-ANALYSIS] Multi-prompt CDI feedback complete`);
-    } else {
-      // Use single prompt for PDI
-      const competencyPrompt = generatePDICompetencyPrompt(tagCounts, utterancesWithTags);
+    console.log(`✅ [COMPETENCY-ANALYSIS] Multi-prompt feedback complete`);
 
-      const competencyResponse = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-5-20250929',
-          max_tokens: 4096,
-          temperature: 0.7,
-          messages: [{
-            role: 'user',
-            content: competencyPrompt
-          }]
-        })
-      });
-
-      if (competencyResponse.ok) {
-        const competencyData = await competencyResponse.json();
-        const analysisText = competencyData.content[0].text;
-
-        try {
-          const parsedAnalysis = parseClaudeJsonResponse(analysisText);
-
-          competencyAnalysis = {
-            summary: parsedAnalysis.summary || null,
-            topMoment: parsedAnalysis.topMoment,
-            celebration: parsedAnalysis.celebration || null,
-            tip: parsedAnalysis.tip || null,
-            example: typeof parsedAnalysis.example === 'number' ? parsedAnalysis.example : null,
-            transition: parsedAnalysis.transition || null,
-            tips: parsedAnalysis.tips,
-            reminder: parsedAnalysis.reminder,
-            analyzedAt: new Date().toISOString(),
-            mode: session.mode
-          };
-
-          console.log(`✅ [COMPETENCY-ANALYSIS] PDI analysis generated for session ${sessionId}`);
-        } catch (parseError) {
-          console.error('⚠️ [COMPETENCY-ANALYSIS] Failed to parse PDI competency analysis as JSON:', parseError.message);
-          competencyAnalysis = {
-            topMoment: null,
-            tips: analysisText,
-            reminder: null,
-            analyzedAt: new Date().toISOString(),
-            mode: session.mode
-          };
-        }
-      } else {
-        console.error(`PDI competency analysis API call failed for session ${sessionId}`);
+    // For PDI sessions, additionally run Two Choices Flow analysis
+    if (!isCDI) {
+      console.log('🎯 [COMPETENCY-ANALYSIS] Running PDI Two Choices Flow analysis...');
+      const pdiResult = await generatePDITwoChoicesAnalysis(utterancesWithTags, childName);
+      if (pdiResult) {
+        competencyAnalysis.pdiSkills = pdiResult.pdiSkills;
+        competencyAnalysis.pdiTomorrowGoal = pdiResult.tomorrowGoal;
+        competencyAnalysis.pdiEncouragement = pdiResult.encouragement;
+        competencyAnalysis.pdiSummary = pdiResult.summary;
+        console.log(`✅ [COMPETENCY-ANALYSIS] PDI Two Choices Flow analysis added — ${pdiResult.pdiSkills.length} skills`);
       }
     }
   } catch (compError) {
@@ -1180,6 +1112,6 @@ Do not include markdown or whitespace (minified JSON).
 module.exports = {
   analyzePCITCoding,
   generateCDIFeedback,
-  generatePDICompetencyPrompt,
+  generatePDITwoChoicesAnalysis,
   generateChildProfiling
 };

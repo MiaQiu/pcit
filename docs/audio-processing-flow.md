@@ -650,22 +650,39 @@ competencyAnalysis = {
 
 ### PDI Mode (Parent-Directed Interaction)
 
-**Function:** `generatePDICompetencyPrompt()` (lines 604-667)
+PDI sessions run the **same CDI multi-prompt feedback flow** above (top moment, revised utterance feedback, etc.), then additionally run a **Two Choices Flow analysis**.
 
-Analyzes command effectiveness:
-- Total Effective Commands: Direct + Positive + Specific
-- Total Ineffective Commands: Indirect + Negative + Vague + Chained
-- Target: 75%+ effective
+#### PDI Two Choices Flow Analysis
 
-**Additional PDI Fields:**
+**Function:** `generatePDITwoChoicesAnalysis()` in `pcitAnalysisService.cjs`
+
+**Prompt File:** `server/prompts/pdiTwoChoicesFlow.txt`
+
+Evaluates the parent on 4 discipline skills from the "Two Choices Flow" framework (Command → Wait → Choice → Wait → Follow-Through):
+
+| Skill | What It Measures |
+|-------|-----------------|
+| **Effective Commands** | Clear, direct, positively-stated, age-appropriate commands |
+| **Wait Time** | ~5 second pause after commands/choices before escalating |
+| **Choice Delivery** | Calm, structured "You can [comply] or [consequence]" |
+| **Follow-Through** | Consistent, calm enforcement of stated consequences |
+
+**Response Format:**
 ```javascript
 {
-  summary: 'brief session summary',
-  celebration: 'what went well',
-  transition: 'transition guidance',
-  tips: 'improvement tips'
+  "pdiSkills": [
+    {
+      "skill": "Effective Commands",
+      "performance": "Good",        // Excellent | Good | Fair | Needs Practice | Not Observed
+      "feedback": "Your commands were mostly clear and direct.",
+      "details": "specific transcript references"
+    },
+    // ... 4 skills total
+  ]
 }
 ```
+
+**Storage:** Saved to `session.competencyAnalysis.pdiSkills` (nested in existing JSON field — no schema migration needed).
 
 ### Nora Score Calculation
 
@@ -693,7 +710,14 @@ session.update({
     example: int,
     childReaction: 'insights',
     tips: 'improvement tips',
-    reminder: 'encouragement'
+    reminder: 'encouragement',
+    // PDI sessions only:
+    pdiSkills: [
+      { skill: 'Effective Commands', performance: 'Good', feedback: '...', details: '...' },
+      { skill: 'Wait Time', performance: 'Excellent', feedback: '...', details: '...' },
+      { skill: 'Choice Delivery', performance: 'Excellent', feedback: '...', details: '...' },
+      { skill: 'Follow-Through', performance: 'Fair', feedback: '...', details: '...' }
+    ]
   },
   coachingCards: [...],           // From Phase 5 (coaching cards)
   overallScore: int,
@@ -753,6 +777,7 @@ detectAndUpdateMilestones(child.id, sessionId)
   tips: 'improvement tips',
   transcript: [ ... ],
   competencyAnalysis: { ... },
+  pdiSkills: [...] | null,       // PDI Two Choices Flow (4 skills) — null for CDI
   developmentalObservation: {  // From ChildProfiling table (Phase 5)
     summary: 'developmental snapshot',
     domains: [
@@ -857,6 +882,7 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 | `server/prompts/roleIdentification.txt` | Speaker role detection prompt |
 | `server/prompts/dpicsCoding.txt` | DPICS coding system prompt |
 | `server/prompts/childProfiling.txt` | Child profiling & coaching cards prompt |
+| `server/prompts/pdiTwoChoicesFlow.txt` | PDI Two Choices Flow discipline analysis prompt |
 | `prisma/schema.prisma` | Database schema (Session, Utterance, Child, ChildProfiling, ChildMilestone, MilestoneLibrary) |
 | `scripts/backfill-child-profiling.cjs` | Migration: re-run profiling + milestone detection on existing sessions |
 | `scripts/migrate-child-records.cjs` | Migration: create Child records, backfill childId |

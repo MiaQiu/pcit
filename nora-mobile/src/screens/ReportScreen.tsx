@@ -168,6 +168,95 @@ const getExampleUtterances = (exampleIndex: number, transcript: any[]) => {
   return result;
 };
 
+// Performance badge color mapping
+const PERFORMANCE_COLORS: { [key: string]: { bg: string; text: string } } = {
+  'Excellent': { bg: '#DCFCE7', text: '#15803D' },
+  'Good': { bg: '#EDE9FE', text: '#6D28D9' },
+  'Fair': { bg: '#FEF3C7', text: '#B45309' },
+  'Needs Practice': { bg: '#FEE2E2', text: '#B91C1C' },
+  'Not Observed': { bg: '#F3F4F6', text: '#6B7280' },
+};
+
+const getPerformanceColors = (performance: string) => {
+  // Handle composite like "Fair/Good"
+  const key = Object.keys(PERFORMANCE_COLORS).find(k =>
+    performance.toLowerCase().includes(k.toLowerCase())
+  );
+  return PERFORMANCE_COLORS[key || 'Not Observed'];
+};
+
+/** PDI Coach's Corner — Two Choices Flow skills */
+const PDICoachCorner: React.FC<{
+  pdiSkills: Array<{ skill: string; performance: string; feedback: string; details: string }>;
+  summary?: string | null;
+  recordingId: string;
+  navigation: any;
+}> = ({ pdiSkills, summary, recordingId, navigation }) => {
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+
+  const toggleExpand = (index: number) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedIndex(prev => prev === index ? null : index);
+  };
+
+  return (
+    <View>
+      <Text style={styles.cardTitle}>Coach's Corner</Text>
+      <View style={styles.coachCard}>
+        {summary && (
+          <Text style={styles.pdiSummaryText}>{summary}</Text>
+        )}
+        <Text style={styles.pdiSectionSubtitle}>The Two Choices Flow</Text>
+        {pdiSkills.map((item, index) => {
+          const colors = getPerformanceColors(item.performance);
+          const isExpanded = expandedIndex === index;
+
+          return (
+            <TouchableOpacity
+              key={index}
+              activeOpacity={0.7}
+              onPress={() => toggleExpand(index)}
+              style={[
+                styles.pdiSkillItem,
+                index < pdiSkills.length - 1 && styles.pdiSkillItemBorder,
+              ]}
+            >
+              <View style={styles.pdiSkillHeader}>
+                <View style={styles.pdiSkillTitleRow}>
+                  <Text style={styles.pdiSkillName}>{item.skill}</Text>
+                  <View style={[styles.pdiPerformanceBadge, { backgroundColor: colors.bg }]}>
+                    <Text style={[styles.pdiPerformanceText, { color: colors.text }]}>{item.performance}</Text>
+                  </View>
+                </View>
+                <View style={styles.pdiSkillFeedbackRow}>
+                  <Text style={styles.pdiSkillFeedback}>{item.feedback}</Text>
+                  <Ionicons
+                    name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={16}
+                    color="#9CA3AF"
+                    style={styles.pdiChevron}
+                  />
+                </View>
+              </View>
+              {isExpanded && item.details && (
+                <View style={styles.pdiDetailsContainer}>
+                  <Text style={styles.pdiDetailsText}>{item.details}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+        <TouchableOpacity
+          style={styles.cardLinkButton}
+          onPress={() => navigation.navigate('Transcript', { recordingId })}
+        >
+          <Text style={styles.cardLinkText}>Read Full Transcript with Tips</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
 export const ReportScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<ReportScreenRouteProp>();
@@ -351,7 +440,11 @@ export const ReportScreen: React.FC = () => {
             />
           </View>
           <View style={styles.headerTextBox}>
-            <Text style={styles.headerText}>{reportData.feedback || reportData.encouragement}</Text>
+            <Text style={styles.headerText}>
+              {(reportData.mode === 'PDI' && reportData.pdiEncouragement)
+                ? reportData.pdiEncouragement
+                : (reportData.feedback || reportData.encouragement)}
+            </Text>
           </View>
         </View>
 
@@ -418,7 +511,9 @@ export const ReportScreen: React.FC = () => {
             {/* <Text style={styles.totalText}>Total &lt; 3</Text> */}
           </View>
           <View style={styles.avoidContainer}>
-            {reportData.areasToAvoid.map((area, index) => {
+            {reportData.areasToAvoid
+              .filter(area => !(reportData.mode === 'PDI' && (typeof area === 'string' ? area : area.label) === 'Commands'))
+              .map((area, index) => {
               const areaData = typeof area === 'string' ? { label: area, count: 0 } : area;
               const needsAttention = areaData.count > 0;
               return (
@@ -467,76 +562,77 @@ export const ReportScreen: React.FC = () => {
         </View>
 
         {/* Coach's Corner */}
-        {reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
-          const cards = (reportData.coachingCards as CoachingCard[]).slice(0, 1);
+        {reportData.mode === 'PDI' && reportData.pdiSkills && Array.isArray(reportData.pdiSkills) && reportData.pdiSkills.length > 0 ? (
+          <PDICoachCorner pdiSkills={reportData.pdiSkills} summary={reportData.pdiSummary} recordingId={recordingId} navigation={navigation} />
+        ) : (
+          reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
+            const cards = (reportData.coachingCards as CoachingCard[]).slice(0, 1);
 
-          return (
-            <View>
-              <Text style={styles.cardTitle}>Coach's Corner</Text>
-              {cards.map((card) => (
-                  <View key={card.card_id} style={styles.coachCard}>
-                    {/* Title Row with Icon */}
-                    {/* <View style={styles.coachTitleRow}>
-                      <View style={[styles.coachIconContainer, { backgroundColor: theme.iconBg }]}>
-                        <Ionicons name={theme.icon} size={20} color={theme.iconColor} />
-                      </View>
-                      <Text style={styles.coachTipTitle}>{card.title}</Text>
-                    </View> */}
+            return (
+              <View>
+                <Text style={styles.cardTitle}>Coach's Corner</Text>
+                {cards.map((card) => (
+                    <View key={card.card_id} style={styles.coachCard}>
+                      {/* Summary */}
+                      {reportData.coachingSummary ? (
+                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Summary: </Text>{reportData.coachingSummary}</Text>
+                      ) : null}
 
-                    {/* Summary */}
-                    {reportData.coachingSummary ? (
-                      <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Summary: </Text>{reportData.coachingSummary}</Text>
-                    ) : null}
+                      {/* Description */}
+                      {card.coaching_tip ? (
+                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Tip for Next Session: </Text>{card.coaching_tip}</Text>
+                      ) : null}
 
-                    {/* Description */}
-                    {card.coaching_tip ? (
-                      <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Tip for Next Session: </Text>{card.coaching_tip}</Text>
-                    ) : null}
+                      {/* Scenario */}
+                      {card.scenario && (
+                        <View style={styles.coachExampleContainer}>
+                          {card.scenario.instead_of ? (
+                            <View style={styles.coachInsteadOfRow}>
+                              <Ionicons name="bulb-outline" size={16} color="#6B7280" />
+                              <Text style={styles.coachExampleInsteadOf}><Text style={styles.coachExampleInsteadOfLabel}>Instead of: </Text>{card.scenario.instead_of}</Text>
+                            </View>
+                          ) : null}
+                          {card.scenario.try_this ? (
+                            <Text style={styles.coachExampleImproved}><Text style={styles.coachExampleImprovedLabel}>Try: </Text>{card.scenario.try_this}</Text>
+                          ) : null}
+                        </View>
+                      )}
 
-                    {/* Scenario */}
-                    {card.scenario && (
-                      <View style={styles.coachExampleContainer}>
-                        {/* {card.scenario.context ? (
-                          <Text style={styles.coachExampleContext}>{card.scenario.context}</Text>
-                        ) : null} */}
-                        {card.scenario.instead_of ? (
-                          <View style={styles.coachInsteadOfRow}>
-                            <Ionicons name="bulb-outline" size={16} color="#6B7280" />
-                            <Text style={styles.coachExampleInsteadOf}><Text style={styles.coachExampleInsteadOfLabel}>Instead of: </Text>{card.scenario.instead_of}</Text>
-                          </View>
-                        ) : null}
-                        {card.scenario.try_this ? (
-                          <Text style={styles.coachExampleImproved}><Text style={styles.coachExampleImprovedLabel}>Try: </Text>{card.scenario.try_this}</Text>
-                        ) : null}
-                      </View>
-                    )}
-                    
-                    {/* Apply in Daily Life */}
-                    {card.apply_in_daily_life ? (
-                      <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Apply in Daily Life: </Text>{card.apply_in_daily_life}</Text>
-                    ) : null}
+                      {/* Apply in Daily Life */}
+                      {card.apply_in_daily_life ? (
+                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Apply in Daily Life: </Text>{card.apply_in_daily_life}</Text>
+                      ) : null}
 
-
-                    <TouchableOpacity
-                      style={styles.cardLinkButton}
-                      onPress={() => navigation.navigate('Transcript', { recordingId })}
-                    >
-                      <Text style={styles.cardLinkText}>Read Full Transcript with Tips</Text>
-                    </TouchableOpacity>
-                  </View>
-              ))}
-            </View>
-          );
-        })()}
+                      <TouchableOpacity
+                        style={styles.cardLinkButton}
+                        onPress={() => navigation.navigate('Transcript', { recordingId })}
+                      >
+                        <Text style={styles.cardLinkText}>Read Full Transcript with Tips</Text>
+                      </TouchableOpacity>
+                    </View>
+                ))}
+              </View>
+            );
+          })()
+        )}
 
         {/* Tomorrow's Goal */}
-        {reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (reportData.coachingCards as CoachingCard[])[0]?.next_day_goal && (
+        {reportData.mode === 'PDI' && reportData.pdiTomorrowGoal ? (
           <View style={styles.nextDayGoalSection}>
             <DragonCard
               label="Tomorrow's Goal"
-              text={(reportData.coachingCards as CoachingCard[])[0].next_day_goal ?? ''}
+              text={reportData.pdiTomorrowGoal}
             />
           </View>
+        ) : (
+          reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (reportData.coachingCards as CoachingCard[])[0]?.next_day_goal && (
+            <View style={styles.nextDayGoalSection}>
+              <DragonCard
+                label="Tomorrow's Goal"
+                text={(reportData.coachingCards as CoachingCard[])[0].next_day_goal ?? ''}
+              />
+            </View>
+          )
         )}
 
         {/* Milestone Celebrations */}
@@ -1758,5 +1854,76 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: 15,
     color: '#10B981',
+  },
+  // PDI Two Choices Flow styles
+  pdiSummaryText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#4B5563',
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  pdiSectionSubtitle: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: '#6B7280',
+    marginBottom: 16,
+  },
+  pdiSkillItem: {
+    paddingVertical: 12,
+  },
+  pdiSkillItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  pdiSkillHeader: {
+    gap: 6,
+  },
+  pdiSkillTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pdiSkillName: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: COLORS.textDark,
+    flex: 1,
+  },
+  pdiPerformanceBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  pdiPerformanceText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+  },
+  pdiSkillFeedbackRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 4,
+  },
+  pdiSkillFeedback: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+    flex: 1,
+  },
+  pdiChevron: {
+    marginTop: 2,
+  },
+  pdiDetailsContainer: {
+    marginTop: 8,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
+    padding: 12,
+  },
+  pdiDetailsText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 20,
   },
 });
