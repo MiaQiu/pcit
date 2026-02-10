@@ -610,6 +610,14 @@ export const HomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+      {/* Temporary: Weekly Report test button */}
+      <TouchableOpacity
+        style={styles.weeklyReportButton}
+        onPress={() => navigation.push('WeeklyReport')}
+      >
+        <Text style={styles.weeklyReportButtonText}>📊 Weekly Report</Text>
+      </TouchableOpacity>
+
       <ScrollView
         ref={scrollViewRef}
         className="flex-1 px-6"
@@ -749,5 +757,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginTop: 8,
     marginLeft: 20,
+  },
+  weeklyReportButton: {
+    marginHorizontal: 24,
+    marginTop: 8,
+    marginBottom: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#F3E8FF',
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  weeklyReportButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#8C49D5',
   },
 });

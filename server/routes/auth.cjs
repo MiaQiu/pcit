@@ -866,4 +866,40 @@ router.delete('/delete-account', require('../middleware/auth.cjs').requireAuth, 
   }
 });
 
+/**
+ * GET /api/auth/child-issues
+ * Get top 5 child issue priorities for the authenticated user's child
+ */
+router.get('/child-issues', require('../middleware/auth.cjs').requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const child = await prisma.child.findFirst({
+      where: { userId },
+      select: { id: true }
+    });
+
+    if (!child) {
+      return res.json({ issues: [] });
+    }
+
+    const issues = await prisma.childIssuePriority.findMany({
+      where: { childId: child.id },
+      orderBy: { priorityRank: 'asc' },
+      take: 5,
+      select: {
+        strategy: true,
+        priorityRank: true,
+        userIssues: true,
+        clinicalLevel: true,
+      }
+    });
+
+    res.json({ issues });
+  } catch (error) {
+    console.error('Get child issues error:', error);
+    res.status(500).json({ error: 'Failed to get child issues' });
+  }
+});
+
 module.exports = router;

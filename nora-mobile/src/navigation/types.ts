@@ -88,6 +88,7 @@ export type RootStackParamList = {
     score?: number; // Optional score for Overall Nora Score
     tip?: string; // Optional tip for Next Step section
   };
+  WeeklyReport: undefined;
 };
 
 export type RootTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;

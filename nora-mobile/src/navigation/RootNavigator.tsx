@@ -22,6 +22,7 @@ import { LessonCompleteScreen } from '../screens/LessonCompleteScreen';
 import { ReportScreen } from '../screens/ReportScreen';
 import { TranscriptScreen } from '../screens/TranscriptScreen';
 import { SkillExplanationScreen } from '../screens/SkillExplanationScreen';
+import { WeeklyReportScreen } from '../screens/WeeklyReportScreen';
 import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
 
@@ -285,6 +286,13 @@ export const RootNavigator: React.FC = () => {
         component={SkillExplanationScreen}
         options={{
           animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="WeeklyReport"
+        component={WeeklyReportScreen}
+        options={{
+          animation: 'slide_from_bottom',
         }}
       />
     </Stack.Navigator>

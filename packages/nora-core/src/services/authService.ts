@@ -469,6 +469,18 @@ class AuthService {
     const result = await response.json();
     return result.user;
   }
+  async getChildIssues(): Promise<{ issues: Array<{ strategy: string; priorityRank: number; userIssues: string | null; clinicalLevel: string }> }> {
+    const response = await this.authenticatedRequest(
+      `${this.apiUrl}/api/auth/child-issues`
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch child issues');
+    }
+
+    return await response.json();
+  }
 }
 
 export default AuthService;
