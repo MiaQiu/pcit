@@ -139,9 +139,13 @@ app.use('/api/sessions', sessionRoutes);
 const learningRoutes = require('./server/routes/learning.cjs');
 app.use('/api/learning', learningRoutes);
 
-// Mount lessons routes (new bite-size learning curriculum)
+// Mount lessons routes (bite-size learning curriculum)
 const lessonRoutes = require('./server/routes/lessons.cjs');
 app.use('/api/lessons', lessonRoutes);
+
+// Mount module routes (module-based browsing)
+const moduleRoutes = require('./server/routes/modules.cjs');
+app.use('/api/modules', moduleRoutes);
 
 // Mount support routes
 const supportRoutes = require('./server/routes/support.cjs');
@@ -168,6 +172,19 @@ app.use('/api/recordings', recordingRoutes);
 // Mount webhook routes (RevenueCat subscription events)
 const webhookRoutes = require('./server/routes/webhooks.cjs');
 app.use('/api/webhooks', webhookRoutes);
+
+// Mount admin routes
+const adminRoutes = require('./server/routes/admin.cjs');
+app.use('/api/admin', adminRoutes);
+
+// Serve admin portal build in production
+if (process.env.NODE_ENV === 'production') {
+  const adminBuildPath = path.join(__dirname, 'admin', 'dist');
+  app.use('/admin', express.static(adminBuildPath));
+  app.get('/admin/*', (req, res) => {
+    res.sendFile(path.join(adminBuildPath, 'index.html'));
+  });
+}
 
 // Send flagged items to coach via email
 app.post('/api/send-coach-alert', async (req, res) => {
