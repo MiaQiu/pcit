@@ -19,6 +19,7 @@ export const COLORS = {
   cardOrange: '#FFE4C0',
   ellipseCyan: '#9BD4DF',
   ellipseOrange: '#FFB380',
+  textSecondary: '#6B7280',
 };
 
 // Typography
