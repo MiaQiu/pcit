@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
   badgeContainer: {
     alignItems: 'center',
     marginBottom: 26,
-    marginTop: 10,
+    marginTop: -15,
   },
   upNextLabel: {
     fontFamily: 'PlusJakartaSans_700Bold',
