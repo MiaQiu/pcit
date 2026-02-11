@@ -544,6 +544,7 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         pushToken: true,
         pushTokenUpdatedAt: true,
         createdAt: true,
+        developmentalVisible: true,
         _count: { select: { Session: true } }
       },
       orderBy: { createdAt: 'desc' }
@@ -554,7 +555,8 @@ router.get('/users', requireAdminAuth, async (req, res) => {
       hasPushToken: !!u.pushToken,
       pushTokenUpdatedAt: u.pushTokenUpdatedAt,
       createdAt: u.createdAt,
-      sessionCount: u._count.Session
+      sessionCount: u._count.Session,
+      developmentalVisible: u.developmentalVisible
     }));
 
     res.json({ users: formatted });
@@ -693,6 +695,37 @@ router.put('/weekly-reports/:id/visibility', requireAdminAuth, async (req, res) 
   } catch (error) {
     console.error('Admin toggle weekly report visibility error:', error);
     res.status(500).json({ error: 'Failed to update report visibility' });
+  }
+});
+
+// ============================================================================
+// DEVELOPMENTAL VISIBILITY ENDPOINTS
+// ============================================================================
+
+/**
+ * PUT /api/admin/users/:id/developmental-visibility
+ * Toggle developmental milestones visibility for a user
+ */
+router.put('/users/:id/developmental-visibility', requireAdminAuth, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { visibility } = req.body;
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { developmentalVisible: !!visibility },
+      select: { id: true, developmentalVisible: true },
+    });
+
+    res.json({ userId: updated.id, developmentalVisible: updated.developmentalVisible });
+  } catch (error) {
+    console.error('Admin toggle developmental visibility error:', error);
+    res.status(500).json({ error: 'Failed to update developmental visibility' });
   }
 });
 

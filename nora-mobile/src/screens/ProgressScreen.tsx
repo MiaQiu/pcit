@@ -320,6 +320,7 @@ export const ProgressScreen: React.FC = () => {
   const [recordings, setRecordings] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [developmentalVisible, setDevelopmentalVisible] = useState(false);
 
   useEffect(() => {
     // Track progress screen viewed
@@ -347,8 +348,8 @@ export const ProgressScreen: React.FC = () => {
     try {
       setLoading(true);
 
-      // Fetch recording data, lesson stats, lesson list, and developmental progress in parallel
-      const [recordingsResponse, learningStats, lessonsResponse, devProgress] = await Promise.all([
+      // Fetch recording data, lesson stats, lesson list, developmental progress, and visibility in parallel
+      const [recordingsResponse, learningStats, lessonsResponse, devProgress, devVisibility] = await Promise.all([
         recordingService.getRecordings(),
         lessonService.getLearningStats().catch(err => {
           console.log('Failed to load learning stats:', err);
@@ -361,10 +362,15 @@ export const ProgressScreen: React.FC = () => {
         recordingService.getDevelopmentalProgress().catch(err => {
           console.log('Failed to load developmental progress:', err);
           return null;
+        }),
+        recordingService.getDevelopmentalVisibility().catch(err => {
+          console.log('Failed to load developmental visibility:', err);
+          return { visible: false };
         })
       ]);
 
-      // Set developmental progress if available
+      // Set developmental progress and visibility
+      setDevelopmentalVisible(devVisibility.visible);
       if (devProgress) {
         setDevelopmentalProgress(devProgress);
       }
@@ -654,7 +660,7 @@ export const ProgressScreen: React.FC = () => {
         <ScoreChart data={scoreData} />
 
         {/* Developmental Stage Radar Chart */}
-        {developmentalProgress && (
+        {developmentalProgress && developmentalVisible && (
           <View onLayout={(e) => { developmentalSectionY.current = e.nativeEvent.layout.y; }}>
             <RadarChart data={developmentalProgress} childName={developmentalProgress.childName} onDomainPress={handleDomainPress} />
           </View>

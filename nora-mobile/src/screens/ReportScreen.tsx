@@ -269,6 +269,7 @@ export const ReportScreen: React.FC = () => {
   const [reportData, setReportData] = useState<RecordingAnalysis | null>(null);
   const [pollingCount, setPollingCount] = useState(0);
   const [childName, setChildName] = useState<string>('Your Child');
+  const [developmentalVisible, setDevelopmentalVisible] = useState(false);
 
   // Feedback state
   const [feedbackSentiment, setFeedbackSentiment] = useState<'positive' | 'negative' | null>(null);
@@ -324,7 +325,17 @@ export const ReportScreen: React.FC = () => {
   useEffect(() => {
     loadReportData();
     loadChildName();
+    loadDevelopmentalVisibility();
   }, [recordingId]);
+
+  const loadDevelopmentalVisibility = async () => {
+    try {
+      const result = await recordingService.getDevelopmentalVisibility();
+      setDevelopmentalVisible(result.visible);
+    } catch (err) {
+      // Keep default false
+    }
+  };
 
   const loadChildName = async () => {
     try {
@@ -636,7 +647,7 @@ export const ReportScreen: React.FC = () => {
         )}
 
         {/* Milestone Celebrations */}
-        {reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations) && reportData.milestoneCelebrations.length > 0 && (
+        {developmentalVisible && reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations) && reportData.milestoneCelebrations.length > 0 && (
           <View style={styles.milestoneCelebrationSection}>
             <Text style={styles.cardTitle}>New Milestone</Text>
             {(reportData.milestoneCelebrations as MilestoneCelebration[]).slice(0, 1).map((milestone, index) => {

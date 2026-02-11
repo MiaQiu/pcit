@@ -111,4 +111,22 @@ router.patch('/weekly-reports/:id/checkin', requireAuth, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/config/developmental-visibility
+ * Returns whether developmental milestones are visible for the authenticated user
+ */
+router.get('/developmental-visibility', requireAuth, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { developmentalVisible: true },
+    });
+
+    res.json({ visible: user ? user.developmentalVisible : false });
+  } catch (error) {
+    console.error('Get developmental visibility error:', error);
+    res.status(500).json({ error: 'Failed to fetch developmental visibility' });
+  }
+});
+
 module.exports = router;

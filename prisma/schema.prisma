@@ -335,9 +335,10 @@ model User {
   trialStartDate        DateTime?
   relationshipToChild   RelationshipToChild  @default(MOTHER)
   childGender           ChildGender?
-  pushToken             String?
-  pushTokenUpdatedAt    DateTime?
-  revenueCatCustomerId  String?              @unique
+  pushToken                String?
+  pushTokenUpdatedAt       DateTime?
+  revenueCatCustomerId     String?              @unique
+  developmentalVisible     Boolean              @default(false)
   LearningProgress      LearningProgress?
   ModuleHistory         ModuleHistory[]
   PasswordResetToken    PasswordResetToken[]

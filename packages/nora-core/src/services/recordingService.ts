@@ -424,6 +424,21 @@ class RecordingService {
   }
 
   /**
+   * Get developmental milestones visibility for this user
+   */
+  async getDevelopmentalVisibility(): Promise<{ visible: boolean }> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/config/developmental-visibility`
+    );
+
+    if (!response.ok) {
+      return { visible: false };
+    }
+
+    return await response.json();
+  }
+
+  /**
    * Get report visibility settings from server config
    */
   async getReportVisibility(): Promise<{ daily: boolean; weekly: boolean; monthly: boolean }> {

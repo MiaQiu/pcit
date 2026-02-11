@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   getUserWeeklyReports,
   toggleWeeklyReportVisibility,
+  toggleDevelopmentalVisibility,
+  getUsers,
   WeeklyReportSummary,
 } from '../api/adminApi';
 
@@ -13,10 +15,13 @@ export default function UserWeeklyReportsPage() {
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [devVisible, setDevVisible] = useState(false);
+  const [togglingDev, setTogglingDev] = useState(false);
 
   useEffect(() => {
     if (userId) {
       loadReports();
+      loadDevVisibility();
     }
   }, [userId]);
 
@@ -28,6 +33,37 @@ export default function UserWeeklyReportsPage() {
       console.error('Failed to load weekly reports:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDevVisibility = async () => {
+    try {
+      const users = await getUsers();
+      const user = users.find((u) => u.id === userId);
+      if (user) {
+        setDevVisible(user.developmentalVisible);
+      }
+    } catch (err) {
+      console.error('Failed to load developmental visibility:', err);
+    }
+  };
+
+  const handleToggleDev = async () => {
+    setTogglingDev(true);
+    setFeedback(null);
+    const newVisibility = !devVisible;
+    try {
+      const result = await toggleDevelopmentalVisibility(userId!, newVisibility);
+      setDevVisible(result.developmentalVisible);
+      setFeedback({
+        type: 'success',
+        message: newVisibility ? 'Developmental milestones visible' : 'Developmental milestones hidden',
+      });
+    } catch {
+      setFeedback({ type: 'error', message: 'Failed to update developmental visibility' });
+    } finally {
+      setTogglingDev(false);
+      setTimeout(() => setFeedback(null), 3000);
     }
   };
 
@@ -92,6 +128,35 @@ export default function UserWeeklyReportsPage() {
           {feedback.message}
         </div>
       )}
+
+      {/* Developmental Milestones Toggle */}
+      <div style={{
+        backgroundColor: '#fff',
+        border: '1px solid #e5e7eb',
+        borderRadius: 12,
+        padding: '16px 20px',
+        marginBottom: 24,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 14, color: '#1e2939' }}>
+            Developmental Milestones
+          </div>
+          <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>
+            Show radar chart on this user's Progress screen
+          </div>
+        </div>
+        <button
+          className={`settings-toggle ${devVisible ? 'active' : ''}`}
+          onClick={handleToggleDev}
+          disabled={togglingDev}
+          aria-label="Toggle developmental milestones visibility"
+        >
+          <span className="settings-toggle-knob" />
+        </button>
+      </div>
 
       {reports.length === 0 ? (
         <div className="loading-state">No weekly reports for this user</div>

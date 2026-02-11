@@ -78,6 +78,7 @@ export interface UserSummary {
   pushTokenUpdatedAt: string | null;
   createdAt: string;
   sessionCount: number;
+  developmentalVisible: boolean;
 }
 
 // ---- Auth ----
@@ -244,6 +245,16 @@ export interface NotificationResult {
   failed: number;
   total: number;
   results: Array<{ userId: string; success: boolean; error?: string }>;
+}
+
+export async function toggleDevelopmentalVisibility(
+  userId: string,
+  visibility: boolean
+): Promise<{ userId: string; developmentalVisible: boolean }> {
+  return apiFetch(`/api/admin/users/${userId}/developmental-visibility`, {
+    method: 'PUT',
+    body: JSON.stringify({ visibility }),
+  });
 }
 
 export async function sendNotifications(
