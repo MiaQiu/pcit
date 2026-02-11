@@ -66,8 +66,8 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
       if (user.childName) {
         setChildName(user.childName);
       }
-      const unlocked = user.currentPhase === 'DISCIPLINE';
-      setIsDisciplineUnlocked(unlocked);
+      // Discipline mode always unlocked in module-based system
+      setIsDisciplineUnlocked(true);
     } catch (error) {
       console.error('Failed to load user data:', error);
     }

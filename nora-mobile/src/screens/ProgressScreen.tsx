@@ -13,6 +13,7 @@ import {
   Image,
   Dimensions,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -20,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
+import { ReportsSection } from '../components/ReportsSection';
 import { RootStackNavigationProp, RootTabParamList } from '../navigation/types';
 
 type ProgressScreenRouteProp = RouteProp<RootTabParamList, 'Progress'>;
@@ -315,6 +317,9 @@ export const ProgressScreen: React.FC = () => {
   const [domainChildName, setDomainChildName] = useState<string | null>(null);
   const [showDomainModal, setShowDomainModal] = useState(false);
   const [loadingDomainMilestones, setLoadingDomainMilestones] = useState(false);
+  const [recordings, setRecordings] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     // Track progress screen viewed
@@ -365,6 +370,7 @@ export const ProgressScreen: React.FC = () => {
       }
 
       const { recordings } = recordingsResponse;
+      setRecordings(recordings || []);
       const { lessons } = lessonsResponse;
 
       // Extract completed lesson dates
@@ -411,6 +417,13 @@ export const ProgressScreen: React.FC = () => {
       console.error('Failed to load progress data:', error);
       setLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadProgressData();
+    setRefreshKey((k) => k + 1);
+    setRefreshing(false);
   };
 
   /**
@@ -601,7 +614,14 @@ export const ProgressScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <ScrollView ref={scrollViewRef} style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#8C49D5" />
+        }
+      >
         <Text style={styles.title}>Progress</Text>
 
         {/* Header with Dragon Icon and Text */}
@@ -640,18 +660,8 @@ export const ProgressScreen: React.FC = () => {
           </View>
         )}
 
-        {/* View Last Report Button */}
-        {/* <View style={styles.buttonContainer}>
-          {latestRecordingId ? (
-            <Button onPress={handleViewReport} variant="primary">
-              View Lastest Report
-            </Button>
-          ) : (
-            <Text style={styles.noRecordingsText}>
-              No recordings yet. Record a session to see your report!
-            </Text>
-          )}
-        </View> */}
+        {/* Reports Section */}
+        <ReportsSection key={refreshKey} recordings={recordings} />
 
         {/* Bottom spacing */}
         <View style={styles.bottomSpacer} />

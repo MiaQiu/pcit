@@ -74,8 +74,6 @@ export interface ModuleSummary {
 
 export interface UserSummary {
   id: string;
-  email: string;
-  name: string;
   hasPushToken: boolean;
   pushTokenUpdatedAt: string | null;
   createdAt: string;
@@ -181,6 +179,57 @@ export async function updateModule(
     body: JSON.stringify(mod),
   });
   return data.module;
+}
+
+// ---- Weekly Reports ----
+
+export interface WeeklyReportSummary {
+  id: string;
+  weekStartDate: string;
+  weekEndDate: string;
+  visibility: boolean;
+  headline: string | null;
+  totalDeposits: number;
+  sessionIds: string[];
+  createdAt: string;
+}
+
+export async function getUserWeeklyReports(userId: string): Promise<WeeklyReportSummary[]> {
+  const data = await apiFetch<{ reports: WeeklyReportSummary[] }>(
+    `/api/admin/users/${userId}/weekly-reports`
+  );
+  return data.reports;
+}
+
+export async function toggleWeeklyReportVisibility(
+  reportId: string,
+  visibility: boolean
+): Promise<{ report: { id: string; visibility: boolean }; notificationSent: boolean }> {
+  return apiFetch(`/api/admin/weekly-reports/${reportId}/visibility`, {
+    method: 'PUT',
+    body: JSON.stringify({ visibility }),
+  });
+}
+
+// ---- Settings ----
+
+export interface ReportVisibility {
+  daily: boolean;
+  weekly: boolean;
+  monthly: boolean;
+}
+
+export async function getReportVisibility(): Promise<ReportVisibility> {
+  return apiFetch<ReportVisibility>('/api/admin/settings/report-visibility');
+}
+
+export async function updateReportVisibility(
+  visibility: ReportVisibility
+): Promise<ReportVisibility> {
+  return apiFetch<ReportVisibility>('/api/admin/settings/report-visibility', {
+    method: 'PUT',
+    body: JSON.stringify(visibility),
+  });
 }
 
 // ---- Users & Notifications ----

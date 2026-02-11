@@ -173,6 +173,10 @@ app.use('/api/recordings', recordingRoutes);
 const webhookRoutes = require('./server/routes/webhooks.cjs');
 app.use('/api/webhooks', webhookRoutes);
 
+// Mount config routes (authenticated user endpoints)
+const configRoutes = require('./server/routes/config.cjs');
+app.use('/api/config', configRoutes);
+
 // Mount admin routes
 const adminRoutes = require('./server/routes/admin.cjs');
 app.use('/api/admin', adminRoutes);

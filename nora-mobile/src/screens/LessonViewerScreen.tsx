@@ -54,8 +54,8 @@ const formatBodyText = (text: string, keywordsList: Keyword[], setSelectedKeywor
 
       elements.push(
         <View key={lineIndex} style={{ flexDirection: 'row', marginBottom: 10 }}>
-          <Text style={{ color: COLORS.mainPurple, fontSize: 20, marginRight: 10, marginTop: 0 }}>•</Text>
-          <Text style={{ flex: 1, fontFamily: FONTS.regular, fontSize: 20, lineHeight: 28, color: COLORS.textDark }}>
+          <Text style={{ color: COLORS.mainPurple, fontSize: 32, marginRight: 8, marginTop: -8}}>•</Text>
+          <Text style={{ flex: 1, fontFamily: FONTS.regular, fontSize: 18, lineHeight: 26, color: COLORS.textDark }}>
             {formattedContent}
           </Text>
         </View>
@@ -67,7 +67,7 @@ const formatBodyText = (text: string, keywordsList: Keyword[], setSelectedKeywor
       // Regular text line
       const formattedContent = formatInlineText(line, keywordsList, setSelectedKeyword, setShowKeywordModal);
       elements.push(
-        <Text key={lineIndex} style={{ fontFamily: FONTS.regular, fontSize: 20, lineHeight: 28, color: COLORS.textDark, marginBottom: 10 }}>
+        <Text key={lineIndex} style={{ fontFamily: FONTS.regular, fontSize: 18, lineHeight: 26, color: COLORS.textDark, marginBottom: 10 }}>
           {formattedContent}
         </Text>
       );
@@ -600,9 +600,8 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         lessonData.lesson.title,
         timeSpent,
         {
-          lessonPhase: lessonData.lesson.phase,
+          lessonModule: lessonData.lesson.module,
           dayNumber: lessonData.lesson.dayNumber,
-          isBooster: lessonData.lesson.isBooster,
           totalSegments,
         }
       );
@@ -656,7 +655,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       isCorrect,
       1,
       {
-        lessonPhase: lessonData.lesson.phase,
+        lessonModule: lessonData.lesson.module,
         lessonTitle: lessonData.lesson.title,
         dayNumber: lessonData.lesson.dayNumber,
         selectedAnswer: selectedOption,
@@ -664,18 +663,12 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       }
     );
 
-    // Submit to API and check for phase advancement
+    // Submit to API in background
     try {
-      const response = await lessonService.submitQuizAnswer(
+      await lessonService.submitQuizAnswer(
         lessonData.lesson.quiz.id,
         selectedOption
       );
-
-      // Check if user advanced to DISCIPLINE phase
-      if (response.phaseAdvanced) {
-        console.log('🎉 User advanced to DISCIPLINE phase!');
-        setShowPhaseCelebration(true);
-      }
     } catch (error) {
       console.error('Failed to submit quiz to server:', error);
       // Don't show error to user since they already got immediate feedback
@@ -779,7 +772,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         nextIndex + 1, // 1-indexed for readability
         {
           lessonTitle: lessonData.lesson.title,
-          lessonPhase: lessonData.lesson.phase,
+          lessonModule: lessonData.lesson.module,
           dayNumber: lessonData.lesson.dayNumber,
           totalSegments: segments.length,
         }
@@ -1098,7 +1091,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 16,
+    paddingBottom: 0,
     gap: 12,
   },
   closeButton: {
@@ -1119,7 +1112,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 18,
     paddingTop: 24,
   },
   phaseBadge: {
@@ -1133,8 +1126,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: FONTS.bold,
-    fontSize: 32,
-    lineHeight: 38,
+    fontSize: 24,
+    lineHeight: 24,
     letterSpacing: -0.2,
     color: COLORS.textDark,
     textAlign: 'center',
@@ -1155,11 +1148,12 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     color: COLORS.textDark,
     marginBottom: 16,
+    marginTop:-20
   },
   bodyText: {
     fontFamily: FONTS.regular,
-    fontSize: 20,
-    lineHeight: 28,
+    fontSize: 12,
+    lineHeight: 24,
     color: COLORS.textDark,
     textAlign: 'left',
     marginBottom: 32,

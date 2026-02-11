@@ -98,7 +98,6 @@ export const CreateAccountScreen: React.FC = () => {
         amplitudeService.identifyUser(response.user.id, {
           email: response.user.email,
           name: response.user.name,
-          currentPhase: response.user.subscriptionPlan,
           currentStreak: 0,
           longestStreak: 0,
           subscriptionPlan: response.user.subscriptionPlan,

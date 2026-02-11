@@ -55,7 +55,6 @@ export const LoginScreen: React.FC = () => {
         amplitudeService.identifyUser(response.user.id, {
           email: response.user.email,
           name: response.user.name,
-          currentPhase: response.user.subscriptionPlan, // Using subscriptionPlan as proxy for phase
           currentStreak: response.user.currentStreak || 0,
           longestStreak: response.user.longestStreak || 0,
           subscriptionPlan: response.user.subscriptionPlan,

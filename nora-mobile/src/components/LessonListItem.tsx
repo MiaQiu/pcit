@@ -13,7 +13,6 @@ export interface LessonListItemProps {
   dayNumber: number;
   title: string;
   isCompleted?: boolean;
-  isLocked?: boolean;
   onPress?: () => void;
 }
 
@@ -21,59 +20,37 @@ export const LessonListItem: React.FC<LessonListItemProps> = ({
   dayNumber,
   title,
   isCompleted = false,
-  isLocked = false,
   onPress,
 }) => {
-  const handlePress = () => {
-    // Always call onPress - let the parent handle locked lesson logic
-    if (onPress) {
-      onPress();
-    }
-  };
-
   return (
     <TouchableOpacity
-      style={[
-        styles.container,
-        isLocked && styles.containerLocked,
-      ]}
-      onPress={handlePress}
+      style={styles.container}
+      onPress={onPress}
       activeOpacity={0.7}
     >
       {/* Status Icon */}
       <View style={[
         styles.iconContainer,
         isCompleted && styles.iconCompleted,
-        isLocked && styles.iconLocked,
       ]}>
         {isCompleted ? (
           <Ionicons name="checkmark" size={20} color="#FFFFFF" />
-        ) : isLocked ? (
-          <Ionicons name="lock-closed" size={16} color="#999999" />
         ) : (
           <Text style={styles.dayNumber}>{dayNumber}</Text>
         )}
       </View>
 
       {/* Lesson Title */}
-      <Text
-        style={[
-          styles.title,
-          isLocked && styles.titleLocked,
-        ]}
-        numberOfLines={2}
-      >
-        Day {dayNumber}: {title}
+      <Text style={styles.title} numberOfLines={2}>
+        Lesson {dayNumber}: {title}
       </Text>
 
       {/* Arrow Icon */}
-      {!isLocked && (
-        <Ionicons
-          name="chevron-forward"
-          size={20}
-          color={isCompleted ? COLORS.mainPurple : '#CCCCCC'}
-        />
-      )}
+      <Ionicons
+        name="chevron-forward"
+        size={20}
+        color={isCompleted ? COLORS.mainPurple : '#CCCCCC'}
+      />
     </TouchableOpacity>
   );
 };
@@ -94,9 +71,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  containerLocked: {
-    opacity: 0.6,
-  },
   iconContainer: {
     width: 40,
     height: 40,
@@ -107,9 +81,6 @@ const styles = StyleSheet.create({
   },
   iconCompleted: {
     backgroundColor: COLORS.mainPurple,
-  },
-  iconLocked: {
-    backgroundColor: '#F5F5F5',
   },
   dayNumber: {
     fontFamily: FONTS.bold,
@@ -122,8 +93,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     color: COLORS.textDark,
-  },
-  titleLocked: {
-    color: '#999999',
   },
 });

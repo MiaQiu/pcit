@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UserSummary } from '../../api/adminApi';
 
 interface Props {
@@ -9,7 +11,13 @@ interface Props {
 }
 
 export default function UserList({ users, selectedIds, onToggle, onSelectAll, onSelectNone }: Props) {
+  const navigate = useNavigate();
+  const [filter, setFilter] = useState('');
+
   const withToken = users.filter((u) => u.hasPushToken);
+  const filtered = filter
+    ? users.filter((u) => u.id.toLowerCase().includes(filter.toLowerCase()))
+    : users;
 
   return (
     <div>
@@ -21,19 +29,37 @@ export default function UserList({ users, selectedIds, onToggle, onSelectAll, on
         </div>
       </div>
 
+      <div style={{ marginBottom: 12 }}>
+        <input
+          type="text"
+          placeholder="Filter by user ID..."
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          style={{
+            padding: '8px 12px',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)',
+            fontSize: 14,
+            fontFamily: 'inherit',
+            width: 300,
+            outline: 'none',
+          }}
+        />
+      </div>
+
       <table className="data-table compact">
         <thead>
           <tr>
             <th style={{ width: 40 }}></th>
-            <th>Name</th>
-            <th>Email</th>
+            <th>User ID</th>
             <th>Push</th>
             <th>Sessions</th>
             <th>Joined</th>
+            <th style={{ width: 100 }}>Reports</th>
           </tr>
         </thead>
         <tbody>
-          {users.map((u) => (
+          {filtered.map((u) => (
             <tr key={u.id} className={!u.hasPushToken ? 'row-disabled' : ''}>
               <td>
                 <input
@@ -43,18 +69,27 @@ export default function UserList({ users, selectedIds, onToggle, onSelectAll, on
                   disabled={!u.hasPushToken}
                 />
               </td>
-              <td>{u.name}</td>
-              <td className="cell-mono">{u.email}</td>
+              <td className="cell-mono">{u.id}</td>
               <td>
                 <span className={`status-dot ${u.hasPushToken ? 'active' : 'inactive'}`} />
               </td>
               <td>{u.sessionCount}</td>
               <td className="cell-date">{new Date(u.createdAt).toLocaleDateString()}</td>
+              <td>
+                <button
+                  className="btn-secondary-sm"
+                  onClick={() => navigate(`/users/${u.id}/weekly-reports`)}
+                >
+                  Weekly
+                </button>
+              </td>
             </tr>
           ))}
-          {users.length === 0 && (
+          {filtered.length === 0 && (
             <tr>
-              <td colSpan={6} className="empty-state">No users found</td>
+              <td colSpan={6} className="empty-state">
+                {filter ? 'No users match filter' : 'No users found'}
+              </td>
             </tr>
           )}
         </tbody>

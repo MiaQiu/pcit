@@ -29,18 +29,29 @@ model LearningProgress {
   @@index([userId])
 }
 
+model Module {
+  id              String       @id @default(uuid())
+  key             LessonModule @unique
+  title           String
+  shortName       String
+  description     String
+  displayOrder    Int
+  backgroundColor String      @default("#E4E4FF")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([displayOrder])
+}
+
 model Lesson {
   id                 String               @id
-  phase              LessonPhase
-  phaseNumber        Int
+  module             LessonModule
   dayNumber          Int
   title              String
   subtitle           String?
   shortDescription   String
   objectives         String[]
   estimatedMinutes   Int                  @default(2)
-  isBooster          Boolean              @default(false)
-  prerequisites      String[]
   teachesCategories  String[]
   dragonImageUrl     String?
   backgroundColor    String               @default("#E4E4FF")
@@ -52,9 +63,8 @@ model Lesson {
   Quiz               Quiz?
   UserLessonProgress UserLessonProgress[]
 
-  @@unique([phaseNumber, dayNumber])
-  @@index([phaseNumber])
-  @@index([phase, dayNumber])
+  @@unique([module, dayNumber])
+  @@index([module])
 }
 
 model LessonSegment {
@@ -327,7 +337,6 @@ model User {
   childGender           ChildGender?
   pushToken             String?
   pushTokenUpdatedAt    DateTime?
-  currentPhase          LessonPhase          @default(CONNECT)
   revenueCatCustomerId  String?              @unique
   LearningProgress      LearningProgress?
   ModuleHistory         ModuleHistory[]
@@ -344,6 +353,7 @@ model User {
   WacbSurvey            WacbSurvey[]
   ChildProfiling        ChildProfiling[]
   Child                 Child[]
+  WeeklyReport          WeeklyReport[]
 
   @@index([emailHash])
   @@index([pushToken])
@@ -448,6 +458,7 @@ model Child {
   ChildMilestone     ChildMilestone[]
   ChildProfiling     ChildProfiling[]
   ChildIssuePriority ChildIssuePriority[]
+  WeeklyReport       WeeklyReport[]
 
   @@index([userId])
 }
@@ -538,16 +549,32 @@ enum ContentType {
   TEXT_INPUT
 }
 
-enum LessonPhase {
-  CONNECT
-  DISCIPLINE
+enum LessonModule {
+  FOUNDATION
+  EMOTIONS
+  COOPERATION
+  SIBLINGS
+  RELOCATION
+  DIVORCE
+  DEVELOPMENT
+  PROCRASTINATION
+  PATIENCE
+  RESPONSIBILITY
+  MEALS
+  AGGRESSION
+  CONFLICT
+  FOCUS
+  DEFIANCE
+  SAFETY
+  SCREENS
+  SEPARATION
+  SPECIAL
 }
 
 enum ProgressStatus {
   NOT_STARTED
   IN_PROGRESS
   COMPLETED
-  LOCKED
 }
 
 enum RelationshipToChild {
@@ -601,10 +628,76 @@ enum ClinicalLevel {
   FLOURISH        // Level V
 }
 
+model AppConfig {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
 enum InterventionStrategy {
   AGGRESSIVE_DE_ESCALATION
   DIFFERENTIAL_ATTENTION
   POSITIVE_REINFORCEMENT
   RELATIONSHIP_BUFFERING
   SKILL_COACHING
+}
+
+model WeeklyReport {
+  id        String   @id @default(uuid())
+  userId    String
+  childId   String?
+
+  // Week boundaries (Monday 00:00 to Sunday 23:59)
+  weekStartDate DateTime
+  weekEndDate   DateTime
+
+  // Visibility control — admin can toggle which reports users see
+  visibility    Boolean  @default(false)
+
+  // Page 1: Weekly Recap Headline
+  headline      String?  // e.g. "Zoey Showed Easier Transition this week"
+
+  // Page 2: Emotional Bank Account Deposits
+  totalDeposits       Int @default(0)
+  massageTimeMinutes  Int @default(0)
+  praiseCount         Int @default(0)
+  echoCount           Int @default(0)
+  narrateCount        Int @default(0)
+
+  // Page 3: Skill Celebration
+  // e.g. "You're an excellent Narrator"
+  skillCelebrationTitle String?
+  // JSON array: [{ label, body, exampleScript }]
+  scenarioCards         Json?
+
+  // Page 4: Weekly Moments Highlight
+  // JSON array: [{ date, dayLabel, dateLabel, tag, sessionTitle, quote, celebration, audioUrl, startTime, endTime }]
+  topMoments            Json?
+
+  // Page 5: Child Development Milestones
+  // JSON array: [{ status, category, title, actionTip }]
+  milestones            Json?
+
+  // Page 6: Next Week's Focus
+  focusHeading          String?  // e.g. "Use narration during transitions"
+  focusSubtext          String?  // e.g. "You don't need to be perfect — just consistent."
+  whyExplanation        String?  // expandable "Why this matters" body text
+
+  // Page 7: Quick Check-in (user responses)
+  moodSelection         String?  // e.g. "Grounded", "Tired", "Stretched", "Hopeful"
+  issueRatings          Json?    // { "Tantrums": "Better", "Hitting": "Same" }
+
+  // Session IDs included in this report
+  sessionIds            String[] @default([])
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  User  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Child Child? @relation(fields: [childId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, weekStartDate])
+  @@index([userId])
+  @@index([userId, weekStartDate])
+  @@index([weekStartDate, weekEndDate])
 }

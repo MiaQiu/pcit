@@ -422,6 +422,117 @@ class RecordingService {
 
     return await response.json();
   }
+
+  /**
+   * Get report visibility settings from server config
+   */
+  async getReportVisibility(): Promise<{ daily: boolean; weekly: boolean; monthly: boolean }> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/config/report-visibility`
+    );
+
+    if (!response.ok) {
+      // Default to all hidden on error
+      return { daily: false, weekly: false, monthly: false };
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Get weekly reports that the admin has made visible for this user
+   */
+  async getVisibleWeeklyReports(): Promise<{ reports: Array<{
+    id: string;
+    weekStartDate: string;
+    weekEndDate: string;
+    headline: string | null;
+    totalDeposits: number;
+    sessionIds: string[];
+  }> }> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/config/weekly-reports`
+    );
+
+    if (!response.ok) {
+      return { reports: [] };
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Get a single full weekly report by ID
+   */
+  async getWeeklyReport(reportId: string): Promise<WeeklyReportData | null> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/config/weekly-reports/${reportId}`
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Save the user's check-in responses for a weekly report
+   */
+  async saveWeeklyCheckin(reportId: string, data: {
+    moodSelection?: string | null;
+    issueRatings?: Record<string, string> | null;
+  }): Promise<void> {
+    await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/config/weekly-reports/${reportId}/checkin`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }
+    );
+  }
+}
+
+export interface WeeklyReportData {
+  id: string;
+  userId: string;
+  childId: string | null;
+  weekStartDate: string;
+  weekEndDate: string;
+  visibility: boolean;
+  headline: string | null;
+  totalDeposits: number;
+  massageTimeMinutes: number;
+  praiseCount: number;
+  echoCount: number;
+  narrateCount: number;
+  skillCelebrationTitle: string | null;
+  scenarioCards: Array<{ label: string; body: string; exampleScript: string }> | null;
+  topMoments: Array<{
+    date: string;
+    dayLabel: string;
+    dateLabel: string;
+    tag: string;
+    sessionTitle: string;
+    quote: string;
+    celebration: string;
+    audioUrl?: string | null;
+    startTime?: number | null;
+    endTime?: number | null;
+  }> | null;
+  milestones: Array<{
+    status: string;
+    category: string;
+    title: string;
+    actionTip: string | null;
+  }> | null;
+  focusHeading: string | null;
+  focusSubtext: string | null;
+  whyExplanation: string | null;
+  moodSelection: string | null;
+  issueRatings: Record<string, string> | null;
+  sessionIds: string[];
 }
 
 export default RecordingService;

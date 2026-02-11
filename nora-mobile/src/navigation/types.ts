@@ -64,6 +64,9 @@ export type RootStackParamList = {
   Support: undefined;
   TermsAndConditions: undefined;
   PrivacyPolicy: undefined;
+  ModuleDetail: {
+    moduleKey: string;
+  };
   LessonViewer: {
     lessonId: string;
   };
@@ -88,7 +91,7 @@ export type RootStackParamList = {
     score?: number; // Optional score for Overall Nora Score
     tip?: string; // Optional tip for Next Step section
   };
-  WeeklyReport: undefined;
+  WeeklyReport: { reportId: string };
 };
 
 export type RootTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;

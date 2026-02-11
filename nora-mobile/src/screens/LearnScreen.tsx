@@ -1,30 +1,21 @@
 /**
  * Learn Screen
- * Shows all lessons organized by phases with completion status
+ * Module-based browsing with search, filter chips, and featured card
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, Text, StyleSheet, ActivityIndicator, RefreshControl, Alert, Modal, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { View, ScrollView, Text, StyleSheet, ActivityIndicator, RefreshControl, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { LessonListItem, LessonListItemProps } from '../components/LessonListItem';
-import { StreakWidget } from '../components/StreakWidget';
-import { ProfileCircle } from '../components/ProfileCircle';
+import { ModuleCard } from '../components/ModuleCard';
+import { SearchBar } from '../components/SearchBar';
+import { FilterChips } from '../components/FilterChips';
 import { FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService } from '../contexts/AppContext';
-import { LessonCache } from '../lib/LessonCache';
 import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
-import { ErrorMessages } from '../utils/errorMessages';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
-
-interface Phase {
-  phaseNumber: number;
-  phaseName: string;
-  totalLessons: number;
-  completedLessons: number;
-  lessons: LessonListItemProps[];
-}
+import type { ModuleWithProgress } from '@nora/core';
 
 export const LearnScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -32,125 +23,91 @@ export const LearnScreen: React.FC = () => {
   const { isOnline } = useNetworkStatus();
   const scrollViewRef = React.useRef<ScrollView>(null);
 
-  const [phases, setPhases] = useState<Phase[]>([]);
+  const [modules, setModules] = useState<ModuleWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showLockedModal, setShowLockedModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('ALL');
 
   useEffect(() => {
-    loadLessons();
+    loadModules();
   }, []);
 
-  // Refresh lessons when screen comes into focus (e.g., after completing a lesson)
+  // Refresh when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      // Reset scroll position to top when screen comes into focus
       scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
-
-      // Only reload if we already have data (skip initial mount, which is handled by useEffect)
-      if (phases.length > 0) {
-        loadLessons(false);
+      if (modules.length > 0) {
+        loadModules(false);
       }
-    }, [phases.length])
+    }, [modules.length])
   );
 
-  const loadLessons = async (showLoadingSpinner = true) => {
+  const loadModules = async (showLoadingSpinner = true) => {
     try {
-      if (showLoadingSpinner) {
-        setLoading(true);
-      } else {
-        setIsRefreshing(true);
-      }
+      if (showLoadingSpinner) setLoading(true);
+      else setIsRefreshing(true);
       setError(null);
 
-      // Fetch all lessons from API
-      const response = await lessonService.getLessons();
-      handleApiSuccess(); // Mark server as up after successful API call
-      const apiLessons = response.lessons || [];
-
-      // Check content version and clear cache if it changed
-      if (response.contentVersion) {
-        const cacheCleared = await LessonCache.checkAndUpdateVersion(response.contentVersion);
-        if (cacheCleared) {
-          console.log('Cache cleared due to content update');
-        }
-      }
-
-      // Group lessons by phase
-      const phaseMap = new Map<string, any[]>();
-      apiLessons.forEach(lesson => {
-        const phase = lesson.phase || 'Phase 1';
-        if (!phaseMap.has(phase)) {
-          phaseMap.set(phase, []);
-        }
-        phaseMap.get(phase)!.push(lesson);
-      });
-
-      // Convert to Phase objects
-      const phasesData: Phase[] = [];
-      let globalDayCounter = 1;
-
-      Array.from(phaseMap.entries())
-        .sort((a, b) => a[0].localeCompare(b[0]))
-        .forEach(([phaseName, lessons], phaseIndex) => {
-          const sortedLessons = lessons.sort((a, b) => {
-            const aOrder = a.orderInPhase || 0;
-            const bOrder = b.orderInPhase || 0;
-            return aOrder - bOrder;
-          });
-
-          const completedCount = sortedLessons.filter(
-            l => l.progress?.status === 'COMPLETED'
-          ).length;
-
-          const lessonItems: LessonListItemProps[] = sortedLessons.map((lesson, index) => ({
-            id: lesson.id,
-            dayNumber: globalDayCounter++,
-            title: lesson.title,
-            isCompleted: lesson.progress?.status === 'COMPLETED',
-            isLocked: lesson.isLocked || false,
-          }));
-
-          phasesData.push({
-            phaseNumber: phaseIndex + 1,
-            phaseName,
-            totalLessons: lessons.length,
-            completedLessons: completedCount,
-            lessons: lessonItems,
-          });
-        });
-
-      setPhases(phasesData);
+      const response = await lessonService.getModules();
+      handleApiSuccess();
+      setModules(response.modules);
     } catch (err) {
-      console.error('Failed to load lessons:', err);
-
-      // Store error message for empty state display
+      console.error('Failed to load modules:', err);
       const errorMessage = handleApiError(err);
       setError(errorMessage);
-      // NetworkStatusBar already shows if it's a network issue
-      // Empty state will display the error message
     } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
   };
 
-  const handleLessonPress = (lessonId: string, isLocked?: boolean) => {
-    // Check if lesson is locked
-    if (isLocked) {
-      setShowLockedModal(true);
-      return;
+  // Build filter chips from modules
+  const filterChips = useMemo(() => {
+    const chips = [{ key: 'ALL', label: 'All' }];
+    modules.forEach(mod => {
+      chips.push({ key: mod.key, label: mod.shortName });
+    });
+    return chips;
+  }, [modules]);
+
+  // Filter modules by search and active chip
+  const filteredModules = useMemo(() => {
+    let result = modules;
+
+    // Filter by chip
+    if (activeFilter !== 'ALL') {
+      result = result.filter(m => m.key === activeFilter);
     }
 
-    navigation.push('LessonViewer', { lessonId });
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(m =>
+        m.title.toLowerCase().includes(query) ||
+        m.shortName.toLowerCase().includes(query) ||
+        m.description.toLowerCase().includes(query)
+      );
+    }
+
+    return result;
+  }, [modules, activeFilter, searchQuery]);
+
+  const handleModulePress = (moduleKey: string) => {
+    navigation.push('ModuleDetail', { moduleKey });
+  };
+
+  const handleBrowseAll = () => {
+    setActiveFilter('ALL');
+    setSearchQuery('');
   };
 
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8C49D5" />
+          <ActivityIndicator size="large" color={COLORS.mainPurple} />
         </View>
       </SafeAreaView>
     );
@@ -166,7 +123,7 @@ export const LearnScreen: React.FC = () => {
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
-            onRefresh={() => loadLessons(false)}
+            onRefresh={() => loadModules(false)}
             enabled={isOnline}
             tintColor={COLORS.mainPurple}
           />
@@ -174,73 +131,58 @@ export const LearnScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.mainTitle}>All Lessons</Text>
+          <Text style={styles.mainTitle}>Explore lessons</Text>
         </View>
 
-        {/* Empty state when error and no lessons loaded */}
-        {error && !loading && phases.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Couldn't Load Lessons</Text>
-            <Text style={styles.emptyMessage}>{error}</Text>
-            {/* <TouchableOpacity
-              style={[styles.retryButton, !isOnline && styles.retryButtonDisabled]}
-              onPress={() => loadLessons()}
-              disabled={!isOnline}
-            >
-              <Text style={styles.retryButtonText}>Try Again</Text>
-            </TouchableOpacity> */}
-          </View>
-        )}
+        <View style={styles.content}>
+          {/* Search Bar */}
+          <SearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
 
-        {/* Phases and Lessons */}
-        {phases.map((phase) => (
-          <View key={phase.phaseNumber} style={styles.phaseSection}>
-            {/* Phase Header */}
-            <View style={styles.phaseHeader}>
-              <Text style={styles.phaseTitle}>
-                Phase {phase.phaseNumber}: {phase.phaseName}
-              </Text>
-              <Text style={styles.phaseProgress}>
-                {phase.completedLessons}/{phase.totalLessons}
-              </Text>
+          {/* Filter Chips */}
+          <FilterChips
+            chips={filterChips}
+            activeKey={activeFilter}
+            onSelect={setActiveFilter}
+          />
+
+          {/* Error state */}
+          {error && !loading && modules.length === 0 && (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>Couldn't Load Modules</Text>
+              <Text style={styles.emptyMessage}>{error}</Text>
             </View>
+          )}
 
-            {/* Lessons List */}
-            <View style={styles.lessonsList}>
-              {phase.lessons.map((lesson) => (
-                <LessonListItem
-                  key={lesson.id}
-                  {...lesson}
-                  onPress={() => handleLessonPress(lesson.id, lesson.isLocked)}
-                />
-              ))}
-            </View>
-          </View>
-        ))}
-      </ScrollView>
-
-      {/* Locked Lesson Modal */}
-      <Modal
-        visible={showLockedModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowLockedModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Lesson Locked</Text>
-            <Text style={styles.modalMessage}>
-              This course is paced to give you the space to reflect and retain what you learn.{'\n\n'}New lesson will unlock tomorrow!
+          {/* Module count */}
+          {filteredModules.length > 0 && (
+            <Text style={styles.subheader}>Module Library
+              {/* {filteredModules.length} {filteredModules.length === 1 ? 'module' : 'modules'} — Browse freely (no required order) */}
             </Text>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => setShowLockedModal(false)}
-            >
-              <Text style={styles.modalButtonText}>OK</Text>
-            </TouchableOpacity>
-          </View>
+          )}
+
+          {/* Module Cards */}
+          {filteredModules.map(mod => (
+            <ModuleCard
+              key={mod.key}
+              module={mod}
+              onPress={() => handleModulePress(mod.key)}
+            />
+          ))}
+
+          {/* No results */}
+          {filteredModules.length === 0 && modules.length > 0 && (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No modules found</Text>
+              <Text style={styles.emptyMessage}>
+                Try a different search term or filter
+              </Text>
+            </View>
+          )}
         </View>
-      </Modal>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -268,84 +210,19 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
     marginTop: 8,
   },
-  phaseSection: {
-    marginBottom: 24,
-  },
-  phaseHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  content: {
     paddingHorizontal: 24,
+  },
+  subheader: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: COLORS.textDark,
     marginBottom: 12,
   },
-  phaseTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 20,
-    lineHeight: 28,
-    color: COLORS.textDark,
-    flex: 1,
-  },
-  phaseProgress: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 16,
-    color: COLORS.mainPurple,
-  },
-  lessonsList: {
-    paddingHorizontal: 24,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 32,
-    width: '100%',
-    maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  modalTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 24,
-    lineHeight: 32,
-    color: COLORS.textDark,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  modalMessage: {
-    fontFamily: FONTS.regular,
-    fontSize: 18,
-    lineHeight: 28,
-    color: COLORS.textDark,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  modalButton: {
-    backgroundColor: COLORS.mainPurple,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    alignItems: 'center',
-  },
-  modalButtonText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 18,
-    color: '#FFFFFF',
-  },
   emptyState: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 80,
+    paddingVertical: 40,
   },
   emptyTitle: {
     fontFamily: FONTS.bold,
@@ -359,22 +236,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
-    marginBottom: 24,
     lineHeight: 24,
-  },
-  retryButton: {
-    backgroundColor: COLORS.mainPurple,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 8,
-  },
-  retryButtonDisabled: {
-    backgroundColor: '#CCCCCC',
-    opacity: 0.6,
-  },
-  retryButtonText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 16,
-    color: '#FFFFFF',
   },
 });

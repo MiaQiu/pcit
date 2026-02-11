@@ -541,8 +541,6 @@ router.get('/users', requireAdminAuth, async (req, res) => {
     const users = await prisma.user.findMany({
       select: {
         id: true,
-        email: true,
-        name: true,
         pushToken: true,
         pushTokenUpdatedAt: true,
         createdAt: true,
@@ -553,8 +551,6 @@ router.get('/users', requireAdminAuth, async (req, res) => {
 
     const formatted = users.map(u => ({
       id: u.id,
-      email: u.email,
-      name: u.name,
       hasPushToken: !!u.pushToken,
       pushTokenUpdatedAt: u.pushTokenUpdatedAt,
       createdAt: u.createdAt,
@@ -609,6 +605,145 @@ router.post('/notifications/send', requireAdminAuth, async (req, res) => {
   } catch (error) {
     console.error('Admin send notifications error:', error);
     res.status(500).json({ error: 'Failed to send notifications' });
+  }
+});
+
+// ============================================================================
+// WEEKLY REPORT ENDPOINTS
+// ============================================================================
+
+/**
+ * GET /api/admin/users/:id/weekly-reports
+ * List weekly reports for a specific user
+ */
+router.get('/users/:id/weekly-reports', requireAdminAuth, async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const reports = await prisma.weeklyReport.findMany({
+      where: { userId },
+      orderBy: { weekStartDate: 'desc' },
+      select: {
+        id: true,
+        weekStartDate: true,
+        weekEndDate: true,
+        visibility: true,
+        headline: true,
+        totalDeposits: true,
+        sessionIds: true,
+        createdAt: true,
+      }
+    });
+
+    res.json({ reports });
+  } catch (error) {
+    console.error('Admin get user weekly reports error:', error);
+    res.status(500).json({ error: 'Failed to fetch weekly reports' });
+  }
+});
+
+/**
+ * PUT /api/admin/weekly-reports/:id/visibility
+ * Toggle visibility of a weekly report. Sends push notification when enabling.
+ */
+router.put('/weekly-reports/:id/visibility', requireAdminAuth, async (req, res) => {
+  try {
+    const reportId = req.params.id;
+    const { visibility } = req.body;
+
+    const report = await prisma.weeklyReport.findUnique({
+      where: { id: reportId },
+    });
+
+    if (!report) {
+      return res.status(404).json({ error: 'Weekly report not found' });
+    }
+
+    const updated = await prisma.weeklyReport.update({
+      where: { id: reportId },
+      data: { visibility: !!visibility },
+    });
+
+    // Send push notification when making visible
+    let notificationResult = null;
+    if (visibility && !report.visibility) {
+      const weekLabel = new Date(report.weekStartDate).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
+      notificationResult = await sendPushNotificationToUser(report.userId, {
+        title: 'Your Weekly Report is Ready!',
+        body: `Check out your progress for the week of ${weekLabel}`,
+        sound: 'default',
+        data: {
+          type: 'weekly_report',
+          reportId: report.id,
+          timestamp: Date.now(),
+        },
+      });
+    }
+
+    res.json({
+      report: {
+        id: updated.id,
+        visibility: updated.visibility,
+      },
+      notificationSent: notificationResult ? notificationResult.success : false,
+    });
+  } catch (error) {
+    console.error('Admin toggle weekly report visibility error:', error);
+    res.status(500).json({ error: 'Failed to update report visibility' });
+  }
+});
+
+// ============================================================================
+// SETTINGS ENDPOINTS
+// ============================================================================
+
+const REPORT_VISIBILITY_KEY = 'report-visibility';
+const DEFAULT_REPORT_VISIBILITY = { daily: false, weekly: false, monthly: false };
+
+/**
+ * GET /api/admin/settings/report-visibility
+ * Get report visibility settings
+ */
+router.get('/settings/report-visibility', requireAdminAuth, async (req, res) => {
+  try {
+    const config = await prisma.appConfig.findUnique({
+      where: { key: REPORT_VISIBILITY_KEY }
+    });
+
+    res.json(config ? config.value : DEFAULT_REPORT_VISIBILITY);
+  } catch (error) {
+    console.error('Admin get report visibility error:', error);
+    res.status(500).json({ error: 'Failed to fetch report visibility settings' });
+  }
+});
+
+/**
+ * PUT /api/admin/settings/report-visibility
+ * Update report visibility settings
+ */
+router.put('/settings/report-visibility', requireAdminAuth, async (req, res) => {
+  try {
+    const { daily, weekly, monthly } = req.body;
+
+    const value = {
+      daily: !!daily,
+      weekly: !!weekly,
+      monthly: !!monthly,
+    };
+
+    await prisma.appConfig.upsert({
+      where: { key: REPORT_VISIBILITY_KEY },
+      update: { value },
+      create: { key: REPORT_VISIBILITY_KEY, value },
+    });
+
+    res.json(value);
+  } catch (error) {
+    console.error('Admin update report visibility error:', error);
+    res.status(500).json({ error: 'Failed to update report visibility settings' });
   }
 });
 

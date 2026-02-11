@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
   //
   card: {
     borderRadius: 24,
-    height: 550, // Fixed height for consistency
+    height: 570, // Fixed height for consistency
     paddingTop: 100, // Push text below ellipse (adjusted for -110 overlap)
     paddingHorizontal: 16,
     paddingBottom: 28,
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     left: 20,
     right: 70, // Leave space for share button
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 18,
+    fontSize: 16,
     lineHeight: 26,
     color: COLORS.textDark,
     zIndex: 100,

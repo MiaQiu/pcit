@@ -8,59 +8,6 @@ const { analyzePCITCoding } = require('./pcitAnalysisService.cjs');
 const { sendReportReadyNotification, sendPushNotificationToUser } = require('./pushNotifications.cjs');
 
 // ============================================================================
-// Phase Progression Helper
-// ============================================================================
-
-/**
- * Check and update user's phase to DISCIPLINE if conditions are met:
- * 1. Completed Day 15 of CONNECT phase
- * 2. Ever achieved a score of 100 in any session
- * @param {string} userId - User ID
- * @returns {Promise<boolean>} Returns true if phase was advanced, false otherwise
- */
-async function checkAndUpdateUserPhase(userId) {
-  try {
-    // Get user's current phase
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { currentPhase: true }
-    });
-
-    // If already in DISCIPLINE phase, no need to check
-    if (user.currentPhase === 'DISCIPLINE') {
-      return false;
-    }
-
-    // Check if user has ever achieved a mastery score of 80+ in any session
-    const sessions = await prisma.session.findMany({
-      where: {
-        userId,
-        overallScore: { not: null }
-      },
-      select: { overallScore: true }
-    });
-
-    const hasMasteryScore = sessions.some(session => (session.overallScore || 0) >= 80);
-
-    if (!hasMasteryScore) {
-      return false; // Never achieved 80 mastery score yet
-    }
-
-    // Mastery achieved - update user to DISCIPLINE phase
-    await prisma.user.update({
-      where: { id: userId },
-      data: { currentPhase: 'DISCIPLINE' }
-    });
-
-    console.log(`✅ User ${userId} advanced to DISCIPLINE phase (achieved 80 mastery score)`);
-    return true;
-  } catch (error) {
-    console.error('Error checking/updating user phase:', error);
-    return false;
-  }
-}
-
-// ============================================================================
 // Failure Notification Helper
 // ============================================================================
 
@@ -231,35 +178,6 @@ async function processRecordingWithRetry(sessionId, userId, attemptNumber = 0) {
       // Don't fail the whole process if push notification fails
     }
 
-    // Check if user should advance to DISCIPLINE phase
-    try {
-      const userPhase = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { currentPhase: true, pushToken: true }
-      });
-
-      if (userPhase?.currentPhase === 'CONNECT') {
-        const phaseAdvanced = await checkAndUpdateUserPhase(userId);
-
-        // If phase advanced, send celebration notification
-        if (phaseAdvanced && userPhase.pushToken) {
-          try {
-            await sendReportReadyNotification(
-              userPhase.pushToken,
-              '🎉 Congratulations!',
-              'You\'ve advanced to the Discipline Phase! New lessons are now available.',
-              { type: 'PHASE_ADVANCED', phase: 'DISCIPLINE' }
-            );
-            console.log(`📱 Sent phase advancement notification to user ${userId}`);
-          } catch (notifError) {
-            console.error('Failed to send phase advancement notification:', notifError);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error checking user phase:', error);
-    }
-
   } catch (error) {
     console.error(`❌ [PROCESSING-ERROR] Session ${sessionId.substring(0, 8)} - Attempt ${attemptNumber + 1} failed:`, error.message);
 
@@ -284,5 +202,4 @@ module.exports = {
   processRecordingWithRetry,
   reportPermanentFailureToTeam,
   notifyProcessingFailure,
-  checkAndUpdateUserPhase
 };

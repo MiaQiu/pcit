@@ -18,67 +18,35 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ProgressBar } from '../components/ProgressBar';
 import { MomentPlayer } from '../components/MomentPlayer';
 import { DRAGON_PURPLE } from '../constants/assets';
-import { RootStackNavigationProp } from '../navigation/types';
+import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import { RecordingAnalysis, MilestoneCelebration } from '@nora/core';
+import { WeeklyReportData } from '@nora/core';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TOTAL_PAGES = 7;
 
-interface WeeklyDeposits {
-  totalDeposits: number;
-  massageTimeMinutes: number;
-  praise: number;
-  echo: number;
-  narrate: number;
-}
-
-interface TopMomentData {
-  date: string;        // e.g. "Mon  Jan 27"
-  dayLabel: string;    // e.g. "Mon"
-  dateLabel: string;   // e.g. "Jan 27"
-  tag: string;         // e.g. "Repair + persistence"
-  sessionTitle: string;
-  quote: string;
-  celebration: string;
-  audioUrl?: string | null;
-  startTime?: number | null;
-  endTime?: number | null;
-}
-
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-const stripPcitTags = (text: string): string => {
-  if (!text) return text;
-  return text
-    .split('\n')
-    .map(line => line.replace(/\s+(LP|IC|DC|RF|BD|NT|QU|CM|CR|UP|NE|EC|PR|NA)$/gi, ''))
-    .join('\n')
-    .trim();
-};
 
 export const WeeklyReportScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const route = useRoute<RouteProp<RootStackParamList, 'WeeklyReport'>>();
   const recordingService = useRecordingService();
   const authService = useAuthService();
   const [currentPage, setCurrentPage] = useState(1);
-  const [deposits, setDeposits] = useState<WeeklyDeposits | null>(null);
-  const [topMoments, setTopMoments] = useState<TopMomentData[]>([]);
-  const [milestones, setMilestones] = useState<MilestoneCelebration[]>([]);
+  const [report, setReport] = useState<WeeklyReportData | null>(null);
   const [childIssues, setChildIssues] = useState<string[]>([]);
   const [childName, setChildName] = useState('Your Child');
-  const [loadingDeposits, setLoadingDeposits] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [moodSelection, setMoodSelection] = useState<string | null>(null);
   const [issueRatings, setIssueRatings] = useState<Record<string, string>>({});
+  const [checkinSaved, setCheckinSaved] = useState(false);
 
   useEffect(() => {
-    loadWeeklyData();
+    loadReport();
     loadChildIssues();
     loadChildName();
   }, []);
@@ -100,7 +68,6 @@ export const WeeklyReportScreen: React.FC = () => {
             if (Array.isArray(parsed)) return parsed[0];
           } catch {}
         }
-        // Fallback: format strategy name
         return i.strategy.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase());
       }).filter(Boolean);
       setChildIssues(issueNames);
@@ -109,118 +76,64 @@ export const WeeklyReportScreen: React.FC = () => {
     }
   };
 
-  const loadWeeklyData = async () => {
+  const loadReport = async () => {
     try {
-      setLoadingDeposits(true);
+      setLoading(true);
+      const { reportId } = route.params;
 
-      // Fetch recordings from the last 4 weeks for testing
-      const fourWeeksAgo = new Date();
-      fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-      const { recordings } = await recordingService.getRecordings({
-        from: fourWeeksAgo.toISOString(),
-      });
-      // getRecordings returns 'status' (transcribed/uploaded), not 'analysisStatus'
-      // All returned recordings with an overallScore have completed analysis
-      const completedRecordings = recordings.filter(
-        (r: any) => r.overallScore != null
-      );
+      let reportData: WeeklyReportData | null = null;
 
-      if (completedRecordings.length === 0) {
-        setDeposits({ totalDeposits: 0, massageTimeMinutes: 0, praise: 0, echo: 0, narrate: 0 });
-        setLoadingDeposits(false);
-        return;
-      }
-
-      const analyses: RecordingAnalysis[] = await Promise.all(
-        completedRecordings.map((r: any) => recordingService.getAnalysis(r.id))
-      );
-
-      let totalPraise = 0;
-      let totalEcho = 0;
-      let totalNarrate = 0;
-      let totalDurationSeconds = 0;
-
-      for (const analysis of analyses) {
-        totalDurationSeconds += analysis.durationSeconds || 0;
-        for (const skill of analysis.skills) {
-          if (skill.label === 'Praise') totalPraise += skill.progress;
-          else if (skill.label === 'Echo') totalEcho += skill.progress;
-          else if (skill.label === 'Narrate') totalNarrate += skill.progress;
+      if (reportId === 'latest') {
+        // Fetch latest visible report
+        const { reports } = await recordingService.getVisibleWeeklyReports();
+        if (reports.length > 0) {
+          reportData = await recordingService.getWeeklyReport(reports[0].id);
         }
+      } else {
+        reportData = await recordingService.getWeeklyReport(reportId);
       }
 
-      setDeposits({
-        totalDeposits: totalPraise + totalEcho + totalNarrate,
-        massageTimeMinutes: Math.round(totalDurationSeconds / 60),
-        praise: totalPraise,
-        echo: totalEcho,
-        narrate: totalNarrate,
-      });
-
-      // Extract top moments for page 4
-      const moments: TopMomentData[] = analyses.map((analysis) => {
-        const date = new Date(analysis.createdAt);
-        const dayLabel = DAY_NAMES[date.getDay()];
-        const dateLabel = `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`;
-
-        const quote = analysis.topMomentUtteranceNumber != null && analysis.transcript?.[analysis.topMomentUtteranceNumber]
-          ? stripPcitTags(analysis.transcript[analysis.topMomentUtteranceNumber].text)
-          : stripPcitTags(typeof analysis.topMoment === 'string' ? analysis.topMoment : analysis.topMoment.quote);
-
-        const celebration = typeof analysis.topMoment === 'object' && analysis.topMoment.celebration
-          ? analysis.topMoment.celebration
-          : (analysis.feedback || analysis.encouragement || '');
-
-        // Build a tag from the top skill
-        const topSkill = [...analysis.skills].sort((a, b) => b.progress - a.progress)[0];
-        const tag = topSkill ? topSkill.label : '';
-
-        return {
-          date: `${dayLabel}  ${dateLabel}`,
-          dayLabel,
-          dateLabel,
-          tag,
-          sessionTitle: analysis.stats?.totalPlayTime || `${Math.round(analysis.durationSeconds / 60)}m session`,
-          quote,
-          celebration,
-          audioUrl: analysis.audioUrl,
-          startTime: analysis.topMomentStartTime,
-          endTime: analysis.topMomentEndTime,
-        };
-      });
-      setTopMoments(moments);
-
-      // Extract unique milestone celebrations across all sessions for page 5
-      const allMilestones: MilestoneCelebration[] = [];
-      const seenTitles = new Set<string>();
-      for (const analysis of analyses) {
-        if (analysis.milestoneCelebrations) {
-          for (const m of analysis.milestoneCelebrations) {
-            if (!seenTitles.has(m.title)) {
-              seenTitles.add(m.title);
-              allMilestones.push(m);
-            }
-          }
-        }
+      if (reportData) {
+        setReport(reportData);
+        // Restore previously saved check-in responses
+        if (reportData.moodSelection) setMoodSelection(reportData.moodSelection);
+        if (reportData.issueRatings) setIssueRatings(reportData.issueRatings);
       }
-      setMilestones(allMilestones);
     } catch (error) {
-      console.log('Failed to load weekly data:', error);
-      setDeposits({ totalDeposits: 0, massageTimeMinutes: 0, praise: 0, echo: 0, narrate: 0 });
+      console.log('Failed to load weekly report:', error);
     } finally {
-      setLoadingDeposits(false);
+      setLoading(false);
     }
   };
 
-  const handleContinue = () => {
+  const saveCheckin = async () => {
+    if (!report || checkinSaved) return;
+    try {
+      await recordingService.saveWeeklyCheckin(report.id, {
+        moodSelection,
+        issueRatings: Object.keys(issueRatings).length > 0 ? issueRatings : null,
+      });
+      setCheckinSaved(true);
+    } catch (error) {
+      console.log('Failed to save check-in:', error);
+    }
+  };
+
+  const handleContinue = async () => {
     if (currentPage < TOTAL_PAGES) {
       setCurrentPage(currentPage + 1);
     } else {
+      // Save check-in before closing
+      await saveCheckin();
       navigation.goBack();
     }
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
+    // Save check-in if user filled anything on the last page
+    if (currentPage === TOTAL_PAGES && (moodSelection || Object.keys(issueRatings).length > 0)) {
+      await saveCheckin();
+    }
     navigation.goBack();
   };
 
@@ -230,7 +143,7 @@ export const WeeklyReportScreen: React.FC = () => {
         <Text style={styles.subtitle}>Weekly Recap</Text>
         <View style={styles.titleRow}>
           <Text style={styles.title}>
-            {childName} Showed Easier Transition this week
+            {report?.headline || `${childName}'s Weekly Recap`}
           </Text>
           {/* <Image
             source={DRAGON_PURPLE}
@@ -253,15 +166,7 @@ export const WeeklyReportScreen: React.FC = () => {
   );
 
   const renderPage2 = () => {
-    if (loadingDeposits) {
-      return (
-        <View style={styles.placeholderContent}>
-          <ActivityIndicator size="large" color="#8C49D5" />
-        </View>
-      );
-    }
-
-    const data = deposits!;
+    if (!report) return null;
 
     return (
       <ScrollView
@@ -278,7 +183,7 @@ export const WeeklyReportScreen: React.FC = () => {
         <View style={styles.totalCard}>
           <Text style={styles.totalLabel}>Total deposits</Text>
           <View style={styles.totalRow}>
-            <Text style={styles.totalNumber}>{data.totalDeposits}</Text>
+            <Text style={styles.totalNumber}>{report.totalDeposits}</Text>
             <View style={styles.totalAvatarContainer}>
               <Image
                 source={DRAGON_PURPLE}
@@ -300,7 +205,7 @@ export const WeeklyReportScreen: React.FC = () => {
               <View style={[styles.depositIcon, { backgroundColor: '#EEF2FF' }]}>
                 <Ionicons name="time-outline" size={20} color="#6366F1" />
               </View>
-              <Text style={styles.depositValue}>{data.massageTimeMinutes}m</Text>
+              <Text style={styles.depositValue}>{report.massageTimeMinutes}m</Text>
             </View>
             <Text style={styles.depositLabel}>Massage time</Text>
             <Text style={styles.depositDescription}>
@@ -314,7 +219,7 @@ export const WeeklyReportScreen: React.FC = () => {
               <View style={[styles.depositIcon, { backgroundColor: '#FFF7ED' }]}>
                 <Ionicons name="ribbon-outline" size={20} color="#EA580C" />
               </View>
-              <Text style={styles.depositValue}>{data.praise}</Text>
+              <Text style={styles.depositValue}>{report.praiseCount}</Text>
             </View>
             <Text style={styles.depositLabel}>Confidence Boost</Text>
             <Text style={styles.depositDescription}>
@@ -328,7 +233,7 @@ export const WeeklyReportScreen: React.FC = () => {
               <View style={[styles.depositIcon, { backgroundColor: '#F3E8FF' }]}>
                 <Ionicons name="chatbox-outline" size={20} color="#8C49D5" />
               </View>
-              <Text style={styles.depositValue}>{data.echo}</Text>
+              <Text style={styles.depositValue}>{report.echoCount}</Text>
             </View>
             <Text style={styles.depositLabel}>Being heard (Echo)</Text>
             <Text style={styles.depositDescription}>
@@ -342,7 +247,7 @@ export const WeeklyReportScreen: React.FC = () => {
               <View style={[styles.depositIcon, { backgroundColor: '#FEF2F2' }]}>
                 <Ionicons name="eye-outline" size={20} color="#DC2626" />
               </View>
-              <Text style={styles.depositValue}>{data.narrate}</Text>
+              <Text style={styles.depositValue}>{report.narrateCount}</Text>
             </View>
             <Text style={styles.depositLabel}>Being seen (Narrate)</Text>
             <Text style={styles.depositDescription}>
@@ -354,70 +259,46 @@ export const WeeklyReportScreen: React.FC = () => {
     );
   };
 
-  const renderPage3 = () => (
-    <ScrollView
-      style={styles.page3Scroll}
-      contentContainerStyle={styles.page3ScrollContent}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Title */}
-      <Text style={styles.page3Title}>You're an excellent Narrator</Text>
+  const renderPage3 = () => {
+    const cards = report?.scenarioCards || [];
 
-      {/* Scenario Cards Container */}
-      <View style={styles.scenarioContainer}>
-        {/* Scenario Card 1 */}
-        <View style={styles.scenarioCard}>
-          <View style={styles.scenarioCardHeader}>
-            <View style={styles.scenarioCardText}>
-              <Text style={styles.scenarioLabel}>Clean-up transition</Text>
-              <Text style={styles.scenarioBody}>
-                You narrated the plan in a steady voice and gave a tiny next step.
-              </Text>
-            </View>
-            <View style={styles.audioIcon}>
-              <Ionicons name="bar-chart-outline" size={20} color="#8C49D5" />
-            </View>
-          </View>
-          <View style={styles.exampleScript}>
-            <Text style={styles.exampleScriptLabel}>Example script</Text>
-            <Text style={styles.exampleScriptText}>
-              "I see you still want to play. We're going to put the blocks in the bin… first five blocks, then we can choose a book."
-            </Text>
-          </View>
-        </View>
+    return (
+      <ScrollView
+        style={styles.page3Scroll}
+        contentContainerStyle={styles.page3ScrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Title */}
+        <Text style={styles.page3Title}>{report?.skillCelebrationTitle || 'Skill Celebration'}</Text>
 
-        {/* Scenario Card 2 */}
-        <View style={styles.scenarioCard}>
-          <View style={styles.scenarioCardHeader}>
-            <View style={styles.scenarioCardText}>
-              <Text style={styles.scenarioLabel}>Big feelings</Text>
-              <Text style={styles.scenarioBody}>
-                You echoed her emotion first — then named what was hard.
-              </Text>
+        {/* Scenario Cards Container */}
+        <View style={styles.scenarioContainer}>
+          {cards.map((card: any, index: number) => (
+            <View key={index} style={styles.scenarioCard}>
+              <View style={styles.scenarioCardHeader}>
+                <View style={styles.scenarioCardText}>
+                  <Text style={styles.scenarioLabel}>{card.label}</Text>
+                  <Text style={styles.scenarioBody}>{card.body}</Text>
+                </View>
+                <View style={styles.audioIcon}>
+                  <Ionicons name="bar-chart-outline" size={20} color="#8C49D5" />
+                </View>
+              </View>
+              {card.exampleScript && (
+                <View style={styles.exampleScript}>
+                  <Text style={styles.exampleScriptLabel}>Example script</Text>
+                  <Text style={styles.exampleScriptText}>{card.exampleScript}</Text>
+                </View>
+              )}
             </View>
-            <View style={styles.audioIcon}>
-              <Ionicons name="bar-chart-outline" size={20} color="#8C49D5" />
-            </View>
-          </View>
-          <View style={styles.exampleScript}>
-            <Text style={styles.exampleScriptLabel}>Example script</Text>
-            <Text style={styles.exampleScriptText}>
-              "You're really mad it's time to stop. You wanted more. Stopping is hard."
-            </Text>
-          </View>
+          ))}
         </View>
-      </View>
-    </ScrollView>
-  );
+      </ScrollView>
+    );
+  };
 
   const renderPage4 = () => {
-    if (loadingDeposits) {
-      return (
-        <View style={styles.placeholderContent}>
-          <ActivityIndicator size="large" color="#8C49D5" />
-        </View>
-      );
-    }
+    const topMoments = report?.topMoments || [];
 
     if (topMoments.length === 0) {
       return (
@@ -499,13 +380,7 @@ export const WeeklyReportScreen: React.FC = () => {
   };
 
   const renderPage5 = () => {
-    if (loadingDeposits) {
-      return (
-        <View style={styles.placeholderContent}>
-          <ActivityIndicator size="large" color="#8C49D5" />
-        </View>
-      );
-    }
+    const milestones = report?.milestones || [];
 
     return (
       <ScrollView
@@ -522,7 +397,7 @@ export const WeeklyReportScreen: React.FC = () => {
           </Text>
 
           {milestones.length > 0 ? (
-            milestones.map((milestone, index) => (
+            milestones.map((milestone: any, index: number) => (
               <View key={index} style={styles.milestoneCard}>
                 <View style={styles.milestoneIcon}>
                   <Ionicons
@@ -578,10 +453,10 @@ export const WeeklyReportScreen: React.FC = () => {
 
         {/* Focus description */}
         <Text style={styles.focusHeading}>
-          Use narration during transitions (clean-up, meals, quiet play).
+          {report?.focusHeading || 'Keep practicing your skills this week.'}
         </Text>
         <Text style={styles.focusSubtext}>
-          You don't need to be perfect — just consistent.
+          {report?.focusSubtext || "You don't need to be perfect — just consistent."}
         </Text>
 
         {/* Why this matters — expandable */}
@@ -603,10 +478,10 @@ export const WeeklyReportScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
 
-        {whyExpanded && (
+        {whyExpanded && report?.whyExplanation && (
           <View style={styles.whyBody}>
             <Text style={styles.whyBodyText}>
-              Narration reduces uncertainty. When Zoey knows what's coming, her body can stay calmer — which makes cooperation more likely.
+              {report.whyExplanation}
             </Text>
           </View>
         )}
@@ -720,6 +595,29 @@ export const WeeklyReportScreen: React.FC = () => {
         );
     }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.placeholderContent}>
+          <ActivityIndicator size="large" color="#8C49D5" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!report) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.placeholderContent}>
+          <Text style={styles.placeholderText}>No report available</Text>
+          <TouchableOpacity onPress={handleClose} style={{ marginTop: 20 }}>
+            <Text style={{ color: '#8C49D5', fontSize: 16 }}>Go back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>

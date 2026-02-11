@@ -34,7 +34,6 @@ export interface User {
   lastSessionDate?: Date | null;
   longestStreak?: number;
   createdAt?: Date;
-  currentPhase?: LessonPhase;
 
   // Subscription fields
   subscriptionPlan?: SubscriptionPlan;
@@ -196,26 +195,55 @@ export interface APIError {
 
 // ============================================================================
 // LEARNING SYSTEM TYPES
-// Bite-size learning curriculum types
+// Module-based learning curriculum types
 // ============================================================================
 
-export type LessonPhase = 'CONNECT' | 'DISCIPLINE';
+export type LessonModule =
+  | 'FOUNDATION' | 'EMOTIONS' | 'COOPERATION' | 'SIBLINGS'
+  | 'RELOCATION' | 'DIVORCE' | 'DEVELOPMENT' | 'PROCRASTINATION'
+  | 'PATIENCE' | 'RESPONSIBILITY' | 'MEALS' | 'AGGRESSION'
+  | 'CONFLICT' | 'FOCUS' | 'DEFIANCE' | 'SAFETY'
+  | 'SCREENS' | 'SEPARATION' | 'SPECIAL';
+
 export type ContentType = 'TEXT' | 'EXAMPLE' | 'TIP' | 'SCRIPT' | 'CALLOUT' | 'TEXT_INPUT';
-export type ProgressStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'LOCKED';
+export type ProgressStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+
+export interface Module {
+  id: string;
+  key: LessonModule;
+  title: string;
+  shortName: string;
+  description: string;
+  displayOrder: number;
+  backgroundColor: string;
+}
+
+export interface ModuleWithProgress extends Module {
+  lessonCount: number;
+  completedLessons: number;
+}
+
+export interface ModuleListResponse {
+  modules: ModuleWithProgress[];
+  totalModules: number;
+  contentVersion: string;
+}
+
+export interface ModuleDetailResponse {
+  module: Module;
+  lessons: LessonCardData[];
+}
 
 export interface Lesson {
   id: string;
-  phase: LessonPhase;
-  phaseNumber: number;
+  module: LessonModule;
   dayNumber: number;
   title: string;
   subtitle?: string;
   shortDescription: string;
   objectives: string[];
   estimatedMinutes: number;
-  isBooster: boolean;
-  prerequisites: string[];
-  teachesCategories: string[]; // Links to ModuleHistory categories (PRAISE, ECHO, etc.)
+  teachesCategories: string[];
 
   // UI assets
   dragonImageUrl?: string;
@@ -305,16 +333,16 @@ export interface KeywordMatch {
 
 export interface LessonCardData {
   id: string;
-  phase: string;
-  phaseName: string;
+  module: LessonModule;
   title: string;
   subtitle?: string;
   description: string;
+  dayNumber: number;
   dragonImageUrl?: string;
   backgroundColor: string;
   ellipse77Color: string;
   ellipse78Color: string;
-  isLocked: boolean;
+  isLocked: false;
   progress?: UserLessonProgress;
 }
 
@@ -346,15 +374,12 @@ export interface SubmitQuizResponse {
   explanation: string;
   attemptNumber: number;
   quizResponse: QuizResponse;
-  phaseAdvanced?: boolean; // True if user advanced to DISCIPLINE phase
 }
 
 export interface LearningStatsResponse {
   totalLessons: number;
   completedLessons: number;
   inProgressLessons: number;
-  currentPhase: LessonPhase;
-  currentDayNumber: number;
   totalTimeSpentMinutes: number;
   averageQuizScore: number;
   streak: number;
@@ -397,3 +422,4 @@ export interface SubmitTextInputResponse {
   attemptNumber: number;
   textInputResponse: TextInputResponse;
 }
+

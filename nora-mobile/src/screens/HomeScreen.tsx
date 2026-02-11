@@ -38,7 +38,6 @@ export const HomeScreen: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>();
   const [relationshipToChild, setRelationshipToChild] = useState<'MOTHER' | 'FATHER' | 'GRANDMOTHER' | 'GRANDFATHER' | 'GUARDIAN' | 'OTHER' | undefined>();
-  const [userCurrentPhase, setUserCurrentPhase] = useState<'CONNECT' | 'DISCIPLINE' | undefined>();
   const [currentStreak, setCurrentStreak] = useState(0);
   const [completedDaysThisWeek, setCompletedDaysThisWeek] = useState<boolean[]>([false, false, false, false, false, false, false]);
   const [latestScore, setLatestScore] = useState<{ score: number; maxScore: number; recordingId: string } | null>(null);
@@ -175,7 +174,6 @@ export const HomeScreen: React.FC = () => {
       handleApiSuccess(); // Mark server as up
       setProfileImageUrl(user.profileImageUrl);
       setRelationshipToChild(user.relationshipToChild);
-      setUserCurrentPhase(user.currentPhase as 'CONNECT' | 'DISCIPLINE' | undefined);
     } catch (error) {
       // Show toast if offline
       if (!isOnline) {
@@ -423,7 +421,7 @@ export const HomeScreen: React.FC = () => {
   useEffect(() => {
     if (lessons.length > 0) {
       // Get unlocked lessons that are not completed
-      const unlockedLessons = lessons.filter(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
+      const unlockedLessons = lessons.filter(l => l.progress?.status !== 'COMPLETED');
 
       // Get only the current lesson (first unlocked and not completed)
       const currentLesson = unlockedLessons[0];
@@ -458,16 +456,12 @@ export const HomeScreen: React.FC = () => {
       const mappedLessons: LessonCardProps[] = apiLessons.map((lesson) => ({
         id: lesson.id,
         phase: 'PHASE',
-        phaseName: lesson.phase,
+        phaseName: lesson.module || '',
         title: lesson.title,
         subtitle: lesson.subtitle || '',
         description: lesson.description,
-        // Use dino image for Discipline phase, dragon for others
-        dragonImageUrl: lesson.phase === 'DISCIPLINE'
-          ? require('../../assets/images/dino_phase2.webp')
-          : (lesson.dragonImageUrl || DRAGON_PURPLE),
-        // Remove backgroundColor, ellipse colors - let LessonCard determine based on phase
-        isLocked: lesson.isLocked,
+        dragonImageUrl: lesson.dragonImageUrl || DRAGON_PURPLE,
+        isLocked: false,
         progress: lesson.progress,
       }));
 
@@ -499,8 +493,7 @@ export const HomeScreen: React.FC = () => {
     if (lesson) {
       amplitudeService.trackLessonStarted(lesson.id, lesson.title, {
         source: 'home_screen',
-        lessonPhase: lesson.phase,
-        phaseName: lesson.phaseName,
+        lessonModule: lesson.phaseName,
         status: lesson.progress?.status || 'NOT_STARTED',
       });
     }
@@ -579,9 +572,7 @@ export const HomeScreen: React.FC = () => {
     switch (cardType) {
       case 'lesson':
         // Find the first unlocked lesson that is not completed in the user's current phase
-        const todayLesson = userCurrentPhase
-          ? lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED' && l.phaseName === userCurrentPhase)
-          : lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
+        const todayLesson = lessons.find(l => l.progress?.status !== 'COMPLETED');
         if (todayLesson) {
           handleLessonPress(todayLesson.id);
         }
@@ -613,7 +604,7 @@ export const HomeScreen: React.FC = () => {
       {/* Temporary: Weekly Report test button */}
       <TouchableOpacity
         style={styles.weeklyReportButton}
-        onPress={() => navigation.push('WeeklyReport')}
+        onPress={() => navigation.push('WeeklyReport', { reportId: 'latest' })}
       >
         <Text style={styles.weeklyReportButtonText}>📊 Weekly Report</Text>
       </TouchableOpacity>
@@ -655,10 +646,8 @@ export const HomeScreen: React.FC = () => {
 
         {/* Show LessonCard for new users with no recordings/lessons, NextActionCard for experienced users */}
         {lessons.length > 0 && (() => {
-          // Find the first unlocked lesson that is not completed in the user's current phase
-          const todayLesson = userCurrentPhase
-            ? lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED' && l.phaseName === userCurrentPhase)
-            : lessons.find(l => !l.isLocked && l.progress?.status !== 'COMPLETED');
+          // Find the first lesson that is not completed
+          const todayLesson = lessons.find(l => l.progress?.status !== 'COMPLETED');
           const displayLesson = todayLesson || lessons[0];
 
           // If user is not experienced (new user), show simple LessonCard
@@ -673,23 +662,6 @@ export const HomeScreen: React.FC = () => {
                   />
                 </View>
 
-                {/* Discipline Phase Card (Locked) */}
-                {(() => {
-                  // Find the first Discipline phase lesson
-                  const disciplineLesson = lessons.find(l => l.phaseName === 'DISCIPLINE');
-                  if (disciplineLesson) {
-                    return (
-                      <View style={{ marginBottom: 8 }}>
-                        <LessonCard
-                          {...disciplineLesson}
-                          isLocked={true}
-                          onPress={() => {}} // No action when locked
-                        />
-                      </View>
-                    );
-                  }
-                  return null;
-                })()}
               </>
             );
           }

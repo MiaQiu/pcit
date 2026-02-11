@@ -8,7 +8,9 @@ import type {
   SubmitQuizResponse,
   LearningStatsResponse,
   UserLessonProgress,
-  LessonPhase,
+  LessonModule,
+  ModuleListResponse,
+  ModuleDetailResponse,
   SubmitTextInputRequest,
   SubmitTextInputResponse,
   TextInputResponse,
@@ -49,11 +51,60 @@ class LessonService {
   }
 
   /**
-   * Get all lessons with user progress
-   * @param phase Optional filter by phase (CONNECT or DISCIPLINE)
+   * Get all modules with per-user progress
    */
-  async getLessons(phase?: LessonPhase): Promise<LessonListResponse> {
-    const queryParam = phase ? `?phase=${phase}` : '';
+  async getModules(): Promise<ModuleListResponse> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/modules`,
+      {
+        method: 'GET',
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new ApiError(
+        error.error || 'Failed to fetch modules',
+        response.status,
+        response.statusText,
+        error.code
+      );
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get module detail with its lessons
+   * @param moduleKey Module key (e.g. 'FOUNDATION')
+   */
+  async getModuleDetail(moduleKey: string): Promise<ModuleDetailResponse> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/modules/${moduleKey}`,
+      {
+        method: 'GET',
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new ApiError(
+        error.error || 'Failed to fetch module detail',
+        response.status,
+        response.statusText,
+        error.code
+      );
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get all lessons with user progress
+   * @param module Optional filter by module
+   */
+  async getLessons(module?: LessonModule): Promise<LessonListResponse> {
+    const queryParam = module ? `?module=${module}` : '';
 
     const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/lessons${queryParam}`,
@@ -110,29 +161,7 @@ class LessonService {
   }
 
   /**
-   * Get the next lesson user should complete
-   * Considers prerequisites and current progress
-   */
-  async getNextLesson(): Promise<Lesson | null> {
-    const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/lessons/next`,
-      {
-        method: 'GET',
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch next lesson');
-    }
-
-    const data = await response.json();
-    return data.lesson || null;
-  }
-
-  /**
    * Get lessons that teach a specific category
-   * Useful for showing "Review these lessons" when module recommended
    * @param category Recommendation category (PRAISE, ECHO, NARRATION, etc.)
    */
   async getLessonsByCategory(category: string): Promise<Lesson[]> {
@@ -218,8 +247,6 @@ class LessonService {
 
   /**
    * Submit text input response for AI evaluation
-   * @param segmentId Segment ID
-   * @param userAnswer User's text response
    */
   async submitTextInputResponse(
     segmentId: string,
@@ -250,7 +277,6 @@ class LessonService {
 
   /**
    * Get user's previous text input responses for a segment
-   * @param segmentId Segment ID
    */
   async getTextInputResponses(
     segmentId: string
@@ -291,20 +317,16 @@ class LessonService {
 
   /**
    * Mark a lesson as completed
-   * Convenience method that updates progress with COMPLETED status
-   * @param lessonId Lesson ID
    */
   async completeLesson(lessonId: string): Promise<UserLessonProgress> {
     return this.updateProgress(lessonId, {
-      currentSegment: 4, // Assuming 4 segments total
+      currentSegment: 4,
       status: 'COMPLETED',
     });
   }
 
   /**
    * Resume a lesson (update last viewed time)
-   * @param lessonId Lesson ID
-   * @param currentSegment Current segment number
    */
   async resumeLesson(
     lessonId: string,
