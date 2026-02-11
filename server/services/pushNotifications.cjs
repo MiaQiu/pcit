@@ -215,9 +215,49 @@ async function unregisterPushToken(userId) {
   }
 }
 
+/**
+ * Send a milestone celebration notification to a user
+ * Only sends if developmentalVisible is enabled for that user
+ * @param {string} userId - User ID
+ * @param {{ status: string, category: string, title: string }[]} celebrations - Milestone celebrations
+ * @returns {Promise<Object>} - Result of the notification
+ */
+async function sendMilestoneNotification(userId, celebrations) {
+  if (!celebrations || celebrations.length === 0) return { success: false, error: 'No celebrations' };
+
+  // Check if developmental milestones are visible for this user
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { developmentalVisible: true }
+  });
+
+  if (!user || !user.developmentalVisible) {
+    console.log(`[PushNotifications] Skipping milestone notification for user ${userId.substring(0, 8)} — developmental not visible`);
+    return { success: false, error: 'Developmental milestones not visible' };
+  }
+
+  const first = celebrations[0];
+  const isAchieved = first.status === 'ACHIEVED';
+  const title = isAchieved ? 'Milestone Achieved!' : 'New Milestone Emerging!';
+  const body = celebrations.length === 1
+    ? `${first.title} (${first.category})`
+    : `${first.title} and ${celebrations.length - 1} more`;
+
+  return sendPushNotificationToUser(userId, {
+    title,
+    body,
+    sound: 'default',
+    data: {
+      type: 'milestone',
+      timestamp: Date.now()
+    }
+  });
+}
+
 module.exports = {
   sendPushNotificationToUser,
   sendReportReadyNotification,
+  sendMilestoneNotification,
   registerPushToken,
   unregisterPushToken,
   isValidExpoPushToken

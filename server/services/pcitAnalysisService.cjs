@@ -1094,6 +1094,14 @@ Do not include markdown or whitespace (minified JSON).
               data: { milestoneCelebrations: milestoneResult.celebrations }
             });
             console.log(`✅ [ANALYSIS-STEP-10] Stored ${milestoneResult.celebrations.length} milestone celebrations`);
+
+            // Send milestone push notification (non-blocking)
+            try {
+              const { sendMilestoneNotification } = require('./pushNotifications.cjs');
+              await sendMilestoneNotification(userId, milestoneResult.celebrations);
+            } catch (notifError) {
+              console.error('⚠️ [ANALYSIS-STEP-10] Milestone notification error (non-blocking):', notifError.message);
+            }
           }
         }
       } catch (milestoneError) {
