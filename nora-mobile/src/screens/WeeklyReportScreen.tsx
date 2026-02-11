@@ -3,7 +3,11 @@
  * 7-page weekly recap flow with segmented progress bar.
  * Page 1: Summary headline with dragon illustration.
  * Page 2: Emotional Bank Account Deposits (weekly session summary).
- * Pages 3-7: Placeholder content.
+ * Page 3: Skill celebration with scenario cards.
+ * Page 4: Weekly moments highlight carousel.
+ * Page 5: Child development milestones.
+ * Page 6: Next week's focus with expandable explanation.
+ * Page 7: Quick check-in (mood + issue ratings).
  */
 
 import React, { useState, useEffect } from 'react';
@@ -22,14 +26,13 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ProgressBar } from '../components/ProgressBar';
 import { MomentPlayer } from '../components/MomentPlayer';
-import { DRAGON_PURPLE } from '../constants/assets';
+import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import { WeeklyReportData } from '@nora/core';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TOTAL_PAGES = 7;
-
 
 export const WeeklyReportScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -84,7 +87,6 @@ export const WeeklyReportScreen: React.FC = () => {
       let reportData: WeeklyReportData | null = null;
 
       if (reportId === 'latest') {
-        // Fetch latest visible report
         const { reports } = await recordingService.getVisibleWeeklyReports();
         if (reports.length > 0) {
           reportData = await recordingService.getWeeklyReport(reports[0].id);
@@ -95,7 +97,6 @@ export const WeeklyReportScreen: React.FC = () => {
 
       if (reportData) {
         setReport(reportData);
-        // Restore previously saved check-in responses
         if (reportData.moodSelection) setMoodSelection(reportData.moodSelection);
         if (reportData.issueRatings) setIssueRatings(reportData.issueRatings);
       }
@@ -123,41 +124,33 @@ export const WeeklyReportScreen: React.FC = () => {
     if (currentPage < TOTAL_PAGES) {
       setCurrentPage(currentPage + 1);
     } else {
-      // Save check-in before closing
       await saveCheckin();
       navigation.goBack();
     }
   };
 
   const handleClose = async () => {
-    // Save check-in if user filled anything on the last page
     if (currentPage === TOTAL_PAGES && (moodSelection || Object.keys(issueRatings).length > 0)) {
       await saveCheckin();
     }
     navigation.goBack();
   };
 
+  // ─── Page 1: Headline ────────────────────────────────────────────────
   const renderPage1 = () => (
     <View style={styles.page1Content}>
-      <View style={styles.textContent}>
-        <Text style={styles.subtitle}>Weekly Recap</Text>
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>
-            {report?.headline || `${childName}'s Weekly Recap`}
-          </Text>
-          {/* <Image
-            source={DRAGON_PURPLE}
-            style={styles.avatarCircle}
-            resizeMode="cover"
-          /> */}
-        </View>
+      <View style={styles.page1TextContent}>
+        <Text style={styles.page1Subtitle}>Weekly Recap</Text>
+        <Text style={styles.page1Title}>
+          {report?.headline || `${childName}'s Weekly Recap`}
+        </Text>
       </View>
 
-      <View style={styles.illustrationContainer}>
-        <View style={styles.illustrationCircle}>
+      <View style={styles.page1IllustrationContainer}>
+        <View style={styles.page1IllustrationCircle}>
           <Image
             source={DRAGON_PURPLE}
-            style={styles.illustrationImage}
+            style={styles.page1IllustrationImage}
             resizeMode="contain"
           />
         </View>
@@ -165,29 +158,27 @@ export const WeeklyReportScreen: React.FC = () => {
     </View>
   );
 
+  // ─── Page 2: Emotional Bank Account Deposits ─────────────────────────
   const renderPage2 = () => {
     if (!report) return null;
 
     return (
       <ScrollView
-        style={styles.page2Scroll}
-        contentContainerStyle={styles.page2ScrollContent}
+        style={styles.pageScroll}
+        contentContainerStyle={styles.pageScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Title */}
-        <Text style={styles.page2Title}>
-          Your Weekly Emotional Bank Account Deposits
-        </Text>
+        <Text style={styles.pageTitle}>Your Weekly Emotional Bank Account Deposits</Text>
 
         {/* Total Deposits Card */}
-        <View style={styles.totalCard}>
+        <View style={styles.card}>
           <Text style={styles.totalLabel}>Total deposits</Text>
           <View style={styles.totalRow}>
             <Text style={styles.totalNumber}>{report.totalDeposits}</Text>
-            <View style={styles.totalAvatarContainer}>
+            <View style={styles.dragonAvatarContainer}>
               <Image
                 source={DRAGON_PURPLE}
-                style={styles.totalAvatarImage}
+                style={styles.dragonAvatarImage}
                 resizeMode="contain"
               />
             </View>
@@ -195,62 +186,58 @@ export const WeeklyReportScreen: React.FC = () => {
           <Text style={styles.totalTagline}>Small moments. Big returns.</Text>
         </View>
 
-        {/* Breakdown Section */}
-        <Text style={styles.breakdownTitle}>Your deposits breakdown</Text>
+        {/* Breakdown */}
+        <Text style={styles.sectionTitle}>Your deposits breakdown</Text>
 
-        <View style={styles.breakdownGrid}>
-          {/* Massage Time */}
+        <View style={styles.depositGrid}>
           <View style={styles.depositCard}>
             <View style={styles.depositCardHeader}>
-              <View style={[styles.depositIcon, { backgroundColor: '#EEF2FF' }]}>
+              <View style={[styles.depositIconCircle, { backgroundColor: '#EEF2FF' }]}>
                 <Ionicons name="time-outline" size={20} color="#6366F1" />
               </View>
               <Text style={styles.depositValue}>{report.massageTimeMinutes}m</Text>
             </View>
             <Text style={styles.depositLabel}>Massage time</Text>
-            <Text style={styles.depositDescription}>
+            <Text style={styles.depositDesc}>
               Time spent co-regulating with warmth and presence.
             </Text>
           </View>
 
-          {/* Confidence Boost (Praise) */}
           <View style={styles.depositCard}>
             <View style={styles.depositCardHeader}>
-              <View style={[styles.depositIcon, { backgroundColor: '#FFF7ED' }]}>
+              <View style={[styles.depositIconCircle, { backgroundColor: '#FFF7ED' }]}>
                 <Ionicons name="ribbon-outline" size={20} color="#EA580C" />
               </View>
               <Text style={styles.depositValue}>{report.praiseCount}</Text>
             </View>
             <Text style={styles.depositLabel}>Confidence Boost</Text>
-            <Text style={styles.depositDescription}>
-              Praise that helped Zoey feel capable and proud.
+            <Text style={styles.depositDesc}>
+              Praise that helped {childName} feel capable and proud.
             </Text>
           </View>
 
-          {/* Being Heard (Echo) */}
           <View style={styles.depositCard}>
             <View style={styles.depositCardHeader}>
-              <View style={[styles.depositIcon, { backgroundColor: '#F3E8FF' }]}>
-                <Ionicons name="chatbox-outline" size={20} color="#8C49D5" />
+              <View style={[styles.depositIconCircle, { backgroundColor: '#F3E8FF' }]}>
+                <Ionicons name="chatbox-outline" size={20} color={COLORS.mainPurple} />
               </View>
               <Text style={styles.depositValue}>{report.echoCount}</Text>
             </View>
             <Text style={styles.depositLabel}>Being heard (Echo)</Text>
-            <Text style={styles.depositDescription}>
-              You reflected feelings so she felt understood.
+            <Text style={styles.depositDesc}>
+              You reflected feelings so they felt understood.
             </Text>
           </View>
 
-          {/* Being Seen (Narrate) */}
           <View style={styles.depositCard}>
             <View style={styles.depositCardHeader}>
-              <View style={[styles.depositIcon, { backgroundColor: '#FEF2F2' }]}>
+              <View style={[styles.depositIconCircle, { backgroundColor: '#FEF2F2' }]}>
                 <Ionicons name="eye-outline" size={20} color="#DC2626" />
               </View>
               <Text style={styles.depositValue}>{report.narrateCount}</Text>
             </View>
             <Text style={styles.depositLabel}>Being seen (Narrate)</Text>
-            <Text style={styles.depositDescription}>
+            <Text style={styles.depositDesc}>
               You described what was happening without judgment.
             </Text>
           </View>
@@ -259,35 +246,34 @@ export const WeeklyReportScreen: React.FC = () => {
     );
   };
 
+  // ─── Page 3: Skill Celebration ───────────────────────────────────────
   const renderPage3 = () => {
     const cards = report?.scenarioCards || [];
 
     return (
       <ScrollView
-        style={styles.page3Scroll}
-        contentContainerStyle={styles.page3ScrollContent}
+        style={styles.pageScroll}
+        contentContainerStyle={styles.pageScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Title */}
-        <Text style={styles.page3Title}>{report?.skillCelebrationTitle || 'Skill Celebration'}</Text>
+        <Text style={styles.pageTitle}>{report?.skillCelebrationTitle || 'Skill Celebration'}</Text>
 
-        {/* Scenario Cards Container */}
         <View style={styles.scenarioContainer}>
           {cards.map((card: any, index: number) => (
             <View key={index} style={styles.scenarioCard}>
               <View style={styles.scenarioCardHeader}>
-                <View style={styles.scenarioCardText}>
+                <View style={styles.scenarioCardTextContent}>
                   <Text style={styles.scenarioLabel}>{card.label}</Text>
                   <Text style={styles.scenarioBody}>{card.body}</Text>
                 </View>
-                <View style={styles.audioIcon}>
-                  <Ionicons name="bar-chart-outline" size={20} color="#8C49D5" />
+                <View style={styles.scenarioIconCircle}>
+                  <Ionicons name="bulb-outline" size={18} color={COLORS.mainPurple} />
                 </View>
               </View>
               {card.exampleScript && (
-                <View style={styles.exampleScript}>
-                  <Text style={styles.exampleScriptLabel}>Example script</Text>
-                  <Text style={styles.exampleScriptText}>{card.exampleScript}</Text>
+                <View style={styles.scenarioExampleBox}>
+                  <Text style={styles.scenarioExampleLabel}>Example script</Text>
+                  <Text style={styles.scenarioExampleText}>{card.exampleScript}</Text>
                 </View>
               )}
             </View>
@@ -297,14 +283,15 @@ export const WeeklyReportScreen: React.FC = () => {
     );
   };
 
+  // ─── Page 4: Weekly Moments Highlight ────────────────────────────────
   const renderPage4 = () => {
     const topMoments = report?.topMoments || [];
 
     if (topMoments.length === 0) {
       return (
-        <View style={styles.placeholderContent}>
-          <Text style={styles.page4Title}>Weekly Moments Highlight</Text>
-          <Text style={styles.placeholderText}>No sessions this week</Text>
+        <View style={styles.emptyState}>
+          <Text style={styles.pageTitle}>Weekly Moments Highlight</Text>
+          <Text style={styles.emptyStateText}>No sessions this week</Text>
         </View>
       );
     }
@@ -313,12 +300,12 @@ export const WeeklyReportScreen: React.FC = () => {
 
     return (
       <View style={styles.page4Wrapper}>
-        <Text style={styles.page4Title}>Weekly Moments Highlight</Text>
+        <Text style={styles.pageTitle}>Weekly Moments Highlight</Text>
 
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.page4ScrollContent}
+          contentContainerStyle={styles.momentScrollContent}
           snapToInterval={CARD_WIDTH + 12}
           decelerationRate="fast"
         >
@@ -335,7 +322,7 @@ export const WeeklyReportScreen: React.FC = () => {
               {/* Tag */}
               {moment.tag ? (
                 <View style={styles.momentTagRow}>
-                  <Ionicons name="bar-chart-outline" size={14} color="#8C49D5" />
+                  <Ionicons name="trending-up" size={14} color={COLORS.mainPurple} />
                   <Text style={styles.momentTagText}>{moment.tag}</Text>
                 </View>
               ) : null}
@@ -343,15 +330,14 @@ export const WeeklyReportScreen: React.FC = () => {
               {/* Session title */}
               <Text style={styles.momentSessionTitle}>{moment.sessionTitle}</Text>
 
-              {/* Top moment quote section */}
-              <View style={styles.momentQuoteCard}>
+              {/* Top moment quote */}
+              <View style={styles.momentQuoteBox}>
                 <Text style={styles.momentQuoteLabel}>Top moment</Text>
                 <Text style={styles.momentQuoteText}>"{moment.quote}"</Text>
                 {moment.celebration ? (
                   <Text style={styles.momentCelebration}>{moment.celebration}</Text>
                 ) : null}
 
-                {/* Audio player */}
                 {moment.audioUrl && moment.startTime != null && moment.endTime != null && (
                   <MomentPlayer
                     audioUrl={moment.audioUrl}
@@ -361,7 +347,7 @@ export const WeeklyReportScreen: React.FC = () => {
                 )}
               </View>
 
-              {/* Saved / Emotional memory footer */}
+              {/* Footer */}
               <View style={styles.momentFooter}>
                 <View>
                   <Text style={styles.momentFooterLabel}>Saved</Text>
@@ -379,35 +365,42 @@ export const WeeklyReportScreen: React.FC = () => {
     );
   };
 
+  // ─── Page 5: What We Learnt (Milestones) ─────────────────────────────
   const renderPage5 = () => {
     const milestones = report?.milestones || [];
 
     return (
       <ScrollView
-        style={styles.page5Scroll}
-        contentContainerStyle={styles.page5ScrollContent}
+        style={styles.pageScroll}
+        contentContainerStyle={styles.pageScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.page5Title}>What We learnt about {childName}</Text>
+        <Text style={styles.pageTitle}>What We Learnt About {childName}</Text>
 
-        {/* Milestones container */}
-        <View style={styles.milestonesContainer}>
-          <Text style={styles.milestonesSubtext}>
+        <View style={styles.card}>
+          <Text style={styles.milestoneSubtext}>
             This is about child growth — not perfection.
           </Text>
 
           {milestones.length > 0 ? (
             milestones.map((milestone: any, index: number) => (
-              <View key={index} style={styles.milestoneCard}>
-                <View style={styles.milestoneIcon}>
+              <View key={index} style={[styles.milestoneRow, index < milestones.length - 1 && styles.milestoneRowBorder]}>
+                <View style={[styles.milestoneIconCircle, milestone.status === 'ACHIEVED' ? styles.milestoneIconAchieved : styles.milestoneIconEmerging]}>
                   <Ionicons
                     name={milestone.status === 'ACHIEVED' ? 'sparkles' : 'trending-up'}
-                    size={22}
-                    color="#3B82F6"
+                    size={20}
+                    color={milestone.status === 'ACHIEVED' ? '#D97706' : '#7C3AED'}
                   />
                 </View>
                 <View style={styles.milestoneTextContent}>
-                  <Text style={styles.milestoneTitle}>{milestone.title}</Text>
+                  <View style={styles.milestoneTitleRow}>
+                    <Text style={styles.milestoneTitle}>{milestone.title}</Text>
+                    <View style={[styles.milestoneBadge, milestone.status === 'ACHIEVED' ? styles.milestoneBadgeAchieved : styles.milestoneBadgeEmerging]}>
+                      <Text style={[styles.milestoneBadgeText, milestone.status === 'ACHIEVED' ? styles.milestoneBadgeTextAchieved : styles.milestoneBadgeTextEmerging]}>
+                        {milestone.status === 'ACHIEVED' ? 'Achieved' : 'Emerging'}
+                      </Text>
+                    </View>
+                  </View>
                   <Text style={styles.milestoneActionTip}>
                     {milestone.actionTip || "Keep noticing tiny shifts — they're the building blocks."}
                   </Text>
@@ -415,9 +408,9 @@ export const WeeklyReportScreen: React.FC = () => {
               </View>
             ))
           ) : (
-            <View style={styles.milestoneCard}>
-              <View style={styles.milestoneIcon}>
-                <Ionicons name="sparkles" size={22} color="#3B82F6" />
+            <View style={styles.milestoneRow}>
+              <View style={[styles.milestoneIconCircle, styles.milestoneIconEmerging]}>
+                <Ionicons name="sparkles" size={20} color="#7C3AED" />
               </View>
               <View style={styles.milestoneTextContent}>
                 <Text style={styles.milestoneTitle}>No milestones yet</Text>
@@ -432,17 +425,18 @@ export const WeeklyReportScreen: React.FC = () => {
     );
   };
 
+  // ─── Page 6: Next Week's Focus ───────────────────────────────────────
   const [whyExpanded, setWhyExpanded] = useState(false);
 
   const renderPage6 = () => (
     <ScrollView
-      style={styles.page6Scroll}
-      contentContainerStyle={styles.page6ScrollContent}
+      style={styles.pageScroll}
+      contentContainerStyle={styles.pageScrollContent}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.page6Title}>Next Week's Focus</Text>
+      <Text style={styles.pageTitle}>Next Week's Focus</Text>
 
-      <View style={styles.focusContainer}>
+      <View style={styles.card}>
         {/* Header */}
         <View style={styles.focusHeaderRow}>
           <Text style={styles.focusLabel}>Next week's gentle focus</Text>
@@ -461,14 +455,15 @@ export const WeeklyReportScreen: React.FC = () => {
 
         {/* Why this matters — expandable */}
         <TouchableOpacity
-          style={styles.whyCard}
+          style={styles.whyToggle}
           onPress={() => setWhyExpanded(!whyExpanded)}
           activeOpacity={0.7}
         >
-          <View style={styles.whyHeader}>
-            <View>
-              <Text style={styles.whyTitle}>Why this matters</Text>
-              <Text style={styles.whySubtitle}>A quick nervous-system explanation.</Text>
+          <View style={styles.whyToggleContent}>
+            <Ionicons name="bulb-outline" size={18} color="#6B7280" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.whyToggleTitle}>Why this matters</Text>
+              <Text style={styles.whyToggleSubtitle}>A quick nervous-system explanation.</Text>
             </View>
             <Ionicons
               name={whyExpanded ? 'chevron-up' : 'chevron-down'}
@@ -489,6 +484,7 @@ export const WeeklyReportScreen: React.FC = () => {
     </ScrollView>
   );
 
+  // ─── Page 7: Quick Check-in ──────────────────────────────────────────
   const MOODS = [
     { label: 'Grounded', emoji: '🌿' },
     { label: 'Tired', emoji: '🥱' },
@@ -503,14 +499,14 @@ export const WeeklyReportScreen: React.FC = () => {
 
     return (
       <ScrollView
-        style={styles.page7Scroll}
-        contentContainerStyle={styles.page7ScrollContent}
+        style={styles.pageScroll}
+        contentContainerStyle={styles.pageScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.page7Title}>Quick Checkin</Text>
+        <Text style={styles.pageTitle}>Quick Check-in</Text>
 
         {/* Mood section */}
-        <View style={styles.checkinSection}>
+        <View style={styles.card}>
           <Text style={styles.checkinQuestion}>How are you doing this week?</Text>
           <View style={styles.moodGrid}>
             {MOODS.map((mood) => (
@@ -538,12 +534,12 @@ export const WeeklyReportScreen: React.FC = () => {
 
         {/* Issue improvement section */}
         {childIssues.length > 0 && (
-          <View style={styles.checkinSection}>
+          <View style={styles.card}>
             <Text style={styles.checkinQuestion}>
               Have you seen improvement in the areas you're working on?
             </Text>
-            {childIssues.map((issue) => (
-              <View key={issue} style={styles.issueRow}>
+            {childIssues.map((issue, index) => (
+              <View key={issue} style={[styles.issueRow, index < childIssues.length - 1 && styles.issueRowBorder]}>
                 <Text style={styles.issueLabel}>{capitalize(issue)}</Text>
                 <View style={styles.ratingButtons}>
                   {RATINGS.map((rating) => (
@@ -571,36 +567,27 @@ export const WeeklyReportScreen: React.FC = () => {
     );
   };
 
+  // ─── Page Router ─────────────────────────────────────────────────────
   const renderPageContent = () => {
     switch (currentPage) {
-      case 1:
-        return renderPage1();
-      case 2:
-        return renderPage2();
-      case 3:
-        return renderPage3();
-      case 4:
-        return renderPage4();
-      case 5:
-        return renderPage5();
-      case 6:
-        return renderPage6();
-      case 7:
-        return renderPage7();
-      default:
-        return (
-          <View style={styles.placeholderContent}>
-            <Text style={styles.placeholderText}>Page {currentPage}</Text>
-          </View>
-        );
+      case 1: return renderPage1();
+      case 2: return renderPage2();
+      case 3: return renderPage3();
+      case 4: return renderPage4();
+      case 5: return renderPage5();
+      case 6: return renderPage6();
+      case 7: return renderPage7();
+      default: return null;
     }
   };
 
+  // ─── Loading / Empty States ──────────────────────────────────────────
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.placeholderContent}>
-          <ActivityIndicator size="large" color="#8C49D5" />
+        <View style={styles.emptyState}>
+          <ActivityIndicator size="large" color={COLORS.mainPurple} />
+          <Text style={styles.loadingText}>Loading report...</Text>
         </View>
       </SafeAreaView>
     );
@@ -609,23 +596,25 @@ export const WeeklyReportScreen: React.FC = () => {
   if (!report) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.placeholderContent}>
-          <Text style={styles.placeholderText}>No report available</Text>
-          <TouchableOpacity onPress={handleClose} style={{ marginTop: 20 }}>
-            <Text style={{ color: '#8C49D5', fontSize: 16 }}>Go back</Text>
+        <View style={styles.emptyState}>
+          <Ionicons name="document-text-outline" size={48} color="#D1D5DB" />
+          <Text style={styles.emptyStateText}>No report available</Text>
+          <TouchableOpacity onPress={handleClose} style={styles.goBackButton}>
+            <Text style={styles.goBackText}>Go back</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
+  // ─── Main Render ─────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        {/* Header: X button + Progress Bar */}
+        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-            <Ionicons name="close" size={28} color="#1F2937" />
+            <Ionicons name="close" size={28} color={COLORS.textDark} />
           </TouchableOpacity>
           <View style={styles.progressBarWrapper}>
             <ProgressBar
@@ -638,27 +627,31 @@ export const WeeklyReportScreen: React.FC = () => {
         {/* Page Content */}
         {renderPageContent()}
 
-        {/* Continue Button */}
+        {/* Bottom Button */}
         <TouchableOpacity
-          style={styles.button}
+          style={styles.bottomButton}
           onPress={handleContinue}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>Continue →</Text>
+          <Text style={styles.bottomButtonText}>
+            {currentPage === TOTAL_PAGES ? 'Submit' : 'Continue →'}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
 
+// ─── Styles ──────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
+  // Layout
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 32,
+    paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 60,
   },
@@ -666,6 +659,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    marginBottom: 8,
   },
   closeButton: {
     padding: 4,
@@ -673,76 +667,116 @@ const styles = StyleSheet.create({
   progressBarWrapper: {
     flex: 1,
   },
-  // Page 1
+
+  // Shared page styles
+  pageScroll: {
+    flex: 1,
+    marginTop: 8,
+  },
+  pageScrollContent: {
+    paddingBottom: 24,
+  },
+  pageTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 24,
+    color: COLORS.textDark,
+    marginBottom: 20,
+    lineHeight: 32,
+  },
+  sectionTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 12,
+  },
+
+  // Card — matches ReportScreen
+  card: {
+    backgroundColor: COLORS.white,
+    borderRadius: 32,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+
+  // Loading / Empty
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  emptyStateText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 17,
+    color: '#9CA3AF',
+  },
+  loadingText: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginTop: 8,
+  },
+  goBackButton: {
+    marginTop: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+  },
+  goBackText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: COLORS.mainPurple,
+  },
+
+  // ─── Page 1: Headline ──────────────────────────────────────────────
   page1Content: {
     flex: 1,
     justifyContent: 'center',
   },
-  textContent: {
+  page1TextContent: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
+    paddingHorizontal: 12,
   },
-  subtitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 16,
-    color: '#8C49D5',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 26,
-  },
-  titleRow: {
-    alignItems: 'center',
-  },
-  title: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 26,
-    color: '#1F2937',
+  page1Subtitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: COLORS.mainPurple,
     textAlign: 'center',
     marginBottom: 16,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
-  avatarCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  page1Title: {
+    fontFamily: FONTS.bold,
+    fontSize: 26,
+    color: COLORS.textDark,
+    textAlign: 'center',
+    lineHeight: 34,
   },
-  illustrationContainer: {
+  page1IllustrationContainer: {
     alignItems: 'center',
   },
-  illustrationCircle: {
-    width: SCREEN_WIDTH * 0.8,
-    height: SCREEN_WIDTH * 0.45,
-    borderRadius: (SCREEN_WIDTH * 0.5) / 2,
+  page1IllustrationCircle: {
+    width: SCREEN_WIDTH * 0.7,
+    height: SCREEN_WIDTH * 0.4,
+    borderRadius: (SCREEN_WIDTH * 0.4) / 2,
     backgroundColor: '#A2DFCB',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  illustrationImage: {
-    width: SCREEN_WIDTH * 0.8,
-    height: SCREEN_WIDTH * 0.8,
+  page1IllustrationImage: {
+    width: SCREEN_WIDTH * 0.7,
+    height: SCREEN_WIDTH * 0.7,
   },
-  // Page 2 — Emotional Bank Account Deposits
-  page2Scroll: {
-    flex: 1,
-    marginTop: 16,
-  },
-  page2ScrollContent: {
-    paddingBottom: 16,
-  },
-  page2Title: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 24,
-    color: '#1F2937',
-    marginBottom: 24,
-  },
-  totalCard: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-  },
+
+  // ─── Page 2: Deposits ──────────────────────────────────────────────
   totalLabel: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: FONTS.semiBold,
     fontSize: 14,
     color: '#6B7280',
     marginBottom: 4,
@@ -753,52 +787,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   totalNumber: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 40,
-    color: '#1F2937',
+    fontFamily: FONTS.bold,
+    fontSize: 42,
+    color: COLORS.textDark,
   },
-  totalAvatarContainer: {
+  dragonAvatarContainer: {
     width: 56,
     height: 56,
     borderRadius: 28,
     overflow: 'hidden',
+    backgroundColor: '#F5F0FF',
   },
-  totalAvatarImage: {
+  dragonAvatarImage: {
     width: 100,
     height: 100,
     marginLeft: -6,
     marginTop: -22,
   },
   totalTagline: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: FONTS.regular,
     fontSize: 14,
     color: '#6B7280',
     marginTop: 4,
   },
-  breakdownTitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 16,
-    color: '#1F2937',
-    marginBottom: 12,
-  },
-  breakdownGrid: {
+  depositGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
   },
   depositCard: {
-    width: (SCREEN_WIDTH - 64 - 12) / 2,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 16,
+    width: (SCREEN_WIDTH - 40 - 12) / 2,
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
     padding: 16,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
   },
   depositCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  depositIcon: {
+  depositIconCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -806,114 +837,98 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   depositValue: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 22,
-    color: '#1F2937',
+    fontFamily: FONTS.bold,
+    fontSize: 24,
+    color: COLORS.textDark,
   },
   depositLabel: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: FONTS.semiBold,
     fontSize: 13,
     color: '#6B7280',
     marginBottom: 6,
   },
-  depositDescription: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+  depositDesc: {
+    fontFamily: FONTS.regular,
     fontSize: 12,
     color: '#9CA3AF',
     lineHeight: 17,
   },
-  // Page 3 — Narrator praise
-  page3Scroll: {
-    flex: 1,
-    marginTop: 16,
-  },
-  page3ScrollContent: {
-    paddingBottom: 16,
-  },
-  page3Title: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 26,
-    color: '#1F2937',
-    marginBottom: 20,
-  },
+
+  // ─── Page 3: Skill Celebration ─────────────────────────────────────
   scenarioContainer: {
-    backgroundColor: '#EEEDF8',
-    borderRadius: 20,
-    padding: 16,
-    gap: 16,
+    gap: 12,
   },
   scenarioCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
   },
   scenarioCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  scenarioCardText: {
+  scenarioCardTextContent: {
     flex: 1,
     marginRight: 12,
   },
   scenarioLabel: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: FONTS.semiBold,
     fontSize: 13,
-    color: '#8C49D5',
+    color: COLORS.mainPurple,
     marginBottom: 6,
   },
   scenarioBody: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 16,
-    color: '#1F2937',
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: COLORS.textDark,
     lineHeight: 22,
   },
-  audioIcon: {
+  scenarioIconCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
     backgroundColor: '#F3E8FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
+    marginTop: 2,
   },
-  exampleScript: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+  scenarioExampleBox: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
     padding: 14,
   },
-  exampleScriptLabel: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+  scenarioExampleLabel: {
+    fontFamily: FONTS.semiBold,
     fontSize: 12,
     color: '#9CA3AF',
     marginBottom: 6,
   },
-  exampleScriptText: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+  scenarioExampleText: {
+    fontFamily: FONTS.regular,
     fontSize: 14,
     color: '#374151',
-    lineHeight: 20,
+    lineHeight: 21,
   },
-  // Page 4 — Weekly Moments Highlight
+
+  // ─── Page 4: Moments Highlight ─────────────────────────────────────
   page4Wrapper: {
     flex: 1,
-    marginTop: 16,
+    marginTop: 8,
   },
-  page4Title: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 26,
-    color: '#1F2937',
-    marginBottom: 20,
-  },
-  page4ScrollContent: {
-    paddingRight: 32,
+  momentScrollContent: {
+    paddingRight: 20,
     gap: 12,
   },
   momentCard: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 20,
+    backgroundColor: COLORS.white,
+    borderRadius: 28,
     padding: 18,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
   },
   momentDateRow: {
     flexDirection: 'row',
@@ -922,18 +937,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   momentDayBadge: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#F3E8FF',
     borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   momentDayText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: FONTS.semiBold,
     fontSize: 12,
-    color: '#374151',
+    color: COLORS.mainPurple,
   },
   momentDateText: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: FONTS.regular,
     fontSize: 13,
     color: '#6B7280',
   },
@@ -949,37 +964,38 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   momentTagText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: FONTS.semiBold,
     fontSize: 12,
-    color: '#8C49D5',
+    color: COLORS.mainPurple,
   },
   momentSessionTitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: FONTS.bold,
     fontSize: 17,
-    color: '#1F2937',
-    marginBottom: 12,
+    color: COLORS.textDark,
+    marginBottom: 14,
   },
-  momentQuoteCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+  momentQuoteBox: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
     padding: 14,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   momentQuoteLabel: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: FONTS.semiBold,
     fontSize: 12,
     color: '#9CA3AF',
     marginBottom: 6,
   },
   momentQuoteText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: FONTS.bold,
     fontSize: 15,
-    color: '#1F2937',
+    color: COLORS.textDark,
     lineHeight: 22,
+    fontStyle: 'italic',
     marginBottom: 8,
   },
   momentCelebration: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: FONTS.regular,
     fontSize: 13,
     color: '#6B7280',
     lineHeight: 19,
@@ -994,14 +1010,14 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   momentFooterLabel: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: FONTS.regular,
     fontSize: 12,
     color: '#9CA3AF',
   },
   momentFooterTitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: FONTS.bold,
     fontSize: 14,
-    color: '#1F2937',
+    color: COLORS.textDark,
   },
   momentCheckRow: {
     flexDirection: 'row',
@@ -1009,96 +1025,97 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   momentCheckText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: FONTS.semiBold,
     fontSize: 14,
     color: '#16A34A',
   },
-  // Page 5 — What We learnt about Zoey
-  page5Scroll: {
-    flex: 1,
-    marginTop: 16,
-  },
-  page5ScrollContent: {
-    paddingBottom: 16,
-  },
-  page5Title: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 26,
-    color: '#1F2937',
-    marginBottom: 20,
-  },
-  milestonesContainer: {
-    backgroundColor: '#EEEDF8',
-    borderRadius: 20,
-    padding: 16,
-    gap: 12,
-  },
-  milestonesSubtext: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+
+  // ─── Page 5: Milestones ────────────────────────────────────────────
+  milestoneSubtext: {
+    fontFamily: FONTS.regular,
     fontSize: 14,
     color: '#9CA3AF',
-    marginBottom: 4,
+    marginBottom: 16,
   },
-  milestoneCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
+  milestoneRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 14,
+    paddingVertical: 14,
   },
-  milestoneIcon: {
+  milestoneRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  milestoneIconCircle: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#DBEAFE',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  milestoneIconAchieved: {
+    backgroundColor: '#FEF3C7',
+  },
+  milestoneIconEmerging: {
+    backgroundColor: '#EDE9FE',
   },
   milestoneTextContent: {
     flex: 1,
   },
-  milestoneTitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 15,
-    color: '#1F2937',
+  milestoneTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
     marginBottom: 4,
   },
+  milestoneTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: COLORS.textDark,
+    flex: 1,
+  },
+  milestoneBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexShrink: 0,
+  },
+  milestoneBadgeAchieved: {
+    backgroundColor: '#FEF3C7',
+  },
+  milestoneBadgeEmerging: {
+    backgroundColor: '#EDE9FE',
+  },
+  milestoneBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 11,
+  },
+  milestoneBadgeTextAchieved: {
+    color: '#D97706',
+  },
+  milestoneBadgeTextEmerging: {
+    color: '#7C3AED',
+  },
   milestoneActionTip: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: FONTS.regular,
     fontSize: 13,
     color: '#6B7280',
     lineHeight: 19,
   },
-  // Page 6 — Next Week's Focus
-  page6Scroll: {
-    flex: 1,
-    marginTop: 16,
-  },
-  page6ScrollContent: {
-    paddingBottom: 16,
-  },
-  page6Title: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 26,
-    color: '#1F2937',
-    marginBottom: 20,
-  },
-  focusContainer: {
-    backgroundColor: '#EEEDF8',
-    borderRadius: 20,
-    padding: 18,
-  },
+
+  // ─── Page 6: Focus ─────────────────────────────────────────────────
   focusHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   focusLabel: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: FONTS.regular,
     fontSize: 13,
-    color: '#6B7280',
+    color: '#9CA3AF',
   },
   focusIconCircle: {
     width: 40,
@@ -1109,112 +1126,95 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   focusHeading: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: FONTS.bold,
     fontSize: 18,
-    color: '#1F2937',
-    lineHeight: 25,
+    color: COLORS.textDark,
+    lineHeight: 26,
     marginBottom: 8,
   },
   focusSubtext: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: FONTS.regular,
     fontSize: 14,
     color: '#6B7280',
-    marginBottom: 16,
+    marginBottom: 20,
+    lineHeight: 21,
   },
-  whyCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+  whyToggle: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
     padding: 14,
   },
-  whyHeader: {
+  whyToggleContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 10,
   },
-  whyTitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 15,
-    color: '#1F2937',
+  whyToggleTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    color: COLORS.textDark,
     marginBottom: 2,
   },
-  whySubtitle: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 13,
+  whyToggleSubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
     color: '#9CA3AF',
   },
   whyBody: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
     padding: 14,
     marginTop: 10,
   },
   whyBodyText: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: FONTS.regular,
     fontSize: 14,
     color: '#374151',
-    lineHeight: 21,
+    lineHeight: 22,
   },
-  // Page 7 — Quick Checkin
-  page7Scroll: {
-    flex: 1,
-    marginTop: 16,
-  },
-  page7ScrollContent: {
-    paddingBottom: 16,
-  },
-  page7Title: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 26,
-    color: '#1F2937',
-    marginBottom: 20,
-  },
-  checkinSection: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 16,
-  },
+
+  // ─── Page 7: Check-in ─────────────────────────────────────────────
   checkinQuestion: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: FONTS.bold,
     fontSize: 16,
-    color: '#1F2937',
-    marginBottom: 14,
+    color: COLORS.textDark,
+    marginBottom: 16,
   },
   moodGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   moodChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1.5,
+    gap: 8,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+    borderWidth: 2,
     borderColor: '#E5E7EB',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    width: (SCREEN_WIDTH - 64 - 36 - 10) / 2,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    width: (SCREEN_WIDTH - 40 - 10) / 2,
   },
   moodChipSelected: {
-    borderColor: '#8C49D5',
+    borderColor: COLORS.mainPurple,
     backgroundColor: '#F9F5FF',
   },
   moodEmoji: {
-    fontSize: 18,
+    fontSize: 20,
   },
   moodLabel: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 14,
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
     color: '#374151',
   },
   moodLabelSelected: {
-    color: '#8C49D5',
+    color: COLORS.mainPurple,
   },
   checkinDisclaimer: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: FONTS.regular,
     fontSize: 13,
     color: '#9CA3AF',
     lineHeight: 19,
@@ -1223,16 +1223,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 10,
+    paddingVertical: 14,
+  },
+  issueRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
   issueLabel: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: FONTS.bold,
     fontSize: 14,
-    color: '#1F2937',
+    color: COLORS.textDark,
     flex: 1,
   },
   ratingButtons: {
@@ -1240,50 +1240,40 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   ratingChip: {
-    borderRadius: 10,
-    borderWidth: 1.5,
+    borderRadius: 12,
+    borderWidth: 2,
     borderColor: '#E5E7EB',
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
   },
   ratingChipSelected: {
-    borderColor: '#8C49D5',
+    borderColor: COLORS.mainPurple,
     backgroundColor: '#F9F5FF',
   },
   ratingText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: FONTS.semiBold,
     fontSize: 13,
     color: '#374151',
   },
   ratingTextSelected: {
-    color: '#8C49D5',
+    color: COLORS.mainPurple,
   },
-  // Placeholder pages
-  placeholderContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 20,
-    color: '#9CA3AF',
-  },
-  // Continue button
-  button: {
+
+  // ─── Bottom Button ─────────────────────────────────────────────────
+  bottomButton: {
     position: 'absolute',
     bottom: 1,
-    left: 32,
-    right: 32,
+    left: 20,
+    right: 20,
     height: 56,
-    backgroundColor: '#8C49D5',
-    borderRadius: 30,
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+  bottomButtonText: {
+    fontFamily: FONTS.semiBold,
     fontSize: 18,
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
 });
