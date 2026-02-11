@@ -47,6 +47,20 @@ router.get('/', requireAuth, async (req, res) => {
       completedMap[cc.module] = cc.completed;
     });
 
+    // Get most recent activity per module for this user
+    const lastActivity = await prisma.$queryRaw`
+      SELECT l."module", MAX(ulp."lastViewedAt") as "lastActivityAt"
+      FROM "UserLessonProgress" ulp
+      JOIN "Lesson" l ON l.id = ulp."lessonId"
+      WHERE ulp."userId" = ${userId}
+      GROUP BY l."module"
+    `;
+
+    const lastActivityMap = {};
+    lastActivity.forEach(la => {
+      lastActivityMap[la.module] = la.lastActivityAt;
+    });
+
     // Build response
     const modulesWithProgress = modules.map(mod => ({
       id: mod.id,
@@ -57,7 +71,8 @@ router.get('/', requireAuth, async (req, res) => {
       displayOrder: mod.displayOrder,
       backgroundColor: mod.backgroundColor,
       lessonCount: lessonCountMap[mod.key] || 0,
-      completedLessons: completedMap[mod.key] || 0
+      completedLessons: completedMap[mod.key] || 0,
+      lastActivityAt: lastActivityMap[mod.key] || null
     }));
 
     // Generate content version hash

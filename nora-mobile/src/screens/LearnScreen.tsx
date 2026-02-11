@@ -91,6 +91,21 @@ export const LearnScreen: React.FC = () => {
       );
     }
 
+    // Sort: in-progress modules first (by most recent activity), then the rest
+    result = [...result].sort((a, b) => {
+      const aInProgress = a.completedLessons > 0 && a.completedLessons < a.lessonCount;
+      const bInProgress = b.completedLessons > 0 && b.completedLessons < b.lessonCount;
+
+      if (aInProgress && !bInProgress) return -1;
+      if (!aInProgress && bInProgress) return 1;
+      if (aInProgress && bInProgress) {
+        const aTime = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+        const bTime = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+        return bTime - aTime;
+      }
+      return 0;
+    });
+
     return result;
   }, [modules, activeFilter, searchQuery]);
 

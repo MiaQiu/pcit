@@ -221,6 +221,7 @@ export interface Module {
 export interface ModuleWithProgress extends Module {
   lessonCount: number;
   completedLessons: number;
+  lastActivityAt: string | null;
 }
 
 export interface ModuleListResponse {

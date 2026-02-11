@@ -26,11 +26,6 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onPress }) => {
       activeOpacity={0.7}
     >
       <View style={styles.topRow}>
-        {/* Module tag */}
-        <View style={[styles.tag, { backgroundColor: module.backgroundColor }]}>
-          <Text style={styles.tagText}>{module.shortName}</Text>
-        </View>
-
         {/* Lesson count */}
         <Text style={styles.lessonCount}>
           {module.lessonCount} {module.lessonCount === 1 ? 'lesson' : 'lessons'}
@@ -80,16 +75,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-  },
-  tag: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  tagText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    color: COLORS.textDark,
   },
   lessonCount: {
     fontFamily: FONTS.regular,
