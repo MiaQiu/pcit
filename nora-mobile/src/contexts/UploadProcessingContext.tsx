@@ -62,13 +62,14 @@ interface UploadProcessingData {
   uploadProgress: number;
   recordingUri?: string;
   durationSeconds?: number;
+  mode?: 'CDI' | 'PDI';
 }
 
 interface UploadProcessingContextType {
   state: ProcessingState;
   recordingId: string | null;
   uploadProgress: number;
-  startUpload: (uri: string, durationSeconds: number) => Promise<void>;
+  startUpload: (uri: string, durationSeconds: number, mode?: 'CDI' | 'PDI') => Promise<void>;
   reset: () => void;
   isProcessing: boolean;
   reportCompletedTimestamp: number | null;
@@ -357,7 +358,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         // Resume processing if needed
         if (data.state === 'uploading' && data.recordingUri && data.durationSeconds !== undefined) {
           // Resume upload
-          uploadRecording(data.recordingUri, data.durationSeconds);
+          uploadRecording(data.recordingUri, data.durationSeconds, false, data.mode || 'CDI');
         } else if (data.state === 'processing' && data.recordingId) {
           // Check if recording has completed or permanently failed
           try {
@@ -406,14 +407,14 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     }
   };
 
-  const startUpload = async (uri: string, durationSeconds: number) => {
+  const startUpload = async (uri: string, durationSeconds: number, mode: 'CDI' | 'PDI' = 'CDI') => {
     // Prevent duplicate uploads - if already uploading or processing, ignore this call
     if (state === 'uploading' || state === 'processing') {
       console.log('[UploadProcessing] Upload already in progress, ignoring duplicate call', { currentState: state });
       return;
     }
 
-    console.log('[UploadProcessing] Starting upload...', { uri, durationSeconds });
+    console.log('[UploadProcessing] Starting upload...', { uri, durationSeconds, mode });
     setState('uploading');
     setUploadProgress(0);
 
@@ -423,12 +424,13 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
       uploadProgress: 0,
       recordingUri: uri,
       durationSeconds,
+      mode,
     });
 
-    await uploadRecording(uri, durationSeconds);
+    await uploadRecording(uri, durationSeconds, false, mode);
   };
 
-  const uploadRecording = async (uri: string, durationSeconds: number, isRetry: boolean = false) => {
+  const uploadRecording = async (uri: string, durationSeconds: number, isRetry: boolean = false, mode: 'CDI' | 'PDI' = 'CDI') => {
     try {
       console.log('[UploadProcessing] Starting presigned URL upload...', { uri, durationSeconds, isRetry });
 
@@ -461,7 +463,8 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
           },
           body: JSON.stringify({
             durationSeconds,
-            mimeType
+            mimeType,
+            mode
           })
         });
 
@@ -627,7 +630,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         const refreshed = await authService.refreshAccessToken();
         if (refreshed) {
           console.log('[UploadProcessing] Token refreshed successfully, retrying upload');
-          return uploadRecording(uri, durationSeconds, true);
+          return uploadRecording(uri, durationSeconds, true, mode);
         } else {
           console.log('[UploadProcessing] Token refresh failed - resetting upload state');
           await reset();

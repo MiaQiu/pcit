@@ -17,6 +17,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 interface RecordingCardProps {
   isRecording: boolean;
   durationMillis: number;
+  targetMinutes?: number;
   onRecordPress?: () => void;
   canRecord?: boolean;
   backgroundColor?: string;
@@ -25,6 +26,7 @@ interface RecordingCardProps {
 export const RecordingCard: React.FC<RecordingCardProps> = ({
   isRecording,
   durationMillis,
+  targetMinutes = 5,
   onRecordPress,
   canRecord,
   backgroundColor = '#E4E4FF',
@@ -53,7 +55,7 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
         <View style={styles.hintContainer}>
           <Text style={styles.hintText}>
             {isRecording
-              ? 'Recording in progress...\nSpeak naturally during play time!'
+              ? `Recording in progress...\nSpeak naturally during play time! The recording will stop automatically at ${targetMinutes} minutes`
               : 'Start recording your play session'}
           </Text>
         </View>
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: COLORS.textDark,
     textAlign: 'center',
-    lineHeight: 32,
+    lineHeight: 24,
   },
   recordButtonContainer: {
     position: 'absolute',

@@ -66,8 +66,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
       if (user.childName) {
         setChildName(user.childName);
       }
-      // Discipline mode always unlocked in module-based system
-      setIsDisciplineUnlocked(true);
+      setIsDisciplineUnlocked(!!user.disciplineUnlocked);
     } catch (error) {
       console.error('Failed to load user data:', error);
     }
@@ -214,10 +213,10 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
                 Effective discipline is built on a foundation of a strong bond. Without that connection, instructions can feel like demands; with it, they feel like guidance.
               </Text>
               <Text style={styles.lockGoalText}>
-                Goal: Reach 80 deposits in a single Special Time session to unlock Discipline coaching module
+                Reach a Nora Score of 80 in a single Connection session to unlock Discipline coaching
               </Text>
               <Text style={styles.lockMessageText}>
-                This ensures your "relationship bank account" is overfilled before you begin the PDI phase.
+                This ensures your "relationship bank account" is overfilled before you begin the Discipline phase.
               </Text>
             </View>
           </View>

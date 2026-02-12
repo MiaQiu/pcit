@@ -63,7 +63,7 @@ const CARD_CONTENT = {
 
 export const NextActionCard: React.FC<NextActionCardProps> = ({
   type = 'lesson',
-  phase = 'PHASE',
+  phase = 'MODULE',
   phaseName = '',
   title: customTitle,
   description: customDescription,
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
   badgeContainer: {
     alignItems: 'center',
     marginBottom: 26,
-    marginTop: -15,
+    marginTop: 3,
   },
   upNextLabel: {
     fontFamily: 'PlusJakartaSans_700Bold',

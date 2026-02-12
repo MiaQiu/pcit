@@ -562,7 +562,13 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
       }
     }
 
-    res.json({ user: decryptedUser });
+    // Check if user has any CDI session with overallScore >= 80
+    const hasQualifyingScore = await prisma.session.findFirst({
+      where: { userId: req.userId, mode: 'CDI', overallScore: { gte: 80 }, analysisStatus: 'COMPLETED' },
+      select: { id: true }
+    });
+
+    res.json({ user: { ...decryptedUser, disciplineUnlocked: !!hasQualifyingScore } });
 
   } catch (error) {
     console.error('Get user error:', error);

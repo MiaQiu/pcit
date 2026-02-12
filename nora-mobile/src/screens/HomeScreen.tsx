@@ -455,7 +455,7 @@ export const HomeScreen: React.FC = () => {
       // Map API lessons to LessonCardProps
       const mappedLessons: LessonCardProps[] = apiLessons.map((lesson) => ({
         id: lesson.id,
-        phase: 'PHASE',
+        phase: 'MODULE',
         phaseName: lesson.module || '',
         title: lesson.title,
         subtitle: lesson.subtitle || '',

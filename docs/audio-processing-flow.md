@@ -37,7 +37,8 @@ MOBILE APP (Display Report)
 ### Direct S3 Upload (Recommended)
 
 1. **Initialize Upload:** `POST /api/recordings/upload/init`
-   - Creates session record with `analysisStatus: PENDING`
+   - Accepts `mode` from request body (`'CDI'` or `'PDI'`, defaults to `'CDI'`)
+   - Creates session record with the requested mode and `analysisStatus: PENDING`
    - Generates presigned S3 URL for direct client-side upload
    - Returns `sessionId`, `uploadUrl`, `uploadKey`, `expiresIn`
 
@@ -810,7 +811,29 @@ detectAndUpdateMilestones(child.id, sessionId)
 
 ---
 
-## Phase 8: Phase Progression (CONNECT → DISCIPLINE)
+## Phase 8: Discipline Mode Gating & Phase Progression
+
+### Discipline Mode Unlock (Client-Side Gating)
+
+**Files:** `server/routes/auth.cjs` (`GET /api/auth/me`), `nora-mobile/src/components/RecordingGuideCard.tsx`, `nora-mobile/src/screens/RecordScreen.tsx`
+
+The Discipline recording tab on the Record screen is locked until the user achieves a qualifying Connection (CDI) session.
+
+**Unlock Criterion:** `overallScore >= 80` in any completed CDI session.
+
+**Server:** The `GET /api/auth/me` endpoint queries for a qualifying session and includes `disciplineUnlocked: boolean` in the response:
+
+```javascript
+const hasQualifyingScore = await prisma.session.findFirst({
+  where: { userId, mode: 'CDI', overallScore: { gte: 80 }, analysisStatus: 'COMPLETED' },
+  select: { id: true }
+});
+// Added to response: disciplineUnlocked: !!hasQualifyingScore
+```
+
+**Mobile:** `RecordingGuideCard` reads `user.disciplineUnlocked` from the `/api/auth/me` response. When locked, a lock overlay is shown with the message: "Reach a Nora Score of 80 in a single Connection session to unlock Discipline coaching." The Record button is also disabled when discipline is selected but locked.
+
+### Phase Progression (CONNECT → DISCIPLINE)
 
 **File:** `server/services/processingService.cjs` (lines 21-86)
 
@@ -872,7 +895,9 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 
 | File | Purpose |
 |------|---------|
-| `server/routes/recordings.cjs` | Upload & report API endpoints |
+| `server/routes/recordings.cjs` | Upload (accepts `mode` from client) & report API endpoints |
+| `server/routes/auth.cjs` | Auth endpoints; `/me` returns `disciplineUnlocked` |
+| `nora-mobile/src/contexts/UploadProcessingContext.tsx` | Manages upload state; passes `mode` to server |
 | `server/services/transcriptionService.cjs` | ElevenLabs transcription |
 | `server/services/pcitAnalysisService.cjs` | Claude & Gemini analysis, DPICS coding, Child record creation |
 | `server/services/milestoneDetectionService.cjs` | Gemini Flash milestone detection, EMERGING → ACHIEVED logic |

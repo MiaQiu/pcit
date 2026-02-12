@@ -138,6 +138,11 @@ export const RecordScreen: React.FC = () => {
       if (user.childName) {
         setChildName(user.childName);
       }
+      // If discipline is not unlocked, lock it and reset to specialTime
+      if (user.disciplineUnlocked === false) {
+        setIsDisciplineLocked(true);
+        setSessionMode('specialTime');
+      }
     } catch (error) {
       console.error('Failed to load user data:', error);
       // Keep default fallback value
@@ -400,9 +405,10 @@ export const RecordScreen: React.FC = () => {
       playCompletionSound();
 
       // Upload to backend using the context (will run in background)
+      const uploadMode = sessionMode === 'discipline' ? 'PDI' : 'CDI';
       if (uri) {
         try {
-          await uploadProcessing.startUpload(uri, durationSeconds);
+          await uploadProcessing.startUpload(uri, durationSeconds, uploadMode);
           // Upload completed successfully - end background task
           await endBackgroundTask();
         } catch (error) {
@@ -423,7 +429,7 @@ export const RecordScreen: React.FC = () => {
                   text: 'Retry',
                   onPress: async () => {
                     try {
-                      await uploadProcessing.startUpload(uri, durationSeconds);
+                      await uploadProcessing.startUpload(uri, durationSeconds, uploadMode);
                     } catch (retryError) {
                       console.error('Retry upload failed:', retryError);
                       const retryMessage = handleApiError(retryError);
@@ -481,9 +487,10 @@ export const RecordScreen: React.FC = () => {
       playCompletionSound();
 
       // Upload to backend using the context (will run in background)
+      const uploadMode = sessionMode === 'discipline' ? 'PDI' : 'CDI';
       if (uri) {
         try {
-          await uploadProcessing.startUpload(uri, durationSeconds);
+          await uploadProcessing.startUpload(uri, durationSeconds, uploadMode);
         } catch (error) {
           console.error('Upload failed:', error);
 
@@ -500,7 +507,7 @@ export const RecordScreen: React.FC = () => {
                   text: 'Retry',
                   onPress: async () => {
                     try {
-                      await uploadProcessing.startUpload(uri, durationSeconds);
+                      await uploadProcessing.startUpload(uri, durationSeconds, uploadMode);
                     } catch (retryError) {
                       console.error('Retry upload failed:', retryError);
                       const retryMessage = handleApiError(retryError);
@@ -597,6 +604,7 @@ export const RecordScreen: React.FC = () => {
             <RecordingCard
               isRecording={true}
               durationMillis={recordingDuration}
+              targetMinutes={sessionMode === 'discipline' ? 10 : 5}
             />
           </View>
         )}
