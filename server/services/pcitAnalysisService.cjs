@@ -584,6 +584,7 @@ async function generatePDITwoChoicesAnalysis(utterances, childName) {
     console.log(`✅ [PDI-TWO-CHOICES] Analysis complete — ${pdiSkills.length} skills evaluated`);
     return {
       pdiSkills,
+      commandSequences: result.commandSequences || [],
       tomorrowGoal: result.tomorrowGoal || null,
       encouragement: result.encouragement || null,
       summary: result.summary || null,
@@ -1025,6 +1026,7 @@ Do not include markdown or whitespace (minified JSON).
       const pdiResult = await generatePDITwoChoicesAnalysis(utterancesWithTags, childName);
       if (pdiResult) {
         competencyAnalysis.pdiSkills = pdiResult.pdiSkills;
+        competencyAnalysis.pdiCommandSequences = pdiResult.commandSequences;
         competencyAnalysis.pdiTomorrowGoal = pdiResult.tomorrowGoal;
         competencyAnalysis.pdiEncouragement = pdiResult.encouragement;
         competencyAnalysis.pdiSummary = pdiResult.summary;

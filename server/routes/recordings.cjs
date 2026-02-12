@@ -158,7 +158,7 @@ async function startBackgroundProcessing(sessionId, userId, storagePath, duratio
 router.post('/upload/init', requireAuth, async (req, res) => {
   try {
     const userId = req.userId;
-    const { durationSeconds, mimeType = 'audio/m4a' } = req.body;
+    const { durationSeconds, mimeType = 'audio/m4a', mode: requestedMode } = req.body;
 
     if (!durationSeconds || durationSeconds < 1) {
       return res.status(400).json({
@@ -167,15 +167,18 @@ router.post('/upload/init', requireAuth, async (req, res) => {
       });
     }
 
+    // Validate mode - default to CDI if not provided or invalid
+    const mode = (requestedMode === 'CDI' || requestedMode === 'PDI') ? requestedMode : 'CDI';
+
     const sessionId = crypto.randomUUID();
 
-    console.log(`[UPLOAD-INIT] Starting upload for user ${userId.substring(0, 8)}, session ${sessionId.substring(0, 8)}`);
+    console.log(`[UPLOAD-INIT] Starting upload for user ${userId.substring(0, 8)}, session ${sessionId.substring(0, 8)}, mode ${mode}`);
 
     await prisma.session.create({
       data: {
         id: sessionId,
         userId: userId,
-        mode: 'CDI',
+        mode: mode,
         storagePath: 'pending_upload',
         durationSeconds: parseInt(durationSeconds, 10),
         transcript: '',
@@ -755,6 +758,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       competencyAnalysis: session.competencyAnalysis || null,
       // PDI Two Choices Flow (only present for PDI sessions)
       pdiSkills: session.competencyAnalysis?.pdiSkills || null,
+      pdiCommandSequences: session.competencyAnalysis?.pdiCommandSequences || null,
       pdiTomorrowGoal: session.competencyAnalysis?.pdiTomorrowGoal || null,
       pdiEncouragement: session.competencyAnalysis?.pdiEncouragement || null,
       pdiSummary: session.competencyAnalysis?.pdiSummary || null,

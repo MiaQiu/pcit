@@ -202,7 +202,14 @@ export interface RecordingAnalysis {
     skill: string;
     performance: string;
     feedback: string;
-    details: string;
+  }> | null;
+  pdiCommandSequences?: Array<{
+    title: string;
+    label: string;
+    command: string;
+    waitTime: string;
+    followThrough: string;
+    coachTip?: string;
   }> | null;
   pdiTomorrowGoal?: string | null;
   pdiEncouragement?: string | null;

@@ -185,20 +185,24 @@ const getPerformanceColors = (performance: string) => {
   return PERFORMANCE_COLORS[key || 'Not Observed'];
 };
 
+/** Label color mapping for command sequences */
+const LABEL_COLORS: { [key: string]: { bg: string; text: string } } = {
+  'Great!': { bg: '#DCFCE7', text: '#15803D' },
+  'Needs Work': { bg: '#FEF3C7', text: '#B45309' },
+};
+
+const getLabelColors = (label: string) => {
+  return LABEL_COLORS[label] || LABEL_COLORS['Needs Work'];
+};
+
 /** PDI Coach's Corner — Two Choices Flow skills */
 const PDICoachCorner: React.FC<{
-  pdiSkills: Array<{ skill: string; performance: string; feedback: string; details: string }>;
+  pdiSkills: Array<{ skill: string; performance: string; feedback: string }>;
+  commandSequences?: Array<{ title: string; label: string; command: string; waitTime: string; followThrough: string; coachTip?: string }> | null;
   summary?: string | null;
   recordingId: string;
   navigation: any;
-}> = ({ pdiSkills, summary, recordingId, navigation }) => {
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-
-  const toggleExpand = (index: number) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedIndex(prev => prev === index ? null : index);
-  };
-
+}> = ({ pdiSkills, commandSequences, summary, recordingId, navigation }) => {
   return (
     <View>
       <Text style={styles.cardTitle}>Coach's Corner</Text>
@@ -206,46 +210,70 @@ const PDICoachCorner: React.FC<{
         {summary && (
           <Text style={styles.pdiSummaryText}>{summary}</Text>
         )}
+
+        {/* Skills List */}
         <Text style={styles.pdiSectionSubtitle}>The Two Choices Flow</Text>
         {pdiSkills.map((item, index) => {
           const colors = getPerformanceColors(item.performance);
-          const isExpanded = expandedIndex === index;
-
           return (
-            <TouchableOpacity
+            <View
               key={index}
-              activeOpacity={0.7}
-              onPress={() => toggleExpand(index)}
               style={[
                 styles.pdiSkillItem,
                 index < pdiSkills.length - 1 && styles.pdiSkillItemBorder,
               ]}
             >
-              <View style={styles.pdiSkillHeader}>
-                <View style={styles.pdiSkillTitleRow}>
-                  <Text style={styles.pdiSkillName}>{item.skill}</Text>
-                  <View style={[styles.pdiPerformanceBadge, { backgroundColor: colors.bg }]}>
-                    <Text style={[styles.pdiPerformanceText, { color: colors.text }]}>{item.performance}</Text>
-                  </View>
-                </View>
-                <View style={styles.pdiSkillFeedbackRow}>
-                  <Text style={styles.pdiSkillFeedback}>{item.feedback}</Text>
-                  <Ionicons
-                    name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                    size={16}
-                    color="#9CA3AF"
-                    style={styles.pdiChevron}
-                  />
+              <View style={styles.pdiSkillTitleRow}>
+                <Text style={styles.pdiSkillName}>{item.skill}</Text>
+                <View style={[styles.pdiPerformanceBadge, { backgroundColor: colors.bg }]}>
+                  <Text style={[styles.pdiPerformanceText, { color: colors.text }]}>{item.performance}</Text>
                 </View>
               </View>
-              {isExpanded && item.details && (
-                <View style={styles.pdiDetailsContainer}>
-                  <Text style={styles.pdiDetailsText}>{item.details}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+              <Text style={styles.pdiSkillFeedback}>{item.feedback}</Text>
+            </View>
           );
         })}
+
+        {/* Command Sequences */}
+        {commandSequences && commandSequences.length > 0 && (
+          <>
+            <Text style={[styles.pdiSectionSubtitle, { marginTop: 20 }]}>Command Sequences</Text>
+            {commandSequences.map((seq, index) => {
+              const labelColors = getLabelColors(seq.label);
+              return (
+                <View
+                  key={index}
+                  style={[
+                    styles.pdiSeqBlock,
+                    index < commandSequences.length - 1 && styles.pdiSkillItemBorder,
+                  ]}
+                >
+                  <View style={styles.pdiSeqHeaderRow}>
+                    <Text style={styles.pdiSeqTitle}>Sequence {index + 1}: {seq.title}</Text>
+                    <View style={[styles.pdiSeqLabelBadge, { backgroundColor: labelColors.bg }]}>
+                      <Text style={[styles.pdiSeqLabelText, { color: labelColors.text }]}>{seq.label}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.pdiSeqBullet}>
+                    <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>Command: </Text>{seq.command}</Text>
+                  </View>
+                  <View style={styles.pdiSeqBullet}>
+                    <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>Wait Time: </Text>{seq.waitTime}</Text>
+                  </View>
+                  <View style={styles.pdiSeqBullet}>
+                    <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>Follow-through: </Text>{seq.followThrough}</Text>
+                  </View>
+                  {seq.coachTip && (
+                    <View style={styles.pdiSeqBullet}>
+                      <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>Coach's Tip: </Text>{seq.coachTip}</Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </>
+        )}
+
         <TouchableOpacity
           style={styles.cardLinkButton}
           onPress={() => navigation.navigate('Transcript', { recordingId })}
@@ -574,7 +602,7 @@ export const ReportScreen: React.FC = () => {
 
         {/* Coach's Corner */}
         {reportData.mode === 'PDI' && reportData.pdiSkills && Array.isArray(reportData.pdiSkills) && reportData.pdiSkills.length > 0 ? (
-          <PDICoachCorner pdiSkills={reportData.pdiSkills} summary={reportData.pdiSummary} recordingId={recordingId} navigation={navigation} />
+          <PDICoachCorner pdiSkills={reportData.pdiSkills} commandSequences={reportData.pdiCommandSequences} summary={reportData.pdiSummary} recordingId={recordingId} navigation={navigation} />
         ) : (
           reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
             const cards = (reportData.coachingCards as CoachingCard[]).slice(0, 1);
@@ -1878,26 +1906,20 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: 15,
     color: '#6B7280',
-    marginBottom: 16,
-  },
-  pdiSkillItem: {
-    paddingVertical: 12,
+    marginBottom: 12,
   },
   pdiSkillItemBorder: {
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
-  pdiSkillHeader: {
-    gap: 6,
-  },
   pdiSkillTitleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
   pdiSkillName: {
     fontFamily: FONTS.bold,
-    fontSize: 15,
+    fontSize: 14,
     color: COLORS.textDark,
     flex: 1,
   },
@@ -1910,31 +1932,55 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: 12,
   },
-  pdiSkillFeedbackRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 4,
+  pdiSkillItem: {
+    paddingVertical: 12,
   },
   pdiSkillFeedback: {
     fontFamily: FONTS.regular,
     fontSize: 14,
     color: '#4B5563',
     lineHeight: 20,
+    marginTop: 4,
+  },
+  // Command sequence styles
+  pdiSeqBlock: {
+    paddingVertical: 14,
+  },
+  pdiSeqHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  pdiSeqTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: COLORS.textDark,
     flex: 1,
   },
-  pdiChevron: {
-    marginTop: 2,
+  pdiSeqLabelBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  pdiDetailsContainer: {
-    marginTop: 8,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
-    padding: 12,
+  pdiSeqLabelText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
   },
-  pdiDetailsText: {
+  pdiSeqBullet: {
+    flexDirection: 'row',
+    paddingLeft: 4,
+    marginBottom: 6,
+  },
+  pdiSeqBulletText: {
     fontFamily: FONTS.regular,
-    fontSize: 13,
-    color: '#6B7280',
-    lineHeight: 20,
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 21,
+    flex: 1,
+  },
+  pdiSeqBold: {
+    fontFamily: FONTS.bold,
+    color: COLORS.textDark,
   },
 });
