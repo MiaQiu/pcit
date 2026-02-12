@@ -1299,3 +1299,650 @@ body {
   background: #fee2e2;
   color: #dc2626;
 }
+
+/* ============================================
+   REPORT DETAIL MODAL (app-style)
+   ============================================ */
+.modal-card.wide {
+  width: 480px;
+  max-width: 95vw;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 0;
+  border-radius: 24px;
+}
+
+/* Progress bar */
+.wr-progress {
+  display: flex;
+  gap: 4px;
+  padding: 16px 20px 0;
+}
+
+.wr-progress-seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: #E0E0E0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.wr-progress-seg.active {
+  background: #8C49D5;
+}
+
+/* Page container */
+.wr-page {
+  padding: 20px;
+  min-height: 420px;
+}
+
+/* Navigation */
+.wr-nav {
+  display: flex;
+  gap: 8px;
+  padding: 0 20px 20px;
+}
+
+.wr-nav-btn {
+  flex: 1;
+  height: 48px;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  border: none;
+}
+
+.wr-nav-btn.secondary {
+  background: white;
+  color: var(--text);
+  border: 1px solid #E5E7EB;
+}
+
+.wr-nav-btn.secondary:hover {
+  background: #F9FAFB;
+}
+
+.wr-nav-btn.primary {
+  background: #8C49D5;
+  color: white;
+}
+
+.wr-nav-btn.primary:hover {
+  background: #7B3DC4;
+}
+
+/* ─── Page 1: Headline ─── */
+.wr-p1 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 380px;
+  gap: 24px;
+}
+
+.wr-p1-subtitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #8C49D5;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.wr-p1-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1E2939;
+  line-height: 1.35;
+}
+
+.wr-p1-illustration {
+  width: 200px;
+  height: 120px;
+  border-radius: 60px;
+  background: #A2DFCB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+}
+
+/* ─── Page 2: Deposits ─── */
+.wr-page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1E2939;
+  margin-bottom: 16px;
+  line-height: 1.35;
+}
+
+.wr-card {
+  background: white;
+  border-radius: 24px;
+  padding: 18px;
+  margin-bottom: 14px;
+  border: 2px solid #E5E7EB;
+}
+
+.wr-total-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6B7280;
+  margin-bottom: 2px;
+}
+
+.wr-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wr-total-number {
+  font-size: 40px;
+  font-weight: 700;
+  color: #1E2939;
+}
+
+.wr-total-tagline {
+  font-size: 13px;
+  color: #6B7280;
+  margin-top: 2px;
+}
+
+.wr-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E2939;
+  margin-bottom: 10px;
+}
+
+.wr-deposit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.wr-deposit-card {
+  background: white;
+  border-radius: 20px;
+  padding: 14px;
+  border: 2px solid #E5E7EB;
+}
+
+.wr-deposit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.wr-deposit-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.wr-deposit-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1E2939;
+}
+
+.wr-deposit-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+  margin-bottom: 4px;
+}
+
+.wr-deposit-desc {
+  font-size: 11px;
+  color: #9CA3AF;
+  line-height: 1.45;
+}
+
+/* ─── Page 3: Skill Celebration ─── */
+.wr-scenario-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wr-scenario-card {
+  background: white;
+  border-radius: 20px;
+  padding: 16px;
+  border: 2px solid #E5E7EB;
+}
+
+.wr-scenario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.wr-scenario-text {
+  flex: 1;
+  margin-right: 10px;
+}
+
+.wr-scenario-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8C49D5;
+  margin-bottom: 4px;
+}
+
+.wr-scenario-body {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E2939;
+  line-height: 1.45;
+}
+
+.wr-scenario-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: #F3E8FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.wr-scenario-example {
+  background: #F9FAFB;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.wr-scenario-example-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9CA3AF;
+  margin-bottom: 4px;
+}
+
+.wr-scenario-example-text {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* ─── Page 4: Moments Highlight ─── */
+.wr-moments-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-snap-type: x mandatory;
+}
+
+.wr-moment-card {
+  background: white;
+  border-radius: 24px;
+  padding: 16px;
+  border: 2px solid #E5E7EB;
+  min-width: 320px;
+  max-width: 340px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+.wr-moment-date-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.wr-moment-day-badge {
+  background: #F3E8FF;
+  border-radius: 8px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8C49D5;
+}
+
+.wr-moment-date-text {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.wr-moment-tag-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #F3E8FF;
+  border-radius: 10px;
+  padding: 4px 9px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8C49D5;
+}
+
+.wr-moment-session-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1E2939;
+  margin-bottom: 12px;
+}
+
+.wr-moment-quote-box {
+  background: #F9FAFB;
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.wr-moment-quote-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9CA3AF;
+  margin-bottom: 4px;
+}
+
+.wr-moment-quote-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E2939;
+  font-style: italic;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+.wr-moment-celebration {
+  font-size: 12px;
+  color: #6B7280;
+  line-height: 1.45;
+}
+
+.wr-moment-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #E5E7EB;
+  padding-top: 10px;
+}
+
+.wr-moment-footer-label {
+  font-size: 11px;
+  color: #9CA3AF;
+}
+
+.wr-moment-footer-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1E2939;
+}
+
+.wr-moment-check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #16A34A;
+}
+
+/* ─── Page 5: Milestones ─── */
+.wr-milestone-subtext {
+  font-size: 13px;
+  color: #9CA3AF;
+  margin-bottom: 14px;
+}
+
+.wr-milestone-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.wr-milestone-row:last-child {
+  border-bottom: none;
+}
+
+.wr-milestone-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.wr-milestone-icon.achieved {
+  background: #FEF3C7;
+}
+
+.wr-milestone-icon.emerging {
+  background: #EDE9FE;
+}
+
+.wr-milestone-content {
+  flex: 1;
+}
+
+.wr-milestone-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.wr-milestone-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E2939;
+  flex: 1;
+}
+
+.wr-milestone-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.wr-milestone-badge.achieved {
+  background: #FEF3C7;
+  color: #D97706;
+}
+
+.wr-milestone-badge.emerging {
+  background: #EDE9FE;
+  color: #7C3AED;
+}
+
+.wr-milestone-action-tip {
+  font-size: 12px;
+  color: #6B7280;
+  line-height: 1.45;
+}
+
+/* ─── Page 6: Focus ─── */
+.wr-focus-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.wr-focus-label {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+.wr-focus-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background: #FFF7ED;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.wr-focus-heading {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1E2939;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+.wr-focus-subtext {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.wr-why-toggle {
+  background: #F9FAFB;
+  border-radius: 14px;
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wr-why-toggle:hover {
+  background: #F3F4F6;
+}
+
+.wr-why-text {
+  flex: 1;
+}
+
+.wr-why-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1E2939;
+  margin-bottom: 1px;
+}
+
+.wr-why-subtitle {
+  font-size: 11px;
+  color: #9CA3AF;
+}
+
+.wr-why-body {
+  background: #F9FAFB;
+  border-radius: 14px;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.55;
+}
+
+/* ─── Page 7: Check-in ─── */
+.wr-checkin-question {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E2939;
+  margin-bottom: 12px;
+}
+
+.wr-mood-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.wr-mood-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #F9FAFB;
+  border-radius: 14px;
+  border: 2px solid #E5E7EB;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.wr-mood-chip.selected {
+  border-color: #8C49D5;
+  background: #F9F5FF;
+  color: #8C49D5;
+}
+
+.wr-checkin-disclaimer {
+  font-size: 12px;
+  color: #9CA3AF;
+  line-height: 1.45;
+}
+
+.wr-issue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.wr-issue-row:last-child {
+  border-bottom: none;
+}
+
+.wr-issue-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1E2939;
+}
+
+.wr-rating-chips {
+  display: flex;
+  gap: 5px;
+}
+
+.wr-rating-chip {
+  border-radius: 10px;
+  border: 2px solid #E5E7EB;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  background: transparent;
+}
+
+.wr-rating-chip.selected {
+  border-color: #8C49D5;
+  background: #F9F5FF;
+  color: #8C49D5;
+}
+
+/* ─── Generated-at meta ─── */
+.wr-meta {
+  padding: 0 20px 16px;
+  font-size: 11px;
+  color: #9CA3AF;
+  text-align: center;
+}

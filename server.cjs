@@ -20,6 +20,9 @@ const {
 
 const app = express();
 
+// Trust first proxy (needed for express-rate-limit behind reverse proxy)
+app.set('trust proxy', 1);
+
 // Security middleware - allow inline scripts for share page
 app.use(helmet({
   contentSecurityPolicy: {
@@ -81,6 +84,11 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve reset password page
+app.get('/reset-password', (req, res) => {
+  res.sendFile(path.join(__dirname, 'reset-password.html'));
+});
 
 // Configuration
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;

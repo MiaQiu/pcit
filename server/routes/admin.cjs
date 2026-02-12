@@ -5,6 +5,8 @@ const prisma = require('../services/db.cjs');
 const { requireAdminAuth } = require('../middleware/adminAuth.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
 
+const { generateWeeklyReport } = require('../services/weeklyReportService.cjs');
+
 const router = express.Router();
 
 // ============================================================================
@@ -633,6 +635,9 @@ router.get('/users/:id/weekly-reports', requireAdminAuth, async (req, res) => {
         headline: true,
         totalDeposits: true,
         sessionIds: true,
+        sessionCount: true,
+        avgNoraScore: true,
+        generatedAt: true,
         createdAt: true,
       }
     });
@@ -641,6 +646,27 @@ router.get('/users/:id/weekly-reports', requireAdminAuth, async (req, res) => {
   } catch (error) {
     console.error('Admin get user weekly reports error:', error);
     res.status(500).json({ error: 'Failed to fetch weekly reports' });
+  }
+});
+
+/**
+ * GET /api/admin/weekly-reports/:id
+ * Get full detail for a single weekly report
+ */
+router.get('/weekly-reports/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const report = await prisma.weeklyReport.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!report) {
+      return res.status(404).json({ error: 'Weekly report not found' });
+    }
+
+    res.json({ report });
+  } catch (error) {
+    console.error('Admin get weekly report detail error:', error);
+    res.status(500).json({ error: 'Failed to fetch weekly report' });
   }
 });
 
@@ -695,6 +721,102 @@ router.put('/weekly-reports/:id/visibility', requireAdminAuth, async (req, res) 
   } catch (error) {
     console.error('Admin toggle weekly report visibility error:', error);
     res.status(500).json({ error: 'Failed to update report visibility' });
+  }
+});
+
+// ============================================================================
+// WEEKLY REPORT GENERATION ENDPOINTS
+// ============================================================================
+
+/**
+ * POST /api/admin/weekly-reports/generate
+ * Generate a weekly report for a single user
+ * Body: { userId, weekStartDate? }
+ */
+router.post('/weekly-reports/generate', requireAdminAuth, async (req, res) => {
+  try {
+    const { userId, weekStartDate } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const result = await generateWeeklyReport(userId, weekStartDate);
+    res.json({ report: result });
+  } catch (error) {
+    console.error('Admin generate weekly report error:', error);
+    res.status(500).json({ error: 'Failed to generate weekly report', details: error.message });
+  }
+});
+
+/**
+ * POST /api/admin/weekly-reports/generate-all
+ * Generate weekly reports for all users with completed sessions in the week
+ * Body: { weekStartDate? }
+ */
+router.post('/weekly-reports/generate-all', requireAdminAuth, async (req, res) => {
+  try {
+    const { weekStartDate } = req.body;
+
+    // Compute week boundaries
+    let weekStart;
+    if (weekStartDate) {
+      weekStart = new Date(weekStartDate);
+      weekStart.setUTCHours(0, 0, 0, 0);
+    } else {
+      weekStart = new Date();
+      const day = weekStart.getUTCDay();
+      const diff = day === 0 ? 6 : day - 1;
+      weekStart.setUTCDate(weekStart.getUTCDate() - diff);
+      weekStart.setUTCHours(0, 0, 0, 0);
+    }
+    const weekEnd = new Date(weekStart);
+    weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
+    weekEnd.setUTCHours(23, 59, 59, 999);
+
+    // Find all users with completed sessions in this week
+    const sessionsInWeek = await prisma.session.findMany({
+      where: {
+        analysisStatus: 'COMPLETED',
+        overallScore: { not: null },
+        createdAt: { gte: weekStart, lte: weekEnd },
+      },
+      select: { userId: true },
+      distinct: ['userId'],
+    });
+
+    const userIds = sessionsInWeek.map(s => s.userId);
+    console.log(`📊 [WEEKLY-REPORT-ALL] Found ${userIds.length} users with sessions in week of ${weekStart.toISOString()}`);
+
+    const results = [];
+    let generated = 0, failed = 0, skipped = 0;
+
+    for (const userId of userIds) {
+      try {
+        const result = await generateWeeklyReport(userId, weekStart.toISOString());
+        if (result.skipped) {
+          skipped++;
+          results.push({ userId, status: 'skipped', reason: result.reason });
+        } else {
+          generated++;
+          results.push({ userId, status: 'generated', reportId: result.id });
+        }
+      } catch (err) {
+        failed++;
+        console.error(`📊 [WEEKLY-REPORT-ALL] Failed for user ${userId}:`, err.message);
+        results.push({ userId, status: 'failed', error: err.message });
+      }
+    }
+
+    res.json({ generated, failed, skipped, total: userIds.length, results });
+  } catch (error) {
+    console.error('Admin generate all weekly reports error:', error);
+    res.status(500).json({ error: 'Failed to generate weekly reports', details: error.message });
   }
 });
 

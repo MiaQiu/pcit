@@ -192,7 +192,47 @@ export interface WeeklyReportSummary {
   headline: string | null;
   totalDeposits: number;
   sessionIds: string[];
+  sessionCount: number;
+  avgNoraScore: number | null;
+  generatedAt: string | null;
   createdAt: string;
+}
+
+export interface WeeklyReportDetail {
+  id: string;
+  userId: string;
+  childId: string | null;
+  weekStartDate: string;
+  weekEndDate: string;
+  visibility: boolean;
+  headline: string | null;
+  totalDeposits: number;
+  massageTimeMinutes: number;
+  praiseCount: number;
+  echoCount: number;
+  narrateCount: number;
+  skillCelebrationTitle: string | null;
+  scenarioCards: Array<{ label: string; body: string; exampleScript: string }> | null;
+  topMoments: Array<{ date: string; dayLabel: string; dateLabel: string; tag: string; sessionTitle: string; quote: string; celebration: string; audioUrl?: string }> | null;
+  milestones: Array<{ status: string; category: string; title: string; actionTip: string }> | null;
+  focusHeading: string | null;
+  focusSubtext: string | null;
+  whyExplanation: string | null;
+  moodSelection: string | null;
+  issueRatings: Record<string, string> | null;
+  depositsTrend: string | null;
+  depositsChangePercent: number | null;
+  trendMessage: string | null;
+  sessionCount: number;
+  uniqueDays: number;
+  consistencyMessage: string | null;
+  strongestGrowthArea: string | null;
+  avgNoraScore: number | null;
+  childResponseSummary: string | null;
+  generatedAt: string | null;
+  sessionIds: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export async function getUserWeeklyReports(userId: string): Promise<WeeklyReportSummary[]> {
@@ -200,6 +240,27 @@ export async function getUserWeeklyReports(userId: string): Promise<WeeklyReport
     `/api/admin/users/${userId}/weekly-reports`
   );
   return data.reports;
+}
+
+export async function getWeeklyReport(id: string): Promise<WeeklyReportDetail> {
+  const data = await apiFetch<{ report: WeeklyReportDetail }>(
+    `/api/admin/weekly-reports/${id}`
+  );
+  return data.report;
+}
+
+export async function generateWeeklyReportApi(
+  userId: string,
+  weekStartDate?: string
+): Promise<WeeklyReportDetail> {
+  const data = await apiFetch<{ report: WeeklyReportDetail }>(
+    '/api/admin/weekly-reports/generate',
+    {
+      method: 'POST',
+      body: JSON.stringify({ userId, weekStartDate }),
+    }
+  );
+  return data.report;
 }
 
 export async function toggleWeeklyReportVisibility(

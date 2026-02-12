@@ -27,6 +27,7 @@ RUN npm prune --production
 
 # Copy application code (backend only)
 COPY server.cjs ./
+COPY reset-password.html ./
 COPY server ./server/
 COPY public ./public/
 

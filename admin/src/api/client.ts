@@ -30,7 +30,7 @@ export async function apiFetch<T = any>(
 
   if (res.status === 401) {
     clearToken();
-    window.location.href = '/admin/login';
+    window.location.href = '/login';
     throw new Error('Unauthorized');
   }
 

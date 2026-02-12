@@ -688,6 +688,27 @@ model WeeklyReport {
   moodSelection         String?  // e.g. "Grounded", "Tired", "Stretched", "Hopeful"
   issueRatings          Json?    // { "Tantrums": "Better", "Hitting": "Same" }
 
+  // Trend insights (enhances Page 2)
+  depositsTrend          String?   // "up" | "down" | "stable"
+  depositsChangePercent  Int?      // e.g. 40 means +40%
+  trendMessage           String?   // AI: "Your praise increased 40% this week!"
+
+  // Consistency tracking (enhances Page 2)
+  sessionCount           Int       @default(0)
+  uniqueDays             Int       @default(0)
+  consistencyMessage     String?   // AI: "You showed up 4 out of 7 days!"
+
+  // Growth insights
+  strongestGrowthArea    String?   // "Praise", "Echo", "Narrate", etc.
+  avgNoraScore           Int?      // 0-100 weekly average
+
+  // Child response patterns (enhances Page 4/5)
+  childResponseSummary   String?   // AI: synthesized child reaction patterns
+
+  // Generation metadata
+  generatedAt            DateTime?
+  generationVersion      Int       @default(1)
+
   // Session IDs included in this report
   sessionIds            String[] @default([])
 
