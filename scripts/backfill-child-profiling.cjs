@@ -16,7 +16,7 @@ require('dotenv').config();
 const prisma = require('../server/services/db.cjs');
 const { decryptSensitiveData } = require('../server/utils/encryption.cjs');
 const { getUtterances } = require('../server/utils/utteranceUtils.cjs');
-const { generateChildProfiling } = require('../server/services/pcitAnalysisService.cjs');
+const { generateDevelopmentalProfiling, generateCdiCoaching } = require('../server/services/pcitAnalysisService.cjs');
 const { detectAndUpdateMilestones } = require('../server/services/milestoneDetectionService.cjs');
 
 // Parse CLI args
@@ -164,26 +164,45 @@ async function main() {
       const childSpeaker = getChildSpeaker(session.roleIdentificationJson);
 
       if (DRY_RUN) {
-        console.log(`    [DRY RUN] Would run generateChildProfiling + upsert + milestone detection`);
+        console.log(`    [DRY RUN] Would run developmental profiling + coaching + upsert + milestone detection`);
         profilingCount++;
         continue;
       }
 
-      // Run child profiling (Step 9)
-      console.log(`    📊 Running child profiling...`);
+      // Run developmental profiling (Claude) + coaching (Gemini) in parallel
+      console.log(`    📊 Running child profiling (developmental + coaching in parallel)...`);
       let profilingResult = null;
       try {
-        profilingResult = await generateChildProfiling(
-          utterances,
-          {
-            name: childName,
-            ageMonths: childAgeMonths,
-            gender: childGender,
-            issue: childIssue
-          },
-          tagCounts,
-          childSpeaker
-        );
+        const childInfoForProfiling = {
+          name: childName,
+          ageMonths: childAgeMonths,
+          gender: childGender,
+          issue: childIssue
+        };
+
+        const [devSettled, coachSettled] = await Promise.allSettled([
+          generateDevelopmentalProfiling(utterances, childInfoForProfiling, tagCounts, childSpeaker),
+          generateCdiCoaching(utterances, childInfoForProfiling, tagCounts, childSpeaker)
+        ]);
+
+        const devResult = devSettled.status === 'fulfilled' ? devSettled.value : null;
+        const coachResult = coachSettled.status === 'fulfilled' ? coachSettled.value : null;
+
+        if (devSettled.status === 'rejected') {
+          console.error(`    ⚠️ Developmental profiling rejected: ${devSettled.reason?.message}`);
+        }
+        if (coachSettled.status === 'rejected') {
+          console.error(`    ⚠️ CDI coaching rejected: ${coachSettled.reason?.message}`);
+        }
+
+        if (devResult || coachResult) {
+          profilingResult = {
+            developmentalObservation: devResult?.developmentalObservation || null,
+            metadata: devResult?.metadata || null,
+            coachingSummary: coachResult?.coachingSummary || null,
+            coachingCards: coachResult?.coachingCards || null
+          };
+        }
       } catch (err) {
         console.error(`    ❌ Profiling error: ${err.message}`);
         continue;
@@ -229,7 +248,7 @@ async function main() {
             where: { id: session.id },
             data: {
               coachingSummary: profilingResult.coachingSummary || null,
-              coachingCards: profilingResult.coachingCards,
+              coachingCards: { sections: profilingResult.coachingCards, tomorrowGoal: profilingResult.tomorrowGoal || null },
             }
           });
         } catch (_) { /* non-critical */ }

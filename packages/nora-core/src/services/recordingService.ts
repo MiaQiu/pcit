@@ -73,6 +73,11 @@ export interface CoachingCard {
   scenario: CoachingCardScenario | null;
 }
 
+export interface CoachingSection {
+  title: string;
+  content: string;
+}
+
 export interface MilestoneCelebration {
   status: 'EMERGING' | 'ACHIEVED';
   category: string;
@@ -197,7 +202,7 @@ export interface RecordingAnalysis {
   aboutChild?: AboutChildItem[] | null;
   developmentalObservation?: DevelopmentalObservation | null;
   coachingSummary?: string | null;
-  coachingCards?: CoachingCard[] | null;
+  coachingCards?: CoachingSection[] | CoachingCard[] | null;
   pdiSkills?: Array<{
     skill: string;
     performance: string;

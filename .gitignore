@@ -18,3 +18,13 @@ database-pre-migration-*.txt
 !tsconfig.json
 !app.json
 !eas.json
+
+# Build artifacts
+*.tsbuildinfo
+
+# Backups and debug logs
+scripts/backups/
+scripts/debug-session-*
+
+# Scratch files
+lesson-content.txt

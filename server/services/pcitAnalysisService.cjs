@@ -268,30 +268,19 @@ function formatUtterancesForPsychologist(utterances) {
 }
 
 /**
- * Generate child profiling using a single Gemini call
- * Produces developmental observations (5 domains) + coaching cards for parents
- * Replaces the old generatePsychologistFeedback + extractChildPortfolioInsights + extractAboutChild pipeline
- * @param {Array} utterances - Utterances with roles
+ * Build shared template variables for child profiling prompts
  * @param {Object} childInfo - Child's info (name, ageMonths, gender, clinicalPriority)
  * @param {Object} tagCounts - Session metrics from PCIT coding
- * @param {string} childSpeaker - Speaker ID of the child (e.g., 'speaker_0')
- * @returns {Promise<Object|null>} { developmentalObservation, coachingCards, metadata } or null on failure
+ * @param {Array} utterances - Utterances with roles
+ * @returns {Object} Template variables object
  */
-async function generateChildProfiling(utterances, childInfo, tagCounts = {}, childSpeaker = null) {
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  if (!GEMINI_API_KEY) {
-    console.warn('⚠️ [CHILD-PROFILING] Gemini API key not configured, skipping');
-    return null;
-  }
-
+function buildProfilingVariables(childInfo, tagCounts, utterances) {
   const { name, ageMonths, gender, clinicalPriority } = childInfo;
   const transcript = formatUtterancesForPsychologist(utterances);
 
-  // Format clinical priority for prompt
   const formatLevel = (level) => level ? level.replace(/_/g, ' ').toLowerCase() : 'none';
   const formatStrategy = (strategy) => strategy ? strategy.replace(/_/g, ' ').toLowerCase() : 'none';
 
-  // Build detail strings from ChildIssuePriority rows
   const formatRowDetails = (row) => {
     const parts = [];
     if (row.fromUserIssue && row.userIssues) {
@@ -305,12 +294,27 @@ async function generateChildProfiling(utterances, childInfo, tagCounts = {}, chi
     return parts.length > 0 ? parts.join('. ') : 'none';
   };
 
-  const primaryDetails = (clinicalPriority?.issuePriorities || []).find(r => r.priorityRank === 1);
+  const primaryRow = (clinicalPriority?.issuePriorities || []).find(r => r.priorityRank === 1);
   const otherPriorities = (clinicalPriority?.issuePriorities || []).filter(r => r.priorityRank > 1);
+
+  // Extract human-readable issue names from issuePriority rows
+  const formatIssueLabel = (row) => {
+    if (row?.fromUserIssue && row.userIssues) {
+      try {
+        return JSON.parse(row.userIssues).map(i => i.replace(/_/g, ' ').toLowerCase()).join(', ');
+      } catch (_) {}
+    }
+    if (row?.fromWacb && row.wacbQuestions) {
+      try {
+        return JSON.parse(row.wacbQuestions).join(', ');
+      } catch (_) {}
+    }
+    return formatLevel(row?.clinicalLevel);
+  };
+
+  const primaryIssueText = primaryRow ? formatIssueLabel(primaryRow) : 'none';
   const otherIssuesText = otherPriorities.length > 0
-    ? otherPriorities.map(r =>
-        `  - ${formatLevel(r.clinicalLevel)} — Strategy: ${formatStrategy(r.strategy)}\n    Details: ${formatRowDetails(r)}`
-      ).join('\n')
+    ? otherPriorities.map(r => `  - ${formatIssueLabel(r)}`).join('\n')
     : '  none';
 
   const sessionMetrics = `- Labeled Praises: ${tagCounts.praise || 0} (goal: 10+)
@@ -320,33 +324,67 @@ async function generateChildProfiling(utterances, childInfo, tagCounts = {}, chi
 - Commands: ${tagCounts.command || 0} (reduce)
 - Criticisms: ${tagCounts.criticism || 0} (eliminate)`;
 
-  const prompt = loadPromptWithVariables('childProfiling', {
+  return {
     CHILD_NAME: name || 'the child',
     CHILD_AGE_MONTHS: String(ageMonths || 'unknown'),
     CHILD_GENDER: gender || 'child',
-    PRIMARY_ISSUE: formatLevel(clinicalPriority?.primaryIssue),
+    PRIMARY_ISSUE: primaryIssueText,
     PRIMARY_STRATEGY: formatStrategy(clinicalPriority?.primaryStrategy),
-    PRIMARY_DETAILS: primaryDetails ? formatRowDetails(primaryDetails) : 'none',
+    PRIMARY_DETAILS: primaryRow ? formatRowDetails(primaryRow) : 'none',
     OTHER_ISSUES: otherIssuesText,
     SESSION_METRICS: sessionMetrics,
     TRANSCRIPT: transcript
-  });
+  };
+}
 
-  console.log(`📊 [CHILD-PROFILING] Calling Gemini API (single call, streaming)...`);
+/**
+ * Generate developmental profiling using Claude
+ * Produces developmental observations (5 clinical domains) with milestone library framework
+ * @param {Array} utterances - Utterances with roles
+ * @param {Object} childInfo - Child's info (name, ageMonths, gender, clinicalPriority)
+ * @param {Object} tagCounts - Session metrics from PCIT coding
+ * @param {string} childSpeaker - Speaker ID of the child (e.g., 'speaker_0')
+ * @returns {Promise<Object|null>} { developmentalObservation, metadata } or null on failure
+ */
+async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts = {}, childSpeaker = null) {
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+  if (!ANTHROPIC_API_KEY) {
+    console.warn('⚠️ [DEV-PROFILING] Anthropic API key not configured, skipping');
+    return null;
+  }
+
+  const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
+  const prompt = loadPromptWithVariables('developmentalProfiling', variables);
+
+  console.log(`📊 [DEV-PROFILING] Calling Claude API for developmental profiling...`);
 
   try {
-    const userMessage = {
-      role: 'user',
-      parts: [{ text: prompt }]
-    };
-
-    const responseText = await callGeminiStreaming([userMessage], {
-      temperature: 0.5,
-      maxOutputTokens: 8192,
-      timeout: 300000  // 5 minutes
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 8192,
+        temperature: 0.5,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }]
+      })
     });
 
-    // Parse JSON response (strip markdown fences if present)
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `Claude API error (dev profiling): ${response.status}`);
+    }
+
+    const data = await response.json();
+    const responseText = data.content[0].text;
+
     const cleanedResponse = responseText
       .replace(/```json\s*/g, '')
       .replace(/```\s*/g, '')
@@ -356,21 +394,116 @@ async function generateChildProfiling(utterances, childInfo, tagCounts = {}, chi
     try {
       parsed = JSON.parse(cleanedResponse);
     } catch (parseError) {
-      console.error('❌ [CHILD-PROFILING] JSON parse error. Raw response (first 500 chars):', cleanedResponse.substring(0, 500));
+      console.error('❌ [DEV-PROFILING] JSON parse error. Raw response (first 500 chars):', cleanedResponse.substring(0, 500));
       throw parseError;
     }
 
     const result = {
       developmentalObservation: parsed.developmental_observation || null,
-      coachingSummary: parsed.pcit_coaching_summary || null,
-      coachingCards: parsed.pcit_coaching_cards || null,
       metadata: parsed.session_metadata || null
     };
 
-    console.log(`✅ [CHILD-PROFILING] Gemini response parsed — ${result.developmentalObservation?.domains?.length || 0} domains, ${result.coachingCards?.length || 0} coaching cards`);
+    console.log(`✅ [DEV-PROFILING] Claude response parsed — ${result.developmentalObservation?.domains?.length || 0} domains`);
     return result;
   } catch (error) {
-    console.error('❌ [CHILD-PROFILING] Error:', error.message);
+    console.error('❌ [DEV-PROFILING] Error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Generate CDI coaching cards using Gemini
+ * Produces actionable coaching summary and cards for parents
+ * @param {Array} utterances - Utterances with roles
+ * @param {Object} childInfo - Child's info (name, ageMonths, gender, clinicalPriority)
+ * @param {Object} tagCounts - Session metrics from PCIT coding
+ * @param {string} childSpeaker - Speaker ID of the child (e.g., 'speaker_0')
+ * @returns {Promise<Object|null>} { coachingSummary, coachingCards } or null on failure
+ */
+async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childSpeaker = null) {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+  if (!GEMINI_API_KEY) {
+    console.warn('⚠️ [CDI-COACHING] Gemini API key not configured, skipping');
+    return null;
+  }
+
+  const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
+  const prompt = loadPromptWithVariables('cdiCoaching', variables);
+
+  console.log(`📊 [CDI-COACHING] Calling Gemini API for coaching report...`);
+
+  try {
+    const userMessage = {
+      role: 'user',
+      parts: [{ text: prompt }]
+    };
+
+    const coachingReport = (await callGeminiStreaming([userMessage], {
+      temperature: 0.5,
+      maxOutputTokens: 8192,
+      timeout: 300000  // 5 minutes
+    })).trim();
+
+    console.log(`✅ [CDI-COACHING] Gemini coaching report received (${coachingReport.length} chars)`);
+
+    // Follow-up Claude call to select 3 sections and format for mobile
+    if (!ANTHROPIC_API_KEY) {
+      console.warn('⚠️ [CDI-COACHING] Anthropic API key not configured, returning raw report');
+      return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal: null };
+    }
+
+    console.log(`📊 [CDI-COACHING] Calling Claude to format 3 coaching sections...`);
+
+    const formatPrompt = loadPromptWithVariables('cdiCoachingFormat', {
+      COACHING_REPORT: coachingReport
+    });
+
+    const formatResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 2048,
+        temperature: 0,
+        messages: [{ role: 'user', content: formatPrompt }]
+      })
+    });
+
+    if (!formatResponse.ok) {
+      const errorData = await formatResponse.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `Claude API error (coaching format): ${formatResponse.status}`);
+    }
+
+    const formatData = await formatResponse.json();
+    const formatText = formatData.content[0].text
+      .replace(/```json\s*/g, '')
+      .replace(/```\s*/g, '')
+      .trim();
+
+    let formatted;
+    try {
+      formatted = JSON.parse(formatText);
+    } catch (parseError) {
+      console.error('❌ [CDI-COACHING] Claude format JSON parse error. Raw (first 500 chars):', formatText.substring(0, 500));
+      // Fall back to raw report
+      return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal: null };
+    }
+
+    const result = {
+      coachingSummary: coachingReport,
+      coachingCards: formatted.sections || null,
+      tomorrowGoal: formatted.tomorrowGoal || null
+    };
+
+    console.log(`✅ [CDI-COACHING] Formatted — ${result.coachingCards?.length || 0} sections`);
+    return result;
+  } catch (error) {
+    console.error('❌ [CDI-COACHING] Error:', error.message);
     return null;
   }
 }
@@ -963,29 +1096,46 @@ Do not include markdown or whitespace (minified JSON).
     }
   }
 
-  // STEP 9: Child Profiling — single Gemini call (replaces old Steps 9/10/11)
-  console.log(`📊 [ANALYSIS-STEP-9] Generating child profiling via Gemini (single call)...`);
+  // STEP 9: Child Profiling — parallel developmental (Claude) + coaching (Gemini) calls
+  console.log(`📊 [ANALYSIS-STEP-9] Generating child profiling (developmental + coaching in parallel)...`);
   let childProfilingResult = null;
   try {
     const utterancesForProfiling = await getUtterances(sessionId);
     const childSpeaker = getChildSpeaker(roleIdentificationJson);
+    const childInfoForProfiling = {
+      name: childName,
+      ageMonths: childAgeMonths,
+      gender: childGender,
+      clinicalPriority
+    };
 
-    childProfilingResult = await generateChildProfiling(
-      utterancesForProfiling,
-      {
-        name: childName,
-        ageMonths: childAgeMonths,
-        gender: childGender,
-        clinicalPriority
-      },
-      tagCounts,
-      childSpeaker
-    );
+    const [profilingSettled, coachingSettled] = await Promise.allSettled([
+      generateDevelopmentalProfiling(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker),
+      generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker)
+    ]);
 
-    if (childProfilingResult) {
+    const profilingResult = profilingSettled.status === 'fulfilled' ? profilingSettled.value : null;
+    const coachingResult = coachingSettled.status === 'fulfilled' ? coachingSettled.value : null;
+
+    if (profilingSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] Developmental profiling rejected:', profilingSettled.reason?.message);
+    }
+    if (coachingSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] CDI coaching rejected:', coachingSettled.reason?.message);
+    }
+
+    // Merge into the same shape downstream code expects
+    if (profilingResult || coachingResult) {
+      childProfilingResult = {
+        developmentalObservation: profilingResult?.developmentalObservation || null,
+        metadata: profilingResult?.metadata || null,
+        coachingSummary: coachingResult?.coachingSummary || null,
+        coachingCards: coachingResult?.coachingCards || null,
+        tomorrowGoal: coachingResult?.tomorrowGoal || null
+      };
       console.log(`✅ [ANALYSIS-STEP-9] Child profiling complete — ${childProfilingResult.developmentalObservation?.domains?.length || 0} domains, ${childProfilingResult.coachingCards?.length || 0} coaching cards`);
     } else {
-      console.log(`⚠️ [ANALYSIS-STEP-9] Child profiling skipped or failed`);
+      console.log(`⚠️ [ANALYSIS-STEP-9] Child profiling skipped or both calls failed`);
     }
   } catch (profilingError) {
     console.error('⚠️ [ANALYSIS-STEP-9] Child profiling error:', profilingError.message);
@@ -1056,7 +1206,9 @@ Do not include markdown or whitespace (minified JSON).
       competencyAnalysis,
       overallScore,
       coachingSummary: childProfilingResult?.coachingSummary || null,
-      coachingCards: childProfilingResult?.coachingCards || null
+      coachingCards: childProfilingResult?.coachingCards
+        ? { sections: childProfilingResult.coachingCards, tomorrowGoal: childProfilingResult.tomorrowGoal || null }
+        : null
     }
   });
 
@@ -1123,5 +1275,6 @@ module.exports = {
   analyzePCITCoding,
   generateCDIFeedback,
   generatePDITwoChoicesAnalysis,
-  generateChildProfiling
+  generateDevelopmentalProfiling,
+  generateCdiCoaching
 };

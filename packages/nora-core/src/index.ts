@@ -35,4 +35,4 @@ export { fetchWithTimeout } from './utils/fetchWithTimeout';
 export type { SessionUploadData, SessionListOptions } from './services/sessionService';
 
 // Export recording-related types
-export type { RecordingAnalysis, StructuredTips, CoachInsight, CoachInsightAnalysis, CoachInsightExample, ChildPortfolioInsights, AboutChildItem, CoachingCard, CoachingCardScenario, MilestoneCelebration, DevelopmentalDomainProgress, DevelopmentalProgress, DomainType, DomainMilestone, DomainMilestonesResponse, DomainProfiling, DomainProfilingObservation, MilestoneHistoryEntry, MilestoneHistoryResponse, WeeklyReportData } from './services/recordingService';
+export type { RecordingAnalysis, StructuredTips, CoachInsight, CoachInsightAnalysis, CoachInsightExample, ChildPortfolioInsights, AboutChildItem, CoachingCard, CoachingCardScenario, CoachingSection, MilestoneCelebration, DevelopmentalDomainProgress, DevelopmentalProgress, DomainType, DomainMilestone, DomainMilestonesResponse, DomainProfiling, DomainProfilingObservation, MilestoneHistoryEntry, MilestoneHistoryResponse, WeeklyReportData } from './services/recordingService';

@@ -5,7 +5,7 @@ This document describes how recorded audio is processed and how reports are gene
 ## High-Level Pipeline
 
 ```
-Audio Upload → Transcription (v1/v2/two-pass) → Speaker Identification → PCIT Coding → Child Profiling → Milestone Detection → Report Generation
+Audio Upload → Transcription (v1/v2/two-pass) → Speaker Identification → PCIT Coding → Developmental Profiling + CDI Coaching (parallel) → Milestone Detection → Report Generation
 ```
 
 ```
@@ -19,9 +19,11 @@ MOBILE APP
     ↓
 4. PCIT Coding & Analysis (Claude)
     ↓
-5. Child Profiling & Coaching Cards (Gemini Pro — streaming)
+5. Child Profiling (parallel):
+   ├─ 5a. Developmental Profiling (Claude Sonnet)
+   └─ 5b. CDI Coaching Report (Gemini Pro → Claude Sonnet format)
     ↓
-5b. Milestone Detection (Gemini Flash — non-blocking)
+5c. Milestone Detection (Gemini Flash — non-blocking)
     ↓
 6. Report Generation & CDI/PDI Feedback
     ↓
@@ -288,59 +290,70 @@ tagCounts = {
 
 ---
 
-## Phase 5: Child Profiling & Coaching Cards (Gemini — Single Call)
+## Phase 5: Child Profiling & Coaching (Parallel)
 
 **File:** `server/services/pcitAnalysisService.cjs`
 
-**Function:** `generateChildProfiling()`
+Two independent AI calls run in parallel via `Promise.allSettled()`. Either can fail without blocking the other.
 
-**Prompt File:** `server/prompts/childProfiling.txt`
+### Shared Helper: `buildProfilingVariables()`
 
-### Purpose
-
-A single Gemini call that replaces the old three-call pipeline (Phases 5/5b/5c). Produces:
-1. **Developmental observations** across 5 clinical domains → stored in `ChildProfiling` table
-2. **Coaching cards** for parents → stored in `Session.coachingCards`
-
-### Streaming Infrastructure
-
-**Function:** `callGeminiStreaming()`
-
-Due to the Gemini 3 Pro Preview model's extended thinking time (30-60s), the system uses SSE streaming:
-
-```javascript
-POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:streamGenerateContent?alt=sse
-{
-  contents: [{ parts: [{ text: prompt }] }],
-  generationConfig: {
-    temperature: 0.5,
-    maxOutputTokens: 8192
-  }
-}
-// timeout: 300,000ms (5 minutes)
-```
-
-### Child Information Used
-
-Retrieved from the User model:
-- **childName:** Decrypted from encrypted storage
-- **childAgeMonths:** Precise age in months
-- **childGender:** From enum (BOY, GIRL, OTHER) → formatted as "boy", "girl", "child"
-- **issue:** User-reported presenting concern
-
-### Prompt Template Variables
+Builds template variables used by both prompts:
 
 | Variable | Source |
 |----------|--------|
 | `{{CHILD_NAME}}` | Decrypted `user.childName` |
 | `{{CHILD_AGE_MONTHS}}` | Calculated from `childBirthday` / `childBirthYear` |
 | `{{CHILD_GENDER}}` | `formatGender(user.childGender)` |
-| `{{CHILD_ISSUE}}` | `user.issue` |
+| `{{PRIMARY_ISSUE}}` | User-reported issues from `ChildIssuePriority` (e.g., "tantrums"), falls back to clinical level |
+| `{{PRIMARY_STRATEGY}}` | Intervention strategy (e.g., "differential attention") |
+| `{{PRIMARY_DETAILS}}` | Detail string with user-reported issues + WACB signals |
+| `{{OTHER_ISSUES}}` | Formatted list of secondary priority issues |
 | `{{SESSION_METRICS}}` | Tag counts from PCIT coding |
 | `{{TRANSCRIPT}}` | Formatted via `formatUtterancesForPsychologist()` |
 
-### Output JSON Structure
+### Clinical Priority Data
 
+Retrieved from `Child` + `ChildIssuePriority` tables:
+
+```javascript
+const clinicalPriority = {
+  primaryIssue: child.primaryIssue,       // ClinicalLevel enum (e.g., DE_ESCALATE)
+  primaryStrategy: child.primaryStrategy, // InterventionStrategy enum
+  issuePriorities: [                      // From ChildIssuePriority table
+    {
+      priorityRank: 1,
+      clinicalLevel: 'DE_ESCALATE',
+      strategy: 'DIFFERENTIAL_ATTENTION',
+      fromUserIssue: true,
+      userIssues: '["tantrums"]',         // ← actual issue label used in prompts
+      fromWacb: false,
+      wacbQuestions: null,
+      wacbScore: null
+    }
+  ]
+};
+```
+
+### Phase 5a: Developmental Profiling (Claude)
+
+**Function:** `generateDevelopmentalProfiling()`
+
+**Prompt File:** `server/prompts/developmentalProfiling.txt`
+
+Produces developmental observations across 5 clinical domains using the Milestone Library framework.
+
+**API Call:**
+```javascript
+POST https://api.anthropic.com/v1/messages
+{
+  model: 'claude-sonnet-4-5-20250929',
+  max_tokens: 8192,
+  temperature: 0.5
+}
+```
+
+**Output JSON:**
 ```javascript
 {
   "session_metadata": {
@@ -363,26 +376,11 @@ Retrieved from the User model:
       }
       // ... 5 domains total
     ]
-  },
-  "pcit_coaching_cards": [
-    {
-      "card_id": 1,
-      "title": "actionable title",
-      "icon_suggestion": "emoji",
-      "insight": "what was observed and why it matters",
-      "suggestion": "what to do differently",
-      "scenario": {
-        "context": "setup",
-        "instead_of": "what parent said",
-        "try_this": "what to say instead"
-      }
-    }
-    // ... 2-4 cards
-  ]
+  }
 }
 ```
 
-### 5 Developmental Domains
+**5 Developmental Domains:**
 
 | Category | Clinical Framework |
 |----------|--------------------|
@@ -392,12 +390,69 @@ Retrieved from the User model:
 | Emotional | Halliday's Personal Function / Emotional Regulation |
 | Connection | Biringen's Emotional Availability Scales |
 
+### Phase 5b: CDI Coaching Report (Gemini → Claude)
+
+**Function:** `generateCdiCoaching()`
+
+**Prompt Files:**
+- `server/prompts/cdiCoaching.txt` — Gemini generates free-form coaching report
+- `server/prompts/cdiCoachingFormat.txt` — Claude formats into sections
+
+**Two-step process:**
+
+1. **Gemini** generates a free-form coaching report (~200 words):
+   ```javascript
+   callGeminiStreaming([userMessage], {
+     temperature: 0.5,
+     maxOutputTokens: 8192,
+     timeout: 300000  // 5 minutes
+   })
+   ```
+
+2. **Claude** selects sections from the report, adds formatting (`**bold**`, `•` bullets), and extracts tomorrow's goal:
+   ```javascript
+   POST https://api.anthropic.com/v1/messages
+   {
+     model: 'claude-sonnet-4-5-20250929',
+     max_tokens: 2048,
+     temperature: 0
+   }
+   ```
+
+**Claude formatting output:**
+```javascript
+{
+  "sections": [
+    { "title": "Session Overview", "content": "Formatted text with **bold** and • bullets" },
+    { "title": "What Went Well", "content": "..." },
+    { "title": "Area to Improve", "content": "..." }
+  ],
+  "tomorrowGoal": "Give 5 specific praises (e.g., ...)"
+}
+```
+
+### Parallel Execution
+
+```javascript
+const [profilingSettled, coachingSettled] = await Promise.allSettled([
+  generateDevelopmentalProfiling(utterances, childInfo, tagCounts, childSpeaker),
+  generateCdiCoaching(utterances, childInfo, tagCounts, childSpeaker)
+]);
+// Merge results — either can succeed independently
+childProfilingResult = {
+  developmentalObservation: profilingResult?.developmentalObservation || null,
+  metadata: profilingResult?.metadata || null,
+  coachingSummary: coachingResult?.coachingSummary || null,
+  coachingCards: coachingResult?.coachingCards || null,
+  tomorrowGoal: coachingResult?.tomorrowGoal || null
+};
+```
+
 ### Child Record Creation
 
 Before saving profiling results, the pipeline finds or creates a `Child` record:
 
 ```javascript
-// Find existing Child for this user, or create one
 let child = await prisma.child.findFirst({ where: { userId } });
 if (!child) {
   child = await prisma.child.create({
@@ -406,25 +461,9 @@ if (!child) {
 }
 ```
 
-This ensures every `ChildProfiling` and `ChildMilestone` record is linked to a `Child`.
-
 ### Database Storage
 
-**Child table** (one row per child):
-```javascript
-Child {
-  id: UUID,
-  userId: string,
-  name: string,                       // decrypted from user.childName
-  birthday: DateTime?,
-  gender: ChildGender?,
-  conditions: string?,
-  createdAt: timestamp,
-  updatedAt: timestamp
-}
-```
-
-**ChildProfiling table** (one row per session):
+**ChildProfiling table** (one row per session — from developmental profiling):
 ```javascript
 ChildProfiling {
   id: UUID,
@@ -439,33 +478,34 @@ ChildProfiling {
 }
 ```
 
-**Session.coachingCards** field:
+**Session fields** (from CDI coaching):
 ```javascript
-session.coachingCards = [ ... ]  // pcit_coaching_cards array
+session.coachingSummary = "Full Gemini coaching report text"
+session.coachingCards = {
+  sections: [                         // Claude-formatted sections
+    { title: "Section Title", content: "Formatted **markdown** text" }
+  ],
+  tomorrowGoal: "Specific goal for next session"
+}
 ```
 
 ### Backward Compatibility
 
-The report endpoint transforms new data into old formats for older mobile app versions:
-- `childPortfolioInsights` ← derived from `session.coachingCards` via `transformCoachingCardsToPortfolioInsights()`
-- `aboutChild` ← derived from `childProfiling.domains` via `transformDomainsToAboutChild()`
+The report endpoint handles both new and legacy `coachingCards` formats:
+- **New format:** `coachingCards.sections` (object with sections array)
+- **Legacy format:** `coachingCards` (flat array of CoachingCard objects)
 
-Falls back to existing `session.childPortfolioInsights` / `session.aboutChild` for sessions processed before this change.
+Old mobile app transforms:
+- `childPortfolioInsights` ← derived from legacy `coachingCards` via `transformCoachingCardsToPortfolioInsights()`
+- `aboutChild` ← derived from `childProfiling.domains` via `transformDomainsToAboutChild()`
 
 ### Configuration
 
-Requires `GEMINI_API_KEY` environment variable. If not configured, this phase is skipped gracefully.
-
-### Performance
-
-| | Before | After |
-|---|--------|-------|
-| AI calls | 3 sequential (Gemini + Gemini multi-turn + Claude) | 1 Gemini call |
-| API dependencies | Gemini + Anthropic | Gemini only |
+Requires both `ANTHROPIC_API_KEY` and `GEMINI_API_KEY`. Each call degrades gracefully if its key is missing.
 
 ---
 
-## Phase 5b: Milestone Detection (Gemini Flash — Non-Blocking)
+## Phase 5c: Milestone Detection (Gemini Flash — Non-Blocking)
 
 **File:** `server/services/milestoneDetectionService.cjs`
 
@@ -494,7 +534,7 @@ POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:ge
 
 The prompt provides Gemini with:
 - Child's age in months
-- The profiling `domains` JSON (from Phase 5)
+- The profiling `domains` JSON (from Phase 5a)
 - All `MilestoneLibrary` entries (key, category, stage, title, detectionMode, age range)
 - Existing milestones with status (so AI skips ACHIEVED ones)
 
@@ -720,7 +760,7 @@ session.update({
       { skill: 'Follow-Through', performance: 'Fair', feedback: '...', details: '...' }
     ]
   },
-  coachingCards: [...],           // From Phase 5 (coaching cards)
+  coachingCards: { sections: [...], tomorrowGoal: '...' },  // From Phase 5b (CDI coaching)
   overallScore: int,
   analysisStatus: 'COMPLETED'
 })
@@ -779,7 +819,7 @@ detectAndUpdateMilestones(child.id, sessionId)
   transcript: [ ... ],
   competencyAnalysis: { ... },
   pdiSkills: [...] | null,       // PDI Two Choices Flow (4 skills) — null for CDI
-  developmentalObservation: {  // From ChildProfiling table (Phase 5)
+  developmentalObservation: {  // From ChildProfiling table (Phase 5a)
     summary: 'developmental snapshot',
     domains: [
       {
@@ -793,15 +833,10 @@ detectAndUpdateMilestones(child.id, sessionId)
       // ... 5 domains
     ]
   },
-  coachingCards: [  // From Session.coachingCards (Phase 5)
-    {
-      card_id: 1,
-      title: 'actionable title',
-      icon_suggestion: 'emoji',
-      insight: '...',
-      suggestion: '...',
-      scenario: { context: '...', instead_of: '...', try_this: '...' }
-    }
+  coachingCards: [  // From Session.coachingCards (Phase 5b)
+    // New format: formatted coaching sections
+    { title: 'Section Title', content: 'Formatted **markdown** text with • bullets' }
+    // Legacy format: structured CoachingCard objects (for older sessions)
   ],
   // Backward compat (transforms from new data, or falls back to legacy fields):
   childPortfolioInsights: [...],
@@ -906,7 +941,9 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 | `server/utils/scoreConstants.cjs` | Nora score calculation |
 | `server/prompts/roleIdentification.txt` | Speaker role detection prompt |
 | `server/prompts/dpicsCoding.txt` | DPICS coding system prompt |
-| `server/prompts/childProfiling.txt` | Child profiling & coaching cards prompt |
+| `server/prompts/developmentalProfiling.txt` | Developmental profiling prompt (5 clinical domains + milestone library) |
+| `server/prompts/cdiCoaching.txt` | CDI coaching report prompt (free-form, Gemini) |
+| `server/prompts/cdiCoachingFormat.txt` | Coaching report formatting prompt (section selection, Claude) |
 | `server/prompts/pdiTwoChoicesFlow.txt` | PDI Two Choices Flow discipline analysis prompt |
 | `prisma/schema.prisma` | Database schema (Session, Utterance, Child, ChildProfiling, ChildMilestone, MilestoneLibrary) |
 | `scripts/backfill-child-profiling.cjs` | Migration: re-run profiling + milestone detection on existing sessions |
@@ -923,15 +960,19 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 | ElevenLabs scribe_v2 | Better text quality | Used in `v2` and `two-pass` modes |
 | Diarization Threshold | 0.1 | Speaker separation sensitivity |
 | Divergence Threshold | 20% reassigned | Flags diarization mismatch in two-pass |
-| Claude Model | `claude-sonnet-4-5-20250929` | Role ID, PCIT coding, CDI/PDI feedback |
-| Gemini Model (Profiling) | `gemini-3-pro-preview` | Child profiling (Phase 5, streaming) |
-| Gemini Model (Milestones) | `gemini-2.0-flash` | Milestone detection (Phase 5b, non-streaming) |
-| Gemini Endpoint (Profiling) | Streaming (SSE) | Prevents timeout during thinking |
+| Claude Model | `claude-sonnet-4-5-20250929` | Role ID, PCIT coding, dev profiling, coaching format, CDI/PDI feedback |
+| Gemini Model (Coaching) | `gemini-3-pro-preview` | CDI coaching report (Phase 5b, streaming) |
+| Gemini Model (Milestones) | `gemini-2.0-flash` | Milestone detection (Phase 5c, non-streaming) |
+| Gemini Endpoint (Coaching) | Streaming (SSE) | Prevents timeout during thinking |
 | Gemini Endpoint (Milestones) | Non-streaming `generateContent` | Fast model, no streaming needed |
 | Gemini Timeout | 300,000ms (5 min) | Extended for reasoning model |
-| Gemini Temp (Profiling) | 0.5 | Balanced creativity/consistency |
+| Claude Temp (Dev Profiling) | 0.5 | Balanced creativity/consistency |
+| Claude Temp (Coaching Format) | 0 | Deterministic formatting |
+| Gemini Temp (Coaching) | 0.5 | Balanced creativity/consistency |
 | Gemini Temp (Milestones) | 0.2 | Low temperature for consistent detection |
-| Max Tokens (Profiling) | 8192 | Detailed analysis |
+| Max Tokens (Dev Profiling) | 8192 | Detailed analysis (Claude) |
+| Max Tokens (Coaching) | 8192 | Free-form report (Gemini) |
+| Max Tokens (Coaching Format) | 2048 | Section formatting (Claude) |
 | Max Tokens (Milestones) | 4096 | Structured JSON response |
 | Claude Temp (Coding) | 0 | Deterministic PCIT coding |
 | Claude Temp (Feedback) | 0.7 | Creative feedback |
@@ -945,7 +986,7 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 - **Processing:** analysisStatus (PENDING/PROCESSING/COMPLETED/FAILED)
 - **Audio:** storagePath (S3 key), elevenLabsJson (raw transcription)
 - **Analysis:** transcript, roleIdentificationJson, pcitCoding, competencyAnalysis
-- **AI Insights:** coachingCards (from child profiling), childPortfolioInsights (legacy), aboutChild (legacy)
+- **AI Insights:** coachingSummary (full coaching report text), coachingCards (formatted sections + tomorrowGoal JSON), childPortfolioInsights (legacy), aboutChild (legacy)
 - **Scoring:** tagCounts, overallScore
 
 ### Child Table

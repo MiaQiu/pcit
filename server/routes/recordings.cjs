@@ -704,9 +704,12 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
 
     const reminder = session.competencyAnalysis?.reminder || null;
 
-    const tomorrowGoal = isCDI
+    // Use AI-generated tomorrowGoal from coaching if available, otherwise fallback to formula
+    const coachingData = session.coachingCards;
+    const aiTomorrowGoal = coachingData?.tomorrowGoal || null;
+    const tomorrowGoal = aiTomorrowGoal || (isCDI
       ? `Use ${Math.max(10, (session.tagCounts?.praise || 0) + 2)} Praises`
-      : `Give ${Math.max(10, (session.tagCounts?.direct_command || 0) + 2)} Direct Commands`;
+      : `Give ${Math.max(10, (session.tagCounts?.direct_command || 0) + 2)} Direct Commands`);
 
     // Generate audio URL for playback
     let audioUrl = null;
@@ -767,9 +770,9 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
         ? { summary: childProfiling.summary, domains: childProfiling.domains }
         : null,
       coachingSummary: session.coachingSummary || null,
-      coachingCards: session.coachingCards || null,
+      coachingCards: coachingData?.sections || (Array.isArray(coachingData) ? coachingData : null),
       // Backward compat (old mobile app versions)
-      childPortfolioInsights: transformCoachingCardsToPortfolioInsights(session.coachingCards) || session.childPortfolioInsights || null,
+      childPortfolioInsights: transformCoachingCardsToPortfolioInsights(Array.isArray(coachingData) ? coachingData : null) || session.childPortfolioInsights || null,
       aboutChild: transformDomainsToAboutChild(childProfiling?.domains) || session.aboutChild || null,
       // Milestone celebrations triggered during this session
       milestoneCelebrations: session.milestoneCelebrations || null

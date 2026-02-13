@@ -14,7 +14,7 @@ import { Button } from '../components/Button';
 import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import type { RecordingAnalysis, CoachingCard, MilestoneCelebration } from '@nora/core';
+import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration } from '@nora/core';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MarkdownText } from '../utils/MarkdownText';
 import { DragonCard } from '../components/DragonCard';
@@ -212,7 +212,7 @@ const PDICoachCorner: React.FC<{
         )}
 
         {/* Skills List */}
-        <Text style={styles.pdiSectionSubtitle}>The Two Choices Flow</Text>
+        {/* <Text style={styles.pdiSectionSubtitle}>The Two Choices Flow</Text>
         {pdiSkills.map((item, index) => {
           const colors = getPerformanceColors(item.performance);
           return (
@@ -232,12 +232,12 @@ const PDICoachCorner: React.FC<{
               <Text style={styles.pdiSkillFeedback}>{item.feedback}</Text>
             </View>
           );
-        })}
+        })} */}
 
         {/* Command Sequences */}
         {commandSequences && commandSequences.length > 0 && (
           <>
-            <Text style={[styles.pdiSectionSubtitle, { marginTop: 20 }]}>Command Sequences</Text>
+            <Text style={[styles.pdiSectionSubtitle, { marginTop: 20 }]}>Detailed feedback on each command sequences</Text>
             {commandSequences.map((seq, index) => {
               const labelColors = getLabelColors(seq.label);
               return (
@@ -605,24 +605,46 @@ export const ReportScreen: React.FC = () => {
           <PDICoachCorner pdiSkills={reportData.pdiSkills} commandSequences={reportData.pdiCommandSequences} summary={reportData.pdiSummary} recordingId={recordingId} navigation={navigation} />
         ) : (
           reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
-            const cards = (reportData.coachingCards as CoachingCard[]).slice(0, 1);
+            const items = reportData.coachingCards;
+            // Detect new format (sections with title + content) vs legacy (CoachingCard objects)
+            const isNewFormat = items.length > 0 && 'content' in items[0];
 
+            if (isNewFormat) {
+              const sections = items as CoachingSection[];
+              return (
+                <View>
+                  <Text style={styles.cardTitle}>Coach's Corner</Text>
+                  <View style={styles.coachCard}>
+                    {sections.map((section, idx) => (
+                      <View key={idx} style={idx > 0 ? { marginTop: 16 } : undefined}>
+                        <Text style={styles.coachLabelBold}>{section.title}</Text>
+                        <MarkdownText style={styles.coachDescription}>{section.content}</MarkdownText>
+                      </View>
+                    ))}
+                    <TouchableOpacity
+                      style={styles.cardLinkButton}
+                      onPress={() => navigation.navigate('Transcript', { recordingId })}
+                    >
+                      <Text style={styles.cardLinkText}>Read Full Transcript with Tips</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            }
+
+            // Legacy CoachingCard format
+            const cards = (items as CoachingCard[]).slice(0, 1);
             return (
               <View>
                 <Text style={styles.cardTitle}>Coach's Corner</Text>
                 {cards.map((card) => (
                     <View key={card.card_id} style={styles.coachCard}>
-                      {/* Summary */}
                       {reportData.coachingSummary ? (
                         <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Summary: </Text>{reportData.coachingSummary}</Text>
                       ) : null}
-
-                      {/* Description */}
                       {card.coaching_tip ? (
                         <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Tip for Next Session: </Text>{card.coaching_tip}</Text>
                       ) : null}
-
-                      {/* Scenario */}
                       {card.scenario && (
                         <View style={styles.coachExampleContainer}>
                           {card.scenario.instead_of ? (
@@ -636,12 +658,9 @@ export const ReportScreen: React.FC = () => {
                           ) : null}
                         </View>
                       )}
-
-                      {/* Apply in Daily Life */}
                       {card.apply_in_daily_life ? (
                         <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Apply in Daily Life: </Text>{card.apply_in_daily_life}</Text>
                       ) : null}
-
                       <TouchableOpacity
                         style={styles.cardLinkButton}
                         onPress={() => navigation.navigate('Transcript', { recordingId })}
@@ -664,13 +683,23 @@ export const ReportScreen: React.FC = () => {
             />
           </View>
         ) : (
-          reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (reportData.coachingCards as CoachingCard[])[0]?.next_day_goal && (
+          reportData.tomorrowGoal ? (
             <View style={styles.nextDayGoalSection}>
               <DragonCard
                 label="Tomorrow's Goal"
-                text={(reportData.coachingCards as CoachingCard[])[0].next_day_goal ?? ''}
+                text={reportData.tomorrowGoal}
               />
             </View>
+          ) : (
+            reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 &&
+              'next_day_goal' in reportData.coachingCards[0] && (reportData.coachingCards as CoachingCard[])[0]?.next_day_goal && (
+              <View style={styles.nextDayGoalSection}>
+                <DragonCard
+                  label="Tomorrow's Goal"
+                  text={(reportData.coachingCards as CoachingCard[])[0].next_day_goal ?? ''}
+                />
+              </View>
+            )
           )
         )}
 

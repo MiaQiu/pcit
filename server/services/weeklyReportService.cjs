@@ -142,11 +142,14 @@ async function aggregateWeekData(userId, childId, weekStart, weekEnd) {
     }
   }
 
-  // 6. Collect coaching cards from all sessions
+  // 6. Collect coaching cards/sections from all sessions
   const allCoachingCards = [];
   for (const s of sessions) {
     if (s.coachingCards) {
-      const cards = Array.isArray(s.coachingCards) ? s.coachingCards : Object.values(s.coachingCards);
+      // New format: { sections: [...], tomorrowGoal: "..." }, legacy: array of cards
+      const cards = Array.isArray(s.coachingCards)
+        ? s.coachingCards
+        : (Array.isArray(s.coachingCards.sections) ? s.coachingCards.sections : []);
       for (const card of cards) {
         allCoachingCards.push(card);
       }
