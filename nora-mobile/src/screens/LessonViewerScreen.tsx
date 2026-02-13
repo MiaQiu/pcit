@@ -786,7 +786,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     } else {
       // No quiz, lesson complete
       console.log('Lesson complete, no quiz');
-      Alert.alert('Complete!', 'You finished this lesson!');
+      await completeLesson();
       navigation.navigate('MainTabs', { screen: 'Home' });
     }
   };

@@ -9,6 +9,30 @@ const { requireAuth } = require('../middleware/auth.cjs');
 
 const router = express.Router();
 
+// Maps user-selected issues to module keys
+const ISSUE_TO_MODULE = {
+  tantrums: 'EMOTIONS',
+  arguing: 'COOPERATION',
+  'not-listening': 'COOPERATION',
+  new_baby_in_the_house: 'SIBLINGS',
+  Navigating_change: 'RELOCATION',
+  social: 'DEVELOPMENT',
+  frustration_tolerance: 'EMOTIONS',
+};
+
+// Maps WACB survey questions to module keys
+const WACB_TO_MODULE = {
+  q4Angry: 'AGGRESSION',
+  q6Destroy: 'RESPONSIBILITY',
+  q5Scream: 'EMOTIONS',
+  q7ProvokeFights: 'CONFLICT',
+  q1Dawdle: 'PROCRASTINATION',
+  q2MealBehavior: 'MEALS',
+  q3Disobey: 'DEFIANCE',
+  q8Interrupt: 'PATIENCE',
+  q9Attention: 'FOCUS',
+};
+
 /**
  * GET /api/modules
  * Get all modules with per-user progress (lesson count, completed count)
@@ -61,6 +85,64 @@ router.get('/', requireAuth, async (req, res) => {
       lastActivityMap[la.module] = la.lastActivityAt;
     });
 
+    // Check if Foundation module is completed
+    const foundationLessonCount = lessonCountMap['FOUNDATION'] || 0;
+    const foundationCompleted = completedMap['FOUNDATION'] || 0;
+    const isFoundationCompleted = foundationLessonCount > 0 && foundationCompleted >= foundationLessonCount;
+
+    // Get recommended modules based on child issue priorities
+    let recommendedModules = [];
+    try {
+      const child = await prisma.child.findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      if (child) {
+        // Get latest child issue priorities ordered by rank
+        const priorities = await prisma.childIssuePriority.findMany({
+          where: { childId: child.id },
+          orderBy: [{ computedAt: 'desc' }, { priorityRank: 'asc' }],
+        });
+
+        // Get the latest computation batch (all share the same computedAt)
+        const latestComputedAt = priorities.length > 0 ? priorities[0].computedAt : null;
+        const latestPriorities = latestComputedAt
+          ? priorities.filter(p => p.computedAt.getTime() === latestComputedAt.getTime())
+          : [];
+
+        // Map priorities to module keys
+        const seenModules = new Set();
+        for (const priority of latestPriorities) {
+          // Check userIssues mapping
+          if (priority.userIssues) {
+            const issues = priority.userIssues.split(',').map(s => s.trim());
+            for (const issue of issues) {
+              const moduleKey = ISSUE_TO_MODULE[issue];
+              if (moduleKey && !seenModules.has(moduleKey)) {
+                seenModules.add(moduleKey);
+                recommendedModules.push(moduleKey);
+              }
+            }
+          }
+          // Check wacbQuestions mapping
+          if (priority.wacbQuestions) {
+            const questions = priority.wacbQuestions.split(',').map(s => s.trim());
+            for (const q of questions) {
+              const moduleKey = WACB_TO_MODULE[q];
+              if (moduleKey && !seenModules.has(moduleKey)) {
+                seenModules.add(moduleKey);
+                recommendedModules.push(moduleKey);
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch child issue priorities:', err.message);
+      // Non-fatal: continue without recommendations
+    }
+
     // Build response
     const modulesWithProgress = modules.map(mod => ({
       id: mod.id,
@@ -72,7 +154,8 @@ router.get('/', requireAuth, async (req, res) => {
       backgroundColor: mod.backgroundColor,
       lessonCount: lessonCountMap[mod.key] || 0,
       completedLessons: completedMap[mod.key] || 0,
-      lastActivityAt: lastActivityMap[mod.key] || null
+      lastActivityAt: lastActivityMap[mod.key] || null,
+      isLocked: !isFoundationCompleted && mod.key !== 'FOUNDATION'
     }));
 
     // Generate content version hash
@@ -85,7 +168,9 @@ router.get('/', requireAuth, async (req, res) => {
     res.json({
       modules: modulesWithProgress,
       totalModules: modules.length,
-      contentVersion: contentHash
+      contentVersion: contentHash,
+      isFoundationCompleted,
+      recommendedModules
     });
   } catch (error) {
     console.error('Get modules error:', error.message, error.stack);
@@ -113,6 +198,21 @@ router.get('/:key', requireAuth, async (req, res) => {
 
     if (!mod) {
       return res.status(404).json({ error: 'Module not found' });
+    }
+
+    // Check if Foundation is completed (for locking non-Foundation modules)
+    if (moduleKey !== 'FOUNDATION') {
+      const foundationLessonCount = await prisma.lesson.count({ where: { module: 'FOUNDATION' } });
+      const foundationCompleted = await prisma.userLessonProgress.count({
+        where: {
+          userId,
+          status: 'COMPLETED',
+          Lesson: { module: 'FOUNDATION' }
+        }
+      });
+      if (foundationLessonCount > 0 && foundationCompleted < foundationLessonCount) {
+        return res.status(403).json({ error: 'Complete the Foundation module first', isLocked: true });
+      }
     }
 
     // Get lessons for this module

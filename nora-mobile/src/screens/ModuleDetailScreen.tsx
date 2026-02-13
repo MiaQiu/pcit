@@ -12,6 +12,7 @@ import { LessonListItem } from '../components/LessonListItem';
 import { FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService } from '../contexts/AppContext';
+import { useToast } from '../components/ToastManager';
 import type { ModuleDetailResponse } from '@nora/core';
 
 export const ModuleDetailScreen: React.FC = () => {
@@ -19,10 +20,12 @@ export const ModuleDetailScreen: React.FC = () => {
   const route = useRoute<any>();
   const { moduleKey } = route.params;
   const lessonService = useLessonService();
+  const { showToast } = useToast();
 
   const [data, setData] = useState<ModuleDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
 
   useEffect(() => {
     loadModuleDetail();
@@ -44,8 +47,14 @@ export const ModuleDetailScreen: React.FC = () => {
 
       const response = await lessonService.getModuleDetail(moduleKey);
       setData(response);
-    } catch (error) {
+      setIsLocked(false);
+    } catch (error: any) {
       console.error('Failed to load module detail:', error);
+      // Handle locked module (403 from backend)
+      if (error?.status === 403 || error?.statusCode === 403) {
+        setIsLocked(true);
+        showToast('Complete the Foundation module first', 'info');
+      }
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -61,6 +70,35 @@ export const ModuleDetailScreen: React.FC = () => {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.mainPurple} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isLocked) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.textDark} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.lockedContainer}>
+          <Ionicons name="lock-closed" size={48} color="#CCCCCC" />
+          <Text style={styles.lockedTitle}>Module Locked</Text>
+          <Text style={styles.lockedMessage}>
+            Complete the Foundation module first to unlock this module.
+          </Text>
+          <TouchableOpacity
+            style={styles.goToFoundationBtn}
+            onPress={() => {
+              navigation.goBack();
+              setTimeout(() => navigation.push('ModuleDetail', { moduleKey: 'FOUNDATION' }), 100);
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.goToFoundationText}>Go to Foundation</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -180,5 +218,37 @@ const styles = StyleSheet.create({
   },
   lessonsList: {
     paddingHorizontal: 24,
+  },
+  lockedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  lockedTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 22,
+    color: COLORS.textDark,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  lockedMessage: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  goToFoundationBtn: {
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+  },
+  goToFoundationText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: '#FFFFFF',
   },
 });

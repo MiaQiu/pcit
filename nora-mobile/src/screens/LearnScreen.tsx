@@ -7,6 +7,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, ScrollView, Text, StyleSheet, ActivityIndicator, RefreshControl, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { ModuleCard } from '../components/ModuleCard';
 import { SearchBar } from '../components/SearchBar';
 import { FilterChips } from '../components/FilterChips';
@@ -15,12 +16,14 @@ import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService } from '../contexts/AppContext';
 import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { useToast } from '../components/ToastManager';
 import type { ModuleWithProgress } from '@nora/core';
 
 export const LearnScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const lessonService = useLessonService();
   const { isOnline } = useNetworkStatus();
+  const { showToast } = useToast();
   const scrollViewRef = React.useRef<ScrollView>(null);
 
   const [modules, setModules] = useState<ModuleWithProgress[]>([]);
@@ -29,6 +32,8 @@ export const LearnScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('ALL');
+  const [isFoundationCompleted, setIsFoundationCompleted] = useState(false);
+  const [recommendedModules, setRecommendedModules] = useState<string[]>([]);
 
   useEffect(() => {
     loadModules();
@@ -53,6 +58,8 @@ export const LearnScreen: React.FC = () => {
       const response = await lessonService.getModules();
       handleApiSuccess();
       setModules(response.modules);
+      setIsFoundationCompleted(response.isFoundationCompleted);
+      setRecommendedModules(response.recommendedModules || []);
     } catch (err) {
       console.error('Failed to load modules:', err);
       const errorMessage = handleApiError(err);
@@ -91,8 +98,25 @@ export const LearnScreen: React.FC = () => {
       );
     }
 
-    // Sort: in-progress modules first (by most recent activity), then the rest
+    // Sort: Foundation always first, then apply context-dependent sorting
     result = [...result].sort((a, b) => {
+      // Foundation always first
+      if (a.key === 'FOUNDATION') return -1;
+      if (b.key === 'FOUNDATION') return 1;
+
+      // If Foundation is completed, sort recommended modules to top
+      if (isFoundationCompleted && recommendedModules.length > 0) {
+        const aRecommendedIdx = recommendedModules.indexOf(a.key);
+        const bRecommendedIdx = recommendedModules.indexOf(b.key);
+        const aIsRecommended = aRecommendedIdx !== -1;
+        const bIsRecommended = bRecommendedIdx !== -1;
+
+        if (aIsRecommended && !bIsRecommended) return -1;
+        if (!aIsRecommended && bIsRecommended) return 1;
+        if (aIsRecommended && bIsRecommended) return aRecommendedIdx - bRecommendedIdx;
+      }
+
+      // Then in-progress modules (by most recent activity)
       const aInProgress = a.completedLessons > 0 && a.completedLessons < a.lessonCount;
       const bInProgress = b.completedLessons > 0 && b.completedLessons < b.lessonCount;
 
@@ -107,9 +131,14 @@ export const LearnScreen: React.FC = () => {
     });
 
     return result;
-  }, [modules, activeFilter, searchQuery]);
+  }, [modules, activeFilter, searchQuery, isFoundationCompleted, recommendedModules]);
 
   const handleModulePress = (moduleKey: string) => {
+    const mod = modules.find(m => m.key === moduleKey);
+    if (mod?.isLocked) {
+      showToast('Complete the Foundation module first', 'info');
+      return;
+    }
     navigation.push('ModuleDetail', { moduleKey });
   };
 
@@ -173,18 +202,26 @@ export const LearnScreen: React.FC = () => {
 
           {/* Module count */}
           {filteredModules.length > 0 && (
-            <Text style={styles.subheader}>Module Library
-              {/* {filteredModules.length} {filteredModules.length === 1 ? 'module' : 'modules'} — Browse freely (no required order) */}
-            </Text>
+            <Text style={styles.subheader}>Module Library</Text>
           )}
 
           {/* Module Cards */}
-          {filteredModules.map(mod => (
-            <ModuleCard
-              key={mod.key}
-              module={mod}
-              onPress={() => handleModulePress(mod.key)}
-            />
+          {filteredModules.map((mod, index) => (
+            <React.Fragment key={mod.key}>
+              <ModuleCard
+                module={mod}
+                onPress={() => handleModulePress(mod.key)}
+              />
+              {/* Show locked notice after Foundation card */}
+              {mod.key === 'FOUNDATION' && !isFoundationCompleted && filteredModules.length > 1 && (
+                <View style={styles.lockedNotice}>
+                  <Ionicons name="lock-closed" size={14} color="#999999" />
+                  <Text style={styles.lockedNoticeText}>
+                    The other modules are locked. Please complete the Foundation module first.
+                  </Text>
+                </View>
+              )}
+            </React.Fragment>
           ))}
 
           {/* No results */}
@@ -252,5 +289,22 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  lockedNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  lockedNoticeText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#999999',
+    flex: 1,
+    lineHeight: 18,
   },
 });

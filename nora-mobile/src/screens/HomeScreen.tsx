@@ -12,6 +12,7 @@ import { LessonCardProps } from '../components/LessonCard'; // Import type for l
 import { NextActionCard } from '../components/NextActionCard';
 import { StreakWidget } from '../components/StreakWidget';
 import { ProfileCircle } from '../components/ProfileCircle';
+import { ModulePickerModal } from '../components/ModulePickerModal';
 import { DRAGON_PURPLE, FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
@@ -22,6 +23,7 @@ import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
 import { toSingaporeDateString, getTodaySingapore, getYesterdaySingapore, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
 import amplitudeService from '../services/amplitudeService';
+import type { ModuleWithProgress } from '@nora/core';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -51,6 +53,12 @@ export const HomeScreen: React.FC = () => {
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
   const [isExperiencedUser, setIsExperiencedUser] = useState(false);
   const [lastRefreshDate, setLastRefreshDate] = useState<string>(getTodaySingapore());
+
+  // Module picker modal state
+  const [showModulePicker, setShowModulePicker] = useState(false);
+  const [modulePickerModules, setModulePickerModules] = useState<ModuleWithProgress[]>([]);
+  const [modulePickerRecommended, setModulePickerRecommended] = useState<string[]>([]);
+  const [activeModuleKey, setActiveModuleKey] = useState<string | null>(null);
 
   /**
    * Check if user is experienced (has completed a lesson or made a recording)
@@ -104,6 +112,74 @@ export const HomeScreen: React.FC = () => {
     }
   };
 
+  /**
+   * Check if module picker modal should be shown.
+   * Shows when Foundation is completed and either:
+   * A) It's a different day than Foundation completion (first time after)
+   * B) No modules are currently in-progress
+   * Won't show again if dismissed today.
+   */
+  const checkModulePickerPopup = async () => {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const today = getTodaySingapore();
+
+      // Check if already dismissed today
+      const dismissedDate = await AsyncStorage.getItem('module_picker_dismissed_date');
+      if (dismissedDate === today) return;
+
+      // Fetch modules data
+      const modulesResponse = await lessonService.getModules();
+      if (!modulesResponse.isFoundationCompleted) return;
+
+      // Store Foundation completion date (first time we see it completed)
+      const storedCompletionDate = await AsyncStorage.getItem('foundation_completed_date');
+      if (!storedCompletionDate) {
+        await AsyncStorage.setItem('foundation_completed_date', today);
+        // Don't show popup on the same day Foundation was completed
+        return;
+      }
+
+      // Check if it's a different day than Foundation completion
+      const isDifferentDay = storedCompletionDate !== today;
+
+      // Check if any non-Foundation modules are in-progress
+      const hasInProgressModule = modulesResponse.modules.some(
+        m => m.key !== 'FOUNDATION' && m.completedLessons > 0 && m.completedLessons < m.lessonCount
+      );
+
+      // Show popup if: different day from completion OR no in-progress modules
+      if (isDifferentDay || !hasInProgressModule) {
+        setModulePickerModules(modulesResponse.modules);
+        setModulePickerRecommended(modulesResponse.recommendedModules || []);
+        setShowModulePicker(true);
+      }
+    } catch (error) {
+      console.log('Failed to check module picker popup:', error);
+    }
+  };
+
+  const handleModulePickerDismiss = async () => {
+    setShowModulePicker(false);
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      await AsyncStorage.setItem('module_picker_dismissed_date', getTodaySingapore());
+    } catch (error) {
+      console.log('Failed to store module picker dismiss date:', error);
+    }
+  };
+
+  const handleModulePickerSelect = async (moduleKey: string) => {
+    setShowModulePicker(false);
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      await AsyncStorage.setItem('module_picker_dismissed_date', getTodaySingapore());
+    } catch (error) {
+      console.log('Failed to store module picker dismiss date:', error);
+    }
+    navigation.push('ModuleDetail', { moduleKey });
+  };
+
   useEffect(() => {
     // Clean up completed lessons from cache on app open
     LessonCache.cleanupCompletedLessons();
@@ -112,6 +188,7 @@ export const HomeScreen: React.FC = () => {
     loadLessons();
     loadUserProfile();
     loadDashboardData();
+    checkModulePickerPopup();
   }, []);
 
   // Reload state when screen comes into focus (after completing lesson/recording/reading report)
@@ -154,6 +231,7 @@ export const HomeScreen: React.FC = () => {
           setLastRefreshDate(today);
           loadLessons();
           loadDashboardData();
+          checkModulePickerPopup();
         }
       }
     });
@@ -189,12 +267,25 @@ export const HomeScreen: React.FC = () => {
    */
   const loadDashboardData = async () => {
     try {
-      // Fetch dashboard data and lessons in parallel
-      const [dashboardData, lessonsResponse] = await Promise.all([
+      // Fetch dashboard data, lessons, and modules in parallel
+      const [dashboardData, lessonsResponse, modulesResponse] = await Promise.all([
         recordingService.getDashboard(),
-        lessonService.getLessons()
+        lessonService.getLessons(),
+        lessonService.getModules().catch(() => null)
       ]);
       handleApiSuccess(); // Mark server as up
+
+      // Determine active module for daily lesson selection
+      if (modulesResponse) {
+        const inProgressModules = modulesResponse.modules
+          .filter(m => m.completedLessons > 0 && m.completedLessons < m.lessonCount)
+          .sort((a, b) => {
+            const aTime = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+            const bTime = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+            return bTime - aTime;
+          });
+        setActiveModuleKey(inProgressModules.length > 0 ? inProgressModules[0].key : null);
+      }
 
       const { todayRecordings, thisWeekRecordings, latestWithReport } = dashboardData;
       const { lessons } = lessonsResponse;
@@ -566,13 +657,30 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate('MainTabs', { screen: 'Record' });
   };
 
+  /**
+   * Find the next lesson to show as "today's lesson".
+   * Prefers the most recently active module's next uncompleted lesson.
+   */
+  const findTodayLesson = () => {
+    const uncompletedLessons = lessons.filter(l => l.progress?.status !== 'COMPLETED');
+    if (uncompletedLessons.length === 0) return lessons[0] || null;
+
+    // If there's an active module, prefer its lessons
+    if (activeModuleKey) {
+      const activeModuleLesson = uncompletedLessons.find(l => l.phaseName === activeModuleKey);
+      if (activeModuleLesson) return activeModuleLesson;
+    }
+
+    // Fallback to first uncompleted lesson
+    return uncompletedLessons[0];
+  };
+
   const handleNextAction = () => {
     const cardType = getCardType();
 
     switch (cardType) {
       case 'lesson':
-        // Find the first unlocked lesson that is not completed in the user's current phase
-        const todayLesson = lessons.find(l => l.progress?.status !== 'COMPLETED');
+        const todayLesson = findTodayLesson();
         if (todayLesson) {
           handleLessonPress(todayLesson.id);
         }
@@ -638,9 +746,7 @@ export const HomeScreen: React.FC = () => {
 
         {/* Show LessonCard for new users with no recordings/lessons, NextActionCard for experienced users */}
         {lessons.length > 0 && (() => {
-          // Find the first lesson that is not completed
-          const todayLesson = lessons.find(l => l.progress?.status !== 'COMPLETED');
-          const displayLesson = todayLesson || lessons[0];
+          const displayLesson = findTodayLesson() || lessons[0];
 
           // If user is not experienced (new user), show simple LessonCard
           if (!isExperiencedUser) {
@@ -691,6 +797,15 @@ export const HomeScreen: React.FC = () => {
           );
         })()}
       </ScrollView>
+
+      {/* Module Picker Modal - shows after Foundation completion */}
+      <ModulePickerModal
+        visible={showModulePicker}
+        onClose={handleModulePickerDismiss}
+        onSelectModule={handleModulePickerSelect}
+        modules={modulePickerModules}
+        recommendedModules={modulePickerRecommended}
+      />
     </SafeAreaView>
   );
 };

@@ -222,12 +222,15 @@ export interface ModuleWithProgress extends Module {
   lessonCount: number;
   completedLessons: number;
   lastActivityAt: string | null;
+  isLocked: boolean;
 }
 
 export interface ModuleListResponse {
   modules: ModuleWithProgress[];
   totalModules: number;
   contentVersion: string;
+  isFoundationCompleted: boolean;
+  recommendedModules: string[];
 }
 
 export interface ModuleDetailResponse {
