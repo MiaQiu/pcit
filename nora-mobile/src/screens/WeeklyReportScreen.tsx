@@ -120,6 +120,12 @@ export const WeeklyReportScreen: React.FC = () => {
     }
   };
 
+  const handleBack = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   const handleContinue = async () => {
     if (currentPage < TOTAL_PAGES) {
       setCurrentPage(currentPage + 1);
@@ -627,16 +633,27 @@ export const WeeklyReportScreen: React.FC = () => {
         {/* Page Content */}
         {renderPageContent()}
 
-        {/* Bottom Button */}
-        <TouchableOpacity
-          style={styles.bottomButton}
-          onPress={handleContinue}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.bottomButtonText}>
-            {currentPage === TOTAL_PAGES ? 'Submit' : 'Continue →'}
-          </Text>
-        </TouchableOpacity>
+        {/* Bottom Buttons */}
+        <View style={styles.bottomButtons}>
+          {currentPage > 1 && (
+            <TouchableOpacity
+              style={styles.bottomButton}
+              onPress={handleBack}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.bottomButtonText}>← Back</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.bottomButton}
+            onPress={handleContinue}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.bottomButtonText}>
+              {currentPage === TOTAL_PAGES ? 'Submit' : 'Continue →'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -1259,12 +1276,17 @@ const styles = StyleSheet.create({
     color: COLORS.mainPurple,
   },
 
-  // ─── Bottom Button ─────────────────────────────────────────────────
-  bottomButton: {
+  // ─── Bottom Buttons ────────────────────────────────────────────────
+  bottomButtons: {
     position: 'absolute',
     bottom: 1,
     left: 20,
     right: 20,
+    flexDirection: 'row',
+    gap: 12,
+  },
+  bottomButton: {
+    flex: 1,
     height: 56,
     backgroundColor: COLORS.mainPurple,
     borderRadius: 28,
