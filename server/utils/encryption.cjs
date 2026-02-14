@@ -45,7 +45,13 @@ function encryptSensitiveData(data) {
  */
 function decryptSensitiveData(data) {
   if (!data) return null;
-  return decrypt(data);
+  try {
+    return decrypt(data);
+  } catch (e) {
+    // Field may be stored in plaintext or encrypted with a different key
+    console.warn('Decryption failed, returning raw value');
+    return data;
+  }
 }
 
 /**
