@@ -275,7 +275,7 @@ function formatUtterancesForPsychologist(utterances) {
  * @returns {Object} Template variables object
  */
 function buildProfilingVariables(childInfo, tagCounts, utterances) {
-  const { name, ageMonths, gender, clinicalPriority } = childInfo;
+  const { name, ageMonths, gender, clinicalPriority, isFirstSession } = childInfo;
   const transcript = formatUtterancesForPsychologist(utterances);
 
   const formatLevel = (level) => level ? level.replace(/_/g, ' ').toLowerCase() : 'none';
@@ -333,7 +333,10 @@ function buildProfilingVariables(childInfo, tagCounts, utterances) {
     PRIMARY_DETAILS: primaryRow ? formatRowDetails(primaryRow) : 'none',
     OTHER_ISSUES: otherIssuesText,
     SESSION_METRICS: sessionMetrics,
-    TRANSCRIPT: transcript
+    TRANSCRIPT: transcript,
+    FIRST_SESSION_NOTE: isFirstSession
+      ? 'please note, This is the first session the parent has with the parent app Nora. for first session, it is to hook user in, setting expectations that we are going to be very helpful to them. For us, the primary goal of this session is to get user excited about emotional massage and the discipline coaching (which will be available once their emotional bank account is ready) and committed to making daily massage session as their priority.'
+      : ''
   };
 }
 
@@ -1102,11 +1105,15 @@ Do not include markdown or whitespace (minified JSON).
   try {
     const utterancesForProfiling = await getUtterances(sessionId);
     const childSpeaker = getChildSpeaker(roleIdentificationJson);
+    const priorCompletedCount = await prisma.session.count({
+      where: { userId, analysisStatus: 'COMPLETED' }
+    });
     const childInfoForProfiling = {
       name: childName,
       ageMonths: childAgeMonths,
       gender: childGender,
-      clinicalPriority
+      clinicalPriority,
+      isFirstSession: priorCompletedCount === 0
     };
 
     const [profilingSettled, coachingSettled] = await Promise.allSettled([

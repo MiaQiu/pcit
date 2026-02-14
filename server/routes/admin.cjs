@@ -1,7 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
 const prisma = require('../services/db.cjs');
+const { generateAccessToken } = require('../utils/jwt.cjs');
 const { requireAdminAuth } = require('../middleware/adminAuth.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
 
@@ -45,11 +45,7 @@ router.post('/auth/login', (req, res) => {
     }
 
     // Generate JWT with admin role
-    const token = jwt.sign(
-      { role: 'admin' },
-      process.env.JWT_ACCESS_SECRET,
-      { expiresIn: '24h' }
-    );
+    const token = generateAccessToken({ role: 'admin' });
 
     res.json({ token });
   } catch (error) {

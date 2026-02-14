@@ -46,9 +46,15 @@ const corsOptions = {
     const allowedOrigins = [
       'https://hinora.co',
       'https://www.hinora.co',
+      'https://admin.hinora.co',
       'http://localhost:5173',
       'http://localhost:3000'
     ];
+
+    // Also allow the server's own origin (for reset-password page served from App Runner)
+    if (process.env.APP_RUNNER_URL) {
+      allowedOrigins.push(process.env.APP_RUNNER_URL);
+    }
 
     // In production, check against allowed origins
     if (process.env.NODE_ENV === 'production') {
