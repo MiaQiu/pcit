@@ -7,14 +7,22 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { FONTS, COLORS } from '../constants/assets';
 
-const STEPS = [
-  'Place your phone nearby where it can hear you both clearly.',
-  'Press "Start Recording" below.',
-  'Play naturally with your child for 5 minutes.',
-  'We\'ll automatically stop at 5 minutes and give you feedback!',
-];
+interface HowToRecordCardProps {
+  sessionMode?: 'specialTime' | 'discipline';
+}
 
-export const HowToRecordCard: React.FC = () => {
+const getSteps = (sessionMode: 'specialTime' | 'discipline') => {
+  const minutes = sessionMode === 'discipline' ? 10 : 5;
+  return [
+    'Place your phone nearby where it can hear you both clearly.',
+    'Press "Start Recording" below.',
+    `Play naturally with your child for ${minutes} minutes.`,
+    `We'll automatically stop at ${minutes} minutes and give you feedback!`,
+  ];
+};
+
+export const HowToRecordCard: React.FC<HowToRecordCardProps> = ({ sessionMode = 'specialTime' }) => {
+  const STEPS = getSteps(sessionMode);
   return (
     <View style={styles.container}>
       <Text style={styles.title}>How to record</Text>

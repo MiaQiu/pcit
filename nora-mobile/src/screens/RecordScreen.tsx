@@ -556,7 +556,7 @@ export const RecordScreen: React.FC = () => {
     await stopRecording();
   };
 
-  const canStartSession = permissionGranted && isOnline && !isDisciplineLocked;
+  const canStartSession = permissionGranted && isOnline && !(sessionMode === 'discipline' && isDisciplineLocked);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right', 'bottom']}>
@@ -593,7 +593,7 @@ export const RecordScreen: React.FC = () => {
 
             {/* How to Record Card */}
             <View style={styles.howToCardContainer}>
-              <HowToRecordCard />
+              <HowToRecordCard sessionMode={sessionMode} />
             </View>
           </>
         )}
