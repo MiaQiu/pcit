@@ -924,10 +924,10 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
                   key={option.id}
                   label={option.optionLabel}
                   text={option.optionText}
-                  isSelected={selectedOption === option.id}
+                  isSelected={selectedOption === option.optionLabel}
                   isSubmitted={isQuizSubmitted}
-                  isCorrect={option.id === lesson.quiz!.correctAnswer}
-                  onPress={() => !isQuizSubmitted && setSelectedOption(option.id)}
+                  isCorrect={option.optionLabel === lesson.quiz!.correctAnswer}
+                  onPress={() => !isQuizSubmitted && setSelectedOption(option.optionLabel)}
                 />
               ))}
             </View>

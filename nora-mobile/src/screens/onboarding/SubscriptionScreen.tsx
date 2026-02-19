@@ -269,7 +269,7 @@ export const SubscriptionScreen: React.FC = () => {
 
         {/* Title */}
         <Text style={styles.title}>
-          Unlock {data.childName ? `${data.childName}'s Potential with Nora` : 'Unlock Potential with Nora'}
+          Unlock {data.childName ? `${data.childName}'s Potential with Nora` : 'Potential with Nora'}
         </Text>
         <Text style={styles.subtitle}>
           {/* First 30 days free, then ${selectedPlan === 'annual' ? '138.96' : '11.58'}/
