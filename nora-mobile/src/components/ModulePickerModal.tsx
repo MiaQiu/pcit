@@ -56,7 +56,7 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
           <Text style={styles.celebrationEmoji}>🎉</Text>
           <Text style={styles.title}>You've completed the Foundation!</Text>
           <Text style={styles.subtitle}>
-            Choose your next module to continue learning.
+            Pick a module to set as your daily lesson.
           </Text>
 
           <ScrollView
@@ -98,7 +98,7 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
 
           {/* Skip button */}
           <TouchableOpacity style={styles.skipButton} onPress={onClose}>
-            <Text style={styles.skipText}>Skip for now</Text>
+            <Text style={styles.skipText}>I'll decide later</Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -132,6 +132,15 @@ export const HomeScreen: React.FC = () => {
       const modulesResponse = await lessonService.getModules();
       if (!modulesResponse.isFoundationCompleted) return;
 
+      // If user already selected a module and it's not yet completed, respect their choice
+      const selectedModule = await AsyncStorage.getItem('module_picker_selected_module');
+      if (selectedModule) {
+        const mod = modulesResponse.modules.find(m => m.key === selectedModule);
+        if (mod && mod.completedLessons < mod.lessonCount) return;
+        // Module was completed — clear so picker can suggest the next one
+        await AsyncStorage.removeItem('module_picker_selected_module');
+      }
+
       // Store Foundation completion date (first time we see it completed)
       const storedCompletionDate = await AsyncStorage.getItem('foundation_completed_date');
       if (!storedCompletionDate) {
@@ -174,6 +183,7 @@ export const HomeScreen: React.FC = () => {
     try {
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
       await AsyncStorage.setItem('module_picker_dismissed_date', getTodaySingapore());
+      await AsyncStorage.setItem('module_picker_selected_module', moduleKey);
     } catch (error) {
       console.log('Failed to store module picker dismiss date:', error);
     }

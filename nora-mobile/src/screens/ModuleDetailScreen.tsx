@@ -26,9 +26,11 @@ export const ModuleDetailScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+  const [isCurrentModule, setIsCurrentModule] = useState(false);
 
   useEffect(() => {
     loadModuleDetail();
+    checkIfCurrentModule();
   }, [moduleKey]);
 
   // Refresh when coming back from a lesson
@@ -58,6 +60,27 @@ export const ModuleDetailScreen: React.FC = () => {
     } finally {
       setLoading(false);
       setIsRefreshing(false);
+    }
+  };
+
+  const checkIfCurrentModule = async () => {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const selected = await AsyncStorage.getItem('module_picker_selected_module');
+      setIsCurrentModule(selected === moduleKey);
+    } catch (error) {
+      console.log('Failed to check current module:', error);
+    }
+  };
+
+  const handleSetAsCurrentModule = async () => {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      await AsyncStorage.setItem('module_picker_selected_module', moduleKey);
+      setIsCurrentModule(true);
+      showToast('Set as your daily lesson', 'success');
+    } catch (error) {
+      console.log('Failed to set current module:', error);
     }
   };
 
@@ -140,11 +163,26 @@ export const ModuleDetailScreen: React.FC = () => {
           <Text style={styles.progressSummary}>
             {completedCount}/{lessons.length} lessons completed
           </Text>
+
+          {/* Start module button — hidden for Foundation and fully-completed modules */}
+          {mod.key !== 'FOUNDATION' && completedCount < lessons.length && (
+            <TouchableOpacity
+              style={isCurrentModule ? styles.currentModuleBtn : styles.startModuleBtn}
+              onPress={handleSetAsCurrentModule}
+              activeOpacity={0.7}
+              disabled={isCurrentModule}
+            >
+              {isCurrentModule && <Ionicons name="checkmark" size={16} color={COLORS.mainPurple} />}
+              <Text style={isCurrentModule ? styles.currentModuleBtnText : styles.startModuleBtnText}>
+                {isCurrentModule ? 'Current module' : 'Set as daily lesson'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Lessons list */}
         <View style={styles.lessonsList}>
-          {lessons.map((lesson, index) => (
+          {lessons.map((lesson) => (
             <LessonListItem
               key={lesson.id}
               id={lesson.id}
@@ -218,6 +256,39 @@ const styles = StyleSheet.create({
   },
   lessonsList: {
     paddingHorizontal: 24,
+  },
+  startModuleBtn: {
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    alignSelf: 'flex-start',
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  startModuleBtnText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: '#FFFFFF',
+  },
+  currentModuleBtn: {
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    alignSelf: 'flex-start',
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: COLORS.mainPurple,
+  },
+  currentModuleBtnText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: COLORS.mainPurple,
   },
   lockedContainer: {
     flex: 1,

@@ -34,6 +34,7 @@ export const LearnScreen: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [isFoundationCompleted, setIsFoundationCompleted] = useState(false);
   const [recommendedModules, setRecommendedModules] = useState<string[]>([]);
+  const [currentModuleKey, setCurrentModuleKey] = useState<string | null>(null);
 
   useEffect(() => {
     loadModules();
@@ -43,11 +44,22 @@ export const LearnScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+      loadCurrentModuleKey();
       if (modules.length > 0) {
         loadModules(false);
       }
     }, [modules.length])
   );
+
+  const loadCurrentModuleKey = async () => {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const key = await AsyncStorage.getItem('module_picker_selected_module');
+      setCurrentModuleKey(key);
+    } catch (error) {
+      console.log('Failed to load current module key:', error);
+    }
+  };
 
   const loadModules = async (showLoadingSpinner = true) => {
     try {
@@ -104,7 +116,13 @@ export const LearnScreen: React.FC = () => {
       if (a.key === 'FOUNDATION') return -1;
       if (b.key === 'FOUNDATION') return 1;
 
-      // If Foundation is completed, sort recommended modules to top
+      // Current module (user's active selection) second
+      if (currentModuleKey) {
+        if (a.key === currentModuleKey) return -1;
+        if (b.key === currentModuleKey) return 1;
+      }
+
+      // If Foundation is completed, sort recommended modules next
       if (isFoundationCompleted && recommendedModules.length > 0) {
         const aRecommendedIdx = recommendedModules.indexOf(a.key);
         const bRecommendedIdx = recommendedModules.indexOf(b.key);
@@ -131,7 +149,7 @@ export const LearnScreen: React.FC = () => {
     });
 
     return result;
-  }, [modules, activeFilter, searchQuery, isFoundationCompleted, recommendedModules]);
+  }, [modules, activeFilter, searchQuery, isFoundationCompleted, recommendedModules, currentModuleKey]);
 
   const handleModulePress = (moduleKey: string) => {
     const mod = modules.find(m => m.key === moduleKey);
@@ -205,24 +223,48 @@ export const LearnScreen: React.FC = () => {
             <Text style={styles.subheader}>Module Library</Text>
           )}
 
-          {/* Module Cards */}
-          {filteredModules.map((mod, index) => (
-            <React.Fragment key={mod.key}>
-              <ModuleCard
-                module={mod}
-                onPress={() => handleModulePress(mod.key)}
-              />
-              {/* Show locked notice after Foundation card */}
-              {mod.key === 'FOUNDATION' && !isFoundationCompleted && filteredModules.length > 1 && (
-                <View style={styles.lockedNotice}>
-                  <Ionicons name="lock-closed" size={14} color="#999999" />
-                  <Text style={styles.lockedNoticeText}>
-                    The other modules are locked. Please complete the Foundation module first.
-                  </Text>
-                </View>
-              )}
-            </React.Fragment>
-          ))}
+          {/* Active Module Cards */}
+          {filteredModules
+            .filter(m => !(m.lessonCount > 0 && m.completedLessons >= m.lessonCount))
+            .map((mod) => (
+              <React.Fragment key={mod.key}>
+                <ModuleCard
+                  module={mod}
+                  onPress={() => handleModulePress(mod.key)}
+                  isCurrentModule={mod.key === currentModuleKey}
+                />
+                {/* Show locked notice after Foundation card */}
+                {mod.key === 'FOUNDATION' && !isFoundationCompleted && filteredModules.length > 1 && (
+                  <View style={styles.lockedNotice}>
+                    <Ionicons name="lock-closed" size={14} color="#999999" />
+                    <Text style={styles.lockedNoticeText}>
+                      The other modules are locked. Please complete the Foundation module first.
+                    </Text>
+                  </View>
+                )}
+              </React.Fragment>
+            ))
+          }
+
+          {/* Completed Modules */}
+          {(() => {
+            const completedModules = filteredModules.filter(
+              m => m.lessonCount > 0 && m.completedLessons >= m.lessonCount
+            );
+            if (completedModules.length === 0) return null;
+            return (
+              <>
+                <Text style={[styles.subheader, styles.completedSubheader]}>Completed modules</Text>
+                {completedModules.map((mod) => (
+                  <ModuleCard
+                    key={mod.key}
+                    module={mod}
+                    onPress={() => handleModulePress(mod.key)}
+                  />
+                ))}
+              </>
+            );
+          })()}
 
           {/* No results */}
           {filteredModules.length === 0 && modules.length > 0 && (
@@ -270,6 +312,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: COLORS.textDark,
     marginBottom: 12,
+  },
+  completedSubheader: {
+    marginTop: 8,
+    color: '#999999',
   },
   emptyState: {
     justifyContent: 'center',

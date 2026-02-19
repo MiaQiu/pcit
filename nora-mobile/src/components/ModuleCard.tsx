@@ -12,9 +12,10 @@ import type { ModuleWithProgress } from '@nora/core';
 interface ModuleCardProps {
   module: ModuleWithProgress;
   onPress: () => void;
+  isCurrentModule?: boolean;
 }
 
-export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onPress }) => {
+export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onPress, isCurrentModule }) => {
   const progress = module.lessonCount > 0
     ? module.completedLessons / module.lessonCount
     : 0;
@@ -32,6 +33,11 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onPress }) => {
         <Text style={[styles.lessonCount, isLocked && styles.textLocked]}>
           {module.lessonCount} {module.lessonCount === 1 ? 'lesson' : 'lessons'}
         </Text>
+        {isCurrentModule && (
+          <View style={styles.currentBadge}>
+            <Text style={styles.currentBadgeText}>Current</Text>
+          </View>
+        )}
         {isLocked && (
           <Ionicons name="lock-closed" size={16} color="#BBBBBB" />
         )}
@@ -121,5 +127,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.mainPurple,
     minWidth: 30,
+  },
+  currentBadge: {
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  currentBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 11,
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
 });
