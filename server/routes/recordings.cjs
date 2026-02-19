@@ -749,6 +749,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
         ? session.competencyAnalysis.example : null,
       feedback: session.competencyAnalysis?.feedback || null,
       childReaction: session.competencyAnalysis?.childReaction || null,
+      activity: session.competencyAnalysis?.activity || null,
       tips,
       reminder,
       tomorrowGoal,

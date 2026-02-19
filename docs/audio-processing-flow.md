@@ -193,20 +193,15 @@ If divergence is detected, a `_diarizationNote` is attached to the stored JSON:
 
 ### Process
 
-1. Claude analyzes each speaker's utterances to classify as `ADULT` or `CHILD`
+1. AI analyzes each speaker's utterances to classify as `ADULT` or `CHILD`
 
 2. **Classification Indicators:**
    - **Child:** Requests, emotional expressions, play vocabulary, approval-seeking
    - **Adult:** Commands, praise, teaching questions, behavior management
 
-3. **API Call:**
+3. **API Call:** Via `callAI()` (routes to Gemini Flash or Claude Sonnet based on `AI_PROVIDER`):
    ```javascript
-   POST https://api.anthropic.com/v1/messages
-   {
-     model: 'claude-sonnet-4-5-20250929',
-     max_tokens: 2048,
-     temperature: 0.3
-   }
+   callAI(roleIdentificationPrompt, { maxTokens: 2048, temperature: 0.3 })
    ```
 
 4. **Response Format:**
@@ -237,7 +232,7 @@ If divergence is detected, a `_diarizationNote` is attached to the stored JSON:
 
 ### DPICS Coding System
 
-Claude codes parent/adult utterances using the DPICS (Dyadic Parent-Child Interaction Coding System):
+AI codes parent/adult utterances using the DPICS (Dyadic Parent-Child Interaction Coding System):
 
 | Code | Name | Category | Example |
 |------|------|----------|---------|
@@ -253,14 +248,14 @@ Claude codes parent/adult utterances using the DPICS (Dyadic Parent-Child Intera
 | AK | Acknowledgment | Neutral | Brief responses |
 
 ### API Call
+Via `callAI()` (routes to Gemini Flash or Claude Sonnet based on `AI_PROVIDER`):
 ```javascript
-POST https://api.anthropic.com/v1/messages
-{
-  model: 'claude-sonnet-4-5-20250929',
-  max_tokens: 8192,
+callAI(userPrompt, {
+  maxTokens: 8192,
   temperature: 0,  // Deterministic coding
-  system: dpicsSystemPrompt
-}
+  systemPrompt: dpicsSystemPrompt,
+  responseType: 'array'
+})
 ```
 
 ### Response Format
@@ -335,7 +330,7 @@ const clinicalPriority = {
 };
 ```
 
-### Phase 5a: Developmental Profiling (Claude)
+### Phase 5a: Developmental Profiling
 
 **Function:** `generateDevelopmentalProfiling()`
 
@@ -343,14 +338,9 @@ const clinicalPriority = {
 
 Produces developmental observations across 5 clinical domains using the Milestone Library framework.
 
-**API Call:**
+**API Call:** Via `callAI()` (routes to Gemini Flash or Claude Sonnet based on `AI_PROVIDER`):
 ```javascript
-POST https://api.anthropic.com/v1/messages
-{
-  model: 'claude-sonnet-4-5-20250929',
-  max_tokens: 8192,
-  temperature: 0.5
-}
+callAI(prompt, { maxTokens: 8192, temperature: 0.5 })
 ```
 
 **Output JSON:**
@@ -390,17 +380,17 @@ POST https://api.anthropic.com/v1/messages
 | Emotional | Halliday's Personal Function / Emotional Regulation |
 | Connection | Biringen's Emotional Availability Scales |
 
-### Phase 5b: CDI Coaching Report (Gemini → Claude)
+### Phase 5b: CDI Coaching Report (Gemini Pro → callAI format)
 
 **Function:** `generateCdiCoaching()`
 
 **Prompt Files:**
-- `server/prompts/cdiCoaching.txt` — Gemini generates free-form coaching report
-- `server/prompts/cdiCoachingFormat.txt` — Claude formats into sections
+- `server/prompts/cdiCoaching.txt` — Gemini Pro generates free-form coaching report
+- `server/prompts/cdiCoachingFormat.txt` — `callAI()` formats into sections
 
 **Two-step process:**
 
-1. **Gemini** generates a free-form coaching report (~200 words):
+1. **Gemini Pro** (streaming, unchanged) generates a free-form coaching report (~200 words):
    ```javascript
    callGeminiStreaming([userMessage], {
      temperature: 0.5,
@@ -409,17 +399,12 @@ POST https://api.anthropic.com/v1/messages
    })
    ```
 
-2. **Claude** selects sections from the report, adds formatting (`**bold**`, `•` bullets), and extracts tomorrow's goal:
+2. **callAI()** selects sections from the report, adds formatting (`**bold**`, `•` bullets), and extracts tomorrow's goal:
    ```javascript
-   POST https://api.anthropic.com/v1/messages
-   {
-     model: 'claude-sonnet-4-5-20250929',
-     max_tokens: 2048,
-     temperature: 0
-   }
+   callAI(formatPrompt, { maxTokens: 2048, temperature: 0 })
    ```
 
-**Claude formatting output:**
+**Formatting output:**
 ```javascript
 {
   "sections": [
@@ -501,7 +486,7 @@ Old mobile app transforms:
 
 ### Configuration
 
-Requires both `ANTHROPIC_API_KEY` and `GEMINI_API_KEY`. Each call degrades gracefully if its key is missing.
+Requires `GEMINI_API_KEY` (always needed for coaching and milestones). When `AI_PROVIDER=claude-sonnet`, also requires `ANTHROPIC_API_KEY`. Each call degrades gracefully if its key is missing.
 
 ---
 
@@ -934,7 +919,7 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 | `server/routes/auth.cjs` | Auth endpoints; `/me` returns `disciplineUnlocked` |
 | `nora-mobile/src/contexts/UploadProcessingContext.tsx` | Manages upload state; passes `mode` to server |
 | `server/services/transcriptionService.cjs` | ElevenLabs transcription |
-| `server/services/pcitAnalysisService.cjs` | Claude & Gemini analysis, DPICS coding, Child record creation |
+| `server/services/pcitAnalysisService.cjs` | AI analysis (`callAI()` routes to Gemini Flash/Claude Sonnet via `AI_PROVIDER`), DPICS coding, Child record creation |
 | `server/services/milestoneDetectionService.cjs` | Gemini Flash milestone detection, EMERGING → ACHIEVED logic |
 | `server/services/processingService.cjs` | Orchestration, retry logic, phase progression |
 | `server/utils/utteranceUtils.cjs` | Utterance database operations |
@@ -955,27 +940,40 @@ Checks if user should advance from CONNECT phase to DISCIPLINE phase after compl
 
 | Setting | Value | Notes |
 |---------|-------|-------|
+| **Transcription** | | |
 | Transcription Mode | `TRANSCRIPTION_MODE` env var | `v1`, `v2` (default), or `two-pass` |
 | ElevenLabs scribe_v1 | Better diarization | Used in `v1` and `two-pass` modes |
 | ElevenLabs scribe_v2 | Better text quality | Used in `v2` and `two-pass` modes |
 | Diarization Threshold | 0.1 | Speaker separation sensitivity |
 | Divergence Threshold | 20% reassigned | Flags diarization mismatch in two-pass |
-| Claude Model | `claude-sonnet-4-5-20250929` | Role ID, PCIT coding, dev profiling, coaching format, CDI/PDI feedback |
-| Gemini Model (Coaching) | `gemini-3-pro-preview` | CDI coaching report (Phase 5b, streaming) |
-| Gemini Model (Milestones) | `gemini-2.0-flash` | Milestone detection (Phase 5c, non-streaming) |
+| **AI Provider** | | |
+| `AI_PROVIDER` env var | `gemini-flash` (default) or `claude-sonnet` | Controls 6 analysis calls via `callAI()` |
+| Gemini Flash Model | `gemini-2.0-flash` | Used when `AI_PROVIDER=gemini-flash` (default) |
+| Claude Sonnet Model | `claude-sonnet-4-5-20250929` | Used when `AI_PROVIDER=claude-sonnet` |
+| **Fixed Models (not affected by AI_PROVIDER)** | | |
+| Gemini Pro (Coaching) | `gemini-3-pro-preview` | CDI coaching report (Phase 5b, streaming) |
+| Gemini Flash (Milestones) | `gemini-2.0-flash` | Milestone detection (Phase 5c, non-streaming) |
+| **Endpoints** | | |
 | Gemini Endpoint (Coaching) | Streaming (SSE) | Prevents timeout during thinking |
 | Gemini Endpoint (Milestones) | Non-streaming `generateContent` | Fast model, no streaming needed |
-| Gemini Timeout | 300,000ms (5 min) | Extended for reasoning model |
-| Claude Temp (Dev Profiling) | 0.5 | Balanced creativity/consistency |
-| Claude Temp (Coaching Format) | 0 | Deterministic formatting |
-| Gemini Temp (Coaching) | 0.5 | Balanced creativity/consistency |
-| Gemini Temp (Milestones) | 0.2 | Low temperature for consistent detection |
-| Max Tokens (Dev Profiling) | 8192 | Detailed analysis (Claude) |
-| Max Tokens (Coaching) | 8192 | Free-form report (Gemini) |
-| Max Tokens (Coaching Format) | 2048 | Section formatting (Claude) |
-| Max Tokens (Milestones) | 4096 | Structured JSON response |
-| Claude Temp (Coding) | 0 | Deterministic PCIT coding |
-| Claude Temp (Feedback) | 0.7 | Creative feedback |
+| Gemini Endpoint (callAI) | Non-streaming `generateContent` | Used for 6 analysis calls |
+| **Temperature / Token Settings** | | |
+| Gemini Timeout (Coaching) | 300,000ms (5 min) | Extended for reasoning model |
+| Temp (Role ID) | 0.3 | Via `callAI()` |
+| Temp (PCIT Coding) | 0 | Deterministic coding, via `callAI()` |
+| Temp (Dev Profiling) | 0.5 | Balanced creativity/consistency, via `callAI()` |
+| Temp (Coaching Format) | 0 | Deterministic formatting, via `callAI()` |
+| Temp (Combined Feedback) | 0.7 | Creative feedback, via `callAI()` |
+| Temp (Review Feedback) | 0.5 | Via `callAI()` |
+| Temp (PDI Two Choices) | 0.7 | Via `callAI()` |
+| Temp (Gemini Pro Coaching) | 0.5 | Fixed, not via `callAI()` |
+| Temp (Milestones) | 0.2 | Fixed, not via `callAI()` |
+| Max Tokens (Role ID) | 2048 | Via `callAI()` |
+| Max Tokens (PCIT Coding) | 8192 | Via `callAI()` |
+| Max Tokens (Dev Profiling) | 8192 | Via `callAI()` |
+| Max Tokens (Coaching Format) | 2048 | Via `callAI()` |
+| Max Tokens (Gemini Pro Coaching) | 8192 | Fixed |
+| Max Tokens (Milestones) | 4096 | Fixed |
 
 ---
 

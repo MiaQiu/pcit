@@ -11,7 +11,7 @@ const { generateCDIFeedback } = require('../server/services/pcitAnalysisService.
 const { getUtterances, updateRevisedFeedback } = require('../server/utils/utteranceUtils.cjs');
 const { decryptSensitiveData } = require('../server/utils/encryption.cjs');
 
-async function rerunCDIFeedback(sessionId) {
+async function rerunCDIFeedback(sessionId, outputSessionId = null) {
   console.log(`\n${'='.repeat(60)}`);
   console.log(`Re-running CDI feedback for session: ${sessionId}`);
   console.log(`${'='.repeat(60)}\n`);
@@ -60,6 +60,7 @@ async function rerunCDIFeedback(sessionId) {
     console.log(`Feedback: ${feedbackResult.feedback}`);
     console.log(`Child Reaction: ${feedbackResult.childReaction}`);
     console.log(`Reminder: ${feedbackResult.reminder}`);
+    console.log(`Activity: ${feedbackResult.activity}`);
     console.log(`Example Index: ${feedbackResult.example}`);
 
     // Save revised feedback to database
@@ -77,17 +78,27 @@ async function rerunCDIFeedback(sessionId) {
       childReaction: feedbackResult.childReaction || null,
       tips: null,
       reminder: feedbackResult.reminder,
+      activity: feedbackResult.activity || null,
       analyzedAt: new Date().toISOString(),
       mode: session.mode
     };
 
-    // Update session
-    await prisma.session.update({
-      where: { id: sessionId },
-      data: { competencyAnalysis }
-    });
-
-    console.log(`\nSession updated with new competency analysis`);
+    // Save to output session (clone if different ID, otherwise update in place)
+    const saveId = outputSessionId || sessionId;
+    if (outputSessionId && outputSessionId !== sessionId) {
+      // Clone original session with new ID and updated competency analysis
+      const { id, createdAt, updatedAt, ...sessionData } = session;
+      await prisma.session.create({
+        data: { id: outputSessionId, ...sessionData, competencyAnalysis }
+      });
+      console.log(`\nCloned session to ${outputSessionId} with new competency analysis`);
+    } else {
+      await prisma.session.update({
+        where: { id: sessionId },
+        data: { competencyAnalysis }
+      });
+      console.log(`\nSession updated with new competency analysis`);
+    }
     console.log(`Done!`);
 
   } catch (error) {
@@ -98,6 +109,7 @@ async function rerunCDIFeedback(sessionId) {
   }
 }
 
-// Get session ID from command line
+// Get session ID from command line, and optional output session ID
 const sessionId = process.argv[2] || '807db5e6-74ad-423c-ba20-b3ead3b58aac';
-rerunCDIFeedback(sessionId);
+const outputSessionId = process.argv[3] || null;
+rerunCDIFeedback(sessionId, outputSessionId);

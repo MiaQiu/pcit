@@ -301,7 +301,7 @@ async function updateRevisedFeedback(sessionId, revisedFeedback) {
   // Build update promises
   const updatePromises = [];
   for (const item of revisedFeedback) {
-    const utteranceId = orderToId[item.id];
+    const utteranceId = orderToId[Number(item.id)];
     if (!utteranceId) {
       console.warn(`⚠️ [REVISED-FEEDBACK] No utterance found for order ${item.id}`);
       continue;

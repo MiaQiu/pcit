@@ -213,71 +213,70 @@ export default function UserWeeklyReportsPage() {
   );
 
   const renderPage3 = (r: WeeklyReportDetail) => {
-    const cards = (r.scenarioCards || []) as Array<{ label: string; body: string; exampleScript: string }>;
+    const metrics = (r.growthMetrics || []) as Array<{ icon: string; value: string; label: string }>;
+    const iconMap: Record<string, string> = {
+      'trending-up': '📈', 'calendar': '📅', 'trophy': '🏆', 'star': '⭐',
+    };
     return (
       <div>
-        <div className="wr-page-title">{r.skillCelebrationTitle || 'Skill Celebration'}</div>
-        <div className="wr-scenario-list">
-          {cards.map((card, i) => (
-            <div key={i} className="wr-scenario-card">
-              <div className="wr-scenario-header">
-                <div className="wr-scenario-text">
-                  <div className="wr-scenario-label">{card.label}</div>
-                  <div className="wr-scenario-body">{card.body}</div>
-                </div>
-                <div className="wr-scenario-icon">💡</div>
-              </div>
-              {card.exampleScript && (
-                <div className="wr-scenario-example">
-                  <div className="wr-scenario-example-label">Example script</div>
-                  <div className="wr-scenario-example-text">{card.exampleScript}</div>
-                </div>
-              )}
+        <div className="wr-page-title">You as a Parent This Week</div>
+
+        {r.parentGrowthNarrative && (
+          <div className="wr-card">
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 22, background: '#F3E8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 20 }}>💜</div>
+              <div style={{ fontWeight: 700, fontSize: 17, color: '#1E2939', lineHeight: '26px' }}>{r.parentGrowthNarrative}</div>
             </div>
-          ))}
-          {cards.length === 0 && (
-            <div style={{ color: '#9CA3AF', textAlign: 'center', padding: 24 }}>No scenario cards</div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {metrics.length > 0 && (
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            {metrics.map((m, i) => (
+              <div key={i} style={{ flex: 1, background: '#fff', borderRadius: 20, padding: 14, border: '2px solid #E5E7EB', textAlign: 'center' }}>
+                <div style={{ fontSize: 20, marginBottom: 4 }}>{iconMap[m.icon] || '⭐'}</div>
+                <div style={{ fontWeight: 700, fontSize: 20, color: '#1E2939' }}>{m.value}</div>
+                <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>{m.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {r.noraObservation && (
+          <div className="wr-card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 16, background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>👁️</div>
+              <div style={{ fontWeight: 600, fontSize: 14, color: '#6366F1' }}>What Nora noticed</div>
+            </div>
+            <div style={{ fontSize: 15, color: '#374151', lineHeight: '23px' }}>{r.noraObservation}</div>
+          </div>
+        )}
+
+        {!r.parentGrowthNarrative && !r.noraObservation && metrics.length === 0 && (
+          <div style={{ color: '#9CA3AF', textAlign: 'center', padding: 24 }}>No parent celebration data</div>
+        )}
       </div>
     );
   };
 
   const renderPage4 = (r: WeeklyReportDetail) => {
-    const moments = (r.topMoments || []) as Array<{
-      date: string; dayLabel: string; dateLabel: string; tag: string;
-      sessionTitle: string; quote: string; celebration: string;
-    }>;
+    const moments = ((r.topMoments || []) as Array<{
+      dayLabel: string; dateLabel: string; sessionTitle: string; quote: string;
+    }>).filter(m => m.quote);
     return (
       <div>
-        <div className="wr-page-title">Weekly Moments Highlight</div>
+        <div className="wr-page-title">Weekly Moments</div>
         {moments.length === 0 ? (
-          <div style={{ color: '#9CA3AF', textAlign: 'center', padding: 24 }}>No sessions this week</div>
+          <div style={{ color: '#9CA3AF', textAlign: 'center', padding: 24 }}>No top moments this week</div>
         ) : (
-          <div className="wr-moments-scroll">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {moments.map((m, i) => (
-              <div key={i} className="wr-moment-card">
-                <div className="wr-moment-date-row">
-                  <span className="wr-moment-day-badge">{m.dayLabel}</span>
-                  <span className="wr-moment-date-text">{m.dateLabel}</span>
+              <div key={i} className="wr-card">
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#9CA3AF', marginBottom: 10 }}>
+                  {m.dayLabel} {m.dateLabel}{m.sessionTitle ? ` — ${m.sessionTitle}` : ''}
                 </div>
-                {m.tag && (
-                  <div className="wr-moment-tag-row">📈 {m.tag}</div>
-                )}
-                <div className="wr-moment-session-title">{m.sessionTitle}</div>
-                <div className="wr-moment-quote-box">
-                  <div className="wr-moment-quote-label">Top moment</div>
-                  <div className="wr-moment-quote-text">"{m.quote}"</div>
-                  {m.celebration && (
-                    <div className="wr-moment-celebration">{m.celebration}</div>
-                  )}
-                </div>
-                <div className="wr-moment-footer">
-                  <div>
-                    <div className="wr-moment-footer-label">Saved</div>
-                    <div className="wr-moment-footer-title">Emotional memory</div>
-                  </div>
-                  <div className="wr-moment-check">✅ Yes</div>
+                <div style={{ fontWeight: 700, fontSize: 20, color: '#1E2939', fontStyle: 'italic', textAlign: 'center', lineHeight: '28px' }}>
+                  "{m.quote}"
                 </div>
               </div>
             ))}
@@ -288,46 +287,52 @@ export default function UserWeeklyReportsPage() {
   };
 
   const renderPage5 = (r: WeeklyReportDetail) => {
-    const milestones = (r.milestones || []) as Array<{
-      status: string; category: string; title: string; actionTip: string;
-    }>;
+    const snapshots = (r.growthSnapshots || []) as Array<{ category: string; icon: string; childQuote: string; meaning: string }>;
+    const categoryIconMap: Record<string, string> = {
+      'Words & Voice': '🗣️', 'Thinking & Learning': '💡', 'Playing Together': '🤝',
+      'Big Feelings': '💛', 'Your Bond': '🤲',
+    };
     return (
       <div>
-        <div className="wr-page-title">What We Learnt</div>
-        <div className="wr-card">
-          <div className="wr-milestone-subtext">This is about child growth — not perfection.</div>
-          {milestones.length > 0 ? milestones.map((ms, i) => {
-            const isAchieved = ms.status === 'ACHIEVED';
-            return (
-              <div key={i} className="wr-milestone-row">
-                <div className={`wr-milestone-icon ${isAchieved ? 'achieved' : 'emerging'}`}>
-                  {isAchieved ? '✨' : '📈'}
-                </div>
-                <div className="wr-milestone-content">
-                  <div className="wr-milestone-title-row">
-                    <div className="wr-milestone-title">{ms.title}</div>
-                    <span className={`wr-milestone-badge ${isAchieved ? 'achieved' : 'emerging'}`}>
-                      {isAchieved ? 'Achieved' : 'Emerging'}
-                    </span>
-                  </div>
-                  <div className="wr-milestone-action-tip">
-                    {ms.actionTip || "Keep noticing tiny shifts — they're the building blocks."}
-                  </div>
-                </div>
-              </div>
-            );
-          }) : (
-            <div className="wr-milestone-row">
-              <div className="wr-milestone-icon emerging">✨</div>
-              <div className="wr-milestone-content">
-                <div className="wr-milestone-title">No milestones yet</div>
-                <div className="wr-milestone-action-tip">
-                  Keep playing together — milestones will appear as we observe more sessions.
-                </div>
-              </div>
+        <div className="wr-page-title">Child's Week</div>
+
+        {r.childSpotlight && (
+          <div className="wr-card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 18, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>✨</div>
+              <div style={{ fontWeight: 600, fontSize: 14, color: '#D97706' }}>Shining moments</div>
             </div>
-          )}
-        </div>
+            <div style={{ fontSize: 15, color: '#374151', lineHeight: '24px' }}>{r.childSpotlight}</div>
+          </div>
+        )}
+
+        {snapshots.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {snapshots.map((snap, i) => (
+              <div key={i} className="wr-card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <span style={{ fontSize: 16 }}>{categoryIconMap[snap.category] || '✨'}</span>
+                  <span style={{ fontWeight: 600, fontSize: 13, color: '#6B7280' }}>{snap.category}</span>
+                </div>
+                <div style={{ background: '#F9FAFB', borderRadius: 14, padding: 14, marginBottom: 10 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: '#1E2939', fontStyle: 'italic', lineHeight: '22px' }}>"{snap.childQuote}"</div>
+                </div>
+                <div style={{ fontSize: 14, color: '#6B7280', lineHeight: '21px' }}>{snap.meaning}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {r.childProgressNote && (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#F0FDF4', borderRadius: 16, padding: 14, marginTop: 16 }}>
+            <span style={{ fontSize: 14 }}>🌱</span>
+            <div style={{ fontSize: 14, color: '#166534', lineHeight: '21px' }}>{r.childProgressNote}</div>
+          </div>
+        )}
+
+        {!r.childSpotlight && snapshots.length === 0 && (
+          <div style={{ color: '#9CA3AF', textAlign: 'center', padding: 24 }}>No child celebration data</div>
+        )}
       </div>
     );
   };

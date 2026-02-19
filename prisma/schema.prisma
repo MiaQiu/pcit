@@ -665,19 +665,22 @@ model WeeklyReport {
   echoCount           Int @default(0)
   narrateCount        Int @default(0)
 
-  // Page 3: Skill Celebration
-  // e.g. "You're an excellent Narrator"
-  skillCelebrationTitle String?
-  // JSON array: [{ label, body, exampleScript }]
-  scenarioCards         Json?
+  // Page 3: You as a Parent This Week
+  skillCelebrationTitle String?   // legacy — kept for backward compat
+  scenarioCards         Json?     // legacy — kept for backward compat
+  parentGrowthNarrative String?   // AI: identity-level celebration connecting skill to child impact
+  growthMetrics         Json?     // JSON array: [{ icon, value, label }] — 2-3 data-driven micro-wins
+  noraObservation       String?   // AI: 2 sentences about what changed in the parent's approach
 
   // Page 4: Weekly Moments Highlight
   // JSON array: [{ date, dayLabel, dateLabel, tag, sessionTitle, quote, celebration, audioUrl, startTime, endTime }]
   topMoments            Json?
 
-  // Page 5: Child Development Milestones
-  // JSON array: [{ status, category, title, actionTip }]
-  milestones            Json?
+  // Page 5: Child's Week — celebrate the child
+  milestones            Json?     // legacy — kept for backward compat
+  childSpotlight        String?   // AI: 2-3 sentence warm narrative about the child's week
+  growthSnapshots       Json?     // JSON array: [{ category, icon, childQuote, meaning }] — evidence cards
+  childProgressNote     String?   // AI: optional one-liner about progress since starting
 
   // Page 6: Next Week's Focus
   focusHeading          String?  // e.g. "Use narration during transitions"

@@ -5,7 +5,7 @@ const { generateAccessToken } = require('../utils/jwt.cjs');
 const { requireAdminAuth } = require('../middleware/adminAuth.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
 
-const { generateWeeklyReport } = require('../services/weeklyReportService.cjs');
+const { generateWeeklyReport, resolveReportAudioUrls } = require('../services/weeklyReportService.cjs');
 
 const router = express.Router();
 
@@ -659,7 +659,9 @@ router.get('/weekly-reports/:id', requireAdminAuth, async (req, res) => {
       return res.status(404).json({ error: 'Weekly report not found' });
     }
 
-    res.json({ report });
+    // Generate fresh presigned audio URLs for top moments
+    const resolved = await resolveReportAudioUrls(report);
+    res.json({ report: resolved });
   } catch (error) {
     console.error('Admin get weekly report detail error:', error);
     res.status(500).json({ error: 'Failed to fetch weekly report' });

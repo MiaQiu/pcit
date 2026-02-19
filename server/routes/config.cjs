@@ -1,6 +1,7 @@
 const express = require('express');
 const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
+const { resolveReportAudioUrls } = require('../services/weeklyReportService.cjs');
 
 const router = express.Router();
 
@@ -70,7 +71,9 @@ router.get('/weekly-reports/:id', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Report not found' });
     }
 
-    res.json(report);
+    // Generate fresh presigned audio URLs for top moments
+    const resolved = await resolveReportAudioUrls(report);
+    res.json(resolved);
   } catch (error) {
     console.error('Get weekly report error:', error);
     res.status(500).json({ error: 'Failed to fetch weekly report' });

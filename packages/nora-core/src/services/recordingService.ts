@@ -536,6 +536,9 @@ export interface WeeklyReportData {
   narrateCount: number;
   skillCelebrationTitle: string | null;
   scenarioCards: Array<{ label: string; body: string; exampleScript: string }> | null;
+  parentGrowthNarrative: string | null;
+  growthMetrics: Array<{ icon: string; value: string; label: string }> | null;
+  noraObservation: string | null;
   topMoments: Array<{
     date: string;
     dayLabel: string;
@@ -554,6 +557,9 @@ export interface WeeklyReportData {
     title: string;
     actionTip: string | null;
   }> | null;
+  childSpotlight: string | null;
+  growthSnapshots: Array<{ category: string; icon: string; childQuote: string; meaning: string }> | null;
+  childProgressNote: string | null;
   focusHeading: string | null;
   focusSubtext: string | null;
   whyExplanation: string | null;

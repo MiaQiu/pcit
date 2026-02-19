@@ -252,9 +252,16 @@ export const WeeklyReportScreen: React.FC = () => {
     );
   };
 
-  // ─── Page 3: Skill Celebration ───────────────────────────────────────
+  // ─── Page 3: You as a Parent This Week ──────────────────────────────
   const renderPage3 = () => {
-    const cards = report?.scenarioCards || [];
+    const metrics = (report?.growthMetrics || []) as Array<{ icon: string; value: string; label: string }>;
+
+    const metricIconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+      'trending-up': 'trending-up',
+      'calendar': 'calendar-outline',
+      'trophy': 'trophy-outline',
+      'star': 'star-outline',
+    };
 
     return (
       <ScrollView
@@ -262,88 +269,86 @@ export const WeeklyReportScreen: React.FC = () => {
         contentContainerStyle={styles.pageScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>{report?.skillCelebrationTitle || 'Skill Celebration'}</Text>
+        <Text style={styles.pageTitle}>You as a Parent This Week</Text>
 
-        <View style={styles.scenarioContainer}>
-          {cards.map((card: any, index: number) => (
-            <View key={index} style={styles.scenarioCard}>
-              <View style={styles.scenarioCardHeader}>
-                <View style={styles.scenarioCardTextContent}>
-                  <Text style={styles.scenarioLabel}>{card.label}</Text>
-                  <Text style={styles.scenarioBody}>{card.body}</Text>
-                </View>
-                <View style={styles.scenarioIconCircle}>
-                  <Ionicons name="bulb-outline" size={18} color={COLORS.mainPurple} />
-                </View>
+        {/* Section A: Identity Statement */}
+        {report?.parentGrowthNarrative && (
+          <View style={styles.card}>
+            <View style={styles.growthNarrativeRow}>
+              <View style={styles.growthNarrativeIconCircle}>
+                <Ionicons name="heart" size={22} color={COLORS.mainPurple} />
               </View>
-              {card.exampleScript && (
-                <View style={styles.scenarioExampleBox}>
-                  <Text style={styles.scenarioExampleLabel}>Example script</Text>
-                  <Text style={styles.scenarioExampleText}>{card.exampleScript}</Text>
-                </View>
-              )}
+              <Text style={styles.growthNarrativeText}>
+                {report.parentGrowthNarrative}
+              </Text>
             </View>
-          ))}
-        </View>
+          </View>
+        )}
+
+        {/* Section B: Growth Metrics */}
+        {metrics.length > 0 && (
+          <View style={styles.growthMetricsRow}>
+            {metrics.map((metric, index) => (
+              <View key={index} style={styles.growthMetricCard}>
+                <View style={styles.growthMetricIconCircle}>
+                  <Ionicons
+                    name={metricIconMap[metric.icon] || 'star-outline'}
+                    size={18}
+                    color={COLORS.mainPurple}
+                  />
+                </View>
+                <Text style={styles.growthMetricValue}>{metric.value}</Text>
+                <Text style={styles.growthMetricLabel}>{metric.label}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Section C: What Nora Noticed */}
+        {report?.noraObservation && (
+          <View style={styles.card}>
+            <View style={styles.noraObservationHeader}>
+              <View style={styles.noraObservationIconCircle}>
+                <Ionicons name="eye-outline" size={18} color="#6366F1" />
+              </View>
+              <Text style={styles.noraObservationTitle}>What Nora noticed</Text>
+            </View>
+            <Text style={styles.noraObservationText}>
+              {report.noraObservation}
+            </Text>
+          </View>
+        )}
       </ScrollView>
     );
   };
 
   // ─── Page 4: Weekly Moments Highlight ────────────────────────────────
   const renderPage4 = () => {
-    const topMoments = report?.topMoments || [];
-
-    if (topMoments.length === 0) {
-      return (
-        <View style={styles.emptyState}>
-          <Text style={styles.pageTitle}>Weekly Moments Highlight</Text>
-          <Text style={styles.emptyStateText}>No sessions this week</Text>
-        </View>
-      );
-    }
-
-    const CARD_WIDTH = SCREEN_WIDTH * 0.78;
+    const topMoments = (report?.topMoments || []).filter((m: any) => m.quote);
 
     return (
-      <View style={styles.page4Wrapper}>
-        <Text style={styles.pageTitle}>Weekly Moments Highlight</Text>
+      <ScrollView
+        style={styles.pageScroll}
+        contentContainerStyle={styles.pageScrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.pageTitle}>Weekly Moments</Text>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.momentScrollContent}
-          snapToInterval={CARD_WIDTH + 12}
-          decelerationRate="fast"
-        >
-          {topMoments.map((moment, index) => (
-            <View key={index} style={[styles.momentCard, { width: CARD_WIDTH }]}>
-              {/* Date header */}
-              <View style={styles.momentDateRow}>
-                <View style={styles.momentDayBadge}>
-                  <Text style={styles.momentDayText}>{moment.dayLabel}</Text>
-                </View>
-                <Text style={styles.momentDateText}>{moment.dateLabel}</Text>
-              </View>
-
-              {/* Tag */}
-              {moment.tag ? (
-                <View style={styles.momentTagRow}>
-                  <Ionicons name="trending-up" size={14} color={COLORS.mainPurple} />
-                  <Text style={styles.momentTagText}>{moment.tag}</Text>
-                </View>
-              ) : null}
-
-              {/* Session title */}
-              <Text style={styles.momentSessionTitle}>{moment.sessionTitle}</Text>
-
-              {/* Top moment quote */}
-              <View style={styles.momentQuoteBox}>
-                <Text style={styles.momentQuoteLabel}>Top moment</Text>
-                <Text style={styles.momentQuoteText}>"{moment.quote}"</Text>
-                {moment.celebration ? (
-                  <Text style={styles.momentCelebration}>{moment.celebration}</Text>
-                ) : null}
-
+        {topMoments.length === 0 ? (
+          <View style={styles.card}>
+            <View style={styles.emptyChildState}>
+              <Ionicons name="chatbubble-outline" size={24} color="#D1D5DB" />
+              <Text style={styles.emptyChildStateText}>No top moments this week</Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.momentBubbleList}>
+            {topMoments.map((moment: any, index: number) => (
+              <View key={index} style={styles.momentBubble}>
+                <Text style={styles.momentBubbleDate}>
+                  {moment.dayLabel} {moment.dateLabel} — {moment.sessionTitle}
+                </Text>
+                <Text style={styles.momentBubbleQuote}>"{moment.quote}"</Text>
                 {moment.audioUrl && moment.startTime != null && moment.endTime != null && (
                   <MomentPlayer
                     audioUrl={moment.audioUrl}
@@ -352,28 +357,40 @@ export const WeeklyReportScreen: React.FC = () => {
                   />
                 )}
               </View>
-
-              {/* Footer */}
-              <View style={styles.momentFooter}>
-                <View>
-                  <Text style={styles.momentFooterLabel}>Saved</Text>
-                  <Text style={styles.momentFooterTitle}>Emotional memory</Text>
-                </View>
-                <View style={styles.momentCheckRow}>
-                  <Ionicons name="checkmark-circle" size={22} color="#16A34A" />
-                  <Text style={styles.momentCheckText}>Yes</Text>
-                </View>
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
     );
   };
 
-  // ─── Page 5: What We Learnt (Milestones) ─────────────────────────────
+  // ─── Page 5: Child's Week ─────────────────────────────────────────────
   const renderPage5 = () => {
-    const milestones = report?.milestones || [];
+    const snapshots = (report?.growthSnapshots || []) as Array<{ category: string; icon: string; childQuote: string; meaning: string }>;
+
+    const snapshotIconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+      'chatbubble': 'chatbubble-outline',
+      'bulb': 'bulb-outline',
+      'people': 'people-outline',
+      'heart': 'heart-outline',
+      'hand-left': 'hand-left-outline',
+    };
+
+    const categoryColorMap: Record<string, string> = {
+      'Words & Voice': '#EEF2FF',
+      'Thinking & Learning': '#FFF7ED',
+      'Playing Together': '#F0FDF4',
+      'Big Feelings': '#FEF2F2',
+      'Your Bond': '#F3E8FF',
+    };
+
+    const categoryIconColorMap: Record<string, string> = {
+      'Words & Voice': '#6366F1',
+      'Thinking & Learning': '#EA580C',
+      'Playing Together': '#16A34A',
+      'Big Feelings': '#DC2626',
+      'Your Bond': COLORS.mainPurple,
+    };
 
     return (
       <ScrollView
@@ -381,52 +398,68 @@ export const WeeklyReportScreen: React.FC = () => {
         contentContainerStyle={styles.pageScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>What We Learnt About {childName}</Text>
+        <Text style={styles.pageTitle}>{childName}'s Week</Text>
 
-        <View style={styles.card}>
-          <Text style={styles.milestoneSubtext}>
-            This is about child growth — not perfection.
-          </Text>
+        {/* Section A: Child Spotlight */}
+        {report?.childSpotlight && (
+          <View style={styles.card}>
+            <View style={styles.childSpotlightHeader}>
+              <View style={[styles.childSpotlightIconCircle]}>
+                <Ionicons name="sparkles" size={20} color="#D97706" />
+              </View>
+              <Text style={styles.childSpotlightLabel}>Shining moments</Text>
+            </View>
+            <Text style={styles.childSpotlightText}>
+              {report.childSpotlight}
+            </Text>
+          </View>
+        )}
 
-          {milestones.length > 0 ? (
-            milestones.map((milestone: any, index: number) => (
-              <View key={index} style={[styles.milestoneRow, index < milestones.length - 1 && styles.milestoneRowBorder]}>
-                <View style={[styles.milestoneIconCircle, milestone.status === 'ACHIEVED' ? styles.milestoneIconAchieved : styles.milestoneIconEmerging]}>
-                  <Ionicons
-                    name={milestone.status === 'ACHIEVED' ? 'sparkles' : 'trending-up'}
-                    size={20}
-                    color={milestone.status === 'ACHIEVED' ? '#D97706' : '#7C3AED'}
-                  />
-                </View>
-                <View style={styles.milestoneTextContent}>
-                  <View style={styles.milestoneTitleRow}>
-                    <Text style={styles.milestoneTitle}>{milestone.title}</Text>
-                    <View style={[styles.milestoneBadge, milestone.status === 'ACHIEVED' ? styles.milestoneBadgeAchieved : styles.milestoneBadgeEmerging]}>
-                      <Text style={[styles.milestoneBadgeText, milestone.status === 'ACHIEVED' ? styles.milestoneBadgeTextAchieved : styles.milestoneBadgeTextEmerging]}>
-                        {milestone.status === 'ACHIEVED' ? 'Achieved' : 'Emerging'}
-                      </Text>
-                    </View>
+        {/* Section B: Growth Snapshots */}
+        {snapshots.length > 0 && (
+          <View style={styles.snapshotContainer}>
+            {snapshots.map((snapshot, index) => (
+              <View key={index} style={styles.snapshotCard}>
+                <View style={styles.snapshotCategoryRow}>
+                  <View style={[styles.snapshotCategoryIconCircle, { backgroundColor: categoryColorMap[snapshot.category] || '#F3E8FF' }]}>
+                    <Ionicons
+                      name={snapshotIconMap[snapshot.icon] || 'sparkles'}
+                      size={16}
+                      color={categoryIconColorMap[snapshot.category] || COLORS.mainPurple}
+                    />
                   </View>
-                  <Text style={styles.milestoneActionTip}>
-                    {milestone.actionTip || "Keep noticing tiny shifts — they're the building blocks."}
+                  <Text style={[styles.snapshotCategoryText, { color: categoryIconColorMap[snapshot.category] || COLORS.mainPurple }]}>
+                    {snapshot.category}
                   </Text>
                 </View>
+                <View style={styles.snapshotQuoteBox}>
+                  <Text style={styles.snapshotQuoteText}>"{snapshot.childQuote}"</Text>
+                </View>
+                <Text style={styles.snapshotMeaning}>{snapshot.meaning}</Text>
               </View>
-            ))
-          ) : (
-            <View style={styles.milestoneRow}>
-              <View style={[styles.milestoneIconCircle, styles.milestoneIconEmerging]}>
-                <Ionicons name="sparkles" size={20} color="#7C3AED" />
-              </View>
-              <View style={styles.milestoneTextContent}>
-                <Text style={styles.milestoneTitle}>No milestones yet</Text>
-                <Text style={styles.milestoneActionTip}>
-                  Keep playing together — milestones will appear as we observe more sessions.
-                </Text>
-              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Section C: Progress Note */}
+        {report?.childProgressNote && (
+          <View style={styles.progressNoteContainer}>
+            <Ionicons name="leaf-outline" size={16} color="#16A34A" />
+            <Text style={styles.progressNoteText}>{report.childProgressNote}</Text>
+          </View>
+        )}
+
+        {/* Empty state */}
+        {!report?.childSpotlight && snapshots.length === 0 && (
+          <View style={styles.card}>
+            <View style={styles.emptyChildState}>
+              <Ionicons name="sparkles" size={24} color="#D1D5DB" />
+              <Text style={styles.emptyChildStateText}>
+                Keep playing together — we'll share {childName}'s growth moments here.
+              </Text>
             </View>
-          )}
-        </View>
+          </View>
+        )}
       </ScrollView>
     );
   };
@@ -871,255 +904,214 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
 
-  // ─── Page 3: Skill Celebration ─────────────────────────────────────
-  scenarioContainer: {
+  // ─── Page 3: You as a Parent This Week ────────────────────────────
+  growthNarrativeRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+  },
+  growthNarrativeIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F3E8FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  growthNarrativeText: {
+    flex: 1,
+    fontFamily: FONTS.bold,
+    fontSize: 17,
+    color: COLORS.textDark,
+    lineHeight: 26,
+  },
+  growthMetricsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  growthMetricCard: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 14,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+  },
+  growthMetricIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F3E8FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  growthMetricValue: {
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    color: COLORS.textDark,
+    marginBottom: 2,
+  },
+  growthMetricLabel: {
+    fontFamily: FONTS.regular,
+    fontSize: 11,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  noraObservationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  noraObservationIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noraObservationTitle: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#6366F1',
+  },
+  noraObservationText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#374151',
+    lineHeight: 23,
+  },
+
+  // ─── Page 4: Weekly Moments (Bubbles) ─────────────────────────────
+  momentBubbleList: {
+    gap: 14,
+  },
+  momentBubble: {
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  momentBubbleDate: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: '#9CA3AF',
+    marginBottom: 10,
+  },
+  momentBubbleQuote: {
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    color: COLORS.textDark,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    lineHeight: 28,
+  },
+
+  // ─── Page 5: Child's Week ──────────────────────────────────────────
+  childSpotlightHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  childSpotlightIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  childSpotlightLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#D97706',
+  },
+  childSpotlightText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#374151',
+    lineHeight: 24,
+  },
+  snapshotContainer: {
     gap: 12,
   },
-  scenarioCard: {
+  snapshotCard: {
     backgroundColor: COLORS.white,
     borderRadius: 24,
     padding: 18,
     borderWidth: 2,
     borderColor: '#E5E7EB',
   },
-  scenarioCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 14,
-  },
-  scenarioCardTextContent: {
-    flex: 1,
-    marginRight: 12,
-  },
-  scenarioLabel: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 13,
-    color: COLORS.mainPurple,
-    marginBottom: 6,
-  },
-  scenarioBody: {
-    fontFamily: FONTS.bold,
-    fontSize: 15,
-    color: COLORS.textDark,
-    lineHeight: 22,
-  },
-  scenarioIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F3E8FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  scenarioExampleBox: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 16,
-    padding: 14,
-  },
-  scenarioExampleLabel: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginBottom: 6,
-  },
-  scenarioExampleText: {
-    fontFamily: FONTS.regular,
-    fontSize: 14,
-    color: '#374151',
-    lineHeight: 21,
-  },
-
-  // ─── Page 4: Moments Highlight ─────────────────────────────────────
-  page4Wrapper: {
-    flex: 1,
-    marginTop: 8,
-  },
-  momentScrollContent: {
-    paddingRight: 20,
-    gap: 12,
-  },
-  momentCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 28,
-    padding: 18,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  momentDateRow: {
+  snapshotCategoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  momentDayBadge: {
-    backgroundColor: '#F3E8FF',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  momentDayText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    color: COLORS.mainPurple,
-  },
-  momentDateText: {
-    fontFamily: FONTS.regular,
-    fontSize: 13,
-    color: '#6B7280',
-  },
-  momentTagRow: {
-    flexDirection: 'row',
+  snapshotCategoryIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#F3E8FF',
-    alignSelf: 'flex-start',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    justifyContent: 'center',
+  },
+  snapshotCategoryText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+  },
+  snapshotQuoteBox: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    padding: 14,
     marginBottom: 10,
   },
-  momentTagText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    color: COLORS.mainPurple,
-  },
-  momentSessionTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 17,
-    color: COLORS.textDark,
-    marginBottom: 14,
-  },
-  momentQuoteBox: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 14,
-  },
-  momentQuoteLabel: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginBottom: 6,
-  },
-  momentQuoteText: {
+  snapshotQuoteText: {
     fontFamily: FONTS.bold,
     fontSize: 15,
     color: COLORS.textDark,
     lineHeight: 22,
     fontStyle: 'italic',
-    marginBottom: 8,
   },
-  momentCelebration: {
+  snapshotMeaning: {
     fontFamily: FONTS.regular,
-    fontSize: 13,
+    fontSize: 14,
     color: '#6B7280',
-    lineHeight: 19,
-    marginBottom: 10,
+    lineHeight: 21,
   },
-  momentFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    paddingTop: 12,
-  },
-  momentFooterLabel: {
-    fontFamily: FONTS.regular,
-    fontSize: 12,
-    color: '#9CA3AF',
-  },
-  momentFooterTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 14,
-    color: COLORS.textDark,
-  },
-  momentCheckRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  momentCheckText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 14,
-    color: '#16A34A',
-  },
-
-  // ─── Page 5: Milestones ────────────────────────────────────────────
-  milestoneSubtext: {
-    fontFamily: FONTS.regular,
-    fontSize: 14,
-    color: '#9CA3AF',
-    marginBottom: 16,
-  },
-  milestoneRow: {
+  progressNoteContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 14,
-    paddingVertical: 14,
-  },
-  milestoneRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  milestoneIconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  milestoneIconAchieved: {
-    backgroundColor: '#FEF3C7',
-  },
-  milestoneIconEmerging: {
-    backgroundColor: '#EDE9FE',
-  },
-  milestoneTextContent: {
-    flex: 1,
-  },
-  milestoneTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 4,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 16,
+    padding: 14,
+    marginTop: 16,
   },
-  milestoneTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 15,
-    color: COLORS.textDark,
+  progressNoteText: {
     flex: 1,
-  },
-  milestoneBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    flexShrink: 0,
-  },
-  milestoneBadgeAchieved: {
-    backgroundColor: '#FEF3C7',
-  },
-  milestoneBadgeEmerging: {
-    backgroundColor: '#EDE9FE',
-  },
-  milestoneBadgeText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 11,
-  },
-  milestoneBadgeTextAchieved: {
-    color: '#D97706',
-  },
-  milestoneBadgeTextEmerging: {
-    color: '#7C3AED',
-  },
-  milestoneActionTip: {
     fontFamily: FONTS.regular,
-    fontSize: 13,
-    color: '#6B7280',
-    lineHeight: 19,
+    fontSize: 14,
+    color: '#166534',
+    lineHeight: 21,
+  },
+  emptyChildState: {
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 20,
+  },
+  emptyChildStateText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    lineHeight: 22,
   },
 
   // ─── Page 6: Focus ─────────────────────────────────────────────────

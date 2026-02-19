@@ -19,6 +19,74 @@ const { loadPrompt, loadPromptWithVariables } = require('../prompts/index.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 
 // ============================================================================
+// AI Provider Configuration
+// ============================================================================
+
+// Switch between 'claude-sonnet' and 'gemini-flash' for the 6 analysis calls.
+// CDI Coaching generation (Gemini Pro streaming) is unaffected.
+const AI_PROVIDER = process.env.AI_PROVIDER || 'gemini-flash';
+
+/**
+ * Unified AI call helper — routes to Claude Sonnet or Gemini Flash based on AI_PROVIDER.
+ * @param {string} prompt - The user prompt
+ * @param {Object} options
+ * @param {number}  options.maxTokens     - Max output tokens (default 2048)
+ * @param {number}  options.temperature   - Sampling temperature (default 0.7)
+ * @param {string}  options.systemPrompt  - Optional system prompt (Claude only; prepended for Gemini)
+ * @param {string}  options.responseType  - 'object' | 'array' (passed through to parseClaudeJsonResponse)
+ * @returns {Promise<Object|Array>} Parsed JSON response
+ */
+async function callAI(prompt, options = {}) {
+  const {
+    maxTokens = 2048,
+    temperature = 0.7,
+    systemPrompt = null,
+    responseType = 'object'
+  } = options;
+
+  if (AI_PROVIDER === 'claude-sonnet') {
+    return callClaudeForFeedback(prompt, { maxTokens, temperature, systemPrompt, responseType });
+  }
+
+  // Gemini Flash path
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY not configured');
+  }
+
+  // Gemini simple API has no system field — prepend system prompt to user prompt
+  const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: fullPrompt }] }],
+      generationConfig: {
+        temperature,
+        maxOutputTokens: maxTokens
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '');
+    throw new Error(`Gemini Flash API error: ${response.status} - ${errorText.substring(0, 200)}`);
+  }
+
+  const data = await response.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!text) {
+    throw new Error('Empty response from Gemini Flash API');
+  }
+
+  return parseClaudeJsonResponse(text, responseType);
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 
@@ -350,63 +418,20 @@ function buildProfilingVariables(childInfo, tagCounts, utterances) {
  * @returns {Promise<Object|null>} { developmentalObservation, metadata } or null on failure
  */
 async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts = {}, childSpeaker = null) {
-  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-  if (!ANTHROPIC_API_KEY) {
-    console.warn('⚠️ [DEV-PROFILING] Anthropic API key not configured, skipping');
-    return null;
-  }
-
   const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
   const prompt = loadPromptWithVariables('developmentalProfiling', variables);
 
-  console.log(`📊 [DEV-PROFILING] Calling Claude API for developmental profiling...`);
+  console.log(`📊 [DEV-PROFILING] Calling ${AI_PROVIDER} for developmental profiling...`);
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 8192,
-        temperature: 0.5,
-        messages: [{
-          role: 'user',
-          content: prompt
-        }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `Claude API error (dev profiling): ${response.status}`);
-    }
-
-    const data = await response.json();
-    const responseText = data.content[0].text;
-
-    const cleanedResponse = responseText
-      .replace(/```json\s*/g, '')
-      .replace(/```\s*/g, '')
-      .trim();
-
-    let parsed;
-    try {
-      parsed = JSON.parse(cleanedResponse);
-    } catch (parseError) {
-      console.error('❌ [DEV-PROFILING] JSON parse error. Raw response (first 500 chars):', cleanedResponse.substring(0, 500));
-      throw parseError;
-    }
+    const parsed = await callAI(prompt, { maxTokens: 8192, temperature: 0.5 });
 
     const result = {
       developmentalObservation: parsed.developmental_observation || null,
       metadata: parsed.session_metadata || null
     };
 
-    console.log(`✅ [DEV-PROFILING] Claude response parsed — ${result.developmentalObservation?.domains?.length || 0} domains`);
+    console.log(`✅ [DEV-PROFILING] Response parsed — ${result.developmentalObservation?.domains?.length || 0} domains`);
     return result;
   } catch (error) {
     console.error('❌ [DEV-PROFILING] Error:', error.message);
@@ -425,7 +450,6 @@ async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts =
  */
 async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childSpeaker = null) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
   if (!GEMINI_API_KEY) {
     console.warn('⚠️ [CDI-COACHING] Gemini API key not configured, skipping');
     return null;
@@ -450,50 +474,18 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
 
     console.log(`✅ [CDI-COACHING] Gemini coaching report received (${coachingReport.length} chars)`);
 
-    // Follow-up Claude call to select 3 sections and format for mobile
-    if (!ANTHROPIC_API_KEY) {
-      console.warn('⚠️ [CDI-COACHING] Anthropic API key not configured, returning raw report');
-      return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal: null };
-    }
-
-    console.log(`📊 [CDI-COACHING] Calling Claude to format 3 coaching sections...`);
+    // Follow-up call to select 3 sections and format for mobile
+    console.log(`📊 [CDI-COACHING] Calling ${AI_PROVIDER} to format 3 coaching sections...`);
 
     const formatPrompt = loadPromptWithVariables('cdiCoachingFormat', {
       COACHING_REPORT: coachingReport
     });
 
-    const formatResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 2048,
-        temperature: 0,
-        messages: [{ role: 'user', content: formatPrompt }]
-      })
-    });
-
-    if (!formatResponse.ok) {
-      const errorData = await formatResponse.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `Claude API error (coaching format): ${formatResponse.status}`);
-    }
-
-    const formatData = await formatResponse.json();
-    const formatText = formatData.content[0].text
-      .replace(/```json\s*/g, '')
-      .replace(/```\s*/g, '')
-      .trim();
-
     let formatted;
     try {
-      formatted = JSON.parse(formatText);
-    } catch (parseError) {
-      console.error('❌ [CDI-COACHING] Claude format JSON parse error. Raw (first 500 chars):', formatText.substring(0, 500));
-      // Fall back to raw report
+      formatted = await callAI(formatPrompt, { maxTokens: 2048, temperature: 0 });
+    } catch (formatError) {
+      console.error('❌ [CDI-COACHING] Format call failed:', formatError.message);
       return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal: null };
     }
 
@@ -548,6 +540,8 @@ Example opening messages for feedback:
 
 4.  **ChildReaction**: Highlight insights about ${childName}'s behavior, to boost the parent's motivation to continue practising the desired skills and avoid undesired skills. Use ${childName}'s name in your response.
 
+5. **Activity**: Infer in a few words what game or activity the parent and child played in this session (e.g. "building blocks", "coloring", "pretend cooking", "puzzle").
+
 Return ONLY valid JSON:
 {
   "topMoment": {
@@ -556,8 +550,9 @@ Return ONLY valid JSON:
   },
   "Feedback": "2 sentences of opening message",
   "exampleUtteranceNumber": index of the utterance used as example,
-  "reminder": "2 sentences of encouragement"
-  "ChildReaction":"2-3 sentences"
+  "reminder": "2 sentences of encouragement",
+  "ChildReaction":"2-3 sentences",
+  "activity": "a few words describing the game/activity"
 }
 
 No markdown code fences.`;
@@ -644,7 +639,7 @@ async function generateCDIFeedback(counts, utterances, childName) {
 
   // Call 1: Combined feedback prompt (analysis + improvement + example in one)
   console.log('📝 [CDI-FEEDBACK] Running combined feedback prompt...');
-  const feedbackData = await callClaudeForFeedback(
+  const feedbackData = await callAI(
     generateCombinedFeedbackPrompt(counts, utterances, childName)
   );
 
@@ -654,7 +649,7 @@ async function generateCDIFeedback(counts, utterances, childName) {
   console.log('📝 [CDI-FEEDBACK] Running Review Feedback for utterances and silence slots...');
   let revisedFeedback = [];
   try {
-    const reviewData = await callClaudeForFeedback(
+    const reviewData = await callAI(
       generateReviewFeedbackPrompt(counts, utterances),
       { temperature: 0.5, responseType: 'array' }  // Lower temperature, expect array response
     );
@@ -674,6 +669,7 @@ async function generateCDIFeedback(counts, utterances, childName) {
     example: feedbackData.exampleUtteranceNumber,
     childReaction: feedbackData.ChildReaction,
     reminder: feedbackData.reminder,
+    activity: feedbackData.activity || null,
     revisedFeedback: revisedFeedback  // Array of {id, feedback, additional_tip}
   };
 
@@ -709,7 +705,7 @@ async function generatePDITwoChoicesAnalysis(utterances, childName) {
   });
 
   try {
-    const result = await callClaudeForFeedback(prompt);
+    const result = await callAI(prompt);
     const pdiSkills = result?.pdiSkills;
 
     if (!Array.isArray(pdiSkills) || pdiSkills.length === 0) {
@@ -829,55 +825,20 @@ async function analyzePCITCoding(sessionId, userId) {
     end: utt.endTime
   }));
 
-  // Call appropriate PCIT coding endpoint based on mode
-  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-  if (!ANTHROPIC_API_KEY) {
-    throw new Error('Anthropic API key not configured');
-  }
-
   const isCDI = session.mode === 'CDI';
 
-  // STEP 1: Identify speaker roles using Claude
+  // STEP 1: Identify speaker roles
   const roleIdentificationPrompt = loadPromptWithVariables('roleIdentification', {
     UTTERANCES_JSON: JSON.stringify(utterancesForPrompt, null, 2)
   });
 
-  console.log(`📊 [ANALYSIS-STEP-3] Calling Claude API for role identification...`);
+  console.log(`📊 [ANALYSIS-STEP-3] Calling ${AI_PROVIDER} for role identification...`);
 
-  const identifyResponse = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 2048,
-      temperature: 0.3,
-      messages: [{
-        role: 'user',
-        content: roleIdentificationPrompt
-      }]
-    })
-  });
-
-  if (!identifyResponse.ok) {
-    const errorData = await identifyResponse.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `Claude API error (identify parent): ${identifyResponse.status}`);
-  }
-
-  const identifyData = await identifyResponse.json();
-  const roleIdentificationText = identifyData.content[0].text.trim();
-  console.log(`✅ [ANALYSIS-STEP-3] Claude API response received, length: ${roleIdentificationText.length} chars`);
-
-  // Parse the JSON response
-  console.log(`📊 [ANALYSIS-STEP-4] Parsing role identification JSON...`);
   let roleIdentificationJson;
   let adultSpeakers = [];
   try {
-    roleIdentificationJson = parseClaudeJsonResponse(roleIdentificationText);
-    console.log(`✅ [ANALYSIS-STEP-4] JSON parsed successfully`);
+    roleIdentificationJson = await callAI(roleIdentificationPrompt, { maxTokens: 2048, temperature: 0.3 });
+    console.log(`✅ [ANALYSIS-STEP-3] Role identification parsed successfully`);
 
     // Extract all adult speakers from speaker_identification
     const speakerIdentification = roleIdentificationJson.speaker_identification || {};
@@ -903,10 +864,8 @@ async function analyzePCITCoding(sessionId, userId) {
     console.log('Role identification:', JSON.stringify(roleIdentificationJson, null, 2));
 
   } catch (parseError) {
-    console.error('❌ [ROLE-ID-ERROR] Failed to parse role identification JSON:', parseError.message);
-    console.error('❌ [ROLE-ID-ERROR] Raw response (first 500 chars):', roleIdentificationText.substring(0, 500));
-    console.error('❌ [ROLE-ID-ERROR] Raw response (last 500 chars):', roleIdentificationText.substring(Math.max(0, roleIdentificationText.length - 500)));
-    throw new Error(`Failed to parse role identification: ${parseError.message}`);
+    console.error('❌ [ROLE-ID-ERROR] Failed role identification:', parseError.message);
+    throw new Error(`Failed role identification: ${parseError.message}`);
   }
 
   // Build role map from speaker identification
@@ -985,53 +944,22 @@ Do not include markdown or whitespace (minified JSON).
 - Last character of your response MUST be ]
 - Every parent segment MUST have both "code" and "feedback" fields`;
 
-  console.log(`📊 [ANALYSIS-STEP-8] Calling Claude API for PCIT coding...`);
+  console.log(`📊 [ANALYSIS-STEP-8] Calling ${AI_PROVIDER} for PCIT coding...`);
   console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
 
-  // Call Claude API for PCIT coding
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 8192,
-      temperature: 0,
-      system: dpicsSystemPrompt,
-      messages: [{
-        role: 'user',
-        content: userPrompt
-      }]
-    })
+  const codingResults = await callAI(userPrompt, {
+    maxTokens: 8192,
+    temperature: 0,
+    systemPrompt: dpicsSystemPrompt,
+    responseType: 'array'
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `Claude API error (PCIT coding): ${response.status}`);
+  if (!Array.isArray(codingResults)) {
+    throw new Error('Expected array of coding results');
   }
 
-  const data = await response.json();
-  const fullResponse = data.content[0].text;
-
-  // Parse JSON response
-  let codingResults;
-  try {
-    codingResults = parseClaudeJsonResponse(fullResponse, 'array');
-
-    if (!Array.isArray(codingResults)) {
-      throw new Error('Expected array of coding results');
-    }
-
-    console.log(`✅ [ANALYSIS-STEP-8] Successfully parsed ${codingResults.length} coding results`);
-  } catch (parseError) {
-    console.error('❌ [PCIT-CODING-ERROR] Failed to parse PCIT coding JSON:', parseError.message);
-    console.error('❌ [PCIT-CODING-ERROR] Raw response (first 500 chars):', fullResponse.substring(0, 500));
-    console.error('❌ [PCIT-CODING-ERROR] Raw response (last 500 chars):', fullResponse.substring(Math.max(0, fullResponse.length - 500)));
-    throw new Error(`Failed to parse PCIT coding response: ${parseError.message}`);
-  }
+  console.log(`✅ [ANALYSIS-STEP-8] Successfully parsed ${codingResults.length} coding results`);
+  const fullResponse = JSON.stringify(codingResults);
 
   // Build ID-to-tag maps for efficient updates
   const pcitTagMap = {};
@@ -1171,6 +1099,7 @@ Do not include markdown or whitespace (minified JSON).
       childReaction: feedbackResult.childReaction || null,
       tips: null,
       reminder: feedbackResult.reminder,
+      activity: feedbackResult.activity || null,
       analyzedAt: new Date().toISOString(),
       mode: session.mode
     };
