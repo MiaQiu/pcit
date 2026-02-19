@@ -2,10 +2,16 @@
 const express = require('express');
 const Joi = require('joi');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const prisma = require('../services/db.cjs');
 const { generateAccessToken, generateRefreshToken } = require('../utils/jwt.cjs');
 const { encryptUserData, decryptUserData } = require('../utils/encryption.cjs');
+
+// Apple JWKS cache
+let appleKeysCache = null;
+let appleKeysCacheTime = 0;
+const APPLE_KEYS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
 const router = express.Router();
 
@@ -47,25 +53,29 @@ router.post('/social', async (req, res) => {
         break;
 
       case 'facebook':
-        // For Facebook, we trust the client has validated the token
-        // In production, verify with Facebook API
-        if (!providedEmail) {
-          return res.status(400).json({ error: 'Email required for Facebook auth' });
+        const facebookUser = await verifyFacebookToken(idToken);
+        if (!facebookUser) {
+          return res.status(401).json({ error: 'Invalid Facebook token' });
         }
-        email = providedEmail;
-        name = providedName || email.split('@')[0];
-        sub = `facebook_${idToken.substring(0, 20)}`;
+        email = facebookUser.email || providedEmail;
+        if (!email) {
+          return res.status(400).json({ error: 'Email not available from Facebook. Please grant email permission.' });
+        }
+        name = facebookUser.name || providedName || email.split('@')[0];
+        sub = `facebook_${facebookUser.sub}`;
         break;
 
       case 'apple':
-        // For Apple, verify the identity token
-        // In production, verify with Apple's public keys
-        if (!providedEmail) {
-          return res.status(400).json({ error: 'Email required for Apple auth' });
+        const appleUser = await verifyAppleToken(idToken);
+        if (!appleUser) {
+          return res.status(401).json({ error: 'Invalid Apple token' });
         }
-        email = providedEmail;
+        email = appleUser.email || providedEmail;
+        if (!email) {
+          return res.status(400).json({ error: 'Email not available from Apple. Please re-authenticate to grant email permission.' });
+        }
         name = providedName || email.split('@')[0];
-        sub = `apple_${idToken.substring(0, 20)}`;
+        sub = `apple_${appleUser.sub}`;
         break;
 
       default:
@@ -151,6 +161,99 @@ router.post('/social', async (req, res) => {
     res.status(500).json({ error: 'Social authentication failed' });
   }
 });
+
+/**
+ * Verify Facebook access token using the Graph API debug_token endpoint.
+ * Requires FACEBOOK_APP_ID and FACEBOOK_APP_SECRET env vars.
+ */
+async function verifyFacebookToken(accessToken) {
+  try {
+    const appId = process.env.FACEBOOK_APP_ID;
+    const appSecret = process.env.FACEBOOK_APP_SECRET;
+
+    if (!appId || !appSecret) {
+      throw new Error('FACEBOOK_APP_ID and FACEBOOK_APP_SECRET must be set');
+    }
+
+    // Validate token against our app using the debug_token endpoint
+    const appToken = `${appId}|${appSecret}`;
+    const debugRes = await fetch(
+      `https://graph.facebook.com/debug_token?input_token=${encodeURIComponent(accessToken)}&access_token=${encodeURIComponent(appToken)}`
+    );
+    const debugData = await debugRes.json();
+
+    if (!debugData.data?.is_valid || debugData.data.app_id !== appId) {
+      console.error('Facebook token invalid or issued for wrong app:', debugData);
+      return null;
+    }
+
+    // Fetch user profile
+    const meRes = await fetch(
+      `https://graph.facebook.com/me?fields=id,name,email&access_token=${encodeURIComponent(accessToken)}`
+    );
+    const meData = await meRes.json();
+
+    if (meData.error || !meData.id) {
+      console.error('Facebook /me error:', meData.error);
+      return null;
+    }
+
+    return {
+      sub: meData.id,
+      email: meData.email || null,
+      name: meData.name || null,
+    };
+  } catch (error) {
+    console.error('Facebook token verification error:', error);
+    return null;
+  }
+}
+
+/**
+ * Verify Apple identity token (JWT) using Apple's published JWKS.
+ * Requires APPLE_BUNDLE_ID env var (defaults to com.chromamind.nora).
+ */
+async function verifyAppleToken(idToken) {
+  try {
+    // Fetch Apple's public keys (with caching)
+    const now = Date.now();
+    if (!appleKeysCache || now - appleKeysCacheTime > APPLE_KEYS_CACHE_TTL) {
+      const keysRes = await fetch('https://appleid.apple.com/auth/keys');
+      if (!keysRes.ok) throw new Error('Failed to fetch Apple public keys');
+      const { keys } = await keysRes.json();
+      appleKeysCache = keys;
+      appleKeysCacheTime = now;
+    }
+
+    // Decode the JWT header to find the matching key by kid
+    const [headerB64] = idToken.split('.');
+    const header = JSON.parse(Buffer.from(headerB64, 'base64url').toString());
+    const jwk = appleKeysCache.find(k => k.kid === header.kid);
+
+    if (!jwk) {
+      console.error('Apple public key not found for kid:', header.kid);
+      return null;
+    }
+
+    // Convert JWK to a Node crypto public key and verify the JWT
+    const publicKey = crypto.createPublicKey({ key: jwk, format: 'jwk' });
+    const bundleId = process.env.APPLE_BUNDLE_ID || 'com.chromamind.nora';
+
+    const payload = jwt.verify(idToken, publicKey, {
+      algorithms: ['RS256'],
+      issuer: 'https://appleid.apple.com',
+      audience: bundleId,
+    });
+
+    return {
+      sub: payload.sub,
+      email: payload.email || null,
+    };
+  } catch (error) {
+    console.error('Apple token verification error:', error);
+    return null;
+  }
+}
 
 /**
  * Verify Google ID token
