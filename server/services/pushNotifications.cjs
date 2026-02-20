@@ -216,6 +216,26 @@ async function unregisterPushToken(userId) {
 }
 
 /**
+ * Send a "Milestones Unlocked" notification after the user completes 5 sessions
+ * @param {string} userId - User ID
+ * @param {string} [childName] - Child's name
+ * @returns {Promise<Object>} - Result of the notification
+ */
+async function sendMilestonesUnlockedNotification(userId, childName) {
+  const name = childName || 'your child';
+  return sendPushNotificationToUser(userId, {
+    title: 'Milestone Chart Unlocked!',
+    body: `You've completed 5 sessions — tap to see ${name}'s developmental milestones across Language, Cognitive, Social, Emotional, and Connection.`,
+    sound: 'default',
+    badge: 1,
+    data: {
+      type: 'milestones_unlocked',
+      timestamp: Date.now()
+    }
+  });
+}
+
+/**
  * Send a milestone celebration notification to a user
  * Only sends if developmentalVisible is enabled for that user
  * @param {string} userId - User ID
@@ -258,6 +278,7 @@ module.exports = {
   sendPushNotificationToUser,
   sendReportReadyNotification,
   sendMilestoneNotification,
+  sendMilestonesUnlockedNotification,
   registerPushToken,
   unregisterPushToken,
   isValidExpoPushToken

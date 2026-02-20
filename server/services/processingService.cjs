@@ -5,7 +5,7 @@
 const fetch = require('node-fetch');
 const prisma = require('./db.cjs');
 const { analyzePCITCoding } = require('./pcitAnalysisService.cjs');
-const { sendReportReadyNotification, sendPushNotificationToUser } = require('./pushNotifications.cjs');
+const { sendReportReadyNotification, sendPushNotificationToUser, sendMilestonesUnlockedNotification } = require('./pushNotifications.cjs');
 
 // ============================================================================
 // Failure Notification Helper
@@ -176,6 +176,21 @@ async function processRecordingWithRetry(sessionId, userId, attemptNumber = 0) {
     } catch (pushError) {
       console.error(`❌ [PUSH-NOTIFICATION] Error sending push notification for session ${sessionId.substring(0, 8)}:`, pushError);
       // Don't fail the whole process if push notification fails
+    }
+
+    // Check if this is the user's 5th completed session — unlock milestones notification
+    try {
+      const completedCount = await prisma.session.count({
+        where: { userId, analysisStatus: 'COMPLETED' }
+      });
+      if (completedCount === 5) {
+        console.log(`🎯 [MILESTONES-UNLOCKED] User ${userId.substring(0, 8)} just completed session 5 — sending unlock notification`);
+        const user = await prisma.user.findUnique({ where: { id: userId }, select: { childName: true } });
+        await sendMilestonesUnlockedNotification(userId, user?.childName);
+      }
+    } catch (milestoneNotifError) {
+      console.error(`❌ [MILESTONES-UNLOCKED] Error sending milestones unlock notification:`, milestoneNotifError);
+      // Non-critical — don't fail the process
     }
 
   } catch (error) {
