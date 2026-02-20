@@ -968,4 +968,104 @@ router.put('/settings/report-visibility', requireAdminAuth, async (req, res) => 
   }
 });
 
+// ============================================================================
+// KEYWORDS
+// ============================================================================
+
+/**
+ * GET /api/admin/keywords
+ * List all keywords, optionally filtered by search term
+ */
+router.get('/keywords', requireAdminAuth, async (req, res) => {
+  try {
+    const { search } = req.query;
+    const where = search
+      ? { OR: [{ term: { contains: search, mode: 'insensitive' } }, { definition: { contains: search, mode: 'insensitive' } }] }
+      : {};
+
+    const keywords = await prisma.keyword.findMany({
+      where,
+      orderBy: { term: 'asc' },
+    });
+
+    res.json({ keywords });
+  } catch (error) {
+    console.error('Admin list keywords error:', error);
+    res.status(500).json({ error: 'Failed to list keywords' });
+  }
+});
+
+/**
+ * POST /api/admin/keywords
+ * Create a new keyword
+ */
+router.post('/keywords', requireAdminAuth, async (req, res) => {
+  try {
+    const { term, definition } = req.body;
+    if (!term || !term.trim()) return res.status(400).json({ error: 'term is required' });
+    if (!definition || !definition.trim()) return res.status(400).json({ error: 'definition is required' });
+
+    const keyword = await prisma.keyword.create({
+      data: {
+        id: crypto.randomUUID(),
+        term: term.trim(),
+        definition: definition.trim(),
+        updatedAt: new Date(),
+      },
+    });
+
+    res.status(201).json({ keyword });
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: `Keyword "${req.body.term}" already exists` });
+    }
+    console.error('Admin create keyword error:', error);
+    res.status(500).json({ error: 'Failed to create keyword' });
+  }
+});
+
+/**
+ * PUT /api/admin/keywords/:id
+ * Update an existing keyword
+ */
+router.put('/keywords/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const { term, definition } = req.body;
+    if (!term || !term.trim()) return res.status(400).json({ error: 'term is required' });
+    if (!definition || !definition.trim()) return res.status(400).json({ error: 'definition is required' });
+
+    const existing = await prisma.keyword.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ error: 'Keyword not found' });
+
+    const keyword = await prisma.keyword.update({
+      where: { id: req.params.id },
+      data: { term: term.trim(), definition: definition.trim(), updatedAt: new Date() },
+    });
+
+    res.json({ keyword });
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: `Keyword "${req.body.term}" already exists` });
+    }
+    console.error('Admin update keyword error:', error);
+    res.status(500).json({ error: 'Failed to update keyword' });
+  }
+});
+
+/**
+ * DELETE /api/admin/keywords/:id
+ */
+router.delete('/keywords/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const existing = await prisma.keyword.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ error: 'Keyword not found' });
+
+    await prisma.keyword.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin delete keyword error:', error);
+    res.status(500).json({ error: 'Failed to delete keyword' });
+  }
+});
+
 module.exports = router;

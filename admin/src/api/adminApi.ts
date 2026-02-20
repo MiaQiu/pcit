@@ -279,6 +279,42 @@ export async function toggleWeeklyReportVisibility(
   });
 }
 
+// ---- Keywords ----
+
+export interface Keyword {
+  id: string;
+  term: string;
+  definition: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function getKeywords(search?: string): Promise<Keyword[]> {
+  const params = search ? `?search=${encodeURIComponent(search)}` : '';
+  const data = await apiFetch<{ keywords: Keyword[] }>(`/api/admin/keywords${params}`);
+  return data.keywords;
+}
+
+export async function createKeyword(term: string, definition: string): Promise<Keyword> {
+  const data = await apiFetch<{ keyword: Keyword }>('/api/admin/keywords', {
+    method: 'POST',
+    body: JSON.stringify({ term, definition }),
+  });
+  return data.keyword;
+}
+
+export async function updateKeyword(id: string, term: string, definition: string): Promise<Keyword> {
+  const data = await apiFetch<{ keyword: Keyword }>(`/api/admin/keywords/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ term, definition }),
+  });
+  return data.keyword;
+}
+
+export async function deleteKeyword(id: string): Promise<void> {
+  await apiFetch(`/api/admin/keywords/${id}`, { method: 'DELETE' });
+}
+
 // ---- Settings ----
 
 export interface ReportVisibility {

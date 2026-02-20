@@ -469,6 +469,15 @@ body {
   white-space: nowrap;
 }
 
+.cell-definition {
+  max-width: 480px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-light);
+  font-size: 13px;
+}
+
 .module-badge {
   display: inline-block;
   padding: 2px 8px;
