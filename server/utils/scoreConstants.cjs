@@ -108,46 +108,19 @@ function calculateCDIScore(tagCounts) {
 }
 
 /**
- * Calculate Nora Score for PDI mode
- * Command effectiveness percentage
- * @param {Object} tagCounts - Object containing command counts
- * @returns {{score: number, passed: boolean}} Score and pass/fail status
- */
-function calculatePDIScore(tagCounts) {
-  const totalCommands = (tagCounts.direct_command || 0) +
-                        (tagCounts.indirect_command || 0) +
-                        (tagCounts.vague_command || 0) +
-                        (tagCounts.chained_command || 0);
-  const effectiveCommands = tagCounts.direct_command || 0;
-
-  const score = totalCommands > 0
-    ? Math.round((effectiveCommands / totalCommands) * 100)
-    : 0;
-
-  // PDI passes at 75%+ effective commands
-  const passed = score >= 75;
-
-  return { score, passed };
-}
-
-/**
  * Calculate Nora Score based on session mode
+ * Both CDI and PDI use the same shield-based CDI scoring system.
  * @param {Object} tagCounts - Object containing skill/command counts
  * @param {string} mode - 'CDI' or 'PDI'
  * @returns {{score: number, passed: boolean}} Score and pass/fail status
  */
 function calculateNoraScore(tagCounts, mode) {
-  if (mode === 'CDI') {
-    return calculateCDIScore(tagCounts);
-  } else {
-    return calculatePDIScore(tagCounts);
-  }
+  return calculateCDIScore(tagCounts);
 }
 
 module.exports = {
   CDI_SCORE_CONFIG,
   DPICS_TO_TAG_MAP,
   calculateCDIScore,
-  calculatePDIScore,
   calculateNoraScore
 };
