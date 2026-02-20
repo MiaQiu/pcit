@@ -153,19 +153,21 @@ export const SignupOptionsScreen: React.FC = () => {
             {loadingProvider === 'google' && <ActivityIndicator size="small" color="#6B7280" />}
           </TouchableOpacity>
 
-          {/* Apple */}
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={handleAppleSignIn}
-            activeOpacity={0.8}
-            disabled={loadingProvider !== null}
-          >
-            <View style={styles.buttonContent}>
-              <Ionicons name="logo-apple" size={20} color="#000000" />
-              <Text style={styles.socialButtonText}>Continue with Apple</Text>
-            </View>
-            {loadingProvider === 'apple' && <ActivityIndicator size="small" color="#6B7280" />}
-          </TouchableOpacity>
+          {/* Apple - temporarily hidden */}
+          {false && (
+            <TouchableOpacity
+              style={styles.socialButton}
+              onPress={handleAppleSignIn}
+              activeOpacity={0.8}
+              disabled={loadingProvider !== null}
+            >
+              <View style={styles.buttonContent}>
+                <Ionicons name="logo-apple" size={20} color="#000000" />
+                <Text style={styles.socialButtonText}>Continue with Apple</Text>
+              </View>
+              {loadingProvider === 'apple' && <ActivityIndicator size="small" color="#6B7280" />}
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Already have account */}

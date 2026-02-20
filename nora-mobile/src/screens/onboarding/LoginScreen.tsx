@@ -186,22 +186,24 @@ export const LoginScreen: React.FC = () => {
           {/* Title */}
           <Text style={styles.title}>Let's get you logged in</Text>
 
-          {/* Apple Sign In */}
-          <TouchableOpacity
-            style={styles.appleButton}
-            onPress={handleAppleSignIn}
-            activeOpacity={0.85}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <View style={styles.socialButtonContent}>
-                <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
-                <Text style={styles.appleButtonText}>Sign in with Apple</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          {/* Apple Sign In - temporarily hidden */}
+          {false && (
+            <TouchableOpacity
+              style={styles.appleButton}
+              onPress={handleAppleSignIn}
+              activeOpacity={0.85}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <View style={styles.socialButtonContent}>
+                  <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
+                  <Text style={styles.appleButtonText}>Sign in with Apple</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
 
           {/* Google Sign In */}
           <TouchableOpacity
