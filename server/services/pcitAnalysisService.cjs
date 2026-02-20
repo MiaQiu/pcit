@@ -1177,7 +1177,7 @@ Do not include markdown or whitespace (minified JSON).
 
     const [profilingSettled, coachingSettled, aboutChildSettled] = await Promise.allSettled([
       generateDevelopmentalProfiling(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker),
-      generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker),
+      isCDI ? generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker) : Promise.resolve(null),
       generateAboutChild(utterancesForProfiling, childInfoForProfiling, tagCounts)
     ]);
 
