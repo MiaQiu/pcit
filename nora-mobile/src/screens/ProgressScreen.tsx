@@ -320,7 +320,6 @@ export const ProgressScreen: React.FC = () => {
   const [recordings, setRecordings] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [developmentalVisible, setDevelopmentalVisible] = useState(false);
 
   useEffect(() => {
     // Track progress screen viewed
@@ -348,8 +347,8 @@ export const ProgressScreen: React.FC = () => {
     try {
       setLoading(true);
 
-      // Fetch recording data, lesson stats, lesson list, developmental progress, and visibility in parallel
-      const [recordingsResponse, learningStats, lessonsResponse, devProgress, devVisibility] = await Promise.all([
+      // Fetch recording data, lesson stats, lesson list, and developmental progress in parallel
+      const [recordingsResponse, learningStats, lessonsResponse, devProgress] = await Promise.all([
         recordingService.getRecordings(),
         lessonService.getLearningStats().catch(err => {
           console.log('Failed to load learning stats:', err);
@@ -363,14 +362,9 @@ export const ProgressScreen: React.FC = () => {
           console.log('Failed to load developmental progress:', err);
           return null;
         }),
-        recordingService.getDevelopmentalVisibility().catch(err => {
-          console.log('Failed to load developmental visibility:', err);
-          return { visible: false };
-        })
       ]);
 
-      // Set developmental progress and visibility
-      setDevelopmentalVisible(devVisibility.visible);
+      // Set developmental progress
       if (devProgress) {
         setDevelopmentalProgress(devProgress);
       }
@@ -660,11 +654,24 @@ export const ProgressScreen: React.FC = () => {
         <ScoreChart data={scoreData} />
 
         {/* Developmental Stage Radar Chart */}
-        {developmentalProgress && developmentalVisible && (
-          <View onLayout={(e) => { developmentalSectionY.current = e.nativeEvent.layout.y; }}>
+        <View onLayout={(e) => { developmentalSectionY.current = e.nativeEvent.layout.y; }}>
+          {recordings.length >= 5 && developmentalProgress ? (
             <RadarChart data={developmentalProgress} childName={developmentalProgress.childName} onDomainPress={handleDomainPress} />
-          </View>
-        )}
+          ) : (
+            <View style={styles.milestoneLockedCard}>
+              <Text style={styles.milestoneLockedTitle}>Developmental Milestones</Text>
+              <Text style={styles.milestoneLockedDesc}>
+                See how your child is growing across 5 key areas — Language, Cognitive, Social, Emotional, and Connection — compared against their age benchmark.
+              </Text>
+              <Text style={styles.milestoneLockedDesc}>
+                Nora needs at least 5 sessions to build a wholistic, unbiased picture of your child, so you can spot where they're truly thriving and where a little extra support might help.
+              </Text>
+              <Text style={styles.milestoneLockedProgress}>
+                Available after 5 sessions · {recordings.length}/5 completed
+              </Text>
+            </View>
+          )}
+        </View>
 
         {/* Reports Section */}
         <ReportsSection key={refreshKey} recordings={recordings} />
@@ -932,5 +939,31 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 24,
+  },
+  milestoneLockedCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  milestoneLockedTitle: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 18,
+    color: '#1E2939',
+    marginBottom: 10,
+  },
+  milestoneLockedDesc: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 21,
+    marginBottom: 14,
+  },
+  milestoneLockedProgress: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 13,
+    color: '#9CA3AF',
   },
 });
