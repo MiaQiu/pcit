@@ -674,8 +674,8 @@ export const ReportScreen: React.FC = () => {
           })()
         )}
 
-        {/* Tomorrow's Goal */}
-        {reportData.mode === 'PDI' && reportData.pdiTomorrowGoal ? (
+        {/* Tomorrow's Goal — hidden for now */}
+        {/* {reportData.mode === 'PDI' && reportData.pdiTomorrowGoal ? (
           <View style={styles.nextDayGoalSection}>
             <DragonCard
               label="Tomorrow's Goal"
@@ -701,7 +701,35 @@ export const ReportScreen: React.FC = () => {
               </View>
             )
           )
-        )}
+        )} */}
+
+        {/* What we learnt about Child */}
+        {reportData.aboutChild && reportData.aboutChild.length > 0 && (() => {
+          const item = reportData.aboutChild![0];
+          return (
+            <View>
+              <Text style={styles.cardTitle}>What we learnt about {childName}</Text>
+              <View style={styles.card}>
+                {/* Title badge */}
+                <View style={styles.aboutChildTitleBadge}>
+                  <Ionicons name="sparkles" size={14} color="#7C3AED" />
+                  <Text style={styles.aboutChildTitleText}>{item.Title}</Text>
+                </View>
+
+                {/* Description */}
+                <Text style={styles.aboutChildDescription}>{item.Description}</Text>
+
+                {/* Divider */}
+                {item.Details ? <View style={styles.aboutChildDivider} /> : null}
+
+                {/* Details */}
+                {item.Details ? (
+                  <Text style={styles.aboutChildDetails}>{item.Details}</Text>
+                ) : null}
+              </View>
+            </View>
+          );
+        })()}
 
         {/* Milestone Celebrations */}
         {developmentalVisible && reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations) && reportData.milestoneCelebrations.length > 0 && (
@@ -1617,54 +1645,38 @@ const styles = StyleSheet.create({
     color: '#0059DB',
   },
   // About Child section styles
-  aboutChildSection: {
-    marginBottom: 16,
-  },
-  aboutChildContainer: {
-    gap: 12,
-  },
-  aboutChildCard: {
-    backgroundColor: '#F8F7FC',
-    borderRadius: 16,
-    padding: 16,
-  },
-  aboutChildRow: {
+  aboutChildTitleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: '#EDE9FE',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 14,
   },
-  aboutChildIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  aboutChildContent: {
-    flex: 1,
-  },
-  aboutChildTitle: {
+  aboutChildTitleText: {
     fontFamily: FONTS.bold,
-    fontSize: 16,
-    color: COLORS.textDark,
-    marginBottom: 4,
+    fontSize: 14,
+    color: '#7C3AED',
   },
   aboutChildDescription: {
-    fontFamily: FONTS.regular,
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    lineHeight: 24,
+    marginBottom: 4,
+  },
+  aboutChildDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 14,
   },
   aboutChildDetails: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  aboutChildDetailsText: {
     fontFamily: FONTS.regular,
     fontSize: 14,
-    color: COLORS.textDark,
+    color: '#4B5563',
     lineHeight: 22,
   },
   // Tomorrow's Goal styles

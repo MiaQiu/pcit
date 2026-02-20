@@ -439,6 +439,137 @@ async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts =
   }
 }
 
+// ============================================================================
+// About Child — Psychologist Narrative + Observation Extraction
+// ============================================================================
+
+/**
+ * Call Gemini Flash and return raw text (no JSON parsing).
+ * Used for free-form narrative steps where the output is prose, not JSON.
+ */
+async function callGeminiFlashRaw(prompt, options = {}) {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
+
+  const { temperature = 0.7, maxOutputTokens = 4096, responseMimeType = null } = options;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+  const generationConfig = { temperature, maxOutputTokens };
+  if (responseMimeType) generationConfig.responseMimeType = responseMimeType;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '');
+    throw new Error(`Gemini Flash API error: ${response.status} - ${errorText.substring(0, 200)}`);
+  }
+
+  const data = await response.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('Empty response from Gemini Flash');
+  return text;
+}
+
+/**
+ * Generate "About Child" observations via two sequential Gemini Flash calls.
+ *
+ * Step 1 — Free-form psychologist narrative (Gemini Flash, prose output)
+ * Step 3 — Extract structured observations from the narrative (Gemini Flash, JSON array)
+ *
+ * @param {Array}  utterances - Utterances with roles
+ * @param {Object} childInfo  - { name, ageMonths, gender }
+ * @param {Object} tagCounts  - Session metrics from PCIT coding
+ * @returns {Promise<Array|null>} Array of AboutChildItem or null on failure
+ */
+async function generateAboutChild(utterances, childInfo, tagCounts = {}) {
+  const { name, ageMonths, gender } = childInfo;
+  const transcript = formatUtterancesForPsychologist(utterances);
+  const ageDisplay = ageMonths ? `${ageMonths} months old` : 'unknown age';
+
+  // ── Step 1: Free-form psychologist narrative ──────────────────────────────
+  const step1Prompt = `this is transcripts from a 5 mins parent-child play session. as a pcit therapist and child developmental psychologist, can you provide feedbacks to parents on the play session. can you also highlight what are the things you notice with the child?
+
+**Child Info:**
+- ${name || 'Child'}, ${ageDisplay} ${gender || 'child'}
+
+**Session Metrics:**
+- Labeled Praises: ${tagCounts.praise || 0} (goal: 10+)
+- Reflections: ${tagCounts.echo || 0} (goal: 10+)
+- Behavioral Descriptions: ${tagCounts.narration || 0} (goal: 10+)
+- Questions: ${tagCounts.question || 0} (reduce)
+- Commands: ${tagCounts.command || 0} (reduce)
+- Criticisms: ${tagCounts.criticism || 0} (eliminate)
+
+**Transcript:**
+${transcript}`;
+
+  console.log(`📊 [ABOUT-CHILD] Step 1: Calling Gemini Flash for psychologist narrative...`);
+
+  let narrativeText;
+  try {
+    narrativeText = await callGeminiFlashRaw(step1Prompt, { temperature: 0.7, maxOutputTokens: 4096 });
+    console.log(`✅ [ABOUT-CHILD] Step 1 complete (${narrativeText.length} chars)`);
+  } catch (error) {
+    console.error('❌ [ABOUT-CHILD] Step 1 failed:', error.message);
+    return null;
+  }
+
+  // ── Step 3: Extract structured child observations ─────────────────────────
+  const step3Prompt = `Extract ONLY the "Observations of the Child" section - the insights about the child's behavior, development, and characteristics observed during the session.
+
+Format the observations as a JSON array, ranked by positivity follow by significance. Each observation should have:
+- id: sequential number starting from 1
+- Title: A short catchy title (2-4 words) describing the trait or behavior
+- Description: A brief 1-sentence summary for parents
+- Details: A longer explanation with developmental context, why this matters, and actionable tips about how to improve.
+
+Here is the psychologist feedback to analyze:
+${narrativeText}
+
+Return ONLY a valid JSON array. No markdown code blocks or explanations.
+
+Example format:
+[
+  {
+    "id": 1,
+    "Title": "Little Scientist",
+    "Description": "Bobby was exploring physics (gravity/pouring). He wasn't trying to be messy.",
+    "Details": "His persistent desire to 'pour' and 'take out' reflects a 3-year-old's natural curiosity about cause and effect. At this age, repetitive pouring is a way of testing physical boundaries and understanding how objects occupy space."
+  },
+  {
+    "id": 2,
+    "Title": "Sensory Seeker",
+    "Description": "Bobby loves the 'squishy' texture today!",
+    "Details": "He is very focused on the tactile nature of the vitamins—calling them 'squishy, squishy'. This is a hallmark of the sensorimotor stage of development, where kids learn through touch and texture."
+  }
+]`;
+
+  console.log(`📊 [ABOUT-CHILD] Step 3: Calling Gemini Flash (JSON mode) to extract child observations...`);
+
+  try {
+    const rawJson = await callGeminiFlashRaw(step3Prompt, {
+      temperature: 0.3,
+      maxOutputTokens: 2048,
+      responseMimeType: 'application/json'
+    });
+    const aboutChild = JSON.parse(rawJson);
+    if (!Array.isArray(aboutChild)) throw new Error('Expected array response');
+    console.log(`✅ [ABOUT-CHILD] Extracted ${aboutChild.length} child observations`);
+    return aboutChild;
+  } catch (error) {
+    console.error('❌ [ABOUT-CHILD] Step 3 failed:', error.message);
+    return null;
+  }
+}
+
 /**
  * Generate CDI coaching cards using Gemini
  * Produces actionable coaching summary and cards for parents
@@ -1044,19 +1175,24 @@ Do not include markdown or whitespace (minified JSON).
       isFirstSession: priorCompletedCount === 0
     };
 
-    const [profilingSettled, coachingSettled] = await Promise.allSettled([
+    const [profilingSettled, coachingSettled, aboutChildSettled] = await Promise.allSettled([
       generateDevelopmentalProfiling(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker),
-      generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker)
+      generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker),
+      generateAboutChild(utterancesForProfiling, childInfoForProfiling, tagCounts)
     ]);
 
     const profilingResult = profilingSettled.status === 'fulfilled' ? profilingSettled.value : null;
     const coachingResult = coachingSettled.status === 'fulfilled' ? coachingSettled.value : null;
+    const aboutChildResult = aboutChildSettled.status === 'fulfilled' ? aboutChildSettled.value : null;
 
     if (profilingSettled.status === 'rejected') {
       console.error('⚠️ [ANALYSIS-STEP-9] Developmental profiling rejected:', profilingSettled.reason?.message);
     }
     if (coachingSettled.status === 'rejected') {
       console.error('⚠️ [ANALYSIS-STEP-9] CDI coaching rejected:', coachingSettled.reason?.message);
+    }
+    if (aboutChildSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] About child rejected:', aboutChildSettled.reason?.message);
     }
 
     // Merge into the same shape downstream code expects
@@ -1066,7 +1202,8 @@ Do not include markdown or whitespace (minified JSON).
         metadata: profilingResult?.metadata || null,
         coachingSummary: coachingResult?.coachingSummary || null,
         coachingCards: coachingResult?.coachingCards || null,
-        tomorrowGoal: coachingResult?.tomorrowGoal || null
+        tomorrowGoal: coachingResult?.tomorrowGoal || null,
+        aboutChild: aboutChildResult || null
       };
       console.log(`✅ [ANALYSIS-STEP-9] Child profiling complete — ${childProfilingResult.developmentalObservation?.domains?.length || 0} domains, ${childProfilingResult.coachingCards?.length || 0} coaching cards`);
     } else {
@@ -1144,7 +1281,8 @@ Do not include markdown or whitespace (minified JSON).
       coachingSummary: childProfilingResult?.coachingSummary || null,
       coachingCards: childProfilingResult?.coachingCards
         ? { sections: childProfilingResult.coachingCards, tomorrowGoal: childProfilingResult.tomorrowGoal || null }
-        : null
+        : null,
+      aboutChild: childProfilingResult?.aboutChild || null
     }
   });
 
@@ -1212,5 +1350,6 @@ module.exports = {
   generateCDIFeedback,
   generatePDITwoChoicesAnalysis,
   generateDevelopmentalProfiling,
-  generateCdiCoaching
+  generateCdiCoaching,
+  generateAboutChild
 };

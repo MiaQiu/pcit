@@ -774,7 +774,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       coachingCards: coachingData?.sections || (Array.isArray(coachingData) ? coachingData : null),
       // Backward compat (old mobile app versions)
       childPortfolioInsights: transformCoachingCardsToPortfolioInsights(Array.isArray(coachingData) ? coachingData : null) || session.childPortfolioInsights || null,
-      aboutChild: transformDomainsToAboutChild(childProfiling?.domains) || session.aboutChild || null,
+      aboutChild: session.aboutChild || null,
       // Milestone celebrations triggered during this session
       milestoneCelebrations: session.milestoneCelebrations || null
     });
