@@ -24,7 +24,8 @@ const ISSUE_TO_LEVEL: Record<string, ClinicalLevel> = {
   arguing: 'DE_ESCALATE',
   'not-listening': 'DIRECT',
   new_baby_in_the_house: 'SUPPORT',
-  Navigating_change: 'SUPPORT',
+  moving_house: 'SUPPORT',
+  parental_divorce: 'SUPPORT',
   social: 'FLOURISH',
   frustration_tolerance: 'FLOURISH',
 };

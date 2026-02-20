@@ -26,7 +26,8 @@ export const ChildIssueScreen: React.FC = () => {
         { value: 'social', label: 'Social-emotional skills' },
         { value: 'new_baby_in_the_house', label: 'New baby in the home' },
         { value: 'frustration_tolerance', label: 'Low frustration tolerance' },
-        { value: 'Navigating_change', label: 'Navigating a big change' },
+        { value: 'moving_house', label: 'Moving house & school changes' },
+        { value: 'parental_divorce', label: 'Navigating parental divorce' },
         { value: 'other', label: 'Others' },
       ]}
       dataField="issue"

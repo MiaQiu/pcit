@@ -15,7 +15,8 @@ const ISSUE_TO_MODULE = {
   arguing: 'COOPERATION',
   'not-listening': 'COOPERATION',
   new_baby_in_the_house: 'SIBLINGS',
-  Navigating_change: 'RELOCATION',
+  moving_house: 'RELOCATION',
+  parental_divorce: 'DIVORCE',
   social: 'DEVELOPMENT',
   frustration_tolerance: 'EMOTIONS',
 };
