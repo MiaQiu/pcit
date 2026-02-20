@@ -28,7 +28,7 @@ export const SignupOptionsScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const socialAuthService = useSocialAuthService();
   const { updateData } = useOnboarding();
-  const [loading, setLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<'google' | 'apple' | null>(null);
 
   const { signIn: signInWithGoogle, request: googleRequest } = useGoogleAuth();
 
@@ -68,7 +68,7 @@ export const SignupOptionsScreen: React.FC = () => {
     if (!googleRequest) return;
 
     try {
-      setLoading(true);
+      setLoadingProvider('google');
       const provider = await signInWithGoogle();
 
       if (provider) {
@@ -79,13 +79,13 @@ export const SignupOptionsScreen: React.FC = () => {
       console.error('Google sign in error:', error);
       Alert.alert('Error', error.message || 'Failed to sign in with Google');
     } finally {
-      setLoading(false);
+      setLoadingProvider(null);
     }
   };
 
   const handleAppleSignIn = async () => {
     try {
-      setLoading(true);
+      setLoadingProvider('apple');
       const provider = await signInWithApple();
 
       if (provider) {
@@ -96,7 +96,7 @@ export const SignupOptionsScreen: React.FC = () => {
       console.error('Apple sign in error:', error);
       Alert.alert('Error', error.message || 'Failed to sign in with Apple');
     } finally {
-      setLoading(false);
+      setLoadingProvider(null);
     }
   };
 
@@ -126,7 +126,7 @@ export const SignupOptionsScreen: React.FC = () => {
             style={styles.socialButton}
             onPress={handleContinueWithEmail}
             activeOpacity={0.8}
-            disabled={loading}
+            disabled={loadingProvider !== null}
           >
             <View style={styles.buttonContent}>
               <Ionicons name="mail" size={20} color="#6B7280" />
@@ -139,13 +139,13 @@ export const SignupOptionsScreen: React.FC = () => {
             style={styles.socialButton}
             onPress={handleGoogleSignIn}
             activeOpacity={0.8}
-            disabled={loading || !googleRequest}
+            disabled={loadingProvider !== null || !googleRequest}
           >
             <View style={styles.buttonContent}>
               <Ionicons name="logo-google" size={20} color="#DB4437" />
               <Text style={styles.socialButtonText}>Continue with Google</Text>
             </View>
-            {loading && <ActivityIndicator size="small" color="#6B7280" />}
+            {loadingProvider === 'google' && <ActivityIndicator size="small" color="#6B7280" />}
           </TouchableOpacity>
 
           {/* Apple */}
@@ -153,13 +153,13 @@ export const SignupOptionsScreen: React.FC = () => {
             style={styles.socialButton}
             onPress={handleAppleSignIn}
             activeOpacity={0.8}
-            disabled={loading}
+            disabled={loadingProvider !== null}
           >
             <View style={styles.buttonContent}>
               <Ionicons name="logo-apple" size={20} color="#000000" />
               <Text style={styles.socialButtonText}>Continue with Apple</Text>
             </View>
-            {loading && <ActivityIndicator size="small" color="#6B7280" />}
+            {loadingProvider === 'apple' && <ActivityIndicator size="small" color="#6B7280" />}
           </TouchableOpacity>
         </View>
 
