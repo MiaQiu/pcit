@@ -64,7 +64,7 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       return initialStep as keyof OnboardingStackParamList;
     }
     // Default to Welcome screen for new users
-    return 'SignupOptions';
+    return 'Welcome';
   };
 
   return (

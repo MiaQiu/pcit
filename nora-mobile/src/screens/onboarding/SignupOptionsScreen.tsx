@@ -117,10 +117,23 @@ export const SignupOptionsScreen: React.FC = () => {
         </TouchableOpacity>
 
         {/* Title */}
-        <Text style={styles.title}>Create an account</Text>
+        <Text style={styles.title}>Create an account to save your progress</Text>
 
         {/* Social Login Buttons */}
         <View style={styles.buttonsContainer}>
+          {/* Email */}
+          <TouchableOpacity
+            style={styles.socialButton}
+            onPress={handleContinueWithEmail}
+            activeOpacity={0.8}
+            disabled={loading}
+          >
+            <View style={styles.buttonContent}>
+              <Ionicons name="mail" size={20} color="#6B7280" />
+              <Text style={styles.socialButtonText}>Continue with Email</Text>
+            </View>
+          </TouchableOpacity>
+
           {/* Google */}
           <TouchableOpacity
             style={styles.socialButton}
@@ -148,23 +161,7 @@ export const SignupOptionsScreen: React.FC = () => {
             </View>
             {loading && <ActivityIndicator size="small" color="#6B7280" />}
           </TouchableOpacity>
-
-          {/* Email */}
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={handleContinueWithEmail}
-            activeOpacity={0.8}
-            disabled={loading}
-          >
-            <View style={styles.buttonContent}>
-              <Ionicons name="mail" size={20} color="#6B7280" />
-              <Text style={styles.socialButtonText}>Continue with Email</Text>
-            </View>
-          </TouchableOpacity>
         </View>
-
-        {/* Spacer */}
-        <View style={styles.spacer} />
 
         {/* Already have account */}
         <View style={styles.loginContainer}>
@@ -233,7 +230,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 170,
+    marginTop: 24,
   },
   loginText: {
     fontFamily: 'PlusJakartaSans_400Regular',

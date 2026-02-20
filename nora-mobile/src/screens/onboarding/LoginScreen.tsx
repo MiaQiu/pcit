@@ -1,6 +1,6 @@
 /**
  * Login Screen
- * Allow existing users to log in with email and password
+ * Allow existing users to log in with email/password, Apple, or Google
  */
 
 import React, { useState } from 'react';
@@ -15,25 +15,30 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Purchases from 'react-native-purchases';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
-import { useAuthService } from '../../contexts/AppContext';
+import { useAuthService, useSocialAuthService } from '../../contexts/AppContext';
 import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
 import { handleApiSuccess } from '../../utils/NetworkMonitor';
 import { requestNotificationPermissions } from '../../utils/notifications';
 import amplitudeService from '../../services/amplitudeService';
+import { useGoogleAuth, signInWithApple } from '../../utils/socialAuth';
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const authService = useAuthService();
+  const socialAuthService = useSocialAuthService();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const { signIn: signInWithGoogle, request: googleRequest } = useGoogleAuth();
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -44,9 +49,8 @@ export const LoginScreen: React.FC = () => {
     try {
       setLoading(true);
       const response = await authService.login(email.trim(), password);
-      handleApiSuccess(); // Mark server as up
+      handleApiSuccess();
 
-      // Track login in Amplitude with user properties
       if (response && response.user) {
         const daysInApp = response.user.createdAt
           ? Math.floor((Date.now() - new Date(response.user.createdAt).getTime()) / (1000 * 60 * 60 * 24))
@@ -65,41 +69,27 @@ export const LoginScreen: React.FC = () => {
         });
         amplitudeService.trackLogin('email');
 
-        // Identify user to RevenueCat on login
-        // This restores the user's purchase history and links any purchases made while logged out
         try {
           const userId = String(response.user.id);
           await Purchases.logIn(userId);
-          console.log('✅ User identified to RevenueCat on login:', userId);
         } catch (revenueCatError) {
           console.error('⚠️ Failed to identify user to RevenueCat:', revenueCatError);
-          // Don't block login flow if RevenueCat identification fails
         }
       }
 
-      // Register for push notifications (non-blocking)
       const accessToken = authService.getAccessToken();
       if (accessToken) {
         requestNotificationPermissions(accessToken).catch(error => {
           console.error('[LoginScreen] Failed to register push notifications:', error);
-          // Don't block login if push notification registration fails
         });
       }
 
-      // Check subscription status and navigate accordingly
       const subscriptionStatus = response?.user?.subscriptionStatus;
-
       if (subscriptionStatus === 'ACTIVE') {
-        // User has active subscription - go to main app
         navigation.dispatch(
-          CommonActions.reset({
-            index: 0,
-            routes: [{ name: 'MainTabs' as any }],
-          })
+          CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] })
         );
       } else {
-        // Subscription not active (INACTIVE, EXPIRED, CANCELLED, or undefined) - show subscription screen
-        console.log('[LoginScreen] Subscription not active, showing subscription screen. Status:', subscriptionStatus);
         navigation.dispatch(
           CommonActions.reset({
             index: 0,
@@ -116,8 +106,61 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleBack = () => {
-    navigation.goBack();
+  const handleSocialAuthSuccess = async (user: any) => {
+    try {
+      await Purchases.logIn(String(user.id));
+    } catch (e) {
+      console.error('RevenueCat logIn failed:', e);
+    }
+
+    amplitudeService.trackLogin('social');
+
+    const subscriptionStatus = user?.subscriptionStatus;
+    if (subscriptionStatus === 'ACTIVE') {
+      navigation.dispatch(
+        CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] })
+      );
+    } else {
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Onboarding' as any, params: { initialStep: 'Subscription' } }],
+        })
+      );
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    try {
+      setLoading(true);
+      const provider = await signInWithApple();
+      if (provider) {
+        const response = await socialAuthService.authenticateWithProvider(provider);
+        await handleSocialAuthSuccess(response.user);
+      }
+    } catch (error: any) {
+      console.error('Apple sign in error:', error);
+      Alert.alert('Error', error.message || 'Failed to sign in with Apple');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (!googleRequest) return;
+    try {
+      setLoading(true);
+      const provider = await signInWithGoogle();
+      if (provider) {
+        const response = await socialAuthService.authenticateWithProvider(provider);
+        await handleSocialAuthSuccess(response.user);
+      }
+    } catch (error: any) {
+      console.error('Google sign in error:', error);
+      Alert.alert('Error', error.message || 'Failed to sign in with Google');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -127,92 +170,115 @@ export const LoginScreen: React.FC = () => {
         style={styles.keyboardView}
       >
         {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={28} color="#1E2939" />
         </TouchableOpacity>
 
-        <View style={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           {/* Title */}
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Log in to continue</Text>
+          <Text style={styles.title}>Let's get you logged in</Text>
 
-          {/* Email Input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              placeholderTextColor="#9CA3AF"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoCorrect={false}
-              editable={!loading}
-            />
-          </View>
-
-          {/* Password Input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="Enter your password"
-                placeholderTextColor="#9CA3AF"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeIcon}
-              >
-                <Ionicons
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={24}
-                  color="#9CA3AF"
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Forgot Password Link */}
+          {/* Apple Sign In */}
           <TouchableOpacity
-            style={styles.forgotPasswordContainer}
-            onPress={() => navigation.navigate('ForgotPassword')}
-          >
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
-
-          {/* Spacer */}
-          <View style={styles.spacer} />
-
-          {/* Login Button */}
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            activeOpacity={0.8}
+            style={styles.appleButton}
+            onPress={handleAppleSignIn}
+            activeOpacity={0.85}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.buttonText}>Log In</Text>
+              <View style={styles.socialButtonContent}>
+                <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
+                <Text style={styles.appleButtonText}>Sign in with Apple</Text>
+              </View>
             )}
           </TouchableOpacity>
 
-          {/* Create Account Link */}
-          <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('CreateAccount')}>
-              <Text style={styles.signupLink}>Sign Up</Text>
+          {/* Google Sign In */}
+          <TouchableOpacity
+            style={styles.googleButton}
+            onPress={handleGoogleSignIn}
+            activeOpacity={0.85}
+            disabled={loading || !googleRequest}
+          >
+            <View style={styles.socialButtonContent}>
+              <Ionicons name="logo-google" size={20} color="#DB4437" />
+              <Text style={styles.googleButtonText}>Sign in with Google</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Divider */}
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Email Input */}
+          <TextInput
+            style={styles.input}
+            placeholder="Email Address"
+            placeholderTextColor="#9CA3AF"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoCorrect={false}
+            editable={!loading}
+          />
+
+          {/* Password Input */}
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Password"
+              placeholderTextColor="#9CA3AF"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!loading}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eyeIcon}
+            >
+              <Ionicons
+                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                size={22}
+                color="#9CA3AF"
+              />
             </TouchableOpacity>
           </View>
-        </View>
+
+          {/* Log In Button */}
+          <TouchableOpacity
+            style={[styles.loginButton, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            activeOpacity={0.8}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#1E2939" />
+            ) : (
+              <Text style={styles.loginButtonText}>LOG IN</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Forgot Password */}
+          <TouchableOpacity
+            style={styles.forgotPasswordContainer}
+            onPress={() => navigation.navigate('ForgotPassword')}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot your Password?</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -227,122 +293,132 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backButton: {
-    position: 'absolute',
-    top: 60,
-    left: 24,
-    zIndex: 10,
+    marginTop: 8,
+    marginLeft: 16,
     width: 40,
     height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 120,
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 48,
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 32,
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 16,
-    color: '#6B7280',
+    fontSize: 30,
+    color: '#1E2939',
     marginBottom: 32,
   },
-  inputContainer: {
-    marginBottom: 24,
+  appleButton: {
+    width: '100%',
+    height: 56,
+    backgroundColor: '#000000',
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
   },
-  label: {
+  socialButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  appleButtonText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  googleButton: {
+    width: '100%',
+    height: 56,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 28,
+  },
+  googleButtonText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 16,
+    color: '#1E2939',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E7EB',
+  },
+  dividerText: {
+    fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 14,
-    color: '#1F2937',
-    marginBottom: 8,
+    color: '#9CA3AF',
   },
   input: {
+    width: '100%',
     height: 56,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    backgroundColor: '#F3F4F6',
     borderRadius: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 16,
-    color: '#1F2937',
+    color: '#1E2939',
+    marginBottom: 14,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
     height: 56,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    backgroundColor: '#F3F4F6',
     borderRadius: 12,
+    marginBottom: 24,
   },
   passwordInput: {
     flex: 1,
     height: '100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 16,
-    color: '#1F2937',
+    color: '#1E2939',
   },
   eyeIcon: {
     paddingHorizontal: 16,
   },
-  forgotPasswordContainer: {
-    alignItems: 'flex-end',
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  forgotPasswordText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 14,
-    color: '#8C49D5',
-  },
-  spacer: {
-    flex: 1,
-  },
-  button: {
+  loginButton: {
     width: '100%',
     height: 56,
     backgroundColor: '#8C49D5',
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-    shadowColor: '#8C49D5',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    marginBottom: 24,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
+  loginButtonText: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 16,
     color: '#FFFFFF',
+    letterSpacing: 1,
   },
-  signupContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  forgotPasswordContainer: {
     alignItems: 'center',
-    marginBottom: 32,
   },
-  signupText: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  signupLink: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 14,
-    color: '#8C49D5',
+  forgotPasswordText: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 15,
+    color: '#1E2939',
   },
 });
