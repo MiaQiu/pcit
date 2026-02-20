@@ -110,6 +110,9 @@ const AppContent: React.FC = () => {
 
         // Navigate to the report screen
         navigation.navigate('Report', { recordingId: data.recordingId as string });
+      } else if (data.type === 'milestones_unlocked') {
+        console.log('[App] Navigating to Progress > Milestones section');
+        navigation.navigate('MainTabs', { screen: 'Progress', params: { scrollToDevelopmental: true } });
       }
     });
 
