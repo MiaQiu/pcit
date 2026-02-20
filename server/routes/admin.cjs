@@ -154,7 +154,9 @@ router.get('/lessons/:id', requireAdminAuth, async (req, res) => {
 
 /**
  * POST /api/admin/lessons
- * Create lesson with segments and quiz in a transaction
+ * Create lesson with segments and quiz in a transaction.
+ * If the requested dayNumber is already occupied, existing lessons at that
+ * position and above are shifted up by 1 to make room.
  */
 router.post('/lessons', requireAdminAuth, async (req, res) => {
   try {
@@ -164,21 +166,58 @@ router.post('/lessons', requireAdminAuth, async (req, res) => {
       return res.status(400).json({ error: 'Missing required lesson fields (module, dayNumber, title)' });
     }
 
-    const lessonId = `${lessonData.module}-${lessonData.dayNumber}`;
-
-    // Check if lesson already exists
-    const existing = await prisma.lesson.findUnique({ where: { id: lessonId } });
-    if (existing) {
-      return res.status(409).json({ error: `Lesson ${lessonId} already exists` });
-    }
+    const moduleKey = lessonData.module;
+    const requestedDayNumber = parseInt(lessonData.dayNumber);
 
     const result = await prisma.$transaction(async (tx) => {
+      // Check if a lesson already occupies the requested dayNumber
+      const occupant = await tx.lesson.findFirst({
+        where: { module: moduleKey, dayNumber: requestedDayNumber }
+      });
+
+      if (occupant) {
+        // Shift all lessons at dayNumber >= requestedDayNumber up by 1
+        const lessonsToShift = await tx.lesson.findMany({
+          where: { module: moduleKey, dayNumber: { gte: requestedDayNumber } },
+          orderBy: { dayNumber: 'asc' }
+        });
+        const now = new Date();
+        // Phase 1: temp values to avoid unique constraint conflicts
+        for (const l of lessonsToShift) {
+          await tx.lesson.update({
+            where: { id: l.id },
+            data: { dayNumber: 100000 + l.dayNumber, updatedAt: now }
+          });
+        }
+        // Phase 2: final values (each +1)
+        for (const l of lessonsToShift) {
+          await tx.lesson.update({
+            where: { id: l.id },
+            data: { dayNumber: l.dayNumber + 1, updatedAt: now }
+          });
+        }
+      }
+
+      // Generate a unique lesson ID using the standard format; if already taken
+      // (by an existing lesson whose dayNumber changed but ID didn't), fall back
+      // to max numeric suffix + 1 across the module.
+      let lessonId = `${moduleKey}-${requestedDayNumber}`;
+      const idConflict = await tx.lesson.findUnique({ where: { id: lessonId } });
+      if (idConflict) {
+        const allIds = await tx.lesson.findMany({ where: { module: moduleKey }, select: { id: true } });
+        const maxNum = allIds.reduce((max, l) => {
+          const match = l.id.match(/-(\d+)$/);
+          return match ? Math.max(max, parseInt(match[1])) : max;
+        }, 0);
+        lessonId = `${moduleKey}-${maxNum + 1}`;
+      }
+
       // Create lesson
       const lesson = await tx.lesson.create({
         data: {
           id: lessonId,
-          module: lessonData.module,
-          dayNumber: parseInt(lessonData.dayNumber),
+          module: moduleKey,
+          dayNumber: requestedDayNumber,
           title: lessonData.title,
           subtitle: lessonData.subtitle || null,
           shortDescription: lessonData.shortDescription || '',
@@ -393,7 +432,7 @@ router.put('/lessons/:id', requireAdminAuth, async (req, res) => {
 
 /**
  * DELETE /api/admin/lessons/:id
- * Delete lesson (cascades to segments, quiz, progress)
+ * Delete lesson (cascades to segments, quiz, progress) and reorders remaining day numbers
  */
 router.delete('/lessons/:id', requireAdminAuth, async (req, res) => {
   try {
@@ -404,7 +443,36 @@ router.delete('/lessons/:id', requireAdminAuth, async (req, res) => {
       return res.status(404).json({ error: 'Lesson not found' });
     }
 
-    await prisma.lesson.delete({ where: { id: lessonId } });
+    const moduleKey = existing.module;
+
+    await prisma.$transaction(async (tx) => {
+      // Delete the lesson (cascades to segments, quiz, progress)
+      await tx.lesson.delete({ where: { id: lessonId } });
+
+      // Get remaining lessons in module sorted by dayNumber
+      const remainingLessons = await tx.lesson.findMany({
+        where: { module: moduleKey },
+        orderBy: { dayNumber: 'asc' }
+      });
+
+      if (remainingLessons.length > 0) {
+        const now = new Date();
+        // Phase 1: Set temp dayNumbers (offset by 100000) to avoid unique constraint conflicts
+        for (let i = 0; i < remainingLessons.length; i++) {
+          await tx.lesson.update({
+            where: { id: remainingLessons[i].id },
+            data: { dayNumber: 100000 + i + 1, updatedAt: now }
+          });
+        }
+        // Phase 2: Set final sequential dayNumbers starting from 1
+        for (let i = 0; i < remainingLessons.length; i++) {
+          await tx.lesson.update({
+            where: { id: remainingLessons[i].id },
+            data: { dayNumber: i + 1, updatedAt: now }
+          });
+        }
+      }
+    });
 
     res.json({ success: true, deletedId: lessonId });
   } catch (error) {
