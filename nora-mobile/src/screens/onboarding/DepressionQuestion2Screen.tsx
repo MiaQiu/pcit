@@ -86,6 +86,7 @@ export const DepressionQuestion2Screen: React.FC = () => {
       options={OPTIONS}
       dataField="phq2.q2Depressed"
       nextScreen="PreIntroReassurance" // This will be overridden by onBeforeNavigate
+      prevScreen="DepressionQuestion1"
       onBeforeNavigate={handleSubmitSurvey}
       continueText="Submit"
       phase={2}

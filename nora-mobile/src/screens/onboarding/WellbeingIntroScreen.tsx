@@ -21,6 +21,7 @@ export const WellbeingIntroScreen: React.FC = () => {
       description="Parenting takes a lot of energy. Before we dive into the program, we want to check in on how you have been feeling"
       buttonText="Let's go!  →"
       onNext={() => navigation.navigate('DepressionQuestion1')}
+      onBack={() => navigation.goBack()}
     />
   );
 };

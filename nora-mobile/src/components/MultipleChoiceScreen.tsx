@@ -41,6 +41,7 @@ export interface MultipleChoiceScreenProps {
   phase?: number;
   stepInPhase?: number;
   totalStepsInPhase?: number;
+  prevScreen?: keyof import('../navigation/types').OnboardingStackParamList;
   disableAutoNavigate?: boolean; // Disable auto-navigation for single-select
   allowOtherOption?: boolean; // Enable "Others" option with text input
   otherOptionValue?: string; // Value identifier for the "Others" option (default: 'other')
@@ -59,6 +60,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   phase = 1,
   stepInPhase = 1,
   totalStepsInPhase = 1,
+  prevScreen,
   disableAutoNavigate = false,
   allowOtherOption = false,
   otherOptionValue = 'other',
@@ -168,7 +170,11 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else if (prevScreen) {
+      navigation.replace(prevScreen as any);
+    }
   };
 
   const isSelected = (value: string | number) => {

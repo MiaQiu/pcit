@@ -21,6 +21,7 @@ export const ChildGenderScreen: React.FC = () => {
       ]}
       dataField="childGender"
       nextScreen="ChildBirthday"
+      prevScreen="ChildName"
       phase={1}
       stepInPhase={4}
       totalStepsInPhase={6}

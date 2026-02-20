@@ -4,12 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { Picker } from '@react-native-picker/picker';
-import { OnboardingLayout } from '../../components/OnboardingLayout';
 import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
@@ -49,7 +48,11 @@ export const ChildBirthdayScreen: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.replace('ChildGender');
+    }
   };
 
   // Generate months array (short form)
@@ -63,65 +66,79 @@ export const ChildBirthdayScreen: React.FC = () => {
   const years = Array.from({ length: 13 }, (_, i) => currentYear - 12 + i);
 
   return (
-    <OnboardingLayout>
-      <OnboardingProgressHeader phase={1} step={5} totalSteps={6} />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <OnboardingProgressHeader phase={1} step={5} totalSteps={6} />
 
-      <View style={styles.header}>
-        <Text style={styles.title}>When is {data.childName}'s birthday?</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>When is {data.childName}'s birthday?</Text>
+        </View>
+
+        {/* Month and Year Pickers */}
+        <View style={styles.pickersContainer}>
+          {/* Month Picker */}
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={selectedMonth}
+              onValueChange={(itemValue) => setSelectedMonth(itemValue)}
+              style={styles.picker}
+              itemStyle={styles.pickerItem}
+            >
+              {months.map((month, index) => (
+                <Picker.Item key={index} label={month} value={index} />
+              ))}
+            </Picker>
+          </View>
+
+          {/* Year Picker */}
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={selectedYear}
+              onValueChange={(itemValue) => setSelectedYear(itemValue)}
+              style={styles.picker}
+              itemStyle={styles.pickerItem}
+            >
+              {years.map((year) => (
+                <Picker.Item key={year} label={year.toString()} value={year} />
+              ))}
+            </Picker>
+          </View>
+        </View>
+
+        {/* Age-based message */}
+        {(childAge < 2 || childAge > 7) && (
+          <View style={styles.messageContainer}>
+            <Text style={styles.messageText}>
+            * Note on <Text style={styles.boldText}>Age Suitability</Text>: Nora's method is clinically evidenced to be most effective for children between 2 and 7 years old. However, the foundational skills taught here, such as positive reinforcement and emotional regulation, can be adapted and beneficial for children of any age.
+            </Text>
+          </View>
+        )}
       </View>
 
-      {/* Month and Year Pickers */}
-      <View style={styles.pickersContainer}>
-        {/* Month Picker */}
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={selectedMonth}
-            onValueChange={(itemValue) => setSelectedMonth(itemValue)}
-            style={styles.picker}
-            itemStyle={styles.pickerItem}
-          >
-            {months.map((month, index) => (
-              <Picker.Item key={index} label={month} value={index} />
-            ))}
-          </Picker>
-        </View>
-
-        {/* Year Picker */}
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={selectedYear}
-            onValueChange={(itemValue) => setSelectedYear(itemValue)}
-            style={styles.picker}
-            itemStyle={styles.pickerItem}
-          >
-            {years.map((year) => (
-              <Picker.Item key={year} label={year.toString()} value={year} />
-            ))}
-          </Picker>
-        </View>
+      {/* Button row pinned to bottom, outside picker's touch area */}
+      <View style={styles.footer}>
+        <OnboardingButtonRow
+          onBack={handleBack}
+          onContinue={handleContinue}
+        />
       </View>
-
-      {/* Age-based message */}
-      {(childAge < 2 || childAge > 7) && (
-        <View style={styles.messageContainer}>
-          <Text style={styles.messageText}>
-          * Note on <Text style={styles.boldText}>Age Suitability</Text>: Nora's method is clinically evidenced to be most effective for children between 2 and 7 years old. However, the foundational skills taught here, such as positive reinforcement and emotional regulation, can be adapted and beneficial for children of any age.
-          </Text>
-        </View>
-      )}
-
-  
-      <View style={styles.spacer} />
-
-      <OnboardingButtonRow
-        onBack={handleBack}
-        onContinue={handleContinue}
-      />
-    </OnboardingLayout>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 60,
+  },
+  footer: {
+    paddingHorizontal: 20,
+  },
   header: {
     marginTop: 32,
     marginBottom: 32,

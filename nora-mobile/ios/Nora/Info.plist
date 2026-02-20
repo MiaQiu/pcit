@@ -39,6 +39,12 @@
           <string>exp+nora-mobile</string>
         </array>
       </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>com.googleusercontent.apps.773719197472-0aib3ell35vj87uo3nkqrt06ae2knrpq</string>
+        </array>
+      </dict>
     </array>
     <key>CFBundleVersion</key>
     <string>34</string>

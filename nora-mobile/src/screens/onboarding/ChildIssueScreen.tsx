@@ -31,6 +31,7 @@ export const ChildIssueScreen: React.FC = () => {
       ]}
       dataField="issue"
       nextScreen="ChildSnapshotIntro"
+      prevScreen="ChildBirthday"
       multiSelect={true}
       allowOtherOption={true}
       otherOptionValue="other"

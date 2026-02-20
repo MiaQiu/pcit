@@ -14,6 +14,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
@@ -33,6 +34,9 @@ export const PreIntroReassuranceScreen: React.FC = () => {
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Ionicons name="arrow-back" size={24} color="#1E2939" />
+        </TouchableOpacity>
         <View style={styles.content}>
           {/* Dragon Image */}
           <Image
@@ -74,6 +78,14 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     justifyContent: 'space-between',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 24,
+    marginTop: 8,
   },
   content: {
     flex: 1,

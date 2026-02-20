@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
@@ -29,6 +30,9 @@ export const Intro1Screen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+        </TouchableOpacity>
         <OnboardingProgressHeader phase={4} step={1} totalSteps={3} />
 
         <View style={styles.textContent}>
@@ -68,6 +72,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingTop: 40,
     paddingBottom: 112,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -8,
+    marginBottom: 4,
   },
   textContent: {
     flex: 1,

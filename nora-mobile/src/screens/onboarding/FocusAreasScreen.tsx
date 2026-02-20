@@ -33,6 +33,7 @@ export const FocusAreasScreen: React.FC = () => {
       }
       buttonText="Continue  →"
       onNext={() => navigation.navigate('GuidanceIntro')}
+      onBack={() => navigation.goBack()}
     />
   );
 };

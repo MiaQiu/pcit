@@ -16,6 +16,7 @@ export const ParentingIntroScreen: React.FC = () => {
     <IntroScreenTemplate
       subtitle="Parenting is complex"
       title="Nora helps you see more clearly."
+      onBack={() => navigation.goBack()}
       description={
         <Text style={styles.description}>
           Parenting a 2–7 year old is intense — even on good days. Big emotions,

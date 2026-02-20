@@ -98,6 +98,7 @@ router.post('/social', async (req, res) => {
         childName: 'Not Set', // Will be updated during onboarding
       });
 
+      const encryptedChildName = encryptUserData({ childName: 'Child' }).childName;
       user = await prisma.user.create({
         data: {
           id: crypto.randomUUID(),
@@ -105,9 +106,9 @@ router.post('/social', async (req, res) => {
           emailHash,
           passwordHash: crypto.randomBytes(32).toString('hex'), // Random password for social auth
           name: encryptedData.name,
-          childName: encryptedData.childName,
-          childBirthYear: new Date().getFullYear(), // Placeholder
-          childConditions: JSON.stringify([]), // Will be updated during onboarding
+          childName: encryptedChildName,
+          childBirthYear: new Date().getFullYear() - 5, // Placeholder, matches email signup
+          childConditions: JSON.stringify(['none']), // Will be updated during onboarding
         },
       });
     }
@@ -260,11 +261,30 @@ async function verifyAppleToken(idToken) {
  */
 async function verifyGoogleToken(idToken) {
   try {
-    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    // Decode the payload to read the aud claim before verification
+    const [, payloadB64] = idToken.split('.');
+    const unverifiedPayload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
+    const tokenAud = Array.isArray(unverifiedPayload.aud)
+      ? unverifiedPayload.aud[0]
+      : unverifiedPayload.aud;
 
+    // Confirm the audience is one of our own Google client IDs
+    const knownClientIds = [
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_IOS_CLIENT_ID,
+      process.env.GOOGLE_ANDROID_CLIENT_ID,
+    ].filter(Boolean);
+
+    if (!knownClientIds.includes(tokenAud)) {
+      console.error('Google token has unrecognised audience:', tokenAud);
+      return null;
+    }
+
+    // Now verify the signature using the exact audience from the token
+    const client = new OAuth2Client();
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: tokenAud,
     });
 
     const payload = ticket.getPayload();

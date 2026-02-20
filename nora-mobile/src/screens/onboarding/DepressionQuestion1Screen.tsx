@@ -21,6 +21,7 @@ export const DepressionQuestion1Screen: React.FC = () => {
       options={OPTIONS}
       dataField="phq2.q1Interest"
       nextScreen="DepressionQuestion2"
+      prevScreen="WellbeingIntro"
       phase={2}
       stepInPhase={10}
       totalStepsInPhase={11}

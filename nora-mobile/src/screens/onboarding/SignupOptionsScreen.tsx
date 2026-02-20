@@ -13,25 +13,24 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import Purchases from 'react-native-purchases';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useSocialAuthService } from '../../contexts/AppContext';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 import {
   useGoogleAuth,
-  useFacebookAuth,
   signInWithApple,
 } from '../../utils/socialAuth';
 
 export const SignupOptionsScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const socialAuthService = useSocialAuthService();
+  const { updateData } = useOnboarding();
   const [loading, setLoading] = useState(false);
 
-  // Initialize Google and Facebook auth
   const { signIn: signInWithGoogle, request: googleRequest } = useGoogleAuth();
-  const { signIn: signInWithFacebook, request: facebookRequest } =
-    useFacebookAuth();
 
   const handleContinueWithEmail = () => {
     navigation.navigate('CreateAccount');
@@ -39,6 +38,30 @@ export const SignupOptionsScreen: React.FC = () => {
 
   const handleLogin = () => {
     navigation.navigate('Login');
+  };
+
+  const handleSocialAuthSuccess = async (user: any) => {
+    // Identify user to RevenueCat (same as email signup)
+    try {
+      await Purchases.logIn(String(user.id));
+    } catch (e) {
+      console.error('RevenueCat logIn failed:', e);
+    }
+
+    // Store email in onboarding context (same as email signup)
+    if (user.email) {
+      updateData({ email: user.email });
+    }
+
+    // New user (childName placeholder) → start onboarding, same as email signup
+    // Returning user → go straight to main app
+    if (!user.childName || user.childName === 'Child') {
+      navigation.navigate('ParentingIntro');
+    } else {
+      navigation.dispatch(
+        CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] })
+      );
+    }
   };
 
   const handleGoogleSignIn = async () => {
@@ -49,31 +72,12 @@ export const SignupOptionsScreen: React.FC = () => {
       const provider = await signInWithGoogle();
 
       if (provider) {
-        await socialAuthService.authenticateWithProvider(provider);
-        // Navigation handled by RootNavigator when auth state changes
+        const response = await socialAuthService.authenticateWithProvider(provider);
+        handleSocialAuthSuccess(response.user);
       }
     } catch (error: any) {
       console.error('Google sign in error:', error);
       Alert.alert('Error', error.message || 'Failed to sign in with Google');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFacebookSignIn = async () => {
-    if (!facebookRequest) return;
-
-    try {
-      setLoading(true);
-      const provider = await signInWithFacebook();
-
-      if (provider) {
-        await socialAuthService.authenticateWithProvider(provider);
-        // Navigation handled by RootNavigator when auth state changes
-      }
-    } catch (error: any) {
-      console.error('Facebook sign in error:', error);
-      Alert.alert('Error', error.message || 'Failed to sign in with Facebook');
     } finally {
       setLoading(false);
     }
@@ -85,8 +89,8 @@ export const SignupOptionsScreen: React.FC = () => {
       const provider = await signInWithApple();
 
       if (provider) {
-        await socialAuthService.authenticateWithProvider(provider);
-        // Navigation handled by RootNavigator when auth state changes
+        const response = await socialAuthService.authenticateWithProvider(provider);
+        handleSocialAuthSuccess(response.user);
       }
     } catch (error: any) {
       console.error('Apple sign in error:', error);
@@ -96,9 +100,22 @@ export const SignupOptionsScreen: React.FC = () => {
     }
   };
 
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.replace('Start');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        {/* Back Button */}
+        <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7}>
+          <Ionicons name="chevron-back" size={28} color="#1E2939" />
+        </TouchableOpacity>
+
         {/* Title */}
         <Text style={styles.title}>Create an account</Text>
 
@@ -128,20 +145,6 @@ export const SignupOptionsScreen: React.FC = () => {
             <View style={styles.buttonContent}>
               <Ionicons name="logo-apple" size={20} color="#000000" />
               <Text style={styles.socialButtonText}>Continue with Apple</Text>
-            </View>
-            {loading && <ActivityIndicator size="small" color="#6B7280" />}
-          </TouchableOpacity>
-
-          {/* Facebook */}
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={handleFacebookSignIn}
-            activeOpacity={0.8}
-            disabled={loading || !facebookRequest}
-          >
-            <View style={styles.buttonContent}>
-              <Ionicons name="logo-facebook" size={20} color="#1877F2" />
-              <Text style={styles.socialButtonText}>Continue with Facebook</Text>
             </View>
             {loading && <ActivityIndicator size="small" color="#6B7280" />}
           </TouchableOpacity>
@@ -183,7 +186,12 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 16,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    padding: 4,
+    marginBottom: 8,
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',

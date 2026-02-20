@@ -20,6 +20,7 @@ export const GrowthIntroScreen: React.FC = () => {
       description="Nora notices patterns across sessions to help you understand your child's social and emotional development."
       buttonText="Let's go!  →"
       onNext={() => navigation.navigate('PreIntroReassurance')}
+      onBack={() => navigation.goBack()}
     />
   );
 };

@@ -18,6 +18,7 @@ export const ChildSnapshotIntroScreen: React.FC = () => {
       description="There are no right or wrong answers. This helps Nora understand what your child may be learning right now, so insights are tailored to your child — not generic advice."
       buttonText="Let's go!  →"
       onNext={() => navigation.navigate('WacbQuestion1')}
+      onBack={() => navigation.goBack()}
     />
   );
 };

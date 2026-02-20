@@ -23,6 +23,7 @@ export const RelationshipScreen: React.FC = () => {
       ]}
       dataField="relationshipToChild"
       nextScreen="ChildName"
+      prevScreen="NameInput"
       phase={1}
       stepInPhase={2}
       totalStepsInPhase={6}

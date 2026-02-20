@@ -24,8 +24,7 @@ export const StartScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
 
   const handleGetStarted = () => {
-    //navigation.navigate('SignupOptions');
-    navigation.navigate('CreateAccount');
+    navigation.navigate('SignupOptions');
   };
 
   const handleLogin = () => {

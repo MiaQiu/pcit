@@ -14,6 +14,7 @@ import {
   Image,
   ImageSourcePropType,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
@@ -60,6 +61,9 @@ export const GuidanceIntroScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+        </TouchableOpacity>
         <OnboardingProgressHeader phase={3} step={2} totalSteps={3} />
         <ScrollView
           style={styles.scrollView}
@@ -100,6 +104,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 32,
     paddingTop: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -8,
+    marginBottom: 4,
   },
   scrollView: {
     flex: 1,
