@@ -17,7 +17,7 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Purchases from 'react-native-purchases';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
-import { useSocialAuthService } from '../../contexts/AppContext';
+import { useAuthService, useSocialAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import {
   useGoogleAuth,
@@ -26,6 +26,7 @@ import {
 
 export const SignupOptionsScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const authService = useAuthService();
   const socialAuthService = useSocialAuthService();
   const { updateData } = useOnboarding();
   const [loadingProvider, setLoadingProvider] = useState<'google' | 'apple' | null>(null);
@@ -41,6 +42,10 @@ export const SignupOptionsScreen: React.FC = () => {
   };
 
   const handleSocialAuthSuccess = async (user: any) => {
+    // Sync tokens from storage into AuthService's in-memory state so that
+    // authenticatedRequest() calls later in onboarding (surveys) work correctly.
+    await authService.initialize();
+
     // Identify user to RevenueCat (same as email signup)
     try {
       await Purchases.logIn(String(user.id));

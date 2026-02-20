@@ -107,6 +107,10 @@ export const LoginScreen: React.FC = () => {
   };
 
   const handleSocialAuthSuccess = async (user: any) => {
+    // Sync tokens from storage into AuthService's in-memory state so that
+    // authenticatedRequest() calls work correctly after social sign-in.
+    await authService.initialize();
+
     try {
       await Purchases.logIn(String(user.id));
     } catch (e) {
