@@ -493,6 +493,12 @@ body {
   color: var(--text-light);
 }
 
+.error-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #e53e3e;
+}
+
 .loading-state {
   text-align: center;
   padding: 60px 20px;

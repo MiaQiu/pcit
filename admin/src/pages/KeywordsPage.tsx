@@ -5,15 +5,17 @@ export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<{ mode: 'add' } | { mode: 'edit'; keyword: Keyword } | null>(null);
 
   const fetchKeywords = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await getKeywords(search || undefined);
       setKeywords(data);
-    } catch (err) {
-      console.error('Failed to fetch keywords:', err);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load keywords');
     } finally {
       setLoading(false);
     }
@@ -63,6 +65,8 @@ export default function KeywordsPage() {
 
       {loading ? (
         <div className="loading-state">Loading keywords...</div>
+      ) : error ? (
+        <div className="error-state">{error}</div>
       ) : (
         <table className="data-table">
           <thead>
