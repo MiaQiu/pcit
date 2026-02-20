@@ -178,18 +178,26 @@ async function processRecordingWithRetry(sessionId, userId, attemptNumber = 0) {
       // Don't fail the whole process if push notification fails
     }
 
-    // Check if this is the user's 5th completed session — unlock milestones notification
+    // Check if this is the user's 5th completed session — schedule milestones unlock notification in 30 mins
     try {
       const completedCount = await prisma.session.count({
         where: { userId, analysisStatus: 'COMPLETED' }
       });
       if (completedCount === 5) {
-        console.log(`🎯 [MILESTONES-UNLOCKED] User ${userId.substring(0, 8)} just completed session 5 — sending unlock notification`);
-        const user = await prisma.user.findUnique({ where: { id: userId }, select: { childName: true } });
-        await sendMilestonesUnlockedNotification(userId, user?.childName);
+        const THIRTY_MINUTES = 30 * 60 * 1000;
+        console.log(`🎯 [MILESTONES-UNLOCKED] User ${userId.substring(0, 8)} just completed session 5 — scheduling unlock notification in 30 mins`);
+        setTimeout(async () => {
+          try {
+            const user = await prisma.user.findUnique({ where: { id: userId }, select: { childName: true } });
+            await sendMilestonesUnlockedNotification(userId, user?.childName);
+            console.log(`✅ [MILESTONES-UNLOCKED] Unlock notification sent for user ${userId.substring(0, 8)}`);
+          } catch (err) {
+            console.error(`❌ [MILESTONES-UNLOCKED] Error sending delayed unlock notification:`, err);
+          }
+        }, THIRTY_MINUTES);
       }
     } catch (milestoneNotifError) {
-      console.error(`❌ [MILESTONES-UNLOCKED] Error sending milestones unlock notification:`, milestoneNotifError);
+      console.error(`❌ [MILESTONES-UNLOCKED] Error scheduling milestones unlock notification:`, milestoneNotifError);
       // Non-critical — don't fail the process
     }
 
