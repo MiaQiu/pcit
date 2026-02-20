@@ -287,14 +287,28 @@ export const HomeScreen: React.FC = () => {
 
       // Determine active module for daily lesson selection
       if (modulesResponse) {
-        const inProgressModules = modulesResponse.modules
-          .filter(m => m.completedLessons > 0 && m.completedLessons < m.lessonCount)
-          .sort((a, b) => {
-            const aTime = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
-            const bTime = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
-            return bTime - aTime;
-          });
-        setActiveModuleKey(inProgressModules.length > 0 ? inProgressModules[0].key : null);
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        const selectedModuleKey = await AsyncStorage.getItem('module_picker_selected_module');
+
+        // Prefer user's explicitly selected module if it's not yet completed
+        if (selectedModuleKey) {
+          const selectedMod = modulesResponse.modules.find(m => m.key === selectedModuleKey);
+          if (selectedMod && selectedMod.completedLessons < selectedMod.lessonCount) {
+            setActiveModuleKey(selectedModuleKey);
+          } else {
+            setActiveModuleKey(null);
+          }
+        } else {
+          // Fall back to most recently active in-progress module
+          const inProgressModules = modulesResponse.modules
+            .filter(m => m.completedLessons > 0 && m.completedLessons < m.lessonCount)
+            .sort((a, b) => {
+              const aTime = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+              const bTime = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+              return bTime - aTime;
+            });
+          setActiveModuleKey(inProgressModules.length > 0 ? inProgressModules[0].key : null);
+        }
       }
 
       const { todayRecordings, thisWeekRecordings, latestWithReport } = dashboardData;

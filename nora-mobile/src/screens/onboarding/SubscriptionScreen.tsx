@@ -380,7 +380,7 @@ export const SubscriptionScreen: React.FC = () => {
             <View style={styles.programDetails}>
               <Text style={styles.programTitle}>1-Year Growth Partner</Text>
               <Text style={styles.programPrice}>S$169.99 (14/month)</Text>
-              <Text style={styles.programDescription}>See meaningful changes in routines, cooperation, and emotional skills.</Text>
+              <Text style={styles.programDescription}>Ongoing parent tips, progress tracking, and support as your child grows.</Text>
               <View style={styles.bonusBadge}>
                 <Text style={styles.bonusBadgeText}>🎁 Beta bonus 1 month free</Text>
               </View>
@@ -405,7 +405,7 @@ export const SubscriptionScreen: React.FC = () => {
             <View style={styles.programDetails}>
               <Text style={styles.programTitle}>3-Month Kickstart</Text>
               <Text style={styles.programPrice}>S$99.99 (33/month)</Text>
-              <Text style={styles.programDescription}>Ongoing parent tips, progress tracking, and support as your child grows.</Text>
+              <Text style={styles.programDescription}>See meaningful changes in routines, cooperation, and emotional skills.</Text>
               <View style={styles.bonusBadge}>
                 <Text style={styles.bonusBadgeText}>🎁 Beta bonus 1 month free</Text>
               </View>
