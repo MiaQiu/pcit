@@ -713,42 +713,57 @@ function formatUtterancesWithFeedback(utterances) {
  * Generate review feedback prompt for CDI session
  * Reviews and revises feedback for parent utterances and selects key silence slots
  */
-function generateReviewFeedbackPrompt(counts, utterances) {
-  // Separate parent utterances and silence slots for clarity
-  const parentUtterances = utterances.filter(u =>
-    u.role === 'adult' && u.speaker !== SILENT_SPEAKER_ID
-  );
-  const silenceSlots = utterances.filter(u => u.speaker === SILENT_SPEAKER_ID);
+function generateReviewFeedbackPrompt(counts, utterances, isCDI = true) {
+  const commandCoachingSection = isCDI
+    ? `   **For undesirable skills (NTA, DC, IC, Q, UP)**, provide constructive, warm feedback with specific alternatives (e.g. suggest a BD or LP instead of a command or question).`
+    : `   **Commands — PDI focus:**
+   - **DC (Direct Command)** is a TARGET SKILL in PDI. Reinforce it warmly. Coach on quality: was it direct, specific, positively phrased, one at a time, age-appropriate, and calm? Do not suggest replacing it with a PRIDE skill.
+   - **IC (Indirect Command)** is still undesirable. Coach the parent toward a DC instead (e.g. "Try stating it directly: 'Please put the block down.'").
+   - **After every DC or IC**, identify the full command sequence across the surrounding utterances:
+     • Did the parent wait ~5 seconds after giving the command? (check the next silence slot or child utterance timing)
+     • Did the child comply or refuse?
+     • If the child refused: did the parent offer a Two-Choice? Was it logical and age-appropriate?
+     • Was follow-through consistent — brief and matter-of-fact, without nagging or over-explaining?
+     • Was LP used immediately after the child complied?
+     Attach coaching to the specific utterance ID where the breakdown occurred (or reinforce the utterance where it went well).
+   **For all other undesirable skills (NTA, Q, UP)**, provide constructive, warm feedback with specific alternatives.`;
 
-  return `You are an expert PCIT parent-child interaction therapyst.
-
-**Session Metrics:**
-- Labeled Praises: ${counts.praise} (goal: 10+)
+  const metricsSection = isCDI
+    ? `- Labeled Praises: ${counts.praise} (goal: 10+)
 - Reflections/Echo: ${counts.echo} (goal: 10+)
 - Behavioral Descriptions/Narration: ${counts.narration} (goal: 10+)
 - Questions: ${counts.question} (reduce)
 - Commands: ${counts.command} (reduce)
-- Criticisms: ${counts.criticism} (reduce)
+- Criticisms: ${counts.criticism} (reduce)`
+    : `- Direct Commands: ${counts.direct_command} (use consistently — this is the goal)
+- Indirect Commands: ${counts.indirect_command} (reduce — convert to Direct Commands)
+- Labeled Praises: ${counts.praise} (use after child compliance as success marker)
+- Questions: ${counts.question} (reduce during discipline sequences)
+- Criticisms: ${counts.criticism} (eliminate)`;
+
+  return `You are an expert PCIT parent-child interaction therapyst.
+
+**Session Metrics:**
+${metricsSection}
 
 **All Utterances with Current Feedback:**
 ${formatUtterancesWithFeedback(utterances)}
 
 **Your Task:**
-1. Take into consideration the session metrics, knowing how well parent perform in each category, and the conversation context, propose revised feedback if provide additional value. 
-   **For desirable skills (LP, BD, RF, RQ)**, do not change the original feedback. you may add an "additional_tip" only if it is extremely insightful, that will help the parents to improve their overall performance/metrics. 
-   **For undesirable skills ((NTA, DC, IC, Q, UP)**, provide constructive, warm feedback with specific alternatives.
+1. Take into consideration the session metrics, knowing how well parent perform in each category, and the conversation context, propose revised feedback if it provides additional value.
+   **For desirable skills (LP, BD, RF, RQ)**, do not change the original feedback. You may add an "additional_tip" only if it is extremely insightful and would help the parent improve their overall performance.
+${commandCoachingSection}
 
 2. Identify any silence slots that:
-   - Are good opportunities for the parent to practice PEN skills
-   - Come at natural moments in play (not awkward pauses)
-   - Would benefit from coaching tips
+   - Are good opportunities for the parent to practice skills
+   - Come at natural moments (not awkward pauses)
+   - Would benefit from coaching tips${isCDI ? ' (PEN skills)' : ' (e.g. strategic wait time after a command)'}
 
 **Output Format:**
 Return ONLY a valid JSON array. Each item has:
 - "id": the utterance index number (from [XX] in the transcript)
 - "feedback": revised feedback string (1-2 sentences, warm and specific)
 - "additional_tip": optional extra tip for desirable skills (null if not applicable)
-
 
 **Rules:**
 - Maximum 3 silence slots
@@ -759,14 +774,15 @@ No markdown code fences.`;
 }
 
 /**
- * Orchestrator function for multi-prompt CDI feedback
+ * Orchestrator function for multi-prompt feedback (CDI and PDI)
  * @param {Object} counts - Tag counts from PCIT coding
  * @param {Array} utterances - Utterances with tags
  * @param {string} childName - Child's name for personalized feedback
+ * @param {boolean} isCDI - true for CDI sessions, false for PDI
  * @returns {Promise<Object>} Assembled feedback result
  */
-async function generateCDIFeedback(counts, utterances, childName) {
-  console.log('🚀 [CDI-FEEDBACK] Starting feedback generation...');
+async function generateCDIFeedback(counts, utterances, childName, isCDI = true) {
+  console.log(`🚀 [CDI-FEEDBACK] Starting feedback generation (mode: ${isCDI ? 'CDI' : 'PDI'})...`);
 
   // Call 1: Combined feedback prompt (analysis + improvement + example in one)
   console.log('📝 [CDI-FEEDBACK] Running combined feedback prompt...');
@@ -781,7 +797,7 @@ async function generateCDIFeedback(counts, utterances, childName) {
   let revisedFeedback = [];
   try {
     const reviewData = await callAI(
-      generateReviewFeedbackPrompt(counts, utterances),
+      generateReviewFeedbackPrompt(counts, utterances, isCDI),
       { temperature: 0.5, responseType: 'array' }  // Lower temperature, expect array response
     );
     // reviewData should be an array directly since we asked for JSON array
@@ -1031,8 +1047,14 @@ async function analyzePCITCoding(sessionId, userId) {
   const adultSpeakerIds = adultSpeakers.map(a => a.id).join(', ');
   console.log(`   Adult speakers: ${adultSpeakerIds}`);
 
-  // Load DPICS system prompt
-  const dpicsSystemPrompt = loadPrompt('dpicsCoding');
+  // Load DPICS system prompt, with PDI-specific feedback override appended
+  const dpicsSystemPrompt = loadPrompt('dpicsCoding') + (!isCDI ? `
+
+**PDI SESSION — Feedback Override for Commands:**
+This is a PDI (Parent-Directed Interaction) session. The rules above apply for coding, but the feedback generation strategy for commands is different:
+- **DC (Direct Command)**: DC is a TARGET SKILL in PDI. Do NOT suggest replacing it with a PRIDE skill. Instead, briefly reinforce it or coach on quality (e.g. was it direct, specific, calm, positively phrased?).
+- **IC (Indirect Command)**: Still undesirable. Coach toward a DC instead (e.g. "Try stating it directly: 'Please put the block down.'"). Do NOT suggest using BD or LP.
+All other feedback rules remain the same.` : '');
 
   // Prepare utterances data for the prompt
   const utterancesData = utterancesWithRoles.map((utt, idx) => ({
@@ -1219,9 +1241,9 @@ Do not include markdown or whitespace (minified JSON).
     // Get updated utterances with tags from database
     const utterancesWithTags = await getUtterances(sessionId);
 
-    // Always run CDI multi-prompt feedback flow (for both CDI and PDI)
+    // Run multi-prompt feedback flow for both CDI and PDI (mode-aware)
     console.log(`🎯 [COMPETENCY-ANALYSIS] Using multi-prompt feedback generation for ${session.mode} session...`);
-    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName);
+    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName, isCDI);
 
     // Save revised feedback to database
     if (feedbackResult.revisedFeedback && feedbackResult.revisedFeedback.length > 0) {
