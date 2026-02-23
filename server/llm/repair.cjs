@@ -13,7 +13,7 @@ const { jsonrepair } = require('jsonrepair');
  *
  * @param {string}           text - Raw model response
  * @param {'object'|'array'} type - Expected root type
- * @returns {Object|Array}
+ * @returns {{ value: Object|Array, repaired: boolean }}
  */
 function parseJSON(text, type = 'object') {
   let clean = text
@@ -32,13 +32,11 @@ function parseJSON(text, type = 'object') {
   }
 
   try {
-    return JSON.parse(clean);
+    return { value: JSON.parse(clean), repaired: false };
   } catch (err) {
     try {
-      const repaired = jsonrepair(clean);
-      const result   = JSON.parse(repaired);
-      console.warn('[JSON-REPAIR] Fixed malformed JSON from model response');
-      return result;
+      const result = JSON.parse(jsonrepair(clean));
+      return { value: result, repaired: true };
     } catch (_) {
       throw new Error(
         `JSON parse failed (repair also failed): ${err.message} — snippet: ${clean.substring(0, 120)}`

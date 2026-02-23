@@ -2,18 +2,17 @@
 
 const fetch = require('node-fetch');
 
-// HTTP status codes worth retrying (server-side errors and rate limits)
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 
 /**
  * Single Gemini generateContent call with per-call timeout.
  *
  * @param {string} apiKey
- * @param {string} model       - Full model ID e.g. 'gemini-3-flash-preview'
+ * @param {string} model       - Full model ID e.g. 'gemini-2.0-flash'
  * @param {Object} body        - Full request body (contents, generationConfig, etc.)
  * @param {Object} [opts]
  * @param {number} [opts.timeout=60000] - AbortController timeout in ms
- * @returns {Promise<string>}  Raw text from first candidate
+ * @returns {Promise<{ text: string, usage: { inputTokens: number|null, outputTokens: number|null } }>}
  */
 async function geminiCall(apiKey, model, body, { timeout = 60_000 } = {}) {
   const url        = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -49,7 +48,12 @@ async function geminiCall(apiKey, model, body, { timeout = 60_000 } = {}) {
     throw err;
   }
 
-  return text;
+  const usage = {
+    inputTokens:  data.usageMetadata?.promptTokenCount     ?? null,
+    outputTokens: data.usageMetadata?.candidatesTokenCount ?? null,
+  };
+
+  return { text, usage };
 }
 
 module.exports = { geminiCall };

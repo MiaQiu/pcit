@@ -15,7 +15,7 @@ const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
  * @param {number}  [opts.maxTokens=2048]
  * @param {number}  [opts.temperature=0.7]
  * @param {number}  [opts.timeout=60000]
- * @returns {Promise<string>} Raw text response
+ * @returns {Promise<{ text: string, usage: { inputTokens: number|null, outputTokens: number|null } }>}
  */
 async function anthropicCall(apiKey, model, opts = {}) {
   const {
@@ -62,7 +62,12 @@ async function anthropicCall(apiKey, model, opts = {}) {
   }
 
   const data = await response.json();
-  return data.content[0].text;
+  const usage = {
+    inputTokens:  data.usage?.input_tokens  ?? null,
+    outputTokens: data.usage?.output_tokens ?? null,
+  };
+
+  return { text: data.content[0].text, usage };
 }
 
 module.exports = { anthropicCall };

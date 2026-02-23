@@ -17,7 +17,8 @@ const { parseJSON }     = require('../llm/repair.cjs');
  * @returns {Object|Array}
  */
 function parseClaudeJsonResponse(text, type = 'object') {
-  return parseJSON(text, type);
+  const { value } = parseJSON(text, type);
+  return value;
 }
 
 /**
@@ -43,8 +44,9 @@ async function callClaudeForFeedback(prompt, options = {}) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
 
-  const text = await anthropicCall(apiKey, model, { prompt, systemPrompt, maxTokens, temperature });
-  return parseJSON(text, responseType);
+  const { text } = await anthropicCall(apiKey, model, { prompt, systemPrompt, maxTokens, temperature });
+  const { value } = parseJSON(text, responseType);
+  return value;
 }
 
 /**
@@ -68,7 +70,8 @@ async function callClaudeRaw(prompt, options = {}) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
 
-  return anthropicCall(apiKey, model, { prompt, systemPrompt, maxTokens, temperature });
+  const { text } = await anthropicCall(apiKey, model, { prompt, systemPrompt, maxTokens, temperature });
+  return text;
 }
 
 module.exports = {
