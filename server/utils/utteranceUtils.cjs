@@ -67,7 +67,9 @@ async function updateUtteranceRoles(sessionId, roleMap) {
     });
   });
 
-  await Promise.all(updatePromises);
+  if (updatePromises.length > 0) {
+    await prisma.$transaction(updatePromises);
+  }
 }
 
 // Silent slot constants
@@ -202,19 +204,16 @@ async function reorderUtterancesByTime(sessionId) {
     return 0;
   }
 
-  // Update each utterance with its new order
-  const updatePromises = utterances.map((u, index) => {
-    if (u.order === index) {
-      // Skip if order is already correct
-      return Promise.resolve();
-    }
-    return prisma.utterance.update({
-      where: { id: u.id },
-      data: { order: index }
-    });
-  });
+  // Build updates only for utterances that need reordering
+  const updates = utterances
+    .map((u, index) => ({ u, index }))
+    .filter(({ u, index }) => u.order !== index)
+    .map(({ u, index }) => prisma.utterance.update({ where: { id: u.id }, data: { order: index } }));
 
-  await Promise.all(updatePromises);
+  // Run inside a single transaction to avoid flooding the SSH tunnel with parallel connections
+  if (updates.length > 0) {
+    await prisma.$transaction(updates);
+  }
   console.log(`🔄 [REORDER] Reordered ${utterances.length} utterances by startTime`);
   return utterances.length;
 }
@@ -271,8 +270,10 @@ async function updateUtteranceTags(sessionId, pcitTagMap, noraTagMap, feedbackMa
     );
   }
 
-  // Execute all updates in parallel
-  await Promise.all(updatePromises);
+  // Execute all updates in a single transaction to avoid flooding the SSH tunnel
+  if (updatePromises.length > 0) {
+    await prisma.$transaction(updatePromises);
+  }
 }
 
 /**
@@ -318,7 +319,9 @@ async function updateRevisedFeedback(sessionId, revisedFeedback) {
     );
   }
 
-  await Promise.all(updatePromises);
+  if (updatePromises.length > 0) {
+    await prisma.$transaction(updatePromises);
+  }
   console.log(`✅ [REVISED-FEEDBACK] Updated ${updatePromises.length} utterances with revised feedback`);
   return updatePromises.length;
 }

@@ -10,7 +10,7 @@ The parent abandons the command (identify this as a "Broken Sequence").
 2. Analysis Instructions
 For each identified sequence, evaluate the following:
 The Command: (Direct, Positive, Specific, One-at-a-time, Age-Appropriate, Neutral Tone). please note, it's ok to use please. 
-The 5-Second Pause: Check for "Strategic Silence" after the command and after the choice. no need to be super strict about 5 second. 4 second is also can. 
+The 5-Second Pause: Check for "Strategic Silence" after the command and after the choice. no need to be super strict about 5 seconds. 4 second is also can. 
 The Choice Flow: If ignored, did the parent offer a logical "This or That" choice? Is it Age-Timed? (Immediate for ages <5; future privilege for >=5).
 Follow-Through & The "Nagging" vs. "Enforcement" Filter:
 EXPECTED BEHAVIOR (Not Nagging): When a parent removes a privilege, they should make a brief, matter-of-fact statement connecting the behavior to the consequence. Example: "You didn't do what I told you, so you won't get a sticker." This is considered Effective Enforcement.
