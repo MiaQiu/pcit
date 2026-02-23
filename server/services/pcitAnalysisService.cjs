@@ -12,7 +12,10 @@ const httpsAgent = new https.Agent({
   keepAliveMsecs: 30000,
   timeout: 120000
 });
-const { callClaudeForFeedback, parseClaudeJsonResponse } = require('./claudeService.cjs');
+const { parseClaudeJsonResponse } = require('./claudeService.cjs');
+const { llmCall } = require('../llm/gateway.cjs');
+const { geminiCall } = require('../llm/providers/gemini.cjs');
+const SCHEMAS = require('../llm/schemas/index.cjs');
 const { getUtterances, updateUtteranceRoles, updateUtteranceTags, updateRevisedFeedback, SILENT_SPEAKER_ID } = require('../utils/utteranceUtils.cjs');
 const { DPICS_TO_TAG_MAP, calculateNoraScore } = require('../utils/scoreConstants.cjs');
 const { loadPrompt, loadPromptWithVariables } = require('../prompts/index.cjs');
@@ -22,69 +25,8 @@ const { decryptSensitiveData } = require('../utils/encryption.cjs');
 // AI Provider Configuration
 // ============================================================================
 
-// Switch between 'claude-sonnet' and 'gemini-flash' for the 6 analysis calls.
-// CDI Coaching generation (Gemini Pro streaming) is unaffected.
+// AI_PROVIDER env var drives default model selection inside the gateway.
 const AI_PROVIDER = process.env.AI_PROVIDER || 'gemini-flash';
-
-/**
- * Unified AI call helper — routes to Claude Sonnet or Gemini Flash based on AI_PROVIDER.
- * @param {string} prompt - The user prompt
- * @param {Object} options
- * @param {number}  options.maxTokens     - Max output tokens (default 2048)
- * @param {number}  options.temperature   - Sampling temperature (default 0.7)
- * @param {string}  options.systemPrompt  - Optional system prompt (Claude only; prepended for Gemini)
- * @param {string}  options.responseType  - 'object' | 'array' (passed through to parseClaudeJsonResponse)
- * @returns {Promise<Object|Array>} Parsed JSON response
- */
-async function callAI(prompt, options = {}) {
-  const {
-    maxTokens = 2048,
-    temperature = 0.7,
-    systemPrompt = null,
-    responseType = 'object'
-  } = options;
-
-  if (AI_PROVIDER === 'claude-sonnet') {
-    return callClaudeForFeedback(prompt, { maxTokens, temperature, systemPrompt, responseType });
-  }
-
-  // Gemini Flash path
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  if (!GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY not configured');
-  }
-
-  // Gemini simple API has no system field — prepend system prompt to user prompt
-  const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: fullPrompt }] }],
-      generationConfig: {
-        temperature,
-        maxOutputTokens: maxTokens
-      }
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
-    throw new Error(`Gemini Flash API error: ${response.status} - ${errorText.substring(0, 200)}`);
-  }
-
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!text) {
-    throw new Error('Empty response from Gemini Flash API');
-  }
-
-  return parseClaudeJsonResponse(text, responseType);
-}
 
 // ============================================================================
 // Helper Functions
@@ -424,7 +366,7 @@ async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts =
   console.log(`📊 [DEV-PROFILING] Calling ${AI_PROVIDER} for developmental profiling...`);
 
   try {
-    const parsed = await callAI(prompt, { maxTokens: 8192, temperature: 0.5 });
+    const parsed = await llmCall(prompt, { maxTokens: 8192, temperature: 0.5, label: 'dev-profiling', schema: SCHEMAS.DEV_PROFILING });
 
     const result = {
       developmentalObservation: parsed.developmental_observation || null,
@@ -448,34 +390,15 @@ async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts =
  * Used for free-form narrative steps where the output is prose, not JSON.
  */
 async function callGeminiFlashRaw(prompt, options = {}) {
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
-
   const { temperature = 0.7, maxOutputTokens = 4096, responseMimeType = null } = options;
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-  const generationConfig = { temperature, maxOutputTokens };
-  if (responseMimeType) generationConfig.responseMimeType = responseMimeType;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig
-    })
+  return llmCall(prompt, {
+    model:        'flash',
+    output:       'text',
+    maxTokens:    maxOutputTokens,
+    temperature,
+    label:        'gemini-flash-raw',
+    _geminiConfig: responseMimeType ? { responseMimeType } : {},
   });
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
-    throw new Error(`Gemini Flash API error: ${response.status} - ${errorText.substring(0, 200)}`);
-  }
-
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Empty response from Gemini Flash');
-  return text;
 }
 
 /**
@@ -614,7 +537,7 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
 
     let formatted;
     try {
-      formatted = await callAI(formatPrompt, { maxTokens: 2048, temperature: 0 });
+      formatted = await llmCall(formatPrompt, { maxTokens: 2048, temperature: 0, label: 'coaching-format', schema: SCHEMAS.COACHING_FORMAT });
     } catch (formatError) {
       console.error('❌ [CDI-COACHING] Format call failed:', formatError.message);
       return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal: null };
@@ -786,8 +709,9 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true) 
 
   // Call 1: Combined feedback prompt (analysis + improvement + example in one)
   console.log('📝 [CDI-FEEDBACK] Running combined feedback prompt...');
-  const feedbackData = await callAI(
-    generateCombinedFeedbackPrompt(counts, utterances, childName)
+  const feedbackData = await llmCall(
+    generateCombinedFeedbackPrompt(counts, utterances, childName),
+    { label: 'combined-feedback', schema: SCHEMAS.COMBINED_FEEDBACK }
   );
 
   console.log('✅ [CDI-FEEDBACK] Combined feedback result:', JSON.stringify(feedbackData).substring(0, 300));
@@ -796,9 +720,9 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true) 
   console.log('📝 [CDI-FEEDBACK] Running Review Feedback for utterances and silence slots...');
   let revisedFeedback = [];
   try {
-    const reviewData = await callAI(
+    const reviewData = await llmCall(
       generateReviewFeedbackPrompt(counts, utterances, isCDI),
-      { temperature: 0.5, responseType: 'array' }  // Lower temperature, expect array response
+      { temperature: 0.5, output: 'array', label: 'review-feedback', schema: SCHEMAS.REVIEW_FEEDBACK }
     );
     // reviewData should be an array directly since we asked for JSON array
     revisedFeedback = Array.isArray(reviewData) ? reviewData : [];
@@ -852,7 +776,7 @@ async function generatePDITwoChoicesAnalysis(utterances, childName) {
   });
 
   try {
-    const result = await callAI(prompt);
+    const result = await llmCall(prompt, { label: 'pdi-two-choices', schema: SCHEMAS.PDI_TWO_CHOICES });
     const pdiSkills = result?.pdiSkills;
 
     if (!Array.isArray(pdiSkills) || pdiSkills.length === 0) {
@@ -984,7 +908,7 @@ async function analyzePCITCoding(sessionId, userId) {
   let roleIdentificationJson;
   let adultSpeakers = [];
   try {
-    roleIdentificationJson = await callAI(roleIdentificationPrompt, { maxTokens: 2048, temperature: 0.3 });
+    roleIdentificationJson = await llmCall(roleIdentificationPrompt, { maxTokens: 2048, temperature: 0.3, label: 'role-id' });
     console.log(`✅ [ANALYSIS-STEP-3] Role identification parsed successfully`);
 
     // Extract all adult speakers from speaker_identification
@@ -1100,11 +1024,13 @@ Do not include markdown or whitespace (minified JSON).
   console.log(`📊 [ANALYSIS-STEP-8] Calling ${AI_PROVIDER} for PCIT coding...`);
   console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
 
-  const codingResults = await callAI(userPrompt, {
-    maxTokens: 8192,
-    temperature: 0,
+  const codingResults = await llmCall(userPrompt, {
+    maxTokens:    8192,
+    temperature:  0,
     systemPrompt: dpicsSystemPrompt,
-    responseType: 'array'
+    output:       'array',
+    label:        'pcit-coding',
+    schema:       SCHEMAS.PCIT_CODING,
   });
 
   if (!Array.isArray(codingResults)) {

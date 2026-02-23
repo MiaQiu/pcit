@@ -7,53 +7,9 @@
  * First detection = EMERGING
  * After appearing in > thresholdValue sessions = ACHIEVED
  */
-const fetch = require('node-fetch');
-const prisma = require('./db.cjs');
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-// ============================================================================
-// Gemini Flash Helper (non-streaming, fast model)
-// ============================================================================
-
-/**
- * Call Gemini Flash for milestone detection
- * @param {string} prompt - The prompt text
- * @returns {Promise<string>} The response text
- */
-async function callGeminiFlash(prompt) {
-  if (!GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY not configured');
-  }
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 4096
-      }
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
-    throw new Error(`Gemini Flash API error: ${response.status} - ${errorText.substring(0, 200)}`);
-  }
-
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!text) {
-    throw new Error('Empty response from Gemini Flash API');
-  }
-
-  return text;
-}
+const prisma  = require('./db.cjs');
+const { llmCall } = require('../llm/gateway.cjs');
+const SCHEMAS = require('../llm/schemas/index.cjs');
 
 // ============================================================================
 // Main Detection Function
@@ -199,23 +155,14 @@ Return ONLY valid JSON in this exact format (no markdown fences):
 
 If no milestones are detected, return: { "detected_milestones": []${isFirstProfiling ? ', "baseline_achieved": []' : ''} }`;
 
-  // 6. Call Gemini Flash
+  // 6. Call Gemini Flash via gateway
   console.log(`🔍 [MILESTONE] Calling Gemini Flash for milestone detection (child ${childId.substring(0, 8)}, session ${sessionId.substring(0, 8)})...`);
-  const responseText = await callGeminiFlash(prompt);
-
-  // 7. Parse JSON response
-  const cleaned = responseText
-    .replace(/```json\s*/g, '')
-    .replace(/```\s*/g, '')
-    .trim();
-
-  let parsed;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch (parseError) {
-    console.error('❌ [MILESTONE] JSON parse error. Raw (first 300 chars):', cleaned.substring(0, 300));
-    throw parseError;
-  }
+  const parsed = await llmCall(prompt, {
+    temperature: 0.2,
+    maxTokens:   4096,
+    label:       'milestone-detection',
+    schema:      SCHEMAS.MILESTONE_DETECTION,
+  });
 
   const detectedMilestones = parsed.detected_milestones || [];
   console.log(`🔍 [MILESTONE] Detected ${detectedMilestones.length} milestones`);
@@ -367,5 +314,4 @@ If no milestones are detected, return: { "detected_milestones": []${isFirstProfi
 
 module.exports = {
   detectAndUpdateMilestones,
-  callGeminiFlash
 };
