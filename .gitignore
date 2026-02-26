@@ -28,3 +28,4 @@ scripts/debug-session-*
 
 # Scratch files
 lesson-content.txt
+.prod-infra-ids.txt

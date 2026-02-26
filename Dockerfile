@@ -13,23 +13,16 @@ COPY package*.json ./
 # Copy Prisma schema
 COPY prisma ./prisma/
 
-# Set Prisma binary target explicitly for Alpine Linux
-ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x
-
-# Install all dependencies (need prisma CLI for generate)
-RUN npm ci
-
-# Generate Prisma client at build time (works because we build with --platform linux/amd64)
-RUN npx prisma generate
-
-# Remove dev dependencies to reduce image size
-RUN npm prune --production
+# Install production dependencies
+RUN npm ci --omit=dev
 
 # Copy application code (backend only)
 COPY server.cjs ./
 COPY reset-password.html ./
 COPY server ./server/
 COPY public ./public/
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
@@ -45,5 +38,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Start the server
-CMD ["node", "server.cjs"]
+# Start the server (prisma generate runs at startup on native hardware, avoiding QEMU issues)
+CMD ["./entrypoint.sh"]
