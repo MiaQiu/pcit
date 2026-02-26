@@ -1,8 +1,30 @@
+import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
+import { syncToProd, SyncResult } from '../../api/adminApi';
 
 export default function AdminLayout() {
   const { logout } = useAuth();
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  async function handleSyncToProd() {
+    if (!window.confirm('Push all lessons and keywords from dev to prod?\n\nThis will overwrite prod content but will not affect user data.')) {
+      return;
+    }
+    setSyncing(true);
+    setSyncResult(null);
+    setSyncError(null);
+    try {
+      const result = await syncToProd();
+      setSyncResult(result);
+    } catch (err: unknown) {
+      setSyncError(err instanceof Error ? err.message : 'Sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   return (
     <div className="admin-layout">
@@ -29,6 +51,20 @@ export default function AdminLayout() {
             Settings
           </NavLink>
         </nav>
+        <div className="sidebar-sync">
+          <button className="sync-prod-btn" onClick={handleSyncToProd} disabled={syncing}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16,3 21,3 21,8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21,16 21,21 16,21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+            {syncing ? 'Syncing…' : 'Push to Prod'}
+          </button>
+          {syncResult && (
+            <div className="sync-result sync-success">
+              Synced: {syncResult.lessons} lessons, {syncResult.keywords} keywords
+            </div>
+          )}
+          {syncError && (
+            <div className="sync-result sync-error">{syncError}</div>
+          )}
+        </div>
         <button className="sidebar-logout" onClick={logout}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Logout

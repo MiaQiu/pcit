@@ -370,3 +370,20 @@ export async function sendNotifications(
     body: JSON.stringify({ userIds, title, body }),
   });
 }
+
+// ---- Sync to Prod ----
+
+export interface SyncResult {
+  modules: number;
+  lessons: number;
+  segments: number;
+  quizzes: number;
+  keywords: number;
+}
+
+export async function syncToProd(): Promise<SyncResult> {
+  const data = await apiFetch<{ success: boolean; synced: SyncResult }>('/api/admin/sync-to-prod', {
+    method: 'POST',
+  });
+  return data.synced;
+}

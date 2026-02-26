@@ -1068,4 +1068,203 @@ router.delete('/keywords/:id', requireAdminAuth, async (req, res) => {
   }
 });
 
+// ============================================================================
+// SYNC TO PROD
+// ============================================================================
+
+/**
+ * POST /api/admin/sync-to-prod
+ * Reads all Modules, Lessons (with segments + quizzes), and Keywords from
+ * the dev DB, then forwards them to the prod API's /receive-sync endpoint.
+ *
+ * Requires env vars on the dev App Runner:
+ *   PROD_API_URL   — e.g. https://wpwpawhz29.ap-southeast-1.awsapprunner.com
+ *   SYNC_SECRET    — shared secret, must match SYNC_SECRET on prod App Runner
+ */
+router.post('/sync-to-prod', requireAdminAuth, async (req, res) => {
+  const prodApiUrl = process.env.PROD_API_URL;
+  const syncSecret = process.env.SYNC_SECRET;
+
+  if (!prodApiUrl || !syncSecret) {
+    return res.status(503).json({ error: 'PROD_API_URL or SYNC_SECRET is not configured on this server' });
+  }
+
+  try {
+    // Read all content from dev DB
+    const [modules, lessons, keywords] = await Promise.all([
+      prisma.module.findMany({ orderBy: { displayOrder: 'asc' } }),
+      prisma.lesson.findMany({
+        include: {
+          LessonSegment: { orderBy: { order: 'asc' } },
+          Quiz: { include: { QuizOption: { orderBy: { order: 'asc' } } } },
+        },
+        orderBy: [{ module: 'asc' }, { dayNumber: 'asc' }],
+      }),
+      prisma.keyword.findMany({ orderBy: { term: 'asc' } }),
+    ]);
+
+    // Forward to prod API (server-to-server; prod App Runner is publicly accessible)
+    const fetch = require('node-fetch');
+    const response = await fetch(`${prodApiUrl}/api/admin/receive-sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${syncSecret}`,
+      },
+      body: JSON.stringify({ modules, lessons, keywords }),
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error || `Prod API responded with ${response.status}`);
+    }
+
+    const result = await response.json();
+    res.json(result);
+  } catch (error) {
+    console.error('Sync to prod error:', error);
+    res.status(500).json({ error: 'Sync failed: ' + error.message });
+  }
+});
+
+/**
+ * POST /api/admin/receive-sync
+ * Receives module/lesson/keyword data from the dev API and upserts it into
+ * whichever DB this server is connected to (intended for prod App Runner).
+ *
+ * Protected by SYNC_SECRET header — NOT by admin JWT — so the dev App Runner
+ * can call this without needing a prod JWT token.
+ *
+ * Lessons and segments are upserted by ID so existing user data
+ * (TextInputResponse) is never deleted. Quiz options are delete-and-recreated
+ * because QuizResponse stores answers as plain strings, not FK references.
+ */
+router.post('/receive-sync', async (req, res) => {
+  const syncSecret = process.env.SYNC_SECRET;
+  if (!syncSecret) {
+    return res.status(503).json({ error: 'SYNC_SECRET is not configured on this server' });
+  }
+
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token || token !== syncSecret) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { modules = [], lessons = [], keywords = [] } = req.body;
+
+  try {
+    // ── Sync Modules ─────────────────────────────────────────────────────────
+    for (const mod of modules) {
+      await prisma.module.upsert({
+        where: { key: mod.key },
+        create: mod,
+        update: {
+          title: mod.title,
+          shortName: mod.shortName,
+          description: mod.description,
+          displayOrder: mod.displayOrder,
+          backgroundColor: mod.backgroundColor,
+          updatedAt: mod.updatedAt,
+        },
+      });
+    }
+
+    // ── Sync Lessons + Segments + Quizzes ────────────────────────────────────
+    let totalSegments = 0;
+    let totalQuizzes = 0;
+
+    for (const lesson of lessons) {
+      const { LessonSegment: segments = [], Quiz: quiz = null, ...lessonData } = lesson;
+
+      await prisma.lesson.upsert({
+        where: { id: lessonData.id },
+        create: lessonData,
+        update: {
+          module: lessonData.module,
+          dayNumber: lessonData.dayNumber,
+          title: lessonData.title,
+          subtitle: lessonData.subtitle,
+          shortDescription: lessonData.shortDescription,
+          objectives: lessonData.objectives,
+          estimatedMinutes: lessonData.estimatedMinutes,
+          teachesCategories: lessonData.teachesCategories,
+          dragonImageUrl: lessonData.dragonImageUrl,
+          backgroundColor: lessonData.backgroundColor,
+          ellipse77Color: lessonData.ellipse77Color,
+          ellipse78Color: lessonData.ellipse78Color,
+          updatedAt: lessonData.updatedAt,
+        },
+      });
+
+      // Upsert segments by ID — preserves any linked TextInputResponse rows
+      for (const seg of segments) {
+        await prisma.lessonSegment.upsert({
+          where: { id: seg.id },
+          create: seg,
+          update: {
+            order: seg.order,
+            sectionTitle: seg.sectionTitle,
+            contentType: seg.contentType,
+            bodyText: seg.bodyText,
+            imageUrl: seg.imageUrl,
+            iconType: seg.iconType,
+            aiCheckMode: seg.aiCheckMode,
+            idealAnswer: seg.idealAnswer,
+            updatedAt: seg.updatedAt,
+          },
+        });
+      }
+      totalSegments += segments.length;
+
+      // Sync quiz + options
+      if (quiz) {
+        const { QuizOption: options = [], ...quizData } = quiz;
+        await prisma.quiz.upsert({
+          where: { id: quizData.id },
+          create: quizData,
+          update: {
+            question: quizData.question,
+            correctAnswer: quizData.correctAnswer,
+            explanation: quizData.explanation,
+            updatedAt: quizData.updatedAt,
+          },
+        });
+        await prisma.quizOption.deleteMany({ where: { quizId: quizData.id } });
+        if (options.length > 0) {
+          await prisma.quizOption.createMany({ data: options });
+        }
+        totalQuizzes++;
+      }
+    }
+
+    // ── Sync Keywords ────────────────────────────────────────────────────────
+    for (const kw of keywords) {
+      await prisma.keyword.upsert({
+        where: { id: kw.id },
+        create: kw,
+        update: {
+          term: kw.term,
+          definition: kw.definition,
+          updatedAt: kw.updatedAt,
+        },
+      });
+    }
+
+    res.json({
+      success: true,
+      synced: {
+        modules: modules.length,
+        lessons: lessons.length,
+        segments: totalSegments,
+        quizzes: totalQuizzes,
+        keywords: keywords.length,
+      },
+    });
+  } catch (error) {
+    console.error('Receive sync error:', error);
+    res.status(500).json({ error: 'Sync failed: ' + error.message });
+  }
+});
+
 module.exports = router;
