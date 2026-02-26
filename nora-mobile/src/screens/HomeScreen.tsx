@@ -735,27 +735,11 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.heading}>Today's deck</Text>
         )} */}
 
-        {/* Show LessonCard for new users with no recordings/lessons, NextActionCard for experienced users */}
+        {/* Always show NextActionCard for all users */}
         {lessons.length > 0 && (() => {
           const displayLesson = findTodayLesson() || lessons[0];
 
-          // If user is not experienced (new user), show simple LessonCard
-          if (!isExperiencedUser) {
-            return (
-              <>
-                {/* Connect Phase Card */}
-                <View style={{ marginBottom: 16 }}>
-                  <LessonCard
-                    {...displayLesson}
-                    onPress={() => handleLessonPress(displayLesson.id)}
-                  />
-                </View>
-
-              </>
-            );
-          }
-
-          // Otherwise, show NextActionCard with dynamic state
+          // Always show NextActionCard with dynamic state
           const cardType = getCardType();
 
           // Always show score section - use placeholder if no recording
