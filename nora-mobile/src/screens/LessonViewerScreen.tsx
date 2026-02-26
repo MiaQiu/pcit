@@ -28,7 +28,6 @@ import { LessonDetailResponse, LessonSegment, SubmitQuizResponse, SubmitTextInpu
 import { useLessonService } from '../contexts/AppContext';
 import { KeywordDefinitionModal } from '../components/KeywordDefinitionModal';
 import { getMockLessonDetail } from '../data/mockLessons';
-import { LessonCache } from '../lib/LessonCache';
 import amplitudeService from '../services/amplitudeService';
 import { getTodaySingapore } from '../utils/timezone';
 
@@ -387,99 +386,23 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     try {
       setLoading(true);
 
-      // Try to get from cache first for instant loading
-      const cachedData = await LessonCache.get(lessonId);
-      if (cachedData) {
-        console.log('Loading lesson from cache:', lessonId);
-
-        // Validate cached data - check if segment index is valid
-        const segments = cachedData.lesson.segments || [];
-        const totalSegments = segments.length + (cachedData.lesson.quiz ? 1 : 0);
-        const savedSegment = cachedData.userProgress?.currentSegment ?? 1;
-        const segmentIndex = savedSegment - 1;
-
-        // If cached data has invalid segment index, invalidate cache and fetch fresh
-        if (segmentIndex < 0 || segmentIndex > totalSegments) {
-          console.log('⚠️ Cache validation failed: invalid segment index, fetching fresh data');
-          await LessonCache.remove(lessonId);
-          // Continue to fetch from API below
-        } else {
-          console.log('✅ Cache validation passed, using cached data');
-          setLessonData(cachedData);
-          if (cachedData.keywords) {
-            setKeywords(cachedData.keywords);
-          }
-          setLoading(false);
-
-          // Set initial segment index from cached data
-          // If lesson is completed, always start from beginning
-          if (cachedData.userProgress?.status === 'COMPLETED') {
-            setCurrentSegmentIndex(0);
-          } else {
-            const validSegment = segmentIndex >= totalSegments ? 0 : segmentIndex;
-            setCurrentSegmentIndex(validSegment);
-          }
-
-          // Fetch fresh data in background to update cache and progress
-          lessonService.getLessonDetail(lessonId)
-            .then(freshData => {
-              setLessonData(freshData);
-
-              // Update last refresh date after successful API fetch
-              setLastRefreshDate(getTodaySingapore());
-
-              // Update segment index if progress changed
-              if (freshData.userProgress) {
-                // If lesson is completed, always start from beginning
-                if (freshData.userProgress.status === 'COMPLETED') {
-                  setCurrentSegmentIndex(0);
-                } else {
-                  const freshSegmentIndex = freshData.userProgress.currentSegment - 1;
-                  const freshValidSegment = freshSegmentIndex >= totalSegments ? 0 : freshSegmentIndex;
-                  setCurrentSegmentIndex(freshValidSegment);
-                }
-              }
-
-              // Update keywords if changed
-              if (freshData.keywords) {
-                setKeywords(freshData.keywords);
-              }
-
-              LessonCache.set(lessonId, freshData);
-            })
-            .catch(err => console.log('Background refresh failed:', err));
-
-          return;
-        }
-      }
-
-      // No cache, fetch from API
       const data = await lessonService.getLessonDetail(lessonId);
       setLessonData(data);
 
-      // Set keywords from API response
       if (data.keywords) {
         setKeywords(data.keywords);
       }
 
-      // Update last refresh date after successful API fetch
       setLastRefreshDate(getTodaySingapore());
 
-      // Cache the data for future use
-      await LessonCache.set(lessonId, data);
-
-      // Set initial segment index from user progress
       if (data.userProgress) {
         const segments = data.lesson.segments || [];
         const totalSegments = segments.length + (data.lesson.quiz ? 1 : 0);
         const savedSegment = data.userProgress.currentSegment - 1;
 
-        // If lesson is completed, always start from beginning
-        // Otherwise, resume from saved segment
         if (data.userProgress.status === 'COMPLETED') {
           setCurrentSegmentIndex(0);
         } else {
-          // Bounds check: if saved segment is beyond total, reset to first segment
           const validSegment = savedSegment >= totalSegments ? 0 : savedSegment;
           setCurrentSegmentIndex(validSegment);
         }
@@ -489,19 +412,9 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     } catch (error: any) {
       console.error('Failed to load lesson:', error);
 
-      // Handle lesson not found (404) - lesson may have been updated/deleted
       if (error instanceof LessonNotFoundError || error.name === 'LessonNotFoundError') {
-        console.log('Lesson not found - clearing cache and returning to Learn screen');
         setLoading(false);
-
-        // Clear all lesson caches to force refresh
-        await LessonCache.clear();
-        await LessonCache.removeLessonsList();
-
-        // Navigate back to Learn screen
         navigation.goBack();
-
-        // Show user-friendly message
         Alert.alert(
           'Content Updated',
           'This lesson has been updated. Please select it again to view the latest version.',
@@ -510,12 +423,9 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         return;
       }
 
-      // Check if lesson is locked (403 error)
       if (error.message?.includes('Prerequisites not met') || error.message?.includes('403')) {
         setLoading(false);
-        // Navigate back and show error
         navigation.goBack();
-        // Note: In a production app, you might want to show an Alert here
         return;
       }
 
@@ -561,9 +471,6 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
       // Handle lesson not found (404) - lesson may have been updated/deleted
       if (error instanceof LessonNotFoundError || error.name === 'LessonNotFoundError') {
-        console.log('Lesson not found during progress update - clearing cache');
-        await LessonCache.clear();
-        await LessonCache.removeLessonsList();
         navigation.goBack();
         Alert.alert(
           'Content Updated',
@@ -610,9 +517,6 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
       // Handle lesson not found (404) - lesson may have been updated/deleted
       if (error instanceof LessonNotFoundError || error.name === 'LessonNotFoundError') {
-        console.log('Lesson not found during completion - clearing cache');
-        await LessonCache.clear();
-        await LessonCache.removeLessonsList();
         navigation.goBack();
         Alert.alert(
           'Content Updated',

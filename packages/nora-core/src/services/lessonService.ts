@@ -38,8 +38,6 @@ class LessonService {
   private storage: StorageAdapter;
   private apiUrl: string;
   private authService: AuthService;
-  private lessonCache: Map<string, LessonDetailResponse> = new Map();
-
   constructor(
     storage: StorageAdapter,
     apiUrl: string,
@@ -131,11 +129,6 @@ class LessonService {
    * @param lessonId Lesson ID
    */
   async getLessonDetail(lessonId: string): Promise<LessonDetailResponse> {
-    // Check cache first
-    if (this.lessonCache.has(lessonId)) {
-      return this.lessonCache.get(lessonId)!;
-    }
-
     const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/lessons/${lessonId}`,
       {
@@ -144,7 +137,6 @@ class LessonService {
     );
 
     if (!response.ok) {
-      // Handle 404 specifically - lesson no longer exists
       if (response.status === 404) {
         throw new LessonNotFoundError('Lesson not found - may have been updated');
       }
@@ -152,12 +144,7 @@ class LessonService {
       throw new Error(error.error || 'Failed to fetch lesson detail');
     }
 
-    const data = await response.json();
-
-    // Cache the response
-    this.lessonCache.set(lessonId, data);
-
-    return data;
+    return response.json();
   }
 
   /**

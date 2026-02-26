@@ -17,7 +17,6 @@ import { DRAGON_PURPLE, FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
-import { LessonCache } from '../lib/LessonCache';
 import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
@@ -191,9 +190,6 @@ export const HomeScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    // Clean up completed lessons from cache on app open
-    LessonCache.cleanupCompletedLessons();
-
     checkExperiencedUserStatus();
     loadLessons();
     loadUserProfile();
@@ -532,25 +528,6 @@ export const HomeScreen: React.FC = () => {
     return 'lesson';
   };
 
-  // Prefetch and cache current lesson only
-  useEffect(() => {
-    if (lessons.length > 0) {
-      // Get unlocked lessons that are not completed
-      const unlockedLessons = lessons.filter(l => l.progress?.status !== 'COMPLETED');
-
-      // Get only the current lesson (first unlocked and not completed)
-      const currentLesson = unlockedLessons[0];
-
-      // Prefetch and cache in background
-      if (currentLesson) {
-        lessonService.getLessonDetail(currentLesson.id)
-          .then(data => LessonCache.set(currentLesson.id, data))
-          .catch(err => {
-            console.log('Prefetch failed for current lesson:', err);
-          });
-      }
-    }
-  }, [lessons]);
 
   const loadLessons = async (showLoadingSpinner = true) => {
     try {
