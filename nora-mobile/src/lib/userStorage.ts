@@ -52,19 +52,41 @@ export async function clearCurrentUser(): Promise<void> {
   currentUserId = null;
 }
 
+/**
+ * Resolve the current user ID, falling back to the last-known stored ID if
+ * the in-memory value was wiped (e.g. by Fast Refresh or module re-init).
+ */
+async function resolveUserId(): Promise<string | null> {
+  if (currentUserId) return currentUserId;
+  try {
+    const stored = await AsyncStorage.getItem(LAST_USER_KEY);
+    if (stored) {
+      console.warn('[userStorage] currentUserId was null — recovered from AsyncStorage:', stored);
+      currentUserId = stored;
+      return stored;
+    }
+  } catch (error) {
+    console.error('[userStorage] resolveUserId fallback failed:', error);
+  }
+  return null;
+}
+
 export async function getItem(key: string): Promise<string | null> {
-  if (!currentUserId) return null;
-  return AsyncStorage.getItem(`user:${currentUserId}:${key}`);
+  const userId = await resolveUserId();
+  if (!userId) return null;
+  return AsyncStorage.getItem(`user:${userId}:${key}`);
 }
 
 export async function setItem(key: string, value: string): Promise<void> {
-  if (!currentUserId) return;
-  return AsyncStorage.setItem(`user:${currentUserId}:${key}`, value);
+  const userId = await resolveUserId();
+  if (!userId) return;
+  return AsyncStorage.setItem(`user:${userId}:${key}`, value);
 }
 
 export async function removeItem(key: string): Promise<void> {
-  if (!currentUserId) return;
-  return AsyncStorage.removeItem(`user:${currentUserId}:${key}`);
+  const userId = await resolveUserId();
+  if (!userId) return;
+  return AsyncStorage.removeItem(`user:${userId}:${key}`);
 }
 
 async function clearKeysForUser(userId: string): Promise<void> {
