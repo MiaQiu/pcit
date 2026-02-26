@@ -139,25 +139,15 @@ Auto-deployment is enabled — pushing a new image to ECR also triggers a deploy
 
 ### Mobile (iOS)
 
-```bash
-# Dev build (uses .env / local backend)
-cd nora-mobile && npx expo prebuild --platform ios
-cd ../ios && pod install
-# Open Nora.xcworkspace → Product → Archive
-
-# Prod build (uses nora-mobile/.env.production → Singapore backend)
-cd nora-mobile && NODE_ENV=production npx expo prebuild --platform ios
-cd ../ios && pod install
-# Open Nora.xcworkspace → Product → Archive → distribute to App Store
-```
-
 Full build sequence (including nora-core):
+
 ```bash
 # 1. Build nora-core
 cd packages/nora-core && npm run build
 
-# 2. Prebuild mobile (add NODE_ENV=production for prod)
-cd ../../nora-mobile && [NODE_ENV=production] npx expo prebuild --platform ios
+# 2. Prebuild mobile
+cd ../../nora-mobile && npx expo prebuild --platform ios            # dev
+cd ../../nora-mobile && NODE_ENV=production npx expo prebuild --platform ios  # prod
 
 # 3. Install pods
 cd ../ios && pod install
@@ -166,10 +156,25 @@ cd ../ios && pod install
 ./docker_deploy.sh           # dev
 ./docker_deploy_prod.sh      # prod
 
-# 5. Open Xcode and archive
+# 5. Open Xcode
 open Nora.xcworkspace
-# Product → Archive
 ```
+
+#### Testing on device (before Archive)
+
+To test on a physical device without submitting to the App Store:
+
+1. In Xcode: **Product → Scheme → Edit Scheme...**
+2. Select **Run** on the left → set **Build Configuration** to **Release**
+3. **Product → Run**
+
+> Using **Release** build configuration is required. Debug builds try to load the JS bundle from Metro bundler (port 8081) and will fail with a timeout error if Metro is not running. Release builds bundle the JS at build time, the same as Archive.
+
+After testing, switch Build Configuration back to **Debug** for normal development.
+
+#### Distributing to App Store
+
+In Xcode: **Product → Archive → Distribute App**
 
 ---
 
