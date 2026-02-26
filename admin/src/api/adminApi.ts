@@ -1,4 +1,10 @@
-import { apiFetch, setToken } from './client';
+import { apiFetch, apiFetchEnv, setToken } from './client';
+
+// Options for calling dev or prod API
+export interface ApiEnvOpts {
+  baseUrl?: string;
+  token?: string;
+}
 
 // ---- Types ----
 
@@ -241,42 +247,49 @@ export interface WeeklyReportDetail {
   updatedAt: string;
 }
 
-export async function getUserWeeklyReports(userId: string): Promise<WeeklyReportSummary[]> {
-  const data = await apiFetch<{ reports: WeeklyReportSummary[] }>(
-    `/api/admin/users/${userId}/weekly-reports`
+export async function getUserWeeklyReports(userId: string, opts?: ApiEnvOpts): Promise<WeeklyReportSummary[]> {
+  const data = await apiFetchEnv<{ reports: WeeklyReportSummary[] }>(
+    `/api/admin/users/${userId}/weekly-reports`,
+    {},
+    opts
   );
   return data.reports;
 }
 
-export async function getWeeklyReport(id: string): Promise<WeeklyReportDetail> {
-  const data = await apiFetch<{ report: WeeklyReportDetail }>(
-    `/api/admin/weekly-reports/${id}`
+export async function getWeeklyReport(id: string, opts?: ApiEnvOpts): Promise<WeeklyReportDetail> {
+  const data = await apiFetchEnv<{ report: WeeklyReportDetail }>(
+    `/api/admin/weekly-reports/${id}`,
+    {},
+    opts
   );
   return data.report;
 }
 
 export async function generateWeeklyReportApi(
   userId: string,
-  weekStartDate?: string
+  weekStartDate?: string,
+  opts?: ApiEnvOpts
 ): Promise<WeeklyReportDetail> {
-  const data = await apiFetch<{ report: WeeklyReportDetail }>(
+  const data = await apiFetchEnv<{ report: WeeklyReportDetail }>(
     '/api/admin/weekly-reports/generate',
     {
       method: 'POST',
       body: JSON.stringify({ userId, weekStartDate }),
-    }
+    },
+    opts
   );
   return data.report;
 }
 
 export async function toggleWeeklyReportVisibility(
   reportId: string,
-  visibility: boolean
+  visibility: boolean,
+  opts?: ApiEnvOpts
 ): Promise<{ report: { id: string; visibility: boolean }; notificationSent: boolean }> {
-  return apiFetch(`/api/admin/weekly-reports/${reportId}/visibility`, {
+  return apiFetchEnv(`/api/admin/weekly-reports/${reportId}/visibility`, {
     method: 'PUT',
     body: JSON.stringify({ visibility }),
-  });
+  }, opts);
 }
 
 // ---- Keywords ----
@@ -338,8 +351,8 @@ export async function updateReportVisibility(
 
 // ---- Users & Notifications ----
 
-export async function getUsers(): Promise<UserSummary[]> {
-  const data = await apiFetch<{ users: UserSummary[] }>('/api/admin/users');
+export async function getUsers(opts?: ApiEnvOpts): Promise<UserSummary[]> {
+  const data = await apiFetchEnv<{ users: UserSummary[] }>('/api/admin/users', {}, opts);
   return data.users;
 }
 
@@ -352,12 +365,13 @@ export interface NotificationResult {
 
 export async function toggleDevelopmentalVisibility(
   userId: string,
-  visibility: boolean
+  visibility: boolean,
+  opts?: ApiEnvOpts
 ): Promise<{ userId: string; developmentalVisible: boolean }> {
-  return apiFetch(`/api/admin/users/${userId}/developmental-visibility`, {
+  return apiFetchEnv(`/api/admin/users/${userId}/developmental-visibility`, {
     method: 'PUT',
     body: JSON.stringify({ visibility }),
-  });
+  }, opts);
 }
 
 export async function sendNotifications(

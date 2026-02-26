@@ -10,12 +10,17 @@ import {
   WeeklyReportSummary,
   WeeklyReportDetail,
 } from '../api/adminApi';
+import { useEnv, PROD_API_URL } from '../context/EnvContext';
 
 const TOTAL_PAGES = 7;
 
 export default function UserWeeklyReportsPage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const { env, prodToken } = useEnv();
+
+  const envOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
+
   const [reports, setReports] = useState<WeeklyReportSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -34,14 +39,17 @@ export default function UserWeeklyReportsPage() {
 
   useEffect(() => {
     if (userId) {
+      setLoading(true);
+      setReports([]);
+      setSelectedReport(null);
       loadReports();
       loadDevVisibility();
     }
-  }, [userId]);
+  }, [userId, env]);
 
   const loadReports = async () => {
     try {
-      const data = await getUserWeeklyReports(userId!);
+      const data = await getUserWeeklyReports(userId!, envOpts);
       setReports(data);
     } catch (err) {
       console.error('Failed to load weekly reports:', err);
@@ -52,7 +60,7 @@ export default function UserWeeklyReportsPage() {
 
   const loadDevVisibility = async () => {
     try {
-      const users = await getUsers();
+      const users = await getUsers(envOpts);
       const user = users.find((u) => u.id === userId);
       if (user) setDevVisible(user.developmentalVisible);
     } catch (err) {
@@ -65,7 +73,7 @@ export default function UserWeeklyReportsPage() {
     setFeedback(null);
     const newVisibility = !devVisible;
     try {
-      const result = await toggleDevelopmentalVisibility(userId!, newVisibility);
+      const result = await toggleDevelopmentalVisibility(userId!, newVisibility, envOpts);
       setDevVisible(result.developmentalVisible);
       setFeedback({
         type: 'success',
@@ -85,7 +93,7 @@ export default function UserWeeklyReportsPage() {
     setFeedback(null);
     const newVisibility = !report.visibility;
     try {
-      const result = await toggleWeeklyReportVisibility(report.id, newVisibility);
+      const result = await toggleWeeklyReportVisibility(report.id, newVisibility, envOpts);
       setReports((prev) =>
         prev.map((r) =>
           r.id === report.id ? { ...r, visibility: result.report.visibility } : r
@@ -109,7 +117,7 @@ export default function UserWeeklyReportsPage() {
   const handleRowClick = async (reportId: string) => {
     setLoadingDetail(true);
     try {
-      const detail = await getWeeklyReport(reportId);
+      const detail = await getWeeklyReport(reportId, envOpts);
       setSelectedReport(detail);
       setCurrentPage(1);
       setWhyExpanded(false);
@@ -125,7 +133,7 @@ export default function UserWeeklyReportsPage() {
     setGenerating(true);
     setFeedback(null);
     try {
-      await generateWeeklyReportApi(userId!);
+      await generateWeeklyReportApi(userId!, undefined, envOpts);
       setFeedback({ type: 'success', message: 'Report generated successfully' });
       await loadReports();
     } catch (err: unknown) {
@@ -451,7 +459,7 @@ export default function UserWeeklyReportsPage() {
           <button className="btn-link" onClick={() => navigate(-1)} style={{ marginBottom: 8 }}>
             &larr; Back to users
           </button>
-          <h1>Weekly Reports</h1>
+          <h1>Weekly Reports {env === 'prod' && <span className="env-badge prod">PROD</span>}</h1>
           <p className="page-subtitle">
             User: <span style={{ fontFamily: "'SF Mono', monospace", fontSize: 13 }}>{userId}</span>
           </p>

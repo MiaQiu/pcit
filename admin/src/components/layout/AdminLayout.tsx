@@ -1,13 +1,57 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
+import { useEnv, PROD_API_URL } from '../../context/EnvContext';
 import { syncToProd, SyncResult } from '../../api/adminApi';
+import { apiFetchEnv } from '../../api/client';
 
 export default function AdminLayout() {
   const { logout } = useAuth();
+  const { env, setEnv, prodToken, setProdToken } = useEnv();
+
+  // Prod login
+  const [showProdLogin, setShowProdLogin] = useState(false);
+  const [prodPassword, setProdPassword] = useState('');
+  const [prodLoginError, setProdLoginError] = useState<string | null>(null);
+  const [loggingInToProd, setLoggingInToProd] = useState(false);
+
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
+
+  const handleEnvClick = (target: 'dev' | 'prod') => {
+    if (target === 'dev') {
+      setEnv('dev');
+      setShowProdLogin(false);
+      return;
+    }
+    if (prodToken) {
+      setEnv('prod');
+    } else {
+      setShowProdLogin(true);
+    }
+  };
+
+  const handleProdLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoggingInToProd(true);
+    setProdLoginError(null);
+    try {
+      const data = await apiFetchEnv<{ token: string }>(
+        '/api/admin/auth/login',
+        { method: 'POST', body: JSON.stringify({ password: prodPassword }) },
+        { baseUrl: PROD_API_URL }
+      );
+      setProdToken(data.token);
+      setEnv('prod');
+      setShowProdLogin(false);
+      setProdPassword('');
+    } catch {
+      setProdLoginError('Invalid password');
+    } finally {
+      setLoggingInToProd(false);
+    }
+  };
 
   async function handleSyncToProd() {
     if (!window.confirm('Push all lessons and keywords from dev to prod?\n\nThis will overwrite prod content but will not affect user data.')) {
@@ -51,6 +95,38 @@ export default function AdminLayout() {
             Settings
           </NavLink>
         </nav>
+
+        {/* Environment selector */}
+        <div className="sidebar-env">
+          <div className="env-label">Environment</div>
+          <div className="env-toggle">
+            <button
+              className={`env-btn ${env === 'dev' ? 'active' : ''}`}
+              onClick={() => handleEnvClick('dev')}
+            >DEV</button>
+            <button
+              className={`env-btn ${env === 'prod' ? 'active' : ''}`}
+              onClick={() => handleEnvClick('prod')}
+            >PROD</button>
+          </div>
+          {showProdLogin && (
+            <form className="prod-login-form" onSubmit={handleProdLogin}>
+              <input
+                type="password"
+                className="prod-login-input"
+                placeholder="Admin password"
+                value={prodPassword}
+                onChange={(e) => setProdPassword(e.target.value)}
+                autoFocus
+              />
+              <button type="submit" className="prod-login-submit" disabled={loggingInToProd}>
+                {loggingInToProd ? '…' : 'Connect'}
+              </button>
+              {prodLoginError && <div className="prod-login-error">{prodLoginError}</div>}
+            </form>
+          )}
+        </div>
+
         <div className="sidebar-sync">
           <button className="sync-prod-btn" onClick={handleSyncToProd} disabled={syncing}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16,3 21,3 21,8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21,16 21,21 16,21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>

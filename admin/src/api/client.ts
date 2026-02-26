@@ -41,3 +41,41 @@ export async function apiFetch<T = any>(
 
   return res.json();
 }
+
+// Env-aware fetch: used for endpoints that can target dev or prod.
+// Pass baseUrl + token to call the prod API directly; omit both for dev (uses Vercel rewrite).
+export async function apiFetchEnv<T = any>(
+  path: string,
+  options: RequestInit = {},
+  envOpts?: { baseUrl?: string; token?: string }
+): Promise<T> {
+  const token = envOpts?.token ?? getToken();
+  const baseUrl = envOpts?.baseUrl ?? '';
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${baseUrl}${path}`, { ...options, headers });
+
+  if (res.status === 401) {
+    if (!envOpts?.baseUrl) {
+      // Only auto-redirect to login for the dev API
+      clearToken();
+      window.location.href = '/login';
+    }
+    throw new Error('Unauthorized');
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Request failed: ${res.status}`);
+  }
+
+  return res.json();
+}

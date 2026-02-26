@@ -1,19 +1,25 @@
 import { useState, useEffect } from 'react';
 import { getUsers, UserSummary } from '../api/adminApi';
+import { useEnv, PROD_API_URL } from '../context/EnvContext';
 import UserList from '../components/notifications/UserList';
 import NotificationSender from '../components/notifications/NotificationSender';
 
 export default function NotificationsPage() {
+  const { env, prodToken } = useEnv();
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
+  const envOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
+
   useEffect(() => {
-    getUsers()
+    setLoading(true);
+    setSelectedIds(new Set());
+    getUsers(envOpts)
       .then(setUsers)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [env]);
 
   const toggleUser = (id: string) => {
     setSelectedIds((prev) => {
@@ -36,7 +42,10 @@ export default function NotificationsPage() {
       <div className="page-header">
         <div>
           <h1>Notifications</h1>
-          <p className="page-subtitle">Send push notifications to users</p>
+          <p className="page-subtitle">
+            Send push notifications to users
+            {env === 'prod' && <span className="env-badge prod">PROD</span>}
+          </p>
         </div>
       </div>
 
