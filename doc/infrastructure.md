@@ -194,6 +194,9 @@ npx prisma migrate dev --name <description>   # 1. create migration
                                               #    (migration auto-applies on startup)
 ```
 
+> **Warning: never use `prisma db push` on dev.**
+> `prisma db push` applies schema changes directly to the dev DB but does **not** create a migration file. This means prod will never receive the change — `prisma migrate deploy` (which runs on every container startup) only applies changes that have a migration file. Always use `prisma migrate dev --name <description>` so the migration file is committed and prod stays in sync automatically on the next deploy.
+
 ---
 
 ## Database Access (local)
