@@ -714,21 +714,19 @@ export const HomeScreen: React.FC = () => {
           />
         }
       >
-        {/* Profile Circle and Streak Widget - Only show for experienced users */}
-        {isExperiencedUser && (
-          <View style={styles.streakContainer}>
-            <ProfileCircle
-              size={60}
-              imageUrl={profileImageUrl}
-              relationshipToChild={relationshipToChild}
-              onPress={handleProfilePress}
-            />
-            <StreakWidget
-              streak={currentStreak}
-              completedDays={completedDaysThisWeek}
-            />
-          </View>
-        )}
+        {/* Profile Circle and Streak Widget - Always show */}
+        <View style={styles.streakContainer}>
+          <ProfileCircle
+            size={60}
+            imageUrl={profileImageUrl}
+            relationshipToChild={relationshipToChild}
+            onPress={handleProfilePress}
+          />
+          <StreakWidget
+            streak={currentStreak}
+            completedDays={completedDaysThisWeek}
+          />
+        </View>
 
         {/* Today's Deck Heading */}
         {/* {lessons.length > 0 && (
