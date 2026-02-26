@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import Purchases from 'react-native-purchases';
@@ -34,6 +34,7 @@ export const RootNavigator: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<string | null>(null);
+  const [hasCheckError, setHasCheckError] = useState(false);
   const navigationRef = useRef<any>(null);
 
   // Handle session expiration
@@ -72,6 +73,12 @@ export const RootNavigator: React.FC = () => {
     authService.setLogoutCallback(handleLogout);
   }, [authService, handleSessionExpired, handleLogout]);
 
+  const retryAuthCheck = () => {
+    setHasCheckError(false);
+    setIsLoading(true);
+    checkAuthStatus();
+  };
+
   useEffect(() => {
     checkAuthStatus();
   }, []);
@@ -98,7 +105,9 @@ export const RootNavigator: React.FC = () => {
           setOnboardingStep(incompleteStep);
         } catch (error) {
           console.error('[Auth] Onboarding check failed:', error);
-          // On error, allow access to app (better than blocking user)
+          setHasCheckError(true);
+          setIsLoading(false);
+          return;
         }
       }
 
@@ -118,9 +127,8 @@ export const RootNavigator: React.FC = () => {
   };
 
   const checkOnboardingCompletion = async (): Promise<string | null> => {
-    try {
-      // Get user profile for onboarding steps
-      const user = await authService.getCurrentUser(true);
+    // Get user profile for onboarding steps
+    const user = await authService.getCurrentUser(true);
 
       // Check which onboarding step is incomplete
       // Default values from signup are 'User' and 'Child'
@@ -169,20 +177,25 @@ export const RootNavigator: React.FC = () => {
         }
       }
 
-      // All steps complete and subscription active
-      return null;
-    } catch (error) {
-      console.error('[Auth] Error checking onboarding completion:', error);
-      // Return null on error - assume onboarding is complete
-      // Better to show main app than block user on network error
-      return null;
-    }
+    // All steps complete and subscription active
+    return null;
   };
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#8C49D5" />
+      </View>
+    );
+  }
+
+  if (hasCheckError) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>Unable to connect. Please check your connection and try again.</Text>
+        <TouchableOpacity onPress={retryAuthCheck} style={styles.retryButton}>
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -313,5 +326,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginHorizontal: 32,
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: '#8C49D5',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
