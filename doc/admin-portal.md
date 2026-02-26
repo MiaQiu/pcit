@@ -1,6 +1,6 @@
 # Admin Portal
 
-Web-based admin interface for managing lessons (CRUD with live mobile preview) and sending push notifications to users. Built with React + Vite, backed by Express API routes.
+Web-based admin interface for managing lessons (CRUD with live mobile preview), keywords, push notifications, and syncing content from dev to prod. Built with React + Vite, backed by Express API routes.
 
 ## Quick Start
 
@@ -68,6 +68,17 @@ All require admin auth.
 | `POST` | `/api/admin/modules` | Create a new module |
 | `PUT` | `/api/admin/modules/:key` | Update module details |
 
+### Keywords
+
+All require admin auth.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/admin/keywords?search=X` | List all keywords, optional search filter |
+| `POST` | `/api/admin/keywords` | Create a keyword |
+| `PUT` | `/api/admin/keywords/:id` | Update a keyword |
+| `DELETE` | `/api/admin/keywords/:id` | Delete a keyword |
+
 ### Notifications
 
 All require admin auth.
@@ -76,6 +87,24 @@ All require admin auth.
 |--------|------|-------------|
 | `GET` | `/api/admin/users` | List users with push token status and session count |
 | `POST` | `/api/admin/notifications/send` | Send push notification to selected users |
+
+### Sync to Prod
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/admin/sync-to-prod` | Admin JWT | Reads all content from dev DB, forwards to prod API |
+| `POST` | `/api/admin/receive-sync` | `SYNC_SECRET` header | Upserts received content into the connected DB |
+
+`sync-to-prod` is called by the admin portal (running against dev API). It reads Modules, Lessons (with segments + quizzes), and Keywords from the dev DB, then makes a server-to-server HTTPS call to the prod API's `receive-sync` endpoint.
+
+`receive-sync` is called by the dev API (server-to-server, not directly from the browser). It upserts all content into whichever DB the receiving server is connected to. Segments are upserted by ID — existing user data (TextInputResponse) is never deleted. Quiz options are delete-and-recreated (safe because QuizResponse stores the selected answer as a plain string).
+
+**Required env vars:**
+
+| Var | Service | Value |
+|-----|---------|-------|
+| `PROD_API_URL` | Dev App Runner (us-east-1) | `https://wpwpawhz29.ap-southeast-1.awsapprunner.com` |
+| `SYNC_SECRET` | Both App Runners | Shared random secret (set via AWS Console) |
 
 ## Lesson ID Convention
 
@@ -166,12 +195,35 @@ The body text textarea supports:
 - `* bullet item` — lines starting with `* ` render as styled bullet points
 - Blank lines add spacing
 
+### Keywords (`/admin/keywords`)
+
+- Table of all glossary keywords with term and definition
+- Search box filters in real-time
+- Inline create and edit forms
+- Delete with confirmation
+
 ### Notifications (`/admin/notifications`)
 
 - Left: user table with checkboxes (only users with push tokens are selectable)
 - Right: compose panel with title/body inputs, preview box, and send button
 - Default message: "Your Weekly Report is Ready!" / "Check out your progress this week"
 - Uses existing `sendPushNotificationToUser` from `server/services/pushNotifications.cjs`
+
+### Push to Prod (sidebar button)
+
+A "Push to Prod" button lives at the bottom of the sidebar, above Logout.
+
+**Flow:**
+1. Click the button → confirmation dialog: "Push all lessons and keywords from dev to prod?"
+2. Admin portal calls `POST /api/admin/sync-to-prod` on the dev API
+3. Dev API reads all Modules, Lessons (with segments + quizzes), and Keywords from dev DB
+4. Dev API forwards the full dataset to `POST /api/admin/receive-sync` on the prod API (server-to-server, authenticated with `SYNC_SECRET`)
+5. Prod API upserts everything into the prod DB
+6. Sidebar shows a success message: "Synced: 74 lessons, 84 keywords" or an error message if it fails
+
+**What is synced:** Modules, Lessons, LessonSegments, Quizzes, QuizOptions, Keywords.
+
+**What is NOT affected:** Users, sessions, user progress, TextInputResponses, WeeklyReports, or any other user-generated data on prod.
 
 ## Content Types
 
