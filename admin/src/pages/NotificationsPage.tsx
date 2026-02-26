@@ -9,17 +9,23 @@ export default function NotificationsPage() {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-
-  const envOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Compute opts inside the effect so it always captures the latest env + prodToken
+    const opts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
     setLoading(true);
+    setUsers([]);
     setSelectedIds(new Set());
-    getUsers(envOpts)
+    setFetchError(null);
+    getUsers(opts)
       .then(setUsers)
-      .catch(console.error)
+      .catch((err) => {
+        console.error('Failed to load users:', err);
+        setFetchError(`Failed to load ${env.toUpperCase()} users: ${err.message}`);
+      })
       .finally(() => setLoading(false));
-  }, [env]);
+  }, [env, prodToken]);
 
   const toggleUser = (id: string) => {
     setSelectedIds((prev) => {
@@ -53,6 +59,8 @@ export default function NotificationsPage() {
         <div className="notifications-users">
           {loading ? (
             <div className="loading-state">Loading users...</div>
+          ) : fetchError ? (
+            <div className="error-state">{fetchError}</div>
           ) : (
             <UserList
               users={users}

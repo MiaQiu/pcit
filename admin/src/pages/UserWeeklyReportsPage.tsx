@@ -19,7 +19,8 @@ export default function UserWeeklyReportsPage() {
   const navigate = useNavigate();
   const { env, prodToken } = useEnv();
 
-  const envOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
+  // opts computed fresh from current env + prodToken on every render — used in all async actions
+  const opts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
 
   const [reports, setReports] = useState<WeeklyReportSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,30 +38,23 @@ export default function UserWeeklyReportsPage() {
   // Generate state
   const [generating, setGenerating] = useState(false);
 
-  useEffect(() => {
-    if (userId) {
-      setLoading(true);
-      setReports([]);
-      setSelectedReport(null);
-      loadReports();
-      loadDevVisibility();
-    }
-  }, [userId, env]);
-
-  const loadReports = async () => {
+  const loadReports = async (callOpts = opts) => {
+    setLoading(true);
     try {
-      const data = await getUserWeeklyReports(userId!, envOpts);
+      const data = await getUserWeeklyReports(userId!, callOpts);
       setReports(data);
     } catch (err) {
       console.error('Failed to load weekly reports:', err);
+      setFeedback({ type: 'error', message: `Failed to load reports from ${env.toUpperCase()}` });
+      setTimeout(() => setFeedback(null), 5000);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadDevVisibility = async () => {
+  const loadDevVisibility = async (callOpts = opts) => {
     try {
-      const users = await getUsers(envOpts);
+      const users = await getUsers(callOpts);
       const user = users.find((u) => u.id === userId);
       if (user) setDevVisible(user.developmentalVisible);
     } catch (err) {
@@ -68,12 +62,23 @@ export default function UserWeeklyReportsPage() {
     }
   };
 
+  useEffect(() => {
+    if (!userId) return;
+    // Snapshot opts at effect-run time so it always reflects the latest env + prodToken
+    const effectOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
+    setReports([]);
+    setSelectedReport(null);
+    setDevVisible(false);
+    loadReports(effectOpts);
+    loadDevVisibility(effectOpts);
+  }, [userId, env, prodToken]);
+
   const handleToggleDev = async () => {
     setTogglingDev(true);
     setFeedback(null);
     const newVisibility = !devVisible;
     try {
-      const result = await toggleDevelopmentalVisibility(userId!, newVisibility, envOpts);
+      const result = await toggleDevelopmentalVisibility(userId!, newVisibility, opts);
       setDevVisible(result.developmentalVisible);
       setFeedback({
         type: 'success',
@@ -93,7 +98,7 @@ export default function UserWeeklyReportsPage() {
     setFeedback(null);
     const newVisibility = !report.visibility;
     try {
-      const result = await toggleWeeklyReportVisibility(report.id, newVisibility, envOpts);
+      const result = await toggleWeeklyReportVisibility(report.id, newVisibility, opts);
       setReports((prev) =>
         prev.map((r) =>
           r.id === report.id ? { ...r, visibility: result.report.visibility } : r
@@ -117,7 +122,7 @@ export default function UserWeeklyReportsPage() {
   const handleRowClick = async (reportId: string) => {
     setLoadingDetail(true);
     try {
-      const detail = await getWeeklyReport(reportId, envOpts);
+      const detail = await getWeeklyReport(reportId, opts);
       setSelectedReport(detail);
       setCurrentPage(1);
       setWhyExpanded(false);
@@ -133,7 +138,7 @@ export default function UserWeeklyReportsPage() {
     setGenerating(true);
     setFeedback(null);
     try {
-      await generateWeeklyReportApi(userId!, undefined, envOpts);
+      await generateWeeklyReportApi(userId!, undefined, opts);
       setFeedback({ type: 'success', message: 'Report generated successfully' });
       await loadReports();
     } catch (err: unknown) {
