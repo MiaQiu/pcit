@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import Purchases from 'react-native-purchases';
@@ -38,8 +39,10 @@ export const RootNavigator: React.FC = () => {
   const navigationRef = useRef<any>(null);
 
   // Handle session expiration
-  const handleSessionExpired = useCallback(() => {
+  const handleSessionExpired = useCallback(async () => {
     console.log('Session expired - logging out user');
+
+    await clearUserData();
 
     // Update auth state
     setIsAuthenticated(false);
@@ -61,8 +64,9 @@ export const RootNavigator: React.FC = () => {
   }, []);
 
   // Handle logout
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
     console.log('User logged out - resetting auth state');
+    await clearUserData();
     setIsAuthenticated(false);
     setOnboardingStep(null);
   }, []);
@@ -72,6 +76,19 @@ export const RootNavigator: React.FC = () => {
     authService.setSessionExpiredCallback(handleSessionExpired);
     authService.setLogoutCallback(handleLogout);
   }, [authService, handleSessionExpired, handleLogout]);
+
+  const clearUserData = async () => {
+    try {
+      const allKeys = await AsyncStorage.getAllKeys();
+      const keysToKeep = ['@notification_preferences'];
+      const keysToRemove = allKeys.filter(key => !keysToKeep.includes(key));
+      if (keysToRemove.length > 0) {
+        await AsyncStorage.multiRemove(keysToRemove);
+      }
+    } catch (error) {
+      console.error('Failed to clear user data on logout:', error);
+    }
+  };
 
   const retryAuthCheck = () => {
     setHasCheckError(false);
