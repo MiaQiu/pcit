@@ -79,12 +79,17 @@ export const RootNavigator: React.FC = () => {
 
   const clearUserData = async () => {
     try {
+      const staticKeys = [
+        'isExperiencedUser',
+        'module_picker_selected_module',
+        'module_picker_dismissed_date',
+        'foundation_completed_date',
+        '@nora_onboarding_completed',
+      ];
+      // Also clear dynamic report_read_<date> keys
       const allKeys = await AsyncStorage.getAllKeys();
-      const keysToKeep = ['@notification_preferences'];
-      const keysToRemove = allKeys.filter(key => !keysToKeep.includes(key));
-      if (keysToRemove.length > 0) {
-        await AsyncStorage.multiRemove(keysToRemove);
-      }
+      const reportReadKeys = allKeys.filter(key => key.startsWith('report_read_'));
+      await AsyncStorage.multiRemove([...staticKeys, ...reportReadKeys]);
     } catch (error) {
       console.error('Failed to clear user data on logout:', error);
     }
