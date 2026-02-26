@@ -25,10 +25,6 @@ export const NameInputScreen: React.FC = () => {
     }
   };
 
-  const handleBack = () => {
-    navigation.goBack();
-  };
-
   const isValid = name.trim().length > 0;
 
   return (
@@ -45,7 +41,7 @@ export const NameInputScreen: React.FC = () => {
       <View style={styles.spacer} />
 
       <OnboardingButtonRow
-        onBack={handleBack}
+        onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
         onContinue={handleContinue}
         continueDisabled={!isValid}
       />

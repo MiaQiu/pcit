@@ -27,6 +27,7 @@ import { WeeklyReportScreen } from '../screens/WeeklyReportScreen';
 import { ModuleDetailScreen } from '../screens/ModuleDetailScreen';
 import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
+import { User } from '@nora/core';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -35,6 +36,7 @@ export const RootNavigator: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<string | null>(null);
+  const [resumeUserData, setResumeUserData] = useState<User | null>(null);
   const [hasCheckError, setHasCheckError] = useState(false);
   const navigationRef = useRef<any>(null);
 
@@ -104,9 +106,12 @@ export const RootNavigator: React.FC = () => {
       if (authenticated) {
         console.log('[Auth] Checking onboarding and subscription status...');
         try {
-          const incompleteStep = await checkOnboardingCompletion();
+          const { step: incompleteStep, user } = await checkOnboardingCompletion();
           console.log('[Auth] Onboarding step:', incompleteStep);
           setOnboardingStep(incompleteStep);
+          if (incompleteStep) {
+            setResumeUserData(user);
+          }
         } catch (error) {
           console.error('[Auth] Onboarding check failed:', error);
           setHasCheckError(true);
@@ -130,7 +135,7 @@ export const RootNavigator: React.FC = () => {
     }
   };
 
-  const checkOnboardingCompletion = async (): Promise<string | null> => {
+  const checkOnboardingCompletion = async (): Promise<{ step: string | null; user: User }> => {
     // Get user profile for onboarding steps
     const user = await authService.getCurrentUser(true);
 
@@ -140,16 +145,16 @@ export const RootNavigator: React.FC = () => {
       // Check which onboarding step is incomplete
       // Default values from signup are 'User' and 'Child'
       if (!user.name || user.name === 'User') {
-        return 'NameInput';
+        return { step: 'NameInput', user };
       }
       if (!user.childName || user.childName === 'Child') {
-        return 'ChildName';
+        return { step: 'ChildName', user };
       }
       if (!user.childBirthday) {
-        return 'ChildBirthday';
+        return { step: 'ChildBirthday', user };
       }
       if (!user.issue) {
-        return 'ChildIssue';
+        return { step: 'ChildIssue', user };
       }
 
       // Check subscription status using RevenueCat SDK (source of truth)
@@ -160,7 +165,7 @@ export const RootNavigator: React.FC = () => {
 
         if (!hasActiveSubscription) {
           console.log('[Auth] No active subscription (RevenueCat), redirecting to subscription screen');
-          return 'Subscription';
+          return { step: 'Subscription', user };
         }
 
         console.log('[Auth] Active subscription confirmed via RevenueCat');
@@ -170,7 +175,7 @@ export const RootNavigator: React.FC = () => {
         // Fallback to backend data if RevenueCat fails
         if (user.subscriptionStatus !== 'ACTIVE') {
           if (user.subscriptionStatus === 'INACTIVE') {
-            return 'Subscription';
+            return { step: 'Subscription', user };
           }
 
           const now = new Date();
@@ -179,13 +184,13 @@ export const RootNavigator: React.FC = () => {
             : null;
 
           if (!endDate || now > endDate) {
-            return 'Subscription';
+            return { step: 'Subscription', user };
           }
         }
       }
 
     // All steps complete and subscription active
-    return null;
+    return { step: null, user };
   };
 
   if (isLoading) {
@@ -220,7 +225,7 @@ export const RootNavigator: React.FC = () => {
           <Stack.Screen
             name="Onboarding"
             component={OnboardingNavigator}
-            initialParams={onboardingStep ? { initialStep: onboardingStep } : undefined}
+            initialParams={onboardingStep ? { initialStep: onboardingStep, resumeUserData: resumeUserData ?? undefined } : undefined}
           />
           <Stack.Screen name="MainTabs" component={TabNavigator} />
         </>

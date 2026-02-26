@@ -6,7 +6,7 @@
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NavigatorScreenParams } from '@react-navigation/native';
-import { Quiz } from '@nora/core';
+import { Quiz, User } from '@nora/core';
 
 export type RootTabParamList = {
   Home: undefined;
@@ -57,7 +57,7 @@ export type OnboardingStackParamList = {
 };
 
 export type RootStackParamList = {
-  Onboarding: { initialStep?: string } | undefined;
+  Onboarding: { initialStep?: string; resumeUserData?: User } | undefined;
   MainTabs: NavigatorScreenParams<RootTabParamList> | undefined;
   Profile: undefined;
   NotificationSettings: undefined;

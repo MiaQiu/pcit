@@ -3,10 +3,11 @@
  * Handles the onboarding flow screens
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { OnboardingStackParamList, RootStackParamList } from './types';
 import { RouteProp } from '@react-navigation/native';
+import { useOnboarding } from '../contexts/OnboardingContext';
 
 // Import onboarding screens (will be created next)
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
@@ -56,6 +57,24 @@ interface OnboardingNavigatorProps {
 
 export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route }) => {
   const initialStep = route?.params?.initialStep;
+  const resumeUserData = route?.params?.resumeUserData;
+  const { updateData } = useOnboarding();
+
+  // Pre-populate context with existing server data when resuming mid-onboarding.
+  // Without this, OnboardingContext starts empty and SubscriptionScreen's
+  // isInitialOnboarding check (data.name !== '') returns false, skipping completeOnboarding.
+  useEffect(() => {
+    if (resumeUserData) {
+      updateData({
+        name: resumeUserData.name !== 'User' ? resumeUserData.name : '',
+        email: resumeUserData.email || '',
+        childName: resumeUserData.childName !== 'Child' ? resumeUserData.childName : '',
+        childBirthday: resumeUserData.childBirthday ? new Date(resumeUserData.childBirthday) : null,
+        issue: resumeUserData.issue || '',
+        relationshipToChild: resumeUserData.relationshipToChild || null,
+      });
+    }
+  }, []);
 
   // Determine initial route name based on the incomplete step
   const getInitialRouteName = (): keyof OnboardingStackParamList => {

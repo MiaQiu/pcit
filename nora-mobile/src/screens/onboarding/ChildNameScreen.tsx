@@ -26,7 +26,11 @@ export const ChildNameScreen: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.replace('Relationship');
+    }
   };
 
   const isValid = childName.trim().length > 0;

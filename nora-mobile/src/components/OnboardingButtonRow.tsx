@@ -9,7 +9,7 @@ import { OnboardingBackButton } from './OnboardingBackButton';
 import { OnboardingButton } from './OnboardingButton';
 
 interface OnboardingButtonRowProps {
-  onBack: () => void;
+  onBack?: () => void;
   onContinue: () => void;
   continueDisabled?: boolean;
   continueText?: string;
@@ -25,8 +25,12 @@ export const OnboardingButtonRow: React.FC<OnboardingButtonRowProps> = ({
 }) => {
   return (
     <View style={styles.buttonRow}>
-      <OnboardingBackButton onPress={onBack} text={backText} />
-      <View style={styles.spacer} />
+      {onBack ? (
+        <>
+          <OnboardingBackButton onPress={onBack} text={backText} />
+          <View style={styles.spacer} />
+        </>
+      ) : null}
       <OnboardingButton
         onPress={onContinue}
         disabled={continueDisabled}
