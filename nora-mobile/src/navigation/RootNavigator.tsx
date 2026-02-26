@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as userStorage from '../lib/userStorage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import Purchases from 'react-native-purchases';
@@ -42,7 +42,7 @@ export const RootNavigator: React.FC = () => {
   const handleSessionExpired = useCallback(async () => {
     console.log('Session expired - logging out user');
 
-    await clearUserData();
+    await userStorage.clearCurrentUser();
 
     // Update auth state
     setIsAuthenticated(false);
@@ -66,7 +66,7 @@ export const RootNavigator: React.FC = () => {
   // Handle logout
   const handleLogout = useCallback(async () => {
     console.log('User logged out - resetting auth state');
-    await clearUserData();
+    await userStorage.clearCurrentUser();
     setIsAuthenticated(false);
     setOnboardingStep(null);
   }, []);
@@ -76,24 +76,6 @@ export const RootNavigator: React.FC = () => {
     authService.setSessionExpiredCallback(handleSessionExpired);
     authService.setLogoutCallback(handleLogout);
   }, [authService, handleSessionExpired, handleLogout]);
-
-  const clearUserData = async () => {
-    try {
-      const staticKeys = [
-        'isExperiencedUser',
-        'module_picker_selected_module',
-        'module_picker_dismissed_date',
-        'foundation_completed_date',
-        '@nora_onboarding_completed',
-      ];
-      // Also clear dynamic report_read_<date> keys
-      const allKeys = await AsyncStorage.getAllKeys();
-      const reportReadKeys = allKeys.filter(key => key.startsWith('report_read_'));
-      await AsyncStorage.multiRemove([...staticKeys, ...reportReadKeys]);
-    } catch (error) {
-      console.error('Failed to clear user data on logout:', error);
-    }
-  };
 
   const retryAuthCheck = () => {
     setHasCheckError(false);
@@ -151,6 +133,9 @@ export const RootNavigator: React.FC = () => {
   const checkOnboardingCompletion = async (): Promise<string | null> => {
     // Get user profile for onboarding steps
     const user = await authService.getCurrentUser(true);
+
+    // Set current user ID so userStorage prefixes keys correctly
+    await userStorage.setCurrentUserId(user.id);
 
       // Check which onboarding step is incomplete
       // Default values from signup are 'User' and 'Child'

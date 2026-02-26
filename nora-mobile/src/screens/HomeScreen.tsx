@@ -22,6 +22,7 @@ import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
 import { toSingaporeDateString, getTodaySingapore, getYesterdaySingapore, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
 import amplitudeService from '../services/amplitudeService';
+import * as userStorage from '../lib/userStorage';
 import type { ModuleWithProgress } from '@nora/core';
 
 export const HomeScreen: React.FC = () => {
@@ -65,10 +66,8 @@ export const HomeScreen: React.FC = () => {
    */
   const checkExperiencedUserStatus = async () => {
     try {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-
       // Check permanent cache first
-      const cachedStatus = await AsyncStorage.getItem('isExperiencedUser');
+      const cachedStatus = await userStorage.getItem('isExperiencedUser');
 
       if (cachedStatus === 'true') {
         // Already marked as experienced, no need to check API
@@ -89,7 +88,7 @@ export const HomeScreen: React.FC = () => {
 
       if (hasRecordings || hasCompletedLesson) {
         // Mark as experienced and cache permanently
-        await AsyncStorage.setItem('isExperiencedUser', 'true');
+        await userStorage.setItem('isExperiencedUser', 'true');
         setIsExperiencedUser(true);
       }
     } catch (error) {
@@ -103,8 +102,7 @@ export const HomeScreen: React.FC = () => {
    */
   const markAsExperiencedUser = async () => {
     try {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      await AsyncStorage.setItem('isExperiencedUser', 'true');
+      await userStorage.setItem('isExperiencedUser', 'true');
       setIsExperiencedUser(true);
     } catch (error) {
       console.log('Failed to mark user as experienced:', error);
@@ -120,11 +118,10 @@ export const HomeScreen: React.FC = () => {
    */
   const checkModulePickerPopup = async () => {
     try {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
       const today = getTodaySingapore();
 
       // Check if already dismissed today
-      const dismissedDate = await AsyncStorage.getItem('module_picker_dismissed_date');
+      const dismissedDate = await userStorage.getItem('module_picker_dismissed_date');
       if (dismissedDate === today) return;
 
       // Fetch modules data
@@ -132,18 +129,18 @@ export const HomeScreen: React.FC = () => {
       if (!modulesResponse.isFoundationCompleted) return;
 
       // If user already selected a module and it's not yet completed, respect their choice
-      const selectedModule = await AsyncStorage.getItem('module_picker_selected_module');
+      const selectedModule = await userStorage.getItem('module_picker_selected_module');
       if (selectedModule) {
         const mod = modulesResponse.modules.find(m => m.key === selectedModule);
         if (mod && mod.completedLessons < mod.lessonCount) return;
         // Module was completed — clear so picker can suggest the next one
-        await AsyncStorage.removeItem('module_picker_selected_module');
+        await userStorage.removeItem('module_picker_selected_module');
       }
 
       // Store Foundation completion date (first time we see it completed)
-      const storedCompletionDate = await AsyncStorage.getItem('foundation_completed_date');
+      const storedCompletionDate = await userStorage.getItem('foundation_completed_date');
       if (!storedCompletionDate) {
-        await AsyncStorage.setItem('foundation_completed_date', today);
+        await userStorage.setItem('foundation_completed_date', today);
         // Don't show popup on the same day Foundation was completed
         return;
       }
@@ -170,8 +167,7 @@ export const HomeScreen: React.FC = () => {
   const handleModulePickerDismiss = async () => {
     setShowModulePicker(false);
     try {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      await AsyncStorage.setItem('module_picker_dismissed_date', getTodaySingapore());
+      await userStorage.setItem('module_picker_dismissed_date', getTodaySingapore());
     } catch (error) {
       console.log('Failed to store module picker dismiss date:', error);
     }
@@ -180,9 +176,8 @@ export const HomeScreen: React.FC = () => {
   const handleModulePickerSelect = async (moduleKey: string) => {
     setShowModulePicker(false);
     try {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      await AsyncStorage.setItem('module_picker_dismissed_date', getTodaySingapore());
-      await AsyncStorage.setItem('module_picker_selected_module', moduleKey);
+      await userStorage.setItem('module_picker_dismissed_date', getTodaySingapore());
+      await userStorage.setItem('module_picker_selected_module', moduleKey);
     } catch (error) {
       console.log('Failed to store module picker dismiss date:', error);
     }
@@ -283,8 +278,7 @@ export const HomeScreen: React.FC = () => {
 
       // Determine active module for daily lesson selection
       if (modulesResponse) {
-        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-        const selectedModuleKey = await AsyncStorage.getItem('module_picker_selected_module');
+        const selectedModuleKey = await userStorage.getItem('module_picker_selected_module');
 
         // Prefer user's explicitly selected module if it's not yet completed
         if (selectedModuleKey) {
@@ -346,9 +340,8 @@ export const HomeScreen: React.FC = () => {
       }
 
       // Check if report was read today by comparing recording IDs
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
       const reportReadKey = `report_read_${getTodaySingapore()}`;
-      const reportReadRecordingId = await AsyncStorage.getItem(reportReadKey);
+      const reportReadRecordingId = await userStorage.getItem(reportReadKey);
 
       if (hasCompletedRecording) {
         // Get the most recent completed recording (recordings are already sorted by desc)
@@ -626,9 +619,8 @@ export const HomeScreen: React.FC = () => {
   const handleReadTodayReport = async (source: 'next_action_button' | 'score_card_button' = 'next_action_button') => {
     if (latestRecordingId) {
       // Mark report as read by storing the recording ID (using Singapore timezone)
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
       const reportReadKey = `report_read_${getTodaySingapore()}`;
-      await AsyncStorage.setItem(reportReadKey, latestRecordingId);
+      await userStorage.setItem(reportReadKey, latestRecordingId);
       setIsReportRead(true);
 
       // Track report viewed with specific source
@@ -648,10 +640,8 @@ export const HomeScreen: React.FC = () => {
 
   const handleRecordAgain = async () => {
     // Reset report read state (since we're recording again, we'll have a new report to read)
-    // Use Singapore timezone
-    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
     const reportReadKey = `report_read_${getTodaySingapore()}`;
-    await AsyncStorage.removeItem(reportReadKey);
+    await userStorage.removeItem(reportReadKey);
     setIsReportRead(false);
 
     // Navigate to recording tab

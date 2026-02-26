@@ -18,6 +18,7 @@ import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
 import type { ModuleWithProgress } from '@nora/core';
+import * as userStorage from '../lib/userStorage';
 
 export const LearnScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -53,8 +54,7 @@ export const LearnScreen: React.FC = () => {
 
   const loadCurrentModuleKey = async () => {
     try {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const key = await AsyncStorage.getItem('module_picker_selected_module');
+      const key = await userStorage.getItem('module_picker_selected_module');
       setCurrentModuleKey(key);
     } catch (error) {
       console.log('Failed to load current module key:', error);

@@ -14,6 +14,7 @@ import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService } from '../contexts/AppContext';
 import { useToast } from '../components/ToastManager';
 import type { ModuleDetailResponse } from '@nora/core';
+import * as userStorage from '../lib/userStorage';
 
 export const ModuleDetailScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -65,8 +66,7 @@ export const ModuleDetailScreen: React.FC = () => {
 
   const checkIfCurrentModule = async () => {
     try {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const selected = await AsyncStorage.getItem('module_picker_selected_module');
+      const selected = await userStorage.getItem('module_picker_selected_module');
       setIsCurrentModule(selected === moduleKey);
     } catch (error) {
       console.log('Failed to check current module:', error);
@@ -75,8 +75,7 @@ export const ModuleDetailScreen: React.FC = () => {
 
   const handleSetAsCurrentModule = async () => {
     try {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      await AsyncStorage.setItem('module_picker_selected_module', moduleKey);
+      await userStorage.setItem('module_picker_selected_module', moduleKey);
       setIsCurrentModule(true);
       showToast('Set as your daily lesson', 'success');
     } catch (error) {

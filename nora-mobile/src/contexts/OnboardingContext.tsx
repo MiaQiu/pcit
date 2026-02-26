@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as userStorage from '../lib/userStorage';
 
 export interface OnboardingData {
   // User data
@@ -83,7 +83,7 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
 
   const completeOnboarding = async () => {
     try {
-      await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+      await userStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
       updateData({ hasCompletedOnboarding: true });
     } catch (error) {
       console.error('Error saving onboarding completion:', error);
@@ -92,7 +92,7 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
 
   const resetOnboarding = async () => {
     try {
-      await AsyncStorage.removeItem(ONBOARDING_STORAGE_KEY);
+      await userStorage.removeItem(ONBOARDING_STORAGE_KEY);
       setData(defaultOnboardingData);
     } catch (error) {
       console.error('Error resetting onboarding:', error);
@@ -129,7 +129,7 @@ export const useOnboarding = (): OnboardingContextType => {
  */
 export const checkOnboardingStatus = async (): Promise<boolean> => {
   try {
-    const value = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
+    const value = await userStorage.getItem(ONBOARDING_STORAGE_KEY);
     return value === 'true';
   } catch (error) {
     console.error('Error checking onboarding status:', error);

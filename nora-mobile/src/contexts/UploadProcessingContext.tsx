@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as userStorage from '../lib/userStorage';
 import * as Notifications from 'expo-notifications';
 import { AppState, Alert } from 'react-native';
 import { useRecordingService, useAuthService } from './AppContext';
@@ -346,7 +346,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
   const loadState = async () => {
     try {
-      const savedState = await AsyncStorage.getItem(STORAGE_KEY);
+      const savedState = await userStorage.getItem(STORAGE_KEY);
       if (savedState) {
         const data: UploadProcessingData = JSON.parse(savedState);
         console.log('[UploadProcessing] Restored state:', data);
@@ -401,7 +401,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
   const saveState = async (data: UploadProcessingData) => {
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      await userStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (error) {
       console.error('[UploadProcessing] Failed to save state:', error);
     }
@@ -662,7 +662,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
     // Clear storage
     try {
-      await AsyncStorage.removeItem(STORAGE_KEY);
+      await userStorage.removeItem(STORAGE_KEY);
       console.log('[UploadProcessing] AsyncStorage cleared successfully');
     } catch (error) {
       console.error('[UploadProcessing] Failed to clear storage:', error);
