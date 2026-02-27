@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const Joi = require('joi');
 const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
+const { decryptSensitiveData } = require('../utils/encryption.cjs');
 
 const router = express.Router();
 
@@ -233,6 +234,13 @@ router.get('/developmental-progress', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'No child record found' });
     }
 
+    // Fetch user for child name and age fallback
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { childName: true, childBirthYear: true, childBirthday: true }
+    });
+    const childName = user?.childName ? decryptSensitiveData(user.childName) : 'your child';
+
     // Calculate child's age in months
     let childAgeMonths = 0;
     if (child.birthday) {
@@ -240,21 +248,14 @@ router.get('/developmental-progress', requireAuth, async (req, res) => {
       const birthday = new Date(child.birthday);
       childAgeMonths = (now.getFullYear() - birthday.getFullYear()) * 12 +
         (now.getMonth() - birthday.getMonth());
-    } else {
-      // Fallback: use childBirthYear from user if available
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { childBirthYear: true, childBirthday: true }
-      });
-      if (user?.childBirthday) {
-        const now = new Date();
-        const birthday = new Date(user.childBirthday);
-        childAgeMonths = (now.getFullYear() - birthday.getFullYear()) * 12 +
-          (now.getMonth() - birthday.getMonth());
-      } else if (user?.childBirthYear) {
-        const now = new Date();
-        childAgeMonths = (now.getFullYear() - user.childBirthYear) * 12 + 6; // Approximate mid-year
-      }
+    } else if (user?.childBirthday) {
+      const now = new Date();
+      const birthday = new Date(user.childBirthday);
+      childAgeMonths = (now.getFullYear() - birthday.getFullYear()) * 12 +
+        (now.getMonth() - birthday.getMonth());
+    } else if (user?.childBirthYear) {
+      const now = new Date();
+      childAgeMonths = (now.getFullYear() - user.childBirthYear) * 12 + 6; // Approximate mid-year
     }
 
     // Define the 5 domains
@@ -352,7 +353,7 @@ router.get('/developmental-progress', requireAuth, async (req, res) => {
 
     res.json({
       childAgeMonths,
-      childName: child.name,
+      childName,
       domains: domainProgress
     });
 
@@ -377,11 +378,12 @@ router.get('/domain-milestones/:domain', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid domain. Must be one of: ' + validDomains.join(', ') });
     }
 
-    // Get the user's child record
-    const child = await prisma.child.findFirst({
-      where: { userId },
-      orderBy: { createdAt: 'desc' }
-    });
+    // Get the user's child record and child name in parallel
+    const [child, user] = await Promise.all([
+      prisma.child.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { childName: true } })
+    ]);
+    const childName = user?.childName ? decryptSensitiveData(user.childName) : 'your child';
 
     if (!child) {
       return res.status(404).json({ error: 'No child record found' });
@@ -445,7 +447,7 @@ router.get('/domain-milestones/:domain', requireAuth, async (req, res) => {
       domain,
       milestones,
       profiling: domainProfiling,
-      childName: child.name
+      childName
     });
 
   } catch (error) {

@@ -445,7 +445,7 @@ model ChildProfiling {
 model Child {
   id                String                @id @default(uuid())
   userId            String
-  name              String
+  name              String?
   birthday          DateTime?
   gender            ChildGender?
   conditions        String?

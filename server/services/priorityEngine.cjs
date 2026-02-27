@@ -242,7 +242,6 @@ async function runPriorityEngine(userId, { wacbSurveyId } = {}) {
     child = await prisma.child.create({
       data: {
         userId,
-        name: user.childName || 'Child',
         birthday: user.childBirthday,
         gender: user.childGender,
         conditions: user.childConditions

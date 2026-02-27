@@ -392,9 +392,7 @@ async function generateWeeklyReport(userId, weekStartDate) {
     throw new Error(`User ${userId} not found`);
   }
 
-  // Resolve child name — prefer Child.name (full name) over User.childName (may be initial)
-  const decryptedUserChildName = user.childName ? decryptSensitiveData(user.childName) : null;
-  const childName = child?.name || decryptedUserChildName || 'the child';
+  const childName = user.childName ? decryptSensitiveData(user.childName) : 'the child';
   const childGender = user.childGender === 'BOY' ? 'boy' : user.childGender === 'GIRL' ? 'girl' : 'child';
 
   let childAge = 'unknown';
