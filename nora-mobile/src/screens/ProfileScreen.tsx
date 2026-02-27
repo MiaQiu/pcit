@@ -733,8 +733,6 @@ export const ProfileScreen: React.FC = () => {
           )}
         </TouchableOpacity>
 
-        {/* App Version */}
-        <Text style={styles.versionText}>Version 1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -968,12 +966,5 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textDecorationLine: 'underline',
   },
-  versionText: {
-    fontFamily: FONTS.regular,
-    fontSize: 12,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 32,
-  },
+
 });
