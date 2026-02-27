@@ -10,6 +10,33 @@ const { generateWeeklyReport, resolveReportAudioUrls } = require('../services/we
 const router = express.Router();
 
 // ============================================================================
+// QUIZ ANSWER NORMALIZATION HELPERS
+// ============================================================================
+
+/**
+ * Convert a correctAnswer from the admin editor (letter 'A'/'B'/'C'/'D')
+ * to the canonical full option ID stored in the DB (e.g. 'FOUNDATION-1-quiz-opt-B').
+ * If it's already a full option ID, returns it unchanged.
+ */
+function quizAnswerLetterToId(lessonId, answer) {
+  if (answer && /^[A-D]$/.test(answer)) {
+    return `${lessonId}-quiz-opt-${answer}`;
+  }
+  return answer;
+}
+
+/**
+ * Convert a correctAnswer from the DB (full option ID like 'FOUNDATION-1-quiz-opt-B')
+ * back to the letter label ('B') for the admin editor UI.
+ * If it's already a bare letter, returns it unchanged.
+ */
+function quizAnswerIdToLabel(answer) {
+  if (!answer) return answer;
+  const match = answer.match(/-quiz-opt-([A-D])$/);
+  return match ? match[1] : answer;
+}
+
+// ============================================================================
 // AUTH ENDPOINTS
 // ============================================================================
 
@@ -140,6 +167,7 @@ router.get('/lessons/:id', requireAdminAuth, async (req, res) => {
         segments: lesson.LessonSegment,
         quiz: lesson.Quiz ? {
           ...lesson.Quiz,
+          correctAnswer: quizAnswerIdToLabel(lesson.Quiz.correctAnswer),
           options: lesson.Quiz.QuizOption
         } : null,
         LessonSegment: undefined,
@@ -260,7 +288,7 @@ router.post('/lessons', requireAdminAuth, async (req, res) => {
             id: quizId,
             lessonId,
             question: quiz.question,
-            correctAnswer: quiz.correctAnswer || 'A',
+            correctAnswer: quizAnswerLetterToId(lessonId, quiz.correctAnswer || 'A'),
             explanation: quiz.explanation || '',
             updatedAt: new Date()
           }
@@ -381,7 +409,7 @@ router.put('/lessons/:id', requireAdminAuth, async (req, res) => {
               id: quizId,
               lessonId,
               question: quiz.question,
-              correctAnswer: quiz.correctAnswer || 'A',
+              correctAnswer: quizAnswerLetterToId(lessonId, quiz.correctAnswer || 'A'),
               explanation: quiz.explanation || '',
               updatedAt: new Date()
             }

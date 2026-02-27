@@ -241,7 +241,7 @@ router.post('/upload/complete', requireAuth, async (req, res) => {
       });
     }
 
-    console.log(`[UPLOAD-COMPLETE] Verifying upload for session ${sessionId.substring(0, 8)}`);
+    console.log(`[UPLOAD-COMPLETE] Processing upload completion for session ${sessionId.substring(0, 8)}`);
 
     const session = await prisma.session.findUnique({
       where: { id: sessionId }
@@ -258,27 +258,6 @@ router.post('/upload/complete', requireAuth, async (req, res) => {
       return res.status(403).json({
         error: 'Access denied',
         details: 'You do not have permission to access this session'
-      });
-    }
-
-    let fileInfo;
-    try {
-      fileInfo = await storage.verifyFileExists(uploadKey);
-
-      if (!fileInfo.exists) {
-        console.error(`[UPLOAD-COMPLETE] File not found in S3: ${uploadKey}`);
-        return res.status(400).json({
-          error: 'Upload verification failed',
-          details: 'File not found in S3. Please try uploading again.'
-        });
-      }
-
-      console.log(`[UPLOAD-COMPLETE] File verified in S3: ${uploadKey} (${fileInfo.size} bytes)`);
-    } catch (verifyError) {
-      console.error('[UPLOAD-COMPLETE] File verification error:', verifyError);
-      return res.status(500).json({
-        error: 'Upload verification failed',
-        details: 'Failed to verify file upload. Please try again.'
       });
     }
 
@@ -306,7 +285,6 @@ router.post('/upload/complete', requireAuth, async (req, res) => {
       recordingId: sessionId,
       status: 'uploaded',
       message: 'Upload confirmed. Processing started in background.',
-      fileSize: fileInfo.size
     });
 
   } catch (error) {

@@ -14,7 +14,7 @@ import {
   ImageSourcePropType,
   Dimensions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface IntroScreenTemplateProps {
@@ -41,44 +41,50 @@ export const IntroScreenTemplate: React.FC<IntroScreenTemplateProps> = ({
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        {onBack && (
-          <TouchableOpacity style={styles.backButton} onPress={onBack} activeOpacity={0.7}>
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
-          </TouchableOpacity>
-        )}
         {header}
-        {/* Content */}
-        <View style={styles.textContent}>
-          <Text style={styles.subtitle}>{subtitle}</Text>
-          <Text style={styles.title}>{title}</Text>
-          {description ? (
-            typeof description === 'string' ? (
-              <Text style={styles.description}>{description}</Text>
-            ) : (
-              description
-            )
-          ) : null}
-        </View>
+        {/* Content + Illustration centred as a group */}
+        <View style={styles.middle}>
+          <View style={styles.textContent}>
+            <Text style={styles.subtitle}>{subtitle}</Text>
+            <Text style={styles.title}>{title}</Text>
+            {description ? (
+              typeof description === 'string' ? (
+                <Text style={styles.description}>{description}</Text>
+              ) : (
+                description
+              )
+            ) : null}
+          </View>
 
-        {/* Illustration */}
-        <View style={styles.illustrationContainer}>
-          <View style={styles.illustrationCircle}>
-            <Image
-              source={image}
-              style={styles.illustrationImage}
-              resizeMode="contain"
-            />
+          <View style={styles.illustrationContainer}>
+            <View style={styles.illustrationCircle}>
+              <Image
+                source={image}
+                style={styles.illustrationImage}
+                resizeMode="contain"
+              />
+            </View>
           </View>
         </View>
+      </View>
 
-        {/* Next Button */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={onNext}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>{buttonText}</Text>
-        </TouchableOpacity>
+      {/* Buttons */}
+      <View style={styles.buttonContainer}>
+        {onBack ? (
+          <OnboardingButtonRow
+            onBack={onBack}
+            onContinue={onNext}
+            continueText={buttonText}
+          />
+        ) : (
+          <TouchableOpacity
+            style={styles.button}
+            onPress={onNext}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>{buttonText}</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -93,18 +99,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 32,
     paddingTop: 40,
-    paddingBottom: 120,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -8,
-    marginBottom: 4,
+  buttonContainer: {
+    paddingHorizontal: 20,
   },
   illustrationContainer: {
     alignItems: 'center',
+    marginTop:40,
   },
   illustrationCircle: {
     width: SCREEN_WIDTH * 0.8,
@@ -119,9 +120,12 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH * 0.8,
     height: SCREEN_WIDTH * 0.8,
   },
-  textContent: {
+  middle: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textContent: {
     alignItems: 'center',
   },
   title: {
@@ -137,7 +141,6 @@ const styles = StyleSheet.create({
     color: '#8C49D5',
     textAlign: 'center',
     marginBottom: 24,
-    marginTop: 40,
     lineHeight: 26,
   },
   description: {
@@ -151,10 +154,6 @@ const styles = StyleSheet.create({
     marginTop:24
   },
   button: {
-    position: 'absolute',
-    bottom: 16,
-    left: 32,
-    right: 32,
     height: 56,
     backgroundColor: '#8C49D5',
     borderRadius: 30,

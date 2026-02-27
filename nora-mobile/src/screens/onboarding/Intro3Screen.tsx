@@ -8,14 +8,13 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { DragonCard } from '../../components/DragonCard';
+import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
 const BENEFITS = [
   'Fewer power struggles',
@@ -31,9 +30,6 @@ export const Intro3Screen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TouchableOpacity>
         <OnboardingProgressHeader phase={4} step={3} totalSteps={3} />
 
         <View style={styles.textContent}>
@@ -49,14 +45,13 @@ export const Intro3Screen: React.FC = () => {
         <View style={styles.cardContainer}>
           <DragonCard text="Small daily moments add up to meaningful change" />
         </View>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('Subscription')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>Continue  →</Text>
-        </TouchableOpacity>
+      </View>
+      <View style={styles.footer}>
+        <OnboardingButtonRow
+          onBack={() => navigation.goBack()}
+          onContinue={() => navigation.navigate('Subscription')}
+          continueText="Continue  →"
+        />
       </View>
     </SafeAreaView>
   );
@@ -71,15 +66,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 32,
     paddingTop: 40,
-    paddingBottom: 112,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -8,
-    marginBottom: 4,
+  footer: {
+    paddingHorizontal: 20,
   },
   textContent: {
     flex: 1,
@@ -103,21 +92,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     lineHeight: 28,
   },
-  cardContainer: {},
-  button: {
-    position: 'absolute',
-    bottom: 16,
-    left: 32,
-    right: 32,
-    height: 56,
-    backgroundColor: '#8C49D5',
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
-    color: '#FFFFFF',
+  cardContainer: {
+    marginBottom: 40
   },
 });

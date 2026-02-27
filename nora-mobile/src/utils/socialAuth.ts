@@ -16,6 +16,11 @@ export const useGoogleAuth = () => {
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '',
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '',
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '',
+    // Disable the hook's internal auto-exchange. It races with our manual exchange
+    // below — both try to consume the same one-time auth code, and whichever loses
+    // gets an invalid_grant from Google. We handle the exchange ourselves using
+    // the iOS client ID + PKCE (no client secret required).
+    shouldAutoExchangeCode: false,
   });
 
   const signIn = async (): Promise<SocialAuthProvider | null> => {
@@ -49,7 +54,12 @@ export const useGoogleAuth = () => {
             body: body.toString(),
           });
 
-          const tokens = await tokenRes.json();
+          let tokens: any;
+          try {
+            tokens = await tokenRes.json();
+          } catch {
+            throw new Error(`Token exchange failed: empty response from Google (HTTP ${tokenRes.status})`);
+          }
 
           if (tokens.id_token || tokens.access_token) {
             return {

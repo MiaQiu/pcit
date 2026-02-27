@@ -31,6 +31,18 @@ export class LessonNotFoundError extends Error {
 }
 
 /**
+ * Custom error for user not found (401 USER_NOT_FOUND)
+ * Thrown when the userId in the JWT doesn't exist in the database.
+ * The app should clear auth state and redirect to login.
+ */
+export class UserNotFoundError extends Error {
+  constructor(message: string = 'User account not found') {
+    super(message);
+    this.name = 'UserNotFoundError';
+  }
+}
+
+/**
  * Lesson Service
  * Handles bite-size learning curriculum interactions
  */
@@ -140,7 +152,10 @@ class LessonService {
       if (response.status === 404) {
         throw new LessonNotFoundError('Lesson not found - may have been updated');
       }
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
+      if (response.status === 401 && error.code === 'USER_NOT_FOUND') {
+        throw new UserNotFoundError(error.error || 'User account not found');
+      }
       throw new Error(error.error || 'Failed to fetch lesson detail');
     }
 

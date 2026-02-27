@@ -10,14 +10,13 @@ import {
   StyleSheet,
   Image,
   Dimensions,
-  TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -34,9 +33,6 @@ export const PreIntroReassuranceScreen: React.FC = () => {
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={24} color="#1E2939" />
-        </TouchableOpacity>
         <View style={styles.content}>
           {/* Dragon Image */}
           <Image
@@ -56,15 +52,13 @@ export const PreIntroReassuranceScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Button */}
+        {/* Buttons */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('Intro1')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>Let's go!  →</Text>
-          </TouchableOpacity>
+          <OnboardingButtonRow
+            onBack={() => navigation.goBack()}
+            onContinue={() => navigation.navigate('Intro1')}
+            continueText="Let's go!  →"
+          />
         </View>
       </SafeAreaView>
     </LinearGradient>
@@ -78,14 +72,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     justifyContent: 'space-between',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 24,
-    marginTop: 8,
   },
   content: {
     flex: 1,
@@ -120,20 +106,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   buttonContainer: {
-    paddingHorizontal: 32,
-    paddingBottom: 32,
-  },
-  button: {
-    width: '100%',
-    height: 56,
-    backgroundColor: '#8C49D5',
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
-    color: '#FFFFFF',
+    paddingHorizontal: 20,
   },
 });

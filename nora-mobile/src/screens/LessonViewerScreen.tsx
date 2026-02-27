@@ -24,8 +24,8 @@ import { TextInputFeedbackCard } from '../components/TextInputFeedbackCard';
 import { LessonContentCard } from '../components/LessonContentCard';
 import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
 import { COLORS, FONTS } from '../constants/assets';
-import { LessonDetailResponse, LessonSegment, SubmitQuizResponse, SubmitTextInputResponse, LessonNotFoundError, Keyword, KeywordMatch } from '@nora/core';
-import { useLessonService } from '../contexts/AppContext';
+import { LessonDetailResponse, LessonSegment, SubmitQuizResponse, SubmitTextInputResponse, LessonNotFoundError, UserNotFoundError, Keyword, KeywordMatch } from '@nora/core';
+import { useLessonService, useAuthService } from '../contexts/AppContext';
 import { KeywordDefinitionModal } from '../components/KeywordDefinitionModal';
 import { getMockLessonDetail } from '../data/mockLessons';
 import amplitudeService from '../services/amplitudeService';
@@ -296,6 +296,7 @@ interface LessonViewerScreenProps {
 export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, navigation }) => {
   const { lessonId } = route.params;
   const lessonService = useLessonService();
+  const authService = useAuthService();
 
   const [loading, setLoading] = useState(true);
   const [lessonData, setLessonData] = useState<LessonDetailResponse | null>(null);
@@ -411,6 +412,13 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       setLoading(false);
     } catch (error: any) {
       console.error('Failed to load lesson:', error);
+
+      if (error instanceof UserNotFoundError || error.name === 'UserNotFoundError') {
+        console.warn('[LessonViewerScreen] User not found in DB — clearing auth and redirecting to login');
+        await authService.logout();
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+        return;
+      }
 
       if (error instanceof LessonNotFoundError || error.name === 'LessonNotFoundError') {
         setLoading(false);
@@ -828,10 +836,10 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
                   key={option.id}
                   label={option.optionLabel}
                   text={option.optionText}
-                  isSelected={selectedOption === option.optionLabel}
+                  isSelected={selectedOption === option.id}
                   isSubmitted={isQuizSubmitted}
-                  isCorrect={option.optionLabel === lesson.quiz!.correctAnswer}
-                  onPress={() => !isQuizSubmitted && setSelectedOption(option.optionLabel)}
+                  isCorrect={option.id === lesson.quiz!.correctAnswer}
+                  onPress={() => !isQuizSubmitted && setSelectedOption(option.id)}
                 />
               ))}
             </View>

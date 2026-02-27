@@ -84,7 +84,7 @@ Same 9 secret names, different values (prod DB URL, same API keys).
 | Variable | Value |
 |---|---|
 | `AWS_REGION` | `ap-southeast-1` |
-| `AWS_S3_BUCKET` | `nora-audio-059364397483-sg` |
+| `AWS_S3_BUCKET` | `nora-audio-059364397483-prod` |
 | `AWS_S3_SUPPORT_BUCKET` | `nora-support` |
 | `AWS_S3_SUPPORT_REGION` | `ap-southeast-1` |
 | `JWT_ACCESS_EXPIRY` | `180d` |
@@ -154,7 +154,7 @@ cd ../ios && pod install
 
 # 4. Deploy backend
 ./docker_deploy.sh           # dev
-./docker_deploy_prod.sh      # prod
+cd ../../pcit && ./docker_deploy_prod.sh      # prod
 
 # 5. Open Xcode
 open Nora.xcworkspace
@@ -224,12 +224,13 @@ Passwords are stored in `.prod-infra-ids.txt` (local, not committed to git).
 
 ---
 
-## S3 Buckets (both environments share)
+## S3 Buckets
 
-| Bucket | Region | Purpose |
-|---|---|---|
-| `nora-audio-059364397483-sg` | ap-southeast-1 | Session audio recordings |
-| `nora-support` | ap-southeast-1 | Support request attachments |
+| Bucket | Region | Environment | Purpose |
+|---|---|---|---|
+| `nora-audio-059364397483-prod` | ap-southeast-1 | **prod only** | Audio recordings, profile images |
+| `nora-audio-059364397483-sg` | ap-southeast-1 | **dev** | Audio recordings, profile images |
+| `nora-support` | ap-southeast-1 | both | Support request attachments |
 
 ---
 

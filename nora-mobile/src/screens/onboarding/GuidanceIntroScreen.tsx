@@ -8,16 +8,15 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   SafeAreaView,
   ScrollView,
   Image,
   ImageSourcePropType,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
+import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
 interface FeatureCardProps {
   image: ImageSourcePropType;
@@ -61,9 +60,6 @@ export const GuidanceIntroScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TouchableOpacity>
         <OnboardingProgressHeader phase={3} step={2} totalSteps={3} />
         <ScrollView
           style={styles.scrollView}
@@ -82,14 +78,13 @@ export const GuidanceIntroScreen: React.FC = () => {
             Our strategies are clinically validated by experts and based on research from UC Davis, University of Florida, and more.
           </Text>
         </ScrollView>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('GrowthIntro')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>Continue  →</Text>
-        </TouchableOpacity>
+      </View>
+      <View style={styles.footer}>
+        <OnboardingButtonRow
+          onBack={() => navigation.goBack()}
+          onContinue={() => navigation.navigate('GrowthIntro')}
+          continueText="Continue  →"
+        />
       </View>
     </SafeAreaView>
   );
@@ -105,19 +100,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingTop: 40,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -8,
-    marginBottom: 4,
+  footer: {
+    paddingHorizontal: 20,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 80,
+    paddingBottom: 16,
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
@@ -174,21 +164,5 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 24,
-  },
-  button: {
-    position: 'absolute',
-    bottom: 16,
-    left: 32,
-    right: 32,
-    height: 56,
-    backgroundColor: '#8C49D5',
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
-    color: '#FFFFFF',
   },
 });

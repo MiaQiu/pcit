@@ -47,8 +47,14 @@ class SocialAuthService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Social authentication failed');
+      let errorMessage = 'Social authentication failed';
+      try {
+        const error = await response.json();
+        errorMessage = error.error || errorMessage;
+      } catch {
+        // Empty or non-JSON body (e.g. connection dropped mid-response)
+      }
+      throw new Error(errorMessage);
     }
 
     const data: LoginResponse = await response.json();

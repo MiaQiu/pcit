@@ -392,7 +392,7 @@ async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts =
 async function callGeminiFlashRaw(prompt, options = {}) {
   const { temperature = 0.7, maxOutputTokens = 4096, responseMimeType = null } = options;
   return llmCall(prompt, {
-    model:        'flash',
+    model:        'claude',
     output:       'text',
     maxTokens:    maxOutputTokens,
     temperature,

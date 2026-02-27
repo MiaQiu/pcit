@@ -304,6 +304,11 @@ router.get('/:id', requireAuth, async (req, res) => {
     });
 
     if (!userProgress) {
+      const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+      if (!userExists) {
+        return res.status(401).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
+      }
+
       userProgress = await prisma.userLessonProgress.create({
         data: {
           id: crypto.randomUUID(),
