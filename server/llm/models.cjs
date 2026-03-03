@@ -14,7 +14,7 @@ const MODELS = {
   // Extended reasoning — CDI coaching narrative (streaming, handled separately)
   pro: {
     provider: 'gemini',
-    primary:  'gemini-3-pro-preview',
+    primary:  'gemini-3.1-pro-preview',
     streaming: true,
   },
   // Anthropic path (AI_PROVIDER=claude-sonnet)

@@ -56,7 +56,7 @@ Defined in `server/llm/models.cjs`. To swap a model, change it here — nothing 
 | Key | Provider | Primary Model | Fallback |
 |-----|----------|---------------|---------|
 | `flash` | Gemini | `gemini-2.0-flash` | `gemini-3-flash-preview` |
-| `pro` | Gemini | `gemini-3-pro-preview` | — (streaming only) |
+| `pro` | Gemini | `gemini-3.1-pro-preview` | — (streaming only) |
 | `claude` | Anthropic | `claude-sonnet-4-6` | — |
 
 **Default model** is controlled by the `AI_PROVIDER` environment variable:
@@ -69,7 +69,7 @@ AI_PROVIDER=claude-sonnet  # → 'claude'
 
 ## Call Sites
 
-### `pcitAnalysisService.cjs` — 7 calls
+### `pcitAnalysisService.cjs` — 7 calls (gateway) + 2 streaming
 
 | Label | Output | Model | Schema | Temperature |
 |-------|--------|-------|--------|-------------|
@@ -79,8 +79,9 @@ AI_PROVIDER=claude-sonnet  # → 'claude'
 | `coaching-format` | json | flash | `COACHING_FORMAT` | 0 |
 | `combined-feedback` | json | flash | `COMBINED_FEEDBACK` | 0.7 |
 | `review-feedback` | array | flash | `REVIEW_FEEDBACK` | 0.5 |
-| `pdi-two-choices` | json | flash | `PDI_TWO_CHOICES` | 0.7 |
 | `gemini-flash-raw` | text | flash | — | 0.7 (×2, about-child steps) |
+| CDI coaching | text | pro (streaming) | — | 0.5 |
+| PDI two-choices | json | pro (streaming) | — | 0.7 |
 
 ### `milestoneDetectionService.cjs` — 1 call
 
@@ -90,7 +91,7 @@ AI_PROVIDER=claude-sonnet  # → 'claude'
 
 ### Streaming (outside gateway)
 
-CDI coaching generation uses `callGeminiStreaming()` directly in `pcitAnalysisService.cjs` with `gemini-3-pro-preview`. Streaming responses cannot go through the gateway's JSON-parse/retry path.
+CDI and PDI coaching generation both use `callGeminiStreaming()` directly in `pcitAnalysisService.cjs` with `gemini-3.1-pro-preview`. Streaming responses cannot go through the gateway's JSON-parse/retry path.
 
 ### `weeklyReportService.cjs` — 1 call (bypasses gateway)
 

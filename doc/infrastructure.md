@@ -75,32 +75,44 @@ Same 9 secret names, different values (prod DB URL, same API keys).
 
 ## App Runner Environment Variables
 
+Both environments must have the **same set of variables**. When adding a new variable, apply it to both.
+
 ### Injected via Secrets Manager (RuntimeEnvironmentSecrets)
+
+Both environments share the same 9 secret names (different values per env):
+
 `DATABASE_URL`, `ENCRYPTION_KEY`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`,
 `ANTHROPIC_API_KEY`, `ELEVENLABS_API_KEY`, `SMTP_USER`, `SMTP_PASS`, `COACH_EMAIL`
 
 ### Plain env vars (RuntimeEnvironmentVariables)
 
-| Variable | Value |
-|---|---|
-| `AWS_REGION` | `ap-southeast-1` |
-| `AWS_S3_BUCKET` | `nora-audio-059364397483-prod` |
-| `AWS_S3_SUPPORT_BUCKET` | `nora-support` |
-| `AWS_S3_SUPPORT_REGION` | `ap-southeast-1` |
-| `JWT_ACCESS_EXPIRY` | `180d` |
-| `JWT_REFRESH_EXPIRY` | `180d` |
-| `SMTP_HOST` | `smtp.gmail.com` |
-| `SMTP_PORT` | `587` |
-| `SMTP_SECURE` | `false` |
-| `DEEPGRAM_API_KEY` | — |
-| `ASSEMBLYAI_API_KEY` | — |
-| `GEMINI_API_KEY` | — |
-| `REVENUECAT_WEBHOOK_SECRET` | — |
-| `ADMIN_PASSWORD` | — |
-| `GOOGLE_CLIENT_ID` | `773719197472-nf4vm9bjl2tve63ro7cf25fjrqb3t968.apps.googleusercontent.com` |
-| `GOOGLE_IOS_CLIENT_ID` | `773719197472-0aib3ell35vj87uo3nkqrt06ae2knrpq.apps.googleusercontent.com` |
-| `FRONTEND_URL` | `https://hinora.co` (prod) / `http://localhost:5173` (dev) |
-| `EXPO_PUBLIC_PROJECT_ID` | `a85b5e9f-f4c9-4650-a58f-16c3c45020c4` |
+| Variable | Dev (us-east-1) | Prod (ap-southeast-1) | Notes |
+|---|---|---|---|
+| `NODE_ENV` | `production` | `production` | Controls rate limiting & CORS strictness |
+| `PORT` | `3001` | `3001` | Express listen port |
+| `AWS_REGION` | `us-east-1` | `ap-southeast-1` | S3 / SDK region |
+| `AWS_S3_BUCKET` | `nora-audio-059364397483-sg` | `nora-audio-059364397483-prod` | Audio & profile images |
+| `AWS_S3_SUPPORT_BUCKET` | `nora-support` | `nora-support` | Support attachments |
+| `AWS_S3_SUPPORT_REGION` | `ap-southeast-1` | `ap-southeast-1` | Support bucket is always sg |
+| `APP_RUNNER_URL` | `https://p2tgddmyxt.us-east-1.awsapprunner.com` | `https://wpwpawhz29.ap-southeast-1.awsapprunner.com` | Added to CORS allowed origins |
+| `WEB_APP_URL` | `https://p2tgddmyxt.us-east-1.awsapprunner.com` | `https://wpwpawhz29.ap-southeast-1.awsapprunner.com` | Base URL for reset-password email link |
+| `FRONTEND_URL` | `https://your-frontend-domain.com` | `https://hinora.co` | CORS allowed origin for web frontend |
+| `PROD_API_URL` | `https://wpwpawhz29.ap-southeast-1.awsapprunner.com` | *(dev-only — admin sync routes call prod from dev)* | |
+| `SMTP_HOST` | `smtp.gmail.com` | `smtp.gmail.com` | |
+| `SMTP_PORT` | `587` | `587` | |
+| `SMTP_SECURE` | `false` | `false` | |
+| `JWT_ACCESS_EXPIRY` | `180d` | `180d` | |
+| `JWT_REFRESH_EXPIRY` | `180d` | `180d` | |
+| `GOOGLE_CLIENT_ID` | `773719197472-nf4vm9bjl2tve63ro7cf25fjrqb3t968.apps.googleusercontent.com` | same | |
+| `GOOGLE_IOS_CLIENT_ID` | `773719197472-0aib3ell35vj87uo3nkqrt06ae2knrpq.apps.googleusercontent.com` | same | |
+| `EXPO_PUBLIC_PROJECT_ID` | `a85b5e9f-f4c9-4650-a58f-16c3c45020c4` | same | Push notifications |
+| `GEMINI_API_KEY` | — | same | |
+| `DEEPGRAM_API_KEY` | — | same | |
+| `ASSEMBLYAI_API_KEY` | — | same | |
+| `REVENUECAT_WEBHOOK_SECRET` | — | same | |
+| `SYNC_SECRET` | — | same | Admin sync auth between dev and prod |
+| `ADMIN_PASSWORD` | — | same | Admin panel login |
+| `DISABLE_ANALYTICS` | `true` | *(prod omits — analytics enabled)* | Suppresses analytics in dev |
 
 ---
 

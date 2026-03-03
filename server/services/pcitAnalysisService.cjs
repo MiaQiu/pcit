@@ -15,6 +15,7 @@ const httpsAgent = new https.Agent({
 const { parseClaudeJsonResponse } = require('./claudeService.cjs');
 const { llmCall } = require('../llm/gateway.cjs');
 const { geminiCall } = require('../llm/providers/gemini.cjs');
+const { parseJSON } = require('../llm/repair.cjs');
 const SCHEMAS = require('../llm/schemas/index.cjs');
 const { getUtterances, updateUtteranceRoles, updateUtteranceTags, updateRevisedFeedback, SILENT_SPEAKER_ID } = require('../utils/utteranceUtils.cjs');
 const { DPICS_TO_TAG_MAP, calculateNoraScore } = require('../utils/scoreConstants.cjs');
@@ -122,7 +123,7 @@ function formatUtterancesForPrompt(utterances) {
 
 /**
  * Call Gemini API using streaming endpoint to avoid connection resets
- * Thinking models (gemini-3-pro-preview) can be silent for 30-60s while reasoning,
+ * Thinking models (gemini-3.1-pro-preview) can be silent for 30-60s while reasoning,
  * which causes ECONNRESET. Streaming keeps the connection alive with heartbeat chunks.
  * Includes automatic retry logic for timeout/connection errors.
  * @param {Array} contents - Array of message objects {role, parts}
@@ -156,7 +157,7 @@ async function callGeminiStreaming(contents, options = {}) {
       }
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`,
         {
           method: 'POST',
           headers: {
@@ -776,7 +777,13 @@ async function generatePDITwoChoicesAnalysis(utterances, childName) {
   });
 
   try {
-    const result = await llmCall(prompt, { label: 'pdi-two-choices', schema: SCHEMAS.PDI_TWO_CHOICES });
+    const userMessage = { role: 'user', parts: [{ text: prompt }] };
+    const raw = await callGeminiStreaming([userMessage], {
+      temperature: 0.7,
+      maxOutputTokens: 8192,
+      timeout: 300000
+    });
+    const { value: result } = parseJSON(raw, 'object');
     const pdiSkills = result?.pdiSkills;
 
     if (!Array.isArray(pdiSkills) || pdiSkills.length === 0) {
