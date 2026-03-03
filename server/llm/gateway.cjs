@@ -5,7 +5,7 @@
  *
  * Handles:
  *  - Model routing (Gemini Flash / Pro / Claude) via models registry
- *  - Primary → fallback model switching on failure
+ *  - Primary → fallback model switching on failure (ultimate fallback: Claude Sonnet)
  *  - Per-call AbortController timeout
  *  - Structured output via Gemini responseSchema (prevents malformed JSON at token level)
  *  - JSON parsing with jsonrepair fallback (safety net for non-schema calls)
@@ -128,11 +128,28 @@ async function llmCall(prompt, options = {}) {
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
-/** Routes to Gemini (with model fallback) or Claude. */
+const SONNET_FALLBACK = { provider: 'anthropic', primary: 'claude-sonnet-4-6' };
+
+/**
+ * Routes to Gemini (with Gemini model fallback) or Claude (with Claude Sonnet fallback).
+ * Fallbacks stay within the same provider to preserve formatting behaviour.
+ */
 async function _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig) {
-  return modelDef.provider === 'gemini'
-    ? _geminiWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig)
-    : _claudeCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout);
+  if (modelDef.provider === 'gemini') {
+    // Gemini: primary → Gemini fallback (defined in models registry)
+    return _geminiWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig);
+  }
+
+  // Claude: primary → Claude Sonnet fallback
+  const isSonnet = modelDef.primary === SONNET_FALLBACK.primary;
+  try {
+    return await _claudeCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout);
+  } catch (err) {
+    if (isSonnet) throw err; // already on Sonnet, nothing left to try
+    console.warn(`[gateway] ${modelDef.primary} failed (${err.message.substring(0, 80)}), falling back to Claude Sonnet...`);
+    const result = await _claudeCall(SONNET_FALLBACK, prompt, systemPrompt, maxTokens, temperature, timeout);
+    return { ...result, fallback: true };
+  }
 }
 
 async function _geminiWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig) {

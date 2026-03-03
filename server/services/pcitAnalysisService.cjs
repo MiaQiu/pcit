@@ -145,6 +145,7 @@ async function callGeminiStreaming(contents, options = {}) {
 
   let lastError;
 
+  try {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -259,6 +260,23 @@ async function callGeminiStreaming(contents, options = {}) {
 
   // Should not reach here, but just in case
   throw lastError || new Error('Gemini API call failed after retries');
+  } catch (geminiError) {
+    // Fall back to Claude Sonnet — same provider as non-streaming calls
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw geminiError;
+    console.warn(`⚠️ [GEMINI-STREAMING] Failed (${geminiError.message.substring(0, 80)}), falling back to Claude Sonnet...`);
+    const prompt = contents.map(m => m.parts.map(p => p.text).join('')).join('\n\n');
+    const text = await llmCall(prompt, {
+      model:       'claude-sonnet-4-6',
+      output:      'text',
+      maxTokens:   maxOutputTokens,
+      temperature,
+      timeout,
+      label:       'streaming-sonnet-fallback',
+    });
+    console.log('✅ [GEMINI-STREAMING] Claude Sonnet fallback succeeded');
+    return text;
+  }
 }
 
 // ============================================================================
@@ -435,7 +453,7 @@ async function generateAboutChild(utterances, childInfo, tagCounts = {}) {
 **Transcript:**
 ${transcript}`;
 
-  console.log(`📊 [ABOUT-CHILD] Step 1: Calling Gemini Flash for psychologist narrative...`);
+  console.log(`📊 [ABOUT-CHILD] Step 1: Calling ${AI_PROVIDER} for psychologist narrative...`);
 
   let narrativeText;
   try {
@@ -476,15 +494,15 @@ Example format:
   }
 ]`;
 
-  console.log(`📊 [ABOUT-CHILD] Step 3: Calling Gemini Flash (JSON mode) to extract child observations...`);
+  console.log(`📊 [ABOUT-CHILD] Step 3: Calling ${AI_PROVIDER} to extract child observations...`);
 
   try {
-    const rawJson = await callGeminiFlashRaw(step3Prompt, {
+    const aboutChild = await llmCall(step3Prompt, {
+      output:      'array',
       temperature: 0.3,
-      maxOutputTokens: 2048,
-      responseMimeType: 'application/json'
+      maxTokens:   2048,
+      label:       'about-child-step3',
     });
-    const aboutChild = JSON.parse(rawJson);
     if (!Array.isArray(aboutChild)) throw new Error('Expected array response');
     console.log(`✅ [ABOUT-CHILD] Extracted ${aboutChild.length} child observations`);
     return aboutChild;
