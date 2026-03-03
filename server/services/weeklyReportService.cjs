@@ -7,7 +7,7 @@
  * 3. generateWeeklyReport — orchestrator
  */
 const prisma = require('./db.cjs');
-const { callClaudeForFeedback } = require('./claudeService.cjs');
+const { llmCall } = require('../llm/gateway.cjs');
 const { loadPromptWithVariables } = require('../prompts/index.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { getUtterances } = require('../utils/utteranceUtils.cjs');
@@ -352,9 +352,10 @@ async function generateNarrativeContent(aggregatedData, childInfo) {
     COACHING_CARDS: coachingCardsText,
   });
 
-  const result = await callClaudeForFeedback(prompt, {
+  const result = await llmCall(prompt, {
     temperature: 0.7,
     maxTokens: 2000,
+    label: 'weekly-report',
   });
 
   return result;

@@ -2,7 +2,7 @@
  * Text Input Evaluation Service
  * Uses Claude AI to evaluate user responses in text input exercises
  */
-const { callClaudeForFeedback } = require('./claudeService.cjs');
+const { llmCall } = require('../llm/gateway.cjs');
 
 const SYSTEM_PROMPT = `You are evaluating a parent's response in PCIT (Parent-Child Interaction Therapy) training.
 Be supportive and encouraging. Focus on what they did well first.
@@ -61,11 +61,11 @@ Example response format:
 }`;
 
   try {
-    const result = await callClaudeForFeedback(evaluationPrompt, {
-      temperature: 0.3, // Lower temperature for consistent evaluations
+    const result = await llmCall(evaluationPrompt, {
+      temperature: 0.3,
       maxTokens: 512,
       systemPrompt: SYSTEM_PROMPT,
-      model: 'claude-sonnet-4-5-20250929'
+      label: 'text-input-eval',
     });
 
     // Validate and normalize the response

@@ -51,51 +51,75 @@ const text = await llmCall(prompt, { output: 'text', label: 'coaching-narrative'
 
 ## Model Registry
 
-Defined in `server/llm/models.cjs`. To swap a model, change it here — nothing else needs updating.
+Defined in `server/llm/models.cjs`. Named keys are shortcuts; full model IDs are also accepted directly.
 
 | Key | Provider | Primary Model | Fallback |
 |-----|----------|---------------|---------|
 | `flash` | Gemini | `gemini-2.0-flash` | `gemini-3-flash-preview` |
-| `pro` | Gemini | `gemini-3.1-pro-preview` | — (streaming only) |
+| `pro` | Gemini | `$GEMINI_STREAMING_MODEL` (default: `gemini-3.1-pro-preview`) | — (streaming only) |
 | `claude` | Anthropic | `claude-sonnet-4-6` | — |
 
-**Default model** is controlled by the `AI_PROVIDER` environment variable:
+**Default model** is controlled by the `AI_PROVIDER` environment variable. Accepts named keys, legacy values, or any full model ID:
+
 ```bash
-AI_PROVIDER=gemini-flash   # → 'flash' (default)
-AI_PROVIDER=claude-sonnet  # → 'claude'
+# Named keys
+AI_PROVIDER=flash                    # gemini-2.0-flash (default if unset)
+AI_PROVIDER=claude                   # claude-sonnet-4-6
+
+# Full model IDs — provider inferred from prefix
+AI_PROVIDER=gemini-2.0-flash
+AI_PROVIDER=gemini-3.1-pro-preview
+AI_PROVIDER=claude-sonnet-4-6
+AI_PROVIDER=claude-opus-4-6
+
+# Legacy values (still supported)
+AI_PROVIDER=gemini-flash
+AI_PROVIDER=claude-sonnet
 ```
+
+The gateway infers the provider from the model ID prefix (`claude-*` → Anthropic, `gemini-*` → Gemini).
 
 ---
 
 ## Call Sites
 
+All calls go through `llmCall()` and follow `AI_PROVIDER` unless noted.
+
 ### `pcitAnalysisService.cjs` — 7 calls (gateway) + 2 streaming
 
 | Label | Output | Model | Schema | Temperature |
 |-------|--------|-------|--------|-------------|
-| `role-id` | json | flash | — | 0.3 |
-| `pcit-coding` | array | flash | `PCIT_CODING` | 0 |
-| `dev-profiling` | json | flash | `DEV_PROFILING` | 0.5 |
-| `coaching-format` | json | flash | `COACHING_FORMAT` | 0 |
-| `combined-feedback` | json | flash | `COMBINED_FEEDBACK` | 0.7 |
-| `review-feedback` | array | flash | `REVIEW_FEEDBACK` | 0.5 |
-| `gemini-flash-raw` | text | flash | — | 0.7 (×2, about-child steps) |
-| CDI coaching | text | pro (streaming) | — | 0.5 |
-| PDI two-choices | json | pro (streaming) | — | 0.7 |
+| `role-id` | json | `AI_PROVIDER` | — | 0.3 |
+| `pcit-coding` | array | `AI_PROVIDER` | `PCIT_CODING` | 0 |
+| `dev-profiling` | json | `AI_PROVIDER` | `DEV_PROFILING` | 0.5 |
+| `coaching-format` | json | `AI_PROVIDER` | `COACHING_FORMAT` | 0 |
+| `combined-feedback` | json | `AI_PROVIDER` | `COMBINED_FEEDBACK` | 0.7 |
+| `review-feedback` | array | `AI_PROVIDER` | `REVIEW_FEEDBACK` | 0.5 |
+| `gemini-flash-raw` | text | `AI_PROVIDER` | — | 0.7 (×2, about-child steps) |
+| CDI coaching | text | `GEMINI_STREAMING_MODEL` (streaming) | — | 0.5 |
+| PDI two-choices | json | `GEMINI_STREAMING_MODEL` (streaming) | — | 0.7 |
 
 ### `milestoneDetectionService.cjs` — 1 call
 
 | Label | Output | Model | Schema |
 |-------|--------|-------|--------|
-| `milestone-detection` | json | flash | `MILESTONE_DETECTION` |
+| `milestone-detection` | json | `AI_PROVIDER` | `MILESTONE_DETECTION` |
+
+### `weeklyReportService.cjs` — 1 call
+
+| Label | Output | Model |
+|-------|--------|-------|
+| `weekly-report` | json | `AI_PROVIDER` |
+
+### `textInputEvaluationService.cjs` — 1 call
+
+| Label | Output | Model |
+|-------|--------|-------|
+| `text-input-eval` | json | `AI_PROVIDER` |
 
 ### Streaming (outside gateway)
 
-CDI and PDI coaching generation both use `callGeminiStreaming()` directly in `pcitAnalysisService.cjs` with `gemini-3.1-pro-preview`. Streaming responses cannot go through the gateway's JSON-parse/retry path.
-
-### `weeklyReportService.cjs` — 1 call (bypasses gateway)
-
-Weekly report calls `callClaudeForFeedback()` from `claudeService.cjs` directly. It is not yet routed through `llmCall()`.
+CDI and PDI coaching use `callGeminiStreaming()` directly in `pcitAnalysisService.cjs`. The model is set via `GEMINI_STREAMING_MODEL` (default: `gemini-3.1-pro-preview`). Streaming responses cannot go through the gateway's JSON-parse/retry path.
 
 ---
 
@@ -176,15 +200,20 @@ Schemas have no effect for Claude calls — they are silently ignored.
 
 ## Switching Models
 
-**Change the default model for all analysis calls:**
+**Change the default model for all gateway calls** — set `AI_PROVIDER` in App Runner, no code change needed:
 ```bash
-# .env
-AI_PROVIDER=gemini-flash    # gemini-2.0-flash (default)
-AI_PROVIDER=claude-sonnet   # claude-sonnet-4-6
+AI_PROVIDER=gemini-2.0-flash      # default
+AI_PROVIDER=claude-sonnet-4-6
+AI_PROVIDER=claude-opus-4-6
 ```
 
-**Swap the Gemini primary/fallback globally:**
-Edit `server/llm/models.cjs`:
+**Change the streaming model** (CDI coaching + PDI two-choices) — set `GEMINI_STREAMING_MODEL` in App Runner:
+```bash
+GEMINI_STREAMING_MODEL=gemini-3.1-pro-preview   # default
+GEMINI_STREAMING_MODEL=gemini-2.5-pro           # example upgrade
+```
+
+**Swap the Gemini Flash primary/fallback globally** — edit `server/llm/models.cjs`:
 ```javascript
 flash: {
   provider: 'gemini',
@@ -195,8 +224,14 @@ flash: {
 
 **Use a different model for a single call:**
 ```javascript
-const result = await llmCall(prompt, { model: 'claude', label: 'my-call' });
+const result = await llmCall(prompt, { model: 'claude-opus-4-6', label: 'my-call' });
 ```
+
+## Adding a New Provider
+
+1. Create `server/llm/providers/<name>.cjs` — same shape as `anthropic.cjs` (accepts `apiKey`, `model`, options; returns `{ text, usage }`)
+2. Add prefix detection in `resolveModel()` in `models.cjs` (e.g. `key.startsWith('gpt-')`)
+3. Add a routing branch in `_call()` in `gateway.cjs`
 
 ---
 

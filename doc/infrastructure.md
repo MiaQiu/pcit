@@ -113,6 +113,8 @@ Both environments share the same 9 secret names (different values per env):
 | `SYNC_SECRET` | — | same | Admin sync auth between dev and prod |
 | `ADMIN_PASSWORD` | — | same | Admin panel login |
 | `DISABLE_ANALYTICS` | `true` | *(prod omits — analytics enabled)* | Suppresses analytics in dev |
+| `AI_PROVIDER` | *(omits — defaults to `gemini-2.0-flash`)* | `claude-sonnet-4-6` | Default model for all gateway calls. Accepts any full model ID (`claude-*` or `gemini-*`) or named key. See `doc/llm-gateway.md`. |
+| `GEMINI_STREAMING_MODEL` | *(omits — defaults to `gemini-3.1-pro-preview`)* | *(omits)* | Model for CDI coaching & PDI two-choices streaming calls (outside gateway) |
 
 ---
 

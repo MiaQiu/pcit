@@ -20,8 +20,7 @@ const { parseJSON }     = require('./repair.cjs');
 const { logLLMCall }    = require('./logger.cjs');
 
 function _defaultModelKey() {
-  const env = process.env.AI_PROVIDER || 'gemini-flash';
-  return env === 'claude-sonnet' ? 'claude' : 'flash';
+  return process.env.AI_PROVIDER || 'gemini-2.0-flash';
 }
 
 /**

@@ -156,8 +156,9 @@ async function callGeminiStreaming(contents, options = {}) {
         await new Promise(resolve => setTimeout(resolve, attempt * 5000));
       }
 
+      const streamingModel = process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview';
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${streamingModel}:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`,
         {
           method: 'POST',
           headers: {
@@ -393,7 +394,6 @@ async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts =
 async function callGeminiFlashRaw(prompt, options = {}) {
   const { temperature = 0.7, maxOutputTokens = 4096, responseMimeType = null } = options;
   return llmCall(prompt, {
-    model:        'claude',
     output:       'text',
     maxTokens:    maxOutputTokens,
     temperature,

@@ -14,7 +14,7 @@ const MODELS = {
   // Extended reasoning — CDI coaching narrative (streaming, handled separately)
   pro: {
     provider: 'gemini',
-    primary:  'gemini-3.1-pro-preview',
+    primary:  process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview',
     streaming: true,
   },
   // Anthropic path (AI_PROVIDER=claude-sonnet)
@@ -26,15 +26,22 @@ const MODELS = {
 
 /**
  * Resolve a model key to its definition.
- * Accepts gateway keys ('flash', 'claude', 'pro') and legacy AI_PROVIDER env
- * values ('gemini-flash', 'claude-sonnet') for backward compatibility.
+ * Accepts:
+ *  - Named keys: 'flash', 'claude', 'pro'
+ *  - Full model IDs: 'claude-sonnet-4-6', 'claude-opus-4-6', 'gemini-2.0-flash', etc.
+ *  - Legacy AI_PROVIDER values: 'gemini-flash', 'claude-sonnet'
  * @param {string} key
  * @returns {Object} model definition
  */
 function resolveModel(key) {
+  // Named keys
+  if (MODELS[key]) return MODELS[key];
+  // Legacy values
   if (key === 'gemini-flash') return MODELS.flash;
   if (key === 'claude-sonnet') return MODELS.claude;
-  if (MODELS[key]) return MODELS[key];
+  // Full model IDs — infer provider from prefix
+  if (key.startsWith('claude-')) return { provider: 'anthropic', primary: key };
+  if (key.startsWith('gemini-')) return { provider: 'gemini', primary: key, fallback: MODELS.flash.primary };
   throw new Error(`[llm/models] Unknown model key: "${key}"`);
 }
 
