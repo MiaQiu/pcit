@@ -213,7 +213,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
                 Effective discipline is built on a foundation of a strong bond. Without that connection, instructions can feel like demands; with it, they feel like guidance.
               </Text>
               <Text style={styles.lockGoalText}>
-                Reach a Nora Score of 80 in a single Connection session to unlock Discipline coaching
+                Reach a Deposit of 80 or more in a single Special Time session to unlock Discipline coaching
               </Text>
               <Text style={styles.lockMessageText}>
                 This ensures your "relationship bank account" is overfilled before you begin the Discipline phase.

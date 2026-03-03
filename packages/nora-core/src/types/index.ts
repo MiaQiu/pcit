@@ -35,6 +35,9 @@ export interface User {
   longestStreak?: number;
   createdAt?: Date;
 
+  // Progress fields
+  disciplineUnlocked?: boolean;
+
   // Subscription fields
   subscriptionPlan?: SubscriptionPlan;
   subscriptionStatus?: SubscriptionStatus;
