@@ -205,25 +205,20 @@ export const LoginScreen: React.FC = () => {
             </TouchableOpacity>
           )}
 
-          {/* Google Sign In */}
-          <TouchableOpacity
-            style={styles.googleButton}
-            onPress={handleGoogleSignIn}
-            activeOpacity={0.85}
-            disabled={loading || !googleRequest}
-          >
-            <View style={styles.socialButtonContent}>
-              <Ionicons name="logo-google" size={20} color="#DB4437" />
-              <Text style={styles.googleButtonText}>Sign in with Google</Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Divider */}
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
-          </View>
+          {/* Google Sign In - temporarily hidden */}
+          {false && (
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleSignIn}
+              activeOpacity={0.85}
+              disabled={loading || !googleRequest}
+            >
+              <View style={styles.socialButtonContent}>
+                <Ionicons name="logo-google" size={20} color="#DB4437" />
+                <Text style={styles.googleButtonText}>Sign in with Google</Text>
+              </View>
+            </TouchableOpacity>
+          )}
 
           {/* Email Input */}
           <TextInput
