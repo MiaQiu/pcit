@@ -47,9 +47,9 @@ export const PhaseCelebrationModal: React.FC<PhaseCelebrationModalProps> = ({
               <Text style={styles.unlockTitle}>Discipline Mode Unlocked</Text>
             </View>
             <Text style={styles.unlockDescription}>
-              You can now record Discipline sessions. Go to the{' '}
-              <Text style={styles.bold}>Record</Text> tab and select the{' '}
-              <Text style={styles.bold}>Discipline (10m)</Text> option.
+              You can now get personalized coaching on effective discipline. Simply go to the{' '}
+              <Text style={styles.bold}>Record</Text> tab, select{' '}
+              <Text style={styles.bold}>Discipline (10m)</Text>, and record a real discipline moment with {childName}.
             </Text>
           </View>
 
