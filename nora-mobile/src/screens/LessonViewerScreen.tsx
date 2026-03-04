@@ -22,7 +22,6 @@ import { ResponseButton } from '../components/ResponseButton';
 import { QuizFeedback } from '../components/QuizFeedback';
 import { TextInputFeedbackCard } from '../components/TextInputFeedbackCard';
 import { LessonContentCard } from '../components/LessonContentCard';
-import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
 import { COLORS, FONTS } from '../constants/assets';
 import { LessonDetailResponse, LessonSegment, SubmitQuizResponse, SubmitTextInputResponse, LessonNotFoundError, UserNotFoundError, Keyword, KeywordMatch } from '@nora/core';
 import { useLessonService, useAuthService } from '../contexts/AppContext';
@@ -307,7 +306,6 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
   const [quizFeedback, setQuizFeedback] = useState<SubmitQuizResponse | null>(null);
-  const [showPhaseCelebration, setShowPhaseCelebration] = useState(false);
   const [lastRefreshDate, setLastRefreshDate] = useState<string>(getTodaySingapore());
 
   // Text input state
@@ -958,16 +956,6 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
           </View>
         </View>
       </View>
-
-      {/* Phase Celebration Modal */}
-      <PhaseCelebrationModal
-        visible={showPhaseCelebration}
-        onClose={() => {
-          setShowPhaseCelebration(false);
-          // Navigate back to home to see new lessons
-          navigation.replace('MainTabs', { screen: 'Home' });
-        }}
-      />
 
       {/* Keyword Definition Modal */}
       <KeywordDefinitionModal

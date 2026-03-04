@@ -19,6 +19,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MarkdownText } from '../utils/MarkdownText';
 import { DragonCard } from '../components/DragonCard';
 import { MomentPlayer } from '../components/MomentPlayer';
+import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
 
@@ -304,6 +306,7 @@ export const ReportScreen: React.FC = () => {
   const [feedbackReasons, setFeedbackReasons] = useState<string[]>([]);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [showPhaseCelebration, setShowPhaseCelebration] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const handleSentimentPress = useCallback((sentiment: 'positive' | 'negative') => {
@@ -383,6 +386,15 @@ export const ReportScreen: React.FC = () => {
       const data = await recordingService.getAnalysis(recordingId);
       setReportData(data);
       setLoading(false);
+
+      // Show phase celebration if this is the first CDI session with score >= 80
+      if ((data.noraScore ?? 0) >= 80) {
+        const celebrated = await AsyncStorage.getItem('@discipline_phase_celebrated');
+        if (!celebrated) {
+          await AsyncStorage.setItem('@discipline_phase_celebrated', 'true');
+          setShowPhaseCelebration(true);
+        }
+      }
     } catch (err: any) {
       console.log('Report error:', err.message);
 
@@ -1010,6 +1022,12 @@ export const ReportScreen: React.FC = () => {
           </Button>
         </View> */}
       </ScrollView>
+
+      <PhaseCelebrationModal
+        visible={showPhaseCelebration}
+        onClose={() => setShowPhaseCelebration(false)}
+        childName={childName}
+      />
     </SafeAreaView>
   );
 };
