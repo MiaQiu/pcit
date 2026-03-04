@@ -457,7 +457,7 @@ ${transcript}`;
 
   let narrativeText;
   try {
-    narrativeText = await callGeminiFlashRaw(step1Prompt, { temperature: 0.7, maxOutputTokens: 4096 });
+    narrativeText = await llmCall(step1Prompt, { output: 'text', temperature: 0.7, maxTokens: 4096, label: 'about-child-step1' });
     console.log(`✅ [ABOUT-CHILD] Step 1 complete (${narrativeText.length} chars)`);
   } catch (error) {
     console.error('❌ [ABOUT-CHILD] Step 1 failed:', error.message);
@@ -465,7 +465,7 @@ ${transcript}`;
   }
 
   // ── Step 3: Extract structured child observations ─────────────────────────
-  const step3Prompt = `Extract ONLY the "Observations of the Child" section - the insights about the child's behavior, development, and characteristics observed during the session.
+  const step3Prompt = `Extract ONLY the "Observations of the Child" section - the insights about the child's behavior, development, and characteristics observed during the session. DO not mention PCIT or clinical terms.
 
 Format the observations as a JSON array, ranked by positivity follow by significance. Each observation should have:
 - id: sequential number starting from 1
