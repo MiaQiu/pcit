@@ -267,7 +267,7 @@ async function callGeminiStreaming(contents, options = {}) {
     console.warn(`⚠️ [GEMINI-STREAMING] Failed (${geminiError.message.substring(0, 80)}), falling back to Claude Sonnet...`);
     const prompt = contents.map(m => m.parts.map(p => p.text).join('')).join('\n\n');
     const text = await llmCall(prompt, {
-      model:       'claude-sonnet-4-6',
+      model:       process.env.FALLBACK_MODEL || 'claude-sonnet-4-6',
       output:      'text',
       maxTokens:   maxOutputTokens,
       temperature,

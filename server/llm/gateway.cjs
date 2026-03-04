@@ -128,11 +128,14 @@ async function llmCall(prompt, options = {}) {
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
-const SONNET_FALLBACK = { provider: 'anthropic', primary: 'claude-sonnet-4-6' };
+function _fallbackModelDef() {
+  return resolveModel(process.env.FALLBACK_MODEL || 'claude-sonnet-4-6');
+}
 
 /**
- * Routes to Gemini (with Gemini model fallback) or Claude (with Claude Sonnet fallback).
- * Fallbacks stay within the same provider to preserve formatting behaviour.
+ * Routes to Gemini (with Gemini model fallback) or Claude (with FALLBACK_MODEL fallback).
+ * Gemini calls stay within Gemini to preserve responseSchema formatting.
+ * Claude calls fall back to FALLBACK_MODEL (any provider).
  */
 async function _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig) {
   if (modelDef.provider === 'gemini') {
@@ -140,14 +143,17 @@ async function _call(modelDef, prompt, systemPrompt, maxTokens, temperature, tim
     return _geminiWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig);
   }
 
-  // Claude: primary → Claude Sonnet fallback
-  const isSonnet = modelDef.primary === SONNET_FALLBACK.primary;
+  // Claude: primary → FALLBACK_MODEL
+  const fallbackDef = _fallbackModelDef();
+  const isFallback  = modelDef.primary === fallbackDef.primary;
   try {
     return await _claudeCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout);
   } catch (err) {
-    if (isSonnet) throw err; // already on Sonnet, nothing left to try
-    console.warn(`[gateway] ${modelDef.primary} failed (${err.message.substring(0, 80)}), falling back to Claude Sonnet...`);
-    const result = await _claudeCall(SONNET_FALLBACK, prompt, systemPrompt, maxTokens, temperature, timeout);
+    if (isFallback) throw err; // already on fallback model, nothing left to try
+    console.warn(`[gateway] ${modelDef.primary} failed (${err.message.substring(0, 80)}), falling back to ${fallbackDef.primary}...`);
+    const result = fallbackDef.provider === 'gemini'
+      ? await _geminiWithFallback(fallbackDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig)
+      : await _claudeCall(fallbackDef, prompt, systemPrompt, maxTokens, temperature, timeout);
     return { ...result, fallback: true };
   }
 }

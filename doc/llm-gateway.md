@@ -95,9 +95,10 @@ All calls go through `llmCall()` and follow `AI_PROVIDER` unless noted.
 | `coaching-format` | json | `AI_PROVIDER` | `COACHING_FORMAT` | 0 |
 | `combined-feedback` | json | `AI_PROVIDER` | `COMBINED_FEEDBACK` | 0.7 |
 | `review-feedback` | array | `AI_PROVIDER` | `REVIEW_FEEDBACK` | 0.5 |
-| `gemini-flash-raw` | text | `AI_PROVIDER` | — | 0.7 (×2, about-child steps) |
-| CDI coaching | text | `GEMINI_STREAMING_MODEL` (streaming) | — | 0.5 |
-| PDI two-choices | json | `GEMINI_STREAMING_MODEL` (streaming) | — | 0.7 |
+| `gemini-flash-raw` | text | `AI_PROVIDER` | — | 0.7 (about-child step 1) |
+| `about-child-step3` | array | `AI_PROVIDER` | — | 0.3 (about-child step 3) |
+| CDI coaching | text | `GEMINI_STREAMING_MODEL` (streaming) → Claude Sonnet fallback | — | 0.5 |
+| PDI two-choices | text | `GEMINI_STREAMING_MODEL` (streaming) → Claude Sonnet fallback | — | 0.7 |
 
 ### `milestoneDetectionService.cjs` — 1 call
 
@@ -119,11 +120,13 @@ All calls go through `llmCall()` and follow `AI_PROVIDER` unless noted.
 
 ### Streaming (outside gateway)
 
-CDI and PDI coaching use `callGeminiStreaming()` directly in `pcitAnalysisService.cjs`. The model is set via `GEMINI_STREAMING_MODEL` (default: `gemini-3.1-pro-preview`). Streaming responses cannot go through the gateway's JSON-parse/retry path.
+CDI and PDI coaching use `callGeminiStreaming()` directly in `pcitAnalysisService.cjs`. The model is set via `GEMINI_STREAMING_MODEL` (default: `gemini-3.1-pro-preview`). If all Gemini streaming attempts fail, it falls back to Claude Sonnet via `llmCall` (label: `streaming-sonnet-fallback`).
 
 ---
 
 ## Failure Handling
+
+### Gateway calls (`llmCall`)
 
 Each call goes through up to 4 layers:
 
@@ -131,7 +134,7 @@ Each call goes through up to 4 layers:
 1. Gemini responseSchema  ← prevents malformed JSON at the token level (Gemini only)
 2. jsonrepair             ← fixes structural issues in the returned text
 3. LLM retry              ← re-sends the same prompt once if JSON parse still fails
-4. Model fallback         ← tries fallback model if primary throws (Gemini only)
+4. Model fallback         ← provider-specific (see below)
 ```
 
 **Layer 1 — responseSchema:** When a `schema` is passed and the provider is Gemini, the gateway sets `responseMimeType: 'application/json'` and `responseSchema` in `generationConfig`. This constrains token-level output so structurally invalid JSON cannot be produced. Has no effect for Claude calls.
@@ -140,7 +143,25 @@ Each call goes through up to 4 layers:
 
 **Layer 3 — LLM retry:** If JSON parsing fails even with repair, the gateway re-sends the original prompt once. If that also fails to parse, the error is thrown.
 
-**Layer 4 — model fallback:** For Gemini calls, if the primary model throws (e.g. 429, 503, empty response), the gateway automatically retries with the fallback model defined in the registry.
+**Layer 4 — model fallback (provider-specific):**
+
+| Primary provider | Fallback |
+|---|---|
+| Gemini | Gemini fallback model (defined in registry) — stays within Gemini to preserve `responseSchema` |
+| Claude (non-Sonnet, e.g. Haiku) | `CLAUDE_FALLBACK_MODEL` (default: `claude-sonnet-4-6`) |
+| Claude Sonnet (or same as fallback) | throws — nothing left to try |
+
+Fallbacks stay within the same provider to preserve output formatting behaviour. `usedFallback: true` appears in the log when a fallback is used.
+
+### Streaming calls (`callGeminiStreaming`)
+
+```
+1. Gemini Pro streaming — up to 3 retries (retryable errors: timeout, ECONNRESET, network)
+2. CLAUDE_FALLBACK_MODEL fallback — via llmCall (label: streaming-sonnet-fallback)
+3. throws if Claude also fails
+```
+
+Note: 503 "high demand" errors from Gemini are non-retryable and go straight to the Claude fallback.
 
 ---
 
