@@ -1,15 +1,36 @@
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { Client } = require('pg');
 const { parseElevenLabsTranscript } = require('../server/utils/parseElevenLabsTranscript.cjs');
 
-const s3Client = new S3Client({ region: process.env.AWS_REGION || 'us-east-1' });
-const storagePath = 'audio/7624c281-64a3-4ea9-8cd0-5e4652d620a0/6974af24-e760-4066-82ee-38e5dbfda190.m4a';
+const SESSION_ID = '3a3025ce-04de-4620-ba4a-e162672d9cd5';
+const PROD_S3_BUCKET = 'nora-audio-059364397483-prod';
+const PROD_REGION = 'ap-southeast-1';
+
+const s3Client = new S3Client({ region: PROD_REGION });
 
 async function main() {
-  console.log('📥 Downloading audio from S3...');
+  // Fetch storagePath from prod DB (tunnel must be running: ./scripts/start-prod-db-tunnel.sh)
+  const db = new Client({
+    host: 'localhost',
+    port: 5433,
+    database: 'nora',
+    user: 'nora_admin',
+    password: process.env.PROD_DB_PASSWORD,
+    ssl: { rejectUnauthorized: false }
+  });
+  await db.connect();
+  const { rows } = await db.query('SELECT "storagePath" FROM "Session" WHERE id = $1', [SESSION_ID]);
+  await db.end();
+
+  if (!rows.length) throw new Error(`Session not found: ${SESSION_ID}`);
+  const storagePath = rows[0].storagePath;
+  console.log('storagePath:', storagePath);
+
+  console.log('Downloading audio from prod S3...');
   const response = await s3Client.send(new GetObjectCommand({
-    Bucket: process.env.AWS_S3_BUCKET,
+    Bucket: PROD_S3_BUCKET,
     Key: storagePath
   }));
 

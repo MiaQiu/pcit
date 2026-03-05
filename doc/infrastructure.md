@@ -177,7 +177,7 @@ open Nora.xcworkspace
 
 #### Testing on device (before Archive)
 
-To test on a physical device without submitting to the App Store:
+**Option A — Run via Xcode (Release build)**
 
 1. In Xcode: **Product → Scheme → Edit Scheme...**
 2. Select **Run** on the left → set **Build Configuration** to **Release**
@@ -186,6 +186,22 @@ To test on a physical device without submitting to the App Store:
 > Using **Release** build configuration is required. Debug builds try to load the JS bundle from Metro bundler (port 8081) and will fail with a timeout error if Metro is not running. Release builds bundle the JS at build time, the same as Archive.
 
 After testing, switch Build Configuration back to **Debug** for normal development.
+
+**Option B — Run via Expo CLI with Metro (Debug dev build)**
+
+This is faster for iterative development. Requires a dev build already installed on the device.
+
+```bash
+# Build and install dev build on connected device (first time or after native changes)
+cd nora-mobile && npm run ios -- --device
+
+# Start Metro bundler (subsequent runs — no native changes)
+cd nora-mobile && npx expo start --dev-client --scheme nora --clear
+```
+
+- `--clear` is required after every `expo prebuild` to reset the stale Metro cache, otherwise bundling fails with `Unable to resolve "../../App"`.
+- Open the installed Nora app on your device — it will connect to the Metro bundler automatically.
+- If the QR code opens Safari instead of the app, manually enter the Metro URL in the dev launcher screen.
 
 #### Distributing to App Store
 
@@ -236,6 +252,40 @@ postgresql://nora_admin:<password>@localhost:5433/nora
 ```
 
 Passwords are stored in `.prod-infra-ids.txt` (local, not committed to git).
+
+### Retrieving the prod DATABASE_URL
+
+The prod `DATABASE_URL` lives in Secrets Manager (not in `.env`). Retrieve it with:
+
+```bash
+aws secretsmanager get-secret-value \
+  --secret-id "arn:aws:secretsmanager:ap-southeast-1:059364397483:secret:nora/database-url-893xxi" \
+  --region ap-southeast-1 \
+  --query 'SecretString' --output text
+```
+
+### Running one-off scripts against prod
+
+1. Start the prod DB tunnel in the background (keep this terminal open):
+   ```bash
+   ./scripts/start-prod-db-tunnel.sh
+   ```
+
+2. In another terminal, retrieve the prod `DATABASE_URL` (see above) and prefix it when running the script:
+   ```bash
+   DATABASE_URL="postgresql://nora_admin:<prod-password>@localhost:5433/nora" \
+     node scripts/<script-name>.cjs <args>
+   ```
+
+   The `DATABASE_URL` env var overrides the one in `.env` because `dotenv` does not overwrite already-set variables.
+
+3. Stop the tunnel (Ctrl+C in the tunnel terminal) when done.
+
+**Example — re-run about-child steps 1 & 3 for a session:**
+```bash
+DATABASE_URL="postgresql://nora_admin:<prod-password>@localhost:5433/nora" \
+  node scripts/run-about-child.cjs <sessionId>
+```
 
 ---
 
