@@ -602,7 +602,7 @@ ${formatUtterancesForPrompt(utterances)}
 **Task:**
 1. **Top Moment**: Find the ONE moment that shows the strongest parent-child connection, joy, or positive interaction.
 
-2. **Feedback**: Be warm and encouraging. within 20 words. Give a opening messages to the session report. Do not mention about therapy or clinical terms.
+2. **Feedback**: Be warm and encouraging. within 20 words. Give a opening messages to the session report. Do not mention PCIT, therapy, or clinical terms.
 Example opening messages for feedback:
 - "Today's play made a net emotional deposit — your child felt seen, safe, and connected."
 - "Today's play added only a small deposit — with a few gentle shifts, your emotional massage can feel much more soothing and connecting."
@@ -627,6 +627,8 @@ Return ONLY valid JSON:
   "ChildReaction":"2-3 sentences",
   "activity": "a few words describing the game/activity"
 }
+
+Do not mention PCIT, therapy, or clinical terms in the output.
 
 No markdown code fences.`;
 }
@@ -655,7 +657,7 @@ function formatUtterancesWithFeedback(utterances) {
  * Generate review feedback prompt for CDI session
  * Reviews and revises feedback for parent utterances and selects key silence slots
  */
-function generateReviewFeedbackPrompt(counts, utterances, isCDI = true) {
+function generateReviewFeedbackPrompt(counts, utterances, isCDI = true, pdiResult = null) {
   const commandCoachingSection = isCDI
     ? `   **For undesirable skills (NTA, DC, IC, Q, UP)**, provide constructive, warm feedback with specific alternatives (e.g. suggest a BD or LP instead of a command or question).`
     : `   **Commands — PDI focus:**
@@ -683,11 +685,15 @@ function generateReviewFeedbackPrompt(counts, utterances, isCDI = true) {
 - Questions: ${counts.question} (reduce during discipline sequences)
 - Criticisms: ${counts.criticism} (eliminate)`;
 
+  const pdiTwoChoicesSection = (!isCDI && pdiResult)
+    ? `\n**PDI Two Choices Flow Analysis:**\n${JSON.stringify({ pdiSkills: pdiResult.pdiSkills, commandSequences: pdiResult.commandSequences }, null, 2)}\n\nUse this analysis to inform feedback on command sequences. Reference specific command sequences when coaching on DC/IC utterances.\n`
+    : '';
+
   return `You are an expert PCIT parent-child interaction therapyst.
 
 **Session Metrics:**
 ${metricsSection}
-
+${pdiTwoChoicesSection}
 **All Utterances with Current Feedback:**
 ${formatUtterancesWithFeedback(utterances)}
 
@@ -723,7 +729,7 @@ No markdown code fences.`;
  * @param {boolean} isCDI - true for CDI sessions, false for PDI
  * @returns {Promise<Object>} Assembled feedback result
  */
-async function generateCDIFeedback(counts, utterances, childName, isCDI = true) {
+async function generateCDIFeedback(counts, utterances, childName, isCDI = true, pdiResult = null) {
   console.log(`🚀 [CDI-FEEDBACK] Starting feedback generation (mode: ${isCDI ? 'CDI' : 'PDI'})...`);
 
   // Call 1: Combined feedback prompt (analysis + improvement + example in one)
@@ -740,7 +746,7 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true) 
   let revisedFeedback = [];
   try {
     const reviewData = await llmCall(
-      generateReviewFeedbackPrompt(counts, utterances, isCDI),
+      generateReviewFeedbackPrompt(counts, utterances, isCDI, pdiResult),
       { temperature: 0.5, output: 'array', label: 'review-feedback', schema: SCHEMAS.REVIEW_FEEDBACK }
     );
     // reviewData should be an array directly since we asked for JSON array
@@ -1192,9 +1198,19 @@ Do not include markdown or whitespace (minified JSON).
     // Get updated utterances with tags from database
     const utterancesWithTags = await getUtterances(sessionId);
 
+    // For PDI sessions, run Two Choices Flow analysis first so its output can inform review-feedback
+    let pdiResult = null;
+    if (!isCDI) {
+      console.log('🎯 [COMPETENCY-ANALYSIS] Running PDI Two Choices Flow analysis...');
+      pdiResult = await generatePDITwoChoicesAnalysis(utterancesWithTags, childName);
+      if (pdiResult) {
+        console.log(`✅ [COMPETENCY-ANALYSIS] PDI Two Choices Flow analysis complete — ${pdiResult.pdiSkills.length} skills`);
+      }
+    }
+
     // Run multi-prompt feedback flow for both CDI and PDI (mode-aware)
     console.log(`🎯 [COMPETENCY-ANALYSIS] Using multi-prompt feedback generation for ${session.mode} session...`);
-    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName, isCDI);
+    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName, isCDI, pdiResult);
 
     // Save revised feedback to database
     if (feedbackResult.revisedFeedback && feedbackResult.revisedFeedback.length > 0) {
@@ -1216,18 +1232,12 @@ Do not include markdown or whitespace (minified JSON).
 
     console.log(`✅ [COMPETENCY-ANALYSIS] Multi-prompt feedback complete`);
 
-    // For PDI sessions, additionally run Two Choices Flow analysis
-    if (!isCDI) {
-      console.log('🎯 [COMPETENCY-ANALYSIS] Running PDI Two Choices Flow analysis...');
-      const pdiResult = await generatePDITwoChoicesAnalysis(utterancesWithTags, childName);
-      if (pdiResult) {
-        competencyAnalysis.pdiSkills = pdiResult.pdiSkills;
-        competencyAnalysis.pdiCommandSequences = pdiResult.commandSequences;
-        competencyAnalysis.pdiTomorrowGoal = pdiResult.tomorrowGoal;
-        competencyAnalysis.pdiEncouragement = pdiResult.encouragement;
-        competencyAnalysis.pdiSummary = pdiResult.summary;
-        console.log(`✅ [COMPETENCY-ANALYSIS] PDI Two Choices Flow analysis added — ${pdiResult.pdiSkills.length} skills`);
-      }
+    if (pdiResult) {
+      competencyAnalysis.pdiSkills = pdiResult.pdiSkills;
+      competencyAnalysis.pdiCommandSequences = pdiResult.commandSequences;
+      competencyAnalysis.pdiTomorrowGoal = pdiResult.tomorrowGoal;
+      competencyAnalysis.pdiEncouragement = pdiResult.encouragement;
+      competencyAnalysis.pdiSummary = pdiResult.summary;
     }
   } catch (compError) {
     console.error('Error generating competency analysis:', compError.message);

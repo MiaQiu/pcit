@@ -68,4 +68,6 @@ Return ONLY valid JSON in this exact structure:
 
 IMPORTANT: The "label" for each command sequence must be exactly "Great!" or "Needs Work" — no other values allowed.
 
+Do not mention PCIT, therapy, or clinical terms in the output.
+
 No markdown code fences. Return ONLY the JSON object.

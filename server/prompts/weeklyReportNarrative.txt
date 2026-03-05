@@ -84,4 +84,6 @@ IMPORTANT for growthSnapshots:
 - If no profiling observations are available, create 2 snapshots based on child reactions data
 - Each meaning should celebrate, not instruct
 
+Do not mention PCIT, therapy, or clinical terms in the output.
+
 Return ONLY the JSON object, no additional text.
