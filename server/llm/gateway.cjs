@@ -9,6 +9,7 @@
  *  - Per-call AbortController timeout
  *  - Structured output via Gemini responseSchema (prevents malformed JSON at token level)
  *  - JSON parsing with jsonrepair fallback (safety net for non-schema calls)
+ *  - Up to 2 retries on network/timeout/5xx errors (1s, 2s backoff)
  *  - One LLM retry on JSON parse failure
  *  - Structured per-call log line (model, latency, tokens, schema/repair/retry/fallback flags)
  */
@@ -76,8 +77,8 @@ async function llmCall(prompt, options = {}) {
     : _geminiConfig;
 
   try {
-    // ── First attempt ────────────────────────────────────────────────────────
-    const first = await _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig);
+    // ── First attempt (with retries on network/timeout/5xx errors) ───────────
+    const first = await _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
     track.model        = first.model;
     track.usedFallback = first.fallback;
     track.inputTokens  = first.usage?.inputTokens  ?? null;
@@ -96,7 +97,7 @@ async function llmCall(prompt, options = {}) {
       track.usedRetry = true;
       console.warn(`[gateway:${label}] JSON parse failed${hasSchema ? ' (schema active)' : ''}, retrying... (${parseErr.message.substring(0, 80)})`);
 
-      const retry = await _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig);
+      const retry = await _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
       track.model        = retry.model;
       track.inputTokens  = retry.usage?.inputTokens  ?? null;
       track.outputTokens = retry.usage?.outputTokens ?? null;
@@ -131,6 +132,39 @@ async function llmCall(prompt, options = {}) {
 
 function _fallbackModelDef() {
   return resolveModel(process.env.FALLBACK_MODEL || 'claude-sonnet-4-6');
+}
+
+const _RETRY_DELAYS = [1_000, 2_000]; // ms between attempts 1→2 and 2→3
+
+function _isRetryable(err) {
+  return err.retryable === true
+    || err.name === 'AbortError'
+    || err.type === 'aborted'
+    || err.code === 'ECONNRESET'
+    || err.code === 'ETIMEDOUT';
+}
+
+/**
+ * Wraps _call with up to 2 retries (3 total attempts) on retryable errors
+ * (network errors, timeouts, 429/5xx HTTP errors).
+ * JSON-parse retries are handled separately in llmCall.
+ */
+async function _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label) {
+  let lastErr;
+  for (let attempt = 0; attempt <= _RETRY_DELAYS.length; attempt++) {
+    if (attempt > 0) {
+      const delay = _RETRY_DELAYS[attempt - 1];
+      console.warn(`[gateway:${label}] retryable error, attempt ${attempt + 1}/${_RETRY_DELAYS.length + 1} in ${delay}ms (${lastErr.message.substring(0, 80)})`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+    try {
+      return await _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig);
+    } catch (err) {
+      lastErr = err;
+      if (!_isRetryable(err)) throw err;
+    }
+  }
+  throw lastErr;
 }
 
 /**
