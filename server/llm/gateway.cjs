@@ -190,6 +190,8 @@ async function _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temp
   try {
     return await _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
   } catch (primaryErr) {
+    // Only fall back after retryable failures — non-retryable errors (4xx, bad config) propagate immediately
+    if (!_isRetryable(primaryErr)) throw primaryErr;
     const fallbackDef = _getFallback(modelDef);
     if (!fallbackDef) throw primaryErr;
     console.warn(`[gateway:${label}] all retries exhausted, falling back to ${fallbackDef.primary}... (${primaryErr.message.substring(0, 80)})`);
