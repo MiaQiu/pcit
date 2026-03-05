@@ -458,7 +458,7 @@ ${transcript}`;
 
   let narrativeText;
   try {
-    narrativeText = await llmCall(step1Prompt, { output: 'text', temperature: 0.7, maxTokens: 4096, label: 'about-child-step1' });
+    narrativeText = await llmCall(step1Prompt, { output: 'text', temperature: 0.7, maxTokens: 4096, label: 'about-child-step1', timeout: 120_000 });
     console.log(`✅ [ABOUT-CHILD] Step 1 complete (${narrativeText.length} chars)`);
   } catch (error) {
     console.error('❌ [ABOUT-CHILD] Step 1 failed:', error.message);
