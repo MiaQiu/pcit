@@ -14,6 +14,7 @@ const httpsAgent = new https.Agent({
 });
 const { parseClaudeJsonResponse } = require('./claudeService.cjs');
 const { llmCall } = require('../llm/gateway.cjs');
+const { sanitizeOutput } = require('../llm/sanitize.cjs');
 const { geminiCall } = require('../llm/providers/gemini.cjs');
 const { parseJSON } = require('../llm/repair.cjs');
 const SCHEMAS = require('../llm/schemas/index.cjs');
@@ -234,7 +235,7 @@ async function callGeminiStreaming(contents, options = {}) {
         throw new Error('Empty response from Gemini streaming API');
       }
 
-      return fullText;
+      return sanitizeOutput(fullText);
     } catch (error) {
       clearTimeout(timeoutId);
       lastError = error;

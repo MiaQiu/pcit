@@ -13,11 +13,12 @@
  *  - Structured per-call log line (model, latency, tokens, schema/repair/retry/fallback flags)
  */
 
-const { resolveModel }  = require('./models.cjs');
-const { geminiCall }    = require('./providers/gemini.cjs');
-const { anthropicCall } = require('./providers/anthropic.cjs');
-const { parseJSON }     = require('./repair.cjs');
-const { logLLMCall }    = require('./logger.cjs');
+const { resolveModel }    = require('./models.cjs');
+const { geminiCall }      = require('./providers/gemini.cjs');
+const { anthropicCall }   = require('./providers/anthropic.cjs');
+const { parseJSON }       = require('./repair.cjs');
+const { logLLMCall }      = require('./logger.cjs');
+const { sanitizeOutput }  = require('./sanitize.cjs');
 
 function _defaultModelKey() {
   return process.env.AI_PROVIDER || 'gemini-2.0-flash';
@@ -82,14 +83,14 @@ async function llmCall(prompt, options = {}) {
     track.inputTokens  = first.usage?.inputTokens  ?? null;
     track.outputTokens = first.usage?.outputTokens ?? null;
 
-    if (output === 'text') return first.text;
+    if (output === 'text') return sanitizeOutput(first.text);
 
     // ── JSON parse (with repair fallback inside parseJSON) ───────────────────
     const type = output === 'array' ? 'array' : 'object';
     try {
       const { value, repaired } = parseJSON(first.text, type);
       track.usedRepair = repaired;
-      return value;
+      return sanitizeOutput(value);
     } catch (parseErr) {
       // ── LLM retry on JSON parse failure ─────────────────────────────────
       track.usedRetry = true;
@@ -102,7 +103,7 @@ async function llmCall(prompt, options = {}) {
 
       const { value, repaired } = parseJSON(retry.text, type);
       track.usedRepair = repaired;
-      return value;
+      return sanitizeOutput(value);
     }
   } catch (err) {
     track.ok    = false;
