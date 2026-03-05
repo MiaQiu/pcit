@@ -9,7 +9,8 @@
  *  - Per-call AbortController timeout
  *  - Structured output via Gemini responseSchema (prevents malformed JSON at token level)
  *  - JSON parsing with jsonrepair fallback (safety net for non-schema calls)
- *  - Up to 2 retries on network/timeout/5xx errors (1s, 2s backoff)
+ *  - Up to 2 retries on network/timeout/5xx errors (1s, 2s backoff) before falling back
+ *  - Model fallback only after all retries exhausted (mirrors callGeminiStreaming)
  *  - One LLM retry on JSON parse failure
  *  - Structured per-call log line (model, latency, tokens, schema/repair/retry/fallback flags)
  */
@@ -77,8 +78,8 @@ async function llmCall(prompt, options = {}) {
     : _geminiConfig;
 
   try {
-    // ── First attempt (with retries on network/timeout/5xx errors) ───────────
-    const first = await _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
+    // ── First attempt: retries on primary, then falls back if all fail ────────
+    const first = await _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
     track.model        = first.model;
     track.usedFallback = first.fallback;
     track.inputTokens  = first.usage?.inputTokens  ?? null;
@@ -97,7 +98,7 @@ async function llmCall(prompt, options = {}) {
       track.usedRetry = true;
       console.warn(`[gateway:${label}] JSON parse failed${hasSchema ? ' (schema active)' : ''}, retrying... (${parseErr.message.substring(0, 80)})`);
 
-      const retry = await _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
+      const retry = await _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
       track.model        = retry.model;
       track.inputTokens  = retry.usage?.inputTokens  ?? null;
       track.outputTokens = retry.usage?.outputTokens ?? null;
@@ -145,7 +146,21 @@ function _isRetryable(err) {
 }
 
 /**
- * Wraps _call with up to 2 retries (3 total attempts) on retryable errors
+ * Returns the fallback modelDef for a given primary modelDef, or null if none.
+ * Gemini falls back to modelDef.fallback (same provider).
+ * Claude falls back to FALLBACK_MODEL (any provider).
+ */
+function _getFallback(modelDef) {
+  if (modelDef.provider === 'gemini' && modelDef.fallback) {
+    return { provider: 'gemini', primary: modelDef.fallback, fallback: null };
+  }
+  const fallbackDef = _fallbackModelDef();
+  if (fallbackDef.primary === modelDef.primary) return null; // already on fallback
+  return fallbackDef;
+}
+
+/**
+ * Retries _call up to 2 times (3 total attempts) on retryable errors
  * (network errors, timeouts, 429/5xx HTTP errors).
  * JSON-parse retries are handled separately in llmCall.
  */
@@ -168,32 +183,32 @@ async function _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, tempera
 }
 
 /**
- * Routes to Gemini (with Gemini model fallback) or Claude (with FALLBACK_MODEL fallback).
- * Gemini calls stay within Gemini to preserve responseSchema formatting.
- * Claude calls fall back to FALLBACK_MODEL (any provider).
+ * Tries the primary model with retries, then the fallback model with retries if all fail.
+ * Matches callGeminiStreaming behaviour: exhaust retries before falling back.
  */
-async function _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig) {
-  if (modelDef.provider === 'gemini') {
-    // Gemini: primary → Gemini fallback (defined in models registry)
-    return _geminiWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig);
-  }
-
-  // Claude: primary → FALLBACK_MODEL
-  const fallbackDef = _fallbackModelDef();
-  const isFallback  = modelDef.primary === fallbackDef.primary;
+async function _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label) {
   try {
-    return await _claudeCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout);
-  } catch (err) {
-    if (isFallback) throw err; // already on fallback model, nothing left to try
-    console.warn(`[gateway] ${modelDef.primary} failed (${err.message.substring(0, 80)}), falling back to ${fallbackDef.primary}...`);
-    const result = fallbackDef.provider === 'gemini'
-      ? await _geminiWithFallback(fallbackDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig)
-      : await _claudeCall(fallbackDef, prompt, systemPrompt, maxTokens, temperature, timeout);
+    return await _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
+  } catch (primaryErr) {
+    const fallbackDef = _getFallback(modelDef);
+    if (!fallbackDef) throw primaryErr;
+    console.warn(`[gateway:${label}] all retries exhausted, falling back to ${fallbackDef.primary}... (${primaryErr.message.substring(0, 80)})`);
+    const result = await _callWithRetry(fallbackDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
     return { ...result, fallback: true };
   }
 }
 
-async function _geminiWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig) {
+/**
+ * Single attempt for the given modelDef — primary model only, no fallback.
+ */
+async function _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig) {
+  if (modelDef.provider === 'gemini') {
+    return _geminiCall(modelDef.primary, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig);
+  }
+  return _claudeCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout);
+}
+
+async function _geminiCall(model, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
 
@@ -203,18 +218,8 @@ async function _geminiWithFallback(modelDef, prompt, systemPrompt, maxTokens, te
     generationConfig: { temperature, maxOutputTokens: maxTokens, ...extraConfig },
   };
 
-  const models = [modelDef.primary, modelDef.fallback].filter(Boolean);
-  for (let i = 0; i < models.length; i++) {
-    const model  = models[i];
-    const isLast = i === models.length - 1;
-    try {
-      const { text, usage } = await geminiCall(apiKey, model, body, { timeout });
-      return { text, usage, model, fallback: i > 0 };
-    } catch (err) {
-      if (isLast) throw err;
-      console.warn(`[gateway] ${model} failed (${err.message.substring(0, 80)}), trying fallback...`);
-    }
-  }
+  const { text, usage } = await geminiCall(apiKey, model, body, { timeout });
+  return { text, usage, model, fallback: false };
 }
 
 async function _claudeCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout) {
