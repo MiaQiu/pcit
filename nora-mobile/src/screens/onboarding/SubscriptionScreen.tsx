@@ -3,16 +3,14 @@
  * Trial information and pricing options
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   Image,
-  Dimensions,
   ActivityIndicator,
   Alert,
   Linking,
@@ -23,26 +21,6 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { REVENUECAT_CONFIG } from '../../config/revenuecat';
-import { Ellipse } from '../../components/Ellipse';
-import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
-import Purchases from 'react-native-purchases';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-const TIMELINE_ITEMS = [
-  {
-    day: 'Month 1',
-    description: 'More connection. Building trust & safety foundation. ',
-  },
-  {
-    day: 'Month 2',
-    description: "Fewer power struggles. Learning emotional regulation",
-  },
-  {
-    day: 'Month 3',
-    description: "Calmer routines. Establishing lasting habits.",
-  },
-];
 
 export const SubscriptionScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -56,8 +34,26 @@ export const SubscriptionScreen: React.FC = () => {
     error: subscriptionError
   } = useSubscription();
 
-  const [selectedPlan, setSelectedPlan] = useState<'3month' | 'yearly'>('yearly');
+  const [selectedPlan] = useState<'1month'>('1month');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Save all onboarding data to backend as soon as the subscription screen loads.
+  // This ensures data is persisted even if the user exits without subscribing.
+  useEffect(() => {
+    const isInitialOnboarding = data.name && data.name.trim() !== '';
+    if (isInitialOnboarding) {
+      authService.completeOnboarding({
+        name: data.name,
+        relationshipToChild: data.relationshipToChild || undefined,
+        childName: data.childName,
+        childGender: data.childGender || undefined,
+        childBirthday: data.childBirthday || undefined,
+        issue: data.issue || undefined,
+      }).catch(err => {
+        console.error('Failed to pre-save onboarding data:', err);
+      });
+    }
+  }, []);
 
   // Calculate trial end date (1 month from today)
   const getTrialEndDate = () => {
@@ -68,13 +64,9 @@ export const SubscriptionScreen: React.FC = () => {
   };
 
   // Find packages by product ID
-  const threeMonthPackage = availablePackages.find(
-    p => p.product.identifier === REVENUECAT_CONFIG.products.threeMonth
+  const selectedPackage = availablePackages.find(
+    p => p.product.identifier === REVENUECAT_CONFIG.products.oneMonth
   );
-  const yearlyPackage = availablePackages.find(
-    p => p.product.identifier === REVENUECAT_CONFIG.products.oneYear
-  );
-  const selectedPackage = selectedPlan === 'yearly' ? yearlyPackage : threeMonthPackage;
 
   const handleBack = () => navigation.goBack();
 
@@ -243,77 +235,24 @@ export const SubscriptionScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      {/* Hero Section */}
+      <View style={styles.heroSection}>
+        <Image
+          source={require('../../../assets/images/dragon_waving.png')}
+          style={styles.dragonImage}
+          resizeMode="contain"
+        />
+      </View>
+
+      {/* Scrollable Content */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Dragon Image Section with Ellipse Backgrounds */}
-        {/* <View style={styles.heroContainer}> */}
-          {/* Ellipse 78 - Top decorative background - #A6E0CB */}
-          {/* <Ellipse color="#A6E0CB" style={styles.ellipse78} /> */}
-
-          {/* Ellipse 77 - Bottom decorative background */}
-          {/* <Ellipse color="#9BD4DF" style={styles.ellipse77} /> */}
-
-          {/* Dragon Image */}
-          {/* <View style={styles.dragonContainer}>
-            <Image
-              source={require('../../../assets/images/dragon_image.png')}
-              style={styles.dragon}
-              resizeMode="contain"
-            />
-          </View>
-        </View> */}
-
-        {/* Title */}
-        <Text style={styles.title}>
-          Unlock {data.childName ? `${data.childName}'s Potential with Nora` : 'Potential with Nora'}
-        </Text>
-        <Text style={styles.subtitle}>
-          {/* First 30 days free, then ${selectedPlan === 'annual' ? '138.96' : '11.58'}/
-          {selectedPlan === 'annual' ? 'year' : 'month'} */}
-          Join thousands of parents seeing real growth.
-        </Text>
-
-        {/* Pricing Toggle */}
-        {/* <View style={styles.pricingToggle}>
-          <TouchableOpacity
-            style={[
-              styles.toggleButton,
-              selectedPlan === 'annual' && styles.toggleButtonActive,
-            ]}
-            onPress={() => setSelectedPlan('annual')}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={[
-                styles.toggleText,
-                selectedPlan === 'annual' && styles.toggleTextActive,
-              ]}
-            >
-              Annual
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.toggleButton,
-              selectedPlan === 'monthly' && styles.toggleButtonActive,
-            ]}
-            onPress={() => setSelectedPlan('monthly')}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={[
-                styles.toggleText,
-                selectedPlan === 'monthly' && styles.toggleTextActive,
-              ]}
-            >
-              Monthly
-            </Text>
-          </TouchableOpacity>
-        </View> */}
+        <Text style={styles.title}>How your trial works</Text>
+        <Text style={styles.subtitle}>First 30 days free, then S$9.99/month</Text>
 
         {/* Loading/Error States */}
         {subscriptionLoading && (
@@ -322,7 +261,6 @@ export const SubscriptionScreen: React.FC = () => {
             <Text style={styles.loadingText}>Loading subscription options...</Text>
           </View>
         )}
-
         {subscriptionError && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{subscriptionError}</Text>
@@ -330,92 +268,68 @@ export const SubscriptionScreen: React.FC = () => {
         )}
 
         {/* Timeline */}
-        {/* <View style={styles.timeline}>
-          {TIMELINE_ITEMS.map((item, index) => (
-            <View key={index} style={styles.timelineItem}>
-            
-              <View style={styles.iconContainer}>
-                <View style={styles.icon}>
-                  <Text style={styles.iconText}>✓</Text>
-                </View>
-                {index < TIMELINE_ITEMS.length - 1 && <View style={styles.connector} />}
+        <View style={styles.timeline}>
+          {/* Step 1 */}
+          <View style={styles.timelineRow}>
+            <View style={styles.timelineLeft}>
+              <View style={[styles.timelineCircle, styles.timelineCircleDone]}>
+                <Text style={styles.timelineCircleText}>✓</Text>
               </View>
+              <View style={styles.timelineConnector} />
+            </View>
+            <View style={styles.timelineBody}>
+              <Text style={styles.timelineTitleDone}>Share your goals</Text>
+              <Text style={styles.timelineDesc}>We've set up your profile based on your answers.</Text>
+            </View>
+          </View>
 
-       
-              <View style={styles.timelineContent}>
-                <Text style={styles.timelineDay}>{item.day}</Text>
-                <Text style={styles.timelineDescription}>{item.description}</Text>
+          {/* Step 2 */}
+          <View style={styles.timelineRow}>
+            <View style={styles.timelineLeft}>
+              <View style={[styles.timelineCircle, styles.timelineCircleActive]}>
+                <Text style={styles.timelineCircleText}>🔓</Text>
+              </View>
+              <View style={styles.timelineConnector} />
+            </View>
+            <View style={styles.timelineBody}>
+              <Text style={styles.timelineTitle}>Today</Text>
+              <Text style={styles.timelineDesc}>Unlock access to personalized PCIT coaching sessions and tools.</Text>
+            </View>
+          </View>
+
+          {/* Step 3 */}
+          <View style={styles.timelineRow}>
+            <View style={styles.timelineLeft}>
+              <View style={[styles.timelineCircle, styles.timelineCircleActive]}>
+                <Text style={styles.timelineCircleText}>★</Text>
               </View>
             </View>
-          ))}
-        </View> */}
+            <View style={styles.timelineBody}>
+              <Text style={styles.timelineTitle}>In 30 days</Text>
+              <Text style={styles.timelineDesc}>You'll be charged S$9.99. Cancel anytime before.</Text>
+            </View>
+          </View>
+        </View>
 
-        {/* Restore Purchase Link */}
-        {/* <TouchableOpacity
-          style={styles.restoreButton}
-          onPress={handleRestore}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={styles.restoreButton} onPress={handleRestore} activeOpacity={0.8}>
           <Text style={styles.restoreText}>Restore purchase</Text>
-        </TouchableOpacity> */}
-
-        {/* Bottom CTA */}
-        {/* 1-Year Growth Partner Box */}
-        <TouchableOpacity
-          style={[styles.planBox, selectedPlan === 'yearly' && styles.planBoxSelected]}
-          onPress={() => setSelectedPlan('yearly')}
-          activeOpacity={0.8}
-        >
-          <View style={styles.recommendedBadge}>
-            <Text style={styles.recommendedBadgeText}>RECOMMENDED</Text>
-          </View>
-          <View style={styles.programContent}>
-            <View style={styles.programIcon}>
-              <Image
-                source={require('../../../assets/images/dragon_waving.png')}
-                style={styles.iconImage}
-                resizeMode="contain"
-              />
-            </View>
-            <View style={styles.programDetails}>
-              <Text style={styles.programTitle}>1-Year Growth Partner</Text>
-              <Text style={styles.programPrice}>S$169.99 (14/month)</Text>
-              <Text style={styles.programDescription}>Ongoing parent tips, progress tracking, and support as your child grows.</Text>
-              <View style={styles.bonusBadge}>
-                <Text style={styles.bonusBadgeText}>🎁 Beta bonus 1 month free</Text>
-              </View>
-            </View>
-          </View>
         </TouchableOpacity>
 
-        {/* 3-Month Kickstart Box */}
-        <TouchableOpacity
-          style={[styles.planBox, selectedPlan === '3month' && styles.planBoxSelected]}
-          onPress={() => setSelectedPlan('3month')}
-          activeOpacity={0.8}
-        >
-          <View style={styles.programContent}>
-            <View style={styles.programIcon}>
-              <Image
-                source={require('../../../assets/images/dragon_waving.png')}
-                style={styles.iconImage}
-                resizeMode="contain"
-              />
-            </View>
-            <View style={styles.programDetails}>
-              <Text style={styles.programTitle}>3-Month Kickstart</Text>
-              <Text style={styles.programPrice}>S$99.99 (33/month)</Text>
-              <Text style={styles.programDescription}>See meaningful changes in routines, cooperation, and emotional skills.</Text>
-              <View style={styles.bonusBadge}>
-                <Text style={styles.bonusBadgeText}>🎁 Beta bonus 1 month free</Text>
-              </View>
-            </View>
-          </View>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
+          <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
 
-        <Text style={styles.noChargeText}>
-          No charge today  •  <Text style={styles.trialEndsText}>Trial ends {getTrialEndDate()}</Text>
+        <Text style={styles.disclaimer}>
+          After your free trial, your subscription automatically renews at S$9.99/month unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our{' '}
+          <Text style={styles.link} onPress={handleOpenTerms}>Terms</Text> and{' '}
+          <Text style={styles.link} onPress={handleOpenPrivacy}>Privacy Policy</Text>.
         </Text>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* Fixed Bottom Button */}
+      <View style={styles.bottomBar}>
         <TouchableOpacity
           style={[styles.startButton, isLoading && styles.startButtonDisabled]}
           onPress={handleStartTrial}
@@ -425,350 +339,189 @@ export const SubscriptionScreen: React.FC = () => {
           {isLoading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.startButtonText}>Start free trial</Text>
+            <Text style={styles.startButtonText}>Start my free trial</Text>
           )}
         </TouchableOpacity>
-
-        <Text style={styles.disclaimer}>
-          After your free trial, your subscription automatically renews at {selectedPlan === '3month' ? 'S$99.99 every 3 months' : 'S$169.99/year'} unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our{' '}
-          <Text style={styles.link} onPress={handleOpenTerms}>Terms</Text> and{' '}
-          <Text style={styles.link} onPress={handleOpenPrivacy}>Privacy Policy</Text>.
-        </Text>
-
-        <TouchableOpacity
-          style={styles.restorePurchasesButton}
-          onPress={handleRestore}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.restorePurchasesText}>Restore Purchases</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.logoutText}>Log Out</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    //backgroundColor: '#F3E8FF',
+    backgroundColor: '#FFFFFF',
   },
+
+  // Hero
+  heroSection: {
+    backgroundColor: '#F3E8FF',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    height: 220,
+  },
+  dragonImage: {
+    width: 180,
+    height: 200,
+  },
+
+  // Scroll
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 32,
-    paddingTop: 20,
+    paddingHorizontal: 28,
+    paddingTop: 28,
     paddingBottom: 20,
   },
-  heroContainer: {
-    position: 'relative',
-    width: SCREEN_WIDTH * 0.7,
-    height: SCREEN_WIDTH * 0.7,
-    //marginBottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-  },
-  ellipse78: {
-    position: 'absolute',
-    left: -130,
-    top: -40,
-    width: 573,
-    height: 150,
-  },
-  ellipse77: {
-    position: 'absolute',
-    left: -80,
-    top: 50,
-    width: 473,
-    height: 120,
-  },
-  dragonContainer: {
-    position: 'absolute',
-    width: '90%',
-    height: '90%',
-    alignItems: 'center',
-    marginBottom: 120,
-  },
-  dragon: {
-    width: '100%',
-    height: '100%',
-  },
+
+  // Header
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 26,
     color: '#1F2937',
     textAlign: 'center',
-    marginBottom: 20,
-    marginTop: 20,
-  },
-  subtitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 14,
-    color: '#8C49D5',
-    textAlign: 'center',
-    marginBottom: 20,
-    backgroundColor: '#F3E8FF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 32,
-    overflow: 'hidden',
-  },
-
-  bonusBadgeText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 12,
-    color: '#8C49D5',
-  },
-  pricingToggle: {
-    flexDirection: 'row',
-    backgroundColor: '#E9D5FF',
-    borderRadius: 20,
-    padding: 4,
-    marginBottom: 32,
-  },
-  toggleButton: {
-    flex: 1,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 18,
-  },
-  toggleButtonActive: {
-    backgroundColor: '#8C49D5',
-  },
-  toggleText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  toggleTextActive: {
-    color: '#FFFFFF',
-  },
-  timeline: {
-    marginLeft: 14,
     marginBottom: 8,
   },
-  timelineItem: {
-    flexDirection: 'row',
-    marginBottom: 0,
+  subtitle: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 15,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 32,
   },
-  iconContainer: {
+
+  // Timeline
+  timeline: {
+    marginBottom: 24,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  timelineLeft: {
     alignItems: 'center',
+    width: 44,
     marginRight: 16,
   },
-  icon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#8C49D5',
+  timelineCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconText: {
+  timelineCircleDone: {
+    backgroundColor: '#8C49D5',
+  },
+  timelineCircleActive: {
+    backgroundColor: '#8C49D5',
+  },
+  timelineCircleText: {
+    fontSize: 18,
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
-  connector: {
-    width: 2,
+  timelineConnector: {
+    width: 3,
+    height: 56,
+    backgroundColor: '#E9D5FF',
+    borderRadius: 2,
+  },
+  timelineBody: {
     flex: 1,
-    backgroundColor: '#C4B5FD',
-    marginTop: 4,
-    marginBottom: 4,
+    paddingTop: 6,
+    paddingBottom: 32,
   },
-  timelineContent: {
-    flex: 1,
-    paddingTop: 4,
-    paddingBottom: 18,
-  },
-  timelineDay: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 16,
+  timelineTitle: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 17,
     color: '#1F2937',
     marginBottom: 4,
   },
-  timelineDescription: {
+  timelineTitleDone: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 17,
+    color: '#9CA3AF',
+    textDecorationLine: 'line-through',
+    marginBottom: 4,
+  },
+  timelineDesc: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 14,
     color: '#6B7280',
     lineHeight: 20,
   },
+
+  // Restore / Logout
   restoreButton: {
     alignSelf: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
+    marginBottom: 4,
   },
   restoreText: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 14,
     color: '#8C49D5',
+    textDecorationLine: 'underline',
   },
-  bottomContainer: {
-    paddingHorizontal: 32,
-    paddingTop: 0,
-    paddingBottom: 32,
-    //backgroundColor: '#F3E8FF',
-  },
-  planBox: {
-    position: 'relative',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 16,
+  logoutButton: {
+    alignSelf: 'center',
+    paddingVertical: 8,
     marginBottom: 12,
   },
-  planBoxSelected: {
-    borderWidth: 2,
-    borderColor: '#A78BFA',
+  logoutText: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 14,
+    color: '#9CA3AF',
   },
-  recommendedBadge: {
-    position: 'absolute',
-    top: -1,
-    right: -1,
-    backgroundColor: '#8C49D5',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderTopRightRadius: 14,
-    borderBottomLeftRadius: 12,
-  },
-  recommendedBadgeText: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+
+  disclaimer: {
+    fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 11,
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-  programContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  programIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    //backgroundColor: '#FEF3C7',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    //marginRight: 12,
-    overflow: 'hidden',
-  },
-  iconImage: {
-    width: 50,
-    height: 50,
-  },
-  programDetails: {
-    flex: 1,
-  },
-  programTitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 18,
-    color: '#1F2937',
-    marginBottom: 2,
-  },
-  programPrice: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 6,
-  },
-  programDescription: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 13,
-    color: '#6B7280',
-    lineHeight: 18,
-    marginBottom: 6,
-  },
-  bonusBadge: {
-    backgroundColor: '#F3E8FF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
-  },
-  noChargeText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 14,
-    color: '#1F2937',
+    color: '#9CA3AF',
     textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 8,
+    lineHeight: 16,
   },
-  trialEndsText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 14,
-    color: '#6B7280',
+  link: {
+    color: '#8C49D5',
+    textDecorationLine: 'underline',
+  },
+
+  // Bottom bar
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 36,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
   },
   startButton: {
-    width: '100%',
-    height: 56,
     backgroundColor: '#8C49D5',
-    borderRadius: 28,
+    borderRadius: 32,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-    shadowColor: '#8C49D5',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   startButtonDisabled: {
     backgroundColor: '#C4B5FD',
-    shadowOpacity: 0.1,
   },
   startButtonText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 18,
     color: '#FFFFFF',
   },
-  disclaimer: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 11,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 16,
-    //marginBottom:0,
-  },
-  link: {
-    color: '#8C49D5',
-    textDecorationLine: 'underline',
-  },
-  restorePurchasesButton: {
-    alignSelf: 'center',
-    paddingVertical: 12,
-    marginTop: 0,
-  },
-  restorePurchasesText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 14,
-    color: '#8C49D5',
-  },
-  logoutButton: {
-    alignSelf: 'center',
-    paddingVertical: 12,
-  },
-  logoutText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 14,
-    color: '#6B7280',
-  },
+
+  // Loading / error
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     backgroundColor: '#F3E8FF',
     borderRadius: 12,
@@ -781,7 +534,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   errorContainer: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     backgroundColor: '#FEE2E2',
     borderRadius: 12,
