@@ -398,6 +398,17 @@ export const RecordScreen: React.FC = () => {
       console.log('[RecordScreen] Processing auto-stopped recording:', uri);
       console.log('[RecordScreen] Duration:', durationSeconds, 'seconds');
 
+      // Check minimum recording length
+      if (durationSeconds < 10) {
+        setRecordingState('idle');
+        Alert.alert(
+          'Recording is too short',
+          'We need a little more play-time to give you helpful insights. Please try again.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       // Reset local recording state
       setRecordingState('completed');
 
@@ -474,6 +485,17 @@ export const RecordScreen: React.FC = () => {
 
       console.log('Recording saved to:', uri);
       console.log('Duration:', durationSeconds, 'seconds');
+
+      // Check minimum recording length
+      if (durationSeconds < 10) {
+        setRecordingState('idle');
+        Alert.alert(
+          'Recording Too Short',
+          'We need a little more play-time to give you helpful insights. Please try again.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
 
       // Reset local recording state
       setRecordingState('completed');
