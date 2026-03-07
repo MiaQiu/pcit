@@ -1,14 +1,17 @@
 /**
- * Quick script to re-run CDI coaching for a specific session.
- * Usage: node scripts/run-cdi-coaching.cjs <sessionId>
+ * Quick script to re-run CDI coaching for a specific session (read-only, no DB writes).
+ * Usage: PROD_DB_PASSWORD=... node scripts/run-cdi-coaching.cjs <sessionId>
+ * Requires prod DB tunnel on localhost:5433.
  */
 require('dotenv').config();
+// Point Prisma at prod DB (generateCdiCoaching doesn't use Prisma, but the import chain needs a valid URL)
+process.env.DATABASE_URL = `postgresql://nora_admin:${process.env.PROD_DB_PASSWORD}@localhost:5433/nora`;
 const prisma = require('../server/services/db.cjs');
 const { getUtterances } = require('../server/utils/utteranceUtils.cjs');
 const { generateCdiCoaching } = require('../server/services/pcitAnalysisService.cjs');
 const { decryptSensitiveData } = require('../server/utils/encryption.cjs');
 
-const SESSION_ID = process.argv[2] || '807db5e6-74ad-423c-ba20-b3ead3b58aac';
+const SESSION_ID = process.argv[2] || 'd2b53798-0ce0-481d-a6c3-cb36f455fb60';
 
 function calculateChildAgeInMonths(birthday, birthYear) {
   const today = new Date();
@@ -67,18 +70,36 @@ async function main() {
     : clinicalPriority.primaryIssue || 'none';
   console.log(`Clinical priority: ${issueLabel} (level: ${clinicalPriority.primaryIssue || 'none'})\n`);
 
+  // Extract child speaker from roleIdentificationJson
+  const roleJson = session.roleIdentificationJson || {};
+  const speakerIdentification = roleJson.speaker_identification || {};
+  let childSpeaker = null;
+  for (const [speakerId, info] of Object.entries(speakerIdentification)) {
+    if (info.role === 'CHILD') { childSpeaker = speakerId; break; }
+  }
+  console.log(`Child speaker: ${childSpeaker}, durationSeconds: ${session.durationSeconds}`);
+
   // Fetch utterances + tagCounts
   const utterances = await getUtterances(SESSION_ID);
   const tagCounts = session.tagCounts || {};
   console.log(`Utterances: ${utterances.length}, tagCounts:`, JSON.stringify(tagCounts, null, 2), '\n');
 
-  // Run CDI coaching
+  await prisma.$disconnect();
+
+  // Run CDI coaching (no DB writes)
   console.log('--- Running generateCdiCoaching ---\n');
   const result = await generateCdiCoaching(
     utterances,
-    { name: childName, ageMonths: childAgeMonths, gender: childGender, clinicalPriority },
+    {
+      name: childName,
+      ageMonths: childAgeMonths,
+      gender: childGender,
+      clinicalPriority,
+      isFirstSession: false,
+      durationSeconds: session.durationSeconds || null
+    },
     tagCounts,
-    null
+    childSpeaker
   );
 
   if (!result) {
@@ -86,31 +107,19 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('\n--- RESULT ---');
-  console.log('\n📝 coachingSummary (raw Gemini report):');
+  console.log('\n' + '='.repeat(80));
+  console.log('CDI COACHING RESULT');
+  console.log('='.repeat(80));
+  console.log('\n--- coachingSummary ---\n');
   console.log(result.coachingSummary);
-  console.log('\n📋 coachingCards (3 formatted sections):');
+  console.log('\n--- coachingCards ---\n');
   console.log(JSON.stringify(result.coachingCards, null, 2));
-  console.log('\n🎯 tomorrowGoal:', result.tomorrowGoal);
-
-  // Save to DB
-  console.log('\n💾 Saving to session...');
-  await prisma.session.update({
-    where: { id: SESSION_ID },
-    data: {
-      coachingSummary: result.coachingSummary,
-      coachingCards: result.coachingCards
-        ? { sections: result.coachingCards, tomorrowGoal: result.tomorrowGoal || null }
-        : null
-    }
-  });
-  console.log('✅ Saved! Check the app.');
-
-  await prisma.$disconnect();
+  console.log('\n--- tomorrowGoal ---\n');
+  console.log(result.tomorrowGoal);
+  console.log('\n' + '='.repeat(80));
 }
 
 main().catch(err => {
   console.error('Fatal:', err);
-  prisma.$disconnect();
   process.exit(1);
 });

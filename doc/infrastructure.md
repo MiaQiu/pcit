@@ -134,6 +134,20 @@ node server.cjs           # starts the server
 
 ## Deployment
 
+### Full Deploy Scripts (backend + mobile)
+
+One-command scripts that handle the full deploy sequence: switch `nora-mobile/.env.production` to the correct region, build nora-core, prebuild the iOS app, run `pod install`, and deploy the backend.
+
+```bash
+# Dev (us-east-1) — switches .env.production to us-east-1 then deploys
+./deploy_dev.sh
+
+# Prod (ap-southeast-1) — switches .env.production to ap-southeast-1 then deploys
+./deploy_prod.sh
+```
+
+After either script completes, open Xcode and Archive as usual.
+
 ### Backend
 
 ```bash

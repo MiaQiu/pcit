@@ -1,0 +1,8 @@
+** BUILD FAILED **
+
+
+The following build commands failed:
+	SwiftEmitModule normal arm64 Emitting\ module\ for\ noramonorepo (in target 'noramonorepo' from project 'noramonorepo')
+	EmitSwiftModule normal arm64 (in target 'noramonorepo' from project 'noramonorepo')
+	Building workspace noramonorepo with scheme noramonorepo and configuration Debug
+(3 failures)

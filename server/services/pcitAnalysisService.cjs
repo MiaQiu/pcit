@@ -306,7 +306,7 @@ function formatUtterancesForPsychologist(utterances) {
  * @returns {Object} Template variables object
  */
 function buildProfilingVariables(childInfo, tagCounts, utterances) {
-  const { name, ageMonths, gender, clinicalPriority, isFirstSession } = childInfo;
+  const { name, ageMonths, gender, clinicalPriority, isFirstSession, durationSeconds } = childInfo;
   const transcript = formatUtterancesForPsychologist(utterances);
 
   const formatLevel = (level) => level ? level.replace(/_/g, ' ').toLowerCase() : 'none';
@@ -355,6 +355,12 @@ function buildProfilingVariables(childInfo, tagCounts, utterances) {
 - Commands: ${tagCounts.command || 0} (reduce)
 - Criticisms: ${tagCounts.criticism || 0} (eliminate)`;
 
+  const totalMinutes = durationSeconds ? Math.floor(durationSeconds / 60) : null;
+  const totalSeconds = durationSeconds ? durationSeconds % 60 : null;
+  const sessionDuration = durationSeconds
+    ? (totalMinutes > 0 ? `${totalMinutes} min ${totalSeconds} sec` : `${totalSeconds} sec`)
+    : 'unknown';
+
   return {
     CHILD_NAME: name || 'the child',
     CHILD_AGE_MONTHS: String(ageMonths || 'unknown'),
@@ -364,6 +370,7 @@ function buildProfilingVariables(childInfo, tagCounts, utterances) {
     PRIMARY_DETAILS: primaryRow ? formatRowDetails(primaryRow) : 'none',
     OTHER_ISSUES: otherIssuesText,
     SESSION_METRICS: sessionMetrics,
+    SESSION_DURATION: sessionDuration,
     TRANSCRIPT: transcript,
     FIRST_SESSION_NOTE: isFirstSession
       ? 'please note, This is the first session the parent has with the parent app Nora. for first session, it is to hook user in, setting expectations that we are going to be very helpful to them. For us, the primary goal of this session is to get user excited about emotional massage and the discipline coaching (which will be available once their emotional bank account is ready) and committed to making daily massage session as their priority.'
@@ -1152,7 +1159,8 @@ Do not include markdown or whitespace (minified JSON).
       ageMonths: childAgeMonths,
       gender: childGender,
       clinicalPriority,
-      isFirstSession: priorCompletedCount === 0
+      isFirstSession: priorCompletedCount === 0,
+      durationSeconds: session.durationSeconds || null
     };
 
     const [profilingSettled, coachingSettled, aboutChildSettled] = await Promise.allSettled([

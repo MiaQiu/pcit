@@ -10,17 +10,20 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Image,
   ActivityIndicator,
   Alert,
   Linking,
+  Dimensions,
 } from 'react-native';
+import { MaskedDinoImage } from '../../components/MaskedDinoImage';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { REVENUECAT_CONFIG } from '../../config/revenuecat';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const SubscriptionScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -68,15 +71,23 @@ export const SubscriptionScreen: React.FC = () => {
     p => p.product.identifier === REVENUECAT_CONFIG.products.oneMonth
   );
 
+  console.log('[Subscription] Available packages:', availablePackages.map(p => p.product.identifier));
+  console.log('[Subscription] Selected package:', selectedPackage?.product.identifier ?? 'NOT FOUND');
+
   const handleBack = () => navigation.goBack();
 
   const handleStartTrial = async () => {
+    if (!selectedPackage) {
+      Alert.alert('Not Available', 'Monthly plan is not available yet. Please try again in a moment.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       // User was already identified to RevenueCat in CreateAccountScreen
       // Proceed directly with purchase - webhook will have the correct user ID
-      const result = await purchasePackage(selectedPackage || undefined);
+      const result = await purchasePackage(selectedPackage);
 
       if (result.success) {
         // CRITICAL: Trust the webhook as source of truth for subscription status
@@ -236,13 +247,11 @@ export const SubscriptionScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Hero Section */}
-      <View style={styles.heroSection}>
-        <Image
-          source={require('../../../assets/images/dragon_waving.png')}
-          style={styles.dragonImage}
-          resizeMode="contain"
-        />
+      {/* Hero Section — same layout as StartScreen */}
+      <View style={styles.dragonSection}>
+        <View style={styles.dragonContainer}>
+          <MaskedDinoImage style={styles.dragonImage} />
+        </View>
       </View>
 
       {/* Scrollable Content */}
@@ -252,15 +261,8 @@ export const SubscriptionScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>How your trial works</Text>
-        <Text style={styles.subtitle}>First 30 days free, then S$9.99/month</Text>
+        <Text style={styles.subtitle}>First 30 days free, then S$9.98/month</Text>
 
-        {/* Loading/Error States */}
-        {subscriptionLoading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#8C49D5" />
-            <Text style={styles.loadingText}>Loading subscription options...</Text>
-          </View>
-        )}
         {subscriptionError && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{subscriptionError}</Text>
@@ -278,7 +280,7 @@ export const SubscriptionScreen: React.FC = () => {
               <View style={styles.timelineConnector} />
             </View>
             <View style={styles.timelineBody}>
-              <Text style={styles.timelineTitleDone}>Share your goals</Text>
+              <Text style={styles.timelineTitleDone}>Set up your profile</Text>
               <Text style={styles.timelineDesc}>We've set up your profile based on your answers.</Text>
             </View>
           </View>
@@ -293,7 +295,7 @@ export const SubscriptionScreen: React.FC = () => {
             </View>
             <View style={styles.timelineBody}>
               <Text style={styles.timelineTitle}>Today</Text>
-              <Text style={styles.timelineDesc}>Unlock access to personalized PCIT coaching sessions and tools.</Text>
+              <Text style={styles.timelineDesc}>Unlock access to personalized coaching lessons and sessions.</Text>
             </View>
           </View>
 
@@ -306,7 +308,7 @@ export const SubscriptionScreen: React.FC = () => {
             </View>
             <View style={styles.timelineBody}>
               <Text style={styles.timelineTitle}>In 30 days</Text>
-              <Text style={styles.timelineDesc}>You'll be charged S$9.99. Cancel anytime before.</Text>
+              <Text style={styles.timelineDesc}>You'll be charged S$9.98. Cancel anytime before.</Text>
             </View>
           </View>
         </View>
@@ -320,7 +322,7 @@ export const SubscriptionScreen: React.FC = () => {
         </TouchableOpacity>
 
         <Text style={styles.disclaimer}>
-          After your free trial, your subscription automatically renews at S$9.99/month unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our{' '}
+          After your free trial, your subscription automatically renews at S$9.98/month unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our{' '}
           <Text style={styles.link} onPress={handleOpenTerms}>Terms</Text> and{' '}
           <Text style={styles.link} onPress={handleOpenPrivacy}>Privacy Policy</Text>.
         </Text>
@@ -353,16 +355,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
 
-  // Hero
-  heroSection: {
-    backgroundColor: '#F3E8FF',
+  // Hero — mirrors StartScreen exactly
+  dragonSection: {
+    position: 'relative',
+    width: SCREEN_WIDTH * 0.8,
+    height: SCREEN_WIDTH * 0.8,
+    marginTop: -20,
+    marginBottom: 8,
+    alignSelf: 'center',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    height: 220,
+    justifyContent: 'center',
+  },
+  dragonContainer: {
+    position: 'absolute',
+    width: '125%',
+    height: '125%',
+    alignItems: 'center',
   },
   dragonImage: {
-    width: 180,
-    height: 200,
+    width: '100%',
+    height: '100%',
   },
 
   // Scroll

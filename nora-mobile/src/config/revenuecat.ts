@@ -17,6 +17,7 @@ export const REVENUECAT_CONFIG = {
 
   // Product identifiers
   products: {
+    oneMonth: 'com.nora.premium.1m',
     threeMonth: 'com.nora.premium.3m',
     oneYear: 'com.nora.premium.1y',
   },

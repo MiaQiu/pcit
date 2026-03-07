@@ -50,7 +50,7 @@ target 'Nora' do
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
 
-  post_install do |installer|
+post_install do |installer|
     react_native_post_install(
       installer,
       config[:reactNativePath],
@@ -65,7 +65,5 @@ target 'Nora' do
         config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
       end
     end
-  end
-end
   end
 end

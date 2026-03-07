@@ -18,9 +18,9 @@ const withModularHeaders = (config) => {
       );
     }
 
-    // Add fix for module map issues in post_install if not already present
-    if (!podfileContent.includes('fix modular headers')) {
-      const postInstallHook = `
+    // Always replace post_install block using a greedy match to end-of-file,
+    // so stray 'end' lines from previous runs are also removed.
+    const postInstallHook = `
   post_install do |installer|
     react_native_post_install(
       installer,
@@ -38,12 +38,12 @@ const withModularHeaders = (config) => {
     end
   end`;
 
-      // Replace the existing post_install block
-      podfileContent = podfileContent.replace(
-        /post_install do \|installer\|[\s\S]*?end\s*end/,
-        postInstallHook.trim() + '\nend'
-      );
-    }
+    // Greedy [\s\S]* consumes everything from post_install through the end of the file,
+    // replacing it with a clean block regardless of what was there before.
+    podfileContent = podfileContent.replace(
+      /\n  post_install do \|installer\|[\s\S]*/,
+      '\n' + postInstallHook.trim() + '\nend\n'
+    );
 
     config.modResults.contents = podfileContent;
     return config;

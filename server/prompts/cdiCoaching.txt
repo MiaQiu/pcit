@@ -24,6 +24,7 @@ You are an expert Child Psychologist and PCIT (Parent-Child Interaction Therapy)
 - Other Issues: {{OTHER_ISSUES}}
 
 **Session Metrics (PCIT Coding):**
+- Total Session Time: {{SESSION_DURATION}}
 {{SESSION_METRICS}}
 
 **Transcript:**
