@@ -25,6 +25,14 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
 }) => {
   if (!children) return null;
 
+  // Extract only typography-safe properties for inline spans.
+  // Block-level properties (margin, padding) must NOT be applied to nested
+  // inline <Text> nodes — React Native misinterprets them as character-level
+  // metrics, which corrupts text measurement and causes text to overflow/clip.
+  const { marginTop, marginBottom, marginLeft, marginRight, margin,
+          paddingTop, paddingBottom, paddingLeft, paddingRight, padding,
+          ...inlineStyle } = (style ?? {}) as any;
+
   // Split text by **bold** markers
   const parts: React.ReactNode[] = [];
   const regex = /\*\*(.*?)\*\*/g;
@@ -36,7 +44,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
     if (match.index > lastIndex) {
       const textBefore = children.substring(lastIndex, match.index);
       parts.push(
-        <Text key={`text-${lastIndex}`} style={style}>
+        <Text key={`text-${lastIndex}`} style={inlineStyle}>
           {textBefore}
         </Text>
       );
@@ -44,7 +52,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
 
     // Add bold text with explicit bold font family
     parts.push(
-      <Text key={`bold-${match.index}`} style={[style, { fontFamily: boldFontFamily }]}>
+      <Text key={`bold-${match.index}`} style={[inlineStyle, { fontFamily: boldFontFamily }]}>
         {match[1]}
       </Text>
     );
@@ -56,7 +64,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
   if (lastIndex < children.length) {
     const textAfter = children.substring(lastIndex);
     parts.push(
-      <Text key={`text-${lastIndex}`} style={style}>
+      <Text key={`text-${lastIndex}`} style={inlineStyle}>
         {textAfter}
       </Text>
     );
@@ -67,5 +75,6 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
     return <Text style={style}>{children}</Text>;
   }
 
+  // Outer <Text> keeps the full style (including margins/padding for block spacing)
   return <Text style={style}>{parts}</Text>;
 };
