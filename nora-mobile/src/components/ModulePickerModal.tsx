@@ -18,6 +18,7 @@ interface ModulePickerModalProps {
   onSelectModule: (moduleKey: string) => void;
   modules: ModuleWithProgress[];
   recommendedModules: string[];
+  autoSelectedKey?: string;
 }
 
 export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
@@ -26,6 +27,7 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
   onSelectModule,
   modules,
   recommendedModules,
+  autoSelectedKey,
 }) => {
   // Split modules into recommended and other (exclude Foundation and completed)
   const availableModules = modules.filter(
@@ -80,6 +82,7 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
                     key={mod.key}
                     module={mod}
                     isRecommended
+                    isCurrent={mod.key === autoSelectedKey}
                     onPress={() => onSelectModule(mod.key)}
                   />
                 ))}
@@ -97,6 +100,7 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
                     key={mod.key}
                     module={mod}
                     isRecommended={false}
+                    isCurrent={mod.key === autoSelectedKey}
                     onPress={() => onSelectModule(mod.key)}
                   />
                 ))}
@@ -118,8 +122,9 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
 const ModulePickerCard: React.FC<{
   module: ModuleWithProgress;
   isRecommended: boolean;
+  isCurrent: boolean;
   onPress: () => void;
-}> = ({ module, isRecommended, onPress }) => {
+}> = ({ module, isRecommended, isCurrent, onPress }) => {
   const progress = module.lessonCount > 0
     ? module.completedLessons / module.lessonCount
     : 0;
@@ -129,6 +134,11 @@ const ModulePickerCard: React.FC<{
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle} numberOfLines={1}>{module.title}</Text>
+        {isCurrent && (
+          <View style={styles.currentBadge}>
+            <Text style={styles.currentBadgeText}>Current</Text>
+          </View>
+        )}
         {isRecommended && (
           <View style={styles.recommendedBadge}>
             <Ionicons name="star" size={12} color="#F59E0B" />
@@ -245,6 +255,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.textDark,
     flex: 1,
+  },
+  currentBadge: {
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  currentBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 11,
+    color: '#FFFFFF',
   },
   recommendedBadge: {
     width: 22,

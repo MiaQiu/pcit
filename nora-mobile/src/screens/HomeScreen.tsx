@@ -58,6 +58,7 @@ export const HomeScreen: React.FC = () => {
   const [showModulePicker, setShowModulePicker] = useState(false);
   const [modulePickerModules, setModulePickerModules] = useState<ModuleWithProgress[]>([]);
   const [modulePickerRecommended, setModulePickerRecommended] = useState<string[]>([]);
+  const [modulePickerAutoSelected, setModulePickerAutoSelected] = useState<string | null>(null);
   const [activeModuleKey, setActiveModuleKey] = useState<string | null>(null);
 
   /**
@@ -126,8 +127,22 @@ export const HomeScreen: React.FC = () => {
       if (!modulesResponse.isFoundationCompleted) return;
 
       await userStorage.setItem('module_picker_shown', 'true');
+
+      // Auto-select the first available module (recommended first, then others)
+      const recs = modulesResponse.recommendedModules || [];
+      const recSet = new Set(recs);
+      const available = modulesResponse.modules.filter(
+        m => m.key !== 'FOUNDATION' && !m.isLocked && m.completedLessons < m.lessonCount
+      );
+      const firstModule =
+        available.find(m => recSet.has(m.key)) ?? available[0];
+      if (firstModule) {
+        await userStorage.setItem('module_picker_selected_module', firstModule.key);
+        setModulePickerAutoSelected(firstModule.key);
+      }
+
       setModulePickerModules(modulesResponse.modules);
-      setModulePickerRecommended(modulesResponse.recommendedModules || []);
+      setModulePickerRecommended(recs);
       setShowModulePicker(true);
     } catch (error) {
       console.log('Failed to check module picker popup:', error);
@@ -742,6 +757,7 @@ export const HomeScreen: React.FC = () => {
         onSelectModule={handleModulePickerSelect}
         modules={modulePickerModules}
         recommendedModules={modulePickerRecommended}
+        autoSelectedKey={modulePickerAutoSelected ?? undefined}
       />
     </SafeAreaView>
   );
