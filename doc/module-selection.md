@@ -30,9 +30,9 @@ Both are local-only values — never synced to the server.
 There are two entry points:
 
 ### 1. Module Picker Modal
-Shown automatically after Foundation completion (see [trigger logic](#module-picker-modal-trigger) below). When the user taps a module card, `handleModulePickerSelect` in `HomeScreen.tsx` saves the key and navigates to `ModuleDetailScreen`.
+Shown automatically after Foundation completion (see [trigger logic](#module-picker-modal-trigger) below). The first recommended module (or first available if none are recommended) is **automatically saved** as the current module when the modal opens, and shown with a purple "Current" badge. Tapping any module card navigates to `ModuleDetailScreen`, where the user can tap "Set as daily lesson" to change the selection.
 
-### 2. "Start module" button
+### 2. "Set as daily lesson" button
 Available on every non-Foundation, non-completed module's detail page (`ModuleDetailScreen.tsx`). Tapping it saves the key to AsyncStorage and shows a toast. The button changes to "Current module ✓" (outlined, disabled) when that module is already selected.
 
 ---
@@ -52,9 +52,7 @@ The modal is shown only when **both** of the following are true:
 
 When the check passes, `module_picker_shown` is set to `"true"` immediately (before rendering the modal) so it never shows again — regardless of whether the user picks a module or dismisses.
 
-When the user **selects** a module, `module_picker_selected_module` is also saved.
-
----
+Before showing the modal, `checkModulePickerPopup` auto-saves the first available module to `module_picker_selected_module`. Tapping a card only navigates — the selection can be changed via the "Set as daily lesson" button on `ModuleDetailScreen`.
 
 ---
 

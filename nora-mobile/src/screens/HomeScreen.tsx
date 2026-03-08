@@ -153,13 +153,8 @@ export const HomeScreen: React.FC = () => {
     setShowModulePicker(false);
   };
 
-  const handleModulePickerSelect = async (moduleKey: string) => {
+  const handleModulePickerSelect = (moduleKey: string) => {
     setShowModulePicker(false);
-    try {
-      await userStorage.setItem('module_picker_selected_module', moduleKey);
-    } catch (error) {
-      console.log('Failed to store module picker selected module:', error);
-    }
     navigation.push('ModuleDetail', { moduleKey });
   };
 
