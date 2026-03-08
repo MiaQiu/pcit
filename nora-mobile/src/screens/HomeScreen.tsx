@@ -149,6 +149,36 @@ export const HomeScreen: React.FC = () => {
     }
   };
 
+  /**
+   * When the current module is fully completed, auto-advance to the next one:
+   * first non-completed recommended module, or first available otherwise.
+   */
+  const checkAndUpdateCurrentModule = async () => {
+    try {
+      const selectedKey = await userStorage.getItem('module_picker_selected_module');
+      if (!selectedKey) return;
+
+      const modulesResponse = await lessonService.getModules();
+      const selectedMod = modulesResponse.modules.find(m => m.key === selectedKey);
+      if (!selectedMod || selectedMod.completedLessons < selectedMod.lessonCount) return;
+
+      // Current module completed — find next
+      const recs = modulesResponse.recommendedModules || [];
+      const recSet = new Set(recs);
+      const available = modulesResponse.modules.filter(
+        m => m.key !== 'FOUNDATION' && !m.isLocked && m.completedLessons < m.lessonCount
+      );
+      const nextModule = available.find(m => recSet.has(m.key)) ?? available[0];
+      if (nextModule) {
+        await userStorage.setItem('module_picker_selected_module', nextModule.key);
+      } else {
+        await userStorage.removeItem('module_picker_selected_module');
+      }
+    } catch (error) {
+      console.log('Failed to auto-update current module:', error);
+    }
+  };
+
   const handleModulePickerDismiss = () => {
     setShowModulePicker(false);
   };
@@ -183,6 +213,7 @@ export const HomeScreen: React.FC = () => {
       loadLessons(false); // Refresh lessons without showing loading spinner
       loadDashboardData();
       checkModulePickerPopup();
+      checkAndUpdateCurrentModule();
     }, [])
   );
 
