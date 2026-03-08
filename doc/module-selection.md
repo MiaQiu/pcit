@@ -8,7 +8,7 @@ Documents how a user's "current module" is determined, stored, and used across t
 
 After completing the Foundation module, users choose which module to focus on next. The chosen module is called the **current module**. It is stored locally and used to:
 
-- Suppress the Module Picker Modal (so it doesn't re-appear unnecessarily)
+- Suppress the Module Picker Modal (it only ever shows once)
 - Pin the current module to the top of the Learn screen module library
 - Show a "Current" badge on the current module's card
 
@@ -16,10 +16,12 @@ After completing the Foundation module, users choose which module to focus on ne
 
 ## Storage
 
-**Key:** `module_picker_selected_module` (AsyncStorage)
-**Value:** `moduleKey` string (e.g. `"EMOTION_COACHING"`)
+| Key | Value | Purpose |
+|---|---|---|
+| `module_picker_shown` | `"true"` | Set the moment the modal is first shown; prevents it from ever showing again |
+| `module_picker_selected_module` | `moduleKey` string (e.g. `"EMOTION_COACHING"`) | The user's chosen module; used to pin it in Learn screen and select daily lessons |
 
-This is a local-only value — it is never synced to the server.
+Both are local-only values — never synced to the server.
 
 ---
 
@@ -39,27 +41,20 @@ Available on every non-Foundation, non-completed module's detail page (`ModuleDe
 
 `checkModulePickerPopup` (`HomeScreen.tsx`) runs:
 - On initial Home screen mount
-- When the app returns to foreground on a **new day** (via `AppState` listener)
+- Every time the Home screen comes into focus (via `useFocusEffect`) — this includes returning from a completed lesson
 
-The modal is shown only when **all** of the following are true:
+The modal is shown only when **both** of the following are true:
 
 | Condition | Detail |
 |---|---|
-| Not dismissed today | `module_picker_dismissed_date` ≠ today (Singapore time) |
+| Never shown before | `module_picker_shown` is unset |
 | Foundation completed | `isFoundationCompleted === true` from API |
-| No current module selected | `module_picker_selected_module` is unset or points to a completed module |
-| Foundation completed on a prior day | First detection of Foundation completion stores the date but skips the modal that day |
-| `isDifferentDay \|\| !hasInProgressModule` | Either it's a different day from Foundation completion, or no non-Foundation module has lessons in progress |
 
-When the user **dismisses** the modal (close button or "Skip for now"), `module_picker_dismissed_date` is set to today — suppressing the modal for the rest of that day.
+When the check passes, `module_picker_shown` is set to `"true"` immediately (before rendering the modal) so it never shows again — regardless of whether the user picks a module or dismisses.
 
-When the user **selects** a module from the modal, both `module_picker_dismissed_date` and `module_picker_selected_module` are saved.
+When the user **selects** a module, `module_picker_selected_module` is also saved.
 
 ---
-
-## How the current module gets cleared
-
-In `checkModulePickerPopup`, after fetching module data, if `module_picker_selected_module` is set but the referenced module is **fully completed**, the key is removed from AsyncStorage. This allows the Module Picker Modal to resurface and prompt the user to choose their next module.
 
 ---
 

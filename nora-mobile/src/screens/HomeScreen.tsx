@@ -118,68 +118,32 @@ export const HomeScreen: React.FC = () => {
    */
   const checkModulePickerPopup = async () => {
     try {
-      const today = getTodaySingapore();
+      // Only show once — never show again after it's been shown
+      const alreadyShown = await userStorage.getItem('module_picker_shown');
+      if (alreadyShown) return;
 
-      // Check if already dismissed today
-      const dismissedDate = await userStorage.getItem('module_picker_dismissed_date');
-      if (dismissedDate === today) return;
-
-      // Fetch modules data
       const modulesResponse = await lessonService.getModules();
       if (!modulesResponse.isFoundationCompleted) return;
 
-      // If user already selected a module and it's not yet completed, respect their choice
-      const selectedModule = await userStorage.getItem('module_picker_selected_module');
-      if (selectedModule) {
-        const mod = modulesResponse.modules.find(m => m.key === selectedModule);
-        if (mod && mod.completedLessons < mod.lessonCount) return;
-        // Module was completed — clear so picker can suggest the next one
-        await userStorage.removeItem('module_picker_selected_module');
-      }
-
-      // Store Foundation completion date (first time we see it completed)
-      const storedCompletionDate = await userStorage.getItem('foundation_completed_date');
-      if (!storedCompletionDate) {
-        await userStorage.setItem('foundation_completed_date', today);
-        // Don't show popup on the same day Foundation was completed
-        return;
-      }
-
-      // Check if it's a different day than Foundation completion
-      const isDifferentDay = storedCompletionDate !== today;
-
-      // Check if any non-Foundation modules are in-progress
-      const hasInProgressModule = modulesResponse.modules.some(
-        m => m.key !== 'FOUNDATION' && m.completedLessons > 0 && m.completedLessons < m.lessonCount
-      );
-
-      // Show popup if: different day from completion OR no in-progress modules
-      if (isDifferentDay || !hasInProgressModule) {
-        setModulePickerModules(modulesResponse.modules);
-        setModulePickerRecommended(modulesResponse.recommendedModules || []);
-        setShowModulePicker(true);
-      }
+      await userStorage.setItem('module_picker_shown', 'true');
+      setModulePickerModules(modulesResponse.modules);
+      setModulePickerRecommended(modulesResponse.recommendedModules || []);
+      setShowModulePicker(true);
     } catch (error) {
       console.log('Failed to check module picker popup:', error);
     }
   };
 
-  const handleModulePickerDismiss = async () => {
+  const handleModulePickerDismiss = () => {
     setShowModulePicker(false);
-    try {
-      await userStorage.setItem('module_picker_dismissed_date', getTodaySingapore());
-    } catch (error) {
-      console.log('Failed to store module picker dismiss date:', error);
-    }
   };
 
   const handleModulePickerSelect = async (moduleKey: string) => {
     setShowModulePicker(false);
     try {
-      await userStorage.setItem('module_picker_dismissed_date', getTodaySingapore());
       await userStorage.setItem('module_picker_selected_module', moduleKey);
     } catch (error) {
-      console.log('Failed to store module picker dismiss date:', error);
+      console.log('Failed to store module picker selected module:', error);
     }
     navigation.push('ModuleDetail', { moduleKey });
   };
@@ -208,6 +172,7 @@ export const HomeScreen: React.FC = () => {
       // This ensures NextActionCard shows the correct lesson (not stale cached data)
       loadLessons(false); // Refresh lessons without showing loading spinner
       loadDashboardData();
+      checkModulePickerPopup();
     }, [])
   );
 
@@ -232,7 +197,6 @@ export const HomeScreen: React.FC = () => {
           setLastRefreshDate(today);
           loadLessons();
           loadDashboardData();
-          checkModulePickerPopup();
         }
       }
     });

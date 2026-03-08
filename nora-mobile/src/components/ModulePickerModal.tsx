@@ -54,11 +54,19 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
 
           {/* Header */}
           <Text style={styles.celebrationEmoji}>🎉</Text>
-          <Text style={styles.title}>You've completed the Foundation!</Text>
-          <Text style={styles.subtitle}>
-            Pick a module to set as your daily lesson.
-          </Text>
+          <Text style={styles.title}>Pick your next module!</Text>
+          <Text style={styles.congratsText}>Congratulations on completing the Foundation!</Text>
 
+          <View style={styles.infoBox}>
+            <View style={styles.infoRow}>
+              <Ionicons name="star" size={14} color={COLORS.mainPurple} />
+              <Text style={styles.infoText}>Recommended based on your child's needs and goals</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Ionicons name="swap-horizontal" size={14} color={COLORS.mainPurple} />
+              <Text style={styles.infoText}>Browse and change anytime in the Learn screen</Text>
+            </View>
+          </View>
           <ScrollView
             style={styles.scrollArea}
             showsVerticalScrollIndicator={false}
@@ -180,13 +188,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 8,
   },
-  subtitle: {
-    fontFamily: FONTS.regular,
+  congratsText: {
+    fontFamily: FONTS.semiBold,
     fontSize: 15,
-    color: '#6B7280',
+    color: '#10B981',
     textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 22,
+    marginBottom: 12,
+  },
+  infoBox: {
+    backgroundColor: '#F5F3FF',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  infoText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#6B7280',
+    flex: 1,
+    lineHeight: 18,
   },
   scrollArea: {
     maxHeight: height * 0.45,

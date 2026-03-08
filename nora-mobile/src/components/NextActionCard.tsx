@@ -209,12 +209,12 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
             </TouchableOpacity>
 
             {/* Next Lesson unlock message - Only for recordAgain */}
-            {type === 'recordAgain' && (
+            {/* {type === 'recordAgain' && (
               <View style={styles.unlockMessageContainer}>
                 <Ionicons name="lock-closed" size={14} color="#1E2939" />
                 <Text style={styles.unlockMessageText}>Next Lesson unlocks in {hoursUntilMidnight} hrs</Text>
               </View>
-            )}
+            )} */}
           </>
         )}
       </View>
