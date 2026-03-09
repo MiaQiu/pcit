@@ -15,17 +15,14 @@ export const ParentingIntroScreen: React.FC = () => {
   return (
     <IntroScreenTemplate
       subtitle="Parenting is complex"
-      title="Nora helps you see more clearly."
-      onBack={() => navigation.goBack()}
+      title="But you don’t have to figure it out alone."
       description={
         <Text style={styles.description}>
-          Parenting a 2–7 year old is intense — even on good days. Big emotions,
-          testing limits, sudden meltdowns —{' '}
-          <Text style={styles.bold}>
-            this is how young children grow.
-          </Text>{' '}
-          Most challenges aren't about bad behavior. They're about skills your
-          child is still developing.
+    
+          In <Text style={styles.bold}>just 5 minutes a day</Text>, Nora listens to real moments between you and
+           your child and gives <Text style={styles.bold}>personalized coaching grounded in child development 
+           science</Text> — helping you build emotional, social, and self-control skills one 
+           small interaction at a time.
         </Text>
       }
       buttonText="Let's go!  →"
