@@ -25,56 +25,35 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
 }) => {
   if (!children) return null;
 
-  // Extract only typography-safe properties for inline spans.
-  // Block-level properties (margin, padding) must NOT be applied to nested
-  // inline <Text> nodes — React Native misinterprets them as character-level
-  // metrics, which corrupts text measurement and causes text to overflow/clip.
-  const { marginTop, marginBottom, marginLeft, marginRight, margin,
-          paddingTop, paddingBottom, paddingLeft, paddingRight, padding,
-          ...inlineStyle } = (style ?? {}) as any;
-
   // Split text by **bold** markers
+  // Regular segments are kept as plain strings — only bold spans get a nested
+  // <Text>. In React Native, wrapping regular text in nested <Text> nodes causes
+  // the parent <Text> to lose its width constraint from the parent View, leading
+  // to text overflowing off-screen. Plain string literals avoid this entirely.
   const parts: React.ReactNode[] = [];
   const regex = /\*\*(.*?)\*\*/g;
   let lastIndex = 0;
   let match;
 
   while ((match = regex.exec(children)) !== null) {
-    // Add text before the bold part
     if (match.index > lastIndex) {
-      const textBefore = children.substring(lastIndex, match.index);
-      parts.push(
-        <Text key={`text-${lastIndex}`} style={inlineStyle}>
-          {textBefore}
-        </Text>
-      );
+      parts.push(children.substring(lastIndex, match.index));
     }
-
-    // Add bold text with explicit bold font family
     parts.push(
-      <Text key={`bold-${match.index}`} style={[inlineStyle, { fontFamily: boldFontFamily }]}>
+      <Text key={`bold-${match.index}`} style={[style, { fontFamily: boldFontFamily }]}>
         {match[1]}
       </Text>
     );
-
     lastIndex = regex.lastIndex;
   }
 
-  // Add remaining text after last bold part
   if (lastIndex < children.length) {
-    const textAfter = children.substring(lastIndex);
-    parts.push(
-      <Text key={`text-${lastIndex}`} style={inlineStyle}>
-        {textAfter}
-      </Text>
-    );
+    parts.push(children.substring(lastIndex));
   }
 
-  // If no markdown found, return plain text
   if (parts.length === 0) {
     return <Text style={style}>{children}</Text>;
   }
 
-  // Outer <Text> keeps the full style (including margins/padding for block spacing)
   return <Text style={style}>{parts}</Text>;
 };
