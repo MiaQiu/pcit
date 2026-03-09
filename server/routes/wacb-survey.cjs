@@ -55,9 +55,13 @@ router.post('/', async (req, res) => {
       }
     }
 
+    // Map raw values (1-5) to points: 1->0, 2->2, 3->4, 4->6, 5->7
+    const VALUE_TO_POINTS = { 1: 0, 2: 2, 3: 4, 4: 6, 5: 7 };
+    const toPoints = (v) => VALUE_TO_POINTS[v] ?? v;
+
     // Calculate total score
-    const totalScore = q1Dawdle + q2MealBehavior + q3Disobey + q4Angry +
-                      q5Scream + q6Destroy + q7ProvokeFights + q8Interrupt + q9Attention;
+    const totalScore = toPoints(q1Dawdle) + toPoints(q2MealBehavior) + toPoints(q3Disobey) + toPoints(q4Angry) +
+                      toPoints(q5Scream) + toPoints(q6Destroy) + toPoints(q7ProvokeFights) + toPoints(q8Interrupt) + toPoints(q9Attention);
 
     // Create survey record
     const survey = await prisma.wacbSurvey.create({
