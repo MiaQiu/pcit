@@ -10,6 +10,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LessonCard } from '../components/LessonCard';
 import { LessonCardProps } from '../components/LessonCard'; // Import type for lesson data
 import { NextActionCard } from '../components/NextActionCard';
+import { FirstLessonCard } from '../components/FirstLessonCard';
 import { StreakWidget } from '../components/StreakWidget';
 import { ProfileCircle } from '../components/ProfileCircle';
 import { ModulePickerModal } from '../components/ModulePickerModal';
@@ -738,12 +739,22 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.heading}>Today's deck</Text>
         )} */}
 
-        {/* Always show NextActionCard for all users */}
+        {/* Always show action card for all users */}
         {lessons.length > 0 && (() => {
           const displayLesson = findTodayLesson() || lessons[0];
-
-          // Always show NextActionCard with dynamic state
           const cardType = getCardType();
+
+          // Show FirstLessonCard for brand-new users who haven't done anything yet
+          if (!isExperiencedUser && cardType === 'lesson') {
+            return (
+              <View style={{ marginBottom: 8 }}>
+                <FirstLessonCard
+                  phaseName={displayLesson.phaseName}
+                  onPress={handleNextAction}
+                />
+              </View>
+            );
+          }
 
           // Always show score section - use placeholder if no recording
           const displayScore = latestScore || { score: 0, maxScore: 100, recordingId: '' };

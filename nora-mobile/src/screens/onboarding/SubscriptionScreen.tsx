@@ -254,6 +254,13 @@ export const SubscriptionScreen: React.FC = () => {
         </View>
       </View>
 
+      {/* Early User Benefits badge */}
+      <View style={styles.badgeContainer}>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>Early User Benefits</Text>
+        </View>
+      </View>
+
       {/* Scrollable Content */}
       <ScrollView
         style={styles.scrollView}
@@ -262,6 +269,7 @@ export const SubscriptionScreen: React.FC = () => {
       >
         <Text style={styles.title}>How your trial works</Text>
         <Text style={styles.subtitle}>First 30 days free, then S$9.98/month</Text>
+        <Text style={styles.regularPrice}>Regular price first 7 days free, then S$39.98/month</Text>
 
         {subscriptionError && (
           <View style={styles.errorContainer}>
@@ -341,9 +349,10 @@ export const SubscriptionScreen: React.FC = () => {
           {isLoading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.startButtonText}>Start my free trial</Text>
+            <Text style={styles.startButtonText}>Start my 30-day free trial</Text>
           )}
         </TouchableOpacity>
+        <Text style={styles.betaPricing}>Limited beta pricing for early supporters</Text>
       </View>
     </View>
   );
@@ -383,8 +392,28 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 28,
-    paddingTop: 28,
+    paddingTop: 15,
     paddingBottom: 20,
+  },
+
+  // Badge
+  badgeContainer: {
+    alignItems: 'center',
+    marginTop: -20,
+    //marginBottom: 14,
+  },
+  badge: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    backgroundColor: '#FFFFFF',
+  },
+  badgeText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 13,
+    color: '#374151',
   },
 
   // Header
@@ -400,6 +429,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#6B7280',
     textAlign: 'center',
+    marginBottom: 4,
+  },
+  regularPrice: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 13,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    textDecorationLine: 'line-through',
     marginBottom: 32,
   },
 
@@ -511,11 +548,19 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
+    alignItems: 'center',
+  },
+  betaPricing: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 8,
   },
   startButton: {
     backgroundColor: '#8C49D5',
     borderRadius: 32,
     height: 56,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
