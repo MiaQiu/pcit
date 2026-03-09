@@ -4,14 +4,15 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { MaskedDinoImage } from './MaskedDinoImage';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { Badge } from './Badge';
 import { FONTS } from '../constants/assets';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.9;
 const HERO_HEIGHT = CARD_WIDTH * 0.75;
+const CARD_BG = '#E8E8FF';
 
 interface FirstLessonCardProps {
   phaseName?: string;
@@ -26,7 +27,20 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
     <View style={styles.container}>
       {/* Teal hero with dragon */}
       <View style={styles.hero}>
-        <MaskedDinoImage style={styles.dinoImage} maskColor="#E8E8FF" />
+        <Image
+          source={require('../../assets/images/dino_new.webp')}
+          style={styles.dinoImage}
+          resizeMode="cover"
+        />
+        {/* Smooth concave curve at the bottom of the hero */}
+        <View style={styles.curveOverlay}>
+          <Svg width="100%" height="100%" viewBox="0 0 400 80" preserveAspectRatio="none">
+            <Path
+              d="M 0 30 Q 200 80, 400 30 L 400 80 L 0 80 Z"
+              fill={CARD_BG}
+            />
+          </Svg>
+        </View>
       </View>
 
       {/* Badge overlapping the hero/content boundary */}
@@ -56,7 +70,7 @@ const styles = StyleSheet.create({
   container: {
     width: '90%',
     alignSelf: 'center',
-    backgroundColor: '#E8E8FF',
+    backgroundColor: CARD_BG,
     borderRadius: 24,
     overflow: 'hidden',
   },
@@ -68,6 +82,13 @@ const styles = StyleSheet.create({
   dinoImage: {
     width: '100%',
     height: '100%',
+  },
+  curveOverlay: {
+    position: 'absolute',
+    bottom: -30,
+    left: 0,
+    right: 0,
+    height: 80,
   },
   badgeContainer: {
     alignItems: 'center',
