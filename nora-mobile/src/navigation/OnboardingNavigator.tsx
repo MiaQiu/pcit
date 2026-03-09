@@ -39,6 +39,7 @@ import { ReassuranceScreen } from '../screens/onboarding/ReassuranceScreen';
 import { DepressionQuestion1Screen } from '../screens/onboarding/DepressionQuestion1Screen';
 import { DepressionQuestion2Screen } from '../screens/onboarding/DepressionQuestion2Screen';
 import { SelfCareScreen } from '../screens/onboarding/SelfCareScreen';
+import { ChildBehaviorProfileScreen } from '../screens/onboarding/ChildBehaviorProfileScreen';
 import { FocusAreasScreen } from '../screens/onboarding/FocusAreasScreen';
 import { GuidanceIntroScreen } from '../screens/onboarding/GuidanceIntroScreen';
 import { GrowthIntroScreen } from '../screens/onboarding/GrowthIntroScreen';
@@ -127,6 +128,7 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="DepressionQuestion2" component={DepressionQuestion2Screen} />
       <Stack.Screen name="SelfCare" component={SelfCareScreen} />
       <Stack.Screen name="Reassurance" component={ReassuranceScreen} />
+      <Stack.Screen name="ChildBehaviorProfile" component={ChildBehaviorProfileScreen} />
       <Stack.Screen name="FocusAreas" component={FocusAreasScreen} />
       <Stack.Screen name="GuidanceIntro" component={GuidanceIntroScreen} />
       <Stack.Screen name="GrowthIntro" component={GrowthIntroScreen} />

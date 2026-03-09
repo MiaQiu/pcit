@@ -45,6 +45,7 @@ export type OnboardingStackParamList = {
   DepressionQuestion1: undefined;
   DepressionQuestion2: undefined;
   SelfCare: undefined;
+  ChildBehaviorProfile: undefined;
   FocusAreas: undefined;
   GuidanceIntro: undefined;
   GrowthIntro: undefined;

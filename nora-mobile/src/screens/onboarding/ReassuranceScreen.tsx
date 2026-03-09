@@ -57,7 +57,7 @@ export const ReassuranceScreen: React.FC = () => {
         <View style={styles.buttonContainer}>
           <OnboardingButtonRow
             onBack={() => navigation.goBack()}
-            onContinue={() => navigation.navigate('FocusAreas')}
+            onContinue={() => navigation.navigate('ChildBehaviorProfile')}
             continueText="Let's go!  →"
           />
         </View>
