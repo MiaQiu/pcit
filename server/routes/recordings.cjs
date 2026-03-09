@@ -11,7 +11,8 @@ const { requireAuth } = require('../middleware/auth.cjs');
 
 // Import from new service modules
 const { transcribeRecording } = require('../services/transcriptionService.cjs');
-const { processRecordingWithRetry, notifyProcessingFailure } = require('../services/processingService.cjs');
+const { processRecordingWithRetry, notifyProcessingFailure, notifyQualityRejection } = require('../services/processingService.cjs');
+const { SessionQualityError } = require('../services/pcitAnalysisService.cjs');
 const { getUtterances } = require('../utils/utteranceUtils.cjs');
 
 const router = express.Router();
@@ -142,8 +143,13 @@ async function startBackgroundProcessing(sessionId, userId, storagePath, duratio
     // Process with automatic retry (3 attempts with 0s, 5s, 15s delays)
     await processRecordingWithRetry(sessionId, userId, 0);
   } catch (err) {
-    console.error(`❌ [PROCESSING-FAILED-PERMANENTLY] Session ${sessionId.substring(0, 8)} failed:`, err.message);
-    await notifyProcessingFailure(sessionId, userId, err);
+    if (err instanceof SessionQualityError) {
+      console.log(`⚠️ [QUALITY-REJECTED] Session ${sessionId.substring(0, 8)} rejected: ${err.userMessage}`);
+      await notifyQualityRejection(sessionId, userId, err);
+    } else {
+      console.error(`❌ [PROCESSING-FAILED-PERMANENTLY] Session ${sessionId.substring(0, 8)} failed:`, err.message);
+      await notifyProcessingFailure(sessionId, userId, err);
+    }
   }
 }
 

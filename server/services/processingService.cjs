@@ -4,7 +4,7 @@
  */
 const fetch = require('node-fetch');
 const prisma = require('./db.cjs');
-const { analyzePCITCoding } = require('./pcitAnalysisService.cjs');
+const { analyzePCITCoding, SessionQualityError } = require('./pcitAnalysisService.cjs');
 const { sendReportReadyNotification, sendPushNotificationToUser, sendMilestonesUnlockedNotification } = require('./pushNotifications.cjs');
 
 // ============================================================================
@@ -123,6 +123,49 @@ async function reportPermanentFailureToTeam(sessionId, error) {
   }
 }
 
+/**
+ * Handle a quality rejection — session is valid but unsuitable for analysis.
+ * Marks the session as permanently failed with the user-facing reason.
+ * Does NOT alert the team (this is expected behaviour, not a system bug).
+ * @param {string} sessionId
+ * @param {string} userId
+ * @param {SessionQualityError} error
+ */
+async function notifyQualityRejection(sessionId, userId, error) {
+  try {
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        analysisStatus: 'FAILED',
+        analysisError: error.userMessage,
+        analysisFailedAt: new Date(),
+        permanentFailure: true
+      }
+    });
+    console.log(`✅ [QUALITY-REJECTION] Database updated for session ${sessionId.substring(0, 8)}`);
+  } catch (dbErr) {
+    console.error(`❌ [DB-ERROR] Failed to save quality rejection to database:`, dbErr);
+  }
+
+  try {
+    const result = await sendPushNotificationToUser(userId, {
+      title: 'Recording Could Not Be Analyzed',
+      body: error.userMessage,
+      data: {
+        type: 'report_quality_rejected',
+        recordingId: sessionId
+      }
+    });
+    if (result.success) {
+      console.log(`✅ [QUALITY-REJECTION] Push notification sent for session ${sessionId.substring(0, 8)}`);
+    } else {
+      console.log(`⚠️ [QUALITY-REJECTION] Push notification failed for session ${sessionId.substring(0, 8)}:`, result.error);
+    }
+  } catch (pushError) {
+    console.error(`❌ [QUALITY-REJECTION] Error sending push notification for session ${sessionId.substring(0, 8)}:`, pushError);
+  }
+}
+
 // ============================================================================
 // Processing with Retry
 // ============================================================================
@@ -204,6 +247,11 @@ async function processRecordingWithRetry(sessionId, userId, attemptNumber = 0) {
   } catch (error) {
     console.error(`❌ [PROCESSING-ERROR] Session ${sessionId.substring(0, 8)} - Attempt ${attemptNumber + 1} failed:`, error.message);
 
+    // Quality rejections are not retryable — rethrow immediately
+    if (error instanceof SessionQualityError) {
+      throw error;
+    }
+
     // Check if we should retry
     if (attemptNumber < maxAttempts - 1) {
       const delay = retryDelays[attemptNumber + 1];
@@ -225,4 +273,5 @@ module.exports = {
   processRecordingWithRetry,
   reportPermanentFailureToTeam,
   notifyProcessingFailure,
+  notifyQualityRejection,
 };

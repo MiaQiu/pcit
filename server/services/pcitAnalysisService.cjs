@@ -24,6 +24,74 @@ const { loadPrompt, loadPromptWithVariables } = require('../prompts/index.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 
 // ============================================================================
+// Session Quality Gate
+// ============================================================================
+
+/**
+ * Thrown when a recording fails the quality gate.
+ * Signals to callers that retries are pointless and no team alert is needed.
+ */
+class SessionQualityError extends Error {
+  constructor(userMessage) {
+    super(userMessage);
+    this.name = 'SessionQualityError';
+    this.userMessage = userMessage;
+  }
+}
+
+/**
+ * Validate that a session is suitable for PCIT analysis.
+ * Runs cheap heuristics first, then one LLM call for everything else.
+ * Throws SessionQualityError if the session should not be processed.
+ */
+async function validateSessionQuality(utterances, durationSeconds) {
+  const SILENT_ID = SILENT_SPEAKER_ID;
+  const nonSilent = utterances.filter(u => u.speaker !== SILENT_ID);
+  const speakerIds = new Set(nonSilent.map(u => u.speaker));
+
+  // --- Heuristic pre-filters (no LLM cost) ---
+  if (nonSilent.length < 10) {
+    throw new SessionQualityError(
+      'Your recording didn\'t capture enough speech to generate a report. This can happen if the recording started too late or the audio was too quiet. Try starting the recording before your play session begins and ensure the device is nearby.'
+    );
+  }
+
+  if (durationSeconds < 60) {
+    throw new SessionQualityError(
+      'Your recording was too short to generate a report. A play session needs to be at least a few minutes long for a meaningful analysis. Try recording a longer session next time.'
+    );
+  }
+
+  // --- LLM quality check ---
+  const sample = nonSilent.slice(0, 60).map(u => ({
+    speaker: u.speaker,
+    text: u.text,
+    start: u.startTime,
+    end: u.endTime
+  }));
+
+  const prompt = loadPromptWithVariables('sessionQualityCheck', {
+    DURATION_SECONDS: String(durationSeconds),
+    UTTERANCE_COUNT: String(nonSilent.length),
+    SPEAKER_COUNT: String(speakerIds.size),
+    UTTERANCES_SAMPLE: JSON.stringify(sample, null, 2)
+  });
+
+  const result = await llmCall(prompt, {
+    label: 'session-quality-check',
+    output: 'json',
+    temperature: 0,
+    maxTokens: 512
+  });
+
+  if (result.valid === false) {
+    throw new SessionQualityError(
+      result.userMessage || 'Your recording could not be analyzed. Please try recording a play session with your child again.'
+    );
+  }
+}
+
+// ============================================================================
 // AI Provider Configuration
 // ============================================================================
 
@@ -927,6 +995,11 @@ async function analyzePCITCoding(sessionId, userId) {
     throw new Error('No utterances found in session data');
   }
 
+  // Quality gate — one fast LLM call; throws SessionQualityError if invalid
+  console.log(`📊 [ANALYSIS-QUALITY-GATE] Validating session quality...`);
+  await validateSessionQuality(utterances, session.durationSeconds);
+  console.log(`✅ [ANALYSIS-QUALITY-GATE] Session passed quality check`);
+
   // Convert to format expected by role identification prompt
   const utterancesForPrompt = utterances.map(utt => ({
     speaker: utt.speaker,
@@ -1338,6 +1411,7 @@ Do not include markdown or whitespace (minified JSON).
 }
 
 module.exports = {
+  SessionQualityError,
   analyzePCITCoding,
   generateCDIFeedback,
   generatePDITwoChoicesAnalysis,
