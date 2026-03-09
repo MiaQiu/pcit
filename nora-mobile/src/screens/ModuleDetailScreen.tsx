@@ -84,7 +84,7 @@ export const ModuleDetailScreen: React.FC = () => {
   };
 
   const handleLessonPress = (lessonId: string) => {
-    navigation.push('LessonViewer', { lessonId });
+    navigation.push('LessonViewer', { lessonId, moduleKey });
   };
 
   if (loading) {

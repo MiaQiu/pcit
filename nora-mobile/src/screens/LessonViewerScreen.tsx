@@ -287,13 +287,14 @@ interface LessonViewerScreenProps {
   route: {
     params: {
       lessonId: string;
+      moduleKey?: string;
     };
   };
   navigation: any;
 }
 
 export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, navigation }) => {
-  const { lessonId } = route.params;
+  const { lessonId, moduleKey } = route.params;
   const lessonService = useLessonService();
   const authService = useAuthService();
 
@@ -641,7 +642,11 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       // DON'T invalidate cache - keep it so user can review completed lesson instantly
       // Cache will be cleaned up when app opens and lesson is completed
 
-      navigation.navigate('MainTabs', { screen: 'Home' });
+      if (moduleKey) {
+        navigation.navigate('ModuleDetail', { moduleKey });
+      } else {
+        navigation.navigate('MainTabs', { screen: 'Home' });
+      }
       return;
     }
 
@@ -697,7 +702,11 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       // No quiz, lesson complete
       console.log('Lesson complete, no quiz');
       await completeLesson();
-      navigation.navigate('MainTabs', { screen: 'Home' });
+      if (moduleKey) {
+        navigation.navigate('ModuleDetail', { moduleKey });
+      } else {
+        navigation.navigate('MainTabs', { screen: 'Home' });
+      }
     }
   };
 
