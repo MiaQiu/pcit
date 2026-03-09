@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
-import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
 interface FeatureCardProps {
@@ -60,7 +59,6 @@ export const GuidanceIntroScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <OnboardingProgressHeader phase={3} step={2} totalSteps={3} />
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

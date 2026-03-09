@@ -89,9 +89,9 @@ export const DepressionQuestion2Screen: React.FC = () => {
       prevScreen="DepressionQuestion1"
       onBeforeNavigate={handleSubmitSurvey}
       continueText="Submit"
-      phase={2}
-      stepInPhase={11}
-      totalStepsInPhase={11}
+      phase={3}
+      stepInPhase={2}
+      totalStepsInPhase={2}
       disableAutoNavigate={true}
     />
   );

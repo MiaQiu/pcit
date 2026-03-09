@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
-import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { DragonCard } from '../../components/DragonCard';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
@@ -30,8 +29,6 @@ export const Intro3Screen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <OnboardingProgressHeader phase={4} step={3} totalSteps={3} />
-
         <View style={styles.textContent}>
           <Text style={styles.title}>What parents notice over time</Text>
 

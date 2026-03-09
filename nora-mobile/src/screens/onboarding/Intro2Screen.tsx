@@ -15,7 +15,6 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { DragonCard } from '../../components/DragonCard';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 
@@ -38,8 +37,6 @@ export const Intro2Screen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <OnboardingProgressHeader phase={4} step={2} totalSteps={3} />
-
         <View style={styles.textContent}>
           <Text style={styles.title}>
             Hi{userName ? ` ${userName}` : ''}, When is your 5 mins?

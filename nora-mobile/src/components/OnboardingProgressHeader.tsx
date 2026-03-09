@@ -13,8 +13,8 @@ interface OnboardingProgressHeaderProps {
   totalSteps: number; // total steps in current phase
 }
 
-const PHASE_NAMES = ['Basic data', 'Developmental snapshot', 'Nora advantage', 'Setup for success'];
-const TOTAL_PHASES = 4;
+const PHASE_NAMES = ['Basic data', 'Developmental snapshot', 'Wellbeing Snapshot'];
+const TOTAL_PHASES = 3;
 
 export const OnboardingProgressHeader: React.FC<OnboardingProgressHeaderProps> = ({
   phase,

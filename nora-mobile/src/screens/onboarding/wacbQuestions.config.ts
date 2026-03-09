@@ -25,7 +25,7 @@ export const getWacbQuestions = (childName: string = 'your child'): Omit<Multipl
     prevScreen: 'ChildSnapshotIntro',
     phase: 2,
     stepInPhase: 1,
-    totalStepsInPhase: 11,
+    totalStepsInPhase: 9,
   },
   {
     headerText: HEADER_TEXT,
@@ -36,7 +36,7 @@ export const getWacbQuestions = (childName: string = 'your child'): Omit<Multipl
     prevScreen: 'WacbQuestion1',
     phase: 2,
     stepInPhase: 2,
-    totalStepsInPhase: 11,
+    totalStepsInPhase: 9,
   },
   {
     headerText: HEADER_TEXT,
@@ -47,7 +47,7 @@ export const getWacbQuestions = (childName: string = 'your child'): Omit<Multipl
     prevScreen: 'WacbQuestion2',
     phase: 2,
     stepInPhase: 3,
-    totalStepsInPhase: 11,
+    totalStepsInPhase: 9,
   },
   {
     headerText: HEADER_TEXT,
@@ -58,7 +58,7 @@ export const getWacbQuestions = (childName: string = 'your child'): Omit<Multipl
     prevScreen: 'WacbQuestion3',
     phase: 2,
     stepInPhase: 4,
-    totalStepsInPhase: 11,
+    totalStepsInPhase: 9,
   },
   {
     headerText: HEADER_TEXT,
@@ -69,7 +69,7 @@ export const getWacbQuestions = (childName: string = 'your child'): Omit<Multipl
     prevScreen: 'WacbQuestion4',
     phase: 2,
     stepInPhase: 5,
-    totalStepsInPhase: 11,
+    totalStepsInPhase: 9,
   },
   {
     headerText: HEADER_TEXT,
@@ -80,7 +80,7 @@ export const getWacbQuestions = (childName: string = 'your child'): Omit<Multipl
     prevScreen: 'WacbQuestion5',
     phase: 2,
     stepInPhase: 6,
-    totalStepsInPhase: 11,
+    totalStepsInPhase: 9,
   },
   {
     headerText: HEADER_TEXT,
@@ -91,7 +91,7 @@ export const getWacbQuestions = (childName: string = 'your child'): Omit<Multipl
     prevScreen: 'WacbQuestion6',
     phase: 2,
     stepInPhase: 7,
-    totalStepsInPhase: 11,
+    totalStepsInPhase: 9,
   },
   {
     headerText: HEADER_TEXT,
@@ -102,7 +102,7 @@ export const getWacbQuestions = (childName: string = 'your child'): Omit<Multipl
     prevScreen: 'WacbQuestion7',
     phase: 2,
     stepInPhase: 8,
-    totalStepsInPhase: 11,
+    totalStepsInPhase: 9,
   },
   {
     headerText: HEADER_TEXT,
@@ -114,6 +114,6 @@ export const getWacbQuestions = (childName: string = 'your child'): Omit<Multipl
     continueText: 'Submit Survey',
     phase: 2,
     stepInPhase: 9,
-    totalStepsInPhase: 11,
+    totalStepsInPhase: 9,
   },
 ];

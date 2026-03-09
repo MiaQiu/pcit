@@ -22,9 +22,9 @@ export const DepressionQuestion1Screen: React.FC = () => {
       dataField="phq2.q1Interest"
       nextScreen="DepressionQuestion2"
       prevScreen="WellbeingIntro"
-      phase={2}
-      stepInPhase={10}
-      totalStepsInPhase={11}
+      phase={3}
+      stepInPhase={1}
+      totalStepsInPhase={2}
     />
   );
 };
