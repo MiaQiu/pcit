@@ -608,7 +608,7 @@ function generateCombinedFeedbackPrompt(counts, utterances, childName = 'the chi
 ${formatUtterancesForPrompt(utterances)}
 
 **Task:**
-1. **Top Moment**: Find the ONE moment that shows the strongest parent-child connection, joy, or positive interaction.
+1. **Top Moment**: Find the ONE moment that shows the strongest parent-child connection, joy, or positive interaction. Child's utterance is prefered over parent's. 
 
 2. **Feedback**: Be warm and encouraging. within 20 words. Give a opening messages to the session report. Do not mention PCIT, therapy, or clinical terms.
 Example opening messages for feedback:
