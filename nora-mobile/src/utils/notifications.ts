@@ -190,6 +190,7 @@ export const scheduleDailyNotification = async (
         priority: Notifications.AndroidNotificationPriority.HIGH,
         // iOS-specific: ensure notification shows even when device is locked
         interruptionLevel: 'active' as any,
+        data: { type: 'daily_session_reminder' },
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
@@ -299,8 +300,8 @@ export const scheduleDailyLessonReminder = async (timeString: string): Promise<s
 
   return scheduleDailyNotification(
     NOTIFICATION_IDS.DAILY_LESSON_REMINDER,
-    "Time for today's lesson!",
-    "Take a few minutes to learn something new with Nora",
+    "Time for today's special play!",
+    "",
     hour,
     minute
   );

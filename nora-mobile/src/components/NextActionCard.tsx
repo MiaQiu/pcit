@@ -104,8 +104,8 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
   const buttonText = isLesson ? (customButtonText || 'Continue') : content?.buttonText;
   const subtitle = isLesson ? 'Up next' : content?.subtitle;
 
-  // Use card-specific encouragement message for non-lesson types, fall back to prop
-  const displayEncouragementMessage = isLesson ? encouragementMessage : (content?.encouragementMessage || encouragementMessage);
+  // Use passed-in encouragement message if provided, otherwise fall back to card-type default
+  const displayEncouragementMessage = isLesson ? encouragementMessage : (encouragementMessage || content?.encouragementMessage);
 
   return (
     <View style={styles.container}>

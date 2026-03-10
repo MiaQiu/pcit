@@ -123,6 +123,9 @@ const AppContent: React.FC = () => {
       } else if (data.type === 'milestones_unlocked') {
         console.log('[App] Navigating to Progress > Milestones section');
         navigation.navigate('MainTabs', { screen: 'Progress', params: { scrollToDevelopmental: true } });
+      } else if (data.type === 'daily_session_reminder') {
+        console.log('[App] Navigating to Record screen from daily reminder');
+        navigation.navigate('Record');
       }
     });
 

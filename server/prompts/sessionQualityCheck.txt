@@ -7,6 +7,8 @@ Before providing the report, evaluate if the session is valid. If any of the fol
 - Low Quality: The transcript contains mostly "[Inaudible]" or "[Crosstalk]" tags, making it impossible to understand the interaction.
 - Irrelevant Content: The conversation is not a play session between a parent and child (e.g., the parent is on a phone call, or the child is playing alone).
 
+Be lose about the gate, if there is some meaninful insight we can get from the conversation, let it pass.
+
 **SESSION METADATA:**
 - Duration: {{DURATION_SECONDS}} seconds
 - Total utterances: {{UTTERANCE_COUNT}}

@@ -152,8 +152,9 @@ async function notifyQualityRejection(sessionId, userId, error) {
       title: 'Recording Could Not Be Analyzed',
       body: error.userMessage,
       data: {
-        type: 'report_quality_rejected',
-        recordingId: sessionId
+        type: 'report_failed',
+        recordingId: sessionId,
+        userMessage: error.userMessage
       }
     });
     if (result.success) {
