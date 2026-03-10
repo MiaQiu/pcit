@@ -62,7 +62,7 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
           <View style={styles.infoBox}>
             <View style={styles.infoRow}>
               <Ionicons name="star" size={14} color={COLORS.mainPurple} />
-              <Text style={styles.infoText}>Recommended based on your child's needs and goals</Text>
+              <Text style={styles.infoText}>We have set the next module based on your child's needs and goals</Text>
             </View>
             <View style={styles.infoRow}>
               <Ionicons name="swap-horizontal" size={14} color={COLORS.mainPurple} />
@@ -110,7 +110,7 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
 
           {/* Skip button */}
           <TouchableOpacity style={styles.skipButton} onPress={onClose}>
-            <Text style={styles.skipText}>I'll decide later</Text>
+            <Text style={styles.skipText}>Ok</Text>
           </TouchableOpacity>
         </View>
       </View>

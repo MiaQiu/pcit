@@ -80,7 +80,7 @@ export const GuidanceIntroScreen: React.FC = () => {
       <View style={styles.footer}>
         <OnboardingButtonRow
           onBack={() => navigation.goBack()}
-          onContinue={() => navigation.navigate('GrowthIntro')}
+          onContinue={() => navigation.navigate('PreIntroReassurance')}
           continueText="Continue  →"
         />
       </View>
