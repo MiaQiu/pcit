@@ -643,7 +643,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       // Cache will be cleaned up when app opens and lesson is completed
 
       if (moduleKey) {
-        navigation.navigate('ModuleDetail', { moduleKey });
+        navigation.goBack();
       } else {
         navigation.navigate('MainTabs', { screen: 'Home' });
       }
@@ -703,7 +703,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       console.log('Lesson complete, no quiz');
       await completeLesson();
       if (moduleKey) {
-        navigation.navigate('ModuleDetail', { moduleKey });
+        navigation.goBack();
       } else {
         navigation.navigate('MainTabs', { screen: 'Home' });
       }
