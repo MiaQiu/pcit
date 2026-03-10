@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { Text, TextStyle } from 'react-native';
+import { Text, TextStyle, View } from 'react-native';
 import { FONTS } from '../constants/assets';
 
 interface MarkdownTextProps {
@@ -55,5 +55,11 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
     return <Text style={style}>{children}</Text>;
   }
 
-  return <Text style={style}>{parts}</Text>;
+  // Wrap in a View so the layout engine constrains the width properly.
+  // A <Text> containing nested <Text> nodes (for bold) can lose its width
+  // constraint from the parent View, causing text to overflow off-screen.
+  // The View gets its width from the parent layout, forcing the inner Text
+  // to wrap correctly. Spacing styles (margins) applied to the View work as
+  // expected; text-only styles on the View are silently ignored by React Native.
+  return <View style={style as object}><Text style={style}>{parts}</Text></View>;
 };
