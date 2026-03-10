@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -8,13 +8,15 @@ interface ToastProps {
   type: ToastType;
   duration?: number;
   onHide: () => void;
+  action?: { label: string; onPress: () => void };
 }
 
 export const Toast: React.FC<ToastProps> = ({
   message,
   type,
   duration = 3000,
-  onHide
+  onHide,
+  action,
 }) => {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(-100));
@@ -56,7 +58,7 @@ export const Toast: React.FC<ToastProps> = ({
   const getBackgroundColor = () => {
     switch (type) {
       case 'success':
-        return '#10B981'; // green
+        return '#8C49D5'; // purple
       case 'error':
         return '#EF4444'; // red
       case 'warning':
@@ -80,6 +82,11 @@ export const Toast: React.FC<ToastProps> = ({
       ]}
     >
       <Text style={styles.text}>{message}</Text>
+      {action && (
+        <TouchableOpacity onPress={() => { action.onPress(); onHide(); }} style={styles.actionButton}>
+          <Text style={styles.actionText}>{action.label}</Text>
+        </TouchableOpacity>
+      )}
     </Animated.View>
   );
 };
@@ -99,11 +106,26 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     zIndex: 9999,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   text: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-    textAlign: 'center',
+    flex: 1,
+  },
+  actionButton: {
+    marginLeft: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+  },
+  actionText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

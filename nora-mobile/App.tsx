@@ -22,7 +22,7 @@ import { SubscriptionProvider } from './src/contexts/SubscriptionContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { RootStackNavigationProp } from './src/navigation/types';
 import { NetworkStatusBar } from './src/components/NetworkStatusBar';
-import { ToastProvider } from './src/components/ToastManager';
+import { ToastProvider, useToast } from './src/components/ToastManager';
 import { clearBadge } from './src/utils/notifications';
 import amplitudeService from './src/services/amplitudeService';
 import { REVENUECAT_CONFIG } from './src/config/revenuecat';
@@ -62,6 +62,7 @@ const navigationTheme = {
 // Helper component that provides navigation to UploadProcessingProvider
 const AppContent: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const { showToast } = useToast();
 
   const handleNavigateToHome = () => {
     navigation.navigate('MainTabs', { screen: 'Home' });
@@ -75,6 +76,15 @@ const AppContent: React.FC = () => {
     console.log('[App] Marked report as read from alert:', reportReadKey, recordingId);
 
     navigation.navigate('Report', { recordingId });
+  };
+
+  const handleReportReady = (recordingId: string) => {
+    showToast(
+      'Your report is ready!',
+      'success',
+      6000,
+      { label: 'View', onPress: () => handleNavigateToReport(recordingId) }
+    );
   };
 
   // Handle notification taps
@@ -136,7 +146,7 @@ const AppContent: React.FC = () => {
   }, []);
 
   return (
-    <UploadProcessingProvider onNavigateToHome={handleNavigateToHome} onNavigateToReport={handleNavigateToReport}>
+    <UploadProcessingProvider onNavigateToHome={handleNavigateToHome} onNavigateToReport={handleNavigateToReport} onReportReady={handleReportReady}>
       <RootNavigator />
       <StatusBar style="dark" />
       <NetworkStatusBar />

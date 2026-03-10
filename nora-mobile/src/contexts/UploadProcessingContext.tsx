@@ -86,12 +86,14 @@ interface UploadProcessingProviderProps {
   children: ReactNode;
   onNavigateToHome?: () => void;
   onNavigateToReport?: (recordingId: string) => void;
+  onReportReady?: (recordingId: string) => void;
 }
 
 export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> = ({
   children,
   onNavigateToHome,
-  onNavigateToReport
+  onNavigateToReport,
+  onReportReady,
 }) => {
   const recordingService = useRecordingService();
   const authService = useAuthService();
@@ -129,7 +131,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
       try {
         const notificationData = notification.request.content.data || {};
-        const { type, recordingId: notificationRecordingId, error } = notificationData;
+        const { type, recordingId: notificationRecordingId, error, userMessage: notificationUserMessage } = notificationData;
         const errorMessage = typeof error === 'string' ? error : 'Unknown error';
 
         // Check if this notification is for our current recording
@@ -138,12 +140,19 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
             // Success: Report ready
             console.log('[UploadProcessing] Report ready notification received for current recording');
 
+            const completedRecordingId = notificationRecordingId as string;
+
             // Update timestamp to notify subscribers (e.g., HomeScreen)
             setReportCompletedTimestamp(Date.now());
 
             // Clear processing state
             await reset();
             console.log('[UploadProcessing] State reset completed after new_report notification');
+
+            // Navigate directly to report (app is active, push notification received)
+            if (completedRecordingId) {
+              onNavigateToReport?.(completedRecordingId);
+            }
           } else if (type === 'report_failed') {
             // Failure: Report generation failed
             console.log('[UploadProcessing] Report failed notification received for current recording');
@@ -153,7 +162,9 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
             console.log('[UploadProcessing] State reset completed after report_failed notification');
 
             // Show error alert to user
-            const userFriendlyMessage = getUserFriendlyErrorMessage(errorMessage);
+            const userFriendlyMessage = typeof notificationUserMessage === 'string'
+              ? notificationUserMessage
+              : getUserFriendlyErrorMessage(errorMessage);
             Alert.alert(
               'Unable to Generate Report',
               userFriendlyMessage,
@@ -194,11 +205,24 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
           const analysis = await recordingService.getAnalysis(recordingIdRef.current);
           console.log('[UploadProcessing] Report is ready! Updating state...');
 
+          const completedRecordingId = recordingIdRef.current;
+
           // Update timestamp to notify subscribers (e.g., HomeScreen)
           setReportCompletedTimestamp(Date.now());
 
           // Clear processing state
           await reset();
+
+          if (completedRecordingId) {
+            const { status } = await Notifications.getPermissionsAsync();
+            if (status === 'granted') {
+              // Notifications allowed — navigate directly (push may have been missed)
+              onNavigateToReport?.(completedRecordingId);
+            } else {
+              // Notifications denied — show toast so user can choose to view
+              onReportReady?.(completedRecordingId);
+            }
+          }
         } catch (error: any) {
           // Check if it's a permanent failure
           const isFailed = error.status === 'failed' ||
@@ -211,9 +235,8 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
             await reset();
 
             // Show error alert with user-friendly message
-            const userFriendlyMessage = getUserFriendlyErrorMessage(
-              error.userMessage || error.message || 'Unknown error'
-            );
+            const userFriendlyMessage = error.userMessage
+              || getUserFriendlyErrorMessage(error.message || 'Unknown error');
             Alert.alert(
               'Unable to Generate Report',
               userFriendlyMessage,
@@ -240,6 +263,15 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
       return;
     }
 
+    // Only poll if notifications are denied — push handles it otherwise
+    let shouldPoll = false;
+    Notifications.getPermissionsAsync().then(({ status }) => {
+      shouldPoll = status !== 'granted';
+      if (!shouldPoll) {
+        console.log('[UploadProcessing] Notifications granted — skipping polling, relying on push');
+      }
+    });
+
     console.log('[UploadProcessing] Setting up polling fallback for processing state');
 
     let pollInterval: NodeJS.Timeout | null = null;
@@ -251,32 +283,24 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
         return;
       }
 
+      // Skip polling if notifications are granted - push handles it
+      if (!shouldPoll) return;
+
       if (!recordingIdRef.current) return;
 
       try {
         console.log('[UploadProcessing] Polling for report status...');
         const analysis = await recordingService.getAnalysis(recordingIdRef.current);
 
-        // Success - report is ready (detected via polling, not push notification)
+        // Success - report is ready (detected via polling, notifications denied)
         console.log('[UploadProcessing] Polling: Report is ready!');
         const completedRecordingId = recordingIdRef.current;
         setReportCompletedTimestamp(Date.now());
         await reset();
 
-        // Show alert since this was detected via polling while app is in foreground
-        // (user did NOT receive a push notification for this)
+        // Show toast with action so user can navigate to report
         if (completedRecordingId) {
-          Alert.alert(
-            'Report Ready!',
-            'Your play session report is ready to view.',
-            [
-              { text: 'Later', style: 'cancel' },
-              {
-                text: 'Read Report',
-                onPress: () => onNavigateToReport?.(completedRecordingId)
-              }
-            ]
-          );
+          onReportReady?.(completedRecordingId);
         }
       } catch (error: any) {
         // Check if it's a permanent failure
