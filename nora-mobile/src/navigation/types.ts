@@ -9,7 +9,7 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 import { Quiz, User } from '@nora/core';
 
 export type RootTabParamList = {
-  Home: undefined;
+  Home: { showModulePicker?: boolean } | undefined;
   Record: undefined;
   Learn: undefined;
   Progress: { scrollToDevelopmental?: boolean } | undefined;

@@ -6,7 +6,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, ActivityIndicator, Text, RefreshControl, StyleSheet, TouchableOpacity, Alert, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { LessonCard } from '../components/LessonCard';
 import { LessonCardProps } from '../components/LessonCard'; // Import type for lesson data
 import { NextActionCard } from '../components/NextActionCard';
@@ -15,7 +16,7 @@ import { StreakWidget } from '../components/StreakWidget';
 import { ProfileCircle } from '../components/ProfileCircle';
 import { ModulePickerModal } from '../components/ModulePickerModal';
 import { DRAGON_PURPLE, FONTS, COLORS } from '../constants/assets';
-import { RootStackNavigationProp } from '../navigation/types';
+import { RootStackNavigationProp, RootTabParamList } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
@@ -28,6 +29,7 @@ import type { ModuleWithProgress } from '@nora/core';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const route = useRoute<RouteProp<RootTabParamList, 'Home'>>();
   const lessonService = useLessonService();
   const authService = useAuthService();
   const recordingService = useRecordingService();
@@ -111,44 +113,30 @@ export const HomeScreen: React.FC = () => {
     }
   };
 
-  /**
-   * Check if module picker modal should be shown.
-   * Shows when Foundation is completed and either:
-   * A) It's a different day than Foundation completion (first time after)
-   * B) No modules are currently in-progress
-   * Won't show again if dismissed today.
-   */
-  const checkModulePickerPopup = async () => {
-    try {
-      // Only show once — never show again after it's been shown
-      const alreadyShown = await userStorage.getItem('module_picker_shown');
-      if (alreadyShown) return;
+  // Show module picker when navigated here after Foundation completion
+  useEffect(() => {
+    if (!route.params?.showModulePicker) return;
 
-      const modulesResponse = await lessonService.getModules();
-      if (!modulesResponse.isFoundationCompleted) return;
+    navigation.setParams({ showModulePicker: undefined });
 
-      await userStorage.setItem('module_picker_shown', 'true');
-
-      // Auto-select the first available module (recommended first, then others)
+    lessonService.getModules().then(modulesResponse => {
       const recs = modulesResponse.recommendedModules || [];
       const recSet = new Set(recs);
       const available = modulesResponse.modules.filter(
         m => m.key !== 'FOUNDATION' && !m.isLocked && m.completedLessons < m.lessonCount
       );
-      const firstModule =
-        available.find(m => recSet.has(m.key)) ?? available[0];
+      const firstModule = available.find(m => recSet.has(m.key)) ?? available[0];
       if (firstModule) {
-        await userStorage.setItem('module_picker_selected_module', firstModule.key);
+        userStorage.setItem('module_picker_selected_module', firstModule.key);
         setModulePickerAutoSelected(firstModule.key);
       }
-
       setModulePickerModules(modulesResponse.modules);
       setModulePickerRecommended(recs);
       setShowModulePicker(true);
-    } catch (error) {
-      console.log('Failed to check module picker popup:', error);
-    }
-  };
+    }).catch(error => {
+      console.log('Failed to load modules for picker:', error);
+    });
+  }, [route.params?.showModulePicker]);
 
   /**
    * When the current module is fully completed, auto-advance to the next one:
@@ -194,7 +182,6 @@ export const HomeScreen: React.FC = () => {
     loadLessons();
     loadUserProfile();
     loadDashboardData();
-    checkModulePickerPopup();
   }, []);
 
   // Reload state when screen comes into focus (after completing lesson/recording/reading report)
@@ -213,7 +200,6 @@ export const HomeScreen: React.FC = () => {
       // This ensures NextActionCard shows the correct lesson (not stale cached data)
       loadLessons(false); // Refresh lessons without showing loading spinner
       loadDashboardData();
-      checkModulePickerPopup();
       checkAndUpdateCurrentModule();
     }, [])
   );

@@ -642,6 +642,16 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       // DON'T invalidate cache - keep it so user can review completed lesson instantly
       // Cache will be cleaned up when app opens and lesson is completed
 
+      if (lessonData.lesson.module === 'FOUNDATION') {
+        try {
+          const modulesResponse = await lessonService.getModules();
+          if (modulesResponse.isFoundationCompleted) {
+            navigation.navigate('MainTabs', { screen: 'Home', params: { showModulePicker: true } });
+            return;
+          }
+        } catch (_) {}
+      }
+
       if (moduleKey) {
         navigation.goBack();
       } else {
@@ -702,6 +712,17 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       // No quiz, lesson complete
       console.log('Lesson complete, no quiz');
       await completeLesson();
+
+      if (lessonData.lesson.module === 'FOUNDATION') {
+        try {
+          const modulesResponse = await lessonService.getModules();
+          if (modulesResponse.isFoundationCompleted) {
+            navigation.navigate('MainTabs', { screen: 'Home', params: { showModulePicker: true } });
+            return;
+          }
+        } catch (_) {}
+      }
+
       if (moduleKey) {
         navigation.goBack();
       } else {
