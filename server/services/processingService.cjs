@@ -6,6 +6,7 @@ const fetch = require('node-fetch');
 const prisma = require('./db.cjs');
 const { analyzePCITCoding, SessionQualityError } = require('./pcitAnalysisService.cjs');
 const { sendReportReadyNotification, sendPushNotificationToUser, sendMilestonesUnlockedNotification } = require('./pushNotifications.cjs');
+const { decryptSensitiveData } = require('../utils/encryption.cjs');
 
 // ============================================================================
 // Failure Notification Helper
@@ -233,7 +234,8 @@ async function processRecordingWithRetry(sessionId, userId, attemptNumber = 0) {
         setTimeout(async () => {
           try {
             const user = await prisma.user.findUnique({ where: { id: userId }, select: { childName: true } });
-            await sendMilestonesUnlockedNotification(userId, user?.childName);
+            const childName = user?.childName ? decryptSensitiveData(user.childName) : null;
+            await sendMilestonesUnlockedNotification(userId, childName);
             console.log(`✅ [MILESTONES-UNLOCKED] Unlock notification sent for user ${userId.substring(0, 8)}`);
           } catch (err) {
             console.error(`❌ [MILESTONES-UNLOCKED] Error sending delayed unlock notification:`, err);
