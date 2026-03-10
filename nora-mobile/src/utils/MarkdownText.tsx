@@ -40,7 +40,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
       parts.push(children.substring(lastIndex, match.index));
     }
     parts.push(
-      <Text key={`bold-${match.index}`} style={[style, { fontFamily: boldFontFamily }]}>
+      <Text key={`bold-${match.index}`} style={{ fontFamily: boldFontFamily, fontSize: style?.fontSize, color: style?.color, lineHeight: style?.lineHeight }}>
         {match[1]}
       </Text>
     );
@@ -59,7 +59,18 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
   // A <Text> containing nested <Text> nodes (for bold) can lose its width
   // constraint from the parent View, causing text to overflow off-screen.
   // The View gets its width from the parent layout, forcing the inner Text
-  // to wrap correctly. Spacing styles (margins) applied to the View work as
-  // expected; text-only styles on the View are silently ignored by React Native.
-  return <View style={style as object}><Text style={style}>{parts}</Text></View>;
+  // to wrap correctly. Only margin/padding spacing props are passed to the View;
+  // text-specific props stay on the inner Text.
+  const { margin, marginTop, marginBottom, marginLeft, marginRight,
+          marginHorizontal, marginVertical,
+          padding, paddingTop, paddingBottom, paddingLeft, paddingRight,
+          paddingHorizontal, paddingVertical } = style ?? {};
+  return (
+    <View style={{ margin, marginTop, marginBottom, marginLeft, marginRight,
+                   marginHorizontal, marginVertical,
+                   padding, paddingTop, paddingBottom, paddingLeft, paddingRight,
+                   paddingHorizontal, paddingVertical }}>
+      <Text style={style}>{parts}</Text>
+    </View>
+  );
 };
