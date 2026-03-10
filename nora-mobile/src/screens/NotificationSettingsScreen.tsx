@@ -84,6 +84,7 @@ export const NotificationSettingsScreen: React.FC = () => {
   const [soundPickerType, setSoundPickerType] = useState<'cdiComplete' | 'pdiTransition'>('cdiComplete');
 
   const soundRef = React.useRef<Audio.Sound | null>(null);
+  const prevNotificationsEnabledRef = React.useRef<boolean | null>(null);
 
   useEffect(() => {
     loadPreferences();
@@ -95,11 +96,13 @@ export const NotificationSettingsScreen: React.FC = () => {
     useCallback(() => {
       const checkAndEnableNotifications = async () => {
         const { status } = await Notifications.getPermissionsAsync();
-        const wasDisabled = !notificationsEnabled;
         const isNowEnabled = status === 'granted';
+        const wasDisabled = prevNotificationsEnabledRef.current === false;
+
+        prevNotificationsEnabledRef.current = isNowEnabled;
 
         if (wasDisabled && isNowEnabled) {
-          // Permission was just granted - enable key notifications
+          // Permission was just granted (user came back from OS Settings) - enable key notifications
           setNotificationsEnabled(true);
 
           // Register push token with backend (this was missing before!)
@@ -170,7 +173,9 @@ export const NotificationSettingsScreen: React.FC = () => {
 
   const checkNotificationPermissions = async () => {
     const { status } = await Notifications.getPermissionsAsync();
-    setNotificationsEnabled(status === 'granted');
+    const enabled = status === 'granted';
+    prevNotificationsEnabledRef.current = enabled;
+    setNotificationsEnabled(enabled);
   };
 
   const requestNotificationPermissions = async () => {
@@ -462,10 +467,10 @@ export const NotificationSettingsScreen: React.FC = () => {
                     styles.settingText,
                     !notificationsEnabled && styles.settingTextDisabled
                   ]}>
-                    Daily Lesson Reminder
+                    Daily Session Reminder
                   </Text>
                   <Text style={styles.settingDescription}>
-                    Get reminded to complete your daily lesson
+                    Get reminded to complete your daily special time session
                   </Text>
                 </View>
               </View>
@@ -567,7 +572,7 @@ export const NotificationSettingsScreen: React.FC = () => {
         </View> */}
 
         {/* Session Reports */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Play Session</Text>
 
           <View style={styles.card}>
@@ -600,7 +605,7 @@ export const NotificationSettingsScreen: React.FC = () => {
               />
             </View>
           </View>
-        </View>
+        </View> */}
 
         {/* Play Session Sound Effects */}
         <View style={styles.section}>

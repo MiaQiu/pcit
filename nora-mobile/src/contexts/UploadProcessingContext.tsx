@@ -140,19 +140,13 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
             // Success: Report ready
             console.log('[UploadProcessing] Report ready notification received for current recording');
 
-            const completedRecordingId = notificationRecordingId as string;
-
             // Update timestamp to notify subscribers (e.g., HomeScreen)
             setReportCompletedTimestamp(Date.now());
 
             // Clear processing state
             await reset();
             console.log('[UploadProcessing] State reset completed after new_report notification');
-
-            // Navigate directly to report (app is active, push notification received)
-            if (completedRecordingId) {
-              onNavigateToReport?.(completedRecordingId);
-            }
+            // Notifications allowed — system banner already shown, no in-app action needed
           } else if (type === 'report_failed') {
             // Failure: Report generation failed
             console.log('[UploadProcessing] Report failed notification received for current recording');
@@ -215,13 +209,11 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
           if (completedRecordingId) {
             const { status } = await Notifications.getPermissionsAsync();
-            if (status === 'granted') {
-              // Notifications allowed — navigate directly (push may have been missed)
-              onNavigateToReport?.(completedRecordingId);
-            } else {
+            if (status !== 'granted') {
               // Notifications denied — show toast so user can choose to view
               onReportReady?.(completedRecordingId);
             }
+            // Notifications allowed — system banner already shown, no in-app action needed
           }
         } catch (error: any) {
           // Check if it's a permanent failure
