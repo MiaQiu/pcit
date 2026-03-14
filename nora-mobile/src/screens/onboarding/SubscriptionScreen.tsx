@@ -341,12 +341,12 @@ export const SubscriptionScreen: React.FC = () => {
       {/* Fixed Bottom Button */}
       <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={[styles.startButton, isLoading && styles.startButtonDisabled]}
+          style={[styles.startButton, (isLoading || subscriptionLoading) && styles.startButtonDisabled]}
           onPress={handleStartTrial}
-          disabled={isLoading}
+          disabled={isLoading || subscriptionLoading}
           activeOpacity={0.8}
         >
-          {isLoading ? (
+          {isLoading || subscriptionLoading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text style={styles.startButtonText}>Start my 30-day free trial</Text>

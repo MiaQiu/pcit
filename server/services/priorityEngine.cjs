@@ -6,6 +6,7 @@
  */
 
 const prisma = require('./db.cjs');
+const { decryptSensitiveData } = require('../utils/encryption.cjs');
 
 // Clinical levels ordered by priority (index 0 = highest priority)
 const CLINICAL_LEVELS_BY_PRIORITY = [
@@ -239,9 +240,11 @@ async function runPriorityEngine(userId, { wacbSurveyId } = {}) {
   });
 
   if (!child) {
+    const childName = user.childName ? decryptSensitiveData(user.childName) : 'Child';
     child = await prisma.child.create({
       data: {
         userId,
+        name: childName,
         birthday: user.childBirthday,
         gender: user.childGender,
         conditions: user.childConditions
