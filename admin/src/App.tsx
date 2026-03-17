@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import LessonListPage from './pages/LessonListPage';
 import LessonEditorPage from './pages/LessonEditorPage';
 import NotificationsPage from './pages/NotificationsPage';
+import SessionsPage from './pages/SessionsPage';
 import SettingsPage from './pages/SettingsPage';
 import UserWeeklyReportsPage from './pages/UserWeeklyReportsPage';
 import KeywordsPage from './pages/KeywordsPage';
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="lessons/:id" element={<LessonEditorPage />} />
           <Route path="keywords" element={<KeywordsPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="sessions" element={<SessionsPage />} />
           <Route path="users/:userId/weekly-reports" element={<UserWeeklyReportsPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>

@@ -24,7 +24,7 @@
         ],
         "NSUserNotificationsUsageDescription": "Nora sends you helpful reminders to practice and learn, and notifies you when your session reports are ready."
       },
-      "buildNumber": "40"
+      "buildNumber": "47"
     },
     "android": {
       "adaptiveIcon": {

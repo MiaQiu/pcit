@@ -202,6 +202,7 @@ if (process.env.NODE_ENV === 'production') {
   app.get('/admin/*', (req, res) => {
     res.sendFile(path.join(adminBuildPath, 'index.html'));
   });
+
 }
 
 // Send flagged items to coach via email

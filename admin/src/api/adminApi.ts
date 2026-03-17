@@ -385,6 +385,51 @@ export async function sendNotifications(
   });
 }
 
+// ---- Sessions ----
+
+export interface SessionSummary {
+  id: string;
+  userId: string;
+  mode: string;
+  analysisStatus: string;
+  createdAt: string;
+  hasCoachingCards: boolean;
+}
+
+export interface SessionSearchParams {
+  sessionId?: string;
+  userId?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+}
+
+export async function searchSessions(params: SessionSearchParams, opts?: ApiEnvOpts): Promise<SessionSummary[]> {
+  const q = new URLSearchParams();
+  if (params.sessionId) q.set('sessionId', params.sessionId);
+  if (params.userId) q.set('userId', params.userId);
+  if (params.from) q.set('from', params.from);
+  if (params.to) q.set('to', params.to);
+  if (params.limit) q.set('limit', String(params.limit));
+  const data = await apiFetchEnv<{ sessions: SessionSummary[] }>(`/api/admin/sessions?${q}`, {}, opts);
+  return data.sessions;
+}
+
+export interface RerunCdiCoachingResult {
+  ok: boolean;
+  coachingSummary: string;
+  coachingCards: Array<{ title: string; content: string }>;
+  tomorrowGoal: string | null;
+}
+
+export async function rerunCdiCoaching(sessionId: string, opts?: ApiEnvOpts): Promise<RerunCdiCoachingResult> {
+  return apiFetchEnv<RerunCdiCoachingResult>(
+    `/api/admin/sessions/${sessionId}/rerun-cdi-coaching`,
+    { method: 'POST' },
+    opts
+  );
+}
+
 // ---- Sync to Prod ----
 
 export interface SyncResult {

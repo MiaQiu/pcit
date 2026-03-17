@@ -6,6 +6,9 @@ const { requireAdminAuth } = require('../middleware/adminAuth.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
 
 const { generateWeeklyReport, resolveReportAudioUrls } = require('../services/weeklyReportService.cjs');
+const { generateCdiCoaching } = require('../services/pcitAnalysisService.cjs');
+const { getUtterances } = require('../utils/utteranceUtils.cjs');
+const { decryptSensitiveData } = require('../utils/encryption.cjs');
 
 const router = express.Router();
 
@@ -1292,6 +1295,161 @@ router.post('/receive-sync', async (req, res) => {
   } catch (error) {
     console.error('Receive sync error:', error);
     res.status(500).json({ error: 'Sync failed: ' + error.message });
+  }
+});
+
+// ============================================================================
+// SESSION ENDPOINTS
+// ============================================================================
+
+function calculateChildAgeInMonths(birthday, birthYear) {
+  const today = new Date();
+  if (birthday) {
+    const birthDate = new Date(birthday);
+    return (today.getFullYear() - birthDate.getFullYear()) * 12 + (today.getMonth() - birthDate.getMonth());
+  }
+  return birthYear ? (today.getFullYear() - birthYear) * 12 : null;
+}
+
+function formatGender(genderEnum) {
+  return { BOY: 'boy', GIRL: 'girl', OTHER: 'child' }[genderEnum] || 'child';
+}
+
+function getChildSpeaker(roleIdentificationJson) {
+  const speakerIdentification = roleIdentificationJson?.speaker_identification || {};
+  for (const [speakerId, info] of Object.entries(speakerIdentification)) {
+    if (info.role === 'CHILD') return speakerId;
+  }
+  return null;
+}
+
+/**
+ * GET /api/admin/sessions
+ * Search CDI sessions by sessionId, userId, date range
+ */
+router.get('/sessions', requireAdminAuth, async (req, res) => {
+  try {
+    const { sessionId, userId, from, to, limit = '20' } = req.query;
+
+    const where = { mode: 'CDI' };
+    if (sessionId) where.id = sessionId;
+    if (userId) where.userId = userId;
+    if (from || to) {
+      where.createdAt = {};
+      if (from) where.createdAt.gte = new Date(from);
+      if (to) where.createdAt.lte = new Date(to);
+    }
+
+    const sessions = await prisma.session.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(parseInt(limit), 100),
+      select: {
+        id: true,
+        userId: true,
+        mode: true,
+        analysisStatus: true,
+        createdAt: true,
+        coachingCards: true,
+      },
+    });
+
+    res.json({
+      sessions: sessions.map((s) => ({
+        id: s.id,
+        userId: s.userId,
+        mode: s.mode,
+        analysisStatus: s.analysisStatus,
+        createdAt: s.createdAt,
+        hasCoachingCards: !!s.coachingCards,
+      })),
+    });
+  } catch (error) {
+    console.error('GET /admin/sessions error:', error);
+    res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
+});
+
+/**
+ * POST /api/admin/sessions/:id/rerun-cdi-coaching
+ * Re-run CDI coaching for a session and write results back to DB
+ */
+router.post('/sessions/:id/rerun-cdi-coaching', requireAdminAuth, async (req, res) => {
+  const sessionId = req.params.id;
+  try {
+    const session = await prisma.session.findUnique({ where: { id: sessionId } });
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+    if (session.mode !== 'CDI') return res.status(400).json({ error: `Session mode is ${session.mode}, expected CDI` });
+
+    const user = await prisma.user.findUnique({ where: { id: session.userId } });
+    const childName = user?.childName ? decryptSensitiveData(user.childName) : 'the child';
+    const childAgeMonths = calculateChildAgeInMonths(user?.childBirthday, user?.childBirthYear);
+    const childGender = user?.childGender ? formatGender(user.childGender) : 'child';
+
+    const child = await prisma.child.findFirst({ where: { userId: session.userId } });
+    let clinicalPriority = {};
+    if (child) {
+      const latestComputedAt = await prisma.childIssuePriority.findFirst({
+        where: { childId: child.id },
+        orderBy: { computedAt: 'desc' },
+        select: { computedAt: true },
+      });
+      const issuePriorities = latestComputedAt
+        ? await prisma.childIssuePriority.findMany({
+            where: { childId: child.id, computedAt: latestComputedAt.computedAt },
+            orderBy: { priorityRank: 'asc' },
+          })
+        : [];
+      clinicalPriority = {
+        primaryIssue: child.primaryIssue,
+        primaryStrategy: child.primaryStrategy,
+        secondaryIssue: child.secondaryIssue,
+        secondaryStrategy: child.secondaryStrategy,
+        issuePriorities,
+      };
+    }
+
+    const priorCompletedCount = await prisma.session.count({
+      where: { userId: session.userId, analysisStatus: 'COMPLETED' },
+    });
+
+    const childSpeaker = getChildSpeaker(session.roleIdentificationJson || {});
+    const utterances = await getUtterances(sessionId);
+    const tagCounts = session.tagCounts || {};
+
+    const childInfo = {
+      name: childName,
+      ageMonths: childAgeMonths,
+      gender: childGender,
+      clinicalPriority,
+      isFirstSession: priorCompletedCount === 0,
+      durationSeconds: session.durationSeconds || null,
+    };
+
+    const result = await generateCdiCoaching(utterances, childInfo, tagCounts, childSpeaker);
+    if (!result) return res.status(500).json({ error: 'generateCdiCoaching returned null' });
+
+    const coachingCards = result.coachingCards
+      ? { sections: result.coachingCards, tomorrowGoal: result.tomorrowGoal || null }
+      : null;
+
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        coachingSummary: result.coachingSummary || null,
+        coachingCards,
+      },
+    });
+
+    res.json({
+      ok: true,
+      coachingSummary: result.coachingSummary,
+      coachingCards: result.coachingCards,
+      tomorrowGoal: result.tomorrowGoal,
+    });
+  } catch (error) {
+    console.error(`POST /admin/sessions/${sessionId}/rerun-cdi-coaching error:`, error);
+    res.status(500).json({ error: error.message || 'Rerun failed' });
   }
 });
 

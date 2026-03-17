@@ -51,12 +51,19 @@ async function main() {
     const flashResult = await llmCall(prompt, { ...callOpts, model: 'flash' });
     console.log(JSON.stringify(flashResult, null, 2));
 
-    // 4. Call Claude
+    // 4. Call Claude Sonnet
     console.log('\n═══════════════════════════════════════════════════════');
     console.log('MODEL: claude-sonnet-4-6');
     console.log('═══════════════════════════════════════════════════════');
     const claudeResult = await llmCall(prompt, { ...callOpts, model: 'claude' });
     console.log(JSON.stringify(claudeResult, null, 2));
+
+    // 5. Call Claude Haiku
+    console.log('\n═══════════════════════════════════════════════════════');
+    console.log('MODEL: claude-haiku-4-5-20251001');
+    console.log('═══════════════════════════════════════════════════════');
+    const haikuResult = await llmCall(prompt, { ...callOpts, model: 'claude-haiku-4-5-20251001' });
+    console.log(JSON.stringify(haikuResult, null, 2));
 
   } finally {
     await prisma.$disconnect();
