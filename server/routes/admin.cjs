@@ -1329,7 +1329,7 @@ function getChildSpeaker(roleIdentificationJson) {
  */
 router.get('/sessions', requireAdminAuth, async (req, res) => {
   try {
-    const { sessionId, userId, from, to, limit = '20' } = req.query;
+    const { sessionId, userId, from, to, limit = '20', noCards } = req.query;
 
     const where = { mode: 'CDI' };
     if (sessionId) where.id = sessionId;
@@ -1339,6 +1339,7 @@ router.get('/sessions', requireAdminAuth, async (req, res) => {
       if (from) where.createdAt.gte = new Date(from);
       if (to) where.createdAt.lte = new Date(to);
     }
+    if (noCards === 'true') where.coachingCards = null;
 
     const sessions = await prisma.session.findMany({
       where,

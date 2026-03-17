@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { searchSessions, rerunCdiCoaching, SessionSummary } from '../api/adminApi';
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
 
@@ -21,23 +21,12 @@ export default function SessionsPage() {
   // Per-row rerun state: sessionId → { state, error }
   const [rerunState, setRerunState] = useState<Record<string, { state: RunState; error?: string }>>({});
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const runSearch = useCallback(async (params: Parameters<typeof searchSessions>[0], callOpts: typeof opts) => {
     setLoading(true);
     setSearchError(null);
-    setSearched(false);
     setSessions([]);
     try {
-      const results = await searchSessions(
-        {
-          sessionId: sessionId.trim() || undefined,
-          userId: userId.trim() || undefined,
-          from: from || undefined,
-          to: to || undefined,
-          limit: 50,
-        },
-        opts
-      );
+      const results = await searchSessions(params, callOpts);
       setSessions(results);
       setSearched(true);
     } catch (err: unknown) {
@@ -45,6 +34,27 @@ export default function SessionsPage() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Auto-load sessions with no coaching cards on mount and env change
+  useEffect(() => {
+    const callOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
+    setRerunState({});
+    runSearch({ limit: 20 }, callOpts);
+  }, [env, prodToken, runSearch]);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    runSearch(
+      {
+        sessionId: sessionId.trim() || undefined,
+        userId: userId.trim() || undefined,
+        from: from || undefined,
+        to: to || undefined,
+        limit: 50,
+      },
+      opts
+    );
   };
 
   const handleRerun = async (id: string) => {

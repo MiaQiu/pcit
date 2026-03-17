@@ -402,6 +402,7 @@ export interface SessionSearchParams {
   from?: string;
   to?: string;
   limit?: number;
+  noCards?: boolean;
 }
 
 export async function searchSessions(params: SessionSearchParams, opts?: ApiEnvOpts): Promise<SessionSummary[]> {
@@ -411,6 +412,7 @@ export async function searchSessions(params: SessionSearchParams, opts?: ApiEnvO
   if (params.from) q.set('from', params.from);
   if (params.to) q.set('to', params.to);
   if (params.limit) q.set('limit', String(params.limit));
+  if (params.noCards) q.set('noCards', 'true');
   const data = await apiFetchEnv<{ sessions: SessionSummary[] }>(`/api/admin/sessions?${q}`, {}, opts);
   return data.sessions;
 }
