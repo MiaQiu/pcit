@@ -2,7 +2,11 @@
 
 Web-based admin interface for managing lessons (CRUD with live mobile preview), keywords, push notifications, and syncing content from dev to prod. Built with React + Vite, backed by Express API routes.
 
-## Quick Start
+## Production URL
+
+**`https://admin.hinora.co`** — hosted on Vercel (project: `pcit`). DNS for `admin.hinora.co` points to Vercel. `vercel.json` rewrites all `/api/*` requests to the prod App Runner (`https://wpwpawhz29.ap-southeast-1.awsapprunner.com`).
+
+## Quick Start (local dev)
 
 ```bash
 # Start backend
@@ -14,23 +18,29 @@ cd admin && npm run dev
 
 Open `http://localhost:5173/admin` and log in with the `ADMIN_PASSWORD` from `.env`.
 
-For production, build and serve statically:
+The Vite dev server proxies `/api` to `localhost:3001` (local backend).
+
+## Deploying
 
 ```bash
-cd admin && npm run build
-# Served automatically at /admin by server.cjs
+# From repo root
+npx vercel --prod --scope qiuy0002-gmailcoms-projects --yes --archive=tgz
 ```
+
+This builds `admin/` and deploys to Vercel. The live site at `admin.hinora.co` updates immediately.
 
 ## Architecture
 
 | Layer | Technology | Location |
 |-------|-----------|----------|
 | Frontend | React 18 + Vite + TypeScript | `admin/` |
+| Hosting | Vercel (project: `pcit`) | `admin.hinora.co` |
+| API proxy | `vercel.json` rewrites `/api/*` → prod App Runner | `admin/vercel.json` |
 | API | Express routes at `/api/admin/*` | `server/routes/admin.cjs` |
 | Auth middleware | JWT with `{ role: 'admin' }` | `server/middleware/adminAuth.cjs` |
 | Database | Prisma (same as mobile app) | `prisma/schema.prisma` |
 
-The Vite dev server proxies `/api` requests to `localhost:3001`. In production, `server.cjs` serves the built SPA from `admin/dist/` at the `/admin` path.
+In production, all `/api/*` calls from the SPA are rewritten by Vercel to the prod App Runner. The SPA itself is served by Vercel's CDN.
 
 ## Authentication
 
@@ -161,7 +171,7 @@ admin/
 
 ## Pages
 
-### Lesson List (`/admin/lessons`)
+### Lesson List (`/lessons`)
 
 - Table showing all lessons with ID, module, day, title, segment count, quiz status, last updated
 - Module filter dropdown (populated from `/api/admin/modules`)
@@ -170,7 +180,7 @@ admin/
 - "+ Add Module" button opens a modal to create a new module (key selected from available `LessonModule` enum values)
 - "Edit Module" button appears next to the filter when a module is selected — opens the same modal pre-filled for editing title, shortName, description, displayOrder, and backgroundColor
 
-### Lesson Editor (`/admin/lessons/new` or `/admin/lessons/:id`)
+### Lesson Editor (`/lessons/new` or `/lessons/:id`)
 
 Split-pane layout:
 
@@ -195,14 +205,14 @@ The body text textarea supports:
 - `* bullet item` — lines starting with `* ` render as styled bullet points
 - Blank lines add spacing
 
-### Keywords (`/admin/keywords`)
+### Keywords (`/keywords`)
 
 - Table of all glossary keywords with term and definition
 - Search box filters in real-time
 - Inline create and edit forms
 - Delete with confirmation
 
-### Notifications (`/admin/notifications`)
+### Notifications (`/notifications`)
 
 - Left: user table with checkboxes (only users with push tokens are selectable)
 - Right: compose panel with title/body inputs, preview box, and send button
