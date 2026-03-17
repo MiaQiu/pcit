@@ -3,7 +3,7 @@
  * User progress, stats, and streak tracking
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
 import { RadarChart } from '../components/RadarChart';
@@ -321,14 +321,14 @@ export const ProgressScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    // Track progress screen viewed
-    amplitudeService.trackScreenView('Progress', {
-      screen: 'progress',
-    });
-
-    loadProgressData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      amplitudeService.trackScreenView('Progress', {
+        screen: 'progress',
+      });
+      loadProgressData();
+    }, [])
+  );
 
   // Handle scroll to developmental section when navigating with param
   useEffect(() => {
