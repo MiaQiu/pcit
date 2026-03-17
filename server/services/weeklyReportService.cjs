@@ -60,7 +60,7 @@ async function aggregateWeekData(userId, childId, weekStart, weekEnd) {
     }
   }
 
-  const totalDeposits = totalPraise + totalEcho + totalNarrate;
+  const totalDeposits = sessions.reduce((sum, s) => sum + (s.overallScore || 0), 0);
   const massageTimeMinutes = Math.round(totalDuration / 60);
   const avgNoraScore = scoreCount > 0 ? Math.round(totalScore / scoreCount) : null;
 
