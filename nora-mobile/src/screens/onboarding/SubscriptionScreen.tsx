@@ -131,8 +131,12 @@ export const SubscriptionScreen: React.FC = () => {
       if (!error.userCancelled) {
         Alert.alert(
           'Purchase Failed',
-          'Unable to start trial. Please try again.',
-          [{ text: 'OK' }]
+          'Unable to start trial. If you were charged, tap Restore Purchase.',
+          [
+            { text: 'Restore Purchase', onPress: handleRestore },
+            { text: 'Try Again', onPress: handleStartTrial },
+            { text: 'Cancel', style: 'cancel' },
+          ]
         );
       }
     } finally {
