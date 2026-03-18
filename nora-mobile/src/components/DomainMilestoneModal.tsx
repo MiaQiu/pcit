@@ -141,6 +141,16 @@ export const DomainMilestoneModal: React.FC<DomainMilestoneModalProps> = ({
             </Text>
           )} */}
 
+          {/* Language note */}
+          {domain === 'Language' && (
+            <View style={styles.languageNote}>
+              <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
+              <Text style={styles.languageNoteText}>
+                Grammar milestones (e.g. tense, plurals, articles) are based on English. They may not apply to all languages.
+              </Text>
+            </View>
+          )}
+
           {/* Content */}
           {loading ? (
             <View style={styles.loadingContainer}>
@@ -357,6 +367,22 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginLeft: 36,
     lineHeight: 18,
+  },
+  languageNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 12,
+  },
+  languageNoteText: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#6B7280',
+    flex: 1,
+    lineHeight: 17,
   },
   emptyState: {
     paddingVertical: 40,

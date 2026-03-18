@@ -14,7 +14,9 @@ import { Button } from '../components/Button';
 import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration } from '@nora/core';
+import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling } from '@nora/core';
+import { RadarChart } from '../components/RadarChart';
+import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MarkdownText } from '../utils/MarkdownText';
 import { DragonCard } from '../components/DragonCard';
@@ -300,6 +302,14 @@ export const ReportScreen: React.FC = () => {
   const [pollingCount, setPollingCount] = useState(0);
   const [childName, setChildName] = useState<string>('Your Child');
   const [developmentalVisible, setDevelopmentalVisible] = useState(false);
+  const [totalRecordings, setTotalRecordings] = useState<number>(0);
+  const [developmentalProgress, setDevelopmentalProgress] = useState<DevelopmentalProgress | null>(null);
+  const [selectedDomain, setSelectedDomain] = useState<DomainType | null>(null);
+  const [domainMilestones, setDomainMilestones] = useState<DomainMilestone[] | null>(null);
+  const [domainProfiling, setDomainProfiling] = useState<DomainProfiling | null>(null);
+  const [domainChildName, setDomainChildName] = useState<string | null>(null);
+  const [showDomainModal, setShowDomainModal] = useState(false);
+  const [loadingDomainMilestones, setLoadingDomainMilestones] = useState(false);
 
   // Feedback state
   const [feedbackSentiment, setFeedbackSentiment] = useState<'positive' | 'negative' | null>(null);
@@ -357,7 +367,43 @@ export const ReportScreen: React.FC = () => {
     loadReportData();
     loadChildName();
     loadDevelopmentalVisibility();
+    recordingService.getRecordings().then(({ recordings }) => {
+      const count = recordings?.length ?? 0;
+      setTotalRecordings(count);
+      if (count >= 5) {
+        recordingService.getDevelopmentalProgress().then(data => {
+          if (data) setDevelopmentalProgress(data);
+        }).catch(() => {});
+      }
+    }).catch(() => {});
   }, [recordingId]);
+
+  const handleDomainPress = async (domain: DomainType) => {
+    setSelectedDomain(domain);
+    setShowDomainModal(true);
+    setLoadingDomainMilestones(true);
+    setDomainMilestones(null);
+    setDomainProfiling(null);
+    setDomainChildName(null);
+    try {
+      const response = await recordingService.getDomainMilestones(domain);
+      setDomainMilestones(response.milestones);
+      setDomainProfiling(response.profiling);
+      setDomainChildName(response.childName);
+    } catch (error) {
+      console.error('Failed to load domain milestones:', error);
+    } finally {
+      setLoadingDomainMilestones(false);
+    }
+  };
+
+  const handleCloseDomainModal = () => {
+    setShowDomainModal(false);
+    setSelectedDomain(null);
+    setDomainMilestones(null);
+    setDomainProfiling(null);
+    setDomainChildName(null);
+  };
 
   const loadDevelopmentalVisibility = async () => {
     try {
@@ -686,8 +732,7 @@ export const ReportScreen: React.FC = () => {
           })()
         )}
 
-        {/* Tomorrow's Goal — hidden for now */}
-        {/* {reportData.mode === 'PDI' && reportData.pdiTomorrowGoal ? (
+        {reportData.mode === 'PDI' && reportData.pdiTomorrowGoal ? (
           <View style={styles.nextDayGoalSection}>
             <DragonCard
               label="Tomorrow's Goal"
@@ -713,7 +758,7 @@ export const ReportScreen: React.FC = () => {
               </View>
             )
           )
-        )} */}
+        )}
 
         {/* What we learnt about Child */}
         {reportData.aboutChild && reportData.aboutChild.length > 0 && (() => {
@@ -918,6 +963,25 @@ export const ReportScreen: React.FC = () => {
           </View>
         )} */}
 
+        {/* Developmental Milestones */}
+        {totalRecordings >= 5 && developmentalProgress ? (
+          <RadarChart
+            data={developmentalProgress}
+            childName={developmentalProgress.childName}
+            onDomainPress={handleDomainPress}
+          />
+        ) : totalRecordings < 5 ? (
+          <View style={styles.milestoneLockedCard}>
+            <Text style={styles.milestoneLockedTitle}>Developmental Milestones</Text>
+            <View style={styles.milestoneLockedBadge}>
+              <Text style={styles.milestoneLockedBadgeText}>Available after 5 sessions · {totalRecordings}/5 completed</Text>
+            </View>
+            <Text style={styles.milestoneLockedDesc}>
+              Track your child's growth across Language, Cognitive, Social, Emotional, and Connection — compared against their age benchmark.
+            </Text>
+          </View>
+        ) : null}
+
         {/* Report Feedback */}
         {feedbackSubmitted ? (
           <View style={styles.feedbackCard}>
@@ -1027,6 +1091,15 @@ export const ReportScreen: React.FC = () => {
         visible={showPhaseCelebration}
         onClose={() => setShowPhaseCelebration(false)}
         childName={childName}
+      />
+      <DomainMilestoneModal
+        visible={showDomainModal}
+        domain={selectedDomain}
+        milestones={domainMilestones}
+        profiling={domainProfiling}
+        childName={domainChildName}
+        loading={loadingDomainMilestones}
+        onClose={handleCloseDomainModal}
       />
     </SafeAreaView>
   );
@@ -2041,5 +2114,39 @@ const styles = StyleSheet.create({
   pdiSeqBold: {
     fontFamily: FONTS.bold,
     color: COLORS.textDark,
+  },
+  milestoneLockedCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 8,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  milestoneLockedTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: '#1E2939',
+    marginBottom: 8,
+  },
+  milestoneLockedBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#F5F0FF',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginBottom: 12,
+  },
+  milestoneLockedBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: '#8C49D5',
+  },
+  milestoneLockedDesc: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 21,
   },
 });

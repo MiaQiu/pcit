@@ -208,20 +208,16 @@ If no milestones are detected, return: { "detected_milestones": []${isFirstProfi
       });
       console.log(`  ✨ [MILESTONE] NEW EMERGING: ${milestoneKey} — ${detected.evidence_summary}`);
     } else if (existing.status === 'EMERGING') {
-      // Existing EMERGING → check if threshold reached
-      const sessionCountSinceFirst = await prisma.childProfiling.count({
-        where: {
-          childId,
-          createdAt: { gte: existing.firstObservedAt }
-        }
-      });
+      // Existing EMERGING → increment detectionCount and check if threshold reached
+      const newCount = existing.detectionCount + 1;
 
-      if (sessionCountSinceFirst > libraryEntry.thresholdValue) {
+      if (newCount > libraryEntry.thresholdValue) {
         // Threshold exceeded → promote to ACHIEVED
         await prisma.childMilestone.update({
           where: { id: existing.id },
           data: {
             status: 'ACHIEVED',
+            detectionCount: newCount,
             achievedAt: new Date()
           }
         });
@@ -232,9 +228,14 @@ If no milestones are detected, return: { "detected_milestones": []${isFirstProfi
           title: libraryEntry.displayTitle,
           actionTip: libraryEntry.actionTip
         });
-        console.log(`  🏆 [MILESTONE] ACHIEVED: ${milestoneKey} (${sessionCountSinceFirst} sessions > threshold ${libraryEntry.thresholdValue})`);
+        console.log(`  🏆 [MILESTONE] ACHIEVED: ${milestoneKey} (detected ${newCount} times > threshold ${libraryEntry.thresholdValue})`);
       } else {
-        console.log(`  📊 [MILESTONE] Still EMERGING: ${milestoneKey} (${sessionCountSinceFirst}/${libraryEntry.thresholdValue} sessions)`);
+        // Still emerging — just increment the count
+        await prisma.childMilestone.update({
+          where: { id: existing.id },
+          data: { detectionCount: newCount }
+        });
+        console.log(`  📊 [MILESTONE] Still EMERGING: ${milestoneKey} (detected ${newCount}/${libraryEntry.thresholdValue} times)`);
       }
     } else if (existing.status === 'ACHIEVED') {
       // Already achieved → skip (never downgrade)

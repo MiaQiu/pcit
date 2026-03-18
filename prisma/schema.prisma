@@ -490,6 +490,7 @@ model ChildMilestone {
   childId          String
   milestoneId      String
   status           MilestoneStatus
+  detectionCount   Int              @default(1)
   firstObservedAt  DateTime         @default(now())
   achievedAt       DateTime?
   createdAt        DateTime         @default(now())
