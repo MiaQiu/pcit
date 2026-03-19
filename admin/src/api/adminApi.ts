@@ -82,6 +82,7 @@ export interface UserSummary {
   id: string;
   name: string;
   email: string;
+  tag: string;
   hasPushToken: boolean;
   pushTokenUpdatedAt: string | null;
   createdAt: string;
@@ -376,6 +377,13 @@ export async function getUsers(opts?: ApiEnvOpts): Promise<UserSummary[]> {
 
 export async function getUserProfile(userId: string, opts?: ApiEnvOpts): Promise<UserProfile> {
   return apiFetchEnv<UserProfile>(`/api/admin/users/${userId}/profile`, {}, opts);
+}
+
+export async function updateUserTag(userId: string, tag: 'user' | 'tester', opts?: ApiEnvOpts): Promise<void> {
+  await apiFetchEnv(`/api/admin/users/${userId}/tag`, {
+    method: 'PUT',
+    body: JSON.stringify({ tag }),
+  }, opts);
 }
 
 export interface NotificationResult {

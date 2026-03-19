@@ -685,6 +685,15 @@ body {
   color: var(--text-light);
 }
 
+.tag-select {
+  font-size: 12px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--card-bg);
+  cursor: pointer;
+}
+
 .link-btn {
   background: none;
   border: none;

@@ -227,6 +227,10 @@ model Session {
   lastRetriedAt          DateTime?
   permanentFailure       Boolean         @default(false)
   retryCount             Int             @default(0)
+  roleIdDone             Boolean         @default(false)
+  pcitCodingDone         Boolean         @default(false)
+  enrichmentStatus       EnrichmentStatus @default(PENDING)
+  enrichmentError        String?
   coachingSummary        String?
   coachingCards          Json?
   milestoneCelebrations  Json?
@@ -339,6 +343,7 @@ model User {
   pushTokenUpdatedAt       DateTime?
   revenueCatCustomerId     String?              @unique
   developmentalVisible     Boolean              @default(false)
+  tag                      String               @default("user")
   LearningProgress      LearningProgress?
   ModuleHistory         ModuleHistory[]
   PasswordResetToken    PasswordResetToken[]
@@ -533,6 +538,13 @@ enum AnalysisStatus {
   PENDING
   PROCESSING
   COMPLETED
+  FAILED
+}
+
+enum EnrichmentStatus {
+  PENDING
+  COMPLETED
+  PARTIAL
   FAILED
 }
 

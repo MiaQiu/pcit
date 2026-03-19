@@ -640,6 +640,7 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         id: true,
         name: true,
         email: true,
+        tag: true,
         pushToken: true,
         pushTokenUpdatedAt: true,
         createdAt: true,
@@ -656,6 +657,7 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         id: u.id,
         name: decrypted.name,
         email: decrypted.email,
+        tag: u.tag,
         hasPushToken: !!u.pushToken,
         pushTokenUpdatedAt: u.pushTokenUpdatedAt,
         createdAt: u.createdAt,
@@ -713,6 +715,25 @@ router.post('/notifications/send', requireAdminAuth, async (req, res) => {
   } catch (error) {
     console.error('Admin send notifications error:', error);
     res.status(500).json({ error: 'Failed to send notifications' });
+  }
+});
+
+/**
+ * PUT /api/admin/users/:id/tag
+ * Update a user's tag (user or tester)
+ */
+router.put('/users/:id/tag', requireAdminAuth, async (req, res) => {
+  const { id } = req.params;
+  const { tag } = req.body;
+  if (!['user', 'tester'].includes(tag)) {
+    return res.status(400).json({ error: 'tag must be "user" or "tester"' });
+  }
+  try {
+    await prisma.user.update({ where: { id }, data: { tag } });
+    res.json({ userId: id, tag });
+  } catch (error) {
+    console.error('Admin update user tag error:', error);
+    res.status(500).json({ error: 'Failed to update tag' });
   }
 });
 
@@ -1412,6 +1433,8 @@ router.get('/sessions', requireAdminAuth, async (req, res) => {
         userId: true,
         mode: true,
         analysisStatus: true,
+        enrichmentStatus: true,
+        enrichmentError: true,
         createdAt: true,
         coachingCards: true,
       },
@@ -1423,6 +1446,8 @@ router.get('/sessions', requireAdminAuth, async (req, res) => {
         userId: s.userId,
         mode: s.mode,
         analysisStatus: s.analysisStatus,
+        enrichmentStatus: s.enrichmentStatus,
+        enrichmentError: s.enrichmentError || null,
         createdAt: s.createdAt,
         hasCoachingCards: !!s.coachingCards,
       })),
