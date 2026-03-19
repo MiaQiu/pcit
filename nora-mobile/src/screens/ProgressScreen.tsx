@@ -653,25 +653,7 @@ export const ProgressScreen: React.FC = () => {
         {/* Score chart */}
         <ScoreChart data={scoreData} />
 
-        {/* Developmental Stage Radar Chart */}
-        <View onLayout={(e) => { developmentalSectionY.current = e.nativeEvent.layout.y; }}>
-          {recordings.length >= 5 && developmentalProgress ? (
-            <RadarChart data={developmentalProgress} childName={developmentalProgress.childName} onDomainPress={handleDomainPress} />
-          ) : (
-            <View style={styles.milestoneLockedCard}>
-              <Text style={styles.milestoneLockedTitle}>Developmental Milestones</Text>
-              <Text style={styles.milestoneLockedDesc}>
-                See how your child is growing across 5 key areas — Language, Cognitive, Social, Emotional, and Connection — compared against their age benchmark.
-              </Text>
-              <Text style={styles.milestoneLockedDesc}>
-                Nora needs at least 5 sessions to build a wholistic, unbiased picture of your child, so you can spot where they're truly thriving and where a little extra support might help.
-              </Text>
-              <Text style={styles.milestoneLockedProgress}>
-                Available after 5 sessions · {recordings.length}/5 completed
-              </Text>
-            </View>
-          )}
-        </View>
+        {/* Developmental Stage Radar Chart — temporarily hidden */}
 
         {/* Reports Section */}
         <ReportsSection key={refreshKey} recordings={recordings} />
@@ -954,16 +936,23 @@ const styles = StyleSheet.create({
     color: '#1E2939',
     marginBottom: 10,
   },
+  milestoneLockedBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#F5F0FF',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginBottom: 12,
+  },
+  milestoneLockedBadgeText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 13,
+    color: '#8C49D5',
+  },
   milestoneLockedDesc: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 14,
     color: '#4B5563',
     lineHeight: 21,
-    marginBottom: 14,
-  },
-  milestoneLockedProgress: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 13,
-    color: '#9CA3AF',
   },
 });

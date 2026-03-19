@@ -40,6 +40,19 @@ class SessionQualityError extends Error {
 }
 
 /**
+ * Thrown when a recording cannot be processed due to a permanent data problem.
+ * Signals to callers that retries are pointless (unlike transient network errors).
+ * Does NOT trigger a team Slack alert — these are data/config issues, not system bugs.
+ */
+class PermanentFailureError extends Error {
+  constructor(message, userMessage) {
+    super(message);
+    this.name = 'PermanentFailureError';
+    this.userMessage = userMessage || 'An error occurred while analyzing your recording. Please try again.';
+  }
+}
+
+/**
  * Validate that a session is suitable for PCIT analysis.
  * Runs cheap heuristics first, then one LLM call for everything else.
  * Throws SessionQualityError if the session should not be processed.
@@ -945,10 +958,18 @@ async function analyzePCITCoding(sessionId, userId) {
       childConditions: true
     }
   });
-  const childName = user?.childName ? decryptSensitiveData(user.childName) : 'the child';
-  const childAge = user?.childBirthYear ? calculateChildAge(user.childBirthYear, user.childBirthday) : null;
-  const childAgeMonths = user?.childBirthYear ? calculateChildAgeInMonths(user.childBirthday, user.childBirthYear) : null;
-  const childGender = user?.childGender ? formatGender(user.childGender) : 'child';
+  if (!user) {
+    throw new PermanentFailureError('User record not found', 'An error occurred while analyzing your recording. Please try again.');
+  }
+  let childName = 'the child';
+  try {
+    childName = user.childName ? decryptSensitiveData(user.childName) : 'the child';
+  } catch (decryptErr) {
+    throw new PermanentFailureError('Failed to decrypt child data', 'An error occurred while analyzing your recording. Please try again.');
+  }
+  const childAge = user.childBirthYear ? calculateChildAge(user.childBirthYear, user.childBirthday) : null;
+  const childAgeMonths = user.childBirthYear ? calculateChildAgeInMonths(user.childBirthday, user.childBirthYear) : null;
+  const childGender = user.childGender ? formatGender(user.childGender) : 'child';
   console.log(`✅ [ANALYSIS-STEP-1b] Child info: ${childName}, ${childAgeMonths} months old, ${childGender}`);
 
   // Fetch Child record early to get clinical priority fields
@@ -1010,22 +1031,14 @@ async function analyzePCITCoding(sessionId, userId) {
 
   const isCDI = session.mode === 'CDI';
 
-  // STEP 1: Identify speaker roles
-  const roleIdentificationPrompt = loadPromptWithVariables('roleIdentification', {
-    UTTERANCES_JSON: JSON.stringify(utterancesForPrompt, null, 2)
-  });
-
-  console.log(`📊 [ANALYSIS-STEP-3] Calling ${AI_PROVIDER} for role identification...`);
-
+  // STEP 1: Identify speaker roles (skip if already done on a previous attempt)
   let roleIdentificationJson;
   let adultSpeakers = [];
-  try {
-    roleIdentificationJson = await llmCall(roleIdentificationPrompt, { maxTokens: 2048, temperature: 0.3, label: 'role-id' });
-    console.log(`✅ [ANALYSIS-STEP-3] Role identification parsed successfully`);
 
-    // Extract all adult speakers from speaker_identification
+  if (session.roleIdDone && session.roleIdentificationJson) {
+    console.log(`[ANALYSIS] Skipping role identification — already completed (checkpoint)`);
+    roleIdentificationJson = session.roleIdentificationJson;
     const speakerIdentification = roleIdentificationJson.speaker_identification || {};
-
     for (const [speakerId, speakerInfo] of Object.entries(speakerIdentification)) {
       if (speakerInfo.role === 'ADULT') {
         adultSpeakers.push({
@@ -1035,56 +1048,98 @@ async function analyzePCITCoding(sessionId, userId) {
         });
       }
     }
-
-    // Sort adults by utterance count (most active first)
     adultSpeakers.sort((a, b) => b.utteranceCount - a.utteranceCount);
+  } else {
+    const roleIdentificationPrompt = loadPromptWithVariables('roleIdentification', {
+      UTTERANCES_JSON: JSON.stringify(utterancesForPrompt, null, 2)
+    });
 
-    if (adultSpeakers.length === 0) {
-      throw new Error('No adult speakers found in role identification');
+    console.log(`📊 [ANALYSIS-STEP-3] Calling ${AI_PROVIDER} for role identification...`);
+
+    try {
+      roleIdentificationJson = await llmCall(roleIdentificationPrompt, { maxTokens: 2048, temperature: 0.3, label: 'role-id' });
+      console.log(`✅ [ANALYSIS-STEP-3] Role identification parsed successfully`);
+
+      // Extract all adult speakers from speaker_identification
+      const speakerIdentification = roleIdentificationJson.speaker_identification || {};
+
+      for (const [speakerId, speakerInfo] of Object.entries(speakerIdentification)) {
+        if (speakerInfo.role === 'ADULT') {
+          adultSpeakers.push({
+            id: speakerId,
+            confidence: speakerInfo.confidence,
+            utteranceCount: speakerInfo.utterance_count || 0
+          });
+        }
+      }
+
+      // Sort adults by utterance count (most active first)
+      adultSpeakers.sort((a, b) => b.utteranceCount - a.utteranceCount);
+
+      if (adultSpeakers.length === 0) {
+        throw new PermanentFailureError(
+          'No adult speakers found in role identification',
+          'We could not identify a parent speaker in your recording. Please ensure the audio clearly captures your voice.'
+        );
+      }
+
+      console.log(`Adult speakers identified: ${adultSpeakers.map(a => a.id).join(', ')}`);
+      console.log('Role identification:', JSON.stringify(roleIdentificationJson, null, 2));
+
+    } catch (parseError) {
+      if (parseError instanceof PermanentFailureError) throw parseError;
+      console.error('❌ [ROLE-ID-ERROR] Failed role identification:', parseError.message);
+      throw new Error(`Failed role identification: ${parseError.message}`);
     }
 
-    console.log(`Adult speakers identified: ${adultSpeakers.map(a => a.id).join(', ')}`);
-    console.log('Role identification:', JSON.stringify(roleIdentificationJson, null, 2));
-
-  } catch (parseError) {
-    console.error('❌ [ROLE-ID-ERROR] Failed role identification:', parseError.message);
-    throw new Error(`Failed role identification: ${parseError.message}`);
-  }
-
-  // Build role map from speaker identification
-  console.log(`📊 [ANALYSIS-STEP-5] Building role map and updating database...`);
-  const speakerIdentification = roleIdentificationJson.speaker_identification || {};
-  const roleMap = {};
-  for (const [speakerId, speakerInfo] of Object.entries(speakerIdentification)) {
-    roleMap[speakerId] = speakerInfo.role.toLowerCase();
-  }
-  console.log(`   Role map: ${JSON.stringify(roleMap)}`);
-
-  // Update utterances with role information in database
-  await updateUtteranceRoles(sessionId, roleMap);
-  console.log(`✅ [ANALYSIS-STEP-5] Updated roles for ${Object.keys(roleMap).length} speakers`);
-
-  // Store role identification JSON in session
-  await prisma.session.update({
-    where: { id: sessionId },
-    data: {
-      roleIdentificationJson
+    // Build role map from speaker identification
+    console.log(`📊 [ANALYSIS-STEP-5] Building role map and updating database...`);
+    const speakerIdentification = roleIdentificationJson.speaker_identification || {};
+    const roleMap = {};
+    for (const [speakerId, speakerInfo] of Object.entries(speakerIdentification)) {
+      roleMap[speakerId] = speakerInfo.role.toLowerCase();
     }
-  });
-  console.log(`✅ [ANALYSIS-STEP-5] Role identification JSON stored in session`);
+    console.log(`   Role map: ${JSON.stringify(roleMap)}`);
 
-  // Get updated utterances for PCIT coding
-  console.log(`📊 [ANALYSIS-STEP-6] Fetching updated utterances with roles for PCIT coding...`);
-  const utterancesWithRoles = await getUtterances(sessionId);
-  console.log(`✅ [ANALYSIS-STEP-6] Got ${utterancesWithRoles.length} utterances with roles`);
+    // Update utterances with role information in database
+    await updateUtteranceRoles(sessionId, roleMap);
+    console.log(`✅ [ANALYSIS-STEP-5] Updated roles for ${Object.keys(roleMap).length} speakers`);
 
-  // STEP 2: Apply PCIT coding to adult utterances
-  console.log(`📊 [ANALYSIS-STEP-7] Preparing PCIT coding prompt...`);
-  const adultSpeakerIds = adultSpeakers.map(a => a.id).join(', ');
-  console.log(`   Adult speakers: ${adultSpeakerIds}`);
+    // Store role identification JSON in session + set checkpoint
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: { roleIdentificationJson, roleIdDone: true }
+    });
+    console.log(`✅ [ANALYSIS-STEP-5] Role identification JSON stored in session`);
+  }
 
-  // Load DPICS system prompt, with PDI-specific feedback override appended
-  const dpicsSystemPrompt = loadPrompt('dpicsCoding') + (!isCDI ? `
+  // STEP 2: Apply PCIT coding to adult utterances (skip if already done on a previous attempt)
+  let tagCounts = {
+    echo: 0, labeled_praise: 0, unlabeled_praise: 0, praise: 0,
+    narration: 0, direct_command: 0, indirect_command: 0, command: 0,
+    question: 0, criticism: 0, neutral: 0
+  };
+  let codingResults = [];
+  let adultSpeakersForPcit = adultSpeakers; // used in pcitCoding JSON below
+
+  if (session.pcitCodingDone && session.pcitCoding && session.tagCounts) {
+    console.log(`[ANALYSIS] Skipping PCIT coding — already completed (checkpoint)`);
+    codingResults = session.pcitCoding.codingResults || [];
+    tagCounts = session.tagCounts;
+    adultSpeakersForPcit = session.pcitCoding.adultSpeakers || adultSpeakers;
+  } else {
+    // Get updated utterances for PCIT coding
+    console.log(`📊 [ANALYSIS-STEP-6] Fetching updated utterances with roles for PCIT coding...`);
+    const utterancesWithRoles = await getUtterances(sessionId);
+    console.log(`✅ [ANALYSIS-STEP-6] Got ${utterancesWithRoles.length} utterances with roles`);
+
+    // STEP 2: Apply PCIT coding to adult utterances
+    console.log(`📊 [ANALYSIS-STEP-7] Preparing PCIT coding prompt...`);
+    const adultSpeakerIds = adultSpeakers.map(a => a.id).join(', ');
+    console.log(`   Adult speakers: ${adultSpeakerIds}`);
+
+    // Load DPICS system prompt, with PDI-specific feedback override appended
+    const dpicsSystemPrompt = loadPrompt('dpicsCoding') + (!isCDI ? `
 
 **PDI SESSION — Feedback Override for Commands:**
 This is a PDI (Parent-Directed Interaction) session. The rules above apply for coding, but the feedback generation strategy for commands is different:
@@ -1092,18 +1147,18 @@ This is a PDI (Parent-Directed Interaction) session. The rules above apply for c
 - **IC (Indirect Command)**: Still undesirable. Coach toward a DC instead (e.g. "Try stating it directly: 'Please put the block down.'"). Do NOT suggest using BD or LP.
 All other feedback rules remain the same.` : '');
 
-  // Prepare utterances data for the prompt
-  const utterancesData = utterancesWithRoles.map((utt, idx) => ({
-    id: idx,
-    role: utt.role,
-    text: utt.text
-  }));
+    // Prepare utterances data for the prompt
+    const utterancesData = utterancesWithRoles.map((utt, idx) => ({
+      id: idx,
+      role: utt.role,
+      text: utt.text
+    }));
 
-  // Create index mapping for later (idx -> utt.id)
-  const idxToUttId = utterancesWithRoles.map(utt => utt.id);
+    // Create index mapping for later (idx -> utt.id)
+    const idxToUttId = utterancesWithRoles.map(utt => utt.id);
 
-  // User prompt
-  const userPrompt = `**Input Format:**
+    // User prompt
+    const userPrompt = `**Input Format:**
 
 You will receive a chronological JSON list of dialogue turns with ${utterancesWithRoles.length} conversations:
 
@@ -1133,89 +1188,92 @@ Do not include markdown or whitespace (minified JSON).
 - Last character of your response MUST be ]
 - Every parent segment MUST have both "code" and "feedback" fields`;
 
-  console.log(`📊 [ANALYSIS-STEP-8] Calling ${AI_PROVIDER} for PCIT coding...`);
-  console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
+    console.log(`📊 [ANALYSIS-STEP-8] Calling ${AI_PROVIDER} for PCIT coding...`);
+    console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
 
-  const codingResults = await llmCall(userPrompt, {
-    maxTokens:    8192,
-    temperature:  0,
-    systemPrompt: dpicsSystemPrompt,
-    output:       'array',
-    label:        'pcit-coding',
-    schema:       SCHEMAS.PCIT_CODING,
-  });
+    codingResults = await llmCall(userPrompt, {
+      maxTokens:    8192,
+      temperature:  0,
+      systemPrompt: dpicsSystemPrompt,
+      output:       'array',
+      label:        'pcit-coding',
+      schema:       SCHEMAS.PCIT_CODING,
+    });
 
-  if (!Array.isArray(codingResults)) {
-    throw new Error('Expected array of coding results');
-  }
+    if (!Array.isArray(codingResults)) {
+      throw new Error('Expected array of coding results');
+    }
 
-  console.log(`✅ [ANALYSIS-STEP-8] Successfully parsed ${codingResults.length} coding results`);
-  const fullResponse = JSON.stringify(codingResults);
+    if (codingResults.length === 0) {
+      throw new PermanentFailureError(
+        'PCIT coding returned empty results',
+        'We were unable to analyze the conversation in your recording. Please try recording again.'
+      );
+    }
 
-  // Build ID-to-tag maps for efficient updates
-  const pcitTagMap = {};
-  const noraTagMap = {};
-  const feedbackMap = {};
+    console.log(`✅ [ANALYSIS-STEP-8] Successfully parsed ${codingResults.length} coding results`);
 
-  for (const result of codingResults) {
-    if (result.id !== undefined && result.code) {
-      const actualUttId = idxToUttId[result.id];
-      if (actualUttId) {
-        pcitTagMap[actualUttId] = result.code;
-        noraTagMap[actualUttId] = DPICS_TO_TAG_MAP[result.code] || result.code;
-        if (result.feedback) {
-          feedbackMap[actualUttId] = result.feedback;
+    // Build ID-to-tag maps for efficient updates
+    const pcitTagMap = {};
+    const noraTagMap = {};
+    const feedbackMap = {};
+
+    for (const result of codingResults) {
+      if (result.id !== undefined && result.code) {
+        const actualUttId = idxToUttId[result.id];
+        if (actualUttId) {
+          pcitTagMap[actualUttId] = result.code;
+          noraTagMap[actualUttId] = DPICS_TO_TAG_MAP[result.code] || result.code;
+          if (result.feedback) {
+            feedbackMap[actualUttId] = result.feedback;
+          }
         }
       }
     }
-  }
 
-  // Update utterances with PCIT tags, Nora tags, and feedback in database
-  await updateUtteranceTags(sessionId, pcitTagMap, noraTagMap, feedbackMap);
+    // Update utterances with PCIT tags, Nora tags, and feedback in database
+    await updateUtteranceTags(sessionId, pcitTagMap, noraTagMap, feedbackMap);
+    console.log(`Updated tags and feedback for ${Object.keys(pcitTagMap).length} utterances`);
 
-  console.log(`Updated tags and feedback for ${Object.keys(pcitTagMap).length} utterances`);
-
-  // Count codes from JSON results
-  const tagCounts = {
-    echo: 0,
-    labeled_praise: 0,
-    unlabeled_praise: 0,
-    praise: 0,
-    narration: 0,
-    direct_command: 0,
-    indirect_command: 0,
-    command: 0,
-    question: 0,
-    criticism: 0,
-    neutral: 0
-  };
-
-  for (const result of codingResults) {
-    const code = result.code;
-    if (code === 'RF' || code === 'RQ') {
-      tagCounts.echo++;
-    } else if (code === 'LP') {
-      tagCounts.labeled_praise++;
-      tagCounts.praise++;
-    } else if (code === 'UP') {
-      tagCounts.unlabeled_praise++;
-    } else if (code === 'BD') {
-      tagCounts.narration++;
-    } else if (code === 'DC') {
-      tagCounts.direct_command++;
-      tagCounts.command++;
-    } else if (code === 'IC') {
-      tagCounts.indirect_command++;
-      tagCounts.command++;
-    } else if (code === 'Q') {
-      tagCounts.question++;
-    } else if (code === 'NTA') {
-      tagCounts.criticism++;
-    } else if (code === 'ID') {
-      tagCounts.neutral++;
-    } else if (code === 'AK') {
-      tagCounts.neutral++;
+    // Count codes from JSON results
+    for (const result of codingResults) {
+      const code = result.code;
+      if (code === 'RF' || code === 'RQ') {
+        tagCounts.echo++;
+      } else if (code === 'LP') {
+        tagCounts.labeled_praise++;
+        tagCounts.praise++;
+      } else if (code === 'UP') {
+        tagCounts.unlabeled_praise++;
+      } else if (code === 'BD') {
+        tagCounts.narration++;
+      } else if (code === 'DC') {
+        tagCounts.direct_command++;
+        tagCounts.command++;
+      } else if (code === 'IC') {
+        tagCounts.indirect_command++;
+        tagCounts.command++;
+      } else if (code === 'Q') {
+        tagCounts.question++;
+      } else if (code === 'NTA') {
+        tagCounts.criticism++;
+      } else if (code === 'ID') {
+        tagCounts.neutral++;
+      } else if (code === 'AK') {
+        tagCounts.neutral++;
+      }
     }
+
+    // Set PCIT coding checkpoint
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        pcitCoding: { adultSpeakers: adultSpeakersForPcit, codingResults, fullResponse: JSON.stringify(codingResults), analyzedAt: new Date().toISOString() },
+        tagCounts,
+        pcitCodingDone: true
+      }
+    });
+    console.log(`✅ [ANALYSIS-STEP-8] PCIT coding checkpoint saved`);
   }
 
   // STEP 9: Child Profiling — parallel developmental (Claude) + coaching (Gemini) calls
@@ -1331,23 +1389,32 @@ Do not include markdown or whitespace (minified JSON).
   // Store PCIT coding, competency analysis, and overall score in database
   console.log(`💾 [DATABASE-UPDATE] Saving competencyAnalysis for session ${sessionId}:`, competencyAnalysis ? 'present' : 'NULL');
 
+  // Evaluate enrichment outcome
+  const hasFeedback  = competencyAnalysis !== null;
+  const hasProfiling = childProfilingResult !== null;
+  const enrichmentStatus =
+    hasFeedback && hasProfiling ? 'COMPLETED' :
+    hasFeedback || hasProfiling ? 'PARTIAL'   : 'FAILED';
+  const enrichmentError =
+    enrichmentStatus !== 'COMPLETED'
+      ? [!hasFeedback && 'competencyAnalysis', !hasProfiling && 'childProfiling'].filter(Boolean).join(', ') + ' failed'
+      : null;
+  if (enrichmentStatus !== 'COMPLETED') {
+    console.warn(`⚠️ [ENRICHMENT] Session ${sessionId.substring(0, 8)} enrichmentStatus=${enrichmentStatus} — ${enrichmentError}`);
+  }
+
   await prisma.session.update({
     where: { id: sessionId },
     data: {
-      pcitCoding: {
-        adultSpeakers,
-        codingResults,
-        fullResponse,
-        analyzedAt: new Date().toISOString()
-      },
-      tagCounts,
       competencyAnalysis,
       overallScore,
       coachingSummary: childProfilingResult?.coachingSummary || null,
       coachingCards: childProfilingResult?.coachingCards
         ? { sections: childProfilingResult.coachingCards, tomorrowGoal: childProfilingResult.tomorrowGoal || null }
         : null,
-      aboutChild: childProfilingResult?.aboutChild || null
+      aboutChild: childProfilingResult?.aboutChild || null,
+      enrichmentStatus,
+      enrichmentError
     }
   });
 
@@ -1412,6 +1479,7 @@ Do not include markdown or whitespace (minified JSON).
 
 module.exports = {
   SessionQualityError,
+  PermanentFailureError,
   analyzePCITCoding,
   generateCDIFeedback,
   generatePDITwoChoicesAnalysis,

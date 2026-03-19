@@ -6,7 +6,6 @@
  */
 require('dotenv').config();
 const prisma = require('../server/services/db.cjs');
-const { transcribeRecording } = require('../server/services/transcriptionService.cjs');
 const { processRecordingWithRetry } = require('../server/services/processingService.cjs');
 
 const SESSION_ID = process.argv[2];
@@ -46,8 +45,11 @@ async function run() {
     data: {
       analysisStatus: 'PENDING',
       transcript: '',
+      transcribedAt: null,
       roleIdentificationJson: null,
+      roleIdDone: false,
       pcitCoding: null,
+      pcitCodingDone: false,
       tagCounts: null,
       competencyAnalysis: null,
       overallScore: null,
@@ -59,32 +61,20 @@ async function run() {
   });
   console.log('✅ Session reset to PENDING');
 
-  // Step 1: Transcription
-  console.log('\n🎤 Step 1: Transcription...');
-  const t1 = Date.now();
-  await transcribeRecording(SESSION_ID, session.userId, session.storagePath, session.durationSeconds);
-  console.log(`✅ Transcription complete (${((Date.now() - t1) / 1000).toFixed(1)}s)`);
-
-  // Update status to PROCESSING
-  await prisma.session.update({
-    where: { id: SESSION_ID },
-    data: { analysisStatus: 'PROCESSING' }
-  });
-
-  // Step 2: Full PCIT analysis (with retry logic)
-  console.log('\n🧠 Step 2: PCIT Analysis (including aboutChild)...');
-  const t2 = Date.now();
-  await processRecordingWithRetry(SESSION_ID, session.userId, 0);
-  console.log(`✅ Analysis complete (${((Date.now() - t2) / 1000).toFixed(1)}s)`);
+  // Full pipeline (transcription + PCIT analysis) with retry logic
+  console.log('\n🧠 Running full pipeline (transcription + analysis)...');
+  const t = Date.now();
+  await processRecordingWithRetry(SESSION_ID, session.userId, session.storagePath, session.durationSeconds, 0);
+  console.log(`✅ Pipeline complete (${((Date.now() - t) / 1000).toFixed(1)}s)`);
 
   // Verify result
   const result = await prisma.session.findUnique({
     where: { id: SESSION_ID },
-    select: { analysisStatus: true, overallScore: true, aboutChild: true }
+    select: { analysisStatus: true, enrichmentStatus: true, overallScore: true, aboutChild: true }
   });
 
   console.log('\n' + '='.repeat(80));
-  console.log(`✅ Done — status: ${result.analysisStatus}, score: ${result.overallScore}`);
+  console.log(`✅ Done — status: ${result.analysisStatus}, enrichment: ${result.enrichmentStatus}, score: ${result.overallScore}`);
   console.log(`   aboutChild items: ${result.aboutChild ? result.aboutChild.length : 0}`);
   if (result.aboutChild && result.aboutChild.length > 0) {
     console.log(`   First item: "${result.aboutChild[0].Title}" — ${result.aboutChild[0].Description}`);

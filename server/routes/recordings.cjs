@@ -12,7 +12,7 @@ const { requireAuth } = require('../middleware/auth.cjs');
 // Import from new service modules
 const { transcribeRecording } = require('../services/transcriptionService.cjs');
 const { processRecordingWithRetry, notifyProcessingFailure, notifyQualityRejection } = require('../services/processingService.cjs');
-const { SessionQualityError } = require('../services/pcitAnalysisService.cjs');
+const { SessionQualityError, PermanentFailureError } = require('../services/pcitAnalysisService.cjs');
 const { getUtterances } = require('../utils/utteranceUtils.cjs');
 
 const router = express.Router();
@@ -131,19 +131,10 @@ function transformDomainsToAboutChild(domains) {
  */
 async function startBackgroundProcessing(sessionId, userId, storagePath, durationSeconds) {
   try {
-    // Run transcription
-    await transcribeRecording(sessionId, userId, storagePath, durationSeconds);
-
-    // Update status to PROCESSING
-    await prisma.session.update({
-      where: { id: sessionId },
-      data: { analysisStatus: 'PROCESSING' }
-    });
-
-    // Process with automatic retry (3 attempts with 0s, 5s, 15s delays)
-    await processRecordingWithRetry(sessionId, userId, 0);
+    // Transcription + analysis with retry (transcription is now inside the retry boundary)
+    await processRecordingWithRetry(sessionId, userId, storagePath, durationSeconds, 0);
   } catch (err) {
-    if (err instanceof SessionQualityError) {
+    if (err instanceof SessionQualityError || err instanceof PermanentFailureError) {
       console.log(`⚠️ [QUALITY-REJECTED] Session ${sessionId.substring(0, 8)} rejected: ${err.userMessage}`);
       await notifyQualityRejection(sessionId, userId, err);
     } else {
@@ -760,7 +751,10 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       childPortfolioInsights: transformCoachingCardsToPortfolioInsights(Array.isArray(coachingData) ? coachingData : null) || session.childPortfolioInsights || null,
       aboutChild: session.aboutChild || null,
       // Milestone celebrations triggered during this session
-      milestoneCelebrations: session.milestoneCelebrations || null
+      milestoneCelebrations: session.milestoneCelebrations || null,
+      // Enrichment status — lets the mobile app show partial-loading states
+      enrichmentStatus: session.enrichmentStatus || null,
+      enrichmentError: session.enrichmentError || null
     });
 
   } catch (error) {

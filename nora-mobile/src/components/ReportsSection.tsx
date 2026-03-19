@@ -171,6 +171,19 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings }) =>
           </View>
         </View>
       )}
+
+      {/* Developmental Milestones locked teaser */}
+      {recordings.length < 5 && (
+        <View style={styles.milestoneLockedCard}>
+          <Text style={styles.milestoneLockedTitle}>Developmental Milestones</Text>
+          <View style={styles.milestoneLockedBadge}>
+            <Text style={styles.milestoneLockedBadgeText}>Available after 5 sessions · {recordings.length}/5 completed</Text>
+          </View>
+          <Text style={styles.milestoneLockedDesc}>
+            Track your child's growth across Language, Cognitive, Social, Emotional, and Connection — compared against their age benchmark.
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -306,5 +319,38 @@ const styles = StyleSheet.create({
     width: 1,
     height: 40,
     backgroundColor: '#E5E7EB',
+  },
+  milestoneLockedCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  milestoneLockedTitle: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 18,
+    color: '#1E2939',
+    marginBottom: 8,
+  },
+  milestoneLockedBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#F5F0FF',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginBottom: 12,
+  },
+  milestoneLockedBadgeText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 13,
+    color: '#8C49D5',
+  },
+  milestoneLockedDesc: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 21,
   },
 });

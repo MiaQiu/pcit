@@ -4,7 +4,8 @@
  */
 const fetch = require('node-fetch');
 const prisma = require('./db.cjs');
-const { analyzePCITCoding, SessionQualityError } = require('./pcitAnalysisService.cjs');
+const { analyzePCITCoding, SessionQualityError, PermanentFailureError } = require('./pcitAnalysisService.cjs');
+const { transcribeRecording } = require('./transcriptionService.cjs');
 const { sendReportReadyNotification, sendPushNotificationToUser, sendMilestonesUnlockedNotification } = require('./pushNotifications.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 
@@ -177,9 +178,11 @@ async function notifyQualityRejection(sessionId, userId, error) {
  * Retries up to 3 times before giving up
  * @param {string} sessionId - Session ID
  * @param {string} userId - User ID
+ * @param {string} storagePath - S3 storage path for the audio file
+ * @param {number} durationSeconds - Recording duration in seconds
  * @param {number} attemptNumber - Current attempt number (0-indexed)
  */
-async function processRecordingWithRetry(sessionId, userId, attemptNumber = 0) {
+async function processRecordingWithRetry(sessionId, userId, storagePath, durationSeconds, attemptNumber = 0) {
   const maxAttempts = 3;
   const retryDelays = [0, 5000, 15000]; // 0s, 5s, 15s
 
@@ -197,6 +200,25 @@ async function processRecordingWithRetry(sessionId, userId, attemptNumber = 0) {
       });
     }
 
+    // Transcription — skip if already done (transcribedAt checkpoint)
+    const sessionState = await prisma.session.findUnique({
+      where: { id: sessionId },
+      select: { transcribedAt: true }
+    });
+    if (!sessionState.transcribedAt) {
+      console.log(`🎤 [PROCESSING] Session ${sessionId.substring(0, 8)} - Starting transcription...`);
+      await transcribeRecording(sessionId, userId, storagePath, durationSeconds);
+      console.log(`✅ [PROCESSING] Session ${sessionId.substring(0, 8)} - Transcription complete`);
+    } else {
+      console.log(`[PROCESSING] Session ${sessionId.substring(0, 8)} - Skipping transcription — already completed`);
+    }
+
+    // Update status to PROCESSING
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: { analysisStatus: 'PROCESSING' }
+    });
+
     // Run the actual processing (PCIT analysis)
     await analyzePCITCoding(sessionId, userId);
 
@@ -208,6 +230,17 @@ async function processRecordingWithRetry(sessionId, userId, attemptNumber = 0) {
       where: { id: sessionId },
       data: { analysisStatus: 'COMPLETED' }
     });
+
+    // Log enrichment outcome (non-blocking)
+    try {
+      const enrichmentCheck = await prisma.session.findUnique({
+        where: { id: sessionId },
+        select: { enrichmentStatus: true, enrichmentError: true }
+      });
+      if (enrichmentCheck?.enrichmentStatus !== 'COMPLETED') {
+        console.warn(`⚠️ [ENRICHMENT-INCOMPLETE] Session ${sessionId.substring(0, 8)} enrichmentStatus=${enrichmentCheck?.enrichmentStatus} — ${enrichmentCheck?.enrichmentError}`);
+      }
+    } catch (e) { /* non-critical */ }
 
     // Send push notification to user that report is ready
     console.log(`📱 [PUSH-NOTIFICATION] Sending report ready notification for session ${sessionId.substring(0, 8)}`);
@@ -223,35 +256,12 @@ async function processRecordingWithRetry(sessionId, userId, attemptNumber = 0) {
       // Don't fail the whole process if push notification fails
     }
 
-    // Check if this is the user's 5th completed session — schedule milestones unlock notification in 30 mins
-    try {
-      const completedCount = await prisma.session.count({
-        where: { userId, analysisStatus: 'COMPLETED' }
-      });
-      if (completedCount === 5) {
-        const THIRTY_MINUTES = 30 * 60 * 1000;
-        console.log(`🎯 [MILESTONES-UNLOCKED] User ${userId.substring(0, 8)} just completed session 5 — scheduling unlock notification in 30 mins`);
-        setTimeout(async () => {
-          try {
-            const user = await prisma.user.findUnique({ where: { id: userId }, select: { childName: true } });
-            const childName = user?.childName ? decryptSensitiveData(user.childName) : null;
-            await sendMilestonesUnlockedNotification(userId, childName);
-            console.log(`✅ [MILESTONES-UNLOCKED] Unlock notification sent for user ${userId.substring(0, 8)}`);
-          } catch (err) {
-            console.error(`❌ [MILESTONES-UNLOCKED] Error sending delayed unlock notification:`, err);
-          }
-        }, THIRTY_MINUTES);
-      }
-    } catch (milestoneNotifError) {
-      console.error(`❌ [MILESTONES-UNLOCKED] Error scheduling milestones unlock notification:`, milestoneNotifError);
-      // Non-critical — don't fail the process
-    }
 
   } catch (error) {
     console.error(`❌ [PROCESSING-ERROR] Session ${sessionId.substring(0, 8)} - Attempt ${attemptNumber + 1} failed:`, error.message);
 
-    // Quality rejections are not retryable — rethrow immediately
-    if (error instanceof SessionQualityError) {
+    // Quality rejections and permanent failures are not retryable — rethrow immediately
+    if (error instanceof SessionQualityError || error instanceof PermanentFailureError) {
       throw error;
     }
 
@@ -264,7 +274,7 @@ async function processRecordingWithRetry(sessionId, userId, attemptNumber = 0) {
       await new Promise(resolve => setTimeout(resolve, delay));
 
       // Retry recursively
-      return processRecordingWithRetry(sessionId, userId, attemptNumber + 1);
+      return processRecordingWithRetry(sessionId, userId, storagePath, durationSeconds, attemptNumber + 1);
     }
 
     // All retries exhausted - throw error to be caught by caller

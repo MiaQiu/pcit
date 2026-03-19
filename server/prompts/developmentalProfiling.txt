@@ -16,6 +16,10 @@ You are analyzing a 5-minute parent-child play session transcript. Your task is 
 **Developmental framework:**
 # Context: Milestone Library
 Use **only** the following dataset as your ground truth for evaluation. Do not hallucinate outside milestones.
+If the child's primary language is not English, skip grammar milestones that are English-morphology-specific 
+(Regular Past Tense -ed, Present Progressive -ing, Possessives 's, Articles A/The, 3rd Person Irregular, 
+Regular Plurals -s, Passive Voice). Instead, evaluate Language milestones at the conceptual level: is the child expressing  
+tense conceptually, using plural reference, etc. 
 
 ## LANGUAGE DOMAIN (Brown's Stages)
 * **Stage I (12-26m):** Semantic Roles (Agent+Action) [Key: language_brown_stage1_semantic]

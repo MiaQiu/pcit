@@ -1,5 +1,5 @@
 /**
- * Rerun PCIT analysis for a session (skips transcription, uses existing transcript)
+ * Rerun PCIT analysis for a session (skips transcription if already done, uses existing transcript)
  * Usage: node scripts/rerun-analysis.cjs <sessionId>
  */
 require('dotenv').config();
@@ -15,7 +15,7 @@ if (!SESSION_ID) {
 async function run() {
   const session = await prisma.session.findUnique({
     where: { id: SESSION_ID },
-    select: { id: true, userId: true, analysisStatus: true, transcript: true }
+    select: { id: true, userId: true, storagePath: true, durationSeconds: true, analysisStatus: true, transcript: true, transcribedAt: true }
   });
 
   if (!session) {
@@ -26,20 +26,38 @@ async function run() {
   console.log(`Session: ${SESSION_ID}`);
   console.log(`Status: ${session.analysisStatus}`);
   console.log(`Transcript length: ${session.transcript?.length || 0} chars`);
+  console.log(`transcribedAt: ${session.transcribedAt || 'not set'}`);
 
   if (!session.transcript) {
-    console.error('No transcript found — run reprocess-session.cjs instead');
+    console.error('No transcript found — run reprocess-session.cjs instead to re-transcribe from audio');
     process.exit(1);
   }
 
-  // Reset to PROCESSING so it can be re-analyzed
+  if (!session.transcribedAt) {
+    console.warn('⚠️  transcribedAt is not set — processRecordingWithRetry will attempt transcription again.');
+    console.warn('   If you want to skip transcription, set transcribedAt manually or use reprocess-session.cjs.');
+  }
+
+  // Reset analysis state (keep transcript and transcribedAt intact to skip re-transcription)
   await prisma.session.update({
     where: { id: SESSION_ID },
-    data: { analysisStatus: 'PROCESSING' }
+    data: {
+      analysisStatus: 'PENDING',
+      roleIdentificationJson: null,
+      roleIdDone: false,
+      pcitCoding: null,
+      pcitCodingDone: false,
+      tagCounts: null,
+      competencyAnalysis: null,
+      overallScore: null,
+      coachingSummary: null,
+      coachingCards: null,
+      aboutChild: null,
+    }
   });
 
   console.log('\nRunning PCIT analysis...');
-  await processRecordingWithRetry(SESSION_ID, session.userId, 0);
+  await processRecordingWithRetry(SESSION_ID, session.userId, session.storagePath, session.durationSeconds, 0);
   console.log('\nDone.');
 
   await prisma.$disconnect();
