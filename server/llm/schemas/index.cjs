@@ -141,15 +141,37 @@ const DEV_PROFILING = {
                   required: ['insight', 'evidence'],
                 },
               },
+              detected_milestone_keys: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    milestone_key:    { type: 'string' },
+                    evidence_summary: { type: 'string' },
+                  },
+                  required: ['milestone_key', 'evidence_summary'],
+                },
+              },
             },
-            required: ['category', 'framework', 'developmental_status', 'current_level', 'benchmark_for_age', 'detailed_observations'],
+            required: ['category', 'framework', 'developmental_status', 'current_level', 'benchmark_for_age', 'detailed_observations', 'detected_milestone_keys'],
           },
         },
       },
       required: ['summary', 'domains'],
     },
+    baseline_achieved: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          milestone_key:    { type: 'string' },
+          evidence_summary: { type: 'string' },
+        },
+        required: ['milestone_key', 'evidence_summary'],
+      },
+    },
   },
-  required: ['session_metadata', 'developmental_observation'],
+  required: ['session_metadata', 'developmental_observation', 'baseline_achieved'],
 };
 
 // ── coaching-format ───────────────────────────────────────────────────────────

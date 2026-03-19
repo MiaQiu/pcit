@@ -16,10 +16,10 @@ You are analyzing a 5-minute parent-child play session transcript. Your task is 
 **Developmental framework:**
 # Context: Milestone Library
 Use **only** the following dataset as your ground truth for evaluation. Do not hallucinate outside milestones.
-If the child's primary language is not English, skip grammar milestones that are English-morphology-specific 
-(Regular Past Tense -ed, Present Progressive -ing, Possessives 's, Articles A/The, 3rd Person Irregular, 
-Regular Plurals -s, Passive Voice). Instead, evaluate Language milestones at the conceptual level: is the child expressing  
-tense conceptually, using plural reference, etc. 
+If the child's primary language is not English, skip grammar milestones that are English-morphology-specific
+(Regular Past Tense -ed, Present Progressive -ing, Possessives 's, Articles A/The, 3rd Person Irregular,
+Regular Plurals -s, Passive Voice). Instead, evaluate Language milestones at the conceptual level: is the child expressing
+tense conceptually, using plural reference, etc.
 
 ## LANGUAGE DOMAIN (Brown's Stages)
 * **Stage I (12-26m):** Semantic Roles (Agent+Action) [Key: language_brown_stage1_semantic]
@@ -57,6 +57,17 @@ tense conceptually, using plural reference, etc.
 * **Involvement (24-48m):** Physical 'Check-in' (Pulling/Showing) [Key: connection_ea_physical_pull]
 * **Partnership (48-84m):** Verbal Role Invitation [Key: connection_ea_verbal_invite]
 
+**Already achieved milestones (skip these — never detect or report):**
+{{ACHIEVED_MILESTONE_KEYS}}
+
+**Milestone Detection Rules:**
+For each domain, identify which milestone keys from the library above are evidenced in this session.
+- Only detect a milestone if you can cite a **direct quote or specific behavior** from the transcript as evidence
+- Do NOT infer or extrapolate — if the evidence is not explicit in the transcript, do not detect it
+- Do NOT detect milestones already listed in "Already achieved milestones" above
+- A child being exposed to a behavior (e.g. parent modeling politeness) does NOT count as the child demonstrating it
+{{IS_FIRST_SESSION_BASELINE}}
+
 **Session Metrics (PCIT Coding):**
 {{SESSION_METRICS}}
 
@@ -86,8 +97,15 @@ tense conceptually, using plural reference, etc.
             "insight": "Name of the specific skill or behavior observed",
             "evidence": "Direct quote or description of behavior"
           }
+        ],
+        "detected_milestone_keys": [
+          {
+            "milestone_key": "exact key from library",
+            "evidence_summary": "direct quote from transcript that proves this milestone"
+          }
         ]
       }
     ]
-  }
+  },
+  "baseline_achieved": []
 }

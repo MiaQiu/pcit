@@ -387,7 +387,7 @@ function formatUtterancesForPsychologist(utterances) {
  * @returns {Object} Template variables object
  */
 function buildProfilingVariables(childInfo, tagCounts, utterances) {
-  const { name, ageMonths, gender, clinicalPriority, isFirstSession, durationSeconds } = childInfo;
+  const { name, ageMonths, gender, clinicalPriority, isFirstSession, durationSeconds, achievedMilestoneKeys } = childInfo;
   const transcript = formatUtterancesForPsychologist(utterances);
 
   const formatLevel = (level) => level ? level.replace(/_/g, ' ').toLowerCase() : 'none';
@@ -455,7 +455,18 @@ function buildProfilingVariables(childInfo, tagCounts, utterances) {
     TRANSCRIPT: transcript,
     FIRST_SESSION_NOTE: isFirstSession
       ? 'please note, This is the first session the parent has with the parent app Nora. for first session, it is to hook user in, setting expectations that we are going to be very helpful to them. For us, the primary goal of this session is to get user excited about emotional massage and the discipline coaching (which will be available once their emotional bank account is ready) and committed to making daily massage session as their priority.'
-      : ''
+      : '',
+    ACHIEVED_MILESTONE_KEYS: achievedMilestoneKeys && achievedMilestoneKeys.length > 0
+      ? JSON.stringify(achievedMilestoneKeys)
+      : '[] (none yet)',
+    IS_FIRST_SESSION_BASELINE: isFirstSession
+      ? `FIRST SESSION — BASELINE ASSESSMENT:
+This is the child's first profiling session. In addition to detecting emerging milestones in "detected_milestone_keys",
+also identify milestones the child has CLEARLY ALREADY MASTERED based on age and transcript evidence.
+- Only include in "baseline_achieved" if the child's age is at or past the typical mastery age AND the transcript shows clear evidence
+- These will be marked directly as ACHIEVED (not EMERGING)
+Return these in the top-level "baseline_achieved" array.`
+      : 'This is NOT the first session. Leave "baseline_achieved" as an empty array [].'
   };
 }
 
@@ -479,10 +490,11 @@ async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts =
 
     const result = {
       developmentalObservation: parsed.developmental_observation || null,
-      metadata: parsed.session_metadata || null
+      metadata: parsed.session_metadata || null,
+      baselineAchieved: parsed.baseline_achieved || []
     };
 
-    console.log(`✅ [DEV-PROFILING] Response parsed — ${result.developmentalObservation?.domains?.length || 0} domains`);
+    console.log(`✅ [DEV-PROFILING] Response parsed — ${result.developmentalObservation?.domains?.length || 0} domains, ${result.baselineAchieved.length} baseline achieved`);
     return result;
   } catch (error) {
     console.error('❌ [DEV-PROFILING] Error:', error.message);
@@ -1282,16 +1294,25 @@ Do not include markdown or whitespace (minified JSON).
   try {
     const utterancesForProfiling = await getUtterances(sessionId);
     const childSpeaker = getChildSpeaker(roleIdentificationJson);
-    const priorCompletedCount = await prisma.session.count({
-      where: { userId, analysisStatus: 'COMPLETED' }
-    });
+    const [priorCompletedCount, existingChildMilestones] = await Promise.all([
+      prisma.session.count({ where: { userId, analysisStatus: 'COMPLETED' } }),
+      child ? prisma.childMilestone.findMany({
+        where: { childId: child.id },
+        include: { MilestoneLibrary: { select: { key: true } } }
+      }) : Promise.resolve([])
+    ]);
+    const achievedMilestoneKeys = existingChildMilestones
+      .filter(m => m.status === 'ACHIEVED')
+      .map(m => m.MilestoneLibrary.key);
+    const isFirstSession = priorCompletedCount === 0;
     const childInfoForProfiling = {
       name: childName,
       ageMonths: childAgeMonths,
       gender: childGender,
       clinicalPriority,
-      isFirstSession: priorCompletedCount === 0,
-      durationSeconds: session.durationSeconds || null
+      isFirstSession,
+      durationSeconds: session.durationSeconds || null,
+      achievedMilestoneKeys
     };
 
     const [profilingSettled, coachingSettled, aboutChildSettled] = await Promise.allSettled([
@@ -1319,6 +1340,7 @@ Do not include markdown or whitespace (minified JSON).
       childProfilingResult = {
         developmentalObservation: profilingResult?.developmentalObservation || null,
         metadata: profilingResult?.metadata || null,
+        baselineAchieved: profilingResult?.baselineAchieved || [],
         coachingSummary: coachingResult?.coachingSummary || null,
         coachingCards: coachingResult?.coachingCards || null,
         tomorrowGoal: coachingResult?.tomorrowGoal || null,
@@ -1440,10 +1462,12 @@ Do not include markdown or whitespace (minified JSON).
       });
       console.log(`✅ [DATABASE-UPDATE] ChildProfiling record upserted for session ${sessionId}`);
 
-      // STEP 10: Milestone Detection (non-blocking)
+      // STEP 10: Milestone Detection (non-blocking) — uses keys detected by Prompt 1
       try {
         const { detectAndUpdateMilestones } = require('./milestoneDetectionService.cjs');
-        const milestoneResult = await detectAndUpdateMilestones(child.id, sessionId);
+        const detectedMilestones = (childProfilingResult.developmentalObservation.domains || [])
+          .flatMap(d => d.detected_milestone_keys || []);
+        const milestoneResult = await detectAndUpdateMilestones(child.id, detectedMilestones, childProfilingResult.baselineAchieved);
         if (milestoneResult) {
           console.log(`✅ [ANALYSIS-STEP-10] Milestones: ${milestoneResult.newEmerging} emerging, ${milestoneResult.newAchieved} achieved`);
 
