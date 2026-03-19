@@ -22,12 +22,28 @@ The Vite dev server proxies `/api` to `localhost:3001` (local backend).
 
 ## Deploying
 
+### Frontend (admin SPA)
+
 ```bash
 # From repo root
 npx vercel --prod --scope qiuy0002-gmailcoms-projects --yes --archive=tgz
 ```
 
 This builds `admin/` and deploys to Vercel. The live site at `admin.hinora.co` updates immediately.
+
+### Backend + DB migrations
+
+```bash
+# 1. With dev DB tunnel running, create and apply migration to dev
+npx prisma migrate dev --name <description>
+
+# 2. Deploy backend to prod (migration auto-applies on container startup)
+./docker_deploy_prod.sh
+```
+
+`prisma migrate deploy` runs automatically in `entrypoint.sh` on every container startup — it applies any committed migration files not yet applied to the connected DB.
+
+**Never use `prisma db push`** — it applies schema changes directly to the DB without creating a migration file, causing drift between dev and prod.
 
 ## Architecture
 
@@ -89,13 +105,22 @@ All require admin auth.
 | `PUT` | `/api/admin/keywords/:id` | Update a keyword |
 | `DELETE` | `/api/admin/keywords/:id` | Delete a keyword |
 
+### Users
+
+All require admin auth.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/admin/users` | List all users with name, email, joined date, last active, session count, tag |
+| `PUT` | `/api/admin/users/:id/tag` | Update user tag (`user` or `tester`) |
+| `GET` | `/api/admin/users/:id/profile` | User's completed lessons and sessions |
+
 ### Notifications
 
 All require admin auth.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/admin/users` | List users with push token status and session count |
 | `POST` | `/api/admin/notifications/send` | Send push notification to selected users |
 
 ### Sync to Prod
@@ -211,6 +236,20 @@ The body text textarea supports:
 - Search box filters in real-time
 - Inline create and edit forms
 - Delete with confirmation
+
+### Users (`/users`)
+
+- Table of all registered users: user ID (clickable), name, email, joined date, last active date, session count, tag
+- Click any column header to sort (toggles asc/desc)
+- **Tag** column: inline dropdown to toggle between `user` and `tester` — persisted immediately via `PUT /api/admin/users/:id/tag`
+- Click a user ID to open the user detail page
+
+### User Detail (`/users/:id`)
+
+- Shows the user's name, email, and ID
+- Two side-by-side tables:
+  - **Lessons completed** — module, lesson title, completed date
+  - **Sessions** — session ID, mode, status, date
 
 ### Notifications (`/notifications`)
 
