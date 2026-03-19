@@ -9,6 +9,8 @@ import SessionsPage from './pages/SessionsPage';
 import SettingsPage from './pages/SettingsPage';
 import UserWeeklyReportsPage from './pages/UserWeeklyReportsPage';
 import KeywordsPage from './pages/KeywordsPage';
+import UsersPage from './pages/UsersPage';
+import UserDetailPage from './pages/UserDetailPage';
 import AdminLayout from './components/layout/AdminLayout';
 
 export default function App() {
@@ -29,6 +31,8 @@ export default function App() {
           <Route path="keywords" element={<KeywordsPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="sessions" element={<SessionsPage />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="users/:userId" element={<UserDetailPage />} />
           <Route path="users/:userId/weekly-reports" element={<UserWeeklyReportsPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>

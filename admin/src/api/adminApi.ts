@@ -80,11 +80,29 @@ export interface ModuleSummary {
 
 export interface UserSummary {
   id: string;
+  name: string;
+  email: string;
   hasPushToken: boolean;
   pushTokenUpdatedAt: string | null;
   createdAt: string;
+  lastActiveAt: string | null;
   sessionCount: number;
   developmentalVisible: boolean;
+}
+
+export interface UserProfile {
+  lessons: Array<{
+    lessonId: string;
+    title: string;
+    module: string | null;
+    completedAt: string | null;
+  }>;
+  sessions: Array<{
+    id: string;
+    mode: string;
+    status: string;
+    createdAt: string;
+  }>;
 }
 
 // ---- Auth ----
@@ -354,6 +372,10 @@ export async function updateReportVisibility(
 export async function getUsers(opts?: ApiEnvOpts): Promise<UserSummary[]> {
   const data = await apiFetchEnv<{ users: UserSummary[] }>('/api/admin/users', {}, opts);
   return data.users;
+}
+
+export async function getUserProfile(userId: string, opts?: ApiEnvOpts): Promise<UserProfile> {
+  return apiFetchEnv<UserProfile>(`/api/admin/users/${userId}/profile`, {}, opts);
 }
 
 export interface NotificationResult {

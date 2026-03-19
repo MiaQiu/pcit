@@ -685,6 +685,20 @@ body {
   color: var(--text-light);
 }
 
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+  font-family: inherit;
+}
+.link-btn:hover {
+  color: var(--primary-dark);
+}
+
 .row-disabled {
   opacity: 0.5;
 }

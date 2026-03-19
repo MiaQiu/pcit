@@ -638,23 +638,32 @@ router.get('/users', requireAdminAuth, async (req, res) => {
     const users = await prisma.user.findMany({
       select: {
         id: true,
+        name: true,
+        email: true,
         pushToken: true,
         pushTokenUpdatedAt: true,
         createdAt: true,
+        lastSessionDate: true,
         developmentalVisible: true,
         _count: { select: { Session: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
 
-    const formatted = users.map(u => ({
-      id: u.id,
-      hasPushToken: !!u.pushToken,
-      pushTokenUpdatedAt: u.pushTokenUpdatedAt,
-      createdAt: u.createdAt,
-      sessionCount: u._count.Session,
-      developmentalVisible: u.developmentalVisible
-    }));
+    const formatted = users.map(u => {
+      const decrypted = decryptUserData(u);
+      return {
+        id: u.id,
+        name: decrypted.name,
+        email: decrypted.email,
+        hasPushToken: !!u.pushToken,
+        pushTokenUpdatedAt: u.pushTokenUpdatedAt,
+        createdAt: u.createdAt,
+        lastActiveAt: u.lastSessionDate,
+        sessionCount: u._count.Session,
+        developmentalVisible: u.developmentalVisible,
+      };
+    });
 
     res.json({ users: formatted });
   } catch (error) {
@@ -704,6 +713,59 @@ router.post('/notifications/send', requireAdminAuth, async (req, res) => {
   } catch (error) {
     console.error('Admin send notifications error:', error);
     res.status(500).json({ error: 'Failed to send notifications' });
+  }
+});
+
+// ============================================================================
+// USER PROFILE ENDPOINT
+// ============================================================================
+
+/**
+ * GET /api/admin/users/:id/profile
+ * Returns lesson completions and sessions for a specific user
+ */
+router.get('/users/:id/profile', requireAdminAuth, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [lessonProgress, sessions] = await Promise.all([
+      prisma.userLessonProgress.findMany({
+        where: { userId: id, status: 'COMPLETED' },
+        select: {
+          lessonId: true,
+          completedAt: true,
+          Lesson: { select: { title: true, module: true } },
+        },
+        orderBy: { completedAt: 'desc' },
+      }),
+      prisma.session.findMany({
+        where: { userId: id },
+        select: {
+          id: true,
+          mode: true,
+          analysisStatus: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    res.json({
+      lessons: lessonProgress.map(p => ({
+        lessonId: p.lessonId,
+        title: p.Lesson?.title ?? p.lessonId,
+        module: p.Lesson?.module ?? null,
+        completedAt: p.completedAt,
+      })),
+      sessions: sessions.map(s => ({
+        id: s.id,
+        mode: s.mode,
+        status: s.analysisStatus,
+        createdAt: s.createdAt,
+      })),
+    });
+  } catch (error) {
+    console.error('Admin get user profile error:', error);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
   }
 });
 
