@@ -1,0 +1,61 @@
+const IS_DEVRUNNER = process.env.APP_VARIANT === 'devrunner';
+
+module.exports = {
+  expo: {
+    name: IS_DEVRUNNER ? 'Nora (Dev)' : 'Nora',
+    slug: 'nora-mobile',
+    version: '1.0.3',
+    main: 'index.ts',
+    orientation: 'portrait',
+    icon: './assets/icon.png',
+    userInterfaceStyle: 'light',
+    newArchEnabled: true,
+    scheme: IS_DEVRUNNER ? 'nora-dev' : 'nora',
+    splash: {
+      image: './assets/splash_icon_dino_small.png',
+      resizeMode: 'contain',
+      backgroundColor: '#ffffff',
+    },
+    ios: {
+      supportsTablet: true,
+      bundleIdentifier: IS_DEVRUNNER
+        ? 'com.chromamind.nora.devrunner'
+        : 'com.chromamind.nora',
+      googleServicesFile: './GoogleService-Info.plist',
+      infoPlist: {
+        UIBackgroundModes: ['audio'],
+        NSUserNotificationsUsageDescription:
+          'Nora sends you helpful reminders to practice and learn, and notifies you when your session reports are ready.',
+      },
+      buildNumber: '47',
+    },
+    android: {
+      adaptiveIcon: {
+        foregroundImage: './assets/adaptive-icon.png',
+        backgroundColor: '#ffffff',
+      },
+      edgeToEdgeEnabled: true,
+      predictiveBackGestureEnabled: false,
+      package: IS_DEVRUNNER
+        ? 'com.chromamind.nora.devrunner'
+        : 'com.chromamind.nora',
+    },
+    web: {
+      favicon: './assets/favicon.png',
+    },
+    plugins: [
+      'expo-secure-store',
+      'expo-font',
+      'expo-notifications',
+      './plugins/withAudioSessionManager.js',
+      './plugins/withModularHeaders.js',
+      '@react-native-firebase/app',
+    ],
+    extra: {
+      eas: {
+        projectId: 'a85b5e9f-f4c9-4650-a58f-16c3c45020c4',
+      },
+    },
+    owner: 'chromamind',
+  },
+};
