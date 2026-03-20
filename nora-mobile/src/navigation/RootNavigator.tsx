@@ -30,7 +30,7 @@ import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
 import { User } from '@nora/core';
 
-const APP_VERSION = '1.0.3';
+const APP_VERSION: string = require('../../app.json').expo.version;
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 function isVersionBelow(current: string, minimum: string): boolean {
@@ -109,7 +109,7 @@ export const RootNavigator: React.FC = () => {
 
       // Check minimum required version before anything else
       try {
-        const res = await fetch(`${API_URL}/app/version`);
+        const res = await fetch(`${API_URL}/api/config/app-version`);
         if (res.ok) {
           const { minRequiredVersion } = await res.json();
           if (minRequiredVersion && isVersionBelow(APP_VERSION, minRequiredVersion)) {

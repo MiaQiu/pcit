@@ -168,7 +168,39 @@ Auto-deployment is enabled — pushing a new image to ECR also triggers a deploy
 
 ### Mobile (iOS)
 
-Full build sequence (including nora-core):
+#### Three-environment device setup
+
+One physical device runs all three environments simultaneously via three permanent app installs:
+
+| App | Bundle ID | Backend | Purpose |
+|---|---|---|---|
+| Expo Dev Client | `com.chromamind.nora` (dev) | Local server (`192.168.x.x:3001`) | Latest app + latest backend |
+| **Nora (Dev)** — DevRunner build | `com.chromamind.nora.devrunner` | Dev AppRunner (`p2tgddmyxt.us-east-1.awsapprunner.com`) | Old app (prod baseline) + new backend |
+| TestFlight | `com.chromamind.nora` | Prod AppRunner (`wpwpawhz29.ap-southeast-1.awsapprunner.com`) | Production |
+
+The **DevRunner build** is a frozen snapshot of the prod app version, built from the `devrunner-baseline` git branch. It installs alongside TestFlight as a separate icon ("Nora (Dev)") due to the different bundle ID. Rebuild it only when intentionally advancing the old-app baseline.
+
+> TestFlight and the DevRunner build cannot coexist on the same device (same bundle ID). Use a second device for TestFlight, or use the iOS Simulator for production testing.
+
+#### Building the DevRunner app
+
+```bash
+# Switch to the frozen baseline branch
+git checkout devrunner-baseline
+
+# Build and distribute internally via EAS
+cd nora-mobile && eas build --profile devrunner --platform ios
+```
+
+Install via the EAS install link. Then return to main:
+
+```bash
+git checkout main
+```
+
+The `devrunner-baseline` branch is tagged `prod-v1.0.3` (commit `00d3d31`) — the exact source of the current App Store build (v1.0.3, build 47, shipped Mar 10 2026). Update the branch and tag when advancing the baseline.
+
+#### Full build sequence (including nora-core)
 
 ```bash
 # 1. Build nora-core

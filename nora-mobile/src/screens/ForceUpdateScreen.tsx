@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Linking, Image } from 'react-native';
 
 const IOS_STORE_URL = process.env.EXPO_PUBLIC_IOS_STORE_URL || '';
 const ANDROID_STORE_URL = process.env.EXPO_PUBLIC_ANDROID_STORE_URL || '';
@@ -14,7 +14,7 @@ export const ForceUpdateScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.emoji}>🔄</Text>
+      <Image source={require('../../assets/splash_icon_dino_small.png')} style={styles.dragon} />
       <Text style={styles.title}>Update Required</Text>
       <Text style={styles.message}>
         A new version of Nora is available. Please update to continue using the app.
@@ -30,13 +30,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    //justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 40,
   },
-  emoji: {
-    fontSize: 64,
-    marginBottom: 24,
+  dragon: {
+    width: 660,
+    height: 660,
+    resizeMode: 'contain',
+    marginBottom: -200,
   },
   title: {
     fontSize: 24,

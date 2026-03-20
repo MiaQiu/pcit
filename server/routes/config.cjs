@@ -8,6 +8,15 @@ const router = express.Router();
 const DEFAULT_REPORT_VISIBILITY = { daily: false, weekly: false, monthly: false };
 
 /**
+ * GET /api/config/app-version
+ * Returns the minimum required app version. No auth required.
+ * Bump minRequiredVersion to force users on older versions to update.
+ */
+router.get('/app-version', (req, res) => {
+  res.json({ minRequiredVersion: '1.0.3' });
+});
+
+/**
  * GET /api/config/report-visibility
  * Returns report visibility settings for mobile app
  */
