@@ -18,8 +18,7 @@
         "EXPO_PUBLIC_API_URL": "https://p2tgddmyxt.us-east-1.awsapprunner.com"
       },
       "ios": {
-        "simulator": false,
-        "bundleIdentifier": "com.chromamind.nora.devrunner"
+        "simulator": false
       }
     },
     "preview": {
