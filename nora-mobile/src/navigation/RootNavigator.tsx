@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import * as userStorage from '../lib/userStorage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { ForceUpdateScreen } from '../screens/ForceUpdateScreen';
 import { useNavigation } from '@react-navigation/native';
 import Purchases from 'react-native-purchases';
 import { TabNavigator } from './TabNavigator';
@@ -29,6 +30,18 @@ import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
 import { User } from '@nora/core';
 
+const APP_VERSION = '1.0.3';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+
+function isVersionBelow(current: string, minimum: string): boolean {
+  const parse = (v: string) => v.split('.').map(Number);
+  const [cMaj, cMin, cPat] = parse(current);
+  const [mMaj, mMin, mPat] = parse(minimum);
+  if (cMaj !== mMaj) return cMaj < mMaj;
+  if (cMin !== mMin) return cMin < mMin;
+  return cPat < mPat;
+}
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
@@ -38,6 +51,7 @@ export const RootNavigator: React.FC = () => {
   const [onboardingStep, setOnboardingStep] = useState<string | null>(null);
   const [resumeUserData, setResumeUserData] = useState<User | null>(null);
   const [hasCheckError, setHasCheckError] = useState(false);
+  const [updateRequired, setUpdateRequired] = useState(false);
   const navigationRef = useRef<any>(null);
 
   // Handle session expiration
@@ -92,6 +106,23 @@ export const RootNavigator: React.FC = () => {
   const checkAuthStatus = async () => {
     try {
       console.log('[Auth] Starting auth check...');
+
+      // Check minimum required version before anything else
+      try {
+        const res = await fetch(`${API_URL}/app/version`);
+        if (res.ok) {
+          const { minRequiredVersion } = await res.json();
+          if (minRequiredVersion && isVersionBelow(APP_VERSION, minRequiredVersion)) {
+            console.log(`[Version] Update required: current=${APP_VERSION} min=${minRequiredVersion}`);
+            setUpdateRequired(true);
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (versionError) {
+        // Non-blocking: if the version check fails, let the user in
+        console.warn('[Version] Version check failed, skipping:', versionError);
+      }
 
       // Initialize auth service (loads tokens from storage - FAST, local only)
       await authService.initialize();
@@ -199,6 +230,10 @@ export const RootNavigator: React.FC = () => {
         <ActivityIndicator size="large" color="#8C49D5" />
       </View>
     );
+  }
+
+  if (updateRequired) {
+    return <ForceUpdateScreen />;
   }
 
   if (hasCheckError) {
