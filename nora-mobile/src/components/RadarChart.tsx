@@ -14,6 +14,7 @@ interface RadarChartProps {
   data: DevelopmentalProgress;
   childName?: string;
   onDomainPress?: (domain: DomainType) => void;
+  showTitle?: boolean;
 }
 
 const DOMAINS: DomainType[] = ['Language', 'Cognitive', 'Social', 'Emotional', 'Connection'];
@@ -85,7 +86,7 @@ const getLabelPosition = (index: number): { x: number; y: number; textAnchor: 's
   return { ...pos, textAnchor };
 };
 
-export const RadarChart: React.FC<RadarChartProps> = ({ data, childName, onDomainPress }) => {
+export const RadarChart: React.FC<RadarChartProps> = ({ data, childName, onDomainPress, showTitle = true }) => {
   // Calculate normalized values for each domain
   // 100% = all milestones in that domain (total)
   // Child's value = (achieved + 0.5 * emerging) / total
@@ -131,7 +132,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, childName, onDomai
 
   return (
     <View style={styles.outerContainer}>
-      <Text style={styles.title}>{childName ? `${childName}'s ` : ''}Developmental Milestones</Text>
+      {showTitle && <Text style={styles.title}>{childName ? `${childName}'s ` : ''}Developmental Milestones</Text>}
       <View style={styles.container}>
         <View style={styles.chartWrapper}>
         <Svg width={CHART_SIZE} height={CHART_SIZE}>
