@@ -206,7 +206,8 @@ const PDICoachCorner: React.FC<{
   summary?: string | null;
   recordingId: string;
   navigation: any;
-}> = ({ pdiSkills, commandSequences, summary, recordingId, navigation }) => {
+  tomorrowGoal?: string | null;
+}> = ({ pdiSkills, commandSequences, summary, recordingId, navigation, tomorrowGoal }) => {
   return (
     <View>
       <Text style={styles.cardTitle}>Coach's Corner</Text>
@@ -278,6 +279,9 @@ const PDICoachCorner: React.FC<{
           </>
         )}
 
+        {tomorrowGoal && (
+          <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Tomorrow's Goal: </Text>{tomorrowGoal}</Text>
+        )}
         <TouchableOpacity
           style={styles.cardLinkButton}
           onPress={() => navigation.navigate('Transcript', { recordingId })}
@@ -660,7 +664,7 @@ export const ReportScreen: React.FC = () => {
 
         {/* Coach's Corner */}
         {reportData.mode === 'PDI' && reportData.pdiSkills && Array.isArray(reportData.pdiSkills) && reportData.pdiSkills.length > 0 ? (
-          <PDICoachCorner pdiSkills={reportData.pdiSkills} commandSequences={reportData.pdiCommandSequences} summary={reportData.pdiSummary} recordingId={recordingId} navigation={navigation} />
+          <PDICoachCorner pdiSkills={reportData.pdiSkills} commandSequences={reportData.pdiCommandSequences} summary={reportData.pdiSummary} recordingId={recordingId} navigation={navigation} tomorrowGoal={reportData.pdiTomorrowGoal} />
         ) : (
           reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
             const items = reportData.coachingCards;
@@ -669,6 +673,7 @@ export const ReportScreen: React.FC = () => {
 
             if (isNewFormat) {
               const sections = items as CoachingSection[];
+              const tomorrowGoalText = reportData.tomorrowGoal;
               return (
                 <View>
                   <Text style={styles.cardTitle}>Coach's Corner</Text>
@@ -679,6 +684,9 @@ export const ReportScreen: React.FC = () => {
                         <MarkdownText style={styles.coachDescription}>{section.content}</MarkdownText>
                       </View>
                     ))}
+                    {tomorrowGoalText && (
+                      <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Tomorrow's Goal: </Text>{tomorrowGoalText}</Text>
+                    )}
                     <TouchableOpacity
                       style={styles.cardLinkButton}
                       onPress={() => navigation.navigate('Transcript', { recordingId })}
@@ -692,6 +700,7 @@ export const ReportScreen: React.FC = () => {
 
             // Legacy CoachingCard format
             const cards = (items as CoachingCard[]).slice(0, 1);
+            const legacyTomorrowGoal = reportData.tomorrowGoal || (cards[0]?.next_day_goal ?? null);
             return (
               <View>
                 <Text style={styles.cardTitle}>Coach's Corner</Text>
@@ -719,6 +728,9 @@ export const ReportScreen: React.FC = () => {
                       {card.apply_in_daily_life ? (
                         <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Apply in Daily Life: </Text>{card.apply_in_daily_life}</Text>
                       ) : null}
+                      {legacyTomorrowGoal && (
+                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Tomorrow's Goal: </Text>{legacyTomorrowGoal}</Text>
+                      )}
                       <TouchableOpacity
                         style={styles.cardLinkButton}
                         onPress={() => navigation.navigate('Transcript', { recordingId })}
@@ -732,104 +744,85 @@ export const ReportScreen: React.FC = () => {
           })()
         )}
 
-        {reportData.mode === 'PDI' && reportData.pdiTomorrowGoal ? (
-          <View style={styles.nextDayGoalSection}>
-            <DragonCard
-              label="Tomorrow's Goal"
-              text={reportData.pdiTomorrowGoal}
-            />
-          </View>
-        ) : (
-          reportData.tomorrowGoal ? (
-            <View style={styles.nextDayGoalSection}>
-              <DragonCard
-                label="Tomorrow's Goal"
-                text={reportData.tomorrowGoal}
-              />
-            </View>
-          ) : (
-            reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 &&
-              'next_day_goal' in reportData.coachingCards[0] && (reportData.coachingCards as CoachingCard[])[0]?.next_day_goal && (
-              <View style={styles.nextDayGoalSection}>
-                <DragonCard
-                  label="Tomorrow's Goal"
-                  text={(reportData.coachingCards as CoachingCard[])[0].next_day_goal ?? ''}
-                />
-              </View>
-            )
-          )
-        )}
-
         {/* What we learnt about Child */}
-        {reportData.aboutChild && reportData.aboutChild.length > 0 && (() => {
-          const item = reportData.aboutChild![0];
+        {/* Section 1: What we learnt about child today */}
+        {((reportData.aboutChild && reportData.aboutChild.length > 0) || (reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations) && reportData.milestoneCelebrations.length > 0)) && (() => {
+          const item = reportData.aboutChild && reportData.aboutChild.length > 0 ? reportData.aboutChild![0] : null;
+          const milestones = reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations)
+            ? (reportData.milestoneCelebrations as MilestoneCelebration[]).slice(0, 1)
+            : [];
+
           return (
             <View>
               <Text style={styles.cardTitle}>What we learnt about {childName}</Text>
               <View style={styles.card}>
-                {/* Title badge */}
-                <View style={styles.aboutChildTitleBadge}>
-                  <Ionicons name="sparkles" size={14} color="#7C3AED" />
-                  <Text style={styles.aboutChildTitleText}>{item.Title}</Text>
-                </View>
+                {/* Observation */}
+                {item && (
+                  <View>
+                    <Text style={styles.learnSubsectionLabel}>Observation</Text>
+                    <View style={styles.aboutChildTitleBadge}>
+                      <Ionicons name="sparkles" size={14} color="#7C3AED" />
+                      <Text style={styles.aboutChildTitleText}>{item.Title}</Text>
+                    </View>
+                    <Text style={styles.aboutChildDescription}>{item.Description}</Text>
+                    {item.Details ? (
+                      <>
+                        <View style={styles.aboutChildDivider} />
+                        <Text style={styles.aboutChildDetails}>{item.Details}</Text>
+                      </>
+                    ) : null}
+                  </View>
+                )}
 
-                {/* Description */}
-                <Text style={styles.aboutChildDescription}>{item.Description}</Text>
+                {/* New Milestone */}
+                {milestones.map((milestone, index) => {
+                  const isAchieved = milestone.status === 'ACHIEVED';
+                  const personalizedDescription = isAchieved
+                    ? `${childName} has mastered ${milestone.title.toLowerCase()}!`
+                    : `${childName} is starting to ${milestone.title.toLowerCase()}!`;
 
-                {/* Divider */}
-                {item.Details ? <View style={styles.aboutChildDivider} /> : null}
-
-                {/* Details */}
-                {item.Details ? (
-                  <Text style={styles.aboutChildDetails}>{item.Details}</Text>
-                ) : null}
+                  return (
+                    <View key={index}>
+                      {item && <View style={styles.aboutChildDivider} />}
+                      <Text style={styles.learnSubsectionLabel}>New Milestone</Text>
+                      <Text style={styles.milestonePersonalizedText}>{personalizedDescription}</Text>
+                      <Text style={styles.milestoneCategory}>{milestone.category}</Text>
+                      {milestone.actionTip && (
+                        <View style={styles.milestoneActionTip}>
+                          <Ionicons name="bulb-outline" size={16} color="#6B7280" />
+                          <Text style={styles.milestoneActionTipText}>{milestone.actionTip}</Text>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
               </View>
             </View>
           );
         })()}
 
-        {/* Milestone Celebrations */}
-        {developmentalVisible && reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations) && reportData.milestoneCelebrations.length > 0 && (
-          <View style={styles.milestoneCelebrationSection}>
-            <Text style={styles.cardTitle}>New Milestone</Text>
-            {(reportData.milestoneCelebrations as MilestoneCelebration[]).slice(0, 1).map((milestone, index) => {
-              const isAchieved = milestone.status === 'ACHIEVED';
-              const personalizedDescription = isAchieved
-                ? `${childName} has mastered ${milestone.title.toLowerCase()}!`
-                : `${childName} is starting to ${milestone.title.toLowerCase()}!`;
-
-              return (
-                <View key={index} style={styles.milestoneCard}>
-                  <View style={styles.milestoneHeader}>
-                    <View style={styles.milestoneContent}>
-                      <View style={styles.milestoneTitleRow}>
-                        <Text style={styles.milestonePersonalizedText}>{personalizedDescription}</Text>
-                        {/* <View style={[styles.milestoneBadge, isAchieved ? styles.milestoneBadgeAchieved : styles.milestoneBadgeEmerging]}>
-                          <Text style={[styles.milestoneBadgeText, isAchieved ? styles.milestoneBadgeTextAchieved : styles.milestoneBadgeTextEmerging]}>
-                            {isAchieved ? 'Achieved' : 'Emerging'}
-                          </Text>
-                        </View> */}
-                      </View>
-                      <Text style={styles.milestoneCategory}>{milestone.category}</Text>
-                    </View>
-                  </View>
-                  {milestone.actionTip && (
-                    <View style={styles.milestoneActionTip}>
-                      <Ionicons name="bulb-outline" size={16} color="#6B7280" />
-                      <Text style={styles.milestoneActionTipText}>{milestone.actionTip}</Text>
-                    </View>
-                  )}
-                  <TouchableOpacity
-                    style={styles.cardLinkButton}
-                    onPress={() => navigation.navigate('MainTabs', { screen: 'Progress', params: { scrollToDevelopmental: true } })}
-                  >
-                    <Text style={styles.cardLinkText}>View All Milestones</Text>
-                  </TouchableOpacity>
-                </View>
-              );
-            })}
+        {/* Section 2: Developmental Milestones */}
+        {totalRecordings >= 5 && developmentalProgress ? (
+          <View>
+            <Text style={styles.cardTitle}>{developmentalProgress.childName ? `${developmentalProgress.childName}'s ` : ''}Developmental Milestones</Text>
+            <RadarChart
+              data={developmentalProgress}
+              childName={developmentalProgress.childName}
+              onDomainPress={handleDomainPress}
+              showTitle={false}
+            />
           </View>
-        )}
+        ) : totalRecordings < 5 ? (
+          <View style={styles.milestoneLockedCard}>
+            <Text style={styles.milestoneLockedTitle}>Developmental Milestones</Text>
+            <View style={styles.milestoneLockedBadge}>
+              <Text style={styles.milestoneLockedBadgeText}>Available after 5 sessions · {totalRecordings}/5 completed</Text>
+            </View>
+            <Text style={styles.milestoneLockedDesc}>
+              Track your child's growth across Language, Cognitive, Social, Emotional, and Connection — compared against their age benchmark.
+            </Text>
+          </View>
+        ) : null}
 
         {/* Tips for Next Time - TEMPORARILY HIDDEN */}
         {/* <View>
@@ -962,25 +955,6 @@ export const ReportScreen: React.FC = () => {
             </View>
           </View>
         )} */}
-
-        {/* Developmental Milestones */}
-        {totalRecordings >= 5 && developmentalProgress ? (
-          <RadarChart
-            data={developmentalProgress}
-            childName={developmentalProgress.childName}
-            onDomainPress={handleDomainPress}
-          />
-        ) : totalRecordings < 5 ? (
-          <View style={styles.milestoneLockedCard}>
-            <Text style={styles.milestoneLockedTitle}>Developmental Milestones</Text>
-            <View style={styles.milestoneLockedBadge}>
-              <Text style={styles.milestoneLockedBadgeText}>Available after 5 sessions · {totalRecordings}/5 completed</Text>
-            </View>
-            <Text style={styles.milestoneLockedDesc}>
-              Track your child's growth across Language, Cognitive, Social, Emotional, and Connection — compared against their age benchmark.
-            </Text>
-          </View>
-        ) : null}
 
         {/* Report Feedback */}
         {feedbackSubmitted ? (
@@ -1736,6 +1710,14 @@ const styles = StyleSheet.create({
     color: '#0059DB',
   },
   // About Child section styles
+  learnSubsectionLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 11,
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 10,
+  },
   aboutChildTitleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
