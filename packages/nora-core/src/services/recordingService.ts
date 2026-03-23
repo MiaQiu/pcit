@@ -83,6 +83,7 @@ export interface MilestoneCelebration {
   category: string;
   title: string;
   actionTip: string | null;
+  evidenceSummary?: string | null;
 }
 
 export interface DevelopmentalDomainProgress {
@@ -95,6 +96,7 @@ export interface DevelopmentalDomainProgress {
 export interface DevelopmentalProgress {
   childAgeMonths: number;
   childName: string;
+  completedSessionCount: number;
   domains: Record<'Language' | 'Cognitive' | 'Social' | 'Emotional' | 'Connection', DevelopmentalDomainProgress>;
 }
 

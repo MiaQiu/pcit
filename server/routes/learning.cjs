@@ -277,6 +277,11 @@ router.get('/developmental-progress', requireAuth, async (req, res) => {
       }
     });
 
+    // Count completed sessions for milestone gating
+    const completedSessionCount = await prisma.session.count({
+      where: { userId, analysisStatus: 'completed' }
+    });
+
     // Helper function to parse age range from grouping_stage
     // e.g., "Stage I (12-26m)" -> { start: 12, end: 26 }
     // e.g., "Post-Stage V (47m+)" -> { start: 47, end: 84 }
@@ -354,6 +359,7 @@ router.get('/developmental-progress', requireAuth, async (req, res) => {
     res.json({
       childAgeMonths,
       childName,
+      completedSessionCount,
       domains: domainProgress
     });
 

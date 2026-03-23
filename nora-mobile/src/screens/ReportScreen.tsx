@@ -372,13 +372,10 @@ export const ReportScreen: React.FC = () => {
     loadChildName();
     loadDevelopmentalVisibility();
     recordingService.getRecordings().then(({ recordings }) => {
-      const count = recordings?.length ?? 0;
-      setTotalRecordings(count);
-      if (count >= 5) {
-        recordingService.getDevelopmentalProgress().then(data => {
-          if (data) setDevelopmentalProgress(data);
-        }).catch(() => {});
-      }
+      setTotalRecordings(recordings?.length ?? 0);
+    }).catch(() => {});
+    recordingService.getDevelopmentalProgress().then(data => {
+      if (data) setDevelopmentalProgress(data);
     }).catch(() => {});
   }, [recordingId]);
 
@@ -767,7 +764,7 @@ export const ReportScreen: React.FC = () => {
                     <Text style={styles.aboutChildDescription}>{item.Description}</Text>
                     {item.Details ? (
                       <>
-                        <View style={styles.aboutChildDivider} />
+                        {/* <View style={styles.aboutChildDivider} /> */}
                         <Text style={styles.aboutChildDetails}>{item.Details}</Text>
                       </>
                     ) : null}
@@ -784,9 +781,12 @@ export const ReportScreen: React.FC = () => {
                   return (
                     <View key={index}>
                       {item && <View style={styles.aboutChildDivider} />}
-                      <Text style={styles.learnSubsectionLabel}>New Milestone</Text>
+                      <Text style={styles.learnSubsectionLabel}>New Milestone ({milestone.category})</Text>
                       <Text style={styles.milestonePersonalizedText}>{personalizedDescription}</Text>
-                      <Text style={styles.milestoneCategory}>{milestone.category}</Text>
+                      {/* <Text style={styles.milestoneCategory}>{milestone.category}</Text> */}
+                      {milestone.evidenceSummary && !milestone.evidenceSummary.toLowerCase().startsWith('not observed') && (
+                        <Text style={styles.milestoneEvidenceSummary}>"{milestone.evidenceSummary}"</Text>
+                      )}
                       {milestone.actionTip && (
                         <View style={styles.milestoneActionTip}>
                           <Ionicons name="bulb-outline" size={16} color="#6B7280" />
@@ -802,7 +802,7 @@ export const ReportScreen: React.FC = () => {
         })()}
 
         {/* Section 2: Developmental Milestones */}
-        {totalRecordings >= 5 && developmentalProgress ? (
+        {developmentalProgress && developmentalProgress.completedSessionCount >= 5 ? (
           <View>
             <Text style={styles.cardTitle}>{developmentalProgress.childName ? `${developmentalProgress.childName}'s ` : ''}Developmental Milestones</Text>
             <RadarChart
@@ -812,17 +812,17 @@ export const ReportScreen: React.FC = () => {
               showTitle={false}
             />
           </View>
-        ) : totalRecordings < 5 ? (
+        ) : (
           <View style={styles.milestoneLockedCard}>
             <Text style={styles.milestoneLockedTitle}>Developmental Milestones</Text>
             <View style={styles.milestoneLockedBadge}>
-              <Text style={styles.milestoneLockedBadgeText}>Available after 5 sessions · {totalRecordings}/5 completed</Text>
+              <Text style={styles.milestoneLockedBadgeText}>Available after 5 sessions · {developmentalProgress?.completedSessionCount ?? 0}/5 completed</Text>
             </View>
             <Text style={styles.milestoneLockedDesc}>
               Track your child's growth across Language, Cognitive, Social, Emotional, and Connection — compared against their age benchmark.
             </Text>
           </View>
-        ) : null}
+        )}
 
         {/* Tips for Next Time - TEMPORARILY HIDDEN */}
         {/* <View>
@@ -1835,7 +1835,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 4,
+    marginBottom:8,
   },
   milestoneBadge: {
     paddingHorizontal: 10,
@@ -1861,7 +1861,7 @@ const styles = StyleSheet.create({
   },
   milestonePersonalizedText: {
     fontFamily: FONTS.bold,
-    fontSize: 17,
+    fontSize: 16,
     color: COLORS.textDark,
     lineHeight: 24,
     flex: 1,
@@ -1871,11 +1871,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6B7280',
   },
+  milestoneEvidenceSummary: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#6B7280',
+    fontStyle: 'italic',
+    marginTop: 4,
+    lineHeight: 20,
+  },
   milestoneActionTip: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
-    marginTop: 12,
+    gap: 4,
+    marginTop: 8,
     paddingTop: 12,
     //borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
