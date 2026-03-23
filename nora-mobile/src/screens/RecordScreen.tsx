@@ -53,6 +53,7 @@ export const RecordScreen: React.FC = () => {
   const [completionSound, setCompletionSound] = useState<string>('Win');
   const [sessionMode, setSessionMode] = useState<'specialTime' | 'discipline'>('specialTime');
   const [isDisciplineLocked, setIsDisciplineLocked] = useState(false);
+  const [processingCountdown, setProcessingCountdown] = useState<number | null>(null);
 
   // Use ref to track current recording for cleanup
   const recordingRef = useRef<Audio.Recording | null>(null);
@@ -60,6 +61,24 @@ export const RecordScreen: React.FC = () => {
   const soundRef = useRef<Audio.Sound | null>(null);
   const autoStopListenerRef = useRef<EmitterSubscription | null>(null);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (uploadProcessing.state === 'processing') {
+      setProcessingCountdown(5);
+    } else {
+      setProcessingCountdown(null);
+    }
+  }, [uploadProcessing.state]);
+
+  useEffect(() => {
+    if (processingCountdown === null) return;
+    if (processingCountdown <= 0) {
+      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+      return;
+    }
+    const timer = setTimeout(() => setProcessingCountdown(prev => (prev !== null ? prev - 1 : null)), 1000);
+    return () => clearTimeout(timer);
+  }, [processingCountdown, navigation]);
 
   useEffect(() => {
     requestPermissions();
@@ -662,7 +681,7 @@ This takes a few minutes.
                Nora is listening for patterns in praise, tone, and turn-taking to personalize your tips.
             </Text>
             <Text style={styles.processingSubtitle}>
-             You can leave this screen — we’ll notify you when it’s ready.
+              Back to Home screen in {processingCountdown}s
             </Text>
             <ActivityIndicator size="large" color={COLORS.mainPurple} style={styles.processingSpinner} />
           </View>
