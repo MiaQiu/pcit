@@ -64,7 +64,7 @@ export const RecordScreen: React.FC = () => {
 
   useEffect(() => {
     if (uploadProcessing.state === 'processing') {
-      setProcessingCountdown(5);
+      setProcessingCountdown(10);
     } else {
       setProcessingCountdown(null);
     }
