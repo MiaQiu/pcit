@@ -114,9 +114,9 @@ async function repairSession(session) {
   let childProfilingResult = null;
   try {
     const [profilingSettled, coachingSettled, aboutChildSettled] = await Promise.allSettled([
-      generateDevelopmentalProfiling(utterances, childInfo, tagCounts, childSpeaker),
-      isCDI ? generateCdiCoaching(utterances, childInfo, tagCounts, childSpeaker) : Promise.resolve(null),
-      generateAboutChild(utterances, childInfo, tagCounts)
+      generateDevelopmentalProfiling(utterances, childInfo, tagCounts, childSpeaker, sessionId),
+      isCDI ? generateCdiCoaching(utterances, childInfo, tagCounts, childSpeaker, sessionId) : Promise.resolve(null),
+      generateAboutChild(utterances, childInfo, tagCounts, sessionId)
     ]);
     const profilingResult  = profilingSettled.status  === 'fulfilled' ? profilingSettled.value  : null;
     const coachingResult   = coachingSettled.status   === 'fulfilled' ? coachingSettled.value   : null;
@@ -143,9 +143,9 @@ async function repairSession(session) {
   try {
     let pdiResult = null;
     if (!isCDI) {
-      pdiResult = await generatePDITwoChoicesAnalysis(utterances, childName).catch(e => { console.warn(`  ⚠️  PDI analysis error: ${e.message}`); return null; });
+      pdiResult = await generatePDITwoChoicesAnalysis(utterances, childName, sessionId).catch(e => { console.warn(`  ⚠️  PDI analysis error: ${e.message}`); return null; });
     }
-    const feedbackResult = await generateCDIFeedback(tagCounts, utterances, childName, isCDI, pdiResult);
+    const feedbackResult = await generateCDIFeedback(tagCounts, utterances, childName, isCDI, pdiResult, sessionId);
     competencyAnalysis = {
       topMoment: feedbackResult.topMoment,
       topMomentUtteranceNumber: typeof feedbackResult.topMomentUtteranceNumber === 'number' ? feedbackResult.topMomentUtteranceNumber : null,

@@ -21,6 +21,7 @@ const { anthropicCall }   = require('./providers/anthropic.cjs');
 const { parseJSON }       = require('./repair.cjs');
 const { logLLMCall }      = require('./logger.cjs');
 const { sanitizeOutput }  = require('./sanitize.cjs');
+const { sendLLMFailureAlert } = require('./alertEmail.cjs');
 
 function _defaultModelKey() {
   return process.env.AI_PROVIDER || 'gemini-2.0-flash';
@@ -55,6 +56,7 @@ async function llmCall(prompt, options = {}) {
     label            = 'unknown',
     schema           = null,
     _geminiConfig    = {},
+    sessionId        = null,
   } = options;
 
   const modelDef  = resolveModel(modelKey);
@@ -110,6 +112,7 @@ async function llmCall(prompt, options = {}) {
   } catch (err) {
     track.ok    = false;
     track.error = err.message;
+    sendLLMFailureAlert({ label, model: track.model, error: err.message, type: 'gateway', sessionId });
     throw err;
   } finally {
     logLLMCall({

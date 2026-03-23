@@ -14,6 +14,7 @@ const httpsAgent = new https.Agent({
 });
 const { parseClaudeJsonResponse } = require('./claudeService.cjs');
 const { llmCall } = require('../llm/gateway.cjs');
+const { sendLLMFailureAlert } = require('../llm/alertEmail.cjs');
 const { sanitizeOutput } = require('../llm/sanitize.cjs');
 const { geminiCall } = require('../llm/providers/gemini.cjs');
 const { parseJSON } = require('../llm/repair.cjs');
@@ -222,7 +223,8 @@ async function callGeminiStreaming(contents, options = {}) {
     temperature = 0.7,
     maxOutputTokens = 8192,
     timeout = 300000,  // 5 minutes for thinking models
-    maxRetries = 3
+    maxRetries = 3,
+    sessionId = null,
   } = options;
 
   let lastError;
@@ -345,7 +347,10 @@ async function callGeminiStreaming(contents, options = {}) {
   } catch (geminiError) {
     // Fall back to Claude Sonnet — same provider as non-streaming calls
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw geminiError;
+    if (!apiKey) {
+      sendLLMFailureAlert({ label: 'gemini-streaming', model: process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview', error: geminiError.message, type: 'streaming', sessionId });
+      throw geminiError;
+    }
     console.warn(`⚠️ [GEMINI-STREAMING] Failed (${geminiError.message.substring(0, 80)}), falling back to Claude Sonnet...`);
     const prompt = contents.map(m => m.parts.map(p => p.text).join('')).join('\n\n');
     const text = await llmCall(prompt, {
@@ -479,14 +484,14 @@ Return these in the top-level "baseline_achieved" array.`
  * @param {string} childSpeaker - Speaker ID of the child (e.g., 'speaker_0')
  * @returns {Promise<Object|null>} { developmentalObservation, metadata } or null on failure
  */
-async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts = {}, childSpeaker = null) {
+async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts = {}, childSpeaker = null, sessionId = null) {
   const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
   const prompt = loadPromptWithVariables('developmentalProfiling', variables);
 
   console.log(`📊 [DEV-PROFILING] Calling ${AI_PROVIDER} for developmental profiling...`);
 
   try {
-    const parsed = await llmCall(prompt, { maxTokens: 8192, temperature: 0.5, label: 'dev-profiling', schema: SCHEMAS.DEV_PROFILING });
+    const parsed = await llmCall(prompt, { maxTokens: 8192, temperature: 0.5, label: 'dev-profiling', schema: SCHEMAS.DEV_PROFILING, sessionId });
 
     const result = {
       developmentalObservation: parsed.developmental_observation || null,
@@ -532,7 +537,7 @@ async function callGeminiFlashRaw(prompt, options = {}) {
  * @param {Object} tagCounts  - Session metrics from PCIT coding
  * @returns {Promise<Array|null>} Array of AboutChildItem or null on failure
  */
-async function generateAboutChild(utterances, childInfo, tagCounts = {}) {
+async function generateAboutChild(utterances, childInfo, tagCounts = {}, sessionId = null) {
   const { name, ageMonths, gender } = childInfo;
   const transcript = formatUtterancesForPsychologist(utterances);
   const ageDisplay = ageMonths ? `${ageMonths} months old` : 'unknown age';
@@ -558,7 +563,7 @@ ${transcript}`;
 
   let narrativeText;
   try {
-    narrativeText = await llmCall(step1Prompt, { output: 'text', temperature: 0.7, maxTokens: 4096, label: 'about-child-step1', timeout: 120_000 });
+    narrativeText = await llmCall(step1Prompt, { output: 'text', temperature: 0.7, maxTokens: 4096, label: 'about-child-step1', timeout: 120_000, sessionId });
     console.log(`✅ [ABOUT-CHILD] Step 1 complete (${narrativeText.length} chars)`);
   } catch (error) {
     console.error('❌ [ABOUT-CHILD] Step 1 failed:', error.message);
@@ -603,6 +608,7 @@ Example format:
       temperature: 0.3,
       maxTokens:   2048,
       label:       'about-child-step3',
+      sessionId,
     });
     if (!Array.isArray(aboutChild)) throw new Error('Expected array response');
     console.log(`✅ [ABOUT-CHILD] Extracted ${aboutChild.length} child observations`);
@@ -622,7 +628,7 @@ Example format:
  * @param {string} childSpeaker - Speaker ID of the child (e.g., 'speaker_0')
  * @returns {Promise<Object|null>} { coachingSummary, coachingCards } or null on failure
  */
-async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childSpeaker = null) {
+async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childSpeaker = null, sessionId = null) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
   if (!GEMINI_API_KEY) {
     console.warn('⚠️ [CDI-COACHING] Gemini API key not configured, skipping');
@@ -643,7 +649,8 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
     const coachingReport = (await callGeminiStreaming([userMessage], {
       temperature: 0.5,
       maxOutputTokens: 8192,
-      timeout: 300000  // 5 minutes
+      timeout: 300000,  // 5 minutes
+      sessionId,
     })).trim();
 
     console.log(`✅ [CDI-COACHING] Gemini coaching report received (${coachingReport.length} chars)`);
@@ -657,7 +664,7 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
 
     let formatted;
     try {
-      formatted = await llmCall(formatPrompt, { model: 'flash', maxTokens: 2048, temperature: 0, label: 'coaching-format', schema: SCHEMAS.COACHING_FORMAT });
+      formatted = await llmCall(formatPrompt, { model: 'flash', maxTokens: 2048, temperature: 0, label: 'coaching-format', schema: SCHEMAS.COACHING_FORMAT, sessionId });
     } catch (formatError) {
       console.error('❌ [CDI-COACHING] Format call failed:', formatError.message);
       return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal: null };
@@ -830,14 +837,14 @@ No markdown code fences.`;
  * @param {boolean} isCDI - true for CDI sessions, false for PDI
  * @returns {Promise<Object>} Assembled feedback result
  */
-async function generateCDIFeedback(counts, utterances, childName, isCDI = true, pdiResult = null) {
+async function generateCDIFeedback(counts, utterances, childName, isCDI = true, pdiResult = null, sessionId = null) {
   console.log(`🚀 [CDI-FEEDBACK] Starting feedback generation (mode: ${isCDI ? 'CDI' : 'PDI'})...`);
 
   // Call 1: Combined feedback prompt (analysis + improvement + example in one)
   console.log('📝 [CDI-FEEDBACK] Running combined feedback prompt...');
   const feedbackData = await llmCall(
     generateCombinedFeedbackPrompt(counts, utterances, childName),
-    { label: 'combined-feedback', schema: SCHEMAS.COMBINED_FEEDBACK }
+    { label: 'combined-feedback', schema: SCHEMAS.COMBINED_FEEDBACK, sessionId }
   );
 
   console.log('✅ [CDI-FEEDBACK] Combined feedback result:', JSON.stringify(feedbackData).substring(0, 300));
@@ -848,7 +855,7 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true, 
   try {
     const reviewData = await llmCall(
       generateReviewFeedbackPrompt(counts, utterances, isCDI, pdiResult),
-      { temperature: 0.5, output: 'array', label: 'review-feedback', schema: SCHEMAS.REVIEW_FEEDBACK }
+      { temperature: 0.5, output: 'array', label: 'review-feedback', schema: SCHEMAS.REVIEW_FEEDBACK, sessionId }
     );
     // reviewData should be an array directly since we asked for JSON array
     revisedFeedback = Array.isArray(reviewData) ? reviewData : [];
@@ -885,7 +892,7 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true, 
  * @param {string} childName - Child's name for personalized feedback
  * @returns {Promise<Array|null>} Array of 4 skill ratings or null on failure
  */
-async function generatePDITwoChoicesAnalysis(utterances, childName) {
+async function generatePDITwoChoicesAnalysis(utterances, childName, sessionId = null) {
   console.log('🎯 [PDI-TWO-CHOICES] Starting Two Choices Flow analysis...');
 
   const transcript = utterances
@@ -906,7 +913,8 @@ async function generatePDITwoChoicesAnalysis(utterances, childName) {
     const raw = await callGeminiStreaming([userMessage], {
       temperature: 0.7,
       maxOutputTokens: 8192,
-      timeout: 300000
+      timeout: 300000,
+      sessionId,
     });
     const { value: result } = parseJSON(raw, 'object');
     const pdiSkills = result?.pdiSkills;
@@ -1069,7 +1077,7 @@ async function analyzePCITCoding(sessionId, userId) {
     console.log(`📊 [ANALYSIS-STEP-3] Calling ${AI_PROVIDER} for role identification...`);
 
     try {
-      roleIdentificationJson = await llmCall(roleIdentificationPrompt, { maxTokens: 2048, temperature: 0.3, label: 'role-id' });
+      roleIdentificationJson = await llmCall(roleIdentificationPrompt, { maxTokens: 2048, temperature: 0.3, label: 'role-id', sessionId });
       console.log(`✅ [ANALYSIS-STEP-3] Role identification parsed successfully`);
 
       // Extract all adult speakers from speaker_identification
@@ -1210,6 +1218,7 @@ Do not include markdown or whitespace (minified JSON).
       output:       'array',
       label:        'pcit-coding',
       schema:       SCHEMAS.PCIT_CODING,
+      sessionId,
     });
 
     if (!Array.isArray(codingResults)) {
@@ -1316,9 +1325,9 @@ Do not include markdown or whitespace (minified JSON).
     };
 
     const [profilingSettled, coachingSettled, aboutChildSettled] = await Promise.allSettled([
-      generateDevelopmentalProfiling(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker),
-      isCDI ? generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker) : Promise.resolve(null),
-      generateAboutChild(utterancesForProfiling, childInfoForProfiling, tagCounts)
+      generateDevelopmentalProfiling(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId),
+      isCDI ? generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId) : Promise.resolve(null),
+      generateAboutChild(utterancesForProfiling, childInfoForProfiling, tagCounts, sessionId)
     ]);
 
     const profilingResult = profilingSettled.status === 'fulfilled' ? profilingSettled.value : null;
@@ -1364,7 +1373,7 @@ Do not include markdown or whitespace (minified JSON).
     let pdiResult = null;
     if (!isCDI) {
       console.log('🎯 [COMPETENCY-ANALYSIS] Running PDI Two Choices Flow analysis...');
-      pdiResult = await generatePDITwoChoicesAnalysis(utterancesWithTags, childName);
+      pdiResult = await generatePDITwoChoicesAnalysis(utterancesWithTags, childName, sessionId);
       if (pdiResult) {
         console.log(`✅ [COMPETENCY-ANALYSIS] PDI Two Choices Flow analysis complete — ${pdiResult.pdiSkills.length} skills`);
       }
@@ -1372,7 +1381,7 @@ Do not include markdown or whitespace (minified JSON).
 
     // Run multi-prompt feedback flow for both CDI and PDI (mode-aware)
     console.log(`🎯 [COMPETENCY-ANALYSIS] Using multi-prompt feedback generation for ${session.mode} session...`);
-    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName, isCDI, pdiResult);
+    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName, isCDI, pdiResult, sessionId);
 
     // Save revised feedback to database
     if (feedbackResult.revisedFeedback && feedbackResult.revisedFeedback.length > 0) {
