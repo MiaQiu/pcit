@@ -17,6 +17,7 @@ interface SubscriptionContextType {
   purchasePackage: (pkg?: PurchasesPackage) => Promise<{ success: boolean }>;
   restorePurchases: () => Promise<{ restored: boolean }>;
   checkSubscriptionStatus: () => Promise<void>;
+  refreshOfferings: () => Promise<PurchasesPackage[]>;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
@@ -55,6 +56,23 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch (e) {
       console.error('Error loading offerings:', e);
       setError('Failed to load subscription options');
+    }
+  };
+
+  const refreshOfferings = async (): Promise<PurchasesPackage[]> => {
+    try {
+      const offerings = await Purchases.getOfferings();
+      setOfferings(offerings);
+
+      const packages = offerings.current?.availablePackages ?? [];
+      if (packages.length > 0) {
+        setAvailablePackages(packages);
+        setCurrentPackage(packages[0]);
+      }
+      return packages;
+    } catch (e) {
+      console.error('Error refreshing offerings:', e);
+      return [];
     }
   };
 
@@ -147,6 +165,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         purchasePackage,
         restorePurchases,
         checkSubscriptionStatus,
+        refreshOfferings,
       }}
     >
       {children}

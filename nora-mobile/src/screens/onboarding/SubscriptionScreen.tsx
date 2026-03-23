@@ -34,6 +34,7 @@ export const SubscriptionScreen: React.FC = () => {
     isLoading: subscriptionLoading,
     purchasePackage,
     restorePurchases,
+    refreshOfferings,
     error: subscriptionError
   } = useSubscription();
 
@@ -77,17 +78,27 @@ export const SubscriptionScreen: React.FC = () => {
   const handleBack = () => navigation.goBack();
 
   const handleStartTrial = async () => {
-    if (!selectedPackage) {
-      Alert.alert('Not Available', 'Monthly plan is not available yet. Please try again in a moment.');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
+      // If offerings haven't loaded yet, fetch them now before proceeding
+      let packageToUse = selectedPackage;
+      if (!packageToUse) {
+        const packages = await refreshOfferings();
+        packageToUse = packages.find(
+          p => p.product.identifier === REVENUECAT_CONFIG.products.oneMonth
+        );
+      }
+
+      if (!packageToUse) {
+        Alert.alert('Not Available', 'Monthly plan is not available yet. Please try again in a moment.');
+        setIsLoading(false);
+        return;
+      }
+
       // User was already identified to RevenueCat in CreateAccountScreen
       // Proceed directly with purchase - webhook will have the correct user ID
-      const result = await purchasePackage(selectedPackage);
+      const result = await purchasePackage(packageToUse);
 
       if (result.success) {
         // CRITICAL: Trust the webhook as source of truth for subscription status
