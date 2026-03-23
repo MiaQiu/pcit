@@ -83,7 +83,8 @@ async function detectAndUpdateMilestones(childId, detectedMilestones = [], basel
         status: 'EMERGING',
         category: libraryEntry.category,
         title: libraryEntry.displayTitle,
-        actionTip: libraryEntry.actionTip
+        actionTip: libraryEntry.actionTip,
+        evidenceSummary: detected.evidence_summary || null
       });
       console.log(`  ✨ [MILESTONE] NEW EMERGING: ${milestoneKey} — ${detected.evidence_summary}`);
     } else if (existing.status === 'EMERGING') {
@@ -104,7 +105,8 @@ async function detectAndUpdateMilestones(childId, detectedMilestones = [], basel
           status: 'ACHIEVED',
           category: libraryEntry.category,
           title: libraryEntry.displayTitle,
-          actionTip: libraryEntry.actionTip
+          actionTip: libraryEntry.actionTip,
+          evidenceSummary: detected.evidence_summary || null
         });
         console.log(`  🏆 [MILESTONE] ACHIEVED: ${milestoneKey} (detected ${newCount} times > threshold ${libraryEntry.thresholdValue})`);
       } else {
@@ -168,7 +170,8 @@ async function detectAndUpdateMilestones(childId, detectedMilestones = [], basel
         status: 'ACHIEVED',
         category: libraryEntry.category,
         title: libraryEntry.displayTitle,
-        actionTip: libraryEntry.actionTip
+        actionTip: libraryEntry.actionTip,
+        evidenceSummary: baseline.evidence_summary || null
       });
       console.log(`  🏆 [MILESTONE] BASELINE ACHIEVED: ${milestoneKey} — ${baseline.evidence_summary}`);
     }

@@ -36,22 +36,22 @@ tense conceptually, using plural reference, etc.
 
 ## COGNITIVE DOMAIN (Piaget/Brown Proxies)
 * **Pre-Operational (24-36m):** Immediate Naming (Here & Now) [Key: cognitive_preop_naming]
-* **Temporal Logic (36-48m):** Sequencing (First/Then) [Key: cognitive_temporal_sequencing]
+* **Temporal Logic (36-48m):** Temporal Sequencing [Key: cognitive_temporal_sequencing]
 * **Temporal Logic (36-48m):** Decentering (Talking about Past) [Key: cognitive_temporal_decentering]
-* **Causal Logic (48-84m):** Causal Linking (Because/So) [Key: cognitive_causal_reasoning]
+* **Causal Logic (48-84m):** Causal Reasoning [Key: cognitive_causal_reasoning]
 * **Causal Logic (48-84m):** Theory of Mind Questions [Key: cognitive_tom_questions]
 
 ## SOCIAL DOMAIN (Halliday Interactional)
-* **Transition (24-36m):** Initiation ('Let's') [Key: social_interaction_initiation]
-* **Transition (24-36m):** Verbal Turn Taking ('My turn') [Key: social_interaction_turntaking]
+* **Transition (24-36m):** Play Initiation [Key: social_interaction_initiation]
+* **Transition (24-36m):** Turn-Taking Awareness [Key: social_interaction_turntaking]
 * **Pragmatic Dev (36-60m):** Politeness Markers (Please/Thanks) [Key: social_pragmatic_politeness]
 * **Pragmatic Dev (36-60m):** Explicit Friendship Definition [Key: social_pragmatic_friendship]
 * **Interpersonal (60-84m):** Complex Play Negotiation [Key: social_interpersonal_negotiation]
 
 ## EMOTIONAL DOMAIN (Halliday Personal)
-* **Assertion (24-36m):** Boundaries ('Mine'/'No') [Key: emotional_personal_boundaries]
-* **Identity (36-60m):** Self-Concept ('I am...') [Key: emotional_personal_self_concept]
-* **Regulation (60-84m):** Emotional Justification (Feel...Because) [Key: emotional_regulation_justification]
+* **Assertion (24-36m):** Asserting Boundaries [Key: emotional_personal_boundaries]
+* **Identity (36-60m):** Sense of Self [Key: emotional_personal_self_concept]
+* **Regulation (60-84m):** Emotional Reasoning [Key: emotional_regulation_justification]
 
 ## CONNECTION DOMAIN (Biringen EA)
 * **Involvement (24-48m):** Physical 'Check-in' (Pulling/Showing) [Key: connection_ea_physical_pull]
