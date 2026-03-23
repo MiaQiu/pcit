@@ -13,7 +13,7 @@ const DEFAULT_REPORT_VISIBILITY = { daily: false, weekly: false, monthly: false 
  * Bump minRequiredVersion to force users on older versions to update.
  */
 router.get('/app-version', (req, res) => {
-  res.json({ minRequiredVersion: '1.0.3' });
+  res.json({ minRequiredVersion: '1.0.1' });
 });
 
 /**
