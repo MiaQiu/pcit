@@ -23,9 +23,10 @@ interface VisibleWeeklyReport {
 
 interface ReportsSectionProps {
   recordings: Recording[];
+  completedSessionCount?: number;
 }
 
-export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings }) => {
+export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, completedSessionCount }) => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const recordingService = useRecordingService();
   const [visibility, setVisibility] = useState<{ daily: boolean; weekly: boolean; monthly: boolean } | null>(null);
@@ -173,11 +174,11 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings }) =>
       )}
 
       {/* Developmental Milestones locked teaser */}
-      {recordings.length < 5 && (
+      {(completedSessionCount ?? recordings.length) < 5 && (
         <View style={styles.milestoneLockedCard}>
           <Text style={styles.milestoneLockedTitle}>Developmental Milestones</Text>
           <View style={styles.milestoneLockedBadge}>
-            <Text style={styles.milestoneLockedBadgeText}>Available after 5 sessions · {recordings.length}/5 completed</Text>
+            <Text style={styles.milestoneLockedBadgeText}>Available after 5 sessions · {completedSessionCount ?? recordings.length}/5 completed</Text>
           </View>
           <Text style={styles.milestoneLockedDesc}>
             Track your child's growth across Language, Cognitive, Social, Emotional, and Connection — compared against their age benchmark.
