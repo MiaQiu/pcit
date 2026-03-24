@@ -8,7 +8,7 @@ const { sendPushNotificationToUser } = require('../services/pushNotifications.cj
 const { generateWeeklyReport, resolveReportAudioUrls } = require('../services/weeklyReportService.cjs');
 const { generateCdiCoaching } = require('../services/pcitAnalysisService.cjs');
 const { getUtterances } = require('../utils/utteranceUtils.cjs');
-const { decryptSensitiveData } = require('../utils/encryption.cjs');
+const { decryptSensitiveData, decryptUserData } = require('../utils/encryption.cjs');
 
 const router = express.Router();
 
@@ -1433,6 +1433,7 @@ router.get('/sessions', requireAdminAuth, async (req, res) => {
         userId: true,
         mode: true,
         analysisStatus: true,
+        analysisError: true,
         enrichmentStatus: true,
         enrichmentError: true,
         createdAt: true,
@@ -1446,6 +1447,7 @@ router.get('/sessions', requireAdminAuth, async (req, res) => {
         userId: s.userId,
         mode: s.mode,
         analysisStatus: s.analysisStatus,
+        analysisError: s.analysisError || null,
         enrichmentStatus: s.enrichmentStatus,
         enrichmentError: s.enrichmentError || null,
         createdAt: s.createdAt,
