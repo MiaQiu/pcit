@@ -128,6 +128,7 @@ export default function SessionsPage() {
                 <th>Session ID</th>
                 <th>User ID</th>
                 <th>Status</th>
+                <th>Error</th>
                 <th>Created At</th>
                 <th>Cards</th>
                 <th>Action</th>
@@ -144,6 +145,10 @@ export default function SessionsPage() {
                       <span className={`status-badge status-${s.analysisStatus.toLowerCase()}`}>
                         {s.analysisStatus}
                       </span>
+                    </td>
+                    <td className="session-error-cell">
+                      {s.analysisError && <span className="session-error" title={s.analysisError}>{s.analysisError}</span>}
+                      {s.enrichmentError && <span className="session-error" title={s.enrichmentError}>{s.enrichmentError}</span>}
                     </td>
                     <td>{new Date(s.createdAt).toLocaleString()}</td>
                     <td>{s.hasCoachingCards ? '✓' : '—'}</td>

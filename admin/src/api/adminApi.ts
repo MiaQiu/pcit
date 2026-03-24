@@ -422,6 +422,9 @@ export interface SessionSummary {
   userId: string;
   mode: string;
   analysisStatus: string;
+  analysisError: string | null;
+  enrichmentStatus: string | null;
+  enrichmentError: string | null;
   createdAt: string;
   hasCoachingCards: boolean;
 }
