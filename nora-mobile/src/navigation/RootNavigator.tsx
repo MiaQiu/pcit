@@ -5,9 +5,11 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as userStorage from '../lib/userStorage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ForceUpdateScreen } from '../screens/ForceUpdateScreen';
+import { WhatsNewModal } from '../components/WhatsNewModal';
 import { useNavigation } from '@react-navigation/native';
 import Purchases from 'react-native-purchases';
 import { TabNavigator } from './TabNavigator';
@@ -29,6 +31,7 @@ import { ModuleDetailScreen } from '../screens/ModuleDetailScreen';
 import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
 import { User } from '@nora/core';
+import amplitudeService from '../services/amplitudeService';
 
 const APP_VERSION: string = require('../../app.json').expo.version;
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -52,6 +55,7 @@ export const RootNavigator: React.FC = () => {
   const [resumeUserData, setResumeUserData] = useState<User | null>(null);
   const [hasCheckError, setHasCheckError] = useState(false);
   const [updateRequired, setUpdateRequired] = useState(false);
+  const [softUpdate, setSoftUpdate] = useState<{ version: string; whatsNew: string[] } | null>(null);
   const navigationRef = useRef<any>(null);
 
   // Handle session expiration
@@ -59,6 +63,7 @@ export const RootNavigator: React.FC = () => {
     console.log('Session expired - logging out user');
 
     await userStorage.clearCurrentUser();
+    amplitudeService.reset();
 
     // Update auth state
     setIsAuthenticated(false);
@@ -83,6 +88,7 @@ export const RootNavigator: React.FC = () => {
   const handleLogout = useCallback(async () => {
     console.log('User logged out - resetting auth state');
     await userStorage.clearCurrentUser();
+    amplitudeService.reset();
     setIsAuthenticated(false);
     setOnboardingStep(null);
   }, []);
@@ -99,6 +105,13 @@ export const RootNavigator: React.FC = () => {
     checkAuthStatus();
   };
 
+  const dismissSoftUpdate = async () => {
+    if (softUpdate) {
+      await AsyncStorage.setItem(`@nora_soft_update_seen_${softUpdate.version}`, 'true');
+    }
+    setSoftUpdate(null);
+  };
+
   useEffect(() => {
     checkAuthStatus();
   }, []);
@@ -111,12 +124,20 @@ export const RootNavigator: React.FC = () => {
       try {
         const res = await fetch(`${API_URL}/api/config/app-version`);
         if (res.ok) {
-          const { minRequiredVersion } = await res.json();
+          const { minRequiredVersion, latestVersion, whatsNew } = await res.json();
           if (minRequiredVersion && isVersionBelow(APP_VERSION, minRequiredVersion)) {
             console.log(`[Version] Update required: current=${APP_VERSION} min=${minRequiredVersion}`);
             setUpdateRequired(true);
             setIsLoading(false);
             return;
+          }
+          if (latestVersion && isVersionBelow(APP_VERSION, latestVersion) && Array.isArray(whatsNew)) {
+            const seenKey = `@nora_soft_update_seen_${latestVersion}`;
+            const alreadySeen = await AsyncStorage.getItem(seenKey);
+            if (!alreadySeen) {
+              console.log(`[Version] Soft update available: current=${APP_VERSION} latest=${latestVersion}`);
+              setSoftUpdate({ version: latestVersion, whatsNew });
+            }
           }
         }
       } catch (versionError) {
@@ -143,6 +164,17 @@ export const RootNavigator: React.FC = () => {
           if (incompleteStep) {
             setResumeUserData(user);
           }
+          // Identify user on session restore so events are never anonymous
+          amplitudeService.identifyUser(user.id, {
+            email: user.email,
+            name: user.name,
+            currentStreak: user.currentStreak || 0,
+            longestStreak: user.longestStreak || 0,
+            subscriptionPlan: user.subscriptionPlan,
+            subscriptionStatus: user.subscriptionStatus,
+            childAge: user.childBirthYear ? new Date().getFullYear() - user.childBirthYear : undefined,
+            relationshipToChild: user.relationshipToChild,
+          });
         } catch (error) {
           console.error('[Auth] Onboarding check failed:', error);
           setHasCheckError(true);
@@ -250,6 +282,7 @@ export const RootNavigator: React.FC = () => {
   const shouldShowOnboarding = !isAuthenticated || onboardingStep !== null;
 
   return (
+    <>
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
@@ -364,6 +397,15 @@ export const RootNavigator: React.FC = () => {
         }}
       />
     </Stack.Navigator>
+    {softUpdate && (
+      <WhatsNewModal
+        visible
+        version={softUpdate.version}
+        whatsNew={softUpdate.whatsNew}
+        onDismiss={dismissSoftUpdate}
+      />
+    )}
+    </>
   );
 };
 

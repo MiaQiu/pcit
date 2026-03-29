@@ -27,6 +27,7 @@ import { REVENUECAT_CONFIG } from '../config/revenuecat';
 import { RootStackNavigationProp } from '../navigation/types';
 import { FONTS, COLORS } from '../constants/assets';
 import type { SubscriptionPlan, SubscriptionStatus, RelationshipToChild } from '@nora/core';
+import amplitudeService from '../services/amplitudeService';
 
 interface UserProfile {
   name: string;
@@ -258,6 +259,7 @@ export const ProfileScreen: React.FC = () => {
 
       // Call logout API (clears auth tokens)
       await authService.logout();
+      amplitudeService.reset();
 
       // Navigate to onboarding
       navigation.reset({
