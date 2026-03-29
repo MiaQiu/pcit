@@ -72,7 +72,7 @@ export const WeeklyReportScreen: React.FC = () => {
           } catch {}
         }
         return i.strategy.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase());
-      }).filter(Boolean);
+      }).filter(Boolean).filter((name, idx, arr) => arr.indexOf(name) === idx);
       setChildIssues(issueNames);
     } catch (error) {
       console.log('Failed to load child issues:', error);
