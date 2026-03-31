@@ -50,18 +50,35 @@ interface CalendarDay {
   hasRecording: boolean;
 }
 
-const CalendarView: React.FC<{ recordingDates: Date[]; lessonCompletionDates: Date[] }> = ({ recordingDates, lessonCompletionDates }) => {
+interface VisibleWeeklyReport {
+  id: string;
+  weekStartDate: string;
+  weekEndDate: string;
+  headline: string | null;
+}
+
+const CalendarView: React.FC<{
+  recordingDates: Date[];
+  lessonCompletionDates: Date[];
+  recordings: Array<{ id: string; createdAt: string; mode: string; overallScore?: number | null }>;
+  weeklyReports: VisibleWeeklyReport[];
+  onReportPress: (recordingId: string) => void;
+  onWeeklyReportPress: (reportId: string) => void;
+}> = ({ recordingDates, lessonCompletionDates, recordings, weeklyReports, onReportPress, onWeeklyReportPress }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const goToPreviousMonth = () => {
+    setSelectedDate(null);
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   };
 
   const goToNextMonth = () => {
+    setSelectedDate(null);
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   };
 
-  // Generate calendar days for the current month
+  // Generate calendar days for the current month, padded to full weeks
   const generateCalendarDays = (): CalendarDay[] => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -75,28 +92,29 @@ const CalendarView: React.FC<{ recordingDates: Date[]; lessonCompletionDates: Da
 
     const days: CalendarDay[] = [];
 
-    // Convert recording dates and lesson dates to sets for faster lookup (using Singapore timezone)
+    // Convert recording dates to set for faster lookup (using Singapore timezone)
     const recordingDateStrings = new Set(recordingDates.map(d => toSingaporeDateString(d)));
-    const lessonDateStrings = new Set(lessonCompletionDates.map(d => toSingaporeDateString(d)));
 
     // Add previous month's trailing days
     for (let i = 0; i < startingDayOfWeek; i++) {
       const date = new Date(year, month, -startingDayOfWeek + i + 1);
       const dateStr = toSingaporeDateString(date);
-      days.push({
-        date,
-        hasRecording: recordingDateStrings.has(dateStr),
-      });
+      days.push({ date, hasRecording: recordingDateStrings.has(dateStr) });
     }
 
     // Add current month's days
     for (let i = 1; i <= lastDay.getDate(); i++) {
       const date = new Date(year, month, i);
       const dateStr = toSingaporeDateString(date);
-      days.push({
-        date,
-        hasRecording: recordingDateStrings.has(dateStr),
-      });
+      days.push({ date, hasRecording: recordingDateStrings.has(dateStr) });
+    }
+
+    // Pad with next month's days to complete the last week
+    const remaining = (7 - (days.length % 7)) % 7;
+    for (let i = 1; i <= remaining; i++) {
+      const date = new Date(year, month + 1, i);
+      const dateStr = toSingaporeDateString(date);
+      days.push({ date, hasRecording: recordingDateStrings.has(dateStr) });
     }
 
     return days;
@@ -107,6 +125,27 @@ const CalendarView: React.FC<{ recordingDates: Date[]; lessonCompletionDates: Da
     month: 'short',
     year: 'numeric',
   });
+
+  // Get all recordings for the selected date
+  const selectedDateRecordings = selectedDate
+    ? recordings.filter(r => toSingaporeDateString(new Date(r.createdAt)) === selectedDate)
+    : [];
+
+  // Get weekly report for the selected date's week
+  const selectedDateWeeklyReport = selectedDate
+    ? weeklyReports.find(report => {
+        const reportStart = report.weekStartDate.substring(0, 10);
+        const reportEnd = report.weekEndDate.substring(0, 10);
+        return selectedDate >= reportStart && selectedDate <= reportEnd;
+      }) || null
+    : null;
+
+  const formatMode = (mode: string) => mode === 'CDI' ? 'Child-Directed' : 'Parent-Directed';
+
+  const formatSelectedDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  };
 
   return (
     <View>
@@ -137,13 +176,31 @@ const CalendarView: React.FC<{ recordingDates: Date[]; lessonCompletionDates: Da
           {days.map((day, index) => {
             const isCurrentMonth = day.date.getMonth() === currentMonth.getMonth();
             const isToday = toSingaporeDateString(day.date) === getTodaySingapore();
+            const dateStr = toSingaporeDateString(day.date);
+            const isSelected = dateStr === selectedDate;
+
+            if (day.hasRecording && isCurrentMonth) {
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.dayCell}
+                  onPress={() => setSelectedDate(isSelected ? null : dateStr)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.dayCircle, styles.dayCircleActive, isSelected && styles.dayCircleSelected]}>
+                    <Text style={[styles.dayText, styles.dayTextActive]}>
+                      {day.date.getDate()}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            }
 
             return (
               <View key={index} style={styles.dayCell}>
                 <View
                   style={[
                     styles.dayCircle,
-                    day.hasRecording && styles.dayCircleActive,
                     !isCurrentMonth && styles.dayCircleInactive,
                     isToday && !day.hasRecording && styles.dayCircleToday,
                   ]}
@@ -151,7 +208,6 @@ const CalendarView: React.FC<{ recordingDates: Date[]; lessonCompletionDates: Da
                   <Text
                     style={[
                       styles.dayText,
-                      day.hasRecording && styles.dayTextActive,
                       !isCurrentMonth && styles.dayTextInactive,
                     ]}
                   >
@@ -162,6 +218,56 @@ const CalendarView: React.FC<{ recordingDates: Date[]; lessonCompletionDates: Da
             );
           })}
         </View>
+
+        {/* Day reports panel — shown when an orange day is selected */}
+        {selectedDate && (selectedDateRecordings.length > 0 || selectedDateWeeklyReport) && (
+          <View style={styles.dayReportsPanel}>
+            <View style={styles.dayReportsDivider} />
+            <Text style={styles.dayReportsDate}>{formatSelectedDate(selectedDate)}</Text>
+            {selectedDateRecordings.map((recording) => (
+              <TouchableOpacity
+                key={recording.id}
+                style={styles.dayReportItem}
+                onPress={() => onReportPress(recording.id)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.dayReportItemLeft}>
+                  <View style={styles.dayReportDot} />
+                  <View>
+                    <Text style={styles.dayReportItemTitle}>{formatMode(recording.mode)}</Text>
+                    <Text style={styles.dayReportItemSub}>Session Report</Text>
+                  </View>
+                </View>
+                <View style={styles.dayReportItemRight}>
+                  {recording.overallScore ? (
+                    <Text style={styles.dayReportScore}>{recording.overallScore}</Text>
+                  ) : (
+                    <Text style={styles.dayReportNoScore}>--</Text>
+                  )}
+                  <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                </View>
+              </TouchableOpacity>
+            ))}
+            {selectedDateWeeklyReport && (
+              <TouchableOpacity
+                style={styles.dayReportItem}
+                onPress={() => onWeeklyReportPress(selectedDateWeeklyReport.id)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.dayReportItemLeft}>
+                  <View style={[styles.dayReportDot, styles.dayReportDotWeekly]} />
+                  <View>
+                    <Text style={styles.dayReportItemTitle}>
+                      {selectedDateWeeklyReport.headline || 'Weekly Report'}
+                    </Text>
+                    <Text style={styles.dayReportItemSub}>Weekly Report</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );
@@ -318,6 +424,7 @@ export const ProgressScreen: React.FC = () => {
   const [showDomainModal, setShowDomainModal] = useState(false);
   const [loadingDomainMilestones, setLoadingDomainMilestones] = useState(false);
   const [recordings, setRecordings] = useState<any[]>([]);
+  const [weeklyReports, setWeeklyReports] = useState<VisibleWeeklyReport[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -347,8 +454,8 @@ export const ProgressScreen: React.FC = () => {
     try {
       setLoading(true);
 
-      // Fetch recording data, lesson stats, lesson list, and developmental progress in parallel
-      const [recordingsResponse, learningStats, lessonsResponse, devProgress] = await Promise.all([
+      // Fetch recording data, lesson stats, lesson list, developmental progress, and weekly reports in parallel
+      const [recordingsResponse, learningStats, lessonsResponse, devProgress, weeklyReportsData] = await Promise.all([
         recordingService.getRecordings(),
         lessonService.getLearningStats().catch(err => {
           console.log('Failed to load learning stats:', err);
@@ -362,7 +469,13 @@ export const ProgressScreen: React.FC = () => {
           console.log('Failed to load developmental progress:', err);
           return null;
         }),
+        recordingService.getVisibleWeeklyReports().catch(err => {
+          console.log('Failed to load weekly reports:', err);
+          return { reports: [] };
+        }),
       ]);
+
+      setWeeklyReports(weeklyReportsData.reports);
 
       // Set developmental progress
       if (devProgress) {
@@ -648,7 +761,19 @@ export const ProgressScreen: React.FC = () => {
         </View>
 
         {/* Calendar */}
-        <CalendarView recordingDates={recordingDates} lessonCompletionDates={lessonCompletionDates} />
+        <CalendarView
+          recordingDates={recordingDates}
+          lessonCompletionDates={lessonCompletionDates}
+          recordings={recordings}
+          weeklyReports={weeklyReports}
+          onReportPress={(recordingId) => {
+            amplitudeService.trackReportViewed(recordingId, undefined, { source: 'progress_calendar' });
+            navigation.navigate('Report', { recordingId });
+          }}
+          onWeeklyReportPress={(reportId) => {
+            navigation.navigate('WeeklyReport', { reportId });
+          }}
+        />
 
         {/* Score chart */}
         <ScoreChart data={scoreData} />
@@ -826,6 +951,10 @@ const styles = StyleSheet.create({
   dayCircleActive: {
     backgroundColor: '#FF8C42',
   },
+  dayCircleSelected: {
+    borderWidth: 2.5,
+    borderColor: '#8C49D5',
+  },
   dayCircleInactive: {
     backgroundColor: 'transparent',
   },
@@ -921,6 +1050,70 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 24,
+  },
+  dayReportsPanel: {
+    marginTop: 8,
+  },
+  dayReportsDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginBottom: 12,
+  },
+  dayReportsDate: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  dayReportItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  dayReportItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  dayReportDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FF8C42',
+  },
+  dayReportDotWeekly: {
+    backgroundColor: '#8C49D5',
+  },
+  dayReportItemTitle: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 14,
+    color: '#1E2939',
+  },
+  dayReportItemSub: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 1,
+  },
+  dayReportItemRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  dayReportScore: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 16,
+    color: '#8C49D5',
+  },
+  dayReportNoScore: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 14,
+    color: '#D1D5DB',
   },
   milestoneLockedCard: {
     backgroundColor: '#FFFFFF',
