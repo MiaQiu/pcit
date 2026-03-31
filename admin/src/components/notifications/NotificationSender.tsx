@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { sendNotifications } from '../../api/adminApi';
+import { sendNotifications, ApiEnvOpts } from '../../api/adminApi';
 
 interface Props {
   selectedIds: Set<string>;
+  envOpts?: ApiEnvOpts;
 }
 
-export default function NotificationSender({ selectedIds }: Props) {
+export default function NotificationSender({ selectedIds, envOpts }: Props) {
   const [title, setTitle] = useState('Your Weekly Report is Ready!');
   const [body, setBody] = useState('Check out your progress this week');
   const [sending, setSending] = useState(false);
@@ -21,7 +22,7 @@ export default function NotificationSender({ selectedIds }: Props) {
     setSending(true);
     setResult(null);
     try {
-      const res = await sendNotifications(Array.from(selectedIds), title, body);
+      const res = await sendNotifications(Array.from(selectedIds), title, body, envOpts);
       setResult({ sent: res.sent, failed: res.failed });
     } catch (err: any) {
       alert('Failed to send: ' + err.message);

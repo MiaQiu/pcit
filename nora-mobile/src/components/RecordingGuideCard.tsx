@@ -184,7 +184,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
           activeOpacity={0.7}
         >
           <Text style={[styles.tabText, mode === 'specialTime' && styles.tabTextActive]}>
-            Special Time (5m)
+            Play Time (5m)
           </Text>
         </TouchableOpacity>
         <TouchableOpacity

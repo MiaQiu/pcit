@@ -407,12 +407,13 @@ export async function toggleDevelopmentalVisibility(
 export async function sendNotifications(
   userIds: string[],
   title: string,
-  body: string
+  body: string,
+  opts?: ApiEnvOpts
 ): Promise<NotificationResult> {
-  return apiFetch<NotificationResult>('/api/admin/notifications/send', {
+  return apiFetchEnv<NotificationResult>('/api/admin/notifications/send', {
     method: 'POST',
     body: JSON.stringify({ userIds, title, body }),
-  });
+  }, opts);
 }
 
 // ---- Sessions ----

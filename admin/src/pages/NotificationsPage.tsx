@@ -11,14 +11,14 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
+  const envOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
+
   useEffect(() => {
-    // Compute opts inside the effect so it always captures the latest env + prodToken
-    const opts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
     setLoading(true);
     setUsers([]);
     setSelectedIds(new Set());
     setFetchError(null);
-    getUsers(opts)
+    getUsers(envOpts)
       .then(setUsers)
       .catch((err) => {
         console.error('Failed to load users:', err);
@@ -72,7 +72,7 @@ export default function NotificationsPage() {
           )}
         </div>
         <div className="notifications-sender">
-          <NotificationSender selectedIds={selectedIds} />
+          <NotificationSender selectedIds={selectedIds} envOpts={envOpts} />
         </div>
       </div>
     </div>

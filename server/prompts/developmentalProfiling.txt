@@ -7,11 +7,6 @@ You are analyzing a 5-minute parent-child play session transcript. Your task is 
 - Age: {{CHILD_AGE_MONTHS}} months old
 - Gender: {{CHILD_GENDER}}
 
-**Clinical Priority (from assessment):**
-- Primary Issue: {{PRIMARY_ISSUE}} — Strategy: {{PRIMARY_STRATEGY}}
-  Details: {{PRIMARY_DETAILS}}
-- Other Issues:
-{{OTHER_ISSUES}}
 
 **Developmental framework:**
 # Context: Milestone Library

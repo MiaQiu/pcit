@@ -145,7 +145,7 @@ const CalendarView: React.FC<{
       }) || null
     : null;
 
-  const formatMode = (mode: string) => mode === 'CDI' ? 'Special-Time' : 'Discipline';
+  const formatMode = (mode: string) => mode === 'CDI' ? 'Play Time' : 'Discipline';
 
   const formatSelectedDate = (dateStr: string) => {
     const d = new Date(dateStr);
