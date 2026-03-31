@@ -53,8 +53,6 @@ export const RecordScreen: React.FC = () => {
   const [completionSound, setCompletionSound] = useState<string>('Win');
   const [sessionMode, setSessionMode] = useState<'specialTime' | 'discipline'>('specialTime');
   const [isDisciplineLocked, setIsDisciplineLocked] = useState(false);
-  const [processingCountdown, setProcessingCountdown] = useState<number | null>(null);
-
   // Use ref to track current recording for cleanup
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -62,23 +60,24 @@ export const RecordScreen: React.FC = () => {
   const autoStopListenerRef = useRef<EmitterSubscription | null>(null);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    if (uploadProcessing.state === 'processing') {
-      setProcessingCountdown(10);
-    } else {
-      setProcessingCountdown(null);
-    }
-  }, [uploadProcessing.state]);
+  // Capture the report timestamp that existed when this screen mounted, so we
+  // only react to a *new* completed report (not one from a prior session).
+  const initialReportTimestampRef = useRef(uploadProcessing.reportCompletedTimestamp);
 
+  // Navigate to Home as soon as the report is ready (new timestamp detected).
+  // This handles all combinations of notification permission and app state:
+  //   - Notifications allowed + foreground  → push listener fires in context
+  //   - Notifications allowed + background  → AppState listener fires on return
+  //   - Notifications denied + foreground   → polling fires in context
+  //   - Notifications denied + background   → AppState listener fires on return
   useEffect(() => {
-    if (processingCountdown === null) return;
-    if (processingCountdown <= 0) {
+    if (
+      uploadProcessing.reportCompletedTimestamp !== null &&
+      uploadProcessing.reportCompletedTimestamp !== initialReportTimestampRef.current
+    ) {
       navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
-      return;
     }
-    const timer = setTimeout(() => setProcessingCountdown(prev => (prev !== null ? prev - 1 : null)), 1000);
-    return () => clearTimeout(timer);
-  }, [processingCountdown, navigation]);
+  }, [uploadProcessing.reportCompletedTimestamp, navigation]);
 
   useEffect(() => {
     requestPermissions();
@@ -681,7 +680,7 @@ This takes a few minutes.
                Nora is listening for patterns in praise, tone, and turn-taking to personalize your tips.
             </Text>
             <Text style={styles.processingSubtitle}>
-              Back to Home screen in {processingCountdown}s
+              You'll be taken to the Home screen as soon as your report is ready.
             </Text>
             <ActivityIndicator size="large" color={COLORS.mainPurple} style={styles.processingSpinner} />
           </View>
