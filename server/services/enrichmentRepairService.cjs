@@ -101,13 +101,34 @@ async function repairSession(session) {
   const isCDI = session.mode === 'CDI';
   const childSpeaker = getChildSpeaker(session.roleIdentificationJson);
 
+  // Fetch last 5 prior CDI sessions for historical metrics + yesterday's goal
+  const priorCdiSessions = isCDI ? await prisma.session.findMany({
+    where: {
+      userId,
+      mode: 'CDI',
+      analysisStatus: 'COMPLETED',
+      enrichmentStatus: 'COMPLETED',
+      id: { not: sessionId },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 5,
+    select: { createdAt: true, tagCounts: true, coachingCards: true },
+  }) : [];
+  // Reverse so oldest → newest for chronological display
+  const historicalCdiSessions = priorCdiSessions.reverse();
+  const yesterdayGoal = priorCdiSessions.length > 0
+    ? (priorCdiSessions[0].coachingCards?.tomorrowGoal || null)
+    : null;
+
   const childInfo = {
     name: childName,
     ageMonths: childAgeMonths,
     gender: childGender,
     clinicalPriority,
     isFirstSession: priorCompletedCount === 0,
-    durationSeconds: session.durationSeconds || null
+    durationSeconds: session.durationSeconds || null,
+    historicalCdiSessions,
+    yesterdayGoal,
   };
 
   // Step 9 — child profiling (parallel)
