@@ -785,8 +785,8 @@ export const ProgressScreen: React.FC = () => {
 
         {/* Developmental Stage Radar Chart — temporarily hidden */}
 
-        {/* Reports Section */}
-        <ReportsSection key={refreshKey} recordings={recordings} completedSessionCount={developmentalProgress?.completedSessionCount} />
+        {/* Reports Section — temporarily hidden */}
+        {/* <ReportsSection key={refreshKey} recordings={recordings} completedSessionCount={developmentalProgress?.completedSessionCount} /> */}
 
         {/* Bottom spacing */}
         <View style={styles.bottomSpacer} />
