@@ -60,7 +60,7 @@ interface VisibleWeeklyReport {
 const CalendarView: React.FC<{
   recordingDates: Date[];
   lessonCompletionDates: Date[];
-  recordings: Array<{ id: string; createdAt: string; mode: string; overallScore?: number | null }>;
+  recordings: Array<{ id: string; createdAt: string; mode: string; overallScore?: number | null; analysisStatus?: string | null }>;
   weeklyReports: VisibleWeeklyReport[];
   onReportPress: (recordingId: string) => void;
   onWeeklyReportPress: (reportId: string) => void;
@@ -126,9 +126,12 @@ const CalendarView: React.FC<{
     year: 'numeric',
   });
 
-  // Get all recordings for the selected date
+  // Get all COMPLETED recordings for the selected date
   const selectedDateRecordings = selectedDate
-    ? recordings.filter(r => toSingaporeDateString(new Date(r.createdAt)) === selectedDate)
+    ? recordings.filter(r =>
+        r.analysisStatus === 'COMPLETED' &&
+        toSingaporeDateString(new Date(r.createdAt)) === selectedDate
+      )
     : [];
 
   // Get weekly report for the selected date's week.
