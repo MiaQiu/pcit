@@ -1406,6 +1406,16 @@ Do not include markdown or whitespace (minified JSON).
     console.error('⚠️ [ANALYSIS-STEP-9] Child profiling error:', profilingError.message);
   }
 
+  // For non-English sessions, clear hardcoded English feedback from silence slots
+  // so review-feedback can write localized feedback for the ones it selects.
+  if (primaryLanguage && primaryLanguage !== 'eng') {
+    await prisma.utterance.updateMany({
+      where: { sessionId, speaker: SILENT_SPEAKER_ID },
+      data: { feedback: null }
+    });
+    console.log(`🌐 [ANALYSIS] Cleared silence slot feedback for localization (language: ${primaryLanguage})`);
+  }
+
   // Get competency analysis based on tag counts and utterances
   let competencyAnalysis = null;
   try {
