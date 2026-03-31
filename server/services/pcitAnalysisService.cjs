@@ -23,6 +23,7 @@ const { getUtterances, updateUtteranceRoles, updateUtteranceTags, updateRevisedF
 const { DPICS_TO_TAG_MAP, calculateNoraScore } = require('../utils/scoreConstants.cjs');
 const { loadPrompt, loadPromptWithVariables } = require('../prompts/index.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
+const { getLanguageInstruction } = require('../utils/languageUtils.cjs');
 
 // ============================================================================
 // Session Quality Gate
@@ -503,8 +504,9 @@ Return these in the top-level "baseline_achieved" array.`
  * @param {string} childSpeaker - Speaker ID of the child (e.g., 'speaker_0')
  * @returns {Promise<Object|null>} { developmentalObservation, metadata } or null on failure
  */
-async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts = {}, childSpeaker = null, sessionId = null) {
+async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts = {}, childSpeaker = null, sessionId = null, language = null) {
   const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
+  variables.LANGUAGE_INSTRUCTION = getLanguageInstruction(language);
   const prompt = loadPromptWithVariables('developmentalProfiling', variables);
 
   console.log(`📊 [DEV-PROFILING] Calling ${AI_PROVIDER} for developmental profiling...`);
@@ -556,7 +558,7 @@ async function callGeminiFlashRaw(prompt, options = {}) {
  * @param {Object} tagCounts  - Session metrics from PCIT coding
  * @returns {Promise<Array|null>} Array of AboutChildItem or null on failure
  */
-async function generateAboutChild(utterances, childInfo, tagCounts = {}, sessionId = null) {
+async function generateAboutChild(utterances, childInfo, tagCounts = {}, sessionId = null, language = null) {
   const { name, ageMonths, gender } = childInfo;
   const transcript = formatUtterancesForPsychologist(utterances);
   const ageDisplay = ageMonths ? `${ageMonths} months old` : 'unknown age';
@@ -578,11 +580,14 @@ async function generateAboutChild(utterances, childInfo, tagCounts = {}, session
 **Transcript:**
 ${transcript}`;
 
+  const languageInstruction = getLanguageInstruction(language);
+  const step1PromptFinal = languageInstruction ? `${step1Prompt}\n\n${languageInstruction}` : step1Prompt;
+
   console.log(`📊 [ABOUT-CHILD] Step 1: Calling ${AI_PROVIDER} for psychologist narrative...`);
 
   let narrativeText;
   try {
-    narrativeText = await llmCall(step1Prompt, { output: 'text', temperature: 0.7, maxTokens: 4096, label: 'about-child-step1', timeout: 120_000, sessionId });
+    narrativeText = await llmCall(step1PromptFinal, { output: 'text', temperature: 0.7, maxTokens: 4096, label: 'about-child-step1', timeout: 120_000, sessionId });
     console.log(`✅ [ABOUT-CHILD] Step 1 complete (${narrativeText.length} chars)`);
   } catch (error) {
     console.error('❌ [ABOUT-CHILD] Step 1 failed:', error.message);
@@ -619,10 +624,12 @@ Example format:
   }
 ]`;
 
+  const step3PromptFinal = languageInstruction ? `${step3Prompt}\n\n${languageInstruction}` : step3Prompt;
+
   console.log(`📊 [ABOUT-CHILD] Step 3: Calling ${AI_PROVIDER} to extract child observations...`);
 
   try {
-    const aboutChild = await llmCall(step3Prompt, {
+    const aboutChild = await llmCall(step3PromptFinal, {
       output:      'array',
       temperature: 0.3,
       maxTokens:   2048,
@@ -647,7 +654,7 @@ Example format:
  * @param {string} childSpeaker - Speaker ID of the child (e.g., 'speaker_0')
  * @returns {Promise<Object|null>} { coachingSummary, coachingCards } or null on failure
  */
-async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childSpeaker = null, sessionId = null) {
+async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childSpeaker = null, sessionId = null, language = null) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
   if (!GEMINI_API_KEY) {
     console.warn('⚠️ [CDI-COACHING] Gemini API key not configured, skipping');
@@ -655,6 +662,7 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
   }
 
   const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
+  variables.LANGUAGE_INSTRUCTION = getLanguageInstruction(language);
   const prompt = loadPromptWithVariables('cdiCoaching', variables);
 
   console.log(`📊 [CDI-COACHING] Calling Gemini API for coaching report...`);
@@ -711,7 +719,7 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
  * Generate combined analysis and feedback prompt for CDI session
  * Combines analysis and improvement into a single prompt
  */
-function generateCombinedFeedbackPrompt(counts, utterances, childName = 'the child') {
+function generateCombinedFeedbackPrompt(counts, utterances, childName = 'the child', language = null) {
   return `You are an expert in parent-child interaction. Analyze this 5-minute play session with ${childName}.
 
 **Session Metrics:**
@@ -757,7 +765,7 @@ Return ONLY valid JSON:
 
 Do not mention PCIT, therapy, or clinical terms in the output.
 
-No markdown code fences.`;
+No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` : ''}`;
 }
 
 
@@ -784,7 +792,7 @@ function formatUtterancesWithFeedback(utterances) {
  * Generate review feedback prompt for CDI session
  * Reviews and revises feedback for parent utterances and selects key silence slots
  */
-function generateReviewFeedbackPrompt(counts, utterances, isCDI = true, pdiResult = null) {
+function generateReviewFeedbackPrompt(counts, utterances, isCDI = true, pdiResult = null, language = null) {
   const commandCoachingSection = isCDI
     ? `   **For undesirable skills (NTA, DC, IC, Q, UP)**, provide constructive, warm feedback with specific alternatives (e.g. suggest a BD or LP instead of a command or question).`
     : `   **Commands — PDI focus:**
@@ -845,7 +853,7 @@ Return ONLY a valid JSON array. Each item has:
 - Keep feedback warm, specific, and actionable
 - Return ONLY the JSON array, no other text
 
-No markdown code fences.`;
+No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` : ''}`;
 }
 
 /**
@@ -856,13 +864,13 @@ No markdown code fences.`;
  * @param {boolean} isCDI - true for CDI sessions, false for PDI
  * @returns {Promise<Object>} Assembled feedback result
  */
-async function generateCDIFeedback(counts, utterances, childName, isCDI = true, pdiResult = null, sessionId = null) {
+async function generateCDIFeedback(counts, utterances, childName, isCDI = true, pdiResult = null, sessionId = null, language = null) {
   console.log(`🚀 [CDI-FEEDBACK] Starting feedback generation (mode: ${isCDI ? 'CDI' : 'PDI'})...`);
 
   // Call 1: Combined feedback prompt (analysis + improvement + example in one)
   console.log('📝 [CDI-FEEDBACK] Running combined feedback prompt...');
   const feedbackData = await llmCall(
-    generateCombinedFeedbackPrompt(counts, utterances, childName),
+    generateCombinedFeedbackPrompt(counts, utterances, childName, language),
     { label: 'combined-feedback', schema: SCHEMAS.COMBINED_FEEDBACK, sessionId }
   );
 
@@ -873,7 +881,7 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true, 
   let revisedFeedback = [];
   try {
     const reviewData = await llmCall(
-      generateReviewFeedbackPrompt(counts, utterances, isCDI, pdiResult),
+      generateReviewFeedbackPrompt(counts, utterances, isCDI, pdiResult, language),
       { temperature: 0.5, output: 'array', label: 'review-feedback', schema: SCHEMAS.REVIEW_FEEDBACK, sessionId }
     );
     // reviewData should be an array directly since we asked for JSON array
@@ -911,7 +919,7 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true, 
  * @param {string} childName - Child's name for personalized feedback
  * @returns {Promise<Array|null>} Array of 4 skill ratings or null on failure
  */
-async function generatePDITwoChoicesAnalysis(utterances, childName, sessionId = null) {
+async function generatePDITwoChoicesAnalysis(utterances, childName, sessionId = null, language = null) {
   console.log('🎯 [PDI-TWO-CHOICES] Starting Two Choices Flow analysis...');
 
   const transcript = utterances
@@ -924,7 +932,8 @@ async function generatePDITwoChoicesAnalysis(utterances, childName, sessionId = 
 
   const prompt = loadPromptWithVariables('pdiTwoChoicesFlow', {
     CHILD_NAME: childName || 'the child',
-    TRANSCRIPT: transcript
+    TRANSCRIPT: transcript,
+    LANGUAGE_INSTRUCTION: getLanguageInstruction(language)
   });
 
   try {
@@ -1064,6 +1073,12 @@ async function analyzePCITCoding(sessionId, userId) {
   }));
 
   const isCDI = session.mode === 'CDI';
+
+  // Detect primary language from ElevenLabs transcription result
+  const primaryLanguage = session.elevenLabsJson?.language_code || null;
+  if (primaryLanguage && primaryLanguage !== 'eng') {
+    console.log(`🌐 [ANALYSIS] Primary language detected: ${primaryLanguage}`);
+  }
 
   // STEP 1: Identify speaker roles (skip if already done on a previous attempt)
   let roleIdentificationJson;
@@ -1234,7 +1249,7 @@ Do not include markdown or whitespace (minified JSON).
 - Your ENTIRE response must be ONLY the JSON array starting with [ and ending with ]
 - First character of your response MUST be [
 - Last character of your response MUST be ]
-- Every parent segment MUST have both "code" and "feedback" fields`;
+- Every parent segment MUST have both "code" and "feedback" fields${primaryLanguage && primaryLanguage !== 'eng' ? `\n- Always keep "code" values as English DPICS codes (e.g. LP, BD, RF). Write the "feedback" field in ${getLanguageInstruction(primaryLanguage).replace('Write your entire response in ', '').replace('.', '')}.` : ''}`;
 
     console.log(`📊 [ANALYSIS-STEP-8] Calling ${AI_PROVIDER} for PCIT coding...`);
     console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
@@ -1353,9 +1368,9 @@ Do not include markdown or whitespace (minified JSON).
     };
 
     const [profilingSettled, coachingSettled, aboutChildSettled] = await Promise.allSettled([
-      generateDevelopmentalProfiling(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId),
-      isCDI ? generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId) : Promise.resolve(null),
-      generateAboutChild(utterancesForProfiling, childInfoForProfiling, tagCounts, sessionId)
+      generateDevelopmentalProfiling(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId, primaryLanguage),
+      isCDI ? generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId, primaryLanguage) : Promise.resolve(null),
+      generateAboutChild(utterancesForProfiling, childInfoForProfiling, tagCounts, sessionId, primaryLanguage)
     ]);
 
     const profilingResult = profilingSettled.status === 'fulfilled' ? profilingSettled.value : null;
@@ -1401,7 +1416,7 @@ Do not include markdown or whitespace (minified JSON).
     let pdiResult = null;
     if (!isCDI) {
       console.log('🎯 [COMPETENCY-ANALYSIS] Running PDI Two Choices Flow analysis...');
-      pdiResult = await generatePDITwoChoicesAnalysis(utterancesWithTags, childName, sessionId);
+      pdiResult = await generatePDITwoChoicesAnalysis(utterancesWithTags, childName, sessionId, primaryLanguage);
       if (pdiResult) {
         console.log(`✅ [COMPETENCY-ANALYSIS] PDI Two Choices Flow analysis complete — ${pdiResult.pdiSkills.length} skills`);
       }
@@ -1409,7 +1424,7 @@ Do not include markdown or whitespace (minified JSON).
 
     // Run multi-prompt feedback flow for both CDI and PDI (mode-aware)
     console.log(`🎯 [COMPETENCY-ANALYSIS] Using multi-prompt feedback generation for ${session.mode} session...`);
-    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName, isCDI, pdiResult, sessionId);
+    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName, isCDI, pdiResult, sessionId, primaryLanguage);
 
     // Save revised feedback to database
     if (feedbackResult.revisedFeedback && feedbackResult.revisedFeedback.length > 0) {

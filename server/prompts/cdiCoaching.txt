@@ -32,3 +32,5 @@ You are an expert Child Psychologist and PCIT (Parent-Child Interaction Therapy)
 
 **Transcript:**
 {{TRANSCRIPT}}
+
+{{LANGUAGE_INSTRUCTION}}

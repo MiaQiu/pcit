@@ -71,3 +71,5 @@ IMPORTANT: The "label" for each command sequence must be exactly "Great!" or "Ne
 Do not mention PCIT, therapy, or clinical terms in the output.
 
 No markdown code fences. Return ONLY the JSON object.
+
+{{LANGUAGE_INSTRUCTION}}
