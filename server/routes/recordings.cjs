@@ -840,7 +840,8 @@ router.get('/', requireAuth, async (req, res) => {
         masteryAchieved: true,
         createdAt: true,
         transcript: true,
-        overallScore: true
+        overallScore: true,
+        analysisStatus: true
       }
     });
 
@@ -851,7 +852,8 @@ router.get('/', requireAuth, async (req, res) => {
       masteryAchieved: session.masteryAchieved,
       createdAt: session.createdAt,
       status: session.transcript ? 'transcribed' : 'uploaded',
-      overallScore: session.overallScore
+      overallScore: session.overallScore,
+      analysisStatus: session.analysisStatus
     }));
 
     res.json({ recordings });
