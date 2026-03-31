@@ -302,6 +302,8 @@ export const TranscriptScreen: React.FC = () => {
               // Check if this is a silent slot
               const isSilentSlot = segment.speaker === '__SILENT__';
 
+              if (isSilentSlot && !segment.feedback) return null;
+
               if (isSilentSlot) {
                 // Render silent slot specially
                 const duration = segment.end - segment.start;
