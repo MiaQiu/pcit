@@ -14,6 +14,9 @@ Be lose about the gate, if there is some meaninful insight we can get from the c
 - Total utterances: {{UTTERANCE_COUNT}}
 - Distinct speakers: {{SPEAKER_COUNT}}
 
+**ROLE IDENTIFICATION:**
+{{ROLE_IDENTIFICATION}}
+
 **TRANSCRIPT SAMPLE:**
 {{UTTERANCES_SAMPLE}}
 

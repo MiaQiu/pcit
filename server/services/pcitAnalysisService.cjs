@@ -58,7 +58,7 @@ class PermanentFailureError extends Error {
  * Runs cheap heuristics first, then one LLM call for everything else.
  * Throws SessionQualityError if the session should not be processed.
  */
-async function validateSessionQuality(utterances, durationSeconds) {
+async function validateSessionQuality(utterances, durationSeconds, roleIdentificationJson) {
   const SILENT_ID = SILENT_SPEAKER_ID;
   const nonSilent = utterances.filter(u => u.speaker !== SILENT_ID);
   const speakerIds = new Set(nonSilent.map(u => u.speaker));
@@ -88,7 +88,8 @@ async function validateSessionQuality(utterances, durationSeconds) {
     DURATION_SECONDS: String(durationSeconds),
     UTTERANCE_COUNT: String(nonSilent.length),
     SPEAKER_COUNT: String(speakerIds.size),
-    UTTERANCES_SAMPLE: JSON.stringify(sample, null, 2)
+    UTTERANCES_SAMPLE: JSON.stringify(sample, null, 2),
+    ROLE_IDENTIFICATION: roleIdentificationJson ? JSON.stringify(roleIdentificationJson, null, 2) : 'Not available'
   });
 
   const result = await llmCall(prompt, {
@@ -392,7 +393,7 @@ function formatUtterancesForPsychologist(utterances) {
  * @returns {Object} Template variables object
  */
 function buildProfilingVariables(childInfo, tagCounts, utterances) {
-  const { name, ageMonths, gender, clinicalPriority, isFirstSession, durationSeconds, achievedMilestoneKeys } = childInfo;
+  const { name, ageMonths, gender, clinicalPriority, isFirstSession, durationSeconds, achievedMilestoneKeys, historicalCdiSessions, yesterdayGoal } = childInfo;
   const transcript = formatUtterancesForPsychologist(utterances);
 
   const formatLevel = (level) => level ? level.replace(/_/g, ' ').toLowerCase() : 'none';
@@ -447,6 +448,18 @@ function buildProfilingVariables(childInfo, tagCounts, utterances) {
     ? (totalMinutes > 0 ? `${totalMinutes} min ${totalSeconds} sec` : `${totalSeconds} sec`)
     : 'unknown';
 
+  const formatSessionDate = (createdAt) => {
+    const d = new Date(createdAt);
+    return `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
+  };
+
+  const historicalMetrics = historicalCdiSessions && historicalCdiSessions.length > 0
+    ? historicalCdiSessions.map(s => {
+        const tc = s.tagCounts || {};
+        return `- [${formatSessionDate(s.createdAt)}]: Praise ${tc.praise || 0}, Echo ${tc.echo || 0}, Narrate ${tc.narration || 0} | Questions ${tc.question || 0}, Commands ${tc.command || 0}, Criticism ${tc.criticism || 0}`;
+      }).join('\n')
+    : null;
+
   return {
     CHILD_NAME: name || 'the child',
     CHILD_AGE_MONTHS: String(ageMonths || 'unknown'),
@@ -457,6 +470,12 @@ function buildProfilingVariables(childInfo, tagCounts, utterances) {
     OTHER_ISSUES: otherIssuesText,
     SESSION_METRICS: sessionMetrics,
     SESSION_DURATION: sessionDuration,
+    HISTORICAL_METRICS_SECTION: historicalMetrics
+      ? `**Historical Session Metrics (last sessions, oldest → most recent):**\n${historicalMetrics}`
+      : '',
+    YESTERDAY_GOAL_SECTION: yesterdayGoal
+      ? `**Yesterday's Focus Goal:**\n${yesterdayGoal}\nWhen setting the "key focus for tomorrow", acknowledge whether yesterday's goal was achieved before setting the next one.`
+      : '',
     TRANSCRIPT: transcript,
     FIRST_SESSION_NOTE: isFirstSession
       ? 'please note, This is the first session the parent has with the parent app Nora. for first session, it is to hook user in, setting expectations that we are going to be very helpful to them. For us, the primary goal of this session is to get user excited about emotional massage and the discipline coaching (which will be available once their emotional bank account is ready) and committed to making daily massage session as their priority.'
@@ -1036,11 +1055,6 @@ async function analyzePCITCoding(sessionId, userId) {
     throw new Error('No utterances found in session data');
   }
 
-  // Quality gate — one fast LLM call; throws SessionQualityError if invalid
-  console.log(`📊 [ANALYSIS-QUALITY-GATE] Validating session quality...`);
-  await validateSessionQuality(utterances, session.durationSeconds);
-  console.log(`✅ [ANALYSIS-QUALITY-GATE] Session passed quality check`);
-
   // Convert to format expected by role identification prompt
   const utterancesForPrompt = utterances.map(utt => ({
     speaker: utt.speaker,
@@ -1079,6 +1093,15 @@ async function analyzePCITCoding(sessionId, userId) {
     try {
       roleIdentificationJson = await llmCall(roleIdentificationPrompt, { maxTokens: 2048, temperature: 0.3, label: 'role-id', sessionId });
       console.log(`✅ [ANALYSIS-STEP-3] Role identification parsed successfully`);
+
+      // Check if any speaker confidence is below threshold — retry with backup model if so
+      const lowConfidenceSpeakers = Object.entries(roleIdentificationJson.speaker_identification || {})
+        .filter(([, info]) => typeof info.confidence === 'number' && info.confidence < 0.8);
+      if (lowConfidenceSpeakers.length > 0) {
+        console.log(`⚠️ [ANALYSIS-STEP-3] Low confidence on speakers (${lowConfidenceSpeakers.map(([id, info]) => `${id}:${info.confidence}`).join(', ')}) — retrying with backup model (claude)`);
+        roleIdentificationJson = await llmCall(roleIdentificationPrompt, { model: 'claude', maxTokens: 2048, temperature: 0.3, label: 'role-id-backup', sessionId });
+        console.log(`✅ [ANALYSIS-STEP-3] Role identification backup parsed successfully`);
+      }
 
       // Extract all adult speakers from speaker_identification
       const speakerIdentification = roleIdentificationJson.speaker_identification || {};
@@ -1132,6 +1155,11 @@ async function analyzePCITCoding(sessionId, userId) {
     });
     console.log(`✅ [ANALYSIS-STEP-5] Role identification JSON stored in session`);
   }
+
+  // Quality gate — one fast LLM call; throws SessionQualityError if invalid
+  console.log(`📊 [ANALYSIS-QUALITY-GATE] Validating session quality...`);
+  await validateSessionQuality(utterances, session.durationSeconds, roleIdentificationJson);
+  console.log(`✅ [ANALYSIS-QUALITY-GATE] Session passed quality check`);
 
   // STEP 2: Apply PCIT coding to adult utterances (skip if already done on a previous attempt)
   let tagCounts = {
