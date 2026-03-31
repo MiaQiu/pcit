@@ -131,16 +131,18 @@ const CalendarView: React.FC<{
     ? recordings.filter(r => toSingaporeDateString(new Date(r.createdAt)) === selectedDate)
     : [];
 
-  // Get weekly report for the selected date's week
+  // Get weekly report for the selected date's week.
+  // Convert report UTC dates to SGT format (same as selectedDate) before comparing.
   const selectedDateWeeklyReport = selectedDate
     ? weeklyReports.find(report => {
-        const reportStart = report.weekStartDate.substring(0, 10);
-        const reportEnd = report.weekEndDate.substring(0, 10);
-        return selectedDate >= reportStart && selectedDate <= reportEnd;
+        const reportStartStr = toSingaporeDateString(new Date(report.weekStartDate));
+        const reportEndStr = toSingaporeDateString(new Date(report.weekEndDate));
+        const selMs = new Date(selectedDate).getTime();
+        return selMs >= new Date(reportStartStr).getTime() && selMs <= new Date(reportEndStr).getTime();
       }) || null
     : null;
 
-  const formatMode = (mode: string) => mode === 'CDI' ? 'Child-Directed' : 'Parent-Directed';
+  const formatMode = (mode: string) => mode === 'CDI' ? 'Special-Time' : 'Discipline';
 
   const formatSelectedDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -149,7 +151,7 @@ const CalendarView: React.FC<{
 
   return (
     <View>
-      <Text style={styles.calendarTitle}>Your Streak</Text>
+      <Text style={styles.calendarTitle}>Your Streak / Report</Text>
       <View style={styles.calendarContainer}>
         {/* Month navigation */}
         <View style={styles.monthNavigation}>
@@ -258,9 +260,9 @@ const CalendarView: React.FC<{
                   <View style={[styles.dayReportDot, styles.dayReportDotWeekly]} />
                   <View>
                     <Text style={styles.dayReportItemTitle}>
-                      {selectedDateWeeklyReport.headline || 'Weekly Report'}
+                      {'Weekly Report'}
                     </Text>
-                    <Text style={styles.dayReportItemSub}>Weekly Report</Text>
+                    {/* <Text style={styles.dayReportItemSub}>Weekly Report</Text> */}
                   </View>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
