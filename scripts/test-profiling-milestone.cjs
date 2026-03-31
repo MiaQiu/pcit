@@ -2,27 +2,20 @@
  * Test script: run developmental profiling + milestone detection for a session
  * Skips transcription — uses existing transcript and role identification.
  *
- * Usage: node scripts/test-profiling-milestone.cjs <sessionId>
+ * Usage:
+ *   node scripts/test-profiling-milestone.cjs <sessionId>          # dry run (no DB writes)
+ *   node scripts/test-profiling-milestone.cjs <sessionId> --save   # save to DB
  */
 require('dotenv').config();
 const prisma = require('../server/services/db.cjs');
 const { decryptSensitiveData } = require('../server/utils/encryption.cjs');
 
 const SESSION_ID = process.argv[2];
+const SAVE = process.argv.includes('--save');
 if (!SESSION_ID) {
-  console.error('Usage: node scripts/test-profiling-milestone.cjs <sessionId>');
+  console.error('Usage: node scripts/test-profiling-milestone.cjs <sessionId> [--save]');
   process.exit(1);
 }
-
-// Inline the relevant helpers from pcitAnalysisService to avoid running the full pipeline
-const {
-  generateDevelopmentalProfiling,
-  buildProfilingVariables,
-} = (() => {
-  // We require the analysis service but only use specific exports
-  // Instead, re-implement the minimal wiring here
-  return {};
-})();
 
 async function run() {
   console.log('='.repeat(80));
@@ -175,38 +168,73 @@ async function run() {
     baselineAchieved.forEach(b => console.log(`    • ${b.milestone_key}: "${b.evidence_summary}"`));
   }
 
-  console.log('\n' + '='.repeat(80));
-  console.log('🏆 STEP 10: Running detectAndUpdateMilestones (DRY RUN — not saving)...');
-  console.log('='.repeat(80));
+  if (SAVE) {
+    console.log('\n' + '='.repeat(80));
+    console.log('💾 SAVING: Upserting ChildProfiling...');
+    console.log('='.repeat(80));
 
-  // Show what WOULD happen without writing to DB
-  const allMilestones = await prisma.milestoneLibrary.findMany();
-  const keyToMilestone = {};
-  for (const m of allMilestones) keyToMilestone[m.key] = m;
-  const existingByKey = {};
-  for (const em of existingChildMilestones) existingByKey[em.MilestoneLibrary.key] = em;
-
-  for (const detected of detectedMilestones) {
-    const lib = keyToMilestone[detected.milestone_key];
-    if (!lib) { console.log(`  ⚠️  Unknown key: ${detected.milestone_key}`); continue; }
-    const existing = existingByKey[detected.milestone_key];
-    if (!existing) {
-      console.log(`  ✨ WOULD CREATE EMERGING: ${detected.milestone_key}`);
-    } else if (existing.status === 'EMERGING') {
-      const newCount = existing.detectionCount + 1;
-      if (newCount > lib.thresholdValue) {
-        console.log(`  🏆 WOULD PROMOTE TO ACHIEVED: ${detected.milestone_key} (count ${newCount} > threshold ${lib.thresholdValue})`);
-      } else {
-        console.log(`  📊 WOULD INCREMENT: ${detected.milestone_key} (count ${existing.detectionCount} → ${newCount} / threshold ${lib.thresholdValue})`);
+    await prisma.childProfiling.upsert({
+      where: { sessionId: SESSION_ID },
+      create: {
+        userId: session.userId,
+        sessionId: SESSION_ID,
+        childId: child.id,
+        summary: profilingResult.developmentalObservation.summary || null,
+        domains: profilingResult.developmentalObservation.domains || [],
+        metadata: profilingResult.metadata || null
+      },
+      update: {
+        childId: child.id,
+        summary: profilingResult.developmentalObservation.summary || null,
+        domains: profilingResult.developmentalObservation.domains || [],
+        metadata: profilingResult.metadata || null
       }
-    } else {
-      console.log(`  ✅ Already ACHIEVED: ${detected.milestone_key} (skip)`);
-    }
-  }
+    });
+    console.log('✅ ChildProfiling upserted');
 
-  console.log('\n' + '='.repeat(80));
-  console.log('✅ Test complete — no DB changes made');
-  console.log('='.repeat(80));
+    console.log('\n🏆 STEP 10: Running detectAndUpdateMilestones (SAVING to DB)...');
+    const { detectAndUpdateMilestones } = require('../server/services/milestoneDetectionService.cjs');
+    const milestoneResult = await detectAndUpdateMilestones(child.id, detectedMilestones, baselineAchieved);
+    if (milestoneResult) {
+      console.log(`✅ Milestones: ${milestoneResult.newEmerging} new emerging, ${milestoneResult.newAchieved} new achieved, ${milestoneResult.celebrations.length} celebrations`);
+    }
+
+    console.log('\n' + '='.repeat(80));
+    console.log('✅ Done — DB updated');
+    console.log('='.repeat(80));
+  } else {
+    console.log('\n' + '='.repeat(80));
+    console.log('🏆 STEP 10: DRY RUN — showing what would happen (pass --save to write)');
+    console.log('='.repeat(80));
+
+    const allMilestones = await prisma.milestoneLibrary.findMany();
+    const keyToMilestone = {};
+    for (const m of allMilestones) keyToMilestone[m.key] = m;
+    const existingByKey = {};
+    for (const em of existingChildMilestones) existingByKey[em.MilestoneLibrary.key] = em;
+
+    for (const detected of detectedMilestones) {
+      const lib = keyToMilestone[detected.milestone_key];
+      if (!lib) { console.log(`  ⚠️  Unknown key: ${detected.milestone_key}`); continue; }
+      const existing = existingByKey[detected.milestone_key];
+      if (!existing) {
+        console.log(`  ✨ WOULD CREATE EMERGING: ${detected.milestone_key}`);
+      } else if (existing.status === 'EMERGING') {
+        const newCount = existing.detectionCount + 1;
+        if (newCount > lib.thresholdValue) {
+          console.log(`  🏆 WOULD PROMOTE TO ACHIEVED: ${detected.milestone_key} (count ${newCount} > threshold ${lib.thresholdValue})`);
+        } else {
+          console.log(`  📊 WOULD INCREMENT: ${detected.milestone_key} (count ${existing.detectionCount} → ${newCount} / threshold ${lib.thresholdValue})`);
+        }
+      } else {
+        console.log(`  ✅ Already ACHIEVED: ${detected.milestone_key} (skip)`);
+      }
+    }
+
+    console.log('\n' + '='.repeat(80));
+    console.log('✅ Dry run complete — no DB changes made');
+    console.log('='.repeat(80));
+  }
 
   await prisma.$disconnect();
 }

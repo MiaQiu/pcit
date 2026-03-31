@@ -123,6 +123,18 @@ All require admin auth.
 |--------|------|-------------|
 | `POST` | `/api/admin/notifications/send` | Send push notification to selected users |
 
+### Weekly Reports
+
+All require admin auth.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/admin/users/:id/weekly-reports` | List all weekly reports for a user (all visibility states) |
+| `GET` | `/api/admin/weekly-reports/:id` | Full report detail with presigned audio URLs |
+| `POST` | `/api/admin/weekly-reports/generate` | Generate a report for one user. Body: `{ userId, weekStartDate? }`. Saves with `visibility: false`. |
+| `POST` | `/api/admin/weekly-reports/generate-all` | Generate reports for all users with completed sessions in the week. Body: `{ weekStartDate? }`. |
+| `PUT` | `/api/admin/weekly-reports/:id/visibility` | Toggle visibility. **Automatically sends push notification when setting `true`** (only fires once, on transition from false→true). |
+
 ### Sync to Prod
 
 | Method | Path | Auth | Description |
@@ -256,7 +268,19 @@ The body text textarea supports:
 - Left: user table with checkboxes (only users with push tokens are selectable)
 - Right: compose panel with title/body inputs, preview box, and send button
 - Default message: "Your Weekly Report is Ready!" / "Check out your progress this week"
-- Uses existing `sendPushNotificationToUser` from `server/services/pushNotifications.cjs`
+- Sends `{ type: 'weekly_report' }` in the notification data (no `reportId` — use the visibility toggle endpoint if you want to deep-link to a specific report)
+- Uses `sendPushNotificationToUser` from `server/services/pushNotifications.cjs`
+
+### Weekly Reports (`/users/:id`)
+
+Accessible from the User Detail page. Shows all generated weekly reports for a user with their visibility state. Admin can:
+- Generate a new report for the user
+- Toggle visibility (publishing a report automatically sends the user a push notification)
+
+The three ways to notify a user about a weekly report:
+1. **Automated cron** (`server/jobs/weeklyReportJob.cjs`) — runs every Monday 5:30pm SGT; generates + publishes + notifies automatically. Includes `reportId` in push payload.
+2. **Via visibility toggle** (`PUT /api/admin/weekly-reports/:id/visibility`) — manual one-off publish; includes `reportId`. Fires only on false→true transition.
+3. **Via Notifications page** (`POST /api/admin/notifications/send`) — manual blast with custom message; no `reportId` in payload.
 
 ### Push to Prod (sidebar button)
 

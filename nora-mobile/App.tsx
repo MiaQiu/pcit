@@ -120,6 +120,9 @@ const AppContent: React.FC = () => {
 
         // Navigate to the report screen
         navigation.navigate('Report', { recordingId: data.recordingId as string });
+      } else if (data.type === 'weekly_report' && data.reportId) {
+        console.log('[App] Navigating to weekly report:', data.reportId);
+        navigation.navigate('WeeklyReport', { reportId: data.reportId as string });
       } else if (data.type === 'milestones_unlocked') {
         console.log('[App] Navigating to Progress > Milestones section');
         navigation.navigate('MainTabs', { screen: 'Progress', params: { scrollToDevelopmental: true } });
@@ -130,6 +133,18 @@ const AppContent: React.FC = () => {
     });
 
     return () => subscription.remove();
+  }, [navigation]);
+
+  // Handle cold-start from a notification tap (app was killed)
+  useEffect(() => {
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (!response) return;
+      const data = response.notification.request.content.data;
+      if (data.type === 'weekly_report' && data.reportId) {
+        console.log('[App] Cold-start: navigating to weekly report:', data.reportId);
+        navigation.navigate('WeeklyReport', { reportId: data.reportId as string });
+      }
+    });
   }, [navigation]);
 
   // Clear badge when app comes to foreground

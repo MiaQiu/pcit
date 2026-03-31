@@ -4,8 +4,8 @@
 
 ## Navigation
 
-- **Route:** `WeeklyReport` (in `RootStackParamList`)
-- **Entry point:** Temporary button on `HomeScreen` (to be replaced with scheduled trigger)
+- **Route:** `WeeklyReport` (in `RootStackParamList`) — accepts `reportId` param
+- **Entry point:** Weekly report cards in `ReportsSection` on `HomeScreen` (only shown when `visibility: true` reports exist for the user)
 - **Dismiss:** X button or completing all 7 pages
 
 ## Architecture
@@ -16,17 +16,17 @@ Single `WeeklyReportScreen` component managing `currentPage` state (1-7) interna
 
 ## Data Loading
 
-All data is fetched once on mount in parallel:
+The screen receives a `reportId` param and loads the pre-generated report from the DB:
 
-| Function | Source | Data |
-|----------|--------|------|
-| `loadWeeklyData()` | `recordingService.getRecordings({ from })` + `getAnalysis()` per session | Deposits, top moments, milestones |
-| `loadChildIssues()` | `authService.getChildIssues()` | Priority issues for check-in |
-| `loadChildName()` | `authService.getCurrentUser()` | Child name for personalization |
+| Source | Endpoint | Data |
+|--------|----------|------|
+| `recordingService.getWeeklyReport(reportId)` | `GET /api/config/weekly-reports/:id` | Full report (deposits, top moments, milestones, AI narrative, audio URLs) |
+| `authService.getChildIssues()` | `GET /api/auth/child-issues` | Priority issues for page 7 check-in |
+| `authService.getCurrentUser()` | `GET /api/auth/me` | Child name for personalization |
 
-**Date range:** Currently last 4 weeks (`Date.now() - 28 days`). To be changed to current Mon-Sun week for production.
+**Report visibility gate:** The `/api/config/weekly-reports/:id` endpoint only returns reports where `visibility: true` and `userId` matches the authenticated user.
 
-**Recording filter:** `overallScore != null` (the `getRecordings` endpoint returns `overallScore`, not `analysisStatus`).
+**Date range:** Mon 00:00 UTC → Sun 23:59 UTC for the report's week (computed server-side at generation time).
 
 ## Pages
 
@@ -85,13 +85,13 @@ All data is fetched once on mount in parallel:
 
 ## API Endpoints
 
-### Existing (reused)
-- `GET /api/recordings?from=` — Fetch recordings in date range
-- `GET /api/recordings/:id/analysis` — Full session analysis (skills, topMoment, milestones, audio)
-- `GET /api/auth/me` — User profile (childName)
-
-### New
-- `GET /api/auth/child-issues` — Returns top 5 `ChildIssuePriority` records for the user's child, ordered by `priorityRank` ASC. Response: `{ issues: [{ strategy, priorityRank, userIssues, clinicalLevel }] }`
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/config/weekly-reports` | List all `visibility: true` reports for the authenticated user |
+| `GET` | `/api/config/weekly-reports/:id` | Full report detail (gated to owner + visible) — resolves presigned audio URLs at read time |
+| `PATCH` | `/api/config/weekly-reports/:id/checkin` | Save page 7 check-in responses (`moodSelection`, `issueRatings`) |
+| `GET` | `/api/auth/me` | User profile (childName) |
+| `GET` | `/api/auth/child-issues` | Top 5 `ChildIssuePriority` records for the user's child, ordered by `priorityRank` ASC |
 
 ## Key Types
 
@@ -126,10 +126,36 @@ interface TopMomentData {
 | `DRAGON_PURPLE` | Illustration and avatar images |
 | `Ionicons` | Icons throughout |
 
+## Delivery Flow
+
+### Automated (primary)
+
+A cron job in `server/jobs/weeklyReportJob.cjs` runs every **Monday at 5:30pm SGT (09:30 UTC)**:
+
+1. Finds all users with at least one completed session in the week that just ended (previous Mon–Sun UTC)
+2. Calls `generateWeeklyReport(userId, weekStart)` for each — aggregates data, generates AI narrative, upserts `WeeklyReport` with `visibility: false`
+3. Sets `visibility: true` on the saved report
+4. Sends a push notification via Expo Push API: `"Your Weekly Report is Ready!"` with `{ type: 'weekly_report', reportId }` in the data payload (only on first publish — skipped if the report was already visible)
+
+### Manual override (admin portal)
+
+Admins can generate and publish outside the schedule:
+
+- `POST /api/admin/weekly-reports/generate` — single user
+- `POST /api/admin/weekly-reports/generate-all` — all users with sessions in the week
+- `PUT /api/admin/weekly-reports/:id/visibility` — toggle visibility; automatically sends push notification on false→true transition
+
+### In-app
+
+`ReportsSection` on HomeScreen calls `GET /api/config/weekly-reports` and renders a card for each `visibility: true` report. Tapping navigates to `WeeklyReport` screen with the `reportId`.
+
+### Notification deep-link
+
+The push notification payload includes `{ type: 'weekly_report', reportId }`. `AppContent` in `App.tsx` handles two cases:
+
+- **Background tap** — `addNotificationResponseReceivedListener` fires immediately and navigates to `WeeklyReport` with the `reportId`
+- **Cold-start tap** (app was killed) — `getLastNotificationResponseAsync` runs on mount and navigates once the navigation tree is ready
+
 ## TODO
 
-- [ ] Replace hardcoded content on pages 1, 3, 6 with AI-generated text from session analysis
-- [ ] Change date range from 4 weeks back to current Mon-Sun week
-- [ ] Submit page 7 check-in responses to backend
-- [ ] Schedule weekly report trigger (push notification or in-app prompt)
-- [ ] Remove temporary HomeScreen button; replace with proper entry point
+- [ ] Replace hardcoded content on pages 3 and 6 with AI-generated text (page 1 headline is now AI-generated)

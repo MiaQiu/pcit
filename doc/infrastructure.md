@@ -274,6 +274,25 @@ npx prisma migrate dev --name <description>   # 1. create migration
 > **Warning: never use `prisma db push` on dev.**
 > `prisma db push` applies schema changes directly to the dev DB but does **not** create a migration file. This means prod will never receive the change — `prisma migrate deploy` (which runs on every container startup) only applies changes that have a migration file. Always use `prisma migrate dev --name <description>` so the migration file is committed and prod stays in sync automatically on the next deploy.
 
+> **Warning: never create two migrations in the same second.**
+> `prisma migrate dev` generates timestamps at second resolution (`YYYYMMDDHHMMSS`). If you run it twice within the same second, or manually create a migration directory reusing an existing timestamp, two migrations end up with the same prefix. Prisma sorts migrations lexicographically by name — if the new migration sorts *before* one that is already applied in the DB, `prisma migrate deploy` on prod will detect it as out-of-order and skip it silently (or error), leaving the column missing in prod even though `entrypoint.sh` runs migrations on every deploy.
+>
+> **Root cause of the 2026-03-23 prod outage:** `20260319000000_add_user_tag` and `20260319000000_add_pipeline_checkpoints_and_enrichment_status` shared the same timestamp. `add_user_tag` was already in prod's `_prisma_migrations`; the pipeline_checkpoints migration sorted before it alphabetically, so Prisma skipped it. The `Session.roleIdDone` column was never created, crashing session analysis for all users.
+>
+> **How to avoid:**
+> - Always wait at least one second between `prisma migrate dev` calls, or simply run them one at a time.
+> - After creating any migration, verify no duplicate timestamps exist:
+>   ```bash
+>   ls prisma/migrations/ | cut -c1-14 | sort | uniq -d
+>   # should print nothing
+>   ```
+> - If a duplicate is found, immediately rename the newer migration directory to a unique timestamp (e.g. append `01`: `20260319000001_...`) and update `migration_name` in `_prisma_migrations` on **both** dev and prod before the next deploy:
+>   ```sql
+>   UPDATE "_prisma_migrations"
+>   SET migration_name = '20260319000001_<name>'
+>   WHERE migration_name = '20260319000000_<name>';
+>   ```
+
 ---
 
 ## Database Access (local)

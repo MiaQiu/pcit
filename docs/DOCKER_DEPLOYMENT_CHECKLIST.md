@@ -386,7 +386,7 @@ If deployment fails and you need to rollback:
 - Ensure `package.json` or `package-lock.json` changed
 - Use `--no-cache` flag
 - Tag with new version number
-- Push with explicit tag: `docker push ${ECR_REPO}:v1.0.4`
+- Push with explicit tag: `docker push ${ECR_REPO}:v1.0.5`
 
 ---
 
@@ -397,7 +397,7 @@ If deployment fails and you need to rollback:
 source aws-resources.txt
 
 # Set version
-export VERSION="1.0.4"
+export VERSION="1.0.5"
 
 # Full deployment pipeline
 docker build -t nora:v${VERSION} -t nora:latest . && \

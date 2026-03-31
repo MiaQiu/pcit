@@ -2,7 +2,7 @@
   "expo": {
     "name": "Nora",
     "slug": "nora-mobile",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "main": "index.ts",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
