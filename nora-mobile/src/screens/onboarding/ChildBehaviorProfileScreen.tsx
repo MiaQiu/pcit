@@ -4,7 +4,7 @@
  * Inserted between Reassurance and FocusAreas screens
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -123,6 +123,8 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
     Math.min(1, (totalScore - SCALE_MIN) / SCALE_RANGE)
   );
 
+  const [nameLabelWidth, setNameLabelWidth] = useState(0);
+
   // Replace placeholder with actual child name
   const description = info.description.replace(/\[Child's Name\]/g, childName);
 
@@ -164,14 +166,20 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
 
           {/* Gradient bar */}
           <View style={styles.barSection}>
-            {/* "You" label above marker */}
+            {/* Child name label above marker */}
             <View
               style={[
                 styles.youLabelContainer,
-                { left: `${markerPosition * 100}%` },
+                {
+                  left: `${markerPosition * 100}%`,
+                  transform: [{ translateX: -nameLabelWidth / 2 }],
+                },
               ]}
             >
-              <View style={styles.youLabel}>
+              <View
+                style={styles.youLabel}
+                onLayout={(e) => setNameLabelWidth(e.nativeEvent.layout.width)}
+              >
                 <Text style={styles.youLabelText}>{childName}</Text>
               </View>
             </View>
@@ -390,9 +398,7 @@ const styles = StyleSheet.create({
   youLabelContainer: {
     position: 'absolute',
     top: 0,
-    transform: [{ translateX: -18 }],
     zIndex: 10,
-    alignItems: 'center',
   },
   youLabel: {
     backgroundColor: COLORS.textDark,
