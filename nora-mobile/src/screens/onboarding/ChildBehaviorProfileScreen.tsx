@@ -172,7 +172,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
               ]}
             >
               <View style={styles.youLabel}>
-                <Text style={styles.youLabelText}>You</Text>
+                <Text style={styles.youLabelText}>{childName}</Text>
               </View>
             </View>
 
@@ -193,29 +193,50 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
               />
             </View>
 
-            {/* Scale numbers */}
+            {/* Scale numbers - proportionally positioned to match dot */}
             <View style={styles.scaleNumbers}>
-              <Text style={styles.scaleNum}>0</Text>
-              <Text style={styles.scaleNum}>25</Text>
-              <Text style={styles.scaleNum}>35</Text>
-              <Text style={styles.scaleNum}>45</Text>
-              <Text style={styles.scaleNum}>63</Text>
+              {([0, 25, 35, 45, 63] as const).map((val) => (
+                <Text
+                  key={val}
+                  style={[
+                    styles.scaleNum,
+                    {
+                      position: 'absolute',
+                      left: `${(val / SCALE_MAX) * 100}%`,
+                      transform: [{ translateX: val === 0 ? 0 : val === 63 ? -14 : -7 }],
+                    },
+                  ]}
+                >
+                  {val}
+                </Text>
+              ))}
             </View>
 
-            {/* Category labels */}
+            {/* Category labels - centered within each segment */}
             <View style={styles.categoryLabels}>
-              <Text style={[styles.categoryLabel, category === 'stable' && styles.categoryLabelActive]}>
-                STABLE
-              </Text>
-              <Text style={[styles.categoryLabel, category === 'mild' && styles.categoryLabelActive]}>
-                MILD
-              </Text>
-              <Text style={[styles.categoryLabel, category === 'medium' && styles.categoryLabelActive]}>
-                MEDIUM
-              </Text>
-              <Text style={[styles.categoryLabel, category === 'high' && styles.categoryLabelActive]}>
-                HIGH
-              </Text>
+              {(
+                [
+                  { key: 'stable', label: 'STABLE', mid: 12.5 },
+                  { key: 'mild', label: 'MILD', mid: 30 },
+                  { key: 'medium', label: 'MEDIUM', mid: 40 },
+                  { key: 'high', label: 'HIGH', mid: 54 },
+                ] as { key: BehaviorCategory; label: string; mid: number }[]
+              ).map(({ key, label, mid }) => (
+                <Text
+                  key={key}
+                  style={[
+                    styles.categoryLabel,
+                    category === key && styles.categoryLabelActive,
+                    {
+                      position: 'absolute',
+                      left: `${(mid / SCALE_MAX) * 100}%`,
+                      transform: [{ translateX: -20 }],
+                    },
+                  ]}
+                >
+                  {label}
+                </Text>
+              ))}
             </View>
           </View>
 
@@ -412,25 +433,27 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   scaleNumbers: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    position: 'relative',
+    height: 16,
     marginTop: 8,
   },
   scaleNum: {
     fontFamily: FONTS.regular,
     fontSize: 11,
     color: '#9CA3AF',
+    position: 'absolute',
   },
   categoryLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    position: 'relative',
+    height: 16,
     marginTop: 4,
   },
   categoryLabel: {
     fontFamily: FONTS.regular,
     fontSize: 10,
     color: '#9CA3AF',
-    flex: 1,
+    position: 'absolute',
+    width: 40,
     textAlign: 'center',
   },
   categoryLabelActive: {
