@@ -6,6 +6,16 @@ import type {
   SignupRequest,
 } from '../types';
 
+async function parseErrorResponse(response: Response, fallback: string): Promise<string> {
+  const text = await response.text();
+  try {
+    const error = JSON.parse(text);
+    return error.error || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 /**
  * Authentication Service
  * Platform-agnostic authentication service that works with web and mobile
@@ -59,8 +69,7 @@ class AuthService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Signup failed');
+      throw new Error(await parseErrorResponse(response, 'Signup failed'));
     }
 
     const data: SignupResponse = await response.json();
@@ -82,8 +91,7 @@ class AuthService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Login failed');
+      throw new Error(await parseErrorResponse(response, 'Login failed'));
     }
 
     const data: LoginResponse = await response.json();
@@ -139,8 +147,7 @@ class AuthService {
         }
         throw new Error('Session expired. Please log in again.');
       }
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to delete account');
+      throw new Error(await parseErrorResponse(response, 'Failed to delete account'));
     }
 
     // Clear all local data after successful deletion
@@ -162,8 +169,7 @@ class AuthService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to send password reset email');
+      throw new Error(await parseErrorResponse(response, 'Failed to send password reset email'));
     }
   }
 
@@ -181,8 +187,7 @@ class AuthService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to reset password');
+      throw new Error(await parseErrorResponse(response, 'Failed to reset password'));
     }
   }
 
@@ -462,8 +467,7 @@ class AuthService {
     );
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to complete onboarding');
+      throw new Error(await parseErrorResponse(response, 'Failed to complete onboarding'));
     }
 
     const result = await response.json();
@@ -475,8 +479,7 @@ class AuthService {
     );
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch child issues');
+      throw new Error(await parseErrorResponse(response, 'Failed to fetch child issues'));
     }
 
     return await response.json();

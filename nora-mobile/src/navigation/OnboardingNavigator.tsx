@@ -34,18 +34,15 @@ import { WacbQuestion6Screen } from '../screens/onboarding/WacbQuestion6Screen';
 import { WacbQuestion7Screen } from '../screens/onboarding/WacbQuestion7Screen';
 import { WacbQuestion8Screen } from '../screens/onboarding/WacbQuestion8Screen';
 import { WacbQuestion9Screen } from '../screens/onboarding/WacbQuestion9Screen';
-import { WellbeingIntroScreen } from '../screens/onboarding/WellbeingIntroScreen';
-import { ReassuranceScreen } from '../screens/onboarding/ReassuranceScreen';
-import { DepressionQuestion1Screen } from '../screens/onboarding/DepressionQuestion1Screen';
-import { DepressionQuestion2Screen } from '../screens/onboarding/DepressionQuestion2Screen';
-import { SelfCareScreen } from '../screens/onboarding/SelfCareScreen';
+import { Demo1Screen } from '../screens/onboarding/Demo1Screen';
+import { Demo2Screen } from '../screens/onboarding/Demo2Screen';
+import { Demo3Screen } from '../screens/onboarding/Demo3Screen';
+import { Demo4Screen } from '../screens/onboarding/Demo4Screen';
+import { Demo5Screen } from '../screens/onboarding/Demo5Screen';
+import { Demo6Screen } from '../screens/onboarding/Demo6Screen';
+import { PlanReadyScreen } from '../screens/onboarding/PlanReadyScreen';
 import { ChildBehaviorProfileScreen } from '../screens/onboarding/ChildBehaviorProfileScreen';
 import { FocusAreasScreen } from '../screens/onboarding/FocusAreasScreen';
-import { GuidanceIntroScreen } from '../screens/onboarding/GuidanceIntroScreen';
-import { GrowthIntroScreen } from '../screens/onboarding/GrowthIntroScreen';
-import { PreIntroReassuranceScreen } from '../screens/onboarding/PreIntroReassuranceScreen';
-import { Intro1Screen } from '../screens/onboarding/Intro1Screen';
-import { Intro2Screen } from '../screens/onboarding/Intro2Screen';
 import { Intro3Screen } from '../screens/onboarding/Intro3Screen';
 import { SubscriptionScreen } from '../screens/onboarding/SubscriptionScreen';
 import { NotificationPermissionScreen } from '../screens/onboarding/NotificationPermissionScreen';
@@ -123,18 +120,15 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="WacbQuestion7" component={WacbQuestion7Screen} />
       <Stack.Screen name="WacbQuestion8" component={WacbQuestion8Screen} />
       <Stack.Screen name="WacbQuestion9" component={WacbQuestion9Screen} />
-      <Stack.Screen name="WellbeingIntro" component={WellbeingIntroScreen} />
-      <Stack.Screen name="DepressionQuestion1" component={DepressionQuestion1Screen} />
-      <Stack.Screen name="DepressionQuestion2" component={DepressionQuestion2Screen} />
-      <Stack.Screen name="SelfCare" component={SelfCareScreen} />
-      <Stack.Screen name="Reassurance" component={ReassuranceScreen} />
+      <Stack.Screen name="Demo1" component={Demo1Screen} />
+      <Stack.Screen name="Demo2" component={Demo2Screen} />
+      <Stack.Screen name="Demo3" component={Demo3Screen} />
+      <Stack.Screen name="Demo4" component={Demo4Screen} />
+      <Stack.Screen name="Demo5" component={Demo5Screen} />
+      <Stack.Screen name="Demo6" component={Demo6Screen} />
+      <Stack.Screen name="PlanReady" component={PlanReadyScreen} />
       <Stack.Screen name="ChildBehaviorProfile" component={ChildBehaviorProfileScreen} />
       <Stack.Screen name="FocusAreas" component={FocusAreasScreen} />
-      <Stack.Screen name="GuidanceIntro" component={GuidanceIntroScreen} />
-      <Stack.Screen name="GrowthIntro" component={GrowthIntroScreen} />
-      <Stack.Screen name="PreIntroReassurance" component={PreIntroReassuranceScreen} />
-      <Stack.Screen name="Intro1" component={Intro1Screen} />
-      <Stack.Screen name="Intro2" component={Intro2Screen} />
       <Stack.Screen name="Intro3" component={Intro3Screen} />
       <Stack.Screen name="Subscription" component={SubscriptionScreen} />
       <Stack.Screen name="NotificationPermission" component={NotificationPermissionScreen} />

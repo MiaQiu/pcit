@@ -30,7 +30,7 @@ export const FocusAreasScreen: React.FC = () => {
         </Text>
       }
       buttonText="Continue  →"
-      onNext={() => navigation.navigate('GuidanceIntro')}
+      onNext={() => navigation.navigate('Intro3')}
       onBack={() => navigation.goBack()}
     />
   );
