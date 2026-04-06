@@ -595,7 +595,10 @@ ${transcript}`;
   }
 
   // ── Step 3: Extract structured child observations ─────────────────────────
+  const childDisplayName = name || 'the child';
   const step3Prompt = `Extract ONLY the "Observations of the Child" section - the insights about the child's behavior, development, and characteristics observed during the session. DO not mention PCIT or clinical terms.
+
+The child's name is "${childDisplayName}". Use this name (not any other name from the text) when referring to the child in your response.
 
 Format the observations as a JSON array, ranked by positivity follow by significance. Each observation should have:
 - id: sequential number starting from 1
