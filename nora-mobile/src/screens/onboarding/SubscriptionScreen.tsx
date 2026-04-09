@@ -41,6 +41,8 @@ export const SubscriptionScreen: React.FC = () => {
   const [selectedPlan] = useState<'1month'>('1month');
   const [isLoading, setIsLoading] = useState(false);
 
+  const isReturningUser = !(data.name && data.name.trim() !== '');
+
   // Save all onboarding data to backend as soon as the subscription screen loads.
   // This ensures data is persisted even if the user exits without subscribing.
   useEffect(() => {
@@ -269,12 +271,14 @@ export const SubscriptionScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Early User Benefits badge */}
-      <View style={styles.badgeContainer}>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>Early User Benefits</Text>
+      {/* Early User Benefits badge — only for new users */}
+      {!isReturningUser && (
+        <View style={styles.badgeContainer}>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>Early User Benefits</Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Scrollable Content */}
       <ScrollView
@@ -282,9 +286,15 @@ export const SubscriptionScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>How your trial works</Text>
-        <Text style={styles.subtitle}>First 30 days free, then S$9.98/month</Text>
-        <Text style={styles.regularPrice}>Regular price first 7 days free, then S$39.98/month</Text>
+        <Text style={styles.title}>
+          {isReturningUser ? 'Subscribe to continue' : 'How your trial works'}
+        </Text>
+        <Text style={styles.subtitle}>
+          {isReturningUser ? 'S$9.98/month' : 'First 30 days free, then S$9.98/month'}
+        </Text>
+        {!isReturningUser && (
+          <Text style={styles.regularPrice}>Regular price first 7 days free, then S$39.98/month</Text>
+        )}
 
         {subscriptionError && (
           <View style={styles.errorContainer}>
@@ -330,8 +340,14 @@ export const SubscriptionScreen: React.FC = () => {
               </View>
             </View>
             <View style={styles.timelineBody}>
-              <Text style={styles.timelineTitle}>In 30 days</Text>
-              <Text style={styles.timelineDesc}>You'll be charged S$9.98. Cancel anytime before.</Text>
+              <Text style={styles.timelineTitle}>
+                {isReturningUser ? 'Today' : 'In 30 days'}
+              </Text>
+              <Text style={styles.timelineDesc}>
+                {isReturningUser
+                  ? 'You\'ll be charged S$9.98. Renews monthly, cancel anytime.'
+                  : 'You\'ll be charged S$9.98. Cancel anytime before.'}
+              </Text>
             </View>
           </View>
         </View>
@@ -345,7 +361,9 @@ export const SubscriptionScreen: React.FC = () => {
         </TouchableOpacity>
 
         <Text style={styles.disclaimer}>
-          After your free trial, your subscription automatically renews at S$9.98/month unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our{' '}
+          {isReturningUser
+            ? 'Your subscription automatically renews at S$9.98/month. Cancel anytime in Settings. By continuing, you agree to our '
+            : 'After your free trial, your subscription automatically renews at S$9.98/month unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our '}
           <Text style={styles.link} onPress={handleOpenTerms}>Terms</Text> and{' '}
           <Text style={styles.link} onPress={handleOpenPrivacy}>Privacy Policy</Text>.
         </Text>
@@ -364,7 +382,9 @@ export const SubscriptionScreen: React.FC = () => {
           {isLoading || subscriptionLoading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.startButtonText}>Start my 30-day free trial</Text>
+            <Text style={styles.startButtonText}>
+              {isReturningUser ? 'Subscribe now' : 'Start my 30-day free trial'}
+            </Text>
           )}
         </TouchableOpacity>
         <Text style={styles.betaPricing}>Limited beta pricing for early supporters</Text>
