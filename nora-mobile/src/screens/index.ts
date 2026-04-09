@@ -2,7 +2,7 @@
  * Screen exports
  */
 
-export { HomeScreen } from './HomeScreen';
+export { HomeScreen_v2 as HomeScreen } from './HomeScreen_v2';
 export { RecordScreen } from './RecordScreen';
 export { LearnScreen } from './LearnScreen';
 export { ProgressScreen } from './ProgressScreen';

@@ -474,7 +474,9 @@ router.get('/dashboard', requireAuth, async (req, res) => {
         orderBy: { createdAt: 'desc' },
         select: {
           id: true,
-          createdAt: true
+          createdAt: true,
+          overallScore: true,
+          analysisStatus: true
         }
       }),
 
