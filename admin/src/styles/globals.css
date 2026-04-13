@@ -685,6 +685,15 @@ body {
   color: var(--text-light);
 }
 
+.success-banner {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
 .tag-select {
   font-size: 12px;
   padding: 2px 6px;

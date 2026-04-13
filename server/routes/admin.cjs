@@ -9,6 +9,8 @@ const { generateWeeklyReport, resolveReportAudioUrls } = require('../services/we
 const { generateCdiCoaching } = require('../services/pcitAnalysisService.cjs');
 const { getUtterances } = require('../utils/utteranceUtils.cjs');
 const { decryptSensitiveData, decryptUserData } = require('../utils/encryption.cjs');
+const { runTrialExpiryJob } = require('../jobs/trialExpiryJob.cjs');
+
 
 const router = express.Router();
 
@@ -646,6 +648,12 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         createdAt: true,
         lastSessionDate: true,
         developmentalVisible: true,
+        subscriptionStatus: true,
+        subscriptionPlan: true,
+        subscriptionStartDate: true,
+        subscriptionEndDate: true,
+        trialStartDate: true,
+        trialEndDate: true,
         _count: { select: { Session: true } }
       },
       orderBy: { createdAt: 'desc' }
@@ -664,6 +672,12 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         lastActiveAt: u.lastSessionDate,
         sessionCount: u._count.Session,
         developmentalVisible: u.developmentalVisible,
+        subscriptionStatus: u.subscriptionStatus,
+        subscriptionPlan: u.subscriptionPlan,
+        subscriptionStartDate: u.subscriptionStartDate,
+        subscriptionEndDate: u.subscriptionEndDate,
+        trialStartDate: u.trialStartDate,
+        trialEndDate: u.trialEndDate,
       };
     });
 
@@ -1540,6 +1554,82 @@ router.post('/sessions/:id/rerun-cdi-coaching', requireAdminAuth, async (req, re
   } catch (error) {
     console.error(`POST /admin/sessions/${sessionId}/rerun-cdi-coaching error:`, error);
     res.status(500).json({ error: error.message || 'Rerun failed' });
+  }
+});
+
+// ============================================================================
+// SUBSCRIPTIONS
+// ============================================================================
+
+/**
+ * GET /api/admin/subscriptions
+ * List all users with their subscription status and trial info.
+ * Supports ?status= filter (TRIAL, ACTIVE, EXPIRED, CANCELLED, NONE, INACTIVE).
+ */
+router.get('/subscriptions', requireAdminAuth, async (req, res) => {
+  try {
+    const { status } = req.query;
+    const where = status ? { subscriptionStatus: status } : {};
+
+    const users = await prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        tag: true,
+        createdAt: true,
+        subscriptionStatus: true,
+        subscriptionPlan: true,
+        subscriptionStartDate: true,
+        subscriptionEndDate: true,
+        trialStartDate: true,
+        trialEndDate: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const formatted = users.map(u => {
+      const decrypted = decryptUserData(u);
+      return {
+        id: u.id,
+        name: decrypted.name,
+        email: decrypted.email,
+        tag: u.tag,
+        createdAt: u.createdAt,
+        subscriptionStatus: u.subscriptionStatus,
+        subscriptionPlan: u.subscriptionPlan,
+        subscriptionStartDate: u.subscriptionStartDate,
+        subscriptionEndDate: u.subscriptionEndDate,
+        trialStartDate: u.trialStartDate,
+        trialEndDate: u.trialEndDate,
+      };
+    });
+
+    res.json({ users: formatted });
+  } catch (error) {
+    console.error('Admin get subscriptions error:', error);
+    res.status(500).json({ error: 'Failed to fetch subscription data' });
+  }
+});
+
+/**
+ * POST /api/admin/subscriptions/send-trial-expiry-emails
+ * Manually trigger trial expiry reminder emails for users whose trial ends in N days.
+ * Body: { daysBeforeExpiry?: number }  (default: 3)
+ */
+router.post('/subscriptions/send-trial-expiry-emails', requireAdminAuth, async (req, res) => {
+  try {
+    const daysBeforeExpiry = parseInt(req.body.daysBeforeExpiry ?? '3', 10);
+    if (isNaN(daysBeforeExpiry) || daysBeforeExpiry < 1 || daysBeforeExpiry > 30) {
+      return res.status(400).json({ error: 'daysBeforeExpiry must be between 1 and 30' });
+    }
+
+    const result = await runTrialExpiryJob(daysBeforeExpiry);
+    res.json({ ok: true, ...result });
+  } catch (error) {
+    console.error('Admin send trial expiry emails error:', error);
+    res.status(500).json({ error: 'Failed to send trial expiry emails' });
   }
 });
 

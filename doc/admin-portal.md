@@ -123,6 +123,15 @@ All require admin auth.
 |--------|------|-------------|
 | `POST` | `/api/admin/notifications/send` | Send push notification to selected users |
 
+### Subscriptions
+
+All require admin auth.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/admin/subscriptions` | List all users with subscription status/plan/trial dates. Optional `?status=` filter (TRIAL, ACTIVE, EXPIRED, CANCELLED, NONE, INACTIVE) |
+| `POST` | `/api/admin/subscriptions/send-trial-expiry-emails` | Manually trigger trial expiry reminder emails. Body: `{ daysBeforeExpiry?: number }` (default: 3) |
+
 ### Weekly Reports
 
 All require admin auth.
@@ -187,7 +196,8 @@ admin/
     │   ├── LoginPage.tsx                 # Password login
     │   ├── LessonListPage.tsx            # Module-filterable table with delete
     │   ├── LessonEditorPage.tsx          # Split-pane: form + live preview
-    │   └── NotificationsPage.tsx         # User selection + notification sender
+    │   ├── NotificationsPage.tsx         # User selection + notification sender
+    │   └── SubscriptionsPage.tsx         # Subscription status view + trial expiry email trigger
     ├── components/
     │   ├── layout/
     │   │   └── AdminLayout.tsx           # Sidebar + content shell
@@ -255,6 +265,18 @@ The body text textarea supports:
 - Click any column header to sort (toggles asc/desc)
 - **Tag** column: inline dropdown to toggle between `user` and `tester` — persisted immediately via `PUT /api/admin/users/:id/tag`
 - Click a user ID to open the user detail page
+- The API also returns subscription fields (`subscriptionStatus`, `subscriptionPlan`, `trialStartDate`, `trialEndDate`, etc.) — see the **Subscriptions** page for a dedicated view
+
+### Subscriptions (`/subscriptions`)
+
+- Table of all users with their subscription status, plan, trial start/end, and subscription start/end dates
+- **Status badge** color-coded: TRIAL (amber), ACTIVE (green), EXPIRED (red), CANCELLED/NONE/INACTIVE (grey)
+- **Trial End** column highlights users whose trial expires within 7 days; shows days remaining in parentheses
+- Filter dropdown to show only users in a specific status (TRIAL, ACTIVE, EXPIRED, etc.)
+- **Status summary strip** at the top showing counts per status
+- **Send Emails** panel: set "days before expiry" (default 3), click "Send Emails" to immediately dispatch trial expiry reminder emails to all matching TRIAL users — useful for ad-hoc sends outside the daily cron
+
+The automated cron (`server/jobs/trialExpiryJob.cjs`) runs daily at 10:00am SGT (02:00 UTC) and sends reminder emails to users whose trial ends in exactly 3 days. Uses the same SMTP env vars as LLM alerts (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`).
 
 ### User Detail (`/users/:id`)
 

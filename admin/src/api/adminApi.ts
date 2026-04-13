@@ -89,6 +89,33 @@ export interface UserSummary {
   lastActiveAt: string | null;
   sessionCount: number;
   developmentalVisible: boolean;
+  subscriptionStatus: string;
+  subscriptionPlan: string;
+  subscriptionStartDate: string | null;
+  subscriptionEndDate: string | null;
+  trialStartDate: string | null;
+  trialEndDate: string | null;
+}
+
+export interface SubscriptionUser {
+  id: string;
+  name: string;
+  email: string;
+  tag: string;
+  createdAt: string;
+  subscriptionStatus: string;
+  subscriptionPlan: string;
+  subscriptionStartDate: string | null;
+  subscriptionEndDate: string | null;
+  trialStartDate: string | null;
+  trialEndDate: string | null;
+}
+
+export interface TrialExpiryResult {
+  ok: boolean;
+  found: number;
+  sent: number;
+  failed: number;
 }
 
 export interface UserProfile {
@@ -413,6 +440,21 @@ export async function sendNotifications(
   return apiFetchEnv<NotificationResult>('/api/admin/notifications/send', {
     method: 'POST',
     body: JSON.stringify({ userIds, title, body }),
+  }, opts);
+}
+
+// ---- Subscriptions ----
+
+export async function getSubscriptions(status?: string, opts?: ApiEnvOpts): Promise<SubscriptionUser[]> {
+  const params = status ? `?status=${encodeURIComponent(status)}` : '';
+  const data = await apiFetchEnv<{ users: SubscriptionUser[] }>(`/api/admin/subscriptions${params}`, {}, opts);
+  return data.users;
+}
+
+export async function sendTrialExpiryEmails(daysBeforeExpiry = 3, opts?: ApiEnvOpts): Promise<TrialExpiryResult> {
+  return apiFetchEnv<TrialExpiryResult>('/api/admin/subscriptions/send-trial-expiry-emails', {
+    method: 'POST',
+    body: JSON.stringify({ daysBeforeExpiry }),
   }, opts);
 }
 
