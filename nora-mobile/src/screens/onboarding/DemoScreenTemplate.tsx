@@ -1,82 +1,55 @@
 /**
  * DemoScreenTemplate
- * Layout: subtitle at top, large image in the middle, title at the bottom.
- * Used by Demo1–Demo6 onboarding screens.
+ * Layout: large rounded image filling top, body text below, single Next button.
+ * Used by Demo3–Demo6 onboarding screens.
  */
 
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   Image,
+  TouchableOpacity,
   ImageSourcePropType,
-  Dimensions,
-  Animated,
-  Easing,
 } from 'react-native';
-import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface DemoScreenTemplateProps {
-  subtitle: string;
   title: string;
   image: ImageSourcePropType;
   onNext: () => void;
-  onBack: () => void;
+  resizeMode?: 'cover' | 'contain';
 }
 
 export const DemoScreenTemplate: React.FC<DemoScreenTemplateProps> = ({
-  subtitle,
   title,
   image,
   onNext,
-  onBack,
+  resizeMode = 'cover',
 }) => {
-  const rotation = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.timing(rotation, {
-        toValue: 1,
-        duration: 1800,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    ).start();
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(onNext, 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const spin = rotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  const insets = useSafeAreaInsets();
+  const isCover = resizeMode === 'cover';
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Spinner + Subtitle at top */}
-      <View style={styles.subtitleContainer}>
-        <Animated.View style={[styles.spinner, { transform: [{ rotate: spin }] }]} />
-        <Text style={styles.subtitle}>{subtitle}</Text>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Image */}
+      <View style={[styles.imageContainer, isCover && styles.imageContainerCover]}>
+        <Image source={image} style={styles.image} resizeMode={resizeMode} />
       </View>
 
-      {/* Image in the middle */}
-      <View style={styles.imageContainer}>
-        <Image source={image} style={styles.image} resizeMode="contain" />
+      {/* Body text */}
+      <View style={styles.textContainer}>
+        <Text style={styles.body}>{title}</Text>
       </View>
 
-      {/* Title + button at the bottom */}
-      <View style={styles.bottomContainer}>
-        <Text style={styles.title}>{title}</Text>
-        <OnboardingButtonRow onBack={onBack} onContinue={onNext} />
+      {/* Button */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
+        <TouchableOpacity style={styles.button} onPress={onNext} activeOpacity={0.85}>
+          <Text style={styles.buttonText}>Next  →</Text>
+        </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -85,49 +58,47 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  subtitleContainer: {
-    paddingHorizontal: 52,
-    paddingTop: 68,
-    paddingBottom: 4,
-    alignItems: 'center',
-  },
-  spinner: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 3,
-    borderColor: '#E9D8FF',
-    borderTopColor: '#8C49D5',
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
   imageContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
+    marginHorizontal: 20,
+    marginTop: 24,
+  },
+  imageContainerCover: {
+    borderRadius: 24,
+    overflow: 'hidden',
   },
   image: {
-    width: SCREEN_WIDTH - 48,
-    height: SCREEN_HEIGHT * 0.4,
+    width: '100%',
+    height: '100%',
   },
-  bottomContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 4,
-    paddingBottom: 98,
+  textContainer: {
+    paddingHorizontal: 32,
+    paddingTop: 28,
+    paddingBottom: 8,
+    alignItems: 'center',
   },
-  title: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 22,
+  body: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 18,
     color: '#1F2937',
     textAlign: 'center',
-    lineHeight: 32,
-    marginBottom: 24,
+    lineHeight: 28,
+  },
+  footer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  button: {
+    width: '100%',
+    height: 56,
+    backgroundColor: '#8C49D5',
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 18,
+    color: '#FFFFFF',
   },
 });

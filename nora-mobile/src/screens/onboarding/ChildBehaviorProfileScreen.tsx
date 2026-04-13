@@ -1,7 +1,6 @@
 /**
  * Child Behavior Profile Screen
  * Shows the child's WACB behavior profile snapshot based on total survey score
- * Inserted between Reassurance and FocusAreas screens
  */
 
 import React, { useMemo, useState } from 'react';
@@ -12,70 +11,84 @@ import {
   SafeAreaView,
   ScrollView,
   Image,
-  Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
-import { OnboardingStackNavigationProp } from '../../navigation/types';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { OnboardingStackNavigationProp, OnboardingStackParamList } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 import { COLORS, FONTS } from '../../constants/assets';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// Scale constants (0–63 range, matching server scoring)
-const SCALE_MIN = 0;
-const SCALE_MAX = 63;
-const SCALE_RANGE = SCALE_MAX - SCALE_MIN; // 54
 
 type BehaviorCategory = 'stable' | 'mild' | 'medium' | 'high';
 
 interface CategoryInfo {
-  label: string;
-  snapshotTitle: string;
-  description: string;
+  barLabel: string;        // label shown under gradient bar
+  snapshotTitle: string;   // "Current Snapshot: ___"
   color: string;
+  whatThisMeans: string;
+  startingPlan: string;
+  whatToExpect: string;
 }
 
 const CATEGORY_INFO: Record<BehaviorCategory, CategoryInfo> = {
   stable: {
-    label: 'STABLE',
-    snapshotTitle: 'Smooth Sailing',
-    description:
-      "[Child's Name]'s behaviors are well within the typical range for their age. Many families see similar patterns at this stage. We'll help you keep nurturing the emotional and social skills that support healthy development.",
+    barLabel: 'ON TRACK',
+    snapshotTitle: 'On Track',
     color: '#22C55E',
+    whatThisMeans:
+      "Your child is generally managing emotions, attention, and behavior in an age-appropriate way.",
+    startingPlan:
+      "Spend 5 minutes a day in Emotional Massage — a simple child-led play where you follow your child's lead and stay fully present.\n\nA small moment that strengthens connection and supports positive behavior.",
+    whatToExpect:
+      "You may begin to notice subtle shifts within a few weeks.\nOver time, you'll also learn how to support emotions and set gentle boundaries.",
   },
   mild: {
-    label: 'MILD',
-    snapshotTitle: 'A Few Bumpy Moments',
-    description:
-      "You may be noticing some behaviors that are starting to test your patience. This is quite common at this age. The good news is that small shifts now can make a big difference, and we'll guide you with simple ways to respond.",
+    barLabel: 'SOME SUPPORT',
+    snapshotTitle: 'Needs Some Support',
     color: '#EAB308',
+    whatThisMeans:
+      "Your child may sometimes struggle with listening, managing emotions, or staying focused in daily situations.\nSmall challenges are common at this age. With the right support, they can improve quickly.",
+    startingPlan:
+      "Spend 5 minutes a day in Emotional Massage — a simple child-led play where you follow your child's lead and strengthen your connection — and helps reduce behavior struggles over time.",
+    whatToExpect:
+      "Many families notice changes within 2–3 weeks.\nFrom there, we'll guide you through emotions and boundaries.",
   },
   medium: {
-    label: 'MEDIUM',
-    snapshotTitle: 'Getting Challenging',
-    description:
-      "It may feel like you're managing a lot right now. [Child's Name] may be having difficulty handling big emotions. We'll focus on practical strategies to reduce daily friction and help things feel calmer at home.",
+    barLabel: 'MORE SUPPORT',
+    snapshotTitle: 'Needs More Support',
     color: '#F97316',
+    whatThisMeans:
+      "Your child may frequently have difficulty with emotions, focus, or cooperation during everyday moments.\nSome moments may feel more challenging right now. With consistent support, meaningful progress is very possible.",
+    startingPlan:
+      "Begin with 5 minutes a day of Emotional Massage — following your child's lead in a calm, focused way.\n\nConnection is where change begins — and supports better behavior over time.",
+    whatToExpect:
+      "With consistency, progress often starts within a few weeks.\nYou'll be guided through emotions, boundaries, and everyday situations.",
   },
   high: {
-    label: 'HIGH INTENSITY',
-    snapshotTitle: 'High Intensity',
-    description:
-      "It sounds like things may feel overwhelming right now. When behaviors happen frequently, it can be exhausting for parents and children alike. We'll start with clear, supportive steps to help de-escalate difficult moments and bring more calm into daily routines.",
+    barLabel: 'EXTRA SUPPORT',
+    snapshotTitle: 'Needs Extra Support',
     color: '#EF4444',
+    whatThisMeans:
+      "Your child may be having difficulty managing emotions or staying focused in daily situations.\nYou're not alone — many families go through this. With the right support, positive change can happen.",
+    startingPlan:
+      "Begin with 5 minutes a day of Emotional Massage — gently following your child's lead and staying present with them.\n\nThis creates a safe foundation for change and supports behavior over time.",
+    whatToExpect:
+      "Small changes can begin within a few weeks.\nWe'll guide you closely through emotions, boundaries, and daily challenges.",
   },
 };
+
+// Scale constants (0–63, matching server scoring)
+const SCALE_MIN = 0;
+const SCALE_MAX = 63;
+const SCALE_RANGE = SCALE_MAX - SCALE_MIN;
 
 function getCategory(score: number): BehaviorCategory {
   if (score <= 25) return 'stable';
   if (score <= 35) return 'mild';
   if (score <= 45) return 'medium';
-  return 'high'; // 46–63
+  return 'high';
 }
 
-// Matches server-side VALUE_TO_POINTS mapping in wacb-survey.cjs
 const VALUE_TO_POINTS: Record<number, number> = { 1: 0, 2: 2, 3: 4, 4: 6, 5: 7 };
 
 function toPoints(val?: number): number {
@@ -84,32 +97,29 @@ function toPoints(val?: number): number {
 }
 
 function computeTotalScore(wacb?: {
-  q1Dawdle?: number;
-  q2MealBehavior?: number;
-  q3Disobey?: number;
-  q4Angry?: number;
-  q5Scream?: number;
-  q6Destroy?: number;
-  q7ProvokeFights?: number;
-  q8Interrupt?: number;
-  q9Attention?: number;
+  q1Dawdle?: number; q2MealBehavior?: number; q3Disobey?: number; q4Angry?: number;
+  q5Scream?: number; q6Destroy?: number; q7ProvokeFights?: number;
+  q8Interrupt?: number; q9Attention?: number;
 }): number {
   if (!wacb) return SCALE_MIN;
   return (
-    toPoints(wacb.q1Dawdle) +
-    toPoints(wacb.q2MealBehavior) +
-    toPoints(wacb.q3Disobey) +
-    toPoints(wacb.q4Angry) +
-    toPoints(wacb.q5Scream) +
-    toPoints(wacb.q6Destroy) +
-    toPoints(wacb.q7ProvokeFights) +
-    toPoints(wacb.q8Interrupt) +
-    toPoints(wacb.q9Attention)
+    toPoints(wacb.q1Dawdle) + toPoints(wacb.q2MealBehavior) + toPoints(wacb.q3Disobey) +
+    toPoints(wacb.q4Angry) + toPoints(wacb.q5Scream) + toPoints(wacb.q6Destroy) +
+    toPoints(wacb.q7ProvokeFights) + toPoints(wacb.q8Interrupt) + toPoints(wacb.q9Attention)
   );
 }
 
+const BAR_SEGMENTS: { key: BehaviorCategory; label: string; mid: number }[] = [
+  { key: 'stable',  label: 'STABLE',  mid: 12.5 },
+  { key: 'mild',    label: 'MILD',    mid: 30   },
+  { key: 'medium',  label: 'MEDIUM',  mid: 40   },
+  { key: 'high',    label: 'HIGH',    mid: 54   },
+];
+
 export const ChildBehaviorProfileScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const route = useRoute<RouteProp<OnboardingStackParamList, 'ChildBehaviorProfile'>>();
+  const locked = route.params?.locked ?? false;
   const { data } = useOnboarding();
 
   const childName = data.childName || 'Your child';
@@ -117,16 +127,8 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
   const category = getCategory(totalScore);
   const info = CATEGORY_INFO[category];
 
-  // Percentage position of marker on bar (0–1)
-  const markerPosition = Math.max(
-    0,
-    Math.min(1, (totalScore - SCALE_MIN) / SCALE_RANGE)
-  );
-
+  const markerPosition = Math.max(0, Math.min(1, (totalScore - SCALE_MIN) / SCALE_RANGE));
   const [nameLabelWidth, setNameLabelWidth] = useState(0);
-
-  // Replace placeholder with actual child name
-  const description = info.description.replace(/\[Child's Name\]/g, childName);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -146,16 +148,30 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
           </View>
           <View style={styles.speechBubble}>
             <Text style={styles.speechText}>
-              80% of parents in a similar situation to you have seen meaningful
-              changes using Nora within a month.
+              {locked
+                ? `Nora has created the personalized plan for you and ${childName}'s name`
+                : `80% of parents in a similar situation to you have seen meaningful changes using Nora within a month.`}
             </Text>
             <View style={styles.bubbleTail} />
           </View>
         </View>
 
-        {/* Profile card */}
+        {/* ── Profile snapshot card ── */}
         <View style={styles.card}>
-          {/* Card header */}
+          {locked && (
+            <TouchableOpacity
+              style={styles.lockOverlay}
+              onPress={() => navigation.navigate('ChildSnapshotIntro')}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.lockIcon}>🔒</Text>
+              <Text style={styles.lockText}>
+                To unlock the behavior profile insights, you can click here to answer those behavior questions for us to personalize the plan
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Header */}
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>{childName}'s Behavior Profile Snapshot</Text>
             <View style={styles.scoreChip}>
@@ -166,7 +182,6 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
 
           {/* Gradient bar */}
           <View style={styles.barSection}>
-            {/* Child name label above marker */}
             <View
               style={[
                 styles.youLabelContainer,
@@ -180,11 +195,10 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
                 style={styles.youLabel}
                 onLayout={(e) => setNameLabelWidth(e.nativeEvent.layout.width)}
               >
-                <Text style={styles.youLabelText}>{childName}</Text>
+                <Text style={styles.youLabelText}>You</Text>
               </View>
             </View>
 
-            {/* Gradient bar with marker */}
             <View style={styles.barWrapper}>
               <LinearGradient
                 colors={['#4ADE80', '#A3E635', '#FACC15', '#FB923C', '#EF4444']}
@@ -192,16 +206,9 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
                 end={{ x: 1, y: 0 }}
                 style={styles.gradientBar}
               />
-              {/* Marker circle */}
-              <View
-                style={[
-                  styles.markerCircle,
-                  { left: `${markerPosition * 100}%` },
-                ]}
-              />
+              <View style={[styles.markerCircle, { left: `${markerPosition * 100}%` }]} />
             </View>
 
-            {/* Scale numbers - proportionally positioned to match dot */}
             <View style={styles.scaleNumbers}>
               {([0, 25, 35, 45, 63] as const).map((val) => (
                 <Text
@@ -220,16 +227,8 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
               ))}
             </View>
 
-            {/* Category labels - centered within each segment */}
             <View style={styles.categoryLabels}>
-              {(
-                [
-                  { key: 'stable', label: 'STABLE', mid: 12.5 },
-                  { key: 'mild', label: 'MILD', mid: 30 },
-                  { key: 'medium', label: 'MEDIUM', mid: 40 },
-                  { key: 'high', label: 'HIGH', mid: 54 },
-                ] as { key: BehaviorCategory; label: string; mid: number }[]
-              ).map(({ key, label, mid }) => (
+              {BAR_SEGMENTS.map(({ key, label, mid }) => (
                 <Text
                   key={key}
                   style={[
@@ -248,33 +247,36 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Status box */}
-          <View style={[styles.statusBox, { borderLeftColor: info.color }]}>
-            <View style={styles.statusHeader}>
-              {/* <View style={[styles.statusIconCircle, { backgroundColor: info.color }]}>
-                <Text style={styles.statusIcon}>
-                  {category === 'stable' ? '✓' : category === 'high' ? '!' : '~'}
-                </Text>
-              </View> */}
-              <Text style={styles.statusTitle}>Current Snapshot: {info.snapshotTitle}</Text>
-            </View>
-            <Text style={styles.statusDescription}>{description}</Text>
+          {/* Current snapshot + What this means */}
+          <View style={styles.snapshotBox}>
+            <Text style={styles.snapshotTitle}>Current Snapshot: {info.snapshotTitle}</Text>
+            <Text style={styles.sectionLabel}>What this means</Text>
+            <Text style={styles.sectionBody}>{info.whatThisMeans}</Text>
           </View>
         </View>
 
-        {/* Disclaimer */}
-        <Text style={styles.disclaimer}>
-          This snapshot isn't a diagnosis — it's simply a starting point to guide your parenting support
-        </Text>
+        {/* ── Starting Plan card ── */}
+        <View style={styles.card}>
+          <Text style={styles.planTitle}>Your Starting Plan</Text>
+          <Text style={styles.sectionBody}>{info.startingPlan}</Text>
+        </View>
+
+        {/* ── What to expect ── */}
+        <View style={styles.expectBox}>
+          <Text style={styles.sectionLabel}>What to expect</Text>
+          <Text style={styles.sectionBody}>{info.whatToExpect}</Text>
+        </View>
       </ScrollView>
 
-      {/* Footer buttons */}
+      {/* Footer */}
       <View style={styles.footer}>
-        <OnboardingButtonRow
-          onBack={() => navigation.goBack()}
-          onContinue={() => navigation.navigate('FocusAreas')}
-          continueText="Continue  →"
-        />
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('FocusAreas')}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.buttonText}>Start My Plan  →</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -285,20 +287,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.white,
   },
-  scrollView: {
-    flex: 1,
-  },
+  scrollView: { flex: 1 },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 48,
     paddingBottom: 32,
   },
 
-  // Dragon + speech bubble
+  // Dragon + bubble
   chatRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 28,
+    marginBottom: 20,
     gap: 10,
   },
   dragonContainer: {
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
 
-  // Card
+  // Cards
   card: {
     backgroundColor: '#F9FAFB',
     borderRadius: 20,
@@ -358,8 +358,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     marginBottom: 16,
-    marginTop:20,
   },
+
+  // Lock overlay
+  lockOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(243, 244, 246, 0.92)',
+    borderRadius: 20,
+    zIndex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  lockIcon: { fontSize: 32, marginBottom: 12 },
+  lockText: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: COLORS.textDark,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+
+  // Card header
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -379,27 +403,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  scoreDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
+  scoreDot: { width: 10, height: 10, borderRadius: 5 },
   scoreNumber: {
     fontFamily: FONTS.regular,
     fontSize: 14,
     color: COLORS.textDark,
   },
 
-  // Bar
-  barSection: {
-    
-    marginBottom: 20,
-  },
-  youLabelContainer: {
-    position: 'absolute',
-    top: 0,
-    zIndex: 10,
-  },
+  // Gradient bar
+  barSection: { marginBottom: 20 },
+  youLabelContainer: { position: 'absolute', top: 0, zIndex: 10 },
   youLabel: {
     backgroundColor: COLORS.textDark,
     borderRadius: 8,
@@ -418,10 +431,7 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     position: 'relative',
   },
-  gradientBar: {
-    height: 12,
-    borderRadius: 6,
-  },
+  gradientBar: { height: 12, borderRadius: 6 },
   markerCircle: {
     position: 'absolute',
     top: -4,
@@ -438,22 +448,14 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
-  scaleNumbers: {
-    position: 'relative',
-    height: 16,
-    marginTop: 8,
-  },
+  scaleNumbers: { position: 'relative', height: 16, marginTop: 8 },
   scaleNum: {
     fontFamily: FONTS.regular,
     fontSize: 11,
     color: '#9CA3AF',
     position: 'absolute',
   },
-  categoryLabels: {
-    position: 'relative',
-    height: 16,
-    marginTop: 4,
-  },
+  categoryLabels: { position: 'relative', height: 16, marginTop: 4 },
   categoryLabel: {
     fontFamily: FONTS.regular,
     fontSize: 10,
@@ -467,67 +469,70 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
   },
 
-  // Status box
-  statusBox: {
+  // Snapshot + what this means
+  snapshotBox: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 16,
-    //borderLeftWidth: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 1,
   },
-  statusHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
-  },
-  statusIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusIcon: {
-    color: COLORS.white,
-    fontFamily: FONTS.bold,
-    fontSize: 14,
-  },
-  statusTitle: {
+  snapshotTitle: {
     fontFamily: FONTS.semiBold,
     fontSize: 15,
     color: COLORS.textDark,
-    flex: 1,
+    marginBottom: 12,
     lineHeight: 20,
   },
-  statusDescription: {
+
+  // Shared text styles
+  sectionLabel: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    color: COLORS.textDark,
+    marginBottom: 6,
+  },
+  sectionBody: {
     fontFamily: FONTS.regular,
     fontSize: 14,
     color: '#4B5563',
     lineHeight: 22,
   },
 
-  // Disclaimer
-  disclaimer: {
-    fontFamily: FONTS.regular,
-    fontSize: 13,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    lineHeight: 19,
-    paddingHorizontal: 8,
+  // Starting plan card
+  planTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 12,
+  },
+
+  // What to expect
+  expectBox: {
+    paddingHorizontal: 4,
+    marginBottom: 8,
   },
 
   // Footer
   footer: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    //borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
     backgroundColor: COLORS.white,
-    marginBottom: -20,
+  },
+  button: {
+    width: '100%',
+    height: 56,
+    backgroundColor: '#8C49D5',
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 18,
+    color: COLORS.white,
   },
 });

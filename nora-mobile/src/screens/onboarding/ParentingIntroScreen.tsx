@@ -1,45 +1,145 @@
 /**
  * Parenting Intro Screen
- * "Parenting is complex" - Shown after account creation
+ * "Just 5 minutes a day can make a difference." - Shown after Demo6
  */
 
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+  Image,
+  Dimensions,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
-import { IntroScreenTemplate } from './IntroScreenTemplate';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const CHECK_ITEMS = [
+  'Build Stronger Bonding',
+  'Reduce Behavior Issues',
+  'Boost Social/Emotion/Focus',
+];
 
 export const ParentingIntroScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
 
   return (
-    <IntroScreenTemplate
-      subtitle="Parenting is complex"
-      title="But you don’t have to figure it out alone."
-      description={
-        <Text style={styles.description}>
-    
-          In <Text style={styles.bold}>just 5 minutes a day</Text>, Nora listens to real moments between you and
-           your child and gives <Text style={styles.bold}>personalized coaching grounded in child development 
-           science</Text> — helping you build emotional, social, and self-control skills one 
-           small interaction at a time.
-        </Text>
-      }
-      buttonText="Let's go!  →"
-      onNext={() => navigation.navigate('NameInput')}
-    />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Just 5 minutes a day can make a difference.</Text>
+
+        <View style={styles.illustrationContainer}>
+          <Image
+            source={require('../../../assets/images/dragon_image.png')}
+            style={styles.illustrationImage}
+            resizeMode="contain"
+          />
+        </View>
+
+        <View style={styles.checkList}>
+          {CHECK_ITEMS.map((item) => (
+            <View key={item} style={styles.checkRow}>
+              <View style={styles.checkbox}>
+                <Text style={styles.checkMark}>✓</Text>
+              </View>
+              <Text style={styles.checkText}>{item}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('NameInput')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonText}>Get Your Personalized Plan  →</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  description: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 28,
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  bold: {
+  content: {
+    flex: 1,
+    paddingHorizontal: 32,
+    paddingTop: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
     fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 26,
+    color: '#1F2937',
+    textAlign: 'center',
+    lineHeight: 36,
+    marginBottom: 32,
+  },
+  illustrationContainer: {
+    width: SCREEN_WIDTH * 0.78,
+    height: SCREEN_WIDTH * 0.48,
+    borderRadius: 32,
+    backgroundColor: '#A2DFCB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginBottom: 36,
+  },
+  illustrationImage: {
+    width: SCREEN_WIDTH * 0.72,
+    height: SCREEN_WIDTH * 0.72,
+  },
+  checkList: {
+    alignSelf: 'stretch',
+    gap: 16,
+  },
+  checkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    backgroundColor: '#8C49D5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkMark: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  checkText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  buttonContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+  },
+  button: {
+    height: 56,
+    backgroundColor: '#8C49D5',
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 18,
+    color: '#FFFFFF',
   },
 });

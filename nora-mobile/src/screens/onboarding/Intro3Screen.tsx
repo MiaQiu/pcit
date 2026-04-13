@@ -1,6 +1,6 @@
 /**
  * Intro 3 Screen
- * "What parents notice over time" - Benefits overview
+ * "We'll show you what a 5-minute session looks like" - preview teaser before subscription
  */
 
 import React from 'react';
@@ -8,49 +8,63 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
+  Image,
+  TouchableOpacity,
+  Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
-import { DragonCard } from '../../components/DragonCard';
-import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 
-const BENEFITS = [
-  'Fewer power struggles',
-  'Better emotional control',
-  'Improved focus',
-  'Stronger social skills',
-  'More confidence as a parent',
-];
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export const Intro3Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const { data } = useOnboarding();
+  const userName = data.name || 'there';
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.textContent}>
-          <Text style={styles.title}>What parents notice over time</Text>
-
-          <View style={styles.bulletList}>
-            {BENEFITS.map((benefit) => (
-              <Text key={benefit} style={styles.bulletItem}>  •  {benefit}</Text>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.cardContainer}>
-          <DragonCard text="Small daily moments add up to meaningful change" />
-        </View>
-      </View>
-      <View style={styles.footer}>
-        <OnboardingButtonRow
-          onBack={() => navigation.goBack()}
-          onContinue={() => navigation.navigate('Subscription')}
-          continueText="Continue  →"
+    <View style={styles.container}>
+      {/* Gradient hero */}
+      <LinearGradient
+        colors={['#B2EAE0', '#DFFAF5', '#FFFFFF']}
+        locations={[0, 0.6, 1]}
+        style={[styles.heroSection, { paddingTop: insets.top }]}
+      >
+        <Image
+          source={require('../../../assets/images/dragon_s1.png')}
+          style={styles.dragonImage}
+          resizeMode="contain"
         />
+      </LinearGradient>
+
+      {/* Text */}
+      <View style={styles.bottomSection}>
+        <Text style={styles.description}>
+          Hi {userName}, We'll show you what a 5-minute session looks like.{'\n'}No need to do anything yet.
+        </Text>
       </View>
-    </SafeAreaView>
+
+      {/* Footer */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 8 }]}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('PlaySession1')}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.buttonText}>Preview  →</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Subscription')}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.skipText}>Skip for Now</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
 
@@ -59,37 +73,52 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 40,
+  heroSection: {
+    height: SCREEN_HEIGHT * 0.52,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
-  footer: {
-    paddingHorizontal: 20,
+  dragonImage: {
+    width: SCREEN_WIDTH * 0.75,
+    height: SCREEN_WIDTH * 0.75,
+    marginBottom: -8,
   },
-  textContent: {
+  bottomSection: {
     flex: 1,
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  title: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 28,
-    color: '#1F2937',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  bulletList: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  bulletItem: {
+  description: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 16,
     color: '#1F2937',
-    lineHeight: 28,
+    textAlign: 'center',
+    lineHeight: 26,
   },
-  cardContainer: {
-    marginBottom: 40
+  footer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    alignItems: 'center',
+    gap: 12,
+  },
+  button: {
+    width: '100%',
+    height: 56,
+    backgroundColor: '#8C49D5',
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 18,
+    color: '#FFFFFF',
+  },
+  skipText: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 15,
+    color: '#6B7280',
   },
 });

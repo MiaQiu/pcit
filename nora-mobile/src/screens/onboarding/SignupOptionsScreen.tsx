@@ -61,7 +61,7 @@ export const SignupOptionsScreen: React.FC = () => {
     // New user (childName placeholder) → start onboarding, same as email signup
     // Returning user → go straight to main app
     if (!user.childName || user.childName === 'Child') {
-      navigation.navigate('ParentingIntro');
+      navigation.navigate('Demo1');
     } else {
       navigation.dispatch(
         CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] })
