@@ -363,14 +363,15 @@ export const ProfileScreen: React.FC = () => {
 
   const getIssueLabel = (issue?: string | string[]) => {
     const issueLabels: Record<string, string> = {
-      tantrums: 'Tantrums or managing big feelings',
-      'not-listening': 'Not listening',
-      arguing: 'Arguing',
-      social: 'Social-emotional skills',
-      new_baby_in_the_house: 'New baby in the home',
+      behavior_challenges: 'Behavior Challenges (Tantrums, Arguing)',
+      big_emotions: 'Handling big emotions',
       frustration_tolerance: 'Low frustration tolerance',
-      moving_house: 'Moving house & school changes',
-      parental_divorce: 'Navigating parental divorce',
+      new_baby_in_the_house: 'New Baby in the Home',
+      moving_house: 'Moving House & School Changes',
+      parental_divorce: 'Navigating Parental Divorces',
+      social: 'Building Social-Emotional Skills',
+      attention_focus: 'Attention and Focus Issues',
+      parenting_strategies: 'Learning More Effective Parenting Strategies',
       defiance: 'Defiance',
       aggression: 'Aggression',
       emotional: 'Emotional Regulation',

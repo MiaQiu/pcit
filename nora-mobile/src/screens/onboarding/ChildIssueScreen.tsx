@@ -20,14 +20,15 @@ export const ChildIssueScreen: React.FC = () => {
       headerText="There are no right or wrong answers. Select all that applies."
       title="How can Nora help?"
       options={[
-        { value: 'tantrums', label: 'Tantrums or managing big feelings' },
-        { value: 'not-listening', label: 'Not listening' },
-        { value: 'arguing', label: 'Arguing' },
-        { value: 'social', label: 'Social-emotional skills' },
-        { value: 'new_baby_in_the_house', label: 'New baby in the home' },
+        { value: 'behavior_challenges', label: 'Behavior Challenges (Tantrums, Arguing)' },
+        { value: 'big_emotions', label: 'Handling big emotions' },
         { value: 'frustration_tolerance', label: 'Low frustration tolerance' },
-        { value: 'moving_house', label: 'Moving house & school changes' },
-        { value: 'parental_divorce', label: 'Navigating parental divorce' },
+        { value: 'new_baby_in_the_house', label: 'New Baby in the Home' },
+        { value: 'moving_house', label: 'Moving House & School Changes' },
+        { value: 'parental_divorce', label: 'Navigating Parental Divorces' },
+        { value: 'social', label: 'Building Social-Emotional Skills' },
+        { value: 'attention_focus', label: 'Attention and Focus Issues' },
+        { value: 'parenting_strategies', label: 'Learning More Effective Parenting Strategies' },
         { value: 'other', label: 'Others' },
       ]}
       dataField="issue"

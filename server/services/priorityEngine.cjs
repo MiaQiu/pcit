@@ -28,14 +28,15 @@ const LEVEL_TO_STRATEGY = {
 
 // Maps ChildIssueScreen values to clinical levels
 const ISSUE_TO_LEVEL = {
-  tantrums: 'DE_ESCALATE',
-  arguing: 'DE_ESCALATE',
-  'not-listening': 'DIRECT',
+  behavior_challenges: 'DE_ESCALATE',
+  big_emotions: 'DE_ESCALATE',
   new_baby_in_the_house: 'SUPPORT',
   moving_house: 'SUPPORT',
   parental_divorce: 'SUPPORT',
   social: 'FLOURISH',
-  frustration_tolerance: 'FLOURISH'
+  frustration_tolerance: 'FLOURISH',
+  attention_focus: 'FLOURISH',
+  parenting_strategies: 'FLOURISH',
   // "other" is intentionally omitted (no clinical mapping)
 };
 

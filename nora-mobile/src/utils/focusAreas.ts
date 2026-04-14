@@ -20,14 +20,15 @@ type ClinicalLevel = (typeof CLINICAL_LEVELS_BY_PRIORITY)[number];
 
 // Maps ChildIssueScreen values to clinical levels
 const ISSUE_TO_LEVEL: Record<string, ClinicalLevel> = {
-  tantrums: 'DE_ESCALATE',
-  arguing: 'DE_ESCALATE',
-  'not-listening': 'DIRECT',
+  behavior_challenges: 'DE_ESCALATE',
+  big_emotions: 'DE_ESCALATE',
   new_baby_in_the_house: 'SUPPORT',
   moving_house: 'SUPPORT',
   parental_divorce: 'SUPPORT',
   social: 'FLOURISH',
   frustration_tolerance: 'FLOURISH',
+  attention_focus: 'FLOURISH',
+  parenting_strategies: 'FLOURISH',
 };
 
 // Maps WACB questions to clinical levels

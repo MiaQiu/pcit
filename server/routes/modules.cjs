@@ -11,14 +11,15 @@ const router = express.Router();
 
 // Maps user-selected issues to module keys
 const ISSUE_TO_MODULE = {
-  tantrums: 'EMOTIONS',
-  arguing: 'COOPERATION',
-  'not-listening': 'COOPERATION',
+  behavior_challenges: 'COOPERATION',
+  big_emotions: 'EMOTIONS',
+  frustration_tolerance: 'EMOTIONS',
   new_baby_in_the_house: 'SIBLINGS',
   moving_house: 'RELOCATION',
   parental_divorce: 'DIVORCE',
   social: 'DEVELOPMENT',
-  frustration_tolerance: 'EMOTIONS',
+  attention_focus: 'FOCUS',
+  parenting_strategies: 'FOUNDATION',
 };
 
 // Maps WACB survey questions to module keys
