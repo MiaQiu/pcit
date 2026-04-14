@@ -54,6 +54,13 @@ export const ParentingIntroScreen: React.FC = () => {
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.navigate('Demo5')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={styles.button}
           onPress={() => navigation.navigate('NameInput')}
           activeOpacity={0.8}
@@ -88,7 +95,7 @@ const styles = StyleSheet.create({
   illustrationContainer: {
     width: SCREEN_WIDTH * 0.78,
     height: SCREEN_WIDTH * 0.48,
-    borderRadius: 32,
+    borderRadius: 9999,
     backgroundColor: '#A2DFCB',
     alignItems: 'center',
     justifyContent: 'center',
@@ -96,12 +103,14 @@ const styles = StyleSheet.create({
     marginBottom: 36,
   },
   illustrationImage: {
-    width: SCREEN_WIDTH * 0.72,
-    height: SCREEN_WIDTH * 0.72,
+    width: SCREEN_WIDTH * 0.82,
+    height: SCREEN_WIDTH * 0.82,
   },
   checkList: {
-    alignSelf: 'stretch',
+    alignSelf: 'center',
     gap: 16,
+    marginTop:10
+    
   },
   checkRow: {
     flexDirection: 'row',
@@ -127,10 +136,27 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
   buttonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 16,
+    gap: 12,
+  },
+  backButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonText: {
+    fontSize: 22,
+    color: '#1F2937',
   },
   button: {
+    flex: 1,
     height: 56,
     backgroundColor: '#8C49D5',
     borderRadius: 30,

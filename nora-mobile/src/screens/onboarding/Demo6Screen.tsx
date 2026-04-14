@@ -10,6 +10,8 @@ export const Demo6Screen: React.FC = () => {
     <DemoScreenTemplate
       image={require('../../../assets/images/demo6.png')}
       title="Your private moments stay private."
+      resizeMode="contain"
+      onBack={() => navigation.navigate('Demo5')}
       onNext={() => navigation.navigate('ParentingIntro')}
     />
   );

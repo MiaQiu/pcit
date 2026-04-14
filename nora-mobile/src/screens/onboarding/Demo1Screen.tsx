@@ -32,11 +32,13 @@ export const Demo1Screen: React.FC = () => {
 
         {/* Image */}
         <View style={styles.imageContainer}>
-          <Image
-            source={require('../../../assets/images/demo1.png')}
-            style={styles.image}
-            resizeMode="contain"
-          />
+          <View style={styles.cylinderContainer}>
+            <Image
+              source={require('../../../assets/images/demo1.png')}
+              style={styles.image}
+              resizeMode="contain"
+            />
+          </View>
         </View>
 
         {/* Meet Nora */}
@@ -77,23 +79,37 @@ const styles = StyleSheet.create({
     color: '#8C49D5',
     textAlign: 'center',
     marginBottom: 12,
+    marginTop:32
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 28,
+    fontSize: 24,
     color: '#1F2937',
     textAlign: 'center',
     lineHeight: 38,
-    marginBottom: 28,
+    marginBottom: 18,
+    marginTop:18
   },
   imageContainer: {
     width: SCREEN_WIDTH - 48,
     aspectRatio: 1.2,
     marginBottom: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cylinderContainer: {
+    width: '95%',
+    aspectRatio: 1.6,
+    backgroundColor: '#EAF6F0',
+    borderRadius: 9999,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   image: {
     width: '100%',
     height: '100%',
+    alignSelf:'center'
   },
   meetTitle: {
     fontFamily: 'PlusJakartaSans_700Bold',

@@ -3,12 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
+import { DemoTemplate } from './DemoTemplate';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface PenSkill {
@@ -87,11 +86,13 @@ const AvoidRow: React.FC<AvoidItem> = ({ name, score, label, dotColor, scoreColo
 // ── Screen ─────────────────────────────────────────────────────────────────
 export const Demo2BScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
-  const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Coaching report card with gradient border */}
+    <DemoTemplate
+      text="Nora helps you understand your parenting style and patterns."
+      onBack={() => navigation.navigate('Demo2')}
+      onNext={() => navigation.navigate('Demo3')}
+    >
       <View style={styles.cardWrapper}>
         <LinearGradient
           colors={['#B8D4F5', '#C8C0F0', '#D8E8FF']}
@@ -100,15 +101,11 @@ export const Demo2BScreen: React.FC = () => {
           style={styles.gradientBorder}
         >
           <View style={styles.cardInner}>
-            {/* PEN Skills */}
             <Text style={styles.sectionTitle}>Your PEN Skills</Text>
             {PEN_SKILLS.map((skill) => (
               <PenRow key={skill.letter} {...skill} />
             ))}
-
             <View style={styles.divider} />
-
-            {/* Areas to Avoid */}
             <Text style={styles.sectionTitle}>Areas to Avoid</Text>
             {AVOID_ITEMS.map((item) => (
               <AvoidRow key={item.name} {...item} />
@@ -116,41 +113,19 @@ export const Demo2BScreen: React.FC = () => {
           </View>
         </LinearGradient>
       </View>
-
-      {/* Body text */}
-      <View style={styles.textContainer}>
-        <Text style={styles.body}>
-          Nora helps you understand your child's behavior — and your parenting patterns.
-        </Text>
-      </View>
-
-      {/* Button */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('Demo3')}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.buttonText}>Next  →</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    </DemoTemplate>
   );
 };
 
 // ── Styles ─────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
   cardWrapper: {
-    marginHorizontal: 20,
-    marginTop: 32,
+    marginHorizontal: 28,
+    marginTop:60
   },
   gradientBorder: {
     borderRadius: 24,
-    padding: 2,
+    padding: 8,
   },
   cardInner: {
     backgroundColor: '#FFFFFF',
@@ -167,39 +142,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#E5E7EB',
     marginVertical: 16,
-  },
-  textContainer: {
-    paddingHorizontal: 28,
-    paddingTop: 28,
-    alignItems: 'center',
-  },
-  body: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 18,
-    color: '#1F2937',
-    textAlign: 'center',
-    lineHeight: 28,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
-  button: {
-    width: '100%',
-    height: 56,
-    backgroundColor: '#8C49D5',
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 18,
-    color: '#FFFFFF',
   },
 });
 
