@@ -8,9 +8,9 @@ export const PlaySession4Screen: React.FC = () => {
 
   return (
     <PlaySessionScreenTemplate
-      title="Instant Coaching Support"
+      title="Short Play, Big Insights"
       image={require('../../../assets/images/play4.png')}
-      subtitle="Real-time guidance helps you manage your sessions, set boundaries, and support your child's daily development."
+      subtitle={`The recording stops automatically after 5 minutes.\nOur AI analyzes the interaction and generates a personalized report in just a few minutes`}
       onContinue={() => navigation.navigate('PlaySession5')}
     />
   );

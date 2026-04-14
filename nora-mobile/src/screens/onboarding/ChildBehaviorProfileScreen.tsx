@@ -148,9 +148,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
           </View>
           <View style={styles.speechBubble}>
             <Text style={styles.speechText}>
-              {locked
-                ? `Nora has created the personalized plan for you and ${childName}'s name`
-                : `80% of parents in a similar situation to you have seen meaningful changes using Nora within a month.`}
+              {`Nora has generated the behavior profile for ${childName} and personalized plan for you.`}
             </Text>
             <View style={styles.bubbleTail} />
           </View>
@@ -161,7 +159,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
           {locked && (
             <TouchableOpacity
               style={styles.lockOverlay}
-              onPress={() => navigation.navigate('ChildSnapshotIntro')}
+              onPress={() => navigation.navigate('WacbQuestion1')}
               activeOpacity={0.9}
             >
               <Text style={styles.lockIcon}>🔒</Text>
@@ -195,7 +193,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
                 style={styles.youLabel}
                 onLayout={(e) => setNameLabelWidth(e.nativeEvent.layout.width)}
               >
-                <Text style={styles.youLabelText}>You</Text>
+                <Text style={styles.youLabelText}>{childName}</Text>
               </View>
             </View>
 
@@ -247,24 +245,35 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Current snapshot + What this means */}
-          <View style={styles.snapshotBox}>
-            <Text style={styles.snapshotTitle}>Current Snapshot: {info.snapshotTitle}</Text>
+          {/* Current snapshot title */}
+          <Text style={styles.snapshotTitle}>Current Snapshot: {info.snapshotTitle}</Text>
+
+          {/* What this means */}
+          <View style={styles.whatThisMeansBox}>
             <Text style={styles.sectionLabel}>What this means</Text>
             <Text style={styles.sectionBody}>{info.whatThisMeans}</Text>
           </View>
         </View>
 
-        {/* ── Starting Plan card ── */}
-        <View style={styles.card}>
-          <Text style={styles.planTitle}>Your Starting Plan</Text>
-          <Text style={styles.sectionBody}>{info.startingPlan}</Text>
-        </View>
+        {/* ── Starting Plan + What to Expect combined card ── */}
+        <View style={styles.infoCard}>
+          <Text style={styles.sectionLabel}>Your Starting Plan</Text>
+          {info.startingPlan.split('\n').filter(Boolean).map((line, i) => (
+            <View key={i} style={styles.iconRow}>
+              <Text style={styles.rowIcon}>💜</Text>
+              <Text style={[styles.sectionBody, styles.iconRowText]}>{line}</Text>
+            </View>
+          ))}
 
-        {/* ── What to expect ── */}
-        <View style={styles.expectBox}>
+          <View style={styles.divider} />
+
           <Text style={styles.sectionLabel}>What to expect</Text>
-          <Text style={styles.sectionBody}>{info.whatToExpect}</Text>
+          {info.whatToExpect.split('\n').filter(Boolean).map((line, i) => (
+            <View key={i} style={styles.iconRow}>
+              <Text style={styles.rowIcon}>🌱</Text>
+              <Text style={[styles.sectionBody, styles.iconRowText]}>{line}</Text>
+            </View>
+          ))}
         </View>
       </ScrollView>
 
@@ -272,10 +281,10 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('FocusAreas')}
+          onPress={() => navigation.navigate('Intro3')}
           activeOpacity={0.85}
         >
-          <Text style={styles.buttonText}>Start My Plan  →</Text>
+          <Text style={styles.buttonText}>Introducing Emotional Massage  →</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -469,23 +478,56 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
   },
 
-  // Snapshot + what this means
-  snapshotBox: {
+  // What this means (inside profile card)
+  whatThisMeansBox: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+
+  // Snapshot title (inside profile card)
+  snapshotTitle: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: COLORS.textDark,
+    marginTop: 4,
+    lineHeight: 20,
+  },
+
+  // Unified info cards
+  infoCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 1,
   },
-  snapshotTitle: {
-    fontFamily: FONTS.semiBold,
+
+  // Icon row layout
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginTop: 8,
+  },
+  rowIcon: {
     fontSize: 15,
-    color: COLORS.textDark,
-    marginBottom: 12,
-    lineHeight: 20,
+    lineHeight: 22,
+  },
+  iconRowText: {
+    flex: 1,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 16,
   },
 
   // Shared text styles
@@ -500,20 +542,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4B5563',
     lineHeight: 22,
-  },
-
-  // Starting plan card
-  planTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 16,
-    color: COLORS.textDark,
-    marginBottom: 12,
-  },
-
-  // What to expect
-  expectBox: {
-    paddingHorizontal: 4,
-    marginBottom: 8,
   },
 
   // Footer

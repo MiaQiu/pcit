@@ -11,9 +11,9 @@ export const PlaySession1Screen: React.FC = () => {
 
   return (
     <PlaySessionScreenTemplate
-      title={`Provide options of toys for ${childName} to choose`}
+      title={`Prepare the Right Toys`}
       image={require('../../../assets/images/play1.png')}
-      subtitle="Simple. Gentle. Personalized & fun."
+      subtitle="To let your child’s imagination run wild, pick unstructured toys. These allow them to be the boss of the play."
       onContinue={() => navigation.navigate('PlaySession2')}
     />
   );

@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
   },
   illustrationContainer: {
     alignItems: 'center',
-    marginTop:40,
+    marginTop: 16,
   },
   illustrationCircle: {
     width: SCREEN_WIDTH * 0.8,
@@ -127,6 +127,7 @@ const styles = StyleSheet.create({
   },
   textContent: {
     alignItems: 'center',
+    width: '100%',
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',

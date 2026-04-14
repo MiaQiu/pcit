@@ -35,7 +35,7 @@ export const Intro3Screen: React.FC = () => {
         style={[styles.heroSection, { paddingTop: insets.top }]}
       >
         <Image
-          source={require('../../../assets/images/dragon_s1.png')}
+          source={require('../../../assets/images/dragon_waving.png')}
           style={styles.dragonImage}
           resizeMode="contain"
         />

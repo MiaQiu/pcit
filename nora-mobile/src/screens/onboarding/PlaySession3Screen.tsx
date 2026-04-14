@@ -8,9 +8,9 @@ export const PlaySession3Screen: React.FC = () => {
 
   return (
     <PlaySessionScreenTemplate
-      title="5 Minutes That Works"
+      title="Record Using Nora App"
       image={require('../../../assets/images/play3.png')}
-      subtitle="Strengthens connection and activates focus, supports social-emotional and cognitive growth, and gets you real coaching support."
+      subtitle="Set your phone nearby where it can clearly hear your conversation. You don't need to hold it—just focus on the play!"
       onContinue={() => navigation.navigate('PlaySession4')}
     />
   );

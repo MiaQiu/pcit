@@ -36,7 +36,7 @@ export const ChildSnapshotIntroScreen: React.FC = () => {
         style={[styles.heroSection, { paddingTop: insets.top }]}
       >
         <Image
-          source={require('../../../assets/images/dragon_s1.png')}
+          source={require('../../../assets/images/dragon_waving.png')}
           style={styles.dragonImage}
           resizeMode="contain"
         />
@@ -96,6 +96,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     textAlign: 'center',
     lineHeight: 26,
+    marginTop:20
   },
   footer: {
     paddingHorizontal: 20,

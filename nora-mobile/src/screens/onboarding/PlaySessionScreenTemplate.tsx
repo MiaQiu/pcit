@@ -40,14 +40,14 @@ export const PlaySessionScreenTemplate: React.FC<PlaySessionScreenTemplateProps>
         <Text style={styles.title}>{title}</Text>
       </View>
 
-      {/* Image */}
-      <View style={styles.imageContainer}>
-        <Image source={image} style={styles.image} resizeMode="contain" />
-      </View>
-
       {/* Subtitle */}
       <View style={styles.subtitleContainer}>
         <Text style={styles.subtitle}>{subtitle}</Text>
+      </View>
+
+      {/* Image */}
+      <View style={styles.imageContainer}>
+        <Image source={image} style={styles.image} resizeMode="contain" />
       </View>
 
       {/* Button */}
@@ -67,14 +67,17 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     paddingHorizontal: 28,
-    paddingTop: 24,
-    paddingBottom: 16,
+    paddingTop: 64,
+    //paddingBottom: 28,
+    alignItems: 'center',
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 24,
     color: '#1F2937',
     lineHeight: 34,
+    textAlign: 'center',
+    width: '100%',
   },
   imageContainer: {
     flex: 1,
@@ -88,14 +91,17 @@ const styles = StyleSheet.create({
   },
   subtitleContainer: {
     paddingHorizontal: 28,
-    paddingTop: 16,
+    paddingTop: 8,
     paddingBottom: 8,
+    alignItems: 'center',
   },
   subtitle: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 14,
     color: '#6B7280',
     lineHeight: 22,
+    textAlign: 'center',
+    width: '100%',
   },
   footer: {
     paddingHorizontal: 20,

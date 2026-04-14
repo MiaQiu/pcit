@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 56,
+    height: 68,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     borderRadius: 36,
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   otherInput: {
-    height: 56,
+    height: 68,
     borderWidth: 2,
     borderColor: '#007866',
     borderRadius: 36,

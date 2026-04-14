@@ -11,9 +11,10 @@ export const PlaySession2Screen: React.FC = () => {
 
   return (
     <PlaySessionScreenTemplate
-      title={`Let ${childName} lead the play. Just describe and echo`}
+      title={`Let Your Child Lead`}
       image={require('../../../assets/images/play2.png')}
-      subtitle="Child-Led Play — to build patterns, connection, and structure."
+      subtitle="For the next 5 minutes, your goal is to be your child’s biggest fan, not their teacher.
+Describe what they're doing, repeat their words."
       onContinue={() => navigation.navigate('PlaySession3')}
     />
   );
