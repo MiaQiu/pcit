@@ -202,13 +202,23 @@ async function toolGetTranscript(userId) {
   const session = await prisma.session.findFirst({
     where: { userId },
     orderBy: { createdAt: 'desc' },
-    select: { createdAt: true, transcript: true },
+    select: { id: true, createdAt: true },
   });
   if (!session) return { error: 'No sessions found' };
 
+  const utterances = await prisma.utterance.findMany({
+    where: { sessionId: session.id },
+    orderBy: { order: 'asc' },
+    select: { text: true, role: true, pcitTag: true },
+  });
+
   return {
     sessionDate: session.createdAt.toISOString().slice(0, 10),
-    transcript: session.transcript ?? null,
+    transcript: utterances.map(u => ({
+      role: u.role ?? null,
+      text: u.text,
+      pcitTag: u.pcitTag ?? null,
+    })),
   };
 }
 
