@@ -1772,6 +1772,9 @@ router.post('/coach/chats/:userId/reply', requireAdminAuth, async (req, res) => 
       select: { id: true, role: true, text: true, createdAt: true },
     });
 
+    const { publish } = require('../services/chatBus.cjs');
+    publish(userId, [created]);
+
     res.json({ message: created });
   } catch (err) {
     console.error('Admin coach reply error:', err);

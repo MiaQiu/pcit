@@ -6,6 +6,7 @@ const fetch   = require('node-fetch');
 const { requireAuth } = require('../middleware/auth.cjs');
 const { logLLMCall }  = require('../llm/logger.cjs');
 const prisma          = require('../services/db.cjs');
+const { subscribe, publish } = require('../services/chatBus.cjs');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -310,6 +311,37 @@ async function runAgentLoop(userId, userText, dbHistory) {
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 /**
+ * GET /api/coach/events?since=<ISO timestamp>
+ * Long-poll endpoint. Holds the request until a new message arrives for this user
+ * or 25 seconds elapse (client should immediately retry on empty response).
+ */
+router.get('/events', async (req, res, next) => {
+  try {
+    const since = req.query.since ? new Date(req.query.since) : new Date();
+
+    // Respond immediately if messages already exist since the timestamp
+    const pending = await prisma.coachChatMessage.findMany({
+      where: { userId: req.userId, createdAt: { gt: since } },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, role: true, text: true, createdAt: true },
+    });
+
+    if (pending.length > 0) {
+      return res.json({ messages: pending });
+    }
+
+    // Otherwise hold until publish() fires or timeout
+    const unsubscribe = subscribe(req.userId, (messages) => {
+      if (!res.headersSent) res.json({ messages });
+    });
+
+    req.on('close', unsubscribe);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * GET /api/coach/history
  * Returns the authenticated user's full chat history (all roles), oldest first.
  */
@@ -374,12 +406,12 @@ router.post('/chat', async (req, res, next) => {
 
     const reply = result.text.trim();
 
-    await prisma.coachChatMessage.createMany({
-      data: [
-        { userId: req.userId, role: 'user',  text: userText },
-        { userId: req.userId, role: 'model', text: reply },
-      ],
-    });
+    const saved = await prisma.$transaction([
+      prisma.coachChatMessage.create({ data: { userId: req.userId, role: 'user',  text: userText }, select: { id: true, role: true, text: true, createdAt: true } }),
+      prisma.coachChatMessage.create({ data: { userId: req.userId, role: 'model', text: reply  }, select: { id: true, role: true, text: true, createdAt: true } }),
+    ]);
+
+    publish(req.userId, saved);
 
     res.json({ reply });
   } catch (err) {

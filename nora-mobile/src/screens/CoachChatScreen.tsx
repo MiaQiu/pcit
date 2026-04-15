@@ -85,29 +85,49 @@ export const CoachChatScreen: React.FC = () => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
   }, []);
 
-  // Load history and poll every 8 seconds for new messages (e.g. admin/psychologist replies)
+  // Load full history on mount, then long-poll for new messages
   useEffect(() => {
     let cancelled = false;
+    let since = new Date().toISOString();
 
-    const fetchHistory = () => {
-      authService.authenticatedRequest(`${API_URL}/api/coach/history`)
+    // 1. Initial history load
+    authService.authenticatedRequest(`${API_URL}/api/coach/history`)
+      .then(r => r.json())
+      .then((data: { messages: Array<{ id: string; role: string; text: string; createdAt: string }> }) => {
+        if (cancelled) return;
+        if (data.messages && data.messages.length > 0) {
+          setMessages(data.messages as Message[]);
+          since = data.messages[data.messages.length - 1].createdAt;
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) startPolling();
+      });
+
+    // 2. Long-poll loop — holds until server pushes or 25s timeout
+    function startPolling() {
+      if (cancelled) return;
+      authService.authenticatedRequest(
+        `${API_URL}/api/coach/events?since=${encodeURIComponent(since)}`
+      )
         .then(r => r.json())
-        .then((data: { messages: Array<{ id: string; role: string; text: string }> }) => {
+        .then((data: { messages: Array<{ id: string; role: string; text: string; createdAt: string }> }) => {
           if (cancelled) return;
           if (data.messages && data.messages.length > 0) {
-            setMessages(data.messages as Message[]);
+            setMessages(prev => {
+              const existingIds = new Set(prev.map(m => m.id));
+              const newOnes = (data.messages as Message[]).filter(m => !existingIds.has(m.id));
+              return newOnes.length > 0 ? [...prev, ...newOnes] : prev;
+            });
+            since = data.messages[data.messages.length - 1].createdAt;
           }
         })
-        .catch(() => {});
-    };
+        .catch(() => {})
+        .finally(() => startPolling()); // immediately reconnect
+    }
 
-    fetchHistory();
-    const interval = setInterval(fetchHistory, 8000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
