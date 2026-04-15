@@ -15,7 +15,6 @@ import { StartScreen } from '../screens/onboarding/StartScreen';
 import { LoginScreen } from '../screens/onboarding/LoginScreen';
 import { ForgotPasswordScreen } from '../screens/onboarding/ForgotPasswordScreen';
 import { ResetPasswordScreen } from '../screens/onboarding/ResetPasswordScreen';
-import { SignupOptionsScreen } from '../screens/onboarding/SignupOptionsScreen';
 import { CreateAccountScreen } from '../screens/onboarding/CreateAccountScreen';
 import { ParentingIntroScreen } from '../screens/onboarding/ParentingIntroScreen';
 import { NameInputScreen } from '../screens/onboarding/NameInputScreen';
@@ -41,9 +40,7 @@ import { Demo2BScreen } from '../screens/onboarding/Demo2BScreen';
 import { Demo3Screen } from '../screens/onboarding/Demo3Screen';
 import { Demo4Screen } from '../screens/onboarding/Demo4Screen';
 import { Demo5Screen } from '../screens/onboarding/Demo5Screen';
-import { PlanReadyScreen } from '../screens/onboarding/PlanReadyScreen';
 import { ChildBehaviorProfileScreen } from '../screens/onboarding/ChildBehaviorProfileScreen';
-import { FocusAreasScreen } from '../screens/onboarding/FocusAreasScreen';
 import { Intro3Screen } from '../screens/onboarding/Intro3Screen';
 import { PlaySession1Screen } from '../screens/onboarding/PlaySession1Screen';
 import { PlaySession2Screen } from '../screens/onboarding/PlaySession2Screen';
@@ -107,7 +104,6 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-      <Stack.Screen name="SignupOptions" component={SignupOptionsScreen} />
       <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
       <Stack.Screen name="Demo1" component={Demo1Screen} />
       <Stack.Screen name="Demo1B" component={Demo1BScreen} />
@@ -133,9 +129,7 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="WacbQuestion7" component={WacbQuestion7Screen} />
       <Stack.Screen name="WacbQuestion8" component={WacbQuestion8Screen} />
       <Stack.Screen name="WacbQuestion9" component={WacbQuestion9Screen} />
-      <Stack.Screen name="PlanReady" component={PlanReadyScreen} />
       <Stack.Screen name="ChildBehaviorProfile" component={ChildBehaviorProfileScreen} />
-      <Stack.Screen name="FocusAreas" component={FocusAreasScreen} />
       <Stack.Screen name="Intro3" component={Intro3Screen} />
       <Stack.Screen name="PlaySession1" component={PlaySession1Screen} />
       <Stack.Screen name="PlaySession2" component={PlaySession2Screen} />

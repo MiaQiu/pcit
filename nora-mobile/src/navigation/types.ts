@@ -21,7 +21,6 @@ export type OnboardingStackParamList = {
   Login: undefined;
   ForgotPassword: undefined;
   ResetPassword: { token?: string };
-  SignupOptions: undefined;
   CreateAccount: undefined;
   ParentingIntro: undefined;
   NameInput: undefined;
@@ -47,9 +46,7 @@ export type OnboardingStackParamList = {
   Demo3: undefined;
   Demo4: undefined;
   Demo5: undefined;
-  PlanReady: undefined;
   ChildBehaviorProfile: { locked?: boolean } | undefined;
-  FocusAreas: undefined;
   Intro3: undefined;
   PlaySession1: undefined;
   PlaySession2: undefined;
