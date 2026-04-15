@@ -36,9 +36,13 @@ const TOOL_DECLARATIONS = [
     parameters: { type: 'OBJECT', properties: {}, required: [] },
   },
   {
-  {
     name: 'get_child_milestone',
     description: "Retrieve the child's developmental milestone progress across 5 domains (Language, Cognitive, Social, Emotional, Connection) as shown in the radar chart. Returns achieved, emerging, and total milestones per domain, plus the age-appropriate benchmark and the child's age in months.",
+    parameters: { type: 'OBJECT', properties: {}, required: [] },
+  },
+  {
+    name: 'get_transcript',
+    description: "Retrieve the full transcript of the parent's most recent emotional massage session, with each utterance tagged by speaker and PCIT code. Call this when the parent asks about what happened in their last session or wants specific feedback on what was said.",
     parameters: { type: 'OBJECT', properties: {}, required: [] },
   },
   {
@@ -47,7 +51,7 @@ const TOOL_DECLARATIONS = [
     parameters: {
       type: 'OBJECT',
       properties: {
-        limit: { type: 'NUMBER', description: 'Number of recent sessions to retrieve (1–10, default 5)' },
+        limit: { type: 'NUMBER', description: 'Number of recent sessions to retrieve (1–10, default 2)' },
       },
       required: [],
     },
@@ -194,12 +198,27 @@ async function toolGetChildMilestone(userId) {
   return { childAgeMonths, domains: result };
 }
 
+async function toolGetTranscript(userId) {
+  const session = await prisma.session.findFirst({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    select: { createdAt: true, transcript: true },
+  });
+  if (!session) return { error: 'No sessions found' };
+
+  return {
+    sessionDate: session.createdAt.toISOString().slice(0, 10),
+    transcript: session.transcript ?? null,
+  };
+}
+
 async function executeTool(name, args, userId) {
   switch (name) {
     case 'get_child_parent_profile': return toolGetChildParentProfile(userId);
-    case 'get_child_milestone':  return toolGetChildMilestone(userId);
-    case 'get_recent_sessions':  return toolGetRecentSessions(userId, args?.limit);
-    default:                     return { error: `Unknown tool: ${name}` };
+    case 'get_child_milestone':      return toolGetChildMilestone(userId);
+    case 'get_recent_sessions':      return toolGetRecentSessions(userId, args?.limit);
+    case 'get_transcript':           return toolGetTranscript(userId);
+    default:                         return { error: `Unknown tool: ${name}` };
   }
 }
 
