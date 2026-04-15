@@ -10,7 +10,7 @@ const prisma          = require('../services/db.cjs');
 const router = express.Router();
 router.use(requireAuth);
 
-const MODEL           = 'gemini-2.5-pro-preview-05-06';
+const MODEL           = 'gemini-3-pro-preview';
 const MAX_AGENT_TURNS = 6;          // tool-call rounds before giving up
 const MAX_HISTORY_MESSAGES = 20;    // conversation turns sent to LLM
 
