@@ -171,23 +171,26 @@ async function toolGetRecentSessions(userId, limit = 5) {
       overallScore: true,
       tagCounts: true,
       coachingSummary: true,
+      coachingCards: true,
     },
   });
-  return sessions.map(s => {
+  return sessions.map((s, idx) => {
     const tc = (s.tagCounts && typeof s.tagCounts === 'object') ? s.tagCounts : {};
     return {
       date: s.createdAt.toISOString().slice(0, 10),
       durationMinutes: Math.round((s.durationSeconds || 0) / 60),
       overallScore: s.overallScore ?? null,
       skills: {
-        labeledPraises:        tc.praise    ?? 0,
-        reflections:           tc.echo      ?? 0,
-        behavioralDescriptions:tc.narration ?? 0,
-        questions:             tc.question  ?? 0,
-        commands:              tc.command   ?? 0,
-        criticisms:            tc.criticism ?? 0,
+        labeledPraises:         tc.praise    ?? 0,
+        reflections:            tc.echo      ?? 0,
+        behavioralDescriptions: tc.narration ?? 0,
+        questions:              tc.question  ?? 0,
+        commands:               tc.command   ?? 0,
+        criticisms:             tc.criticism ?? 0,
       },
       coachingSummary: s.coachingSummary || null,
+      // Include coachingCards for the two most recent sessions only
+      coachingCards: idx < 2 ? (s.coachingCards ?? null) : undefined,
     };
   });
 }
