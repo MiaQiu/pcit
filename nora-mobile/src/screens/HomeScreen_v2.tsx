@@ -284,26 +284,26 @@ export const HomeScreen_v2: React.FC = () => {
       setNextLessonId(nextLesson?.id ?? null);
       const plan: TodayPlanItem[] = [];
 
-      if (nextLesson) {
+      const lessonForPlan = todayCompletedLesson || nextLesson;
+      if (lessonForPlan) {
         plan.push({
-          id: nextLesson.id,
+          id: lessonForPlan.id,
           type: 'lesson',
           label: 'Daily Learning:',
-          title: nextLesson.title,
+          title: lessonForPlan.title,
           duration: '5 min read',
           isCompleted: !!todayCompletedLesson,
         });
       }
 
-      if (isLessonCompleted || todayCompletedLesson) {
-        plan.push({
-          id: 'record',
-          type: 'record',
-          label: 'Record Session:',
-          title: `5-minute play with ${childName}`,
-          isCompleted: hasCompleted,
-        });
-      }
+      // Always show Record Session regardless of lesson completion
+      plan.push({
+        id: 'record',
+        type: 'record',
+        label: 'Record Session:',
+        title: `5-minute play with ${childName}`,
+        isCompleted: hasCompleted,
+      });
 
       setTodayPlan(plan);
     } catch (err) {
