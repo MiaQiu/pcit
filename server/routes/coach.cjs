@@ -201,22 +201,13 @@ async function toolGetSkillProgress(userId, limit = 10) {
     where: { userId },
     orderBy: { createdAt: 'desc' },
     take: n,
-    select: { createdAt: true, overallScore: true, tagCounts: true },
+    select: { createdAt: true, tagCounts: true },
   });
-  sessions.reverse(); // show oldest → newest for trend reading
-  return sessions.map(s => {
-    const tc = (s.tagCounts && typeof s.tagCounts === 'object') ? s.tagCounts : {};
-    return {
-      date: s.createdAt.toISOString().slice(0, 10),
-      overallScore:           s.overallScore ?? null,
-      labeledPraises:         tc.praise    ?? 0,
-      reflections:            tc.echo      ?? 0,
-      behavioralDescriptions: tc.narration ?? 0,
-      questions:              tc.question  ?? 0,
-      commands:               tc.command   ?? 0,
-      criticisms:             tc.criticism ?? 0,
-    };
-  });
+  sessions.reverse(); // oldest → newest for trend reading
+  return sessions.map(s => ({
+    date: s.createdAt.toISOString().slice(0, 10),
+    tagCounts: s.tagCounts ?? {},
+  }));
 }
 
 async function toolGetCoachingHistory(userId, limit = 3) {
