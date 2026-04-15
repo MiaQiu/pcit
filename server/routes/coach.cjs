@@ -57,7 +57,7 @@ You are an expert Child Psychologist and PCIT (Parent-Child Interaction Therapy)
 const TOOL_DECLARATIONS = [
   {
     name: 'get_child_profile',
-    description: "Retrieve the child's profile: name, age in months, gender, primary behavioural issue, and secondary issues from assessment. Call this when the parent asks about their child or when personalisation is needed.",
+    description: "Retrieve the child's profile: name, age in months, gender, primary behavioural issue, secondary issues from assessment, and the two most recent developmental profiling snapshots (summary and metadata). Call this when the parent asks about their child, developmental progress, or when personalisation is needed.",
     parameters: { type: 'OBJECT', properties: {}, required: [] },
   },
   {
@@ -134,7 +134,28 @@ async function toolGetChildProfile(userId) {
     }
   }
 
-  return { childName, ageMonths, gender, primaryIssue, otherIssues };
+  // Latest two ChildProfiling snapshots (summary + metadata)
+  const profilingSnapshots = child?.id
+    ? await prisma.childProfiling.findMany({
+        where: { childId: child.id },
+        orderBy: { createdAt: 'desc' },
+        take: 2,
+        select: { createdAt: true, summary: true, metadata: true },
+      })
+    : [];
+
+  return {
+    childName,
+    ageMonths,
+    gender,
+    primaryIssue,
+    otherIssues,
+    profilingSnapshots: profilingSnapshots.map(p => ({
+      date: p.createdAt.toISOString().slice(0, 10),
+      summary: p.summary ?? null,
+      metadata: p.metadata ?? null,
+    })),
+  };
 }
 
 async function toolGetRecentSessions(userId, limit = 5) {
