@@ -85,16 +85,29 @@ export const CoachChatScreen: React.FC = () => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
   }, []);
 
-  // Load existing conversation history (including psychologist replies) on mount
+  // Load history and poll every 8 seconds for new messages (e.g. admin/psychologist replies)
   useEffect(() => {
-    authService.authenticatedRequest(`${API_URL}/api/coach/history`)
-      .then(r => r.json())
-      .then((data: { messages: Array<{ id: string; role: string; text: string }> }) => {
-        if (data.messages && data.messages.length > 0) {
-          setMessages(data.messages as Message[]);
-        }
-      })
-      .catch(() => { /* silently keep greeting */ });
+    let cancelled = false;
+
+    const fetchHistory = () => {
+      authService.authenticatedRequest(`${API_URL}/api/coach/history`)
+        .then(r => r.json())
+        .then((data: { messages: Array<{ id: string; role: string; text: string }> }) => {
+          if (cancelled) return;
+          if (data.messages && data.messages.length > 0) {
+            setMessages(data.messages as Message[]);
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchHistory();
+    const interval = setInterval(fetchHistory, 8000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
