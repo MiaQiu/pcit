@@ -276,7 +276,37 @@ The body text textarea supports:
 - **Status summary strip** at the top showing counts per status
 - **Send Emails** panel: set "days before expiry" (default 3), click "Send Emails" to immediately dispatch trial expiry reminder emails to all matching TRIAL users — useful for ad-hoc sends outside the daily cron
 
-The automated cron (`server/jobs/trialExpiryJob.cjs`) runs daily at 10:00am SGT (02:00 UTC) and sends reminder emails to users whose trial ends in exactly 3 days. Uses the same SMTP env vars as LLM alerts (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`).
+### Trial Expiry Notification System
+
+A scheduled job (`server/jobs/trialExpiryJob.cjs`) runs daily at **10:00am SGT (02:00 UTC)** via `node-cron`. It checks RevenueCat for every user and sends a reminder email to users whose trial ends in **exactly 3 days**.
+
+**Job flow:**
+1. Fetches all users from the DB
+2. Pre-aggregates session `overallScore` sums and latest published `WeeklyReport` per user
+3. Iterates each user, calling the RevenueCat API with a 600ms delay (~100 req/min to stay under RC's limit)
+4. For each user, checks if they have a trial subscription that:
+   - Has `period_type === 'trial'`
+   - Has NOT been cancelled (`unsubscribe_detected_at` is null)
+   - Expires on **exactly** the target day (UTC date boundary match)
+5. Sends an HTML email with their progress stats
+
+**Email content:**
+- Sessions completed
+- Total emotional account deposits (sum of session `overallScore`)
+- Strongest skill (from latest weekly report — defaults to **Narrate** if no report exists)
+- Trial renewal date (formatted in SGT timezone)
+
+**Sender:** `Nora Parenting <info@chromamind.ai>` (authenticated via `yihui.qiu@chromamind.ai` SMTP, which has `info@chromamind.ai` configured as a "Send mail as" alias in Gmail)
+
+**Checking expiring users locally** — use `scripts/check-trial-expiry.cjs` to dry-run against prod without sending emails:
+
+```bash
+# Requires prod DB tunnel on localhost:5433
+DATABASE_URL="postgresql://nora_admin:<pass>@localhost:5433/nora" \
+  node scripts/check-trial-expiry.cjs 3
+```
+
+**Required env vars:** `REVENUECAT_SECRET_KEY`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`
 
 ### User Detail (`/users/:id`)
 
