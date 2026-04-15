@@ -1636,6 +1636,55 @@ router.post('/subscriptions/send-trial-expiry-emails', requireAdminAuth, async (
 // ─── Coach Chat ───────────────────────────────────────────────────────────────
 
 /**
+ * GET /api/admin/coach/users?q=<search>
+ * Search all users by name, email, or userId for the chat panel.
+ * Returns up to 50 results with a flag indicating existing chat history.
+ */
+router.get('/coach/users', requireAdminAuth, async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+
+    const where = q ? {
+      OR: [
+        { id: { contains: q } },
+        { name: { contains: q, mode: 'insensitive' } },
+        { email: { contains: q, mode: 'insensitive' } },
+      ],
+    } : {};
+
+    const users = await prisma.user.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        _count: { select: { CoachChatMessage: true } },
+      },
+    });
+
+    const { decryptUserData } = require('../utils/encryption.cjs');
+
+    res.json({
+      users: users.map(u => {
+        const dec = decryptUserData(u);
+        return {
+          userId: u.id,
+          name: dec.name || u.name,
+          email: dec.email || u.email,
+          hasChat: u._count.CoachChatMessage > 0,
+          messageCount: u._count.CoachChatMessage,
+        };
+      }),
+    });
+  } catch (err) {
+    console.error('Admin coach users search error:', err);
+    res.status(500).json({ error: 'Failed to search users' });
+  }
+});
+
+/**
  * GET /api/admin/coach/chats
  * List all users who have coach chat messages, with message count and last message time.
  */

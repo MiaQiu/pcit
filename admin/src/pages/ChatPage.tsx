@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiFetch } from '../api/client';
 
 interface ChatUser {
   userId: string;
   name: string;
   email: string;
+  hasChat: boolean;
   messageCount: number;
-  lastMessageAt: string;
 }
 
 interface ChatMessage {
@@ -28,6 +28,7 @@ interface PsychRequest {
 
 export default function ChatPage() {
   const [users, setUsers] = useState<ChatUser[]>([]);
+  const [search, setSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -41,6 +42,23 @@ export default function ChatPage() {
   const [dismissing, setDismissing] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchUsers = useCallback((q: string) => {
+    setLoadingUsers(true);
+    apiFetch<{ users: ChatUser[] }>(`/api/admin/coach/users?q=${encodeURIComponent(q)}`)
+      .then(data => setUsers(data.users))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load'))
+      .finally(() => setLoadingUsers(false));
+  }, []);
+
+  useEffect(() => { fetchUsers(''); }, [fetchUsers]);
+
+  function handleSearch(q: string) {
+    setSearch(q);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => fetchUsers(q), 300);
+  }
 
   useEffect(() => {
     apiFetch<{ requests: PsychRequest[] }>('/api/admin/coach/psychologist-requests')
@@ -57,13 +75,6 @@ export default function ChatPage() {
       setDismissing(null);
     }
   }
-
-  useEffect(() => {
-    apiFetch<{ chats: ChatUser[] }>('/api/admin/coach/chats')
-      .then(data => setUsers(data.chats))
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load'))
-      .finally(() => setLoadingUsers(false));
-  }, []);
 
   useEffect(() => {
     if (!selectedUserId) return;
@@ -108,19 +119,11 @@ export default function ChatPage() {
     });
   }
 
-  function fmtShort(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString(undefined, {
-      month: 'short', day: 'numeric',
-    });
-  }
-
   return (
     <div className="page" style={{ padding: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ padding: '24px 28px 16px', borderBottom: '1px solid #F3F4F6' }}>
         <h1 style={{ margin: 0 }}>Coach Chat</h1>
-        <p className="page-subtitle" style={{ marginTop: 4 }}>
-          {users.length} users with conversations
-        </p>
+        <p className="page-subtitle" style={{ marginTop: 4 }}>Search users to view or start a conversation</p>
       </div>
 
       {psychRequests.length > 0 && (
@@ -167,10 +170,30 @@ export default function ChatPage() {
           overflowY: 'auto',
           flexShrink: 0,
         }}>
+          {/* Search box */}
+          <div style={{ padding: '10px 12px', borderBottom: '1px solid #F3F4F6' }}>
+            <input
+              type="text"
+              value={search}
+              onChange={e => handleSearch(e.target.value)}
+              placeholder="Search by name, email, or user ID…"
+              style={{
+                width: '100%',
+                padding: '7px 10px',
+                borderRadius: 8,
+                border: '1.5px solid #E5E7EB',
+                fontSize: 13,
+                color: '#1E2939',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
           {loadingUsers ? (
             <div className="loading-state">Loading…</div>
           ) : users.length === 0 ? (
-            <div className="empty-state" style={{ padding: 24 }}>No chats yet.</div>
+            <div className="empty-state" style={{ padding: 24 }}>No users found.</div>
           ) : (
             users.map(u => (
               <button
@@ -180,7 +203,7 @@ export default function ChatPage() {
                   display: 'block',
                   width: '100%',
                   textAlign: 'left',
-                  padding: '14px 20px',
+                  padding: '12px 16px',
                   border: 'none',
                   borderBottom: '1px solid #F9FAFB',
                   background: selectedUserId === u.userId ? '#F5F0FF' : 'white',
@@ -188,14 +211,15 @@ export default function ChatPage() {
                   transition: 'background 0.15s',
                 }}
               >
-                <div style={{ fontWeight: 600, fontSize: 14, color: '#1E2939', marginBottom: 2 }}>
-                  {u.name}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontWeight: 600, fontSize: 14, color: '#1E2939' }}>{u.name}</span>
+                  {u.hasChat && (
+                    <span style={{ fontSize: 10, background: '#EDE9FE', color: '#7C3AED', borderRadius: 4, padding: '1px 5px', fontWeight: 600 }}>
+                      {u.messageCount} msgs
+                    </span>
+                  )}
                 </div>
-                <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 4 }}>{u.email}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9CA3AF' }}>
-                  <span>{u.messageCount} messages</span>
-                  <span>{fmtShort(u.lastMessageAt)}</span>
-                </div>
+                <div style={{ fontSize: 11, color: '#9CA3AF' }}>{u.email}</div>
               </button>
             ))
           )}
@@ -217,11 +241,17 @@ export default function ChatPage() {
                 padding: '14px 24px',
                 borderBottom: '1px solid #F3F4F6',
                 background: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
               }}>
-                <div style={{ fontWeight: 700, fontSize: 15, color: '#1E2939' }}>
-                  {selectedUser?.name}
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: '#1E2939' }}>{selectedUser?.name}</div>
+                  <div style={{ fontSize: 12, color: '#6B7280' }}>{selectedUser?.email}</div>
                 </div>
-                <div style={{ fontSize: 12, color: '#6B7280' }}>{selectedUser?.email}</div>
+                {selectedUser && !selectedUser.hasChat && (
+                  <span style={{ fontSize: 12, color: '#9CA3AF', fontStyle: 'italic' }}>No chat history — send the first message</span>
+                )}
               </div>
 
               {/* Messages */}
