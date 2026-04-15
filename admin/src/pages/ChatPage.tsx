@@ -29,6 +29,8 @@ interface PsychRequest {
 export default function ChatPage() {
   const [users, setUsers] = useState<ChatUser[]>([]);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -44,20 +46,28 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchUsers = useCallback((q: string) => {
+  const fetchUsers = useCallback((q: string, p: number) => {
     setLoadingUsers(true);
-    apiFetch<{ users: ChatUser[] }>(`/api/admin/coach/users?q=${encodeURIComponent(q)}`)
-      .then(data => setUsers(data.users))
+    apiFetch<{ users: ChatUser[]; totalPages: number; page: number }>(
+      `/api/admin/coach/users?q=${encodeURIComponent(q)}&page=${p}`
+    )
+      .then(data => { setUsers(data.users); setTotalPages(data.totalPages); })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load'))
       .finally(() => setLoadingUsers(false));
   }, []);
 
-  useEffect(() => { fetchUsers(''); }, [fetchUsers]);
+  useEffect(() => { fetchUsers('', 1); }, [fetchUsers]);
 
   function handleSearch(q: string) {
     setSearch(q);
+    setPage(1);
     if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => fetchUsers(q), 300);
+    searchTimer.current = setTimeout(() => fetchUsers(q, 1), 300);
+  }
+
+  function handlePage(p: number) {
+    setPage(p);
+    fetchUsers(search, p);
   }
 
   useEffect(() => {
@@ -222,6 +232,23 @@ export default function ChatPage() {
                 <div style={{ fontSize: 11, color: '#9CA3AF' }}>{u.email}</div>
               </button>
             ))
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderTop: '1px solid #F3F4F6' }}>
+              <button
+                onClick={() => handlePage(page - 1)}
+                disabled={page <= 1}
+                style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #E5E7EB', background: page <= 1 ? '#F9FAFB' : '#fff', color: page <= 1 ? '#D1D5DB' : '#374151', cursor: page <= 1 ? 'default' : 'pointer', fontSize: 12 }}
+              >← Prev</button>
+              <span style={{ fontSize: 12, color: '#6B7280' }}>{page} / {totalPages}</span>
+              <button
+                onClick={() => handlePage(page + 1)}
+                disabled={page >= totalPages}
+                style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #E5E7EB', background: page >= totalPages ? '#F9FAFB' : '#fff', color: page >= totalPages ? '#D1D5DB' : '#374151', cursor: page >= totalPages ? 'default' : 'pointer', fontSize: 12 }}
+              >Next →</button>
+            </div>
           )}
         </div>
 

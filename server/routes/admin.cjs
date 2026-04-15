@@ -1652,17 +1652,25 @@ router.get('/coach/users', requireAdminAuth, async (req, res) => {
       ],
     } : {};
 
-    const users = await prisma.user.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        _count: { select: { CoachChatMessage: true } },
-      },
-    });
+    const page  = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = 10;
+    const skip  = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          _count: { select: { CoachChatMessage: true } },
+        },
+      }),
+      prisma.user.count({ where }),
+    ]);
 
     const { decryptUserData } = require('../utils/encryption.cjs');
 
@@ -1677,6 +1685,9 @@ router.get('/coach/users', requireAdminAuth, async (req, res) => {
           messageCount: u._count.CoachChatMessage,
         };
       }),
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
     });
   } catch (err) {
     console.error('Admin coach users search error:', err);
