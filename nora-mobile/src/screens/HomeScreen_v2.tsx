@@ -25,6 +25,7 @@ import { COLORS, FONTS } from '../constants/assets';
 const DRAGON_ANIMATION = require('../../assets/images/Dragon_anime.mov');
 import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
+import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { getTodaySingapore, toSingaporeDateString, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
 import * as userStorage from '../lib/userStorage';
@@ -145,6 +146,7 @@ const PlanItem: React.FC<PlanItemProps> = ({ item, onPress }) => (
 
 export const HomeScreen_v2: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const { unreadCount } = useCoachUnread();
   const { width: screenWidth } = useWindowDimensions();
   const lessonService = useLessonService();
   const authService = useAuthService();
@@ -175,6 +177,7 @@ export const HomeScreen_v2: React.FC = () => {
   const [isReportRead, setIsReportRead] = useState(false);
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
   const [nextLessonId, setNextLessonId] = useState<string | null>(null);
+  const [hasAnySession, setHasAnySession] = useState(false);
 
   // ── Derived ──
   // Initials from first two words of name, or first two chars
@@ -272,6 +275,9 @@ export const HomeScreen_v2: React.FC = () => {
       } else {
         setIsReportRead(false);
       }
+
+      // ── Has any completed session ever ──
+      setHasAnySession(!!latestWithReport);
 
       // ── Weekly score — sum of all completed session scores this week (max 300) ──
       const weeklyScoreSum = thisWeekRecordings
@@ -640,6 +646,16 @@ export const HomeScreen_v2: React.FC = () => {
           </View>
         )}
         </ScrollView>
+
+      {/* Floating chat bubble — only shown after first completed play session */}
+      {hasAnySession && <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => navigation.push('CoachChat')}>
+        <Ionicons name="chatbubble-ellipses" size={26} color="#fff" />
+        {unreadCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : String(unreadCount)}</Text>
+          </View>
+        )}
+      </TouchableOpacity>}
     </SafeAreaView>
   );
 };
@@ -902,5 +918,41 @@ const styles = StyleSheet.create({
   planItemMuted: {
     fontFamily: FONTS.regular,
     color: '#9CA3AF',
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 10,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#8C49D5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+    lineHeight: 14,
   },
 });

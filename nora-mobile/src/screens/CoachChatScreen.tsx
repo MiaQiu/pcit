@@ -23,6 +23,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
+import { useCoachUnread } from '../contexts/CoachUnreadContext';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
 
@@ -65,6 +66,7 @@ const Bubble: React.FC<{ message: Message }> = ({ message }) => {
 export const CoachChatScreen: React.FC = () => {
   const navigation = useNavigation();
   const authService = useAuthService();
+  const { markAsRead } = useCoachUnread();
   const flatListRef = useRef<FlatList>(null);
 
   const GREETING: Message = {
@@ -84,6 +86,11 @@ export const CoachChatScreen: React.FC = () => {
   const scrollToEnd = useCallback(() => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
   }, []);
+
+  // Clear unread badge when entering the chat screen
+  useEffect(() => {
+    markAsRead();
+  }, [markAsRead]);
 
   // Load full history on mount, then long-poll for new messages
   useEffect(() => {

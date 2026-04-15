@@ -311,6 +311,26 @@ async function runAgentLoop(userId, userText, dbHistory) {
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 /**
+ * GET /api/coach/unread?since=<ISO timestamp>
+ * Returns the count of non-user messages (AI / psychologist) received after `since`.
+ */
+router.get('/unread', async (req, res, next) => {
+  try {
+    const since = req.query.since ? new Date(req.query.since) : new Date(0);
+    const count = await prisma.coachChatMessage.count({
+      where: {
+        userId: req.userId,
+        role: { not: 'user' },
+        createdAt: { gt: since },
+      },
+    });
+    res.json({ count });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * GET /api/coach/events?since=<ISO timestamp>
  * Long-poll endpoint. Holds the request until a new message arrives for this user
  * or 25 seconds elapse (client should immediately retry on empty response).

@@ -16,6 +16,7 @@ import crashlytics from '@react-native-firebase/crashlytics';
 import Purchases from 'react-native-purchases';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AppProvider } from './src/contexts/AppContext';
+import { CoachUnreadProvider } from './src/contexts/CoachUnreadContext';
 import { OnboardingProvider } from './src/contexts/OnboardingContext';
 import { UploadProcessingProvider } from './src/contexts/UploadProcessingContext';
 import { SubscriptionProvider } from './src/contexts/SubscriptionContext';
@@ -238,6 +239,7 @@ export default function App() {
     <ErrorBoundary>
       <SafeAreaProvider>
         <AppProvider>
+          <CoachUnreadProvider>
           <SubscriptionProvider>
             <OnboardingProvider>
               <ToastProvider>
@@ -247,6 +249,7 @@ export default function App() {
               </ToastProvider>
             </OnboardingProvider>
           </SubscriptionProvider>
+          </CoachUnreadProvider>
         </AppProvider>
       </SafeAreaProvider>
     </ErrorBoundary>

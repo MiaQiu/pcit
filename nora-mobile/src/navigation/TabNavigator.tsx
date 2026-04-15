@@ -4,11 +4,8 @@
  */
 
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { RootStackNavigationProp } from './types';
 import { RootTabParamList } from './types';
 import {
   HomeScreen,
@@ -19,13 +16,8 @@ import {
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
-const TAB_BAR_HEIGHT = 74;
-
 export const TabNavigator: React.FC = () => {
-  const navigation = useNavigation<RootStackNavigationProp>();
-
   return (
-    <View style={{ flex: 1 }}>
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
@@ -113,30 +105,5 @@ export const TabNavigator: React.FC = () => {
         }}
       />
     </Tab.Navigator>
-
-      {/* Floating chat bubble */}
-      <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => navigation.push('CoachChat')}>
-        <Ionicons name="chatbubble-ellipses" size={26} color="#fff" />
-      </TouchableOpacity>
-    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: TAB_BAR_HEIGHT + 10,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#8C49D5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-});
