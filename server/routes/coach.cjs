@@ -46,28 +46,6 @@ const TOOL_DECLARATIONS = [
       required: [],
     },
   },
-  {
-    name: 'get_skill_progress',
-    description: "Retrieve a time-series of skill metrics across multiple sessions (oldest first) to identify trends and progress over time. Call this when the parent asks about improvement, trends, or how they are progressing.",
-    parameters: {
-      type: 'OBJECT',
-      properties: {
-        limit: { type: 'NUMBER', description: 'Number of sessions to include in trend (default 10, max 20)' },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'get_coaching_history',
-    description: "Retrieve coaching summaries and tomorrow's goals from recent sessions. Call this when the parent asks what the coach previously said, what to work on, or what their focus area has been.",
-    parameters: {
-      type: 'OBJECT',
-      properties: {
-        limit: { type: 'NUMBER', description: 'Number of recent sessions with coaching to retrieve (default 3)' },
-      },
-      required: [],
-    },
-  },
 ];
 
 // ─── Tool implementations (DB queries) ────────────────────────────────────────
@@ -134,44 +112,11 @@ async function toolGetRecentSessions(userId, limit = 5) {
   });
 }
 
-async function toolGetSkillProgress(userId, limit = 10) {
-  const n = Math.min(Math.max(1, Number(limit) || 10), 20);
-  const sessions = await prisma.session.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
-    take: n,
-    select: { createdAt: true, tagCounts: true },
-  });
-  sessions.reverse(); // oldest → newest for trend reading
-  return sessions.map(s => ({
-    date: s.createdAt.toISOString().slice(0, 10),
-    tagCounts: s.tagCounts ?? {},
-  }));
-}
-
-async function toolGetCoachingHistory(userId, limit = 3) {
-  const n = Math.min(Math.max(1, Number(limit) || 3), 5);
-  const sessions = await prisma.session.findMany({
-    where: { userId, NOT: { coachingSummary: null } },
-    orderBy: { createdAt: 'desc' },
-    take: n,
-    select: { createdAt: true, coachingSummary: true, coachingCards: true },
-  });
-  return sessions.map(s => ({
-    date: s.createdAt.toISOString().slice(0, 10),
-    coachingSummary: s.coachingSummary,
-    tomorrowGoal: (s.coachingCards && typeof s.coachingCards === 'object')
-      ? s.coachingCards.tomorrowGoal ?? null
-      : null,
-  }));
-}
 
 async function executeTool(name, args, userId) {
   switch (name) {
     case 'get_child_parent_profile': return toolGetChildParentProfile(userId);
     case 'get_recent_sessions':  return toolGetRecentSessions(userId, args?.limit);
-    case 'get_skill_progress':   return toolGetSkillProgress(userId, args?.limit);
-    case 'get_coaching_history': return toolGetCoachingHistory(userId, args?.limit);
     default:                     return { error: `Unknown tool: ${name}` };
   }
 }
