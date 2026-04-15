@@ -18,6 +18,14 @@ interface ChatMessage {
 
 type ReplyMode = 'ai' | 'psychologist';
 
+interface PsychRequest {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  createdAt: string;
+}
+
 export default function ChatPage() {
   const [users, setUsers] = useState<ChatUser[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -29,8 +37,26 @@ export default function ChatPage() {
   const [replyMode, setReplyMode] = useState<ReplyMode>('ai');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [psychRequests, setPsychRequests] = useState<PsychRequest[]>([]);
+  const [dismissing, setDismissing] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    apiFetch<{ requests: PsychRequest[] }>('/api/admin/coach/psychologist-requests')
+      .then(data => setPsychRequests(data.requests))
+      .catch(() => {});
+  }, []);
+
+  async function handleDismiss(id: string) {
+    setDismissing(id);
+    try {
+      await apiFetch(`/api/admin/coach/psychologist-requests/${id}/dismiss`, { method: 'POST' });
+      setPsychRequests(prev => prev.filter(r => r.id !== id));
+    } finally {
+      setDismissing(null);
+    }
+  }
 
   useEffect(() => {
     apiFetch<{ chats: ChatUser[] }>('/api/admin/coach/chats')
@@ -96,6 +122,40 @@ export default function ChatPage() {
           {users.length} users with conversations
         </p>
       </div>
+
+      {psychRequests.length > 0 && (
+        <div style={{ margin: '0 28px 16px', borderRadius: 12, overflow: 'hidden', border: '1.5px solid #FCD34D', background: '#FFFBEB' }}>
+          <div style={{ padding: '10px 16px', background: '#FEF3C7', borderBottom: '1px solid #FCD34D', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16 }}>🔔</span>
+            <span style={{ fontWeight: 700, fontSize: 13, color: '#92400E' }}>
+              {psychRequests.length} pending psychologist request{psychRequests.length > 1 ? 's' : ''}
+            </span>
+          </div>
+          {psychRequests.map(r => (
+            <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid #FEF3C7' }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 13, color: '#1E2939' }}>{r.name}</div>
+                <div style={{ fontSize: 12, color: '#6B7280' }}>{r.email} · {new Date(r.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => setSelectedUserId(r.userId)}
+                  style={{ padding: '5px 12px', borderRadius: 8, border: '1.5px solid #0EA5E9', background: '#E0F2FE', color: '#0369A1', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  View Chat
+                </button>
+                <button
+                  onClick={() => handleDismiss(r.id)}
+                  disabled={dismissing === r.id}
+                  style={{ padding: '5px 12px', borderRadius: 8, border: '1.5px solid #E5E7EB', background: '#fff', color: '#6B7280', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  {dismissing === r.id ? '…' : 'Dismiss'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {error && <div className="error-state" style={{ margin: 16 }}>{error}</div>}
 

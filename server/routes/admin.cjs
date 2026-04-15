@@ -1719,4 +1719,57 @@ router.post('/coach/chats/:userId/reply', requireAdminAuth, async (req, res) => 
   }
 });
 
+/**
+ * GET /api/admin/coach/psychologist-requests
+ * Returns open "Talk to a Psychologist" support requests, newest first.
+ */
+router.get('/coach/psychologist-requests', requireAdminAuth, async (req, res) => {
+  try {
+    const requests = await prisma.supportRequest.findMany({
+      where: {
+        status: 'OPEN',
+        description: { contains: 'psychologist' },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        userId: true,
+        email: true,
+        createdAt: true,
+        User: { select: { name: true } },
+      },
+    });
+
+    res.json({
+      requests: requests.map(r => ({
+        id: r.id,
+        userId: r.userId,
+        name: r.User?.name ?? 'Unknown',
+        email: r.email,
+        createdAt: r.createdAt,
+      })),
+    });
+  } catch (err) {
+    console.error('Admin psychologist requests error:', err);
+    res.status(500).json({ error: 'Failed to fetch psychologist requests' });
+  }
+});
+
+/**
+ * POST /api/admin/coach/psychologist-requests/:id/dismiss
+ * Marks a psychologist support request as resolved.
+ */
+router.post('/coach/psychologist-requests/:id/dismiss', requireAdminAuth, async (req, res) => {
+  try {
+    await prisma.supportRequest.update({
+      where: { id: req.params.id },
+      data: { status: 'RESOLVED', resolvedAt: new Date() },
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Admin dismiss psychologist request error:', err);
+    res.status(500).json({ error: 'Failed to dismiss request' });
+  }
+});
+
 module.exports = router;

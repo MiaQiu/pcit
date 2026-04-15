@@ -10,11 +10,11 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Copy Prisma schema
-COPY prisma ./prisma/
-
 # Install production dependencies
 RUN npm ci --omit=dev
+
+# Copy Prisma schema and migrations (after npm ci so migrations aren't cached)
+COPY prisma ./prisma/
 
 # Copy application code (backend only)
 COPY server.cjs ./
