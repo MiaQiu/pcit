@@ -152,7 +152,7 @@ async function sendTrialExpiryEmail(user, daysLeft, trialEndFormatted, report) {
 
   try {
     await getTransporter().sendMail({
-      from: `"Nora" <${process.env.SMTP_USER}>`,
+      from: `"Nora Parenting" <info@chromamind.ai>`,
       to: email,
       subject: `Your Nora subscription renews in ${daysLeft} day${daysLeft !== 1 ? 's' : ''} — here's what to know`,
       html,
@@ -236,7 +236,7 @@ async function runTrialExpiryJob(daysBeforeExpiry = 3) {
       ...user,
       _totalDeposits: scoreByUserId[user.id] ?? 0,
     };
-    const report = reportByUserId[user.id] ?? null;
+    const report = reportByUserId[user.id] ?? { strongestGrowthArea: 'Narrate', massageTimeMinutes: 0 };
 
     const ok = await sendTrialExpiryEmail(enrichedUser, daysBeforeExpiry, trialEndFormatted, report);
     if (ok) {
