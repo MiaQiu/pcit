@@ -36,6 +36,12 @@ const TOOL_DECLARATIONS = [
     parameters: { type: 'OBJECT', properties: {}, required: [] },
   },
   {
+  {
+    name: 'get_child_milestone',
+    description: "Retrieve the child's developmental milestone progress across 5 domains (Language, Cognitive, Social, Emotional, Connection) as shown in the radar chart. Returns achieved, emerging, and total milestones per domain, plus the age-appropriate benchmark and the child's age in months.",
+    parameters: { type: 'OBJECT', properties: {}, required: [] },
+  },
+  {
     name: 'get_recent_sessions',
     description: "Retrieve recent emotional massage (play) session data including date, duration, overall score, and skill counts (praises, reflections, narrations, questions, commands, criticisms). Call this when the parent asks about recent sessions, their performance, or their scores.",
     parameters: {
@@ -113,9 +119,85 @@ async function toolGetRecentSessions(userId, limit = 5) {
 }
 
 
+async function toolGetChildMilestone(userId) {
+  const child = await prisma.child.findFirst({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, birthday: true },
+  });
+  if (!child) return { error: 'No child record found' };
+
+  // Age in months
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { childBirthday: true, childBirthYear: true },
+  });
+  let childAgeMonths = 0;
+  const birthday = child.birthday || user?.childBirthday || null;
+  if (birthday) {
+    const now = new Date();
+    const bd  = new Date(birthday);
+    childAgeMonths = (now.getFullYear() - bd.getFullYear()) * 12 + (now.getMonth() - bd.getMonth());
+  } else if (user?.childBirthYear) {
+    childAgeMonths = (new Date().getFullYear() - user.childBirthYear) * 12 + 6;
+  }
+
+  const [allMilestones, childMilestones] = await Promise.all([
+    prisma.milestoneLibrary.findMany({
+      orderBy: [{ category: 'asc' }, { medianAgeMonths: 'asc' }],
+    }),
+    prisma.childMilestone.findMany({
+      where: { childId: child.id },
+      include: { MilestoneLibrary: true },
+    }),
+  ]);
+
+  const parseAgeRange = (groupingStage) => {
+    const match = groupingStage.match(/\((\d+)-?(\d+)?m?\+?\)/);
+    if (match) return { start: parseInt(match[1], 10), end: match[2] ? parseInt(match[2], 10) : 84 };
+    return { start: 0, end: 84 };
+  };
+
+  // Group library milestones by domain → stage
+  const byDomainStage = {};
+  for (const m of allMilestones) {
+    (byDomainStage[m.category] ??= {})[m.groupingStage] ??= [];
+    byDomainStage[m.category][m.groupingStage].push(m);
+  }
+
+  const calculateBenchmark = (category) => {
+    const stages = byDomainStage[category];
+    if (!stages) return 0;
+    let benchmark = 0;
+    const entries = Object.entries(stages)
+      .map(([stage, ms]) => ({ range: parseAgeRange(stage), count: ms.length }))
+      .sort((a, b) => a.range.start - b.range.start);
+    for (const { range, count } of entries) {
+      if (childAgeMonths >= range.end) {
+        benchmark += count;
+      } else if (childAgeMonths >= range.start) {
+        benchmark += count * (childAgeMonths - range.start) / (range.end - range.start);
+      }
+    }
+    return Math.round(benchmark * 100) / 100;
+  };
+
+  const domains = ['Language', 'Cognitive', 'Social', 'Emotional', 'Connection'];
+  const result = {};
+  for (const domain of domains) {
+    const total    = allMilestones.filter(m => m.category === domain).length;
+    const achieved = childMilestones.filter(cm => cm.MilestoneLibrary.category === domain && cm.status === 'ACHIEVED').length;
+    const emerging = childMilestones.filter(cm => cm.MilestoneLibrary.category === domain && cm.status === 'EMERGING').length;
+    result[domain] = { achieved, emerging, total, benchmark: calculateBenchmark(domain) };
+  }
+
+  return { childAgeMonths, domains: result };
+}
+
 async function executeTool(name, args, userId) {
   switch (name) {
     case 'get_child_parent_profile': return toolGetChildParentProfile(userId);
+    case 'get_child_milestone':  return toolGetChildMilestone(userId);
     case 'get_recent_sessions':  return toolGetRecentSessions(userId, args?.limit);
     default:                     return { error: `Unknown tool: ${name}` };
   }
