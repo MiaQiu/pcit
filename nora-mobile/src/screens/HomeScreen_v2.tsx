@@ -61,14 +61,15 @@ interface StatPillProps {
   value: string;
   total: string;
   unit: string;
+  onPress?: () => void;
 }
 
-const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, unit }) => {
+const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, unit, onPress }) => {
   const progress = Math.min(Number(value) / Number(total), 1);
   const dashOffset = RING_CIRCUMFERENCE * (1 - progress);
 
   return (
-    <View style={styles.statPill}>
+    <TouchableOpacity style={styles.statPill} onPress={onPress} activeOpacity={onPress ? 0.7 : 1} disabled={!onPress}>
       {/* Circular progress ring with icon centered */}
       <View style={styles.statRingWrap}>
         <Svg width={RING_SIZE} height={RING_SIZE} viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}>
@@ -106,7 +107,7 @@ const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, 
         <Text style={styles.statValueMuted}>/{total}</Text>
       </Text>
       <Text style={styles.statUnit}>{unit}</Text>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -173,6 +174,7 @@ export const HomeScreen_v2: React.FC = () => {
   const [hasRecordedSession, setHasRecordedSession] = useState(false);
   const [isReportRead, setIsReportRead] = useState(false);
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
+  const [nextLessonId, setNextLessonId] = useState<string | null>(null);
 
   // ── Derived ──
   // Initials from first two words of name, or first two chars
@@ -279,6 +281,7 @@ export const HomeScreen_v2: React.FC = () => {
 
       // ── Today's plan ──
       const nextLesson = lessons.find((l: any) => l.progress?.status !== 'COMPLETED');
+      setNextLessonId(nextLesson?.id ?? null);
       const plan: TodayPlanItem[] = [];
 
       if (nextLesson) {
@@ -528,6 +531,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.daysCompleted)}
             total="7"
             unit="days"
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Record' })}
           />
           <StatPill
             iconName="flash"
@@ -535,6 +539,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.minutesPlayed)}
             total="35"
             unit="mins"
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Record' })}
           />
           <StatPill
             iconName="happy-outline"
@@ -542,6 +547,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.timesRecorded)}
             total="7"
             unit="times"
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Record' })}
           />
           <StatPill
             iconName="book-outline"
@@ -549,6 +555,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.lessonsCompleted)}
             total="7"
             unit="lessons"
+            onPress={() => nextLessonId && navigation.push('LessonViewer', { lessonId: nextLessonId })}
           />
         </View>
 
