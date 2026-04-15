@@ -195,6 +195,10 @@ app.use('/api/config', configRoutes);
 const adminRoutes = require('./server/routes/admin.cjs');
 app.use('/api/admin', adminRoutes);
 
+// Mount AI coach chat routes
+const coachRoutes = require('./server/routes/coach.cjs');
+app.use('/api/coach', coachRoutes);
+
 // Serve admin portal build in production
 if (process.env.NODE_ENV === 'production') {
   const adminBuildPath = path.join(__dirname, 'admin', 'dist');

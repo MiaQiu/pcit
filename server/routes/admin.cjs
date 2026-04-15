@@ -1633,4 +1633,90 @@ router.post('/subscriptions/send-trial-expiry-emails', requireAdminAuth, async (
   }
 });
 
+// ─── Coach Chat ───────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/admin/coach/chats
+ * List all users who have coach chat messages, with message count and last message time.
+ */
+router.get('/coach/chats', requireAdminAuth, async (req, res) => {
+  try {
+    const rows = await prisma.coachChatMessage.groupBy({
+      by: ['userId'],
+      _count: { id: true },
+      _max: { createdAt: true },
+      orderBy: { _max: { createdAt: 'desc' } },
+    });
+
+    const userIds = rows.map(r => r.userId);
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, email: true },
+    });
+    const userMap = Object.fromEntries(users.map(u => [u.id, u]));
+
+    const result = rows.map(r => ({
+      userId: r.userId,
+      name: userMap[r.userId]?.name ?? 'Unknown',
+      email: userMap[r.userId]?.email ?? '',
+      messageCount: r._count.id,
+      lastMessageAt: r._max.createdAt,
+    }));
+
+    res.json({ chats: result });
+  } catch (err) {
+    console.error('Admin coach chats error:', err);
+    res.status(500).json({ error: 'Failed to fetch chat list' });
+  }
+});
+
+/**
+ * GET /api/admin/coach/chats/:userId
+ * Get all chat messages for a specific user, oldest first.
+ */
+router.get('/coach/chats/:userId', requireAdminAuth, async (req, res) => {
+  try {
+    const messages = await prisma.coachChatMessage.findMany({
+      where: { userId: req.params.userId },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, role: true, text: true, createdAt: true },
+    });
+    res.json({ messages });
+  } catch (err) {
+    console.error('Admin coach chat detail error:', err);
+    res.status(500).json({ error: 'Failed to fetch chat messages' });
+  }
+});
+
+/**
+ * POST /api/admin/coach/chats/:userId/reply
+ * Admin sends a message into a user's coach chat as AI (role: model) or psychologist.
+ * Body: { message: string, mode: 'ai' | 'psychologist' }
+ */
+router.post('/coach/chats/:userId/reply', requireAdminAuth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { message, mode } = req.body;
+
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ error: 'message is required' });
+    }
+    if (mode !== 'ai' && mode !== 'psychologist') {
+      return res.status(400).json({ error: 'mode must be ai or psychologist' });
+    }
+
+    const role = mode === 'ai' ? 'model' : 'psychologist';
+
+    const created = await prisma.coachChatMessage.create({
+      data: { userId, role, text: message.trim() },
+      select: { id: true, role: true, text: true, createdAt: true },
+    });
+
+    res.json({ message: created });
+  } catch (err) {
+    console.error('Admin coach reply error:', err);
+    res.status(500).json({ error: 'Failed to send reply' });
+  }
+});
+
 module.exports = router;

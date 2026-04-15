@@ -28,6 +28,7 @@ import { TranscriptScreen } from '../screens/TranscriptScreen';
 import { SkillExplanationScreen } from '../screens/SkillExplanationScreen';
 import { WeeklyReportScreen } from '../screens/WeeklyReportScreen';
 import { ModuleDetailScreen } from '../screens/ModuleDetailScreen';
+import { CoachChatScreen } from '../screens/CoachChatScreen';
 import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
 import { User } from '@nora/core';
@@ -392,6 +393,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="WeeklyReport"
         component={WeeklyReportScreen}
+        options={{
+          animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="CoachChat"
+        component={CoachChatScreen}
         options={{
           animation: 'slide_from_bottom',
         }}

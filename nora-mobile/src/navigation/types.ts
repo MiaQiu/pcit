@@ -94,6 +94,7 @@ export type RootStackParamList = {
     tip?: string; // Optional tip for Next Step section
   };
   WeeklyReport: { reportId: string };
+  CoachChat: undefined;
 };
 
 export type RootTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;

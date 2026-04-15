@@ -9,7 +9,7 @@ export const Demo5Screen: React.FC = () => {
 
   return (
     <DemoTemplate
-      text={`Empowering every caregiver,\nin any language.`}
+      text={`Empowering every caregiver,\nin 90+ languages.`}
       onBack={() => navigation.navigate('Demo4')}
       onNext={() => navigation.navigate('ParentingIntro')}
     >

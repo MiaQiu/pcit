@@ -1,0 +1,8 @@
+node_modules
+admin/node_modules
+server/node_modules
+nora-mobile/node_modules
+nora-mobile/.expo
+expo
+.expo
+*.log

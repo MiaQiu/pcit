@@ -12,6 +12,7 @@ import KeywordsPage from './pages/KeywordsPage';
 import UsersPage from './pages/UsersPage';
 import UserDetailPage from './pages/UserDetailPage';
 import SubscriptionsPage from './pages/SubscriptionsPage';
+import ChatPage from './pages/ChatPage';
 import AdminLayout from './components/layout/AdminLayout';
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="users/:userId" element={<UserDetailPage />} />
           <Route path="users/:userId/weekly-reports" element={<UserWeeklyReportsPage />} />
           <Route path="subscriptions" element={<SubscriptionsPage />} />
+          <Route path="chat" element={<ChatPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Route>
