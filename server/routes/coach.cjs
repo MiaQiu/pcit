@@ -14,31 +14,6 @@ const MODEL           = 'gemini-2.5-pro-preview-05-06';
 const MAX_AGENT_TURNS = 6;          // tool-call rounds before giving up
 const MAX_HISTORY_MESSAGES = 20;    // conversation turns sent to LLM
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function calculateChildAgeInMonths(birthday, birthYear) {
-  const today = new Date();
-  if (birthday) {
-    const d = new Date(birthday);
-    return (today.getFullYear() - d.getFullYear()) * 12 + (today.getMonth() - d.getMonth());
-  }
-  return (today.getFullYear() - (birthYear || today.getFullYear())) * 12;
-}
-
-function formatGender(g) {
-  return { BOY: 'boy', GIRL: 'girl', OTHER: 'child' }[g] || 'child';
-}
-
-function formatIssueLabel(row) {
-  if (row?.fromUserIssue && row.userIssues) {
-    try { return JSON.parse(row.userIssues).map(i => i.replace(/_/g, ' ').toLowerCase()).join(', '); } catch (_) {}
-  }
-  if (row?.fromWacb && row.wacbQuestions) {
-    try { return JSON.parse(row.wacbQuestions).join(', '); } catch (_) {}
-  }
-  return row?.clinicalLevel ? row.clinicalLevel.replace(/_/g, ' ').toLowerCase() : 'none';
-}
-
 // ─── System prompt ────────────────────────────────────────────────────────────
 
 const SYSTEM_PROMPT = `**ROLE & OBJECTIVE**
@@ -56,8 +31,8 @@ You are an expert Child Psychologist and PCIT (Parent-Child Interaction Therapy)
 
 const TOOL_DECLARATIONS = [
   {
-    name: 'get_child_profile',
-    description: "Retrieve the child's profile: name, age in months, gender, primary behavioural issue, secondary issues from assessment, and the two most recent developmental profiling snapshots (summary and metadata). Call this when the parent asks about their child, developmental progress, or when personalisation is needed.",
+    name: 'get_child_parent_profile',
+    description: "Retrieve the two most recent developmental profiling snapshots for the child (summary and metadata). Call this when the parent asks about their child's developmental profile or progress.",
     parameters: { type: 'OBJECT', properties: {}, required: [] },
   },
   {
@@ -97,60 +72,24 @@ const TOOL_DECLARATIONS = [
 
 // ─── Tool implementations (DB queries) ────────────────────────────────────────
 
-async function toolGetChildProfile(userId) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { childName: true, childBirthday: true, childBirthYear: true, childGender: true },
-  });
+async function toolGetChildParentProfile(userId) {
   const child = await prisma.child.findFirst({
     where: { userId },
     orderBy: { createdAt: 'desc' },
-    select: { id: true, name: true, birthday: true, gender: true },
+    select: { id: true },
   });
 
-  const childName = child?.name || user?.childName || 'your child';
-  const birthday  = child?.birthday || user?.childBirthday || null;
-  const birthYear = user?.childBirthYear || null;
-  const gender    = formatGender(child?.gender || user?.childGender);
-  const ageMonths = calculateChildAgeInMonths(birthday, birthYear);
+  if (!child?.id) return { profilingSnapshots: [] };
 
-  let primaryIssue = 'none';
-  let otherIssues  = 'none';
-  if (child?.id) {
-    const snap = await prisma.childIssuePriority.findFirst({
-      where: { childId: child.id },
-      orderBy: { computedAt: 'desc' },
-      select: { computedAt: true },
-    });
-    if (snap) {
-      const rows = await prisma.childIssuePriority.findMany({
-        where: { childId: child.id, computedAt: snap.computedAt },
-        orderBy: { priorityRank: 'asc' },
-      });
-      const primary = rows.find(r => r.priorityRank === 1);
-      const others  = rows.filter(r => r.priorityRank > 1);
-      primaryIssue  = primary ? formatIssueLabel(primary) : 'none';
-      otherIssues   = others.length ? others.map(r => formatIssueLabel(r)).join(', ') : 'none';
-    }
-  }
-
-  // Latest two ChildProfiling snapshots (summary + metadata)
-  const profilingSnapshots = child?.id
-    ? await prisma.childProfiling.findMany({
-        where: { childId: child.id },
-        orderBy: { createdAt: 'desc' },
-        take: 2,
-        select: { createdAt: true, summary: true, metadata: true },
-      })
-    : [];
+  const snapshots = await prisma.childProfiling.findMany({
+    where: { childId: child.id },
+    orderBy: { createdAt: 'desc' },
+    take: 2,
+    select: { createdAt: true, summary: true, metadata: true },
+  });
 
   return {
-    childName,
-    ageMonths,
-    gender,
-    primaryIssue,
-    otherIssues,
-    profilingSnapshots: profilingSnapshots.map(p => ({
+    profilingSnapshots: snapshots.map(p => ({
       date: p.createdAt.toISOString().slice(0, 10),
       summary: p.summary ?? null,
       metadata: p.metadata ?? null,
@@ -229,7 +168,7 @@ async function toolGetCoachingHistory(userId, limit = 3) {
 
 async function executeTool(name, args, userId) {
   switch (name) {
-    case 'get_child_profile':    return toolGetChildProfile(userId);
+    case 'get_child_parent_profile': return toolGetChildParentProfile(userId);
     case 'get_recent_sessions':  return toolGetRecentSessions(userId, args?.limit);
     case 'get_skill_progress':   return toolGetSkillProgress(userId, args?.limit);
     case 'get_coaching_history': return toolGetCoachingHistory(userId, args?.limit);
