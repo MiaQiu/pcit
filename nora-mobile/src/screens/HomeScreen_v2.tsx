@@ -227,7 +227,9 @@ export const HomeScreen_v2: React.FC = () => {
       // ── Weekly stats ──
       const today = getTodaySingapore();
       const uniqueDays = new Set(
-        thisWeekRecordings.map((r: any) => toSingaporeDateString(new Date(r.createdAt)))
+        thisWeekRecordings
+          .filter((r: any) => r.analysisStatus === 'COMPLETED')
+          .map((r: any) => toSingaporeDateString(new Date(r.createdAt)))
       );
 
       // Count lessons completed this week
@@ -376,7 +378,7 @@ export const HomeScreen_v2: React.FC = () => {
   const handleProfilePress = () => navigation.push('Profile');
 
   const handleRecordPress = () => {
-    navigation.navigate('MainTabs', { screen: 'Record' });
+    navigation.navigate('MainTabs', { screen: 'Record', params: { autoStart: true } });
   };
 
   const handleReadReport = async () => {
@@ -501,7 +503,13 @@ export const HomeScreen_v2: React.FC = () => {
           {/* Tip bubble — shown 1s after animation plays */}
           {showTip && (
             <Animated.View style={[styles.tipBubble, { opacity: tipOpacity }]}>
-              <Text style={styles.tipBubbleText}>Aim for 4 sessions a week{'\n'}for faster progress</Text>
+              <Text style={styles.tipBubbleText}>
+                {weeklyStats.daysCompleted === 7
+                  ? `Perfect 7/7! 👑\nYou're legendary!`
+                  : weeklyStats.daysCompleted > 4
+                  ? `${weeklyStats.daysCompleted} days down! 🌟\nCan we hit a full 7?`
+                  : 'Aim for 4 sessions a week\nfor faster progress'}
+              </Text>
               <View style={styles.tipBubbleDot1} />
               <View style={styles.tipBubbleDot2} />
             </Animated.View>
@@ -572,7 +580,7 @@ export const HomeScreen_v2: React.FC = () => {
               ]}
             >
               <Text style={styles.scoreBubbleText}>
-                {userInitials}'s Weekly Deposit
+                {childName}'s Weekly Deposit
               </Text>
               <Text style={styles.scoreBubbleScore}>{scoreText}</Text>
             </View>
@@ -581,7 +589,7 @@ export const HomeScreen_v2: React.FC = () => {
 
           {/* ── Weekly title ── */}
         {/* <Text style={styles.weeklyTitle}>
-          <Text style={styles.weeklyTitleBold}>{userInitials}'s Weekly Deposit</Text>
+          <Text style={styles.weeklyTitleBold}>{childName}'s Weekly Deposit</Text>
         </Text> */}
 
         {/* ── Stats row ── */}
@@ -1029,7 +1037,7 @@ const styles = StyleSheet.create({
   },
   tipBubbleText: {
     fontFamily: FONTS.semiBold,
-    fontSize: 13,
+    fontSize: 15,
     color: '#1E2939',
     lineHeight: 18,
   },

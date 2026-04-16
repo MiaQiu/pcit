@@ -6,7 +6,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, ActivityIndicator, AppState, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useRoute, RouteProp } from '@react-navigation/native';
+import { RootTabParamList } from '../navigation/types';
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackNavigationProp } from '../navigation/types';
@@ -37,6 +38,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 export const RecordScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const route = useRoute<RouteProp<RootTabParamList, 'Record'>>();
   const recordingService = useRecordingService();
   const authService = useAuthService();
   const uploadProcessing = useUploadProcessing();
@@ -241,11 +243,20 @@ export const RecordScreen: React.FC = () => {
         screen: 'record',
       });
 
+      // Auto-start: show RecordingCard immediately, start recording in parallel
+      if (route.params?.autoStart) {
+        navigation.setParams({ autoStart: undefined } as any);
+        setRecordingDuration(0);
+        setRecordingState('recording');
+        startRecording();
+        return;
+      }
+
       // Only reset if not currently uploading/processing in background
       if (!uploadProcessing.isProcessing && recordingState !== 'recording') {
         resetRecording();
       }
-    }, [uploadProcessing.isProcessing, recordingState])
+    }, [uploadProcessing.isProcessing, recordingState, route.params?.autoStart])
   );
 
   const requestPermissions = async () => {

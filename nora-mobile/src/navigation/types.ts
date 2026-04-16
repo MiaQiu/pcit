@@ -10,7 +10,7 @@ import { Quiz, User } from '@nora/core';
 
 export type RootTabParamList = {
   Home: { showModulePicker?: boolean } | undefined;
-  Record: undefined;
+  Record: { autoStart?: boolean } | undefined;
   Learn: undefined;
   Progress: { scrollToDevelopmental?: boolean } | undefined;
 };
