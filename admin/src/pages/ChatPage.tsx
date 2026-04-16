@@ -158,6 +158,19 @@ export default function ChatPage() {
     };
   }, [selectedUserId]);
 
+  async function handleStop() {
+    if (!selectedUserId || stopping) return;
+    setStopping(true);
+    try {
+      await apiFetch(`/api/admin/coach/chats/${selectedUserId}/stop`, { method: 'POST' });
+      setIsGenerating(false);
+    } catch {
+      // ignore
+    } finally {
+      setStopping(false);
+    }
+  }
+
   async function handleSend() {
     if (!selectedUserId || !replyText.trim() || sending) return;
     setSending(true);
@@ -332,9 +345,33 @@ export default function ChatPage() {
                   <div style={{ fontWeight: 700, fontSize: 15, color: '#1E2939' }}>{selectedUser?.name}</div>
                   <div style={{ fontSize: 12, color: '#6B7280' }}>{selectedUser?.email}</div>
                 </div>
-                {selectedUser && !selectedUser.hasChat && (
-                  <span style={{ fontSize: 12, color: '#9CA3AF', fontStyle: 'italic' }}>No chat history — send the first message</span>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {isGenerating && (
+                    <button
+                      onClick={handleStop}
+                      disabled={stopping}
+                      style={{
+                        padding: '5px 14px',
+                        borderRadius: 8,
+                        border: '1.5px solid #EF4444',
+                        background: stopping ? '#FEE2E2' : '#FFF1F1',
+                        color: '#EF4444',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: stopping ? 'default' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 5,
+                      }}
+                    >
+                      <span style={{ fontSize: 11 }}>■</span>
+                      {stopping ? 'Stopping…' : 'Stop AI'}
+                    </button>
+                  )}
+                  {selectedUser && !selectedUser.hasChat && !isGenerating && (
+                    <span style={{ fontSize: 12, color: '#9CA3AF', fontStyle: 'italic' }}>No chat history — send the first message</span>
+                  )}
+                </div>
               </div>
 
               {/* Messages */}

@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   useWindowDimensions,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -154,6 +155,10 @@ export const HomeScreen_v2: React.FC = () => {
   const { isOnline } = useNetworkStatus();
 
   const dragonVideoRef = useRef<Video>(null);
+  const tipOpacity = useRef(new Animated.Value(0)).current;
+  const [showTip, setShowTip] = useState(false);
+  const tipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPositionRef = useRef<number>(0);
 
   // ── User state ──
   const [userName, setUserName] = useState('');
@@ -327,11 +332,43 @@ export const HomeScreen_v2: React.FC = () => {
     loadData('full');
   }, []);
 
+  // Show tip for 3 seconds starting 1s after animation begins or loops
+  const showTipSequence = useCallback(() => {
+    if (tipTimerRef.current) {
+      clearTimeout(tipTimerRef.current);
+      tipTimerRef.current = null;
+    }
+    tipOpacity.setValue(0);
+    setShowTip(false);
+
+    tipTimerRef.current = setTimeout(() => {
+      setShowTip(true);
+      Animated.timing(tipOpacity, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+
+      tipTimerRef.current = setTimeout(() => {
+        Animated.timing(tipOpacity, { toValue: 0, duration: 400, useNativeDriver: true })
+          .start(() => setShowTip(false));
+        tipTimerRef.current = null;
+      }, 4000);
+    }, 1000);
+  }, [tipOpacity]);
+
   useFocusEffect(
     useCallback(() => {
       loadData('background');
       dragonVideoRef.current?.playAsync();
-    }, [])
+      lastPositionRef.current = 0;
+      showTipSequence();
+
+      return () => {
+        if (tipTimerRef.current) {
+          clearTimeout(tipTimerRef.current);
+          tipTimerRef.current = null;
+        }
+        tipOpacity.setValue(0);
+        setShowTip(false);
+      };
+    }, [showTipSequence])
   );
 
   // ─── Actions ──────────────────────────────────────────────────────────────
@@ -450,7 +487,25 @@ export const HomeScreen_v2: React.FC = () => {
             isLooping
             isMuted
             useNativeControls={false}
+            onPlaybackStatusUpdate={(status) => {
+              if (!status.isLoaded) return;
+              const pos = status.positionMillis ?? 0;
+              // Detect loop: position jumped back to near 0 from a later point
+              if (lastPositionRef.current > 500 && pos < 200) {
+                showTipSequence();
+              }
+              lastPositionRef.current = pos;
+            }}
           />
+
+          {/* Tip bubble — shown 1s after animation plays */}
+          {showTip && (
+            <Animated.View style={[styles.tipBubble, { opacity: tipOpacity }]}>
+              <Text style={styles.tipBubbleText}>Aim for 4 sessions a week{'\n'}for faster progress</Text>
+              <View style={styles.tipBubbleDot1} />
+              <View style={styles.tipBubbleDot2} />
+            </Animated.View>
+          )}
 
           {/* SVG arc — centered horizontally, circle center at container bottom */}
           <Svg
@@ -954,5 +1009,57 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     lineHeight: 14,
+  },
+
+  // Tip bubble — thought-bubble style above dragon
+  tipBubble: {
+    position: 'absolute',
+    bottom: -30,
+    left: 100,
+    backgroundColor: '#ffffff',
+    borderRadius: 36,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    maxWidth: 260,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  tipBubbleText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: '#1E2939',
+    lineHeight: 18,
+  },
+  // Thought-bubble tail dots
+  tipBubbleDot1: {
+    position: 'absolute',
+    top: -11,
+    left: 72,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.10,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  tipBubbleDot2: {
+    position: 'absolute',
+    top: -20,
+    left: 78,
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });
