@@ -333,7 +333,6 @@ export const HomeScreen_v2: React.FC = () => {
       });
 
       // Show weekly report if available
-      const latestReport = (weeklyReportsData.reports ?? [])[0] ?? null;
       if (latestReport) {
         plan.push({
           id: latestReport.id,
@@ -344,7 +343,7 @@ export const HomeScreen_v2: React.FC = () => {
         });
       }
 
-      setTodayPlan(plan);
+      setTodayPlan([...plan.filter(i => !i.isCompleted), ...plan.filter(i => i.isCompleted)]);
     } catch (err) {
       console.log('[HomeScreen_v2] Failed to load data:', err);
     } finally {
