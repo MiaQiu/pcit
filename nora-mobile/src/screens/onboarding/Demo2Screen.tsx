@@ -10,7 +10,7 @@ export const Demo2Screen: React.FC = () => {
   return (
     <DemoTemplate
       text="Nora listens to your day-to-day interactions — playtime, boundaries, big feelings."
-      onBack={() => navigation.navigate('Demo1B')}
+      onBack={() => navigation.goBack()}
       onNext={() => navigation.navigate('Demo2B')}
     >
       <View style={styles.imageContainer}>

@@ -11,6 +11,7 @@ export const PlaySession3Screen: React.FC = () => {
       title="Record Using Nora App"
       image={require('../../../assets/images/play3.png')}
       subtitle="Set your phone nearby where it can clearly hear your conversation. You don't need to hold it—just focus on the play!"
+      onBack={() => navigation.goBack()}
       onContinue={() => navigation.navigate('PlaySession4')}
     />
   );

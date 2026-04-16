@@ -10,7 +10,7 @@ export const Demo5Screen: React.FC = () => {
   return (
     <DemoTemplate
       text={`Empowering every caregiver,\nin 90+ languages.`}
-      onBack={() => navigation.navigate('Demo4')}
+      onBack={() => navigation.goBack()}
       onNext={() => navigation.navigate('ParentingIntro')}
     >
       <View style={styles.imageContainer}>

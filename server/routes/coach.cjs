@@ -7,6 +7,7 @@ const { requireAuth } = require('../middleware/auth.cjs');
 const { logLLMCall }  = require('../llm/logger.cjs');
 const prisma          = require('../services/db.cjs');
 const { subscribe, publish } = require('../services/chatBus.cjs');
+const agentBus = require('../services/agentBus.cjs');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -235,7 +236,7 @@ async function executeTool(name, args, userId) {
 
 // ─── Gemini agent loop ────────────────────────────────────────────────────────
 
-async function runAgentLoop(userId, userText, dbHistory) {
+async function runAgentLoop(userId, userText, dbHistory, signal) {
   const contents = [
     ...dbHistory.map(m => ({
       role: m.role === 'model' || m.role === 'psychologist' ? 'model' : 'user',
@@ -258,6 +259,8 @@ async function runAgentLoop(userId, userText, dbHistory) {
   for (let turn = 0; turn < MAX_AGENT_TURNS; turn++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 30_000);
+    // Also abort if the external signal fires (e.g. admin stopped the request)
+    signal?.addEventListener('abort', () => controller.abort(), { once: true });
 
     let raw;
     try {
@@ -391,7 +394,14 @@ router.post('/chat', async (req, res, next) => {
     }
     const userText = message.trim();
 
-    // Load conversation history (exclude psychologist messages from LLM context)
+    // Save & publish the user message immediately so admin sees it without waiting for LLM
+    const userMsg = await prisma.coachChatMessage.create({
+      data: { userId: req.userId, role: 'user', text: userText },
+      select: { id: true, role: true, text: true, createdAt: true },
+    });
+    publish(req.userId, [userMsg]);
+
+    // Load conversation history for LLM context
     const dbHistory = await prisma.coachChatMessage.findMany({
       where: { userId: req.userId },
       orderBy: { createdAt: 'desc' },
@@ -400,11 +410,18 @@ router.post('/chat', async (req, res, next) => {
     });
     dbHistory.reverse();
 
+    const abortController = new AbortController();
+    agentBus.setActive(req.userId, abortController);
+
     const start = Date.now();
     let result;
     try {
-      result = await runAgentLoop(req.userId, userText, dbHistory);
+      result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal);
     } catch (llmErr) {
+      agentBus.clear(req.userId);
+      if (llmErr.name === 'AbortError') {
+        return res.status(200).json({ reply: null, aborted: true });
+      }
       logLLMCall({
         label: 'coach-chat', model: MODEL, provider: 'gemini',
         latencyMs: Date.now() - start,
@@ -414,6 +431,7 @@ router.post('/chat', async (req, res, next) => {
       });
       throw llmErr;
     }
+    agentBus.clear(req.userId);
 
     logLLMCall({
       label: 'coach-chat', model: MODEL, provider: 'gemini',
@@ -426,12 +444,11 @@ router.post('/chat', async (req, res, next) => {
 
     const reply = result.text.trim();
 
-    const saved = await prisma.$transaction([
-      prisma.coachChatMessage.create({ data: { userId: req.userId, role: 'user',  text: userText }, select: { id: true, role: true, text: true, createdAt: true } }),
-      prisma.coachChatMessage.create({ data: { userId: req.userId, role: 'model', text: reply  }, select: { id: true, role: true, text: true, createdAt: true } }),
-    ]);
-
-    publish(req.userId, saved);
+    const modelMsg = await prisma.coachChatMessage.create({
+      data: { userId: req.userId, role: 'model', text: reply },
+      select: { id: true, role: true, text: true, createdAt: true },
+    });
+    publish(req.userId, [modelMsg]);
 
     res.json({ reply });
   } catch (err) {

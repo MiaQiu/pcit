@@ -8,7 +8,7 @@ const { llmCall } = require('../server/llm/gateway.cjs');
 const { loadPromptWithVariables } = require('../server/prompts/index.cjs');
 const { getUtterances, SILENT_SPEAKER_ID } = require('../server/utils/utteranceUtils.cjs');
 
-const SESSION_ID = 'cc33ca75-bf86-4442-99bb-94aba42b6173';
+const SESSION_ID = 'df89d2c9-ae6b-4635-aabc-fb640c8b0d39';
 
 async function main() {
   const session = await prisma.session.findUnique({

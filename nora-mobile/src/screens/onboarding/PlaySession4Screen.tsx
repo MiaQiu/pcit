@@ -11,6 +11,7 @@ export const PlaySession4Screen: React.FC = () => {
       title="Short Play, Big Insights"
       image={require('../../../assets/images/play4.png')}
       subtitle={`The recording stops automatically after 5 minutes.\nOur AI analyzes the interaction and generates a personalized report in just a few minutes`}
+      onBack={() => navigation.goBack()}
       onContinue={() => navigation.navigate('PlaySession5')}
     />
   );

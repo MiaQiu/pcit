@@ -55,7 +55,7 @@ export const ParentingIntroScreen: React.FC = () => {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.navigate('Demo5')}
+          onPress={() => navigation.goBack()}
           activeOpacity={0.8}
         >
           <Text style={styles.backButtonText}>←</Text>

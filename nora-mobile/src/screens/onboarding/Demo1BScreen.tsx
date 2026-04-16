@@ -10,7 +10,7 @@ export const Demo1BScreen: React.FC = () => {
   return (
     <DemoTemplate
       text="Get simple strategies that actually work."
-      onBack={() => navigation.navigate('Demo1')}
+      onBack={() => navigation.goBack()}
       onNext={() => navigation.navigate('Demo2')}
     >
       <View style={styles.imageContainer}>

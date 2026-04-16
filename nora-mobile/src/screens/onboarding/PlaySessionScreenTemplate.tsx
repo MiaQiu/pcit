@@ -15,6 +15,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { OnboardingBackButton } from '../../components/OnboardingBackButton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -23,6 +24,7 @@ interface PlaySessionScreenTemplateProps {
   subtitle: string;
   image: ImageSourcePropType;
   onContinue: () => void;
+  onBack: () => void;
 }
 
 export const PlaySessionScreenTemplate: React.FC<PlaySessionScreenTemplateProps> = ({
@@ -30,6 +32,7 @@ export const PlaySessionScreenTemplate: React.FC<PlaySessionScreenTemplateProps>
   subtitle,
   image,
   onContinue,
+  onBack,
 }) => {
   const insets = useSafeAreaInsets();
 
@@ -52,6 +55,7 @@ export const PlaySessionScreenTemplate: React.FC<PlaySessionScreenTemplateProps>
 
       {/* Button */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
+        <OnboardingBackButton onPress={onBack} />
         <TouchableOpacity style={styles.button} onPress={onContinue} activeOpacity={0.85}>
           <Text style={styles.buttonText}>Continue  →</Text>
         </TouchableOpacity>
@@ -104,11 +108,13 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   footer: {
+    flexDirection: 'row',
     paddingHorizontal: 20,
     paddingTop: 12,
+    gap: 12,
   },
   button: {
-    width: '100%',
+    flex: 1,
     height: 56,
     backgroundColor: '#8C49D5',
     borderRadius: 30,

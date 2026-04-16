@@ -41,7 +41,7 @@ export const NameInputScreen: React.FC = () => {
       <View style={styles.spacer} />
 
       <OnboardingButtonRow
-        onBack={() => navigation.navigate('ParentingIntro')}
+        onBack={() => navigation.goBack()}
         onContinue={handleContinue}
         continueDisabled={!isValid}
       />

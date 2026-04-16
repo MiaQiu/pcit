@@ -142,9 +142,6 @@ export const CoachChatScreen: React.FC = () => {
     const text = input.trim();
     if (!text || loading) return;
 
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', text };
-    const nextMessages = [...messages, userMsg];
-    setMessages(nextMessages);
     setInput('');
     setLoading(true);
     scrollToEnd();
@@ -160,17 +157,10 @@ export const CoachChatScreen: React.FC = () => {
       );
 
       if (!response.ok) throw new Error(`Server error ${response.status}`);
-      const data = await response.json();
-
-      const modelMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'model',
-        text: data.reply,
-      };
-      setMessages(prev => [...prev, modelMsg]);
+      // Messages (user + AI) are delivered via the long-poll loop when publish() fires
     } catch {
       const errMsg: Message = {
-        id: (Date.now() + 1).toString(),
+        id: Date.now().toString(),
         role: 'model',
         text: 'Something went wrong. Please check your connection and try again.',
       };
@@ -179,7 +169,7 @@ export const CoachChatScreen: React.FC = () => {
       setLoading(false);
       scrollToEnd();
     }
-  }, [input, loading, messages, scrollToEnd, authService]);
+  }, [input, loading, scrollToEnd, authService]);
 
   const handleRequestHuman = useCallback(() => {
     setAgreedToTerms(false);

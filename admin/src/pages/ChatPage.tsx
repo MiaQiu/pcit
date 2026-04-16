@@ -40,11 +40,15 @@ export default function ChatPage() {
   const [replyMode, setReplyMode] = useState<ReplyMode>('ai');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [stopping, setStopping] = useState(false);
   const [psychRequests, setPsychRequests] = useState<PsychRequest[]>([]);
   const [dismissing, setDismissing] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollAbortRef = useRef<AbortController | null>(null);
+  const sinceRef = useRef<string>(new Date().toISOString());
 
   const fetchUsers = useCallback((q: string, p: number) => {
     setLoadingUsers(true);
@@ -88,16 +92,70 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (!selectedUserId) return;
+
+    // Cancel any running poll for the previous user
+    pollAbortRef.current?.abort();
+    pollAbortRef.current = null;
+
     setLoadingMessages(true);
+    setMessages([]);
     setReplyText('');
     setSendError(null);
+    setIsGenerating(false);
+
+    // 1. Load full history
     apiFetch<{ messages: ChatMessage[] }>(`/api/admin/coach/chats/${selectedUserId}`)
       .then(data => {
         setMessages(data.messages);
+        if (data.messages.length > 0) {
+          sinceRef.current = data.messages[data.messages.length - 1].createdAt;
+        } else {
+          sinceRef.current = new Date().toISOString();
+        }
         setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load messages'))
-      .finally(() => setLoadingMessages(false));
+      .finally(() => {
+        setLoadingMessages(false);
+        startPolling(selectedUserId);
+      });
+
+    // 2. Long-poll loop — reconnects immediately after each response
+    function startPolling(uid: string) {
+      if (pollAbortRef.current?.signal.aborted) return;
+      const controller = new AbortController();
+      pollAbortRef.current = controller;
+
+      apiFetch<{ messages: ChatMessage[] }>(
+        `/api/admin/coach/events/${uid}?since=${encodeURIComponent(sinceRef.current)}`,
+        { signal: controller.signal }
+      )
+        .then(data => {
+          if (controller.signal.aborted) return;
+          if (data.messages.length > 0) {
+            setMessages(prev => {
+              const existingIds = new Set(prev.map(m => m.id));
+              const newOnes = data.messages.filter(m => !existingIds.has(m.id));
+              if (newOnes.length === 0) return prev;
+              setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+              return [...prev, ...newOnes];
+            });
+            sinceRef.current = data.messages[data.messages.length - 1].createdAt;
+            // User message arrived → LLM is now generating; model/psych arrived → done
+            const last = data.messages[data.messages.length - 1];
+            setIsGenerating(last.role === 'user');
+          }
+        })
+        .catch(() => {}) // aborted or network error — reconnect below
+        .finally(() => {
+          if (!controller.signal.aborted) startPolling(uid);
+        });
+    }
+
+    return () => {
+      pollAbortRef.current?.abort();
+      pollAbortRef.current = null;
+    };
   }, [selectedUserId]);
 
   async function handleSend() {
@@ -105,13 +163,11 @@ export default function ChatPage() {
     setSending(true);
     setSendError(null);
     try {
-      const data = await apiFetch<{ message: ChatMessage }>(
+      await apiFetch<{ message: ChatMessage }>(
         `/api/admin/coach/chats/${selectedUserId}/reply`,
         { method: 'POST', body: JSON.stringify({ message: replyText.trim(), mode: replyMode }) }
       );
-      setMessages(prev => [...prev, data.message]);
       setReplyText('');
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
     } catch (err: unknown) {
       setSendError(err instanceof Error ? err.message : 'Failed to send');
     } finally {

@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { OnboardingBackButton } from '../../components/OnboardingBackButton';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -51,13 +52,16 @@ export const ChildSnapshotIntroScreen: React.FC = () => {
 
       {/* Footer pinned at the bottom */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 8 }]}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('WacbQuestion1')}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.buttonText}>Let's go  →</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <OnboardingBackButton onPress={() => navigation.goBack()} />
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate('WacbQuestion1')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.buttonText}>Let's go  →</Text>
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity
           onPress={() => navigation.navigate('ChildBehaviorProfile', { locked: true })}
           activeOpacity={0.7}
@@ -104,8 +108,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  buttonRow: {
+    flexDirection: 'row',
+    alignSelf: 'stretch',
+    gap: 12,
+  },
   button: {
-    width: '100%',
+    flex: 1,
     height: 56,
     backgroundColor: '#8C49D5',
     borderRadius: 30,

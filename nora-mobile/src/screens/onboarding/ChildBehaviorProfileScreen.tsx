@@ -13,7 +13,6 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { OnboardingStackNavigationProp, OnboardingStackParamList } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
@@ -189,22 +188,12 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
                 },
               ]}
             >
-              <View
+              {/* <View
                 style={styles.youLabel}
                 onLayout={(e) => setNameLabelWidth(e.nativeEvent.layout.width)}
               >
                 <Text style={styles.youLabelText}>{childName}</Text>
-              </View>
-            </View>
-
-            <View style={styles.barWrapper}>
-              <LinearGradient
-                colors={['#4ADE80', '#A3E635', '#FACC15', '#FB923C', '#EF4444']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.gradientBar}
-              />
-              <View style={[styles.markerCircle, { left: `${markerPosition * 100}%` }]} />
+              </View> */}
             </View>
 
             <View style={styles.scaleNumbers}>
@@ -223,6 +212,20 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
                   {val}
                 </Text>
               ))}
+            </View>
+
+            <View style={styles.barWrapper}>
+              <View style={styles.segmentedBar}>
+                {/* stable: 0–25 = 25/63 ≈ 39.68% */}
+                <View style={[styles.barSegment, { flex: 25, backgroundColor: '#22C55E', borderTopLeftRadius: 6, borderBottomLeftRadius: 6 }]} />
+                {/* mild: 25–35 = 10/63 ≈ 15.87% */}
+                <View style={[styles.barSegment, { flex: 10, backgroundColor: '#EAB308' }]} />
+                {/* medium: 35–45 = 10/63 ≈ 15.87% */}
+                <View style={[styles.barSegment, { flex: 10, backgroundColor: '#F97316' }]} />
+                {/* high: 45–63 = 18/63 ≈ 28.57% */}
+                <View style={[styles.barSegment, { flex: 18, backgroundColor: '#EF4444', borderTopRightRadius: 6, borderBottomRightRadius: 6 }]} />
+              </View>
+              <View style={[styles.markerCircle, { left: `${markerPosition * 100}%` }]} />
             </View>
 
             <View style={styles.categoryLabels}>
@@ -397,7 +400,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 20,
+    marginBottom: 0,
   },
   cardTitle: {
     fontFamily: FONTS.bold,
@@ -434,13 +437,14 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   barWrapper: {
-    marginTop: 28,
+    marginTop: 4,
     height: 12,
     borderRadius: 6,
     overflow: 'visible',
     position: 'relative',
   },
-  gradientBar: { height: 12, borderRadius: 6 },
+  segmentedBar: { flexDirection: 'row', height: 12 },
+  barSegment: { height: 12 },
   markerCircle: {
     position: 'absolute',
     top: -4,
@@ -457,7 +461,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
-  scaleNumbers: { position: 'relative', height: 16, marginTop: 8 },
+  scaleNumbers: { position: 'relative', height: 16, marginTop: 28 },
   scaleNum: {
     fontFamily: FONTS.regular,
     fontSize: 11,
@@ -470,7 +474,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#9CA3AF',
     position: 'absolute',
-    width: 40,
+    width: 45,
     textAlign: 'center',
   },
   categoryLabelActive: {

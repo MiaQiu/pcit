@@ -11,6 +11,7 @@ export const PlaySession5Screen: React.FC = () => {
       title="Your data stays private"
       image={require('../../../assets/images/play5.png')}
       subtitle="Your data is always protected and never shared without your permission."
+      onBack={() => navigation.goBack()}
       onContinue={() => navigation.navigate('Subscription')}
     />
   );

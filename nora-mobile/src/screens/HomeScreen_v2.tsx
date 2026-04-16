@@ -306,7 +306,7 @@ export const HomeScreen_v2: React.FC = () => {
       plan.push({
         id: 'record',
         type: 'record',
-        label: 'Record Session:',
+        label: 'Start Emotional Message:',
         title: `5-minute play with ${childName}`,
         isCompleted: hasCompleted,
       });

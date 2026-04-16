@@ -14,6 +14,7 @@ export const PlaySession1Screen: React.FC = () => {
       title={`Prepare the Right Toys`}
       image={require('../../../assets/images/play1.png')}
       subtitle="To let your child’s imagination run wild, pick unstructured toys. These allow them to be the boss of the play."
+      onBack={() => navigation.goBack()}
       onContinue={() => navigation.navigate('PlaySession2')}
     />
   );

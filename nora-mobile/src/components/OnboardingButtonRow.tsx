@@ -13,7 +13,6 @@ interface OnboardingButtonRowProps {
   onContinue: () => void;
   continueDisabled?: boolean;
   continueText?: string;
-  backText?: string;
 }
 
 export const OnboardingButtonRow: React.FC<OnboardingButtonRowProps> = ({
@@ -21,16 +20,10 @@ export const OnboardingButtonRow: React.FC<OnboardingButtonRowProps> = ({
   onContinue,
   continueDisabled = false,
   continueText = 'Continue',
-  backText = 'Back',
 }) => {
   return (
     <View style={styles.buttonRow}>
-      {onBack ? (
-        <>
-          <OnboardingBackButton onPress={onBack} text={backText} />
-          <View style={styles.spacer} />
-        </>
-      ) : null}
+      {onBack ? <OnboardingBackButton onPress={onBack} /> : null}
       <OnboardingButton
         onPress={onContinue}
         disabled={continueDisabled}
@@ -47,8 +40,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingBottom: 10,
     backgroundColor: '#FFFFFF',
-  },
-  spacer: {
-    width: 12,
+    gap: 12,
   },
 });

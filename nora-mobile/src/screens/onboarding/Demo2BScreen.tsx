@@ -90,7 +90,7 @@ export const Demo2BScreen: React.FC = () => {
   return (
     <DemoTemplate
       text="Nora helps you understand your parenting style and patterns."
-      onBack={() => navigation.navigate('Demo2')}
+      onBack={() => navigation.goBack()}
       onNext={() => navigation.navigate('Demo3')}
     >
       <View style={styles.cardWrapper}>

@@ -1749,6 +1749,36 @@ router.get('/coach/chats/:userId', requireAdminAuth, async (req, res) => {
 });
 
 /**
+ * GET /api/admin/coach/events/:userId?since=<ISO timestamp>
+ * Long-poll endpoint for the admin portal. Holds the request until a new message
+ * arrives for the given user (from either the user or an AI/admin reply) or 25s elapse.
+ */
+router.get('/coach/events/:userId', requireAdminAuth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const since = req.query.since ? new Date(req.query.since) : new Date();
+
+    const pending = await prisma.coachChatMessage.findMany({
+      where: { userId, createdAt: { gt: since } },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, role: true, text: true, createdAt: true },
+    });
+
+    if (pending.length > 0) return res.json({ messages: pending });
+
+    const { subscribe } = require('../services/chatBus.cjs');
+    const unsubscribe = subscribe(userId, (messages) => {
+      if (!res.headersSent) res.json({ messages });
+    });
+
+    req.on('close', unsubscribe);
+  } catch (err) {
+    console.error('Admin coach events error:', err);
+    res.status(500).json({ error: 'Failed to subscribe to events' });
+  }
+});
+
+/**
  * POST /api/admin/coach/chats/:userId/reply
  * Admin sends a message into a user's coach chat as AI (role: model) or psychologist.
  * Body: { message: string, mode: 'ai' | 'psychologist' }
@@ -1780,6 +1810,16 @@ router.post('/coach/chats/:userId/reply', requireAdminAuth, async (req, res) => 
     console.error('Admin coach reply error:', err);
     res.status(500).json({ error: 'Failed to send reply' });
   }
+});
+
+/**
+ * POST /api/admin/coach/chats/:userId/stop
+ * Aborts any in-flight LLM agent call for the given user.
+ */
+router.post('/coach/chats/:userId/stop', requireAdminAuth, async (req, res) => {
+  const { abort, isActive } = require('../services/agentBus.cjs');
+  const wasActive = abort(req.params.userId);
+  res.json({ ok: true, wasActive });
 });
 
 /**

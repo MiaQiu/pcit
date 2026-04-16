@@ -782,6 +782,7 @@ export const HomeScreen: React.FC = () => {
         recommendedModules={modulePickerRecommended}
         autoSelectedKey={modulePickerAutoSelected ?? undefined}
       />
+
     </SafeAreaView>
   );
 };

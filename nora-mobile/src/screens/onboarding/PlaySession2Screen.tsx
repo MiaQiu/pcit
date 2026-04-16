@@ -15,6 +15,7 @@ export const PlaySession2Screen: React.FC = () => {
       image={require('../../../assets/images/play2.png')}
       subtitle="For the next 5 minutes, your goal is to be your child’s biggest fan, not their teacher.
 Describe what they're doing, repeat their words."
+      onBack={() => navigation.goBack()}
       onContinue={() => navigation.navigate('PlaySession3')}
     />
   );
