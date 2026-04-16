@@ -8,24 +8,46 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   Alert,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MaskedDinoImage } from '../../components/MaskedDinoImage';
 import { RootStackNavigationProp } from '../../navigation/types';
 import { FONTS, COLORS } from '../../constants/assets';
-import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 import { requestNotificationPermissions, scheduleDailyLessonReminder } from '../../utils/notifications';
 import { useAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const NotificationPermissionScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const authService = useAuthService();
   const { data } = useOnboarding();
+  const childName = data.childName || 'your child';
+
+  const BENEFITS = [
+    {
+      icon: 'time' as const,
+      text: `Reminders for your 5-minute play `,
+    },
+    {
+      icon: 'bulb' as const,
+      text: 'Instant insights after recording',
+    },
+    {
+      icon: 'bar-chart' as const,
+      text: `Weekly progress reports `,
+    },
+  ];
   const [isRequesting, setIsRequesting] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const handleNotNow = () => {
     navigation.replace('MainTabs');
@@ -34,17 +56,12 @@ export const NotificationPermissionScreen: React.FC = () => {
   const handleEnable = async () => {
     setIsRequesting(true);
     try {
-      // Get access token to register push token with backend
       const accessToken = authService.getAccessToken();
       const granted = await requestNotificationPermissions(accessToken);
       if (granted) {
-        console.log('Notification permissions granted and push token registered');
-
-        // Schedule daily lesson reminder using the time selected in Intro2
         const reminderTime = data.reminderTime || '19:30';
         await scheduleDailyLessonReminder(reminderTime);
 
-        // Save the reminder time to notification preferences so settings screen stays in sync
         try {
           const prefsStr = await AsyncStorage.getItem('@notification_preferences');
           const prefs = prefsStr ? JSON.parse(prefsStr) : {};
@@ -54,8 +71,6 @@ export const NotificationPermissionScreen: React.FC = () => {
         } catch (e) {
           console.error('Error saving reminder preference:', e);
         }
-
-        console.log(`Daily lesson reminder scheduled at ${reminderTime}`);
       } else {
         Alert.alert(
           'Notifications Disabled',
@@ -72,53 +87,56 @@ export const NotificationPermissionScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Icon */}
-        <View style={styles.iconContainer}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="notifications" size={64} color={COLORS.mainPurple} />
-          </View>
+    <View style={styles.container}>
+      {/* Hero — mirrors SubscriptionScreen */}
+      <View style={styles.dragonSection}>
+        <View style={styles.dragonContainer}>
+          <MaskedDinoImage style={styles.dragonImage} />
         </View>
+      </View>
 
-        {/* Title */}
-        <Text style={styles.title}>Stay on Track</Text>
-
-        {/* Description */}
+      {/* Scrollable content */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>Enable Notifications</Text>
         <Text style={styles.description}>
-          Get gentle reminders to practice what you've learned and track your progress.
+          Building a lasting habit of staying present is easier with gentle reminders.
         </Text>
 
-        {/* Benefits List */}
         <View style={styles.benefitsList}>
-          <View style={styles.benefitItem}>
-            <Ionicons name="checkmark-circle" size={24} color={COLORS.mainPurple} />
-            <Text style={styles.benefitText}>Daily lesson reminders</Text>
-          </View>
-          <View style={styles.benefitItem}>
-            <Ionicons name="checkmark-circle" size={24} color={COLORS.mainPurple} />
-            <Text style={styles.benefitText}>Encouragement messages</Text>
-          </View>
-          <View style={styles.benefitItem}>
-            <Ionicons name="checkmark-circle" size={24} color={COLORS.mainPurple} />
-            <Text style={styles.benefitText}>Progress milestones</Text>
-          </View>
+          {BENEFITS.map((item, index) => (
+            <View key={index} style={styles.benefitItem}>
+              <View style={styles.iconBadge}>
+                <Ionicons name={item.icon} size={20} color={COLORS.mainPurple} />
+              </View>
+              <Text style={styles.benefitText}>{item.text}</Text>
+            </View>
+          ))}
         </View>
 
-        {/* Spacer */}
-        <View style={{ flex: 1 }} />
-      </View>
+        <View style={{ height: 100 }} />
+      </ScrollView>
 
-      {/* Not Now and Enable Buttons */}
-      <View style={styles.footer}>
-        <OnboardingButtonRow
-          onBack={handleNotNow}
-          onContinue={handleEnable}
-          backText="Not Now"
-          continueText="Enable"
-        />
+      {/* Fixed bottom bar — mirrors SubscriptionScreen */}
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
+        <TouchableOpacity
+          style={styles.enableButton}
+          onPress={handleEnable}
+          disabled={isRequesting}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.enableButtonText}>
+            {isRequesting ? 'Enabling…' : 'Enable'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleNotNow} activeOpacity={0.7}>
+          <Text style={styles.notNowText}>Not Now</Text>
+        </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -127,61 +145,113 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 60,
-    paddingBottom: 40,
-  },
-  iconContainer: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#F3E8FF',
+
+  // Hero — same as SubscriptionScreen
+  dragonSection: {
+    position: 'relative',
+    width: SCREEN_WIDTH * 0.8,
+    height: SCREEN_WIDTH * 0.8,
+    marginTop: -30,
+    marginBottom: 38,
+    alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  dragonContainer: {
+    position: 'absolute',
+    width: '125%',
+    height: '125%',
+    alignItems: 'center',
+  },
+  dragonImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  // Scroll
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 28,
+    paddingTop: 8,
+    paddingBottom: 20,
+  },
+
   title: {
     fontFamily: FONTS.bold,
-    fontSize: 32,
-    lineHeight: 38,
-    letterSpacing: -0.5,
-    color: COLORS.textDark,
+    fontSize: 26,
+    color: '#1F2937',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   description: {
     fontFamily: FONTS.regular,
-    fontSize: 18,
-    lineHeight: 28,
+    fontSize: 15,
+    lineHeight: 24,
     color: '#6B7280',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 28,
   },
+
   benefitsList: {
-    gap: 20,
+    gap: 10,
   },
   benefitItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 14,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+    padding: 16,
+  },
+  iconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#EDE9FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   benefitText: {
     fontFamily: FONTS.regular,
-    fontSize: 16,
-    lineHeight: 24,
-    color: COLORS.textDark,
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#1F2937',
     flex: 1,
   },
-  footer: {
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+
+  // Bottom bar — same pattern as SubscriptionScreen
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    alignItems: 'center',
+    gap: 12,
+  },
+  enableButton: {
+    backgroundColor: '#8C49D5',
+    borderRadius: 32,
+    height: 56,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  enableButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 18,
+    color: '#FFFFFF',
+  },
+  notNowText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#9CA3AF',
   },
 });

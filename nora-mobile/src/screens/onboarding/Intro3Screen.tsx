@@ -1,6 +1,6 @@
 /**
  * Intro 3 Screen
- * "We'll show you what a 5-minute session looks like" - preview teaser before subscription
+ * Introduces "Emotional Massage" concept before the play session preview
  */
 
 import React from 'react';
@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { OnboardingBackButton } from '../../components/OnboardingBackButton';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -34,29 +35,35 @@ export const Intro3Screen: React.FC = () => {
         locations={[0, 0.6, 1]}
         style={[styles.heroSection, { paddingTop: insets.top }]}
       >
-        <Image
-          source={require('../../../assets/images/dragon_waving.png')}
-          style={styles.dragonImage}
-          resizeMode="contain"
-        />
+        <View style={styles.imageContainer}>
+          <Image
+            source={require('../../../assets/images/emotional_message.png')}
+            style={styles.dragonImage}
+            resizeMode="contain"
+          />
+        </View>
       </LinearGradient>
 
       {/* Text */}
       <View style={styles.bottomSection}>
+        <Text style={styles.title}>Emotional Massage</Text>
         <Text style={styles.description}>
-          Hi {userName}, We'll show you what a 5-minute session looks like.{'\n'}No need to do anything yet.
+          A simple 5-minute daily play with your child. By following your child’s lead and staying fully present, you support their ability to build positive behavior, develop social skills, and improve focus.
         </Text>
       </View>
 
       {/* Footer */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 8 }]}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('PlaySession1')}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.buttonText}>Preview  →</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <OnboardingBackButton onPress={() => navigation.goBack()} />
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate('PlaySession1')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.buttonText}>Let's Begin  →</Text>
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity
           onPress={() => navigation.navigate('Subscription')}
           activeOpacity={0.7}
@@ -78,10 +85,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
-  dragonImage: {
-    width: SCREEN_WIDTH * 0.75,
-    height: SCREEN_WIDTH * 0.75,
+  imageContainer: {
+    width: SCREEN_WIDTH * 0.78,
+    height: SCREEN_WIDTH * 0.78,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
     marginBottom: -8,
+  },
+  dragonImage: {
+    width: SCREEN_WIDTH * 0.95,
+    height: SCREEN_WIDTH * 0.95,
   },
   bottomSection: {
     flex: 1,
@@ -90,10 +106,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  title: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 24,
+    color: '#1F2937',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
   description: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 16,
-    color: '#1F2937',
+    color: '#4B5563',
     textAlign: 'center',
     lineHeight: 26,
   },
@@ -103,8 +126,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  buttonRow: {
+    flexDirection: 'row',
+    alignSelf: 'stretch',
+    gap: 12,
+  },
   button: {
-    width: '100%',
+    flex: 1,
     height: 56,
     backgroundColor: '#8C49D5',
     borderRadius: 30,
