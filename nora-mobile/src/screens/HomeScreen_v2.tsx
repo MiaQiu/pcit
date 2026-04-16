@@ -43,7 +43,7 @@ interface WeeklyStats {
 
 interface TodayPlanItem {
   id: string;
-  type: 'lesson' | 'record';
+  type: 'lesson' | 'record' | 'weekly-report';
   label: string;
   title: string;
   duration?: string;
@@ -183,6 +183,8 @@ export const HomeScreen_v2: React.FC = () => {
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
   const [nextLessonId, setNextLessonId] = useState<string | null>(null);
   const [hasAnySession, setHasAnySession] = useState(false);
+  const [latestWeeklyReport, setLatestWeeklyReport] = useState<{ id: string; weekStartDate: string; weekEndDate: string; headline: string | null } | null>(null);
+  const [isWeeklyReportDismissed, setIsWeeklyReportDismissed] = useState(false);
 
   // ── Derived ──
   // Initials from first two words of name, or first two chars
@@ -216,9 +218,10 @@ export const HomeScreen_v2: React.FC = () => {
       if (mode === 'full') setLoading(true);
       else if (mode === 'refresh') setIsRefreshing(true);
 
-      const [dashboardData, lessonsResponse] = await Promise.all([
+      const [dashboardData, lessonsResponse, weeklyReportsData] = await Promise.all([
         recordingService.getDashboard(),
         lessonService.getLessons(),
+        recordingService.getVisibleWeeklyReports().catch(() => ({ reports: [] })),
       ]);
 
       const { todayRecordings, thisWeekRecordings, latestWithReport } = dashboardData;
@@ -286,6 +289,17 @@ export const HomeScreen_v2: React.FC = () => {
       // ── Has any completed session ever ──
       setHasAnySession(!!latestWithReport);
 
+      // ── Latest weekly report ──
+      const reports = weeklyReportsData.reports ?? [];
+      const latestReport = reports.length > 0 ? reports[0] : null;
+      setLatestWeeklyReport(latestReport);
+      if (latestReport) {
+        const dismissed = await userStorage.getItem(`weekly_report_dismissed_${latestReport.id}`);
+        setIsWeeklyReportDismissed(!!dismissed);
+      } else {
+        setIsWeeklyReportDismissed(false);
+      }
+
       // ── Weekly score — sum of all completed session scores this week (max 300) ──
       const weeklyScoreSum = thisWeekRecordings
         .filter((r: any) => r.analysisStatus === 'COMPLETED' && r.overallScore !== undefined)
@@ -317,6 +331,18 @@ export const HomeScreen_v2: React.FC = () => {
         title: `5-minute play with ${childName}`,
         isCompleted: hasCompleted,
       });
+
+      // Show weekly report if available
+      const latestReport = (weeklyReportsData.reports ?? [])[0] ?? null;
+      if (latestReport) {
+        plan.push({
+          id: latestReport.id,
+          type: 'weekly-report',
+          label: 'Weekly Report:',
+          title: 'See your progress this week',
+          isCompleted: false,
+        });
+      }
 
       setTodayPlan(plan);
     } catch (err) {
@@ -399,6 +425,8 @@ export const HomeScreen_v2: React.FC = () => {
   const handlePlanItemPress = (item: TodayPlanItem) => {
     if (item.type === 'lesson') {
       navigation.push('LessonViewer', { lessonId: item.id });
+    } else if (item.type === 'weekly-report') {
+      navigation.push('WeeklyReport', { reportId: item.id });
     } else {
       handleRecordPress();
     }
@@ -628,15 +656,48 @@ export const HomeScreen_v2: React.FC = () => {
           />
         </View>
 
-        {/* ── Daily Emotional Massage card ── */}
+        {/* ── Main Action Card — priority: weekly report > record > read report > record again ── */}
         <View style={styles.massageCard}>
-          <View style={styles.massageHeader}>
-            <View style={styles.greenDot} />
-            <Text style={styles.massageLabel}>Daily Emotional Massage</Text>
-          </View>
-
-          {!hasRecordedSession && (
+          {latestWeeklyReport && !isWeeklyReportDismissed ? (
             <>
+              <View style={styles.massageHeader}>
+                <Ionicons name="bar-chart-outline" size={14} color={COLORS.mainPurple} />
+                <Text style={styles.massageLabel}>Weekly Report Ready!</Text>
+              </View>
+              <Text style={styles.massageBody}>
+                {latestWeeklyReport.headline
+                  ? latestWeeklyReport.headline
+                  : `Your weekly summary is ready. See how ${childName} progressed this week.`}
+              </Text>
+              <TouchableOpacity
+                style={styles.recordButton}
+                onPress={async () => {
+                  await userStorage.setItem(`weekly_report_dismissed_${latestWeeklyReport.id}`, 'true');
+                  setIsWeeklyReportDismissed(true);
+                  navigation.push('WeeklyReport', { reportId: latestWeeklyReport.id });
+                }}
+                activeOpacity={0.85}
+              >
+                {/* <Ionicons name="stats-chart-outline" size={20} color="#fff" /> */}
+                <Text style={styles.recordButtonText}>View Weekly Report</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.skipButton}
+                onPress={async () => {
+                  await userStorage.setItem(`weekly_report_dismissed_${latestWeeklyReport.id}`, 'true');
+                  setIsWeeklyReportDismissed(true);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.skipButtonText}>Skip for now</Text>
+              </TouchableOpacity>
+            </>
+          ) : !hasRecordedSession ? (
+            <>
+              <View style={styles.massageHeader}>
+                <View style={styles.greenDot} />
+                <Text style={styles.massageLabel}>Daily Emotional Massage</Text>
+              </View>
               <Text style={styles.massageBody}>
                 {`Let `}
                 <Text style={styles.massageChildName}>{childName}</Text>
@@ -654,10 +715,12 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.recordButtonText}>Record the Playtime Now</Text>
               </TouchableOpacity>
             </>
-          )}
-
-          {hasRecordedSession && !isReportRead && (
+          ) : hasRecordedSession && !isReportRead ? (
             <>
+              <View style={styles.massageHeader}>
+                <View style={styles.greenDot} />
+                <Text style={styles.massageLabel}>Daily Emotional Massage</Text>
+              </View>
               <Text style={styles.massageBody}>
                 {'Great job! Your session report is ready. See how '}
                 <Text style={styles.massageChildName}>{childName}</Text>
@@ -673,10 +736,12 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.recordButtonText}>Read Today's Report</Text>
               </TouchableOpacity>
             </>
-          )}
-
-          {hasRecordedSession && isReportRead && (
+          ) : (
             <>
+              <View style={styles.massageHeader}>
+                <View style={styles.greenDot} />
+                <Text style={styles.massageLabel}>Daily Emotional Massage</Text>
+              </View>
               <Text style={styles.massageBody}>
                 {'Want to practice again? Record another session with '}
                 <Text style={styles.massageChildName}>{childName}</Text>
@@ -915,6 +980,16 @@ const styles = StyleSheet.create({
   },
   recordButtonDisabled: {
     backgroundColor: '#D1D5DB',
+  },
+  skipButton: {
+    alignItems: 'center',
+    marginTop: 5,
+    //paddingVertical: 6,
+  },
+  skipButtonText: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#9CA3AF',
   },
   recordButtonText: {
     fontFamily: FONTS.semiBold,
