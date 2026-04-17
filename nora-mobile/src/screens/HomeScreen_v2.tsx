@@ -59,9 +59,10 @@ interface TodayPlanItem {
 }
 
 const REMINDER_PRESETS = [
+  { label: 'Before-School Booster', time: '07:00', display: '7:30 AM' },
   { label: 'After-School Reconnect', time: '15:30', display: '3:30 PM' },
-  { label: 'Pre-Dinner Play', time: '17:30', display: '5:30 PM' },
-  { label: 'Weekend Morning', time: '10:00', display: '10:00 AM' },
+  { label: 'Before-Sleep Play', time: '20:00', display: '8:30 PM' },
+
 ] as const;
 
 // ─── Stat Pill ────────────────────────────────────────────────────────────────
@@ -170,6 +171,7 @@ export const HomeScreen_v2: React.FC = () => {
 
   const dragonVideoRef = useRef<Video>(null);
   const tipOpacity = useRef(new Animated.Value(0)).current;
+  const isFirstFocus = useRef(true);
   const [showTip, setShowTip] = useState(false);
   const tipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPositionRef = useRef<number>(0);
@@ -411,6 +413,10 @@ export const HomeScreen_v2: React.FC = () => {
 
   useFocusEffect(
     useCallback(() => {
+      if (isFirstFocus.current) {
+        isFirstFocus.current = false;
+        return;
+      }
       loadData('background');
     }, [])
   );
@@ -491,19 +497,7 @@ export const HomeScreen_v2: React.FC = () => {
     }
   };
 
-  const handleSetupReminderPress = async () => {
-    const { status } = await Notifications.getPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Enable Notifications',
-        'To set a daily reminder, please enable notifications for this app in Settings.',
-        [
-          { text: 'Not Now', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
-        ]
-      );
-      return;
-    }
+  const handleSetupReminderPress = () => {
     setSelectedPreset(null);
     setShowCustomPicker(false);
     const d = new Date(); d.setHours(18, 30, 0, 0);
@@ -520,6 +514,18 @@ export const HomeScreen_v2: React.FC = () => {
   };
 
   const handleSaveReminder = async () => {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Enable Notifications',
+        'To set a daily reminder, please enable notifications for this app in Settings.',
+        [
+          { text: 'Not Now', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]
+      );
+      return;
+    }
     const h = reminderTime.getHours();
     const m = reminderTime.getMinutes();
     const timeString = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
