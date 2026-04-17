@@ -238,10 +238,10 @@ async function executeTool(name, args, userId) {
 // ─── Tool → status text (shown to user while tool executes) ──────────────────
 
 const TOOL_STATUS = {
-  get_recent_sessions:      'Checking your recent sessions...',
-  get_child_milestone:      "Looking at your child's milestones...",
-  get_child_parent_profile: 'Pulling up your profile...',
-  get_transcript:           'Reviewing your last session...',
+  get_recent_sessions:      'Checking recent progress...',
+  get_child_milestone:      "Reviewing milestones...",
+  get_child_parent_profile: 'Pulling up profiles...',
+  get_transcript:           'Retrieving past sessions...',
 };
 
 // ─── Gemini agent loop ────────────────────────────────────────────────────────
