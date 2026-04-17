@@ -79,13 +79,8 @@ const AppContent: React.FC = () => {
     navigation.navigate('Report', { recordingId });
   };
 
-  const handleReportReady = (recordingId: string) => {
-    showToast(
-      'Your report is ready!',
-      'success',
-      6000,
-      { label: 'View', onPress: () => handleNavigateToReport(recordingId) }
-    );
+  const handleReportReady = (_recordingId: string) => {
+    // No-op: navigation is handled by reportCompletedTimestamp in RecordScreen
   };
 
   // Handle notification taps
