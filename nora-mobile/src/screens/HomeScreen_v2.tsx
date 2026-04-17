@@ -3,7 +3,7 @@
  * Redesigned homepage with arc hero, weekly emotional bank stats, and today's plan
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -160,6 +160,29 @@ const PlanItem: React.FC<PlanItemProps> = ({ item, onPress }) => (
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
+const recordMessages = [
+  {
+    start: 'You are doing amazing! Ready to shine again? Record another session with ',
+    end: ' and watch the magic happen! ✨',
+  },
+  {
+    start: 'Keep that fantastic momentum going! Jump into another fun session with ',
+    end: '!',
+  },
+  {
+    start: 'Awesome job so far! Grab another 5 minutes of special time with ',
+    end: ' to keep growing together! 🌟',
+  },
+  {
+    start: "You've got this! Record another quick, joyful session with ",
+    end: ' and celebrate your amazing progress!',
+  },
+  {
+    start: 'Ready for more fun? Capture another awesome play session with ',
+    end: '!',
+  },
+];
+
 export const HomeScreen_v2: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const { unreadCount } = useCoachUnread();
@@ -199,8 +222,10 @@ export const HomeScreen_v2: React.FC = () => {
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
   const [nextLessonId, setNextLessonId] = useState<string | null>(null);
   const [hasAnySession, setHasAnySession] = useState(false);
+  const recordMessage = useMemo(() => recordMessages[Math.floor(Math.random() * recordMessages.length)], []);
   const [latestWeeklyReport, setLatestWeeklyReport] = useState<{ id: string; weekStartDate: string; weekEndDate: string; headline: string | null } | null>(null);
   const [isWeeklyReportDismissed, setIsWeeklyReportDismissed] = useState(false);
+  const [sessionNotifications, setSessionNotifications] = useState<{ postSession?: string; tomorrow?: string } | null>(null);
 
   // ── Reminder setup modal ──
   const [showReminderModal, setShowReminderModal] = useState(false);
@@ -306,8 +331,13 @@ export const HomeScreen_v2: React.FC = () => {
         const reportReadKey = `report_read_${getTodaySingapore()}`;
         const reportReadId = await userStorage.getItem(reportReadKey);
         setIsReportRead(reportReadId === latestCompleted.id);
+        setSessionNotifications({
+          postSession: latestCompleted.coachingCards?.notifications?.postSession,
+          tomorrow: latestCompleted.coachingCards?.notifications?.tomorrow ?? latestWithReport?.coachingCards?.notifications?.tomorrow,
+        });
       } else {
         setIsReportRead(false);
+        setSessionNotifications(latestWithReport?.coachingCards?.notifications ?? null);
       }
 
       // ── Has any completed session ever ──
@@ -822,11 +852,15 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.massageLabel}>Daily Emotional Massage</Text>
               </View>
               <Text style={styles.massageBody}>
-                {`Let `}
-                <Text style={styles.massageChildName}>{childName}</Text>
-                {` lead today's 5-minute play to grow their emotional bank. Enjoy easy progress every day and see `}
-                <Text style={styles.massageChildName}>{childName}</Text>
-                {`'s development.`}
+                {sessionNotifications?.tomorrow ?? (
+                  <>
+                    {`Let `}
+                    <Text style={styles.massageChildName}>{childName}</Text>
+                    {` lead today's 5-minute play to grow their emotional bank. Enjoy easy progress every day and see `}
+                    <Text style={styles.massageChildName}>{childName}</Text>
+                    {`'s development.`}
+                  </>
+                )}
               </Text>
               <TouchableOpacity
                 style={[styles.recordButton, !isOnline && styles.recordButtonDisabled]}
@@ -845,9 +879,13 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.massageLabel}>Daily Emotional Massage</Text>
               </View>
               <Text style={styles.massageBody}>
-                {'Great job! Your session report is ready. See how '}
-                <Text style={styles.massageChildName}>{childName}</Text>
-                {' did today.'}
+                {sessionNotifications?.postSession ?? (
+                  <>
+                    {'Great job! Your session report is ready. See how '}
+                    <Text style={styles.massageChildName}>{childName}</Text>
+                    {' did today.'}
+                  </>
+                )}
               </Text>
               <TouchableOpacity
                 style={[styles.recordButton, !isOnline && styles.recordButtonDisabled]}
@@ -866,9 +904,9 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.massageLabel}>Daily Emotional Massage</Text>
               </View>
               <Text style={styles.massageBody}>
-                {'Want to practice again? Record another session with '}
+                {recordMessage.start}
                 <Text style={styles.massageChildName}>{childName}</Text>
-                {' to keep improving.'}
+                {recordMessage.end}
               </Text>
               <TouchableOpacity
                 style={[styles.recordButton, !isOnline && styles.recordButtonDisabled]}

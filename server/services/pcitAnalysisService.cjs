@@ -676,14 +676,27 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
       parts: [{ text: prompt }]
     };
 
-    const coachingReport = (await callGeminiStreaming([userMessage], {
+    const rawCoachingResponse = (await callGeminiStreaming([userMessage], {
       temperature: 0.5,
       maxOutputTokens: 8192,
       timeout: 300000,  // 5 minutes
       sessionId,
     })).trim();
 
-    console.log(`✅ [CDI-COACHING] Gemini coaching report received (${coachingReport.length} chars)`);
+    // Split coaching report from notifications block
+    const notifSplit = rawCoachingResponse.split('---NOTIFICATIONS---');
+    const coachingReport = notifSplit[0].trim();
+    let notifications = null;
+    if (notifSplit[1]) {
+      try {
+        const { value } = parseJSON(notifSplit[1].trim(), 'object');
+        notifications = value;
+      } catch (_) {
+        console.warn('⚠️ [CDI-COACHING] Could not parse notifications block');
+      }
+    }
+
+    console.log(`✅ [CDI-COACHING] Gemini coaching report received (${coachingReport.length} chars)${notifications ? ', notifications parsed' : ''}`);
 
     // Follow-up call to select 3 sections and format for mobile
     console.log(`📊 [CDI-COACHING] Calling ${AI_PROVIDER} to format 3 coaching sections...`);
@@ -703,7 +716,8 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
     const result = {
       coachingSummary: coachingReport,
       coachingCards: formatted.sections || null,
-      tomorrowGoal: formatted.tomorrowGoal || null
+      tomorrowGoal: formatted.tomorrowGoal || null,
+      notifications: notifications || null
     };
 
     console.log(`✅ [CDI-COACHING] Formatted — ${result.coachingCards?.length || 0} sections`);
@@ -1400,6 +1414,7 @@ Do not include markdown or whitespace (minified JSON).
         coachingSummary: coachingResult?.coachingSummary || null,
         coachingCards: coachingResult?.coachingCards || null,
         tomorrowGoal: coachingResult?.tomorrowGoal || null,
+        notifications: coachingResult?.notifications || null,
         aboutChild: aboutChildResult || null
       };
       console.log(`✅ [ANALYSIS-STEP-9] Child profiling complete — ${childProfilingResult.developmentalObservation?.domains?.length || 0} domains, ${childProfilingResult.coachingCards?.length || 0} coaching cards`);
@@ -1498,7 +1513,7 @@ Do not include markdown or whitespace (minified JSON).
       overallScore,
       coachingSummary: childProfilingResult?.coachingSummary || null,
       coachingCards: childProfilingResult?.coachingCards
-        ? { sections: childProfilingResult.coachingCards, tomorrowGoal: childProfilingResult.tomorrowGoal || null }
+        ? { sections: childProfilingResult.coachingCards, tomorrowGoal: childProfilingResult.tomorrowGoal || null, notifications: childProfilingResult.notifications || null }
         : null,
       aboutChild: childProfilingResult?.aboutChild || null,
       enrichmentStatus,

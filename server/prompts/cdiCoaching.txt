@@ -33,4 +33,14 @@ You are an expert Child Psychologist and PCIT (Parent-Child Interaction Therapy)
 **Transcript:**
 {{TRANSCRIPT}}
 
+After the coaching report, append this block exactly (replace only the quoted strings):
+
+---NOTIFICATIONS---
+{
+  "postSession": "<1–2 sentences: note one unique thing about this specific session, then motivate the parent to open the report>",
+  "tomorrow": "<1–2 sentences: child growth centered — motivate the parent to record a new session tomorrow>"
+}
+
+Keep both messages warm and personal. Do not mention PCIT or clinical terms.
+
 {{LANGUAGE_INSTRUCTION}}

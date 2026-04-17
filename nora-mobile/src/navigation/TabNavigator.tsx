@@ -105,6 +105,7 @@ export const TabNavigator: React.FC = () => {
           ),
         }}
       />
+      {/* Tips tab temporarily hidden
       <Tab.Screen
         name="EmotionalMassage"
         component={EmotionalMassageScreen}
@@ -119,6 +120,7 @@ export const TabNavigator: React.FC = () => {
           ),
         }}
       />
+      */}
     </Tab.Navigator>
   );
 }

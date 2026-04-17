@@ -126,12 +126,20 @@ export const WeeklyReportScreen: React.FC = () => {
     }
   };
 
+  const navigateBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('MainTabs');
+    }
+  };
+
   const handleContinue = async () => {
     if (currentPage < TOTAL_PAGES) {
       setCurrentPage(currentPage + 1);
     } else {
       await saveCheckin();
-      navigation.goBack();
+      navigateBack();
     }
   };
 
@@ -139,7 +147,7 @@ export const WeeklyReportScreen: React.FC = () => {
     if (currentPage === TOTAL_PAGES && (moodSelection || Object.keys(issueRatings).length > 0)) {
       await saveCheckin();
     }
-    navigation.goBack();
+    navigateBack();
   };
 
   // ─── Page 1: Headline ────────────────────────────────────────────────

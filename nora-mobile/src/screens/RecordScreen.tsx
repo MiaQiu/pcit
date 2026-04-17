@@ -55,12 +55,17 @@ export const RecordScreen: React.FC = () => {
   const [completionSound, setCompletionSound] = useState<string>('Win');
   const [sessionMode, setSessionMode] = useState<'specialTime' | 'discipline'>('specialTime');
   const [isDisciplineLocked, setIsDisciplineLocked] = useState(false);
+
+  // Keep ref in sync so useFocusEffect can read current value without being a dep
+  useEffect(() => { recordingStateRef.current = recordingState; }, [recordingState]);
+
   // Use ref to track current recording for cleanup
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
   const autoStopListenerRef = useRef<EmitterSubscription | null>(null);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingStateRef = useRef<RecordingState>('idle');
 
   // Capture the report timestamp that existed when this screen mounted, so we
   // only react to a *new* completed report (not one from a prior session).
@@ -253,10 +258,10 @@ export const RecordScreen: React.FC = () => {
       }
 
       // Only reset if not currently uploading/processing in background
-      if (!uploadProcessing.isProcessing && recordingState !== 'recording') {
+      if (!uploadProcessing.isProcessing && recordingStateRef.current !== 'recording') {
         resetRecording();
       }
-    }, [uploadProcessing.isProcessing, recordingState, route.params?.autoStart])
+    }, [uploadProcessing.isProcessing, route.params?.autoStart])
   );
 
   const requestPermissions = async () => {

@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useRecordingService } from '../contexts/AppContext';
+import * as userStorage from '../lib/userStorage';
 
 interface Recording {
   id: string;
@@ -133,7 +134,10 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
             <TouchableOpacity
               key={report.id}
               style={styles.weeklyCard}
-              onPress={() => navigation.navigate('WeeklyReport', { reportId: report.id })}
+              onPress={async () => {
+                await userStorage.setItem(`weekly_report_dismissed_${report.id}`, 'true');
+                navigation.navigate('WeeklyReport', { reportId: report.id });
+              }}
               activeOpacity={0.7}
             >
               <View style={styles.weeklyLeft}>

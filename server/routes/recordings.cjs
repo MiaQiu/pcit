@@ -460,7 +460,8 @@ router.get('/dashboard', requireAuth, async (req, res) => {
           durationSeconds: true,
           createdAt: true,
           overallScore: true,
-          analysisStatus: true
+          analysisStatus: true,
+          coachingCards: true
         }
       }),
 
@@ -493,7 +494,8 @@ router.get('/dashboard', requireAuth, async (req, res) => {
           createdAt: true,
           overallScore: true,
           durationSeconds: true,
-          analysisStatus: true
+          analysisStatus: true,
+          coachingCards: true
         }
       })
     ]);

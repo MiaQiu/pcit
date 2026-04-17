@@ -33,6 +33,7 @@ interface Message {
   id: string;
   role: 'user' | 'model' | 'psychologist';
   text: string;
+  createdAt?: string;
 }
 
 // ─── Bubble ───────────────────────────────────────────────────────────────────
