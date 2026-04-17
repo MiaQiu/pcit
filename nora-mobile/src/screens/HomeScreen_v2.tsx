@@ -369,8 +369,9 @@ export const HomeScreen_v2: React.FC = () => {
       }
 
       // ── Setup daily reminder item (shown for first 3 days after account creation) ──
-      const reminderDone = await userStorage.getItem('reminder_setup_completed');
-      if (!reminderDone) {
+      const reminderDoneDate = await userStorage.getItem('reminder_setup_completed');
+      const completedToday = reminderDoneDate === getTodaySingapore();
+      if (!reminderDoneDate || completedToday) {
         try {
           const user = await authService.getCurrentUser();
           if (user.createdAt) {
@@ -388,7 +389,7 @@ export const HomeScreen_v2: React.FC = () => {
                 type: 'setup-reminder',
                 label: 'Setup Daily Reminder:',
                 title: 'Keep your streak with a daily reminder',
-                isCompleted: false,
+                isCompleted: completedToday,
               });
             }
           }
@@ -539,9 +540,11 @@ export const HomeScreen_v2: React.FC = () => {
         dailyLessonTime: timeString,
       }));
     } catch {}
-    await userStorage.setItem('reminder_setup_completed', 'true');
+    await userStorage.setItem('reminder_setup_completed', getTodaySingapore());
     setShowReminderModal(false);
-    setTodayPlan(prev => prev.filter(item => item.id !== 'setup-reminder'));
+    setTodayPlan(prev =>
+      prev.map(item => item.id === 'setup-reminder' ? { ...item, isCompleted: true } : item)
+    );
   };
 
   const formatReminderTime = (d: Date) => {
