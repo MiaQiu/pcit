@@ -4,7 +4,8 @@
 const express = require('express');
 const fetch   = require('node-fetch');
 const { requireAuth }    = require('../middleware/auth.cjs');
-const { logLLMCall }     = require('../llm/logger.cjs');
+const { logLLMCall }          = require('../llm/logger.cjs');
+const { sendLLMFailureAlert } = require('../llm/alertEmail.cjs');
 const prisma             = require('../services/db.cjs');
 const { subscribe, publish } = require('../services/chatBus.cjs');
 const agentBus = require('../services/agentBus.cjs');
@@ -596,7 +597,17 @@ router.post('/chat', async (req, res, next) => {
             hasSchema: false, usedFallback: true, usedRepair: false, usedRetry: true,
             ok: false, error: claudeErr.message,
           });
-          throw claudeErr;
+          sendLLMFailureAlert({
+            label: 'coach-chat', model, error: claudeErr.message,
+            to: 'info@chromamind.ai',
+          });
+          const sorryText = "I'm having some trouble right now and couldn't process your message. Please try again in a moment, or tap \"Talk to a Psychologist\" if you need immediate support.";
+          const sorryMsg = await prisma.coachChatMessage.create({
+            data: { userId: req.userId, role: 'model', text: sorryText },
+            select: { id: true, role: true, text: true, createdAt: true },
+          });
+          publish(req.userId, [sorryMsg]);
+          return res.json({ reply: sorryText });
         }
       }
     }

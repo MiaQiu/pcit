@@ -43,8 +43,8 @@ function _getTransporter() {
  * @param {string} [params.type]             - 'gateway' | 'streaming' (for subject line)
  * @param {string} [params.sessionId]        - Session ID, if available
  */
-async function sendLLMFailureAlert({ label, model, error, type = 'gateway', sessionId = null }) {
-  const to = process.env.LLM_ALERT_EMAIL;
+async function sendLLMFailureAlert({ label, model, error, type = 'gateway', sessionId = null, to: toOverride = null }) {
+  const to = toOverride || process.env.LLM_ALERT_EMAIL;
   if (!to || !process.env.SMTP_USER || !process.env.SMTP_PASS) return;
 
   const timestamp = new Date().toISOString();
