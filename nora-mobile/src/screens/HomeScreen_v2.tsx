@@ -14,7 +14,15 @@ import {
   RefreshControl,
   useWindowDimensions,
   Animated,
+  Modal,
+  Alert,
+  Linking,
+  Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Notifications from 'expo-notifications';
+import { scheduleDailyLessonReminder } from '../utils/notifications';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,12 +51,18 @@ interface WeeklyStats {
 
 interface TodayPlanItem {
   id: string;
-  type: 'lesson' | 'record' | 'weekly-report';
+  type: 'lesson' | 'record' | 'weekly-report' | 'setup-reminder';
   label: string;
   title: string;
   duration?: string;
   isCompleted: boolean;
 }
+
+const REMINDER_PRESETS = [
+  { label: 'After-School Reconnect', time: '15:30', display: '3:30 PM' },
+  { label: 'Pre-Dinner Play', time: '17:30', display: '5:30 PM' },
+  { label: 'Weekend Morning', time: '10:00', display: '10:00 AM' },
+] as const;
 
 // ─── Stat Pill ────────────────────────────────────────────────────────────────
 
@@ -185,6 +199,14 @@ export const HomeScreen_v2: React.FC = () => {
   const [hasAnySession, setHasAnySession] = useState(false);
   const [latestWeeklyReport, setLatestWeeklyReport] = useState<{ id: string; weekStartDate: string; weekEndDate: string; headline: string | null } | null>(null);
   const [isWeeklyReportDismissed, setIsWeeklyReportDismissed] = useState(false);
+
+  // ── Reminder setup modal ──
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [reminderTime, setReminderTime] = useState<Date>(() => {
+    const d = new Date(); d.setHours(18, 30, 0, 0); return d;
+  });
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const [showCustomPicker, setShowCustomPicker] = useState(false);
 
   // ── Derived ──
   // Initials from first two words of name, or first two chars
@@ -343,6 +365,29 @@ export const HomeScreen_v2: React.FC = () => {
         });
       }
 
+      // ── Setup daily reminder item (shown for first 3 days after onboarding) ──
+      let onboardingDateStr = await userStorage.getItem('onboarding_completed_date');
+      if (!onboardingDateStr) {
+        onboardingDateStr = getTodaySingapore();
+        await userStorage.setItem('onboarding_completed_date', onboardingDateStr);
+      }
+      const reminderDone = await userStorage.getItem('reminder_setup_completed');
+      const todayStr = getTodaySingapore();
+      const [oy, om, od] = onboardingDateStr.split('-').map(Number);
+      const [ty, tm, td] = todayStr.split('-').map(Number);
+      const daysDiff = Math.floor(
+        (new Date(ty, tm - 1, td).getTime() - new Date(oy, om - 1, od).getTime()) / 86400000
+      );
+      if (daysDiff <= 2 && !reminderDone) {
+        plan.push({
+          id: 'setup-reminder',
+          type: 'setup-reminder',
+          label: 'Setup Daily Reminder:',
+          title: 'Keep your streak with a daily reminder',
+          isCompleted: false,
+        });
+      }
+
       setTodayPlan([...plan.filter(i => !i.isCompleted), ...plan.filter(i => i.isCompleted)]);
     } catch (err) {
       console.log('[HomeScreen_v2] Failed to load data:', err);
@@ -426,9 +471,66 @@ export const HomeScreen_v2: React.FC = () => {
       navigation.push('LessonViewer', { lessonId: item.id });
     } else if (item.type === 'weekly-report') {
       navigation.push('WeeklyReport', { reportId: item.id });
+    } else if (item.type === 'setup-reminder') {
+      handleSetupReminderPress();
     } else {
       handleRecordPress();
     }
+  };
+
+  const handleSetupReminderPress = async () => {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Enable Notifications',
+        'To set a daily reminder, please enable notifications for this app in Settings.',
+        [
+          { text: 'Not Now', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]
+      );
+      return;
+    }
+    setSelectedPreset(null);
+    setShowCustomPicker(false);
+    const d = new Date(); d.setHours(18, 30, 0, 0);
+    setReminderTime(d);
+    setShowReminderModal(true);
+  };
+
+  const handleSelectPreset = (preset: typeof REMINDER_PRESETS[number]) => {
+    const [h, m] = preset.time.split(':').map(Number);
+    const d = new Date(); d.setHours(h, m, 0, 0);
+    setReminderTime(d);
+    setSelectedPreset(preset.time);
+    setShowCustomPicker(false);
+  };
+
+  const handleSaveReminder = async () => {
+    const h = reminderTime.getHours();
+    const m = reminderTime.getMinutes();
+    const timeString = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    await scheduleDailyLessonReminder(timeString);
+    try {
+      const saved = await AsyncStorage.getItem('@notification_preferences');
+      const prefs = saved ? JSON.parse(saved) : {};
+      await AsyncStorage.setItem('@notification_preferences', JSON.stringify({
+        ...prefs,
+        dailyLessonReminder: true,
+        dailyLessonTime: timeString,
+      }));
+    } catch {}
+    await userStorage.setItem('reminder_setup_completed', 'true');
+    setShowReminderModal(false);
+    setTodayPlan(prev => prev.filter(item => item.id !== 'setup-reminder'));
+  };
+
+  const formatReminderTime = (d: Date) => {
+    const h = d.getHours();
+    const m = d.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
   };
 
   // ─── Arc dimensions ───────────────────────────────────────────────────────
@@ -783,6 +885,81 @@ export const HomeScreen_v2: React.FC = () => {
           </View>
         )}
       </TouchableOpacity>}
+
+      {/* ── Daily Reminder Setup Modal ── */}
+      <Modal visible={showReminderModal} transparent animationType="slide" onRequestClose={() => setShowReminderModal(false)}>
+        <View style={styles.reminderOverlay}>
+          <View style={styles.reminderCard}>
+            <Text style={styles.reminderTitle}>Set Daily Reminder</Text>
+            <Text style={styles.reminderBody}>
+              Kids like consistency. Many parents find the{' '}
+              <Text style={styles.reminderHighlight}>"After-School Reconnect"</Text>
+              {' '}or{' '}
+              <Text style={styles.reminderHighlight}>"Pre-Dinner Play"</Text>
+              {' '}or{' '}
+              <Text style={styles.reminderHighlight}>"Weekend day morning"</Text>
+              {' '}works best. Let them choose the timing.
+            </Text>
+
+            {/* Preset options */}
+            <View style={styles.reminderPresets}>
+              {REMINDER_PRESETS.map(preset => (
+                <TouchableOpacity
+                  key={preset.time}
+                  style={[styles.reminderPresetBtn, selectedPreset === preset.time && styles.reminderPresetBtnActive]}
+                  onPress={() => handleSelectPreset(preset)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={[styles.reminderPresetLabel, selectedPreset === preset.time && styles.reminderPresetLabelActive]}>
+                    {preset.label}
+                  </Text>
+                  <Text style={[styles.reminderPresetTime, selectedPreset === preset.time && styles.reminderPresetLabelActive]}>
+                    {preset.display}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Custom time row */}
+            <TouchableOpacity
+              style={[styles.reminderCustomRow, !selectedPreset && styles.reminderCustomRowActive]}
+              onPress={() => {
+                setSelectedPreset(null);
+                if (Platform.OS === 'android') setShowCustomPicker(true);
+                else setShowCustomPicker(v => !v);
+              }}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="time-outline" size={18} color={!selectedPreset ? COLORS.mainPurple : '#6B7280'} />
+              <Text style={[styles.reminderCustomLabel, !selectedPreset && styles.reminderCustomLabelActive]}>
+                Custom time: {formatReminderTime(reminderTime)}
+              </Text>
+              <Ionicons name="chevron-down" size={16} color={!selectedPreset ? COLORS.mainPurple : '#9CA3AF'} />
+            </TouchableOpacity>
+
+            {/* Time picker — inline on iOS, dialog on Android */}
+            {(showCustomPicker || (Platform.OS === 'ios' && !selectedPreset)) && (
+              <DateTimePicker
+                mode="time"
+                value={reminderTime}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(_, date) => {
+                  if (Platform.OS === 'android') setShowCustomPicker(false);
+                  if (date) setReminderTime(date);
+                }}
+                style={styles.reminderPicker}
+              />
+            )}
+
+            <TouchableOpacity style={styles.reminderSaveBtn} onPress={handleSaveReminder} activeOpacity={0.85}>
+              <Text style={styles.reminderSaveBtnText}>Set Reminder</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.reminderCancelBtn} onPress={() => setShowReminderModal(false)} activeOpacity={0.7}>
+              <Text style={styles.reminderCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -1143,5 +1320,119 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 2,
     elevation: 2,
+  },
+
+  // Daily reminder modal
+  reminderOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  reminderCard: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 36,
+  },
+  reminderTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    color: '#1E2939',
+    marginBottom: 12,
+  },
+  reminderBody: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#374151',
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  reminderHighlight: {
+    fontFamily: FONTS.semiBold,
+    color: COLORS.mainPurple,
+  },
+  reminderPresets: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  reminderPresetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+  },
+  reminderPresetBtnActive: {
+    borderColor: COLORS.mainPurple,
+    backgroundColor: '#F3EEFF',
+  },
+  reminderPresetLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#374151',
+  },
+  reminderPresetTime: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  reminderPresetLabelActive: {
+    color: COLORS.mainPurple,
+  },
+  reminderCustomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+    marginBottom: 12,
+  },
+  reminderCustomRowActive: {
+    borderColor: COLORS.mainPurple,
+    backgroundColor: '#F3EEFF',
+  },
+  reminderCustomLabel: {
+    flex: 1,
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#374151',
+  },
+  reminderCustomLabelActive: {
+    color: COLORS.mainPurple,
+  },
+  reminderPicker: {
+    marginBottom: 8,
+  },
+  reminderSaveBtn: {
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 100,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  reminderSaveBtnText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: '#fff',
+  },
+  reminderCancelBtn: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  reminderCancelText: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#9CA3AF',
   },
 });
