@@ -3,9 +3,9 @@
 // AI coaching chat route — Gemini function-calling agent
 const express = require('express');
 const fetch   = require('node-fetch');
-const { requireAuth } = require('../middleware/auth.cjs');
-const { logLLMCall }  = require('../llm/logger.cjs');
-const prisma          = require('../services/db.cjs');
+const { requireAuth }    = require('../middleware/auth.cjs');
+const { logLLMCall }     = require('../llm/logger.cjs');
+const prisma             = require('../services/db.cjs');
 const { subscribe, publish } = require('../services/chatBus.cjs');
 const agentBus = require('../services/agentBus.cjs');
 
@@ -311,6 +311,119 @@ async function runAgentLoop(userId, userText, dbHistory, signal) {
   throw new Error('Agent exceeded maximum tool-call turns without producing a reply');
 }
 
+// ─── Claude Sonnet fallback agent loop (full tool use) ────────────────────────
+
+const CLAUDE_FALLBACK_MODEL = 'claude-sonnet-4-6';
+
+// Convert Gemini tool declarations → Claude format (input_schema, lowercase types)
+const CLAUDE_TOOLS = TOOL_DECLARATIONS.map(t => ({
+  name:        t.name,
+  description: t.description,
+  input_schema: {
+    type:       t.parameters.type.toLowerCase(),
+    properties: Object.fromEntries(
+      Object.entries(t.parameters.properties).map(([k, v]) => [
+        k, { ...v, type: v.type.toLowerCase() },
+      ])
+    ),
+    required: t.parameters.required,
+  },
+}));
+
+async function runClaudeAgentLoop(userId, userText, dbHistory, signal) {
+  // Build messages array; Claude requires strict user/assistant alternation.
+  // Merge consecutive same-role messages and drop leading assistant turns.
+  const rawMessages = [
+    ...dbHistory.map(m => ({
+      role:    (m.role === 'model' || m.role === 'psychologist') ? 'assistant' : 'user',
+      content: m.text,
+    })),
+    { role: 'user', content: userText },
+  ];
+
+  const messages = [];
+  for (const msg of rawMessages) {
+    if (messages.length === 0 && msg.role === 'assistant') continue; // must start with user
+    const prev = messages[messages.length - 1];
+    if (prev && prev.role === msg.role) {
+      prev.content += '\n' + msg.content; // merge consecutive same-role
+    } else {
+      messages.push({ role: msg.role, content: msg.content });
+    }
+  }
+
+  const apiUrl = 'https://api.anthropic.com/v1/messages';
+  const headers = {
+    'Content-Type':      'application/json',
+    'x-api-key':         process.env.ANTHROPIC_API_KEY,
+    'anthropic-version': '2023-06-01',
+  };
+
+  let totalInput  = 0;
+  let totalOutput = 0;
+
+  for (let turn = 0; turn < MAX_AGENT_TURNS; turn++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60_000);
+    signal?.addEventListener('abort', () => controller.abort(), { once: true });
+
+    let raw;
+    try {
+      raw = await fetch(apiUrl, {
+        method:  'POST',
+        headers,
+        body: JSON.stringify({
+          model:       CLAUDE_FALLBACK_MODEL,
+          system:      SYSTEM_PROMPT,
+          tools:       CLAUDE_TOOLS,
+          messages,
+          max_tokens:  2048,
+          temperature: 0.8,
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (!raw.ok) {
+      const errText = await raw.text().catch(() => '');
+      throw Object.assign(
+        new Error(`Claude API error ${raw.status}: ${errText.slice(0, 200)}`),
+        { status: raw.status }
+      );
+    }
+
+    const data       = await raw.json();
+    totalInput  += data.usage?.input_tokens  ?? 0;
+    totalOutput += data.usage?.output_tokens ?? 0;
+
+    const content    = data.content ?? [];
+    const textBlock  = content.find(b => b.type === 'text');
+    const toolBlocks = content.filter(b => b.type === 'tool_use');
+
+    if (data.stop_reason === 'end_turn' || toolBlocks.length === 0) {
+      return {
+        text:  textBlock?.text ?? '',
+        usage: { inputTokens: totalInput, outputTokens: totalOutput },
+      };
+    }
+
+    // Append assistant's tool-call turn, then execute tools in parallel
+    messages.push({ role: 'assistant', content });
+
+    const toolResults = await Promise.all(
+      toolBlocks.map(async b => {
+        const result = await executeTool(b.name, b.input ?? {}, userId);
+        return { type: 'tool_result', tool_use_id: b.id, content: JSON.stringify(result) };
+      })
+    );
+    messages.push({ role: 'user', content: toolResults });
+  }
+
+  throw new Error('Claude agent exceeded maximum tool-call turns without producing a reply');
+}
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 /**
@@ -415,30 +528,87 @@ router.post('/chat', async (req, res, next) => {
 
     const start = Date.now();
     let result;
+    let usedRetry    = false;
+    let usedFallback = false;
+    let provider     = 'gemini';
+    let model        = MODEL;
+
+    const isUserAbort = () => abortController.signal.aborted;
+
     try {
       result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal);
-    } catch (llmErr) {
-      agentBus.clear(req.userId);
-      if (llmErr.name === 'AbortError') {
+    } catch (firstErr) {
+      if (firstErr.name === 'AbortError' && isUserAbort()) {
+        agentBus.clear(req.userId);
         return res.status(200).json({ reply: null, aborted: true });
       }
+
+      if (firstErr.name !== 'AbortError') {
+        agentBus.clear(req.userId);
+        logLLMCall({
+          label: 'coach-chat', model, provider,
+          latencyMs: Date.now() - start,
+          inputTokens: null, outputTokens: null,
+          hasSchema: false, usedFallback: false, usedRepair: false, usedRetry: false,
+          ok: false, error: firstErr.message,
+        });
+        throw firstErr;
+      }
+
+      // Gemini timed out — retry once silently
+      usedRetry = true;
       logLLMCall({
-        label: 'coach-chat', model: MODEL, provider: 'gemini',
+        label: 'coach-chat', model, provider,
         latencyMs: Date.now() - start,
         inputTokens: null, outputTokens: null,
-        hasSchema: false, usedFallback: false, usedRepair: false, usedRetry: false,
-        ok: false, error: llmErr.message,
+        hasSchema: false, usedFallback: false, usedRepair: false, usedRetry: true,
+        ok: false, error: firstErr.message,
       });
-      throw llmErr;
+
+      try {
+        result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal);
+      } catch (retryErr) {
+        if (retryErr.name === 'AbortError' && isUserAbort()) {
+          agentBus.clear(req.userId);
+          return res.status(200).json({ reply: null, aborted: true });
+        }
+
+        // Gemini still failing — fallback to Claude Sonnet
+        usedFallback = true;
+        provider     = 'anthropic';
+        model        = CLAUDE_FALLBACK_MODEL;
+        logLLMCall({
+          label: 'coach-chat', model: MODEL, provider: 'gemini',
+          latencyMs: Date.now() - start,
+          inputTokens: null, outputTokens: null,
+          hasSchema: false, usedFallback: true, usedRepair: false, usedRetry: true,
+          ok: false, error: retryErr.message,
+        });
+
+        try {
+          result = await runClaudeAgentLoop(req.userId, userText, dbHistory, abortController.signal);
+        } catch (claudeErr) {
+          agentBus.clear(req.userId);
+          logLLMCall({
+            label: 'coach-chat', model, provider,
+            latencyMs: Date.now() - start,
+            inputTokens: null, outputTokens: null,
+            hasSchema: false, usedFallback: true, usedRepair: false, usedRetry: true,
+            ok: false, error: claudeErr.message,
+          });
+          throw claudeErr;
+        }
+      }
     }
+
     agentBus.clear(req.userId);
 
     logLLMCall({
-      label: 'coach-chat', model: MODEL, provider: 'gemini',
+      label: 'coach-chat', model, provider,
       latencyMs: Date.now() - start,
       inputTokens: result.usage.inputTokens,
       outputTokens: result.usage.outputTokens,
-      hasSchema: false, usedFallback: false, usedRepair: false, usedRetry: false,
+      hasSchema: false, usedFallback, usedRepair: false, usedRetry,
       ok: true, error: null,
     });
 
