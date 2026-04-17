@@ -356,36 +356,41 @@ export const HomeScreen_v2: React.FC = () => {
 
       // Show weekly report if available
       if (latestReport) {
+        const reportDismissed = await userStorage.getItem(`weekly_report_dismissed_${latestReport.id}`);
         plan.push({
           id: latestReport.id,
           type: 'weekly-report',
           label: 'Weekly Report:',
           title: 'See your progress this week',
-          isCompleted: false,
+          isCompleted: !!reportDismissed,
         });
       }
 
-      // ── Setup daily reminder item (shown for first 3 days after onboarding) ──
-      let onboardingDateStr = await userStorage.getItem('onboarding_completed_date');
-      if (!onboardingDateStr) {
-        onboardingDateStr = getTodaySingapore();
-        await userStorage.setItem('onboarding_completed_date', onboardingDateStr);
-      }
+      // ── Setup daily reminder item (shown for first 3 days after account creation) ──
       const reminderDone = await userStorage.getItem('reminder_setup_completed');
-      const todayStr = getTodaySingapore();
-      const [oy, om, od] = onboardingDateStr.split('-').map(Number);
-      const [ty, tm, td] = todayStr.split('-').map(Number);
-      const daysDiff = Math.floor(
-        (new Date(ty, tm - 1, td).getTime() - new Date(oy, om - 1, od).getTime()) / 86400000
-      );
-      if (daysDiff <= 2 && !reminderDone) {
-        plan.push({
-          id: 'setup-reminder',
-          type: 'setup-reminder',
-          label: 'Setup Daily Reminder:',
-          title: 'Keep your streak with a daily reminder',
-          isCompleted: false,
-        });
+      if (!reminderDone) {
+        try {
+          const user = await authService.getCurrentUser();
+          if (user.createdAt) {
+            const created = new Date(user.createdAt);
+            const todayMidnight = new Date();
+            todayMidnight.setHours(0, 0, 0, 0);
+            const createdMidnight = new Date(created);
+            createdMidnight.setHours(0, 0, 0, 0);
+            const daysSinceCreation = Math.floor(
+              (todayMidnight.getTime() - createdMidnight.getTime()) / 86400000
+            );
+            if (daysSinceCreation <= 2) {
+              plan.push({
+                id: 'setup-reminder',
+                type: 'setup-reminder',
+                label: 'Setup Daily Reminder:',
+                title: 'Keep your streak with a daily reminder',
+                isCompleted: false,
+              });
+            }
+          }
+        } catch {}
       }
 
       setTodayPlan([...plan.filter(i => !i.isCompleted), ...plan.filter(i => i.isCompleted)]);
@@ -403,6 +408,12 @@ export const HomeScreen_v2: React.FC = () => {
     loadUserProfile();
     loadData('full');
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData('background');
+    }, [])
+  );
 
   // Show tip for 3 seconds starting 1s after animation begins or loops
   const showTipSequence = useCallback(() => {
@@ -466,10 +477,12 @@ export const HomeScreen_v2: React.FC = () => {
     navigation.navigate('MainTabs', { screen: 'Record' });
   };
 
-  const handlePlanItemPress = (item: TodayPlanItem) => {
+  const handlePlanItemPress = async (item: TodayPlanItem) => {
     if (item.type === 'lesson') {
       navigation.push('LessonViewer', { lessonId: item.id });
     } else if (item.type === 'weekly-report') {
+      await userStorage.setItem(`weekly_report_dismissed_${item.id}`, 'true');
+      setIsWeeklyReportDismissed(true);
       navigation.push('WeeklyReport', { reportId: item.id });
     } else if (item.type === 'setup-reminder') {
       handleSetupReminderPress();
