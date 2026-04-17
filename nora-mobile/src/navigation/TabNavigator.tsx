@@ -12,6 +12,7 @@ import {
   RecordScreen,
   LearnScreen,
   ProgressScreen,
+  EmotionalMassageScreen,
 } from '../screens';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
@@ -98,6 +99,20 @@ export const TabNavigator: React.FC = () => {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'bar-chart' : 'bar-chart-outline'}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="EmotionalMassage"
+        component={EmotionalMassageScreen}
+        options={{
+          tabBarLabel: 'Tips',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'heart' : 'heart-outline'}
               size={24}
               color={color}
             />

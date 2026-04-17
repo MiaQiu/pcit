@@ -13,6 +13,7 @@ export type RootTabParamList = {
   Record: { autoStart?: boolean } | undefined;
   Learn: undefined;
   Progress: { scrollToDevelopmental?: boolean } | undefined;
+  EmotionalMassage: undefined;
 };
 
 export type OnboardingStackParamList = {

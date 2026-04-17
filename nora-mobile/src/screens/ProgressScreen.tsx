@@ -67,6 +67,20 @@ const CalendarView: React.FC<{
 }> = ({ recordingDates, lessonCompletionDates, recordings, weeklyReports, onReportPress, onWeeklyReportPress }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const autoSelectedRef = useRef(false);
+
+  useEffect(() => {
+    if (autoSelectedRef.current || recordings.length === 0) return;
+    const completed = recordings.filter(r => r.analysisStatus === 'COMPLETED');
+    if (completed.length === 0) return;
+    const latest = completed.reduce((a, b) =>
+      new Date(a.createdAt) > new Date(b.createdAt) ? a : b
+    );
+    const dateStr = toSingaporeDateString(new Date(latest.createdAt));
+    setSelectedDate(dateStr);
+    setCurrentMonth(new Date(latest.createdAt));
+    autoSelectedRef.current = true;
+  }, [recordings]);
 
   const goToPreviousMonth = () => {
     setSelectedDate(null);
@@ -154,7 +168,8 @@ const CalendarView: React.FC<{
 
   return (
     <View>
-      <Text style={styles.calendarTitle}>Your Streak / Report</Text>
+      <Text style={styles.calendarTitle}>Past Reports</Text>
+      <Text style={styles.calendarSubtitle}>Weekly reports are generated every Monday.</Text>
       <View style={styles.calendarContainer}>
         {/* Month navigation */}
         <View style={styles.monthNavigation}>
@@ -207,7 +222,6 @@ const CalendarView: React.FC<{
                   style={[
                     styles.dayCircle,
                     !isCurrentMonth && styles.dayCircleInactive,
-                    isToday && !day.hasRecording && styles.dayCircleToday,
                   ]}
                 >
                   <Text
@@ -432,6 +446,7 @@ export const ProgressScreen: React.FC = () => {
   const [weeklyReports, setWeeklyReports] = useState<VisibleWeeklyReport[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [lastSessionScore, setLastSessionScore] = useState<{ score: number; recordingId: string } | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -501,6 +516,13 @@ export const ProgressScreen: React.FC = () => {
 
       if (recordings && recordings.length > 0) {
         setLatestRecordingId(recordings[0].id);
+
+        const latestWithScore = recordings.find(r => r.overallScore);
+        if (latestWithScore) {
+          setLastSessionScore({ score: latestWithScore.overallScore, recordingId: latestWithScore.id });
+        } else {
+          setLastSessionScore(null);
+        }
 
         // Calculate streak based on recordings only
         const currentStreak = calculateStreak(recordings);
@@ -740,9 +762,9 @@ export const ProgressScreen: React.FC = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#8C49D5" />
         }
       >
-        <Text style={styles.title}>Progress</Text>
+        <Text style={styles.title}>Reports</Text>
 
-        {/* Header with Dragon Icon and Text */}
+        {/* Header with Dragon Icon and Text
         <View style={styles.headerSection}>
           <View style={styles.dragonIconContainer}>
             <Image
@@ -756,14 +778,31 @@ export const ProgressScreen: React.FC = () => {
               Look how far you've come! Keep up the amazing work.
             </Text>
           </View>
-        </View>
+        </View> */}
 
-        {/* Stats cards */}
-        <View style={styles.statsRow}>
-          <StatCard value={stats.lessonsCompleted} label="Lessons completed" />
-          <StatCard value={stats.playsessionsRecorded} label="Play sessions" />
-          <StatCard value={stats.currentStreak} label="Current Streak" />
-        </View>
+        {/* Last Session Deposits */}
+        {lastSessionScore && (() => {
+          const percentage = Math.min((lastSessionScore.score / 100) * 100, 100);
+          return (
+            <View style={styles.tealSection}>
+              <View style={styles.yesterdayCard}>
+                <View style={styles.yesterdayHeader}>
+                  <Text style={styles.yesterdayTitle}>Last Session Deposits</Text>
+                  <Text style={styles.yesterdayScoreText}>+{lastSessionScore.score}/{100}</Text>
+                </View>
+                <View style={styles.progressTrack}>
+                  <View style={[styles.progressFill, { width: `${percentage}%` }]} />
+                </View>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Report', { recordingId: lastSessionScore.recordingId })}
+                  style={styles.linkContainer}
+                >
+                  <Text style={styles.linkText}>Read report</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          );
+        })()}
 
         {/* Calendar */}
         <CalendarView
@@ -779,6 +818,15 @@ export const ProgressScreen: React.FC = () => {
             navigation.navigate('WeeklyReport', { reportId });
           }}
         />
+
+        <Text style={styles.title}>Progress</Text>
+
+        {/* Stats cards */}
+        <View style={styles.statsRow}>
+          <StatCard value={stats.lessonsCompleted} label="Lessons completed" />
+          <StatCard value={stats.playsessionsRecorded} label="Play sessions" />
+          <StatCard value={stats.currentStreak} label="Current Streak" />
+        </View>
 
         {/* Score chart */}
         <ScoreChart data={scoreData} />
@@ -897,6 +945,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#1E2939',
     marginBottom: 12,
+    marginLeft:5
+  },
+  calendarSubtitle: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 13,
+    color: '#9CA3AF',
+    marginBottom: 12,
+    marginTop: -8,
+    marginLeft:5
   },
   calendarContainer: {
     backgroundColor: '#FFFFFF',
@@ -1119,6 +1176,61 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 14,
     color: '#D1D5DB',
+  },
+  tealSection: {
+    paddingHorizontal: 0,
+    paddingBottom: 8,
+  },
+  yesterdayCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  yesterdayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  yesterdayTitle: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 16,
+    color: '#1E2939',
+    lineHeight: 24,
+  },
+  yesterdayScoreText: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 18,
+    color: '#8C49D5',
+  },
+  progressTrack: {
+    width: '100%',
+    height: 8,
+    backgroundColor: '#E8E8E8',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#8C49D5',
+    borderRadius: 4,
+  },
+  linkContainer: {
+    alignSelf: 'flex-end',
+  },
+  linkText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 14,
+    color: '#0059DB',
   },
   milestoneLockedCard: {
     backgroundColor: '#FFFFFF',
