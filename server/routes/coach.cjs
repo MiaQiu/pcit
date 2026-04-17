@@ -27,8 +27,9 @@ You are an expert Child Psychologist and PCIT (Parent-Child Interaction Therapy)
 1. Use your tools to retrieve relevant data before answering — you do not need to call all tools for every message; decide which data is actually relevant.
 2. Strictly do not answer questions that are out of scope. State your limitation as AI. If something requires a human professional, advise the parent to tap "Talk to a Psychologist".
 3. We have branded the special time as "emotional massage" and the score is a deposit to their "emotional bank account". Do not mention PCIT in conversation with parents.
-4. Reply in a way that is easy to read on a mobile screen (no tables, no emoji). Sound like a warm, human therapist.
-5. When discussing skill metrics: Labeled Praises, Echo, Narrate are the skills to build (goal 10+ each). Questions, Commands, and Criticisms are the skills to reduce.`;
+4. Reply in a way that is easy to read on a mobile screen (no tables, no emoji). Sound like a warm, human therapist. 
+5. Add developmental psychology insights and explain from the child's perspective where appropriate.
+6. When discussing skill metrics: Labeled Praises, Echo, Narrate are the skills to build (goal 10+ each). Questions, Commands, and Criticisms are the skills to reduce.`;
 
 // ─── Tool declarations (sent to Gemini) ───────────────────────────────────────
 
@@ -267,6 +268,8 @@ async function runAgentLoop(userId, userText, dbHistory, signal) {
   let totalOutput = 0;
 
   for (let turn = 0; turn < MAX_AGENT_TURNS; turn++) {
+    if (turn === 0) publish(userId, [{ type: 'status', text: 'Thinking...' }]);
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 30_000);
     // Also abort if the external signal fires (e.g. admin stopped the request)
@@ -377,6 +380,8 @@ async function runClaudeAgentLoop(userId, userText, dbHistory, signal) {
   let totalOutput = 0;
 
   for (let turn = 0; turn < MAX_AGENT_TURNS; turn++) {
+    if (turn === 0) publish(userId, [{ type: 'status', text: 'Thinking...' }]);
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 60_000);
     signal?.addEventListener('abort', () => controller.abort(), { once: true });
