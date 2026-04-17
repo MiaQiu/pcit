@@ -82,6 +82,7 @@ export const CoachChatScreen: React.FC = () => {
   const [submittingHuman, setSubmittingHuman] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [statusText, setStatusText] = useState<string | null>(null);
 
   const scrollToEnd = useCallback(() => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
@@ -119,15 +120,24 @@ export const CoachChatScreen: React.FC = () => {
         `${API_URL}/api/coach/events?since=${encodeURIComponent(since)}`
       )
         .then(r => r.json())
-        .then((data: { messages: Array<{ id: string; role: string; text: string; createdAt: string }> }) => {
+        .then((data: { messages: Array<{ id?: string; role?: string; text: string; createdAt?: string; type?: string }> }) => {
           if (cancelled) return;
           if (data.messages && data.messages.length > 0) {
-            setMessages(prev => {
-              const existingIds = new Set(prev.map(m => m.id));
-              const newOnes = (data.messages as Message[]).filter(m => !existingIds.has(m.id));
-              return newOnes.length > 0 ? [...prev, ...newOnes] : prev;
-            });
-            since = data.messages[data.messages.length - 1].createdAt;
+            // Separate status hints from real messages
+            const statusEvent = data.messages.find(m => m.type === 'status');
+            const realMessages = data.messages.filter(m => m.type !== 'status') as Message[];
+
+            if (statusEvent) setStatusText(statusEvent.text);
+
+            if (realMessages.length > 0) {
+              setStatusText(null);
+              setMessages(prev => {
+                const existingIds = new Set(prev.map(m => m.id));
+                const newOnes = realMessages.filter(m => !existingIds.has(m.id!));
+                return newOnes.length > 0 ? [...prev, ...newOnes] : prev;
+              });
+              since = realMessages[realMessages.length - 1].createdAt!;
+            }
           }
         })
         .catch(() => {})
@@ -167,6 +177,7 @@ export const CoachChatScreen: React.FC = () => {
       setMessages(prev => [...prev, errMsg]);
     } finally {
       setLoading(false);
+      setStatusText(null);
       scrollToEnd();
     }
   }, [input, loading, scrollToEnd, authService]);
@@ -240,7 +251,10 @@ export const CoachChatScreen: React.FC = () => {
               <Ionicons name="sparkles" size={14} color="#fff" />
             </View>
             <View style={styles.typingBubble}>
-              <ActivityIndicator size="small" color={COLORS.mainPurple} />
+              {statusText
+                ? <Text style={styles.statusText}>{statusText}</Text>
+                : <ActivityIndicator size="small" color={COLORS.mainPurple} />
+              }
             </View>
           </View>
         )}
@@ -511,6 +525,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
     paddingVertical: 10,
     paddingHorizontal: 18,
+  },
+  statusText: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#6B7280',
+    fontStyle: 'italic',
   },
 
   // Input bar

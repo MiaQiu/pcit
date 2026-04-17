@@ -235,6 +235,15 @@ async function executeTool(name, args, userId) {
   }
 }
 
+// ─── Tool → status text (shown to user while tool executes) ──────────────────
+
+const TOOL_STATUS = {
+  get_recent_sessions:      'Checking your recent sessions...',
+  get_child_milestone:      "Looking at your child's milestones...",
+  get_child_parent_profile: 'Pulling up your profile...',
+  get_transcript:           'Reviewing your last session...',
+};
+
 // ─── Gemini agent loop ────────────────────────────────────────────────────────
 
 async function runAgentLoop(userId, userText, dbHistory, signal) {
@@ -298,6 +307,10 @@ async function runAgentLoop(userId, userText, dbHistory, signal) {
 
     // Append model's tool-call turn
     contents.push({ role: 'model', parts: fnParts });
+
+    // Publish status for the first tool call so the client can show a hint
+    const statusText = TOOL_STATUS[fnParts[0].functionCall.name] ?? 'Looking something up...';
+    publish(userId, [{ type: 'status', text: statusText }]);
 
     // Execute tools (in parallel) and append results
     const responseParts = await Promise.all(
@@ -412,6 +425,10 @@ async function runClaudeAgentLoop(userId, userText, dbHistory, signal) {
 
     // Append assistant's tool-call turn, then execute tools in parallel
     messages.push({ role: 'assistant', content });
+
+    // Publish status for the first tool call so the client can show a hint
+    const statusText = TOOL_STATUS[toolBlocks[0].name] ?? 'Looking something up...';
+    publish(userId, [{ type: 'status', text: statusText }]);
 
     const toolResults = await Promise.all(
       toolBlocks.map(async b => {
