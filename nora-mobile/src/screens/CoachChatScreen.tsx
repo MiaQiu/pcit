@@ -104,9 +104,10 @@ export const CoachChatScreen: React.FC = () => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
   }, []);
 
-  // Clear unread badge when entering the chat screen
+  // Clear unread badge on entry and again on exit (covers messages received during the session)
   useEffect(() => {
     markAsRead();
+    return () => { markAsRead(); };
   }, [markAsRead]);
 
   // Load full history on mount, then long-poll for new messages

@@ -523,8 +523,8 @@ export const HomeScreen_v2: React.FC = () => {
       navigation.push('WeeklyReport', { reportId: item.id });
     } else if (item.type === 'setup-reminder') {
       handleSetupReminderPress();
-    } else {
-      handleRecordPress();
+    } else if (item.type === 'record') {
+      navigation.navigate('MainTabs', { screen: 'Record' });
     }
   };
 
@@ -687,9 +687,9 @@ export const HomeScreen_v2: React.FC = () => {
               <Text style={styles.tipBubbleText}>
                 {weeklyStats.daysCompleted === 7
                   ? `Perfect 7/7! 👑\nYou're legendary!`
-                  : weeklyStats.daysCompleted > 4
+                  : weeklyStats.daysCompleted >= 4
                   ? `${weeklyStats.daysCompleted} days down! 🌟\nCan we hit a full 7?`
-                  : 'Aim for 4 sessions a week\nfor faster progress'}
+                  : 'Aim for 4 days a week\nfor faster progress'}
               </Text>
               <View style={styles.tipBubbleDot1} />
               <View style={styles.tipBubbleDot2} />
