@@ -36,6 +36,21 @@ interface Message {
   createdAt?: string;
 }
 
+// ─── Animated status dots ─────────────────────────────────────────────────────
+
+const AnimatedStatusText: React.FC<{ text: string; style: object }> = ({ text, style }) => {
+  const [dots, setDots] = useState(0);
+  const base = text.replace(/\.+$/, '');
+
+  useEffect(() => {
+    setDots(0);
+    const id = setInterval(() => setDots(d => (d + 1) % 4), 400);
+    return () => clearInterval(id);
+  }, [text]);
+
+  return <Text style={style}>{base}{'...'.slice(0, dots)}</Text>;
+};
+
 // ─── Bubble ───────────────────────────────────────────────────────────────────
 
 const Bubble: React.FC<{ message: Message }> = ({ message }) => {
@@ -253,7 +268,7 @@ export const CoachChatScreen: React.FC = () => {
             </View>
             <View style={styles.typingBubble}>
               {statusText
-                ? <Text style={styles.statusText}>{statusText}</Text>
+                ? <AnimatedStatusText text={statusText} style={styles.statusText} />
                 : <ActivityIndicator size="small" color={COLORS.mainPurple} />
               }
             </View>
