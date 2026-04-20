@@ -676,27 +676,14 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
       parts: [{ text: prompt }]
     };
 
-    const rawCoachingResponse = (await callGeminiStreaming([userMessage], {
+    const coachingReport = (await callGeminiStreaming([userMessage], {
       temperature: 0.5,
       maxOutputTokens: 8192,
       timeout: 300000,  // 5 minutes
       sessionId,
     })).trim();
 
-    // Split coaching report from notifications block
-    const notifSplit = rawCoachingResponse.split('---NOTIFICATIONS---');
-    const coachingReport = notifSplit[0].trim();
-    let notifications = null;
-    if (notifSplit[1]) {
-      try {
-        const { value } = parseJSON(notifSplit[1].trim(), 'object');
-        notifications = value;
-      } catch (_) {
-        console.warn('⚠️ [CDI-COACHING] Could not parse notifications block');
-      }
-    }
-
-    console.log(`✅ [CDI-COACHING] Gemini coaching report received (${coachingReport.length} chars)${notifications ? ', notifications parsed' : ''}`);
+    console.log(`✅ [CDI-COACHING] Gemini coaching report received (${coachingReport.length} chars)`);
 
     // Follow-up call to select 3 sections and format for mobile
     console.log(`📊 [CDI-COACHING] Calling ${AI_PROVIDER} to format 3 coaching sections...`);
@@ -711,6 +698,31 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
     } catch (formatError) {
       console.error('❌ [CDI-COACHING] Format call failed:', formatError.message);
       return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal: null };
+    }
+
+    // Generate notifications from a dedicated prompt
+    let notifications = null;
+    try {
+      const { name, ageMonths, yesterdayGoal } = childInfo;
+      const sessionMetrics = variables.SESSION_METRICS;
+      const tomorrowGoal = formatted.tomorrowGoal || null;
+      const notifPrompt = loadPromptWithVariables('cdiCoachingNotifications', {
+        CHILD_NAME: name || 'your child',
+        CHILD_AGE_MONTHS: String(ageMonths || 'unknown'),
+        SESSION_METRICS: sessionMetrics,
+        YESTERDAY_GOAL_SECTION: yesterdayGoal
+          ? `Yesterday's Focus Goal: ${yesterdayGoal}`
+          : '',
+        TOMORROW_GOAL_SECTION: tomorrowGoal || 'Continue building connection through play.'
+      });
+      const { value } = parseJSON(
+        await llmCall(notifPrompt, { model: 'flash-3', maxTokens: 4096, temperature: 0.5, output: 'text', label: 'coaching-notifications', sessionId }),
+        'object'
+      );
+      notifications = value;
+      console.log(`✅ [CDI-COACHING] Notifications generated`);
+    } catch (notifError) {
+      console.warn('⚠️ [CDI-COACHING] Notifications generation failed:', notifError.message);
     }
 
     const result = {

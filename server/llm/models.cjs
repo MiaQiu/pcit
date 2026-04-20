@@ -11,6 +11,12 @@ const MODELS = {
     primary:  'gemini-2.0-flash',
     fallback: 'gemini-3-flash-preview',
   },
+  // Gemini 3 — for notification generation
+  'flash-3': {
+    provider: 'gemini',
+    primary:  'gemini-3-pro-preview',
+    fallback: 'gemini-3-flash-preview',
+  },
   // Extended reasoning — CDI coaching narrative (streaming, handled separately)
   pro: {
     provider: 'gemini',
