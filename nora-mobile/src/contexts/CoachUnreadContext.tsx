@@ -8,7 +8,7 @@ const STORAGE_KEY = '@nora_coach_last_read_at';
 
 interface CoachUnreadContextType {
   unreadCount: number;
-  markAsRead: () => Promise<void>;
+  markAsRead: (timestamp?: string) => Promise<void>;
 }
 
 const CoachUnreadContext = createContext<CoachUnreadContextType>({
@@ -37,11 +37,11 @@ export const CoachUnreadProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [authService]);
 
-  const markAsRead = useCallback(async () => {
-    const now = new Date().toISOString();
-    lastReadAtRef.current = now;
+  const markAsRead = useCallback(async (timestamp?: string) => {
+    const ts = timestamp ?? new Date().toISOString();
+    lastReadAtRef.current = ts;
     setUnreadCount(0);
-    await AsyncStorage.setItem(STORAGE_KEY, now);
+    await AsyncStorage.setItem(STORAGE_KEY, ts);
   }, []);
 
   useEffect(() => {

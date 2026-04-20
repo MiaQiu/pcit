@@ -19,8 +19,10 @@ import {
   Modal,
   ScrollView,
   Keyboard,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Video, ResizeMode } from 'expo-av';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
@@ -93,7 +95,9 @@ const Bubble: React.FC<{ message: Message }> = ({ message }) => {
     <View style={[styles.bubbleRow, isUser ? styles.bubbleRowUser : styles.bubbleRowModel]}>
       {!isUser && (
         <View style={[styles.avatarWrap, isPsychologist && styles.avatarWrapPsych]}>
-          <Ionicons name={isPsychologist ? 'person' : 'sparkles'} size={14} color="#fff" />
+          {isPsychologist
+            ? <Ionicons name="person" size={14} color="#fff" />
+            : <Text style={styles.avatarN}>N</Text>}
         </View>
       )}
       <View style={{ maxWidth: '78%' }}>
@@ -110,6 +114,15 @@ const Bubble: React.FC<{ message: Message }> = ({ message }) => {
   );
 };
 
+// ─── Guide suggestions (shown when chat is empty) ────────────────────────────
+
+const SUGGESTIONS = [
+  { image: require('../../assets/images/green-energy.png'), title: 'Understand My Child',    prompt: 'Why is my child acting this way?' },
+  { image: require('../../assets/images/air-heater.png'), title: 'What Should I Do Now',   prompt: 'What do I do in this situation?' },
+  { image: require('../../assets/images/rating.png'), title: 'Parent with Confidence', prompt: 'Am I handling this the right way?' },
+  { image: require('../../assets/images/planning.png'), title: 'My Nora Plan',         prompt: 'Explain my coaching tips & what to focus on' },
+];
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export const CoachChatScreen: React.FC = () => {
@@ -122,13 +135,7 @@ export const CoachChatScreen: React.FC = () => {
   const prevContentHeightRef = useRef(0);
   const pinToBottomRef = useRef(true);
 
-  const GREETING: Message = {
-    id: '0',
-    role: 'model',
-    text: "Hi! I'm Nora, your parenting coach. How can I support you today? 💜",
-  };
-
-  const [messages, setMessages] = useState<Message[]>([GREETING]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [showHumanModal, setShowHumanModal] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -138,6 +145,9 @@ export const CoachChatScreen: React.FC = () => {
   const [statusText, setStatusText] = useState<string | null>(null);
   const [flatListHeight, setFlatListHeight] = useState(600);
   const [showSpacer, setShowSpacer] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [parentName, setParentName] = useState('');
+  const [childName, setChildName] = useState('');
 
   const scrollToEnd = useCallback((animated = true) => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated }), 100);
@@ -155,14 +165,21 @@ export const CoachChatScreen: React.FC = () => {
 
     async function init() {
       // 1. Load cache — display instantly
-      const cached = await loadMessageCache();
+      const [cached, user] = await Promise.all([
+        loadMessageCache(),
+        authService.getCurrentUser().catch(() => null),
+      ]);
       if (cancelled) return;
+
+      if (user) {
+        setParentName(user.name?.split(' ')[0] ?? '');
+        setChildName(user.childName ?? '');
+      }
 
       if (cached.length > 0) {
         setMessages(cached);
         since = cached[cached.length - 1].createdAt!;
       } else {
-        // No cache — only fetch the past 2 days from server
         since = twoDaysAgo().toISOString();
       }
 
@@ -177,8 +194,7 @@ export const CoachChatScreen: React.FC = () => {
         if (data.messages?.length > 0) {
           const incoming = data.messages as Message[];
           setMessages(prev => {
-            const isGreetingOnly = prev.length === 1 && prev[0].id === '0';
-            const base = isGreetingOnly ? cached : prev;
+            const base = prev.length === 0 ? cached : prev;
             const existingIds = new Set(base.map(m => m.id));
             const merged = [...base, ...incoming.filter(m => !existingIds.has(m.id))];
             saveMessageCache(merged);
@@ -191,8 +207,19 @@ export const CoachChatScreen: React.FC = () => {
         } else if (cached.length > 0) {
           latestServerTsRef.current = since;
           markAsRead(since);
+        } else {
+          // No cache and no server messages — show the guide
+          setShowGuide(true);
+          pinToBottomRef.current = false;
+          setTimeout(() => flatListRef.current?.scrollToOffset({ offset: 0, animated: false }), 50);
         }
-      } catch {}
+      } catch {
+        if (cached.length === 0) {
+          setShowGuide(true);
+          pinToBottomRef.current = false;
+          setTimeout(() => flatListRef.current?.scrollToOffset({ offset: 0, animated: false }), 50);
+        }
+      }
 
       if (!cancelled) startPolling();
     }
@@ -247,6 +274,8 @@ export const CoachChatScreen: React.FC = () => {
     setInput('');
     setLoading(true);
     Keyboard.dismiss();
+
+    setShowGuide(false);
 
     // Stop auto-pinning to bottom; we'll control scroll manually from here
     pinToBottomRef.current = false;
@@ -345,22 +374,54 @@ export const CoachChatScreen: React.FC = () => {
         {/* Messages */}
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={showGuide ? [] : messages}
           keyExtractor={m => m.id}
           renderItem={({ item }) => <Bubble message={item} />}
+          ListHeaderComponent={showGuide ? (
+            <View style={styles.guideContainer}>
+              <Video
+                source={require('../../assets/images/Dragon_anime.mov')}
+                style={styles.guideVideo}
+                resizeMode={ResizeMode.CONTAIN}
+                shouldPlay
+                isLooping
+                isMuted
+              />
+              <Text style={styles.guideTitle}>
+                {parentName ? `Hi ${parentName}!` : 'Hi there!'}
+              </Text>
+              <Text style={styles.guideSubtitle}>
+                {`Let's support ${childName || 'your child'} today.\nHere's a few ideas for you:`}
+              </Text>
+              <View style={styles.suggestionsGrid}>
+                {SUGGESTIONS.map(s => (
+                  <TouchableOpacity
+                    key={s.title}
+                    style={styles.suggestionCard}
+                    onPress={() => setInput(s.prompt)}
+                    activeOpacity={0.75}
+                  >
+                    <Image source={s.image} style={styles.suggestionIcon} />
+                    <Text style={styles.suggestionCardTitle}>{s.title}</Text>
+                    <Text style={styles.suggestionCardSubtitle}>{s.prompt}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          ) : null}
           contentContainerStyle={styles.messageList}
           onLayout={(e) => setFlatListHeight(e.nativeEvent.layout.height)}
           onContentSizeChange={(_, h) => {
-            if (pinToBottomRef.current) scrollToEnd(false);
+            if (pinToBottomRef.current && !showGuide) scrollToEnd(false);
             prevContentHeightRef.current = h;
           }}
-          maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+          maintainVisibleContentPosition={showGuide ? undefined : { minIndexForVisible: 0 }}
           ListFooterComponent={
             <>
               {loading && (
                 <View style={styles.typingRow}>
                   <View style={styles.avatarWrap}>
-                    <Ionicons name="sparkles" size={14} color="#fff" />
+                    <Text style={styles.avatarN}>N</Text>
                   </View>
                   <View style={styles.typingBubble}>
                     {statusText
@@ -593,6 +654,12 @@ const styles = StyleSheet.create({
   avatarWrapPsych: {
     backgroundColor: '#0EA5E9',
   },
+  avatarN: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: FONTS.bold,
+    lineHeight: 17,
+  },
   psychLabel: {
     fontFamily: FONTS.semiBold,
     fontSize: 11,
@@ -813,5 +880,68 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     lineHeight: 20,
     paddingLeft: 8,
+  },
+
+  // Guide (empty state)
+  guideContainer: {
+    paddingHorizontal: 8,
+    paddingTop: 20,
+    paddingBottom: 8,
+  },
+  guideVideo: {
+    width: 100,
+    height: 100,
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  guideTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 22,
+    color: COLORS.textDark,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  guideSubtitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: COLORS.textDark, 
+    textAlign: 'center',
+    lineHeight: 25,
+    marginBottom: 24,
+  },
+  suggestionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  suggestionCard: {
+    width: '47%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 14,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  suggestionIcon: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
+    marginBottom: 4,
+  },
+  suggestionCardTitle: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: COLORS.textDark,
+    lineHeight: 18,
+  },
+  suggestionCardSubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 17,
   },
 });
