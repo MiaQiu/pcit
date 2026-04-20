@@ -1284,7 +1284,7 @@ Do not include markdown or whitespace (minified JSON).
     console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
 
     codingResults = await llmCall(userPrompt, {
-      model:        'claude-sonnet-4-6',
+      model:        'pcit',
       maxTokens:    8192,
       temperature:  0,
       systemPrompt: dpicsSystemPrompt,

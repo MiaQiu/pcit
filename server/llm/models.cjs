@@ -23,6 +23,11 @@ const MODELS = {
     primary:  process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview',
     streaming: true,
   },
+  // Gemini 3 Pro for PCIT coding — falls back to Claude Sonnet on failure
+  pcit: {
+    provider: 'gemini',
+    primary:  'gemini-3-pro-preview',
+  },
   // Anthropic path (AI_PROVIDER=claude-sonnet)
   claude: {
     provider: 'anthropic',
