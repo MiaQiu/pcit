@@ -18,7 +18,9 @@ import {
   Alert,
   Modal,
   ScrollView,
+  Keyboard,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
@@ -26,6 +28,37 @@ import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
+
+// ─── Message cache (past 2 days including today) ──────────────────────────────
+
+const CACHE_KEY = '@nora_coach_messages_cache';
+
+function twoDaysAgo(): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - 2);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+async function loadMessageCache(): Promise<Message[]> {
+  try {
+    const raw = await AsyncStorage.getItem(CACHE_KEY);
+    if (!raw) return [];
+    const msgs: Message[] = JSON.parse(raw);
+    const cutoff = twoDaysAgo();
+    return msgs.filter(m => m.createdAt && new Date(m.createdAt) >= cutoff);
+  } catch {
+    return [];
+  }
+}
+
+async function saveMessageCache(messages: Message[]): Promise<void> {
+  try {
+    const cutoff = twoDaysAgo();
+    const toSave = messages.filter(m => m.createdAt && new Date(m.createdAt) >= cutoff);
+    await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(toSave));
+  } catch {}
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -84,6 +117,10 @@ export const CoachChatScreen: React.FC = () => {
   const authService = useAuthService();
   const { markAsRead } = useCoachUnread();
   const flatListRef = useRef<FlatList>(null);
+  const latestServerTsRef = useRef<string | undefined>(undefined);
+  const optimisticIndexRef = useRef<number>(0);
+  const prevContentHeightRef = useRef(0);
+  const pinToBottomRef = useRef(true);
 
   const GREETING: Message = {
     id: '0',
@@ -99,38 +136,68 @@ export const CoachChatScreen: React.FC = () => {
   const [showTerms, setShowTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [statusText, setStatusText] = useState<string | null>(null);
+  const [flatListHeight, setFlatListHeight] = useState(600);
+  const [showSpacer, setShowSpacer] = useState(false);
 
-  const scrollToEnd = useCallback(() => {
-    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+  const scrollToEnd = useCallback((animated = true) => {
+    setTimeout(() => flatListRef.current?.scrollToEnd({ animated }), 100);
   }, []);
 
-  // Clear unread badge on entry and again on exit (covers messages received during the session)
+  // Clear unread badge on exit using the latest server timestamp to avoid device/server clock skew
   useEffect(() => {
-    markAsRead();
-    return () => { markAsRead(); };
+    return () => { markAsRead(latestServerTsRef.current); };
   }, [markAsRead]);
 
-  // Load full history on mount, then long-poll for new messages
+  // Load history (cache-first), then long-poll for new messages
   useEffect(() => {
     let cancelled = false;
     let since = new Date().toISOString();
 
-    // 1. Initial history load
-    authService.authenticatedRequest(`${API_URL}/api/coach/history`)
-      .then(r => r.json())
-      .then((data: { messages: Array<{ id: string; role: string; text: string; createdAt: string }> }) => {
-        if (cancelled) return;
-        if (data.messages && data.messages.length > 0) {
-          setMessages(data.messages as Message[]);
-          since = data.messages[data.messages.length - 1].createdAt;
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) startPolling();
-      });
+    async function init() {
+      // 1. Load cache — display instantly
+      const cached = await loadMessageCache();
+      if (cancelled) return;
 
-    // 2. Long-poll loop — holds until server pushes or 25s timeout
+      if (cached.length > 0) {
+        setMessages(cached);
+        since = cached[cached.length - 1].createdAt!;
+      } else {
+        // No cache — only fetch the past 2 days from server
+        since = twoDaysAgo().toISOString();
+      }
+
+      // 2. Fetch only messages newer than last cached from server
+      try {
+        const r = await authService.authenticatedRequest(
+          `${API_URL}/api/coach/history?since=${encodeURIComponent(since)}`
+        );
+        const data: { messages: Array<{ id: string; role: string; text: string; createdAt: string }> } = await r.json();
+        if (cancelled) return;
+
+        if (data.messages?.length > 0) {
+          const incoming = data.messages as Message[];
+          setMessages(prev => {
+            const isGreetingOnly = prev.length === 1 && prev[0].id === '0';
+            const base = isGreetingOnly ? cached : prev;
+            const existingIds = new Set(base.map(m => m.id));
+            const merged = [...base, ...incoming.filter(m => !existingIds.has(m.id))];
+            saveMessageCache(merged);
+            return merged.length > 0 ? merged : prev;
+          });
+          const lastTs = incoming[incoming.length - 1].createdAt;
+          since = lastTs;
+          latestServerTsRef.current = lastTs;
+          markAsRead(lastTs);
+        } else if (cached.length > 0) {
+          latestServerTsRef.current = since;
+          markAsRead(since);
+        }
+      } catch {}
+
+      if (!cancelled) startPolling();
+    }
+
+    // 3. Long-poll loop — holds until server pushes or 25s timeout
     function startPolling() {
       if (cancelled) return;
       authService.authenticatedRequest(
@@ -140,7 +207,6 @@ export const CoachChatScreen: React.FC = () => {
         .then((data: { messages: Array<{ id?: string; role?: string; text: string; createdAt?: string; type?: string }> }) => {
           if (cancelled) return;
           if (data.messages && data.messages.length > 0) {
-            // Separate status hints from real messages
             const statusEvent = data.messages.find(m => m.type === 'status');
             const realMessages = data.messages.filter(m => m.type !== 'status') as Message[];
 
@@ -149,18 +215,27 @@ export const CoachChatScreen: React.FC = () => {
             if (realMessages.length > 0) {
               setStatusText(null);
               setMessages(prev => {
-                const existingIds = new Set(prev.map(m => m.id));
+                // Strip optimistic messages now that server confirms the real ones
+                const base = prev.filter(m => !m.id.startsWith('opt-'));
+                const existingIds = new Set(base.map(m => m.id));
                 const newOnes = realMessages.filter(m => !existingIds.has(m.id!));
-                return newOnes.length > 0 ? [...prev, ...newOnes] : prev;
+                if (newOnes.length === 0) return prev;
+                const updated = [...base, ...newOnes];
+                saveMessageCache(updated);
+                return updated;
               });
-              since = realMessages[realMessages.length - 1].createdAt!;
+              const lastTs = realMessages[realMessages.length - 1].createdAt!;
+              since = lastTs;
+              latestServerTsRef.current = lastTs;
+              markAsRead(lastTs);
             }
           }
         })
         .catch(() => {})
-        .finally(() => startPolling()); // immediately reconnect
+        .finally(() => startPolling());
     }
 
+    init();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -171,7 +246,25 @@ export const CoachChatScreen: React.FC = () => {
 
     setInput('');
     setLoading(true);
-    scrollToEnd();
+    Keyboard.dismiss();
+
+    // Stop auto-pinning to bottom; we'll control scroll manually from here
+    pinToBottomRef.current = false;
+
+    // scrollTarget = top of where the new message will appear.
+    // If spacer is already shown, prevContentHeightRef includes its height — subtract it.
+    const scrollTarget = Math.max(0, prevContentHeightRef.current - (showSpacer ? flatListHeight : 0) - 16);
+    if (!showSpacer) setShowSpacer(true); // persist for the whole session — never remove
+
+    const optimisticId = `opt-${Date.now()}`;
+    const optimisticMsg: Message = { id: optimisticId, role: 'user', text, createdAt: new Date().toISOString() };
+    setMessages(prev => {
+      optimisticIndexRef.current = prev.length;
+      return [...prev, optimisticMsg];
+    });
+    setTimeout(() => {
+      flatListRef.current?.scrollToOffset({ offset: scrollTarget, animated: true });
+    }, 150);
 
     try {
       const response = await authService.authenticatedRequest(
@@ -186,16 +279,14 @@ export const CoachChatScreen: React.FC = () => {
       if (!response.ok) throw new Error(`Server error ${response.status}`);
       // Messages (user + AI) are delivered via the long-poll loop when publish() fires
     } catch {
-      const errMsg: Message = {
-        id: Date.now().toString(),
-        role: 'model',
-        text: 'Something went wrong. Please check your connection and try again.',
-      };
-      setMessages(prev => [...prev, errMsg]);
+      setMessages(prev => [
+        ...prev.filter(m => m.id !== optimisticId),
+        { id: Date.now().toString(), role: 'model', text: 'Something went wrong. Please check your connection and try again.' },
+      ]);
+      scrollToEnd();
     } finally {
       setLoading(false);
       setStatusText(null);
-      scrollToEnd();
     }
   }, [input, loading, scrollToEnd, authService]);
 
@@ -258,23 +349,31 @@ export const CoachChatScreen: React.FC = () => {
           keyExtractor={m => m.id}
           renderItem={({ item }) => <Bubble message={item} />}
           contentContainerStyle={styles.messageList}
-          onContentSizeChange={scrollToEnd}
+          onLayout={(e) => setFlatListHeight(e.nativeEvent.layout.height)}
+          onContentSizeChange={(_, h) => {
+            if (pinToBottomRef.current) scrollToEnd(false);
+            prevContentHeightRef.current = h;
+          }}
+          maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+          ListFooterComponent={
+            <>
+              {loading && (
+                <View style={styles.typingRow}>
+                  <View style={styles.avatarWrap}>
+                    <Ionicons name="sparkles" size={14} color="#fff" />
+                  </View>
+                  <View style={styles.typingBubble}>
+                    {statusText
+                      ? <AnimatedStatusText text={statusText} style={styles.statusText} />
+                      : <ActivityIndicator size="small" color={COLORS.mainPurple} />
+                    }
+                  </View>
+                </View>
+              )}
+              {showSpacer && <View style={{ height: flatListHeight }} />}
+            </>
+          }
         />
-
-        {/* Typing indicator */}
-        {loading && (
-          <View style={styles.typingRow}>
-            <View style={styles.avatarWrap}>
-              <Ionicons name="sparkles" size={14} color="#fff" />
-            </View>
-            <View style={styles.typingBubble}>
-              {statusText
-                ? <AnimatedStatusText text={statusText} style={styles.statusText} />
-                : <ActivityIndicator size="small" color={COLORS.mainPurple} />
-              }
-            </View>
-          </View>
-        )}
 
         {/* Input bar */}
         <View style={styles.inputBar}>
