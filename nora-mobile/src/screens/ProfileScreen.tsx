@@ -257,15 +257,8 @@ export const ProfileScreen: React.FC = () => {
     try {
       setLoggingOut(true);
 
-      // Call logout API (clears auth tokens)
       await authService.logout();
       amplitudeService.reset();
-
-      // Navigate to onboarding
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Onboarding' }],
-      });
     } catch (error) {
       console.error('Logout error:', error);
       Alert.alert('Error', 'Failed to log out. Please try again.');
