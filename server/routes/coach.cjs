@@ -239,10 +239,10 @@ async function executeTool(name, args, userId) {
 // ─── Tool → status text (shown to user while tool executes) ──────────────────
 
 const TOOL_STATUS = {
-  get_recent_sessions:      'Checking recent progress...',
-  get_child_milestone:      "Reviewing milestones...",
-  get_child_parent_profile: 'Pulling up profiles...',
-  get_transcript:           'Retrieving past sessions...',
+  get_recent_sessions:      'Reviewing recent play sessions...',
+  get_child_milestone:      "Understanding your child’s stage...",
+  get_child_parent_profile: 'Personalizing your answer...',
+  get_transcript:           'Reviewing recent play sessions...',
 };
 
 // ─── Gemini agent loop ────────────────────────────────────────────────────────
@@ -311,9 +311,11 @@ async function runAgentLoop(userId, userText, dbHistory, signal) {
     // Append model's tool-call turn
     contents.push({ role: 'model', parts: fnParts });
 
-    // Publish status for the first tool call so the client can show a hint
-    const statusText = TOOL_STATUS[fnParts[0].functionCall.name] ?? 'Looking something up...';
-    publish(userId, [{ type: 'status', text: statusText }]);
+    const statuses = fnParts.map(p => ({
+      type: 'status',
+      text: TOOL_STATUS[p.functionCall.name] ?? 'Looking something up...',
+    }));
+    publish(userId, statuses);
 
     // Execute tools (in parallel) and append results
     const responseParts = await Promise.all(
@@ -323,6 +325,7 @@ async function runAgentLoop(userId, userText, dbHistory, signal) {
       })
     );
     contents.push({ role: 'user', parts: responseParts });
+    publish(userId, [{ type: 'status', text: 'Almost ready...' }]);
   }
 
   throw new Error('Agent exceeded maximum tool-call turns without producing a reply');
@@ -431,9 +434,11 @@ async function runClaudeAgentLoop(userId, userText, dbHistory, signal) {
     // Append assistant's tool-call turn, then execute tools in parallel
     messages.push({ role: 'assistant', content });
 
-    // Publish status for the first tool call so the client can show a hint
-    const statusText = TOOL_STATUS[toolBlocks[0].name] ?? 'Looking something up...';
-    publish(userId, [{ type: 'status', text: statusText }]);
+    const statuses = toolBlocks.map(b => ({
+      type: 'status',
+      text: TOOL_STATUS[b.name] ?? 'Looking something up...',
+    }));
+    publish(userId, statuses);
 
     const toolResults = await Promise.all(
       toolBlocks.map(async b => {
@@ -442,6 +447,7 @@ async function runClaudeAgentLoop(userId, userText, dbHistory, signal) {
       })
     );
     messages.push({ role: 'user', content: toolResults });
+    publish(userId, [{ type: 'status', text: 'Almost ready...' }]);
   }
 
   throw new Error('Claude agent exceeded maximum tool-call turns without producing a reply');
@@ -506,8 +512,12 @@ router.get('/events', async (req, res, next) => {
  */
 router.get('/history', async (req, res, next) => {
   try {
+    const since = req.query.since ? new Date(req.query.since) : undefined;
     const messages = await prisma.coachChatMessage.findMany({
-      where: { userId: req.userId },
+      where: {
+        userId: req.userId,
+        ...(since ? { createdAt: { gt: since } } : {}),
+      },
       orderBy: { createdAt: 'asc' },
       select: { id: true, role: true, text: true, createdAt: true },
     });
