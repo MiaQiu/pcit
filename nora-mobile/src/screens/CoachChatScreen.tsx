@@ -192,7 +192,7 @@ export const CoachChatScreen: React.FC = () => {
         if (cancelled) return;
 
         if (data.messages?.length > 0) {
-          const incoming = data.messages as Message[];
+          const incoming = data.messages as Array<Message & { createdAt: string }>;
           setMessages(prev => {
             const base = prev.length === 0 ? cached : prev;
             const existingIds = new Set(base.map(m => m.id));

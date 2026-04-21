@@ -334,6 +334,61 @@ The three ways to notify a user about a weekly report:
 2. **Via visibility toggle** (`PUT /api/admin/weekly-reports/:id/visibility`) — manual one-off publish; includes `reportId`. Fires only on false→true transition.
 3. **Via Notifications page** (`POST /api/admin/notifications/send`) — manual blast with custom message; no `reportId` in payload.
 
+### Coach Chat (`/coach`)
+
+Real-time view of all parent conversations with the AI coach. Admins can monitor chats live, inject replies as either the AI model or a human psychologist, and abort stuck LLM calls.
+
+#### Chat List
+
+- Table of all users who have at least one coach message, ordered by most recent message
+- Columns: user name/email, last message preview, last message time, unread indicator
+- Click a row to open the conversation
+
+#### Conversation View
+
+Split layout:
+
+- **Left / message thread** — full conversation history rendered in the same bubble style as the mobile app:
+  - User messages: right-aligned grey
+  - Model (AI) messages: left-aligned with a sparkle icon
+  - Psychologist messages: left-aligned blue with a "Psychologist" label
+- **Right / compose panel** — send a reply as either role:
+  - Toggle between **Model** and **Psychologist** reply modes
+  - Text area + Send button
+  - **Stop Generation** button — aborts the in-flight Gemini/Claude request for this user via `agentBus`
+
+New messages from the mobile app appear in real time via the same long-poll bus used by the mobile client. There is no need to refresh.
+
+#### API Endpoints
+
+All require admin auth.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/admin/coach/chats` | List all users with chat history (last message + timestamp) |
+| `GET` | `/api/admin/coach/chats/:userId` | Full message history for a user |
+| `GET` | `/api/admin/coach/events/:userId?since=` | Long-poll for new messages in a user's chat (same `chatBus` as mobile) |
+| `POST` | `/api/admin/coach/chats/:userId/reply` | Inject a message. Body: `{ text, mode: 'model' \| 'psychologist' }`. Published via `chatBus` — appears in mobile within one poll cycle |
+| `POST` | `/api/admin/coach/chats/:userId/stop` | Abort in-flight Gemini/Claude call via `agentBus.abort(userId)` |
+| `GET` | `/api/admin/coach/users?q=` | Paginated user search with chat count |
+| `GET` | `/api/admin/coach/psychologist-requests` | Open "Talk to a Psychologist" support tickets |
+| `POST` | `/api/admin/coach/psychologist-requests/:id/dismiss` | Mark a psychologist request resolved |
+
+#### Psychologist Requests
+
+When a parent taps "Talk to a Psychologist" in the mobile app and agrees to the terms, a support ticket is created. Admins see open tickets in a dedicated list. Clicking a ticket navigates to that user's conversation. Once handled, dismiss the ticket via the button in the list.
+
+#### How Real-time Delivery Works
+
+The admin portal uses the same `chatBus.cjs` long-poll bus as the mobile app:
+
+- Admin page opens `GET /api/admin/coach/events/:userId?since=<ISO>` — server holds the connection for up to 25 seconds
+- When the mobile app sends a message (`POST /api/coach/chat`), the server publishes to the bus and the admin's open connection wakes immediately
+- Similarly, when an admin sends a reply, the server publishes to the bus and the **mobile app's** open connection wakes — the message appears on the parent's phone within ~1 second
+- The connection is re-established automatically on each resolution (empty timeout or real messages), creating a continuous loop
+
+Because the bus is in-process memory, this only works when both the admin browser tab and the mobile app are connected to the **same server instance**. Multi-instance deployments would require a shared broker (e.g. Redis pub/sub).
+
 ### Push to Prod (sidebar button)
 
 A "Push to Prod" button lives at the bottom of the sidebar, above Logout.

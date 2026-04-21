@@ -940,7 +940,7 @@ export const HomeScreen_v2: React.FC = () => {
 
       {/* Floating chat bubble — only shown after first completed play session */}
       {hasAnySession && <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => navigation.push('CoachChat')}>
-        <Ionicons name="chatbubble-ellipses" size={26} color="#fff" />
+        <Ionicons name="chatbox-ellipses" size={26} color="#fff" />
         {unreadCount > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : String(unreadCount)}</Text>
