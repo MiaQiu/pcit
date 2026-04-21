@@ -90,15 +90,16 @@ All calls go through `llmCall()` and follow `AI_PROVIDER` unless noted.
 | Label | Output | Model | Schema | Temperature |
 |-------|--------|-------|--------|-------------|
 | `role-id` | json | `AI_PROVIDER` | — | 0.3 |
-| `pcit-coding` | array | `AI_PROVIDER` | `PCIT_CODING` | 0 |
+| `pcit-coding` | array | `gemini-3-pro-preview` **(streaming)** → Claude Sonnet fallback | — | 0 |
 | `dev-profiling` | json | `AI_PROVIDER` | `DEV_PROFILING` | 0.5 |
+| `coaching-notifications` | json | `gemini-3-pro-preview` **(streaming)** → Claude Sonnet fallback | — | 0.5 |
 | `coaching-format` | json | `AI_PROVIDER` | `COACHING_FORMAT` | 0 |
 | `combined-feedback` | json | `AI_PROVIDER` | `COMBINED_FEEDBACK` | 0.7 |
 | `review-feedback` | array | `AI_PROVIDER` | `REVIEW_FEEDBACK` | 0.5 |
 | `gemini-flash-raw` | text | `AI_PROVIDER` | — | 0.7 (about-child step 1) |
 | `about-child-step3` | array | `AI_PROVIDER` | — | 0.3 (about-child step 3) |
-| CDI coaching | text | `GEMINI_STREAMING_MODEL` (streaming) → Claude Sonnet fallback | — | 0.5 |
-| PDI two-choices | text | `GEMINI_STREAMING_MODEL` (streaming) → Claude Sonnet fallback | — | 0.7 |
+| CDI coaching | text | `GEMINI_STREAMING_MODEL` **(streaming)** → Claude Sonnet fallback | — | 0.5 |
+| PDI two-choices | text | `GEMINI_STREAMING_MODEL` **(streaming)** → Claude Sonnet fallback | — | 0.7 |
 
 ### `milestoneDetectionService.cjs` — 1 call
 
@@ -259,6 +260,8 @@ const result = await llmCall(prompt, { model: 'claude-opus-4-6', label: 'my-call
 ## Provider Notes
 
 **Gemini** — system prompt is prepended to the user message (no separate system field in the API). Structured output via `responseSchema` prevents malformed JSON at the token level.
+
+> **⚠ Always use `callGeminiStreaming` for `gemini-3-pro-preview`** — this model silently "thinks" for 30-60 s before producing output, which causes `AbortError`/`ECONNRESET` on the blocking `:generateContent` endpoint. `callGeminiStreaming` uses the SSE endpoint (`:streamGenerateContent?alt=sse`) and keeps the connection alive with heartbeat chunks. Do **not** route `gemini-3-pro-preview` calls through `llmCall`.
 
 **Claude** — uses the `system` field in the messages API. Does not support `responseSchema`; JSON reliability relies on jsonrepair + LLM retry.
 
