@@ -298,6 +298,7 @@ async function callGeminiStreaming(contents, options = {}) {
     timeout = 300000,  // 5 minutes for thinking models
     maxRetries = 3,
     sessionId = null,
+    model: modelOverride = null,
   } = options;
 
   let lastError;
@@ -314,7 +315,7 @@ async function callGeminiStreaming(contents, options = {}) {
         await new Promise(resolve => setTimeout(resolve, attempt * 5000));
       }
 
-      const streamingModel = process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview';
+      const streamingModel = modelOverride || process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview';
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${streamingModel}:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`,
         {
@@ -1356,19 +1357,21 @@ Do not include markdown or whitespace (minified JSON).
 - Last character of your response MUST be ]
 - Every parent segment MUST have both "code" and "feedback" fields${primaryLanguage && primaryLanguage !== 'eng' ? `\n- Always keep "code" values as English DPICS codes (e.g. LP, BD, RF). Write the "feedback" field in ${getLanguageInstruction(primaryLanguage).replace('Write your entire response in ', '').replace('.', '')}.` : ''}`;
 
-    console.log(`📊 [ANALYSIS-STEP-8] Calling ${AI_PROVIDER} for PCIT coding...`);
+    console.log(`📊 [ANALYSIS-STEP-8] Calling gemini-3-pro-preview streaming for PCIT coding...`);
     console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
 
-    codingResults = await llmCall(userPrompt, {
-      model:        'pcit',
-      maxTokens:    8192,
-      temperature:  0,
-      systemPrompt: dpicsSystemPrompt,
-      output:       'array',
-      label:        'pcit-coding',
-      schema:       SCHEMAS.PCIT_CODING,
+    const pcitContents = [{
+      role: 'user',
+      parts: [{ text: `${dpicsSystemPrompt}\n\n${userPrompt}` }]
+    }];
+    const rawCoding = await callGeminiStreaming(pcitContents, {
+      model:          'gemini-3-pro-preview',
+      temperature:    0,
+      maxOutputTokens: 8192,
+      timeout:        300000,
       sessionId,
     });
+    ({ value: codingResults } = parseJSON(rawCoding, 'array'));
 
     if (!Array.isArray(codingResults)) {
       throw new Error('Expected array of coding results');
