@@ -16,7 +16,7 @@
  */
 
 const { resolveModel }    = require('./models.cjs');
-const { geminiCall }      = require('./providers/gemini.cjs');
+const { geminiCall, geminiStreamCall } = require('./providers/gemini.cjs');
 const { anthropicCall }   = require('./providers/anthropic.cjs');
 const { parseJSON }       = require('./repair.cjs');
 const { logLLMCall }      = require('./logger.cjs');
@@ -155,7 +155,7 @@ function _isRetryable(err) {
  */
 function _getFallback(modelDef) {
   if (modelDef.provider === 'gemini' && modelDef.fallback) {
-    return { provider: 'gemini', primary: modelDef.fallback, fallback: null };
+    return resolveModel(modelDef.fallback);
   }
   const fallbackDef = _fallbackModelDef();
   if (fallbackDef.primary === modelDef.primary) return null; // already on fallback
@@ -208,9 +208,26 @@ async function _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temp
  */
 async function _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig) {
   if (modelDef.provider === 'gemini') {
+    if (modelDef.streaming) {
+      return _geminiStreamCall(modelDef.primary, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig);
+    }
     return _geminiCall(modelDef.primary, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig);
   }
   return _claudeCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout);
+}
+
+async function _geminiStreamCall(model, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
+
+  const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
+  const body = {
+    contents:         [{ parts: [{ text: fullPrompt }] }],
+    generationConfig: { temperature, maxOutputTokens: maxTokens, ...extraConfig },
+  };
+
+  const { text, usage } = await geminiStreamCall(apiKey, model, body, { timeout });
+  return { text, usage, model, fallback: false };
 }
 
 async function _geminiCall(model, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig) {

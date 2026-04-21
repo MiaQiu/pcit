@@ -798,7 +798,7 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
 
     let formatted;
     try {
-      formatted = await llmCall(formatPrompt, { model: 'flash', maxTokens: 2048, temperature: 0, label: 'coaching-format', schema: SCHEMAS.COACHING_FORMAT, sessionId });
+      formatted = await llmCall(formatPrompt, { model: 'flash', maxTokens: 4096, temperature: 0, label: 'coaching-format', schema: SCHEMAS.COACHING_FORMAT, sessionId });
     } catch (formatError) {
       console.error('❌ [CDI-COACHING] Format call failed:', formatError.message);
       return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal, notifications };

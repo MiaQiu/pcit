@@ -5,11 +5,17 @@
  * To add or swap a model, change it here — nothing else needs to change.
  */
 const MODELS = {
-  // Fast, cheap — default for all analysis calls
+  // Fast, cheap — default for all analysis calls; falls back to FALLBACK_MODEL (Claude Sonnet)
   flash: {
     provider: 'gemini',
-    primary:  'gemini-2.0-flash',
-    fallback: 'gemini-3-flash-preview',
+    primary:  'gemini-2.5-flash',
+    fallback: 'gemini-2.0-flash',
+  },
+  // Gemini 3 Flash — uses streaming endpoint to avoid connection resets
+  'gemini-3-flash-preview': {
+    provider:  'gemini',
+    primary:   'gemini-3-flash-preview',
+    streaming: true,
   },
   // Gemini 3 — for notification generation
   'flash-3': {

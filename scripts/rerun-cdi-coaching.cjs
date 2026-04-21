@@ -124,7 +124,7 @@ async function main() {
 
   // Write back to session
   const coachingCards = result.coachingCards
-    ? { sections: result.coachingCards, tomorrowGoal: result.tomorrowGoal || null }
+    ? { sections: result.coachingCards, tomorrowGoal: result.tomorrowGoal || null, notifications: result.notifications || null }
     : null;
 
   await prisma.session.update({
@@ -134,7 +134,7 @@ async function main() {
       coachingCards
     }
   });
-  console.log(`\nSession updated — coachingCards (${result.coachingCards?.length || 0} sections) and coachingSummary written to DB.`);
+  console.log(`\nSession updated — coachingCards (${result.coachingCards?.length || 0} sections), tomorrowGoal, notifications written to DB.`);
 
   await prisma.$disconnect();
 }
