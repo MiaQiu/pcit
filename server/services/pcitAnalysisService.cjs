@@ -203,6 +203,77 @@ function formatUtterancesForPrompt(utterances) {
 }
 
 // ============================================================================
+// Performance vs Goal Section Builder
+// ============================================================================
+
+const METRIC_ALIASES = {
+  praise:    ['praise', 'praises', 'labeled praise', 'labeled praises'],
+  echo:      ['refl', 'reflection', 'reflections', 'echo'],
+  narration: ['behav_desc', 'behavioral description', 'behavioral descriptions', 'narrate', 'narration'],
+  question:  ['question', 'questions', 'ques'],
+  command:   ['command', 'commands', 'cmd'],
+  criticism: ['criticism', 'criticisms', 'crit'],
+};
+const METRIC_DISPLAY = {
+  praise: 'Praises', echo: 'Refl', narration: 'Narrate',
+  question: 'Ques', command: 'Cmd', criticism: 'Crit',
+};
+
+function parseGoalMeta(goalText) {
+  if (!goalText) return null;
+  const lower = goalText.toLowerCase();
+  let metricKey = null;
+  for (const [key, aliases] of Object.entries(METRIC_ALIASES)) {
+    if (aliases.some(a => lower.includes(a))) { metricKey = key; break; }
+  }
+  const numMatch = goalText.match(/\b(\d+)\b/);
+  const target = numMatch ? parseInt(numMatch[1], 10) : null;
+  return metricKey && target ? { metricKey, target } : null;
+}
+
+function buildPerformanceVsGoalSection(historicalCdiSessions, currentTagCounts, yesterdayGoal) {
+  const sessions = historicalCdiSessions || [];
+  if (sessions.length === 0 && !yesterdayGoal) return 'No prior sessions.';
+
+  const fmtDate = (d) => {
+    const dt = new Date(d);
+    return `${dt.toLocaleString('en-US', { month: 'short' })} ${dt.getDate()}`;
+  };
+
+  const lines = [];
+
+  sessions.forEach((s, i) => {
+    const tc = s.tagCounts || {};
+    const prev = i > 0 ? sessions[i - 1] : null;
+    const goalText = s.sessionGoal || prev?.tomorrowGoal || null;
+    const meta = parseGoalMeta(goalText);
+    const prevTc = prev?.tagCounts || {};
+
+    const goalPart = meta
+      ? `Goal: ${METRIC_DISPLAY[meta.metricKey]} (${meta.target})`
+      : goalText ? `Goal: ${goalText.substring(0, 35)}` : 'Goal: -';
+    const actualPart = meta
+      ? ` | actual ${prevTc[meta.metricKey] ?? '-'} -> ${tc[meta.metricKey] ?? 0}`
+      : '';
+
+    lines.push(`[${fmtDate(s.createdAt)}, S${i + 1}] ${goalPart}${actualPart}`);
+  });
+
+  // Current session row
+  const lastTc = sessions[sessions.length - 1]?.tagCounts || {};
+  const meta = parseGoalMeta(yesterdayGoal);
+  const goalPart = meta
+    ? `Goal: ${METRIC_DISPLAY[meta.metricKey]} (${meta.target})`
+    : yesterdayGoal ? `Goal: ${yesterdayGoal.substring(0, 35)}` : 'Goal: -';
+  const actualPart = meta
+    ? ` | actual ${lastTc[meta.metricKey] ?? '-'} -> ${currentTagCounts[meta.metricKey] ?? 0}`
+    : '';
+  lines.push(`[Today] ${goalPart}${actualPart}`);
+
+  return lines.join('\n');
+}
+
+// ============================================================================
 // Gemini Streaming Helper (for thinking models)
 // ============================================================================
 
@@ -666,9 +737,39 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
 
   const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
   variables.LANGUAGE_INSTRUCTION = getLanguageInstruction(language);
+
+  console.log(`📊 [CDI-COACHING] Step 1: Generating notifications and tomorrow goal...`);
+
+  // Step 1: Notifications first — determines the tomorrow goal via ZPD logic
+  const { name, ageMonths, yesterdayGoal, historicalCdiSessions } = childInfo;
+  let tomorrowGoal = null;
+  let notifications = null;
+  try {
+    const notifPrompt = loadPromptWithVariables('cdiCoachingNotifications', {
+      CHILD_NAME:                    name || 'your child',
+      CHILD_AGE_MONTHS:              String(ageMonths || 'unknown'),
+      SESSION_DURATION:              variables.SESSION_DURATION,
+      SESSION_METRICS:               variables.SESSION_METRICS,
+      YESTERDAY_GOAL_SECTION:        yesterdayGoal ? `Yesterday's Focus Goal: ${yesterdayGoal}` : 'None',
+      HISTORICAL_METRICS_SECTION:    variables.HISTORICAL_METRICS_SECTION || 'No prior sessions.',
+      PERFORMANCE_VS_GOAL_SECTION:   buildPerformanceVsGoalSection(historicalCdiSessions, tagCounts, yesterdayGoal)
+    });
+    const { value: notifResult } = parseJSON(
+      await llmCall(notifPrompt, { model: 'flash-3', maxTokens: 4096, temperature: 0.5, output: 'text', label: 'coaching-notifications', sessionId }),
+      'object'
+    );
+    tomorrowGoal = notifResult?.['tomorrow goal'] || null;
+    notifications = notifResult?.notification || null;
+    console.log(`✅ [CDI-COACHING] Notifications generated`);
+  } catch (notifError) {
+    console.warn('⚠️ [CDI-COACHING] Notifications generation failed:', notifError.message);
+  }
+
+  // Step 2: Coaching report — tomorrow goal injected so narrative reinforces the decided goal
+  variables.TOMORROW_GOAL = tomorrowGoal || 'Continue building connection through play.';
   const prompt = loadPromptWithVariables('cdiCoaching', variables);
 
-  console.log(`📊 [CDI-COACHING] Calling Gemini API for coaching report...`);
+  console.log(`📊 [CDI-COACHING] Step 2: Calling Gemini API for coaching report...`);
 
   try {
     const userMessage = {
@@ -685,8 +786,8 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
 
     console.log(`✅ [CDI-COACHING] Gemini coaching report received (${coachingReport.length} chars)`);
 
-    // Follow-up call to select 3 sections and format for mobile
-    console.log(`📊 [CDI-COACHING] Calling ${AI_PROVIDER} to format 3 coaching sections...`);
+    // Step 3: Format coaching report for mobile
+    console.log(`📊 [CDI-COACHING] Step 3: Calling ${AI_PROVIDER} to format coaching sections...`);
 
     const formatPrompt = loadPromptWithVariables('cdiCoachingFormat', {
       COACHING_REPORT: coachingReport
@@ -697,38 +798,13 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
       formatted = await llmCall(formatPrompt, { model: 'flash', maxTokens: 2048, temperature: 0, label: 'coaching-format', schema: SCHEMAS.COACHING_FORMAT, sessionId });
     } catch (formatError) {
       console.error('❌ [CDI-COACHING] Format call failed:', formatError.message);
-      return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal: null };
-    }
-
-    // Generate notifications from a dedicated prompt
-    let notifications = null;
-    try {
-      const { name, ageMonths, yesterdayGoal } = childInfo;
-      const sessionMetrics = variables.SESSION_METRICS;
-      const tomorrowGoal = formatted.tomorrowGoal || null;
-      const notifPrompt = loadPromptWithVariables('cdiCoachingNotifications', {
-        CHILD_NAME: name || 'your child',
-        CHILD_AGE_MONTHS: String(ageMonths || 'unknown'),
-        SESSION_METRICS: sessionMetrics,
-        YESTERDAY_GOAL_SECTION: yesterdayGoal
-          ? `Yesterday's Focus Goal: ${yesterdayGoal}`
-          : '',
-        TOMORROW_GOAL_SECTION: tomorrowGoal || 'Continue building connection through play.'
-      });
-      const { value } = parseJSON(
-        await llmCall(notifPrompt, { model: 'flash-3', maxTokens: 4096, temperature: 0.5, output: 'text', label: 'coaching-notifications', sessionId }),
-        'object'
-      );
-      notifications = value;
-      console.log(`✅ [CDI-COACHING] Notifications generated`);
-    } catch (notifError) {
-      console.warn('⚠️ [CDI-COACHING] Notifications generation failed:', notifError.message);
+      return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal, notifications };
     }
 
     const result = {
       coachingSummary: coachingReport,
       coachingCards: formatted.sections || null,
-      tomorrowGoal: formatted.tomorrowGoal || null,
+      tomorrowGoal: formatted.tomorrowGoal || tomorrowGoal || null,
       notifications: notifications || null
     };
 
