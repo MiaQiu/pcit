@@ -341,6 +341,7 @@ export const ReportScreen: React.FC = () => {
 
   const dismissChatDemoMessage = useCallback(() => {
     setShowChatDemoMessage(false);
+    AsyncStorage.setItem('@report_chat_demo_shown', 'true');
   }, []);
 
   const handleScroll = useCallback((event: any) => {
