@@ -756,7 +756,9 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
       PERFORMANCE_VS_GOAL_SECTION:   buildPerformanceVsGoalSection(historicalCdiSessions, tagCounts, yesterdayGoal)
     });
     const { value: notifResult } = parseJSON(
-      await llmCall(notifPrompt, { model: 'flash-3', maxTokens: 4096, temperature: 0.5, output: 'text', label: 'coaching-notifications', sessionId }),
+      await callGeminiStreaming([{ role: 'user', parts: [{ text: notifPrompt }] }], {
+        model: 'gemini-3-pro-preview', temperature: 0.5, maxOutputTokens: 4096, timeout: 300000, sessionId
+      }),
       'object'
     );
     tomorrowGoal = notifResult?.['tomorrow goal'] || null;
