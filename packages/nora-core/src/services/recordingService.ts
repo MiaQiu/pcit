@@ -252,19 +252,25 @@ class RecordingService {
       throw new Error(data.message || 'Analysis still processing');
     }
 
-    if (response.status === 500) {
-      // Analysis failed
+    if (response.status === 500 || response.status === 503) {
       const errorData = await response.json();
-      const errorMessage = errorData.message || errorData.error || 'Report generation failed';
 
-      // Create error with clear message that includes "Report generation failed" for detection
+      // Only treat as permanent failure if the backend explicitly marked it as failed.
+      // A generic 500 (e.g. DB connection pool timeout) should be treated as transient.
+      if (errorData.status !== 'failed') {
+        console.warn('[RecordingService] Transient server error on analysis endpoint, will retry:', errorData.error || errorData.details);
+        throw new Error(errorData.error || 'Service temporarily unavailable');
+      }
+
+      // Explicit permanent failure from backend
+      const errorMessage = errorData.message || errorData.error || 'Report generation failed';
       const failedError: any = new Error(`Report generation failed: ${errorMessage}`);
       failedError.status = 'failed';
       failedError.userMessage = errorMessage;
       failedError.failedAt = errorData.failedAt;
       failedError.originalError = errorData.error;
 
-      console.error('[RecordingService] Analysis failed:', {
+      console.error('[RecordingService] Analysis permanently failed:', {
         status: failedError.status,
         message: failedError.message,
         userMessage: failedError.userMessage

@@ -35,6 +35,7 @@ const DRAGON_ANIMATION = require('../../assets/images/Dragon_anime.mov');
 import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
+import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { getTodaySingapore, toSingaporeDateString, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
 import * as userStorage from '../lib/userStorage';
@@ -190,6 +191,7 @@ export const HomeScreen_v2: React.FC = () => {
   const lessonService = useLessonService();
   const authService = useAuthService();
   const recordingService = useRecordingService();
+  const uploadProcessing = useUploadProcessing();
   const { isOnline } = useNetworkStatus();
 
   const dragonVideoRef = useRef<Video>(null);
@@ -454,6 +456,13 @@ export const HomeScreen_v2: React.FC = () => {
     }, [])
   );
 
+  // Auto-refresh when upload processing completes
+  useEffect(() => {
+    if (uploadProcessing.reportCompletedTimestamp) {
+      loadData('background');
+    }
+  }, [uploadProcessing.reportCompletedTimestamp]);
+
   // Show tip for 3 seconds starting 1s after animation begins or loops
   const showTipSequence = useCallback(() => {
     if (tipTimerRef.current) {
@@ -509,11 +518,8 @@ export const HomeScreen_v2: React.FC = () => {
     navigation.push('Report', { recordingId: latestRecordingId });
   };
 
-  const handleRecordAgain = async () => {
-    const reportReadKey = `report_read_${getTodaySingapore()}`;
-    await userStorage.removeItem(reportReadKey);
-    setIsReportRead(false);
-    navigation.navigate('MainTabs', { screen: 'Record' });
+  const handleRecordAgain = () => {
+    navigation.navigate('MainTabs', { screen: 'Record', params: { autoStart: true } });
   };
 
   const handlePlanItemPress = async (item: TodayPlanItem) => {
@@ -846,6 +852,18 @@ export const HomeScreen_v2: React.FC = () => {
               >
                 <Text style={styles.skipButtonText}>Skip for now</Text>
               </TouchableOpacity>
+            </>
+          ) : uploadProcessing.isProcessing ? (
+            <>
+              <View style={styles.massageHeader}>
+                <View style={styles.greenDot} />
+                <Text style={styles.massageLabel}>Daily Emotional Massage</Text>
+              </View>
+              <Text style={styles.massageBody}>
+                {'Great session! We\'re analyzing your playtime with '}
+                <Text style={styles.massageChildName}>{childName}</Text>
+                {'. Your report will be ready in a moment.'}
+              </Text>
             </>
           ) : !hasRecordedSession ? (
             <>
