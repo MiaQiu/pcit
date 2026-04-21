@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator, TextInput, LayoutAnimation, Platform, UIManager, Animated } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator, TextInput, LayoutAnimation, Platform, UIManager, Animated, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -323,6 +323,49 @@ export const ReportScreen: React.FC = () => {
   const [showPhaseCelebration, setShowPhaseCelebration] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
+  // One-time coach chat demo bubble
+  const [showChatDemo, setShowChatDemo] = useState(false);
+  const [showChatDemoMessage, setShowChatDemoMessage] = useState(true);
+  const chatDemoAnim = useRef(new Animated.Value(0)).current;
+  const chatDemoJump = useRef(new Animated.Value(0)).current;
+  const aboutChildSectionY = useRef<number | null>(null);
+  const chatDemoTriggered = useRef(false);
+
+  const dismissChatDemo = useCallback(async (navigate = false) => {
+    Animated.timing(chatDemoAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
+      setShowChatDemo(false);
+    });
+    await AsyncStorage.setItem('@report_chat_demo_shown', 'true');
+    if (navigate) navigation.push('CoachChat');
+  }, [chatDemoAnim, navigation]);
+
+  const dismissChatDemoMessage = useCallback(() => {
+    setShowChatDemoMessage(false);
+  }, []);
+
+  const handleScroll = useCallback((event: any) => {
+    if (chatDemoTriggered.current || aboutChildSectionY.current === null) return;
+    const scrollY = event.nativeEvent.contentOffset.y;
+    const screenHeight = Dimensions.get('window').height;
+    if (scrollY + screenHeight * 0.65 >= aboutChildSectionY.current) {
+      chatDemoTriggered.current = true;
+      AsyncStorage.getItem('@report_chat_demo_shown').then(shown => {
+        if (shown) return;
+        setShowChatDemo(true);
+        Animated.spring(chatDemoAnim, { toValue: 1, useNativeDriver: true, tension: 60, friction: 10 }).start(() => {
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(chatDemoJump, { toValue: -12, duration: 200, useNativeDriver: true }),
+              Animated.spring(chatDemoJump, { toValue: 0, useNativeDriver: true, tension: 120, friction: 6 }),
+              Animated.delay(1800),
+            ]),
+            { iterations: 3 }
+          ).start();
+        });
+      });
+    }
+  }, [chatDemoAnim]);
+
   const handleSentimentPress = useCallback((sentiment: 'positive' | 'negative') => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setFeedbackSentiment(sentiment);
@@ -377,6 +420,15 @@ export const ReportScreen: React.FC = () => {
     recordingService.getDevelopmentalProgress().then(data => {
       if (data) setDevelopmentalProgress(data);
     }).catch(() => {});
+    // Show bubble immediately (no animation, no message) if demo was already seen
+    AsyncStorage.getItem('@report_chat_demo_shown').then(shown => {
+      if (shown) {
+        chatDemoAnim.setValue(1);
+        setShowChatDemoMessage(false);
+        setShowChatDemo(true);
+        chatDemoTriggered.current = true;
+      }
+    });
   }, [recordingId]);
 
   const handleDomainPress = async (domain: DomainType) => {
@@ -527,6 +579,8 @@ export const ReportScreen: React.FC = () => {
         className="flex-1"
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={200}
       >
         {/* Header with Dragon Icon and Encouragement Message */}
         <View style={styles.headerSection}>
@@ -750,7 +804,7 @@ export const ReportScreen: React.FC = () => {
             : [];
 
           return (
-            <View>
+            <View onLayout={e => { aboutChildSectionY.current = e.nativeEvent.layout.y; }}>
               <Text style={styles.cardTitle}>What we learnt about {childName}</Text>
               <View style={styles.card}>
                 {/* Observation */}
@@ -1060,6 +1114,32 @@ export const ReportScreen: React.FC = () => {
           </Button>
         </View> */}
       </ScrollView>
+
+      {showChatDemo && (
+        <Animated.View
+          style={[
+            styles.chatDemoBubble,
+            {
+              opacity: chatDemoAnim,
+              transform: [{ translateY: chatDemoAnim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
+            },
+          ]}
+        >
+          {showChatDemoMessage && (
+            <View style={styles.chatDemoMessageRow}>
+              <Text style={styles.chatDemoText}>Discuss the session with our friendly AI coach Nora.</Text>
+              <TouchableOpacity onPress={dismissChatDemoMessage} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close" size={18} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+          )}
+          <Animated.View style={{ transform: [{ translateY: chatDemoJump }], alignSelf: 'flex-end' }}>
+            <TouchableOpacity style={styles.chatDemoIconCircle} activeOpacity={0.85} onPress={() => dismissChatDemo(true)}>
+              <Ionicons name="chatbox-ellipses" size={26} color="#fff" />
+            </TouchableOpacity>
+          </Animated.View>
+        </Animated.View>
+      )}
 
       <PhaseCelebrationModal
         visible={showPhaseCelebration}
@@ -2138,5 +2218,51 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4B5563',
     lineHeight: 21,
+  },
+  chatDemoBubble: {
+    position: 'absolute',
+    bottom: 100,
+    right: 20,
+    width: 260,
+  },
+  chatDemoMessageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingLeft: 14,
+    paddingRight: 10,
+    marginBottom: 10,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
+    borderWidth: 1.5,
+    borderColor: '#EDE9FE',
+  },
+  chatDemoText: {
+    flex: 1,
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#1F2937',
+    lineHeight: 20,
+  },
+  chatDemoIconCircle: {
+    alignSelf: 'flex-end',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#8C49D5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
 });
