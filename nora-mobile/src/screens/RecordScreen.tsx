@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, ActivityIndicator, AppState, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, ActivityIndicator, AppState, Linking, InteractionManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect, useRoute, RouteProp } from '@react-navigation/native';
 import { RootTabParamList } from '../navigation/types';
@@ -23,7 +23,7 @@ import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendNewReportNotification } from '../utils/notifications';
-import { startRecording as startNativeRecording, stopRecording as stopNativeRecording, getRecordingStatus, addAutoStopListener, removeAutoStopListener, getPendingRecording, endBackgroundTask, setCompletionSound } from '../utils/AudioSessionManager';
+import { startRecording as startNativeRecording, stopRecording as stopNativeRecording, getRecordingStatus, addAutoStopListener, removeAutoStopListener, getPendingRecording, endBackgroundTask, setCompletionSound as setNativeCompletionSound } from '../utils/AudioSessionManager';
 import type { EmitterSubscription } from 'react-native';
 import { ErrorMessages } from '../utils/errorMessages';
 import { handleApiError } from '../utils/NetworkMonitor';
@@ -96,6 +96,13 @@ export const RecordScreen: React.FC = () => {
     const subscription = AppState.addEventListener('change', async (nextAppState) => {
       console.log('[AppState] Changed to:', nextAppState);
 
+      // When returning to foreground, kick off pending-recording check immediately
+      // (don't wait for getRecordingStatus — the auto-stop may have already fired
+      // in the background and checkPendingRecording handles that path).
+      if (nextAppState === 'active') {
+        checkPendingRecording();
+      }
+
       // Check native recording status when app state changes
       try {
         const status = await getRecordingStatus();
@@ -104,26 +111,19 @@ export const RecordScreen: React.FC = () => {
         // CRITICAL: Stop duration polling when backgrounded to prevent CPU resource fatal
         if (nextAppState === 'background' && status.isRecording) {
           console.log('[AppState] App backgrounded while recording - STOPPING duration polling to save CPU');
-          // Clear the duration interval to prevent excessive bridge calls
           if (durationIntervalRef.current) {
             clearInterval(durationIntervalRef.current);
             durationIntervalRef.current = null;
           }
         }
 
-        // CRITICAL: Resume duration polling when returning to foreground
+        // CRITICAL: Resume duration polling when returning to foreground (only if still recording)
         if (nextAppState === 'active' && status.isRecording) {
           console.log('[AppState] App foregrounded while recording - RESUMING duration polling');
-          // Restart the duration interval for UI updates
           startDurationPolling();
         }
       } catch (error) {
         console.log('[AppState] Could not get native recording status:', error);
-      }
-
-      // When app comes back to foreground, check for pending recordings
-      if (nextAppState === 'active') {
-        checkPendingRecording();
       }
     });
 
@@ -248,12 +248,15 @@ export const RecordScreen: React.FC = () => {
         screen: 'record',
       });
 
-      // Auto-start: show RecordingCard immediately, start recording in parallel
+      // Auto-start: show RecordingCard immediately, defer startRecording until
+      // after the tab navigation animation completes so the JS bridge is free.
       if (route.params?.autoStart) {
         navigation.setParams({ autoStart: undefined } as any);
         setRecordingDuration(0);
         setRecordingState('recording');
-        startRecording();
+        InteractionManager.runAfterInteractions(() => {
+          startRecording();
+        });
         return;
       }
 
@@ -343,7 +346,7 @@ export const RecordScreen: React.FC = () => {
       });
 
       // Set completion sound before starting recording
-      setCompletionSound(completionSound);
+      setNativeCompletionSound(completionSound);
 
       // Start native recording: 5 min for Special Time, 10 min for Discipline
       const durationSec = sessionMode === 'discipline' ? 600 : 300;
