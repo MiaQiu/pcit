@@ -22,6 +22,15 @@ The Vite dev server proxies `/api` to `localhost:3001` (local backend).
 
 ## Deploying
 
+### Switching the API backend (dev ↔ prod)
+
+```bash
+./admin-switch.sh dev    # point admin.hinora.co → dev App Runner (us-east-1)
+./admin-switch.sh prod   # point admin.hinora.co → prod App Runner (ap-southeast-1)
+```
+
+`admin-switch.sh` rewrites `admin/vercel.json` with the correct App Runner URL and immediately redeploys to Vercel. Default is prod. After switching to dev, `admin/vercel.json` will appear modified in git — don't commit it while pointing at dev.
+
 ### Frontend (admin SPA)
 
 ```bash
