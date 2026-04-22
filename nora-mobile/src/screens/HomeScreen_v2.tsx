@@ -228,6 +228,7 @@ export const HomeScreen_v2: React.FC = () => {
   const [latestWeeklyReport, setLatestWeeklyReport] = useState<{ id: string; weekStartDate: string; weekEndDate: string; headline: string | null } | null>(null);
   const [isWeeklyReportDismissed, setIsWeeklyReportDismissed] = useState(false);
   const [sessionNotifications, setSessionNotifications] = useState<{ postSession?: string; tomorrow?: string } | null>(null);
+  const [chatIntroDismissed, setChatIntroDismissed] = useState(false);
 
   // ── Reminder setup modal ──
   const [showReminderModal, setShowReminderModal] = useState(false);
@@ -355,6 +356,10 @@ export const HomeScreen_v2: React.FC = () => {
       } else {
         setIsWeeklyReportDismissed(false);
       }
+
+      // ── Chat intro dismissed ──
+      const chatIntroDismissedVal = await userStorage.getItem('chat_intro_dismissed');
+      setChatIntroDismissed(!!chatIntroDismissedVal);
 
       // ── Weekly score — sum of all completed session scores this week (max 300) ──
       const weeklyScoreSum = thisWeekRecordings
@@ -520,6 +525,17 @@ export const HomeScreen_v2: React.FC = () => {
 
   const handleRecordAgain = () => {
     navigation.navigate('MainTabs', { screen: 'Record', params: { autoStart: true } });
+  };
+
+  const handleChatIntroChat = async () => {
+    await userStorage.setItem('chat_intro_dismissed', 'true');
+    setChatIntroDismissed(true);
+    navigation.push('CoachChat');
+  };
+
+  const handleChatIntroSkip = async () => {
+    await userStorage.setItem('chat_intro_dismissed', 'true');
+    setChatIntroDismissed(true);
   };
 
   const handlePlanItemPress = async (item: TodayPlanItem) => {
@@ -813,7 +829,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.lessonsCompleted)}
             total="7"
             unit="lessons"
-            onPress={() => nextLessonId && navigation.push('LessonViewer', { lessonId: nextLessonId })}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Learn' })}
           />
         </View>
 
@@ -915,6 +931,29 @@ export const HomeScreen_v2: React.FC = () => {
               >
                 <Ionicons name="document-text-outline" size={20} color="#fff" />
                 <Text style={styles.recordButtonText}>Read Today's Report</Text>
+              </TouchableOpacity>
+            </>
+          ) : hasRecordedSession && isReportRead && !chatIntroDismissed ? (
+            <>
+              <View style={styles.massageHeader}>
+                <Ionicons name="chatbubble-ellipses-outline" size={14} color={COLORS.mainPurple} />
+                <Text style={styles.massageLabel}>Meet Your AI Coach</Text>
+              </View>
+              <Text style={styles.massageBody}>
+                {'See the chat bubble at the bottom-right? That\'s your AI coach, Nora. Ask anything — parenting tips, what to do next, or how '}
+                <Text style={styles.massageChildName}>{childName}</Text>
+                {' is progressing.'}
+              </Text>
+              <TouchableOpacity
+                style={styles.recordButton}
+                onPress={handleChatIntroChat}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="chatbubble-ellipses" size={20} color="#fff" />
+                <Text style={styles.recordButtonText}>Chat with Coach</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.skipButton} onPress={handleChatIntroSkip} activeOpacity={0.7}>
+                <Text style={styles.skipButtonText}>Skip for now</Text>
               </TouchableOpacity>
             </>
           ) : (
