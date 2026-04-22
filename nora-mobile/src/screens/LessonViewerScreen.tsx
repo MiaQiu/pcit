@@ -22,6 +22,7 @@ import { ResponseButton } from '../components/ResponseButton';
 import { QuizFeedback } from '../components/QuizFeedback';
 import { TextInputFeedbackCard } from '../components/TextInputFeedbackCard';
 import { LessonContentCard } from '../components/LessonContentCard';
+import { CustomHtmlSegment } from '../components/CustomHtmlSegment';
 import { COLORS, FONTS } from '../constants/assets';
 import { LessonDetailResponse, LessonSegment, SubmitQuizResponse, SubmitTextInputResponse, LessonNotFoundError, UserNotFoundError, Keyword, KeywordMatch } from '@nora/core';
 import { useLessonService, useAuthService } from '../contexts/AppContext';
@@ -841,124 +842,125 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         </View>
       </View>
 
-      {/* Scrollable Content */}
-      <View style={{ flex: 1 }}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {isOnQuiz && lesson.quiz ? (
-          /* Quiz Content */
-          <>
-            {/* Badge */}
-            <Text style={styles.quizBadge}>Just a quick check</Text>
+      {/* Content area — custom HTML bypasses ScrollView so WebView gets a real height */}
+      {!isOnQuiz && currentSegment?.customHtml ? (
+        <View style={{ flex: 1 }}>
+          <CustomHtmlSegment html={currentSegment.customHtml} />
+        </View>
+      ) : (
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {isOnQuiz && lesson.quiz ? (
+              /* Quiz Content */
+              <>
+                {/* Badge */}
+                <Text style={styles.quizBadge}>Just a quick check</Text>
 
-            {/* Question */}
-            <Text style={styles.quizQuestion}>{lesson.quiz.question}</Text>
+                {/* Question */}
+                <Text style={styles.quizQuestion}>{lesson.quiz.question}</Text>
 
-            {/* Options */}
-            <View style={styles.optionsContainer}>
-              {[...lesson.quiz.options].sort((a, b) => a.order - b.order).map((option) => (
-                <ResponseButton
-                  key={option.id}
-                  label={option.optionLabel}
-                  text={option.optionText}
-                  isSelected={selectedOption === option.id}
-                  isSubmitted={isQuizSubmitted}
-                  isCorrect={option.id === lesson.quiz!.correctAnswer}
-                  onPress={() => !isQuizSubmitted && setSelectedOption(option.id)}
-                />
-              ))}
-            </View>
+                {/* Options */}
+                <View style={styles.optionsContainer}>
+                  {[...lesson.quiz.options].sort((a, b) => a.order - b.order).map((option) => (
+                    <ResponseButton
+                      key={option.id}
+                      label={option.optionLabel}
+                      text={option.optionText}
+                      isSelected={selectedOption === option.id}
+                      isSubmitted={isQuizSubmitted}
+                      isCorrect={option.id === lesson.quiz!.correctAnswer}
+                      onPress={() => !isQuizSubmitted && setSelectedOption(option.id)}
+                    />
+                  ))}
+                </View>
 
-            {/* Feedback */}
-            {quizFeedback && (
-              <QuizFeedback
-                isCorrect={quizFeedback.isCorrect}
-                explanation={quizFeedback.explanation}
-              />
-            )}
-          </>
-        ) : (
-          /* Lesson Content */
-          <>
-            {/* Phase Badge */}
-            {/* <Text style={styles.phaseBadge}>{lesson.phase}</Text> */}
-
-            {/* Lesson Content Card */}
-            <LessonContentCard
-              backgroundColor={lesson.backgroundColor || '#F8F8FF'}
-              ellipseColor={lesson.ellipse77Color || COLORS.mainPurple}
-              onShare={handleShare}
-              title={lesson.title}
-            >
-              {/* Section Title (if present) */}
-              {currentSegment?.sectionTitle && (
-                <Text style={styles.sectionTitle}>{currentSegment.sectionTitle}</Text>
-              )}
-
-              {/* Body Text */}
-              <View style={styles.bodyTextContainer}>
-                {formatBodyText(currentSegment?.bodyText || '', keywords, setSelectedKeyword, setShowKeywordModal)}
-              </View>
-
-              {/* Text Input Field (for TEXT_INPUT segments) */}
-              {isTextInputSegment && (
-                <View style={styles.textInputContainer}>
-                  <Text style={styles.textInputLabel}>Your response:</Text>
-                  <TextInput
-                    style={[
-                      styles.textInputField,
-                      isTextInputSubmitted && styles.textInputFieldDisabled,
-                    ]}
-                    multiline
-                    numberOfLines={4}
-                    placeholder="Type your answer here..."
-                    placeholderTextColor={COLORS.textSecondary}
-                    value={userTextInput}
-                    onChangeText={setUserTextInput}
-                    editable={!isTextInputSubmitted && !isTextInputSubmitting}
-                    textAlignVertical="top"
+                {/* Feedback */}
+                {quizFeedback && (
+                  <QuizFeedback
+                    isCorrect={quizFeedback.isCorrect}
+                    explanation={quizFeedback.explanation}
                   />
-                  {isTextInputSubmitting && (
-                    <View style={styles.textInputLoadingOverlay}>
-                      <ActivityIndicator color={COLORS.mainPurple} />
-                      <Text style={styles.textInputLoadingText}>Evaluating...</Text>
+                )}
+              </>
+            ) : (
+              /* Standard Lesson Content */
+              <>
+                {/* Lesson Content Card */}
+                <LessonContentCard
+                  backgroundColor={lesson.backgroundColor || '#F8F8FF'}
+                  ellipseColor={lesson.ellipse77Color || COLORS.mainPurple}
+                  onShare={handleShare}
+                  title={lesson.title}
+                >
+                  {/* Section Title (if present) */}
+                  {currentSegment?.sectionTitle && (
+                    <Text style={styles.sectionTitle}>{currentSegment.sectionTitle}</Text>
+                  )}
+
+                  {/* Body Text */}
+                  <View style={styles.bodyTextContainer}>
+                    {formatBodyText(currentSegment?.bodyText || '', keywords, setSelectedKeyword, setShowKeywordModal)}
+                  </View>
+
+                  {/* Text Input Field (for TEXT_INPUT segments) */}
+                  {isTextInputSegment && (
+                    <View style={styles.textInputContainer}>
+                      <Text style={styles.textInputLabel}>Your response:</Text>
+                      <TextInput
+                        style={[
+                          styles.textInputField,
+                          isTextInputSubmitted && styles.textInputFieldDisabled,
+                        ]}
+                        multiline
+                        numberOfLines={4}
+                        placeholder="Type your answer here..."
+                        placeholderTextColor={COLORS.textSecondary}
+                        value={userTextInput}
+                        onChangeText={setUserTextInput}
+                        editable={!isTextInputSubmitted && !isTextInputSubmitting}
+                        textAlignVertical="top"
+                      />
+                      {isTextInputSubmitting && (
+                        <View style={styles.textInputLoadingOverlay}>
+                          <ActivityIndicator color={COLORS.mainPurple} />
+                          <Text style={styles.textInputLoadingText}>Evaluating...</Text>
+                        </View>
+                      )}
                     </View>
                   )}
-                </View>
-              )}
+                </LessonContentCard>
 
-            </LessonContentCard>
+                {/* Text Input Feedback - outside card for better scrolling */}
+                {isTextInputSegment && textInputFeedback && (
+                  <TextInputFeedbackCard
+                    isCorrect={textInputFeedback.isCorrect}
+                    score={textInputFeedback.score}
+                    feedback={textInputFeedback.feedback}
+                    suggestions={textInputFeedback.suggestions}
+                    idealAnswer={textInputFeedback.idealAnswer}
+                  />
+                )}
 
-            {/* Text Input Feedback - outside card for better scrolling */}
-            {isTextInputSegment && textInputFeedback && (
-              <TextInputFeedbackCard
-                isCorrect={textInputFeedback.isCorrect}
-                score={textInputFeedback.score}
-                feedback={textInputFeedback.feedback}
-                suggestions={textInputFeedback.suggestions}
-                idealAnswer={textInputFeedback.idealAnswer}
-              />
+                {/* Dragon Image (show on first segment) */}
+                {currentSegmentIndex === 0 && lesson.dragonImageUrl && (
+                  <View style={styles.imageContainer}>
+                    <View style={styles.imagePlaceholder}>
+                      <Text style={styles.imagePlaceholderText}>🐉</Text>
+                    </View>
+                  </View>
+                )}
+              </>
             )}
 
-            {/* Dragon Image (show on first segment) */}
-            {currentSegmentIndex === 0 && lesson.dragonImageUrl && (
-              <View style={styles.imageContainer}>
-                {/* TODO: Replace with actual Image component when assets are ready */}
-                <View style={styles.imagePlaceholder}>
-                  <Text style={styles.imagePlaceholderText}>🐉</Text>
-                </View>
-              </View>
-            )}
-          </>
-        )}
-
-          {/* Spacer for button */}
-          <View style={{ height: 100 }} />
-        </ScrollView>
-      </View>
+            {/* Spacer for button */}
+            <View style={{ height: 100 }} />
+          </ScrollView>
+        </View>
+      )}
 
       {/* Footer with Back and Continue Buttons */}
       <View style={styles.footer}>

@@ -80,6 +80,7 @@ model LessonSegment {
   updatedAt         DateTime
   aiCheckMode       String?
   idealAnswer       String?
+  customHtml        String?
   Lesson            Lesson              @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   TextInputResponse TextInputResponse[]
 

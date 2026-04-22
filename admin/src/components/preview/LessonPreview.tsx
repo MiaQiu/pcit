@@ -1,5 +1,7 @@
+import { useEffect, useRef } from 'react';
 import PhonePreview from './PhonePreview';
 import { Segment } from '../../api/adminApi';
+import { normalizeHtml } from '../../utils/htmlNormalizer';
 
 interface Props {
   lesson: {
@@ -10,6 +12,45 @@ interface Props {
   };
   segments: Segment[];
   currentSegmentIndex: number;
+}
+
+
+function buildHtmlDoc(html: string): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+    body > :first-child { width: 100% !important; height: 100% !important; max-width: 100% !important; aspect-ratio: auto !important; }
+    #__tw-indicator { display: none !important; }
+  </style>
+</head>
+<body>${html}</body>
+</html>`;
+}
+
+function HtmlPreview({ html }: { html: string }) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const blobUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const blob = new Blob([buildHtmlDoc(html)], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    blobUrlRef.current = url;
+    if (iframeRef.current) iframeRef.current.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [html]);
+
+  return (
+    <iframe
+      ref={iframeRef}
+      style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+    />
+  );
 }
 
 function formatInlineText(text: string): string {
@@ -64,6 +105,14 @@ export default function LessonPreview({ lesson, segments, currentSegmentIndex }:
   }
 
   const ellipseColor = lesson.ellipse77Color || '#9BD4DF';
+
+  if (segment.customHtml) {
+    return (
+      <PhonePreview>
+        <HtmlPreview html={normalizeHtml(segment.customHtml)} />
+      </PhonePreview>
+    );
+  }
 
   return (
     <PhonePreview>

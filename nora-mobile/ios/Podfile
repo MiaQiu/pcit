@@ -58,7 +58,6 @@ post_install do |installer|
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
 
-    # Fix for module map file issues with use_modular_headers!
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['USE_HEADERMAP'] = 'YES'

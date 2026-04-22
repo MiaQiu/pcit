@@ -33,6 +33,7 @@ export interface Segment {
   iconType?: string | null;
   aiCheckMode?: string | null;
   idealAnswer?: string | null;
+  customHtml?: string | null;
 }
 
 export interface QuizOption {

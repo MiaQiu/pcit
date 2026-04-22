@@ -277,6 +277,7 @@ export interface LessonSegment {
   iconType?: string;
   idealAnswer?: string;  // For TEXT_INPUT segments
   aiCheckMode?: string;  // 'AI-Check' or 'Ideal' for TEXT_INPUT segments
+  customHtml?: string;   // Full custom HTML layout; if set, overrides the standard LessonContentCard renderer
 }
 
 export interface Quiz {

@@ -1,5 +1,6 @@
 import { KeyboardEvent } from 'react';
 import { Segment } from '../../api/adminApi';
+import { normalizeHtml } from '../../utils/htmlNormalizer';
 
 const CONTENT_TYPES = ['TEXT', 'EXAMPLE', 'TIP', 'SCRIPT', 'CALLOUT', 'TEXT_INPUT'];
 
@@ -120,6 +121,30 @@ export default function SegmentEditor({
           onKeyDown={(e) => handleBoldShortcut(e, onChange)}
           placeholder="Segment content (supports Ctrl+B for bold, * for bullet points)"
           rows={6}
+        />
+      </div>
+
+      <div className="form-group">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <label style={{ marginBottom: 0 }}>Custom HTML</label>
+          {segment.customHtml && (
+            <button
+              className="btn-secondary-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange({ customHtml: normalizeHtml(segment.customHtml!) });
+              }}
+            >
+              Fix HTML
+            </button>
+          )}
+        </div>
+        <textarea
+          value={segment.customHtml || ''}
+          onChange={(e) => onChange({ customHtml: e.target.value || null })}
+          placeholder="Raw HTML for this segment. If set, overrides Body Text on mobile."
+          rows={8}
+          style={{ fontFamily: 'monospace', fontSize: 12 }}
         />
       </div>
 

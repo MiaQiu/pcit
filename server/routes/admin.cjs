@@ -18,6 +18,128 @@ const router = express.Router();
 // QUIZ ANSWER NORMALIZATION HELPERS
 // ============================================================================
 
+// JSX prop → HTML attribute mappings
+const JSX_ATTR_MAP = {
+  className: 'class',
+  strokeWidth: 'stroke-width',
+  strokeLinecap: 'stroke-linecap',
+  strokeLinejoin: 'stroke-linejoin',
+  strokeDasharray: 'stroke-dasharray',
+  strokeDashoffset: 'stroke-dashoffset',
+  strokeMiterlimit: 'stroke-miterlimit',
+  strokeOpacity: 'stroke-opacity',
+  stopColor: 'stop-color',
+  stopOpacity: 'stop-opacity',
+  fillOpacity: 'fill-opacity',
+  fillRule: 'fill-rule',
+  clipPath: 'clip-path',
+  clipRule: 'clip-rule',
+  colorInterpolation: 'color-interpolation',
+  colorRendering: 'color-rendering',
+  dominantBaseline: 'dominant-baseline',
+  enableBackground: 'enable-background',
+  floodColor: 'flood-color',
+  floodOpacity: 'flood-opacity',
+  fontFamily: 'font-family',
+  fontSize: 'font-size',
+  fontStyle: 'font-style',
+  fontWeight: 'font-weight',
+  imageRendering: 'image-rendering',
+  letterSpacing: 'letter-spacing',
+  lightingColor: 'lighting-color',
+  markerEnd: 'marker-end',
+  markerMid: 'marker-mid',
+  markerStart: 'marker-start',
+  shapeRendering: 'shape-rendering',
+  textAnchor: 'text-anchor',
+  textDecoration: 'text-decoration',
+  textRendering: 'text-rendering',
+  wordSpacing: 'word-spacing',
+  writingMode: 'writing-mode',
+  xlinkHref: 'xlink:href',
+  xmlSpace: 'xml:space',
+  htmlFor: 'for',
+};
+
+function jsxStyleObjectToString(inner) {
+  try {
+    const cleaned = inner.replace(/(\w+)\s*:/g, '"$1":').replace(/'/g, '"');
+    const parsed = JSON.parse(cleaned);
+    return Object.entries(parsed)
+      .map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}:${v}`)
+      .join(';');
+  } catch {
+    return '';
+  }
+}
+
+const NON_VOID_TAGS = [
+  'div','span','section','article','p','a','button','label',
+  'h1','h2','h3','h4','h5','h6','ul','ol','li',
+  'header','footer','main','nav','aside','form',
+  'table','thead','tbody','tr','td','th',
+  'blockquote','pre','code','strong','em','i','b','s',
+  'figure','figcaption','details','summary',
+];
+
+function stripBalancedBraces(str) {
+  // Replace top-level { ... } blocks (handles nesting) with a placeholder comment
+  let result = '';
+  let depth = 0;
+  let inBrace = false;
+  for (let i = 0; i < str.length; i++) {
+    if (str[i] === '{') {
+      if (depth === 0) inBrace = true;
+      depth++;
+    } else if (str[i] === '}') {
+      depth--;
+      if (depth === 0 && inBrace) {
+        result += '<!-- JSX expression removed - expand manually -->';
+        inBrace = false;
+      }
+    } else if (depth === 0) {
+      result += str[i];
+    }
+  }
+  return result;
+}
+
+function normalizeCustomHtml(html) {
+  if (!html) return html;
+  let result = html;
+
+  // 1. Convert style={{ ... }} to style="..."
+  result = result.replace(/style=\{\{([^}]*)\}\}/g, (_, inner) => {
+    return `style="${jsxStyleObjectToString(`{${inner}}`).replace(/"/g, "'")}"`;
+  });
+
+  // 2. Convert JSX prop names to HTML attribute names
+  result = Object.entries(JSX_ATTR_MAP).reduce(
+    (s, [jsx, attr]) => s.replace(new RegExp(`\\b${jsx}=`, 'g'), `${attr}=`),
+    result
+  );
+
+  // 3. Remove JSX-only props: key={}, ref={}, event handlers
+  result = result.replace(/\s+key=\{[^}]*\}/g, '');
+  result = result.replace(/\s+ref=\{[^}]*\}/g, '');
+  result = result.replace(/\s+on[A-Z][a-zA-Z]*=\{[^}]*\}/g, '');
+
+  // 4. Fix self-closing non-void tags: <div/> or <div class="x"/> → <div class="x"></div>
+  const nonVoidPattern = NON_VOID_TAGS.join('|');
+  result = result.replace(
+    new RegExp(`<(${nonVoidPattern})(\\s[^>]*)?\/>`, 'gi'),
+    (_, tag, attrs = '') => `<${tag}${attrs}></${tag}>`
+  );
+
+  // 5. Convert JSX comments {/* ... */} to HTML comments
+  result = result.replace(/\{\/\*([\s\S]*?)\*\/\}/g, '<!-- $1 -->');
+
+  // 6. Strip remaining { ... } JSX expressions (including .map() blocks)
+  result = stripBalancedBraces(result);
+
+  return result;
+}
+
 /**
  * Convert a correctAnswer from the admin editor (letter 'A'/'B'/'C'/'D')
  * to the canonical full option ID stored in the DB (e.g. 'FOUNDATION-1-quiz-opt-B').
@@ -280,6 +402,7 @@ router.post('/lessons', requireAdminAuth, async (req, res) => {
             iconType: seg.iconType || null,
             aiCheckMode: seg.aiCheckMode || null,
             idealAnswer: seg.idealAnswer || null,
+            customHtml: normalizeCustomHtml(seg.customHtml) || null,
             updatedAt: now
           }))
         });
@@ -397,6 +520,7 @@ router.put('/lessons/:id', requireAdminAuth, async (req, res) => {
               iconType: seg.iconType || null,
               aiCheckMode: seg.aiCheckMode || null,
               idealAnswer: seg.idealAnswer || null,
+              customHtml: normalizeCustomHtml(seg.customHtml) || null,
               updatedAt: now
             }))
           });

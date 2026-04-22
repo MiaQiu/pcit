@@ -41,6 +41,7 @@ const DEFAULT_SEGMENT: Segment = {
   sectionTitle: '',
   contentType: 'TEXT',
   bodyText: '',
+  customHtml: null,
 };
 
 const DEFAULT_QUIZ: Quiz = {
@@ -106,6 +107,7 @@ export default function LessonEditorPage() {
                   iconType: s.iconType,
                   aiCheckMode: s.aiCheckMode,
                   idealAnswer: s.idealAnswer,
+                  customHtml: s.customHtml,
                 }))
               : [{ ...DEFAULT_SEGMENT }]
           );
