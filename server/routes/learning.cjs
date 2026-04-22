@@ -220,9 +220,11 @@ router.get('/history', requireAuth, async (req, res) => {
 });
 
 // GET /api/learning/developmental-progress - Get child's developmental progress by domain
+// Optional query param: asOf (ISO date string) — returns the milestone snapshot at that point in time
 router.get('/developmental-progress', requireAuth, async (req, res) => {
   try {
     const userId = req.userId;
+    const asOf = req.query.asOf ? new Date(req.query.asOf) : null;
 
     // Get the user's child record
     const child = await prisma.child.findFirst({
@@ -241,21 +243,19 @@ router.get('/developmental-progress', requireAuth, async (req, res) => {
     });
     const childName = user?.childName ? decryptSensitiveData(user.childName) : 'your child';
 
-    // Calculate child's age in months
+    // Calculate child's age in months (relative to asOf date if provided)
+    const ageReferenceDate = asOf || new Date();
     let childAgeMonths = 0;
     if (child.birthday) {
-      const now = new Date();
       const birthday = new Date(child.birthday);
-      childAgeMonths = (now.getFullYear() - birthday.getFullYear()) * 12 +
-        (now.getMonth() - birthday.getMonth());
+      childAgeMonths = (ageReferenceDate.getFullYear() - birthday.getFullYear()) * 12 +
+        (ageReferenceDate.getMonth() - birthday.getMonth());
     } else if (user?.childBirthday) {
-      const now = new Date();
       const birthday = new Date(user.childBirthday);
-      childAgeMonths = (now.getFullYear() - birthday.getFullYear()) * 12 +
-        (now.getMonth() - birthday.getMonth());
+      childAgeMonths = (ageReferenceDate.getFullYear() - birthday.getFullYear()) * 12 +
+        (ageReferenceDate.getMonth() - birthday.getMonth());
     } else if (user?.childBirthYear) {
-      const now = new Date();
-      childAgeMonths = (now.getFullYear() - user.childBirthYear) * 12 + 6; // Approximate mid-year
+      childAgeMonths = (ageReferenceDate.getFullYear() - user.childBirthYear) * 12 + 6; // Approximate mid-year
     }
 
     // Define the 5 domains
@@ -277,9 +277,13 @@ router.get('/developmental-progress', requireAuth, async (req, res) => {
       }
     });
 
-    // Count completed sessions for milestone gating
+    // Count completed sessions for milestone gating (up to asOf if provided)
     const completedSessionCount = await prisma.session.count({
-      where: { userId, analysisStatus: 'COMPLETED' }
+      where: {
+        userId,
+        analysisStatus: 'COMPLETED',
+        ...(asOf ? { createdAt: { lte: asOf } } : {})
+      }
     });
 
     // Helper function to parse age range from grouping_stage
@@ -338,14 +342,27 @@ router.get('/developmental-progress', requireAuth, async (req, res) => {
     };
 
     // Build domain progress data
+    // When asOf is provided, derive the historical status of each milestone at that point:
+    //   ACHIEVED: achievedAt exists and <= asOf
+    //   EMERGING: firstObservedAt exists and <= asOf, but achievedAt is null or > asOf
+    const getStatusAtTime = (cm) => {
+      if (!asOf) return cm.status;
+      const achieved = cm.achievedAt && cm.achievedAt <= asOf;
+      const observed = cm.firstObservedAt && cm.firstObservedAt <= asOf;
+      if (achieved) return 'ACHIEVED';
+      if (observed) return 'EMERGING';
+      return 'NOT_YET';
+    };
+
     const domainProgress = {};
     domainCategories.forEach(domain => {
       const totalMilestones = allMilestones.filter(m => m.category === domain).length;
-      const achievedMilestones = childMilestones.filter(
-        cm => cm.MilestoneLibrary.category === domain && cm.status === 'ACHIEVED'
+      const domainChildMilestones = childMilestones.filter(cm => cm.MilestoneLibrary.category === domain);
+      const achievedMilestones = domainChildMilestones.filter(
+        cm => getStatusAtTime(cm) === 'ACHIEVED'
       ).length;
-      const emergingMilestones = childMilestones.filter(
-        cm => cm.MilestoneLibrary.category === domain && cm.status === 'EMERGING'
+      const emergingMilestones = domainChildMilestones.filter(
+        cm => getStatusAtTime(cm) === 'EMERGING'
       ).length;
 
       domainProgress[domain] = {

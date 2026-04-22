@@ -418,9 +418,7 @@ export const ReportScreen: React.FC = () => {
     recordingService.getRecordings().then(({ recordings }) => {
       setTotalRecordings(recordings?.length ?? 0);
     }).catch(() => {});
-    recordingService.getDevelopmentalProgress().then(data => {
-      if (data) setDevelopmentalProgress(data);
-    }).catch(() => {});
+    // getDevelopmentalProgress is called in a separate useEffect once reportData is available
     // Show bubble immediately (no animation, no message) if demo was already seen
     AsyncStorage.getItem('@report_chat_demo_shown').then(shown => {
       if (shown) {
@@ -431,6 +429,13 @@ export const ReportScreen: React.FC = () => {
       }
     });
   }, [recordingId]);
+
+  useEffect(() => {
+    if (!reportData) return;
+    recordingService.getDevelopmentalProgress(reportData.createdAt).then(data => {
+      if (data) setDevelopmentalProgress(data);
+    }).catch(() => {});
+  }, [reportData?.createdAt]);
 
   const handleDomainPress = async (domain: DomainType) => {
     setSelectedDomain(domain);

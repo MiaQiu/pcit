@@ -372,10 +372,11 @@ class RecordingService {
    * Get developmental progress by domain
    * Returns child's milestone progress across 5 domains with age-appropriate benchmarks
    */
-  async getDevelopmentalProgress(): Promise<DevelopmentalProgress> {
-    const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/learning/developmental-progress`
-    );
+  async getDevelopmentalProgress(asOf?: string): Promise<DevelopmentalProgress> {
+    const url = asOf
+      ? `${this.apiUrl}/api/learning/developmental-progress?asOf=${encodeURIComponent(asOf)}`
+      : `${this.apiUrl}/api/learning/developmental-progress`;
+    const response = await this.authService.authenticatedRequest(url);
 
     if (!response.ok) {
       const error = await response.json();
