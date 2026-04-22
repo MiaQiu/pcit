@@ -1121,16 +1121,16 @@ body {
    PHONE PREVIEW (from share-lesson.html)
    ============================================ */
 .iphone-frame {
-  width: 390px;
-  height: 844px;
+  width: 420px;
+  height: 850px;
   background: #000;
   border-radius: 50px;
   padding: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   position: relative;
-  transform: scale(0.52);
+  transform: scale(0.68);
   transform-origin: top center;
-  margin-bottom: -400px;
+  margin-bottom: -270px;
 }
 
 .iphone-notch {

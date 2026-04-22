@@ -15,7 +15,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Share, PanResponder, Clipboard, AppState, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProgressBar } from '../components/ProgressBar';
 import { Button } from '../components/Button';
 import { ResponseButton } from '../components/ResponseButton';
@@ -298,6 +298,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const { lessonId, moduleKey } = route.params;
   const lessonService = useLessonService();
   const authService = useAuthService();
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
   const [lessonData, setLessonData] = useState<LessonDetailResponse | null>(null);
@@ -820,6 +821,42 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     buttonText = 'Take Quiz →';
   }
 
+  // Full-screen custom HTML: WebView covers entire screen (including status bar), header/footer float on top
+  if (!isOnQuiz && currentSegment?.customHtml) {
+    return (
+      <View style={styles.container}>
+        <View style={StyleSheet.absoluteFillObject}>
+          <CustomHtmlSegment html={currentSegment.customHtml} />
+        </View>
+        <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={handleContinue} activeOpacity={1} />
+        <SafeAreaView edges={['top', 'left', 'right']} style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.closeButton} onPress={handleClose} accessibilityLabel="Close lesson">
+              <Text style={styles.closeIcon}>×</Text>
+            </TouchableOpacity>
+            <View style={styles.progressBarContainer}>
+              <ProgressBar totalSegments={totalSegments} currentSegment={currentSegmentIndex + 1} />
+            </View>
+          </View>
+        </SafeAreaView>
+        <SafeAreaView edges={['left', 'right']} style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+          <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
+            <View style={styles.buttonRow}>
+              <View style={styles.halfButton}>
+                <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7}>
+                  <Text style={styles.backButtonText}>← Back</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.halfButton}>
+                <Button onPress={handleContinue} height={48}>{buttonText}</Button>
+              </View>
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Header with Close Button and Progress Bar */}
@@ -842,14 +879,9 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         </View>
       </View>
 
-      {/* Content area — custom HTML bypasses ScrollView so WebView gets a real height */}
-      {!isOnQuiz && currentSegment?.customHtml ? (
-        <View style={{ flex: 1 }}>
-          <CustomHtmlSegment html={currentSegment.customHtml} />
-        </View>
-      ) : (
-        <View style={{ flex: 1 }}>
-          <ScrollView
+      {/* Scrollable Content */}
+      <View style={{ flex: 1 }}>
+        <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
@@ -960,10 +992,9 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
             <View style={{ height: 100 }} />
           </ScrollView>
         </View>
-      )}
 
       {/* Footer with Back and Continue Buttons */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
         <View style={styles.buttonRow}>
           <View style={styles.halfButton}>
             <TouchableOpacity
@@ -977,6 +1008,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
           <View style={styles.halfButton}>
             <Button
               onPress={handleContinue}
+              height={48}
               disabled={
                 (isOnQuiz && !isQuizSubmitted && !selectedOption) ||
                 (isTextInputSegment && !isTextInputSubmitted && !userTextInput.trim()) ||
@@ -1131,11 +1163,10 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 0,
     paddingTop: 16,
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    backgroundColor: 'transparent',
+    borderTopWidth: 0,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -1146,7 +1177,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backButton: {
-    height: 64,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: COLORS.white,

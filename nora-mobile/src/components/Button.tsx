@@ -14,6 +14,7 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   icon?: React.ReactNode;
+  height?: number;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -23,6 +24,7 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   loading = false,
   icon,
+  height = 64,
 }) => {
   const isPrimary = variant === 'primary';
   const bgColor = disabled
@@ -37,7 +39,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled || loading}
       style={{
         backgroundColor: bgColor,
-        height: 64,
+        height,
         borderRadius: 112,
         paddingHorizontal: 24,
         paddingVertical: 15,

@@ -308,6 +308,38 @@ DATABASE_URL="postgresql://nora_admin:<pass>@localhost:5433/nora" \
 
 **Required env vars:** `REVENUECAT_SECRET_KEY`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`
 
+**Manually drafting and sending a trial expiry email for a specific user**
+
+Use `scripts/_tmp_draft_trial_email.cjs` to render the email HTML for one user without sending it, and `scripts/_tmp_send_trial_email.cjs` to send it. Both scripts require a prod DB tunnel and read SMTP/RC credentials from `.env`.
+
+1. Start the prod DB tunnel:
+   ```bash
+   ./scripts/start-prod-db-tunnel.sh
+   ```
+
+2. Retrieve the prod DB password:
+   ```bash
+   aws secretsmanager get-secret-value \
+     --secret-id "arn:aws:secretsmanager:ap-southeast-1:059364397483:secret:nora/database-url-893xxi" \
+     --region ap-southeast-1 \
+     --query 'SecretString' --output text
+   ```
+
+3. Set `TARGET_USER_ID` in the script to the target user's UUID, then draft (no send):
+   ```bash
+   DATABASE_URL="postgresql://nora_admin:<pass>@localhost:5433/nora" \
+     node scripts/_tmp_draft_trial_email.cjs
+   ```
+   Opens `scripts/_tmp_draft_trial_email.html` — preview in a browser. The script prints the resolved subject, from, to, and all stats (sessions, deposits, skill, trial expiry date).
+
+4. Once satisfied, send:
+   ```bash
+   DATABASE_URL="postgresql://nora_admin:<pass>@localhost:5433/nora" \
+     node scripts/_tmp_send_trial_email.cjs
+   ```
+
+The send script hard-codes `daysLeft` and `trialEndFormatted` from the draft run — update these if running on a different day.
+
 ### User Detail (`/users/:id`)
 
 - Shows the user's name, email, and ID

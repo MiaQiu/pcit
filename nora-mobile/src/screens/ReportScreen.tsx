@@ -432,7 +432,7 @@ export const ReportScreen: React.FC = () => {
 
   useEffect(() => {
     if (!reportData) return;
-    recordingService.getDevelopmentalProgress(reportData.createdAt).then(data => {
+    recordingService.getDevelopmentalProgress().then(data => {
       if (data) setDevelopmentalProgress(data);
     }).catch(() => {});
   }, [reportData?.createdAt]);

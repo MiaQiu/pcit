@@ -2,6 +2,45 @@ import { KeyboardEvent } from 'react';
 import { Segment } from '../../api/adminApi';
 import { normalizeHtml } from '../../utils/htmlNormalizer';
 
+function adjustTopPadding(html: string, delta: number): string {
+  // Walk tags in order; skip elements that are absolute-positioned (decorative backgrounds)
+  const tagRegex = /<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/g;
+  let m: RegExpExecArray | null;
+
+  while ((m = tagRegex.exec(html)) !== null) {
+    const [fullTag, , attrs] = m;
+    if (/\babsolute\b/.test(attrs)) continue;
+
+    // Try pt-[Npx]
+    const ptArb = attrs.match(/\bpt-\[(\d+)px\]/);
+    if (ptArb) {
+      const next = Math.max(0, parseInt(ptArb[1]) + delta);
+      const newTag = fullTag.replace(/\bpt-\[\d+px\]/, `pt-[${next}px]`);
+      return html.slice(0, m.index) + newTag + html.slice(m.index + fullTag.length);
+    }
+
+    // Try pt-N (Tailwind units → px)
+    const ptUnit = attrs.match(/\bpt-(\d+)\b/);
+    if (ptUnit) {
+      const next = Math.max(0, parseInt(ptUnit[1]) * 4 + delta);
+      const newTag = fullTag.replace(/\bpt-\d+\b/, `pt-[${next}px]`);
+      return html.slice(0, m.index) + newTag + html.slice(m.index + fullTag.length);
+    }
+
+    // Try py-N — split into pt- and pb- so we can adjust top independently
+    const pyUnit = attrs.match(/\bpy-(\d+)\b/);
+    if (pyUnit) {
+      const origPx = parseInt(pyUnit[1]) * 4;
+      const nextPt = Math.max(0, origPx + delta);
+      const newTag = fullTag.replace(/\bpy-\d+\b/, `pt-[${nextPt}px] pb-[${origPx}px]`);
+      return html.slice(0, m.index) + newTag + html.slice(m.index + fullTag.length);
+    }
+  }
+
+  // No padding found — add pt- to the first non-absolute element
+  return html.replace(/(<(?:div|section|main|article)\b[^>]*class=")(?![^"]*\babsolute\b)/, `$1pt-[${Math.max(0, delta)}px] `);
+}
+
 const CONTENT_TYPES = ['TEXT', 'EXAMPLE', 'TIP', 'SCRIPT', 'CALLOUT', 'TEXT_INPUT'];
 
 function handleBoldShortcut(
@@ -128,15 +167,22 @@ export default function SegmentEditor({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
           <label style={{ marginBottom: 0 }}>Custom HTML</label>
           {segment.customHtml && (
-            <button
-              className="btn-secondary-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange({ customHtml: normalizeHtml(segment.customHtml!) });
-              }}
-            >
-              Fix HTML
-            </button>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button
+                className="btn-secondary-sm"
+                onClick={(e) => { e.stopPropagation(); onChange({ customHtml: adjustTopPadding(segment.customHtml!, -10) }); }}
+                title="Move content up 10px"
+              >▲ Up</button>
+              <button
+                className="btn-secondary-sm"
+                onClick={(e) => { e.stopPropagation(); onChange({ customHtml: adjustTopPadding(segment.customHtml!, 10) }); }}
+                title="Move content down 10px"
+              >▼ Down</button>
+              <button
+                className="btn-secondary-sm"
+                onClick={(e) => { e.stopPropagation(); onChange({ customHtml: normalizeHtml(segment.customHtml!) }); }}
+              >Fix HTML</button>
+            </div>
           )}
         </div>
         <textarea
