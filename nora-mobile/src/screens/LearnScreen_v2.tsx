@@ -102,7 +102,6 @@ const LessonCard: React.FC<LessonCardProps> = ({
 
       {/* Text */}
       <View style={styles.lessonCardText}>
-        <Text style={styles.lessonDayLabel}>Lesson {lesson.dayNumber}</Text>
         <Text style={styles.lessonTitle} numberOfLines={2}>{lesson.title}</Text>
       </View>
     </TouchableOpacity>
@@ -114,9 +113,8 @@ const LessonCard: React.FC<LessonCardProps> = ({
 interface ModuleSectionProps {
   module: ModuleWithProgress;
   lessons: LessonCardData[];
-  isExpanded: boolean;
-  onToggleExpand: () => void;
   onLessonPress: (lessonId: string) => void;
+  onModulePress: () => void;
   cardWidth: number;
   showLockedNotice: boolean;
 }
@@ -124,30 +122,27 @@ interface ModuleSectionProps {
 const ModuleSection: React.FC<ModuleSectionProps> = ({
   module,
   lessons,
-  isExpanded,
-  onToggleExpand,
+  onModulePress,
   onLessonPress,
   cardWidth,
   showLockedNotice,
 }) => {
-  const visibleLessons = isExpanded ? lessons : lessons.slice(0, PREVIEW_COUNT);
-  const hiddenCount = lessons.length - PREVIEW_COUNT;
+  const sortedLessons = useMemo(() => {
+    const incomplete = lessons.filter(l => l.progress?.status !== 'COMPLETED');
+    const completed = lessons.filter(l => l.progress?.status === 'COMPLETED');
+    return [...incomplete, ...completed];
+  }, [lessons]);
 
   return (
     <View style={styles.moduleSection}>
       {/* Module header */}
-      <View style={styles.moduleHeader}>
-        <View style={[styles.moduleAccent, { backgroundColor: module.backgroundColor || COLORS.mainPurple }]} />
-        <View style={styles.moduleHeaderText}>
-          <Text style={styles.moduleName}>{module.title}</Text>
-          <Text style={styles.moduleProgress}>
-            {module.completedLessons}/{module.lessonCount} completed
-          </Text>
-        </View>
-        {module.isLocked && (
-          <Ionicons name="lock-closed" size={15} color="#BBBBBB" />
-        )}
-      </View>
+      <TouchableOpacity style={styles.moduleHeader} onPress={onModulePress} activeOpacity={0.7}>
+        <Text style={styles.moduleName}>{module.title}</Text>
+        {module.isLocked
+          ? <Ionicons name="lock-closed" size={18} color="#BBBBBB" />
+          : <Ionicons name="chevron-forward" size={28} color={COLORS.textDark} />
+        }
+      </TouchableOpacity>
 
       {/* Locked notice */}
       {showLockedNotice && (
@@ -159,9 +154,14 @@ const ModuleSection: React.FC<ModuleSectionProps> = ({
         </View>
       )}
 
-      {/* Lesson grid */}
-      <View style={styles.lessonGrid}>
-        {visibleLessons.map(lesson => (
+      {/* Horizontal lesson row */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.lessonRow}
+        style={styles.lessonRowScroll}
+      >
+        {sortedLessons.map(lesson => (
           <LessonCard
             key={lesson.id}
             lesson={lesson}
@@ -171,23 +171,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = ({
             onPress={() => onLessonPress(lesson.id)}
           />
         ))}
-      </View>
-
-      {/* Expand / collapse */}
-      {hiddenCount > 0 && (
-        <TouchableOpacity style={styles.expandBtn} onPress={onToggleExpand} activeOpacity={0.7}>
-          <Text style={styles.expandBtnText}>
-            {isExpanded
-              ? 'Show less'
-              : `+${hiddenCount} more lesson${hiddenCount > 1 ? 's' : ''}`}
-          </Text>
-          <Ionicons
-            name={isExpanded ? 'chevron-up' : 'chevron-down'}
-            size={14}
-            color={COLORS.mainPurple}
-          />
-        </TouchableOpacity>
-      )}
+      </ScrollView>
     </View>
   );
 };
@@ -201,7 +185,7 @@ export const LearnScreen_v2: React.FC = () => {
   const { showToast } = useToast();
   const scrollViewRef = React.useRef<ScrollView>(null);
   const { width } = useWindowDimensions();
-  const cardWidth = (width - H_PAD * 2 - CARD_GAP) / 2;
+  const cardWidth = (width - H_PAD * 2) / 2.3;
 
   const [modules, setModules] = useState<ModuleWithProgress[]>([]);
   const [allLessons, setAllLessons] = useState<LessonCardData[]>([]);
@@ -211,7 +195,6 @@ export const LearnScreen_v2: React.FC = () => {
   const [isFoundationCompleted, setIsFoundationCompleted] = useState(false);
   const [recommendedModules, setRecommendedModules] = useState<string[]>([]);
   const [currentModuleKey, setCurrentModuleKey] = useState<string | null>(null);
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadData();
@@ -278,15 +261,15 @@ export const LearnScreen_v2: React.FC = () => {
     return map;
   }, [allLessons]);
 
-  // Sorted modules: GETTING_STARTED first, completed modules last, rest by activity
+  // Sorted modules: FOUNDATION first, completed modules last, rest by activity
   const sortedModules = useMemo(() => {
     const isCompleted = (m: ModuleWithProgress) =>
       m.lessonCount > 0 && m.completedLessons >= m.lessonCount;
 
     return [...modules].sort((a, b) => {
-      // GETTING_STARTED always first
-      if (a.key === 'GETTING_STARTED') return -1;
-      if (b.key === 'GETTING_STARTED') return 1;
+      // FOUNDATION always first
+      if (a.key === 'FOUNDATION') return -1;
+      if (b.key === 'FOUNDATION') return 1;
 
       // Completed modules always last
       const aDone = isCompleted(a);
@@ -344,15 +327,6 @@ export const LearnScreen_v2: React.FC = () => {
     navigation.push('LessonViewer', { lessonId, moduleKey });
   };
 
-  const toggleExpand = (moduleKey: string) => {
-    setExpandedModules(prev => {
-      const next = new Set(prev);
-      if (next.has(moduleKey)) next.delete(moduleKey);
-      else next.add(moduleKey);
-      return next;
-    });
-  };
-
   const visibleModules = sortedModules.filter(m => filteredLessonsByModule.has(m.key));
 
   if (loading) {
@@ -400,9 +374,8 @@ export const LearnScreen_v2: React.FC = () => {
                 key={mod.key}
                 module={mod}
                 lessons={lessons}
-                isExpanded={expandedModules.has(mod.key)}
-                onToggleExpand={() => toggleExpand(mod.key)}
                 onLessonPress={lessonId => handleLessonPress(lessonId, mod.key)}
+                onModulePress={() => navigation.push('ModuleDetail', { moduleKey: mod.key })}
                 cardWidth={cardWidth}
                 showLockedNotice={showLockedNotice}
               />
@@ -452,29 +425,25 @@ const styles = StyleSheet.create({
   // ── Module section ──
   moduleSection: {
     marginTop: 24,
-    paddingHorizontal: H_PAD,
   },
   moduleHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
+    alignItems: 'flex-end',
+    marginBottom: 14,
+    gap: 4,
+    paddingHorizontal: H_PAD,
   },
-  moduleAccent: {
-    width: 4,
-    height: 28,
-    borderRadius: 2,
-  },
-  moduleHeaderText: { flex: 1 },
   moduleName: {
     fontFamily: FONTS.bold,
-    fontSize: 17,
+    fontSize: 26,
     color: COLORS.textDark,
-    lineHeight: 22,
+    lineHeight: 32,
+    letterSpacing: -0.3,
+    flex: 1,
   },
   moduleProgress: {
     fontFamily: FONTS.regular,
-    fontSize: 12,
+    fontSize: 13,
     color: '#9CA3AF',
     marginTop: 1,
   },
@@ -488,6 +457,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 10,
+    marginHorizontal: H_PAD,
   },
   lockedNoticeText: {
     fontFamily: FONTS.regular,
@@ -496,28 +466,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  lessonGrid: {
+  lessonRowScroll: { width: '100%' },
+  lessonRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: CARD_GAP,
-  },
-
-  expandBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    alignSelf: 'flex-start',
-    marginTop: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: COLORS.mainPurple,
-  },
-  expandBtnText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 13,
-    color: COLORS.mainPurple,
+    paddingHorizontal: H_PAD,
   },
 
   // ── Lesson card ──

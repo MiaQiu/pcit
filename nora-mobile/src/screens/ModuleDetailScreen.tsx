@@ -1,14 +1,23 @@
 /**
  * ModuleDetailScreen
- * Shows module info and its lessons with user progress
+ * Shows module info and all its lessons in a 2-column card grid.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, Text, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import {
+  View,
+  ScrollView,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  RefreshControl,
+  TouchableOpacity,
+  Image,
+  useWindowDimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { LessonListItem } from '../components/LessonListItem';
 import { FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useLessonService } from '../contexts/AppContext';
@@ -16,12 +25,23 @@ import { useToast } from '../components/ToastManager';
 import type { ModuleDetailResponse } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
 
+const H_PAD = 20;
+const CARD_GAP = 10;
+
+const LESSON_ICONS = [
+  require('../../assets/images/lessons/1_icon.png'),
+  require('../../assets/images/lessons/2_icon.png'),
+  require('../../assets/images/lessons/3_icon.png'),
+];
+
 export const ModuleDetailScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<any>();
   const { moduleKey } = route.params;
   const lessonService = useLessonService();
   const { showToast } = useToast();
+  const { width } = useWindowDimensions();
+  const cardWidth = (width - H_PAD * 2 - CARD_GAP) / 2;
 
   const [data, setData] = useState<ModuleDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,12 +54,9 @@ export const ModuleDetailScreen: React.FC = () => {
     checkIfCurrentModule();
   }, [moduleKey]);
 
-  // Refresh when coming back from a lesson
   useFocusEffect(
     useCallback(() => {
-      if (data) {
-        loadModuleDetail(false);
-      }
+      if (data) loadModuleDetail(false);
     }, [data?.module?.key])
   );
 
@@ -47,13 +64,11 @@ export const ModuleDetailScreen: React.FC = () => {
     try {
       if (showSpinner) setLoading(true);
       else setIsRefreshing(true);
-
       const response = await lessonService.getModuleDetail(moduleKey);
       setData(response);
       setIsLocked(false);
     } catch (error: any) {
       console.error('Failed to load module detail:', error);
-      // Handle locked module (403 from backend)
       if (error?.status === 403 || error?.statusCode === 403) {
         setIsLocked(true);
         showToast('Complete the Foundation module first', 'info');
@@ -68,9 +83,7 @@ export const ModuleDetailScreen: React.FC = () => {
     try {
       const selected = await userStorage.getItem('module_picker_selected_module');
       setIsCurrentModule(selected === moduleKey);
-    } catch (error) {
-      console.log('Failed to check current module:', error);
-    }
+    } catch {}
   };
 
   const handleSetAsCurrentModule = async () => {
@@ -78,18 +91,28 @@ export const ModuleDetailScreen: React.FC = () => {
       await userStorage.setItem('module_picker_selected_module', moduleKey);
       setIsCurrentModule(true);
       showToast('Set as your daily lesson', 'success');
-    } catch (error) {
-      console.log('Failed to set current module:', error);
-    }
+    } catch {}
   };
 
   const handleLessonPress = (lessonId: string) => {
     navigation.push('LessonViewer', { lessonId, moduleKey });
   };
 
+  // Shared top bar — always rendered so layout is stable across all states
+  const topBar = (title: string) => (
+    <View style={styles.topBar}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
+        <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
+      </TouchableOpacity>
+      <Text style={styles.topBarTitle} numberOfLines={1}>{title}</Text>
+      <View style={styles.backCirclePlaceholder} />
+    </View>
+  );
+
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        {topBar('')}
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.mainPurple} />
         </View>
@@ -100,11 +123,7 @@ export const ModuleDetailScreen: React.FC = () => {
   if (isLocked) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.textDark} />
-          </TouchableOpacity>
-        </View>
+        {topBar('')}
         <View style={styles.lockedContainer}>
           <Ionicons name="lock-closed" size={48} color="#CCCCCC" />
           <Text style={styles.lockedTitle}>Module Locked</Text>
@@ -130,12 +149,15 @@ export const ModuleDetailScreen: React.FC = () => {
 
   const { module: mod, lessons } = data;
   const completedCount = lessons.filter(l => l.progress?.status === 'COMPLETED').length;
+  const moduleColor = mod.backgroundColor || COLORS.mainPurple;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {topBar(mod.title)}
+
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -145,25 +167,13 @@ export const ModuleDetailScreen: React.FC = () => {
           />
         }
       >
-        {/* Back button + Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.textDark} />
-          </TouchableOpacity>
-        </View>
-
         {/* Module info */}
         <View style={styles.moduleInfo}>
-          <View style={[styles.tag, { backgroundColor: mod.backgroundColor }]}>
-            <Text style={styles.tagText}>{mod.shortName}</Text>
-          </View>
           <Text style={styles.title}>{mod.title}</Text>
-          <Text style={styles.description}>{mod.description}</Text>
-          <Text style={styles.progressSummary}>
-            {completedCount}/{lessons.length} lessons completed
-          </Text>
+          {mod.description ? (
+            <Text style={styles.description}>{mod.description}</Text>
+          ) : null}
 
-          {/* Start module button — hidden for Foundation and fully-completed modules */}
           {mod.key !== 'FOUNDATION' && completedCount < lessons.length && (
             <TouchableOpacity
               style={isCurrentModule ? styles.currentModuleBtn : styles.startModuleBtn}
@@ -179,18 +189,50 @@ export const ModuleDetailScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Lessons list */}
-        <View style={styles.lessonsList}>
-          {lessons.map((lesson) => (
-            <LessonListItem
-              key={lesson.id}
-              id={lesson.id}
-              dayNumber={lesson.dayNumber}
-              title={lesson.title}
-              isCompleted={lesson.progress?.status === 'COMPLETED'}
-              onPress={() => handleLessonPress(lesson.id)}
-            />
-          ))}
+        {/* 2-column card grid */}
+        <View style={styles.grid}>
+          {lessons.map((lesson) => {
+            const isCompleted = lesson.progress?.status === 'COMPLETED';
+            const isInProgress = lesson.progress?.status === 'IN_PROGRESS';
+            const fallbackIcon = LESSON_ICONS[(lesson.dayNumber - 1) % LESSON_ICONS.length];
+            const imageUrl = (lesson as any).dragonImageUrl;
+
+            return (
+              <TouchableOpacity
+                key={lesson.id}
+                style={[styles.card, { width: cardWidth }]}
+                onPress={() => handleLessonPress(lesson.id)}
+                activeOpacity={0.75}
+              >
+                <View style={[styles.cardImageWrap, { backgroundColor: moduleColor }]}>
+                  {!imageUrl && (
+                    <>
+                      <View style={styles.decoCircleLg} />
+                      <View style={styles.decoCircleSm} />
+                    </>
+                  )}
+                  <Image
+                    source={imageUrl ? { uri: imageUrl } : fallbackIcon}
+                    style={styles.cardIcon}
+                    resizeMode="cover"
+                  />
+                  {isCompleted && (
+                    <View style={styles.statusBadge}>
+                      <Ionicons name="checkmark" size={11} color="#fff" />
+                    </View>
+                  )}
+                  {isInProgress && !isCompleted && (
+                    <View style={[styles.statusBadge, styles.statusBadgeProgress]}>
+                      <View style={styles.progressDot} />
+                    </View>
+                  )}
+                </View>
+                <View style={styles.cardText}>
+                  <Text style={styles.cardTitle} numberOfLines={2}>{lesson.title}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -198,97 +240,153 @@ export const ModuleDetailScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  topBar: {
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E7EB',
     backgroundColor: '#FFFFFF',
   },
-  loadingContainer: {
+  backCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backCirclePlaceholder: { width: 34 },
+  topBarTitle: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  moduleInfo: {
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-  },
-  tag: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  tagText: {
+    textAlign: 'center',
     fontFamily: FONTS.semiBold,
-    fontSize: 13,
+    fontSize: 16,
     color: COLORS.textDark,
+    marginHorizontal: 8,
   },
+
+  scrollContent: { paddingBottom: 40 },
+
+  moduleInfo: { paddingHorizontal: H_PAD, paddingTop: 16, paddingBottom: 16 },
   title: {
     fontFamily: FONTS.bold,
     fontSize: 28,
     lineHeight: 34,
     color: COLORS.textDark,
     marginBottom: 8,
+    letterSpacing: -0.3,
   },
   description: {
     fontFamily: FONTS.regular,
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#666666',
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#6B7280',
     marginBottom: 12,
   },
-  progressSummary: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 14,
-    color: COLORS.mainPurple,
-  },
-  lessonsList: {
-    paddingHorizontal: 24,
-  },
+
   startModuleBtn: {
     backgroundColor: COLORS.mainPurple,
     borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 12,
     alignSelf: 'flex-start',
-    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  startModuleBtnText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 15,
-    color: '#FFFFFF',
-  },
+  startModuleBtnText: { fontFamily: FONTS.semiBold, fontSize: 15, color: '#FFFFFF' },
   currentModuleBtn: {
     borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 12,
     alignSelf: 'flex-start',
-    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     borderWidth: 1.5,
     borderColor: COLORS.mainPurple,
   },
-  currentModuleBtnText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 15,
-    color: COLORS.mainPurple,
+  currentModuleBtnText: { fontFamily: FONTS.semiBold, fontSize: 15, color: COLORS.mainPurple },
+
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: CARD_GAP,
+    paddingHorizontal: H_PAD,
   },
+
+  card: {
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 3,
+    marginBottom: 4,
+  },
+  cardImageWrap: {
+    aspectRatio: 1,
+    overflow: 'hidden',
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardIcon: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+    zIndex: 1,
+  },
+  decoCircleLg: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 18,
+    borderColor: 'rgba(255,255,255,0.18)',
+    bottom: -28,
+    right: -22,
+  },
+  decoCircleSm: {
+    position: 'absolute',
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 12,
+    borderColor: 'rgba(255,255,255,0.12)',
+    top: -16,
+    left: -8,
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: 7,
+    right: 7,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: COLORS.mainPurple,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  statusBadgeProgress: { backgroundColor: '#F59E0B' },
+  progressDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
+
+  cardText: { padding: 10, paddingBottom: 11 },
+  cardTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 13,
+    lineHeight: 18,
+    color: COLORS.textDark,
+  },
+
   lockedContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -316,9 +414,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 14,
   },
-  goToFoundationText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 16,
-    color: '#FFFFFF',
-  },
+  goToFoundationText: { fontFamily: FONTS.semiBold, fontSize: 16, color: '#FFFFFF' },
 });
