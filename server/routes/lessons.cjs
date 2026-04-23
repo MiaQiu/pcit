@@ -472,7 +472,8 @@ router.post('/:quizId/submit', requireAuth, async (req, res) => {
         select: {
           id: true,
           correctAnswer: true,
-          explanation: true
+          explanation: true,
+          wrongExplanation: true
         }
       }),
       prisma.quizResponse.findMany({
@@ -557,7 +558,8 @@ router.post('/:quizId/submit', requireAuth, async (req, res) => {
     res.json({
       isCorrect,
       correctAnswer: quiz.correctAnswer,
-      explanation: quiz.explanation,
+      explanation: isCorrect ? quiz.explanation : (quiz.wrongExplanation ?? quiz.explanation),
+      wrongExplanation: quiz.wrongExplanation ?? null,
       attemptNumber,
       quizResponse
     });

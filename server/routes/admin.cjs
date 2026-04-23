@@ -418,6 +418,8 @@ router.post('/lessons', requireAdminAuth, async (req, res) => {
             question: quiz.question,
             correctAnswer: quizAnswerLetterToId(lessonId, quiz.correctAnswer || 'A'),
             explanation: quiz.explanation || '',
+            wrongExplanation: quiz.wrongExplanation || null,
+            quizPosition: quiz.quizPosition ?? null,
             updatedAt: new Date()
           }
         });
@@ -540,6 +542,8 @@ router.put('/lessons/:id', requireAdminAuth, async (req, res) => {
               question: quiz.question,
               correctAnswer: quizAnswerLetterToId(lessonId, quiz.correctAnswer || 'A'),
               explanation: quiz.explanation || '',
+              wrongExplanation: quiz.wrongExplanation || null,
+              quizPosition: quiz.quizPosition ?? null,
               updatedAt: new Date()
             }
           });
@@ -1479,6 +1483,8 @@ router.post('/receive-sync', async (req, res) => {
             question: quizData.question,
             correctAnswer: quizData.correctAnswer,
             explanation: quizData.explanation,
+            wrongExplanation: quizData.wrongExplanation ?? null,
+            quizPosition: quizData.quizPosition ?? null,
             updatedAt: quizData.updatedAt,
           },
         });

@@ -456,20 +456,49 @@ async function runClaudeAgentLoop(userId, userText, dbHistory, signal) {
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 /**
- * GET /api/coach/unread?since=<ISO timestamp>
- * Returns the count of non-user messages (AI / psychologist) received after `since`.
+ * GET /api/coach/unread?since=<ISO>&thread=ai|psych
+ * Returns the count of unread messages.
+ * thread=ai   → only model messages
+ * thread=psych → only psychologist messages
+ * (default)   → all non-user, non-user_psych messages
  */
 router.get('/unread', async (req, res, next) => {
   try {
-    const since = req.query.since ? new Date(req.query.since) : new Date(0);
+    const since  = req.query.since  ? new Date(req.query.since) : new Date(0);
+    const thread = req.query.thread;
+
+    let roleFilter;
+    if (thread === 'ai')    roleFilter = { equals: 'model' };
+    else if (thread === 'psych') roleFilter = { equals: 'psychologist' };
+    else                    roleFilter = { notIn: ['user', 'user_psych'] };
+
     const count = await prisma.coachChatMessage.count({
-      where: {
-        userId: req.userId,
-        role: { not: 'user' },
-        createdAt: { gt: since },
-      },
+      where: { userId: req.userId, role: roleFilter, createdAt: { gt: since } },
     });
     res.json({ count });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/coach/psych-message
+ * Body: { message: string }
+ * Saves a parent message directed at the psychologist (role: user_psych).
+ * Does NOT trigger the AI agent.
+ */
+router.post('/psych-message', async (req, res, next) => {
+  try {
+    const { message } = req.body;
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ error: 'message is required' });
+    }
+    const msg = await prisma.coachChatMessage.create({
+      data: { userId: req.userId, role: 'user_psych', text: message.trim() },
+      select: { id: true, role: true, text: true, createdAt: true },
+    });
+    publish(req.userId, [msg]);
+    res.json({ success: true });
   } catch (err) {
     next(err);
   }

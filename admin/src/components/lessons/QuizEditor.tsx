@@ -2,10 +2,11 @@ import { Quiz } from '../../api/adminApi';
 
 interface Props {
   quiz: Quiz;
+  segmentCount: number;
   onChange: (quiz: Quiz) => void;
 }
 
-export default function QuizEditor({ quiz, onChange }: Props) {
+export default function QuizEditor({ quiz, segmentCount, onChange }: Props) {
   const updateOption = (index: number, text: string) => {
     const options = quiz.options.map((o, i) =>
       i === index ? { ...o, optionText: text } : o
@@ -13,8 +14,34 @@ export default function QuizEditor({ quiz, onChange }: Props) {
     onChange({ ...quiz, options });
   };
 
+  const positionOptions = [
+    { value: '', label: 'After all segments (default)' },
+    { value: '0', label: 'Before first segment' },
+    ...Array.from({ length: segmentCount }, (_, i) => ({
+      value: String(i + 1),
+      label: `After segment ${i + 1}`,
+    })),
+  ];
+
   return (
     <div className="quiz-editor">
+      <div className="form-group">
+        <label>Position</label>
+        <select
+          value={quiz.quizPosition != null ? String(quiz.quizPosition) : ''}
+          onChange={(e) =>
+            onChange({
+              ...quiz,
+              quizPosition: e.target.value === '' ? null : Number(e.target.value),
+            })
+          }
+        >
+          {positionOptions.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </div>
+
       <div className="form-group">
         <label>Question</label>
         <textarea
@@ -48,11 +75,21 @@ export default function QuizEditor({ quiz, onChange }: Props) {
       </div>
 
       <div className="form-group">
-        <label>Explanation</label>
+        <label>Explanation (correct answer)</label>
         <textarea
           value={quiz.explanation}
           onChange={(e) => onChange({ ...quiz, explanation: e.target.value })}
-          placeholder="Explanation shown after answering"
+          placeholder="Shown when the user picks the correct answer"
+          rows={3}
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Explanation (wrong answer)</label>
+        <textarea
+          value={quiz.wrongExplanation || ''}
+          onChange={(e) => onChange({ ...quiz, wrongExplanation: e.target.value || undefined })}
+          placeholder="Shown when the user picks a wrong answer (leave blank to use same explanation)"
           rows={3}
         />
       </div>

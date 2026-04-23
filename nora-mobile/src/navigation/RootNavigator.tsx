@@ -29,6 +29,7 @@ import { SkillExplanationScreen } from '../screens/SkillExplanationScreen';
 import { WeeklyReportScreen } from '../screens/WeeklyReportScreen';
 import { ModuleDetailScreen } from '../screens/ModuleDetailScreen';
 import { CoachChatScreen } from '../screens/CoachChatScreen';
+import { PsychologistChatScreen } from '../screens/PsychologistChatScreen';
 import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
 import { User } from '@nora/core';
@@ -405,6 +406,13 @@ export const RootNavigator: React.FC = () => {
         component={CoachChatScreen}
         options={{
           animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="PsychologistChat"
+        component={PsychologistChatScreen}
+        options={{
+          animation: 'slide_from_right',
         }}
       />
     </Stack.Navigator>

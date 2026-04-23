@@ -96,6 +96,7 @@ export type RootStackParamList = {
   };
   WeeklyReport: { reportId: string };
   CoachChat: undefined;
+  PsychologistChat: undefined;
 };
 
 export type RootTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;

@@ -1,7 +1,6 @@
 /**
  * ResponseButton Component
- * Quiz option button with 4 states: default, selected, correct, incorrect
- * Based on Figma design
+ * Quiz option button with 4 states: default, selected-correct, selected-wrong, unselected
  */
 
 import React from 'react';
@@ -9,10 +8,9 @@ import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { COLORS, FONTS } from '../constants/assets';
 
 export interface ResponseButtonProps {
-  label: string; // A, B, C, D
-  text: string;  // Option text
+  label: string;
+  text: string;
   isSelected: boolean;
-  isSubmitted: boolean;
   isCorrect: boolean;
   onPress: () => void;
 }
@@ -21,23 +19,12 @@ export const ResponseButton: React.FC<ResponseButtonProps> = ({
   label,
   text,
   isSelected,
-  isSubmitted,
   isCorrect,
   onPress,
 }) => {
-  // Determine button state and styling
   const getStateStyles = () => {
-    if (isSubmitted) {
-      if (isCorrect) {
-        return styles.correct;
-      }
-      if (isSelected && !isCorrect) {
-        return styles.incorrect;
-      }
-    }
-    if (isSelected) {
-      return styles.selected;
-    }
+    if (isSelected && isCorrect) return styles.correct;
+    if (isSelected && !isCorrect) return styles.incorrect;
     return styles.default;
   };
 
@@ -47,11 +34,9 @@ export const ResponseButton: React.FC<ResponseButtonProps> = ({
     <TouchableOpacity
       style={[styles.container, stateStyles.container]}
       onPress={onPress}
-      disabled={isSubmitted}
       activeOpacity={0.7}
     >
-      {/* Show label only when not selected or when submitted */}
-      {(!isSelected || isSubmitted) && (
+      {!isSelected && (
         <View style={[styles.labelCircle, stateStyles.labelCircle]}>
           <Text style={[styles.labelText, stateStyles.labelText]}>
             {label}
@@ -59,12 +44,11 @@ export const ResponseButton: React.FC<ResponseButtonProps> = ({
         </View>
       )}
 
-      <Text style={[styles.optionText, stateStyles.optionText, (isSelected && !isSubmitted) && { marginLeft: 0 }]}>
+      <Text style={[styles.optionText, stateStyles.optionText, isSelected && { marginLeft: 0 }]}>
         {text}
       </Text>
 
-      {/* Checkmark for correct answer */}
-      {isSubmitted && isCorrect && (
+      {isSelected && isCorrect && (
         <Text style={styles.checkmark}>✓</Text>
       )}
     </TouchableOpacity>
@@ -106,7 +90,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 
-  // State: Default (not selected)
   default: {
     container: {
       backgroundColor: COLORS.white,
@@ -123,24 +106,6 @@ const styles = StyleSheet.create({
     },
   },
 
-  // State: Selected (before submission)
-  selected: {
-    container: {
-      backgroundColor: COLORS.white,
-      borderColor: '#047857',
-    },
-    labelCircle: {
-      backgroundColor: COLORS.mainPurple,
-    },
-    labelText: {
-      color: COLORS.white,
-    },
-    optionText: {
-      color: COLORS.textDark,
-    },
-  },
-
-  // State: Correct (after submission)
   correct: {
     container: {
       backgroundColor: '#F0FFF4',
@@ -157,7 +122,6 @@ const styles = StyleSheet.create({
     },
   },
 
-  // State: Incorrect (after submission)
   incorrect: {
     container: {
       backgroundColor: '#FFF5F5',

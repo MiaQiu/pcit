@@ -48,6 +48,7 @@ const DEFAULT_QUIZ: Quiz = {
   question: '',
   correctAnswer: 'A',
   explanation: '',
+  wrongExplanation: '',
   options: [
     { optionLabel: 'A', optionText: '', order: 1 },
     { optionLabel: 'B', optionText: '', order: 2 },
@@ -209,7 +210,7 @@ export default function LessonEditorPage() {
                 </button>
               )}
             </div>
-            {quiz && <QuizEditor quiz={quiz} onChange={setQuiz} />}
+            {quiz && <QuizEditor quiz={quiz} segmentCount={segments.length} onChange={setQuiz} />}
           </div>
         </div>
 

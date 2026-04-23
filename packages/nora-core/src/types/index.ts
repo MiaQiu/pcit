@@ -287,6 +287,8 @@ export interface Quiz {
   options: QuizOption[];
   correctAnswer: string; // The correct option ID
   explanation: string;
+  wrongExplanation?: string;
+  quizPosition?: number | null;
 }
 
 export interface QuizOption {
@@ -380,6 +382,7 @@ export interface SubmitQuizResponse {
   isCorrect: boolean;
   correctAnswer: string;
   explanation: string;
+  wrongExplanation?: string;
   attemptNumber: number;
   quizResponse: QuizResponse;
 }

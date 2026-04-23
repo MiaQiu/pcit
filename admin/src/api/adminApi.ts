@@ -48,6 +48,8 @@ export interface Quiz {
   question: string;
   correctAnswer: string;
   explanation: string;
+  wrongExplanation?: string;
+  quizPosition?: number | null;
   options: QuizOption[];
 }
 

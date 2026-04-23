@@ -321,9 +321,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
   // Quiz state
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
-  const [wrongAttempts, setWrongAttempts] = useState<string[]>([]);
-  const [quizFeedback, setQuizFeedback] = useState<SubmitQuizResponse | null>(null);
+  const [quizFeedback, setQuizFeedback] = useState<{ isCorrect: boolean; explanation: string } | null>(null);
   const [lastRefreshDate, setLastRefreshDate] = useState<string>(getTodaySingapore());
 
   // Text input state
@@ -551,72 +549,15 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     }
   };
 
-  const handleSubmitQuiz = async (optionId?: string) => {
-    const chosenOption = optionId ?? selectedOption;
-    if (!chosenOption || !lessonData?.lesson.quiz) return;
-
-    setSelectedOption(optionId ?? null);
-
-    const isCorrect = chosenOption === lessonData.lesson.quiz.correctAnswer;
+  const handleSelectQuizOption = (optionId: string) => {
+    if (!lessonData?.lesson.quiz) return;
+    setSelectedOption(optionId);
+    const isCorrect = optionId === lessonData.lesson.quiz.correctAnswer;
     const { explanation, wrongExplanation } = lessonData.lesson.quiz;
-
-    if (isCorrect) {
-      const response: SubmitQuizResponse = {
-        isCorrect: true,
-        explanation,
-        attemptNumber: 1,
-        correctAnswer: lessonData.lesson.quiz.correctAnswer,
-        quizResponse: {
-          id: 'pending',
-          userId: 'current-user',
-          quizId: lessonData.lesson.quiz.id,
-          selectedAnswer: chosenOption,
-          isCorrect: true,
-          attemptNumber: 1,
-          respondedAt: new Date(),
-        },
-      };
-      setQuizFeedback(response);
-      setIsQuizSubmitted(true);
-
-      amplitudeService.trackQuizAnswered(
-        lessonData.lesson.id,
-        lessonData.lesson.quiz.id,
-        true,
-        1,
-        {
-          lessonModule: lessonData.lesson.module,
-          lessonTitle: lessonData.lesson.title,
-          dayNumber: lessonData.lesson.dayNumber,
-          selectedAnswer: chosenOption,
-          correctAnswer: lessonData.lesson.quiz.correctAnswer,
-        }
-      );
-
-      try {
-        await lessonService.submitQuizAnswer(lessonData.lesson.quiz.id, chosenOption);
-      } catch (error) {
-        console.error('Failed to submit quiz to server:', error);
-      }
-    } else {
-      // Wrong answer — show feedback but keep quiz open
-      setWrongAttempts((prev) => [...prev, chosenOption]);
-      setQuizFeedback({
-        isCorrect: false,
-        explanation: wrongExplanation ?? explanation,
-        attemptNumber: 1,
-        correctAnswer: lessonData.lesson.quiz.correctAnswer,
-        quizResponse: {
-          id: 'pending',
-          userId: 'current-user',
-          quizId: lessonData.lesson.quiz.id,
-          selectedAnswer: chosenOption,
-          isCorrect: false,
-          attemptNumber: 1,
-          respondedAt: new Date(),
-        },
-      });
-    }
+    setQuizFeedback({
+      isCorrect,
+      explanation: isCorrect ? explanation : (wrongExplanation ?? explanation),
+    });
   };
 
   const handleSubmitTextInput = async () => {
@@ -662,12 +603,6 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     const currentItem = virtualItems[currentSegmentIndex];
     const isOnQuiz = currentItem?.type === 'quiz';
     const isLastItem = currentSegmentIndex >= virtualItems.length - 1;
-
-    // Quiz: wait for submission
-    if (isOnQuiz && !isQuizSubmitted) {
-      await handleSubmitQuiz();
-      return;
-    }
 
     // Text input: wait for submission
     if (currentItem?.type === 'segment' && currentItem.segment.contentType === 'TEXT_INPUT' && !isTextInputSubmitted) {
@@ -738,8 +673,6 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       const virtualItems = buildVirtualItems(segments, lessonData?.lesson.quiz);
       if (virtualItems[currentSegmentIndex]?.type === 'quiz') {
         setSelectedOption(null);
-        setIsQuizSubmitted(false);
-        setWrongAttempts([]);
         setQuizFeedback(null);
       }
       // Reset text input state when navigating
@@ -893,10 +826,8 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
                       label={option.optionLabel}
                       text={option.optionText}
                       isSelected={selectedOption === option.id}
-                      isWrong={wrongAttempts.includes(option.id)}
-                      isCorrectRevealed={isQuizSubmitted}
                       isCorrect={option.id === lesson.quiz!.correctAnswer}
-                      onPress={() => !isQuizSubmitted && !wrongAttempts.includes(option.id) && handleSubmitQuiz(option.id)}
+                      onPress={() => handleSelectQuizOption(option.id)}
                     />
                   ))}
                 </View>
@@ -1001,7 +932,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
               onPress={handleContinue}
               height={48}
               disabled={
-                (isOnQuiz && !isQuizSubmitted && !selectedOption) ||
+                (isOnQuiz && !selectedOption) ||
                 (isTextInputSegment && !isTextInputSubmitted && !userTextInput.trim()) ||
                 isTextInputSubmitting
               }

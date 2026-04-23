@@ -129,13 +129,15 @@ model Phq2Survey {
 }
 
 model Quiz {
-  id            String         @id
-  lessonId      String         @unique
-  question      String
-  correctAnswer String
-  explanation   String
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime
+  id               String         @id
+  lessonId         String         @unique
+  question         String
+  correctAnswer    String
+  explanation      String
+  wrongExplanation String?
+  quizPosition     Int?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime
   Lesson        Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   QuizOption    QuizOption[]
   QuizResponse  QuizResponse[]

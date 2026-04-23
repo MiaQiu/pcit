@@ -29,6 +29,8 @@ import { COLORS, FONTS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 
+const PSYCH_REQUESTED_KEY = '@nora_psych_requested';
+
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
 
 // ─── Message cache (past 2 days including today) ──────────────────────────────
@@ -126,9 +128,9 @@ const SUGGESTIONS = [
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export const CoachChatScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const authService = useAuthService();
-  const { markAsRead } = useCoachUnread();
+  const { markAiAsRead, psychUnreadCount } = useCoachUnread();
   const flatListRef = useRef<FlatList>(null);
   const latestServerTsRef = useRef<string | undefined>(undefined);
   const optimisticIndexRef = useRef<number>(0);
@@ -141,6 +143,7 @@ export const CoachChatScreen: React.FC = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [submittingHuman, setSubmittingHuman] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [psychRequested, setPsychRequested] = useState(false);
   const [loading, setLoading] = useState(false);
   const [statusText, setStatusText] = useState<string | null>(null);
   const [flatListHeight, setFlatListHeight] = useState(600);
@@ -153,10 +156,17 @@ export const CoachChatScreen: React.FC = () => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated }), 100);
   }, []);
 
-  // Clear unread badge on exit using the latest server timestamp to avoid device/server clock skew
+  // Load psych-requested flag on mount
   useEffect(() => {
-    return () => { markAsRead(latestServerTsRef.current); };
-  }, [markAsRead]);
+    AsyncStorage.getItem(PSYCH_REQUESTED_KEY).then(v => {
+      if (v === 'true') setPsychRequested(true);
+    });
+  }, []);
+
+  // Clear AI unread badge on exit
+  useEffect(() => {
+    return () => { markAiAsRead(latestServerTsRef.current); };
+  }, [markAiAsRead]);
 
   // Load history (cache-first), then long-poll for new messages
   useEffect(() => {
@@ -203,10 +213,10 @@ export const CoachChatScreen: React.FC = () => {
           const lastTs = incoming[incoming.length - 1].createdAt;
           since = lastTs;
           latestServerTsRef.current = lastTs;
-          markAsRead(lastTs);
+          markAiAsRead(lastTs);
         } else if (cached.length > 0) {
           latestServerTsRef.current = since;
-          markAsRead(since);
+          markAiAsRead(since);
         } else {
           // No cache and no server messages — show the guide
           setShowGuide(true);
@@ -254,7 +264,7 @@ export const CoachChatScreen: React.FC = () => {
               const lastTs = realMessages[realMessages.length - 1].createdAt!;
               since = lastTs;
               latestServerTsRef.current = lastTs;
-              markAsRead(lastTs);
+              markAiAsRead(lastTs);
             }
           }
         })
@@ -320,9 +330,13 @@ export const CoachChatScreen: React.FC = () => {
   }, [input, loading, scrollToEnd, authService]);
 
   const handleRequestHuman = useCallback(() => {
-    setAgreedToTerms(false);
-    setShowHumanModal(true);
-  }, []);
+    if (psychRequested) {
+      navigation.navigate('PsychologistChat');
+    } else {
+      setAgreedToTerms(false);
+      setShowHumanModal(true);
+    }
+  }, [psychRequested, navigation]);
 
   const handleSubmitHuman = useCallback(async () => {
     if (!agreedToTerms) return;
@@ -341,13 +355,15 @@ export const CoachChatScreen: React.FC = () => {
         }
       );
       setShowHumanModal(false);
-      Alert.alert('Request Sent', 'Our psychologist team has been notified and will reach out to you soon.');
+      await AsyncStorage.setItem(PSYCH_REQUESTED_KEY, 'true');
+      setPsychRequested(true);
+      navigation.navigate('PsychologistChat');
     } catch {
       Alert.alert('Error', 'Failed to send request. Please try again.');
     } finally {
       setSubmittingHuman(false);
     }
-  }, [agreedToTerms, authService]);
+  }, [agreedToTerms, authService, navigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -363,6 +379,11 @@ export const CoachChatScreen: React.FC = () => {
         <TouchableOpacity onPress={handleRequestHuman} activeOpacity={0.7} style={styles.humanBtn}>
           <Ionicons name="person-circle-outline" size={16} color={COLORS.mainPurple} />
           <Text style={styles.humanBtnText}>Talk to a Psychologist</Text>
+          {psychUnreadCount > 0 && (
+            <View style={styles.psychBadge}>
+              <Text style={styles.psychBadgeText}>{psychUnreadCount > 9 ? '9+' : psychUnreadCount}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -374,7 +395,7 @@ export const CoachChatScreen: React.FC = () => {
         {/* Messages */}
         <FlatList
           ref={flatListRef}
-          data={showGuide ? [] : messages}
+          data={showGuide ? [] : messages.filter(m => m.role !== 'psychologist' && m.role !== 'user_psych')}
           keyExtractor={m => m.id}
           renderItem={({ item }) => <Bubble message={item} />}
           ListHeaderComponent={showGuide ? (
@@ -607,6 +628,22 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: 12,
     color: COLORS.mainPurple,
+  },
+  psychBadge: {
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    marginLeft: 2,
+  },
+  psychBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontFamily: FONTS.bold,
+    lineHeight: 13,
   },
   headerCenter: {
     flex: 1,
