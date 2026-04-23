@@ -568,6 +568,7 @@ enum ContentType {
 }
 
 enum LessonModule {
+  GETTING_STARTED
   FOUNDATION
   EMOTIONS
   COOPERATION

@@ -157,7 +157,7 @@ router.get('/', requireAuth, async (req, res) => {
       lessonCount: lessonCountMap[mod.key] || 0,
       completedLessons: completedMap[mod.key] || 0,
       lastActivityAt: lastActivityMap[mod.key] || null,
-      isLocked: !isFoundationCompleted && mod.key !== 'FOUNDATION'
+      isLocked: false
     }));
 
     // Generate content version hash
@@ -200,21 +200,6 @@ router.get('/:key', requireAuth, async (req, res) => {
 
     if (!mod) {
       return res.status(404).json({ error: 'Module not found' });
-    }
-
-    // Check if Foundation is completed (for locking non-Foundation modules)
-    if (moduleKey !== 'FOUNDATION') {
-      const foundationLessonCount = await prisma.lesson.count({ where: { module: 'FOUNDATION' } });
-      const foundationCompleted = await prisma.userLessonProgress.count({
-        where: {
-          userId,
-          status: 'COMPLETED',
-          Lesson: { module: 'FOUNDATION' }
-        }
-      });
-      if (foundationLessonCount > 0 && foundationCompleted < foundationLessonCount) {
-        return res.status(403).json({ error: 'Complete the Foundation module first', isLocked: true });
-      }
     }
 
     // Get lessons for this module
