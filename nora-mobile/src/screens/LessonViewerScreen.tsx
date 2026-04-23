@@ -31,6 +31,20 @@ import { getMockLessonDetail } from '../data/mockLessons';
 import amplitudeService from '../services/amplitudeService';
 import { getTodaySingapore } from '../utils/timezone';
 
+type VirtualItem = { type: 'segment'; segment: LessonSegment } | { type: 'quiz' };
+
+function buildVirtualItems(segments: LessonSegment[], quiz: { quizPosition?: number | null } | null | undefined): VirtualItem[] {
+  if (!quiz) return segments.map((s) => ({ type: 'segment', segment: s }));
+  const pos = quiz.quizPosition ?? segments.length;
+  const items: VirtualItem[] = [];
+  for (let i = 0; i < segments.length; i++) {
+    if (i === pos) items.push({ type: 'quiz' });
+    items.push({ type: 'segment', segment: segments[i] });
+  }
+  if (pos >= segments.length) items.push({ type: 'quiz' });
+  return items;
+}
+
 /**
  * Format body text with markdown-like formatting:
  * - Replace * at start of lines with purple bullets
@@ -308,6 +322,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   // Quiz state
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
+  const [wrongAttempts, setWrongAttempts] = useState<string[]>([]);
   const [quizFeedback, setQuizFeedback] = useState<SubmitQuizResponse | null>(null);
   const [lastRefreshDate, setLastRefreshDate] = useState<string>(getTodaySingapore());
 
@@ -399,7 +414,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
       if (data.userProgress) {
         const segments = data.lesson.segments || [];
-        const totalSegments = segments.length + (data.lesson.quiz ? 1 : 0);
+        const totalSegments = buildVirtualItems(segments, data.lesson.quiz).length;
         const savedSegment = data.userProgress.currentSegment - 1;
 
         if (data.userProgress.status === 'COMPLETED') {
@@ -500,7 +515,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       const now = new Date();
       const timeSpent = Math.floor((now.getTime() - startTime.getTime()) / 1000);
       const segments = lessonData.lesson.segments || [];
-      const totalSegments = segments.length + (lessonData.lesson.quiz ? 1 : 0);
+      const totalSegments = buildVirtualItems(segments, lessonData.lesson.quiz).length;
 
       await lessonService.updateProgress(lessonId, {
         currentSegment: totalSegments,
@@ -536,55 +551,71 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     }
   };
 
-  const handleSubmitQuiz = async () => {
-    if (!selectedOption || !lessonData?.lesson.quiz) return;
+  const handleSubmitQuiz = async (optionId?: string) => {
+    const chosenOption = optionId ?? selectedOption;
+    if (!chosenOption || !lessonData?.lesson.quiz) return;
 
-    // Provide immediate feedback using client-side validation
-    const isCorrect = selectedOption === lessonData.lesson.quiz.correctAnswer;
-    const immediateResponse: SubmitQuizResponse = {
-      isCorrect,
-      explanation: lessonData.lesson.quiz.explanation,
-      attemptNumber: 1,
-      correctAnswer: lessonData.lesson.quiz.correctAnswer,
-      quizResponse: {
-        id: 'pending',
-        userId: 'current-user',
-        quizId: lessonData.lesson.quiz.id,
-        selectedAnswer: selectedOption,
-        isCorrect,
+    setSelectedOption(optionId ?? null);
+
+    const isCorrect = chosenOption === lessonData.lesson.quiz.correctAnswer;
+    const { explanation, wrongExplanation } = lessonData.lesson.quiz;
+
+    if (isCorrect) {
+      const response: SubmitQuizResponse = {
+        isCorrect: true,
+        explanation,
         attemptNumber: 1,
-        respondedAt: new Date(),
-      },
-    };
-
-    // Show feedback immediately
-    setQuizFeedback(immediateResponse);
-    setIsQuizSubmitted(true);
-
-    // Track quiz answered
-    amplitudeService.trackQuizAnswered(
-      lessonData.lesson.id,
-      lessonData.lesson.quiz.id,
-      isCorrect,
-      1,
-      {
-        lessonModule: lessonData.lesson.module,
-        lessonTitle: lessonData.lesson.title,
-        dayNumber: lessonData.lesson.dayNumber,
-        selectedAnswer: selectedOption,
         correctAnswer: lessonData.lesson.quiz.correctAnswer,
-      }
-    );
+        quizResponse: {
+          id: 'pending',
+          userId: 'current-user',
+          quizId: lessonData.lesson.quiz.id,
+          selectedAnswer: chosenOption,
+          isCorrect: true,
+          attemptNumber: 1,
+          respondedAt: new Date(),
+        },
+      };
+      setQuizFeedback(response);
+      setIsQuizSubmitted(true);
 
-    // Submit to API in background
-    try {
-      await lessonService.submitQuizAnswer(
+      amplitudeService.trackQuizAnswered(
+        lessonData.lesson.id,
         lessonData.lesson.quiz.id,
-        selectedOption
+        true,
+        1,
+        {
+          lessonModule: lessonData.lesson.module,
+          lessonTitle: lessonData.lesson.title,
+          dayNumber: lessonData.lesson.dayNumber,
+          selectedAnswer: chosenOption,
+          correctAnswer: lessonData.lesson.quiz.correctAnswer,
+        }
       );
-    } catch (error) {
-      console.error('Failed to submit quiz to server:', error);
-      // Don't show error to user since they already got immediate feedback
+
+      try {
+        await lessonService.submitQuizAnswer(lessonData.lesson.quiz.id, chosenOption);
+      } catch (error) {
+        console.error('Failed to submit quiz to server:', error);
+      }
+    } else {
+      // Wrong answer — show feedback but keep quiz open
+      setWrongAttempts((prev) => [...prev, chosenOption]);
+      setQuizFeedback({
+        isCorrect: false,
+        explanation: wrongExplanation ?? explanation,
+        attemptNumber: 1,
+        correctAnswer: lessonData.lesson.quiz.correctAnswer,
+        quizResponse: {
+          id: 'pending',
+          userId: 'current-user',
+          quizId: lessonData.lesson.quiz.id,
+          selectedAnswer: chosenOption,
+          isCorrect: false,
+          attemptNumber: 1,
+          respondedAt: new Date(),
+        },
+      });
     }
   };
 
@@ -624,95 +655,28 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   };
 
   const handleContinue = async () => {
-    console.log('handleContinue called');
-    if (!lessonData) {
-      console.log('No lesson data, returning');
-      return;
-    }
+    if (!lessonData) return;
 
     const segments = lessonData.lesson.segments || [];
-    const isOnQuiz = currentSegmentIndex === segments.length;
-    console.log('handleContinue:', { currentSegmentIndex, totalSegments: segments.length, isOnQuiz });
+    const virtualItems = buildVirtualItems(segments, lessonData.lesson.quiz);
+    const currentItem = virtualItems[currentSegmentIndex];
+    const isOnQuiz = currentItem?.type === 'quiz';
+    const isLastItem = currentSegmentIndex >= virtualItems.length - 1;
 
-    // If on quiz and submitted, complete the lesson
-    if (isOnQuiz && isQuizSubmitted) {
-      console.log('On quiz and submitted, completing lesson');
-      // Lesson complete, navigate to Record screen
-      // Save final progress to server before navigating away
-      await completeLesson();
-
-      // DON'T invalidate cache - keep it so user can review completed lesson instantly
-      // Cache will be cleaned up when app opens and lesson is completed
-
-      if (lessonData.lesson.module === 'FOUNDATION') {
-        try {
-          const modulesResponse = await lessonService.getModules();
-          if (modulesResponse.isFoundationCompleted) {
-            navigation.navigate('MainTabs', { screen: 'Home', params: { showModulePicker: true } });
-            return;
-          }
-        } catch (_) {}
-      }
-
-      if (moduleKey) {
-        navigation.goBack();
-      } else {
-        navigation.navigate('MainTabs', { screen: 'Home' });
-      }
-      return;
-    }
-
-    // If on quiz but not submitted, need to submit first
+    // Quiz: wait for submission
     if (isOnQuiz && !isQuizSubmitted) {
-      console.log('On quiz but not submitted, submitting first');
       await handleSubmitQuiz();
       return;
     }
 
-    // Check if current segment is TEXT_INPUT and not yet submitted
-    const currentSegment = segments[currentSegmentIndex];
-    const isOnTextInput = currentSegment?.contentType === 'TEXT_INPUT';
-
-    if (isOnTextInput && !isTextInputSubmitted) {
-      console.log('On text input but not submitted, submitting first');
+    // Text input: wait for submission
+    if (currentItem?.type === 'segment' && currentItem.segment.contentType === 'TEXT_INPUT' && !isTextInputSubmitted) {
       await handleSubmitTextInput();
       return;
     }
 
-    // Move to next segment or quiz
-    if (currentSegmentIndex < segments.length - 1) {
-      // Move to next content segment
-      const nextIndex = currentSegmentIndex + 1;
-      console.log('Moving to next segment:', nextIndex);
-      // Update UI immediately, save progress in background
-      setCurrentSegmentIndex(nextIndex);
-      updateProgress(nextIndex);
-
-      // Reset text input state for next segment
-      setUserTextInput('');
-      setIsTextInputSubmitted(false);
-      setTextInputFeedback(null);
-
-      // Track segment viewed
-      amplitudeService.trackLessonSegmentViewed(
-        lessonData.lesson.id,
-        nextIndex + 1, // 1-indexed for readability
-        {
-          lessonTitle: lessonData.lesson.title,
-          lessonModule: lessonData.lesson.module,
-          dayNumber: lessonData.lesson.dayNumber,
-          totalSegments: segments.length,
-        }
-      );
-    } else if (lessonData.lesson.quiz) {
-      // Move to quiz (last segment)
-      console.log('Moving to quiz');
-      // Update UI immediately, save progress in background
-      setCurrentSegmentIndex(segments.length);
-      updateProgress(currentSegmentIndex + 1);
-    } else {
-      // No quiz, lesson complete
-      console.log('Lesson complete, no quiz');
+    // Last item → complete lesson
+    if (isLastItem) {
       await completeLesson();
 
       if (lessonData.lesson.module === 'FOUNDATION') {
@@ -730,6 +694,30 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       } else {
         navigation.navigate('MainTabs', { screen: 'Home' });
       }
+      return;
+    }
+
+    // Advance to next item
+    const nextIndex = currentSegmentIndex + 1;
+    setCurrentSegmentIndex(nextIndex);
+    updateProgress(nextIndex);
+
+    setUserTextInput('');
+    setIsTextInputSubmitted(false);
+    setTextInputFeedback(null);
+
+    const nextItem = virtualItems[nextIndex];
+    if (nextItem?.type === 'segment') {
+      amplitudeService.trackLessonSegmentViewed(
+        lessonData.lesson.id,
+        nextIndex + 1,
+        {
+          lessonTitle: lessonData.lesson.title,
+          lessonModule: lessonData.lesson.module,
+          dayNumber: lessonData.lesson.dayNumber,
+          totalSegments: virtualItems.length,
+        }
+      );
     }
   };
 
@@ -744,13 +732,14 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
   const handleBack = () => {
     if (currentSegmentIndex > 0) {
-      // Go to previous segment
       setCurrentSegmentIndex(currentSegmentIndex - 1);
-      // Reset quiz state if going back from quiz
+      // Reset quiz state when leaving the quiz screen
       const segments = lessonData?.lesson.segments || [];
-      if (currentSegmentIndex === segments.length) {
+      const virtualItems = buildVirtualItems(segments, lessonData?.lesson.quiz);
+      if (virtualItems[currentSegmentIndex]?.type === 'quiz') {
         setSelectedOption(null);
         setIsQuizSubmitted(false);
+        setWrongAttempts([]);
         setQuizFeedback(null);
       }
       // Reset text input state when navigating
@@ -804,20 +793,20 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
   const { lesson, userProgress } = lessonData;
   const segments = lesson.segments || [];
-  const totalSegments = segments.length + (lesson.quiz ? 1 : 0);
-  const isOnQuiz = currentSegmentIndex === segments.length;
-  const currentSegment = !isOnQuiz ? segments[currentSegmentIndex] : null;
+  const virtualItems = buildVirtualItems(segments, lesson.quiz);
+  const totalSegments = virtualItems.length;
+  const currentItem = virtualItems[currentSegmentIndex];
+  const isOnQuiz = currentItem?.type === 'quiz';
+  const currentSegment = currentItem?.type === 'segment' ? currentItem.segment : null;
 
   // Check if current segment is TEXT_INPUT
   const isTextInputSegment = currentSegment?.contentType === 'TEXT_INPUT';
 
   // Determine button text
   let buttonText = 'Continue →';
-  if (isOnQuiz) {
-    buttonText = isQuizSubmitted ? 'Continue →' : 'Check Answer';
-  } else if (isTextInputSegment) {
+  if (isTextInputSegment) {
     buttonText = isTextInputSubmitted ? 'Continue →' : 'Check Answer';
-  } else if (currentSegmentIndex === segments.length - 1 && lesson.quiz) {
+  } else if (virtualItems[currentSegmentIndex + 1]?.type === 'quiz') {
     buttonText = 'Take Quiz →';
   }
 
@@ -831,12 +820,12 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={handleContinue} activeOpacity={1} />
         <SafeAreaView edges={['top', 'left', 'right']} style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
           <View style={styles.header}>
+            <View style={styles.progressBarContainer}>
+              <ProgressBar totalSegments={totalSegments} currentSegment={currentSegmentIndex + 1} height={4} />
+            </View>
             <TouchableOpacity style={styles.closeButton} onPress={handleClose} accessibilityLabel="Close lesson">
               <Text style={styles.closeIcon}>×</Text>
             </TouchableOpacity>
-            <View style={styles.progressBarContainer}>
-              <ProgressBar totalSegments={totalSegments} currentSegment={currentSegmentIndex + 1} />
-            </View>
           </View>
         </SafeAreaView>
         <SafeAreaView edges={['left', 'right']} style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
@@ -859,8 +848,17 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      {/* Header with Close Button and Progress Bar */}
+      {/* Header with Progress Bar and Close Button */}
       <View style={styles.header}>
+        {/* Progress Bar */}
+        <View style={styles.progressBarContainer}>
+          <ProgressBar
+            totalSegments={totalSegments}
+            currentSegment={currentSegmentIndex + 1}
+            height={4}
+          />
+        </View>
+
         {/* Close Button */}
         <TouchableOpacity
           style={styles.closeButton}
@@ -869,14 +867,6 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         >
           <Text style={styles.closeIcon}>×</Text>
         </TouchableOpacity>
-
-        {/* Progress Bar */}
-        <View style={styles.progressBarContainer}>
-          <ProgressBar
-            totalSegments={totalSegments}
-            currentSegment={currentSegmentIndex + 1}
-          />
-        </View>
       </View>
 
       {/* Scrollable Content */}
@@ -890,7 +880,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
               /* Quiz Content */
               <>
                 {/* Badge */}
-                <Text style={styles.quizBadge}>Just a quick check</Text>
+                <Text style={styles.quizBadge}>TAKE A GUESS</Text>
 
                 {/* Question */}
                 <Text style={styles.quizQuestion}>{lesson.quiz.question}</Text>
@@ -903,9 +893,10 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
                       label={option.optionLabel}
                       text={option.optionText}
                       isSelected={selectedOption === option.id}
-                      isSubmitted={isQuizSubmitted}
+                      isWrong={wrongAttempts.includes(option.id)}
+                      isCorrectRevealed={isQuizSubmitted}
                       isCorrect={option.id === lesson.quiz!.correctAnswer}
-                      onPress={() => !isQuizSubmitted && setSelectedOption(option.id)}
+                      onPress={() => !isQuizSubmitted && !wrongAttempts.includes(option.id) && handleSubmitQuiz(option.id)}
                     />
                   ))}
                 </View>
@@ -1051,24 +1042,24 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   header: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 12,
     paddingBottom: 0,
-    gap: 12,
   },
   closeButton: {
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'flex-end',
+    marginRight: 18,
   },
   progressBarContainer: {
-    flex: 1,
+    width: '95%',
   },
   closeIcon: {
-    fontSize: 32,
+    fontSize: 28,
     color: COLORS.textDark,
     fontWeight: '300',
   },
