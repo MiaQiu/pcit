@@ -198,6 +198,22 @@ export async function deleteLesson(id: string): Promise<void> {
   await apiFetch(`/api/admin/lessons/${id}`, { method: 'DELETE' });
 }
 
+export async function uploadLessonImage(id: string, file: File): Promise<{ dragonImageUrl: string }> {
+  const token = (await import('./client')).getToken();
+  const form = new FormData();
+  form.append('image', file);
+  const res = await fetch(`/api/admin/lessons/${id}/image`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Upload failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 // ---- Modules ----
 
 export async function getModules(): Promise<ModuleSummary[]> {

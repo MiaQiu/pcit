@@ -379,11 +379,72 @@ async function verifyFileExists(key) {
 }
 
 /**
+ * Resolve a dragonImageUrl to a presigned URL when it points to S3.
+ * Accepts either a full S3 URL (https://bucket.s3.region.amazonaws.com/lessons/...)
+ * or a bare S3 key (lessons/...).
+ * Non-S3 values (external URLs, mock://, null) are returned as-is.
+ * @param {string|null} value
+ * @returns {Promise<string|null>}
+ */
+async function resolveDragonImageUrl(value) {
+  if (!value) return value;
+  if (value.startsWith('mock://')) return value;
+
+  // Bare S3 key
+  if (value.startsWith('lessons/')) {
+    return getSignedUrl(value);
+  }
+
+  // Full S3 URL — extract the key
+  if (value.startsWith('https://') && value.includes('.amazonaws.com/')) {
+    const key = value.replace(/^https:\/\/[^/]+\//, '');
+    if (key.startsWith('lessons/')) {
+      return getSignedUrl(key);
+    }
+  }
+
+  return value; // external CDN, leave untouched
+}
+
+/**
  * Check if S3 is enabled and configured
  * @returns {boolean}
  */
 function isS3Enabled() {
   return !!S3_ENABLED;
+}
+
+/**
+ * Upload lesson image to AWS S3 (publicly accessible)
+ * @param {Buffer} fileBuffer
+ * @param {string} lessonId
+ * @param {string} extension - e.g. 'jpg', 'png', 'webp'
+ * @returns {Promise<string>} - Public S3 URL or mock path
+ */
+async function uploadLessonImage(fileBuffer, lessonId, extension = 'jpg') {
+  if (!S3_ENABLED || !s3Client) {
+    console.warn('S3 not configured, using mock storage path for lesson image');
+    return `mock://lessons/${lessonId}/image.${extension}`;
+  }
+
+  const contentTypeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
+  const contentType = contentTypeMap[extension.toLowerCase()] || 'image/jpeg';
+  const key = `lessons/${lessonId}/image.${extension}`;
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: contentType,
+    Metadata: { lessonId, uploadedAt: new Date().toISOString() },
+    ServerSideEncryption: 'AES256',
+  });
+
+  await s3Client.send(command);
+
+  const publicUrl = `https://${bucketName}.s3.${AWS_REGION}.amazonaws.com/${key}`;
+  console.log(`Lesson image uploaded to S3: ${key}`);
+  return publicUrl;
 }
 
 module.exports = {
@@ -395,5 +456,7 @@ module.exports = {
   uploadProfileImage,
   deleteProfileImage,
   uploadSupportAttachment,
+  uploadLessonImage,
+  resolveDragonImageUrl,
   isS3Enabled
 };

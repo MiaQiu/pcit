@@ -42,6 +42,17 @@ Used by: controls where the quiz appears in the lesson segment sequence. `NULL` 
 
 ---
 
+### `LessonModule` enum — new values
+```sql
+ALTER TYPE "LessonModule" ADD VALUE IF NOT EXISTS 'GETTING_STARTED';
+ALTER TYPE "LessonModule" ADD VALUE IF NOT EXISTS 'DISCIPLINE';
+ALTER TYPE "LessonModule" ADD VALUE IF NOT EXISTS 'EMOTIONAL_MASSAGE';
+ALTER TYPE "LessonModule" ADD VALUE IF NOT EXISTS 'ADHD';
+```
+Used by: lesson content organised under these new module categories.
+
+---
+
 ## How to fix properly (create migration files)
 
 Run these **one at a time**, waiting at least one second between each, to avoid duplicate timestamps:
@@ -80,6 +91,10 @@ ALTER TABLE "LessonSegment" ADD COLUMN IF NOT EXISTS "customHtml" TEXT;
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "developmentalVisible" BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE "Quiz" ADD COLUMN IF NOT EXISTS "wrongExplanation" TEXT;
 ALTER TABLE "Quiz" ADD COLUMN IF NOT EXISTS "quizPosition" INTEGER;
+ALTER TYPE "LessonModule" ADD VALUE IF NOT EXISTS 'GETTING_STARTED';
+ALTER TYPE "LessonModule" ADD VALUE IF NOT EXISTS 'DISCIPLINE';
+ALTER TYPE "LessonModule" ADD VALUE IF NOT EXISTS 'EMOTIONAL_MASSAGE';
+ALTER TYPE "LessonModule" ADD VALUE IF NOT EXISTS 'ADHD';
 ```
 
 After doing this, still create the migration files so future deploys stay consistent.

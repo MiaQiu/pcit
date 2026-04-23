@@ -6,6 +6,7 @@ const express = require('express');
 const crypto = require('crypto');
 const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
+const { resolveDragonImageUrl } = require('../services/storage-s3.cjs');
 
 const router = express.Router();
 
@@ -223,20 +224,20 @@ router.get('/:key', requireAuth, async (req, res) => {
     });
 
     // Format lesson cards
-    const lessonCards = lessons.map(lesson => ({
+    const lessonCards = await Promise.all(lessons.map(async lesson => ({
       id: lesson.id,
       module: lesson.module,
       title: lesson.title,
       subtitle: lesson.subtitle,
       description: lesson.shortDescription,
       dayNumber: lesson.dayNumber,
-      dragonImageUrl: lesson.dragonImageUrl,
+      dragonImageUrl: await resolveDragonImageUrl(lesson.dragonImageUrl),
       backgroundColor: lesson.backgroundColor,
       ellipse77Color: lesson.ellipse77Color,
       ellipse78Color: lesson.ellipse78Color,
       isLocked: false,
       progress: progressMap[lesson.id] || null
-    }));
+    })));
 
     res.json({
       module: {

@@ -185,6 +185,7 @@ export default function LessonEditorPage() {
         <div className="editor-form">
           <MetadataForm
             lesson={lesson}
+            lessonId={id}
             modules={modules}
             isEditing={isEditing}
             onChange={(updates) => setLesson((prev) => ({ ...prev, ...updates }))}

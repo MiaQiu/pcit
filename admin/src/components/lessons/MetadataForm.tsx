@@ -1,4 +1,5 @@
-import { ModuleSummary } from '../../api/adminApi';
+import { useRef, useState } from 'react';
+import { ModuleSummary, uploadLessonImage } from '../../api/adminApi';
 
 const CONTENT_MODULES = [
   'FOUNDATION', 'EMOTIONS', 'COOPERATION', 'SIBLINGS', 'RELOCATION',
@@ -17,16 +18,45 @@ interface Props {
     objectives: string[];
     estimatedMinutes: number;
     teachesCategories: string[];
+    dragonImageUrl: string;
     backgroundColor: string;
     ellipse77Color: string;
     ellipse78Color: string;
   };
+  lessonId?: string;
   modules: ModuleSummary[];
   isEditing: boolean;
   onChange: (updates: Record<string, any>) => void;
 }
 
-export default function MetadataForm({ lesson, modules, isEditing, onChange }: Props) {
+export default function MetadataForm({ lesson, lessonId, modules, isEditing, onChange }: Props) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !lessonId) return;
+
+    setLocalPreview(URL.createObjectURL(file));
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const { dragonImageUrl } = await uploadLessonImage(lessonId, file);
+      onChange({ dragonImageUrl });
+      setLocalPreview(null);
+    } catch (err: any) {
+      setUploadError(err.message || 'Upload failed');
+      setLocalPreview(null);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const previewSrc = localPreview || lesson.dragonImageUrl || null;
+
   return (
     <div className="editor-section">
       <h2>Lesson Metadata</h2>
@@ -122,6 +152,61 @@ export default function MetadataForm({ lesson, modules, isEditing, onChange }: P
           }
           placeholder="e.g. LABELED_PRAISE, REFLECTION"
         />
+      </div>
+
+      {/* Lesson image */}
+      <div className="form-group">
+        <label>Lesson Image</label>
+        {isEditing ? (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+            {previewSrc && (
+              <img
+                src={previewSrc}
+                alt="Lesson"
+                style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb', flexShrink: 0 }}
+              />
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading…' : previewSrc ? 'Replace Image' : 'Upload Image'}
+              </button>
+              {lesson.dragonImageUrl && !uploading && (
+                <button
+                  type="button"
+                  className="btn-danger-sm"
+                  onClick={() => onChange({ dragonImageUrl: '' })}
+                >
+                  Remove
+                </button>
+              )}
+              {uploadError && <p style={{ color: '#ef4444', fontSize: 13, margin: 0 }}>{uploadError}</p>}
+              {lesson.dragonImageUrl && (
+                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0, wordBreak: 'break-all', maxWidth: 280 }}>
+                  {lesson.dragonImageUrl}
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <input
+            type="text"
+            value={lesson.dragonImageUrl}
+            onChange={(e) => onChange({ dragonImageUrl: e.target.value })}
+            placeholder="Image URL (available after saving)"
+          />
+        )}
       </div>
 
       <div className="form-row">

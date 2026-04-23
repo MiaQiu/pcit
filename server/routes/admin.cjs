@@ -1,9 +1,20 @@
 const express = require('express');
 const crypto = require('crypto');
+const multer = require('multer');
 const prisma = require('../services/db.cjs');
 const { generateAccessToken } = require('../utils/jwt.cjs');
 const { requireAdminAuth } = require('../middleware/adminAuth.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
+const { uploadLessonImage } = require('../services/storage-s3.cjs');
+
+const uploadMiddleware = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
 
 const { generateWeeklyReport, resolveReportAudioUrls } = require('../services/weeklyReportService.cjs');
 const { generateCdiCoaching } = require('../services/pcitAnalysisService.cjs');
@@ -639,6 +650,34 @@ router.delete('/lessons/:id', requireAdminAuth, async (req, res) => {
   } catch (error) {
     console.error('Admin delete lesson error:', error);
     res.status(500).json({ error: 'Failed to delete lesson' });
+  }
+});
+
+/**
+ * POST /api/admin/lessons/:id/image
+ * Upload a lesson image to S3 and persist the URL on the lesson record.
+ */
+router.post('/lessons/:id/image', requireAdminAuth, uploadMiddleware.single('image'), async (req, res) => {
+  try {
+    const lessonId = req.params.id;
+
+    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+    if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
+
+    if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+
+    const ext = (req.file.originalname.split('.').pop() || 'jpg').toLowerCase();
+    const imageUrl = await uploadLessonImage(req.file.buffer, lessonId, ext);
+
+    await prisma.lesson.update({
+      where: { id: lessonId },
+      data: { dragonImageUrl: imageUrl, updatedAt: new Date() },
+    });
+
+    res.json({ dragonImageUrl: imageUrl });
+  } catch (error) {
+    console.error('Admin lesson image upload error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload image' });
   }
 });
 

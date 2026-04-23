@@ -9,6 +9,7 @@ const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
 
 const { evaluateTextInput } = require('../services/textInputEvaluationService.cjs');
+const { resolveDragonImageUrl } = require('../services/storage-s3.cjs');
 
 const router = express.Router();
 
@@ -37,7 +38,7 @@ const submitTextInputSchema = Joi.object({
 /**
  * Format lesson for lesson card (list view)
  */
-function formatLessonCard(lesson, userProgress) {
+async function formatLessonCard(lesson, userProgress) {
   return {
     id: lesson.id,
     module: lesson.module,
@@ -45,7 +46,7 @@ function formatLessonCard(lesson, userProgress) {
     subtitle: lesson.subtitle,
     description: lesson.shortDescription,
     dayNumber: lesson.dayNumber,
-    dragonImageUrl: lesson.dragonImageUrl,
+    dragonImageUrl: await resolveDragonImageUrl(lesson.dragonImageUrl),
     backgroundColor: lesson.backgroundColor,
     ellipse77Color: lesson.ellipse77Color,
     ellipse78Color: lesson.ellipse78Color,
@@ -95,10 +96,10 @@ router.get('/', requireAuth, async (req, res) => {
     });
 
     // Format lesson cards — all unlocked
-    const lessonCards = lessons.map(lesson => {
+    const lessonCards = await Promise.all(lessons.map(lesson => {
       const progress = progressMap[lesson.id] || null;
       return formatLessonCard(lesson, progress);
-    });
+    }));
 
     // Generate content version hash
     const contentHash = crypto

@@ -588,6 +588,9 @@ enum LessonModule {
   SCREENS
   SEPARATION
   SPECIAL
+  DISCIPLINE
+  EMOTIONAL_MASSAGE
+  ADHD
 }
 
 enum ProgressStatus {

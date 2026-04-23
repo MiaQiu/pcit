@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { getLessons, getModules, deleteLesson, createModule, updateModule, LessonSummary, ModuleSummary } from '../api/adminApi';
 
 const LESSON_MODULES = [
-  'FOUNDATION', 'EMOTIONS', 'COOPERATION', 'SIBLINGS', 'RELOCATION',
+  'GETTING_STARTED', 'FOUNDATION', 'EMOTIONS', 'COOPERATION', 'SIBLINGS', 'RELOCATION',
   'DIVORCE', 'DEVELOPMENT', 'PROCRASTINATION', 'PATIENCE', 'RESPONSIBILITY',
   'MEALS', 'AGGRESSION', 'CONFLICT', 'FOCUS', 'DEFIANCE', 'SAFETY',
-  'SCREENS', 'SEPARATION', 'SPECIAL',
+  'SCREENS', 'SEPARATION', 'SPECIAL', 'DISCIPLINE', 'EMOTIONAL_MASSAGE', 'ADHD',
 ];
 
 export default function LessonListPage() {
