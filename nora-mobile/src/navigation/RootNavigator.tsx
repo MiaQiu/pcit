@@ -32,6 +32,7 @@ import { CoachChatScreen } from '../screens/CoachChatScreen';
 import { PsychologistChatScreen } from '../screens/PsychologistChatScreen';
 import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
+import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { User } from '@nora/core';
 import amplitudeService from '../services/amplitudeService';
 
@@ -51,6 +52,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
   const authService = useAuthService();
+  const { reinitialize: reinitializeUnread } = useCoachUnread();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<string | null>(null);
@@ -209,6 +211,7 @@ export const RootNavigator: React.FC = () => {
 
     // Set current user ID so userStorage prefixes keys correctly
     await userStorage.setCurrentUserId(user.id);
+    reinitializeUnread(user.id);
 
       // Check which onboarding step is incomplete
       // Default values from signup are 'User' and 'Child'

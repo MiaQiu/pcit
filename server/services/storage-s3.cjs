@@ -379,6 +379,29 @@ async function verifyFileExists(key) {
 }
 
 /**
+ * Generate a presigned read URL directly, without a HeadObject pre-check.
+ * Use for assets where existence is assumed (e.g. lesson images).
+ * @param {string} key - S3 object key
+ * @param {number} expiresIn - seconds until expiry (default 7 days)
+ * @returns {Promise<string>}
+ */
+async function getPresignedReadUrl(key, expiresIn = 7 * 24 * 60 * 60) {
+  if (!S3_ENABLED || !s3Client) {
+    console.log(`[lesson-image] S3 not enabled, returning key as-is: ${key}`);
+    return key;
+  }
+  try {
+    const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
+    const url = await getSignedUrlSDK(s3Client, command, { expiresIn });
+    console.log(`[lesson-image] presigned URL generated for key: ${key} → ${url.substring(0, 120)}...`);
+    return url;
+  } catch (error) {
+    console.error(`[lesson-image] presigned URL generation failed for key: ${key}`, error.message);
+    return key;
+  }
+}
+
+/**
  * Resolve a dragonImageUrl to a presigned URL when it points to S3.
  * Accepts either a full S3 URL (https://bucket.s3.region.amazonaws.com/lessons/...)
  * or a bare S3 key (lessons/...).
@@ -392,17 +415,23 @@ async function resolveDragonImageUrl(value) {
 
   // Bare S3 key
   if (value.startsWith('lessons/')) {
-    return getSignedUrl(value);
+    console.log(`[lesson-image] resolving bare key: ${value}`);
+    return getPresignedReadUrl(value);
   }
 
-  // Full S3 URL — extract the key
+  // Full S3 URL — only re-sign if it belongs to the current bucket
   if (value.startsWith('https://') && value.includes('.amazonaws.com/')) {
+    const ownsBucket = bucketName && value.includes(`/${bucketName}.`) || value.includes(`/${bucketName}/`);
     const key = value.replace(/^https:\/\/[^/]+\//, '');
-    if (key.startsWith('lessons/')) {
-      return getSignedUrl(key);
+    console.log(`[lesson-image] resolving full S3 URL, extracted key: ${key}, ownsBucket: ${ownsBucket}`);
+    if (key.startsWith('lessons/') && ownsBucket) {
+      return getPresignedReadUrl(key);
     }
+    // Different bucket (e.g. dev url in prod) — return as-is and let the client try
+    return value;
   }
 
+  console.log(`[lesson-image] value not S3, returning as-is: ${value}`);
   return value; // external CDN, leave untouched
 }
 

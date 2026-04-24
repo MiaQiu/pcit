@@ -171,10 +171,11 @@ export const PsychologistChatScreen: React.FC = () => {
 
           if (incoming.length > 0) {
             setMessages(prev => {
-              const existingIds = new Set(prev.map(m => m.id));
+              const base = prev.filter(m => !m.id.startsWith('opt-'));
+              const existingIds = new Set(base.map(m => m.id));
               const newOnes = incoming.filter(m => !existingIds.has(m.id!));
               if (newOnes.length === 0) return prev;
-              const updated = [...prev, ...newOnes];
+              const updated = [...base, ...newOnes];
               saveCache(updated);
               return updated;
             });

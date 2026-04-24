@@ -68,7 +68,7 @@ async function saveMessageCache(messages: Message[]): Promise<void> {
 
 interface Message {
   id: string;
-  role: 'user' | 'model' | 'psychologist';
+  role: 'user' | 'model' | 'psychologist' | 'user_psych';
   text: string;
   createdAt?: string;
 }

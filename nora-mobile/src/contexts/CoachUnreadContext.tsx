@@ -4,8 +4,9 @@ import { AppState, AppStateStatus } from 'react-native';
 import { useAuthService } from './AppContext';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
-const AI_STORAGE_KEY    = '@nora_coach_last_read_at';
-const PSYCH_STORAGE_KEY = '@nora_psych_last_read_at';
+
+const aiStorageKey    = (userId: string) => `@nora_coach_last_read_at_${userId}`;
+const psychStorageKey = (userId: string) => `@nora_psych_last_read_at_${userId}`;
 
 interface CoachUnreadContextType {
   unreadCount: number;       // total AI + psych (for tab badge)
@@ -14,6 +15,8 @@ interface CoachUnreadContextType {
   markPsychAsRead: (timestamp?: string) => Promise<void>;
   /** @deprecated use markAiAsRead */
   markAsRead: (timestamp?: string) => Promise<void>;
+  /** Call after login so counts are immediately correct for the new user */
+  reinitialize: (userId: string) => Promise<void>;
 }
 
 const CoachUnreadContext = createContext<CoachUnreadContextType>({
@@ -22,6 +25,7 @@ const CoachUnreadContext = createContext<CoachUnreadContextType>({
   markAiAsRead: async () => {},
   markPsychAsRead: async () => {},
   markAsRead: async () => {},
+  reinitialize: async () => {},
 });
 
 export const CoachUnreadProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -30,9 +34,11 @@ export const CoachUnreadProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [psychUnreadCount, setPsychUnreadCount] = useState(0);
   const aiLastReadRef    = useRef<string>(new Date(0).toISOString());
   const psychLastReadRef = useRef<string>(new Date(0).toISOString());
+  const currentUserIdRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
 
   const fetchUnread = useCallback(async () => {
+    if (!currentUserIdRef.current) return;
     try {
       const [aiRes, psychRes] = await Promise.all([
         authService.authenticatedRequest(
@@ -56,27 +62,36 @@ export const CoachUnreadProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const ts = timestamp ?? new Date().toISOString();
     aiLastReadRef.current = ts;
     setAiUnreadCount(0);
-    await AsyncStorage.setItem(AI_STORAGE_KEY, ts);
+    if (currentUserIdRef.current) {
+      await AsyncStorage.setItem(aiStorageKey(currentUserIdRef.current), ts);
+    }
   }, []);
 
   const markPsychAsRead = useCallback(async (timestamp?: string) => {
     const ts = timestamp ?? new Date().toISOString();
     psychLastReadRef.current = ts;
     setPsychUnreadCount(0);
-    await AsyncStorage.setItem(PSYCH_STORAGE_KEY, ts);
+    if (currentUserIdRef.current) {
+      await AsyncStorage.setItem(psychStorageKey(currentUserIdRef.current), ts);
+    }
   }, []);
+
+  const reinitialize = useCallback(async (userId: string) => {
+    currentUserIdRef.current = userId;
+    aiLastReadRef.current    = new Date(0).toISOString();
+    psychLastReadRef.current = new Date(0).toISOString();
+    const [aiStored, psychStored] = await Promise.all([
+      AsyncStorage.getItem(aiStorageKey(userId)),
+      AsyncStorage.getItem(psychStorageKey(userId)),
+    ]);
+    if (aiStored)    aiLastReadRef.current    = aiStored;
+    if (psychStored) psychLastReadRef.current = psychStored;
+    await fetchUnread();
+  }, [fetchUnread]);
 
   useEffect(() => {
     mountedRef.current = true;
-
-    Promise.all([
-      AsyncStorage.getItem(AI_STORAGE_KEY),
-      AsyncStorage.getItem(PSYCH_STORAGE_KEY),
-    ]).then(([aiStored, psychStored]) => {
-      if (aiStored)    aiLastReadRef.current    = aiStored;
-      if (psychStored) psychLastReadRef.current = psychStored;
-      fetchUnread();
-    });
+    // Initial load without a userId — counts stay 0 until reinitialize() is called after login
 
     const interval = setInterval(fetchUnread, 30_000);
     const appStateSub = AppState.addEventListener('change', (state: AppStateStatus) => {
@@ -97,6 +112,7 @@ export const CoachUnreadProvider: React.FC<{ children: React.ReactNode }> = ({ c
       markAiAsRead,
       markPsychAsRead,
       markAsRead: markAiAsRead,
+      reinitialize,
     }}>
       {children}
     </CoachUnreadContext.Provider>

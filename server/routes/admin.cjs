@@ -1900,17 +1900,30 @@ router.get('/coach/chats', requireAdminAuth, async (req, res) => {
 });
 
 /**
- * GET /api/admin/coach/chats/:userId
- * Get all chat messages for a specific user, oldest first.
+ * GET /api/admin/coach/chats/:userId?limit=10&before=<ISO>
+ * Get paginated chat messages for a user, newest-first page, returned oldest-first.
+ * `before` cursor: only return messages with createdAt < before (for loading older pages).
+ * Response: { messages, hasMore }
  */
 router.get('/coach/chats/:userId', requireAdminAuth, async (req, res) => {
   try {
-    const messages = await prisma.coachChatMessage.findMany({
-      where: { userId: req.params.userId },
-      orderBy: { createdAt: 'asc' },
+    const limit  = Math.min(parseInt(req.query.limit) || 10, 100);
+    const before = req.query.before ? new Date(req.query.before) : undefined;
+
+    // Fetch one extra to know if there are more pages
+    const rows = await prisma.coachChatMessage.findMany({
+      where: {
+        userId: req.params.userId,
+        ...(before ? { createdAt: { lt: before } } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit + 1,
       select: { id: true, role: true, text: true, createdAt: true },
     });
-    res.json({ messages });
+
+    const hasMore = rows.length > limit;
+    const messages = rows.slice(0, limit).reverse(); // oldest-first for display
+    res.json({ messages, hasMore });
   } catch (err) {
     console.error('Admin coach chat detail error:', err);
     res.status(500).json({ error: 'Failed to fetch chat messages' });

@@ -1,3 +1,63 @@
+// Lucide icon name → SVG inner content (paths/circles/lines).
+// Add entries here as new icons appear in pasted JSX.
+const LUCIDE_ICONS: Record<string, string> = {
+  XCircle:      `<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>`,
+  ShieldCheck:  `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>`,
+  CheckCircle:  `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>`,
+  Check:        `<polyline points="20 6 9 17 4 12"/>`,
+  X:            `<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>`,
+  AlertCircle:  `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`,
+  Info:         `<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>`,
+  Star:         `<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>`,
+  Heart:        `<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>`,
+  Lock:         `<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>`,
+  Unlock:       `<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>`,
+  ChevronRight: `<polyline points="9 18 15 12 9 6"/>`,
+  ChevronLeft:  `<polyline points="15 18 9 12 15 6"/>`,
+  ArrowRight:   `<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>`,
+  ArrowLeft:    `<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>`,
+  Plus:         `<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>`,
+  Minus:        `<line x1="5" y1="12" x2="19" y2="12"/>`,
+  Smile:        `<circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>`,
+  Frown:        `<circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>`,
+  Lightbulb:    `<line x1="9" y1="21" x2="15" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17H8v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/>`,
+  BookOpen:     `<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>`,
+  Target:       `<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>`,
+  Zap:          `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`,
+  Trophy:       `<polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M5 6H3a2 2 0 0 0-2 2v1a4 4 0 0 0 4 4h0"/><path d="M19 6h2a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4h0"/><rect x="5" y="2" width="14" height="8" rx="1"/>`,
+  Quote:        `<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 2v7c0 1.25.756 2.017 2 2h1c1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 2v7c0 1.25.755 2.017 2 2h1c1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/>`,
+  MessageCircle:`<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>`,
+  Sparkles:     `<path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/><path d="M5 3l.75 2.25L8 6l-2.25.75L5 9l-.75-2.25L2 6l2.25-.75z"/><path d="M19 13l.75 2.25L22 16l-2.25.75L19 19l-.75-2.25L16 16l2.25-.75z"/>`,
+  Bird:         `<path d="M16 7h.01"/><path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20"/><path d="m20 7 2 .5-2 .5"/><path d="M10 18v3"/><path d="M14 17.75V21"/><path d="M7 18a6 6 0 0 0 3.84-10.61"/>`,
+  Flame:        `<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>`,
+  Waves:        `<path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>`,
+  Brain:        `<path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/><path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/><path d="M3.477 10.896a4 4 0 0 1 .585-.396"/><path d="M19.938 10.5a4 4 0 0 1 .585.396"/><path d="M6 18a4 4 0 0 1-1.967-.516"/><path d="M19.967 17.484A4 4 0 0 1 18 18"/>`,
+};
+
+function expandLucideComponents(html: string): string {
+  // Matches <PascalCaseName ...attrs... /> — self-closing JSX components
+  return html.replace(/<([A-Z][a-zA-Z]+)(\s[^>]*)?\s*\/>/g, (match, name, attrsStr = '') => {
+    const inner = LUCIDE_ICONS[name];
+    if (!inner) return match; // unknown — leave for downstream stripping
+
+    // size={N} or size="N"
+    const sizeMatch = attrsStr.match(/\bsize=\{?(\d+)\}?/);
+    const size = sizeMatch ? sizeMatch[1] : '24';
+
+    // class="..." (className already converted to class in step 2)
+    const classMatch = attrsStr.match(/\bclass(?:Name)?="([^"]*)"/);
+    const cls = classMatch ? classMatch[1] : '';
+
+    // explicit stroke or color prop
+    const strokeMatch = attrsStr.match(/\bstroke="([^"]*)"/);
+    const colorMatch  = attrsStr.match(/\bcolor="([^"]*)"/);
+    const stroke = strokeMatch?.[1] ?? colorMatch?.[1] ?? 'currentColor';
+
+    const classAttr = cls ? ` class="${cls}"` : '';
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"${classAttr}>${inner}</svg>`;
+  });
+}
+
 const JSX_ATTR_MAP: Record<string, string> = {
   className: 'class',
   strokeWidth: 'stroke-width',
@@ -179,6 +239,9 @@ export function normalizeHtml(html: string): string {
   result = result.replace(/\s+key=\{[^}]*\}/g, '');
   result = result.replace(/\s+ref=\{[^}]*\}/g, '');
   result = result.replace(/\s+on[A-Z][a-zA-Z]*=\{[^}]*\}/g, '');
+
+  // 3b. Replace Lucide React components with inline SVGs
+  result = expandLucideComponents(result);
 
   // 4. Fix self-closing non-void tags
   const nonVoidPattern = NON_VOID_TAGS.join('|');

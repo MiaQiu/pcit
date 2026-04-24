@@ -188,6 +188,10 @@ export default function SegmentEditor({
         <textarea
           value={segment.customHtml || ''}
           onChange={(e) => onChange({ customHtml: e.target.value || null })}
+          onBlur={(e) => {
+            const val = e.target.value;
+            if (val) onChange({ customHtml: normalizeHtml(val) });
+          }}
           placeholder="Raw HTML for this segment. If set, overrides Body Text on mobile."
           rows={8}
           style={{ fontFamily: 'monospace', fontSize: 12 }}

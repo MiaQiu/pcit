@@ -643,6 +643,7 @@ export const ReportScreen: React.FC = () => {
         {/* PRN Skills Section */}
         <View style={styles.skillsSection}>
           <Text style={styles.sectionTitle}>Your PEN Skills</Text>
+          <Text style={styles.sectionSubtitle}>Boost Confidence and Compliance</Text>
           <View style={styles.skillsContainer}>
             {reportData.skills.map((skill, index) => {
               const rating = getSkillRating(skill.progress);
@@ -668,6 +669,7 @@ export const ReportScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>Areas to Avoid</Text>
             {/* <Text style={styles.totalText}>Total &lt; 3</Text> */}
           </View>
+          <Text style={styles.sectionSubtitle}>Disrupts focus and creativity</Text>
           <View style={styles.avoidContainer}>
             {reportData.areasToAvoid
               .filter(area => !(reportData.mode === 'PDI' && (typeof area === 'string' ? area : area.label) === 'Commands'))
@@ -1321,6 +1323,12 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     fontSize: 16,
     color: COLORS.textDark,
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#6B7280',
     marginBottom: 16,
   },
   totalText: {
