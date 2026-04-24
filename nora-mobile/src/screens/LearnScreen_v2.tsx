@@ -324,7 +324,18 @@ export const LearnScreen_v2: React.FC = () => {
       showToast('Complete the Foundation module first', 'info');
       return;
     }
-    navigation.push('LessonViewer', { lessonId, moduleKey });
+
+    const moduleLessons = lessonsByModule.get(moduleKey) ?? [];
+    const currentLesson = moduleLessons.find(l => l.id === lessonId);
+    const currentDay = currentLesson?.dayNumber ?? 0;
+    const incomplete = moduleLessons.filter(
+      l => l.id !== lessonId && l.progress?.status !== 'COMPLETED'
+    );
+    const nextLesson =
+      incomplete.find(l => l.dayNumber > currentDay) ??
+      incomplete.sort((a, b) => a.dayNumber - b.dayNumber)[0];
+
+    navigation.push('LessonViewer', { lessonId, moduleKey, nextLessonId: nextLesson?.id });
   };
 
   const visibleModules = sortedModules.filter(m => filteredLessonsByModule.has(m.key));

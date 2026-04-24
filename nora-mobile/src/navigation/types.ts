@@ -72,6 +72,7 @@ export type RootStackParamList = {
   LessonViewer: {
     lessonId: string;
     moduleKey?: string;
+    nextLessonId?: string;
   };
   Quiz: {
     quizId: string;

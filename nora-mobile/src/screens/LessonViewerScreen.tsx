@@ -309,7 +309,7 @@ interface LessonViewerScreenProps {
 }
 
 export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, navigation }) => {
-  const { lessonId, moduleKey } = route.params;
+  const { lessonId, moduleKey, nextLessonId } = route.params;
   const lessonService = useLessonService();
   const authService = useAuthService();
   const insets = useSafeAreaInsets();
@@ -614,6 +614,11 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     if (isLastItem) {
       await completeLesson();
 
+      if (nextLessonId) {
+        navigation.push('LessonViewer', { lessonId: nextLessonId, moduleKey });
+        return;
+      }
+
       if (lessonData.lesson.module === 'FOUNDATION') {
         try {
           const modulesResponse = await lessonService.getModules();
@@ -736,11 +741,14 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
   const isTextInputSegment = currentSegment?.contentType === 'TEXT_INPUT';
 
   // Determine button text
+  const isLastItem = currentSegmentIndex >= virtualItems.length - 1;
   let buttonText = 'Continue →';
   if (isTextInputSegment) {
     buttonText = isTextInputSubmitted ? 'Continue →' : 'Check Answer';
   } else if (virtualItems[currentSegmentIndex + 1]?.type === 'quiz') {
     buttonText = 'Take Quiz →';
+  } else if (isLastItem && nextLessonId) {
+    buttonText = 'Next Lesson →';
   }
 
   // Full-screen custom HTML: WebView covers entire screen (including status bar), header/footer float on top
