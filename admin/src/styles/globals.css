@@ -986,6 +986,28 @@ body {
   cursor: grabbing;
 }
 
+.segment-add-row {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 4px;
+}
+
+.btn-add-segment-inline {
+  font-size: 11px;
+  color: #999;
+  background: none;
+  border: 1px dashed #ddd;
+  border-radius: 6px;
+  padding: 3px 12px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.btn-add-segment-inline:hover {
+  color: #4f46e5;
+  border-color: #4f46e5;
+}
+
 /* ============================================
    QUIZ EDITOR
    ============================================ */

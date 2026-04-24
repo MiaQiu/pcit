@@ -111,6 +111,22 @@ export default function SegmentList({ segments, onChange, onSelectSegment, selec
     onSelectSegment(segments.length);
   };
 
+  const addSegmentAfter = (index: number) => {
+    const newSeg: Segment = {
+      order: index + 2,
+      sectionTitle: '',
+      contentType: 'TEXT',
+      bodyText: '',
+    };
+    const updated = [
+      ...segments.slice(0, index + 1),
+      newSeg,
+      ...segments.slice(index + 1),
+    ].map((s, i) => ({ ...s, order: i + 1 }));
+    onChange(updated);
+    onSelectSegment(index + 1);
+  };
+
   const updateSegment = (index: number, updates: Partial<Segment>) => {
     const updated = segments.map((s, i) => (i === index ? { ...s, ...updates } : s));
     onChange(updated);
@@ -141,16 +157,22 @@ export default function SegmentList({ segments, onChange, onSelectSegment, selec
           strategy={verticalListSortingStrategy}
         >
           {segments.map((seg, i) => (
-            <SortableSegment
-              key={`seg-${i}`}
-              segment={seg}
-              index={i}
-              isSelected={i === selectedIndex}
-              onSelect={() => onSelectSegment(i)}
-              onUpdate={(updates) => updateSegment(i, updates)}
-              onRemove={() => removeSegment(i)}
-              canRemove={segments.length > 1}
-            />
+            <div key={`seg-${i}`}>
+              <SortableSegment
+                segment={seg}
+                index={i}
+                isSelected={i === selectedIndex}
+                onSelect={() => onSelectSegment(i)}
+                onUpdate={(updates) => updateSegment(i, updates)}
+                onRemove={() => removeSegment(i)}
+                canRemove={segments.length > 1}
+              />
+              <div className="segment-add-row">
+                <button className="btn-add-segment-inline" onClick={() => addSegmentAfter(i)}>
+                  + Add Segment
+                </button>
+              </div>
+            </div>
           ))}
         </SortableContext>
       </DndContext>

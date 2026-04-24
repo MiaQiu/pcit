@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getLesson, getModules, createLesson, updateLesson, ModuleSummary, Segment, Quiz } from '../api/adminApi';
+import { getLesson, getLessons, getModules, createLesson, updateLesson, ModuleSummary, Segment, Quiz, LessonSummary } from '../api/adminApi';
 import MetadataForm from '../components/lessons/MetadataForm';
 import SegmentList from '../components/lessons/SegmentList';
 import QuizEditor from '../components/lessons/QuizEditor';
@@ -66,6 +66,7 @@ export default function LessonEditorPage() {
   const [segments, setSegments] = useState<Segment[]>([{ ...DEFAULT_SEGMENT }]);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [modules, setModules] = useState<ModuleSummary[]>([]);
+  const [allLessons, setAllLessons] = useState<LessonSummary[]>([]);
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
   const [previewSegmentIndex, setPreviewSegmentIndex] = useState(0);
@@ -76,7 +77,19 @@ export default function LessonEditorPage() {
 
   useEffect(() => {
     getModules().then(setModules).catch(console.error);
+    if (!isEditing) {
+      getLessons().then(setAllLessons).catch(console.error);
+    }
   }, []);
+
+  // When allLessons loads or module changes, auto-set dayNumber for new lessons
+  useEffect(() => {
+    if (isEditing || allLessons.length === 0) return;
+    const maxDay = allLessons
+      .filter((l) => l.module === lesson.module)
+      .reduce((m, l) => Math.max(m, l.dayNumber), 0);
+    setLesson((prev) => ({ ...prev, dayNumber: maxDay + 1 }));
+  }, [allLessons, lesson.module]);
 
   useEffect(() => {
     if (id) {
