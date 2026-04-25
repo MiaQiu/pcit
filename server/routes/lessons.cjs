@@ -36,6 +36,17 @@ const submitTextInputSchema = Joi.object({
 // ============================================================================
 
 /**
+ * Returns a map of LessonModule key -> displayOrder from the Module table.
+ * Used to sort lessons by the module's intended display order.
+ */
+async function getModuleDisplayOrderMap() {
+  const modules = await prisma.module.findMany({ select: { key: true, displayOrder: true } });
+  const map = {};
+  modules.forEach(m => { map[m.key] = m.displayOrder; });
+  return map;
+}
+
+/**
  * Format lesson for lesson card (list view)
  */
 async function formatLessonCard(lesson, userProgress) {
@@ -75,13 +86,14 @@ router.get('/', requireAuth, async (req, res) => {
       where.module = moduleFilter.toUpperCase();
     }
 
-    // Get all lessons
-    const lessons = await prisma.lesson.findMany({
-      where,
-      orderBy: [
-        { module: 'asc' },
-        { dayNumber: 'asc' }
-      ]
+    // Get all lessons ordered by module displayOrder, then dayNumber
+    const [lessons, moduleOrderMap] = await Promise.all([
+      prisma.lesson.findMany({ where }),
+      getModuleDisplayOrderMap()
+    ]);
+    lessons.sort((a, b) => {
+      const modDiff = (moduleOrderMap[a.module] ?? 999) - (moduleOrderMap[b.module] ?? 999);
+      return modDiff !== 0 ? modDiff : a.dayNumber - b.dayNumber;
     });
 
     // Get user progress for all lessons
@@ -235,16 +247,13 @@ router.get('/by-category/:category', requireAuth, async (req, res) => {
   try {
     const { category } = req.params;
 
-    const lessons = await prisma.lesson.findMany({
-      where: {
-        teachesCategories: {
-          has: category.toUpperCase()
-        }
-      },
-      orderBy: [
-        { module: 'asc' },
-        { dayNumber: 'asc' }
-      ]
+    const [lessons, moduleOrderMap] = await Promise.all([
+      prisma.lesson.findMany({ where: { teachesCategories: { has: category.toUpperCase() } } }),
+      getModuleDisplayOrderMap()
+    ]);
+    lessons.sort((a, b) => {
+      const modDiff = (moduleOrderMap[a.module] ?? 999) - (moduleOrderMap[b.module] ?? 999);
+      return modDiff !== 0 ? modDiff : a.dayNumber - b.dayNumber;
     });
 
     res.json({ lessons });

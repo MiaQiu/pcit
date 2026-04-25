@@ -22,12 +22,16 @@ function expandLucideComponents(html: string): string {
     const colorMatch  = attrsStr.match(/\bcolor="([^"]*)"/);
     const stroke = strokeMatch?.[1] ?? colorMatch?.[1] ?? 'currentColor';
 
+    // fill prop (e.g. fill="currentColor" for filled icons like Star)
+    const fillMatch = attrsStr.match(/\bfill="([^"]*)"/);
+    const fill = fillMatch?.[1] ?? 'none';
+
     // stroke-width from strokeWidth={N} (already renamed by step 2) or stroke-width="N"
     const swMatch = attrsStr.match(/\bstroke-width=(?:\{?([\d.]+)\}?|"([\d.]+)")/);
     const strokeWidth = swMatch ? (swMatch[1] ?? swMatch[2]) : '2';
 
     const classAttr = cls ? ` class="${cls}"` : '';
-    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"${classAttr}>${inner}</svg>`;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"${classAttr}>${inner}</svg>`;
   });
 }
 
@@ -204,8 +208,38 @@ function convertOpacityShorthands(html: string): string {
   });
 }
 
+function extractLocalVars(html: string): Record<string, string> {
+  const vars: Record<string, string> = {};
+  // Match: const name = 'value' | "value" | `value`
+  const re = /\bconst\s+(\w+)\s*=\s*(['"`])((?:[^\\]|\\.)*?)\2/g;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    vars[m[1]] = m[3];
+  }
+  return vars;
+}
+
 export function normalizeHtml(html: string): string {
   let result = html;
+
+  // 0. Extract local const declarations, substitute variable references, then remove the const lines
+  const localVars = extractLocalVars(result);
+  if (Object.keys(localVars).length > 0) {
+    // Remove the const declaration lines from the output
+    result = result.replace(/\bconst\s+\w+\s*=\s*(['"`])(?:[^\\]|\\.)*?\1\s*;?\n?/g, '');
+    // Resolve identifiers inside style={{ ... }} before JSON-parse step
+    result = result.replace(/style=\{\{([^}]*(?:\{[^}]*\}[^}]*)*)\}\}/g, (match, inner) => {
+      let sub = inner;
+      for (const [name, value] of Object.entries(localVars)) {
+        sub = sub.replace(new RegExp(`(?<!['"\\w])${name}(?!['"\\w])`, 'g'), `'${value}'`);
+      }
+      return `style={{${sub}}}`;
+    });
+    // Resolve identifiers in other expression attrs: fill={varName}, stroke={varName}, etc.
+    result = result.replace(/=\{([a-z][a-zA-Z0-9]*)\}/g, (match, name) =>
+      localVars[name] !== undefined ? `="${localVars[name]}"` : match
+    );
+  }
 
   // 1. style={{ ... }} → style="..."
   result = result.replace(/style=\{\{([^}]*)\}\}/g, (_, inner) => {
