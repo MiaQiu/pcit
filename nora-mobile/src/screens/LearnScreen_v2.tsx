@@ -102,7 +102,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
 
       {/* Text */}
       <View style={styles.lessonCardText}>
-        <Text style={styles.lessonTitle} numberOfLines={2}>{lesson.title}</Text>
+        <Text style={styles.lessonTitle} numberOfLines={3}>{lesson.title}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -556,7 +556,8 @@ const styles = StyleSheet.create({
     zIndex: 3,
   },
   lessonCardText: {
-    padding: 10,
+    paddingHorizontal: 5,
+    paddingTop: 8,
     paddingBottom: 11,
   },
   lessonDayLabel: {
