@@ -32,7 +32,7 @@ import { ProfileCircle } from '../components/ProfileCircle';
 import { COLORS, FONTS } from '../constants/assets';
 
 const DRAGON_ANIMATION = require('../../assets/images/Dragon_anime.mov');
-import { RootStackNavigationProp } from '../navigation/types';
+import { RootStackNavigationProp, RootTabNavigationProp } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
@@ -186,6 +186,7 @@ const recordMessages = [
 
 export const HomeScreen_v2: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const tabNavigation = useNavigation<RootTabNavigationProp>();
   const { unreadCount } = useCoachUnread();
   const { width: screenWidth } = useWindowDimensions();
   const lessonService = useLessonService();
@@ -388,7 +389,7 @@ export const HomeScreen_v2: React.FC = () => {
       plan.push({
         id: 'record',
         type: 'record',
-        label: 'Start Emotional Message:',
+        label: 'Start Emotional Massage:',
         title: `5-minute play with ${childName}`,
         isCompleted: hasCompleted,
       });
@@ -512,7 +513,7 @@ export const HomeScreen_v2: React.FC = () => {
   const handleProfilePress = () => navigation.push('Profile');
 
   const handleRecordPress = () => {
-    navigation.navigate('MainTabs', { screen: 'Record', params: { autoStart: true } });
+    tabNavigation.navigate('Record', { autoStart: true });
   };
 
   const handleReadReport = async () => {
@@ -524,7 +525,7 @@ export const HomeScreen_v2: React.FC = () => {
   };
 
   const handleRecordAgain = () => {
-    navigation.navigate('MainTabs', { screen: 'Record', params: { autoStart: true } });
+    tabNavigation.navigate('Record', { autoStart: true });
   };
 
   const handleChatIntroChat = async () => {
@@ -548,7 +549,7 @@ export const HomeScreen_v2: React.FC = () => {
     } else if (item.type === 'setup-reminder') {
       handleSetupReminderPress();
     } else if (item.type === 'record') {
-      navigation.navigate('MainTabs', { screen: 'Record' });
+      tabNavigation.navigate('Record');
     }
   };
 
@@ -805,7 +806,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.daysCompleted)}
             total="7"
             unit="days"
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Record' })}
+            onPress={() => tabNavigation.navigate('Record')}
           />
           <StatPill
             iconName="flash"
@@ -813,7 +814,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.minutesPlayed)}
             total="35"
             unit="mins"
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Record' })}
+            onPress={() => tabNavigation.navigate('Record')}
           />
           <StatPill
             iconName="happy-outline"
@@ -821,7 +822,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.timesRecorded)}
             total="7"
             unit="times"
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Record' })}
+            onPress={() => tabNavigation.navigate('Record')}
           />
           <StatPill
             iconName="book-outline"
@@ -829,7 +830,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.lessonsCompleted)}
             total="7"
             unit="lessons"
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Learn' })}
+            onPress={() => tabNavigation.navigate('Learn')}
           />
         </View>
 

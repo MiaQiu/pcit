@@ -267,18 +267,21 @@ export const RecordScreen: React.FC = () => {
     }, [uploadProcessing.isProcessing, route.params?.autoStart])
   );
 
-  const requestPermissions = async () => {
+  const requestPermissions = async (): Promise<boolean> => {
     try {
       const { status } = await Audio.requestPermissionsAsync();
-      setPermissionGranted(status === 'granted');
-      if (status !== 'granted') {
+      const granted = status === 'granted';
+      setPermissionGranted(granted);
+      if (!granted) {
         Alert.alert(
           'Permission Required',
           'Please grant microphone permission to record audio sessions.'
         );
       }
+      return granted;
     } catch (error) {
       console.error('Error requesting permissions:', error);
+      return false;
     }
   };
 
@@ -331,9 +334,11 @@ export const RecordScreen: React.FC = () => {
 
     try {
       if (!permissionGranted) {
-        await requestPermissions();
-        setRecordingState('idle');
-        return;
+        const granted = await requestPermissions();
+        if (!granted) {
+          setRecordingState('idle');
+          return;
+        }
       }
 
       console.log('[RecordScreen] Starting native recording with 5-minute auto-stop...');
