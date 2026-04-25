@@ -316,15 +316,23 @@ export const RecordScreen: React.FC = () => {
   };
 
   const startRecording = async () => {
+    // If app was backgrounded during the InteractionManager delay, bail out
+    if (AppState.currentState !== 'active') {
+      setRecordingState('idle');
+      return;
+    }
+
     // Check network before starting
     if (!isOnline) {
       showToast('Recording requires internet connection', 'error');
+      setRecordingState('idle');
       return;
     }
 
     try {
       if (!permissionGranted) {
         await requestPermissions();
+        setRecordingState('idle');
         return;
       }
 
@@ -367,6 +375,7 @@ export const RecordScreen: React.FC = () => {
       startDurationPolling();
     } catch (error) {
       console.error('Failed to start recording:', error);
+      setRecordingState('idle');
 
       // Progressive escalation based on failure count
       const newCount = recordingFailureCount + 1;
