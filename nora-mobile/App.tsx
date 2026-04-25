@@ -25,6 +25,7 @@ import { RootStackNavigationProp } from './src/navigation/types';
 import { NetworkStatusBar } from './src/components/NetworkStatusBar';
 import { ToastProvider, useToast } from './src/components/ToastManager';
 import { clearBadge } from './src/utils/notifications';
+import * as userStorage from './src/lib/userStorage';
 import amplitudeService from './src/services/amplitudeService';
 import { REVENUECAT_CONFIG } from './src/config/revenuecat';
 import { getTodaySingapore } from './src/utils/timezone';
@@ -73,7 +74,7 @@ const AppContent: React.FC = () => {
     // Mark report as read before navigating
     // This ensures the NextActionCard updates correctly when user returns to Home screen
     const reportReadKey = `report_read_${getTodaySingapore()}`;
-    await AsyncStorage.setItem(reportReadKey, recordingId);
+    await userStorage.setItem(reportReadKey, recordingId);
     console.log('[App] Marked report as read from alert:', reportReadKey, recordingId);
 
     navigation.navigate('Report', { recordingId });
@@ -111,13 +112,14 @@ const AppContent: React.FC = () => {
         // Mark report as read before navigating
         // This ensures the NextActionCard updates correctly when user returns to Home screen
         const reportReadKey = `report_read_${getTodaySingapore()}`;
-        await AsyncStorage.setItem(reportReadKey, data.recordingId as string);
+        await userStorage.setItem(reportReadKey, data.recordingId as string);
         console.log('[App] Marked report as read:', reportReadKey, data.recordingId);
 
         // Navigate to the report screen
         navigation.navigate('Report', { recordingId: data.recordingId as string });
       } else if (data.type === 'weekly_report' && data.reportId) {
         console.log('[App] Navigating to weekly report:', data.reportId);
+        await userStorage.setItem(`weekly_report_dismissed_${data.reportId as string}`, 'true');
         navigation.navigate('WeeklyReport', { reportId: data.reportId as string });
       } else if (data.type === 'milestones_unlocked') {
         console.log('[App] Navigating to Progress > Milestones section');
@@ -133,11 +135,12 @@ const AppContent: React.FC = () => {
 
   // Handle cold-start from a notification tap (app was killed)
   useEffect(() => {
-    Notifications.getLastNotificationResponseAsync().then((response) => {
+    Notifications.getLastNotificationResponseAsync().then(async (response) => {
       if (!response) return;
       const data = response.notification.request.content.data;
       if (data.type === 'weekly_report' && data.reportId) {
         console.log('[App] Cold-start: navigating to weekly report:', data.reportId);
+        await userStorage.setItem(`weekly_report_dismissed_${data.reportId as string}`, 'true');
         navigation.navigate('WeeklyReport', { reportId: data.reportId as string });
       }
     });
