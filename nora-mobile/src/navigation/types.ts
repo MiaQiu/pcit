@@ -19,7 +19,7 @@ export type RootTabParamList = {
 export type OnboardingStackParamList = {
   Welcome: undefined;
   Start: undefined;
-  Login: undefined;
+  Login: { referralCode?: string } | undefined;
   ForgotPassword: undefined;
   ResetPassword: { token?: string };
   CreateAccount: undefined;
@@ -98,6 +98,7 @@ export type RootStackParamList = {
   WeeklyReport: { reportId: string };
   CoachChat: undefined;
   PsychologistChat: undefined;
+  Referral: undefined;
 };
 
 export type RootTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;

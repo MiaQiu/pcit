@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["FJRP6385Q9.com.chromamind.nora"],
+        "components": [
+          { "/": "/join/*", "comment": "Referral landing page" },
+          { "/": "/reset-password*", "comment": "Password reset deep link" }
+        ]
+      }
+    ]
+  }
+}

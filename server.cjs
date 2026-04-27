@@ -88,8 +88,8 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files from public directory (dotfiles: allow serves .well-known/apple-app-site-association)
+app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'allow' }));
 
 // Serve reset password page
 app.get('/reset-password', (req, res) => {
@@ -186,6 +186,15 @@ app.use('/api/recordings', recordingRoutes);
 // Mount webhook routes (RevenueCat subscription events)
 const webhookRoutes = require('./server/routes/webhooks.cjs');
 app.use('/api/webhooks', webhookRoutes);
+
+// Mount referral routes
+const referralRoutes = require('./server/routes/referral.cjs');
+app.use('/api/referral', referralRoutes);
+
+// Serve referral landing page
+app.get('/join/:code', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'join.html'));
+});
 
 // Mount config routes (authenticated user endpoints)
 const configRoutes = require('./server/routes/config.cjs');
@@ -371,6 +380,9 @@ scheduleWeeklyReportJob();
 
 const { scheduleTrialExpiryJob } = require('./server/jobs/trialExpiryJob.cjs');
 scheduleTrialExpiryJob();
+
+const { scheduleReferralExpiryJob } = require('./server/jobs/referralExpiryJob.cjs');
+scheduleReferralExpiryJob();
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

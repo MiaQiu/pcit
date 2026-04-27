@@ -347,6 +347,7 @@ model User {
   revenueCatCustomerId     String?              @unique
   developmentalVisible     Boolean              @default(false)
   tag                      String               @default("user")
+  referralCode          String?              @unique
   LearningProgress      LearningProgress?
   ModuleHistory         ModuleHistory[]
   PasswordResetToken    PasswordResetToken[]
@@ -364,6 +365,8 @@ model User {
   Child                 Child[]
   WeeklyReport          WeeklyReport[]
   CoachChatMessage      CoachChatMessage[]
+  referralsGiven        Referral[]           @relation("ReferralsGiven")
+  referralReceived      Referral?            @relation("ReferralReceived")
 
   @@index([emailHash])
   @@index([pushToken])
@@ -758,4 +761,27 @@ model CoachChatMessage {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model Referral {
+  id         String         @id @default(uuid())
+  referrerId String
+  refereeId  String         @unique
+  code       String
+  status     ReferralStatus @default(PENDING)
+  rewardAt   DateTime?
+  createdAt  DateTime       @default(now())
+
+  referrer User @relation("ReferralsGiven",   fields: [referrerId], references: [id], onDelete: Cascade)
+  referee  User @relation("ReferralReceived", fields: [refereeId],  references: [id], onDelete: Cascade)
+
+  @@index([referrerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ReferralStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
 }

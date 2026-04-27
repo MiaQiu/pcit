@@ -169,7 +169,7 @@ const CalendarView: React.FC<{
   return (
     <View>
       <Text style={styles.calendarTitle}>Past Reports</Text>
-      <Text style={styles.calendarSubtitle}>Weekly reports are generated every Monday.</Text>
+      <Text style={styles.calendarSubtitle}>Weekly reports are generated every Monday 5:30PM.</Text>
       <View style={styles.calendarContainer}>
         {/* Month navigation */}
         <View style={styles.monthNavigation}>

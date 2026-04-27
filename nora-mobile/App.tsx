@@ -38,6 +38,7 @@ const linking = {
       Onboarding: {
         screens: {
           ResetPassword: 'reset-password',
+          Login: { path: 'join', parse: { referralCode: String } },
         },
       },
       MainTabs: {

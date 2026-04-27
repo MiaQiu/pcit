@@ -30,6 +30,7 @@ import { WeeklyReportScreen } from '../screens/WeeklyReportScreen';
 import { ModuleDetailScreen } from '../screens/ModuleDetailScreen';
 import { CoachChatScreen } from '../screens/CoachChatScreen';
 import { PsychologistChatScreen } from '../screens/PsychologistChatScreen';
+import { ReferralScreen } from '../screens/ReferralScreen';
 import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
@@ -414,6 +415,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="PsychologistChat"
         component={PsychologistChatScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="Referral"
+        component={ReferralScreen}
         options={{
           animation: 'slide_from_right',
         }}

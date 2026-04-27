@@ -3,7 +3,7 @@
  * Allow existing users to log in with email/password, Apple, or Google
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,10 +17,11 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { useNavigation, CommonActions } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Purchases from 'react-native-purchases';
-import { OnboardingStackNavigationProp } from '../../navigation/types';
+import { OnboardingStackNavigationProp, OnboardingStackParamList } from '../../navigation/types';
 import { useAuthService, useSocialAuthService } from '../../contexts/AppContext';
 import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
 import { handleApiSuccess } from '../../utils/NetworkMonitor';
@@ -28,8 +29,12 @@ import { requestNotificationPermissions } from '../../utils/notifications';
 import amplitudeService from '../../services/amplitudeService';
 import { useGoogleAuth, signInWithApple } from '../../utils/socialAuth';
 
+const PENDING_REFERRAL_KEY = '@nora_pending_referral_code';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const route = useRoute<RouteProp<OnboardingStackParamList, 'Login'>>();
   const authService = useAuthService();
   const socialAuthService = useSocialAuthService();
 
@@ -39,6 +44,32 @@ export const LoginScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const { signIn: signInWithGoogle, request: googleRequest } = useGoogleAuth();
+
+  // When opened via a referral deep link (nora://join?referralCode=...), store the code
+  // so it can be applied after successful login
+  useEffect(() => {
+    const code = route.params?.referralCode;
+    if (code) {
+      AsyncStorage.setItem(PENDING_REFERRAL_KEY, code).catch(() => {});
+    }
+  }, [route.params?.referralCode]);
+
+  const applyPendingReferral = async () => {
+    try {
+      const code = await AsyncStorage.getItem(PENDING_REFERRAL_KEY);
+      if (!code) return;
+      const token = authService.getAccessToken();
+      await fetch(`${API_URL}/api/referral/apply-existing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ code }),
+      });
+    } catch {
+      // Non-blocking — referral application failure should not interrupt login
+    } finally {
+      await AsyncStorage.removeItem(PENDING_REFERRAL_KEY).catch(() => {});
+    }
+  };
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -83,6 +114,9 @@ export const LoginScreen: React.FC = () => {
           console.error('[LoginScreen] Failed to register push notifications:', error);
         });
       }
+
+      // Apply any pending referral code (from deep link — non-blocking)
+      applyPendingReferral();
 
       const subscriptionStatus = response?.user?.subscriptionStatus;
       if (subscriptionStatus === 'ACTIVE') {

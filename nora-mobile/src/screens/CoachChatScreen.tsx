@@ -544,7 +544,7 @@ export const CoachChatScreen: React.FC = () => {
               <>
                 <Text style={styles.modalTitle}>Talk to a Psychologist</Text>
                 <Text style={styles.modalBody}>
-                  Our child psychologist team will be notified and will reach out to you in 24 hours here.
+                  Our child psychologist team will reply you in 24 hours here.
                 </Text>
 
                 {/* Terms checkbox */}

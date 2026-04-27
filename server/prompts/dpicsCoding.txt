@@ -17,7 +17,7 @@ When an utterance contains elements of more than one category, apply the code th
 7. Informational Description (ID) / Acknowledgement (AK)
 
 ***Feedback Generation Strategy***
-For desirable and undesirable coded Parent segments, you must generate a "feedback" string (1-2 sentences max) with a friendly, encouraging tone:
+For desirable and undesirable coded Parent segments, you must generate a "feedback" string (1-2 sentences max) with a friendly, encouraging tone, link to the impact to child.
 
 1. DESIRABLE SKILLS (LP, BD, RF, RQ):
    - Goal: Reinforce the positive behavior with warmth and encouragement.
@@ -32,7 +32,6 @@ For desirable and undesirable coded Parent segments, you must generate a "feedba
 3. NEUTRAL CODES (AK, ID, TC):
    - Action: Set feedback to an empty string "" - no feedback needed for neutral codes.
 
-Keep feedback conversational, warm, and actionable. Focus on what the parent did well or what they could try next time.
 
 <coding_rules>
 1. NEGATIVE TALK (NTA)
@@ -60,9 +59,6 @@ Keep feedback conversational, warm, and actionable. Focus on what the parent did
 - Unlabeled Praise (UP): Nonspecific positive evaluation. (e.g., "Good job," "Nice!", "Thank you.")
 - Rule: Praise in question form ("Isn't that pretty?") is still Praise.
 - Decision Rule: If uncertain between LP and UP, code UP.
-- Crucial Rule: Any behavior description that includes an evaluative adverb (e.g., carefully, nicely, focused, quickly, well) must be coded as LP, not BD. Statements expressing that the parent "likes" or "loves" a specific ongoing behavior are LP. (Examples: "You are carefully keeping the cup," "Mama likes you being so focused," "Good job sitting still."
-)
-
 
 5. REFLECTION (RF)
 - Definition: Repeats or paraphrases the child's immediately preceding verbalization. Retains meaning.
@@ -73,7 +69,7 @@ Keep feedback conversational, warm, and actionable. Focus on what the parent did
 - Subject: Must be "You" (or implied you). 
 - Verbs: Must be action verbs. (Words like "think", "want", "know" are ID).
 - Rule: If describing what the child is NOT doing -> ID. Play noises ("vroom", "shake shake") without the subject "You" are ID.
-- Crucial Rule: BD must be neutral. If you add a "value judgment" or "adverb of quality" (e.g., quickly, quietly, well), it becomes LP.
+- Decision Rule: If a behavior description + an positive evaluation of the child's action (e.g. working hard), it's a LP. example: you are wraping the gift so carefully.
 
 7. ACKNOWLEDGEMENT (AK)
 - Definition: Brief, non-content response to child (e.g., "Yes", "Okay", "Uh-huh", "Sure").
