@@ -156,6 +156,46 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+const SKILL_TAG_MAP: Record<string, string[]> = {
+  'Praise': ['Praise', 'Labeled Praise', 'Praise (Labeled)', 'Praise(Labeled)'],
+  'Labeled Praise': ['Praise', 'Labeled Praise', 'Praise (Labeled)', 'Praise(Labeled)'],
+  'Echo': ['Echo'],
+  'Narrate': ['Narration', 'Narrate'],
+  'Narration': ['Narration', 'Narrate'],
+  'Question': ['Question', 'Questions'],
+  'Questions': ['Question', 'Questions'],
+  'Command': ['Command', 'Commands', 'Direct Command', 'Indirect Command'],
+  'Commands': ['Command', 'Commands', 'Direct Command', 'Indirect Command'],
+  'Criticism': ['Criticism', 'Negative Talk'],
+};
+
+const getUtterancesForSkill = (
+  transcript: any[] | undefined,
+  skillLabel: string,
+): Array<{
+  preceding?: { role?: string; text: string };
+  main: { role?: string; text: string; tag?: string; feedback?: string };
+}> => {
+  if (!transcript?.length) return [];
+  const tags = (SKILL_TAG_MAP[skillLabel] || [skillLabel]).map(t => t.toLowerCase());
+  const results: Array<{
+    preceding?: { role?: string; text: string };
+    main: { role?: string; text: string; tag?: string; feedback?: string };
+  }> = [];
+  transcript.forEach((u, index) => {
+    if (u.tag && tags.includes(u.tag.toLowerCase())) {
+      const prev = index > 0 ? transcript[index - 1] : null;
+      results.push({
+        preceding: prev && prev.speaker !== '__SILENT__'
+          ? { role: prev.role, text: prev.text }
+          : undefined,
+        main: { role: u.role, text: u.text, tag: u.tag, feedback: u.feedback },
+      });
+    }
+  });
+  return results;
+};
+
 const NEGATIVE_REASONS = ['Too generic', 'Not accurate', 'Hard to understand', 'Missing something'];
 
 const getExampleUtterances = (exampleIndex: number, transcript: any[]) => {
@@ -656,7 +696,11 @@ export const ReportScreen: React.FC = () => {
                   color={rating.barColor}
                   textColor={rating.textColor}
                   suffix={rating.suffix}
-                  onPress={() => navigation.navigate('SkillExplanation', { skillKey: skill.label })}
+                  onPress={() => navigation.navigate('SkillUtterances', {
+                    skillKey: skill.label,
+                    recordingId,
+                    utterances: getUtterancesForSkill(reportData.transcript, skill.label),
+                  })}
                 />
               );
             })}
@@ -682,7 +726,11 @@ export const ReportScreen: React.FC = () => {
                     <Text style={styles.avoidLabel}>{areaData.label}</Text>
                     <TouchableOpacity
                       style={styles.avoidRightContainer}
-                      onPress={() => navigation.navigate('SkillExplanation', { skillKey: areaData.label })}
+                      onPress={() => navigation.navigate('SkillUtterances', {
+                        skillKey: areaData.label,
+                        recordingId,
+                        utterances: getUtterancesForSkill(reportData.transcript, areaData.label),
+                      })}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
                       <Text style={[styles.countText, styles.countTextClickable, needsAttention ? styles.countTextAttention : styles.countTextExcellent]}>

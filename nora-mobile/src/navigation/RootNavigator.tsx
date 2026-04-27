@@ -26,6 +26,7 @@ import { LessonCompleteScreen } from '../screens/LessonCompleteScreen';
 import { ReportScreen } from '../screens/ReportScreen';
 import { TranscriptScreen } from '../screens/TranscriptScreen';
 import { SkillExplanationScreen } from '../screens/SkillExplanationScreen';
+import { SkillUtterancesScreen } from '../screens/SkillUtterancesScreen';
 import { WeeklyReportScreen } from '../screens/WeeklyReportScreen';
 import { ModuleDetailScreen } from '../screens/ModuleDetailScreen';
 import { CoachChatScreen } from '../screens/CoachChatScreen';
@@ -394,6 +395,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="SkillExplanation"
         component={SkillExplanationScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="SkillUtterances"
+        component={SkillUtterancesScreen}
         options={{
           animation: 'slide_from_right',
         }}

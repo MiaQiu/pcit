@@ -95,6 +95,14 @@ export type RootStackParamList = {
     score?: number; // Optional score for Overall Nora Score
     tip?: string; // Optional tip for Next Step section
   };
+  SkillUtterances: {
+    skillKey: string;
+    recordingId: string;
+    utterances: Array<{
+      preceding?: { role?: string; text: string };
+      main: { role?: string; text: string; tag?: string; feedback?: string };
+    }>;
+  };
   WeeklyReport: { reportId: string };
   CoachChat: undefined;
   PsychologistChat: undefined;
