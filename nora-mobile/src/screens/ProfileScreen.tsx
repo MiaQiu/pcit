@@ -259,6 +259,11 @@ export const ProfileScreen: React.FC = () => {
 
       await authService.logout();
       amplitudeService.reset();
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Onboarding' }],
+      });
     } catch (error) {
       console.error('Logout error:', error);
       Alert.alert('Error', 'Failed to log out. Please try again.');
@@ -628,6 +633,20 @@ export const ProfileScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Settings</Text>
 
           <View style={styles.card}>
+            <TouchableOpacity
+              style={styles.settingRow}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('Referral')}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="gift-outline" size={22} color="#1F2937" />
+                <Text style={styles.settingText}>Refer a Friend</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
             <TouchableOpacity
               style={styles.settingRow}
               activeOpacity={0.7}
