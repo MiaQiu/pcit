@@ -512,7 +512,6 @@ export const CoachChatScreen: React.FC = () => {
                   <Text style={styles.termsBullet}>- Your name and email address</Text>
                   <Text style={styles.termsBullet}>- Your child's name, age, and gender</Text>
                   <Text style={styles.termsBullet}>- Your child's behavioural assessment results, including primary and secondary concerns identified during onboarding</Text>
-                  <Text style={styles.termsBullet}>- Your Nora Coach chat history</Text>
                   <Text style={styles.termsBullet}>- A summary of your recent emotional massage session activity</Text>
 
                   <Text style={styles.termsSection}>3. How It Is Used</Text>
@@ -527,7 +526,7 @@ export const CoachChatScreen: React.FC = () => {
 
                   <Text style={styles.termsSection}>5. Response Time</Text>
                   <Text style={styles.termsBody}>
-                    Our psychologist team will contact you via email within 2 business days. This service is not intended for emergencies. If you or your child are in immediate distress, please contact your local emergency services or a crisis helpline.
+                    Our psychologist team will contact you via chat in 24 hours. This service is not intended for emergencies. If you or your child are in immediate distress, please contact your local emergency services or a crisis helpline.
                   </Text>
 
                   <Text style={styles.termsSection}>6. Your Consent</Text>
@@ -545,7 +544,7 @@ export const CoachChatScreen: React.FC = () => {
               <>
                 <Text style={styles.modalTitle}>Talk to a Psychologist</Text>
                 <Text style={styles.modalBody}>
-                  Our child psychologist team will be notified and will reach out to you shortly via email.
+                  Our child psychologist team will be notified and will reach out to you in 24 hours here.
                 </Text>
 
                 {/* Terms checkbox */}

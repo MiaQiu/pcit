@@ -93,6 +93,7 @@ export const PsychologistChatScreen: React.FC = () => {
   const { markPsychAsRead } = useCoachUnread();
 
   const flatListRef = useRef<FlatList>(null);
+  const inputRef = useRef<TextInput>(null);
   const latestServerTsRef = useRef<string | undefined>(undefined);
   const pinToBottomRef = useRef(true);
 
@@ -102,6 +103,12 @@ export const PsychologistChatScreen: React.FC = () => {
 
   const scrollToEnd = useCallback((animated = true) => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated }), 100);
+  }, []);
+
+  // Auto-focus input on first entry
+  useEffect(() => {
+    const t = setTimeout(() => inputRef.current?.focus(), 300);
+    return () => clearTimeout(t);
   }, []);
 
   // Mark psych messages as read on unmount
@@ -263,9 +270,9 @@ export const PsychologistChatScreen: React.FC = () => {
               <View style={styles.emptyIconWrap}>
                 <Ionicons name="person" size={28} color="#fff" />
               </View>
-              <Text style={styles.emptyTitle}>Your request has been received</Text>
+              <Text style={styles.emptyTitle}>Please describe your situation and questions here</Text>
               <Text style={styles.emptyBody}>
-                A psychologist from our team will reach out to you here soon. You can also send a message to let them know what you need.
+                A psychologist from our team will reach out to you within 24 hours.
               </Text>
             </View>
           }
@@ -274,6 +281,7 @@ export const PsychologistChatScreen: React.FC = () => {
         {/* Input bar */}
         <View style={styles.inputBar}>
           <TextInput
+            ref={inputRef}
             style={styles.input}
             value={input}
             onChangeText={setInput}
@@ -340,12 +348,13 @@ const styles = StyleSheet.create({
   },
   emptyList: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   emptyState: {
     alignItems: 'center',
     paddingHorizontal: 32,
-    paddingVertical: 40,
+    paddingTop: 48,
+    paddingBottom: 40,
   },
   emptyIconWrap: {
     width: 64,
