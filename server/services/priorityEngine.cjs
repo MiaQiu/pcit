@@ -37,6 +37,7 @@ const ISSUE_TO_LEVEL = {
   frustration_tolerance: 'FLOURISH',
   attention_focus: 'FLOURISH',
   parenting_strategies: 'FLOURISH',
+  adhd: 'DE_ESCALATE',
   // "other" is intentionally omitted (no clinical mapping)
 };
 

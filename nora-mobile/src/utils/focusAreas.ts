@@ -29,6 +29,7 @@ const ISSUE_TO_LEVEL: Record<string, ClinicalLevel> = {
   frustration_tolerance: 'FLOURISH',
   attention_focus: 'FLOURISH',
   parenting_strategies: 'FLOURISH',
+  adhd: 'DE_ESCALATE',
 };
 
 // Maps WACB questions to clinical levels

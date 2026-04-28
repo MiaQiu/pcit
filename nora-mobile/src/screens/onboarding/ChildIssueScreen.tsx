@@ -28,6 +28,7 @@ export const ChildIssueScreen: React.FC = () => {
         { value: 'parental_divorce', label: 'Navigating Parental Divorces' },
         { value: 'social', label: 'Building Social-Emotional Skills' },
         { value: 'attention_focus', label: 'Attention and Focus Issues' },
+        { value: 'adhd', label: 'ADHD / Attention & Hyperactivity' },
         { value: 'parenting_strategies', label: 'Learning More Effective Parenting Strategies' },
         { value: 'other', label: 'Others' },
       ]}

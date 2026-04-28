@@ -369,6 +369,7 @@ export const ProfileScreen: React.FC = () => {
       parental_divorce: 'Navigating Parental Divorces',
       social: 'Building Social-Emotional Skills',
       attention_focus: 'Attention and Focus Issues',
+      adhd: 'ADHD / Attention & Hyperactivity',
       parenting_strategies: 'Learning More Effective Parenting Strategies',
       defiance: 'Defiance',
       aggression: 'Aggression',

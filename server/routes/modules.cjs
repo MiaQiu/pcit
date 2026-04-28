@@ -20,6 +20,7 @@ const ISSUE_TO_MODULE = {
   parental_divorce: 'DIVORCE',
   social: 'DEVELOPMENT',
   attention_focus: 'FOCUS',
+  adhd: 'FOCUS',
   parenting_strategies: 'FOUNDATION',
 };
 
