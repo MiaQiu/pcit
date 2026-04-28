@@ -41,7 +41,7 @@ const DPICS_TO_TAG_MAP = {
 
 /**
  * Calculate Nora Score for CDI mode
- * Shield-based scoring system v5
+ * Base 70 + 1 per PEN skill use - 3 per negative
  * @param {Object} tagCounts - Object containing skill counts
  * @returns {{score: number, passed: boolean}} Score and pass/fail status
  */
@@ -53,53 +53,14 @@ function calculateCDIScore(tagCounts) {
   const E = tagCounts.command || 0;
   const F = tagCounts.criticism || 0;
 
-  // 1. Setup - cap effective skills at 10
-  const A_eff = Math.min(A, CDI_SCORE_CONFIG.SKILL_TARGET);
-  const B_eff = Math.min(B, CDI_SCORE_CONFIG.SKILL_TARGET);
-  const C_eff = Math.min(C, CDI_SCORE_CONFIG.SKILL_TARGET);
+  const rawScore = 50 + A + B + C - (D + E + F);
+  const finalScore = Math.min(100, Math.max(0, rawScore));
+
   const totalNegs = D + E + F;
-
-  // 2. Build the Shield (Max 40 points)
-  // 30 skill points = 40 score points -> 1.333 multiplier
-  const currentShield = (A_eff + B_eff + C_eff) *
-    (CDI_SCORE_CONFIG.MAX_SHIELD_POINTS / CDI_SCORE_CONFIG.SKILL_POINTS_FOR_MAX_SHIELD);
-
-  // 3. Apply Damage
-  // High Impact Damage = 3.333 per negative
-  const damagePerHit = CDI_SCORE_CONFIG.SKILL_TARGET / 3;
-
-  // Calculate how many "hits" the shield can take before breaking
-  const hitsToBreakShield = damagePerHit > 0 ? currentShield / damagePerHit : 0;
-
-  let rawScore;
-  if (totalNegs <= hitsToBreakShield) {
-    // Case A: Shield holds. Deduct using high penalty.
-    const penalty = totalNegs * damagePerHit;
-    rawScore = CDI_SCORE_CONFIG.BASE_SCORE + currentShield - penalty;
-  } else {
-    // Case B: Shield broken.
-    // User loses all shield points (Score resets to 60).
-    // Remaining negatives subtract 1 point each from 60.
-    const remainingNegs = totalNegs - hitsToBreakShield;
-    rawScore = CDI_SCORE_CONFIG.BASE_SCORE - remainingNegs;
-  }
-
-  // 4. Gate Check (Pass/Fail)
   const passed = (A >= CDI_SCORE_CONFIG.SKILL_TARGET) &&
                  (B >= CDI_SCORE_CONFIG.SKILL_TARGET) &&
                  (C >= CDI_SCORE_CONFIG.SKILL_TARGET) &&
                  (totalNegs <= CDI_SCORE_CONFIG.MAX_DONTS);
-
-  let finalScore = rawScore;
-  if (passed) {
-    if (finalScore > CDI_SCORE_CONFIG.PASS_CAP) finalScore = CDI_SCORE_CONFIG.PASS_CAP;
-  } else {
-    // Cap at 89 if failed
-    if (finalScore > CDI_SCORE_CONFIG.FAIL_CAP) finalScore = CDI_SCORE_CONFIG.FAIL_CAP;
-  }
-
-  // Floor at 0
-  if (finalScore < 0) finalScore = 0;
 
   return {
     score: Math.round(finalScore),

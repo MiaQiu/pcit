@@ -333,6 +333,190 @@ const PDICoachCorner: React.FC<{
   );
 };
 
+const EBA_TOTAL = 50;
+
+const EmotionalBankBar: React.FC<{
+  noraScore: number;
+  skills: Array<{ label: string; progress: number }>;
+  areasToAvoid: Array<any>;
+}> = ({ noraScore, skills, areasToAvoid }) => {
+  const HALF = EBA_TOTAL / 2; // 25 — center divider
+
+  // Green: base 50pts (fixed) + 1pt per PEN skill use
+  const penPoints = skills.reduce((s, sk) => s + (sk.progress || 0), 0);
+  const totalPositive = 50 + penPoints;
+  const totalGreenSegs = Math.min(Math.round(totalPositive / 100 * HALF), HALF);
+  const penSegs = totalPositive > 0 ? Math.round((penPoints / totalPositive) * totalGreenSegs) : 0;
+  const baseSegs = totalGreenSegs - penSegs;
+
+  // Red: 1pt per negative use (Questions, Commands, Criticism)
+  const avoidTotal = areasToAvoid.reduce((s: number, a: any) => {
+    return s + (typeof a === 'string' ? 0 : (a.count || 0));
+  }, 0);
+  const negPoints = avoidTotal;
+  const redSegs = Math.min(Math.round(negPoints / 100 * HALF), HALF);
+
+  // Build segment type array: 0=empty, 1=base green, 2=pen green, 3=red
+  // Left half  = indices 0..24, right half = indices 25..49
+  const segs = Array(EBA_TOTAL).fill(0) as number[];
+  // Green: from index 24 going left
+  for (let i = 0; i < baseSegs; i++) segs[HALF - 1 - i] = 1;
+  for (let i = 0; i < penSegs; i++) segs[HALF - 1 - baseSegs - i] = 2;
+  // Red: from index 25 going right
+  for (let i = 0; i < redSegs; i++) segs[HALF + i] = 3;
+
+  const getColor = (type: number, pos: number): string => {
+    if (type === 1) return '#6750A4';
+    if (type === 2) return '#C4B5FD';
+    if (type === 3) return '#852221';
+    return '#E5E7EB';
+  };
+
+  const scoreColor = noraScore < 80 ? '#852221' : '#6750A4';
+
+  return (
+    <View>
+      <View style={eboStyles.scoreHeader}>
+        <View style={eboStyles.scoreNumRow}>
+          <Text style={[eboStyles.scoreNum, { color: scoreColor }]}>{noraScore}</Text>
+          <Text style={eboStyles.scoreDenom}>/100</Text>
+        </View>
+      </View>
+      <View style={eboStyles.bar}>
+        {segs.map((type, i) => (
+          <View key={i} style={[eboStyles.seg, { backgroundColor: getColor(type, i) }]} />
+        ))}
+      </View>
+      <View style={eboStyles.pointsRow}>
+        <View style={eboStyles.pointsLeftHalf}>
+          <Text style={eboStyles.pointsGreen}>+{penPoints} pts ({penPoints} PEN × 1)</Text>
+          <Text style={eboStyles.pointsBase}>50 (base)</Text>
+        </View>
+        <View style={eboStyles.pointsRightHalf}>
+          <Text style={eboStyles.pointsRed}>−{negPoints} pts ({avoidTotal} avoid × 1)</Text>
+        </View>
+      </View>
+      {/* <View style={eboStyles.legend}>
+        <View style={eboStyles.legendLeft}>
+        <View style={eboStyles.legendItem}>
+            <View style={[eboStyles.dot, { backgroundColor: '#C4B5FD' }]} />
+            <Text style={eboStyles.legendLabel}>PEN skills</Text>
+          </View>
+          <View style={eboStyles.legendItem}>
+            <View style={[eboStyles.dot, { backgroundColor: '#6750A4' }]} />
+            <Text style={eboStyles.legendLabel}>Base</Text>
+          </View>
+
+        </View>
+        <View style={eboStyles.legendItem}>
+          <View style={[eboStyles.dot, { backgroundColor: '#852221' }]} />
+          <Text style={eboStyles.legendLabel}>Areas to avoid</Text>
+        </View>
+      </View> */}
+    </View>
+  );
+};
+
+const eboStyles = StyleSheet.create({
+  scoreHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  scoreNumRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 2,
+  },
+  scoreNum: {
+    fontFamily: FONTS.bold,
+    fontSize: 36,
+  },
+  scoreDenom: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: '#9CA3AF',
+  },
+  suffixBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  suffixText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+  },
+  bar: {
+    flexDirection: 'row',
+    height: 11,
+    borderRadius: 3,
+    gap: 2,
+    alignItems: 'center',
+  },
+  seg: {
+    flex: 1,
+    height: '100%',
+    borderRadius: 3,
+  },
+  pointsRow: {
+    flexDirection: 'row',
+    marginTop: 6,
+    paddingHorizontal: 2,
+  },
+  pointsLeftHalf: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingRight: 6,
+  },
+  pointsRightHalf: {
+    flex: 1,
+    alignItems: 'flex-end',
+    paddingLeft: 6,
+  },
+  pointsBase: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#6750A4',
+  },
+  pointsGreen: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#C4B5FD',
+  },
+  pointsRed: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#852221',
+  },
+  legend: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingHorizontal: 2,
+  },
+  legendLeft: {
+    flexDirection: 'row',
+    gap: 14,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+  },
+  legendLabel: {
+    fontFamily: FONTS.regular,
+    fontSize: 11,
+    color: '#6B7280',
+  },
+});
+
 export const ReportScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<ReportScreenRouteProp>();
@@ -678,6 +862,11 @@ export const ReportScreen: React.FC = () => {
               );
             })()}
           </View>
+          {/* <EmotionalBankBar
+            noraScore={reportData.noraScore ?? 0}
+            skills={reportData.skills}
+            areasToAvoid={reportData.areasToAvoid}
+          /> */}
         </View>
 
         {/* PRN Skills Section */}
