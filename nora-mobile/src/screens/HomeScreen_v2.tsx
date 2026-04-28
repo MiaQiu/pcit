@@ -394,18 +394,16 @@ export const HomeScreen_v2: React.FC = () => {
         isCompleted: hasCompleted,
       });
 
-      // Show weekly report only if not yet dismissed
+      // Always show weekly report plan item; mark completed if already viewed/dismissed
       if (latestReport) {
         const reportDismissed = await userStorage.getItem(`weekly_report_dismissed_${latestReport.id}`);
-        if (!reportDismissed) {
-          plan.push({
-            id: latestReport.id,
-            type: 'weekly-report',
-            label: 'Weekly Report:',
-            title: 'See your progress this week',
-            isCompleted: false,
-          });
-        }
+        plan.push({
+          id: latestReport.id,
+          type: 'weekly-report',
+          label: 'Weekly Report:',
+          title: 'See your progress this week',
+          isCompleted: !!reportDismissed,
+        });
       }
 
       // ── Setup daily reminder item (shown for first 3 days after account creation) ──
