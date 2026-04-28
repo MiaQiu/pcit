@@ -140,6 +140,10 @@ const CalendarView: React.FC<{
     year: 'numeric',
   });
 
+  const weeklyReportMondayStrings = new Set(
+    weeklyReports.map(report => toSingaporeDateString(new Date(report.weekEndDate)))
+  );
+
   // Get all COMPLETED recordings for the selected date
   const selectedDateRecordings = selectedDate
     ? recordings.filter(r =>
@@ -148,15 +152,12 @@ const CalendarView: React.FC<{
       )
     : [];
 
-  // Get weekly report for the selected date's week.
-  // Convert report UTC dates to SGT format (same as selectedDate) before comparing.
+  // Show weekly report only on the Monday (SGT) it was generated.
+  // weekEndDate in UTC lands on Monday SGT — match that date directly.
   const selectedDateWeeklyReport = selectedDate
-    ? weeklyReports.find(report => {
-        const reportStartStr = toSingaporeDateString(new Date(report.weekStartDate));
-        const reportEndStr = toSingaporeDateString(new Date(report.weekEndDate));
-        const selMs = new Date(selectedDate).getTime();
-        return selMs >= new Date(reportStartStr).getTime() && selMs <= new Date(reportEndStr).getTime();
-      }) || null
+    ? weeklyReports.find(report =>
+        selectedDate === toSingaporeDateString(new Date(report.weekEndDate))
+      ) || null
     : null;
 
   const formatMode = (mode: string) => mode === 'CDI' ? 'Play Time' : 'Discipline';
@@ -199,6 +200,8 @@ const CalendarView: React.FC<{
             const dateStr = toSingaporeDateString(day.date);
             const isSelected = dateStr === selectedDate;
 
+            const isWeeklyReportMonday = isCurrentMonth && weeklyReportMondayStrings.has(dateStr);
+
             if (day.hasRecording && isCurrentMonth) {
               return (
                 <TouchableOpacity
@@ -208,6 +211,23 @@ const CalendarView: React.FC<{
                   activeOpacity={0.7}
                 >
                   <View style={[styles.dayCircle, styles.dayCircleActive, isSelected && styles.dayCircleSelected]}>
+                    <Text style={[styles.dayText, styles.dayTextActive]}>
+                      {day.date.getDate()}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            }
+
+            if (isWeeklyReportMonday) {
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.dayCell}
+                  onPress={() => setSelectedDate(isSelected ? null : dateStr)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.dayCircle, styles.dayCircleWeekly, isSelected && styles.dayCircleSelected]}>
                     <Text style={[styles.dayText, styles.dayTextActive]}>
                       {day.date.getDate()}
                     </Text>
@@ -1011,6 +1031,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   dayCircleActive: {
+    backgroundColor: '#FF8C42',
+  },
+  dayCircleWeekly: {
     backgroundColor: '#FF8C42',
   },
   dayCircleSelected: {
