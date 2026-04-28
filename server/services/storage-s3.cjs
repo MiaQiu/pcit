@@ -378,9 +378,15 @@ async function verifyFileExists(key) {
   }
 }
 
+// Cache presigned read URLs to avoid re-signing on every request.
+// TTL is 6 days (keys expire after 7 days, so we refresh one day early).
+const PRESIGNED_CACHE_TTL_MS = 6 * 24 * 60 * 60 * 1000;
+const presignedReadUrlCache = new Map(); // key -> { url, expiresAt }
+
 /**
  * Generate a presigned read URL directly, without a HeadObject pre-check.
  * Use for assets where existence is assumed (e.g. lesson images).
+ * Results are cached for 6 days to avoid redundant S3 API calls on every request.
  * @param {string} key - S3 object key
  * @param {number} expiresIn - seconds until expiry (default 7 days)
  * @returns {Promise<string>}
@@ -390,9 +396,16 @@ async function getPresignedReadUrl(key, expiresIn = 7 * 24 * 60 * 60) {
     console.log(`[lesson-image] S3 not enabled, returning key as-is: ${key}`);
     return key;
   }
+
+  const cached = presignedReadUrlCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.url;
+  }
+
   try {
     const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
     const url = await getSignedUrlSDK(s3Client, command, { expiresIn });
+    presignedReadUrlCache.set(key, { url, expiresAt: Date.now() + PRESIGNED_CACHE_TTL_MS });
     console.log(`[lesson-image] presigned URL generated for key: ${key} → ${url.substring(0, 120)}...`);
     return url;
   } catch (error) {
