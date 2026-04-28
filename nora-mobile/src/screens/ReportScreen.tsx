@@ -242,7 +242,7 @@ const getLabelColors = (label: string) => {
 /** PDI Coach's Corner — Two Choices Flow skills */
 const PDICoachCorner: React.FC<{
   pdiSkills: Array<{ skill: string; performance: string; feedback: string }>;
-  commandSequences?: Array<{ title: string; label: string; command: string; waitTime: string; followThrough: string; coachTip?: string }> | null;
+  commandSequences?: Array<{ title: string; label: string; whatHappened?: string; command: string; waitTime: string; followThrough: string; coachTip?: string }> | null;
   summary?: string | null;
   recordingId: string;
   navigation: any;
@@ -299,6 +299,9 @@ const PDICoachCorner: React.FC<{
                       <Text style={[styles.pdiSeqLabelText, { color: labelColors.text }]}>{seq.label}</Text>
                     </View>
                   </View>
+                  {seq.whatHappened && (
+                    <Text style={styles.pdiSeqWhatHappened}>{seq.whatHappened}</Text>
+                  )}
                   <View style={styles.pdiSeqBullet}>
                     <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>Command: </Text>{seq.command}</Text>
                   </View>
@@ -1043,7 +1046,7 @@ export const ReportScreen: React.FC = () => {
         {/* What we learnt about Child */}
         {/* Section 1: What we learnt about child today */}
         {((reportData.aboutChild && reportData.aboutChild.length > 0) || (reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations) && reportData.milestoneCelebrations.length > 0)) && (() => {
-          const item = reportData.aboutChild && reportData.aboutChild.length > 0 ? reportData.aboutChild![0] : null;
+          const item = reportData.aboutChild && reportData.aboutChild.length > 0 ? reportData.aboutChild![Math.floor(Math.random() * reportData.aboutChild.length)] : null;
           const milestones = reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations)
             ? (reportData.milestoneCelebrations as MilestoneCelebration[]).slice(0, 1)
             : [];
@@ -2435,6 +2438,14 @@ const styles = StyleSheet.create({
   pdiSeqBold: {
     fontFamily: FONTS.bold,
     color: COLORS.textDark,
+  },
+  pdiSeqWhatHappened: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 21,
+    marginBottom: 10,
+    fontStyle: 'italic',
   },
   milestoneLockedCard: {
     backgroundColor: '#FFFFFF',
