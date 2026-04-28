@@ -14,11 +14,11 @@ const DEFAULT_REPORT_VISIBILITY = { daily: false, weekly: false, monthly: false 
  */
 router.get('/app-version', (req, res) => {
   res.json({
-    minRequiredVersion: '1.0.1',
+    minRequiredVersion: '1.0.5',
     latestVersion: '1.0.5',
     whatsNew: [
-      'Milestone celebrations with evidence summaries',
-      'Developmental milestones now unlock as you complete sessions',
+      'Exciting new user experience',
+      'Fresh learning modules to dive into',
     ],
   });
 });

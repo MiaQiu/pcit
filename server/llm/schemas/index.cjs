@@ -68,7 +68,8 @@ const COMBINED_FEEDBACK = {
 const PDI_TWO_CHOICES = {
   type: 'object',
   properties: {
-    summary: { type: 'string' },
+    summary:      { type: 'string' },
+    encouragement: { type: 'string' },
     commandSequences: {
       type: 'array',
       items: {
@@ -76,12 +77,13 @@ const PDI_TWO_CHOICES = {
         properties: {
           title:         { type: 'string' },
           label:         { type: 'string', enum: ['Great!', 'Needs Work'] },
+          whatHappened:  { type: 'string' },
           command:       { type: 'string' },
           waitTime:      { type: 'string' },
           followThrough: { type: 'string' },
           coachTip:      { type: 'string', nullable: true },
         },
-        required: ['title', 'label', 'command', 'waitTime', 'followThrough'],
+        required: ['title', 'label', 'whatHappened', 'command', 'waitTime', 'followThrough'],
       },
     },
     pdiSkills: {
@@ -96,10 +98,9 @@ const PDI_TWO_CHOICES = {
         required: ['skill', 'performance', 'feedback'],
       },
     },
-    tomorrowGoal:  { type: 'string' },
-    encouragement: { type: 'string', nullable: true },
+    tomorrowGoal: { type: 'string' },
   },
-  required: ['summary', 'commandSequences', 'pdiSkills', 'tomorrowGoal'],
+  required: ['summary', 'encouragement', 'commandSequences', 'pdiSkills', 'tomorrowGoal'],
 };
 
 // ── dev-profiling ─────────────────────────────────────────────────────────────

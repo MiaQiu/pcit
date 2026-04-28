@@ -1,0 +1,1 @@
+ALTER TABLE "LessonSegment" ADD COLUMN IF NOT EXISTS "customHtml" TEXT;
