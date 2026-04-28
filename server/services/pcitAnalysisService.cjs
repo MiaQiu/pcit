@@ -1048,7 +1048,7 @@ async function generatePDITwoChoicesAnalysis(utterances, childName, sessionId = 
     const userMessage = { role: 'user', parts: [{ text: prompt }] };
     const raw = await callGeminiStreaming([userMessage], {
       temperature: 0.7,
-      maxOutputTokens: 8192,
+      maxOutputTokens: 16384,
       timeout: 300000,
       sessionId,
     });
@@ -1219,7 +1219,7 @@ async function analyzePCITCoding(sessionId, userId) {
 
       // Check if any speaker confidence is below threshold — retry with backup model if so
       const lowConfidenceSpeakers = Object.entries(roleIdentificationJson.speaker_identification || {})
-        .filter(([, info]) => typeof info.confidence === 'number' && info.confidence < 0.8);
+        .filter(([, info]) => typeof info.confidence === 'number' && info.confidence < 0.9);
       if (lowConfidenceSpeakers.length > 0) {
         console.log(`⚠️ [ANALYSIS-STEP-3] Low confidence on speakers (${lowConfidenceSpeakers.map(([id, info]) => `${id}:${info.confidence}`).join(', ')}) — retrying with backup model (claude)`);
         roleIdentificationJson = await llmCall(roleIdentificationPrompt, { model: 'claude', maxTokens: 2048, temperature: 0.3, label: 'role-id-backup', sessionId });
