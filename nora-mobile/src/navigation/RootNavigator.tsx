@@ -11,10 +11,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ForceUpdateScreen } from '../screens/ForceUpdateScreen';
 import { WhatsNewModal } from '../components/WhatsNewModal';
 import { useNavigation } from '@react-navigation/native';
-import Purchases from 'react-native-purchases';
 import { TabNavigator } from './TabNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
-import { REVENUECAT_CONFIG } from '../config/revenuecat';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
 import { SupportScreen } from '../screens/SupportScreen';
@@ -37,6 +35,7 @@ import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { User } from '@nora/core';
 import amplitudeService from '../services/amplitudeService';
+import { checkOnboardingStep } from '../utils/onboardingCheck';
 
 const APP_VERSION: string = require('../../app.json').expo.version;
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -208,62 +207,9 @@ export const RootNavigator: React.FC = () => {
   };
 
   const checkOnboardingCompletion = async (): Promise<{ step: string | null; user: User }> => {
-    // Get user profile for onboarding steps
-    const user = await authService.getCurrentUser(true);
-
-    // Set current user ID so userStorage prefixes keys correctly
-    await userStorage.setCurrentUserId(user.id);
-    reinitializeUnread(user.id);
-
-      // Check which onboarding step is incomplete
-      // Default values from signup are 'User' and 'Child'
-      if (!user.name || user.name === 'User') {
-        return { step: 'NameInput', user };
-      }
-      if (!user.childName || user.childName === 'Child') {
-        return { step: 'ChildName', user };
-      }
-      if (!user.childBirthday) {
-        return { step: 'ChildBirthday', user };
-      }
-      if (!user.issue) {
-        return { step: 'ChildIssue', user };
-      }
-
-      // Check subscription status using RevenueCat SDK (source of truth)
-      // This is instant and doesn't depend on webhooks
-      try {
-        const customerInfo = await Purchases.getCustomerInfo();
-        const hasActiveSubscription = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium] !== undefined;
-
-        if (!hasActiveSubscription) {
-          console.log('[Auth] No active subscription (RevenueCat), redirecting to subscription screen');
-          return { step: 'Subscription', user };
-        }
-
-        console.log('[Auth] Active subscription confirmed via RevenueCat');
-      } catch (rcError) {
-        console.error('[Auth] RevenueCat check failed, falling back to backend:', rcError);
-
-        // Fallback to backend data if RevenueCat fails
-        if (user.subscriptionStatus !== 'ACTIVE') {
-          if (user.subscriptionStatus === 'INACTIVE') {
-            return { step: 'Subscription', user };
-          }
-
-          const now = new Date();
-          const endDate = user.subscriptionEndDate
-            ? new Date(user.subscriptionEndDate)
-            : null;
-
-          if (!endDate || now > endDate) {
-            return { step: 'Subscription', user };
-          }
-        }
-      }
-
-    // All steps complete and subscription active
-    return { step: null, user };
+    const result = await checkOnboardingStep(authService);
+    reinitializeUnread(result.user.id);
+    return result;
   };
 
   if (isLoading) {

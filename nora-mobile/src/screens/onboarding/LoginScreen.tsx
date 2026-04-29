@@ -28,6 +28,8 @@ import { handleApiSuccess } from '../../utils/NetworkMonitor';
 import { requestNotificationPermissions } from '../../utils/notifications';
 import amplitudeService from '../../services/amplitudeService';
 import { useGoogleAuth, signInWithApple } from '../../utils/socialAuth';
+import { checkOnboardingStep } from '../../utils/onboardingCheck';
+import { useCoachUnread } from '../../contexts/CoachUnreadContext';
 
 const PENDING_REFERRAL_KEY = '@nora_pending_referral_code';
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -43,6 +45,7 @@ export const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const { reinitialize: reinitializeUnread } = useCoachUnread();
   const { signIn: signInWithGoogle, request: googleRequest } = useGoogleAuth();
 
   // When opened via a referral deep link (nora://join?referralCode=...), store the code
@@ -53,6 +56,23 @@ export const LoginScreen: React.FC = () => {
       AsyncStorage.setItem(PENDING_REFERRAL_KEY, code).catch(() => {});
     }
   }, [route.params?.referralCode]);
+
+  const navigateAfterAuth = async () => {
+    const { step, user } = await checkOnboardingStep(authService);
+    reinitializeUnread(user.id);
+    if (step) {
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Onboarding' as any, params: { initialStep: step, resumeUserData: user } }],
+        })
+      );
+    } else {
+      navigation.dispatch(
+        CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] })
+      );
+    }
+  };
 
   const applyPendingReferral = async () => {
     try {
@@ -118,19 +138,7 @@ export const LoginScreen: React.FC = () => {
       // Apply any pending referral code (from deep link — non-blocking)
       applyPendingReferral();
 
-      const subscriptionStatus = response?.user?.subscriptionStatus;
-      if (subscriptionStatus === 'ACTIVE') {
-        navigation.dispatch(
-          CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] })
-        );
-      } else {
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 0,
-            routes: [{ name: 'Onboarding' as any, params: { initialStep: 'Subscription' } }],
-          })
-        );
-      }
+      await navigateAfterAuth();
     } catch (error: any) {
       console.error('Login error:', error);
       const errorMessage = getErrorMessage(error, ErrorMessages.AUTH.LOGIN_FAILED);
@@ -153,19 +161,7 @@ export const LoginScreen: React.FC = () => {
 
     amplitudeService.trackLogin('social');
 
-    const subscriptionStatus = user?.subscriptionStatus;
-    if (subscriptionStatus === 'ACTIVE') {
-      navigation.dispatch(
-        CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] })
-      );
-    } else {
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Onboarding' as any, params: { initialStep: 'Subscription' } }],
-        })
-      );
-    }
+    await navigateAfterAuth();
   };
 
   const handleAppleSignIn = async () => {
