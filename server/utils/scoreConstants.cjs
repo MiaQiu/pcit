@@ -57,7 +57,7 @@ function calculateCDIScore(tagCounts) {
   const E = tagCounts.command || 0;
   const F = tagCounts.criticism || 0;
 
-  const rawScore = 50 + A + B + C - (D + E + F);
+  const rawScore = 50 + A + B + C - (D + E + F) * 1.1;
   const finalScore = Math.min(100, Math.max(0, rawScore));
 
   const totalNegs = D + E + F;
