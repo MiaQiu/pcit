@@ -19,7 +19,7 @@ cd "$SCRIPT_DIR/nora-mobile" && NODE_ENV=production npx expo prebuild --platform
 echo "==> 3. Install pods"
 cd "$SCRIPT_DIR/nora-mobile/ios" && pod install
 
-#echo "==> 4. Deploy backend"
-#cd "$SCRIPT_DIR" && ./docker_deploy_prod.sh
+echo "==> 4. Deploy backend"
+cd "$SCRIPT_DIR" && ./docker_deploy_prod.sh
 
-#echo "==> Prod deploy complete"
+echo "==> Prod deploy complete"

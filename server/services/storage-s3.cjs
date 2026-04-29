@@ -379,8 +379,9 @@ async function verifyFileExists(key) {
 }
 
 // Cache presigned read URLs to avoid re-signing on every request.
-// TTL is 6 days (keys expire after 7 days, so we refresh one day early).
-const PRESIGNED_CACHE_TTL_MS = 6 * 24 * 60 * 60 * 1000;
+// TTL is 45 minutes — App Runner IAM credentials rotate ~hourly, so presigned
+// URLs signed with old credentials become invalid after rotation.
+const PRESIGNED_CACHE_TTL_MS = 45 * 60 * 1000;
 const presignedReadUrlCache = new Map(); // key -> { url, expiresAt }
 
 /**
@@ -391,7 +392,7 @@ const presignedReadUrlCache = new Map(); // key -> { url, expiresAt }
  * @param {number} expiresIn - seconds until expiry (default 7 days)
  * @returns {Promise<string>}
  */
-async function getPresignedReadUrl(key, expiresIn = 7 * 24 * 60 * 60) {
+async function getPresignedReadUrl(key, expiresIn = 60 * 60) {
   if (!S3_ENABLED || !s3Client) {
     console.log(`[lesson-image] S3 not enabled, returning key as-is: ${key}`);
     return key;
@@ -432,15 +433,14 @@ async function resolveDragonImageUrl(value) {
     return getPresignedReadUrl(value);
   }
 
-  // Full S3 URL — only re-sign if it belongs to the current bucket
+  // Full S3 URL — extract key and re-sign with current bucket
   if (value.startsWith('https://') && value.includes('.amazonaws.com/')) {
-    const ownsBucket = bucketName && value.includes(`/${bucketName}.`) || value.includes(`/${bucketName}/`);
     const key = value.replace(/^https:\/\/[^/]+\//, '');
-    console.log(`[lesson-image] resolving full S3 URL, extracted key: ${key}, ownsBucket: ${ownsBucket}`);
-    if (key.startsWith('lessons/') && ownsBucket) {
+    console.log(`[lesson-image] resolving full S3 URL, extracted key: ${key}`);
+    if (key.startsWith('lessons/')) {
+      // Always re-sign with current bucket regardless of source bucket (handles dev→prod syncs)
       return getPresignedReadUrl(key);
     }
-    // Different bucket (e.g. dev url in prod) — return as-is and let the client try
     return value;
   }
 

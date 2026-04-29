@@ -35,7 +35,7 @@ For each coachable sequence, note:
 
 STEP 4 — CURATE, DON'T CATALOGUE.
 
-Do not report on every coachable command. Select at most 2–3 sequences that together tell the most useful story:
+Do not report on every coachable command. Select 2-3 sequences that together tell the most useful story:
 - Prioritize sequences that went well — these teach the parent what to repeat.
 - Choose at most ONE sequence as the main growth moment. If nothing went meaningfully wrong, it is fine to have zero growth moments.
 - If the session was short or clean, one sequence is enough.

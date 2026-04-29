@@ -1211,10 +1211,15 @@ async function analyzePCITCoding(sessionId, userId) {
       UTTERANCES_JSON: JSON.stringify(utterancesForPrompt, null, 2)
     });
 
-    console.log(`📊 [ANALYSIS-STEP-3] Calling ${AI_PROVIDER} for role identification...`);
+    console.log(`📊 [ANALYSIS-STEP-3] Calling gemini-3-pro (streaming) for role identification...`);
 
     try {
-      roleIdentificationJson = await llmCall(roleIdentificationPrompt, { maxTokens: 2048, temperature: 0.3, label: 'role-id', sessionId });
+      const raw = await callGeminiStreaming(
+        [{ role: 'user', parts: [{ text: roleIdentificationPrompt }] }],
+        { temperature: 0.3, maxOutputTokens: 4096, timeout: 300000, sessionId, model: 'gemini-3-pro-preview' }
+      );
+      const { value: parsed } = parseJSON(raw, 'object');
+      roleIdentificationJson = parsed;
       console.log(`✅ [ANALYSIS-STEP-3] Role identification parsed successfully`);
 
       // Check if any speaker confidence is below threshold — retry with backup model if so
@@ -1369,7 +1374,7 @@ Do not include markdown or whitespace (minified JSON).
     const rawCoding = await callGeminiStreaming(pcitContents, {
       model:          'gemini-3-pro-preview',
       temperature:    0,
-      maxOutputTokens: 8192,
+      maxOutputTokens: 32768,
       timeout:        300000,
       sessionId,
     });
