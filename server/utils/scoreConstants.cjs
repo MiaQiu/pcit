@@ -28,7 +28,11 @@ const CDI_SCORE_CONFIG = {
 const DPICS_TO_TAG_MAP = {
   'RF': 'Echo',              // Reflection
   'RQ': 'Echo',              // Reflective Question
-  'LP': 'Labeled Praise',    // Labeled Praise
+  'LP': 'Labeled Praise',    // Labeled Praise (legacy — sub-classified as LP1–LP4 in new sessions)
+  'LP1': 'Labeled Praise',   // Product Praise
+  'LP2': 'Labeled Praise',   // Action Praise
+  'LP3': 'Labeled Praise',   // Effort/Growth Praise
+  'LP4': 'Labeled Praise',   // Regulatory Praise
   'UP': 'Unlabeled Praise',  // Unlabeled Praise
   'BD': 'Narration',         // Behavioral Description
   'DC': 'Command',           // Direct Command

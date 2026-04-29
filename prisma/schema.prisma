@@ -360,6 +360,7 @@ model User {
   TextInputResponse     TextInputResponse[]
   ThirdPartyRequest     ThirdPartyRequest[]
   UserLessonProgress    UserLessonProgress[]
+  UserSkillProgress     UserSkillProgress[]
   WacbSurvey            WacbSurvey[]
   ChildProfiling        ChildProfiling[]
   Child                 Child[]
@@ -390,6 +391,30 @@ model UserLessonProgress {
   @@unique([userId, lessonId])
   @@index([lessonId])
   @@index([userId, status])
+}
+
+model UserSkillProgress {
+  id                       String   @id @default(uuid())
+  userId                   String
+  childId                  String
+  // Mastery flags — set true once thresholds are met (never reset)
+  masteredCorrections      Boolean  @default(false)
+  masteredLeading          Boolean  @default(false)
+  masteredPraise           Boolean  @default(false)
+  masteredEcho             Boolean  @default(false)
+  unlockedEffortPraise     Boolean  @default(false)
+  unlockedRegulatoryPraise Boolean  @default(false)
+  // Consecutive clean-session counters used to compute mastery
+  cleanCorrectionsSessions Int      @default(0)
+  cleanLeadingSessions     Int      @default(0)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  User                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Child                    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, childId])
+  @@index([userId])
+  @@index([childId])
 }
 
 model Utterance {
@@ -471,6 +496,7 @@ model Child {
   ChildMilestone     ChildMilestone[]
   ChildProfiling     ChildProfiling[]
   ChildIssuePriority ChildIssuePriority[]
+  UserSkillProgress  UserSkillProgress[]
   WeeklyReport       WeeklyReport[]
 
   @@index([userId])

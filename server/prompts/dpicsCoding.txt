@@ -54,11 +54,15 @@ For desirable and undesirable coded Parent segments, you must generate a "feedba
   - Tag Questions: Adding "okay?", "right?", or "是不是" to a statement turns it into a Q.
 - Reflective Question (RQ): Repeats/paraphrases the child's immediately preceding statement but adds a rising inflection or tag question (verifying).
 
-4. PRAISE (LP / UP)
-- Labeled Praise (LP): Positive evaluation + Specific behavior/product/attribute labeled. (e.g., "Good job building that tower," "Thank you for handing me the block.")
+4. PRAISE (LP1 / LP2 / LP3 / LP4 / UP)
 - Unlabeled Praise (UP): Nonspecific positive evaluation. (e.g., "Good job," "Nice!", "Thank you.")
-- Rule: Praise in question form ("Isn't that pretty?") is still Praise.
-- Decision Rule: If uncertain between LP and UP, code UP.
+- Labeled Praise is specific positive evaluation. Sub-classify into one of four levels:
+  - LP1 (Product Praise): Praises the object, toy, or finished product. (e.g., "Great tower!", "That's a beautiful drawing!")
+  - LP2 (Action Praise): Praises the child's specific action or behavior. (e.g., "I love how you're stacking those blocks!", "Good job putting that piece in!")
+  - LP3 (Effort/Growth Praise): Praises effort, persistence, focus, or trying hard. (e.g., "You're working so hard on that!", "I love how you kept trying even when it was tricky!")
+  - LP4 (Regulatory Praise): Praises emotional regulation — using a calm voice, accepting a limit, sharing, or self-control. (e.g., "I love how you used your gentle hands!", "Great job accepting that so calmly!")
+- Rule: Praise in question form ("Isn't that pretty?") is still Praise. Apply the same LP1-LP4 sub-classification.
+- Decision Rule: If uncertain between LP and UP, code UP. If uncertain between LP sub-levels, prefer the lower level (LP1 over LP2, etc.).
 
 5. REFLECTION (RF)
 - Definition: Repeats or paraphrases the child's immediately preceding verbalization. Retains meaning.
@@ -69,7 +73,7 @@ For desirable and undesirable coded Parent segments, you must generate a "feedba
 - Subject: Must be "You" (or implied you). 
 - Verbs: Must be action verbs. (Words like "think", "want", "know" are ID).
 - Rule: If describing what the child is NOT doing -> ID. Play noises ("vroom", "shake shake") without the subject "You" are ID.
-- Decision Rule: If a behavior description + an positive evaluation of the child's action (e.g. working hard), it's a LP. example: you are wraping the gift so carefully.
+- Decision Rule: If a behavior description includes a positive evaluation of the child's action or effort (e.g., "You are wrapping the gift so carefully"), code LP2 or LP3 instead of BD.
 
 7. ACKNOWLEDGEMENT (AK)
 - Definition: Brief, non-content response to child (e.g., "Yes", "Okay", "Uh-huh", "Sure").

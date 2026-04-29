@@ -22,6 +22,7 @@ const SCHEMAS = require('../llm/schemas/index.cjs');
 const { getUtterances, updateUtteranceRoles, updateUtteranceTags, updateRevisedFeedback, SILENT_SPEAKER_ID } = require('../utils/utteranceUtils.cjs');
 const { DPICS_TO_TAG_MAP, calculateNoraScore } = require('../utils/scoreConstants.cjs');
 const { loadPrompt, loadPromptWithVariables } = require('../prompts/index.cjs');
+const { getGoalDirective, tagCountsToSession, recordToProfile, computeMasteryUpdates } = require('../utils/goalDirective.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { getLanguageInstruction } = require('../utils/languageUtils.cjs');
 
@@ -739,12 +740,29 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
   const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
   variables.LANGUAGE_INSTRUCTION = getLanguageInstruction(language);
 
-  console.log(`📊 [CDI-COACHING] Step 1: Generating notifications and tomorrow goal...`);
-
-  // Step 1: Notifications first — determines the tomorrow goal via ZPD logic
-  const { name, ageMonths, yesterdayGoal, historicalCdiSessions } = childInfo;
+  // Step 1: Deterministic goal directive — no LLM needed
+  const { name, ageMonths, yesterdayGoal, historicalCdiSessions, childId, userId: childUserId } = childInfo;
   let tomorrowGoal = null;
   let notifications = null;
+
+  console.log(`📊 [CDI-COACHING] Step 1: Computing goal directive...`);
+  let skillProgressRecord = null;
+  try {
+    skillProgressRecord = await prisma.userSkillProgress.findUnique({
+      where: { userId_childId: { userId: childUserId, childId } }
+    });
+  } catch (e) {
+    console.warn('⚠️ [CDI-COACHING] Could not fetch skill progress record:', e.message);
+  }
+
+  const directive = getGoalDirective(
+    tagCountsToSession(tagCounts),
+    recordToProfile(skillProgressRecord)
+  );
+  console.log(`✅ [CDI-COACHING] Goal directive: ${directive.focus_skill} → target ${directive.target_number}`);
+
+  // Step 1b: LLM writes notification copy based on the pre-determined directive
+  console.log(`📊 [CDI-COACHING] Step 1b: Generating notification copy...`);
   try {
     const notifPrompt = loadPromptWithVariables('cdiCoachingNotifications', {
       CHILD_NAME:                    name || 'your child',
@@ -753,7 +771,8 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
       SESSION_METRICS:               variables.SESSION_METRICS,
       YESTERDAY_GOAL_SECTION:        yesterdayGoal ? `Yesterday's Focus Goal: ${yesterdayGoal}` : 'None',
       HISTORICAL_METRICS_SECTION:    variables.HISTORICAL_METRICS_SECTION || 'No prior sessions.',
-      PERFORMANCE_VS_GOAL_SECTION:   buildPerformanceVsGoalSection(historicalCdiSessions, tagCounts, yesterdayGoal)
+      PERFORMANCE_VS_GOAL_SECTION:   buildPerformanceVsGoalSection(historicalCdiSessions, tagCounts, yesterdayGoal),
+      GOAL_DIRECTIVE:                `Focus: ${directive.focus_skill}\nTarget: ${directive.target_number}\nStrategy: ${directive.strategy}`
     });
     const { value: notifResult } = parseJSON(
       await callGeminiStreaming([{ role: 'user', parts: [{ text: notifPrompt }] }], {
@@ -761,11 +780,27 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
       }),
       'object'
     );
-    tomorrowGoal = notifResult?.['tomorrow goal'] || null;
+    tomorrowGoal = notifResult?.['tomorrow goal'] || `${directive.focus_skill}: ${directive.target_number}`;
     notifications = notifResult?.notification || null;
     console.log(`✅ [CDI-COACHING] Notifications generated`);
   } catch (notifError) {
     console.warn('⚠️ [CDI-COACHING] Notifications generation failed:', notifError.message);
+    tomorrowGoal = `${directive.focus_skill}: ${directive.target_number}`;
+  }
+
+  // Step 1c: Update mastery profile (non-blocking)
+  try {
+    const masteryUpdates = computeMasteryUpdates(skillProgressRecord, tagCountsToSession(tagCounts));
+    if (Object.keys(masteryUpdates).length > 0) {
+      await prisma.userSkillProgress.upsert({
+        where: { userId_childId: { userId: childUserId, childId } },
+        create: { userId: childUserId, childId, ...masteryUpdates },
+        update: masteryUpdates
+      });
+      console.log(`✅ [CDI-COACHING] Mastery profile updated:`, masteryUpdates);
+    }
+  } catch (masteryError) {
+    console.warn('⚠️ [CDI-COACHING] Mastery profile update failed (non-blocking):', masteryError.message);
   }
 
   // Step 2: Coaching report — tomorrow goal injected so narrative reinforces the decided goal
@@ -1292,6 +1327,7 @@ async function analyzePCITCoding(sessionId, userId) {
   // STEP 2: Apply PCIT coding to adult utterances (skip if already done on a previous attempt)
   let tagCounts = {
     echo: 0, labeled_praise: 0, unlabeled_praise: 0, praise: 0,
+    product_praise: 0, action_praise: 0, growth_praise: 0, regulatory_praise: 0,
     narration: 0, direct_command: 0, indirect_command: 0, command: 0,
     question: 0, criticism: 0, neutral: 0
   };
@@ -1420,9 +1456,14 @@ Do not include markdown or whitespace (minified JSON).
       const code = result.code;
       if (code === 'RF' || code === 'RQ') {
         tagCounts.echo++;
-      } else if (code === 'LP') {
+      } else if (code === 'LP' || code === 'LP1' || code === 'LP2' || code === 'LP3' || code === 'LP4') {
         tagCounts.labeled_praise++;
         tagCounts.praise++;
+        if (code === 'LP1') tagCounts.product_praise++;
+        else if (code === 'LP2') tagCounts.action_praise++;
+        else if (code === 'LP3') tagCounts.growth_praise++;
+        else if (code === 'LP4') tagCounts.regulatory_praise++;
+        else tagCounts.product_praise++; // legacy LP treated as product praise
       } else if (code === 'UP') {
         tagCounts.unlabeled_praise++;
       } else if (code === 'BD') {
@@ -1480,7 +1521,9 @@ Do not include markdown or whitespace (minified JSON).
       clinicalPriority,
       isFirstSession,
       durationSeconds: session.durationSeconds || null,
-      achievedMilestoneKeys
+      achievedMilestoneKeys,
+      childId: child?.id || null,
+      userId
     };
 
     const [profilingSettled, coachingSettled, aboutChildSettled] = await Promise.allSettled([
