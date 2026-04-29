@@ -2,7 +2,7 @@
   "expo": {
     "name": "Nora",
     "slug": "nora-mobile",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "main": "index.ts",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,7 +24,7 @@
         ],
         "NSUserNotificationsUsageDescription": "Nora sends you helpful reminders to practice and learn, and notifies you when your session reports are ready."
       },
-      "buildNumber": "48"
+      "buildNumber": "64"
     },
     "android": {
       "adaptiveIcon": {

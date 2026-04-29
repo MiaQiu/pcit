@@ -114,6 +114,7 @@ async function validateSessionQuality(utterances, durationSeconds, roleIdentific
 
 // AI_PROVIDER env var drives default model selection inside the gateway.
 const AI_PROVIDER = process.env.AI_PROVIDER || 'gemini-flash';
+const GEMINI_STREAMING_MODEL = process.env.GEMINI_STREAMING_MODEL || 'gemini-2.5-flash';
 
 // ============================================================================
 // Helper Functions
@@ -316,7 +317,7 @@ async function callGeminiStreaming(contents, options = {}) {
         await new Promise(resolve => setTimeout(resolve, attempt * 5000));
       }
 
-      const streamingModel = modelOverride || process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview';
+      const streamingModel = modelOverride || GEMINI_STREAMING_MODEL;
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${streamingModel}:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`,
         {
@@ -423,7 +424,7 @@ async function callGeminiStreaming(contents, options = {}) {
     // Fall back to Claude Sonnet — same provider as non-streaming calls
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      sendLLMFailureAlert({ label: 'gemini-streaming', model: process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview', error: geminiError.message, type: 'streaming', sessionId });
+      sendLLMFailureAlert({ label: 'gemini-streaming', model: GEMINI_STREAMING_MODEL, error: geminiError.message, type: 'streaming', sessionId });
       throw geminiError;
     }
     console.warn(`⚠️ [GEMINI-STREAMING] Failed (${geminiError.message.substring(0, 80)}), falling back to Claude Sonnet...`);
@@ -776,7 +777,7 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
     });
     const { value: notifResult } = parseJSON(
       await callGeminiStreaming([{ role: 'user', parts: [{ text: notifPrompt }] }], {
-        model: 'gemini-3-pro-preview', temperature: 0.5, maxOutputTokens: 4096, timeout: 300000, sessionId
+        temperature: 0.5, maxOutputTokens: 4096, timeout: 300000, sessionId
       }),
       'object'
     );
@@ -815,12 +816,16 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
       parts: [{ text: prompt }]
     };
 
-    const coachingReport = (await callGeminiStreaming([userMessage], {
+    let coachingReport = (await callGeminiStreaming([userMessage], {
       temperature: 0.5,
       maxOutputTokens: 8192,
       timeout: 300000,  // 5 minutes
       sessionId,
     })).trim();
+
+    if (childInfo.isFirstSession) {
+      coachingReport += `\n\n---\n\nYour 5-Minute Foundation:\nGreat job on your first session! Think of this 5-minute block as a Training Gym where you and your child both benefit:\nFor your child: It is an "emotional massage" that repairs self-esteem and lowers frustration.\nFor you: It is a "practice lab" to master expert skills until they become natural habits.\n\nYour PEN Skill Challenge\nDon't worry about being perfect right away—this requires practice! We will break down these skills and lead you step-by-step to make each session more effective.\n\nAim for these targets during your session:\n\n10 Labeled Praises: Be specific ("I love how you shared those blocks").\n\n10 Echoes: Repeat what they say to show you are truly listening.\n\n10 Narrations: Describe their play like a sports broadcaster.\n\nThe "Avoids": No Questions, Commands, or Criticism. Let your child lead!\n\nOver time, these skills will naturally show up in your daily life—during routines and even stressful moments. You won't need to force it forever; with practice, it becomes a habit.\n\nImportant Reminder: The Three Modes\nChild-led play does not mean child-led all day. We are building the "Play Time" foundation first. Once it's rock-solid, Nora will guide you through the other essential modes:\n\nPlay Time (Child-Led): Building the emotional "bank account."\n\nTeaching Mode: Reading, learning, and coaching new skills.\n\nLeadership Mode: Routines, boundaries, and discipline.\n\nHealthy parenting uses all three modes to raise resilient, successful children.\n\nWhy it Works\nThis "Emotional Massage" builds the foundation needed for later leadership. Research shows it:\n\nReduces Opposition: A stronger bond makes them want to cooperate.\n\nImproves Focus: It builds frustration tolerance and longer play periods.\n\nBreaks the Cycle: No matter how tough the day was, it always ends with a win.\n\nConsistency is your superpower. Even on bad days, don't skip your 5 minutes. See you for Day 2!`;
+    }
 
     console.log(`✅ [CDI-COACHING] Gemini coaching report received (${coachingReport.length} chars)`);
 
@@ -1246,12 +1251,12 @@ async function analyzePCITCoding(sessionId, userId) {
       UTTERANCES_JSON: JSON.stringify(utterancesForPrompt, null, 2)
     });
 
-    console.log(`📊 [ANALYSIS-STEP-3] Calling gemini-3-pro (streaming) for role identification...`);
+    console.log(`📊 [ANALYSIS-STEP-3] Calling ${GEMINI_STREAMING_MODEL} (streaming) for role identification...`);
 
     try {
       const raw = await callGeminiStreaming(
         [{ role: 'user', parts: [{ text: roleIdentificationPrompt }] }],
-        { temperature: 0.3, maxOutputTokens: 4096, timeout: 300000, sessionId, model: 'gemini-3-pro-preview' }
+        { temperature: 0.3, maxOutputTokens: 4096, timeout: 300000, sessionId }
       );
       const { value: parsed } = parseJSON(raw, 'object');
       roleIdentificationJson = parsed;
@@ -1400,7 +1405,7 @@ Do not include markdown or whitespace (minified JSON).
 - Last character of your response MUST be ]
 - Every parent segment MUST have both "code" and "feedback" fields${primaryLanguage && primaryLanguage !== 'eng' ? `\n- Always keep "code" values as English DPICS codes (e.g. LP, BD, RF). Write the "feedback" field in ${getLanguageInstruction(primaryLanguage).replace('Write your entire response in ', '').replace('.', '')}.` : ''}`;
 
-    console.log(`📊 [ANALYSIS-STEP-8] Calling gemini-3-pro-preview streaming for PCIT coding...`);
+    console.log(`📊 [ANALYSIS-STEP-8] Calling ${GEMINI_STREAMING_MODEL} (streaming) for PCIT coding...`);
     console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
 
     const pcitContents = [{
@@ -1408,7 +1413,6 @@ Do not include markdown or whitespace (minified JSON).
       parts: [{ text: `${dpicsSystemPrompt}\n\n${userPrompt}` }]
     }];
     const rawCoding = await callGeminiStreaming(pcitContents, {
-      model:          'gemini-3-pro-preview',
       temperature:    0,
       maxOutputTokens: 32768,
       timeout:        300000,

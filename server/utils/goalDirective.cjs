@@ -106,13 +106,13 @@ function getGoalDirective(session, profile) {
       return {
         focus_skill: 'Gentle Reset: Corrections',
         target_number: 0,
-        strategy: "The 'Grace' Reset. Remind them of their great permanent progress and ask for 0 corrections tomorrow.",
+        strategy: "The 'Grace' Reset. Remind them of their great permanent progress and ask for 0 criticism tomorrow.",
       };
     }
     return {
       focus_skill: 'Corrections',
       target_number: 0,
-      strategy: "The 'Bite-Your-Tongue' rule. Tell them to stay completely silent if they feel the urge to correct.",
+      strategy: "Self-awareness of the urge to correct (criticise), direct (command/question) their children. stay silent, only narrate when they talk",
     };
   }
 
