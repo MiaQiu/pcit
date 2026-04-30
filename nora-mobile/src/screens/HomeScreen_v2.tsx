@@ -394,16 +394,19 @@ export const HomeScreen_v2: React.FC = () => {
         isCompleted: hasCompleted,
       });
 
-      // Always show weekly report plan item; mark completed if already viewed/dismissed
+      // Show weekly report plan item: completed if read today, hidden if read on a prior day
       if (latestReport) {
-        const reportDismissed = await userStorage.getItem(`weekly_report_dismissed_${latestReport.id}`);
-        plan.push({
-          id: latestReport.id,
-          type: 'weekly-report',
-          label: 'Weekly Report:',
-          title: 'See your progress this week',
-          isCompleted: !!reportDismissed,
-        });
+        const reportReadDate = await userStorage.getItem(`weekly_report_read_date_${latestReport.id}`);
+        const today = getTodaySingapore();
+        if (!reportReadDate || reportReadDate === today) {
+          plan.push({
+            id: latestReport.id,
+            type: 'weekly-report',
+            label: 'Weekly Report:',
+            title: 'See your progress this week',
+            isCompleted: reportReadDate === today,
+          });
+        }
       }
 
       // ── Setup daily reminder item (shown for first 3 days after account creation) ──
@@ -541,6 +544,7 @@ export const HomeScreen_v2: React.FC = () => {
     if (item.type === 'lesson') {
       navigation.push('LessonViewer', { lessonId: item.id });
     } else if (item.type === 'weekly-report') {
+      await userStorage.setItem(`weekly_report_read_date_${item.id}`, getTodaySingapore());
       await userStorage.setItem(`weekly_report_dismissed_${item.id}`, 'true');
       setIsWeeklyReportDismissed(true);
       navigation.push('WeeklyReport', { reportId: item.id });
@@ -848,6 +852,7 @@ export const HomeScreen_v2: React.FC = () => {
               <TouchableOpacity
                 style={styles.recordButton}
                 onPress={async () => {
+                  await userStorage.setItem(`weekly_report_read_date_${latestWeeklyReport.id}`, getTodaySingapore());
                   await userStorage.setItem(`weekly_report_dismissed_${latestWeeklyReport.id}`, 'true');
                   setIsWeeklyReportDismissed(true);
                   navigation.push('WeeklyReport', { reportId: latestWeeklyReport.id });

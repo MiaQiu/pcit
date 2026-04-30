@@ -149,6 +149,20 @@ Admins can generate and publish outside the schedule:
 
 `ReportsSection` on HomeScreen calls `GET /api/config/weekly-reports` and renders a card for each `visibility: true` report. Tapping navigates to `WeeklyReport` screen with the `reportId`.
 
+**HomeScreen_v2 today's plan item**
+
+The weekly report appears as a plan item under "Today's Plan" with date-scoped visibility (mirrors the setup-reminder pattern):
+
+| State | Behaviour |
+|-------|-----------|
+| Not yet read | Shown as incomplete |
+| Read today | Shown as completed (sinks to bottom of plan) |
+| Read on a prior day | Hidden from plan |
+
+Reading is triggered by tapping the plan item **or** tapping "View Weekly Report" on the main action card. Both paths write `weekly_report_read_date_<reportId>` = today (Singapore date) and `weekly_report_dismissed_<reportId>` = `'true'` to `userStorage`.
+
+"Skip for now" on the main action card only sets the dismissed flag — the plan item remains incomplete and accessible.
+
 ### Notification deep-link
 
 The push notification payload includes `{ type: 'weekly_report', reportId }`. `AppContent` in `App.tsx` handles two cases:
