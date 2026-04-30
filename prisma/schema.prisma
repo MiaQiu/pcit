@@ -758,6 +758,9 @@ model WeeklyReport {
   // Child response patterns (enhances Page 4/5)
   childResponseSummary   String?   // AI: synthesized child reaction patterns
 
+  // User read tracking
+  markedReadAt           DateTime?  // Set when user opens the report; survives local storage clears
+
   // Generation metadata
   generatedAt            DateTime?
   generationVersion      Int       @default(1)

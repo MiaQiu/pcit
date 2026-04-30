@@ -59,6 +59,7 @@ router.get('/weekly-reports', requireAuth, async (req, res) => {
         headline: true,
         totalDeposits: true,
         sessionIds: true,
+        markedReadAt: true,
       },
     });
 
@@ -93,6 +94,34 @@ router.get('/weekly-reports/:id', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Get weekly report error:', error);
     res.status(500).json({ error: 'Failed to fetch weekly report' });
+  }
+});
+
+/**
+ * PATCH /api/config/weekly-reports/:id/mark-read
+ * Sets markedReadAt on the report so dismissed state survives local storage clears
+ */
+router.patch('/weekly-reports/:id/mark-read', requireAuth, async (req, res) => {
+  try {
+    const report = await prisma.weeklyReport.findFirst({
+      where: { id: req.params.id, userId: req.userId },
+    });
+
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    if (!report.markedReadAt) {
+      await prisma.weeklyReport.update({
+        where: { id: req.params.id },
+        data: { markedReadAt: new Date() },
+      });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark weekly report read error:', error);
+    res.status(500).json({ error: 'Failed to mark report as read' });
   }
 });
 

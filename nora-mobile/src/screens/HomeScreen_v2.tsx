@@ -226,7 +226,7 @@ export const HomeScreen_v2: React.FC = () => {
   const [nextLessonId, setNextLessonId] = useState<string | null>(null);
   const [hasAnySession, setHasAnySession] = useState(false);
   const recordMessage = useMemo(() => recordMessages[Math.floor(Math.random() * recordMessages.length)], []);
-  const [latestWeeklyReport, setLatestWeeklyReport] = useState<{ id: string; weekStartDate: string; weekEndDate: string; headline: string | null } | null>(null);
+  const [latestWeeklyReport, setLatestWeeklyReport] = useState<{ id: string; weekStartDate: string; weekEndDate: string; headline: string | null; markedReadAt: string | null } | null>(null);
   const [isWeeklyReportDismissed, setIsWeeklyReportDismissed] = useState(false);
   const [sessionNotifications, setSessionNotifications] = useState<{ postSession?: string; tomorrow?: string } | null>(null);
   const [chatIntroDismissed, setChatIntroDismissed] = useState(false);
@@ -352,8 +352,8 @@ export const HomeScreen_v2: React.FC = () => {
       const latestReport = reports.length > 0 ? reports[0] : null;
       setLatestWeeklyReport(latestReport);
       if (latestReport) {
-        const dismissed = await userStorage.getItem(`weekly_report_dismissed_${latestReport.id}`);
-        setIsWeeklyReportDismissed(!!dismissed);
+        const locallyDismissed = await userStorage.getItem(`weekly_report_dismissed_${latestReport.id}`);
+        setIsWeeklyReportDismissed(!!latestReport.markedReadAt || !!locallyDismissed);
       } else {
         setIsWeeklyReportDismissed(false);
       }
@@ -547,6 +547,7 @@ export const HomeScreen_v2: React.FC = () => {
       await userStorage.setItem(`weekly_report_read_date_${item.id}`, getTodaySingapore());
       await userStorage.setItem(`weekly_report_dismissed_${item.id}`, 'true');
       setIsWeeklyReportDismissed(true);
+      recordingService.markWeeklyReportRead(item.id).catch(() => {});
       navigation.push('WeeklyReport', { reportId: item.id });
     } else if (item.type === 'setup-reminder') {
       handleSetupReminderPress();
@@ -855,6 +856,7 @@ export const HomeScreen_v2: React.FC = () => {
                   await userStorage.setItem(`weekly_report_read_date_${latestWeeklyReport.id}`, getTodaySingapore());
                   await userStorage.setItem(`weekly_report_dismissed_${latestWeeklyReport.id}`, 'true');
                   setIsWeeklyReportDismissed(true);
+                  recordingService.markWeeklyReportRead(latestWeeklyReport.id).catch(() => {});
                   navigation.push('WeeklyReport', { reportId: latestWeeklyReport.id });
                 }}
                 activeOpacity={0.85}

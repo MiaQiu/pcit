@@ -485,6 +485,7 @@ class RecordingService {
     headline: string | null;
     totalDeposits: number;
     sessionIds: string[];
+    markedReadAt: string | null;
   }> }> {
     const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/config/weekly-reports`
@@ -510,6 +511,16 @@ class RecordingService {
     }
 
     return await response.json();
+  }
+
+  /**
+   * Mark a weekly report as read server-side so dismissed state survives local storage clears
+   */
+  async markWeeklyReportRead(reportId: string): Promise<void> {
+    await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/config/weekly-reports/${reportId}/mark-read`,
+      { method: 'PATCH' }
+    );
   }
 
   /**
