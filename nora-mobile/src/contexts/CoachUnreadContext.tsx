@@ -80,10 +80,19 @@ export const CoachUnreadProvider: React.FC<{ children: React.ReactNode }> = ({ c
     currentUserIdRef.current = userId;
     aiLastReadRef.current    = new Date(0).toISOString();
     psychLastReadRef.current = new Date(0).toISOString();
-    const [aiStored, psychStored] = await Promise.all([
+    let [aiStored, psychStored] = await Promise.all([
       AsyncStorage.getItem(aiStorageKey(userId)),
       AsyncStorage.getItem(psychStorageKey(userId)),
     ]);
+    // One-time migration from old device-level keys
+    if (!aiStored) {
+      aiStored = await AsyncStorage.getItem('@nora_coach_last_read_at');
+      if (aiStored) await AsyncStorage.setItem(aiStorageKey(userId), aiStored);
+    }
+    if (!psychStored) {
+      psychStored = await AsyncStorage.getItem('@nora_psych_last_read_at');
+      if (psychStored) await AsyncStorage.setItem(psychStorageKey(userId), psychStored);
+    }
     if (aiStored)    aiLastReadRef.current    = aiStored;
     if (psychStored) psychLastReadRef.current = psychStored;
     await fetchUnread();
