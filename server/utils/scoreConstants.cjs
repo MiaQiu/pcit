@@ -57,10 +57,17 @@ function calculateCDIScore(tagCounts) {
   const E = tagCounts.command || 0;
   const F = tagCounts.criticism || 0;
 
-  const rawScore = 50 + A + B + C - (D + E + F) * 1.1;
+  const A_eff = Math.min(A, 10);
+  const B_eff = Math.min(B, 10);
+  const C_eff = Math.min(C, 10);
+  const D_eff = Math.min(D, 15);
+  const E_eff = Math.min(E, 15);
+  const F_eff = Math.min(F, 15);
+
+  const rawScore = (50 + A_eff + B_eff + C_eff - D_eff - E_eff - F_eff) * 1.3;
   const finalScore = Math.min(100, Math.max(0, rawScore));
 
-  const totalNegs = D + E + F;
+  const totalNegs = D + E + F; // uncapped for pass/fail gate
   const passed = (A >= CDI_SCORE_CONFIG.SKILL_TARGET) &&
                  (B >= CDI_SCORE_CONFIG.SKILL_TARGET) &&
                  (C >= CDI_SCORE_CONFIG.SKILL_TARGET) &&
