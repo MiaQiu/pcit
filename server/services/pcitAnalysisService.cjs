@@ -349,6 +349,7 @@ async function callGeminiStreaming(contents, options = {}) {
       let fullText = '';
       let buffer = '';
 
+      let finishReason = null;
       for await (const chunk of reader) {
         buffer += decoder.decode(chunk, { stream: true });
 
@@ -366,6 +367,8 @@ async function callGeminiStreaming(contents, options = {}) {
                 if (text) {
                   fullText += text;
                 }
+                const reason = data.candidates?.[0]?.finishReason;
+                if (reason) finishReason = reason;
               } catch (e) {
                 // Skip malformed JSON chunks
               }
@@ -384,11 +387,15 @@ async function callGeminiStreaming(contents, options = {}) {
             if (text) {
               fullText += text;
             }
+            const reason = data.candidates?.[0]?.finishReason;
+            if (reason) finishReason = reason;
           } catch (e) {
             // Skip malformed JSON
           }
         }
       }
+
+      console.log(`[GEMINI-STREAMING] finishReason=${finishReason}, responseChars=${fullText.length}`);
 
       if (!fullText) {
         throw new Error('Empty response from Gemini streaming API');
@@ -1418,7 +1425,8 @@ Do not include markdown or whitespace (minified JSON).
       timeout:        300000,
       sessionId,
     });
-    ({ value: codingResults } = parseJSON(rawCoding, 'array'));
+    let repaired;
+    ({ value: codingResults, repaired } = parseJSON(rawCoding, 'array'));
 
     if (!Array.isArray(codingResults)) {
       throw new Error('Expected array of coding results');
@@ -1431,7 +1439,32 @@ Do not include markdown or whitespace (minified JSON).
       );
     }
 
-    console.log(`✅ [ANALYSIS-STEP-8] Successfully parsed ${codingResults.length} coding results`);
+    console.log(`✅ [ANALYSIS-STEP-8] Successfully parsed ${codingResults.length} coding results (rawChars=${rawCoding.length}, repaired=${repaired})`);
+
+    // Detect missed adult utterances (LLM sometimes stops early with a valid closed JSON array)
+    const codedIdSet = new Set(codingResults.map(r => r.id));
+    const missedAdultUtts = utterancesData.filter(u => u.role === 'adult' && !codedIdSet.has(u.id));
+    if (missedAdultUtts.length > 0) {
+      console.warn(`⚠️ [ANALYSIS-STEP-8] ${missedAdultUtts.length} adult utterances not coded — requesting supplemental coding...`);
+      try {
+        const supplementalPrompt = `The following parent utterances were missed from a prior coding pass. Code each one and return ONLY a valid JSON array.
+
+${JSON.stringify(missedAdultUtts, null, 2)}
+
+Output: [{"id": <int>, "code": <string>, "feedback": <string>}, ...]`;
+        const supplementalRaw = await callGeminiStreaming([{
+          role: 'user',
+          parts: [{ text: `${dpicsSystemPrompt}\n\n${supplementalPrompt}` }]
+        }], { temperature: 0, maxOutputTokens: 8192, timeout: 120000, sessionId });
+        const { value: supplementalResults } = parseJSON(supplementalRaw, 'array');
+        if (Array.isArray(supplementalResults) && supplementalResults.length > 0) {
+          codingResults = [...codingResults, ...supplementalResults];
+          console.log(`✅ [ANALYSIS-STEP-8] Supplemental coding added ${supplementalResults.length} results (total: ${codingResults.length})`);
+        }
+      } catch (suppErr) {
+        console.warn(`⚠️ [ANALYSIS-STEP-8] Supplemental coding failed (non-blocking): ${suppErr.message}`);
+      }
+    }
 
     // Build ID-to-tag maps for efficient updates
     const pcitTagMap = {};
