@@ -25,6 +25,7 @@ const { loadPrompt, loadPromptWithVariables } = require('../prompts/index.cjs');
 const { getGoalDirective, tagCountsToSession, recordToProfile, computeMasteryUpdates } = require('../utils/goalDirective.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { getLanguageInstruction } = require('../utils/languageUtils.cjs');
+const { classifySpeakersML } = require('./mlDiarizationService.cjs');
 
 // ============================================================================
 // Session Quality Gate
@@ -560,7 +561,53 @@ function buildProfilingVariables(childInfo, tagCounts, utterances) {
       : '',
     TRANSCRIPT: transcript,
     FIRST_SESSION_NOTE: isFirstSession
-      ? 'please note, This is the first session the parent has with the parent app Nora. for first session, it is to hook user in, setting expectations that we are going to be very helpful to them. For us, the primary goal of this session is to get user excited about emotional massage and the discipline coaching (which will be available once their emotional bank account is ready) and committed to making daily massage session as their priority.'
+      ? `This is the first session the parent has with Nora. Your primary goal is to hook the user in, set expectations that Nora will be very helpful, and get them excited about the emotional massage and the discipline coaching (available once their emotional bank account is ready). Commit them to making daily sessions their priority.
+
+After your main coaching report, include the following "First Session Foundation" section verbatim in structure but translated to the appropriate language and consistent in tone with the rest of your report:
+
+---
+
+Your 5-Minute Foundation:
+Great job on your first session! Think of this 5-minute block as a Training Gym where you and your child both benefit:
+For your child: It is an "emotional massage" that repairs self-esteem and lowers frustration.
+For you: It is a "practice lab" to master expert skills until they become natural habits.
+
+Your PEN Skill Challenge
+Don't worry about being perfect right away—this requires practice! We will break down these skills and lead you step-by-step to make each session more effective.
+
+Aim for these targets during your session:
+
+10 Labeled Praises: Be specific ("I love how you shared those blocks").
+
+10 Echoes: Repeat what they say to show you are truly listening.
+
+10 Narrations: Describe their play like a sports broadcaster.
+
+The "Avoids": No Questions, Commands, or Criticism. Let your child lead!
+
+Over time, these skills will naturally show up in your daily life—during routines and even stressful moments. You won't need to force it forever; with practice, it becomes a habit.
+
+Important Reminder: The Three Modes
+Child-led play does not mean child-led all day. We are building the "Play Time" foundation first. Once it's rock-solid, Nora will guide you through the other essential modes:
+
+Play Time (Child-Led): Building the emotional "bank account."
+
+Teaching Mode: Reading, learning, and coaching new skills.
+
+Leadership Mode: Routines, boundaries, and discipline.
+
+Healthy parenting uses all three modes to raise resilient, successful children.
+
+Why it Works
+This "Emotional Massage" builds the foundation needed for later leadership. Research shows it:
+
+Reduces Opposition: A stronger bond makes them want to cooperate.
+
+Improves Focus: It builds frustration tolerance and longer play periods.
+
+Breaks the Cycle: No matter how tough the day was, it always ends with a win.
+
+Consistency is your superpower. Even on bad days, don't skip your 5 minutes. See you for Day 2!`
       : '',
     ACHIEVED_MILESTONE_KEYS: achievedMilestoneKeys && achievedMilestoneKeys.length > 0
       ? JSON.stringify(achievedMilestoneKeys)
@@ -825,14 +872,10 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
 
     let coachingReport = (await callGeminiStreaming([userMessage], {
       temperature: 0.5,
-      maxOutputTokens: 8192,
+      maxOutputTokens: 16384,
       timeout: 300000,  // 5 minutes
       sessionId,
     })).trim();
-
-    if (childInfo.isFirstSession) {
-      coachingReport += `\n\n---\n\nYour 5-Minute Foundation:\nGreat job on your first session! Think of this 5-minute block as a Training Gym where you and your child both benefit:\nFor your child: It is an "emotional massage" that repairs self-esteem and lowers frustration.\nFor you: It is a "practice lab" to master expert skills until they become natural habits.\n\nYour PEN Skill Challenge\nDon't worry about being perfect right away—this requires practice! We will break down these skills and lead you step-by-step to make each session more effective.\n\nAim for these targets during your session:\n\n10 Labeled Praises: Be specific ("I love how you shared those blocks").\n\n10 Echoes: Repeat what they say to show you are truly listening.\n\n10 Narrations: Describe their play like a sports broadcaster.\n\nThe "Avoids": No Questions, Commands, or Criticism. Let your child lead!\n\nOver time, these skills will naturally show up in your daily life—during routines and even stressful moments. You won't need to force it forever; with practice, it becomes a habit.\n\nImportant Reminder: The Three Modes\nChild-led play does not mean child-led all day. We are building the "Play Time" foundation first. Once it's rock-solid, Nora will guide you through the other essential modes:\n\nPlay Time (Child-Led): Building the emotional "bank account."\n\nTeaching Mode: Reading, learning, and coaching new skills.\n\nLeadership Mode: Routines, boundaries, and discipline.\n\nHealthy parenting uses all three modes to raise resilient, successful children.\n\nWhy it Works\nThis "Emotional Massage" builds the foundation needed for later leadership. Research shows it:\n\nReduces Opposition: A stronger bond makes them want to cooperate.\n\nImproves Focus: It builds frustration tolerance and longer play periods.\n\nBreaks the Cycle: No matter how tough the day was, it always ends with a win.\n\nConsistency is your superpower. Even on bad days, don't skip your 5 minutes. See you for Day 2!`;
-    }
 
     console.log(`✅ [CDI-COACHING] Gemini coaching report received (${coachingReport.length} chars)`);
 
@@ -1122,6 +1165,154 @@ async function generatePDITwoChoicesAnalysis(utterances, childName, sessionId = 
 }
 
 // ============================================================================
+// Role Identification — 3-way Majority Vote
+// ============================================================================
+
+/**
+ * Identify speaker roles using three independent methods in parallel:
+ *   1. Gemini (streaming) — transcript-based LLM
+ *   2. Claude Sonnet      — transcript-based LLM (second opinion)
+ *   3. ML Lambda          — acoustic model (USC SAIL whisper LoRA)
+ *
+ * For each speaker, the role that receives ≥2 votes wins.
+ * Any individual failure is tolerated; the function only throws if all three fail.
+ *
+ * @param {Array}  utterancesForPrompt  Utterances formatted for the role-ID prompt
+ * @param {Array}  utterances           Full utterance records (for ML segment map)
+ * @param {string} storagePath          S3 key of the audio file
+ * @param {string} sessionId
+ * @returns {{ roleIdentificationJson: Object, roleMap: Object }}
+ *   roleMap: { speaker_0: 'adult', speaker_1: 'child', ... }  (lowercase)
+ */
+async function identifyRolesWithVoting(utterancesForPrompt, utterances, storagePath, sessionId) {
+  const prompt = loadPromptWithVariables('roleIdentification', {
+    UTTERANCES_JSON: JSON.stringify(utterancesForPrompt, null, 2)
+  });
+
+  console.log(`📊 [ROLE-ID-VOTE] Running 3-way role identification in parallel (Gemini + Claude + ML)...`);
+
+  const [geminiSettled, claudeSettled, mlSettled] = await Promise.allSettled([
+    callGeminiStreaming(
+      [{ role: 'user', parts: [{ text: prompt }] }],
+      { temperature: 0.3, maxOutputTokens: 4096, timeout: 60000, sessionId }
+    ).then(raw => parseJSON(raw, 'object').value),
+
+    llmCall(prompt, {
+      model: 'claude-sonnet-4-6',
+      output: 'json',
+      maxTokens: 2048,
+      temperature: 0.3,
+      label: 'role-id-claude',
+      sessionId
+    }),
+
+    classifySpeakersML(storagePath, utterances, sessionId)
+  ]);
+
+  // ── Collect votes ────────────────────────────────────────────────────────
+  const votes = [];  // [{ source, map: { speaker_X: 'adult'|'child' }, full? }]
+
+  if (geminiSettled.status === 'fulfilled' && geminiSettled.value?.speaker_identification) {
+    const map = {};
+    for (const [id, info] of Object.entries(geminiSettled.value.speaker_identification)) {
+      map[id] = (info.role || '').toLowerCase();
+    }
+    votes.push({ source: 'gemini', map, full: geminiSettled.value });
+    console.log(`✅ [ROLE-ID-VOTE] Gemini: ${JSON.stringify(map)}`);
+  } else {
+    console.warn(`⚠️ [ROLE-ID-VOTE] Gemini failed: ${geminiSettled.reason?.message}`);
+  }
+
+  if (claudeSettled.status === 'fulfilled' && claudeSettled.value?.speaker_identification) {
+    const map = {};
+    for (const [id, info] of Object.entries(claudeSettled.value.speaker_identification)) {
+      map[id] = (info.role || '').toLowerCase();
+    }
+    votes.push({ source: 'claude', map, full: claudeSettled.value });
+    console.log(`✅ [ROLE-ID-VOTE] Claude: ${JSON.stringify(map)}`);
+  } else {
+    console.warn(`⚠️ [ROLE-ID-VOTE] Claude failed: ${claudeSettled.reason?.message}`);
+  }
+
+  if (mlSettled.status === 'fulfilled' && mlSettled.value) {
+    const map = {};
+    for (const [id, info] of Object.entries(mlSettled.value)) {
+      if (info.role && info.role !== 'unknown') map[id] = info.role.toLowerCase();
+    }
+    if (Object.keys(map).length > 0) {
+      votes.push({ source: 'ml', map, full: mlSettled.value });
+      console.log(`✅ [ROLE-ID-VOTE] ML: ${JSON.stringify(map)}`);
+    }
+  } else {
+    console.warn(`⚠️ [ROLE-ID-VOTE] ML failed: ${mlSettled.reason?.message || 'no result'}`);
+  }
+
+  if (votes.length === 0) {
+    throw new Error('All role identification methods failed');
+  }
+
+  // ── Per-speaker utterance counts (used in stored JSON) ───────────────────
+  const uttCounts = {};
+  for (const u of utterances) {
+    if (u.speaker && u.speaker !== SILENT_SPEAKER_ID) {
+      uttCounts[u.speaker] = (uttCounts[u.speaker] || 0) + 1;
+    }
+  }
+
+  // ── Majority vote ────────────────────────────────────────────────────────
+  const allSpeakers = new Set(votes.flatMap(v => Object.keys(v.map)));
+  const roleMap = {};
+  const voteDetail = {};
+
+  for (const speakerId of allSpeakers) {
+    const speakerVotes = votes
+      .map(v => ({ source: v.source, role: v.map[speakerId] }))
+      .filter(v => v.role);
+    const adultN = speakerVotes.filter(v => v.role === 'adult').length;
+    const childN = speakerVotes.filter(v => v.role === 'child').length;
+
+    let winner;
+    if (adultN > childN) winner = 'adult';
+    else if (childN > adultN) winner = 'child';
+    else winner = speakerVotes[0]?.role || 'adult';  // tie-break: first available
+
+    roleMap[speakerId] = winner;
+    voteDetail[speakerId] = { adult: adultN, child: childN, winner, votes: speakerVotes };
+
+    if (adultN > 0 && childN > 0) {
+      console.warn(`⚠️ [ROLE-ID-VOTE] ${speakerId} disagreement: adult=${adultN} child=${childN} → ${winner}`);
+    }
+  }
+
+  const sources = votes.map(v => v.source);
+  console.log(`✅ [ROLE-ID-VOTE] Final (${sources.join('+')}): ${JSON.stringify(roleMap)}`);
+
+  // ── Build roleIdentificationJson compatible with downstream consumers ────
+  // Use the LLM result as base (has confidence/utterance_count metadata),
+  // then override roles with the voted result.
+  const baseFull = (votes.find(v => v.source === 'gemini') || votes.find(v => v.source === 'claude'))?.full;
+  const baseSpeakers = baseFull?.speaker_identification || {};
+
+  const speaker_identification = {};
+  for (const [speakerId, role] of Object.entries(roleMap)) {
+    const existing = baseSpeakers[speakerId] || {};
+    speaker_identification[speakerId] = {
+      ...existing,
+      role: role.toUpperCase(),
+      utterance_count: uttCounts[speakerId] || existing.utterance_count || 0
+    };
+  }
+
+  const roleIdentificationJson = {
+    speaker_identification,
+    _vote_sources: sources,
+    _vote_detail: voteDetail
+  };
+
+  return { roleIdentificationJson, roleMap };
+}
+
+// ============================================================================
 // Main Analysis Function
 // ============================================================================
 
@@ -1254,44 +1445,22 @@ async function analyzePCITCoding(sessionId, userId) {
     }
     adultSpeakers.sort((a, b) => b.utteranceCount - a.utteranceCount);
   } else {
-    const roleIdentificationPrompt = loadPromptWithVariables('roleIdentification', {
-      UTTERANCES_JSON: JSON.stringify(utterancesForPrompt, null, 2)
-    });
-
-    console.log(`📊 [ANALYSIS-STEP-3] Calling ${GEMINI_STREAMING_MODEL} (streaming) for role identification...`);
-
     try {
-      const raw = await callGeminiStreaming(
-        [{ role: 'user', parts: [{ text: roleIdentificationPrompt }] }],
-        { temperature: 0.3, maxOutputTokens: 4096, timeout: 300000, sessionId }
+      const { roleIdentificationJson: rij, roleMap } = await identifyRolesWithVoting(
+        utterancesForPrompt, utterances, session.storagePath, sessionId
       );
-      const { value: parsed } = parseJSON(raw, 'object');
-      roleIdentificationJson = parsed;
-      console.log(`✅ [ANALYSIS-STEP-3] Role identification parsed successfully`);
+      roleIdentificationJson = rij;
 
-      // Check if any speaker confidence is below threshold — retry with backup model if so
-      const lowConfidenceSpeakers = Object.entries(roleIdentificationJson.speaker_identification || {})
-        .filter(([, info]) => typeof info.confidence === 'number' && info.confidence < 0.9);
-      if (lowConfidenceSpeakers.length > 0) {
-        console.log(`⚠️ [ANALYSIS-STEP-3] Low confidence on speakers (${lowConfidenceSpeakers.map(([id, info]) => `${id}:${info.confidence}`).join(', ')}) — retrying with backup model (claude)`);
-        roleIdentificationJson = await llmCall(roleIdentificationPrompt, { model: 'claude', maxTokens: 2048, temperature: 0.3, label: 'role-id-backup', sessionId });
-        console.log(`✅ [ANALYSIS-STEP-3] Role identification backup parsed successfully`);
-      }
-
-      // Extract all adult speakers from speaker_identification
-      const speakerIdentification = roleIdentificationJson.speaker_identification || {};
-
-      for (const [speakerId, speakerInfo] of Object.entries(speakerIdentification)) {
-        if (speakerInfo.role === 'ADULT') {
+      // Extract adult speakers from voted result
+      for (const [speakerId, info] of Object.entries(roleIdentificationJson.speaker_identification || {})) {
+        if (info.role === 'ADULT') {
           adultSpeakers.push({
             id: speakerId,
-            confidence: speakerInfo.confidence,
-            utteranceCount: speakerInfo.utterance_count || 0
+            confidence: info.confidence,
+            utteranceCount: info.utterance_count || 0
           });
         }
       }
-
-      // Sort adults by utterance count (most active first)
       adultSpeakers.sort((a, b) => b.utteranceCount - a.utteranceCount);
 
       if (adultSpeakers.length === 0) {
@@ -1302,33 +1471,24 @@ async function analyzePCITCoding(sessionId, userId) {
       }
 
       console.log(`Adult speakers identified: ${adultSpeakers.map(a => a.id).join(', ')}`);
-      console.log('Role identification:', JSON.stringify(roleIdentificationJson, null, 2));
 
-    } catch (parseError) {
-      if (parseError instanceof PermanentFailureError) throw parseError;
-      console.error('❌ [ROLE-ID-ERROR] Failed role identification:', parseError.message);
-      throw new Error(`Failed role identification: ${parseError.message}`);
+      // Persist roles
+      console.log(`📊 [ANALYSIS-STEP-5] Updating utterance roles and storing checkpoint...`);
+      console.log(`   Role map: ${JSON.stringify(roleMap)}`);
+      await updateUtteranceRoles(sessionId, roleMap);
+      console.log(`✅ [ANALYSIS-STEP-5] Updated roles for ${Object.keys(roleMap).length} speakers`);
+
+      await prisma.session.update({
+        where: { id: sessionId },
+        data: { roleIdentificationJson, roleIdDone: true }
+      });
+      console.log(`✅ [ANALYSIS-STEP-5] Role identification JSON stored in session`);
+
+    } catch (roleIdError) {
+      if (roleIdError instanceof PermanentFailureError) throw roleIdError;
+      console.error('❌ [ROLE-ID-ERROR] Failed role identification:', roleIdError.message);
+      throw new Error(`Failed role identification: ${roleIdError.message}`);
     }
-
-    // Build role map from speaker identification
-    console.log(`📊 [ANALYSIS-STEP-5] Building role map and updating database...`);
-    const speakerIdentification = roleIdentificationJson.speaker_identification || {};
-    const roleMap = {};
-    for (const [speakerId, speakerInfo] of Object.entries(speakerIdentification)) {
-      roleMap[speakerId] = speakerInfo.role.toLowerCase();
-    }
-    console.log(`   Role map: ${JSON.stringify(roleMap)}`);
-
-    // Update utterances with role information in database
-    await updateUtteranceRoles(sessionId, roleMap);
-    console.log(`✅ [ANALYSIS-STEP-5] Updated roles for ${Object.keys(roleMap).length} speakers`);
-
-    // Store role identification JSON in session + set checkpoint
-    await prisma.session.update({
-      where: { id: sessionId },
-      data: { roleIdentificationJson, roleIdDone: true }
-    });
-    console.log(`✅ [ANALYSIS-STEP-5] Role identification JSON stored in session`);
   }
 
   // Quality gate — one fast LLM call; throws SessionQualityError if invalid
