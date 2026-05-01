@@ -15,22 +15,15 @@ import { RootStackNavigationProp, RootStackParamList } from '../navigation/types
 type SkillUtterancesRouteProp = RouteProp<RootStackParamList, 'SkillUtterances'>;
 
 const DISPLAY_NAMES: Record<string, string> = {
-  'Praise': 'Praise',
-  'Labeled Praise': 'Praise',
+  'Praise (Labeled)': 'Praise',
   'Echo': 'Echo',
   'Narrate': 'Narration',
-  'Narration': 'Narration',
-  'Question': 'Questions',
   'Questions': 'Questions',
-  'Command': 'Commands',
   'Commands': 'Commands',
-  'Direct Command': 'Commands',
-  'Indirect Command': 'Commands',
   'Criticism': 'Criticism',
-  'Negative Talk': 'Criticism',
 };
 
-const PEN_SKILL_KEYS = new Set(['Praise', 'Labeled Praise', 'Echo', 'Narrate', 'Narration']);
+const PEN_SKILL_KEYS = new Set(['Praise (Labeled)', 'Echo', 'Narrate']);
 
 const PRAISE_DESC = 'Specific feedback that identifies exactly what behavior you admire. Instead of a vague "Good job," you say, "I love how carefully you are stacking those blocks."';
 const ECHO_DESC = 'Repeating or rephrasing what your child says. If they say "Big tower!", you respond with "Yes, a very big tower!"';
@@ -40,30 +33,21 @@ const COMMAND_DESC = 'Any instruction where you tell your child what to do (e.g.
 const CRITICISM_DESC = 'Any disapproval, including "No," "Stop," "Don\'t," or correcting a mistake.';
 
 const SESSION_CONTEXT: Record<string, { title: string; description: string }> = {
-  'Praise': { title: 'What counts as Praise?', description: 'These are moments where you named exactly what your child did well — specific statements that tell them precisely which behaviour to repeat.' },
+  'Praise (Labeled)': { title: 'What counts as Praise?', description: 'These are moments where you named exactly what your child did well — specific statements that tell them precisely which behaviour to repeat.' },
   'Echo': { title: 'What counts as Echo?', description: 'These are moments where you repeated or rephrased your child\'s own words, showing you were fully listening and validating what they said.' },
   'Narrate': { title: 'What counts as Narration?', description: 'These are moments where you described your child\'s actions aloud, directing your full attention to what they were doing.' },
-  'Question': { title: 'What counts as a Question?', description: 'These are moments where you asked something — even well-meaning questions can act as hidden commands that interrupt your child\'s focus and flow.' },
-  'Command': { title: 'In this session', description: 'These are moments where you gave an instruction or directed your child\'s behaviour, which can shift the lead away from them.' },
+  'Questions': { title: 'What counts as a Question?', description: 'These are moments where you asked something — even well-meaning questions can act as hidden commands that interrupt your child\'s focus and flow.' },
+  'Commands': { title: 'In this session', description: 'These are moments where you gave an instruction or directed your child\'s behaviour, which can shift the lead away from them.' },
   'Criticism': { title: 'What counts as Criticism?', description: 'These are moments where you used disapproving language — saying "No," "Stop," "Don\'t," or correcting a mistake, which can accidentally reinforce the behaviour.' },
 };
 
 const WHAT_IT_IS: Record<string, string> = {
-  'Praise': PRAISE_DESC,
-  'Labeled Praise': PRAISE_DESC,
   'Praise (Labeled)': PRAISE_DESC,
-  'Praise(Labeled)': PRAISE_DESC,
   'Echo': ECHO_DESC,
   'Narrate': NARRATE_DESC,
-  'Narration': NARRATE_DESC,
-  'Question': QUESTION_DESC,
   'Questions': QUESTION_DESC,
-  'Command': COMMAND_DESC,
   'Commands': COMMAND_DESC,
-  'Direct Command': COMMAND_DESC,
-  'Indirect Command': COMMAND_DESC,
   'Criticism': CRITICISM_DESC,
-  'Negative Talk': CRITICISM_DESC,
 };
 
 const RolePill: React.FC<{ role?: string }> = ({ role }) => {
@@ -86,14 +70,7 @@ export const SkillUtterancesScreen: React.FC = () => {
 
   const whatItIs = WHAT_IT_IS[skillKey];
 
-  const CONTEXT_CANONICAL: Record<string, string> = {
-    'Labeled Praise': 'Praise', 'Praise (Labeled)': 'Praise', 'Praise(Labeled)': 'Praise',
-    'Narration': 'Narrate',
-    'Questions': 'Question', 'Commands': 'Command',
-    'Direct Command': 'Command', 'Indirect Command': 'Command',
-    'Negative Talk': 'Criticism',
-  };
-  const sessionContext = SESSION_CONTEXT[CONTEXT_CANONICAL[skillKey] || skillKey];
+  const sessionContext = SESSION_CONTEXT[skillKey];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>

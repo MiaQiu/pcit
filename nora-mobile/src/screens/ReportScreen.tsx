@@ -156,17 +156,13 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const SKILL_TAG_MAP: Record<string, string[]> = {
-  'Praise': ['Praise', 'Labeled Praise', 'Praise (Labeled)', 'Praise(Labeled)'],
-  'Labeled Praise': ['Praise', 'Labeled Praise', 'Praise (Labeled)', 'Praise(Labeled)'],
-  'Echo': ['Echo'],
-  'Narrate': ['Narration', 'Narrate'],
-  'Narration': ['Narration', 'Narrate'],
-  'Question': ['Question', 'Questions'],
-  'Questions': ['Question', 'Questions'],
-  'Command': ['Command', 'Commands', 'Direct Command', 'Indirect Command'],
-  'Commands': ['Command', 'Commands', 'Direct Command', 'Indirect Command'],
-  'Criticism': ['Criticism', 'Negative Talk'],
+const SKILL_TAG_MAP: Record<string, string> = {
+  'Praise (Labeled)': 'Labeled Praise',
+  'Echo': 'Echo',
+  'Narrate': 'Narration',
+  'Questions': 'Question',
+  'Commands': 'Command',
+  'Criticism': 'Criticism',
 };
 
 const getUtterancesForSkill = (
@@ -177,13 +173,13 @@ const getUtterancesForSkill = (
   main: { role?: string; text: string; tag?: string; feedback?: string };
 }> => {
   if (!transcript?.length) return [];
-  const tags = (SKILL_TAG_MAP[skillLabel] || [skillLabel]).map(t => t.toLowerCase());
+  const tag = (SKILL_TAG_MAP[skillLabel] || skillLabel).toLowerCase();
   const results: Array<{
     preceding?: { role?: string; text: string };
     main: { role?: string; text: string; tag?: string; feedback?: string };
   }> = [];
   transcript.forEach((u, index) => {
-    if (u.tag && tags.includes(u.tag.toLowerCase())) {
+    if (u.tag && u.tag.toLowerCase() === tag) {
       const prev = index > 0 ? transcript[index - 1] : null;
       results.push({
         preceding: prev && prev.speaker !== '__SILENT__'
