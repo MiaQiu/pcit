@@ -27,6 +27,7 @@ import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
 import type { ModuleWithProgress, LessonCardData } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
+import { resolveImageUris } from '../services/lessonImageCache';
 
 const H_PAD = 20;
 const CARD_GAP = 10;
@@ -46,6 +47,7 @@ interface LessonCardProps {
   isModuleLocked: boolean;
   cardWidth: number;
   onPress: () => void;
+  localImageUri?: string;
 }
 
 const LessonCard: React.FC<LessonCardProps> = ({
@@ -54,6 +56,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
   isModuleLocked,
   cardWidth,
   onPress,
+  localImageUri,
 }) => {
   const status = lesson.progress?.status;
   const isCompleted = status === 'COMPLETED';
@@ -76,7 +79,11 @@ const LessonCard: React.FC<LessonCardProps> = ({
           </>
         )}
         <Image
-          source={lesson.dragonImageUrl ? { uri: lesson.dragonImageUrl } : fallbackIcon}
+          source={
+            (localImageUri || lesson.dragonImageUrl)
+              ? { uri: localImageUri || lesson.dragonImageUrl }
+              : fallbackIcon
+          }
           style={styles.lessonIcon}
           resizeMode="cover"
         />
@@ -117,6 +124,7 @@ interface ModuleSectionProps {
   onModulePress: () => void;
   cardWidth: number;
   showLockedNotice: boolean;
+  localImageUris: Record<string, string>;
 }
 
 const ModuleSection: React.FC<ModuleSectionProps> = ({
@@ -126,6 +134,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = ({
   onLessonPress,
   cardWidth,
   showLockedNotice,
+  localImageUris,
 }) => {
   const sortedLessons = useMemo(() => {
     const incomplete = lessons.filter(l => l.progress?.status !== 'COMPLETED');
@@ -169,6 +178,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = ({
             isModuleLocked={!!module.isLocked}
             cardWidth={cardWidth}
             onPress={() => onLessonPress(lesson.id)}
+            localImageUri={localImageUris[lesson.id]}
           />
         ))}
       </ScrollView>
@@ -189,6 +199,7 @@ export const LearnScreen_v2: React.FC = () => {
 
   const [modules, setModules] = useState<ModuleWithProgress[]>([]);
   const [allLessons, setAllLessons] = useState<LessonCardData[]>([]);
+  const [localImageUris, setLocalImageUris] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -199,6 +210,16 @@ export const LearnScreen_v2: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (allLessons.length === 0) return;
+    resolveImageUris(allLessons).then(({ uris, pendingDownloads }) => {
+      if (Object.keys(uris).length > 0) setLocalImageUris(prev => ({ ...prev, ...uris }));
+      pendingDownloads.then(newUris => {
+        if (Object.keys(newUris).length > 0) setLocalImageUris(prev => ({ ...prev, ...newUris }));
+      });
+    });
+  }, [allLessons]);
 
   useFocusEffect(
     useCallback(() => {
@@ -389,6 +410,7 @@ export const LearnScreen_v2: React.FC = () => {
                 onModulePress={() => navigation.push('ModuleDetail', { moduleKey: mod.key })}
                 cardWidth={cardWidth}
                 showLockedNotice={showLockedNotice}
+                localImageUris={localImageUris}
               />
             );
           })}

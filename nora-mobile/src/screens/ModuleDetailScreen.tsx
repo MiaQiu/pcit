@@ -24,6 +24,7 @@ import { useLessonService } from '../contexts/AppContext';
 import { useToast } from '../components/ToastManager';
 import type { ModuleDetailResponse } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
+import { resolveImageUris } from '../services/lessonImageCache';
 
 const H_PAD = 20;
 const CARD_GAP = 10;
@@ -44,6 +45,7 @@ export const ModuleDetailScreen: React.FC = () => {
   const cardWidth = (width - H_PAD * 2 - CARD_GAP) / 2;
 
   const [data, setData] = useState<ModuleDetailResponse | null>(null);
+  const [localImageUris, setLocalImageUris] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
@@ -53,6 +55,17 @@ export const ModuleDetailScreen: React.FC = () => {
     loadModuleDetail();
     checkIfCurrentModule();
   }, [moduleKey]);
+
+  useEffect(() => {
+    const lessons = data?.lessons;
+    if (!lessons || lessons.length === 0) return;
+    resolveImageUris(lessons).then(({ uris, pendingDownloads }) => {
+      if (Object.keys(uris).length > 0) setLocalImageUris(prev => ({ ...prev, ...uris }));
+      pendingDownloads.then(newUris => {
+        if (Object.keys(newUris).length > 0) setLocalImageUris(prev => ({ ...prev, ...newUris }));
+      });
+    });
+  }, [data]);
 
   useFocusEffect(
     useCallback(() => {
@@ -195,7 +208,7 @@ export const ModuleDetailScreen: React.FC = () => {
             const isCompleted = lesson.progress?.status === 'COMPLETED';
             const isInProgress = lesson.progress?.status === 'IN_PROGRESS';
             const fallbackIcon = LESSON_ICONS[(lesson.dayNumber - 1) % LESSON_ICONS.length];
-            const imageUrl = (lesson as any).dragonImageUrl;
+            const imageUrl = localImageUris[lesson.id] || (lesson as any).dragonImageUrl;
 
             return (
               <TouchableOpacity

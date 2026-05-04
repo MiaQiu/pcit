@@ -349,6 +349,7 @@ export interface LessonCardData {
   description: string;
   dayNumber: number;
   dragonImageUrl?: string;
+  imageUpdatedAt?: string;
   backgroundColor: string;
   ellipse77Color: string;
   ellipse78Color: string;

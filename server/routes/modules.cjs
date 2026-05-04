@@ -233,6 +233,7 @@ router.get('/:key', requireAuth, async (req, res) => {
       description: lesson.shortDescription,
       dayNumber: lesson.dayNumber,
       dragonImageUrl: await resolveDragonImageUrl(lesson.dragonImageUrl),
+      imageUpdatedAt: lesson.updatedAt,
       backgroundColor: lesson.backgroundColor,
       ellipse77Color: lesson.ellipse77Color,
       ellipse78Color: lesson.ellipse78Color,

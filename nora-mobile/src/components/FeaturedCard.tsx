@@ -28,17 +28,7 @@ export const FeaturedCard: React.FC<FeaturedCardProps> = ({
   onModulePress,
   onBrowseAll,
 }) => {
-  return (
-    // <View style={styles.container}>
-    //   <TouchableOpacity
-    //     style={styles.browseButton}
-    //     onPress={onBrowseAll}
-    //     activeOpacity={0.7}
-    //   >
-    //     <Text style={styles.browseButtonText}>Browse all lessons</Text>
-    //   </TouchableOpacity>
-    // </View>
-  );
+  return null;
 };
 
 const styles = StyleSheet.create({
