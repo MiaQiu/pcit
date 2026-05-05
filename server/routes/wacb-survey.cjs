@@ -56,7 +56,7 @@ router.post('/', async (req, res) => {
     }
 
     // Map raw values (1-5) to points: 1->0, 2->2, 3->4, 4->6, 5->7
-    const VALUE_TO_POINTS = { 1: 0, 2: 2, 3: 4, 4: 6, 5: 7 };
+    const VALUE_TO_POINTS = { 1: 1, 2: 2, 3: 4, 4: 6, 5: 7 };
     const toPoints = (v) => VALUE_TO_POINTS[v] ?? v;
 
     // Calculate total score

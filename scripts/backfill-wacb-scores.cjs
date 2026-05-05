@@ -1,12 +1,12 @@
 /**
  * Backfill WACB totalScore using new scoring formula:
- * value 1 -> 0 pts, 2 -> 2 pts, 3 -> 4 pts, 4 -> 6 pts, 5 -> 7 pts
+ * value 1 -> 1 pts, 2 -> 2 pts, 3 -> 4 pts, 4 -> 6 pts, 5 -> 7 pts
  */
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const VALUE_TO_POINTS = { 1: 0, 2: 2, 3: 4, 4: 6, 5: 7 };
+const VALUE_TO_POINTS = { 1: 1, 2: 2, 3: 4, 4: 6, 5: 7 };
 const toPoints = (v) => VALUE_TO_POINTS[v] ?? v;
 
 async function backfill() {
