@@ -10,12 +10,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const Demo1Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
@@ -25,10 +27,10 @@ export const Demo1Screen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Subtitle */}
-        <Text style={styles.subtitle}>Parenting is hard</Text>
+        <Text style={styles.subtitle}>{t('onboarding.demo1.subtitle')}</Text>
 
         {/* Title */}
-        <Text style={styles.title}>But you don't have to do it alone.</Text>
+        <Text style={styles.title}>{t('onboarding.demo1.title')}</Text>
 
         {/* Image */}
         <View style={styles.imageContainer}>
@@ -42,10 +44,8 @@ export const Demo1Screen: React.FC = () => {
         </View>
 
         {/* Meet Nora */}
-        <Text style={styles.meetTitle}>Meet Nora</Text>
-        <Text style={styles.description}>
-          Your guide to raising confident, happy kids.{'\n'}Science-backed.{'\n'}Personalized for your child (ages 1–7)
-        </Text>
+        <Text style={styles.meetTitle}>{t('onboarding.demo1.meetNora')}</Text>
+        <Text style={styles.description}>{t('onboarding.demo1.description')}</Text>
       </ScrollView>
 
       {/* Button */}
@@ -55,7 +55,7 @@ export const Demo1Screen: React.FC = () => {
           onPress={() => navigation.navigate('Demo1B')}
           activeOpacity={0.85}
         >
-          <Text style={styles.buttonText}>Let's go!  →</Text>
+          <Text style={styles.buttonText}>{t('onboarding.letsGo')}</Text>
         </TouchableOpacity>
       </View>
     </View>

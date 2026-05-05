@@ -23,6 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
 
@@ -65,6 +66,7 @@ async function saveCache(messages: Message[]): Promise<void> {
 // ─── Bubble ───────────────────────────────────────────────────────────────────
 
 const Bubble: React.FC<{ message: Message }> = ({ message }) => {
+  const { t } = useTranslation();
   const isUser = message.role === 'user_psych';
   return (
     <View style={[styles.bubbleRow, isUser ? styles.bubbleRowUser : styles.bubbleRowPsych]}>
@@ -74,7 +76,7 @@ const Bubble: React.FC<{ message: Message }> = ({ message }) => {
         </View>
       )}
       <View style={{ maxWidth: '78%' }}>
-        {!isUser && <Text style={styles.psychLabel}>Psychologist</Text>}
+        {!isUser && <Text style={styles.psychLabel}>{t('psychologistChat.psychologist')}</Text>}
         <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubblePsych]}>
           <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextPsych]}>
             {message.text}
@@ -91,6 +93,7 @@ export const PsychologistChatScreen: React.FC = () => {
   const navigation = useNavigation();
   const authService = useAuthService();
   const { markPsychAsRead } = useCoachUnread();
+  const { t } = useTranslation();
 
   const flatListRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
@@ -244,8 +247,8 @@ export const PsychologistChatScreen: React.FC = () => {
           <Ionicons name="chevron-down" size={26} color={COLORS.textDark} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Psychologist</Text>
-          <Text style={styles.headerSub}>Nora Clinical Team</Text>
+          <Text style={styles.headerTitle}>{t('psychologistChat.headerTitle')}</Text>
+          <Text style={styles.headerSub}>{t('psychologistChat.headerSub')}</Text>
         </View>
         <View style={{ width: 40 }} />
       </View>
@@ -270,10 +273,8 @@ export const PsychologistChatScreen: React.FC = () => {
               <View style={styles.emptyIconWrap}>
                 <Ionicons name="person" size={28} color="#fff" />
               </View>
-              <Text style={styles.emptyTitle}>Please describe your situation and questions here</Text>
-              <Text style={styles.emptyBody}>
-                A psychologist from our team will reach out to you within 24 hours.
-              </Text>
+              <Text style={styles.emptyTitle}>{t('psychologistChat.emptyTitle')}</Text>
+              <Text style={styles.emptyBody}>{t('psychologistChat.emptyBody')}</Text>
             </View>
           }
         />
@@ -285,7 +286,7 @@ export const PsychologistChatScreen: React.FC = () => {
             style={styles.input}
             value={input}
             onChangeText={setInput}
-            placeholder="Message the psychologist…"
+            placeholder={t('psychologistChat.inputPlaceholder')}
             placeholderTextColor="#9CA3AF"
             multiline
             maxLength={1000}

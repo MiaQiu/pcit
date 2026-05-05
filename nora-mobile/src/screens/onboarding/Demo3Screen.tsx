@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { DemoTemplate } from './DemoTemplate';
 
 export const Demo3Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const { t } = useTranslation();
 
   return (
     <DemoTemplate
-      text="Personalized coaching based on your real moments, grounded in child development science."
+      text={t('onboarding.demo3.text')}
       onBack={() => navigation.goBack()}
       onNext={() => navigation.navigate('Demo4')}
     >
@@ -34,6 +36,5 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-
   },
 });

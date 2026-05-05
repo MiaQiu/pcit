@@ -23,6 +23,7 @@ import { DragonCard } from '../components/DragonCard';
 import { MomentPlayer } from '../components/MomentPlayer';
 import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
 
@@ -70,13 +71,13 @@ const getSkillType = (tag?: string): 'desirable' | 'undesirable' | 'neutral' => 
 };
 
 // Helper to get skill rating info based on progress value
-const getSkillRating = (progress: number): { barColor?: string; textColor?: string; suffix?: string } => {
+const getSkillRating = (progress: number, t: Function): { barColor?: string; textColor?: string; suffix?: string } => {
   if (progress <= 5) {
-    return { barColor: '#852221', textColor: '#852221', suffix: '(Pay attention)' };
+    return { barColor: '#852221', textColor: '#852221', suffix: t('report.skillRating.payAttention') };
   } else if (progress <= 8) {
-    return { barColor: '#6750A4', textColor: '#6750A4', suffix: '(Good)' };
+    return { barColor: '#6750A4', textColor: '#6750A4', suffix: t('report.skillRating.good') };
   } else {
-    return { barColor: '#6750A4', textColor: '#6750A4', suffix: '(Excellent)' };
+    return { barColor: '#6750A4', textColor: '#6750A4', suffix: t('report.skillRating.excellent') };
   }
 };
 
@@ -165,6 +166,21 @@ const SKILL_TAG_MAP: Record<string, string> = {
   'Criticism': 'Criticism',
 };
 
+// Maps API label → i18n key suffix (under report.skillLabel.*)
+const SKILL_LABEL_I18N_KEY: Record<string, string> = {
+  'Praise (Labeled)': 'praiseLabeleld',
+  'Echo': 'echo',
+  'Narrate': 'narrate',
+  'Questions': 'questions',
+  'Commands': 'commands',
+  'Criticism': 'criticism',
+};
+
+const getSkillDisplayLabel = (apiLabel: string, t: Function): string => {
+  const key = SKILL_LABEL_I18N_KEY[apiLabel];
+  return key ? t(`report.skillLabel.${key}`) : apiLabel;
+};
+
 const getUtterancesForSkill = (
   transcript: any[] | undefined,
   skillLabel: string,
@@ -244,9 +260,10 @@ const PDICoachCorner: React.FC<{
   navigation: any;
   tomorrowGoal?: string | null;
 }> = ({ pdiSkills, commandSequences, summary, recordingId, navigation, tomorrowGoal }) => {
+  const { t } = useTranslation();
   return (
     <View>
-      <Text style={styles.cardTitle}>Coach's Corner</Text>
+      <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
       <View style={styles.coachCard}>
         {summary && (
           <Text style={styles.pdiSummaryText}>{summary}</Text>
@@ -278,7 +295,7 @@ const PDICoachCorner: React.FC<{
         {/* Command Sequences */}
         {commandSequences && commandSequences.length > 0 && (
           <>
-            <Text style={[styles.pdiSectionSubtitle, { marginTop: 20 }]}>Detailed feedback on each command sequences</Text>
+            <Text style={[styles.pdiSectionSubtitle, { marginTop: 20 }]}>{t('report.pdi.commandSequencesSubtitle')}</Text>
             {commandSequences.map((seq, index) => {
               const labelColors = getLabelColors(seq.label);
               return (
@@ -290,7 +307,7 @@ const PDICoachCorner: React.FC<{
                   ]}
                 >
                   <View style={styles.pdiSeqHeaderRow}>
-                    <Text style={styles.pdiSeqTitle}>Sequence {index + 1}: {seq.title}</Text>
+                    <Text style={styles.pdiSeqTitle}>{t('report.pdi.sequenceTitle', { index: index + 1, title: seq.title })}</Text>
                     <View style={[styles.pdiSeqLabelBadge, { backgroundColor: labelColors.bg }]}>
                       <Text style={[styles.pdiSeqLabelText, { color: labelColors.text }]}>{seq.label}</Text>
                     </View>
@@ -299,17 +316,17 @@ const PDICoachCorner: React.FC<{
                     <Text style={styles.pdiSeqWhatHappened}>{seq.whatHappened}</Text>
                   )}
                   <View style={styles.pdiSeqBullet}>
-                    <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>Command: </Text>{seq.command}</Text>
+                    <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>{t('report.pdi.command')}</Text>{seq.command}</Text>
                   </View>
                   <View style={styles.pdiSeqBullet}>
-                    <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>Wait Time: </Text>{seq.waitTime}</Text>
+                    <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>{t('report.pdi.waitTime')}</Text>{seq.waitTime}</Text>
                   </View>
                   <View style={styles.pdiSeqBullet}>
-                    <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>Follow-through: </Text>{seq.followThrough}</Text>
+                    <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>{t('report.pdi.followThrough')}</Text>{seq.followThrough}</Text>
                   </View>
                   {seq.coachTip && (
                     <View style={styles.pdiSeqBullet}>
-                      <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>Coach's Tip: </Text>{seq.coachTip}</Text>
+                      <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>{t('report.pdi.coachsTip')}</Text>{seq.coachTip}</Text>
                     </View>
                   )}
                 </View>
@@ -319,13 +336,13 @@ const PDICoachCorner: React.FC<{
         )}
 
         {tomorrowGoal && (
-          <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Tomorrow's Goal: </Text>{tomorrowGoal}</Text>
+          <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tomorrowsGoal')}</Text>{tomorrowGoal}</Text>
         )}
         <TouchableOpacity
           style={styles.cardLinkButton}
           onPress={() => navigation.navigate('Transcript', { recordingId })}
         >
-          <Text style={styles.cardLinkText}>Read Full Transcript with Tips</Text>
+          <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -519,6 +536,7 @@ const eboStyles = StyleSheet.create({
 export const ReportScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<ReportScreenRouteProp>();
+  const { t } = useTranslation();
   const recordingService = useRecordingService();
   const authService = useAuthService();
   const { recordingId } = route.params;
@@ -736,7 +754,7 @@ export const ReportScreen: React.FC = () => {
         setError('Analysis is taking longer than expected. Please try again later.');
         setLoading(false);
       } else {
-        setError(err.message || 'Failed to load report');
+        setError(err.message || t('report.failedToLoad'));
         setLoading(false);
       }
     }
@@ -758,13 +776,13 @@ export const ReportScreen: React.FC = () => {
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Today’s Emotional Massage Recap</Text>
+          <Text style={styles.headerTitle}>{t('report.headerTitle')}</Text>
           <View style={{ width: 28 }} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.mainPurple} />
           <Text style={styles.loadingText}>
-            {pollingCount > 0 ? 'Analyzing your session...' : 'Loading report...'}
+            {pollingCount > 0 ? t('report.analyzingSession') : t('report.loadingReport')}
           </Text>
         </View>
       </SafeAreaView>
@@ -779,14 +797,14 @@ export const ReportScreen: React.FC = () => {
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Today’s Emotional Massage Recap</Text>
+          <Text style={styles.headerTitle}>{t('report.headerTitle')}</Text>
           <View style={{ width: 28 }} />
         </View>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color="#E74C3C" />
-          <Text style={styles.errorText}>{error || 'Failed to load report'}</Text>
+          <Text style={styles.errorText}>{error || t('report.failedToLoad')}</Text>
           <Button onPress={loadReportData} variant="primary">
-            Try Again
+            {t('report.tryAgain')}
           </Button>
         </View>
       </SafeAreaView>
@@ -800,7 +818,7 @@ export const ReportScreen: React.FC = () => {
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Today’s Emotional Massage Recap</Text>
+        <Text style={styles.headerTitle}>{t('report.headerTitle')}</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -831,7 +849,7 @@ export const ReportScreen: React.FC = () => {
 
         {/* Nora Score */}
         <View style={styles.scoreSection}>
-          <Text style={styles.sectionTitle}>Emotional Bank Account</Text>
+          <Text style={styles.sectionTitle}>{t('report.section.emotionalBankAccount')}</Text>
           <View style={styles.skillsContainer}>
             {(() => {
               const score = reportData.noraScore ?? 0;
@@ -839,17 +857,17 @@ export const ReportScreen: React.FC = () => {
               let suffix: string;
               if (score < 80) {
                 scoreColor = '#852221';
-                suffix = '(Pay attention)';
+                suffix = t('report.skillRating.payAttention');
               } else if (score < 90) {
                 scoreColor = '#6750A4';
-                suffix = '(Good)';
+                suffix = t('report.skillRating.good');
               } else {
                 scoreColor = '#6750A4';
-                suffix = '(Excellent)';
+                suffix = t('report.skillRating.excellent');
               }
               return (
                 <SkillProgressBar
-                  label="Overall"
+                  label={t('report.overallLabel')}
                   progress={score}
                   maxValue={100}
                   color={scoreColor}
@@ -870,15 +888,15 @@ export const ReportScreen: React.FC = () => {
 
         {/* PRN Skills Section */}
         <View style={styles.skillsSection}>
-          <Text style={styles.sectionTitle}>Your PEN Skills</Text>
-          <Text style={styles.sectionSubtitle}>Boost Confidence and Compliance</Text>
+          <Text style={styles.sectionTitle}>{t('report.section.penSkills')}</Text>
+          <Text style={styles.sectionSubtitle}>{t('report.section.penSkillsSubtitle')}</Text>
           <View style={styles.skillsContainer}>
             {reportData.skills.map((skill, index) => {
-              const rating = getSkillRating(skill.progress);
+              const rating = getSkillRating(skill.progress, t);
               return (
                 <SkillProgressBar
                   key={index}
-                  label={skill.label}
+                  label={getSkillDisplayLabel(skill.label, t)}
                   progress={skill.progress}
                   maxValue={10}
                   color={rating.barColor}
@@ -898,10 +916,10 @@ export const ReportScreen: React.FC = () => {
         {/* Areas to Avoid */}
         <View style={styles.avoidSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Areas to Avoid</Text>
+            <Text style={styles.sectionTitle}>{t('report.section.areasToAvoid')}</Text>
             {/* <Text style={styles.totalText}>Total &lt; 3</Text> */}
           </View>
-          <Text style={styles.sectionSubtitle}>Disrupts focus and creativity</Text>
+          <Text style={styles.sectionSubtitle}>{t('report.section.areasToAvoidSubtitle')}</Text>
           <View style={styles.avoidContainer}>
             {reportData.areasToAvoid
               .filter(area => !(reportData.mode === 'PDI' && (typeof area === 'string' ? area : area.label) === 'Commands'))
@@ -911,7 +929,7 @@ export const ReportScreen: React.FC = () => {
               return (
                 <View key={index} style={styles.avoidItem}>
                   <View style={styles.avoidRow}>
-                    <Text style={styles.avoidLabel}>{areaData.label}</Text>
+                    <Text style={styles.avoidLabel}>{getSkillDisplayLabel(areaData.label, t)}</Text>
                     <TouchableOpacity
                       style={styles.avoidRightContainer}
                       onPress={() => navigation.navigate('SkillUtterances', {
@@ -922,7 +940,7 @@ export const ReportScreen: React.FC = () => {
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
                       <Text style={[styles.countText, styles.countTextClickable, needsAttention ? styles.countTextAttention : styles.countTextExcellent]}>
-                        {areaData.count}{needsAttention ? ' (Pay attention)' : ' (Excellent)'}
+                        {areaData.count}{needsAttention ? ' ' + t('report.skillRating.payAttention') : ' ' + t('report.skillRating.excellent')}
                         <Ionicons name="chevron-forward" size={12} color={needsAttention ? '#852221' : '#6750A4'} />
                       </Text>
                     </TouchableOpacity>
@@ -940,7 +958,7 @@ export const ReportScreen: React.FC = () => {
 
         {/* Top Moment */}
         <View>
-          <Text style={styles.cardTitle}>Top Moment</Text>
+          <Text style={styles.cardTitle}>{t('report.section.topMoment')}</Text>
           <View style={styles.card}>
             <Text style={styles.quoteText}>
               "{reportData.topMomentUtteranceNumber != null && reportData.transcript?.[reportData.topMomentUtteranceNumber]
@@ -971,7 +989,7 @@ export const ReportScreen: React.FC = () => {
               const tomorrowGoalText = reportData.tomorrowGoal;
               return (
                 <View>
-                  <Text style={styles.cardTitle}>Coach's Corner</Text>
+                  <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
                   <View style={styles.coachCard}>
                     {sections.map((section, idx) => (
                       <View key={idx} style={idx > 0 ? { marginTop: 16 } : undefined}>
@@ -980,13 +998,13 @@ export const ReportScreen: React.FC = () => {
                       </View>
                     ))}
                     {tomorrowGoalText && (
-                      <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Tomorrow's Goal: </Text>{tomorrowGoalText}</Text>
+                      <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tomorrowsGoal')}</Text>{tomorrowGoalText}</Text>
                     )}
                     <TouchableOpacity
                       style={styles.cardLinkButton}
                       onPress={() => navigation.navigate('Transcript', { recordingId })}
                     >
-                      <Text style={styles.cardLinkText}>Read Full Transcript with Tips</Text>
+                      <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -998,39 +1016,39 @@ export const ReportScreen: React.FC = () => {
             const legacyTomorrowGoal = reportData.tomorrowGoal || (cards[0]?.next_day_goal ?? null);
             return (
               <View>
-                <Text style={styles.cardTitle}>Coach's Corner</Text>
+                <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
                 {cards.map((card) => (
                     <View key={card.card_id} style={styles.coachCard}>
                       {reportData.coachingSummary ? (
-                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Summary: </Text>{reportData.coachingSummary}</Text>
+                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.summary')}</Text>{reportData.coachingSummary}</Text>
                       ) : null}
                       {card.coaching_tip ? (
-                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Tip for Next Session: </Text>{card.coaching_tip}</Text>
+                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tipForNextSession')}</Text>{card.coaching_tip}</Text>
                       ) : null}
                       {card.scenario && (
                         <View style={styles.coachExampleContainer}>
                           {card.scenario.instead_of ? (
                             <View style={styles.coachInsteadOfRow}>
                               <Ionicons name="bulb-outline" size={16} color="#6B7280" />
-                              <Text style={styles.coachExampleInsteadOf}><Text style={styles.coachExampleInsteadOfLabel}>Instead of: </Text>{card.scenario.instead_of}</Text>
+                              <Text style={styles.coachExampleInsteadOf}><Text style={styles.coachExampleInsteadOfLabel}>{t('report.coachingCard.insteadOf')}</Text>{card.scenario.instead_of}</Text>
                             </View>
                           ) : null}
                           {card.scenario.try_this ? (
-                            <Text style={styles.coachExampleImproved}><Text style={styles.coachExampleImprovedLabel}>Try: </Text>{card.scenario.try_this}</Text>
+                            <Text style={styles.coachExampleImproved}><Text style={styles.coachExampleImprovedLabel}>{t('report.coachingCard.try')}</Text>{card.scenario.try_this}</Text>
                           ) : null}
                         </View>
                       )}
                       {card.apply_in_daily_life ? (
-                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Apply in Daily Life: </Text>{card.apply_in_daily_life}</Text>
+                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.applyInDailyLife')}</Text>{card.apply_in_daily_life}</Text>
                       ) : null}
                       {legacyTomorrowGoal && (
-                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>Tomorrow's Goal: </Text>{legacyTomorrowGoal}</Text>
+                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tomorrowsGoal')}</Text>{legacyTomorrowGoal}</Text>
                       )}
                       <TouchableOpacity
                         style={styles.cardLinkButton}
                         onPress={() => navigation.navigate('Transcript', { recordingId })}
                       >
-                        <Text style={styles.cardLinkText}>Read Full Transcript with Tips</Text>
+                        <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
                       </TouchableOpacity>
                     </View>
                 ))}
@@ -1049,12 +1067,12 @@ export const ReportScreen: React.FC = () => {
 
           return (
             <View onLayout={e => { aboutChildSectionY.current = e.nativeEvent.layout.y; }}>
-              <Text style={styles.cardTitle}>What we learnt about {childName}</Text>
+              <Text style={styles.cardTitle}>{t('report.section.whatWeLearnt', { childName })}</Text>
               <View style={styles.card}>
                 {/* Observation */}
                 {item && (
                   <View>
-                    <Text style={styles.learnSubsectionLabel}>Observation</Text>
+                    <Text style={styles.learnSubsectionLabel}>{t('report.subsection.observation')}</Text>
                     <View style={styles.aboutChildTitleBadge}>
                       <Ionicons name="sparkles" size={14} color="#7C3AED" />
                       <Text style={styles.aboutChildTitleText}>{item.Title}</Text>
@@ -1073,13 +1091,13 @@ export const ReportScreen: React.FC = () => {
                 {milestones.map((milestone, index) => {
                   const isAchieved = milestone.status === 'ACHIEVED';
                   const personalizedDescription = isAchieved
-                    ? `${childName} has mastered ${milestone.title.toLowerCase()}!`
-                    : `${childName} is starting to ${milestone.title.toLowerCase()}!`;
+                    ? t('report.milestone.achieved', { childName, title: milestone.title.toLowerCase() })
+                    : t('report.milestone.emerging', { childName, title: milestone.title.toLowerCase() });
 
                   return (
                     <View key={index}>
                       {item && <View style={styles.aboutChildDivider} />}
-                      <Text style={styles.learnSubsectionLabel}>New Milestone ({milestone.category})</Text>
+                      <Text style={styles.learnSubsectionLabel}>{t('report.subsection.newMilestone', { category: milestone.category })}</Text>
                       <Text style={styles.milestonePersonalizedText}>{personalizedDescription}</Text>
                       {/* <Text style={styles.milestoneCategory}>{milestone.category}</Text> */}
                       {milestone.evidenceSummary && !milestone.evidenceSummary.toLowerCase().startsWith('not observed') && (
@@ -1102,7 +1120,7 @@ export const ReportScreen: React.FC = () => {
         {/* Section 2: Developmental Milestones */}
         {developmentalProgress && developmentalProgress.completedSessionCount >= 5 ? (
           <View>
-            <Text style={styles.cardTitle}>{developmentalProgress.childName ? `${developmentalProgress.childName}'s ` : ''}Developmental Milestones</Text>
+            <Text style={styles.cardTitle}>{developmentalProgress.childName ? t('report.section.developmentalMilestonesWithName', { childName: developmentalProgress.childName }) : t('report.section.developmentalMilestones')}</Text>
             <RadarChart
               data={developmentalProgress}
               childName={developmentalProgress.childName}
@@ -1112,12 +1130,12 @@ export const ReportScreen: React.FC = () => {
           </View>
         ) : (
           <View style={styles.milestoneLockedCard}>
-            <Text style={styles.milestoneLockedTitle}>Developmental Milestones</Text>
+            <Text style={styles.milestoneLockedTitle}>{t('report.section.developmentalMilestones')}</Text>
             <View style={styles.milestoneLockedBadge}>
-              <Text style={styles.milestoneLockedBadgeText}>Available after 5 sessions · {developmentalProgress?.completedSessionCount ?? 0}/5 completed</Text>
+              <Text style={styles.milestoneLockedBadgeText}>{t('report.milestone.lockedBadge', { count: developmentalProgress?.completedSessionCount ?? 0 })}</Text>
             </View>
             <Text style={styles.milestoneLockedDesc}>
-              Track your child's growth across Language, Cognitive, Social, Emotional, and Connection — compared against their age benchmark.
+              {t('report.milestone.lockedDescription')}
             </Text>
           </View>
         )}
@@ -1167,7 +1185,7 @@ export const ReportScreen: React.FC = () => {
                       );
                     }
 
-                    const speakerLabel = speakerMappings.labelMapping[utterance.speaker] || 'Unknown';
+                    const speakerLabel = speakerMappings.labelMapping[utterance.speaker] || t('report.speakerUnknown');
                     const speakerColor = speakerMappings.colorMapping[utterance.speaker] || '#E3F2FD';
                     const isAdult = speakerLabel.includes('Adult');
                     const pcitTag = utterance.tag;
@@ -1259,12 +1277,12 @@ export const ReportScreen: React.FC = () => {
           <View style={styles.feedbackCard}>
             <View style={styles.feedbackThankYou}>
               <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={styles.feedbackThankYouText}>Thanks for your feedback!</Text>
+              <Text style={styles.feedbackThankYouText}>{t('report.feedback.thankYou')}</Text>
             </View>
           </View>
         ) : (
           <View style={styles.feedbackCard}>
-            <Text style={styles.feedbackTitle}>Was this report helpful?</Text>
+            <Text style={styles.feedbackTitle}>{t('report.feedback.question')}</Text>
 
             <View style={styles.feedbackSentimentRow}>
               <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
@@ -1285,7 +1303,7 @@ export const ReportScreen: React.FC = () => {
                     styles.feedbackPillText,
                     styles.feedbackPillTextNegative,
                     feedbackSentiment === 'positive' && styles.feedbackPillTextActive,
-                  ]}>Yes</Text>
+                  ]}>{t('report.feedbackYes')}</Text>
                 </TouchableOpacity>
               </Animated.View>
 
@@ -1306,35 +1324,43 @@ export const ReportScreen: React.FC = () => {
                   styles.feedbackPillText,
                   styles.feedbackPillTextNegative,
                   feedbackSentiment === 'negative' && styles.feedbackPillTextActive,
-                ]}>Not really</Text>
+                ]}>{t('report.feedbackNotReally')}</Text>
               </TouchableOpacity>
             </View>
 
             {feedbackSentiment === 'negative' && (
               <View style={styles.feedbackFollowUp}>
-                <Text style={styles.feedbackFollowUpLabel}>What could be better?</Text>
+                <Text style={styles.feedbackFollowUpLabel}>{t('report.feedbackWhatBetter')}</Text>
 
                 <View style={styles.feedbackChipsRow}>
-                  {NEGATIVE_REASONS.map(reason => (
-                    <TouchableOpacity
-                      key={reason}
-                      style={[
-                        styles.feedbackChip,
-                        feedbackReasons.includes(reason) && styles.feedbackChipActiveNegative,
-                      ]}
-                      onPress={() => toggleReason(reason)}
-                    >
-                      <Text style={[
-                        styles.feedbackChipText,
-                        feedbackReasons.includes(reason) && styles.feedbackChipTextActive,
-                      ]}>{reason}</Text>
-                    </TouchableOpacity>
-                  ))}
+                  {NEGATIVE_REASONS.map(reason => {
+                    const reasonKeyMap: Record<string, string> = {
+                      'Too generic': t('report.negativeReasons.tooGeneric'),
+                      'Not accurate': t('report.negativeReasons.notAccurate'),
+                      'Hard to understand': t('report.negativeReasons.hardToUnderstand'),
+                      'Missing something': t('report.negativeReasons.missingSomething'),
+                    };
+                    return (
+                      <TouchableOpacity
+                        key={reason}
+                        style={[
+                          styles.feedbackChip,
+                          feedbackReasons.includes(reason) && styles.feedbackChipActiveNegative,
+                        ]}
+                        onPress={() => toggleReason(reason)}
+                      >
+                        <Text style={[
+                          styles.feedbackChipText,
+                          feedbackReasons.includes(reason) && styles.feedbackChipTextActive,
+                        ]}>{reasonKeyMap[reason] || reason}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
 
                 <TextInput
                   style={styles.feedbackInput}
-                  placeholder="How can we improve?"
+                  placeholder={t('report.feedbackPlaceholder')}
                   placeholderTextColor="#9CA3AF"
                   value={feedbackText}
                   onChangeText={setFeedbackText}
@@ -1344,7 +1370,7 @@ export const ReportScreen: React.FC = () => {
                 />
 
                 <TouchableOpacity style={styles.feedbackSubmitButton} onPress={handleSubmitFeedback}>
-                  <Text style={styles.feedbackSubmitText}>Submit</Text>
+                  <Text style={styles.feedbackSubmitText}>{t('report.feedbackSubmit')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -1371,7 +1397,7 @@ export const ReportScreen: React.FC = () => {
         >
           {showChatDemoMessage && (
             <View style={styles.chatDemoMessageRow}>
-              <Text style={styles.chatDemoText}>Discuss the session with our friendly AI coach Nora.</Text>
+              <Text style={styles.chatDemoText}>{t('report.chatDemo.message')}</Text>
               <TouchableOpacity onPress={dismissChatDemoMessage} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Ionicons name="close" size={18} color="#6B7280" />
               </TouchableOpacity>

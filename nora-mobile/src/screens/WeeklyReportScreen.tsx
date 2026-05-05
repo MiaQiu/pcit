@@ -30,6 +30,7 @@ import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import { WeeklyReportData } from '@nora/core';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TOTAL_PAGES = 7;
@@ -37,6 +38,7 @@ const TOTAL_PAGES = 7;
 export const WeeklyReportScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'WeeklyReport'>>();
+  const { t } = useTranslation();
   const recordingService = useRecordingService();
   const authService = useAuthService();
   const [currentPage, setCurrentPage] = useState(1);
@@ -494,10 +496,10 @@ export const WeeklyReportScreen: React.FC = () => {
 
         {/* Focus description */}
         <Text style={styles.focusHeading}>
-          {report?.focusHeading || 'Keep practicing your skills this week.'}
+          {report?.focusHeading || t('weeklyReport.defaultFocusHeading')}
         </Text>
         <Text style={styles.focusSubtext}>
-          {report?.focusSubtext || "You don't need to be perfect — just consistent."}
+          {report?.focusSubtext || t('weeklyReport.defaultFocusSubtext')}
         </Text>
 
         {/* Why this matters — expandable */}
@@ -533,13 +535,17 @@ export const WeeklyReportScreen: React.FC = () => {
 
   // ─── Page 7: Quick Check-in ──────────────────────────────────────────
   const MOODS = [
-    { label: 'Grounded', emoji: '🌿' },
-    { label: 'Tired', emoji: '🥱' },
-    { label: 'Stretched', emoji: '🫠' },
-    { label: 'Hopeful', emoji: '✨' },
+    { label: 'Grounded', display: t('weeklyReport.moods.grounded'), emoji: '🌿' },
+    { label: 'Tired', display: t('weeklyReport.moods.tired'), emoji: '🥱' },
+    { label: 'Stretched', display: t('weeklyReport.moods.stretched'), emoji: '🫠' },
+    { label: 'Hopeful', display: t('weeklyReport.moods.hopeful'), emoji: '✨' },
   ];
 
-  const RATINGS = ['Better', 'Same', 'Worse'];
+  const RATINGS = [
+    { key: 'Better', display: t('weeklyReport.ratings.better') },
+    { key: 'Same', display: t('weeklyReport.ratings.same') },
+    { key: 'Worse', display: t('weeklyReport.ratings.worse') },
+  ];
 
   const renderPage7 = () => {
     const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -550,11 +556,11 @@ export const WeeklyReportScreen: React.FC = () => {
         contentContainerStyle={styles.pageScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>Quick Check-in</Text>
+        <Text style={styles.pageTitle}>{t('weeklyReport.checkInTitle')}</Text>
 
         {/* Mood section */}
         <View style={styles.card}>
-          <Text style={styles.checkinQuestion}>How are you doing this week?</Text>
+          <Text style={styles.checkinQuestion}>{t('weeklyReport.checkInMoodQuestion')}</Text>
           <View style={styles.moodGrid}>
             {MOODS.map((mood) => (
               <TouchableOpacity
@@ -570,12 +576,12 @@ export const WeeklyReportScreen: React.FC = () => {
                 <Text style={[
                   styles.moodLabel,
                   moodSelection === mood.label && styles.moodLabelSelected,
-                ]}>{mood.label}</Text>
+                ]}>{mood.display}</Text>
               </TouchableOpacity>
             ))}
           </View>
           <Text style={styles.checkinDisclaimer}>
-            This isn't graded — it helps your coach tailor the next suggestions.
+            {t('weeklyReport.checkInDisclaimer')}
           </Text>
         </View>
 
@@ -583,7 +589,7 @@ export const WeeklyReportScreen: React.FC = () => {
         {childIssues.length > 0 && (
           <View style={styles.card}>
             <Text style={styles.checkinQuestion}>
-              Have you seen improvement in the areas you're working on?
+              {t('weeklyReport.checkInImprovementQuestion')}
             </Text>
             {childIssues.map((issue, index) => (
               <View key={issue} style={[styles.issueRow, index < childIssues.length - 1 && styles.issueRowBorder]}>
@@ -591,18 +597,18 @@ export const WeeklyReportScreen: React.FC = () => {
                 <View style={styles.ratingButtons}>
                   {RATINGS.map((rating) => (
                     <TouchableOpacity
-                      key={rating}
+                      key={rating.key}
                       style={[
                         styles.ratingChip,
-                        issueRatings[issue] === rating && styles.ratingChipSelected,
+                        issueRatings[issue] === rating.key && styles.ratingChipSelected,
                       ]}
-                      onPress={() => setIssueRatings((prev) => ({ ...prev, [issue]: rating }))}
+                      onPress={() => setIssueRatings((prev) => ({ ...prev, [issue]: rating.key }))}
                       activeOpacity={0.7}
                     >
                       <Text style={[
                         styles.ratingText,
-                        issueRatings[issue] === rating && styles.ratingTextSelected,
-                      ]}>{rating}</Text>
+                        issueRatings[issue] === rating.key && styles.ratingTextSelected,
+                      ]}>{rating.display}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -634,7 +640,7 @@ export const WeeklyReportScreen: React.FC = () => {
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyState}>
           <ActivityIndicator size="large" color={COLORS.mainPurple} />
-          <Text style={styles.loadingText}>Loading report...</Text>
+          <Text style={styles.loadingText}>{t('weeklyReport.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -645,9 +651,9 @@ export const WeeklyReportScreen: React.FC = () => {
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyState}>
           <Ionicons name="document-text-outline" size={48} color="#D1D5DB" />
-          <Text style={styles.emptyStateText}>No report available</Text>
+          <Text style={styles.emptyStateText}>{t('weeklyReport.noReport')}</Text>
           <TouchableOpacity onPress={handleClose} style={styles.goBackButton}>
-            <Text style={styles.goBackText}>Go back</Text>
+            <Text style={styles.goBackText}>{t('weeklyReport.goBack')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -682,7 +688,7 @@ export const WeeklyReportScreen: React.FC = () => {
               onPress={handleBack}
               activeOpacity={0.8}
             >
-              <Text style={styles.bottomButtonText}>← Back</Text>
+              <Text style={styles.bottomButtonText}>{t('weeklyReport.buttonBack')}</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -691,7 +697,7 @@ export const WeeklyReportScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             <Text style={styles.bottomButtonText}>
-              {currentPage === TOTAL_PAGES ? 'Submit' : 'Continue →'}
+              {currentPage === TOTAL_PAGES ? t('weeklyReport.buttonSubmit') : t('weeklyReport.buttonContinue')}
             </Text>
           </TouchableOpacity>
         </View>

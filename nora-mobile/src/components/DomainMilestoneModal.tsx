@@ -18,6 +18,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
 import type { DomainMilestone, DomainType, DomainProfiling } from '@nora/core';
+import { useTranslation } from 'react-i18next';
 
 interface DomainMilestoneModalProps {
   visible: boolean;
@@ -46,6 +47,7 @@ const STATUS_COLORS = {
 };
 
 const MilestoneItem: React.FC<{ milestone: DomainMilestone }> = ({ milestone }) => {
+  const { t } = useTranslation();
   const colors = STATUS_COLORS[milestone.status];
 
   const getIcon = () => {
@@ -69,7 +71,7 @@ const MilestoneItem: React.FC<{ milestone: DomainMilestone }> = ({ milestone }) 
         </View>
       </View>
       {milestone.actionTip && milestone.status !== 'ACHIEVED' && (
-        <Text style={styles.actionTip}>Tips: {milestone.actionTip}</Text>
+        <Text style={styles.actionTip}>{t('domainMilestone.tips', { tip: milestone.actionTip })}</Text>
       )}
     </View>
   );
@@ -84,6 +86,7 @@ export const DomainMilestoneModal: React.FC<DomainMilestoneModalProps> = ({
   loading,
   onClose,
 }) => {
+  const { t } = useTranslation();
   if (!domain) return null;
 
   // Group milestones by status
@@ -132,7 +135,7 @@ export const DomainMilestoneModal: React.FC<DomainMilestoneModalProps> = ({
           </TouchableOpacity>
 
           {/* Title */}
-          <Text style={styles.title}>{domain} Milestones</Text>
+          <Text style={styles.title}>{t('domainMilestone.title', { domain })}</Text>
 
           {/* Subtitle with counts */}
           {/* {!loading && milestones && (
@@ -146,7 +149,7 @@ export const DomainMilestoneModal: React.FC<DomainMilestoneModalProps> = ({
             <View style={styles.languageNote}>
               <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
               <Text style={styles.languageNoteText}>
-                Grammar milestones (e.g. tense, plurals, articles) are based on English. They may not apply to all languages.
+                {t('domainMilestone.languageNote')}
               </Text>
             </View>
           )}
@@ -155,7 +158,7 @@ export const DomainMilestoneModal: React.FC<DomainMilestoneModalProps> = ({
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={COLORS.mainPurple} />
-              <Text style={styles.loadingText}>Loading milestones...</Text>
+              <Text style={styles.loadingText}>{t('domainMilestone.loading')}</Text>
             </View>
           ) : (
             <ScrollView
@@ -169,18 +172,22 @@ export const DomainMilestoneModal: React.FC<DomainMilestoneModalProps> = ({
               {profiling && (
                 <View style={styles.profilingSection}>
                   <Text style={styles.profilingStatus}>
-                    {childName || 'Your child'} is {profiling.developmental_status.toLowerCase()} in {domain} development.
+                    {t('domainMilestone.profilingStatus', {
+                      childName: childName || t('domainMilestone.defaultChildName'),
+                      status: profiling.developmental_status.toLowerCase(),
+                      domain,
+                    })}
                   </Text>
                 </View>
               )}
 
-              {renderSection('Achieved', achieved, 'ACHIEVED')}
-              {renderSection('Emerging', emerging, 'EMERGING')}
-              {renderSection('Not Yet Observed', notYet, 'NOT_YET')}
+              {renderSection(t('domainMilestone.achieved'), achieved, 'ACHIEVED')}
+              {renderSection(t('domainMilestone.emerging'), emerging, 'EMERGING')}
+              {renderSection(t('domainMilestone.notYetObserved'), notYet, 'NOT_YET')}
 
               {milestones && milestones.length === 0 && (
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptyText}>No milestones found for this domain.</Text>
+                  <Text style={styles.emptyText}>{t('domainMilestone.noMilestones')}</Text>
                 </View>
               )}
             </ScrollView>

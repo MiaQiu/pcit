@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -24,6 +25,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 export const ChildSnapshotIntroScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data } = useOnboarding();
+  const { t } = useTranslation();
   const userName = data.name || 'there';
   const childName = data.childName || 'your child';
   const insets = useSafeAreaInsets();
@@ -46,7 +48,7 @@ export const ChildSnapshotIntroScreen: React.FC = () => {
       {/* Text */}
       <View style={styles.bottomSection}>
         <Text style={styles.description}>
-          Hi {userName}, Thanks for sharing what brought you here. You are in the right place. We'll ask a few quick questions to better understand {childName}'s recent behavior and tailor support to you
+          {t('onboarding.childSnapshotIntro.description', { userName, childName })}
         </Text>
       </View>
 
@@ -59,14 +61,14 @@ export const ChildSnapshotIntroScreen: React.FC = () => {
             onPress={() => navigation.navigate('WacbQuestion1')}
             activeOpacity={0.85}
           >
-            <Text style={styles.buttonText}>Let's go  →</Text>
+            <Text style={styles.buttonText}>{t('onboarding.letsGo')}</Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity
           onPress={() => navigation.navigate('ChildBehaviorProfile', { locked: true })}
           activeOpacity={0.7}
         >
-          <Text style={styles.skipText}>Skip for Now</Text>
+          <Text style={styles.skipText}>{t('onboarding.skipForNow')}</Text>
         </TouchableOpacity>
       </View>
     </View>

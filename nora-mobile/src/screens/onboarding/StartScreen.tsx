@@ -17,10 +17,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { MaskedDinoImage } from '../../components/MaskedDinoImage';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const StartScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<OnboardingStackNavigationProp>();
 
   const handleGetStarted = () => {
@@ -49,10 +51,7 @@ export const StartScreen: React.FC = () => {
         <Text style={styles.title}>Nora</Text>
 
         {/* Subtitle */}
-        <Text style={styles.subtitle}>
-          5 Minutes a Day to a Calmer, {'\n'}
-          Happier Child.
-        </Text>
+        <Text style={styles.subtitle}>{t('start.subtitle')}</Text>
 
         {/* Spacer after title */}
         <View style={styles.spacer} />
@@ -63,7 +62,7 @@ export const StartScreen: React.FC = () => {
           onPress={handleGetStarted}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>Get Started</Text>
+          <Text style={styles.buttonText}>{t('start.getStarted')}</Text>
         </TouchableOpacity>
 
         {/* Login Button */}
@@ -72,15 +71,15 @@ export const StartScreen: React.FC = () => {
           onPress={handleLogin}
           activeOpacity={0.8}
         >
-          <Text style={styles.loginButtonText}>I already have an account</Text>
+          <Text style={styles.loginButtonText}>{t('start.alreadyHaveAccount')}</Text>
         </TouchableOpacity>
 
         {/* Terms and Privacy Policy */}
         <Text style={styles.termsText}>
-          By continuing, you agree to Nora's{'\n'}
-          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/terms')}>Terms of Service</Text>
-          {' '}and{' '}
-          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/privacy')}>Privacy Policy</Text>
+          {t('start.termsPrefix')}
+          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/terms')}>{t('start.termsOfService')}</Text>
+          {t('start.termsAnd')}
+          <Text style={styles.termsLink} onPress={() => Linking.openURL('https://hinora.co/privacy')}>{t('start.privacyPolicy')}</Text>
         </Text>
       </View>
     </SafeAreaView>

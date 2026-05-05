@@ -14,12 +14,14 @@ import {
   ActivityIndicator,
   Linking,
   Platform,
+  ActionSheetIOS,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import Purchases from 'react-native-purchases';
+import { useTranslation } from 'react-i18next';
 import { ProfileCircle } from '../components/ProfileCircle';
 import { useAuthService } from '../contexts/AppContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -28,6 +30,7 @@ import { RootStackNavigationProp } from '../navigation/types';
 import { FONTS, COLORS } from '../constants/assets';
 import type { SubscriptionPlan, SubscriptionStatus, RelationshipToChild } from '@nora/core';
 import amplitudeService from '../services/amplitudeService';
+import { changeLanguage } from '../i18n';
 
 interface UserProfile {
   name: string;
@@ -47,6 +50,7 @@ interface UserProfile {
 }
 
 export const ProfileScreen: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<RootStackNavigationProp>();
   const authService = useAuthService();
   const { checkSubscriptionStatus } = useSubscription();
@@ -125,7 +129,7 @@ export const ProfileScreen: React.FC = () => {
       });
     } catch (error) {
       console.error('Failed to load profile:', error);
-      Alert.alert('Error', 'Failed to load profile information');
+      Alert.alert(t('common.error'), t('profile.errorLoadProfile'));
     } finally {
       setLoading(false);
     }
@@ -137,10 +141,7 @@ export const ProfileScreen: React.FC = () => {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'Please allow access to your photos to change your profile picture.'
-        );
+        Alert.alert(t('profile.permissionRequiredTitle'), t('profile.permissionRequiredMessage'));
         return;
       }
 
@@ -157,7 +158,7 @@ export const ProfileScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Image picker error:', error);
-      Alert.alert('Error', 'Failed to pick image');
+      Alert.alert(t('common.error'), t('profile.errorPickImage'));
     }
   };
 
@@ -226,10 +227,10 @@ export const ProfileScreen: React.FC = () => {
         profileImageUrl: data.user.profileImageUrl
       } : null);
 
-      Alert.alert('Success', 'Profile image updated successfully');
+      Alert.alert(t('common.success'), t('profile.successImageUpdated'));
     } catch (error: any) {
       console.error('Upload error:', error);
-      Alert.alert('Error', error.message || 'Failed to upload image');
+      Alert.alert(t('common.error'), error.message || t('profile.errorUploadImage'));
     } finally {
       setUploadingImage(false);
     }
@@ -237,18 +238,11 @@ export const ProfileScreen: React.FC = () => {
 
   const handleLogout = () => {
     Alert.alert(
-      'Log Out',
-      'Are you sure you want to log out?',
+      t('profile.logOutConfirmTitle'),
+      t('profile.logOutConfirmMessage'),
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Log Out',
-          style: 'destructive',
-          onPress: performLogout,
-        },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('profile.logOutConfirmButton'), style: 'destructive', onPress: performLogout },
       ]
     );
   };
@@ -266,7 +260,7 @@ export const ProfileScreen: React.FC = () => {
       });
     } catch (error) {
       console.error('Logout error:', error);
-      Alert.alert('Error', 'Failed to log out. Please try again.');
+      Alert.alert(t('common.error'), t('profile.errorLogOut'));
     } finally {
       setLoggingOut(false);
     }
@@ -274,18 +268,11 @@ export const ProfileScreen: React.FC = () => {
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      'Delete Account',
-      'This will permanently delete your account and all personal information associated with it. You will lose access to your play session history and feedback reports. This action cannot be undone.',
+      t('profile.deleteConfirmTitle'),
+      t('profile.deleteConfirmMessage'),
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete Account',
-          style: 'destructive',
-          onPress: performDeleteAccount,
-        },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('profile.deleteConfirmButton'), style: 'destructive', onPress: performDeleteAccount },
       ]
     );
   };
@@ -303,10 +290,7 @@ export const ProfileScreen: React.FC = () => {
       });
     } catch (error: any) {
       console.error('Delete account error:', error);
-      Alert.alert(
-        'Error',
-        error.message || 'Failed to delete account. Please try again or contact support.'
-      );
+      Alert.alert(t('common.error'), error.message || t('profile.errorDeleteAccount'));
     } finally {
       setDeletingAccount(false);
     }
@@ -326,12 +310,12 @@ export const ProfileScreen: React.FC = () => {
         if (supported) {
           await Linking.openURL(url);
         } else {
-          Alert.alert('Error', 'Could not open subscription management');
+          Alert.alert(t('common.error'), t('profile.errorManageSubscription'));
         }
       }
     } catch (error) {
       console.error('Failed to open subscription management:', error);
-      Alert.alert('Error', 'Could not open subscription management. Please try again.');
+      Alert.alert(t('common.error'), t('profile.errorManageSubscriptionRetry'));
     }
   };
 
@@ -360,39 +344,20 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const getIssueLabel = (issue?: string | string[]) => {
-    const issueLabels: Record<string, string> = {
-      behavior_challenges: 'Behavior Challenges (Tantrums, Arguing)',
-      big_emotions: 'Handling big emotions',
-      frustration_tolerance: 'Low frustration tolerance',
-      new_baby_in_the_house: 'New Baby in the Home',
-      moving_house: 'Moving House & School Changes',
-      parental_divorce: 'Navigating Parental Divorces',
-      social: 'Building Social-Emotional Skills',
-      attention_focus: 'Attention and Focus Issues',
-      adhd: 'ADHD / Attention & Hyperactivity',
-      parenting_strategies: 'Learning More Effective Parenting Strategies',
-      defiance: 'Defiance',
-      aggression: 'Aggression',
-      emotional: 'Emotional Regulation',
-      routine: 'Routine & Structure',
-      general: 'General Behavior',
-    };
+    const getLabel = (key: string) => t(`profile.issueTags.${key}`, { defaultValue: key });
 
-    if (!issue) return 'Not specified';
+    if (!issue) return t('profile.issueNotSpecified');
 
     if (Array.isArray(issue)) {
-      // Return comma-separated list of labels
-      return issue.map(i => issueLabels[i] || i).join(', ');
+      return issue.map(i => getLabel(i)).join(', ');
     }
 
-    return issueLabels[issue] || issue;
+    return getLabel(issue);
   };
 
-  // Format date in local timezone (avoids potential Hermes engine quirks with toLocaleDateString)
   const formatLocalDate = (date: Date): string => {
-    const months = ['January', 'February', 'March', 'April', 'May', 'June',
-                    'July', 'August', 'September', 'October', 'November', 'December'];
-    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+    const month = t(`months.${date.getMonth()}`);
+    return `${month} ${date.getDate()}, ${date.getFullYear()}`;
   };
 
   const getSubscriptionInfo = () => {
@@ -402,9 +367,9 @@ export const ProfileScreen: React.FC = () => {
       const { isActive, expirationDate, willRenew, periodType } = rcSubscription;
 
       // Determine plan name
-      let planName = 'Free';
+      let planName = t('profile.planNames.free');
       if (isActive) {
-        planName = periodType === 'TRIAL' ? 'Premium Trial' : 'Premium';
+        planName = periodType === 'TRIAL' ? t('profile.planNames.premiumTrial') : t('profile.planNames.premium');
       }
 
       // Calculate status
@@ -420,17 +385,17 @@ export const ProfileScreen: React.FC = () => {
       const formattedDate = expirationDate ? formatLocalDate(expirationDate) : null;
 
       if (!isActive) {
-        statusText = expirationDate ? 'Subscription expired' : 'No active subscription';
+        statusText = expirationDate ? t('profile.subscriptionStatus.subscriptionExpired') : t('profile.subscriptionStatus.noActiveSubscription');
       } else if (!willRenew && formattedDate) {
         statusText = periodType === 'TRIAL'
-          ? `Trial ends ${formattedDate}`
-          : `Cancelled, ends ${formattedDate}`;
+          ? t('profile.subscriptionStatus.trialEnds', { date: formattedDate })
+          : t('profile.subscriptionStatus.cancelledEnds', { date: formattedDate });
       } else if (formattedDate) {
         statusText = periodType === 'TRIAL'
-          ? `Trial ends ${formattedDate}`
-          : `Renews ${formattedDate}`;
+          ? t('profile.subscriptionStatus.trialEnds', { date: formattedDate })
+          : t('profile.subscriptionStatus.renews', { date: formattedDate });
       } else {
-        statusText = 'Active';
+        statusText = t('profile.subscriptionStatus.active');
       }
 
       return { planName, statusText, daysRemaining: 0, status };
@@ -447,35 +412,61 @@ export const ProfileScreen: React.FC = () => {
       endDate = new Date(profile.subscriptionEndDate);
     }
 
-    const planName = plan === 'TRIAL' ? 'Premium Trial' : plan === 'PREMIUM' ? 'Premium' : 'Free';
+    const planName = plan === 'TRIAL' ? t('profile.planNames.premiumTrial') : plan === 'PREMIUM' ? t('profile.planNames.premium') : t('profile.planNames.free');
     let statusText = '';
     const formattedDate = endDate && !isNaN(endDate.getTime()) ? formatLocalDate(endDate) : null;
 
     if (status === 'INACTIVE') {
-      statusText = 'No active subscription';
+      statusText = t('profile.subscriptionStatus.noActiveSubscription');
     } else if (status === 'EXPIRED') {
-      statusText = 'Subscription expired';
+      statusText = t('profile.subscriptionStatus.subscriptionExpired');
     } else if (status === 'CANCELLED') {
-      statusText = formattedDate ? `Cancelled, ends ${formattedDate}` : 'Cancelled';
+      statusText = formattedDate ? t('profile.subscriptionStatus.cancelledEnds', { date: formattedDate }) : t('profile.subscriptionStatus.cancelled');
     } else if (status === 'ACTIVE') {
       if (plan === 'TRIAL' && formattedDate) {
-        statusText = `Trial ends ${formattedDate}`;
+        statusText = t('profile.subscriptionStatus.trialEnds', { date: formattedDate });
       } else if (formattedDate) {
-        statusText = `Renews ${formattedDate}`;
+        statusText = t('profile.subscriptionStatus.renews', { date: formattedDate });
       } else {
-        statusText = 'Active';
+        statusText = t('profile.subscriptionStatus.active');
       }
     }
 
     return { planName, statusText, daysRemaining: 0, status };
   };
 
+  const handleLanguagePress = () => {
+    const currentLang = i18n.language;
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [t('common.cancel'), t('languagePicker.english'), t('languagePicker.traditionalChinese')],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) changeLanguage('en');
+          else if (buttonIndex === 2) changeLanguage('zh-TW');
+        }
+      );
+    } else {
+      Alert.alert(t('languagePicker.title'), undefined, [
+        { text: t('languagePicker.english'), onPress: () => changeLanguage('en') },
+        { text: t('languagePicker.traditionalChinese'), onPress: () => changeLanguage('zh-TW') },
+        { text: t('common.cancel'), style: 'cancel' },
+      ]);
+    }
+  };
+
+  const currentLanguageLabel = i18n.language === 'zh-TW'
+    ? t('languagePicker.traditionalChinese')
+    : t('languagePicker.english');
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8C49D5" />
-          <Text style={styles.loadingText}>Loading profile...</Text>
+          <Text style={styles.loadingText}>{t('profile.loadingProfile')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -491,7 +482,7 @@ export const ProfileScreen: React.FC = () => {
         >
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>{t('profile.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -520,7 +511,7 @@ export const ProfileScreen: React.FC = () => {
 
         {/* Account Information Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text style={styles.sectionTitle}>{t('profile.account')}</Text>
 
           <View style={styles.card}>
             {/* <View style={styles.infoRow}>
@@ -540,7 +531,7 @@ export const ProfileScreen: React.FC = () => {
                 <Ionicons name="mail-outline" size={20} color="#8C49D5" />
               </View>
               <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Email</Text>
+                <Text style={styles.infoLabel}>{t('profile.emailLabel')}</Text>
                 <Text style={styles.infoValue}>{profile?.email}</Text>
               </View>
             </View>
@@ -552,7 +543,7 @@ export const ProfileScreen: React.FC = () => {
                 <Ionicons name="happy-outline" size={20} color="#8C49D5" />
               </View>
               <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Child's Name</Text>
+                <Text style={styles.infoLabel}>{t('profile.childNameLabel')}</Text>
                 <Text style={styles.infoValue}>{profile?.childName}</Text>
               </View>
             </View>
@@ -565,8 +556,8 @@ export const ProfileScreen: React.FC = () => {
                     <Ionicons name="calendar-outline" size={20} color="#8C49D5" />
                   </View>
                   <View style={styles.infoContent}>
-                    <Text style={styles.infoLabel}>Child's Age</Text>
-                    <Text style={styles.infoValue}>{getChildAge()} years old</Text>
+                    <Text style={styles.infoLabel}>{t('profile.childAgeLabel')}</Text>
+                    <Text style={styles.infoValue}>{t('profile.childAgeValue', { age: getChildAge() })}</Text>
                   </View>
                 </View>
               </>
@@ -580,7 +571,7 @@ export const ProfileScreen: React.FC = () => {
                     <Ionicons name="heart-outline" size={20} color="#8C49D5" />
                   </View>
                   <View style={styles.infoContent}>
-                    <Text style={styles.infoLabel}>Primary Focus Area</Text>
+                    <Text style={styles.infoLabel}>{t('profile.primaryFocusLabel')}</Text>
                     <Text style={styles.infoValue}>{getIssueLabel(profile.issue)}</Text>
                   </View>
                 </View>
@@ -591,7 +582,7 @@ export const ProfileScreen: React.FC = () => {
 
         {/* Subscription Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Subscription</Text>
+          <Text style={styles.sectionTitle}>{t('profile.subscriptionSection')}</Text>
 
           <TouchableOpacity style={styles.card} activeOpacity={0.7}>
             <View style={styles.infoRow}>
@@ -600,9 +591,9 @@ export const ProfileScreen: React.FC = () => {
               </View>
               <View style={styles.infoContentFlex}>
                 <View>
-                  <Text style={styles.infoLabel}>Current Plan</Text>
+                  <Text style={styles.infoLabel}>{t('profile.currentPlan')}</Text>
                   <Text style={styles.infoValue}>
-                    {getSubscriptionInfo()?.planName || 'Premium Trial'}
+                    {getSubscriptionInfo()?.planName || t('profile.planNames.premiumTrial')}
                   </Text>
                   {getSubscriptionInfo()?.statusText && (
                     <Text style={[
@@ -625,13 +616,13 @@ export const ProfileScreen: React.FC = () => {
             activeOpacity={0.7}
             onPress={handleManageSubscription}
           >
-            <Text style={styles.linkButtonText}>Manage Subscription</Text>
+            <Text style={styles.linkButtonText}>{t('profile.manageSubscription')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Settings Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Settings</Text>
+          <Text style={styles.sectionTitle}>{t('profile.settings')}</Text>
 
           <View style={styles.card}>
             <TouchableOpacity
@@ -641,7 +632,7 @@ export const ProfileScreen: React.FC = () => {
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="gift-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Refer a Friend</Text>
+                <Text style={styles.settingText}>{t('profile.referFriend')}</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -655,26 +646,29 @@ export const ProfileScreen: React.FC = () => {
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="notifications-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Notifications</Text>
+                <Text style={styles.settingText}>{t('profile.notifications')}</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
 
             <View style={styles.divider} />
 
-            {/* <TouchableOpacity
+            <TouchableOpacity
               style={styles.settingRow}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate('PrivacySecurity')}
+              onPress={handleLanguagePress}
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="lock-closed-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Privacy & Security</Text>
+                <Ionicons name="language-outline" size={22} color="#1F2937" />
+                <Text style={styles.settingText}>{t('profile.language')}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={{ fontFamily: FONTS.regular, fontSize: 14, color: '#9CA3AF' }}>{currentLanguageLabel}</Text>
+                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              </View>
             </TouchableOpacity>
 
-            <View style={styles.divider} /> */}
+            <View style={styles.divider} />
 
             <TouchableOpacity
               style={styles.settingRow}
@@ -683,7 +677,7 @@ export const ProfileScreen: React.FC = () => {
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="help-circle-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Support</Text>
+                <Text style={styles.settingText}>{t('profile.support')}</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -697,7 +691,7 @@ export const ProfileScreen: React.FC = () => {
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="document-text-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Terms and Conditions</Text>
+                <Text style={styles.settingText}>{t('profile.termsAndConditions')}</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -711,7 +705,7 @@ export const ProfileScreen: React.FC = () => {
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="shield-checkmark-outline" size={22} color="#1F2937" />
-                <Text style={styles.settingText}>Privacy Policy</Text>
+                <Text style={styles.settingText}>{t('profile.privacyPolicy')}</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -730,7 +724,7 @@ export const ProfileScreen: React.FC = () => {
           ) : (
             <>
               <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-              <Text style={styles.logoutText}>Log Out</Text>
+              <Text style={styles.logoutText}>{t('profile.logOut')}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -745,7 +739,7 @@ export const ProfileScreen: React.FC = () => {
           {deletingAccount ? (
             <ActivityIndicator color="#9CA3AF" />
           ) : (
-            <Text style={styles.deleteAccountText}>Delete Account</Text>
+            <Text style={styles.deleteAccountText}>{t('profile.deleteAccount')}</Text>
           )}
         </TouchableOpacity>
 

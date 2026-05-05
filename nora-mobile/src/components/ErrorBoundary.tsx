@@ -7,6 +7,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { FONTS } from '../constants/assets';
+import i18n from '../i18n';
 
 interface Props {
   children: ReactNode;
@@ -62,9 +63,9 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <View style={styles.container}>
-          <Text style={styles.title}>Something went wrong</Text>
+          <Text style={styles.title}>{i18n.t('errorBoundary.title')}</Text>
           <Text style={styles.message}>
-            {this.state.error?.toString() || 'An unexpected error occurred'}
+            {this.state.error?.toString() || i18n.t('errorBoundary.defaultMessage')}
           </Text>
           {__DEV__ && this.state.errorInfo && (
             <Text style={styles.stack}>
@@ -72,7 +73,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </Text>
           )}
           <TouchableOpacity style={styles.button} onPress={this.handleReset}>
-            <Text style={styles.buttonText}>Try Again</Text>
+            <Text style={styles.buttonText}>{i18n.t('errorBoundary.tryAgain')}</Text>
           </TouchableOpacity>
         </View>
       );

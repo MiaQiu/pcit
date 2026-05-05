@@ -7,6 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import type { MilestoneHistoryResponse } from '@nora/core';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -20,6 +21,7 @@ const TOTAL_COLOR = '#8C49D5'; // Purple (achieved + emerging)
 const GRID_COLOR = '#E5E7EB';
 
 export const MilestoneTimeline: React.FC<MilestoneTimelineProps> = ({ data }) => {
+  const { t } = useTranslation();
   const chartWidth = SCREEN_WIDTH - 48 - 40; // padding + margins
   const chartHeight = 160;
   const leftPadding = 10;
@@ -29,9 +31,9 @@ export const MilestoneTimeline: React.FC<MilestoneTimelineProps> = ({ data }) =>
   if (history.length === 0) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Milestone Progress</Text>
+        <Text style={styles.title}>{t('milestoneTimeline.title')}</Text>
         <View style={styles.noDataContainer}>
-          <Text style={styles.noDataText}>No milestone history yet</Text>
+          <Text style={styles.noDataText}>{t('milestoneTimeline.noData')}</Text>
         </View>
       </View>
     );
@@ -81,7 +83,7 @@ export const MilestoneTimeline: React.FC<MilestoneTimelineProps> = ({ data }) =>
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Milestone Progress</Text>
+      <Text style={styles.title}>{t('milestoneTimeline.title')}</Text>
       <View style={styles.chartWrapper}>
         {/* Y-axis labels */}
         <View style={styles.yAxisLabels}>
@@ -182,11 +184,11 @@ export const MilestoneTimeline: React.FC<MilestoneTimelineProps> = ({ data }) =>
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendLine, { backgroundColor: ACHIEVED_COLOR }]} />
-          <Text style={styles.legendText}>Achieved</Text>
+          <Text style={styles.legendText}>{t('milestoneTimeline.legendAchieved')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendLine, { backgroundColor: TOTAL_COLOR }]} />
-          <Text style={styles.legendText}>Total (incl. emerging)</Text>
+          <Text style={styles.legendText}>{t('milestoneTimeline.legendTotal')}</Text>
         </View>
       </View>
     </View>

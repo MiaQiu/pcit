@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { DemoTemplate } from './DemoTemplate';
 
@@ -28,30 +29,6 @@ interface AvoidItem {
   scoreColor: string;
 }
 
-// ── Data ───────────────────────────────────────────────────────────────────
-const PEN_SKILLS: PenSkill[] = [
-  {
-    letter: 'P', rest: 'raise (Labeled)',
-    score: '6/10', label: 'Good',
-    progress: 0.6, barColor: '#6B3FA0', scoreColor: '#6B3FA0',
-  },
-  {
-    letter: 'E', rest: 'cho',
-    score: '3/10', label: 'Pay attention',
-    progress: 0.3, barColor: '#7B2020', scoreColor: '#7B2020',
-  },
-  {
-    letter: 'N', rest: 'arrate',
-    score: '15/10', label: 'Excellent',
-    progress: 1, barColor: '#6B3FA0', scoreColor: '#6B3FA0',
-  },
-];
-
-const AVOID_ITEMS: AvoidItem[] = [
-  { name: 'Questions',  score: '1', label: 'Pay attention', dotColor: '#7B2020', scoreColor: '#7B2020' },
-  { name: 'Commands',   score: '1', label: 'Pay attention', dotColor: '#7B2020', scoreColor: '#7B2020' },
-  { name: 'Criticism',  score: '0', label: 'Excellent',     dotColor: null,      scoreColor: '#5B4FCF' },
-];
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 const PenRow: React.FC<PenSkill> = ({ letter, rest, score, label, progress, barColor, scoreColor }) => (
@@ -86,10 +63,23 @@ const AvoidRow: React.FC<AvoidItem> = ({ name, score, label, dotColor, scoreColo
 // ── Screen ─────────────────────────────────────────────────────────────────
 export const Demo2BScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const { t } = useTranslation();
+
+  const PEN_SKILLS: PenSkill[] = [
+    { letter: 'P', rest: t('onboarding.demo2B.praiseLabeled'), score: '6/10', label: t('onboarding.demo2B.labelGood'), progress: 0.6, barColor: '#6B3FA0', scoreColor: '#6B3FA0' },
+    { letter: 'E', rest: t('onboarding.demo2B.echo'), score: '3/10', label: t('onboarding.demo2B.labelPayAttention'), progress: 0.3, barColor: '#7B2020', scoreColor: '#7B2020' },
+    { letter: 'N', rest: t('onboarding.demo2B.narrate'), score: '15/10', label: t('onboarding.demo2B.labelExcellent'), progress: 1, barColor: '#6B3FA0', scoreColor: '#6B3FA0' },
+  ];
+
+  const AVOID_ITEMS: AvoidItem[] = [
+    { name: t('onboarding.demo2B.questions'), score: '1', label: t('onboarding.demo2B.labelPayAttention'), dotColor: '#7B2020', scoreColor: '#7B2020' },
+    { name: t('onboarding.demo2B.commands'), score: '1', label: t('onboarding.demo2B.labelPayAttention'), dotColor: '#7B2020', scoreColor: '#7B2020' },
+    { name: t('onboarding.demo2B.criticism'), score: '0', label: t('onboarding.demo2B.labelExcellent'), dotColor: null, scoreColor: '#5B4FCF' },
+  ];
 
   return (
     <DemoTemplate
-      text="Nora helps you understand your parenting style and patterns."
+      text={t('onboarding.demo2B.text')}
       onBack={() => navigation.goBack()}
       onNext={() => navigation.navigate('Demo3')}
     >
@@ -101,12 +91,12 @@ export const Demo2BScreen: React.FC = () => {
           style={styles.gradientBorder}
         >
           <View style={styles.cardInner}>
-            <Text style={styles.sectionTitle}>Your PEN Skills</Text>
+            <Text style={styles.sectionTitle}>{t('onboarding.demo2B.penSkills')}</Text>
             {PEN_SKILLS.map((skill) => (
               <PenRow key={skill.letter} {...skill} />
             ))}
             <View style={styles.divider} />
-            <Text style={styles.sectionTitle}>Areas to Avoid</Text>
+            <Text style={styles.sectionTitle}>{t('onboarding.demo2B.areasToAvoid')}</Text>
             {AVOID_ITEMS.map((item) => (
               <AvoidRow key={item.name} {...item} />
             ))}

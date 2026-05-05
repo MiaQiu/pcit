@@ -30,6 +30,7 @@ import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { toSingaporeDateString, getTodaySingapore, getYesterdaySingapore } from '../utils/timezone';
 import amplitudeService from '../services/amplitudeService';
 import { DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling } from '@nora/core';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -65,6 +66,7 @@ const CalendarView: React.FC<{
   onReportPress: (recordingId: string) => void;
   onWeeklyReportPress: (reportId: string) => void;
 }> = ({ recordingDates, lessonCompletionDates, recordings, weeklyReports, onReportPress, onWeeklyReportPress }) => {
+  const { t } = useTranslation();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const autoSelectedRef = useRef(false);
@@ -160,7 +162,7 @@ const CalendarView: React.FC<{
       ) || null
     : null;
 
-  const formatMode = (mode: string) => mode === 'CDI' ? 'Play Time' : 'Discipline';
+  const formatMode = (mode: string) => mode === 'CDI' ? t('progress.playTime') : t('progress.discipline');
 
   const formatSelectedDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -169,8 +171,8 @@ const CalendarView: React.FC<{
 
   return (
     <View>
-      <Text style={styles.calendarTitle}>Past Reports</Text>
-      <Text style={styles.calendarSubtitle}>Weekly reports are generated every Monday 5:30PM.</Text>
+      <Text style={styles.calendarTitle}>{t('progress.pastReports')}</Text>
+      <Text style={styles.calendarSubtitle}>{t('progress.weeklyReportSchedule')}</Text>
       <View style={styles.calendarContainer}>
         {/* Month navigation */}
         <View style={styles.monthNavigation}>
@@ -185,8 +187,8 @@ const CalendarView: React.FC<{
 
         {/* Day headers */}
         <View style={styles.dayHeaderRow}>
-          {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day) => (
-            <Text key={day} style={styles.dayHeader}>
+          {[t('progress.mon'), t('progress.tue'), t('progress.wed'), t('progress.thu'), t('progress.fri'), t('progress.sat'), t('progress.sun')].map((day, index) => (
+            <Text key={index} style={styles.dayHeader}>
               {day}
             </Text>
           ))}
@@ -274,7 +276,7 @@ const CalendarView: React.FC<{
                   <View style={styles.dayReportDot} />
                   <View>
                     <Text style={styles.dayReportItemTitle}>{formatMode(recording.mode)}</Text>
-                    <Text style={styles.dayReportItemSub}>Session Report</Text>
+                    <Text style={styles.dayReportItemSub}>{t('progress.sessionReport')}</Text>
                   </View>
                 </View>
                 <View style={styles.dayReportItemRight}>
@@ -297,7 +299,7 @@ const CalendarView: React.FC<{
                   <View style={[styles.dayReportDot, styles.dayReportDotWeekly]} />
                   <View>
                     <Text style={styles.dayReportItemTitle}>
-                      {'Weekly Report'}
+                      {t('progress.weeklyReport')}
                     </Text>
                     {/* <Text style={styles.dayReportItemSub}>Weekly Report</Text> */}
                   </View>
@@ -317,6 +319,7 @@ interface ScoreChartProps {
 }
 
 const ScoreChart: React.FC<ScoreChartProps> = ({ data }) => {
+  const { t } = useTranslation();
   const chartWidth = SCREEN_WIDTH - 48 - 40; // padding + margins
   const chartHeight = 180;
   const maxDataPoints = 10; // Always show 10 points on x-axis
@@ -326,9 +329,9 @@ const ScoreChart: React.FC<ScoreChartProps> = ({ data }) => {
   if (data.length === 0) {
     return (
       <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>Overall Nora Score</Text>
+        <Text style={styles.chartTitle}>{t('progress.overallNoraScore')}</Text>
         <View style={styles.noDataContainer}>
-          <Text style={styles.noDataText}>No data yet</Text>
+          <Text style={styles.noDataText}>{t('progress.noDataYet')}</Text>
         </View>
       </View>
     );
@@ -352,7 +355,7 @@ const ScoreChart: React.FC<ScoreChartProps> = ({ data }) => {
 
   return (
     <View style={styles.chartContainer}>
-      <Text style={styles.chartTitle}>Overall Nora Score</Text>
+      <Text style={styles.chartTitle}>{t('progress.overallNoraScore')}</Text>
       <View style={styles.chartWrapper}>
         {/* Y-axis labels */}
         <View style={styles.yAxisLabels}>
@@ -441,6 +444,7 @@ const ScoreChart: React.FC<ScoreChartProps> = ({ data }) => {
 export const ProgressScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<ProgressScreenRouteProp>();
+  const { t } = useTranslation();
   const recordingService = useRecordingService();
   const lessonService = useLessonService();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -698,7 +702,7 @@ export const ProgressScreen: React.FC = () => {
       });
 
       const date = new Date(dateKey);
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthNames = Array.from({ length: 12 }, (_, i) => t(`months.short${i}`));
 
       return {
         date: dateKey,
@@ -782,7 +786,7 @@ export const ProgressScreen: React.FC = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#8C49D5" />
         }
       >
-        <Text style={styles.title}>Reports</Text>
+        <Text style={styles.title}>{t('progress.reportsTitle')}</Text>
 
         {/* Header with Dragon Icon and Text
         <View style={styles.headerSection}>
@@ -807,7 +811,7 @@ export const ProgressScreen: React.FC = () => {
             <View style={styles.tealSection}>
               <View style={styles.yesterdayCard}>
                 <View style={styles.yesterdayHeader}>
-                  <Text style={styles.yesterdayTitle}>Last Session Deposits</Text>
+                  <Text style={styles.yesterdayTitle}>{t('progress.lastSessionDeposits')}</Text>
                   <Text style={styles.yesterdayScoreText}>+{lastSessionScore.score}/{100}</Text>
                 </View>
                 <View style={styles.progressTrack}>
@@ -817,7 +821,7 @@ export const ProgressScreen: React.FC = () => {
                   onPress={() => navigation.navigate('Report', { recordingId: lastSessionScore.recordingId })}
                   style={styles.linkContainer}
                 >
-                  <Text style={styles.linkText}>Read report</Text>
+                  <Text style={styles.linkText}>{t('progress.readReport')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -839,13 +843,13 @@ export const ProgressScreen: React.FC = () => {
           }}
         />
 
-        <Text style={styles.title}>Progress</Text>
+        <Text style={styles.title}>{t('progress.progressTitle')}</Text>
 
         {/* Stats cards */}
         <View style={styles.statsRow}>
-          <StatCard value={stats.lessonsCompleted} label="Lessons completed" />
-          <StatCard value={stats.playsessionsRecorded} label="Play sessions" />
-          <StatCard value={stats.currentStreak} label="Current Streak" />
+          <StatCard value={stats.lessonsCompleted} label={t('progress.lessonsCompleted')} />
+          <StatCard value={stats.playsessionsRecorded} label={t('progress.playSessions')} />
+          <StatCard value={stats.currentStreak} label={t('progress.currentStreak')} />
         </View>
 
         {/* Score chart */}

@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { OnboardingLayout } from '../../components/OnboardingLayout';
@@ -16,6 +17,7 @@ import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 export const ChildNameScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
+  const { t } = useTranslation();
   const [childName, setChildName] = useState(data.childName);
 
   const handleContinue = () => {
@@ -40,7 +42,7 @@ export const ChildNameScreen: React.FC = () => {
       <OnboardingProgressHeader phase={1} step={3} totalSteps={6} />
 
       <OnboardingTextInput
-        title="What's your child's name?"
+        title={t('onboarding.childName.title')}
         value={childName}
         onChangeText={setChildName}
         onSubmitEditing={handleContinue}

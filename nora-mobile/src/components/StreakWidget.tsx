@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface StreakWidgetProps {
   streak: number;
@@ -13,14 +14,17 @@ interface StreakWidgetProps {
   dragonImageUrl?: string;
 }
 
-const DAYS = ['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su'];
-
 export const StreakWidget: React.FC<StreakWidgetProps> = ({
   streak,
   completedDays,
   dragonImageUrl,
 }) => {
-  // Calculate today's day index (0 = Monday, 6 = Sunday)
+  const { t } = useTranslation();
+  const DAYS = [
+    t('streak.mon'), t('streak.tue'), t('streak.wed'), t('streak.thu'),
+    t('streak.fri'), t('streak.sat'), t('streak.sun'),
+  ];
+
   const getTodayIndex = () => {
     const now = new Date();
     const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
@@ -35,7 +39,7 @@ export const StreakWidget: React.FC<StreakWidgetProps> = ({
       {/* Streak Info */}
       <View style={styles.streakContainer}>
         <View style={styles.header}>
-          <Text style={styles.headerText}>Streak</Text>
+          <Text style={styles.headerText}>{t('streak.title')}</Text>
         </View>
 
         {/* Days Grid */}

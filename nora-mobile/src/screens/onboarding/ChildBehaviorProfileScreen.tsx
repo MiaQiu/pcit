@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp, OnboardingStackParamList } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { COLORS, FONTS } from '../../constants/assets';
@@ -29,51 +30,11 @@ interface CategoryInfo {
   whatToExpect: string;
 }
 
-const CATEGORY_INFO: Record<BehaviorCategory, CategoryInfo> = {
-  stable: {
-    barLabel: 'ON TRACK',
-    snapshotTitle: 'On Track',
-    color: '#22C55E',
-    whatThisMeans:
-      "Your child is generally managing emotions, attention, and behavior in an age-appropriate way.",
-    startingPlan:
-      "Spend 5 minutes a day in Emotional Massage — a simple child-led play where you follow your child's lead and stay fully present.\n\nA small moment that strengthens connection and supports positive behavior.",
-    whatToExpect:
-      "You may begin to notice subtle shifts within a few weeks.\nOver time, you'll also learn how to support emotions and set gentle boundaries.",
-  },
-  mild: {
-    barLabel: 'SOME SUPPORT',
-    snapshotTitle: 'Needs Some Support',
-    color: '#EAB308',
-    whatThisMeans:
-      "Your child may sometimes struggle with listening, managing emotions, or staying focused in daily situations.\nSmall challenges are common at this age. With the right support, they can improve quickly.",
-    startingPlan:
-      "Spend 5 minutes a day in Emotional Massage — a simple child-led play where you follow your child's lead and strengthen your connection — and helps reduce behavior struggles over time.",
-    whatToExpect:
-      "Many families notice changes within 2–3 weeks.\nFrom there, we'll guide you through emotions and boundaries.",
-  },
-  medium: {
-    barLabel: 'MORE SUPPORT',
-    snapshotTitle: 'Needs More Support',
-    color: '#F97316',
-    whatThisMeans:
-      "Your child may frequently have difficulty with emotions, focus, or cooperation during everyday moments.\nSome moments may feel more challenging right now. With consistent support, meaningful progress is very possible.",
-    startingPlan:
-      "Begin with 5 minutes a day of Emotional Massage — following your child's lead in a calm, focused way.\n\nConnection is where change begins — and supports better behavior over time.",
-    whatToExpect:
-      "With consistency, progress often starts within a few weeks.\nYou'll be guided through emotions, boundaries, and everyday situations.",
-  },
-  high: {
-    barLabel: 'EXTRA SUPPORT',
-    snapshotTitle: 'Needs Extra Support',
-    color: '#EF4444',
-    whatThisMeans:
-      "Your child may be having difficulty managing emotions or staying focused in daily situations.\nYou're not alone — many families go through this. With the right support, positive change can happen.",
-    startingPlan:
-      "Begin with 5 minutes a day of Emotional Massage — gently following your child's lead and staying present with them.\n\nThis creates a safe foundation for change and supports behavior over time.",
-    whatToExpect:
-      "Small changes can begin within a few weeks.\nWe'll guide you closely through emotions, boundaries, and daily challenges.",
-  },
+const CATEGORY_COLORS: Record<BehaviorCategory, string> = {
+  stable: '#22C55E',
+  mild: '#EAB308',
+  medium: '#F97316',
+  high: '#EF4444',
 };
 
 // Scale constants (0–63, matching server scoring)
@@ -108,15 +69,9 @@ function computeTotalScore(wacb?: {
   );
 }
 
-const BAR_SEGMENTS: { key: BehaviorCategory; label: string; mid: number }[] = [
-  { key: 'stable',  label: 'STABLE',  mid: 12.5 },
-  { key: 'mild',    label: 'MILD',    mid: 30   },
-  { key: 'medium',  label: 'MEDIUM',  mid: 40   },
-  { key: 'high',    label: 'HIGH',    mid: 54   },
-];
-
 export const ChildBehaviorProfileScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const { t } = useTranslation();
   const route = useRoute<RouteProp<OnboardingStackParamList, 'ChildBehaviorProfile'>>();
   const locked = route.params?.locked ?? false;
   const { data } = useOnboarding();
@@ -124,7 +79,20 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
   const childName = data.childName || 'Your child';
   const totalScore = useMemo(() => computeTotalScore(data.wacb), [data.wacb]);
   const category = getCategory(totalScore);
-  const info = CATEGORY_INFO[category];
+  const info = {
+    color: CATEGORY_COLORS[category],
+    barLabel: t(`onboarding.childBehaviorProfile.barLabels.${category}`),
+    snapshotTitle: t(`onboarding.childBehaviorProfile.snapshotTitles.${category}`),
+    whatThisMeans: t(`onboarding.childBehaviorProfile.categories.${category}.whatThisMeans`),
+    startingPlan: t(`onboarding.childBehaviorProfile.categories.${category}.startingPlan`),
+    whatToExpect: t(`onboarding.childBehaviorProfile.categories.${category}.whatToExpect`),
+  };
+  const BAR_SEGMENTS: { key: BehaviorCategory; label: string; mid: number }[] = [
+    { key: 'stable', label: t('onboarding.childBehaviorProfile.barSegments.stable'), mid: 12.5 },
+    { key: 'mild',   label: t('onboarding.childBehaviorProfile.barSegments.mild'),   mid: 30   },
+    { key: 'medium', label: t('onboarding.childBehaviorProfile.barSegments.medium'), mid: 40   },
+    { key: 'high',   label: t('onboarding.childBehaviorProfile.barSegments.high'),   mid: 54   },
+  ];
 
   const markerPosition = Math.max(0, Math.min(1, (totalScore - SCALE_MIN) / SCALE_RANGE));
   const [nameLabelWidth, setNameLabelWidth] = useState(0);
@@ -147,7 +115,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
           </View>
           <View style={styles.speechBubble}>
             <Text style={styles.speechText}>
-              {`Nora has generated the behavior profile for ${childName} and personalized plan for you.`}
+              {t('onboarding.childBehaviorProfile.speechBubble', { childName })}
             </Text>
             <View style={styles.bubbleTail} />
           </View>
@@ -163,14 +131,14 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
             >
               <Text style={styles.lockIcon}>🔒</Text>
               <Text style={styles.lockText}>
-                To unlock the behavior profile insights, you can click here to answer those behavior questions for us to personalize the plan
+                {t('onboarding.childBehaviorProfile.lockText')}
               </Text>
             </TouchableOpacity>
           )}
 
           {/* Header */}
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>{childName}'s Behavior Profile Snapshot</Text>
+            <Text style={styles.cardTitle}>{t('onboarding.childBehaviorProfile.cardTitle', { childName })}</Text>
             <View style={styles.scoreChip}>
               <View style={[styles.scoreDot, { backgroundColor: info.color }]} />
               <Text style={styles.scoreNumber}>{totalScore}</Text>
@@ -249,18 +217,18 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
           </View>
 
           {/* Current snapshot title */}
-          <Text style={styles.snapshotTitle}>Current Snapshot: {info.snapshotTitle}</Text>
+          <Text style={styles.snapshotTitle}>{t('onboarding.childBehaviorProfile.currentSnapshot', { title: info.snapshotTitle })}</Text>
 
           {/* What this means */}
           <View style={styles.whatThisMeansBox}>
-            <Text style={styles.sectionLabel}>What this means</Text>
+            <Text style={styles.sectionLabel}>{t('onboarding.childBehaviorProfile.whatThisMeans')}</Text>
             <Text style={styles.sectionBody}>{info.whatThisMeans}</Text>
           </View>
         </View>
 
         {/* ── Starting Plan + What to Expect combined card ── */}
         <View style={styles.infoCard}>
-          <Text style={styles.sectionLabel}>Your Starting Plan</Text>
+          <Text style={styles.sectionLabel}>{t('onboarding.childBehaviorProfile.startingPlan')}</Text>
           {info.startingPlan.split('\n').filter(Boolean).map((line, i) => (
             <View key={i} style={styles.iconRow}>
               <Text style={styles.rowIcon}>💜</Text>
@@ -270,7 +238,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
 
           <View style={styles.divider} />
 
-          <Text style={styles.sectionLabel}>What to expect</Text>
+          <Text style={styles.sectionLabel}>{t('onboarding.childBehaviorProfile.whatToExpect')}</Text>
           {info.whatToExpect.split('\n').filter(Boolean).map((line, i) => (
             <View key={i} style={styles.iconRow}>
               <Text style={styles.rowIcon}>🌱</Text>
@@ -287,7 +255,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
           onPress={() => navigation.navigate('Intro3')}
           activeOpacity={0.85}
         >
-          <Text style={styles.buttonText}>Introducing Emotional Massage  →</Text>
+          <Text style={styles.buttonText}>{t('onboarding.childBehaviorProfile.continueButton')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

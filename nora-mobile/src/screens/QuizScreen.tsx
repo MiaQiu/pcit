@@ -20,6 +20,7 @@ import { ProgressBar } from '../components/ProgressBar';
 import { Button } from '../components/Button';
 import { COLORS, FONTS } from '../constants/assets';
 import { LessonService, Quiz, QuizOption, SubmitQuizResponse } from '@nora/core';
+import { useTranslation } from 'react-i18next';
 
 interface QuizScreenProps {
   route: {
@@ -36,6 +37,7 @@ interface QuizScreenProps {
 
 export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => {
   const { quizId, lessonId, quiz, totalSegments, currentSegment } = route.params;
+  const { t } = useTranslation();
 
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -76,7 +78,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
       setIsLoading(false);
     } catch (error) {
       console.error('Failed to submit quiz:', error);
-      Alert.alert('Error', 'Failed to submit quiz. Please try again.');
+      Alert.alert(t('common.error'), t('quiz.errorSubmit'));
       setIsLoading(false);
     }
   };
@@ -123,7 +125,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
         </View> */}
 
         {/* Badge */}
-        <Text style={styles.badge}>Just a quick check</Text>
+        <Text style={styles.badge}>{t('quiz.badge')}</Text>
 
         {/* Question */}
         <Text style={styles.question}>{quiz.question}</Text>
@@ -163,7 +165,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
             disabled={!selectedOption || isLoading}
             loading={isLoading}
           >
-            Check Answer
+            {t('quiz.checkAnswer')}
           </Button>
         ) : (
           <View style={styles.buttonRow}>
@@ -173,12 +175,12 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
                 onPress={handleClose}
                 activeOpacity={0.7}
               >
-                <Text style={styles.backButtonText}>← Back</Text>
+                <Text style={styles.backButtonText}>{t('quiz.back')}</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.halfButton}>
               <Button onPress={handleContinue}>
-                Continue →
+                {t('quiz.continue')}
               </Button>
             </View>
           </View>

@@ -7,6 +7,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { COLORS, FONTS } from '../constants/assets';
+import { useTranslation } from 'react-i18next';
 
 interface QuizFeedbackProps {
   isCorrect: boolean;
@@ -17,11 +18,12 @@ export const QuizFeedback: React.FC<QuizFeedbackProps> = ({
   isCorrect,
   explanation,
 }) => {
+  const { t } = useTranslation();
   return (
     <View style={[styles.container, isCorrect ? styles.correctContainer : styles.incorrectContainer]}>
       {/* Heading - left aligned */}
       <Text style={[styles.heading, isCorrect ? styles.correctHeading : styles.incorrectHeading]}>
-        {isCorrect ? 'Correct!' : 'Not quite!'}
+        {isCorrect ? t('quizFeedback.correct') : t('quizFeedback.notQuite')}
       </Text>
 
       {/* Explanation - left aligned */}

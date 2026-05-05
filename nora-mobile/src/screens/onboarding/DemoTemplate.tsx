@@ -7,6 +7,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -23,6 +24,7 @@ export const DemoTemplate: React.FC<DemoTemplateProps> = ({
   onNext,
   onBack,
 }) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   // Space from screen top to where text starts (text bottom = insets.bottom + 180, text height ≈ 52px)
@@ -46,7 +48,7 @@ export const DemoTemplate: React.FC<DemoTemplateProps> = ({
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={onNext} activeOpacity={0.85}>
-          <Text style={styles.buttonText}>Next  →</Text>
+          <Text style={styles.buttonText}>{t('onboarding.next')}</Text>
         </TouchableOpacity>
       </View>
     </View>

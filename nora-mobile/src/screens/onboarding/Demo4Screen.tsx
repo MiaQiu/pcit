@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { DemoTemplate } from './DemoTemplate';
 
 export const Demo4Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const { t } = useTranslation();
 
   return (
     <DemoTemplate
-      text="Help your child thrive. Build on their strengths and support their emotional and social growth."
+      text={t('onboarding.demo4.text')}
       onBack={() => navigation.goBack()}
       onNext={() => navigation.navigate('Demo5')}
     >

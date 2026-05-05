@@ -30,11 +30,13 @@ import amplitudeService from '../../services/amplitudeService';
 import { useGoogleAuth, signInWithApple } from '../../utils/socialAuth';
 import { checkOnboardingStep } from '../../utils/onboardingCheck';
 import { useCoachUnread } from '../../contexts/CoachUnreadContext';
+import { useTranslation } from 'react-i18next';
 
 const PENDING_REFERRAL_KEY = '@nora_pending_referral_code';
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 export const LoginScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const route = useRoute<RouteProp<OnboardingStackParamList, 'Login'>>();
   const authService = useAuthService();
@@ -93,7 +95,7 @@ export const LoginScreen: React.FC = () => {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please enter your email and password');
+      Alert.alert(t('login.errorEmptyTitle'), t('login.errorEmptyMessage'));
       return;
     }
 
@@ -142,7 +144,7 @@ export const LoginScreen: React.FC = () => {
     } catch (error: any) {
       console.error('Login error:', error);
       const errorMessage = getErrorMessage(error, ErrorMessages.AUTH.LOGIN_FAILED);
-      Alert.alert('Login Failed', errorMessage);
+      Alert.alert(t('login.loginFailedTitle'), errorMessage);
     } finally {
       setLoading(false);
     }
@@ -174,7 +176,7 @@ export const LoginScreen: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Apple sign in error:', error);
-      Alert.alert('Error', error.message || 'Failed to sign in with Apple');
+      Alert.alert(t('login.errorEmptyTitle'), error.message || t('login.appleSignInFailedMessage'));
     } finally {
       setLoading(false);
     }
@@ -191,7 +193,7 @@ export const LoginScreen: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Google sign in error:', error);
-      Alert.alert('Error', error.message || 'Failed to sign in with Google');
+      Alert.alert(t('login.errorEmptyTitle'), error.message || t('login.googleSignInFailedMessage'));
     } finally {
       setLoading(false);
     }
@@ -214,7 +216,7 @@ export const LoginScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           {/* Title */}
-          <Text style={styles.title}>Let's get you logged in</Text>
+          <Text style={styles.title}>{t('login.title')}</Text>
 
           {/* Apple Sign In - temporarily hidden */}
           {false && (
@@ -229,7 +231,7 @@ export const LoginScreen: React.FC = () => {
               ) : (
                 <View style={styles.socialButtonContent}>
                   <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
-                  <Text style={styles.appleButtonText}>Sign in with Apple</Text>
+                  <Text style={styles.appleButtonText}>{t('login.signInWithApple')}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -245,7 +247,7 @@ export const LoginScreen: React.FC = () => {
             >
               <View style={styles.socialButtonContent}>
                 <Ionicons name="logo-google" size={20} color="#DB4437" />
-                <Text style={styles.googleButtonText}>Sign in with Google</Text>
+                <Text style={styles.googleButtonText}>{t('login.signInWithGoogle')}</Text>
               </View>
             </TouchableOpacity>
           )}
@@ -253,7 +255,7 @@ export const LoginScreen: React.FC = () => {
           {/* Email Input */}
           <TextInput
             style={styles.input}
-            placeholder="Email Address"
+            placeholder={t('login.emailPlaceholder')}
             placeholderTextColor="#9CA3AF"
             value={email}
             onChangeText={setEmail}
@@ -267,7 +269,7 @@ export const LoginScreen: React.FC = () => {
           <View style={styles.passwordContainer}>
             <TextInput
               style={styles.passwordInput}
-              placeholder="Password"
+              placeholder={t('login.passwordPlaceholder')}
               placeholderTextColor="#9CA3AF"
               value={password}
               onChangeText={setPassword}
@@ -298,7 +300,7 @@ export const LoginScreen: React.FC = () => {
             {loading ? (
               <ActivityIndicator color="#1E2939" />
             ) : (
-              <Text style={styles.loginButtonText}>LOG IN</Text>
+              <Text style={styles.loginButtonText}>{t('login.logIn')}</Text>
             )}
           </TouchableOpacity>
 
@@ -307,7 +309,7 @@ export const LoginScreen: React.FC = () => {
             style={styles.forgotPasswordContainer}
             onPress={() => navigation.navigate('ForgotPassword')}
           >
-            <Text style={styles.forgotPasswordText}>Forgot your Password?</Text>
+            <Text style={styles.forgotPasswordText}>{t('login.forgotPassword')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

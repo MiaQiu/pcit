@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OnboardingBackButton } from '../../components/OnboardingBackButton';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -34,6 +35,7 @@ export const PlaySessionScreenTemplate: React.FC<PlaySessionScreenTemplateProps>
   onContinue,
   onBack,
 }) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
@@ -57,7 +59,7 @@ export const PlaySessionScreenTemplate: React.FC<PlaySessionScreenTemplateProps>
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         <OnboardingBackButton onPress={onBack} />
         <TouchableOpacity style={styles.button} onPress={onContinue} activeOpacity={0.85}>
-          <Text style={styles.buttonText}>Continue  →</Text>
+          <Text style={styles.buttonText}>{t('onboarding.continue')}</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { MaskedDinoImage } from '../../components/MaskedDinoImage';
 import { useNavigation, CommonActions } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
@@ -27,6 +28,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const SubscriptionScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const { t } = useTranslation();
   const { data, completeOnboarding } = useOnboarding();
   const authService = useAuthService();
   const {
@@ -93,7 +95,7 @@ export const SubscriptionScreen: React.FC = () => {
       }
 
       if (!packageToUse) {
-        Alert.alert('Not Available', 'Monthly plan is not available yet. Please try again in a moment.');
+        Alert.alert(t('subscription.notAvailableTitle'), t('subscription.notAvailableMessage'));
         setIsLoading(false);
         return;
       }
@@ -143,12 +145,12 @@ export const SubscriptionScreen: React.FC = () => {
       // Only show error if user didn't cancel
       if (!error.userCancelled) {
         Alert.alert(
-          'Purchase Failed',
-          'Unable to start trial. If you were charged, tap Restore Purchase.',
+          t('subscription.purchaseFailedTitle'),
+          t('subscription.purchaseFailedMessage'),
           [
-            { text: 'Restore Purchase', onPress: handleRestore },
-            { text: 'Try Again', onPress: handleStartTrial },
-            { text: 'Cancel', style: 'cancel' },
+            { text: t('subscription.restorePurchaseButton'), onPress: handleRestore },
+            { text: t('subscription.tryAgain'), onPress: handleStartTrial },
+            { text: t('common.cancel'), style: 'cancel' },
           ]
         );
       }
@@ -166,10 +168,10 @@ export const SubscriptionScreen: React.FC = () => {
       if (result.restored) {
         const isInitialOnboarding = data.name && data.name.trim() !== '';
         Alert.alert(
-          'Success',
-          'Your subscription has been restored!',
+          t('subscription.restoreSuccessTitle'),
+          t('subscription.restoreSuccessMessage'),
           [{
-            text: 'OK',
+            text: t('common.ok'),
             onPress: () => {
               if (isInitialOnboarding) {
                 navigation.navigate('NotificationPermission');
@@ -187,16 +189,16 @@ export const SubscriptionScreen: React.FC = () => {
         );
       } else {
         Alert.alert(
-          'No Purchases Found',
-          'We couldn\'t find any previous purchases to restore.',
-          [{ text: 'OK' }]
+          t('subscription.noPurchasesTitle'),
+          t('subscription.noPurchasesMessage'),
+          [{ text: t('common.ok') }]
         );
       }
     } catch (error) {
       Alert.alert(
-        'Restore Failed',
-        'Unable to restore purchases. Please try again.',
-        [{ text: 'OK' }]
+        t('subscription.restoreFailedTitle'),
+        t('subscription.restoreFailedMessage'),
+        [{ text: t('common.ok') }]
       );
     } finally {
       setIsLoading(false);
@@ -229,17 +231,11 @@ export const SubscriptionScreen: React.FC = () => {
     } catch (error: any) {
       console.error('Complete onboarding error:', error);
       Alert.alert(
-        'Error',
-        'Failed to complete setup. Please try again.',
+        t('common.error'),
+        t('subscription.errorSetup'),
         [
-          {
-            text: 'Retry',
-            onPress: handleSkip,
-          },
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
+          { text: t('common.retry'), onPress: handleSkip },
+          { text: t('common.cancel'), style: 'cancel' },
         ]
       );
     } finally {
@@ -258,7 +254,7 @@ export const SubscriptionScreen: React.FC = () => {
       );
     } catch (error) {
       console.error('Logout error:', error);
-      Alert.alert('Error', 'Failed to log out. Please try again.');
+      Alert.alert(t('common.error'), t('subscription.logoutError'));
     }
   };
 
@@ -275,7 +271,7 @@ export const SubscriptionScreen: React.FC = () => {
       {!isReturningUser && (
         <View style={styles.badgeContainer}>
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>Early User Benefits</Text>
+            <Text style={styles.badgeText}>{t('subscription.earlyUserBenefits')}</Text>
           </View>
         </View>
       )}
@@ -287,13 +283,13 @@ export const SubscriptionScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>
-          {isReturningUser ? 'Subscribe to continue' : 'How your trial works'}
+          {isReturningUser ? t('subscription.subscribeToContinue') : t('subscription.howTrialWorks')}
         </Text>
         <Text style={styles.subtitle}>
-          {isReturningUser ? 'S$9.98/month' : 'First 30 days free, then S$9.98/month'}
+          {isReturningUser ? t('subscription.priceMonthly') : t('subscription.priceFreeTrialThenMonthly')}
         </Text>
         {!isReturningUser && (
-          <Text style={styles.regularPrice}>Regular price first 7 days free, then S$39.98/month</Text>
+          <Text style={styles.regularPrice}>{t('subscription.regularPrice')}</Text>
         )}
 
         {subscriptionError && (
@@ -313,8 +309,8 @@ export const SubscriptionScreen: React.FC = () => {
               <View style={styles.timelineConnector} />
             </View>
             <View style={styles.timelineBody}>
-              <Text style={styles.timelineTitleDone}>Set up your profile</Text>
-              <Text style={styles.timelineDesc}>We've set up your profile based on your answers.</Text>
+              <Text style={styles.timelineTitleDone}>{t('subscription.stepProfileTitle')}</Text>
+              <Text style={styles.timelineDesc}>{t('subscription.stepProfileDesc')}</Text>
             </View>
           </View>
 
@@ -327,8 +323,8 @@ export const SubscriptionScreen: React.FC = () => {
               <View style={styles.timelineConnector} />
             </View>
             <View style={styles.timelineBody}>
-              <Text style={styles.timelineTitle}>Today</Text>
-              <Text style={styles.timelineDesc}>Unlock access to personalized coaching lessons and sessions.</Text>
+              <Text style={styles.timelineTitle}>{t('subscription.stepTodayTitle')}</Text>
+              <Text style={styles.timelineDesc}>{t('subscription.stepTodayDesc')}</Text>
             </View>
           </View>
 
@@ -341,31 +337,27 @@ export const SubscriptionScreen: React.FC = () => {
             </View>
             <View style={styles.timelineBody}>
               <Text style={styles.timelineTitle}>
-                {isReturningUser ? 'Today' : 'In 30 days'}
+                {isReturningUser ? t('subscription.stepTodayTitle') : t('subscription.step30DaysTitle')}
               </Text>
               <Text style={styles.timelineDesc}>
-                {isReturningUser
-                  ? 'You\'ll be charged S$9.98. Renews monthly, cancel anytime.'
-                  : 'You\'ll be charged S$9.98. Cancel anytime before.'}
+                {isReturningUser ? t('subscription.stepChargedDescReturning') : t('subscription.stepChargedDesc')}
               </Text>
             </View>
           </View>
         </View>
 
         <TouchableOpacity style={styles.restoreButton} onPress={handleRestore} activeOpacity={0.8}>
-          <Text style={styles.restoreText}>Restore purchase</Text>
+          <Text style={styles.restoreText}>{t('subscription.restorePurchase')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
-          <Text style={styles.logoutText}>Log Out</Text>
+          <Text style={styles.logoutText}>{t('subscription.logOut')}</Text>
         </TouchableOpacity>
 
         <Text style={styles.disclaimer}>
-          {isReturningUser
-            ? 'Your subscription automatically renews at S$9.98/month. Cancel anytime in Settings. By continuing, you agree to our '
-            : 'After your free trial, your subscription automatically renews at S$9.98/month unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our '}
-          <Text style={styles.link} onPress={handleOpenTerms}>Terms</Text> and{' '}
-          <Text style={styles.link} onPress={handleOpenPrivacy}>Privacy Policy</Text>.
+          {isReturningUser ? t('subscription.disclaimerReturning') : t('subscription.disclaimerNew')}
+          <Text style={styles.link} onPress={handleOpenTerms}>{t('subscription.terms')}</Text>{' '}and{' '}
+          <Text style={styles.link} onPress={handleOpenPrivacy}>{t('subscription.privacyPolicy')}</Text>.
         </Text>
 
         <View style={{ height: 100 }} />
@@ -383,11 +375,11 @@ export const SubscriptionScreen: React.FC = () => {
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text style={styles.startButtonText}>
-              {isReturningUser ? 'Subscribe now' : 'Start my 30-day free trial'}
+              {isReturningUser ? t('subscription.subscribeNow') : t('subscription.startTrial')}
             </Text>
           )}
         </TouchableOpacity>
-        <Text style={styles.betaPricing}>Limited beta pricing for early supporters</Text>
+        <Text style={styles.betaPricing}>{t('subscription.betaPricing')}</Text>
       </View>
     </View>
   );

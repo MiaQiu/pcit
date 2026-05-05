@@ -25,6 +25,7 @@ import { useToast } from '../components/ToastManager';
 import type { ModuleDetailResponse } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
 import { resolveImageUris } from '../services/lessonImageCache';
+import { useTranslation } from 'react-i18next';
 
 const H_PAD = 20;
 const CARD_GAP = 10;
@@ -41,6 +42,7 @@ export const ModuleDetailScreen: React.FC = () => {
   const { moduleKey } = route.params;
   const lessonService = useLessonService();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const cardWidth = (width - H_PAD * 2 - CARD_GAP) / 2;
 
@@ -139,10 +141,8 @@ export const ModuleDetailScreen: React.FC = () => {
         {topBar('')}
         <View style={styles.lockedContainer}>
           <Ionicons name="lock-closed" size={48} color="#CCCCCC" />
-          <Text style={styles.lockedTitle}>Module Locked</Text>
-          <Text style={styles.lockedMessage}>
-            Complete the Foundation module first to unlock this module.
-          </Text>
+          <Text style={styles.lockedTitle}>{t('moduleDetail.moduleLocked')}</Text>
+          <Text style={styles.lockedMessage}>{t('moduleDetail.lockedMessage')}</Text>
           <TouchableOpacity
             style={styles.goToFoundationBtn}
             onPress={() => {
@@ -151,7 +151,7 @@ export const ModuleDetailScreen: React.FC = () => {
             }}
             activeOpacity={0.7}
           >
-            <Text style={styles.goToFoundationText}>Go to Foundation</Text>
+            <Text style={styles.goToFoundationText}>{t('moduleDetail.goToFoundation')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

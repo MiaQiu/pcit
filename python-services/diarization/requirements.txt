@@ -1,0 +1,8 @@
+boto3
+huggingface_hub
+soundfile
+loralib==0.1.2
+numpy==1.24.4
+torch==2.3.0
+torchaudio==2.3.0
+transformers==4.30.2

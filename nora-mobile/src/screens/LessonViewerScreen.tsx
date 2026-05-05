@@ -30,6 +30,7 @@ import { KeywordDefinitionModal } from '../components/KeywordDefinitionModal';
 import { getMockLessonDetail } from '../data/mockLessons';
 import amplitudeService from '../services/amplitudeService';
 import { getTodaySingapore } from '../utils/timezone';
+import { useTranslation } from 'react-i18next';
 
 type VirtualItem = { type: 'segment'; segment: LessonSegment } | { type: 'quiz' };
 
@@ -310,6 +311,7 @@ interface LessonViewerScreenProps {
 
 export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, navigation }) => {
   const { lessonId, moduleKey, nextLessonId } = route.params;
+  const { t } = useTranslation();
   const lessonService = useLessonService();
   const authService = useAuthService();
   const insets = useSafeAreaInsets();
@@ -438,9 +440,9 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         setLoading(false);
         navigation.goBack();
         Alert.alert(
-          'Content Updated',
-          'This lesson has been updated. Please select it again to view the latest version.',
-          [{ text: 'OK' }]
+          t('lessonViewer.contentUpdatedTitle'),
+          t('lessonViewer.contentUpdatedMessage'),
+          [{ text: t('common.ok') }]
         );
         return;
       }
@@ -495,9 +497,9 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       if (error instanceof LessonNotFoundError || error.name === 'LessonNotFoundError') {
         navigation.goBack();
         Alert.alert(
-          'Content Updated',
-          'This lesson has been updated. Please select it again to view the latest version.',
-          [{ text: 'OK' }]
+          t('lessonViewer.contentUpdatedTitle'),
+          t('lessonViewer.contentUpdatedMessage'),
+          [{ text: t('common.ok') }]
         );
         return;
       }
@@ -541,9 +543,9 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       if (error instanceof LessonNotFoundError || error.name === 'LessonNotFoundError') {
         navigation.goBack();
         Alert.alert(
-          'Content Updated',
-          'This lesson has been updated. Please select it again to view the latest version.',
-          [{ text: 'OK' }]
+          t('lessonViewer.contentUpdatedTitle'),
+          t('lessonViewer.contentUpdatedMessage'),
+          [{ text: t('common.ok') }]
         );
       }
     }
@@ -589,7 +591,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       });
     } catch (error) {
       console.error('Failed to submit text input:', error);
-      Alert.alert('Error', 'Failed to evaluate your response. Please try again.');
+      Alert.alert(t('common.error'), t('lessonViewer.errorEvaluateResponse'));
     } finally {
       setIsTextInputSubmitting(false);
     }
@@ -742,13 +744,13 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
   // Determine button text
   const isLastItem = currentSegmentIndex >= virtualItems.length - 1;
-  let buttonText = 'Continue →';
+  let buttonText = t('lessonViewer.buttonContinue');
   if (isTextInputSegment) {
-    buttonText = isTextInputSubmitted ? 'Continue →' : 'Check Answer';
+    buttonText = isTextInputSubmitted ? t('lessonViewer.buttonContinue') : t('lessonViewer.buttonCheckAnswer');
   } else if (virtualItems[currentSegmentIndex + 1]?.type === 'quiz') {
-    buttonText = 'Take Quiz →';
+    buttonText = t('lessonViewer.buttonTakeQuiz');
   } else if (isLastItem && nextLessonId) {
-    buttonText = 'Next Lesson →';
+    buttonText = t('lessonViewer.buttonNextLesson');
   }
 
   // Full-screen custom HTML: WebView covers entire screen (including status bar), header/footer float on top
@@ -774,7 +776,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
             <View style={styles.buttonRow}>
               <View style={styles.halfButton}>
                 <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7}>
-                  <Text style={styles.backButtonText}>← Back</Text>
+                  <Text style={styles.backButtonText}>{t('lessonViewer.buttonBack')}</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.halfButton}>
@@ -821,7 +823,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
               /* Quiz Content */
               <>
                 {/* Badge */}
-                <Text style={styles.quizBadge}>TAKE A GUESS</Text>
+                <Text style={styles.quizBadge}>{t('lessonViewer.quizBadge')}</Text>
 
                 {/* Question */}
                 <Text style={styles.quizQuestion}>{lesson.quiz.question}</Text>
@@ -871,7 +873,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
                   {/* Text Input Field (for TEXT_INPUT segments) */}
                   {isTextInputSegment && (
                     <View style={styles.textInputContainer}>
-                      <Text style={styles.textInputLabel}>Your response:</Text>
+                      <Text style={styles.textInputLabel}>{t('lessonViewer.yourResponse')}</Text>
                       <TextInput
                         style={[
                           styles.textInputField,
@@ -879,7 +881,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
                         ]}
                         multiline
                         numberOfLines={4}
-                        placeholder="Type your answer here..."
+                        placeholder={t('lessonViewer.typePlaceholder')}
                         placeholderTextColor={COLORS.textSecondary}
                         value={userTextInput}
                         onChangeText={setUserTextInput}
@@ -889,7 +891,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
                       {isTextInputSubmitting && (
                         <View style={styles.textInputLoadingOverlay}>
                           <ActivityIndicator color={COLORS.mainPurple} />
-                          <Text style={styles.textInputLoadingText}>Evaluating...</Text>
+                          <Text style={styles.textInputLoadingText}>{t('lessonViewer.evaluating')}</Text>
                         </View>
                       )}
                     </View>
@@ -932,7 +934,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
               onPress={handleBack}
               activeOpacity={0.7}
             >
-              <Text style={styles.backButtonText}>← Back</Text>
+              <Text style={styles.backButtonText}>{t('lessonViewer.buttonBack')}</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.halfButton}>

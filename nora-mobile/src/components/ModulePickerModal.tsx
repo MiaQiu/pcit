@@ -9,6 +9,7 @@ import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
 import type { ModuleWithProgress } from '@nora/core';
+import { useTranslation } from 'react-i18next';
 
 const { height } = Dimensions.get('window');
 
@@ -29,6 +30,7 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
   recommendedModules,
   autoSelectedKey,
 }) => {
+  const { t } = useTranslation();
   // Split modules into recommended and other (exclude Foundation and completed)
   const availableModules = modules.filter(
     m => m.key !== 'FOUNDATION' && !m.isLocked && m.completedLessons < m.lessonCount
@@ -56,17 +58,17 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
 
           {/* Header */}
           <Text style={styles.celebrationEmoji}>🎉</Text>
-          <Text style={styles.title}>Pick your next module!</Text>
-          <Text style={styles.congratsText}>Congratulations on completing the Foundation!</Text>
+          <Text style={styles.title}>{t('modulePicker.title')}</Text>
+          <Text style={styles.congratsText}>{t('modulePicker.congrats')}</Text>
 
           <View style={styles.infoBox}>
             <View style={styles.infoRow}>
               <Ionicons name="star" size={14} color={COLORS.mainPurple} />
-              <Text style={styles.infoText}>We have set the next module based on your child's needs and goals</Text>
+              <Text style={styles.infoText}>{t('modulePicker.infoAutoSelected')}</Text>
             </View>
             <View style={styles.infoRow}>
               <Ionicons name="swap-horizontal" size={14} color={COLORS.mainPurple} />
-              <Text style={styles.infoText}>Browse available modules and change your daily lesson anytime in the Learn screen</Text>
+              <Text style={styles.infoText}>{t('modulePicker.infoBrowse')}</Text>
             </View>
           </View>
           <ScrollView
@@ -76,7 +78,7 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
             {/* Recommended section */}
             {recommended.length > 0 && (
               <>
-                <Text style={styles.sectionTitle}>Recommended for you</Text>
+                <Text style={styles.sectionTitle}>{t('modulePicker.recommended')}</Text>
                 {recommended.map(mod => (
                   <ModulePickerCard
                     key={mod.key}
@@ -93,7 +95,7 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
             {others.length > 0 && (
               <>
                 <Text style={styles.sectionTitle}>
-                  {recommended.length > 0 ? 'Other modules' : 'Available modules'}
+                  {recommended.length > 0 ? t('modulePicker.otherModules') : t('modulePicker.availableModules')}
                 </Text>
                 {others.map(mod => (
                   <ModulePickerCard
@@ -110,7 +112,7 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
 
           {/* Skip button */}
           <TouchableOpacity style={styles.skipButton} onPress={onClose}>
-            <Text style={styles.skipText}>Ok</Text>
+            <Text style={styles.skipText}>{t('modulePicker.ok')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -125,6 +127,7 @@ const ModulePickerCard: React.FC<{
   isCurrent: boolean;
   onPress: () => void;
 }> = ({ module, isRecommended, isCurrent, onPress }) => {
+  const { t } = useTranslation();
   const progress = module.lessonCount > 0
     ? module.completedLessons / module.lessonCount
     : 0;
@@ -136,7 +139,7 @@ const ModulePickerCard: React.FC<{
         <Text style={styles.cardTitle} numberOfLines={1}>{module.title}</Text>
         {isCurrent && (
           <View style={styles.currentBadge}>
-            <Text style={styles.currentBadgeText}>Current</Text>
+            <Text style={styles.currentBadgeText}>{t('modulePicker.current')}</Text>
           </View>
         )}
         {isRecommended && (
@@ -148,11 +151,11 @@ const ModulePickerCard: React.FC<{
       <Text style={styles.cardDescription} numberOfLines={2}>{module.description}</Text>
       <View style={styles.cardFooter}>
         <Text style={styles.cardLessonCount}>
-          {module.lessonCount} {module.lessonCount === 1 ? 'lesson' : 'lessons'}
+          {module.lessonCount} {module.lessonCount === 1 ? t('modulePicker.lesson') : t('modulePicker.lessons')}
         </Text>
         {isInProgress && (
           <Text style={styles.cardProgress}>
-            {module.completedLessons}/{module.lessonCount} done
+            {module.completedLessons}/{module.lessonCount} {t('modulePicker.done')}
           </Text>
         )}
         <Ionicons name="chevron-forward" size={16} color={COLORS.mainPurple} />

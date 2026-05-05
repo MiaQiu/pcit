@@ -1,16 +1,18 @@
 import React from 'react';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { PlaySessionScreenTemplate } from './PlaySessionScreenTemplate';
 
 export const PlaySession3Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const { t } = useTranslation();
 
   return (
     <PlaySessionScreenTemplate
-      title="Record Using Nora App"
+      title={t('onboarding.playSession3.title')}
       image={require('../../../assets/images/play3.png')}
-      subtitle="Set your phone nearby where it can clearly hear your conversation. You don't need to hold it—just focus on the play!"
+      subtitle={t('onboarding.playSession3.subtitle')}
       onBack={() => navigation.goBack()}
       onContinue={() => navigation.navigate('PlaySession4')}
     />

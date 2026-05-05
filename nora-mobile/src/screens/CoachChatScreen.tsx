@@ -28,6 +28,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
+import { useTranslation } from 'react-i18next';
 
 const PSYCH_REQUESTED_KEY = '@nora_psych_requested';
 
@@ -91,6 +92,7 @@ const AnimatedStatusText: React.FC<{ text: string; style: object }> = ({ text, s
 // ─── Bubble ───────────────────────────────────────────────────────────────────
 
 const Bubble: React.FC<{ message: Message }> = ({ message }) => {
+  const { t } = useTranslation();
   const isUser = message.role === 'user';
   const isPsychologist = message.role === 'psychologist';
   return (
@@ -104,7 +106,7 @@ const Bubble: React.FC<{ message: Message }> = ({ message }) => {
       )}
       <View style={{ maxWidth: '78%' }}>
         {isPsychologist && (
-          <Text style={styles.psychLabel}>Psychologist</Text>
+          <Text style={styles.psychLabel}>{t('coachChat.psychologist')}</Text>
         )}
         <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleModel]}>
           <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextModel]}>
@@ -116,20 +118,12 @@ const Bubble: React.FC<{ message: Message }> = ({ message }) => {
   );
 };
 
-// ─── Guide suggestions (shown when chat is empty) ────────────────────────────
-
-const SUGGESTIONS = [
-  { image: require('../../assets/images/green-energy.png'), title: 'Understand My Child',    prompt: 'Why is my child acting this way?' },
-  { image: require('../../assets/images/air-heater.png'), title: 'What Should I Do Now',   prompt: 'What do I do in this situation?' },
-  { image: require('../../assets/images/rating.png'), title: 'Parent with Confidence', prompt: 'Am I handling this the right way?' },
-  { image: require('../../assets/images/planning.png'), title: 'My Nora Plan',         prompt: 'Explain my coaching tips & what to focus on' },
-];
-
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export const CoachChatScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const authService = useAuthService();
+  const { t } = useTranslation();
   const { markAiAsRead, psychUnreadCount } = useCoachUnread();
   const flatListRef = useRef<FlatList>(null);
   const latestServerTsRef = useRef<string | undefined>(undefined);
@@ -151,6 +145,13 @@ export const CoachChatScreen: React.FC = () => {
   const [showGuide, setShowGuide] = useState(false);
   const [parentName, setParentName] = useState('');
   const [childName, setChildName] = useState('');
+
+  const SUGGESTIONS = [
+    { image: require('../../assets/images/green-energy.png'), title: t('coachChat.suggestions.understandTitle'), prompt: t('coachChat.suggestions.understandPrompt') },
+    { image: require('../../assets/images/air-heater.png'),   title: t('coachChat.suggestions.whatToDoTitle'),   prompt: t('coachChat.suggestions.whatToDoPrompt') },
+    { image: require('../../assets/images/rating.png'),       title: t('coachChat.suggestions.confidenceTitle'), prompt: t('coachChat.suggestions.confidencePrompt') },
+    { image: require('../../assets/images/planning.png'),     title: t('coachChat.suggestions.planTitle'),       prompt: t('coachChat.suggestions.planPrompt') },
+  ];
 
   const scrollToEnd = useCallback((animated = true) => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated }), 100);
@@ -320,7 +321,7 @@ export const CoachChatScreen: React.FC = () => {
     } catch {
       setMessages(prev => [
         ...prev.filter(m => m.id !== optimisticId),
-        { id: Date.now().toString(), role: 'model', text: 'Something went wrong. Please check your connection and try again.' },
+        { id: Date.now().toString(), role: 'model', text: t('coachChat.errorConnection') },
       ]);
       scrollToEnd();
     } finally {
@@ -359,7 +360,7 @@ export const CoachChatScreen: React.FC = () => {
       setPsychRequested(true);
       navigation.navigate('PsychologistChat');
     } catch {
-      Alert.alert('Error', 'Failed to send request. Please try again.');
+      Alert.alert(t('common.error'), t('coachChat.errorSendRequest'));
     } finally {
       setSubmittingHuman(false);
     }
@@ -373,12 +374,12 @@ export const CoachChatScreen: React.FC = () => {
           <Ionicons name="chevron-down" size={26} color={COLORS.textDark} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Nora Coach</Text>
-          <Text style={styles.headerSub}>AI Parenting Coach</Text>
+          <Text style={styles.headerTitle}>{t('coachChat.headerTitle')}</Text>
+          <Text style={styles.headerSub}>{t('coachChat.headerSub')}</Text>
         </View>
         <TouchableOpacity onPress={handleRequestHuman} activeOpacity={0.7} style={styles.humanBtn}>
           <Ionicons name="person-circle-outline" size={16} color={COLORS.mainPurple} />
-          <Text style={styles.humanBtnText}>Talk to a Psychologist</Text>
+          <Text style={styles.humanBtnText}>{t('coachChat.talkToPsychologist')}</Text>
           {psychUnreadCount > 0 && (
             <View style={styles.psychBadge}>
               <Text style={styles.psychBadgeText}>{psychUnreadCount > 9 ? '9+' : psychUnreadCount}</Text>
@@ -401,7 +402,7 @@ export const CoachChatScreen: React.FC = () => {
           ListHeaderComponent={showGuide ? (
             <View style={styles.guideContainer}>
               <Video
-                source={require('../../assets/images/Dragon_anime.mov')}
+                source={require('../../assets/images/Dragon_anime2.mov')}
                 style={styles.guideVideo}
                 resizeMode={ResizeMode.CONTAIN}
                 shouldPlay
@@ -409,10 +410,10 @@ export const CoachChatScreen: React.FC = () => {
                 isMuted
               />
               <Text style={styles.guideTitle}>
-                {parentName ? `Hi ${parentName}!` : 'Hi there!'}
+                {parentName ? t('coachChat.greetingWithName', { name: parentName }) : t('coachChat.greetingDefault')}
               </Text>
               <Text style={styles.guideSubtitle}>
-                {`Let's support ${childName || 'your child'} today.\nHere's a few ideas for you:`}
+                {t('coachChat.guideSubtitle', { childName: childName || t('coachChat.yourChild') })}
               </Text>
               <View style={styles.suggestionsGrid}>
                 {SUGGESTIONS.map(s => (
@@ -463,7 +464,7 @@ export const CoachChatScreen: React.FC = () => {
             style={styles.input}
             value={input}
             onChangeText={setInput}
-            placeholder="Ask Nora anything…"
+            placeholder={t('coachChat.inputPlaceholder')}
             placeholderTextColor="#9CA3AF"
             multiline
             maxLength={1000}
@@ -496,56 +497,42 @@ export const CoachChatScreen: React.FC = () => {
                   <TouchableOpacity onPress={() => setShowTerms(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                     <Ionicons name="arrow-back" size={22} color={COLORS.textDark} />
                   </TouchableOpacity>
-                  <Text style={[styles.modalTitle, { marginBottom: 0, flex: 1, marginLeft: 10 }]}>Terms and Conditions</Text>
+                  <Text style={[styles.modalTitle, { marginBottom: 0, flex: 1, marginLeft: 10 }]}>{t('coachChat.terms.title')}</Text>
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 16 }}>
-                  <Text style={styles.termsSection}>1. Purpose</Text>
-                  <Text style={styles.termsBody}>
-                    By requesting to speak with a psychologist, you are asking Nora to connect you with a qualified child psychologist from our team. This service is provided to offer additional professional support beyond the AI coaching available in the app.
-                  </Text>
+                  <Text style={styles.termsSection}>{t('coachChat.terms.section1Title')}</Text>
+                  <Text style={styles.termsBody}>{t('coachChat.terms.section1Body')}</Text>
 
-                  <Text style={styles.termsSection}>2. Information We Share</Text>
-                  <Text style={styles.termsBody}>
-                    To enable the psychologist to provide you with informed, personalised support, the following information will be shared with them:
-                  </Text>
-                  <Text style={styles.termsBullet}>- Your name and email address</Text>
-                  <Text style={styles.termsBullet}>- Your child's name, age, and gender</Text>
-                  <Text style={styles.termsBullet}>- Your child's behavioural assessment results, including primary and secondary concerns identified during onboarding</Text>
-                  <Text style={styles.termsBullet}>- A summary of your recent emotional massage session activity</Text>
+                  <Text style={styles.termsSection}>{t('coachChat.terms.section2Title')}</Text>
+                  <Text style={styles.termsBody}>{t('coachChat.terms.section2Body')}</Text>
+                  <Text style={styles.termsBullet}>{t('coachChat.terms.section2Bullet1')}</Text>
+                  <Text style={styles.termsBullet}>{t('coachChat.terms.section2Bullet2')}</Text>
+                  <Text style={styles.termsBullet}>{t('coachChat.terms.section2Bullet3')}</Text>
+                  <Text style={styles.termsBullet}>{t('coachChat.terms.section2Bullet4')}</Text>
 
-                  <Text style={styles.termsSection}>3. How It Is Used</Text>
-                  <Text style={styles.termsBody}>
-                    This information is used solely for the purpose of your consultation. The psychologist will review it before reaching out so that they can provide relevant, context-aware guidance without requiring you to repeat background information.
-                  </Text>
+                  <Text style={styles.termsSection}>{t('coachChat.terms.section3Title')}</Text>
+                  <Text style={styles.termsBody}>{t('coachChat.terms.section3Body')}</Text>
 
-                  <Text style={styles.termsSection}>4. Confidentiality</Text>
-                  <Text style={styles.termsBody}>
-                    All information shared is kept strictly confidential within our clinical team. It will not be disclosed to third parties, sold, or used for marketing purposes. Our team operates under professional confidentiality obligations consistent with child psychology practice standards.
-                  </Text>
+                  <Text style={styles.termsSection}>{t('coachChat.terms.section4Title')}</Text>
+                  <Text style={styles.termsBody}>{t('coachChat.terms.section4Body')}</Text>
 
-                  <Text style={styles.termsSection}>5. Response Time</Text>
-                  <Text style={styles.termsBody}>
-                    Our psychologist team will contact you via chat in 24 hours. This service is not intended for emergencies. If you or your child are in immediate distress, please contact your local emergency services or a crisis helpline.
-                  </Text>
+                  <Text style={styles.termsSection}>{t('coachChat.terms.section5Title')}</Text>
+                  <Text style={styles.termsBody}>{t('coachChat.terms.section5Body')}</Text>
 
-                  <Text style={styles.termsSection}>6. Your Consent</Text>
-                  <Text style={styles.termsBody}>
-                    By ticking the checkbox and submitting this request, you confirm that you have read and understood these terms and give your informed consent for the above information to be shared with our psychologist team.
-                  </Text>
+                  <Text style={styles.termsSection}>{t('coachChat.terms.section6Title')}</Text>
+                  <Text style={styles.termsBody}>{t('coachChat.terms.section6Body')}</Text>
                 </ScrollView>
 
                 <TouchableOpacity style={styles.modalConfirm} onPress={() => setShowTerms(false)} activeOpacity={0.8}>
-                  <Text style={styles.modalConfirmText}>I Understand</Text>
+                  <Text style={styles.modalConfirmText}>{t('coachChat.iUnderstand')}</Text>
                 </TouchableOpacity>
               </>
             ) : (
               /* ── Request view ── */
               <>
-                <Text style={styles.modalTitle}>Talk to a Psychologist</Text>
-                <Text style={styles.modalBody}>
-                  Our child psychologist team will reply you in 24 hours here.
-                </Text>
+                <Text style={styles.modalTitle}>{t('coachChat.talkToPsychologist')}</Text>
+                <Text style={styles.modalBody}>{t('coachChat.psychologistReplyTime')}</Text>
 
                 {/* Terms checkbox */}
                 <TouchableOpacity
@@ -556,12 +543,10 @@ export const CoachChatScreen: React.FC = () => {
                   <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
                     {agreedToTerms && <Ionicons name="checkmark" size={13} color="#fff" />}
                   </View>
-                  <Text style={styles.checkLabel}>
-                    I agree to the Terms and Conditions and consent to sharing my information with our psychologist team.
-                  </Text>
+                  <Text style={styles.checkLabel}>{t('coachChat.agreeToTerms')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setShowTerms(true)} activeOpacity={0.7} style={styles.termsLink}>
-                  <Text style={styles.checkLabelLink}>Read Terms and Conditions</Text>
+                  <Text style={styles.checkLabelLink}>{t('coachChat.readTerms')}</Text>
                 </TouchableOpacity>
 
                 {/* Actions */}
@@ -571,7 +556,7 @@ export const CoachChatScreen: React.FC = () => {
                     onPress={() => { setShowHumanModal(false); setShowTerms(false); }}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.modalCancelText}>Cancel</Text>
+                    <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalConfirm, (!agreedToTerms || submittingHuman) && styles.modalConfirmDisabled]}
@@ -581,7 +566,7 @@ export const CoachChatScreen: React.FC = () => {
                   >
                     {submittingHuman
                       ? <ActivityIndicator size="small" color="#fff" />
-                      : <Text style={styles.modalConfirmText}>Send Request</Text>
+                      : <Text style={styles.modalConfirmText}>{t('coachChat.sendRequest')}</Text>
                     }
                   </TouchableOpacity>
                 </View>
@@ -875,7 +860,7 @@ const styles = StyleSheet.create({
   },
   modalConfirm: {
     flex: 1,
-    paddingVertical: 13,
+    paddingVertical: 18,
     borderRadius: 100,
     backgroundColor: COLORS.mainPurple,
     alignItems: 'center',

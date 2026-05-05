@@ -40,6 +40,7 @@ import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { getTodaySingapore, toSingaporeDateString, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
 import * as userStorage from '../lib/userStorage';
 import type { RelationshipToChild } from '@nora/core';
+import { useTranslation } from 'react-i18next';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -59,12 +60,7 @@ interface TodayPlanItem {
   isCompleted: boolean;
 }
 
-const REMINDER_PRESETS = [
-  { label: 'Before-School Booster', time: '07:00', display: '7:30 AM' },
-  { label: 'After-School Reconnect', time: '15:30', display: '3:30 PM' },
-  { label: 'Before-Sleep Play', time: '20:00', display: '8:30 PM' },
-
-] as const;
+// REMINDER_PRESETS moved inside component to use t()
 
 // ─── Stat Pill ────────────────────────────────────────────────────────────────
 
@@ -161,28 +157,7 @@ const PlanItem: React.FC<PlanItemProps> = ({ item, onPress }) => (
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
-const recordMessages = [
-  {
-    start: 'You are doing amazing! Ready to shine again? Record another session with ',
-    end: ' and watch the magic happen! ✨',
-  },
-  {
-    start: 'Keep that fantastic momentum going! Jump into another fun session with ',
-    end: '!',
-  },
-  {
-    start: 'Awesome job so far! Grab another 5 minutes of special time with ',
-    end: ' to keep growing together! 🌟',
-  },
-  {
-    start: "You've got this! Record another quick, joyful session with ",
-    end: ' and celebrate your amazing progress!',
-  },
-  {
-    start: 'Ready for more fun? Capture another awesome play session with ',
-    end: '!',
-  },
-];
+// recordMessages moved inside component to use t()
 
 export const HomeScreen_v2: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -194,6 +169,7 @@ export const HomeScreen_v2: React.FC = () => {
   const recordingService = useRecordingService();
   const uploadProcessing = useUploadProcessing();
   const { isOnline } = useNetworkStatus();
+  const { t } = useTranslation();
 
   const dragonVideoRef = useRef<Video>(null);
   const tipOpacity = useRef(new Animated.Value(0)).current;
@@ -225,11 +201,25 @@ export const HomeScreen_v2: React.FC = () => {
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
   const [nextLessonId, setNextLessonId] = useState<string | null>(null);
   const [hasAnySession, setHasAnySession] = useState(false);
-  const recordMessage = useMemo(() => recordMessages[Math.floor(Math.random() * recordMessages.length)], []);
+  const recordMessage = useMemo(() => {
+    const idx = Math.floor(Math.random() * 5);
+    return {
+      start: t(`homeV2.recordMessages.${idx}start` as any),
+      end: t(`homeV2.recordMessages.${idx}end` as any),
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [latestWeeklyReport, setLatestWeeklyReport] = useState<{ id: string; weekStartDate: string; weekEndDate: string; headline: string | null; markedReadAt: string | null } | null>(null);
   const [isWeeklyReportDismissed, setIsWeeklyReportDismissed] = useState(false);
   const [sessionNotifications, setSessionNotifications] = useState<{ postSession?: string; tomorrow?: string } | null>(null);
   const [chatIntroDismissed, setChatIntroDismissed] = useState(false);
+
+  // ── Reminder presets (inside component to use t()) ──
+  const REMINDER_PRESETS = [
+    { label: t('homeV2.reminderPresets.beforeSchool'), time: '07:00', display: '7:30 AM' },
+    { label: t('homeV2.reminderPresets.afterSchool'), time: '15:30', display: '3:30 PM' },
+    { label: t('homeV2.reminderPresets.beforeSleep'), time: '20:00', display: '8:30 PM' },
+  ] as const;
 
   // ── Reminder setup modal ──
   const [showReminderModal, setShowReminderModal] = useState(false);
@@ -271,11 +261,15 @@ export const HomeScreen_v2: React.FC = () => {
       if (mode === 'full') setLoading(true);
       else if (mode === 'refresh') setIsRefreshing(true);
 
-      const [dashboardData, lessonsResponse, weeklyReportsData] = await Promise.all([
+      const [dashboardData, lessonsResponse, weeklyReportsData, currentUser] = await Promise.all([
         recordingService.getDashboard(),
         lessonService.getLessons(),
         recordingService.getVisibleWeeklyReports().catch(() => ({ reports: [] })),
+        authService.getCurrentUser().catch(() => null),
       ]);
+
+      const resolvedChildName = currentUser?.childName || childName;
+      if (currentUser?.childName) setChildName(currentUser.childName);
 
       const { todayRecordings, thisWeekRecordings, latestWithReport } = dashboardData;
       const { lessons } = lessonsResponse;
@@ -378,9 +372,9 @@ export const HomeScreen_v2: React.FC = () => {
         plan.push({
           id: lessonForPlan.id,
           type: 'lesson',
-          label: 'Daily Learning:',
+          label: t('homeV2.planLessonLabel'),
           title: lessonForPlan.title,
-          duration: '5 min read',
+          duration: t('homeV2.planLessonDuration'),
           isCompleted: !!todayCompletedLesson,
         });
       }
@@ -389,8 +383,8 @@ export const HomeScreen_v2: React.FC = () => {
       plan.push({
         id: 'record',
         type: 'record',
-        label: 'Start Emotional Massage:',
-        title: `5-minute play with ${childName}`,
+        label: t('homeV2.planRecordLabel'),
+        title: t('homeV2.planRecordTitle', { childName: resolvedChildName }),
         isCompleted: hasCompleted,
       });
 
@@ -402,8 +396,8 @@ export const HomeScreen_v2: React.FC = () => {
           plan.push({
             id: latestReport.id,
             type: 'weekly-report',
-            label: 'Weekly Report:',
-            title: 'See your progress this week',
+            label: t('homeV2.planWeeklyReportLabel'),
+            title: t('homeV2.planWeeklyReportTitle'),
             isCompleted: reportReadDate === today,
           });
         }
@@ -428,8 +422,8 @@ export const HomeScreen_v2: React.FC = () => {
               plan.push({
                 id: 'setup-reminder',
                 type: 'setup-reminder',
-                label: 'Setup Daily Reminder:',
-                title: 'Keep your streak with a daily reminder',
+                label: t('homeV2.planReminderLabel'),
+                title: t('homeV2.planReminderTitle'),
                 isCompleted: completedToday,
               });
             }
@@ -576,11 +570,11 @@ export const HomeScreen_v2: React.FC = () => {
     const { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
-        'Enable Notifications',
-        'To set a daily reminder, please enable notifications for this app in Settings.',
+        t('homeV2.enableNotificationsTitle'),
+        t('homeV2.enableNotificationsMessage'),
         [
-          { text: 'Not Now', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          { text: t('homeV2.notNow'), style: 'cancel' },
+          { text: t('homeV2.openSettings'), onPress: () => Linking.openSettings() },
         ]
       );
       return;
@@ -676,7 +670,7 @@ export const HomeScreen_v2: React.FC = () => {
         >
           {/* ── Header ── */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Home</Text>
+            <Text style={styles.headerTitle}>{t('homeV2.headerTitle')}</Text>
             <ProfileCircle
               size={44}
               imageUrl={profileImageUrl}
@@ -714,10 +708,10 @@ export const HomeScreen_v2: React.FC = () => {
             <Animated.View style={[styles.tipBubble, { opacity: tipOpacity }]}>
               <Text style={styles.tipBubbleText}>
                 {weeklyStats.daysCompleted === 7
-                  ? `Perfect 7/7! 👑\nYou're legendary!`
+                  ? t('homeV2.tipPerfect')
                   : weeklyStats.daysCompleted >= 4
-                  ? `${weeklyStats.daysCompleted} days down! 🌟\nCan we hit a full 7?`
-                  : 'Aim for 4 days a week\nfor faster progress'}
+                  ? t('homeV2.tipDaysDown', { count: weeklyStats.daysCompleted })
+                  : t('homeV2.tipAimFor4')}
               </Text>
               <View style={styles.tipBubbleDot1} />
               <View style={styles.tipBubbleDot2} />
@@ -789,7 +783,7 @@ export const HomeScreen_v2: React.FC = () => {
               ]}
             >
               <Text style={styles.scoreBubbleText}>
-                {childName}'s Weekly Deposit
+                {t('homeV2.weeklyDeposit', { childName })}
               </Text>
               <Text style={styles.scoreBubbleScore}>{scoreText}</Text>
             </View>
@@ -808,7 +802,7 @@ export const HomeScreen_v2: React.FC = () => {
             iconColor={COLORS.mainPurple}
             value={String(weeklyStats.daysCompleted)}
             total="7"
-            unit="days"
+            unit={t('homeV2.statDays')}
             onPress={() => tabNavigation.navigate('Record')}
           />
           <StatPill
@@ -816,7 +810,7 @@ export const HomeScreen_v2: React.FC = () => {
             iconColor="#10B981"
             value={String(weeklyStats.minutesPlayed)}
             total="35"
-            unit="mins"
+            unit={t('homeV2.statMins')}
             onPress={() => tabNavigation.navigate('Record')}
           />
           <StatPill
@@ -824,7 +818,7 @@ export const HomeScreen_v2: React.FC = () => {
             iconColor={COLORS.mainPurple}
             value={String(weeklyStats.timesRecorded)}
             total="7"
-            unit="times"
+            unit={t('homeV2.statTimes')}
             onPress={() => tabNavigation.navigate('Record')}
           />
           <StatPill
@@ -832,7 +826,7 @@ export const HomeScreen_v2: React.FC = () => {
             iconColor="#10B981"
             value={String(weeklyStats.lessonsCompleted)}
             total="7"
-            unit="lessons"
+            unit={t('homeV2.statLessons')}
             onPress={() => tabNavigation.navigate('Learn')}
           />
         </View>
@@ -843,12 +837,12 @@ export const HomeScreen_v2: React.FC = () => {
             <>
               <View style={styles.massageHeader}>
                 <Ionicons name="bar-chart-outline" size={14} color={COLORS.mainPurple} />
-                <Text style={styles.massageLabel}>Weekly Report Ready!</Text>
+                <Text style={styles.massageLabel}>{t('homeV2.weeklyReportLabel')}</Text>
               </View>
               <Text style={styles.massageBody}>
                 {latestWeeklyReport.headline
                   ? latestWeeklyReport.headline
-                  : `Your weekly summary is ready. See how ${childName} progressed this week.`}
+                  : t('homeV2.weeklyReportFallback', { childName })}
               </Text>
               <TouchableOpacity
                 style={styles.recordButton}
@@ -862,7 +856,7 @@ export const HomeScreen_v2: React.FC = () => {
                 activeOpacity={0.85}
               >
                 {/* <Ionicons name="stats-chart-outline" size={20} color="#fff" /> */}
-                <Text style={styles.recordButtonText}>View Weekly Report</Text>
+                <Text style={styles.recordButtonText}>{t('homeV2.viewWeeklyReport')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.skipButton}
@@ -872,35 +866,35 @@ export const HomeScreen_v2: React.FC = () => {
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={styles.skipButtonText}>Skip for now</Text>
+                <Text style={styles.skipButtonText}>{t('homeV2.skipForNow')}</Text>
               </TouchableOpacity>
             </>
           ) : uploadProcessing.isProcessing ? (
             <>
               <View style={styles.massageHeader}>
                 <View style={styles.greenDot} />
-                <Text style={styles.massageLabel}>Daily Emotional Massage</Text>
+                <Text style={styles.massageLabel}>{t('homeV2.dailyEmotionalMassageLabel')}</Text>
               </View>
               <Text style={styles.massageBody}>
-                {'Great session! We\'re analyzing your playtime with '}
+                {t('homeV2.analyzingSession')}
                 <Text style={styles.massageChildName}>{childName}</Text>
-                {'. Your report will be ready in a moment.'}
+                {t('homeV2.analyzingSessionSuffix')}
               </Text>
             </>
           ) : !hasRecordedSession ? (
             <>
               <View style={styles.massageHeader}>
                 <View style={styles.greenDot} />
-                <Text style={styles.massageLabel}>Daily Emotional Massage</Text>
+                <Text style={styles.massageLabel}>{t('homeV2.dailyEmotionalMassageLabel')}</Text>
               </View>
               <Text style={styles.massageBody}>
                 {sessionNotifications?.tomorrow ?? (
                   <>
-                    {`Let `}
+                    {t('homeV2.letChildLeadStart')}
                     <Text style={styles.massageChildName}>{childName}</Text>
-                    {` lead today's 5-minute play to grow their emotional bank. Enjoy easy progress every day and see `}
+                    {t('homeV2.letChildLeadMiddle')}
                     <Text style={styles.massageChildName}>{childName}</Text>
-                    {`'s development.`}
+                    {t('homeV2.letChildLeadEnd')}
                   </>
                 )}
               </Text>
@@ -911,21 +905,21 @@ export const HomeScreen_v2: React.FC = () => {
                 disabled={!isOnline}
               >
                 <Ionicons name="mic" size={20} color="#fff" />
-                <Text style={styles.recordButtonText}>Record the Playtime Now</Text>
+                <Text style={styles.recordButtonText}>{t('homeV2.recordNow')}</Text>
               </TouchableOpacity>
             </>
           ) : hasRecordedSession && !isReportRead ? (
             <>
               <View style={styles.massageHeader}>
                 <View style={styles.greenDot} />
-                <Text style={styles.massageLabel}>Daily Emotional Massage</Text>
+                <Text style={styles.massageLabel}>{t('homeV2.dailyEmotionalMassageLabel')}</Text>
               </View>
               <Text style={styles.massageBody}>
                 {sessionNotifications?.postSession ?? (
                   <>
-                    {'Great job! Your session report is ready. See how '}
+                    {t('homeV2.reportReadyStart')}
                     <Text style={styles.massageChildName}>{childName}</Text>
-                    {' did today.'}
+                    {t('homeV2.reportReadyEnd')}
                   </>
                 )}
               </Text>
@@ -936,19 +930,19 @@ export const HomeScreen_v2: React.FC = () => {
                 disabled={!isOnline}
               >
                 <Ionicons name="document-text-outline" size={20} color="#fff" />
-                <Text style={styles.recordButtonText}>Read Today's Report</Text>
+                <Text style={styles.recordButtonText}>{t('homeV2.readReport')}</Text>
               </TouchableOpacity>
             </>
           ) : hasRecordedSession && isReportRead && !chatIntroDismissed ? (
             <>
               <View style={styles.massageHeader}>
                 <Ionicons name="chatbubble-ellipses-outline" size={14} color={COLORS.mainPurple} />
-                <Text style={styles.massageLabel}>Meet Your AI Coach</Text>
+                <Text style={styles.massageLabel}>{t('homeV2.meetCoachLabel')}</Text>
               </View>
               <Text style={styles.massageBody}>
-                {'See the chat bubble at the bottom-right? That\'s your AI coach, Nora. Ask anything — parenting tips, what to do next, or how '}
+                {t('homeV2.meetCoachBodyStart')}
                 <Text style={styles.massageChildName}>{childName}</Text>
-                {' is progressing.'}
+                {t('homeV2.meetCoachBodyEnd')}
               </Text>
               <TouchableOpacity
                 style={styles.recordButton}
@@ -956,17 +950,17 @@ export const HomeScreen_v2: React.FC = () => {
                 activeOpacity={0.85}
               >
                 <Ionicons name="chatbubble-ellipses" size={20} color="#fff" />
-                <Text style={styles.recordButtonText}>Chat with Coach</Text>
+                <Text style={styles.recordButtonText}>{t('homeV2.chatWithCoach')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.skipButton} onPress={handleChatIntroSkip} activeOpacity={0.7}>
-                <Text style={styles.skipButtonText}>Skip for now</Text>
+                <Text style={styles.skipButtonText}>{t('homeV2.skipForNow')}</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
               <View style={styles.massageHeader}>
                 <View style={styles.greenDot} />
-                <Text style={styles.massageLabel}>Daily Emotional Massage</Text>
+                <Text style={styles.massageLabel}>{t('homeV2.dailyEmotionalMassageLabel')}</Text>
               </View>
               <Text style={styles.massageBody}>
                 {recordMessage.start}
@@ -980,7 +974,7 @@ export const HomeScreen_v2: React.FC = () => {
                 disabled={!isOnline}
               >
                 <Ionicons name="mic" size={20} color="#fff" />
-                <Text style={styles.recordButtonText}>Record Again</Text>
+                <Text style={styles.recordButtonText}>{t('homeV2.recordAgain')}</Text>
               </TouchableOpacity>
             </>
           )}
@@ -989,7 +983,7 @@ export const HomeScreen_v2: React.FC = () => {
         {/* ── Today's plan ── */}
         {todayPlan.length > 0 && (
           <View style={styles.planSection}>
-            <Text style={styles.planTitle}>Today's plan</Text>
+            <Text style={styles.planTitle}>{t('homeV2.todaysPlan')}</Text>
             {todayPlan.map(item => (
               <PlanItem
                 key={item.id}
@@ -1015,15 +1009,15 @@ export const HomeScreen_v2: React.FC = () => {
       <Modal visible={showReminderModal} transparent animationType="slide" onRequestClose={() => setShowReminderModal(false)}>
         <View style={styles.reminderOverlay}>
           <View style={styles.reminderCard}>
-            <Text style={styles.reminderTitle}>Set Daily Reminder</Text>
+            <Text style={styles.reminderTitle}>{t('homeV2.reminderModalTitle')}</Text>
             <Text style={styles.reminderBody}>
-              Kids like consistency. Many parents find the{' '}
-              <Text style={styles.reminderHighlight}>"After-School Reconnect"</Text>
-              {' '}or{' '}
-              <Text style={styles.reminderHighlight}>"Pre-Dinner Play"</Text>
-              {' '}or{' '}
-              <Text style={styles.reminderHighlight}>"Weekend day morning"</Text>
-              {' '}works best. Let them choose the timing.
+              {t('homeV2.reminderModalBody1')}{' '}
+              <Text style={styles.reminderHighlight}>{t('homeV2.reminderModalHighlight1')}</Text>
+              {' '}{t('homeV2.reminderModalOr')}{' '}
+              <Text style={styles.reminderHighlight}>{t('homeV2.reminderModalHighlight2')}</Text>
+              {' '}{t('homeV2.reminderModalOr')}{' '}
+              <Text style={styles.reminderHighlight}>{t('homeV2.reminderModalHighlight3')}</Text>
+              {' '}{t('homeV2.reminderModalBody2')}
             </Text>
 
             {/* Preset options */}
@@ -1057,7 +1051,7 @@ export const HomeScreen_v2: React.FC = () => {
             >
               <Ionicons name="time-outline" size={18} color={!selectedPreset ? COLORS.mainPurple : '#6B7280'} />
               <Text style={[styles.reminderCustomLabel, !selectedPreset && styles.reminderCustomLabelActive]}>
-                Custom time: {formatReminderTime(reminderTime)}
+                {t('homeV2.reminderCustomTime', { time: formatReminderTime(reminderTime) })}
               </Text>
               <Ionicons name="chevron-down" size={16} color={!selectedPreset ? COLORS.mainPurple : '#9CA3AF'} />
             </TouchableOpacity>
@@ -1077,10 +1071,10 @@ export const HomeScreen_v2: React.FC = () => {
             )}
 
             <TouchableOpacity style={styles.reminderSaveBtn} onPress={handleSaveReminder} activeOpacity={0.85}>
-              <Text style={styles.reminderSaveBtnText}>Set Reminder</Text>
+              <Text style={styles.reminderSaveBtnText}>{t('homeV2.setReminder')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.reminderCancelBtn} onPress={() => setShowReminderModal(false)} activeOpacity={0.7}>
-              <Text style={styles.reminderCancelText}>Cancel</Text>
+              <Text style={styles.reminderCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -7,6 +7,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { COLORS, FONTS } from '../constants/assets';
+import { useTranslation } from 'react-i18next';
 
 interface TextInputFeedbackCardProps {
   isCorrect: boolean;
@@ -23,7 +24,7 @@ export const TextInputFeedbackCard: React.FC<TextInputFeedbackCardProps> = ({
   suggestions,
   idealAnswer,
 }) => {
-  // Determine score color based on value
+  const { t } = useTranslation();
   const getScoreColor = () => {
     if (score >= 80) return '#047857'; // Green
     if (score >= 60) return '#D97706'; // Orange
@@ -38,7 +39,7 @@ export const TextInputFeedbackCard: React.FC<TextInputFeedbackCardProps> = ({
           <Text style={styles.scoreText}>{score}%</Text>
         </View>
         <Text style={[styles.heading, isCorrect ? styles.correctHeading : styles.incorrectHeading]}>
-          {isCorrect ? 'Great job!' : 'Keep practicing!'}
+          {isCorrect ? t('textInputFeedback.greatJob') : t('textInputFeedback.keepPracticing')}
         </Text>
       </View>
 
@@ -50,7 +51,7 @@ export const TextInputFeedbackCard: React.FC<TextInputFeedbackCardProps> = ({
       {/* Suggestions (if any) */}
       {suggestions && suggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
-          <Text style={styles.suggestionsTitle}>Tips for improvement:</Text>
+          <Text style={styles.suggestionsTitle}>{t('textInputFeedback.tipsForImprovement')}</Text>
           {suggestions.map((suggestion, index) => (
             <View key={index} style={styles.suggestionRow}>
               <Text style={styles.bulletPoint}>•</Text>
@@ -62,7 +63,7 @@ export const TextInputFeedbackCard: React.FC<TextInputFeedbackCardProps> = ({
 
       {/* Ideal Answer */}
       <View style={styles.idealAnswerContainer}>
-        <Text style={styles.idealAnswerTitle}>Ideal answer:</Text>
+        <Text style={styles.idealAnswerTitle}>{t('textInputFeedback.idealAnswer')}</Text>
         <Text style={styles.idealAnswerText}>"{idealAnswer}"</Text>
       </View>
     </View>

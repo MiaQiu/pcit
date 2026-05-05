@@ -9,6 +9,7 @@ import {
   Linking,
   ScrollView,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 const IOS_STORE_URL = process.env.EXPO_PUBLIC_IOS_STORE_URL || '';
 const ANDROID_STORE_URL = process.env.EXPO_PUBLIC_ANDROID_STORE_URL || '';
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export const WhatsNewModal: React.FC<Props> = ({ visible, version, whatsNew, onDismiss }) => {
+  const { t } = useTranslation();
   const handleUpdate = () => {
     const url = Platform.OS === 'ios' ? IOS_STORE_URL : ANDROID_STORE_URL;
     if (url) {
@@ -35,8 +37,8 @@ export const WhatsNewModal: React.FC<Props> = ({ visible, version, whatsNew, onD
         <View style={styles.sheet}>
           <View style={styles.handle} />
 
-          <Text style={styles.title}>What's New</Text>
-          <Text style={styles.version}>Version {version}</Text>
+          <Text style={styles.title}>{t('whatsNew.title')}</Text>
+          <Text style={styles.version}>{t('whatsNew.version', { version })}</Text>
 
           <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
             {whatsNew.map((item, index) => (
@@ -48,11 +50,11 @@ export const WhatsNewModal: React.FC<Props> = ({ visible, version, whatsNew, onD
           </ScrollView>
 
           <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
-            <Text style={styles.updateButtonText}>Update Now</Text>
+            <Text style={styles.updateButtonText}>{t('whatsNew.updateNow')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.dismissButton} onPress={onDismiss}>
-            <Text style={styles.dismissButtonText}>Maybe Later</Text>
+            <Text style={styles.dismissButtonText}>{t('whatsNew.maybeLater')}</Text>
           </TouchableOpacity>
         </View>
       </View>

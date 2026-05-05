@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackNavigationProp } from '../navigation/types';
@@ -28,6 +29,7 @@ interface ReportsSectionProps {
 }
 
 export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, completedSessionCount }) => {
+  const { t } = useTranslation();
   const navigation = useNavigation<RootStackNavigationProp>();
   const recordingService = useRecordingService();
   const [visibility, setVisibility] = useState<{ daily: boolean; weekly: boolean; monthly: boolean } | null>(null);
@@ -85,7 +87,7 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
   };
 
   const formatMode = (mode: string) => {
-    return mode === 'CDI' ? 'Child-Directed' : 'Parent-Directed';
+    return mode === 'CDI' ? t('reports.childDirected') : t('reports.parentDirected');
   };
 
   const formatWeekRange = (start: string, end: string) => {
@@ -96,12 +98,12 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Reports</Text>
+      <Text style={styles.sectionTitle}>{t('reports.title')}</Text>
 
       {/* Daily Reports */}
       {hasDaily && (
         <View style={styles.subsection}>
-          <Text style={styles.subsectionTitle}>Recent Sessions</Text>
+          <Text style={styles.subsectionTitle}>{t('reports.recentSessions')}</Text>
           {recentRecordings.map((recording) => (
             <TouchableOpacity
               key={recording.id}
@@ -129,7 +131,7 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
       {/* Weekly Reports from DB */}
       {hasWeekly && (
         <View style={styles.subsection}>
-          <Text style={styles.subsectionTitle}>Weekly Reports</Text>
+          <Text style={styles.subsectionTitle}>{t('reports.weeklyReports')}</Text>
           {weeklyReports.map((report) => (
             <TouchableOpacity
               key={report.id}
@@ -146,7 +148,7 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.weeklyTitle} numberOfLines={1}>
-                    {report.headline || 'Weekly Report'}
+                    {report.headline || t('reports.weeklyReport')}
                   </Text>
                   <Text style={styles.weeklySubtitle}>
                     {formatWeekRange(report.weekStartDate, report.weekEndDate)}
@@ -162,16 +164,16 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
       {/* Monthly Summary */}
       {hasMonthly && (
         <View style={styles.monthlyCard}>
-          <Text style={styles.monthlyTitle}>This Month</Text>
+          <Text style={styles.monthlyTitle}>{t('reports.thisMonth')}</Text>
           <View style={styles.monthlyStats}>
             <View style={styles.monthlyStat}>
               <Text style={styles.monthlyStatValue}>{monthlySessionCount}</Text>
-              <Text style={styles.monthlyStatLabel}>Sessions</Text>
+              <Text style={styles.monthlyStatLabel}>{t('reports.sessions')}</Text>
             </View>
             <View style={styles.monthlyDivider} />
             <View style={styles.monthlyStat}>
               <Text style={styles.monthlyStatValue}>{monthlyAvgScore || '--'}</Text>
-              <Text style={styles.monthlyStatLabel}>Avg Score</Text>
+              <Text style={styles.monthlyStatLabel}>{t('reports.avgScore')}</Text>
             </View>
           </View>
         </View>
@@ -180,12 +182,12 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
       {/* Developmental Milestones locked teaser */}
       {(completedSessionCount ?? recordings.length) < 5 && (
         <View style={styles.milestoneLockedCard}>
-          <Text style={styles.milestoneLockedTitle}>Developmental Milestones</Text>
+          <Text style={styles.milestoneLockedTitle}>{t('reports.developmentalMilestones')}</Text>
           <View style={styles.milestoneLockedBadge}>
-            <Text style={styles.milestoneLockedBadgeText}>Available after 5 sessions · {completedSessionCount ?? recordings.length}/5 completed</Text>
+            <Text style={styles.milestoneLockedBadgeText}>{t('reports.milestoneLocked', { count: completedSessionCount ?? recordings.length })}</Text>
           </View>
           <Text style={styles.milestoneLockedDesc}>
-            Track your child's growth across Language, Cognitive, Social, Emotional, and Connection — compared against their age benchmark.
+            {t('reports.milestoneDesc')}
           </Text>
         </View>
       )}

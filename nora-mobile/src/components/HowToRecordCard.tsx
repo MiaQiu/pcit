@@ -6,26 +6,24 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { FONTS, COLORS } from '../constants/assets';
+import { useTranslation } from 'react-i18next';
 
 interface HowToRecordCardProps {
   sessionMode?: 'specialTime' | 'discipline';
 }
 
-const getSteps = (sessionMode: 'specialTime' | 'discipline') => {
-  const minutes = sessionMode === 'discipline' ? 10 : 5;
-  return [
-    'Place your phone nearby where it can hear you both clearly.',
-    'Press "Start Recording" below.',
-    `Play naturally with your child for ${minutes} minutes.`,
-    `We'll automatically stop at ${minutes} minutes and give you feedback!`,
-  ];
-};
-
 export const HowToRecordCard: React.FC<HowToRecordCardProps> = ({ sessionMode = 'specialTime' }) => {
-  const STEPS = getSteps(sessionMode);
+  const { t } = useTranslation();
+  const minutes = sessionMode === 'discipline' ? 10 : 5;
+  const STEPS = [
+    t('howToRecord.step1'),
+    t('howToRecord.step2'),
+    t('howToRecord.step3', { minutes }),
+    t('howToRecord.step4', { minutes }),
+  ];
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>How to record</Text>
+      <Text style={styles.title}>{t('howToRecord.title')}</Text>
 
       {STEPS.map((step, index) => (
         <View key={index} style={styles.stepItem}>

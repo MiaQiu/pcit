@@ -13,24 +13,26 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const CHECK_ITEMS = [
-  'Build Stronger Bonding',
-  'Reduce Behavior Issues',
-  'Boost Social/Emotion/Focus',
-];
-
 export const ParentingIntroScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+  const { t } = useTranslation();
+
+  const CHECK_ITEMS = [
+    t('onboarding.parentingIntro.benefit1'),
+    t('onboarding.parentingIntro.benefit2'),
+    t('onboarding.parentingIntro.benefit3'),
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Just 5 minutes a day can make a difference.</Text>
+        <Text style={styles.title}>{t('onboarding.parentingIntro.title')}</Text>
 
         <View style={styles.illustrationContainer}>
           <Image
@@ -65,7 +67,7 @@ export const ParentingIntroScreen: React.FC = () => {
           onPress={() => navigation.navigate('NameInput')}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>Get Your Personalized Plan  →</Text>
+          <Text style={styles.buttonText}>{t('onboarding.parentingIntro.continueButton')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

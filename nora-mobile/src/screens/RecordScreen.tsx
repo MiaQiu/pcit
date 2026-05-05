@@ -30,6 +30,7 @@ import { handleApiError } from '../utils/NetworkMonitor';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
 import amplitudeService from '../services/amplitudeService';
+import { useTranslation } from 'react-i18next';
 
 type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed';
 
@@ -39,6 +40,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 export const RecordScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<RouteProp<RootTabParamList, 'Record'>>();
+  const { t } = useTranslation();
   const recordingService = useRecordingService();
   const authService = useAuthService();
   const uploadProcessing = useUploadProcessing();
@@ -274,8 +276,8 @@ export const RecordScreen: React.FC = () => {
       setPermissionGranted(granted);
       if (!granted) {
         Alert.alert(
-          'Permission Required',
-          'Please grant microphone permission to record audio sessions.'
+          t('record.permissionRequiredTitle'),
+          t('record.permissionRequiredMessage')
         );
       }
       return granted;
@@ -392,22 +394,22 @@ export const RecordScreen: React.FC = () => {
       } else if (newCount === 3) {
         // Third failure: Modal with troubleshooting
         Alert.alert(
-          'Recording Issue',
-          'We\'re having trouble starting the recording.\n\nPlease check:\n• Microphone permissions are enabled\n• No other apps are using the microphone\n• Your device has enough storage',
+          t('record.recordingIssueTitle'),
+          t('record.recordingIssueMessage'),
           [
-            { text: 'Check Settings', onPress: () => Linking.openSettings() },
-            { text: 'Try Again', onPress: startRecording }
+            { text: t('record.checkSettings'), onPress: () => Linking.openSettings() },
+            { text: t('record.tryAgain'), onPress: startRecording }
           ]
         );
       } else {
         // 4+ failures: Escalate to support
         Alert.alert(
-          'We\'re Sorry',
-          'Recording continues to fail. This might be a device compatibility issue.',
+          t('record.sorryCantRecordTitle'),
+          t('record.sorryCantRecordMessage'),
           [
-            { text: 'Contact Support', onPress: () => navigation.push('Support') },
-            { text: 'Try Again', onPress: startRecording },
-            { text: 'Cancel', style: 'cancel' }
+            { text: t('record.contactSupport'), onPress: () => navigation.push('Support') },
+            { text: t('record.tryAgain'), onPress: startRecording },
+            { text: t('common.cancel'), style: 'cancel' }
           ]
         );
       }
@@ -453,9 +455,9 @@ export const RecordScreen: React.FC = () => {
       if (durationSeconds < 10) {
         setRecordingState('idle');
         Alert.alert(
-          'Recording is too short',
-          'We need a little more play-time to give you helpful insights. Please try again.',
-          [{ text: 'OK' }]
+          t('record.tooShortTitle'),
+          t('record.tooShortMessage'),
+          [{ text: t('common.ok') }]
         );
         return;
       }
@@ -483,12 +485,12 @@ export const RecordScreen: React.FC = () => {
 
           const showUploadError = () => {
             Alert.alert(
-              'Upload Failed',
-              userMessage || 'Unable to upload your recording. Please check your connection and try again.',
+              t('record.uploadFailedTitle'),
+              userMessage || t('record.uploadFailedMessage'),
               [
-                { text: 'Cancel', onPress: resetRecording, style: 'cancel' },
+                { text: t('common.cancel'), onPress: resetRecording, style: 'cancel' },
                 {
-                  text: 'Retry',
+                  text: t('record.retry'),
                   onPress: async () => {
                     try {
                       await uploadProcessing.startUpload(uri, durationSeconds, uploadMode);
@@ -541,9 +543,9 @@ export const RecordScreen: React.FC = () => {
       if (durationSeconds < 10) {
         setRecordingState('idle');
         Alert.alert(
-          'Recording Too Short',
-          'We need a little more play-time to give you helpful insights. Please try again.',
-          [{ text: 'OK' }]
+          t('record.tooShortTitle'),
+          t('record.tooShortMessage'),
+          [{ text: t('common.ok') }]
         );
         return;
       }
@@ -572,12 +574,12 @@ export const RecordScreen: React.FC = () => {
 
           const showUploadError = () => {
             Alert.alert(
-              'Upload Failed',
-              userMessage || 'Unable to upload your recording. Please check your connection and try again.',
+              t('record.uploadFailedTitle'),
+              userMessage || t('record.uploadFailedMessage'),
               [
-                { text: 'Cancel', onPress: resetRecording, style: 'cancel' },
+                { text: t('common.cancel'), onPress: resetRecording, style: 'cancel' },
                 {
-                  text: 'Retry',
+                  text: t('record.retry'),
                   onPress: async () => {
                     try {
                       await uploadProcessing.startUpload(uri, durationSeconds, uploadMode);
@@ -686,7 +688,7 @@ export const RecordScreen: React.FC = () => {
         {uploadProcessing.state === 'uploading' && (
           <View style={styles.uploadContainer}>
             <ActivityIndicator size="large" color={COLORS.textDark} />
-            <Text style={styles.uploadText}>Uploading recording...</Text>
+            <Text style={styles.uploadText}>{t('record.uploadingRecording')}</Text>
             <View style={styles.progressBarContainer}>
               <View style={[styles.progressBar, { width: `${uploadProcessing.uploadProgress}%` }]} />
             </View>
@@ -704,16 +706,12 @@ export const RecordScreen: React.FC = () => {
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.processingTitle}>Analyzing your play time…
-This takes a few minutes.
-
-
-</Text>
+            <Text style={styles.processingTitle}>{t('record.analyzingTitle')}</Text>
             <Text style={styles.processingSubtitle}>
-               Nora is listening for patterns in praise, tone, and turn-taking to personalize your tips.
+              {t('record.analyzingSubtitle1')}
             </Text>
             <Text style={styles.processingSubtitle}>
-              You'll be taken to the Home screen as soon as your report is ready.
+              {t('record.analyzingSubtitle2')}
             </Text>
             <ActivityIndicator size="large" color={COLORS.mainPurple} style={styles.processingSpinner} />
           </View>
@@ -723,7 +721,7 @@ This takes a few minutes.
 
         {!permissionGranted && recordingState === 'idle' && (
           <Text style={styles.permissionText}>
-            Microphone permission required to record
+            {t('record.micPermissionRequired')}
           </Text>
         )}
       </ScrollView>
@@ -737,7 +735,7 @@ This takes a few minutes.
             disabled={!canStartSession}
             activeOpacity={0.8}
           >
-            <Text style={styles.actionButtonText}>Record</Text>
+            <Text style={styles.actionButtonText}>{t('record.recordButton')}</Text>
             <Ionicons name="mic" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
@@ -750,7 +748,7 @@ This takes a few minutes.
             onPress={handleStopRecording}
             activeOpacity={0.8}
           >
-            <Text style={styles.actionButtonText}>Stop Recording</Text>
+            <Text style={styles.actionButtonText}>{t('record.stopRecordingButton')}</Text>
             <Ionicons name="stop" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>

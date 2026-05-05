@@ -17,6 +17,7 @@ import { Card } from './Card';
 import { Badge } from './Badge';
 import { Button } from './Button';
 import { MaskedDinoImage } from './MaskedDinoImage';
+import { useTranslation } from 'react-i18next';
 
 // Phase-specific styling
 const PHASE_STYLES = {
@@ -56,6 +57,7 @@ export const LessonCard: React.FC<LessonCardProps> = ({
   isLocked = false,
   onPress,
 }) => {
+  const { t } = useTranslation();
   // Determine phase-based styling (case-insensitive)
   const normalizedPhaseName = phaseName.toUpperCase();
   const phaseStyle = PHASE_STYLES[normalizedPhaseName as keyof typeof PHASE_STYLES] || PHASE_STYLES.CONNECT;
@@ -105,7 +107,7 @@ export const LessonCard: React.FC<LessonCardProps> = ({
         {/* CTA Button - Figma node 35:800 */}
         <View style={styles.buttonContainer}>
           <Button onPress={onPress || (() => {})} disabled={isLocked}>
-            {isLocked ? 'Locked 🔒' : 'Start Reading'}
+            {isLocked ? t('lessonCard.locked') : t('lessonCard.startReading')}
           </Button>
         </View>
       </View>

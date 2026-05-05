@@ -11,44 +11,21 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
+import { useTranslation } from 'react-i18next';
 
 type SkillUtterancesRouteProp = RouteProp<RootStackParamList, 'SkillUtterances'>;
 
-const DISPLAY_NAMES: Record<string, string> = {
-  'Praise (Labeled)': 'Praise',
-  'Echo': 'Echo',
-  'Narrate': 'Narration',
-  'Questions': 'Questions',
-  'Commands': 'Commands',
-  'Criticism': 'Criticism',
+// Maps from the route skillKey to the i18n namespace key (lowercase)
+const SKILL_KEY_MAP: Record<string, string> = {
+  'Praise (Labeled)': 'praise',
+  'Echo': 'echo',
+  'Narrate': 'narrate',
+  'Questions': 'question',
+  'Commands': 'command',
+  'Criticism': 'criticism',
 };
 
 const PEN_SKILL_KEYS = new Set(['Praise (Labeled)', 'Echo', 'Narrate']);
-
-const PRAISE_DESC = 'Specific feedback that identifies exactly what behavior you admire. Instead of a vague "Good job," you say, "I love how carefully you are stacking those blocks."';
-const ECHO_DESC = 'Repeating or rephrasing what your child says. If they say "Big tower!", you respond with "Yes, a very big tower!"';
-const NARRATE_DESC = "Describing your child's actions out loud, like a sports commentator. For example: \"You're putting the red car inside the garage.\"";
-const QUESTION_DESC = 'Even "helpful" questions like "What color is that?" or "How was your day?".';
-const COMMAND_DESC = 'Any instruction where you tell your child what to do (e.g., "Put the block there" or "Give me the toy").';
-const CRITICISM_DESC = 'Any disapproval, including "No," "Stop," "Don\'t," or correcting a mistake.';
-
-const SESSION_CONTEXT: Record<string, { title: string; description: string }> = {
-  'Praise (Labeled)': { title: 'What counts as Praise?', description: 'These are moments where you named exactly what your child did well — specific statements that tell them precisely which behaviour to repeat.' },
-  'Echo': { title: 'What counts as Echo?', description: 'These are moments where you repeated or rephrased your child\'s own words, showing you were fully listening and validating what they said.' },
-  'Narrate': { title: 'What counts as Narration?', description: 'These are moments where you described your child\'s actions aloud, directing your full attention to what they were doing.' },
-  'Questions': { title: 'What counts as a Question?', description: 'These are moments where you asked something — even well-meaning questions can act as hidden commands that interrupt your child\'s focus and flow.' },
-  'Commands': { title: 'In this session', description: 'These are moments where you gave an instruction or directed your child\'s behaviour, which can shift the lead away from them.' },
-  'Criticism': { title: 'What counts as Criticism?', description: 'These are moments where you used disapproving language — saying "No," "Stop," "Don\'t," or correcting a mistake, which can accidentally reinforce the behaviour.' },
-};
-
-const WHAT_IT_IS: Record<string, string> = {
-  'Praise (Labeled)': PRAISE_DESC,
-  'Echo': ECHO_DESC,
-  'Narrate': NARRATE_DESC,
-  'Questions': QUESTION_DESC,
-  'Commands': COMMAND_DESC,
-  'Criticism': CRITICISM_DESC,
-};
 
 const RolePill: React.FC<{ role?: string }> = ({ role }) => {
   const isChild = role === 'child';
@@ -63,14 +40,16 @@ export const SkillUtterancesScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<SkillUtterancesRouteProp>();
   const { skillKey, recordingId, utterances } = route.params;
+  const { t } = useTranslation();
 
-  const displayName = DISPLAY_NAMES[skillKey] || skillKey;
+  const nsKey = SKILL_KEY_MAP[skillKey] || skillKey.toLowerCase();
   const isPenSkill = PEN_SKILL_KEYS.has(skillKey);
   const accentColor = isPenSkill ? '#6750A4' : '#852221';
 
-  const whatItIs = WHAT_IT_IS[skillKey];
-
-  const sessionContext = SESSION_CONTEXT[skillKey];
+  const displayName = t(`skillInfo.${nsKey}.displayName` as any);
+  const whatItIs = t(`skillInfo.${nsKey}.whatItIs` as any);
+  const contextTitle = t(`skillInfo.${nsKey}.contextTitle` as any);
+  const contextDescription = t(`skillInfo.${nsKey}.contextDescription` as any);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -78,7 +57,7 @@ export const SkillUtterancesScreen: React.FC = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{displayName} Utterances</Text>
+        <Text style={styles.headerTitle}>{t('skillInfo.utterancesHeader', { name: displayName })}</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -96,7 +75,7 @@ export const SkillUtterancesScreen: React.FC = () => {
           <View style={styles.explainCardHeader}>
             <Ionicons name="bulb-outline" size={18} color={accentColor} />
             <Text style={[styles.explainLinkText, { color: accentColor }]}>
-              Learn about {displayName}
+              {t('skillInfo.learnAbout', { name: displayName })}
             </Text>
             <Ionicons name="chevron-forward" size={16} color={accentColor} />
           </View>
@@ -106,10 +85,10 @@ export const SkillUtterancesScreen: React.FC = () => {
         </TouchableOpacity>
 
         {/* Session context */}
-        {sessionContext && (
+        {contextTitle && (
           <View style={styles.contextSection}>
-            <Text style={styles.contextTitle}>{sessionContext.title}</Text>
-            <Text style={styles.contextDescription}>{sessionContext.description}</Text>
+            <Text style={styles.contextTitle}>{contextTitle}</Text>
+            <Text style={styles.contextDescription}>{contextDescription}</Text>
           </View>
         )}
 
@@ -129,7 +108,7 @@ export const SkillUtterancesScreen: React.FC = () => {
         {utterances.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>
-              No {displayName} utterances recorded in this session.
+              {t('skillInfo.noUtterances', { name: displayName })}
             </Text>
           </View>
         ) : (
@@ -162,7 +141,7 @@ export const SkillUtterancesScreen: React.FC = () => {
           style={styles.transcriptButton}
           onPress={() => navigation.navigate('Transcript', { recordingId })}
         >
-          <Text style={styles.transcriptButtonText}>Read Full Conversation</Text>
+          <Text style={styles.transcriptButtonText}>{t('skillInfo.readFullConversation')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

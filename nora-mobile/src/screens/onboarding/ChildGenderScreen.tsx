@@ -3,21 +3,23 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
 export const ChildGenderScreen: React.FC = () => {
   const { data } = useOnboarding();
+  const { t } = useTranslation();
   const childName = data.childName || 'your child';
 
   return (
     <MultipleChoiceScreen
-      headerText="Used only to personalize guidance."
-      title={`What is ${childName}'s gender?`}
+      headerText={t('onboarding.childGender.headerText')}
+      title={t('onboarding.childGender.title', { name: childName })}
       options={[
-        { value: 'BOY', label: 'Boy' },
-        { value: 'GIRL', label: 'Girl' },
-        { value: 'OTHER', label: 'Prefer not to share' },
+        { value: 'BOY', label: t('onboarding.childGender.boy') },
+        { value: 'GIRL', label: t('onboarding.childGender.girl') },
+        { value: 'OTHER', label: t('onboarding.childGender.preferNotToShare') },
       ]}
       dataField="childGender"
       nextScreen="ChildBirthday"

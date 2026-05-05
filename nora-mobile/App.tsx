@@ -1,7 +1,10 @@
+import './src/i18n';
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, Text, AppState, Platform } from 'react-native';
 import { NavigationContainer, useNavigation, DefaultTheme } from '@react-navigation/native';
+import { I18nextProvider } from 'react-i18next';
+import i18n, { loadSavedLanguage } from './src/i18n';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
@@ -179,6 +182,10 @@ export default function App() {
     PlusJakartaSans_700Bold,
   });
 
+  useEffect(() => {
+    loadSavedLanguage();
+  }, []);
+
   // Initialize Firebase Crashlytics
   useEffect(() => {
     // Enable crash reporting (even in development for testing)
@@ -235,23 +242,25 @@ export default function App() {
   }
 
   return (
-    <ErrorBoundary>
-      <SafeAreaProvider>
-        <AppProvider>
-          <CoachUnreadProvider>
-          <SubscriptionProvider>
-            <OnboardingProvider>
-              <ToastProvider>
-                <NavigationContainer linking={linking} theme={navigationTheme}>
-                  <AppContent />
-                </NavigationContainer>
-              </ToastProvider>
-            </OnboardingProvider>
-          </SubscriptionProvider>
-          </CoachUnreadProvider>
-        </AppProvider>
-      </SafeAreaProvider>
-    </ErrorBoundary>
+    <I18nextProvider i18n={i18n}>
+      <ErrorBoundary>
+        <SafeAreaProvider>
+          <AppProvider>
+            <CoachUnreadProvider>
+            <SubscriptionProvider>
+              <OnboardingProvider>
+                <ToastProvider>
+                  <NavigationContainer linking={linking} theme={navigationTheme}>
+                    <AppContent />
+                  </NavigationContainer>
+                </ToastProvider>
+              </OnboardingProvider>
+            </SubscriptionProvider>
+            </CoachUnreadProvider>
+          </AppProvider>
+        </SafeAreaProvider>
+      </ErrorBoundary>
+    </I18nextProvider>
   );
 }
 

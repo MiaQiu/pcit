@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { FONTS, COLORS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
+import { useTranslation } from 'react-i18next';
 
 interface AttachedFile {
   uri: string;
@@ -31,6 +32,7 @@ interface AttachedFile {
 export const SupportScreen: React.FC = () => {
   const navigation = useNavigation();
   const authService = useAuthService();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState('');
   const [description, setDescription] = useState('');
@@ -62,11 +64,11 @@ export const SupportScreen: React.FC = () => {
           return updated;
         });
 
-        Alert.alert('Success', `${newFiles.length} file(s) attached`);
+        Alert.alert(t('common.success'), t('support.filesAttached', { count: newFiles.length }));
       }
     } catch (error) {
       console.error('Error picking document:', error);
-      Alert.alert('Error', 'Failed to attach file. Please try again.');
+      Alert.alert(t('common.error'), t('support.errorAttachFile'));
     }
   };
 
@@ -84,19 +86,19 @@ export const SupportScreen: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!email.trim()) {
-      Alert.alert('Required Field', 'Please enter your email address.');
+      Alert.alert(t('support.requiredFieldTitle'), t('support.requiredEmailMessage'));
       return;
     }
 
     if (!description.trim()) {
-      Alert.alert('Required Field', 'Please enter a description of your issue.');
+      Alert.alert(t('support.requiredFieldTitle'), t('support.requiredDescriptionMessage'));
       return;
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      Alert.alert(t('support.invalidEmailTitle'), t('support.invalidEmailMessage'));
       return;
     }
 
@@ -164,11 +166,11 @@ export const SupportScreen: React.FC = () => {
       console.log('Support request submitted successfully:', result);
 
       Alert.alert(
-        'Request Submitted',
-        'Thank you for contacting us. We will review your request and get back to you shortly.',
+        t('support.successTitle'),
+        t('support.successMessage'),
         [
           {
-            text: 'OK',
+            text: t('common.ok'),
             onPress: () => navigation.goBack(),
           },
         ]
@@ -180,7 +182,7 @@ export const SupportScreen: React.FC = () => {
       setAttachedFiles([]);
     } catch (error: any) {
       console.error('Submit error:', error);
-      Alert.alert('Error', error.message || 'Failed to submit request. Please try again.');
+      Alert.alert(t('common.error'), error.message || t('support.errorSubmit'));
     } finally {
       setIsSubmitting(false);
     }
@@ -196,22 +198,22 @@ export const SupportScreen: React.FC = () => {
         >
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Support</Text>
+        <Text style={styles.headerTitle}>{t('support.headerTitle')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <Text style={styles.introText}>
-            Having trouble or need help? Describe your issue below and we'll get back to you as soon as possible.
+            {t('support.introText')}
           </Text>
 
           {/* Email Input */}
           <View style={styles.section}>
-            <Text style={styles.label}>Email *</Text>
+            <Text style={styles.label}>{t('support.emailLabel')}</Text>
             <TextInput
               style={styles.emailInput}
-              placeholder="your.email@example.com"
+              placeholder={t('support.emailPlaceholder')}
               placeholderTextColor="#9CA3AF"
               value={email}
               onChangeText={setEmail}
@@ -223,10 +225,10 @@ export const SupportScreen: React.FC = () => {
 
           {/* Description Input */}
           <View style={styles.section}>
-            <Text style={styles.label}>Description *</Text>
+            <Text style={styles.label}>{t('support.descriptionLabel')}</Text>
             <TextInput
               style={styles.textInput}
-              placeholder="Describe your issue or question..."
+              placeholder={t('support.descriptionPlaceholder')}
               placeholderTextColor="#9CA3AF"
               value={description}
               onChangeText={setDescription}
@@ -239,14 +241,14 @@ export const SupportScreen: React.FC = () => {
           {/* Attachments Section */}
           <View style={styles.section}>
             <View style={styles.attachmentHeader}>
-              <Text style={styles.label}>Attachments</Text>
+              <Text style={styles.label}>{t('support.attachments')}</Text>
               <TouchableOpacity
                 style={styles.attachButton}
                 onPress={handleAttachFile}
                 activeOpacity={0.7}
               >
                 <Ionicons name="attach" size={20} color="#8C49D5" />
-                <Text style={styles.attachButtonText}>Attach File</Text>
+                <Text style={styles.attachButtonText}>{t('support.attachFile')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -285,7 +287,7 @@ export const SupportScreen: React.FC = () => {
             {isSubmitting ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.submitButtonText}>Submit Request</Text>
+              <Text style={styles.submitButtonText}>{t('support.submitButton')}</Text>
             )}
           </TouchableOpacity>
         </View>

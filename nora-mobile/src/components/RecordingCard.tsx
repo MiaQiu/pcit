@@ -11,6 +11,7 @@ import { Card } from './Card';
 import { MaskedDinoImage } from './MaskedDinoImage';
 import { RecordingTimer } from './RecordingTimer';
 import { FONTS, COLORS } from '../constants/assets';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -31,6 +32,7 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
   canRecord,
   backgroundColor = '#E4E4FF',
 }) => {
+  const { t } = useTranslation();
   return (
     <Card
       backgroundColor={backgroundColor}
@@ -55,8 +57,8 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
         <View style={styles.hintContainer}>
           <Text style={styles.hintText}>
             {isRecording
-              ? `Recording in progress...\nSpeak naturally during play time! The recording will stop automatically at ${targetMinutes} minutes`
-              : 'Start recording your play session'}
+              ? t('recordingCard.recording', { minutes: targetMinutes })
+              : t('recordingCard.startPrompt')}
           </Text>
         </View>
 
@@ -69,7 +71,7 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
               disabled={!canRecord}
               activeOpacity={0.8}
             >
-              <Text style={styles.recordButtonText}>Record</Text>
+              <Text style={styles.recordButtonText}>{t('recordingCard.record')}</Text>
               <Ionicons name="mic" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
@@ -83,7 +85,7 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
               onPress={onRecordPress}
               activeOpacity={0.8}
             >
-              <Text style={styles.stopButtonText}>Stop</Text>
+              <Text style={styles.stopButtonText}>{t('recordingCard.stop')}</Text>
               <Ionicons name="stop" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>

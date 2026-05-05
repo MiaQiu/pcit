@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { Picker } from '@react-native-picker/picker';
@@ -15,6 +16,7 @@ import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 export const ChildBirthdayScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
+  const { t } = useTranslation();
 
   // Get current date for defaults
   const currentDate = new Date();
@@ -55,11 +57,7 @@ export const ChildBirthdayScreen: React.FC = () => {
     }
   };
 
-  // Generate months array (short form)
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
+  const months = Array.from({ length: 12 }, (_, i) => t(`months.short${i}`));
 
   // Generate years array (from 12 years ago to current year)
   const currentYear = new Date().getFullYear();
@@ -71,7 +69,7 @@ export const ChildBirthdayScreen: React.FC = () => {
         <OnboardingProgressHeader phase={1} step={5} totalSteps={6} />
 
         <View style={styles.header}>
-          <Text style={styles.title}>When is {data.childName}'s birthday?</Text>
+          <Text style={styles.title}>{t('onboarding.childBirthday.title', { name: data.childName })}</Text>
         </View>
 
         {/* Month and Year Pickers */}
@@ -109,7 +107,7 @@ export const ChildBirthdayScreen: React.FC = () => {
         {(childAge < 2 || childAge > 7) && (
           <View style={styles.messageContainer}>
             <Text style={styles.messageText}>
-            * Note on <Text style={styles.boldText}>Age Suitability</Text>: Nora's method is clinically evidenced to be most effective for children between 2 and 7 years old. However, the foundational skills taught here, such as positive reinforcement and emotional regulation, can be adapted and beneficial for children of any age.
+              {t('onboarding.childBirthday.ageSuitabilityNote')}
             </Text>
           </View>
         )}

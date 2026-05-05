@@ -1,10 +1,13 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Linking, Image } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 const IOS_STORE_URL = process.env.EXPO_PUBLIC_IOS_STORE_URL || '';
 const ANDROID_STORE_URL = process.env.EXPO_PUBLIC_ANDROID_STORE_URL || '';
 
 export const ForceUpdateScreen: React.FC = () => {
+  const { t } = useTranslation();
+
   const handleUpdate = () => {
     const url = Platform.OS === 'ios' ? IOS_STORE_URL : ANDROID_STORE_URL;
     if (url) {
@@ -15,12 +18,10 @@ export const ForceUpdateScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <Image source={require('../../assets/splash_icon_dino_small.png')} style={styles.dragon} />
-      <Text style={styles.title}>Update Required</Text>
-      <Text style={styles.message}>
-        A new version of Nora is available. Please update to continue using the app.
-      </Text>
+      <Text style={styles.title}>{t('forceUpdate.title')}</Text>
+      <Text style={styles.message}>{t('forceUpdate.message')}</Text>
       <TouchableOpacity style={styles.button} onPress={handleUpdate}>
-        <Text style={styles.buttonText}>Update Now</Text>
+        <Text style={styles.buttonText}>{t('forceUpdate.updateButton')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -30,7 +31,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    //justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 40,
   },

@@ -1,0 +1,1148 @@
+{
+  "common": {
+    "error": "Error",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "retry": "Retry",
+    "success": "Success",
+    "loading": "Loading...",
+    "done": "Done"
+  },
+  "months": {
+    "0": "January",
+    "1": "February",
+    "2": "March",
+    "3": "April",
+    "4": "May",
+    "5": "June",
+    "6": "July",
+    "7": "August",
+    "8": "September",
+    "9": "October",
+    "10": "November",
+    "11": "December",
+    "short0": "Jan",
+    "short1": "Feb",
+    "short2": "Mar",
+    "short3": "Apr",
+    "short4": "May",
+    "short5": "Jun",
+    "short6": "Jul",
+    "short7": "Aug",
+    "short8": "Sep",
+    "short9": "Oct",
+    "short10": "Nov",
+    "short11": "Dec"
+  },
+  "start": {
+    "subtitle": "5 Minutes a Day to a Calmer, \nHappier Child.",
+    "getStarted": "Get Started",
+    "alreadyHaveAccount": "I already have an account",
+    "termsPrefix": "By continuing, you agree to Nora's\n",
+    "termsOfService": "Terms of Service",
+    "termsAnd": " and ",
+    "privacyPolicy": "Privacy Policy"
+  },
+  "login": {
+    "title": "Let's get you logged in",
+    "emailPlaceholder": "Email Address",
+    "passwordPlaceholder": "Password",
+    "logIn": "LOG IN",
+    "forgotPassword": "Forgot your Password?",
+    "signInWithApple": "Sign in with Apple",
+    "signInWithGoogle": "Sign in with Google",
+    "errorEmptyTitle": "Error",
+    "errorEmptyMessage": "Please enter your email and password",
+    "loginFailedTitle": "Login Failed",
+    "appleSignInFailedMessage": "Failed to sign in with Apple",
+    "googleSignInFailedMessage": "Failed to sign in with Google"
+  },
+  "createAccount": {
+    "title": "Create your account",
+    "emailLabel": "Email",
+    "emailPlaceholder": "your@email.com",
+    "emailInvalid": "Please enter a valid email",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "At least 8 characters",
+    "passwordWeak": "Must have 8+ characters, 1 uppercase, 1 lowercase, 1 number",
+    "confirmPasswordLabel": "Confirm Password",
+    "confirmPasswordPlaceholder": "Re-enter password",
+    "passwordMismatch": "Passwords do not match",
+    "createButton": "Create Account",
+    "invalidEmailTitle": "Invalid Email",
+    "invalidEmailMessage": "Please enter a valid email address",
+    "weakPasswordTitle": "Weak Password",
+    "weakPasswordMessage": "Password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number",
+    "passwordMismatchTitle": "Password Mismatch",
+    "signupFailedTitle": "Signup Failed"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password?",
+    "subtitle": "Enter your email address and we'll send you instructions to reset your password",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Enter your email",
+    "sendResetLink": "Send Reset Link",
+    "rememberPassword": "Remember your password? ",
+    "logIn": "Log In",
+    "errorEmptyMessage": "Please enter your email address",
+    "errorInvalidMessage": "Please enter a valid email address",
+    "errorFailedMessage": "Failed to send password reset email. Please try again.",
+    "checkEmailTitle": "Check Your Email",
+    "sentDescription": "We've sent password reset instructions to",
+    "sentInstructions": "Please check your email and follow the link to reset your password. If you don't see the email, check your spam folder.",
+    "backToLogin": "Back to Login",
+    "didntReceive": "Didn't receive the email? ",
+    "tryAgain": "Try again"
+  },
+  "resetPassword": {
+    "title": "Reset Password",
+    "subtitle": "Enter your new password below",
+    "resetTokenLabel": "Reset Token",
+    "resetTokenPlaceholder": "Enter token from email",
+    "newPasswordLabel": "New Password",
+    "newPasswordPlaceholder": "Enter new password",
+    "passwordHint": "At least 8 characters with 1 uppercase, 1 lowercase, and 1 number",
+    "confirmPasswordLabel": "Confirm Password",
+    "confirmPasswordPlaceholder": "Confirm new password",
+    "resetButton": "Reset Password",
+    "rememberPassword": "Remember your password? ",
+    "logIn": "Log In",
+    "errorTokenRequired": "Reset token is required",
+    "errorPasswordRequired": "Please enter your new password",
+    "errorPasswordMismatch": "Passwords do not match",
+    "successTitle": "Success",
+    "successMessage": "Your password has been reset successfully. Please log in with your new password.",
+    "errorFailedMessage": "Failed to reset password. The link may have expired."
+  },
+  "subscription": {
+    "earlyUserBenefits": "Early User Benefits",
+    "howTrialWorks": "How your trial works",
+    "subscribeToContinue": "Subscribe to continue",
+    "priceMonthly": "S$9.98/month",
+    "priceFreeTrialThenMonthly": "First 30 days free, then S$9.98/month",
+    "regularPrice": "Regular price first 7 days free, then S$39.98/month",
+    "stepProfileTitle": "Set up your profile",
+    "stepProfileDesc": "We've set up your profile based on your answers.",
+    "stepTodayTitle": "Today",
+    "stepTodayDesc": "Unlock access to personalized coaching lessons and sessions.",
+    "step30DaysTitle": "In 30 days",
+    "stepChargedDesc": "You'll be charged S$9.98. Cancel anytime before.",
+    "stepChargedDescReturning": "You'll be charged S$9.98. Renews monthly, cancel anytime.",
+    "restorePurchase": "Restore purchase",
+    "logOut": "Log Out",
+    "disclaimerNew": "After your free trial, your subscription automatically renews at S$9.98/month unless you cancel at least 24 hours before the trial ends. Cancel anytime in Settings. By continuing, you agree to our ",
+    "disclaimerReturning": "Your subscription automatically renews at S$9.98/month. Cancel anytime in Settings. By continuing, you agree to our ",
+    "terms": "Terms",
+    "privacyPolicy": "Privacy Policy",
+    "startTrial": "Start my 30-day free trial",
+    "subscribeNow": "Subscribe now",
+    "betaPricing": "Limited beta pricing for early supporters",
+    "notAvailableTitle": "Not Available",
+    "notAvailableMessage": "Monthly plan is not available yet. Please try again in a moment.",
+    "purchaseFailedTitle": "Purchase Failed",
+    "purchaseFailedMessage": "Unable to start trial. If you were charged, tap Restore Purchase.",
+    "restorePurchaseButton": "Restore Purchase",
+    "tryAgain": "Try Again",
+    "restoreSuccessTitle": "Success",
+    "restoreSuccessMessage": "Your subscription has been restored!",
+    "noPurchasesTitle": "No Purchases Found",
+    "noPurchasesMessage": "We couldn't find any previous purchases to restore.",
+    "restoreFailedTitle": "Restore Failed",
+    "restoreFailedMessage": "Unable to restore purchases. Please try again.",
+    "errorSetup": "Failed to complete setup. Please try again.",
+    "logoutError": "Failed to log out. Please try again."
+  },
+  "notificationPermission": {
+    "title": "Enable Notifications",
+    "description": "Building a lasting habit of staying present is easier with gentle reminders.",
+    "benefitReminders": "Reminders for your 5-minute play ",
+    "benefitInsights": "Instant insights after recording",
+    "benefitReports": "Weekly progress reports ",
+    "enabling": "Enabling…",
+    "enable": "Enable",
+    "notNow": "Not Now",
+    "disabledTitle": "Notifications Disabled",
+    "disabledMessage": "You can enable notifications later in Settings."
+  },
+  "notificationSettings": {
+    "title": "Notifications",
+    "loading": "Loading...",
+    "permissionBannerTitle": "Notifications Disabled",
+    "permissionBannerSubtitle": "To receive reminders and updates, please enable notifications in your device Settings.",
+    "openSettings": "Open Settings",
+    "dailyReminders": "Daily Reminders",
+    "dailySessionReminder": "Daily Session Reminder",
+    "dailySessionReminderDesc": "Get reminded to complete your daily special time session",
+    "reminderTime": "Reminder Time",
+    "playSounds": "Play Session Sounds",
+    "connectPhase": "Connect Phase",
+    "connectPhaseDesc": "Sound when 5-minute play session finishes",
+    "disciplinePhase": "Discipline Phase",
+    "disciplinePhaseDesc": "Sound when transitioning from child directed play to discipline",
+    "infoText": "You can change these settings at any time. Notification times and frequency may vary.",
+    "selectTime": "Select Time",
+    "pickerCancel": "Cancel",
+    "pickerDone": "Done",
+    "connectPhaseSoundTitle": "Connect Phase Sound",
+    "disciplinePhaseSoundTitle": "Discipline Phase Sound",
+    "errorSavePreferences": "Failed to save preferences",
+    "errorPlaySound": "Failed to play sound preview",
+    "notificationsDisabledTitle": "Notifications Disabled",
+    "notificationsDisabledMessage": "Please enable notifications in your device settings to receive reminders.",
+    "sounds": {
+      "winChime": "Win Chime",
+      "gentleBell": "Gentle Bell",
+      "voiceReminder": "Voice Reminder"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "loadingProfile": "Loading profile...",
+    "account": "Account",
+    "emailLabel": "Email",
+    "childNameLabel": "Child's Name",
+    "childAgeLabel": "Child's Age",
+    "childAgeValue": "{{age}} years old",
+    "primaryFocusLabel": "Primary Focus Area",
+    "issueNotSpecified": "Not specified",
+    "subscriptionSection": "Subscription",
+    "currentPlan": "Current Plan",
+    "manageSubscription": "Manage Subscription",
+    "settings": "Settings",
+    "referFriend": "Refer a Friend",
+    "notifications": "Notifications",
+    "support": "Support",
+    "termsAndConditions": "Terms and Conditions",
+    "privacyPolicy": "Privacy Policy",
+    "language": "Language",
+    "logOut": "Log Out",
+    "deleteAccount": "Delete Account",
+    "permissionRequiredTitle": "Permission Required",
+    "permissionRequiredMessage": "Please allow access to your photos to change your profile picture.",
+    "errorPickImage": "Failed to pick image",
+    "errorLoadProfile": "Failed to load profile information",
+    "errorUploadImage": "Failed to upload image",
+    "successImageUpdated": "Profile image updated successfully",
+    "logOutConfirmTitle": "Log Out",
+    "logOutConfirmMessage": "Are you sure you want to log out?",
+    "logOutConfirmButton": "Log Out",
+    "deleteConfirmTitle": "Delete Account",
+    "deleteConfirmMessage": "This will permanently delete your account and all personal information associated with it. You will lose access to your play session history and feedback reports. This action cannot be undone.",
+    "deleteConfirmButton": "Delete Account",
+    "errorLogOut": "Failed to log out. Please try again.",
+    "errorManageSubscription": "Could not open subscription management",
+    "errorManageSubscriptionRetry": "Could not open subscription management. Please try again.",
+    "errorDeleteAccount": "Failed to delete account. Please try again or contact support.",
+    "issueTags": {
+      "behavior_challenges": "Behavior Challenges (Tantrums, Arguing)",
+      "big_emotions": "Handling big emotions",
+      "frustration_tolerance": "Low frustration tolerance",
+      "new_baby_in_the_house": "New Baby in the Home",
+      "moving_house": "Moving House & School Changes",
+      "parental_divorce": "Navigating Parental Divorces",
+      "social": "Building Social-Emotional Skills",
+      "attention_focus": "Attention and Focus Issues",
+      "adhd": "ADHD / Attention & Hyperactivity",
+      "parenting_strategies": "Learning More Effective Parenting Strategies",
+      "defiance": "Defiance",
+      "aggression": "Aggression",
+      "emotional": "Emotional Regulation",
+      "routine": "Routine & Structure",
+      "general": "General Behavior"
+    },
+    "planNames": {
+      "premiumTrial": "Premium Trial",
+      "premium": "Premium",
+      "free": "Free"
+    },
+    "subscriptionStatus": {
+      "subscriptionExpired": "Subscription expired",
+      "noActiveSubscription": "No active subscription",
+      "trialEnds": "Trial ends {{date}}",
+      "cancelledEnds": "Cancelled, ends {{date}}",
+      "renews": "Renews {{date}}",
+      "active": "Active",
+      "cancelled": "Cancelled"
+    }
+  },
+  "home": {
+    "unableToLoadProfile": "Unable to load profile while offline",
+    "sessionProcessing": "Latest play session processing. We'll notify you when it's ready.",
+    "completeSession": "Complete a play session to see your score!"
+  },
+  "transcript": {
+    "headerTitle": "Full Transcript",
+    "loading": "Loading transcript...",
+    "failedToLoad": "Failed to load transcript",
+    "speakerLegend": "Speaker Legend",
+    "noTranscript": "No transcript available",
+    "silentMoment": "Silent Moment",
+    "speakerAdult": "Adult",
+    "speakerChild": "Child",
+    "speakerAdultN": "Adult {{n}}",
+    "speakerChildN": "Child {{n}}"
+  },
+  "weeklyReport": {
+    "loading": "Loading report...",
+    "noReport": "No report available",
+    "goBack": "Go back",
+    "defaultFocusHeading": "Keep practicing your skills this week.",
+    "defaultFocusSubtext": "You don't need to be perfect — just consistent.",
+    "buttonBack": "← Back",
+    "buttonContinue": "Continue →",
+    "buttonSubmit": "Submit",
+    "checkInTitle": "Quick Check-in",
+    "checkInMoodQuestion": "How are you doing this week?",
+    "checkInDisclaimer": "This isn't graded — it helps your coach tailor the next suggestions.",
+    "checkInImprovementQuestion": "Have you seen improvement in the areas you're working on?",
+    "moods": {
+      "grounded": "Grounded",
+      "tired": "Tired",
+      "stretched": "Stretched",
+      "hopeful": "Hopeful"
+    },
+    "ratings": {
+      "better": "Better",
+      "same": "Same",
+      "worse": "Worse"
+    }
+  },
+  "report": {
+    "headerTitle": "Today's Emotional Massage Recap",
+    "analyzingSession": "Analyzing your session...",
+    "loadingReport": "Loading report...",
+    "failedToLoad": "Failed to load report",
+    "tryAgain": "Try Again",
+    "overallLabel": "Overall",
+    "speakerAdult": "Adult",
+    "speakerChild": "Child",
+    "speakerAdultN": "Adult {{n}}",
+    "speakerChildN": "Child {{n}}",
+    "speakerUnknown": "Unknown",
+    "feedbackYes": "Yes",
+    "feedbackNotReally": "Not really",
+    "feedbackWhatBetter": "What could be better?",
+    "feedbackPlaceholder": "How can we improve?",
+    "feedbackSubmit": "Submit",
+    "negativeReasons": {
+      "tooGeneric": "Too generic",
+      "notAccurate": "Not accurate",
+      "hardToUnderstand": "Hard to understand",
+      "missingSomething": "Missing something"
+    },
+    "section": {
+      "emotionalBankAccount": "Emotional Bank Account",
+      "penSkills": "Your PEN Skills",
+      "penSkillsSubtitle": "Boost Confidence and Compliance",
+      "areasToAvoid": "Areas to Avoid",
+      "areasToAvoidSubtitle": "Disrupts focus and creativity",
+      "topMoment": "Top Moment",
+      "coachsCorner": "Coach's Corner",
+      "whatWeLearnt": "What we learnt about {{childName}}",
+      "developmentalMilestones": "Developmental Milestones",
+      "developmentalMilestonesWithName": "{{childName}}'s Developmental Milestones"
+    },
+    "subsection": {
+      "observation": "Observation",
+      "newMilestone": "New Milestone ({{category}})"
+    },
+    "skillRating": {
+      "payAttention": "(Pay attention)",
+      "good": "(Good)",
+      "excellent": "(Excellent)"
+    },
+    "pdi": {
+      "commandSequencesSubtitle": "Detailed feedback on each command sequences",
+      "sequenceTitle": "Sequence {{index}}: {{title}}",
+      "command": "Command: ",
+      "waitTime": "Wait Time: ",
+      "followThrough": "Follow-through: ",
+      "coachsTip": "Coach's Tip: "
+    },
+    "coachingCard": {
+      "tomorrowsGoal": "Tomorrow's Goal: ",
+      "readFullTranscript": "Read Full Transcript with Tips",
+      "summary": "Summary: ",
+      "tipForNextSession": "Tip for Next Session: ",
+      "insteadOf": "Instead of: ",
+      "try": "Try: ",
+      "applyInDailyLife": "Apply in Daily Life: "
+    },
+    "milestone": {
+      "lockedBadge": "Available after 5 sessions · {{count}}/5 completed",
+      "lockedDescription": "Track your child's growth across Language, Cognitive, Social, Emotional, and Connection — compared against their age benchmark.",
+      "achieved": "{{childName}} has mastered {{title}}!",
+      "emerging": "{{childName}} is starting to {{title}}!"
+    },
+    "feedback": {
+      "thankYou": "Thanks for your feedback!",
+      "question": "Was this report helpful?"
+    },
+    "chatDemo": {
+      "message": "Discuss the session with our friendly AI coach Nora."
+    },
+    "skillLabel": {
+      "praiseLabeleld": "Praise (Labeled)",
+      "echo": "Echo",
+      "narrate": "Narrate",
+      "questions": "Questions",
+      "commands": "Commands",
+      "criticism": "Criticism"
+    }
+  },
+  "lessonViewer": {
+    "contentUpdatedTitle": "Content Updated",
+    "contentUpdatedMessage": "This lesson has been updated. Please select it again to view the latest version.",
+    "errorEvaluateResponse": "Failed to evaluate your response. Please try again.",
+    "quizBadge": "TAKE A GUESS",
+    "yourResponse": "Your response:",
+    "evaluating": "Evaluating...",
+    "typePlaceholder": "Type your answer here...",
+    "buttonContinue": "Continue →",
+    "buttonCheckAnswer": "Check Answer",
+    "buttonTakeQuiz": "Take Quiz →",
+    "buttonNextLesson": "Next Lesson →",
+    "buttonBack": "← Back"
+  },
+  "progress": {
+    "weeklyReport": "Weekly Report",
+    "lessonsCompleted": "Lessons completed",
+    "playSessions": "Play sessions",
+    "currentStreak": "Current Streak",
+    "pastReports": "Past Reports",
+    "weeklyReportSchedule": "Weekly reports are generated every Monday 5:30PM.",
+    "mon": "MON",
+    "tue": "TUE",
+    "wed": "WED",
+    "thu": "THU",
+    "fri": "FRI",
+    "sat": "SAT",
+    "sun": "SUN",
+    "playTime": "Play Time",
+    "discipline": "Discipline",
+    "sessionReport": "Session Report",
+    "overallNoraScore": "Overall Nora Score",
+    "noDataYet": "No data yet",
+    "reportsTitle": "Reports",
+    "lastSessionDeposits": "Last Session Deposits",
+    "readReport": "Read report",
+    "progressTitle": "Progress"
+  },
+  "quiz": {
+    "badge": "Just a quick check",
+    "checkAnswer": "Check Answer",
+    "back": "← Back",
+    "continue": "Continue →",
+    "errorSubmit": "Failed to submit quiz. Please try again."
+  },
+  "learn": {
+    "title": "Explore lessons",
+    "filterAll": "All",
+    "moduleLibrary": "Module Library",
+    "completedModules": "Completed modules",
+    "foundationLockedNotice": "The other modules are locked. Please complete the Foundation module first.",
+    "completeFoundationFirst": "Complete the Foundation module first",
+    "couldntLoadModules": "Couldn't Load Modules",
+    "noModulesFound": "No modules found",
+    "tryDifferentSearch": "Try a different search term or filter"
+  },
+  "record": {
+    "uploadingRecording": "Uploading recording...",
+    "analyzingTitle": "Analyzing your play time…\nThis takes a few minutes.",
+    "analyzingSubtitle1": "Nora is listening for patterns in praise, tone, and turn-taking to personalize your tips.",
+    "analyzingSubtitle2": "You'll be taken to the Home screen as soon as your report is ready.",
+    "micPermissionRequired": "Microphone permission required to record",
+    "recordButton": "Record",
+    "stopRecordingButton": "Stop Recording",
+    "permissionRequiredTitle": "Permission Required",
+    "permissionRequiredMessage": "Please grant microphone permission to record audio sessions.",
+    "recordingIssueTitle": "Recording Issue",
+    "recordingIssueMessage": "We're having trouble starting the recording.\n\nPlease check:\n• Microphone permissions are enabled\n• No other apps are using the microphone\n• Your device has enough storage",
+    "checkSettings": "Check Settings",
+    "tryAgain": "Try Again",
+    "sorryCantRecordTitle": "We're Sorry",
+    "sorryCantRecordMessage": "Recording continues to fail. This might be a device compatibility issue.",
+    "contactSupport": "Contact Support",
+    "tooShortTitle": "Recording is too short",
+    "tooShortMessage": "We need a little more play-time to give you helpful insights. Please try again.",
+    "uploadFailedTitle": "Upload Failed",
+    "uploadFailedMessage": "Unable to upload your recording. Please check your connection and try again.",
+    "retry": "Retry"
+  },
+  "forceUpdate": {
+    "title": "Update Required",
+    "message": "A new version of Nora is available. Please update to continue using the app.",
+    "updateButton": "Update Now"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "defaultMessage": "An unexpected error occurred",
+    "tryAgain": "Try Again"
+  },
+  "networkStatus": {
+    "offline": "No Internet Connection"
+  },
+  "referral": {
+    "headerTitle": "Refer a Friend",
+    "heroTitle": "Give a friend 1 month free",
+    "heroSubtitle": "You'll also get 1 free month when your friend subscribes after their trial.",
+    "yourInviteLink": "Your invite link",
+    "shareButton": "Share Invite Link",
+    "shareMessage": "I've been using Nora to improve my parenting — it's been really helpful! Use my link to get 1 month free:",
+    "yourReferrals": "Your referrals",
+    "friendJoined_one": "{{count}} friend joined",
+    "friendJoined_other": "{{count}} friends joined",
+    "subscribed_one": "{{count}} subscribed",
+    "subscribed_other": "{{count}} subscribed",
+    "monthEarned_one": "+{{count}} month earned",
+    "monthEarned_other": "+{{count}} months earned",
+    "onFreeTrial_one": "{{count}} on free trial",
+    "onFreeTrial_other": "{{count}} on free trial",
+    "emptyStats": "Share your link to get started. You'll see your referrals here.",
+    "howItWorks": "How it works",
+    "step1": "Share your link with a friend",
+    "step2": "They sign up and get 1 month free",
+    "step3": "When they subscribe, you get 1 free month",
+    "errorLoadReferral": "Could not load your referral code. Please try again."
+  },
+  "support": {
+    "headerTitle": "Support",
+    "introText": "Having trouble or need help? Describe your issue below and we'll get back to you as soon as possible.",
+    "emailLabel": "Email *",
+    "emailPlaceholder": "your.email@example.com",
+    "descriptionLabel": "Description *",
+    "descriptionPlaceholder": "Describe your issue or question...",
+    "attachments": "Attachments",
+    "attachFile": "Attach File",
+    "submitButton": "Submit Request",
+    "requiredFieldTitle": "Required Field",
+    "requiredEmailMessage": "Please enter your email address.",
+    "requiredDescriptionMessage": "Please enter a description of your issue.",
+    "invalidEmailTitle": "Invalid Email",
+    "invalidEmailMessage": "Please enter a valid email address.",
+    "successTitle": "Request Submitted",
+    "successMessage": "Thank you for contacting us. We will review your request and get back to you shortly.",
+    "filesAttached": "{{count}} file(s) attached",
+    "errorAttachFile": "Failed to attach file. Please try again.",
+    "errorSubmit": "Failed to submit request. Please try again."
+  },
+  "psychologistChat": {
+    "headerTitle": "Psychologist",
+    "headerSub": "Nora Clinical Team",
+    "psychologist": "Psychologist",
+    "emptyTitle": "Please describe your situation and questions here",
+    "emptyBody": "A psychologist from our team will reach out to you within 24 hours.",
+    "inputPlaceholder": "Message the psychologist…"
+  },
+  "homeV2": {
+    "headerTitle": "Home",
+    "weeklyDeposit": "{{childName}}'s Weekly Deposit",
+    "statDays": "days",
+    "statMins": "mins",
+    "statTimes": "times",
+    "statLessons": "lessons",
+    "tipPerfect": "Perfect 7/7! 👑\nYou're legendary!",
+    "tipDaysDown": "{{count}} days down! 🌟\nCan we hit a full 7?",
+    "tipAimFor4": "Aim for 4 days a week\nfor faster progress",
+    "weeklyReportLabel": "Weekly Report Ready!",
+    "weeklyReportFallback": "Your weekly summary is ready. See how {{childName}} progressed this week.",
+    "viewWeeklyReport": "View Weekly Report",
+    "skipForNow": "Skip for now",
+    "dailyEmotionalMassageLabel": "Daily Emotional Massage",
+    "analyzingSession": "Great session! We're analyzing your playtime with ",
+    "analyzingSessionSuffix": ". Your report will be ready in a moment.",
+    "letChildLeadStart": "Let ",
+    "letChildLeadMiddle": " lead today's 5-minute play to grow their emotional bank. Enjoy easy progress every day and see ",
+    "letChildLeadEnd": "'s development.",
+    "recordNow": "Record the Playtime Now",
+    "reportReadyStart": "Great job! Your session report is ready. See how ",
+    "reportReadyEnd": " did today.",
+    "readReport": "Read Today's Report",
+    "meetCoachLabel": "Meet Your AI Coach",
+    "meetCoachBodyStart": "See the chat bubble at the bottom-right? That's your AI coach, Nora. Ask anything — parenting tips, what to do next, or how ",
+    "meetCoachBodyEnd": " is progressing.",
+    "chatWithCoach": "Chat with Coach",
+    "recordAgain": "Record Again",
+    "todaysPlan": "Today's plan",
+    "planLessonLabel": "Daily Learning:",
+    "planLessonDuration": "5 min read",
+    "planRecordLabel": "Start Emotional Massage:",
+    "planRecordTitle": "5-minute play with {{childName}}",
+    "planWeeklyReportLabel": "Weekly Report:",
+    "planWeeklyReportTitle": "See your progress this week",
+    "planReminderLabel": "Setup Daily Reminder:",
+    "planReminderTitle": "Keep your streak with a daily reminder",
+    "enableNotificationsTitle": "Enable Notifications",
+    "enableNotificationsMessage": "To set a daily reminder, please enable notifications for this app in Settings.",
+    "notNow": "Not Now",
+    "openSettings": "Open Settings",
+    "reminderModalTitle": "Set Daily Reminder",
+    "reminderModalBody1": "Kids like consistency. Many parents find the ",
+    "reminderModalHighlight1": "\"After-School Reconnect\"",
+    "reminderModalOr": " or ",
+    "reminderModalHighlight2": "\"Pre-Dinner Play\"",
+    "reminderModalHighlight3": "\"Weekend day morning\"",
+    "reminderModalBody2": " works best. Let them choose the timing.",
+    "reminderCustomTime": "Custom time: {{time}}",
+    "setReminder": "Set Reminder",
+    "reminderPresets": {
+      "beforeSchool": "Before-School Booster",
+      "afterSchool": "After-School Reconnect",
+      "beforeSleep": "Before-Sleep Play"
+    },
+    "recordMessages": {
+      "0start": "You are doing amazing! Ready to shine again? Record another session with ",
+      "0end": " and watch the magic happen! ✨",
+      "1start": "Keep that fantastic momentum going! Jump into another fun session with ",
+      "1end": "!",
+      "2start": "Awesome job so far! Grab another 5 minutes of special time with ",
+      "2end": " to keep growing together! 🌟",
+      "3start": "You've got this! Record another quick, joyful session with ",
+      "3end": " and celebrate your amazing progress!",
+      "4start": "Ready for more fun? Capture another awesome play session with ",
+      "4end": "!"
+    }
+  },
+  "learnV2": {
+    "title": "Explore lessons",
+    "subtitle": "Handpicked for you",
+    "lockedNotice": "Complete Foundation first to unlock this module.",
+    "completeFoundationFirst": "Complete the Foundation module first",
+    "noLessonsFound": "No lessons found",
+    "tryDifferentSearch": "Try a different search term"
+  },
+  "privacyPolicy": {
+    "headerTitle": "Privacy Policy"
+  },
+  "termsAndConditions": {
+    "headerTitle": "Terms and Conditions"
+  },
+  "skillInfo": {
+    "theScience": "The Science",
+    "theResult": "The Result",
+    "theNextStep": "The Next Step",
+    "skillDetails": "Skill Details",
+    "skillNotAvailable": "Information not available for this skill.",
+    "penSkill": "PEN Skill",
+    "areaToAvoid": "Area to Avoid",
+    "whatItIsLabel": "What it is",
+    "whyImportantLabel": "Why it's important",
+    "whyAvoidLabel": "Why avoid it",
+    "inDailyLifeLabel": "In Daily Life",
+    "utterancesHeader": "{{name}} Utterances",
+    "learnAbout": "Learn about {{name}}",
+    "noUtterances": "No {{name}} utterances recorded in this session.",
+    "readFullConversation": "Read Full Conversation",
+    "noraScore": {
+      "title": "Nora Score",
+      "introduction": "Your Nora Score is the daily balance you keep in your child's Emotional Bank Account. It measures your \"Connection Capital\"—the ratio of P.E.N. deposits to behavioral withdrawals made during your 5-minute Special Play Time.",
+      "excellent": {
+        "rating": "Excellent",
+        "summary": "Your connection is overflowing! You've made massive deposits today. By maintaining high skill density and avoiding withdrawals, you have signaled to your child that they are safe, seen, and supported.",
+        "science": "Your child's Upstairs Brain (logic and empathy) is fully engaged and \"in the lead.\"",
+        "result": "Your child's emotional resilience is high today. With a full bank account, they are better equipped to handle frustrations, transitions, and big feelings with ease."
+      },
+      "good": {
+        "rating": "Good",
+        "summary": "You're building a strong foundation. You have a healthy, positive balance in the bank. You are successfully practicing the \"Mental Gym\" workout and following your child's lead.",
+        "science": "You are successfully balancing Cortisol vs. Oxytocin by focusing on pure connection.",
+        "result": "Your child has a steady emotional buffer. They feel connected to you, which lowers their overall stress levels as they start their day."
+      },
+      "payAttention": {
+        "rating": "Pay Attention",
+        "summary": "Relational \"leaks\" happen. A lower score usually means the \"Withdrawal Rate\" (Commands, Questions, or Criticism) was high. This is a normal part of busy parenting, but it's a signal that the account needs a top-up.",
+        "science": "A low balance can trigger the Downstairs Brain (survival mode), making children more sensitive to stress.",
+        "result": "When \"Connection Capital\" is low, your child may have less emotional stamina for challenges, leading to quicker frustrations or \"defense\" behaviors."
+      }
+    },
+    "praise": {
+      "title": "Praise (Labeled)",
+      "displayName": "Praise",
+      "whatItIs": "Specific feedback that identifies exactly what behavior you admire. Instead of a vague \"Good job,\" you say, \"I love how carefully you are stacking those blocks.\"",
+      "whyImportant": "It builds Self-Efficacy (a child's belief in their ability to succeed). By labeling the action, you tell the child exactly which behaviors to repeat.",
+      "inDailyLife": "Be a \"detective\" for the Positive Opposite. If your child usually struggles to wait, the moment you see them sitting patiently, use a Labeled Praise: \"I'm so proud of how patiently you are waiting for your snack.\"",
+      "contextTitle": "What counts as Praise?",
+      "contextDescription": "These are moments where you named exactly what your child did well — specific statements that tell them precisely which behaviour to repeat."
+    },
+    "echo": {
+      "title": "Echo",
+      "displayName": "Echo",
+      "whatItIs": "Repeating or rephrasing what your child says. If they say \"Big tower!\", you respond with \"Yes, a very big tower!\"",
+      "whyImportant": "Known as a Verbal Hug, it provides immediate validation and proves you are listening. It also acts as Language Modeling, showing correct grammar without the \"withdrawal\" of a correction.",
+      "inDailyLife": "Use Energy Matching. If your child is excited about a small discovery, match their enthusiasm with an Echo. This proves you are \"in sync\" with their world.",
+      "contextTitle": "What counts as Echo?",
+      "contextDescription": "These are moments where you repeated or rephrased your child's own words, showing you were fully listening and validating what they said."
+    },
+    "narrate": {
+      "title": "Narrate",
+      "displayName": "Narration",
+      "whatItIs": "Describing your child's actions out loud, like a sports commentator. For example: \"You're putting the red car inside the garage.\"",
+      "whyImportant": "It creates Joint Attention, which is the most effective way to improve a child's focus and attention span. It signals that their actions are important enough for your full attention.",
+      "inDailyLife": "Replace questions with narration. Instead of asking \"What are you drawing?\", try \"You are using the green crayon to make big circles.\" This provides attention without putting \"Performance Pressure\" on the child.",
+      "contextTitle": "What counts as Narration?",
+      "contextDescription": "These are moments where you described your child's actions aloud, directing your full attention to what they were doing."
+    },
+    "question": {
+      "title": "Questions",
+      "displayName": "Questions",
+      "whatItIs": "Even \"helpful\" questions like \"What color is that?\" or \"How was your day?\".",
+      "whyImportant": "Questions are often Hidden Commands. They force the child to stop playing and \"answer to you,\" which breaks their Flow (deep immersion).",
+      "inDailyLife": "Use Active Silence. When your child comes home from school, avoid the \"interrogation.\" Use P.E.N. skills to narrate their actions until they feel secure enough to share information voluntarily.",
+      "contextTitle": "What counts as a Question?",
+      "contextDescription": "These are moments where you asked something — even well-meaning questions can act as hidden commands that interrupt your child's focus and flow."
+    },
+    "command": {
+      "title": "Commands",
+      "displayName": "Commands",
+      "whatItIs": "Any instruction where you tell your child what to do (e.g., \"Put the block there\" or \"Give me the toy\").",
+      "whyImportant": "Commands take the lead away from the child and can trigger a power struggle.",
+      "inDailyLife": "The 10:1 Repair Rule:\n\n• Reduce the Volume: Aim to reduce the total number of commands you give in a day.\n\n• The Repair: Think of every command as a $10 withdrawal. To keep the relationship \"in the black,\" aim to use your P.E.N. skills 10 times for every 1 command you give. This repairs the connection and ensures your child is neurologically \"receptive\" rather than \"defensive.\"",
+      "contextTitle": "In this session",
+      "contextDescription": "These are moments where you gave an instruction or directed your child's behaviour, which can shift the lead away from them."
+    },
+    "criticism": {
+      "title": "Criticism",
+      "displayName": "Criticism",
+      "whatItIs": "Any disapproval, including \"No,\" \"Stop,\" \"Don't,\" or correcting a mistake.",
+      "whyImportant": "It creates a Negative Attention Trap. If you give attention to a behavior by criticizing it, you may accidentally reinforce that behavior.",
+      "inDailyLife": "Use Strategic Ignoring for minor misbehaviors like whining or pouting. Use a \"Poker Face\" and turn your attention away. The moment the behavior stops, jump back in with a Labeled Praise to reward the positive shift.",
+      "contextTitle": "What counts as Criticism?",
+      "contextDescription": "These are moments where you used disapproving language — saying \"No,\" \"Stop,\" \"Don't,\" or correcting a mistake, which can accidentally reinforce the behaviour."
+    }
+  },
+  "moduleDetail": {
+    "moduleLocked": "Module Locked",
+    "lockedMessage": "Complete the Foundation module first to unlock this module.",
+    "goToFoundation": "Go to Foundation"
+  },
+  "coachChat": {
+    "headerTitle": "Nora Coach",
+    "headerSub": "AI Parenting Coach",
+    "talkToPsychologist": "Talk to a Psychologist",
+    "psychologist": "Psychologist",
+    "greetingWithName": "Hi {{name}}!",
+    "greetingDefault": "Hi there!",
+    "guideSubtitle": "Let's support {{childName}} today.\nHere's a few ideas for you:",
+    "yourChild": "your child",
+    "inputPlaceholder": "Ask Nora anything…",
+    "errorConnection": "Something went wrong. Please check your connection and try again.",
+    "errorSendRequest": "Failed to send request. Please try again.",
+    "suggestions": {
+      "understandTitle": "Understand My Child",
+      "understandPrompt": "Why is my child acting this way?",
+      "whatToDoTitle": "What Should I Do Now",
+      "whatToDoPrompt": "What do I do in this situation?",
+      "confidenceTitle": "Parent with Confidence",
+      "confidencePrompt": "Am I handling this the right way?",
+      "planTitle": "My Nora Plan",
+      "planPrompt": "Explain my coaching tips & what to focus on"
+    },
+    "iUnderstand": "I Understand",
+    "psychologistReplyTime": "Our child psychologist team will reply you in 24 hours here.",
+    "agreeToTerms": "I agree to the Terms and Conditions and consent to sharing my information with our psychologist team.",
+    "readTerms": "Read Terms and Conditions",
+    "sendRequest": "Send Request",
+    "terms": {
+      "title": "Terms and Conditions",
+      "section1Title": "1. Purpose",
+      "section1Body": "By requesting to speak with a psychologist, you are asking Nora to connect you with a qualified child psychologist from our team. This service is provided to offer additional professional support beyond the AI coaching available in the app.",
+      "section2Title": "2. Information We Share",
+      "section2Body": "To enable the psychologist to provide you with informed, personalised support, the following information will be shared with them:",
+      "section2Bullet1": "- Your name and email address",
+      "section2Bullet2": "- Your child's name, age, and gender",
+      "section2Bullet3": "- Your child's behavioural assessment results, including primary and secondary concerns identified during onboarding",
+      "section2Bullet4": "- A summary of your recent emotional massage session activity",
+      "section3Title": "3. How It Is Used",
+      "section3Body": "This information is used solely for the purpose of your consultation. The psychologist will review it before reaching out so that they can provide relevant, context-aware guidance without requiring you to repeat background information.",
+      "section4Title": "4. Confidentiality",
+      "section4Body": "All information shared is kept strictly confidential within our clinical team. It will not be disclosed to third parties, sold, or used for marketing purposes. Our team operates under professional confidentiality obligations consistent with child psychology practice standards.",
+      "section5Title": "5. Response Time",
+      "section5Body": "Our psychologist team will contact you via chat in 24 hours. This service is not intended for emergencies. If you or your child are in immediate distress, please contact your local emergency services or a crisis helpline.",
+      "section6Title": "6. Your Consent",
+      "section6Body": "By ticking the checkbox and submitting this request, you confirm that you have read and understood these terms and give your informed consent for the above information to be shared with our psychologist team."
+    }
+  },
+  "languagePicker": {
+    "title": "Language",
+    "english": "English",
+    "traditionalChinese": "繁體中文"
+  },
+  "onboarding": {
+    "continue": "Continue",
+    "back": "Back",
+    "letsGo": "Let's go!  →",
+    "letsBegin": "Let's Begin  →",
+    "skipForNow": "Skip for Now",
+    "nameInput": {
+      "title": "What's your name?"
+    },
+    "childName": {
+      "title": "What's your child's name?"
+    },
+    "relationship": {
+      "headerText": "This helps us tailor guidance to your role.",
+      "title": "Hi {{name}}, what is your relationship to the child?",
+      "mother": "Mother",
+      "father": "Father",
+      "grandmother": "Grandmother",
+      "grandfather": "Grandfather",
+      "other": "Other"
+    },
+    "childGender": {
+      "headerText": "Used only to personalize guidance.",
+      "title": "What is {{name}}'s gender?",
+      "boy": "Boy",
+      "girl": "Girl",
+      "preferNotToShare": "Prefer not to share"
+    },
+    "childBirthday": {
+      "title": "When is {{name}}'s birthday?",
+      "ageSuitabilityNote": "* Note on Age Suitability: Nora's method is clinically evidenced to be most effective for children between 2 and 7 years old. However, the foundational skills taught here, such as positive reinforcement and emotional regulation, can be adapted and beneficial for children of any age."
+    },
+    "childIssue": {
+      "headerText": "There are no right or wrong answers. Select all that applies.",
+      "title": "How can Nora help?",
+      "behaviorChallenges": "Behavior Challenges (Tantrums, Arguing)",
+      "bigEmotions": "Handling big emotions",
+      "frustrationTolerance": "Low frustration tolerance",
+      "newBaby": "New Baby in the Home",
+      "movingHouse": "Moving House & School Changes",
+      "parentalDivorce": "Navigating Parental Divorces",
+      "social": "Building Social-Emotional Skills",
+      "attentionFocus": "Attention and Focus Issues",
+      "adhd": "ADHD / Attention & Hyperactivity",
+      "parentingStrategies": "Learning More Effective Parenting Strategies",
+      "other": "Others",
+      "otherPlaceholder": "Please describe the issue..."
+    },
+    "childSnapshotIntro": {
+      "description": "Hi {{userName}}, Thanks for sharing what brought you here. You are in the right place. We'll ask a few quick questions to better understand {{childName}}'s recent behavior and tailor support to you"
+    },
+    "childBehaviorProfile": {
+      "speechBubble": "Nora has generated the behavior profile for {{childName}} and personalized plan for you.",
+      "cardTitle": "{{childName}}'s Behavior Profile Snapshot",
+      "lockText": "To unlock the behavior profile insights, you can click here to answer those behavior questions for us to personalize the plan",
+      "currentSnapshot": "Current Snapshot: {{title}}",
+      "whatThisMeans": "What this means",
+      "startingPlan": "Your Starting Plan",
+      "whatToExpect": "What to expect",
+      "continueButton": "Introducing Emotional Massage  →",
+      "barSegments": {
+        "stable": "STABLE",
+        "mild": "MILD",
+        "medium": "MEDIUM",
+        "high": "HIGH"
+      },
+      "snapshotTitles": {
+        "stable": "On Track",
+        "mild": "Needs Some Support",
+        "medium": "Needs More Support",
+        "high": "Needs Extra Support"
+      },
+      "barLabels": {
+        "stable": "ON TRACK",
+        "mild": "SOME SUPPORT",
+        "medium": "MORE SUPPORT",
+        "high": "EXTRA SUPPORT"
+      },
+      "categories": {
+        "stable": {
+          "whatThisMeans": "Your child is generally managing emotions, attention, and behavior in an age-appropriate way.",
+          "startingPlan": "Spend 5 minutes a day in Emotional Massage — a simple child-led play where you follow your child's lead and stay fully present.\n\nA small moment that strengthens connection and supports positive behavior.",
+          "whatToExpect": "You may begin to notice subtle shifts within a few weeks.\nOver time, you'll also learn how to support emotions and set gentle boundaries."
+        },
+        "mild": {
+          "whatThisMeans": "Your child may sometimes struggle with listening, managing emotions, or staying focused in daily situations.\nSmall challenges are common at this age. With the right support, they can improve quickly.",
+          "startingPlan": "Spend 5 minutes a day in Emotional Massage — a simple child-led play where you follow your child's lead and strengthen your connection — and helps reduce behavior struggles over time.",
+          "whatToExpect": "Many families notice changes within 2–3 weeks.\nFrom there, we'll guide you through emotions and boundaries."
+        },
+        "medium": {
+          "whatThisMeans": "Your child may frequently have difficulty with emotions, focus, or cooperation during everyday moments.\nSome moments may feel more challenging right now. With consistent support, meaningful progress is very possible.",
+          "startingPlan": "Begin with 5 minutes a day of Emotional Massage — following your child's lead in a calm, focused way.\n\nConnection is where change begins — and supports better behavior over time.",
+          "whatToExpect": "With consistency, progress often starts within a few weeks.\nYou'll be guided through emotions, boundaries, and everyday situations."
+        },
+        "high": {
+          "whatThisMeans": "Your child may be having difficulty managing emotions or staying focused in daily situations.\nYou're not alone — many families go through this. With the right support, positive change can happen.",
+          "startingPlan": "Begin with 5 minutes a day of Emotional Massage — gently following your child's lead and staying present with them.\n\nThis creates a safe foundation for change and supports behavior over time.",
+          "whatToExpect": "Small changes can begin within a few weeks.\nWe'll guide you closely through emotions, boundaries, and daily challenges."
+        }
+      }
+    },
+    "wacb": {
+      "headerText": "There are no right or wrong answers — and this is not a diagnosis.",
+      "scaleNever": "Never (Not at All)",
+      "scaleRarely": "Rarely (1–2 times a week)",
+      "scaleSometimes": "Sometimes (3–4 times a week)",
+      "scaleOften": "Often (5–6 times a week)",
+      "scaleVeryOften": "Very often (more than 6 times a week)",
+      "submitSurvey": "Submit Survey",
+      "q1": "In the past two weeks, how often has {{name}} taken too long to do things or dragged their feet on purpose?",
+      "q2": "In the past two weeks, how often has {{name}} acted up or misbehaved while eating?",
+      "q3": "In the past two weeks, how often has {{name}} refused to listen or said \"no\" to rules?",
+      "q4": "In the past two weeks, how often has {{name}} lost their temper or acted physically rough?",
+      "q5": "In the past two weeks, how often has {{name}} had a screaming fit or tantrum that was hard to stop?",
+      "q6": "In the past two weeks, how often has {{name}} broken things or been too rough with other people's toys?",
+      "q7": "In the past two weeks, how often has {{name}} started arguments or teased others on purpose?",
+      "q8": "In the past two weeks, how often has {{name}} interrupted conversations or demanded constant attention?",
+      "q9": "In the past two weeks, how often has {{name}} struggled to focus or been unable to sit still?",
+      "submissionError": "Submission Error",
+      "submissionFailed": "Failed to submit survey. Please try again."
+    },
+    "intro3": {
+      "title": "Emotional Massage",
+      "description": "A simple 5-minute daily play with your child. By following your child's lead and staying fully present, you support their ability to build positive behavior, develop social skills, and improve focus."
+    },
+    "parentingIntro": {
+      "title": "Just 5 minutes a day can make a difference.",
+      "benefit1": "Build Stronger Bonding",
+      "benefit2": "Reduce Behavior Issues",
+      "benefit3": "Boost Social/Emotion/Focus",
+      "continueButton": "Get Your Personalized Plan  →"
+    },
+    "demo1": {
+      "subtitle": "Parenting is hard",
+      "title": "But you don't have to do it alone.",
+      "meetNora": "Meet Nora",
+      "description": "Your guide to raising confident, happy kids.\nScience-backed.\nPersonalized for your child (ages 1–7)"
+    },
+    "demo1B": {
+      "text": "Get simple strategies that actually work."
+    },
+    "demo2": {
+      "text": "Nora listens to your day-to-day interactions — playtime, boundaries, big feelings."
+    },
+    "demo2B": {
+      "text": "Nora helps you understand your parenting style and patterns.",
+      "penSkills": "Your PEN Skills",
+      "areasToAvoid": "Areas to Avoid",
+      "praiseLabeled": "raise (Labeled)",
+      "echo": "cho",
+      "narrate": "arrate",
+      "labelGood": "Good",
+      "labelPayAttention": "Pay attention",
+      "labelExcellent": "Excellent",
+      "questions": "Questions",
+      "commands": "Commands",
+      "criticism": "Criticism"
+    },
+    "demo3": {
+      "text": "Personalized coaching based on your real moments, grounded in child development science."
+    },
+    "demo4": {
+      "text": "Help your child thrive. Build on their strengths and support their emotional and social growth."
+    },
+    "demo5": {
+      "text": "Empowering every caregiver,\nin 90+ languages."
+    },
+    "playSession1": {
+      "title": "Prepare the Right Toys",
+      "subtitle": "To let your child's imagination run wild, pick unstructured toys. These allow them to be the boss of the play."
+    },
+    "playSession2": {
+      "title": "Let Your Child Lead",
+      "subtitle": "For the next 5 minutes, your goal is to be your child's biggest fan, not their teacher.\nDescribe what they're doing, repeat their words."
+    },
+    "playSession3": {
+      "title": "Record Using Nora App",
+      "subtitle": "Set your phone nearby where it can clearly hear your conversation. You don't need to hold it—just focus on the play!"
+    },
+    "playSession4": {
+      "title": "Short Play, Big Insights",
+      "subtitle": "The recording stops automatically after 5 minutes.\nOur AI analyzes the interaction and generates a personalized report in just a few minutes"
+    },
+    "playSession5": {
+      "title": "Your data stays private",
+      "subtitle": "Your data is always protected and never shared without your permission."
+    },
+    "next": "Next  →"
+  },
+  "quizFeedback": {
+    "correct": "Correct!",
+    "notQuite": "Not quite!"
+  },
+  "recordingCard": {
+    "recording": "Recording in progress...\nSpeak naturally during play time! The recording will stop automatically at {{minutes}} minutes",
+    "startPrompt": "Start recording your play session",
+    "record": "Record",
+    "stop": "Stop"
+  },
+  "lessonCard": {
+    "locked": "Locked 🔒",
+    "startReading": "Start Reading"
+  },
+  "howToRecord": {
+    "title": "How to record",
+    "step1": "Place your phone nearby where it can hear you both clearly.",
+    "step2": "Press \"Start Recording\" below.",
+    "step3": "Play naturally with your child for {{minutes}} minutes.",
+    "step4": "We'll automatically stop at {{minutes}} minutes and give you feedback!"
+  },
+  "recordingGuide": {
+    "doSectionTitle": "DO - PEN Skills",
+    "dontSectionTitle": "DON'T",
+    "reminderText": "Remember, this is Child-Led Play. Just follow {{childName}}'s lead.",
+    "connectionFirstTitle": "Connection First – PEN Skills",
+    "disciplineDoTitle": "During Discipline – Do",
+    "disciplineReminder": "Remember, For every command, aim for about 10 P.E.N. moments to rebuild connection.",
+    "playTimeTab": "Play Time (5m)",
+    "disciplineTab": "Discipline (10m)",
+    "lockMessage": "Effective discipline is built on a foundation of a strong bond. Without that connection, instructions can feel like demands; with it, they feel like guidance.",
+    "lockGoal": "Reach a Deposit of 80 or more in a single Special Time session to unlock Discipline coaching",
+    "lockBankMessage": "This ensures your \"relationship bank account\" is overfilled before you begin the Discipline phase.",
+    "do": {
+      "praise": {
+        "title": "Praise",
+        "description": "Be a Cheerleader. Tell your child exactly what you like about their behavior."
+      },
+      "echo": {
+        "title": "Echo",
+        "description": "Repeat What They Say. Show you're listening by repeating their words."
+      },
+      "narrate": {
+        "title": "Narrate",
+        "description": "Describe their actions like a sportscaster, without judgment."
+      }
+    },
+    "dont": {
+      "command": "Command",
+      "question": "Question",
+      "criticize": "Criticize"
+    },
+    "discipline": {
+      "command": {
+        "title": "The Effective Command:",
+        "description": "Direct, Positive, Single, Specific"
+      },
+      "followThrough": {
+        "title": "Always Follow Through:",
+        "description": "5-Second → Offer a Choice → 5-Second → Act on the Choice"
+      },
+      "mindsets": {
+        "title": "Key Mindsets:",
+        "description": "Consistency, Stay calm"
+      }
+    }
+  },
+  "nextActionCard": {
+    "upNext": "Up next",
+    "continue": "Continue",
+    "lastSessionDeposits": "Last Session Deposits",
+    "readReport": {
+      "title": "Read your report and insights",
+      "description": "Check out the analysis of your session.",
+      "encouragement": "Awesome! Your report is ready!"
+    },
+    "extraPractice": "EXTRA PRACTICE",
+    "record": {
+      "title": "Record your play session",
+      "description": "Learning is 2x faster when put into practice. Practice your new skills by recording the session.",
+      "encouragement": "Good job completing today's lesson! Let's record your play session now."
+    },
+    "recordAgain": {
+      "title": "Beat your score",
+      "description": "Repetition builds confidence. Record another play session to practice the feedback you just received.",
+      "encouragement": "Great work! Want to practice one more time?"
+    },
+    "readReportLink": "Read report"
+  },
+  "modulePicker": {
+    "title": "Pick your next module!",
+    "congrats": "Congratulations on completing the Foundation!",
+    "infoAutoSelected": "We have set the next module based on your child's needs and goals",
+    "infoBrowse": "Browse available modules and change your daily lesson anytime in the Learn screen",
+    "recommended": "Recommended for you",
+    "otherModules": "Other modules",
+    "availableModules": "Available modules",
+    "current": "Current",
+    "lesson": "lesson",
+    "lessons": "lessons",
+    "done": "done",
+    "ok": "Ok"
+  },
+  "reports": {
+    "title": "Reports",
+    "recentSessions": "Recent Sessions",
+    "childDirected": "Child-Directed",
+    "parentDirected": "Parent-Directed",
+    "weeklyReports": "Weekly Reports",
+    "weeklyReport": "Weekly Report",
+    "thisMonth": "This Month",
+    "sessions": "Sessions",
+    "avgScore": "Avg Score",
+    "developmentalMilestones": "Developmental Milestones",
+    "milestoneLocked": "Available after 5 sessions · {{count}}/5 completed",
+    "milestoneDesc": "Track your child's growth across Language, Cognitive, Social, Emotional, and Connection — compared against their age benchmark."
+  },
+  "domainMilestone": {
+    "title": "{{domain}} Milestones",
+    "languageNote": "Grammar milestones (e.g. tense, plurals, articles) are based on English. They may not apply to all languages.",
+    "loading": "Loading milestones...",
+    "profilingStatus": "{{childName}} is {{status}} in {{domain}} development.",
+    "defaultChildName": "Your child",
+    "achieved": "Achieved",
+    "emerging": "Emerging",
+    "notYetObserved": "Not Yet Observed",
+    "noMilestones": "No milestones found for this domain.",
+    "tips": "Tips: {{tip}}"
+  },
+  "tabNav": {
+    "home": "Home",
+    "record": "Record",
+    "learn": "Learn",
+    "report": "Report"
+  },
+  "firstLessonCard": {
+    "label": "Start your journey",
+    "title": "Read your first 2-minute Lesson",
+    "description": "Lessons are short 2 min reads about how important connection is during playtime.",
+    "startReading": "Start Reading 📖"
+  },
+  "milestoneTimeline": {
+    "title": "Milestone Progress",
+    "noData": "No milestone history yet",
+    "legendAchieved": "Achieved",
+    "legendTotal": "Total (incl. emerging)"
+  },
+  "phaseCelebration": {
+    "title": "You've Mastered Special Play Time!",
+    "message": "Incredible work. Scoring 80+ shows you've built a strong, connected foundation with {{childName}}.",
+    "unlockTitle": "Discipline Mode Unlocked",
+    "unlockDescriptionPrefix": "You can now get personalized coaching on effective discipline. Simply go to the",
+    "recordTab": "Record",
+    "unlockDescriptionMiddle": "tab, select",
+    "disciplineMode": "Discipline (10m)",
+    "unlockDescriptionSuffix": ", and record a real discipline moment with {{childName}}.",
+    "beforeYouBegin": "Before You Begin",
+    "suggestionPrefix": "We recommend completing the",
+    "notListeningLessons": "Not Listening & Arguing",
+    "suggestionMiddle": " lessons first — they'll give you the framework to make your Discipline sessions most effective.\n\nIn the meantime, keep doing Special Time sessions to deposit into {{childName}}'s emotional bank account.",
+    "gotIt": "Got it!"
+  },
+  "whatsNew": {
+    "title": "What's New",
+    "version": "Version {{version}}",
+    "updateNow": "Update Now",
+    "maybeLater": "Maybe Later"
+  },
+  "textInputFeedback": {
+    "greatJob": "Great job!",
+    "keepPracticing": "Keep practicing!",
+    "tipsForImprovement": "Tips for improvement:",
+    "idealAnswer": "Ideal answer:"
+  },
+  "streak": {
+    "title": "Streak",
+    "mon": "M",
+    "tue": "T",
+    "wed": "W",
+    "thu": "Th",
+    "fri": "F",
+    "sat": "Sa",
+    "sun": "Su"
+  },
+  "moduleCard": {
+    "lessonCount_one": "{{count}} lesson",
+    "lessonCount_other": "{{count}} lessons",
+    "current": "Current"
+  }
+}

@@ -10,6 +10,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS, DRAGON_PURPLE } from '../constants/assets';
 import { Badge } from './Badge';
+import { useTranslation } from 'react-i18next';
 
 export type CardType = 'lesson' | 'record' | 'readReport' | 'recordAgain';
 
@@ -34,33 +35,6 @@ export interface NextActionCardProps {
   isOnline?: boolean;
 }
 
-// Content definitions for each card type
-const CARD_CONTENT = {
-  record: {
-    title: 'Record your play session',
-    subtitle: 'Up next',
-    description: 'Learning is 2x faster when put into practice. Practice your new skills by recording the session.',
-    buttonText: 'Continue',
-    encouragementMessage: 'Good job completing today\'s lesson! Let\'s record your play session now.',
-
-  },
-  readReport: {
-    title: 'Read your report and insights',
-    subtitle: 'Up next',
-    description: 'Check out the analysis of your session.',
-    buttonText: 'Continue',
-    encouragementMessage: 'Awesome! Your report is ready!',
-
-  },
-  recordAgain: {
-    title: 'Beat your score',
-    subtitle: 'Up next',
-    description: 'Repetition builds confidence. Record another play session to practice the feedback you just received.',
-    buttonText: 'Continue',
-    encouragementMessage: 'Great work! Want to practice one more time?',
-  },
-};
-
 export const NextActionCard: React.FC<NextActionCardProps> = ({
   type = 'lesson',
   phase = 'MODULE',
@@ -74,6 +48,32 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
   onReadReport,
   isOnline = true,
 }) => {
+  const { t } = useTranslation();
+
+  const CARD_CONTENT = {
+    record: {
+      title: t('nextActionCard.record.title'),
+      subtitle: t('nextActionCard.upNext'),
+      description: t('nextActionCard.record.description'),
+      buttonText: t('nextActionCard.continue'),
+      encouragementMessage: t('nextActionCard.record.encouragement'),
+    },
+    readReport: {
+      title: t('nextActionCard.readReport.title'),
+      subtitle: t('nextActionCard.upNext'),
+      description: t('nextActionCard.readReport.description'),
+      buttonText: t('nextActionCard.continue'),
+      encouragementMessage: t('nextActionCard.readReport.encouragement'),
+    },
+    recordAgain: {
+      title: t('nextActionCard.recordAgain.title'),
+      subtitle: t('nextActionCard.upNext'),
+      description: t('nextActionCard.recordAgain.description'),
+      buttonText: t('nextActionCard.continue'),
+      encouragementMessage: t('nextActionCard.recordAgain.encouragement'),
+    },
+  };
+
   const showYesterdaySection = yesterdayScore !== undefined;
   const percentage = yesterdayScore
     ? Math.min((yesterdayScore.score / yesterdayScore.maxScore) * 100, 100)
@@ -101,8 +101,8 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
 
   const title = isLesson ? customTitle : content?.title;
   const description = isLesson ? customDescription : content?.description;
-  const buttonText = isLesson ? (customButtonText || 'Continue') : content?.buttonText;
-  const subtitle = isLesson ? 'Up next' : content?.subtitle;
+  const buttonText = isLesson ? (customButtonText || t('nextActionCard.continue')) : content?.buttonText;
+  const subtitle = isLesson ? t('nextActionCard.upNext') : content?.subtitle;
 
   // Use passed-in encouragement message if provided, otherwise fall back to card-type default
   const displayEncouragementMessage = isLesson ? encouragementMessage : (encouragementMessage || content?.encouragementMessage);
@@ -115,7 +115,7 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
           {/* Yesterday's PEN Skills Card */}
           <View style={styles.yesterdayCard}>
             <View style={styles.yesterdayHeader}>
-              <Text style={styles.yesterdayTitle}>Last Session Deposits</Text>
+              <Text style={styles.yesterdayTitle}>{t('nextActionCard.lastSessionDeposits')}</Text>
               <Text style={styles.yesterdayScore}>+
                 {yesterdayScore.score}/{100}
               </Text>
@@ -138,7 +138,7 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
                 style={styles.linkContainer}
                 disabled={!isOnline}
               >
-                <Text style={[styles.linkText, !isOnline && styles.linkTextDisabled]}>Read report</Text>
+                <Text style={[styles.linkText, !isOnline && styles.linkTextDisabled]}>{t('nextActionCard.readReportLink')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -183,7 +183,7 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
         {/* Up next label or Extra Practice badge */}
         {type === 'recordAgain' ? (
           <View style={styles.extraPracticeBadge}>
-            <Text style={styles.extraPracticeText}>EXTRA PRACTICE</Text>
+            <Text style={styles.extraPracticeText}>{t('nextActionCard.extraPractice')}</Text>
           </View>
         ) : (
           <Text style={styles.upNextLabel}>{subtitle}</Text>

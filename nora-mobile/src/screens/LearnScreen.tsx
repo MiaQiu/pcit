@@ -19,9 +19,11 @@ import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
 import type { ModuleWithProgress } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
+import { useTranslation } from 'react-i18next';
 
 export const LearnScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const { t } = useTranslation();
   const lessonService = useLessonService();
   const { isOnline } = useNetworkStatus();
   const { showToast } = useToast();
@@ -84,7 +86,7 @@ export const LearnScreen: React.FC = () => {
 
   // Build filter chips from modules
   const filterChips = useMemo(() => {
-    const chips = [{ key: 'ALL', label: 'All' }];
+    const chips = [{ key: 'ALL', label: t('learn.filterAll') }];
     modules.forEach(mod => {
       chips.push({ key: mod.key, label: mod.shortName });
     });
@@ -154,7 +156,7 @@ export const LearnScreen: React.FC = () => {
   const handleModulePress = (moduleKey: string) => {
     const mod = modules.find(m => m.key === moduleKey);
     if (mod?.isLocked) {
-      showToast('Complete the Foundation module first', 'info');
+      showToast(t('learn.completeFoundationFirst'), 'info');
       return;
     }
     navigation.push('ModuleDetail', { moduleKey });
@@ -193,7 +195,7 @@ export const LearnScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.mainTitle}>Explore lessons</Text>
+          <Text style={styles.mainTitle}>{t('learn.title')}</Text>
         </View>
 
         <View style={styles.content}>
@@ -213,14 +215,14 @@ export const LearnScreen: React.FC = () => {
           {/* Error state */}
           {error && !loading && modules.length === 0 && (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>Couldn't Load Modules</Text>
+              <Text style={styles.emptyTitle}>{t('learn.couldntLoadModules')}</Text>
               <Text style={styles.emptyMessage}>{error}</Text>
             </View>
           )}
 
           {/* Module count */}
           {filteredModules.length > 0 && (
-            <Text style={styles.subheader}>Module Library</Text>
+            <Text style={styles.subheader}>{t('learn.moduleLibrary')}</Text>
           )}
 
           {/* Active Module Cards */}
@@ -238,7 +240,7 @@ export const LearnScreen: React.FC = () => {
                   <View style={styles.lockedNotice}>
                     <Ionicons name="lock-closed" size={14} color="#999999" />
                     <Text style={styles.lockedNoticeText}>
-                      The other modules are locked. Please complete the Foundation module first.
+                      {t('learn.foundationLockedNotice')}
                     </Text>
                   </View>
                 )}
@@ -254,7 +256,7 @@ export const LearnScreen: React.FC = () => {
             if (completedModules.length === 0) return null;
             return (
               <>
-                <Text style={[styles.subheader, styles.completedSubheader]}>Completed modules</Text>
+                <Text style={[styles.subheader, styles.completedSubheader]}>{t('learn.completedModules')}</Text>
                 {completedModules.map((mod) => (
                   <ModuleCard
                     key={mod.key}
@@ -269,9 +271,9 @@ export const LearnScreen: React.FC = () => {
           {/* No results */}
           {filteredModules.length === 0 && modules.length > 0 && (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No modules found</Text>
+              <Text style={styles.emptyTitle}>{t('learn.noModulesFound')}</Text>
               <Text style={styles.emptyMessage}>
-                Try a different search term or filter
+                {t('learn.tryDifferentSearch')}
               </Text>
             </View>
           )}

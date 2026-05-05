@@ -1,19 +1,18 @@
 import React from 'react';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
-import { useOnboarding } from '../../contexts/OnboardingContext';
 import { PlaySessionScreenTemplate } from './PlaySessionScreenTemplate';
 
 export const PlaySession1Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
-  const { data } = useOnboarding();
-  const childName = data.childName || 'your child';
+  const { t } = useTranslation();
 
   return (
     <PlaySessionScreenTemplate
-      title={`Prepare the Right Toys`}
+      title={t('onboarding.playSession1.title')}
       image={require('../../../assets/images/play1.png')}
-      subtitle="To let your child’s imagination run wild, pick unstructured toys. These allow them to be the boss of the play."
+      subtitle={t('onboarding.playSession1.subtitle')}
       onBack={() => navigation.goBack()}
       onContinue={() => navigation.navigate('PlaySession2')}
     />

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -27,6 +28,7 @@ export const ResetPasswordScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const route = useRoute<ResetPasswordScreenRouteProp>();
   const authService = useAuthService();
+  const { t } = useTranslation();
 
   const [token, setToken] = useState(route.params?.token || '');
   const [newPassword, setNewPassword] = useState('');
@@ -60,24 +62,23 @@ export const ResetPasswordScreen: React.FC = () => {
 
   const handleResetPassword = async () => {
     if (!token.trim()) {
-      Alert.alert('Error', 'Reset token is required');
+      Alert.alert(t('common.error'), t('resetPassword.errorTokenRequired'));
       return;
     }
 
     if (!newPassword.trim()) {
-      Alert.alert('Error', 'Please enter your new password');
+      Alert.alert(t('common.error'), t('resetPassword.errorPasswordRequired'));
       return;
     }
 
-    // Validate password strength
     const passwordError = validatePassword(newPassword);
     if (passwordError) {
-      Alert.alert('Error', passwordError);
+      Alert.alert(t('common.error'), passwordError);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      Alert.alert(t('common.error'), t('resetPassword.errorPasswordMismatch'));
       return;
     }
 
@@ -86,20 +87,15 @@ export const ResetPasswordScreen: React.FC = () => {
       await authService.resetPassword(token.trim(), newPassword);
 
       Alert.alert(
-        'Success',
-        'Your password has been reset successfully. Please log in with your new password.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('Login'),
-          },
-        ]
+        t('resetPassword.successTitle'),
+        t('resetPassword.successMessage'),
+        [{ text: t('common.ok'), onPress: () => navigation.navigate('Login') }]
       );
     } catch (error: any) {
       console.error('Reset password error:', error);
       Alert.alert(
-        'Error',
-        error.message || 'Failed to reset password. The link may have expired.'
+        t('common.error'),
+        error.message || t('resetPassword.errorFailedMessage')
       );
     } finally {
       setLoading(false);
@@ -123,18 +119,16 @@ export const ResetPasswordScreen: React.FC = () => {
 
         <View style={styles.content}>
           {/* Title */}
-          <Text style={styles.title}>Reset Password</Text>
-          <Text style={styles.subtitle}>
-            Enter your new password below
-          </Text>
+          <Text style={styles.title}>{t('resetPassword.title')}</Text>
+          <Text style={styles.subtitle}>{t('resetPassword.subtitle')}</Text>
 
           {/* Token Input (hidden if token provided via deep link) */}
           {!route.params?.token && (
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Reset Token</Text>
+              <Text style={styles.label}>{t('resetPassword.resetTokenLabel')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter token from email"
+                placeholder={t('resetPassword.resetTokenPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 value={token}
                 onChangeText={setToken}
@@ -147,11 +141,11 @@ export const ResetPasswordScreen: React.FC = () => {
 
           {/* New Password Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>New Password</Text>
+            <Text style={styles.label}>{t('resetPassword.newPasswordLabel')}</Text>
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.passwordInput}
-                placeholder="Enter new password"
+                placeholder={t('resetPassword.newPasswordPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 value={newPassword}
                 onChangeText={setNewPassword}
@@ -171,18 +165,16 @@ export const ResetPasswordScreen: React.FC = () => {
                 />
               </TouchableOpacity>
             </View>
-            <Text style={styles.hint}>
-              At least 8 characters with 1 uppercase, 1 lowercase, and 1 number
-            </Text>
+            <Text style={styles.hint}>{t('resetPassword.passwordHint')}</Text>
           </View>
 
           {/* Confirm Password Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Confirm Password</Text>
+            <Text style={styles.label}>{t('resetPassword.confirmPasswordLabel')}</Text>
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.passwordInput}
-                placeholder="Confirm new password"
+                placeholder={t('resetPassword.confirmPasswordPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -217,15 +209,15 @@ export const ResetPasswordScreen: React.FC = () => {
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.buttonText}>Reset Password</Text>
+              <Text style={styles.buttonText}>{t('resetPassword.resetButton')}</Text>
             )}
           </TouchableOpacity>
 
           {/* Back to Login Link */}
           <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>Remember your password? </Text>
+            <Text style={styles.loginText}>{t('resetPassword.rememberPassword')}</Text>
             <TouchableOpacity onPress={handleBack}>
-              <Text style={styles.loginLink}>Log In</Text>
+              <Text style={styles.loginLink}>{t('resetPassword.logIn')}</Text>
             </TouchableOpacity>
           </View>
         </View>

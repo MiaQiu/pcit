@@ -15,9 +15,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
+import { useTranslation } from 'react-i18next';
 
 export const PrivacyPolicyScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { t } = useTranslation();
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -29,7 +31,7 @@ export const PrivacyPolicyScreen: React.FC = () => {
         >
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Privacy Policy</Text>
+        <Text style={styles.headerTitle}>{t('privacyPolicy.headerTitle')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 

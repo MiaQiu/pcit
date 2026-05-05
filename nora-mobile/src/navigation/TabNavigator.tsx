@@ -7,6 +7,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { RootTabParamList } from './types';
+import { useTranslation } from 'react-i18next';
 import {
   HomeScreen,
   RecordScreen,
@@ -18,6 +19,7 @@ import {
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export const TabNavigator: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -53,7 +55,7 @@ export const TabNavigator: React.FC = () => {
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: t('tabNav.home'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'home' : 'home-outline'}
@@ -67,7 +69,7 @@ export const TabNavigator: React.FC = () => {
         name="Record"
         component={RecordScreen}
         options={{
-          tabBarLabel: 'Record',
+          tabBarLabel: t('tabNav.record'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'mic' : 'mic-outline'}
@@ -81,7 +83,7 @@ export const TabNavigator: React.FC = () => {
         name="Learn"
         component={LearnScreen}
         options={{
-          tabBarLabel: 'Learn',
+          tabBarLabel: t('tabNav.learn'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'book' : 'book-outline'}
@@ -95,7 +97,7 @@ export const TabNavigator: React.FC = () => {
         name="Progress"
         component={ProgressScreen}
         options={{
-          tabBarLabel: 'Report',
+          tabBarLabel: t('tabNav.report'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'bar-chart' : 'bar-chart-outline'}

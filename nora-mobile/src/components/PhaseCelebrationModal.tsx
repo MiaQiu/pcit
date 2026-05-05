@@ -8,6 +8,7 @@ import React from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
+import { useTranslation } from 'react-i18next';
 
 interface PhaseCelebrationModalProps {
   visible: boolean;
@@ -20,6 +21,7 @@ export const PhaseCelebrationModal: React.FC<PhaseCelebrationModalProps> = ({
   onClose,
   childName = 'your child',
 }) => {
+  const { t } = useTranslation();
   return (
     <Modal
       visible={visible}
@@ -33,23 +35,23 @@ export const PhaseCelebrationModal: React.FC<PhaseCelebrationModalProps> = ({
           <Text style={styles.celebrationEmoji}>🎉</Text>
 
           {/* Title */}
-          <Text style={styles.title}>You've Mastered Special Play Time!</Text>
+          <Text style={styles.title}>{t('phaseCelebration.title')}</Text>
 
           {/* Message */}
-          <Text style={styles.message}>
-            Incredible work. Scoring 80+ shows you've built a strong, connected foundation with {childName}.
-          </Text>
+          <Text style={styles.message}>{t('phaseCelebration.message', { childName })}</Text>
 
           {/* Unlock Banner */}
           <View style={styles.unlockBox}>
             <View style={styles.unlockTitleRow}>
               <Ionicons name="lock-open" size={18} color={COLORS.mainPurple} />
-              <Text style={styles.unlockTitle}>Discipline Mode Unlocked</Text>
+              <Text style={styles.unlockTitle}>{t('phaseCelebration.unlockTitle')}</Text>
             </View>
             <Text style={styles.unlockDescription}>
-              You can now get personalized coaching on effective discipline. Simply go to the{' '}
-              <Text style={styles.bold}>Record</Text> tab, select{' '}
-              <Text style={styles.bold}>Discipline (10m)</Text>, and record a real discipline moment with {childName}.
+              {t('phaseCelebration.unlockDescriptionPrefix')}{' '}
+              <Text style={styles.bold}>{t('phaseCelebration.recordTab')}</Text>{' '}
+              {t('phaseCelebration.unlockDescriptionMiddle')}{' '}
+              <Text style={styles.bold}>{t('phaseCelebration.disciplineMode')}</Text>
+              {t('phaseCelebration.unlockDescriptionSuffix', { childName })}
             </Text>
           </View>
 
@@ -57,12 +59,12 @@ export const PhaseCelebrationModal: React.FC<PhaseCelebrationModalProps> = ({
           <View style={styles.suggestionBox}>
             <View style={styles.suggestionTitleRow}>
               <Ionicons name="bulb-outline" size={16} color="#92400E" />
-              <Text style={styles.suggestionTitle}>Before You Begin</Text>
+              <Text style={styles.suggestionTitle}>{t('phaseCelebration.beforeYouBegin')}</Text>
             </View>
             <Text style={styles.suggestionText}>
-              We recommend completing the{' '}
-              <Text style={styles.bold}>Not Listening &amp; Arguing</Text> lessons first — they'll give you the framework to make your Discipline sessions most effective.{'\n\n'}
-              In the meantime, keep doing Special Time sessions to deposit into {childName}'s emotional bank account.
+              {t('phaseCelebration.suggestionPrefix')}{' '}
+              <Text style={styles.bold}>{t('phaseCelebration.notListeningLessons')}</Text>
+              {t('phaseCelebration.suggestionMiddle', { childName })}
             </Text>
           </View>
 
@@ -72,7 +74,7 @@ export const PhaseCelebrationModal: React.FC<PhaseCelebrationModalProps> = ({
             onPress={onClose}
             activeOpacity={0.8}
           >
-            <Text style={styles.continueButtonText}>Got it!</Text>
+            <Text style={styles.continueButtonText}>{t('phaseCelebration.gotIt')}</Text>
           </TouchableOpacity>
         </View>
       </View>

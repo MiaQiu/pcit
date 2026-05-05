@@ -13,18 +13,18 @@ import {
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
-import { useOnboarding } from '../../contexts/OnboardingContext';
+
 import { OnboardingBackButton } from '../../components/OnboardingBackButton';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export const Intro3Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
-  const { data } = useOnboarding();
-  const userName = data.name || 'there';
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
@@ -46,10 +46,8 @@ export const Intro3Screen: React.FC = () => {
 
       {/* Text */}
       <View style={styles.bottomSection}>
-        <Text style={styles.title}>Emotional Massage</Text>
-        <Text style={styles.description}>
-          A simple 5-minute daily play with your child. By following your child’s lead and staying fully present, you support their ability to build positive behavior, develop social skills, and improve focus.
-        </Text>
+        <Text style={styles.title}>{t('onboarding.intro3.title')}</Text>
+        <Text style={styles.description}>{t('onboarding.intro3.description')}</Text>
       </View>
 
       {/* Footer */}
@@ -61,14 +59,14 @@ export const Intro3Screen: React.FC = () => {
             onPress={() => navigation.navigate('PlaySession1')}
             activeOpacity={0.85}
           >
-            <Text style={styles.buttonText}>Let's Begin  →</Text>
+            <Text style={styles.buttonText}>{t('onboarding.letsBegin')}</Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity
           onPress={() => navigation.navigate('Subscription')}
           activeOpacity={0.7}
         >
-          <Text style={styles.skipText}>Skip for Now</Text>
+          <Text style={styles.skipText}>{t('onboarding.skipForNow')}</Text>
         </TouchableOpacity>
       </View>
     </View>

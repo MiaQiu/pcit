@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { networkMonitor, ConnectionStatus } from '../utils/NetworkMonitor';
 
 export const NetworkStatusBar: React.FC = () => {
   const [status, setStatus] = useState<ConnectionStatus>('online');
-  const [fadeAnim] = useState(new Animated.Value(0)); // Start hidden
-  const [scaleAnim] = useState(new Animated.Value(0.8)); // Start slightly smaller
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [scaleAnim] = useState(new Animated.Value(0.8));
+  const { t } = useTranslation();
 
   useEffect(() => {
-    // Get initial state
     const initialStatus = networkMonitor.getConnectionStatus();
     console.log('[NetworkStatusBar] Initial connection status:', initialStatus);
     setStatus(initialStatus);
@@ -23,47 +24,18 @@ export const NetworkStatusBar: React.FC = () => {
 
   useEffect(() => {
     if (status === 'offline') {
-      // Fade in and scale up when offline
       Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 8,
-          tension: 40,
-          useNativeDriver: true,
-        }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.spring(scaleAnim, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }),
       ]).start();
     } else {
-      // Fade out and scale down when online (or server down but connected)
       Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 0.8,
-          duration: 200,
-          useNativeDriver: true,
-        }),
+        Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 0.8, duration: 200, useNativeDriver: true }),
       ]).start();
     }
   }, [status]);
 
-  const getMessage = () => {
-    switch (status) {
-      case 'offline':
-        return 'No Internet Connection';
-      default:
-        return '';
-    }
-  };
-
-  // Only show when offline (not for server errors)
   if (status !== 'offline') {
     return null;
   }
@@ -83,7 +55,7 @@ export const NetworkStatusBar: React.FC = () => {
       ]}
     >
       <View style={styles.button}>
-        <Text style={styles.text}>{getMessage()}</Text>
+        <Text style={styles.text}>{t('networkStatus.offline')}</Text>
       </View>
     </Animated.View>
   );
@@ -97,7 +69,7 @@ const styles = StyleSheet.create({
     zIndex: 9998,
   },
   button: {
-    backgroundColor: '#FFA500', // '#1E2939', //'#FFA500', // Amber
+    backgroundColor: '#FFA500',
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 36,
@@ -111,7 +83,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   text: {
-    color: '#000000', //'#000000', // Black text for readability
+    color: '#000000',
     fontSize: 16,
     fontWeight: '700',
   },

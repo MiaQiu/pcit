@@ -30,6 +30,7 @@ import {
   cancelDailyLessonReminder,
 } from '../utils/notifications';
 import { useAuthService } from '../contexts/AppContext';
+import { useTranslation } from 'react-i18next';
 
 interface NotificationPreferences {
   dailyLessonReminder: boolean;
@@ -55,25 +56,23 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   pdiTransitionSound: 'Win',
 };
 
-// Available sound effects for Connect Phase (CDI Complete)
-const CONNECT_PHASE_SOUNDS = [
-  { id: 'Win', label: 'Win Chime'},
-  { id: 'Bell', label: 'Gentle Bell' },
-  // { id: 'voice-reminder', label: 'Voice Reminder'},
-];
-
-// Available sound effects for Discipline Phase (PDI Transition)
-const DISCIPLINE_PHASE_SOUNDS = [
-  { id: 'Bell', label: 'Gentle Bell' },
-  { id: 'Win', label: 'Win Chime'},
-  { id: 'voice-reminder', label: 'Voice Reminder'},
-];
-
 const STORAGE_KEY = '@notification_preferences';
 
 export const NotificationSettingsScreen: React.FC = () => {
   const navigation = useNavigation();
   const authService = useAuthService();
+  const { t } = useTranslation();
+
+  const CONNECT_PHASE_SOUNDS = [
+    { id: 'Win', label: t('notificationSettings.sounds.winChime') },
+    { id: 'Bell', label: t('notificationSettings.sounds.gentleBell') },
+  ];
+
+  const DISCIPLINE_PHASE_SOUNDS = [
+    { id: 'Bell', label: t('notificationSettings.sounds.gentleBell') },
+    { id: 'Win', label: t('notificationSettings.sounds.winChime') },
+    { id: 'voice-reminder', label: t('notificationSettings.sounds.voiceReminder') },
+  ];
 
   const [preferences, setPreferences] = useState<NotificationPreferences>(DEFAULT_PREFERENCES);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -167,7 +166,7 @@ export const NotificationSettingsScreen: React.FC = () => {
       setPreferences(newPreferences);
     } catch (error) {
       console.error('Failed to save notification preferences:', error);
-      Alert.alert('Error', 'Failed to save preferences');
+      Alert.alert(t('common.error'), t('notificationSettings.errorSavePreferences'));
     }
   };
 
@@ -185,10 +184,10 @@ export const NotificationSettingsScreen: React.FC = () => {
 
     if (!granted) {
       Alert.alert(
-        'Notifications Disabled',
-        'Please enable notifications in your device settings to receive reminders.',
+        t('notificationSettings.notificationsDisabledTitle'),
+        t('notificationSettings.notificationsDisabledMessage'),
         [
-          { text: 'OK', style: 'cancel' },
+          { text: t('common.ok'), style: 'cancel' },
         ]
       );
       return false;
@@ -400,7 +399,7 @@ export const NotificationSettingsScreen: React.FC = () => {
       });
     } catch (error) {
       console.error('Error playing sound:', error);
-      Alert.alert('Error', 'Failed to play sound preview');
+      Alert.alert(t('common.error'), t('notificationSettings.errorPlaySound'));
     }
   };
 
@@ -408,7 +407,7 @@ export const NotificationSettingsScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
+          <Text style={styles.loadingText}>{t('notificationSettings.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -424,7 +423,7 @@ export const NotificationSettingsScreen: React.FC = () => {
         >
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
+        <Text style={styles.headerTitle}>{t('notificationSettings.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -434,9 +433,9 @@ export const NotificationSettingsScreen: React.FC = () => {
           <View style={styles.permissionBanner}>
             <Ionicons name="notifications-off-outline" size={32} color="#F59E0B" />
             <View style={styles.permissionTextContainer}>
-              <Text style={styles.permissionTitle}>Notifications Disabled</Text>
+              <Text style={styles.permissionTitle}>{t('notificationSettings.permissionBannerTitle')}</Text>
               <Text style={styles.permissionSubtitle}>
-                To receive reminders and updates, please enable notifications in your device Settings.
+                {t('notificationSettings.permissionBannerSubtitle')}
               </Text>
               <TouchableOpacity
                 style={styles.settingsButton}
@@ -444,7 +443,7 @@ export const NotificationSettingsScreen: React.FC = () => {
                 activeOpacity={0.7}
               >
                 <Ionicons name="settings-outline" size={16} color="#FFFFFF" />
-                <Text style={styles.settingsButtonText}>Open Settings</Text>
+                <Text style={styles.settingsButtonText}>{t('notificationSettings.openSettings')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -452,7 +451,7 @@ export const NotificationSettingsScreen: React.FC = () => {
 
         {/* Daily Lesson Reminder */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Daily Reminders</Text>
+          <Text style={styles.sectionTitle}>{t('notificationSettings.dailyReminders')}</Text>
 
           <View style={styles.card}>
             <View style={styles.settingRow}>
@@ -467,10 +466,10 @@ export const NotificationSettingsScreen: React.FC = () => {
                     styles.settingText,
                     !notificationsEnabled && styles.settingTextDisabled
                   ]}>
-                    Daily Session Reminder
+                    {t('notificationSettings.dailySessionReminder')}
                   </Text>
                   <Text style={styles.settingDescription}>
-                    Get reminded to complete your daily special time session
+                    {t('notificationSettings.dailySessionReminderDesc')}
                   </Text>
                 </View>
               </View>
@@ -492,7 +491,7 @@ export const NotificationSettingsScreen: React.FC = () => {
                   onPress={handleTimeChange}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.timeLabel}>Reminder Time</Text>
+                  <Text style={styles.timeLabel}>{t('notificationSettings.reminderTime')}</Text>
                   <View style={styles.timeValue}>
                     <Text style={styles.timeText}>{preferences.dailyLessonTime}</Text>
                     <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
@@ -609,7 +608,7 @@ export const NotificationSettingsScreen: React.FC = () => {
 
         {/* Play Session Sound Effects */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Play Session Sounds</Text>
+          <Text style={styles.sectionTitle}>{t('notificationSettings.playSounds')}</Text>
 
           <View style={styles.card}>
             {/* CDI Complete Sound */}
@@ -621,9 +620,9 @@ export const NotificationSettingsScreen: React.FC = () => {
               <View style={styles.soundLeft}>
                 <Ionicons name="play-circle-outline" size={22} color="#8C49D5" />
                 <View style={styles.soundContent}>
-                  <Text style={styles.soundText}>Connect Phase</Text>
+                  <Text style={styles.soundText}>{t('notificationSettings.connectPhase')}</Text>
                   <Text style={styles.soundDescription}>
-                    Sound when 5-minute play session finishes
+                    {t('notificationSettings.connectPhaseDesc')}
                   </Text>
                 </View>
               </View>
@@ -644,9 +643,9 @@ export const NotificationSettingsScreen: React.FC = () => {
               <View style={styles.soundLeft}>
                 <Ionicons name="swap-horizontal-outline" size={22} color="#8C49D5" />
                 <View style={styles.soundContent}>
-                  <Text style={styles.soundText}>Discipline Phase</Text>
+                  <Text style={styles.soundText}>{t('notificationSettings.disciplinePhase')}</Text>
                   <Text style={styles.soundDescription}>
-                    Sound when transitioning from child directed play to discipline
+                    {t('notificationSettings.disciplinePhaseDesc')}
                   </Text>
                 </View>
               </View>
@@ -662,7 +661,7 @@ export const NotificationSettingsScreen: React.FC = () => {
         <View style={styles.infoSection}>
           <Ionicons name="information-circle-outline" size={20} color="#6B7280" />
           <Text style={styles.infoText}>
-            You can change these settings at any time. Notification times and frequency may vary.
+            {t('notificationSettings.infoText')}
           </Text>
         </View>
       </ScrollView>
@@ -683,11 +682,11 @@ export const NotificationSettingsScreen: React.FC = () => {
             <View style={styles.modalContent}>
               <View style={styles.pickerHeader}>
                 <TouchableOpacity onPress={handleCancelTimePicker}>
-                  <Text style={styles.pickerButton}>Cancel</Text>
+                  <Text style={styles.pickerButton}>{t('notificationSettings.pickerCancel')}</Text>
                 </TouchableOpacity>
-                <Text style={styles.pickerTitle}>Select Time</Text>
+                <Text style={styles.pickerTitle}>{t('notificationSettings.selectTime')}</Text>
                 <TouchableOpacity onPress={handleConfirmTime}>
-                  <Text style={[styles.pickerButton, styles.pickerButtonConfirm]}>Done</Text>
+                  <Text style={[styles.pickerButton, styles.pickerButtonConfirm]}>{t('notificationSettings.pickerDone')}</Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker
@@ -731,10 +730,10 @@ export const NotificationSettingsScreen: React.FC = () => {
               <View style={styles.pickerHeader}>
                 <View style={{ width: 60 }} />
                 <Text style={styles.pickerTitle}>
-                  {soundPickerType === 'cdiComplete' ? 'Connect Phase Sound' : 'Discipline Phase Sound'}
+                  {soundPickerType === 'cdiComplete' ? t('notificationSettings.connectPhaseSoundTitle') : t('notificationSettings.disciplinePhaseSoundTitle')}
                 </Text>
                 <TouchableOpacity onPress={() => setShowSoundPicker(false)}>
-                  <Text style={styles.pickerButton}>Done</Text>
+                  <Text style={styles.pickerButton}>{t('notificationSettings.pickerDone')}</Text>
                 </TouchableOpacity>
               </View>
 

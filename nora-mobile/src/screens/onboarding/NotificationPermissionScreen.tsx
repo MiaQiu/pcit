@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaskedDinoImage } from '../../components/MaskedDinoImage';
@@ -30,21 +31,12 @@ export const NotificationPermissionScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const authService = useAuthService();
   const { data } = useOnboarding();
-  const childName = data.childName || 'your child';
+  const { t } = useTranslation();
 
   const BENEFITS = [
-    {
-      icon: 'time' as const,
-      text: `Reminders for your 5-minute play `,
-    },
-    {
-      icon: 'bulb' as const,
-      text: 'Instant insights after recording',
-    },
-    {
-      icon: 'bar-chart' as const,
-      text: `Weekly progress reports `,
-    },
+    { icon: 'time' as const, text: t('notificationPermission.benefitReminders') },
+    { icon: 'bulb' as const, text: t('notificationPermission.benefitInsights') },
+    { icon: 'bar-chart' as const, text: t('notificationPermission.benefitReports') },
   ];
   const [isRequesting, setIsRequesting] = useState(false);
   const insets = useSafeAreaInsets();
@@ -73,9 +65,9 @@ export const NotificationPermissionScreen: React.FC = () => {
         }
       } else {
         Alert.alert(
-          'Notifications Disabled',
-          'You can enable notifications later in Settings.',
-          [{ text: 'OK' }]
+          t('notificationPermission.disabledTitle'),
+          t('notificationPermission.disabledMessage'),
+          [{ text: t('common.ok') }]
         );
       }
     } catch (error) {
@@ -101,10 +93,8 @@ export const NotificationPermissionScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Enable Notifications</Text>
-        <Text style={styles.description}>
-          Building a lasting habit of staying present is easier with gentle reminders.
-        </Text>
+        <Text style={styles.title}>{t('notificationPermission.title')}</Text>
+        <Text style={styles.description}>{t('notificationPermission.description')}</Text>
 
         <View style={styles.benefitsList}>
           {BENEFITS.map((item, index) => (
@@ -129,11 +119,11 @@ export const NotificationPermissionScreen: React.FC = () => {
           activeOpacity={0.8}
         >
           <Text style={styles.enableButtonText}>
-            {isRequesting ? 'Enabling…' : 'Enable'}
+            {isRequesting ? t('notificationPermission.enabling') : t('notificationPermission.enable')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleNotNow} activeOpacity={0.7}>
-          <Text style={styles.notNowText}>Not Now</Text>
+          <Text style={styles.notNowText}>{t('notificationPermission.notNow')}</Text>
         </TouchableOpacity>
       </View>
     </View>

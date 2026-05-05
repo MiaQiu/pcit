@@ -15,6 +15,7 @@ import { RootStackParamList, RootStackNavigationProp } from '../navigation/types
 import { useLessonService } from '../contexts/AppContext';
 import { LessonDetailResponse } from '@nora/core';
 import { COLORS, FONTS } from '../constants/assets';
+import { useTranslation } from 'react-i18next';
 
 type LessonCompleteScreenRouteProp = RouteProp<RootStackParamList, 'LessonComplete'>;
 
@@ -23,6 +24,7 @@ export const LessonCompleteScreen: React.FC = () => {
   const route = useRoute<LessonCompleteScreenRouteProp>();
   const lessonService = useLessonService();
   const { lessonId } = route.params;
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [lessonData, setLessonData] = useState<LessonDetailResponse | null>(null);
@@ -61,7 +63,7 @@ export const LessonCompleteScreen: React.FC = () => {
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.mainPurple} />
-          <Text style={styles.loadingText}>Loading...</Text>
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       </SafeAreaView>
     );

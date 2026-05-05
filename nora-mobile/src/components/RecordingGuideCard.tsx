@@ -10,6 +10,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
+import { useTranslation } from 'react-i18next';
 
 export type GuideMode = 'specialTime' | 'discipline';
 
@@ -18,40 +19,25 @@ interface RecordingGuideCardProps {
   onRecordPress?: () => void;
 }
 
-const DO_ITEMS = [
-  {
-    title: 'Praise',
-    description: 'Be a Cheerleader. Tell your child exactly what you like about their behavior.',
-  },
-  {
-    title: 'Echo',
-    description: 'Repeat What They Say. Show you\'re listening by repeating their words.',
-  },
-  {
-    title: 'Narrate',
-    description: 'Describe their actions like a sportscaster, without judgment.',
-  },
-];
-
-const DONT_ITEMS = ['Command', 'Question', 'Criticize'];
-
-const DISCIPLINE_DO_ITEMS = [
-  {
-    title: 'The Effective Command:',
-    description: 'Direct, Positive, Single, Specific',
-  },
-  {
-    title: 'Always Follow Through:',
-    description: '5-Second \u2192 Offer a Choice \u2192 5-Second \u2192 Act on the Choice',
-  },
-  {
-    title: 'Key Mindsets:',
-    description: 'Consistency, Stay calm',
-  },
-];
-
 export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeChange }) => {
   const authService = useAuthService();
+  const { t } = useTranslation();
+
+  const DO_ITEMS = [
+    { title: t('recordingGuide.do.praise.title'), description: t('recordingGuide.do.praise.description') },
+    { title: t('recordingGuide.do.echo.title'), description: t('recordingGuide.do.echo.description') },
+    { title: t('recordingGuide.do.narrate.title'), description: t('recordingGuide.do.narrate.description') },
+  ];
+  const DONT_ITEMS = [
+    t('recordingGuide.dont.command'),
+    t('recordingGuide.dont.question'),
+    t('recordingGuide.dont.criticize'),
+  ];
+  const DISCIPLINE_DO_ITEMS = [
+    { title: t('recordingGuide.discipline.command.title'), description: t('recordingGuide.discipline.command.description') },
+    { title: t('recordingGuide.discipline.followThrough.title'), description: t('recordingGuide.discipline.followThrough.description') },
+    { title: t('recordingGuide.discipline.mindsets.title'), description: t('recordingGuide.discipline.mindsets.description') },
+  ];
   const [childName, setChildName] = useState<string>('your child');
   const [mode, setMode] = useState<GuideMode>('specialTime');
   const [isDisciplineUnlocked, setIsDisciplineUnlocked] = useState(false);
@@ -82,7 +68,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
     <>
       {/* DO Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>DO - PEN Skills</Text>
+        <Text style={styles.sectionTitle}>{t('recordingGuide.doSectionTitle')}</Text>
 
         {DO_ITEMS.map((item, index) => (
           <View key={index} style={styles.doItem}>
@@ -103,7 +89,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
 
       {/* DON'T Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>DON'T</Text>
+        <Text style={styles.sectionTitle}>{t('recordingGuide.dontSectionTitle')}</Text>
 
         <View style={styles.dontChipsContainer}>
           {DONT_ITEMS.map((item, index) => (
@@ -114,7 +100,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
         </View>
 
         <Text style={styles.reminderText}>
-          Remember, this is Child-Led Play. Just follow {childName}'s lead.
+          {t('recordingGuide.reminderText', { childName })}
         </Text>
       </View>
     </>
@@ -124,7 +110,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
     <>
       {/* Connection First - PEN Skills */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Connection First {'\u2013'} PEN Skills</Text>
+        <Text style={styles.sectionTitle}>{t('recordingGuide.connectionFirstTitle')}</Text>
 
         <View style={styles.doItem}>
           <View style={styles.itemIconContainer}>
@@ -149,7 +135,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
 
       {/* During Discipline - Do */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>During Discipline {'\u2013'} Do</Text>
+        <Text style={styles.sectionTitle}>{t('recordingGuide.disciplineDoTitle')}</Text>
 
         {DISCIPLINE_DO_ITEMS.map((item, index) => (
           <View key={index} style={styles.doItem}>
@@ -169,7 +155,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
       </View>
 
       <Text style={styles.reminderText}>
-        Remember, For every command, aim for about 10 P.E.N. moments to rebuild connection.
+        {t('recordingGuide.disciplineReminder')}
       </Text>
     </>
   );
@@ -184,7 +170,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
           activeOpacity={0.7}
         >
           <Text style={[styles.tabText, mode === 'specialTime' && styles.tabTextActive]}>
-            Play Time (5m)
+            {t('recordingGuide.playTimeTab')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -193,7 +179,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
           activeOpacity={0.7}
         >
           <Text style={[styles.tabText, mode === 'discipline' && styles.tabTextActive]}>
-            Discipline (10m)
+            {t('recordingGuide.disciplineTab')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -210,13 +196,13 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
             <View style={styles.lockMessageContainer}>
               <Ionicons name="lock-closed" size={24} color="#8C49D5" style={{ marginBottom: 8 }} />
               <Text style={styles.lockMessageText}>
-                Effective discipline is built on a foundation of a strong bond. Without that connection, instructions can feel like demands; with it, they feel like guidance.
+                {t('recordingGuide.lockMessage')}
               </Text>
               <Text style={styles.lockGoalText}>
-                Reach a Deposit of 80 or more in a single Special Time session to unlock Discipline coaching
+                {t('recordingGuide.lockGoal')}
               </Text>
               <Text style={styles.lockMessageText}>
-                This ensures your "relationship bank account" is overfilled before you begin the Discipline phase.
+                {t('recordingGuide.lockBankMessage')}
               </Text>
             </View>
           </View>

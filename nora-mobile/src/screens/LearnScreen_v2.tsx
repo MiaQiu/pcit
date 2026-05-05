@@ -28,6 +28,7 @@ import { useToast } from '../components/ToastManager';
 import type { ModuleWithProgress, LessonCardData } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
 import { resolveImageUris } from '../services/lessonImageCache';
+import { useTranslation } from 'react-i18next';
 
 const H_PAD = 20;
 const CARD_GAP = 10;
@@ -136,6 +137,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = ({
   showLockedNotice,
   localImageUris,
 }) => {
+  const { t } = useTranslation();
   const sortedLessons = useMemo(() => {
     const incomplete = lessons.filter(l => l.progress?.status !== 'COMPLETED');
     const completed = lessons.filter(l => l.progress?.status === 'COMPLETED');
@@ -157,9 +159,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = ({
       {showLockedNotice && (
         <View style={styles.lockedNotice}>
           <Ionicons name="lock-closed" size={12} color="#BBBBBB" />
-          <Text style={styles.lockedNoticeText}>
-            Complete Foundation first to unlock this module.
-          </Text>
+          <Text style={styles.lockedNoticeText}>{t('learnV2.lockedNotice')}</Text>
         </View>
       )}
 
@@ -193,6 +193,7 @@ export const LearnScreen_v2: React.FC = () => {
   const lessonService = useLessonService();
   const { isOnline } = useNetworkStatus();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const scrollViewRef = React.useRef<ScrollView>(null);
   const { width } = useWindowDimensions();
   const cardWidth = (width - H_PAD * 2) / 2.3;
@@ -342,7 +343,7 @@ export const LearnScreen_v2: React.FC = () => {
   const handleLessonPress = (lessonId: string, moduleKey: string) => {
     const mod = modules.find(m => m.key === moduleKey);
     if (mod?.isLocked) {
-      showToast('Complete the Foundation module first', 'info');
+      showToast(t('learnV2.completeFoundationFirst'), 'info');
       return;
     }
 
@@ -387,8 +388,8 @@ export const LearnScreen_v2: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Explore lessons</Text>
-          <Text style={styles.subtitle}>Handpicked for you</Text>
+          <Text style={styles.title}>{t('learnV2.title')}</Text>
+          <Text style={styles.subtitle}>{t('learnV2.subtitle')}</Text>
         </View>
 
         {/* Search */}
@@ -418,8 +419,8 @@ export const LearnScreen_v2: React.FC = () => {
 
         {visibleModules.length === 0 && modules.length > 0 && (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No lessons found</Text>
-            <Text style={styles.emptyMessage}>Try a different search term</Text>
+            <Text style={styles.emptyTitle}>{t('learnV2.noLessonsFound')}</Text>
+            <Text style={styles.emptyMessage}>{t('learnV2.tryDifferentSearch')}</Text>
           </View>
         )}
       </ScrollView>

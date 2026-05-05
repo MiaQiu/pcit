@@ -26,8 +26,10 @@ import { useAuthService } from '../../contexts/AppContext';
 import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
 import { handleApiSuccess } from '../../utils/NetworkMonitor';
 import amplitudeService from '../../services/amplitudeService';
+import { useTranslation } from 'react-i18next';
 
 export const CreateAccountScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { updateData } = useOnboarding();
   const authService = useAuthService();
@@ -61,18 +63,15 @@ export const CreateAccountScreen: React.FC = () => {
   const handleSignup = async () => {
     if (!isFormValid) {
       if (!validateEmail(email)) {
-        Alert.alert('Invalid Email', 'Please enter a valid email address');
+        Alert.alert(t('createAccount.invalidEmailTitle'), t('createAccount.invalidEmailMessage'));
         return;
       }
       if (!validatePassword(password)) {
-        Alert.alert(
-          'Weak Password',
-          'Password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number'
-        );
+        Alert.alert(t('createAccount.weakPasswordTitle'), t('createAccount.weakPasswordMessage'));
         return;
       }
       if (password !== confirmPassword) {
-        Alert.alert('Password Mismatch', 'Passwords do not match');
+        Alert.alert(t('createAccount.passwordMismatchTitle'), t('createAccount.passwordMismatch'));
         return;
       }
       return;
@@ -129,7 +128,7 @@ export const CreateAccountScreen: React.FC = () => {
     } catch (error: any) {
       console.error('Signup error:', error);
       const errorMessage = getErrorMessage(error, ErrorMessages.AUTH.SIGNUP_FAILED);
-      Alert.alert('Signup Failed', errorMessage);
+      Alert.alert(t('createAccount.signupFailedTitle'), errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -158,7 +157,7 @@ export const CreateAccountScreen: React.FC = () => {
 
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Create your account</Text>
+            <Text style={styles.title}>{t('createAccount.title')}</Text>
             {/* <Text style={styles.subtitle}>
               Enter your email and password to get started
             </Text> */}
@@ -166,10 +165,10 @@ export const CreateAccountScreen: React.FC = () => {
 
           {/* Email Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t('createAccount.emailLabel')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="your@email.com"
+              placeholder={t('createAccount.emailPlaceholder')}
               placeholderTextColor="#9CA3AF"
               value={email}
               onChangeText={setEmail}
@@ -183,17 +182,17 @@ export const CreateAccountScreen: React.FC = () => {
               importantForAutofill="no"
             />
             {email.length > 0 && !validateEmail(email) && (
-              <Text style={styles.errorText}>Please enter a valid email</Text>
+              <Text style={styles.errorText}>{t('createAccount.emailInvalid')}</Text>
             )}
           </View>
 
           {/* Password Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>{t('createAccount.passwordLabel')}</Text>
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.passwordInput}
-                placeholder="At least 8 characters"
+                placeholder={t('createAccount.passwordPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 value={password}
                 onChangeText={setPassword}
@@ -217,19 +216,17 @@ export const CreateAccountScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
             {password.length > 0 && !validatePassword(password) && (
-              <Text style={styles.errorText}>
-                Must have 8+ characters, 1 uppercase, 1 lowercase, 1 number
-              </Text>
+              <Text style={styles.errorText}>{t('createAccount.passwordWeak')}</Text>
             )}
           </View>
 
           {/* Confirm Password Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Confirm Password</Text>
+            <Text style={styles.label}>{t('createAccount.confirmPasswordLabel')}</Text>
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.passwordInput}
-                placeholder="Re-enter password"
+                placeholder={t('createAccount.confirmPasswordPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -254,7 +251,7 @@ export const CreateAccountScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
             {confirmPassword.length > 0 && password !== confirmPassword && (
-              <Text style={styles.errorText}>Passwords do not match</Text>
+              <Text style={styles.errorText}>{t('createAccount.passwordMismatch')}</Text>
             )}
           </View>
 
@@ -272,7 +269,7 @@ export const CreateAccountScreen: React.FC = () => {
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={[styles.buttonText, (!isFormValid || isLoading) && styles.buttonTextDisabled]}>
-                Create Account
+                {t('createAccount.createButton')}
               </Text>
             )}
           </TouchableOpacity>

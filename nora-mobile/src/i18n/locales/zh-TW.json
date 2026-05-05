@@ -1,0 +1,1148 @@
+{
+  "common": {
+    "error": "錯誤",
+    "cancel": "取消",
+    "ok": "確定",
+    "retry": "重試",
+    "success": "成功",
+    "loading": "載入中...",
+    "done": "完成"
+  },
+  "months": {
+    "0": "一月",
+    "1": "二月",
+    "2": "三月",
+    "3": "四月",
+    "4": "五月",
+    "5": "六月",
+    "6": "七月",
+    "7": "八月",
+    "8": "九月",
+    "9": "十月",
+    "10": "十一月",
+    "11": "十二月",
+    "short0": "1月",
+    "short1": "2月",
+    "short2": "3月",
+    "short3": "4月",
+    "short4": "5月",
+    "short5": "6月",
+    "short6": "7月",
+    "short7": "8月",
+    "short8": "9月",
+    "short9": "10月",
+    "short10": "11月",
+    "short11": "12月"
+  },
+  "start": {
+    "subtitle": "每天 5 分鐘，讓孩子更平靜、更快樂。",
+    "getStarted": "立即開始",
+    "alreadyHaveAccount": "我已經有帳號了",
+    "termsPrefix": "點擊繼續即表示您同意 Nora 的\n",
+    "termsOfService": "服務條款",
+    "termsAnd": " 與 ",
+    "privacyPolicy": "隱私權政策"
+  },
+  "login": {
+    "title": "登入您的帳號",
+    "emailPlaceholder": "電子郵件地址",
+    "passwordPlaceholder": "密碼",
+    "logIn": "登入",
+    "forgotPassword": "忘記密碼？",
+    "signInWithApple": "使用 Apple 登入",
+    "signInWithGoogle": "使用 Google 登入",
+    "errorEmptyTitle": "錯誤",
+    "errorEmptyMessage": "請輸入您的電子郵件和密碼",
+    "loginFailedTitle": "登入失敗",
+    "appleSignInFailedMessage": "Apple 登入失敗",
+    "googleSignInFailedMessage": "Google 登入失敗"
+  },
+  "createAccount": {
+    "title": "建立您的帳號",
+    "emailLabel": "電子郵件",
+    "emailPlaceholder": "your@email.com",
+    "emailInvalid": "請輸入有效的電子郵件",
+    "passwordLabel": "密碼",
+    "passwordPlaceholder": "至少 8 個字元",
+    "passwordWeak": "需包含 8 個以上字元，且含大小寫字母與數字",
+    "confirmPasswordLabel": "確認密碼",
+    "confirmPasswordPlaceholder": "再次輸入密碼",
+    "passwordMismatch": "密碼不相符",
+    "createButton": "建立帳號",
+    "invalidEmailTitle": "無效的電子郵件",
+    "invalidEmailMessage": "請輸入有效的電子郵件地址",
+    "weakPasswordTitle": "密碼強度不足",
+    "weakPasswordMessage": "密碼必須至少 8 個字元，並包含 1 個大寫字母、1 個小寫字母和 1 個數字",
+    "passwordMismatchTitle": "密碼不相符",
+    "signupFailedTitle": "註冊失敗"
+  },
+  "forgotPassword": {
+    "title": "忘記密碼？",
+    "subtitle": "輸入您的電子郵件地址，我們將向您傳送重設密碼的指示",
+    "emailLabel": "電子郵件",
+    "emailPlaceholder": "輸入您的電子郵件",
+    "sendResetLink": "傳送重設連結",
+    "rememberPassword": "想起密碼了？",
+    "logIn": "登入",
+    "errorEmptyMessage": "請輸入您的電子郵件地址",
+    "errorInvalidMessage": "請輸入有效的電子郵件地址",
+    "errorFailedMessage": "傳送重設密碼郵件失敗，請再試一次。",
+    "checkEmailTitle": "請檢查您的電子郵件",
+    "sentDescription": "我們已將重設指示傳送至",
+    "sentInstructions": "請檢查您的電子郵件並點擊連結以重設密碼。若未看到郵件，請檢查垃圾郵件箱。",
+    "backToLogin": "返回登入",
+    "didntReceive": "沒收到郵件？",
+    "tryAgain": "再試一次"
+  },
+  "resetPassword": {
+    "title": "重設密碼",
+    "subtitle": "請在下方輸入您的新密碼",
+    "resetTokenLabel": "重設驗證碼",
+    "resetTokenPlaceholder": "輸入郵件中的驗證碼",
+    "newPasswordLabel": "新密碼",
+    "newPasswordPlaceholder": "輸入新密碼",
+    "passwordHint": "至少 8 個字元，且含大小寫字母與數字",
+    "confirmPasswordLabel": "確認新密碼",
+    "confirmPasswordPlaceholder": "確認新密碼",
+    "resetButton": "重設密碼",
+    "rememberPassword": "想起密碼了？",
+    "logIn": "登入",
+    "errorTokenRequired": "需填寫重設驗證碼",
+    "errorPasswordRequired": "請輸入您的新密碼",
+    "errorPasswordMismatch": "密碼不相符",
+    "successTitle": "成功",
+    "successMessage": "您的密碼已成功重設。請使用新密碼登入。",
+    "errorFailedMessage": "重設密碼失敗，連結可能已過期。"
+  },
+  "subscription": {
+    "earlyUserBenefits": "早期用戶福利",
+    "howTrialWorks": "試用方案說明",
+    "subscribeToContinue": "訂閱以繼續使用",
+    "priceMonthly": "每月 S$9.98",
+    "priceFreeTrialThenMonthly": "前 30 天免費，之後每月 S$9.98",
+    "regularPrice": "原價前 7 天免費，之後每月 S$39.98",
+    "stepProfileTitle": "設定您的檔案",
+    "stepProfileDesc": "我們已根據您的回答設定好您的個人檔案。",
+    "stepTodayTitle": "今天",
+    "stepTodayDesc": "解鎖個人化教養課程與練習會話。",
+    "step30DaysTitle": "30 天後",
+    "stepChargedDesc": "系統將向您收取 S$9.98。您可以在此之前的任何時間取消。",
+    "stepChargedDescReturning": "系統將向您收取 S$9.98。每月自動續訂，可隨時取消。",
+    "restorePurchase": "恢復購買",
+    "logOut": "登出",
+    "disclaimerNew": "免費試用結束後，您的訂閱將以每月 S$9.98 自動續訂，除非您在試用結束前至少 24 小時取消。可隨時在「設定」中取消。點擊繼續即表示您同意我們的 ",
+    "disclaimerReturning": "您的訂閱將以每月 S$9.98 自動續訂。可隨時在「設定」中取消。點擊繼續即表示您同意我們的 ",
+    "terms": "條款",
+    "privacyPolicy": "隱私權政策",
+    "startTrial": "開始 30 天免費試用",
+    "subscribeNow": "立即訂閱",
+    "betaPricing": "早期支持者限量測試優惠價",
+    "notAvailableTitle": "暫時無法使用",
+    "notAvailableMessage": "目前暫時無法使用月費計劃，請稍後再試。",
+    "purchaseFailedTitle": "購買失敗",
+    "purchaseFailedMessage": "無法開始試用。如果您已被扣款，請點擊「恢復購買」。",
+    "restorePurchaseButton": "恢復購買",
+    "tryAgain": "再試一次",
+    "restoreSuccessTitle": "成功",
+    "restoreSuccessMessage": "您的訂閱已恢復！",
+    "noPurchasesTitle": "未發現購買紀錄",
+    "noPurchasesMessage": "我們找不到任何可恢復的購買紀錄。",
+    "restoreFailedTitle": "恢復失敗",
+    "restoreFailedMessage": "無法恢復購買，請再試一次。",
+    "errorSetup": "設定失敗，請再試一次。",
+    "logoutError": "登出失敗，請再試一次。"
+  },
+  "notificationPermission": {
+    "title": "開啟通知",
+    "description": "透過溫馨提醒，能更輕鬆地建立保持活在當下的持久習慣。",
+    "benefitReminders": "5 分鐘遊戲提醒",
+    "benefitInsights": "錄音後的即時分析",
+    "benefitReports": "每週進度報告",
+    "enabling": "開啟中...",
+    "enable": "開啟",
+    "notNow": "暫不開啟",
+    "disabledTitle": "通知已關閉",
+    "disabledMessage": "您稍後可以在「設定」中開啟通知。"
+  },
+  "notificationSettings": {
+    "title": "通知",
+    "loading": "載入中...",
+    "permissionBannerTitle": "通知已關閉",
+    "permissionBannerSubtitle": "若要接收提醒和更新，請在裝置「設定」中開啟通知。",
+    "openSettings": "開啟設定",
+    "dailyReminders": "每日提醒",
+    "dailySessionReminder": "每日練習提醒",
+    "dailySessionReminderDesc": "提醒您完成每日特別時間練習",
+    "reminderTime": "提醒時間",
+    "playSounds": "播放練習音效",
+    "connectPhase": "連結階段",
+    "connectPhaseDesc": "5 分鐘遊戲練習結束時的音效",
+    "disciplinePhase": "管教階段",
+    "disciplinePhaseDesc": "從孩子主導遊戲轉換到管教階段時的音效",
+    "infoText": "您可以隨時更改這些設定。通知時間和頻率可能會有所不同。",
+    "selectTime": "選擇時間",
+    "pickerCancel": "取消",
+    "pickerDone": "完成",
+    "connectPhaseSoundTitle": "連結階段音效",
+    "disciplinePhaseSoundTitle": "管教階段音效",
+    "errorSavePreferences": "儲存偏好設定失敗",
+    "errorPlaySound": "播放音效預覽失敗",
+    "notificationsDisabledTitle": "通知已關閉",
+    "notificationsDisabledMessage": "請在裝置設定中開啟通知以接收提醒。",
+    "sounds": {
+      "winChime": "勝利風鈴",
+      "gentleBell": "溫和鈴聲",
+      "voiceReminder": "語音提醒"
+    }
+  },
+  "profile": {
+    "title": "個人檔案",
+    "loadingProfile": "正在載入檔案...",
+    "account": "帳號",
+    "emailLabel": "電子郵件",
+    "childNameLabel": "孩子姓名",
+    "childAgeLabel": "孩子年齡",
+    "childAgeValue": "{{age}} 歲",
+    "primaryFocusLabel": "主要關注領域",
+    "issueNotSpecified": "未指定",
+    "subscriptionSection": "訂閱狀態",
+    "currentPlan": "目前方案",
+    "manageSubscription": "管理訂閱",
+    "settings": "設定",
+    "referFriend": "推薦好友",
+    "notifications": "通知",
+    "support": "技術支援",
+    "termsAndConditions": "服務條款",
+    "privacyPolicy": "隱私權政策",
+    "language": "語言",
+    "logOut": "登出",
+    "deleteAccount": "刪除帳號",
+    "permissionRequiredTitle": "需要權限",
+    "permissionRequiredMessage": "請允許存取您的相片以更換個人頭像。",
+    "errorPickImage": "選取圖片失敗",
+    "errorLoadProfile": "載入檔案資訊失敗",
+    "errorUploadImage": "上傳圖片失敗",
+    "successImageUpdated": "個人頭像已成功更新",
+    "logOutConfirmTitle": "登出",
+    "logOutConfirmMessage": "確定要登出嗎？",
+    "logOutConfirmButton": "登出",
+    "deleteConfirmTitle": "刪除帳號",
+    "deleteConfirmMessage": "這將永久刪除您的帳號及其關聯的所有個人資訊。您將失去所有遊戲紀錄與分析報告。此操作無法復原。",
+    "deleteConfirmButton": "刪除帳號",
+    "errorLogOut": "登出失敗，請再試一次。",
+    "errorManageSubscription": "無法開啟訂閱管理",
+    "errorManageSubscriptionRetry": "無法開啟訂閱管理，請再試一次。",
+    "errorDeleteAccount": "刪除帳號失敗。請再試一次或聯繫技術支援。",
+    "issueTags": {
+      "behavior_challenges": "行為挑戰 (鬧脾氣、爭執)",
+      "big_emotions": "處理大情緒",
+      "frustration_tolerance": "挫折忍受度低",
+      "new_baby_in_the_house": "家有新生兒",
+      "moving_house": "搬家或轉學",
+      "parental_divorce": "應對父母離異",
+      "social": "培養社交情緒技能",
+      "attention_focus": "注意力與集中力問題",
+      "adhd": "ADHD / 注意力不足過動症",
+      "parenting_strategies": "學習更有效的教養策略",
+      "defiance": "反抗行為",
+      "aggression": "攻擊性行為",
+      "emotional": "情緒調節",
+      "routine": "常規與結構",
+      "general": "一般行為"
+    },
+    "planNames": {
+      "premiumTrial": "進階試用版",
+      "premium": "進階版",
+      "free": "免費版"
+    },
+    "subscriptionStatus": {
+      "subscriptionExpired": "訂閱已過期",
+      "noActiveSubscription": "無使用中訂閱",
+      "trialEnds": "試用將於 {{date}} 結束",
+      "cancelledEnds": "已取消，將於 {{date}} 終止",
+      "renews": "續訂日期：{{date}}",
+      "active": "使用中",
+      "cancelled": "已取消"
+    }
+  },
+  "home": {
+    "unableToLoadProfile": "離線時無法載入個人檔案",
+    "sessionProcessing": "最近的遊戲練習正在處理中。完成後我們將通知您。",
+    "completeSession": "完成一次遊戲練習以查看您的分數！"
+  },
+  "transcript": {
+    "headerTitle": "完整對話紀錄",
+    "loading": "正在載入對話紀錄...",
+    "failedToLoad": "載入對話紀錄失敗",
+    "speakerLegend": "講者標示",
+    "noTranscript": "無可用對話紀錄",
+    "silentMoment": "靜默時刻",
+    "speakerAdult": "大人",
+    "speakerChild": "孩子",
+    "speakerAdultN": "大人 {{n}}",
+    "speakerChildN": "孩子 {{n}}"
+  },
+  "weeklyReport": {
+    "loading": "正在載入報告...",
+    "noReport": "無可用報告",
+    "goBack": "返回",
+    "defaultFocusHeading": "本週請繼續練習您的技能。",
+    "defaultFocusSubtext": "不求完美，貴在堅持。",
+    "buttonBack": "← 返回",
+    "buttonContinue": "繼續 →",
+    "buttonSubmit": "提交",
+    "checkInTitle": "快速心情簽到",
+    "checkInMoodQuestion": "您本週過得如何？",
+    "checkInDisclaimer": "這不是評分——而是幫助教練調整下一次的建議。",
+    "checkInImprovementQuestion": "您是否在正努力改善的領域中看到進步？",
+    "moods": {
+      "grounded": "踏實",
+      "tired": "疲憊",
+      "stretched": "緊繃",
+      "hopeful": "充滿希望"
+    },
+    "ratings": {
+      "better": "好轉",
+      "same": "不變",
+      "worse": "變差"
+    }
+  },
+  "report": {
+    "headerTitle": "今日情感按摩回顧",
+    "analyzingSession": "正在分析您的練習...",
+    "loadingReport": "正在載入報告...",
+    "failedToLoad": "載入報告失敗",
+    "tryAgain": "再試一次",
+    "overallLabel": "總體",
+    "speakerAdult": "大人",
+    "speakerChild": "孩子",
+    "speakerAdultN": "大人 {{n}}",
+    "speakerChildN": "孩子 {{n}}",
+    "speakerUnknown": "未知",
+    "feedbackYes": "是",
+    "feedbackNotReally": "不太滿意",
+    "feedbackWhatBetter": "哪裡可以做得更好？",
+    "feedbackPlaceholder": "我們該如何改進？",
+    "feedbackSubmit": "提交",
+    "negativeReasons": {
+      "tooGeneric": "太過籠統",
+      "notAccurate": "不夠準確",
+      "hardToUnderstand": "難以理解",
+      "missingSomething": "缺少內容"
+    },
+    "section": {
+      "emotionalBankAccount": "情感銀行帳戶",
+      "penSkills": "您的 PEN 技能",
+      "penSkillsSubtitle": "提升自信與配合度",
+      "areasToAvoid": "應避免的區域",
+      "areasToAvoidSubtitle": "會干擾專注力與創造力",
+      "topMoment": "最佳時刻",
+      "coachsCorner": "教練專區",
+      "whatWeLearnt": "我們對 {{childName}} 的新發現",
+      "developmentalMilestones": "發展里程碑",
+      "developmentalMilestonesWithName": "{{childName}} 的發展里程碑"
+    },
+    "subsection": {
+      "observation": "觀察",
+      "newMilestone": "新里程碑 ({{category}})"
+    },
+    "skillRating": {
+      "payAttention": "(值得關注)",
+      "good": "(良好)",
+      "excellent": "(優異)"
+    },
+    "pdi": {
+      "commandSequencesSubtitle": "每個指令序列的詳細回饋",
+      "sequenceTitle": "序列 {{index}}：{{title}}",
+      "command": "指令：",
+      "waitTime": "等待時間：",
+      "followThrough": "貫徹執行：",
+      "coachsTip": "教練小撇步："
+    },
+    "coachingCard": {
+      "tomorrowsGoal": "明日目標：",
+      "readFullTranscript": "閱讀帶有提示的完整對話",
+      "summary": "總結：",
+      "tipForNextSession": "下次練習的小撇步：",
+      "insteadOf": "與其說：",
+      "try": "試著說：",
+      "applyInDailyLife": "日常應用："
+    },
+    "milestone": {
+      "lockedBadge": "完成 5 次練習後開啟 · {{count}}/5 已完成",
+      "lockedDescription": "追蹤孩子在語言、認知、社交、情緒和連結方面的成長——並與同齡基準進行比較。",
+      "achieved": "{{childName}} 已經精通了「{{title}}」！",
+      "emerging": "{{childName}} 開始展現「{{title}}」的能力！"
+    },
+    "feedback": {
+      "thankYou": "感謝您的回饋！",
+      "question": "這份報告對您有幫助嗎？"
+    },
+    "chatDemo": {
+      "message": "與我們友善的 AI 教練 Nora 討論這次練習。"
+    },
+    "skillLabel": {
+      "praiseLabeleld": "",
+      "echo": "",
+      "narrate": "",
+      "questions": "",
+      "commands": "",
+      "criticism": ""
+    }
+  },
+  "lessonViewer": {
+    "contentUpdatedTitle": "內容已更新",
+    "contentUpdatedMessage": "本課程已更新。請重新選取以查看最新版本。",
+    "errorEvaluateResponse": "評估您的回答失敗，請再試一次。",
+    "quizBadge": "猜猜看",
+    "yourResponse": "您的回答：",
+    "evaluating": "評估中...",
+    "typePlaceholder": "在此輸入您的答案...",
+    "buttonContinue": "繼續 →",
+    "buttonCheckAnswer": "檢查答案",
+    "buttonTakeQuiz": "進行測驗 →",
+    "buttonNextLesson": "下一課 →",
+    "buttonBack": "← 返回"
+  },
+  "progress": {
+    "weeklyReport": "每週報告",
+    "lessonsCompleted": "已完成課程",
+    "playSessions": "遊戲練習次數",
+    "currentStreak": "目前連續紀錄",
+    "pastReports": "過往報告",
+    "weeklyReportSchedule": "週報於每週一生成。",
+    "mon": "週一",
+    "tue": "週二",
+    "wed": "週三",
+    "thu": "週四",
+    "fri": "週五",
+    "sat": "週六",
+    "sun": "週日",
+    "playTime": "遊戲時間",
+    "discipline": "管教",
+    "sessionReport": "練習報告",
+    "overallNoraScore": "整體 Nora 指數",
+    "noDataYet": "尚無資料",
+    "reportsTitle": "報告",
+    "lastSessionDeposits": "上次練習存款",
+    "readReport": "閱讀報告",
+    "progressTitle": "進度"
+  },
+  "quiz": {
+    "badge": "快速檢查",
+    "checkAnswer": "檢查答案",
+    "back": "← 返回",
+    "continue": "繼續 →",
+    "errorSubmit": "提交測驗失敗，請再試一次。"
+  },
+  "learn": {
+    "title": "探索課程",
+    "filterAll": "全部",
+    "moduleLibrary": "模組庫",
+    "completedModules": "已完成模組",
+    "foundationLockedNotice": "其他模組已鎖定。請先完成「基礎」模組。",
+    "completeFoundationFirst": "請先完成基礎模組",
+    "couldntLoadModules": "無法載入模組",
+    "noModulesFound": "找不到模組",
+    "tryDifferentSearch": "嘗試不同的關鍵字或篩選條件"
+  },
+  "record": {
+    "uploadingRecording": "正在上傳錄音...",
+    "analyzingTitle": "正在分析遊戲時間...\n這需要幾分鐘。",
+    "analyzingSubtitle1": "Nora 正在聽取讚美、語氣和輪流互動的模式，以提供個人化的建議。",
+    "analyzingSubtitle2": "報告準備就緒後，系統會自動帶您回到首頁。",
+    "micPermissionRequired": "需要麥克風權限才能錄音",
+    "recordButton": "錄製",
+    "stopRecordingButton": "停止錄製",
+    "permissionRequiredTitle": "需要權限",
+    "permissionRequiredMessage": "請授予麥克風權限以錄製練習對話。",
+    "recordingIssueTitle": "錄音發生問題",
+    "recordingIssueMessage": "啟動錄音時發生困難。\n\n請檢查：\n• 麥克風權限已開啟\n• 沒有其他應用程式正在使用麥克風\n• 您的裝置空間足夠",
+    "checkSettings": "檢查設定",
+    "tryAgain": "再試一次",
+    "sorryCantRecordTitle": "抱歉",
+    "sorryCantRecordMessage": "錄音持續失敗。這可能是裝置相容性問題。",
+    "contactSupport": "聯繫技術支援",
+    "tooShortTitle": "錄音時間太短",
+    "tooShortMessage": "我們需要更長一點的遊戲時間才能提供有幫助的分析。請再試一次。",
+    "uploadFailedTitle": "上傳失敗",
+    "uploadFailedMessage": "無法上傳您的錄音。請檢查網路連線並再試一次。",
+    "retry": "重試"
+  },
+  "forceUpdate": {
+    "title": "需要更新",
+    "message": "Nora 有新版本。請更新以繼續使用。",
+    "updateButton": "立即更新"
+  },
+  "errorBoundary": {
+    "title": "發生錯誤",
+    "defaultMessage": "發生非預期的錯誤",
+    "tryAgain": "再試一次"
+  },
+  "networkStatus": {
+    "offline": "無網路連線"
+  },
+  "referral": {
+    "headerTitle": "推薦好友",
+    "heroTitle": "贈送好友 1 個月免費體驗",
+    "heroSubtitle": "當您的好友在試用後訂閱時，您也將獲得 1 個月免費訂閱。",
+    "yourInviteLink": "您的邀請連結",
+    "shareButton": "分享邀請連結",
+    "shareMessage": "我一直在使用 Nora 來改善教養方式——它真的很有幫助！使用我的連結可獲得 1 個月免費體驗：",
+    "yourReferrals": "您的推薦紀錄",
+    "friendJoined_one": "{{count}} 位朋友已加入",
+    "friendJoined_other": "{{count}} 位朋友已加入",
+    "subscribed_one": "{{count}} 位已訂閱",
+    "subscribed_other": "{{count}} 位已訂閱",
+    "monthEarned_one": "獲得 +{{count}} 個月",
+    "monthEarned_other": "獲得 +{{count}} 個月",
+    "onFreeTrial_one": "{{count}} 位正在免費試用",
+    "onFreeTrial_other": "{{count}} 位正在免費試用",
+    "emptyStats": "分享您的連結以開始。您將在此看到您的推薦進度。",
+    "howItWorks": "運作方式",
+    "step1": "與好友分享您的連結",
+    "step2": "他們註冊並獲得 1 個月免費體驗",
+    "step3": "當他們正式訂閱時，您獲得 1 個月免費訂閱",
+    "errorLoadReferral": "無法載入您的推薦代碼。請再試一次。"
+  },
+  "support": {
+    "headerTitle": "技術支援",
+    "introText": "遇到困難或需要協助嗎？請在下方描述您的問題，我們會盡快回覆您。",
+    "emailLabel": "電子郵件 *",
+    "emailPlaceholder": "your.email@example.com",
+    "descriptionLabel": "描述 *",
+    "descriptionPlaceholder": "描述您的問題或疑問...",
+    "attachments": "附件",
+    "attachFile": "夾帶檔案",
+    "submitButton": "提交請求",
+    "requiredFieldTitle": "必填欄位",
+    "requiredEmailMessage": "請輸入您的電子郵件地址。",
+    "requiredDescriptionMessage": "請輸入問題描述。",
+    "invalidEmailTitle": "無效的電子郵件",
+    "invalidEmailMessage": "請輸入有效的電子郵件地址。",
+    "successTitle": "請求已提交",
+    "successMessage": "感謝您的聯繫。我們將審核您的請求並盡快回覆。",
+    "filesAttached": "已夾帶 {{count}} 個檔案",
+    "errorAttachFile": "夾帶檔案失敗，請再試一次。",
+    "errorSubmit": "提交請求失敗，請再試一次。"
+  },
+  "psychologistChat": {
+    "headerTitle": "心理師",
+    "headerSub": "Nora 臨床團隊",
+    "psychologist": "心理師",
+    "emptyTitle": "請在此描述您的情況與問題",
+    "emptyBody": "我們團隊的心理師將在 24 小時內與您聯繫。",
+    "inputPlaceholder": "傳送訊息給心理師..."
+  },
+  "homeV2": {
+    "headerTitle": "首頁",
+    "weeklyDeposit": "{{childName}} 的每週存款",
+    "statDays": "天數",
+    "statMins": "分鐘",
+    "statTimes": "次數",
+    "statLessons": "課程",
+    "tipPerfect": "完美的 7/7！👑\n您太傳奇了！",
+    "tipDaysDown": "已達成 {{count}} 天！🌟\n我們能挑戰滿 7 天嗎？",
+    "tipAimFor4": "目標每週 4 天\n進度會更快喔",
+    "weeklyReportLabel": "每週報告已生成！",
+    "weeklyReportFallback": "您的每週總結已準備就緒。來看看 {{childName}} 本週的進步。",
+    "viewWeeklyReport": "查看每週報告",
+    "skipForNow": "暫時跳過",
+    "dailyEmotionalMassageLabel": "每日情感按摩",
+    "analyzingSession": "很棒的練習！我們正在為您與 ",
+    "analyzingSessionSuffix": " 的遊戲時間進行分析。報告即將完成。",
+    "letChildLeadStart": "讓 ",
+    "letChildLeadMiddle": " 主導今天的 5 分鐘遊戲，來增加他們的情感存款。每天輕鬆進步，見證 ",
+    "letChildLeadEnd": " 的成長。",
+    "recordNow": "立即錄製遊戲時間",
+    "reportReadyStart": "做得好！您的練習報告已準備就緒。看看 ",
+    "reportReadyEnd": " 今天表現如何。",
+    "readReport": "閱讀今日報告",
+    "meetCoachLabel": "認識您的 AI 教練",
+    "meetCoachBodyStart": "看到右下角的對話氣泡了嗎？那是您的 AI 教練 Nora。您可以詢問任何問題——教養小撇步、接下來該怎麼做，或是 ",
+    "meetCoachBodyEnd": " 的進度。",
+    "chatWithCoach": "與教練對話",
+    "recordAgain": "再次錄製",
+    "todaysPlan": "今日計畫",
+    "planLessonLabel": "每日學習：",
+    "planLessonDuration": "5 分鐘閱讀",
+    "planRecordLabel": "開始情感按摩：",
+    "planRecordTitle": "與 {{childName}} 的 5 分鐘遊戲",
+    "planWeeklyReportLabel": "每週報告：",
+    "planWeeklyReportTitle": "查看本週進度",
+    "planReminderLabel": "設定每日提醒：",
+    "planReminderTitle": "透過每日提醒保持連續紀錄",
+    "enableNotificationsTitle": "開啟通知",
+    "enableNotificationsMessage": "若要設定每日提醒，請在「設定」中開啟此應用程式的通知。",
+    "notNow": "暫不開啟",
+    "openSettings": "開啟設定",
+    "reminderModalTitle": "設定每日提醒",
+    "reminderModalBody1": "孩子喜歡規律。許多家長發現 ",
+    "reminderModalHighlight1": "「放學後重聚」",
+    "reminderModalOr": " 或 ",
+    "reminderModalHighlight2": "「晚餐前遊戲」",
+    "reminderModalHighlight3": "「週末早晨」",
+    "reminderModalBody2": " 的效果最好。讓孩子來決定時間吧。",
+    "reminderCustomTime": "自定義時間：{{time}}",
+    "setReminder": "設定提醒",
+    "reminderPresets": {
+      "beforeSchool": "上學前充電",
+      "afterSchool": "放學後重聚",
+      "beforeSleep": "睡前遊戲時間"
+    },
+    "recordMessages": {
+      "0start": "您做得太棒了！準備好再次閃耀了嗎？與 ",
+      "0end": " 錄製另一個練習，見證奇蹟發生！ ✨",
+      "1start": "保持那股驚人的氣勢！與 ",
+      "1end": " 進行另一個有趣的練習吧！",
+      "2start": "到目前為止都很出色！與 ",
+      "2end": " 再進行 5 分鐘的特別時間，繼續共同成長！ 🌟",
+      "3start": "您可以做到的！與 ",
+      "3end": " 再錄製一次快速愉快的練習，慶祝您的進步！",
+      "4start": "準備好迎接更多樂趣了嗎？與 ",
+      "4end": " 捕捉另一個超讚的遊戲時光吧！"
+    }
+  },
+  "learnV2": {
+    "title": "探索課程",
+    "subtitle": "為您精選",
+    "lockedNotice": "先完成基礎模組以解鎖此模組。",
+    "completeFoundationFirst": "請先完成基礎模組",
+    "noLessonsFound": "找不到課程",
+    "tryDifferentSearch": "嘗試不同的關鍵字"
+  },
+  "privacyPolicy": {
+    "headerTitle": "隱私權政策"
+  },
+  "termsAndConditions": {
+    "headerTitle": "服務條款"
+  },
+  "skillInfo": {
+    "theScience": "科學原理解析",
+    "theResult": "預期成效",
+    "theNextStep": "下一步練習",
+    "skillDetails": "技能詳情",
+    "skillNotAvailable": "暫無此技能的資訊。",
+    "penSkill": "P.E.N. 技能",
+    "areaToAvoid": "應避免的區域",
+    "whatItIsLabel": "定義",
+    "whyImportantLabel": "重要性",
+    "whyAvoidLabel": "為什麼要避免",
+    "inDailyLifeLabel": "日常應用",
+    "utterancesHeader": "{{name}} 的語句",
+    "learnAbout": "了解 {{name}}",
+    "noUtterances": "本次練習未記錄到 {{name}} 的語句。",
+    "readFullConversation": "閱讀完整對話",
+    "noraScore": {
+      "title": "Nora 指數",
+      "introduction": "您的 Nora 指數代表您在孩子「情感銀行帳戶」中的每日餘額。它衡量的是您的「連結資本」——即在 5 分鐘特別遊戲時間內，P.E.N. 存款與行為提款的比率。",
+      "excellent": {
+        "rating": "表現優異",
+        "summary": "您的連結滿溢！您今天存入了大量情感。透過保持高密度的技能應用並避免提款，您向孩子傳達了他們是被安全對待、被看見且被支持的信號。",
+        "science": "您孩子的大腦高層（邏輯與同理心）已完全啟動並居於主導地位。",
+        "result": "您孩子今日的情緒韌性很高。有了充足的存款，他們能更輕鬆地處理挫折、過渡和強烈的情緒。"
+      },
+      "good": {
+        "rating": "表現良好",
+        "summary": "您正在建立堅實的基礎。您的銀行帳戶有健康的正向餘額。您成功實踐了「大腦體育館」的鍛鍊，並跟隨孩子的領導。",
+        "science": "透過專注於單純的連結，您成功平衡了皮質醇與催產素。",
+        "result": "您的孩子擁有了穩定的情緒緩衝區。他們感受到與您的連結，這降低了他們開始新的一天時的壓力水平。"
+      },
+      "payAttention": {
+        "rating": "值得關注",
+        "summary": "關係中的「滲漏」偶爾會發生。分數較低通常意味著「提款率」（指令、提問或批評）偏高。這是忙碌教養中的正常現象，但這是一個信號，提醒帳戶需要儲值了。",
+        "science": "低餘額可能觸發低層大腦（生存模式），使孩子對壓力更敏感。",
+        "result": "當「連結資本」較低時，您的孩子應對挑戰的情緒體力可能較差，導致更快的挫折感或「防禦性」行為。"
+      }
+    },
+    "praise": {
+      "title": "讚美 (具體描述)",
+      "displayName": "讚美",
+      "whatItIs": "具體的回饋，精確指出您欣賞的行為。不只是說「好棒」，而是說「我好喜歡你這麼仔細地堆疊這些積木」。",
+      "whyImportant": "它能建立自我效能感（孩子相信自己能成功的能力）。透過描述行為，您能告訴孩子具體應該重複哪些優良行為。",
+      "inDailyLife": "當個「正向偵探」。如果孩子平時很難等待，當你看見他們安靜坐著的那一刻，立刻使用具體讚美：「我為你能這麼耐心地等待點心感到驕傲。」",
+      "contextTitle": "什麼算讚美？",
+      "contextDescription": "這些是您精確命名孩子做對了什麼的時刻——具體的陳述能告訴他們精確該重複哪些行為。"
+    },
+    "echo": {
+      "title": "覆誦",
+      "displayName": "覆誦",
+      "whatItIs": "重複或改述孩子說的話。如果他們說「大塔！」，您回答「是的，一個非常大的塔！」。",
+      "whyImportant": "這被稱為「言語的擁抱」，它能提供即時的認可並證明您在傾聽。它同時也是語言榜樣，在不進行「提款式糾正」的情況下示範正確的語法。",
+      "inDailyLife": "使用能量匹配。如果孩子對一個小發現感到興奮，請用同樣熱情的「覆誦」來回應。這證明您與他們的世界是同步的。",
+      "contextTitle": "什麼算覆誦？",
+      "contextDescription": "這些是您重複或改述孩子的話語，展現您完全在傾聽並認同他們所說的話。"
+    },
+    "narrate": {
+      "title": "敘事",
+      "displayName": "敘事",
+      "whatItIs": "像體育評論員一樣大聲描述孩子的行為。例如：「你正把紅色的車子停進車庫裡。」",
+      "whyImportant": "它能創造「共同關注」，這是提高孩子專注力和注意力跨度最有效的方法。這傳達了他們的行動重要到足以獲得您的全身心關注。",
+      "inDailyLife": "用敘事代替提問。與其問「你在畫什麼？」，不如試試「你正在用綠色的蠟筆畫大圓圈」。這提供了關注，卻不會帶給孩子「表現壓力」。",
+      "contextTitle": "什麼算敘事？",
+      "contextDescription": "這些是您大聲描述孩子行為的時刻，將您的全副注意力集中在他們正在做的事情上。"
+    },
+    "question": {
+      "title": "提問",
+      "displayName": "提問",
+      "whatItIs": "甚至是「有幫助」的問題，例如「那是什麽顏色？」或「你今天過得好嗎？」。",
+      "whyImportant": "提問往往是「隱藏的指令」。它們迫使孩子停止遊戲來「回答您」，這會打破他們的「心流」（深度沉浸）。",
+      "inDailyLife": "練習「積極的沉默」。當孩子放學回家時，避免連珠炮式的提問。使用 P.E.N. 技能來敘事他們的動作，直到他們感到足夠安全並自願分享資訊。",
+      "contextTitle": "什麼算提問？",
+      "contextDescription": "這些是您詢問內容的時刻——即便出發點良好，提問仍可能成為中斷孩子專注力和心流的隱藏指令。"
+    },
+    "command": {
+      "title": "指令",
+      "displayName": "指令",
+      "whatItIs": "任何您告訴孩子該怎麼做的指示（例如：「把積木放那裡」或「把玩具給我」）。",
+      "whyImportant": "指令會奪走孩子的主導權，並可能觸發權力鬥爭。",
+      "inDailyLife": "10:1 修復原則：\n\n• 減少指令量：目標是減少您一天中給出的總指令數。\n\n• 修復連結：將每個指令視為 10 美元的提款。為了保持帳戶餘額為正，目標是在每給出 1 個指令後，使用 10 次 P.E.N. 技能。這能修復連結，確保您的孩子在神經系統上是處於「接收」而非「防禦」狀態。",
+      "contextTitle": "本次練習中",
+      "contextDescription": "這些是您給出指示或引導孩子行為的時刻，這可能會將主導權從他們身上移開。"
+    },
+    "criticism": {
+      "title": "批評",
+      "displayName": "批評",
+      "whatItIs": "任何表示反對的話語，包括「不」、「停止」、「別這樣」或糾正錯誤。",
+      "whyImportant": "這會造成「負面關注陷阱」。如果您透過批評來給予某行為關注，可能會意外地強化該行為。",
+      "inDailyLife": "對輕微的錯誤行為（如抱怨或噘嘴）使用「策略性忽視」。保持面無表情並將注意力轉開。一旦該行為停止，立即加入「具體讚美」來獎勵正向的轉變。",
+      "contextTitle": "什麼算批評？",
+      "contextDescription": "這些是您使用否定性語言的時刻——說「不」、「停止」、「別這樣」或糾正錯誤，這可能會意外強化該行為。"
+    }
+  },
+  "moduleDetail": {
+    "moduleLocked": "模組已鎖定",
+    "lockedMessage": "請先完成基礎模組以解鎖此模組。",
+    "goToFoundation": "前往基礎模組"
+  },
+  "coachChat": {
+    "headerTitle": "Nora 教練",
+    "headerSub": "AI 教養教練",
+    "talkToPsychologist": "諮詢心理師",
+    "psychologist": "心理師",
+    "greetingWithName": "嗨 {{name}}！",
+    "greetingDefault": "您好！",
+    "guideSubtitle": "讓我們今天一起支持 {{childName}}。\n這裡有一些建議給您：",
+    "yourChild": "您的孩子",
+    "inputPlaceholder": "詢問 Nora 任何問題...",
+    "errorConnection": "發生錯誤。請檢查網路連線並再試一次。",
+    "errorSendRequest": "發送請求失敗。請再試一次。",
+    "suggestions": {
+      "understandTitle": "了解我的孩子",
+      "understandPrompt": "為什麼我的孩子會這樣做？",
+      "whatToDoTitle": "我現在該怎麼辦",
+      "whatToDoPrompt": "在這種情況下我該怎麼做？",
+      "confidenceTitle": "充滿自信的教養",
+      "confidencePrompt": "我的處理方式正確嗎？",
+      "planTitle": "我的 Nora 計畫",
+      "planPrompt": "解釋我的教養建議與重點"
+    },
+    "iUnderstand": "我了解了",
+    "psychologistReplyTime": "我們的兒童心理師團隊將在 24 小時內在此回覆您。",
+    "agreeToTerms": "我同意服務條款，並同意將我的資訊分享給心理師團隊。",
+    "readTerms": "閱讀服務條款",
+    "sendRequest": "發送請求",
+    "terms": {
+      "title": "服務條款",
+      "section1Title": "1. 目的",
+      "section1Body": "透過請求諮詢心理師，您即要求 Nora 為您聯繫我們團隊中的合格兒童心理師。此服務旨在提供除了應用程式內 AI 教練之外的專業支援。",
+      "section2Title": "2. 我們分享的資訊",
+      "section2Body": "為了讓心理師能提供個人化支援，我們將與其分享以下資訊：",
+      "section2Bullet1": "- 您的姓名和電子郵件",
+      "section2Bullet2": "- 您孩子的姓名、年齡和性別",
+      "section2Bullet3": "- 您孩子的行為評估結果，包括註冊時識別的主要與次要關注問題",
+      "section2Bullet4": "- 您近期情感按摩練習活動的摘要",
+      "section3Title": "3. 資訊用途",
+      "section3Body": "此資訊僅用於您的諮詢目的。心理師將在聯繫您前進行審閱，以便提供相關且符合背景的指引，您無須重複背景資訊。",
+      "section4Title": "4. 保密性",
+      "section4Body": "所有分享的資訊在我們的臨床團隊內嚴格保密。不會揭露給第三方、販售或用於行銷。我們團隊的操作遵循與兒童心理實務標準一致的專業保密義務。",
+      "section5Title": "5. 回覆時間",
+      "section5Body": "我們的心理師團隊將在 24 小時內透過對話視窗與您聯繫。此服務不適用於緊急狀況。如果您或您的孩子面臨即時危險，請聯繫當地急救服務或危機專線。",
+      "section6Title": "6. 您的同意",
+      "section6Body": "勾選方框並提交此請求，即代表您確認已閱讀並理解這些條款，並給予知情同意將上述資訊分享給我們的心理師團隊。"
+    }
+  },
+  "languagePicker": {
+    "title": "語言",
+    "english": "English",
+    "traditionalChinese": "繁體中文"
+  },
+  "onboarding": {
+    "continue": "繼續",
+    "back": "返回",
+    "letsGo": "我們開始吧！  →",
+    "letsBegin": "準備開始  →",
+    "skipForNow": "暫時跳過",
+    "nameInput": {
+      "title": "您怎麼稱呼？"
+    },
+    "childName": {
+      "title": "您的孩子叫什麼名字？"
+    },
+    "relationship": {
+      "headerText": "這能幫助我們為您的角色量身打造引導內容。",
+      "title": "嗨 {{name}}，您是孩子的誰？",
+      "mother": "母親",
+      "father": "父親",
+      "grandmother": "祖母/外祖母",
+      "grandfather": "祖父/外祖父",
+      "other": "其他"
+    },
+    "childGender": {
+      "headerText": "僅用於提供個人化的引導內容。",
+      "title": "{{name}} 的性別是？",
+      "boy": "男孩",
+      "girl": "女孩",
+      "preferNotToShare": "不便透露"
+    },
+    "childBirthday": {
+      "title": "{{name}} 的生日是什麼時候？",
+      "ageSuitabilityNote": "* 年齡適用說明：Nora 的方法經臨床證實對 2 至 7 歲的孩子最有效。然而，這裡教導的核心技能（如正向強化和情緒調節）可以靈活調整，並對任何年齡的孩子都有幫助。"
+    },
+    "childIssue": {
+      "headerText": "答案沒有對錯。請選擇所有適用的選項。",
+      "title": "Nora 能如何幫助您？",
+      "behaviorChallenges": "行為挑戰 (鬧脾氣、爭執)",
+      "bigEmotions": "處理大情緒",
+      "frustrationTolerance": "挫折忍受度低",
+      "newBaby": "家有新生兒",
+      "movingHouse": "搬家或轉學",
+      "parentalDivorce": "應對父母離異",
+      "social": "培養社交情緒技能",
+      "attentionFocus": "注意力與集中力問題",
+      "adhd": "ADHD / 注意力不足過動症",
+      "parentingStrategies": "學習更有效的教養策略",
+      "other": "其他",
+      "otherPlaceholder": "請描述該問題..."
+    },
+    "childSnapshotIntro": {
+      "description": "嗨 {{userName}}，感謝您分享來這裡的原因。您找對地方了。我們將詢問幾個快速問題，以進一步了解 {{childName}} 最近的表現，並為您量身打造支援。"
+    },
+    "childBehaviorProfile": {
+      "speechBubble": "Nora 已為 {{childName}} 生成了行為特徵描述，並為您制定了個人化計畫。",
+      "cardTitle": "{{childName}} 的行為特徵快照",
+      "lockText": "要解鎖行為特徵洞察，您可以點擊此處回答行為問題，以便我們個人化您的計畫",
+      "currentSnapshot": "目前狀態：{{title}}",
+      "whatThisMeans": "這代表什麼",
+      "startingPlan": "您的入門計畫",
+      "whatToExpect": "預期成效",
+      "continueButton": "介紹情感按摩  →",
+      "barSegments": {
+        "stable": "穩定",
+        "mild": "輕微",
+        "medium": "中度",
+        "high": "高度"
+      },
+      "snapshotTitles": {
+        "stable": "發展達標",
+        "mild": "需要些許支援",
+        "medium": "需要更多支援",
+        "high": "需要額外支援"
+      },
+      "barLabels": {
+        "stable": "發展達標",
+        "mild": "些許支援",
+        "medium": "更多支援",
+        "high": "額外支援"
+      },
+      "categories": {
+        "stable": {
+          "whatThisMeans": "您的孩子通常能以符合年齡的方式管理情緒、注意力和行為。",
+          "startingPlan": "每天進行 5 分鐘「情感按摩」——這是一種簡單的孩子主導遊戲，您只需跟隨孩子的引導並全然同在。\n\n一個小小的時刻，就能加強連結並支持正向行為。",
+          "whatToExpect": "您可能會在幾週內開始注意到細微的轉變。\n隨著時間推移，您也將學會如何支持情緒並設定溫和的界線。"
+        },
+        "mild": {
+          "whatThisMeans": "您的孩子有時可能在傾聽、管理情緒或在日常生活中保持專注方面遇到困難。\n這個年齡常見一些小挑戰。有了正確的支援，他們能快速進步。",
+          "startingPlan": "每天進行 5 分鐘「情感按摩」——這是一個簡單的孩子主導遊戲，由您跟隨孩子的引導。這能加強你們的連結，並幫助隨著時間減少行為掙扎。",
+          "whatToExpect": "許多家庭在 2-3 週內就會注意到變化。\n在那之後，我們將引導您處理情緒與界線。"
+        },
+        "medium": {
+          "whatThisMeans": "您的孩子在日常時刻可能經常在情緒、專注力或合作方面遇到困難。\n目前某些時刻可能感覺更具挑戰性。透過持續的支援，非常有機會達成具意義的進步。",
+          "startingPlan": "從每天 5 分鐘「情感按摩」開始——以冷靜、專注的方式跟隨孩子的引導。\n\n連結是改變的起點——並能隨著時間支持更好的行為。",
+          "whatToExpect": "只要持之以恆，進步通常會在幾週內開始。\n我們將引導您處理情緒、界線及各種日常狀況。"
+        },
+        "high": {
+          "whatThisMeans": "您的孩子在日常生活中管理情緒或保持專注方面可能遇到困難。\n您並不孤單——許多家庭都經歷過這些。有了正確的支援，正向的改變是會發生的。",
+          "startingPlan": "從每天 5 分鐘「情感按摩」開始——溫和地跟隨孩子的引導，並與他們全然同在。\n\n這能為改變奠定安全的基礎，並隨著時間支持行為發展。",
+          "whatToExpect": "微小的改變會在幾週內開始出現。\n我們將密切引導您處理情緒、界線和日常挑戰。"
+        }
+      }
+    },
+    "wacb": {
+      "headerText": "答案沒有對錯——且這並非診斷。",
+      "scaleNever": "從不 (完全沒有)",
+      "scaleRarely": "很少 (每週 1–2 次)",
+      "scaleSometimes": "有時 (每週 3–4 次)",
+      "scaleOften": "經常 (每週 5–6 次)",
+      "scaleVeryOften": "非常頻繁 (每週超過 6 次)",
+      "submitSurvey": "提交問卷",
+      "q1": "在過去兩週內，{{name}} 有多常做事花太長時間或故意拖延？",
+      "q2": "在過去兩週內，{{name}} 在進餐時有多常表現不佳或不守規矩？",
+      "q3": "在過去兩週內，{{name}} 有多常拒絕聽從或對規定說「不」？",
+      "q4": "在過去兩週內，{{name}} 有多常發脾氣或動作粗魯？",
+      "q5": "在過去兩週內，{{name}} 有多常尖叫哭鬧或難以停止地大發脾氣？",
+      "q6": "在過去兩週內，{{name}} 有多常弄壞東西或對別人的玩具太粗魯？",
+      "q7": "在過去兩週內，{{name}} 有多常故意挑起爭端或取笑他人？",
+      "q8": "在過去兩週內，{{name}} 有多常打斷談話或要求持續的關注？",
+      "q9": "在過去兩週內，{{name}} 有多常難以專注或無法靜坐？",
+      "submissionError": "提交錯誤",
+      "submissionFailed": "提交問卷失敗，請再試一次。"
+    },
+    "intro3": {
+      "title": "情感按摩",
+      "description": "每天只需 5 分鐘與孩子的簡單遊戲。透過跟隨孩子的領導並全然同在，您能支持他們建立正向行為、發展社交技能並提升專注力。"
+    },
+    "parentingIntro": {
+      "title": "每天只需 5 分鐘，就能帶來改變。",
+      "benefit1": "建立更強的連結",
+      "benefit2": "減少行為問題",
+      "benefit3": "提升社交、情緒與專注力",
+      "continueButton": "獲取個人化計畫  →"
+    },
+    "demo1": {
+      "subtitle": "教養並不容易",
+      "title": "但您無須獨自面對。",
+      "meetNora": "認識 Nora",
+      "description": "您培養自信、快樂孩子的嚮導。\n基於科學實證。\n為您的孩子 (1–7 歲) 量身打造。"
+    },
+    "demo1B": {
+      "text": "獲得真正有效的簡單策略。"
+    },
+    "demo2": {
+      "text": "Nora 傾聽您的日常互動——遊戲時光、界線設定、大情緒噴發。"
+    },
+    "demo2B": {
+      "text": "Nora 協助您理解您的教養風格與模式。",
+      "penSkills": "您的 PEN 技能",
+      "areasToAvoid": "應避免的區域",
+      "praiseLabeled": "讚美 (具體描述)",
+      "echo": "覆誦",
+      "narrate": "敘事",
+      "labelGood": "良好",
+      "labelPayAttention": "值得關注",
+      "labelExcellent": "優異",
+      "questions": "提問",
+      "commands": "指令",
+      "criticism": "批評"
+    },
+    "demo3": {
+      "text": "基於真實時刻的個人化教練，以兒童發展科學為基礎。"
+    },
+    "demo4": {
+      "text": "幫助您的孩子茁壯成長。發揚他們的優點並支持其情感與社交成長。"
+    },
+    "demo5": {
+      "text": "賦能每一位照顧者，支援 90 多種語言。"
+    },
+    "playSession1": {
+      "title": "準備合適的玩具",
+      "subtitle": "為了讓孩子的想像力盡情發揮，請選擇非結構化的玩具。這些玩具能讓他們在遊戲中掌握主導權。"
+    },
+    "playSession2": {
+      "title": "讓孩子主導",
+      "subtitle": "在接下來的 5 分鐘內，您的目標是成為孩子最大的支持者，而不是老師。\n描述他們正在做的事，重複他們說的話。"
+    },
+    "playSession3": {
+      "title": "使用 Nora App 錄製",
+      "subtitle": "將手機放在附近能清楚聽到對話的地方。您無須手持——只需專注於遊戲！"
+    },
+    "playSession4": {
+      "title": "短暫遊戲，深度洞察",
+      "subtitle": "錄製將在 5 分鐘後自動停止。\n我們的 AI 將分析互動，並在幾分鐘內生成個人化報告。"
+    },
+    "playSession5": {
+      "title": "您的數據保持私密",
+      "subtitle": "您的數據始終受到保護，未經您的許可絕不分享。"
+    },
+    "next": "下一步  →"
+  },
+  "quizFeedback": {
+    "correct": "正確！",
+    "notQuite": "不完全正確！"
+  },
+  "recordingCard": {
+    "recording": "錄音中...\n遊戲時請自然對話！錄音將在 {{minutes}} 分鐘時自動停止。",
+    "startPrompt": "開始錄製您的遊戲練習",
+    "record": "錄製",
+    "stop": "停止"
+  },
+  "lessonCard": {
+    "locked": "已鎖定 🔒",
+    "startReading": "開始閱讀"
+  },
+  "howToRecord": {
+    "title": "如何錄製",
+    "step1": "將手機放在附近，確保能清楚聽到兩人的聲音。",
+    "step2": "按下下方的「開始錄製」。",
+    "step3": "與孩子自然地遊戲 {{minutes}} 分鐘。",
+    "step4": "我們將在 {{minutes}} 分鐘後自動停止並給予回饋！"
+  },
+  "recordingGuide": {
+    "doSectionTitle": "要做的事 - PEN 技能",
+    "dontSectionTitle": "不該做的事",
+    "reminderText": "記住，這是「孩子主導」的遊戲。只需跟隨 {{childName}} 的引導。",
+    "connectionFirstTitle": "連結優先 – PEN 技能",
+    "disciplineDoTitle": "管教期間 – 要做的事",
+    "disciplineReminder": "記住，每給出一個指令，目標是使用約 10 次 P.E.N. 互動來重建連結。",
+    "playTimeTab": "遊戲時間 (5分)",
+    "disciplineTab": "管教階段 (10分)",
+    "lockMessage": "有效的管教是建立在強大連結的基礎上。缺乏連結，指令會感覺像要求；有了連結，指令則是引導。",
+    "lockGoal": "在單次特別時間練習中獲得 80 分以上的存款，即可解鎖管教引導",
+    "lockBankMessage": "這能確保在您進入管教階段前，您的「關係銀行帳戶」是滿溢的。",
+    "do": {
+      "praise": {
+        "title": "讚美",
+        "description": "當個啦啦隊。明確告訴孩子您喜歡他行為的哪些部分。"
+      },
+      "echo": {
+        "title": "覆誦",
+        "description": "重複他們說的話。透過重述他們的話語來表現您正在傾聽。"
+      },
+      "narrate": {
+        "title": "敘事",
+        "description": "像體育主播一樣描述他們的動作，不帶評論。"
+      }
+    },
+    "dont": {
+      "command": "指令",
+      "question": "提問",
+      "criticize": "批評"
+    },
+    "discipline": {
+      "command": {
+        "title": "有效的指令：",
+        "description": "直接、正向、單一、具體"
+      },
+      "followThrough": {
+        "title": "始終貫徹執行：",
+        "description": "5秒等待 → 給予選擇 → 5秒等待 → 執行該選擇"
+      },
+      "mindsets": {
+        "title": "核心心態：",
+        "description": "一致性、保持冷靜"
+      }
+    }
+  },
+  "nextActionCard": {
+    "upNext": "接下來",
+    "continue": "繼續",
+    "lastSessionDeposits": "上次練習存款",
+    "readReport": {
+      "title": "閱讀您的報告與洞察",
+      "description": "查看本次練習的分析。",
+      "encouragement": "太棒了！您的報告已準備就緒！"
+    },
+    "extraPractice": "額外練習",
+    "record": {
+      "title": "錄製您的遊戲練習",
+      "description": "學以致用能讓學習速度快 2 倍。透過錄製練習來實踐您的新技能。",
+      "encouragement": "做得好，完成了今天的課程！現在讓我們來錄製遊戲練習吧。"
+    },
+    "recordAgain": {
+      "title": "挑戰更高分",
+      "description": "熟能生巧。再次錄製遊戲練習來實踐剛收到的回饋。",
+      "encouragement": "太棒了！想不想再練習一次？"
+    },
+    "readReportLink": "閱讀報告"
+  },
+  "modulePicker": {
+    "title": "選擇下一個模組！",
+    "congrats": "恭喜完成基礎課程！",
+    "infoAutoSelected": "我們已根據您孩子的需求與目標設定了下一個模組",
+    "infoBrowse": "您可以隨時在「探索」畫面瀏覽可用模組並更改每日課程",
+    "recommended": "為您推薦",
+    "otherModules": "其他模組",
+    "availableModules": "可用模組",
+    "current": "目前",
+    "lesson": "課程",
+    "lessons": "課程",
+    "done": "已完成",
+    "ok": "確定"
+  },
+  "reports": {
+    "title": "報告",
+    "recentSessions": "近期紀錄",
+    "childDirected": "孩子主導",
+    "parentDirected": "家長主導",
+    "weeklyReports": "每週報告",
+    "weeklyReport": "每週報告",
+    "thisMonth": "本月",
+    "sessions": "練習次數",
+    "avgScore": "平均分數",
+    "developmentalMilestones": "發展里程碑",
+    "milestoneLocked": "完成 5 次練習後開啟 · {{count}}/5 已完成",
+    "milestoneDesc": "追蹤孩子在語言、認知、社交、情緒和連結方面的成長——並與同齡基準進行比較。"
+  },
+  "domainMilestone": {
+    "title": "{{domain}} 里程碑",
+    "languageNote": "語法里程碑 (如時態、複數、冠詞) 以英文為準，可能不適用於所有語言。",
+    "loading": "正在載入里程碑...",
+    "profilingStatus": "{{childName}} 的 {{domain}} 發展評估為 {{status}}。",
+    "defaultChildName": "您的孩子",
+    "achieved": "已達成",
+    "emerging": "發展中",
+    "notYetObserved": "尚未觀察到",
+    "noMilestones": "未發現此領域的里程碑。",
+    "tips": "小撇步：{{tip}}"
+  },
+  "tabNav": {
+    "home": "首頁",
+    "record": "錄製",
+    "learn": "課程",
+    "report": "報告"
+  },
+  "firstLessonCard": {
+    "label": "開始您的旅程",
+    "title": "閱讀您的第一堂 2 分鐘課程",
+    "description": "課程是只需 2 分鐘的短文，內容講述在遊戲時間建立連結的重要性。",
+    "startReading": "開始閱讀 📖"
+  },
+  "milestoneTimeline": {
+    "title": "里程碑進度",
+    "noData": "尚無里程碑紀錄",
+    "legendAchieved": "已達成",
+    "legendTotal": "總計 (包含發展中)"
+  },
+  "phaseCelebration": {
+    "title": "您已精通特別遊戲時間！",
+    "message": "做得太好了！獲得 80 分以上，代表您已經與 {{childName}} 建立了穩固且充滿連結的基礎。",
+    "unlockTitle": "管教模式已解鎖",
+    "unlockDescriptionPrefix": "您現在可以獲得關於有效管教的個人化指導。只需前往「",
+    "recordTab": "錄製",
+    "unlockDescriptionMiddle": "」標籤頁，選擇「",
+    "disciplineMode": "管教階段 (10分)",
+    "unlockDescriptionSuffix": "」，即可錄製一段與 {{childName}} 真實的管教時刻。",
+    "beforeYouBegin": "開始之前",
+    "suggestionPrefix": "我們建議您先完成「",
+    "notListeningLessons": "不聽話與爭執",
+    "suggestionMiddle": "」模組的課程——這些課程將為您提供架構，讓您的管教練習發揮最大效果。\n\n同時，請繼續進行特別時間的練習，持續為 {{childName}} 的情感銀行帳戶存款。",
+    "gotIt": "我知道了！"
+  },
+  "whatsNew": {
+    "title": "最新消息",
+    "version": "版本 {{version}}",
+    "updateNow": "立即更新",
+    "maybeLater": "稍後再說"
+  },
+  "textInputFeedback": {
+    "greatJob": "做得太棒了！",
+    "keepPracticing": "繼續練習！",
+    "tipsForImprovement": "改進建議：",
+    "idealAnswer": "理想答案："
+  },
+  "streak": {
+    "title": "連續紀錄",
+    "mon": "一",
+    "tue": "二",
+    "wed": "三",
+    "thu": "四",
+    "fri": "五",
+    "sat": "六",
+    "sun": "日"
+  },
+  "moduleCard": {
+    "lessonCount_one": "{{count}} 堂課程",
+    "lessonCount_other": "{{count}} 堂課程",
+    "current": "目前"
+  }
+}

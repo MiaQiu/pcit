@@ -3,23 +3,25 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
 export const RelationshipScreen: React.FC = () => {
   const { data } = useOnboarding();
+  const { t } = useTranslation();
   const userName = data.name || 'there';
 
   return (
     <MultipleChoiceScreen
-      headerText="This helps us tailor guidance to your role."
-      title={`Hi ${userName}, what is your relationship to the child?`}
+      headerText={t('onboarding.relationship.headerText')}
+      title={t('onboarding.relationship.title', { name: userName })}
       options={[
-        { value: 'MOTHER', label: 'Mother' },
-        { value: 'FATHER', label: 'Father' },
-        { value: 'GRANDMOTHER', label: 'Grandmother' },
-        { value: 'GRANDFATHER', label: 'Grandfather' },
-        { value: 'OTHER', label: 'Other' },
+        { value: 'MOTHER', label: t('onboarding.relationship.mother') },
+        { value: 'FATHER', label: t('onboarding.relationship.father') },
+        { value: 'GRANDMOTHER', label: t('onboarding.relationship.grandmother') },
+        { value: 'GRANDFATHER', label: t('onboarding.relationship.grandfather') },
+        { value: 'OTHER', label: t('onboarding.relationship.other') },
       ]}
       dataField="relationshipToChild"
       nextScreen="ChildName"

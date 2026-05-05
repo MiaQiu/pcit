@@ -1,0 +1,1010 @@
+{
+  "common": {
+    "error": "",
+    "cancel": "",
+    "ok": "",
+    "retry": "",
+    "success": "",
+    "loading": "",
+    "done": ""
+  },
+  "months": {
+    "0": "",
+    "1": "",
+    "2": "",
+    "3": "",
+    "4": "",
+    "5": "",
+    "6": "",
+    "7": "",
+    "8": "",
+    "9": "",
+    "10": "",
+    "11": "",
+    "short0": "",
+    "short1": "",
+    "short2": "",
+    "short3": "",
+    "short4": "",
+    "short5": "",
+    "short6": "",
+    "short7": "",
+    "short8": "",
+    "short9": "",
+    "short10": "",
+    "short11": ""
+  },
+  "start": {
+    "subtitle": "",
+    "getStarted": "",
+    "alreadyHaveAccount": "",
+    "termsPrefix": "",
+    "termsOfService": "",
+    "termsAnd": "",
+    "privacyPolicy": ""
+  },
+  "login": {
+    "title": "",
+    "emailPlaceholder": "",
+    "passwordPlaceholder": "",
+    "logIn": "",
+    "forgotPassword": "",
+    "signInWithApple": "",
+    "signInWithGoogle": "",
+    "errorEmptyTitle": "",
+    "errorEmptyMessage": "",
+    "loginFailedTitle": "",
+    "appleSignInFailedMessage": "",
+    "googleSignInFailedMessage": ""
+  },
+  "createAccount": {
+    "title": "",
+    "emailLabel": "",
+    "emailPlaceholder": "",
+    "emailInvalid": "",
+    "passwordLabel": "",
+    "passwordPlaceholder": "",
+    "passwordWeak": "",
+    "confirmPasswordLabel": "",
+    "confirmPasswordPlaceholder": "",
+    "passwordMismatch": "",
+    "createButton": "",
+    "invalidEmailTitle": "",
+    "invalidEmailMessage": "",
+    "weakPasswordTitle": "",
+    "weakPasswordMessage": "",
+    "passwordMismatchTitle": "",
+    "signupFailedTitle": ""
+  },
+  "forgotPassword": {
+    "title": "",
+    "subtitle": "",
+    "emailLabel": "",
+    "emailPlaceholder": "",
+    "sendResetLink": "",
+    "rememberPassword": "",
+    "logIn": "",
+    "errorEmptyMessage": "",
+    "errorInvalidMessage": "",
+    "errorFailedMessage": "",
+    "checkEmailTitle": "",
+    "sentDescription": "",
+    "sentInstructions": "",
+    "backToLogin": "",
+    "didntReceive": "",
+    "tryAgain": ""
+  },
+  "resetPassword": {
+    "title": "",
+    "subtitle": "",
+    "resetTokenLabel": "",
+    "resetTokenPlaceholder": "",
+    "newPasswordLabel": "",
+    "newPasswordPlaceholder": "",
+    "passwordHint": "",
+    "confirmPasswordLabel": "",
+    "confirmPasswordPlaceholder": "",
+    "resetButton": "",
+    "rememberPassword": "",
+    "logIn": "",
+    "errorTokenRequired": "",
+    "errorPasswordRequired": "",
+    "errorPasswordMismatch": "",
+    "successTitle": "",
+    "successMessage": "",
+    "errorFailedMessage": ""
+  },
+  "subscription": {
+    "earlyUserBenefits": "",
+    "howTrialWorks": "",
+    "subscribeToContinue": "",
+    "priceMonthly": "",
+    "priceFreeTrialThenMonthly": "",
+    "regularPrice": "",
+    "stepProfileTitle": "",
+    "stepProfileDesc": "",
+    "stepTodayTitle": "",
+    "stepTodayDesc": "",
+    "step30DaysTitle": "",
+    "stepChargedDesc": "",
+    "stepChargedDescReturning": "",
+    "restorePurchase": "",
+    "logOut": "",
+    "disclaimerNew": "",
+    "disclaimerReturning": "",
+    "terms": "",
+    "privacyPolicy": "",
+    "startTrial": "",
+    "subscribeNow": "",
+    "betaPricing": "",
+    "notAvailableTitle": "",
+    "notAvailableMessage": "",
+    "purchaseFailedTitle": "",
+    "purchaseFailedMessage": "",
+    "restorePurchaseButton": "",
+    "tryAgain": "",
+    "restoreSuccessTitle": "",
+    "restoreSuccessMessage": "",
+    "noPurchasesTitle": "",
+    "noPurchasesMessage": "",
+    "restoreFailedTitle": "",
+    "restoreFailedMessage": "",
+    "errorSetup": "",
+    "logoutError": ""
+  },
+  "notificationPermission": {
+    "title": "",
+    "description": "",
+    "benefitReminders": "",
+    "benefitInsights": "",
+    "benefitReports": "",
+    "enabling": "",
+    "enable": "",
+    "notNow": "",
+    "disabledTitle": "",
+    "disabledMessage": ""
+  },
+  "notificationSettings": {
+    "title": "",
+    "loading": "",
+    "permissionBannerTitle": "",
+    "permissionBannerSubtitle": "",
+    "openSettings": "",
+    "dailyReminders": "",
+    "dailySessionReminder": "",
+    "dailySessionReminderDesc": "",
+    "reminderTime": "",
+    "playSounds": "",
+    "connectPhase": "",
+    "connectPhaseDesc": "",
+    "disciplinePhase": "",
+    "disciplinePhaseDesc": "",
+    "infoText": "",
+    "selectTime": "",
+    "pickerCancel": "",
+    "pickerDone": "",
+    "connectPhaseSoundTitle": "",
+    "disciplinePhaseSoundTitle": "",
+    "errorSavePreferences": "",
+    "errorPlaySound": "",
+    "notificationsDisabledTitle": "",
+    "notificationsDisabledMessage": "",
+    "sounds": {
+      "winChime": "",
+      "gentleBell": "",
+      "voiceReminder": ""
+    }
+  },
+  "profile": {
+    "title": "",
+    "loadingProfile": "",
+    "account": "",
+    "emailLabel": "",
+    "childNameLabel": "",
+    "childAgeLabel": "",
+    "childAgeValue": "",
+    "primaryFocusLabel": "",
+    "issueNotSpecified": "",
+    "subscriptionSection": "",
+    "currentPlan": "",
+    "manageSubscription": "",
+    "settings": "",
+    "referFriend": "",
+    "notifications": "",
+    "support": "",
+    "termsAndConditions": "",
+    "privacyPolicy": "",
+    "language": "",
+    "logOut": "",
+    "deleteAccount": "",
+    "permissionRequiredTitle": "",
+    "permissionRequiredMessage": "",
+    "errorPickImage": "",
+    "errorLoadProfile": "",
+    "errorUploadImage": "",
+    "successImageUpdated": "",
+    "logOutConfirmTitle": "",
+    "logOutConfirmMessage": "",
+    "logOutConfirmButton": "",
+    "deleteConfirmTitle": "",
+    "deleteConfirmMessage": "",
+    "deleteConfirmButton": "",
+    "errorLogOut": "",
+    "errorManageSubscription": "",
+    "errorManageSubscriptionRetry": "",
+    "errorDeleteAccount": "",
+    "issueTags": {
+      "behavior_challenges": "",
+      "big_emotions": "",
+      "frustration_tolerance": "",
+      "new_baby_in_the_house": "",
+      "moving_house": "",
+      "parental_divorce": "",
+      "social": "",
+      "attention_focus": "",
+      "adhd": "",
+      "parenting_strategies": "",
+      "defiance": "",
+      "aggression": "",
+      "emotional": "",
+      "routine": "",
+      "general": ""
+    },
+    "planNames": {
+      "premiumTrial": "",
+      "premium": "",
+      "free": ""
+    },
+    "subscriptionStatus": {
+      "subscriptionExpired": "",
+      "noActiveSubscription": "",
+      "trialEnds": "",
+      "cancelledEnds": "",
+      "renews": "",
+      "active": "",
+      "cancelled": ""
+    }
+  },
+  "home": {
+    "unableToLoadProfile": "",
+    "sessionProcessing": "",
+    "completeSession": ""
+  },
+  "transcript": {
+    "headerTitle": "",
+    "loading": "",
+    "failedToLoad": "",
+    "speakerLegend": "",
+    "noTranscript": "",
+    "silentMoment": "",
+    "speakerAdult": "",
+    "speakerChild": "",
+    "speakerAdultN": "",
+    "speakerChildN": ""
+  },
+  "weeklyReport": {
+    "loading": "",
+    "noReport": "",
+    "goBack": "",
+    "defaultFocusHeading": "",
+    "defaultFocusSubtext": "",
+    "buttonBack": "",
+    "buttonContinue": "",
+    "buttonSubmit": "",
+    "checkInTitle": "",
+    "checkInMoodQuestion": "",
+    "checkInDisclaimer": "",
+    "checkInImprovementQuestion": "",
+    "moods": {
+      "grounded": "",
+      "tired": "",
+      "stretched": "",
+      "hopeful": ""
+    },
+    "ratings": {
+      "better": "",
+      "same": "",
+      "worse": ""
+    }
+  },
+  "report": {
+    "headerTitle": "",
+    "analyzingSession": "",
+    "loadingReport": "",
+    "failedToLoad": "",
+    "tryAgain": "",
+    "overallLabel": "",
+    "speakerAdult": "",
+    "speakerChild": "",
+    "speakerAdultN": "",
+    "speakerChildN": "",
+    "speakerUnknown": "",
+    "feedbackYes": "",
+    "feedbackNotReally": "",
+    "feedbackWhatBetter": "",
+    "feedbackPlaceholder": "",
+    "feedbackSubmit": "",
+    "negativeReasons": {
+      "tooGeneric": "",
+      "notAccurate": "",
+      "hardToUnderstand": "",
+      "missingSomething": ""
+    }
+  },
+  "lessonViewer": {
+    "contentUpdatedTitle": "",
+    "contentUpdatedMessage": "",
+    "errorEvaluateResponse": "",
+    "quizBadge": "",
+    "yourResponse": "",
+    "evaluating": "",
+    "typePlaceholder": "",
+    "buttonContinue": "",
+    "buttonCheckAnswer": "",
+    "buttonTakeQuiz": "",
+    "buttonNextLesson": "",
+    "buttonBack": ""
+  },
+  "progress": {
+    "weeklyReport": "",
+    "lessonsCompleted": "",
+    "playSessions": "",
+    "currentStreak": ""
+  },
+  "quiz": {
+    "badge": "",
+    "checkAnswer": "",
+    "back": "",
+    "continue": "",
+    "errorSubmit": ""
+  },
+  "learn": {
+    "title": "",
+    "filterAll": "",
+    "moduleLibrary": "",
+    "completedModules": "",
+    "foundationLockedNotice": "",
+    "completeFoundationFirst": "",
+    "couldntLoadModules": "",
+    "noModulesFound": "",
+    "tryDifferentSearch": ""
+  },
+  "record": {
+    "uploadingRecording": "",
+    "analyzingTitle": "",
+    "analyzingSubtitle1": "",
+    "analyzingSubtitle2": "",
+    "micPermissionRequired": "",
+    "recordButton": "",
+    "stopRecordingButton": "",
+    "permissionRequiredTitle": "",
+    "permissionRequiredMessage": "",
+    "recordingIssueTitle": "",
+    "recordingIssueMessage": "",
+    "checkSettings": "",
+    "tryAgain": "",
+    "sorryCantRecordTitle": "",
+    "sorryCantRecordMessage": "",
+    "contactSupport": "",
+    "tooShortTitle": "",
+    "tooShortMessage": "",
+    "uploadFailedTitle": "",
+    "uploadFailedMessage": "",
+    "retry": ""
+  },
+  "forceUpdate": {
+    "title": "",
+    "message": "",
+    "updateButton": ""
+  },
+  "errorBoundary": {
+    "title": "",
+    "defaultMessage": "",
+    "tryAgain": ""
+  },
+  "networkStatus": {
+    "offline": ""
+  },
+  "referral": {
+    "headerTitle": "",
+    "heroTitle": "",
+    "heroSubtitle": "",
+    "yourInviteLink": "",
+    "shareButton": "",
+    "shareMessage": "",
+    "yourReferrals": "",
+    "friendJoined_one": "",
+    "friendJoined_other": "",
+    "subscribed_one": "",
+    "subscribed_other": "",
+    "monthEarned_one": "",
+    "monthEarned_other": "",
+    "onFreeTrial_one": "",
+    "onFreeTrial_other": "",
+    "emptyStats": "",
+    "howItWorks": "",
+    "step1": "",
+    "step2": "",
+    "step3": "",
+    "errorLoadReferral": ""
+  },
+  "support": {
+    "headerTitle": "",
+    "introText": "",
+    "emailLabel": "",
+    "emailPlaceholder": "",
+    "descriptionLabel": "",
+    "descriptionPlaceholder": "",
+    "attachments": "",
+    "attachFile": "",
+    "submitButton": "",
+    "requiredFieldTitle": "",
+    "requiredEmailMessage": "",
+    "requiredDescriptionMessage": "",
+    "invalidEmailTitle": "",
+    "invalidEmailMessage": "",
+    "successTitle": "",
+    "successMessage": "",
+    "filesAttached": "",
+    "errorAttachFile": "",
+    "errorSubmit": ""
+  },
+  "psychologistChat": {
+    "headerTitle": "",
+    "headerSub": "",
+    "psychologist": "",
+    "emptyTitle": "",
+    "emptyBody": "",
+    "inputPlaceholder": ""
+  },
+  "homeV2": {
+    "headerTitle": "",
+    "weeklyDeposit": "",
+    "statDays": "",
+    "statMins": "",
+    "statTimes": "",
+    "statLessons": "",
+    "tipPerfect": "",
+    "tipDaysDown": "",
+    "tipAimFor4": "",
+    "weeklyReportLabel": "",
+    "weeklyReportFallback": "",
+    "viewWeeklyReport": "",
+    "skipForNow": "",
+    "dailyEmotionalMassageLabel": "",
+    "analyzingSession": "",
+    "analyzingSessionSuffix": "",
+    "letChildLeadStart": "",
+    "letChildLeadMiddle": "",
+    "letChildLeadEnd": "",
+    "recordNow": "",
+    "reportReadyStart": "",
+    "reportReadyEnd": "",
+    "readReport": "",
+    "meetCoachLabel": "",
+    "meetCoachBodyStart": "",
+    "meetCoachBodyEnd": "",
+    "chatWithCoach": "",
+    "recordAgain": "",
+    "todaysPlan": "",
+    "planLessonLabel": "",
+    "planLessonDuration": "",
+    "planRecordLabel": "",
+    "planRecordTitle": "",
+    "planWeeklyReportLabel": "",
+    "planWeeklyReportTitle": "",
+    "planReminderLabel": "",
+    "planReminderTitle": "",
+    "enableNotificationsTitle": "",
+    "enableNotificationsMessage": "",
+    "notNow": "",
+    "openSettings": "",
+    "reminderModalTitle": "",
+    "reminderModalBody1": "",
+    "reminderModalHighlight1": "",
+    "reminderModalOr": "",
+    "reminderModalHighlight2": "",
+    "reminderModalHighlight3": "",
+    "reminderModalBody2": "",
+    "reminderCustomTime": "",
+    "setReminder": "",
+    "reminderPresets": {
+      "beforeSchool": "",
+      "afterSchool": "",
+      "beforeSleep": ""
+    },
+    "recordMessages": {
+      "0start": "",
+      "0end": "",
+      "1start": "",
+      "1end": "",
+      "2start": "",
+      "2end": "",
+      "3start": "",
+      "3end": "",
+      "4start": "",
+      "4end": ""
+    }
+  },
+  "learnV2": {
+    "title": "",
+    "subtitle": "",
+    "lockedNotice": "",
+    "completeFoundationFirst": "",
+    "noLessonsFound": "",
+    "tryDifferentSearch": ""
+  },
+  "privacyPolicy": {
+    "headerTitle": ""
+  },
+  "termsAndConditions": {
+    "headerTitle": ""
+  },
+  "skillInfo": {
+    "theScience": "",
+    "theResult": "",
+    "theNextStep": "",
+    "skillDetails": "",
+    "skillNotAvailable": "",
+    "penSkill": "",
+    "areaToAvoid": "",
+    "whatItIsLabel": "",
+    "whyImportantLabel": "",
+    "whyAvoidLabel": "",
+    "inDailyLifeLabel": "",
+    "utterancesHeader": "",
+    "learnAbout": "",
+    "noUtterances": "",
+    "readFullConversation": "",
+    "noraScore": {
+      "title": "",
+      "introduction": "",
+      "excellent": {
+        "rating": "",
+        "summary": "",
+        "science": "",
+        "result": ""
+      },
+      "good": {
+        "rating": "",
+        "summary": "",
+        "science": "",
+        "result": ""
+      },
+      "payAttention": {
+        "rating": "",
+        "summary": "",
+        "science": "",
+        "result": ""
+      }
+    },
+    "praise": {
+      "title": "",
+      "displayName": "",
+      "whatItIs": "",
+      "whyImportant": "",
+      "inDailyLife": "",
+      "contextTitle": "",
+      "contextDescription": ""
+    },
+    "echo": {
+      "title": "",
+      "displayName": "",
+      "whatItIs": "",
+      "whyImportant": "",
+      "inDailyLife": "",
+      "contextTitle": "",
+      "contextDescription": ""
+    },
+    "narrate": {
+      "title": "",
+      "displayName": "",
+      "whatItIs": "",
+      "whyImportant": "",
+      "inDailyLife": "",
+      "contextTitle": "",
+      "contextDescription": ""
+    },
+    "question": {
+      "title": "",
+      "displayName": "",
+      "whatItIs": "",
+      "whyImportant": "",
+      "inDailyLife": "",
+      "contextTitle": "",
+      "contextDescription": ""
+    },
+    "command": {
+      "title": "",
+      "displayName": "",
+      "whatItIs": "",
+      "whyImportant": "",
+      "inDailyLife": "",
+      "contextTitle": "",
+      "contextDescription": ""
+    },
+    "criticism": {
+      "title": "",
+      "displayName": "",
+      "whatItIs": "",
+      "whyImportant": "",
+      "inDailyLife": "",
+      "contextTitle": "",
+      "contextDescription": ""
+    }
+  },
+  "moduleDetail": {
+    "moduleLocked": "",
+    "lockedMessage": "",
+    "goToFoundation": ""
+  },
+  "coachChat": {
+    "headerTitle": "",
+    "headerSub": "",
+    "talkToPsychologist": "",
+    "psychologist": "",
+    "greetingWithName": "",
+    "greetingDefault": "",
+    "guideSubtitle": "",
+    "yourChild": "",
+    "inputPlaceholder": "",
+    "errorConnection": "",
+    "errorSendRequest": "",
+    "suggestions": {
+      "understandTitle": "",
+      "understandPrompt": "",
+      "whatToDoTitle": "",
+      "whatToDoPrompt": "",
+      "confidenceTitle": "",
+      "confidencePrompt": "",
+      "planTitle": "",
+      "planPrompt": ""
+    },
+    "iUnderstand": "",
+    "psychologistReplyTime": "",
+    "agreeToTerms": "",
+    "readTerms": "",
+    "sendRequest": "",
+    "terms": {
+      "title": "",
+      "section1Title": "",
+      "section1Body": "",
+      "section2Title": "",
+      "section2Body": "",
+      "section2Bullet1": "",
+      "section2Bullet2": "",
+      "section2Bullet3": "",
+      "section2Bullet4": "",
+      "section3Title": "",
+      "section3Body": "",
+      "section4Title": "",
+      "section4Body": "",
+      "section5Title": "",
+      "section5Body": "",
+      "section6Title": "",
+      "section6Body": ""
+    }
+  },
+  "languagePicker": {
+    "title": "語言",
+    "english": "English",
+    "traditionalChinese": "繁體中文"
+  },
+  "onboarding": {
+    "continue": "",
+    "back": "",
+    "letsGo": "",
+    "letsBegin": "",
+    "skipForNow": "",
+    "nameInput": {
+      "title": ""
+    },
+    "childName": {
+      "title": ""
+    },
+    "relationship": {
+      "headerText": "",
+      "title": "",
+      "mother": "",
+      "father": "",
+      "grandmother": "",
+      "grandfather": "",
+      "other": ""
+    },
+    "childGender": {
+      "headerText": "",
+      "title": "",
+      "boy": "",
+      "girl": "",
+      "preferNotToShare": ""
+    },
+    "childBirthday": {
+      "title": "",
+      "ageSuitabilityNote": ""
+    },
+    "childIssue": {
+      "headerText": "",
+      "title": "",
+      "behaviorChallenges": "",
+      "bigEmotions": "",
+      "frustrationTolerance": "",
+      "newBaby": "",
+      "movingHouse": "",
+      "parentalDivorce": "",
+      "social": "",
+      "attentionFocus": "",
+      "adhd": "",
+      "parentingStrategies": "",
+      "other": "",
+      "otherPlaceholder": ""
+    },
+    "childSnapshotIntro": {
+      "description": ""
+    },
+    "childBehaviorProfile": {
+      "speechBubble": "",
+      "cardTitle": "",
+      "lockText": "",
+      "currentSnapshot": "",
+      "whatThisMeans": "",
+      "startingPlan": "",
+      "whatToExpect": "",
+      "continueButton": "",
+      "barSegments": {
+        "stable": "",
+        "mild": "",
+        "medium": "",
+        "high": ""
+      },
+      "snapshotTitles": {
+        "stable": "",
+        "mild": "",
+        "medium": "",
+        "high": ""
+      },
+      "barLabels": {
+        "stable": "",
+        "mild": "",
+        "medium": "",
+        "high": ""
+      },
+      "categories": {
+        "stable": {
+          "whatThisMeans": "",
+          "startingPlan": "",
+          "whatToExpect": ""
+        },
+        "mild": {
+          "whatThisMeans": "",
+          "startingPlan": "",
+          "whatToExpect": ""
+        },
+        "medium": {
+          "whatThisMeans": "",
+          "startingPlan": "",
+          "whatToExpect": ""
+        },
+        "high": {
+          "whatThisMeans": "",
+          "startingPlan": "",
+          "whatToExpect": ""
+        }
+      }
+    },
+    "wacb": {
+      "headerText": "",
+      "scaleNever": "",
+      "scaleRarely": "",
+      "scaleSometimes": "",
+      "scaleOften": "",
+      "scaleVeryOften": "",
+      "submitSurvey": "",
+      "q1": "",
+      "q2": "",
+      "q3": "",
+      "q4": "",
+      "q5": "",
+      "q6": "",
+      "q7": "",
+      "q8": "",
+      "q9": "",
+      "submissionError": "",
+      "submissionFailed": ""
+    },
+    "intro3": {
+      "title": "",
+      "description": ""
+    },
+    "parentingIntro": {
+      "title": "",
+      "benefit1": "",
+      "benefit2": "",
+      "benefit3": "",
+      "continueButton": ""
+    },
+    "demo1": {
+      "subtitle": "",
+      "title": "",
+      "meetNora": "",
+      "description": ""
+    },
+    "demo1B": {
+      "text": ""
+    },
+    "demo2": {
+      "text": ""
+    },
+    "demo2B": {
+      "text": "",
+      "penSkills": "",
+      "areasToAvoid": "",
+      "praiseLabeled": "",
+      "echo": "",
+      "narrate": "",
+      "labelGood": "",
+      "labelPayAttention": "",
+      "labelExcellent": "",
+      "questions": "",
+      "commands": "",
+      "criticism": ""
+    },
+    "demo3": {
+      "text": ""
+    },
+    "demo4": {
+      "text": ""
+    },
+    "demo5": {
+      "text": ""
+    },
+    "playSession1": {
+      "title": "",
+      "subtitle": ""
+    },
+    "playSession2": {
+      "title": "",
+      "subtitle": ""
+    },
+    "playSession3": {
+      "title": "",
+      "subtitle": ""
+    },
+    "playSession4": {
+      "title": "",
+      "subtitle": ""
+    },
+    "playSession5": {
+      "title": "",
+      "subtitle": ""
+    }
+  },
+  "quizFeedback": {
+    "correct": "",
+    "notQuite": ""
+  },
+  "recordingCard": {
+    "recording": "",
+    "startPrompt": "",
+    "record": "",
+    "stop": ""
+  },
+  "lessonCard": {
+    "locked": "",
+    "startReading": ""
+  },
+  "howToRecord": {
+    "title": "",
+    "step1": "",
+    "step2": "",
+    "step3": "",
+    "step4": ""
+  },
+  "recordingGuide": {
+    "doSectionTitle": "",
+    "dontSectionTitle": "",
+    "reminderText": "",
+    "connectionFirstTitle": "",
+    "disciplineDoTitle": "",
+    "disciplineReminder": "",
+    "playTimeTab": "",
+    "disciplineTab": "",
+    "lockMessage": "",
+    "lockGoal": "",
+    "lockBankMessage": "",
+    "do": {
+      "praise": {
+        "title": "",
+        "description": ""
+      },
+      "echo": {
+        "title": "",
+        "description": ""
+      },
+      "narrate": {
+        "title": "",
+        "description": ""
+      }
+    },
+    "dont": {
+      "command": "",
+      "question": "",
+      "criticize": ""
+    },
+    "discipline": {
+      "command": {
+        "title": "",
+        "description": ""
+      },
+      "followThrough": {
+        "title": "",
+        "description": ""
+      },
+      "mindsets": {
+        "title": "",
+        "description": ""
+      }
+    }
+  },
+  "nextActionCard": {
+    "upNext": "",
+    "continue": "",
+    "lastSessionDeposits": "",
+    "readReport": {
+      "title": "",
+      "description": "",
+      "encouragement": ""
+    },
+    "extraPractice": "",
+    "record": {
+      "title": "",
+      "description": "",
+      "encouragement": ""
+    },
+    "recordAgain": {
+      "title": "",
+      "description": "",
+      "encouragement": ""
+    },
+    "readReportLink": ""
+  },
+  "modulePicker": {
+    "title": "",
+    "congrats": "",
+    "infoAutoSelected": "",
+    "infoBrowse": "",
+    "recommended": "",
+    "otherModules": "",
+    "availableModules": "",
+    "current": "",
+    "lesson": "",
+    "lessons": "",
+    "done": "",
+    "ok": ""
+  },
+  "reports": {
+    "title": "",
+    "recentSessions": "",
+    "childDirected": "",
+    "parentDirected": "",
+    "weeklyReports": "",
+    "weeklyReport": "",
+    "thisMonth": "",
+    "sessions": "",
+    "avgScore": "",
+    "developmentalMilestones": "",
+    "milestoneLocked": "",
+    "milestoneDesc": ""
+  },
+  "domainMilestone": {
+    "title": "",
+    "languageNote": "",
+    "loading": "",
+    "profilingStatus": "",
+    "defaultChildName": "",
+    "achieved": "",
+    "emerging": "",
+    "notYetObserved": "",
+    "noMilestones": "",
+    "tips": ""
+  }
+}

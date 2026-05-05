@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'rea
 import Svg, { Path } from 'react-native-svg';
 import { Badge } from './Badge';
 import { FONTS } from '../constants/assets';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.9;
@@ -23,6 +24,7 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
   phaseName = '',
   onPress,
 }) => {
+  const { t } = useTranslation();
   return (
     <View style={styles.container}>
       {/* Teal hero with dragon */}
@@ -50,15 +52,13 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
 
       {/* Content */}
       <View style={styles.content}>
-        <Text style={styles.label}>Start your journey</Text>
-        <Text style={styles.title}>Read your first 2-minute Lesson</Text>
-        <Text style={styles.description}>
-          Lessons are short 2 min reads about how important connection is during playtime.
-        </Text>
+        <Text style={styles.label}>{t('firstLessonCard.label')}</Text>
+        <Text style={styles.title}>{t('firstLessonCard.title')}</Text>
+        <Text style={styles.description}>{t('firstLessonCard.description')}</Text>
 
         {onPress && (
           <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
-            <Text style={styles.buttonText}>Start Reading 📖</Text>
+            <Text style={styles.buttonText}>{t('firstLessonCard.startReading')}</Text>
           </TouchableOpacity>
         )}
       </View>

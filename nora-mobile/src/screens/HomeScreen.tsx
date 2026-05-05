@@ -26,10 +26,12 @@ import { toSingaporeDateString, getTodaySingapore, getYesterdaySingapore, getSta
 import amplitudeService from '../services/amplitudeService';
 import * as userStorage from '../lib/userStorage';
 import type { ModuleWithProgress } from '@nora/core';
+import { useTranslation } from 'react-i18next';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<RouteProp<RootTabParamList, 'Home'>>();
+  const { t } = useTranslation();
   const lessonService = useLessonService();
   const authService = useAuthService();
   const recordingService = useRecordingService();
@@ -248,7 +250,7 @@ export const HomeScreen: React.FC = () => {
     } catch (error) {
       // Show toast if offline
       if (!isOnline) {
-        showToast('Unable to load profile while offline', 'error');
+        showToast(t('home.unableToLoadProfile'), 'error');
       }
       console.log('Could not load user profile:', error);
     }
@@ -747,8 +749,8 @@ export const HomeScreen: React.FC = () => {
 
           // Check if report is being processed
           const displayEncouragement = uploadProcessing.isProcessing
-            ? "Latest play session processing. We'll notify you when it's ready."
-            : (encouragementMessage || "Complete a play session to see your score!");
+            ? t('home.sessionProcessing')
+            : (encouragementMessage || t('home.completeSession'));
 
           return (
             <View style={{ marginBottom: 8 }}>

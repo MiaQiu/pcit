@@ -8,6 +8,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
 import type { ModuleWithProgress } from '@nora/core';
+import { useTranslation } from 'react-i18next';
 
 interface ModuleCardProps {
   module: ModuleWithProgress;
@@ -16,6 +17,7 @@ interface ModuleCardProps {
 }
 
 export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onPress, isCurrentModule }) => {
+  const { t } = useTranslation();
   const progress = module.lessonCount > 0
     ? module.completedLessons / module.lessonCount
     : 0;
@@ -31,11 +33,11 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onPress, isCurre
       <View style={styles.topRow}>
         {/* Lesson count */}
         <Text style={[styles.lessonCount, isLocked && styles.textLocked]}>
-          {module.lessonCount} {module.lessonCount === 1 ? 'lesson' : 'lessons'}
+          {t('moduleCard.lessonCount', { count: module.lessonCount })}
         </Text>
         {isCurrentModule && (
           <View style={styles.currentBadge}>
-            <Text style={styles.currentBadgeText}>Current</Text>
+            <Text style={styles.currentBadgeText}>{t('moduleCard.current')}</Text>
           </View>
         )}
         {isLocked && (

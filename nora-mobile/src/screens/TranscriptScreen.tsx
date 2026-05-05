@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService } from '../contexts/AppContext';
+import { useTranslation } from 'react-i18next';
 
 type TranscriptScreenRouteProp = RouteProp<RootStackParamList, 'Transcript'>;
 
@@ -66,6 +67,7 @@ const TAG_COLORS: { [key: string]: string } = {
 export const TranscriptScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<TranscriptScreenRouteProp>();
+  const { t } = useTranslation();
   const recordingService = useRecordingService();
   const { recordingId } = route.params;
 
@@ -95,7 +97,7 @@ export const TranscriptScreen: React.FC = () => {
       setLoading(false);
     } catch (err: any) {
       console.error('Failed to load transcript:', err);
-      setError(err.message || 'Failed to load transcript');
+      setError(err.message || t('transcript.failedToLoad'));
       setLoading(false);
     }
   };
@@ -138,12 +140,12 @@ export const TranscriptScreen: React.FC = () => {
 
     // Assign labels and colors
     adultSpeakers.forEach((speaker, index) => {
-      labelMapping[speaker] = adultSpeakers.length > 1 ? `Adult ${index + 1}` : 'Adult';
+      labelMapping[speaker] = adultSpeakers.length > 1 ? t('transcript.speakerAdultN', { n: index + 1 }) : t('transcript.speakerAdult');
       colorMapping[speaker] = SPEAKER_COLORS[colorIndex % SPEAKER_COLORS.length];
       colorIndex++;
     });
     childSpeakers.forEach((speaker, index) => {
-      labelMapping[speaker] = childSpeakers.length > 1 ? `Child ${index + 1}` : 'Child';
+      labelMapping[speaker] = childSpeakers.length > 1 ? t('transcript.speakerChildN', { n: index + 1 }) : t('transcript.speakerChild');
       colorMapping[speaker] = SPEAKER_COLORS[colorIndex % SPEAKER_COLORS.length];
       colorIndex++;
     });
@@ -230,12 +232,12 @@ export const TranscriptScreen: React.FC = () => {
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Full Transcript</Text>
+          <Text style={styles.headerTitle}>{t('transcript.headerTitle')}</Text>
           <View style={{ width: 28 }} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.mainPurple} />
-          <Text style={styles.loadingText}>Loading transcript...</Text>
+          <Text style={styles.loadingText}>{t('transcript.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -249,7 +251,7 @@ export const TranscriptScreen: React.FC = () => {
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Full Transcript</Text>
+          <Text style={styles.headerTitle}>{t('transcript.headerTitle')}</Text>
           <View style={{ width: 28 }} />
         </View>
         <View style={styles.errorContainer}>
@@ -278,7 +280,7 @@ export const TranscriptScreen: React.FC = () => {
       >
         {/* Legend */}
         <View style={styles.legendCard}>
-          <Text style={styles.legendTitle}>Speaker Legend</Text>
+          <Text style={styles.legendTitle}>{t('transcript.speakerLegend')}</Text>
           <View style={styles.legendRow}>
             {Object.entries(speakerLabels).map(([speaker, label]) => {
               const backgroundColor = speakerColors[speaker];
@@ -294,7 +296,7 @@ export const TranscriptScreen: React.FC = () => {
         {/* Transcript */}
         {transcriptSegments.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No transcript available</Text>
+            <Text style={styles.emptyText}>{t('transcript.noTranscript')}</Text>
           </View>
         ) : (
           <View style={styles.transcriptContainer}>
@@ -315,7 +317,7 @@ export const TranscriptScreen: React.FC = () => {
                   <View key={index} style={styles.silentSlotContainer}>
                     <View style={styles.silentSlotHeader}>
                       <View style={styles.silentSlotBadge}>
-                        <Text style={styles.silentSlotBadgeText}>Silent Moment</Text>
+                        <Text style={styles.silentSlotBadgeText}>{t('transcript.silentMoment')}</Text>
                       </View>
                       {/* <Text style={styles.silentSlotDuration}>{durationText}</Text> */}
                     </View>

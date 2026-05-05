@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { getWacbQuestions } from './wacbQuestions.config';
 import { useAuthService } from '../../contexts/AppContext';
@@ -12,6 +13,7 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 export const WacbQuestion9Screen: React.FC = () => {
   const authService = useAuthService();
   const { data } = useOnboarding();
+  const { t } = useTranslation();
   const childName = data.childName || 'your child';
 
   const handleSubmitSurvey = async (selectedValue: number) => {
@@ -50,8 +52,8 @@ export const WacbQuestion9Screen: React.FC = () => {
     } catch (err: any) {
       console.error('WACB Survey submission error:', err);
       Alert.alert(
-        'Submission Error',
-        err.message || 'Failed to submit survey. Please try again.\n\nError: Network request failed'
+        t('onboarding.wacb.submissionError'),
+        err.message || t('onboarding.wacb.submissionFailed')
       );
       // Re-throw to prevent navigation
       throw err;
@@ -60,7 +62,7 @@ export const WacbQuestion9Screen: React.FC = () => {
 
   return (
     <MultipleChoiceScreen
-      {...getWacbQuestions(childName)[8]}
+      {...getWacbQuestions(childName, t)[8]}
       onBeforeNavigate={handleSubmitSurvey}
       disableAutoNavigate={true}
     />
