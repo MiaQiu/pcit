@@ -10,8 +10,11 @@ const { requireAuth } = require('../middleware/auth.cjs');
 
 const { evaluateTextInput } = require('../services/textInputEvaluationService.cjs');
 const { resolveDragonImageUrl } = require('../services/storage-s3.cjs');
+const { localeMiddleware } = require('../middleware/locale.cjs');
 
 const router = express.Router();
+
+router.use(localeMiddleware);
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -44,6 +47,48 @@ async function getModuleDisplayOrderMap() {
   const map = {};
   modules.forEach(m => { map[m.key] = m.displayOrder; });
   return map;
+}
+
+// ============================================================================
+// TRANSLATION MERGE HELPERS
+// ============================================================================
+
+function applyLessonTx(lesson, tx) {
+  if (!tx) return lesson;
+  return {
+    ...lesson,
+    title: tx.title ?? lesson.title,
+    subtitle: tx.subtitle ?? lesson.subtitle,
+    shortDescription: tx.shortDescription ?? lesson.shortDescription,
+    objectives: tx.objectives ?? lesson.objectives,
+  };
+}
+
+function applySegmentTx(segment, tx) {
+  if (!tx) return segment;
+  return {
+    ...segment,
+    sectionTitle: tx.sectionTitle ?? segment.sectionTitle,
+    bodyText: tx.bodyText ?? segment.bodyText,
+    idealAnswer: tx.idealAnswer ?? segment.idealAnswer,
+    customHtml: tx.customHtml ?? segment.customHtml,
+  };
+}
+
+function applyQuizTx(quiz, tx) {
+  if (!tx) return quiz;
+  return {
+    ...quiz,
+    question: tx.question ?? quiz.question,
+    explanation: tx.explanation ?? quiz.explanation,
+    wrongExplanation: tx.wrongExplanation ?? quiz.wrongExplanation,
+    options: quiz.options.map(opt => {
+      const txOpt = Array.isArray(tx.options)
+        ? tx.options.find(o => o.optionLabel === opt.optionLabel)
+        : null;
+      return txOpt ? { ...opt, optionText: txOpt.optionText } : opt;
+    }),
+  };
 }
 
 /**
@@ -108,10 +153,20 @@ router.get('/', requireAuth, async (req, res) => {
       progressMap[p.lessonId] = p;
     });
 
+    // Fetch lesson translations for locale
+    const locale = req.locale;
+    let lessonTxMap = {};
+    if (locale !== 'en' && lessons.length > 0) {
+      const txs = await prisma.lessonTranslation.findMany({
+        where: { locale, lessonId: { in: lessons.map(l => l.id) } }
+      });
+      txs.forEach(tx => { lessonTxMap[tx.lessonId] = tx; });
+    }
+
     // Format lesson cards — all unlocked
     const lessonCards = await Promise.all(lessons.map(lesson => {
       const progress = progressMap[lesson.id] || null;
-      return formatLessonCard(lesson, progress);
+      return formatLessonCard(applyLessonTx(lesson, lessonTxMap[lesson.id]), progress);
     }));
 
     // Generate content version hash
@@ -341,14 +396,38 @@ router.get('/:id', requireAuth, async (req, res) => {
       });
     }
 
-    // Map Prisma field names to frontend expected names
+    // Fetch translations for the requested locale
+    const locale = req.locale;
+    let lessonTx = null, segmentTxMap = {}, quizTx = null;
+    if (locale !== 'en') {
+      const segmentIds = lesson.LessonSegment.map(s => s.id);
+      const [lessonTxResult, segmentTxList, quizTxResult] = await Promise.all([
+        prisma.lessonTranslation.findUnique({
+          where: { lessonId_locale: { lessonId: id, locale } }
+        }),
+        prisma.lessonSegmentTranslation.findMany({
+          where: { locale, segmentId: { in: segmentIds } }
+        }),
+        lesson.Quiz
+          ? prisma.quizTranslation.findUnique({
+              where: { quizId_locale: { quizId: lesson.Quiz.id, locale } }
+            })
+          : Promise.resolve(null),
+      ]);
+      lessonTx = lessonTxResult;
+      quizTx = quizTxResult;
+      segmentTxMap = Object.fromEntries(segmentTxList.map(t => [t.segmentId, t]));
+    }
+
+    // Map Prisma field names to frontend expected names, applying translations
+    const translatedLesson = applyLessonTx(lesson, lessonTx);
+    const quizWithOptions = lesson.Quiz
+      ? { ...lesson.Quiz, options: lesson.Quiz.QuizOption }
+      : null;
     const lessonResponse = {
-      ...lesson,
-      segments: lesson.LessonSegment,
-      quiz: lesson.Quiz ? {
-        ...lesson.Quiz,
-        options: lesson.Quiz.QuizOption
-      } : null,
+      ...translatedLesson,
+      segments: lesson.LessonSegment.map(seg => applySegmentTx(seg, segmentTxMap[seg.id])),
+      quiz: quizWithOptions ? applyQuizTx(quizWithOptions, quizTx) : null,
       LessonSegment: undefined,
       Quiz: undefined
     };

@@ -63,9 +63,10 @@ class LessonService {
   /**
    * Get all modules with per-user progress
    */
-  async getModules(): Promise<ModuleListResponse> {
+  async getModules(locale?: string): Promise<ModuleListResponse> {
+    const lang = locale && locale !== 'en' ? `?lang=${locale}` : '';
     const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/modules`,
+      `${this.apiUrl}/api/modules${lang}`,
       {
         method: 'GET',
       }
@@ -88,9 +89,10 @@ class LessonService {
    * Get module detail with its lessons
    * @param moduleKey Module key (e.g. 'FOUNDATION')
    */
-  async getModuleDetail(moduleKey: string): Promise<ModuleDetailResponse> {
+  async getModuleDetail(moduleKey: string, locale?: string): Promise<ModuleDetailResponse> {
+    const lang = locale && locale !== 'en' ? `?lang=${locale}` : '';
     const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/modules/${moduleKey}`,
+      `${this.apiUrl}/api/modules/${moduleKey}${lang}`,
       {
         method: 'GET',
       }
@@ -113,8 +115,11 @@ class LessonService {
    * Get all lessons with user progress
    * @param module Optional filter by module
    */
-  async getLessons(module?: LessonModule): Promise<LessonListResponse> {
-    const queryParam = module ? `?module=${module}` : '';
+  async getLessons(module?: LessonModule, locale?: string): Promise<LessonListResponse> {
+    const params = new URLSearchParams();
+    if (module) params.set('module', module);
+    if (locale && locale !== 'en') params.set('lang', locale);
+    const queryParam = params.toString() ? `?${params.toString()}` : '';
 
     const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/lessons${queryParam}`,
@@ -140,9 +145,10 @@ class LessonService {
    * Get lesson detail with segments and quiz
    * @param lessonId Lesson ID
    */
-  async getLessonDetail(lessonId: string): Promise<LessonDetailResponse> {
+  async getLessonDetail(lessonId: string, locale?: string): Promise<LessonDetailResponse> {
+    const lang = locale && locale !== 'en' ? `?lang=${locale}` : '';
     const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/lessons/${lessonId}`,
+      `${this.apiUrl}/api/lessons/${lessonId}${lang}`,
       {
         method: 'GET',
       }
@@ -166,9 +172,10 @@ class LessonService {
    * Get lessons that teach a specific category
    * @param category Recommendation category (PRAISE, ECHO, NARRATION, etc.)
    */
-  async getLessonsByCategory(category: string): Promise<Lesson[]> {
+  async getLessonsByCategory(category: string, locale?: string): Promise<Lesson[]> {
+    const lang = locale && locale !== 'en' ? `?lang=${locale}` : '';
     const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/lessons/by-category/${category}`,
+      `${this.apiUrl}/api/lessons/by-category/${category}${lang}`,
       {
         method: 'GET',
       }

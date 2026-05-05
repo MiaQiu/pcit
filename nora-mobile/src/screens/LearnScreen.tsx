@@ -23,7 +23,7 @@ import { useTranslation } from 'react-i18next';
 
 export const LearnScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const lessonService = useLessonService();
   const { isOnline } = useNetworkStatus();
   const { showToast } = useToast();
@@ -69,7 +69,7 @@ export const LearnScreen: React.FC = () => {
       else setIsRefreshing(true);
       setError(null);
 
-      const response = await lessonService.getModules();
+      const response = await lessonService.getModules(i18n.language);
       handleApiSuccess();
       setModules(response.modules);
       setIsFoundationCompleted(response.isFoundationCompleted);

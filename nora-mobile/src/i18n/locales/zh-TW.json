@@ -402,7 +402,8 @@
     "buttonCheckAnswer": "檢查答案",
     "buttonTakeQuiz": "進行測驗 →",
     "buttonNextLesson": "下一課 →",
-    "buttonBack": "← 返回"
+    "buttonBack": "← 返回",
+    "loadingLesson": "載入課程中..."
   },
   "progress": {
     "weeklyReport": "每週報告",
@@ -713,7 +714,10 @@
   "moduleDetail": {
     "moduleLocked": "模組已鎖定",
     "lockedMessage": "請先完成基礎模組以解鎖此模組。",
-    "goToFoundation": "前往基礎模組"
+    "goToFoundation": "前往基礎模組",
+    "completeFoundationFirst": "請先完成基礎模組",
+    "setAsDailyLesson": "設為每日課程",
+    "currentModule": "目前模組"
   },
   "coachChat": {
     "headerTitle": "Nora 教練",

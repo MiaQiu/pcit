@@ -169,7 +169,7 @@ export const HomeScreen_v2: React.FC = () => {
   const recordingService = useRecordingService();
   const uploadProcessing = useUploadProcessing();
   const { isOnline } = useNetworkStatus();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const dragonVideoRef = useRef<Video>(null);
   const tipOpacity = useRef(new Animated.Value(0)).current;
@@ -263,7 +263,7 @@ export const HomeScreen_v2: React.FC = () => {
 
       const [dashboardData, lessonsResponse, weeklyReportsData, currentUser] = await Promise.all([
         recordingService.getDashboard(),
-        lessonService.getLessons(),
+        lessonService.getLessons(undefined, i18n.language),
         recordingService.getVisibleWeeklyReports().catch(() => ({ reports: [] })),
         authService.getCurrentUser().catch(() => null),
       ]);
@@ -456,6 +456,11 @@ export const HomeScreen_v2: React.FC = () => {
       loadData('background');
     }, [])
   );
+
+  // Reload when language changes so lesson titles come back in the right locale
+  useEffect(() => {
+    loadData('background');
+  }, [i18n.language]);
 
   // Auto-refresh when upload processing completes
   useEffect(() => {

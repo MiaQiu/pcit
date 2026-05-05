@@ -7,8 +7,11 @@ const crypto = require('crypto');
 const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
 const { resolveDragonImageUrl } = require('../services/storage-s3.cjs');
+const { localeMiddleware } = require('../middleware/locale.cjs');
 
 const router = express.Router();
+
+router.use(localeMiddleware);
 
 // Maps user-selected issues to module keys
 const ISSUE_TO_MODULE = {
@@ -47,7 +50,8 @@ router.get('/', requireAuth, async (req, res) => {
 
     // Get all modules ordered by displayOrder
     const modules = await prisma.module.findMany({
-      orderBy: { displayOrder: 'asc' }
+      orderBy: { displayOrder: 'asc' },
+      include: { translations: true }
     });
 
     // Get lesson counts per module
@@ -148,19 +152,23 @@ router.get('/', requireAuth, async (req, res) => {
     }
 
     // Build response
-    const modulesWithProgress = modules.map(mod => ({
-      id: mod.id,
-      key: mod.key,
-      title: mod.title,
-      shortName: mod.shortName,
-      description: mod.description,
-      displayOrder: mod.displayOrder,
-      backgroundColor: mod.backgroundColor,
-      lessonCount: lessonCountMap[mod.key] || 0,
-      completedLessons: completedMap[mod.key] || 0,
-      lastActivityAt: lastActivityMap[mod.key] || null,
-      isLocked: false
-    }));
+    const locale = req.locale;
+    const modulesWithProgress = modules.map(mod => {
+      const tx = locale !== 'en' ? mod.translations.find(t => t.locale === locale) : null;
+      return {
+        id: mod.id,
+        key: mod.key,
+        title: tx?.title ?? mod.title,
+        shortName: mod.shortName,
+        description: tx?.description ?? mod.description,
+        displayOrder: mod.displayOrder,
+        backgroundColor: mod.backgroundColor,
+        lessonCount: lessonCountMap[mod.key] || 0,
+        completedLessons: completedMap[mod.key] || 0,
+        lastActivityAt: lastActivityMap[mod.key] || null,
+        isLocked: false
+      };
+    });
 
     // Generate content version hash
     const contentHash = crypto
@@ -197,7 +205,8 @@ router.get('/:key', requireAuth, async (req, res) => {
 
     // Get module
     const mod = await prisma.module.findUnique({
-      where: { key: moduleKey }
+      where: { key: moduleKey },
+      include: { translations: true }
     });
 
     if (!mod) {
@@ -224,30 +233,44 @@ router.get('/:key', requireAuth, async (req, res) => {
       progressMap[p.lessonId] = p;
     });
 
-    // Format lesson cards
-    const lessonCards = await Promise.all(lessons.map(async lesson => ({
-      id: lesson.id,
-      module: lesson.module,
-      title: lesson.title,
-      subtitle: lesson.subtitle,
-      description: lesson.shortDescription,
-      dayNumber: lesson.dayNumber,
-      dragonImageUrl: await resolveDragonImageUrl(lesson.dragonImageUrl),
-      imageUpdatedAt: lesson.updatedAt,
-      backgroundColor: lesson.backgroundColor,
-      ellipse77Color: lesson.ellipse77Color,
-      ellipse78Color: lesson.ellipse78Color,
-      isLocked: false,
-      progress: progressMap[lesson.id] || null
-    })));
+    // Fetch lesson translations for locale
+    const locale = req.locale;
+    let lessonTxMap = {};
+    if (locale !== 'en' && lessonIds.length > 0) {
+      const txs = await prisma.lessonTranslation.findMany({
+        where: { locale, lessonId: { in: lessonIds } }
+      });
+      txs.forEach(tx => { lessonTxMap[tx.lessonId] = tx; });
+    }
 
+    // Format lesson cards
+    const lessonCards = await Promise.all(lessons.map(async lesson => {
+      const tx = lessonTxMap[lesson.id];
+      return {
+        id: lesson.id,
+        module: lesson.module,
+        title: (tx?.title) ?? lesson.title,
+        subtitle: (tx?.subtitle) ?? lesson.subtitle,
+        description: (tx?.shortDescription) ?? lesson.shortDescription,
+        dayNumber: lesson.dayNumber,
+        dragonImageUrl: await resolveDragonImageUrl(lesson.dragonImageUrl),
+        imageUpdatedAt: lesson.updatedAt,
+        backgroundColor: lesson.backgroundColor,
+        ellipse77Color: lesson.ellipse77Color,
+        ellipse78Color: lesson.ellipse78Color,
+        isLocked: false,
+        progress: progressMap[lesson.id] || null
+      };
+    }));
+
+    const modTx = locale !== 'en' ? mod.translations.find(t => t.locale === locale) : null;
     res.json({
       module: {
         id: mod.id,
         key: mod.key,
-        title: mod.title,
+        title: modTx?.title ?? mod.title,
         shortName: mod.shortName,
-        description: mod.description,
+        description: modTx?.description ?? mod.description,
         displayOrder: mod.displayOrder,
         backgroundColor: mod.backgroundColor
       },

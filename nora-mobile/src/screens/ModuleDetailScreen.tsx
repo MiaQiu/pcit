@@ -42,7 +42,7 @@ export const ModuleDetailScreen: React.FC = () => {
   const { moduleKey } = route.params;
   const lessonService = useLessonService();
   const { showToast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { width } = useWindowDimensions();
   const cardWidth = (width - H_PAD * 2 - CARD_GAP) / 2;
 
@@ -79,14 +79,14 @@ export const ModuleDetailScreen: React.FC = () => {
     try {
       if (showSpinner) setLoading(true);
       else setIsRefreshing(true);
-      const response = await lessonService.getModuleDetail(moduleKey);
+      const response = await lessonService.getModuleDetail(moduleKey, i18n.language);
       setData(response);
       setIsLocked(false);
     } catch (error: any) {
       console.error('Failed to load module detail:', error);
       if (error?.status === 403 || error?.statusCode === 403) {
         setIsLocked(true);
-        showToast('Complete the Foundation module first', 'info');
+        showToast(t('moduleDetail.completeFoundationFirst'), 'info');
       }
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export const ModuleDetailScreen: React.FC = () => {
     try {
       await userStorage.setItem('module_picker_selected_module', moduleKey);
       setIsCurrentModule(true);
-      showToast('Set as your daily lesson', 'success');
+      showToast(t('moduleDetail.setAsDailyLesson'), 'success');
     } catch {}
   };
 
@@ -196,7 +196,7 @@ export const ModuleDetailScreen: React.FC = () => {
             >
               {isCurrentModule && <Ionicons name="checkmark" size={16} color={COLORS.mainPurple} />}
               <Text style={isCurrentModule ? styles.currentModuleBtnText : styles.startModuleBtnText}>
-                {isCurrentModule ? 'Current module' : 'Set as daily lesson'}
+                {isCurrentModule ? t('moduleDetail.currentModule') : t('moduleDetail.setAsDailyLesson')}
               </Text>
             </TouchableOpacity>
           )}

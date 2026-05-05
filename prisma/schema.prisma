@@ -30,17 +30,32 @@ model LearningProgress {
 }
 
 model Module {
-  id              String       @id @default(uuid())
-  key             LessonModule @unique
+  id              String              @id @default(uuid())
+  key             LessonModule        @unique
   title           String
   shortName       String
   description     String
   displayOrder    Int
-  backgroundColor String      @default("#E4E4FF")
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  backgroundColor String              @default("#E4E4FF")
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  translations    ModuleTranslation[]
 
   @@index([displayOrder])
+}
+
+model ModuleTranslation {
+  moduleId      String
+  locale        String
+  title         String
+  description   String
+  autoTranslated Boolean  @default(true)
+  reviewed      Boolean   @default(false)
+  translatedAt  DateTime  @default(now())
+  module        Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@id([moduleId, locale])
+  @@index([locale])
 }
 
 model Lesson {
@@ -59,33 +74,67 @@ model Lesson {
   ellipse78Color     String               @default("#A6E0CB")
   createdAt          DateTime             @default(now())
   updatedAt          DateTime
-  LessonSegment      LessonSegment[]
-  Quiz               Quiz?
-  UserLessonProgress UserLessonProgress[]
+  LessonSegment        LessonSegment[]
+  LessonTranslation    LessonTranslation[]
+  Quiz                 Quiz?
+  UserLessonProgress   UserLessonProgress[]
 
   @@unique([module, dayNumber])
   @@index([module])
 }
 
+model LessonTranslation {
+  lessonId         String
+  locale           String
+  title            String
+  subtitle         String?
+  shortDescription String
+  objectives       String[]
+  autoTranslated   Boolean  @default(true)
+  reviewed         Boolean  @default(false)
+  translatedAt     DateTime @default(now())
+  lesson           Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@id([lessonId, locale])
+  @@index([locale])
+}
+
 model LessonSegment {
-  id                String              @id
-  lessonId          String
-  order             Int
-  sectionTitle      String?
-  contentType       ContentType
-  bodyText          String
-  imageUrl          String?
-  iconType          String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime
-  aiCheckMode       String?
-  idealAnswer       String?
-  customHtml        String?
-  Lesson            Lesson              @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  TextInputResponse TextInputResponse[]
+  id                       String                     @id
+  lessonId                 String
+  order                    Int
+  sectionTitle             String?
+  contentType              ContentType
+  bodyText                 String
+  imageUrl                 String?
+  iconType                 String?
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime
+  aiCheckMode              String?
+  idealAnswer              String?
+  customHtml               String?
+  Lesson                   Lesson                     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  LessonSegmentTranslation LessonSegmentTranslation[]
+  TextInputResponse        TextInputResponse[]
 
   @@unique([lessonId, order])
   @@index([lessonId])
+}
+
+model LessonSegmentTranslation {
+  segmentId      String
+  locale         String
+  sectionTitle   String?
+  bodyText       String
+  idealAnswer    String?
+  customHtml     String?
+  autoTranslated Boolean       @default(true)
+  reviewed       Boolean       @default(false)
+  translatedAt   DateTime      @default(now())
+  segment        LessonSegment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  @@id([segmentId, locale])
+  @@index([locale])
 }
 
 model ModuleHistory {
@@ -129,20 +178,37 @@ model Phq2Survey {
 }
 
 model Quiz {
-  id               String         @id
-  lessonId         String         @unique
+  id               String           @id
+  lessonId         String           @unique
   question         String
   correctAnswer    String
   explanation      String
   wrongExplanation String?
   quizPosition     Int?
-  createdAt        DateTime       @default(now())
+  createdAt        DateTime         @default(now())
   updatedAt        DateTime
-  Lesson        Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  QuizOption    QuizOption[]
-  QuizResponse  QuizResponse[]
+  Lesson           Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  QuizOption       QuizOption[]
+  QuizResponse     QuizResponse[]
+  QuizTranslation  QuizTranslation[]
 
   @@index([lessonId])
+}
+
+model QuizTranslation {
+  quizId           String
+  locale           String
+  question         String
+  options          Json
+  explanation      String
+  wrongExplanation String?
+  autoTranslated   Boolean  @default(true)
+  reviewed         Boolean  @default(false)
+  translatedAt     DateTime @default(now())
+  quiz             Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@id([quizId, locale])
+  @@index([locale])
 }
 
 model QuizOption {

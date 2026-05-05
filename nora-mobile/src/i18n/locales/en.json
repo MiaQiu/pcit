@@ -402,7 +402,8 @@
     "buttonCheckAnswer": "Check Answer",
     "buttonTakeQuiz": "Take Quiz →",
     "buttonNextLesson": "Next Lesson →",
-    "buttonBack": "← Back"
+    "buttonBack": "← Back",
+    "loadingLesson": "Loading lesson..."
   },
   "progress": {
     "weeklyReport": "Weekly Report",
@@ -713,7 +714,10 @@
   "moduleDetail": {
     "moduleLocked": "Module Locked",
     "lockedMessage": "Complete the Foundation module first to unlock this module.",
-    "goToFoundation": "Go to Foundation"
+    "goToFoundation": "Go to Foundation",
+    "completeFoundationFirst": "Complete the Foundation module first",
+    "setAsDailyLesson": "Set as daily lesson",
+    "currentModule": "Current module"
   },
   "coachChat": {
     "headerTitle": "Nora Coach",

@@ -193,7 +193,7 @@ export const LearnScreen_v2: React.FC = () => {
   const lessonService = useLessonService();
   const { isOnline } = useNetworkStatus();
   const { showToast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const scrollViewRef = React.useRef<ScrollView>(null);
   const { width } = useWindowDimensions();
   const cardWidth = (width - H_PAD * 2) / 2.3;
@@ -211,6 +211,10 @@ export const LearnScreen_v2: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    loadData(false);
+  }, [i18n.language]);
 
   useEffect(() => {
     if (allLessons.length === 0) return;
@@ -244,9 +248,10 @@ export const LearnScreen_v2: React.FC = () => {
       if (showLoadingSpinner) setLoading(true);
       else setIsRefreshing(true);
 
+      const locale = i18n.language;
       const [modulesRes, lessonsRes] = await Promise.all([
-        lessonService.getModules(),
-        lessonService.getLessons(),
+        lessonService.getModules(locale),
+        lessonService.getLessons(undefined, locale),
       ]);
 
       handleApiSuccess();

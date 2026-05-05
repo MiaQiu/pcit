@@ -311,7 +311,7 @@ interface LessonViewerScreenProps {
 
 export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, navigation }) => {
   const { lessonId, moduleKey, nextLessonId } = route.params;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const lessonService = useLessonService();
   const authService = useAuthService();
   const insets = useSafeAreaInsets();
@@ -403,7 +403,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     try {
       setLoading(true);
 
-      const data = await lessonService.getLessonDetail(lessonId);
+      const data = await lessonService.getLessonDetail(lessonId, i18n.language);
       setLessonData(data);
 
       if (data.keywords) {
@@ -623,7 +623,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
       if (lessonData.lesson.module === 'FOUNDATION') {
         try {
-          const modulesResponse = await lessonService.getModules();
+          const modulesResponse = await lessonService.getModules(i18n.language);
           if (modulesResponse.isFoundationCompleted) {
             navigation.navigate('MainTabs', { screen: 'Home', params: { showModulePicker: true } });
             return;
@@ -721,7 +721,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.mainPurple} />
-          <Text style={styles.loadingText}>Loading lesson...</Text>
+          <Text style={styles.loadingText}>{t('lessonViewer.loadingLesson')}</Text>
         </View>
       </SafeAreaView>
     );
