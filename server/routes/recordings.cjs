@@ -129,10 +129,10 @@ function transformDomainsToAboutChild(domains) {
  * Start transcription and analysis in background
  * Handles retry logic and failure notifications
  */
-async function startBackgroundProcessing(sessionId, userId, storagePath, durationSeconds) {
+async function startBackgroundProcessing(sessionId, userId, storagePath, durationSeconds, preferredLanguage) {
   try {
     // Transcription + analysis with retry (transcription is now inside the retry boundary)
-    await processRecordingWithRetry(sessionId, userId, storagePath, durationSeconds, 0);
+    await processRecordingWithRetry(sessionId, userId, storagePath, durationSeconds, 0, preferredLanguage);
   } catch (err) {
     if (err instanceof SessionQualityError || err instanceof PermanentFailureError) {
       console.log(`⚠️ [QUALITY-REJECTED] Session ${sessionId.substring(0, 8)} rejected: ${err.userMessage}`);
@@ -155,7 +155,7 @@ async function startBackgroundProcessing(sessionId, userId, storagePath, duratio
 router.post('/upload/init', requireAuth, async (req, res) => {
   try {
     const userId = req.userId;
-    const { durationSeconds, mimeType = 'audio/m4a', mode: requestedMode, preferredLanguage } = req.body;
+    const { durationSeconds, mimeType = 'audio/m4a', mode: requestedMode } = req.body;
 
     if (!durationSeconds || durationSeconds < 1) {
       return res.status(400).json({
@@ -185,8 +185,7 @@ router.post('/upload/init', requireAuth, async (req, res) => {
         masteryAchieved: false,
         riskScore: 0,
         flaggedForReview: false,
-        analysisStatus: 'PENDING',
-        ...(preferredLanguage ? { preferredLanguage } : {})
+        analysisStatus: 'PENDING'
       }
     });
 
@@ -230,7 +229,7 @@ router.post('/upload/init', requireAuth, async (req, res) => {
 router.post('/upload/complete', requireAuth, async (req, res) => {
   try {
     const userId = req.userId;
-    const { sessionId, uploadKey } = req.body;
+    const { sessionId, uploadKey, preferredLanguage } = req.body;
 
     if (!sessionId || !uploadKey) {
       return res.status(400).json({
@@ -271,7 +270,7 @@ router.post('/upload/complete', requireAuth, async (req, res) => {
 
     // Trigger background processing (non-blocking)
     console.log(`[UPLOAD-COMPLETE] Triggering background processing for session ${sessionId.substring(0, 8)}`);
-    startBackgroundProcessing(sessionId, userId, uploadKey, session.durationSeconds)
+    startBackgroundProcessing(sessionId, userId, uploadKey, session.durationSeconds, preferredLanguage)
       .then(() => {
         console.log(`✅ [UPLOAD-COMPLETE] Background processing completed for session ${sessionId.substring(0, 8)}`);
       })

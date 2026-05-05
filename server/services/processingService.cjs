@@ -182,7 +182,7 @@ async function notifyQualityRejection(sessionId, userId, error) {
  * @param {number} durationSeconds - Recording duration in seconds
  * @param {number} attemptNumber - Current attempt number (0-indexed)
  */
-async function processRecordingWithRetry(sessionId, userId, storagePath, durationSeconds, attemptNumber = 0) {
+async function processRecordingWithRetry(sessionId, userId, storagePath, durationSeconds, attemptNumber = 0, preferredLanguage = null) {
   const maxAttempts = 3;
   const retryDelays = [0, 5000, 15000]; // 0s, 5s, 15s
 
@@ -220,7 +220,7 @@ async function processRecordingWithRetry(sessionId, userId, storagePath, duratio
     });
 
     // Run the actual processing (PCIT analysis)
-    await analyzePCITCoding(sessionId, userId);
+    await analyzePCITCoding(sessionId, userId, preferredLanguage);
 
     // Success! Log it
     console.log(`✅ [PROCESSING-SUCCESS] Session ${sessionId.substring(0, 8)} completed on attempt ${attemptNumber + 1}`);
@@ -274,7 +274,7 @@ async function processRecordingWithRetry(sessionId, userId, storagePath, duratio
       await new Promise(resolve => setTimeout(resolve, delay));
 
       // Retry recursively
-      return processRecordingWithRetry(sessionId, userId, storagePath, durationSeconds, attemptNumber + 1);
+      return processRecordingWithRetry(sessionId, userId, storagePath, durationSeconds, attemptNumber + 1, preferredLanguage);
     }
 
     // All retries exhausted - throw error to be caught by caller

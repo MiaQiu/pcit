@@ -481,8 +481,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
           body: JSON.stringify({
             durationSeconds,
             mimeType,
-            mode,
-            preferredLanguage: i18n.language !== 'en' ? i18n.language : undefined
+            mode
           })
         });
 
@@ -595,7 +594,8 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
           },
           body: JSON.stringify({
             sessionId,
-            uploadKey
+            uploadKey,
+            preferredLanguage: i18n.language !== 'en' ? i18n.language : undefined
           })
         });
 

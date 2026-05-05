@@ -1334,7 +1334,7 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
  * @param {string} sessionId - Session ID
  * @param {string} userId - User ID
  */
-async function analyzePCITCoding(sessionId, userId) {
+async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
   console.log(`\n${'='.repeat(80)}`);
   console.log(`🏷️  [ANALYSIS-START] Session ${sessionId.substring(0, 8)} - Starting PCIT analysis`);
   console.log(`🏷️  [ANALYSIS-START] User: ${userId.substring(0, 8)}`);
@@ -1438,10 +1438,10 @@ async function analyzePCITCoding(sessionId, userId) {
   const detectedLanguage = session.elevenLabsJson?.language_code || null;
   const CHINESE_CODES = new Set(['zho', 'cmn']);
   const primaryLanguage = (
-    CHINESE_CODES.has(detectedLanguage) && session.preferredLanguage === 'zh-TW'
+    CHINESE_CODES.has(detectedLanguage) && preferredLanguage === 'zh-TW'
   ) ? 'zh-TW' : detectedLanguage;
   if (primaryLanguage && primaryLanguage !== 'eng') {
-    console.log(`🌐 [ANALYSIS] Primary language: ${primaryLanguage} (detected: ${detectedLanguage}, preferred: ${session.preferredLanguage || 'none'})`);
+    console.log(`🌐 [ANALYSIS] Primary language: ${primaryLanguage} (detected: ${detectedLanguage}, preferred: ${preferredLanguage || 'none'})`);
   }
 
   // STEP 1: Identify speaker roles (skip if already done on a previous attempt)
