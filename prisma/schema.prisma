@@ -238,6 +238,7 @@ model Session {
   coachingCards          Json?
   milestoneCelebrations  Json?
   userFeedback           Json?
+  preferredLanguage      String?
   User                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   Utterance              Utterance[]
   ChildProfiling         ChildProfiling?

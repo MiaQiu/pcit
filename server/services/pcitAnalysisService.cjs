@@ -1432,10 +1432,16 @@ async function analyzePCITCoding(sessionId, userId) {
 
   const isCDI = session.mode === 'CDI';
 
-  // Detect primary language from ElevenLabs transcription result
-  const primaryLanguage = session.elevenLabsJson?.language_code || null;
+  // Detect primary language from ElevenLabs transcription result.
+  // If ElevenLabs detects Chinese (zho/cmn) and the user's preferred language is
+  // Traditional Chinese (zh-TW), honour that preference over the generic Mandarin code.
+  const detectedLanguage = session.elevenLabsJson?.language_code || null;
+  const CHINESE_CODES = new Set(['zho', 'cmn']);
+  const primaryLanguage = (
+    CHINESE_CODES.has(detectedLanguage) && session.preferredLanguage === 'zh-TW'
+  ) ? 'zh-TW' : detectedLanguage;
   if (primaryLanguage && primaryLanguage !== 'eng') {
-    console.log(`🌐 [ANALYSIS] Primary language detected: ${primaryLanguage}`);
+    console.log(`🌐 [ANALYSIS] Primary language: ${primaryLanguage} (detected: ${detectedLanguage}, preferred: ${session.preferredLanguage || 'none'})`);
   }
 
   // STEP 1: Identify speaker roles (skip if already done on a previous attempt)

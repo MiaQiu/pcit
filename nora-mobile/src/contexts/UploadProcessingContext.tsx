@@ -11,6 +11,7 @@ import { useRecordingService, useAuthService } from './AppContext';
 import { handleApiError, ApiError } from '../utils/NetworkMonitor';
 import { ErrorMessages } from '../utils/errorMessages';
 import amplitudeService from '../services/amplitudeService';
+import i18n from '../i18n';
 
 /**
  * Map technical backend error messages to user-friendly messages
@@ -480,7 +481,8 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
           body: JSON.stringify({
             durationSeconds,
             mimeType,
-            mode
+            mode,
+            preferredLanguage: i18n.language !== 'en' ? i18n.language : undefined
           })
         });
 

@@ -56,6 +56,7 @@ const LANGUAGE_NAMES = {
   mlt: 'Maltese',
   cmn: 'Mandarin Chinese',
   zho: 'Mandarin Chinese',  // ISO 639-3 macrolanguage code used by ElevenLabs
+  'zh-TW': 'Traditional Chinese',
   mar: 'Marathi',
   nep: 'Nepali',
   ori: 'Odia',

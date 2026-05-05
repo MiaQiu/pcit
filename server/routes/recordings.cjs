@@ -155,7 +155,7 @@ async function startBackgroundProcessing(sessionId, userId, storagePath, duratio
 router.post('/upload/init', requireAuth, async (req, res) => {
   try {
     const userId = req.userId;
-    const { durationSeconds, mimeType = 'audio/m4a', mode: requestedMode } = req.body;
+    const { durationSeconds, mimeType = 'audio/m4a', mode: requestedMode, preferredLanguage } = req.body;
 
     if (!durationSeconds || durationSeconds < 1) {
       return res.status(400).json({
@@ -185,7 +185,8 @@ router.post('/upload/init', requireAuth, async (req, res) => {
         masteryAchieved: false,
         riskScore: 0,
         flaggedForReview: false,
-        analysisStatus: 'PENDING'
+        analysisStatus: 'PENDING',
+        ...(preferredLanguage ? { preferredLanguage } : {})
       }
     });
 
@@ -616,6 +617,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       end: utt.endTime,
       role: utt.role,
       tag: utt.noraTag,
+      pcitTag: utt.pcitTag,
       feedback: utt.feedback,
       revisedFeedback: utt.revisedFeedback,
       additionalTip: utt.additionalTip
