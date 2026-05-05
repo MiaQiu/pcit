@@ -883,7 +883,8 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
     console.log(`📊 [CDI-COACHING] Step 3: Calling ${AI_PROVIDER} to format coaching sections...`);
 
     const formatPrompt = loadPromptWithVariables('cdiCoachingFormat', {
-      COACHING_REPORT: coachingReport
+      COACHING_REPORT: coachingReport,
+      LANGUAGE_INSTRUCTION: variables.LANGUAGE_INSTRUCTION || ''
     });
 
     let formatted;
@@ -1189,28 +1190,18 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
     UTTERANCES_JSON: JSON.stringify(utterancesForPrompt, null, 2)
   });
 
-  console.log(`📊 [ROLE-ID-VOTE] Running 3-way role identification in parallel (Gemini + Claude + ML)...`);
+  // ── Phase 1: Gemini + ML in parallel ─────────────────────────────────────
+  console.log(`📊 [ROLE-ID-VOTE] Phase 1: Gemini + ML in parallel...`);
 
-  const [geminiSettled, claudeSettled, mlSettled] = await Promise.allSettled([
+  const [geminiSettled, mlSettled] = await Promise.allSettled([
     callGeminiStreaming(
       [{ role: 'user', parts: [{ text: prompt }] }],
       { temperature: 0.3, maxOutputTokens: 4096, timeout: 60000, sessionId }
     ).then(raw => parseJSON(raw, 'object').value),
-
-    llmCall(prompt, {
-      model: 'claude-sonnet-4-6',
-      output: 'json',
-      maxTokens: 2048,
-      temperature: 0.3,
-      label: 'role-id-claude',
-      sessionId
-    }),
-
     classifySpeakersML(storagePath, utterances, sessionId)
   ]);
 
-  // ── Collect votes ────────────────────────────────────────────────────────
-  const votes = [];  // [{ source, map: { speaker_X: 'adult'|'child' }, full? }]
+  const votes = [];
 
   if (geminiSettled.status === 'fulfilled' && geminiSettled.value?.speaker_identification) {
     const map = {};
@@ -1221,17 +1212,6 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
     console.log(`✅ [ROLE-ID-VOTE] Gemini: ${JSON.stringify(map)}`);
   } else {
     console.warn(`⚠️ [ROLE-ID-VOTE] Gemini failed: ${geminiSettled.reason?.message}`);
-  }
-
-  if (claudeSettled.status === 'fulfilled' && claudeSettled.value?.speaker_identification) {
-    const map = {};
-    for (const [id, info] of Object.entries(claudeSettled.value.speaker_identification)) {
-      map[id] = (info.role || '').toLowerCase();
-    }
-    votes.push({ source: 'claude', map, full: claudeSettled.value });
-    console.log(`✅ [ROLE-ID-VOTE] Claude: ${JSON.stringify(map)}`);
-  } else {
-    console.warn(`⚠️ [ROLE-ID-VOTE] Claude failed: ${claudeSettled.reason?.message}`);
   }
 
   if (mlSettled.status === 'fulfilled' && mlSettled.value) {
@@ -1248,10 +1228,49 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
   }
 
   if (votes.length === 0) {
-    throw new Error('All role identification methods failed');
+    throw new Error('Both Gemini and ML role identification failed');
   }
 
-  // ── Per-speaker utterance counts (used in stored JSON) ───────────────────
+  // ── Check for disagreements ───────────────────────────────────────────────
+  const allSpeakers = new Set(votes.flatMap(v => Object.keys(v.map)));
+  const disagreements = [];
+
+  if (votes.length >= 2) {
+    for (const speakerId of allSpeakers) {
+      const speakerVotes = votes.map(v => v.map[speakerId]).filter(Boolean);
+      if (new Set(speakerVotes).size > 1) {
+        disagreements.push(speakerId);
+        console.warn(`⚠️ [ROLE-ID-VOTE] ${speakerId} disagreement: ${votes.map(v => `${v.source}→${v.map[speakerId] ?? '?'}`).join(' | ')}`);
+      }
+    }
+  }
+
+  // ── Phase 2: Claude tiebreaker (only on disagreement) ────────────────────
+  if (disagreements.length > 0) {
+    console.log(`📊 [ROLE-ID-VOTE] Phase 2: Claude resolving ${disagreements.length} disagreement(s)...`);
+    try {
+      const claudeResult = await llmCall(prompt, {
+        model: 'claude-sonnet-4-6',
+        output: 'json',
+        maxTokens: 2048,
+        temperature: 0.3,
+        label: 'role-id-claude',
+        sessionId
+      });
+      if (claudeResult?.speaker_identification) {
+        const map = {};
+        for (const [id, info] of Object.entries(claudeResult.speaker_identification)) {
+          map[id] = (info.role || '').toLowerCase();
+        }
+        votes.push({ source: 'claude', map, full: claudeResult });
+        console.log(`✅ [ROLE-ID-VOTE] Claude: ${JSON.stringify(map)}`);
+      }
+    } catch (claudeError) {
+      console.warn(`⚠️ [ROLE-ID-VOTE] Claude failed: ${claudeError.message}`);
+    }
+  }
+
+  // ── Majority vote per speaker ─────────────────────────────────────────────
   const uttCounts = {};
   for (const u of utterances) {
     if (u.speaker && u.speaker !== SILENT_SPEAKER_ID) {
@@ -1259,8 +1278,6 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
     }
   }
 
-  // ── Majority vote ────────────────────────────────────────────────────────
-  const allSpeakers = new Set(votes.flatMap(v => Object.keys(v.map)));
   const roleMap = {};
   const voteDetail = {};
 
@@ -1274,22 +1291,16 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
     let winner;
     if (adultN > childN) winner = 'adult';
     else if (childN > adultN) winner = 'child';
-    else winner = speakerVotes[0]?.role || 'adult';  // tie-break: first available
+    else winner = speakerVotes[0]?.role || 'adult';  // tie: first available
 
     roleMap[speakerId] = winner;
     voteDetail[speakerId] = { adult: adultN, child: childN, winner, votes: speakerVotes };
-
-    if (adultN > 0 && childN > 0) {
-      console.warn(`⚠️ [ROLE-ID-VOTE] ${speakerId} disagreement: adult=${adultN} child=${childN} → ${winner}`);
-    }
   }
 
   const sources = votes.map(v => v.source);
   console.log(`✅ [ROLE-ID-VOTE] Final (${sources.join('+')}): ${JSON.stringify(roleMap)}`);
 
-  // ── Build roleIdentificationJson compatible with downstream consumers ────
-  // Use the LLM result as base (has confidence/utterance_count metadata),
-  // then override roles with the voted result.
+  // ── Build roleIdentificationJson ──────────────────────────────────────────
   const baseFull = (votes.find(v => v.source === 'gemini') || votes.find(v => v.source === 'claude'))?.full;
   const baseSpeakers = baseFull?.speaker_identification || {};
 
@@ -1303,13 +1314,14 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
     };
   }
 
-  const roleIdentificationJson = {
-    speaker_identification,
-    _vote_sources: sources,
-    _vote_detail: voteDetail
+  return {
+    roleIdentificationJson: {
+      speaker_identification,
+      _vote_sources: sources,
+      _vote_detail: voteDetail
+    },
+    roleMap
   };
-
-  return { roleIdentificationJson, roleMap };
 }
 
 // ============================================================================
@@ -1924,6 +1936,7 @@ module.exports = {
   SessionQualityError,
   PermanentFailureError,
   analyzePCITCoding,
+  identifyRolesWithVoting,
   generateCDIFeedback,
   generatePDITwoChoicesAnalysis,
   generateDevelopmentalProfiling,
