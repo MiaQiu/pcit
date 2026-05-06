@@ -988,7 +988,10 @@
     },
     "playSession3": {
       "title": "Record Using Nora App",
-      "subtitle": "Set your phone nearby where it can clearly hear your conversation. You don't need to hold it—just focus on the play!"
+      "subtitle": "Set your phone nearby where it can clearly hear your conversation. You don't need to hold it—just focus on the play!",
+      "cardLabel": "Daily Emotional Massage",
+      "cardContent": "Let {{name}} lead today's 5-minute play to grow their emotional bank. Easy progress every day, witness {{name}}'s growth.",
+      "cardButton": "Record the Playtime Now"
     },
     "playSession4": {
       "title": "Short Play, Big Insights",

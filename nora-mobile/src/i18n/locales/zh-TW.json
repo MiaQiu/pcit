@@ -988,7 +988,10 @@
     },
     "playSession3": {
       "title": "使用 Nora App 錄製",
-      "subtitle": "將手機放在附近能清楚聽到對話的地方。您無須手持——只需專注於遊戲！"
+      "subtitle": "將手機放在附近能清楚聽到對話的地方。您無須手持——只需專注於遊戲！",
+      "cardLabel": "每日情感按摩",
+      "cardContent": "讓{{name}}主導今天的5分鐘遊戲，來增加他們的情感存款。每天輕鬆進步，見證{{name}}的成長。",
+      "cardButton": "立即錄製遊戲時間"
     },
     "playSession4": {
       "title": "短暫遊戲，深度洞察",

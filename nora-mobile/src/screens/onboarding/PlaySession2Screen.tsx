@@ -6,6 +6,7 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  type DimensionValue,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -16,7 +17,7 @@ import { OnboardingBackButton } from '../../components/OnboardingBackButton';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_SIZE = SCREEN_WIDTH - 40;
 
-const PolaroidLabel: React.FC<{ text: string; top: string; rotate: string }> = ({ text, top, rotate }) => (
+const PolaroidLabel: React.FC<{ text: string; top: DimensionValue; rotate: string }> = ({ text, top, rotate }) => (
   <View style={[labelStyles.row, { top }]}>
     <Text style={[labelStyles.text, { transform: [{ rotate }] }]}>{text}</Text>
   </View>
