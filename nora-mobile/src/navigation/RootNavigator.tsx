@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as userStorage from '../lib/userStorage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -58,7 +58,6 @@ export const RootNavigator: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<string | null>(null);
   const [resumeUserData, setResumeUserData] = useState<User | null>(null);
-  const [hasCheckError, setHasCheckError] = useState(false);
   const [updateRequired, setUpdateRequired] = useState(false);
   const [softUpdate, setSoftUpdate] = useState<{ version: string; whatsNew: string[] } | null>(null);
   const navigationRef = useRef<any>(null);
@@ -103,12 +102,6 @@ export const RootNavigator: React.FC = () => {
     authService.setSessionExpiredCallback(handleSessionExpired);
     authService.setLogoutCallback(handleLogout);
   }, [authService, handleSessionExpired, handleLogout]);
-
-  const retryAuthCheck = () => {
-    setHasCheckError(false);
-    setIsLoading(true);
-    checkAuthStatus();
-  };
 
   const dismissSoftUpdate = async () => {
     if (softUpdate) {
@@ -181,8 +174,8 @@ export const RootNavigator: React.FC = () => {
             relationshipToChild: user.relationshipToChild,
           });
         } catch (error) {
-          console.error('[Auth] Onboarding check failed:', error);
-          setHasCheckError(true);
+          console.error('[Auth] Onboarding check failed, falling back to login:', error);
+          setIsAuthenticated(false);
           setIsLoading(false);
           return;
         }
@@ -219,17 +212,6 @@ export const RootNavigator: React.FC = () => {
 
   if (updateRequired) {
     return <ForceUpdateScreen />;
-  }
-
-  if (hasCheckError) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>Unable to connect. Please check your connection and try again.</Text>
-        <TouchableOpacity onPress={retryAuthCheck} style={styles.retryButton}>
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
   }
 
   const shouldShowOnboarding = !isAuthenticated || onboardingStep !== null;
@@ -396,23 +378,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#333',
-    textAlign: 'center',
-    marginHorizontal: 32,
-    marginBottom: 24,
-  },
-  retryButton: {
-    backgroundColor: '#8C49D5',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

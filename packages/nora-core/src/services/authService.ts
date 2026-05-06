@@ -209,6 +209,10 @@ class AuthService {
       }
     }
 
+    // Read stale cache before any network attempt — clearTokens() (called on 401 refresh
+    // failure) wipes it, so we must capture it here while it still exists.
+    const staleCacheRaw = await this.storage.getItem('cachedUser');
+
     // Fetch from API
     try {
       const response = await fetch(`${this.apiUrl}/api/auth/me`, {
@@ -238,12 +242,12 @@ class AuthService {
 
       return user;
     } catch (error) {
-      // If we hit a network error and have a cached user (even expired), use it
-      const cachedUser = await this.storage.getItem('cachedUser');
-      if (cachedUser) {
+      // If we hit a network error and have a cached user (even expired), use it.
+      // Use the snapshot captured before the request — clearTokens() may have wiped it.
+      if (staleCacheRaw) {
         console.log('[AuthService] Network error, using stale cache as fallback');
         try {
-          const { user } = JSON.parse(cachedUser);
+          const { user } = JSON.parse(staleCacheRaw);
           return user;
         } catch (parseError) {
           // Cache corrupted, throw original error
