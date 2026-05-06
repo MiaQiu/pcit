@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { OnboardingBackButton } from '../../components/OnboardingBackButton';
+import amplitudeService from '../../services/amplitudeService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const H_PAD = 16;
@@ -132,6 +133,8 @@ export const PlaySession4Screen: React.FC = () => {
   const c = (key: string) => t(`onboarding.playSession4.cards.${key}`);
   const d = (key: string) => t(`onboarding.demo2B.${key}`);
 
+  useEffect(() => { amplitudeService.trackOnboardingScreen('play_session4', 33); }, []);
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.titleContainer}>
@@ -193,7 +196,7 @@ export const PlaySession4Screen: React.FC = () => {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         <OnboardingBackButton onPress={() => navigation.goBack()} />
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('PlaySession5')} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.button} onPress={() => { amplitudeService.trackOnboardingStepCompleted('play_session4', 33); navigation.navigate('PlaySession5'); }} activeOpacity={0.85}>
           <Text style={styles.buttonText}>{t('onboarding.continue')}</Text>
         </TouchableOpacity>
       </View>

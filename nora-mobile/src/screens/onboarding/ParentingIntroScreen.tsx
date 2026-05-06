@@ -3,7 +3,7 @@
  * "Just 5 minutes a day can make a difference." - Shown after Demo6
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,12 +16,15 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
+import amplitudeService from '../../services/amplitudeService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const ParentingIntroScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { t } = useTranslation();
+
+  useEffect(() => { amplitudeService.trackOnboardingScreen('parenting_intro', 11); }, []);
 
   const CHECK_ITEMS = [
     t('onboarding.parentingIntro.benefit1'),
@@ -64,7 +67,7 @@ export const ParentingIntroScreen: React.FC = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('NameInput')}
+          onPress={() => { amplitudeService.trackOnboardingStepCompleted('parenting_intro', 11); navigation.navigate('NameInput'); }}
           activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>{t('onboarding.parentingIntro.continueButton')}</Text>

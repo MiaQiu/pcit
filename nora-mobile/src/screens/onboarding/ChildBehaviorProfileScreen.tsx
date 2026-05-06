@@ -3,7 +3,7 @@
  * Shows the child's WACB behavior profile snapshot based on total survey score
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp, OnboardingStackParamList } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { COLORS, FONTS } from '../../constants/assets';
+import amplitudeService from '../../services/amplitudeService';
 
 type BehaviorCategory = 'stable' | 'mild' | 'medium' | 'high';
 
@@ -75,6 +76,8 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
   const route = useRoute<RouteProp<OnboardingStackParamList, 'ChildBehaviorProfile'>>();
   const locked = route.params?.locked ?? false;
   const { data } = useOnboarding();
+
+  useEffect(() => { amplitudeService.trackOnboardingScreen('child_behavior_profile', 28); }, []);
 
   const childName = data.childName || 'Your child';
   const totalScore = useMemo(() => computeTotalScore(data.wacb), [data.wacb]);
@@ -252,7 +255,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('Intro3')}
+          onPress={() => { amplitudeService.trackOnboardingStepCompleted('child_behavior_profile', 28); navigation.navigate('Intro3'); }}
           activeOpacity={0.85}
         >
           <Text style={styles.buttonText}>{t('onboarding.childBehaviorProfile.continueButton')}</Text>

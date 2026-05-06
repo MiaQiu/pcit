@@ -3,7 +3,7 @@
  * Introduces "Emotional Massage" concept before the play session preview
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 
 import { OnboardingBackButton } from '../../components/OnboardingBackButton';
+import amplitudeService from '../../services/amplitudeService';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -26,6 +27,8 @@ export const Intro3Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+
+  useEffect(() => { amplitudeService.trackOnboardingScreen('intro3', 29); }, []);
 
   return (
     <View style={styles.container}>
@@ -56,7 +59,7 @@ export const Intro3Screen: React.FC = () => {
           <OnboardingBackButton onPress={() => navigation.goBack()} />
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate('PlaySession1')}
+            onPress={() => { amplitudeService.trackOnboardingStepCompleted('intro3', 29); navigation.navigate('PlaySession1'); }}
             activeOpacity={0.85}
           >
             <Text style={styles.buttonText}>{t('onboarding.letsBegin')}</Text>

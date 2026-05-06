@@ -3,7 +3,7 @@
  * User enters their name
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ import { OnboardingLayout } from '../../components/OnboardingLayout';
 import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingTextInput } from '../../components/OnboardingTextInput';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
+import amplitudeService from '../../services/amplitudeService';
 
 export const NameInputScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -20,9 +21,12 @@ export const NameInputScreen: React.FC = () => {
   const { t } = useTranslation();
   const [name, setName] = useState(data.name);
 
+  useEffect(() => { amplitudeService.trackOnboardingScreen('name_input', 12); }, []);
+
   const handleContinue = () => {
     if (name.trim()) {
       updateData({ name: name.trim() });
+      amplitudeService.trackOnboardingStepCompleted('name_input', 12);
       navigation.navigate('Relationship');
     }
   };

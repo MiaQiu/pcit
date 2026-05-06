@@ -3,7 +3,7 @@
  * Shown after ChildIssue, before WacbQuestion1.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   View,
@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { OnboardingBackButton } from '../../components/OnboardingBackButton';
+import amplitudeService from '../../services/amplitudeService';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -28,6 +29,8 @@ export const ChildSnapshotIntroScreen: React.FC = () => {
   const { t } = useTranslation();
   const userName = data.name || 'there';
   const childName = data.childName || 'your child';
+
+  useEffect(() => { amplitudeService.trackOnboardingScreen('child_snapshot_intro', 18); }, []);
   const insets = useSafeAreaInsets();
 
   return (
@@ -58,7 +61,7 @@ export const ChildSnapshotIntroScreen: React.FC = () => {
           <OnboardingBackButton onPress={() => navigation.goBack()} />
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate('WacbQuestion1')}
+            onPress={() => { amplitudeService.trackOnboardingStepCompleted('child_snapshot_intro', 18); navigation.navigate('WacbQuestion1'); }}
             activeOpacity={0.85}
           >
             <Text style={styles.buttonText}>{t('onboarding.letsGo')}</Text>

@@ -3,7 +3,7 @@
  * User enters their child's birthday with a date picker
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -12,11 +12,14 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { Picker } from '@react-native-picker/picker';
 import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
+import amplitudeService from '../../services/amplitudeService';
 
 export const ChildBirthdayScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
   const { t } = useTranslation();
+
+  useEffect(() => { amplitudeService.trackOnboardingScreen('child_birthday', 16); }, []);
 
   // Get current date for defaults
   const currentDate = new Date();
@@ -46,6 +49,7 @@ export const ChildBirthdayScreen: React.FC = () => {
     // Create a date from month and year (set day to 1st)
     const birthday = new Date(selectedYear, selectedMonth, 1);
     updateData({ childBirthday: birthday });
+    amplitudeService.trackOnboardingStepCompleted('child_birthday', 16);
     navigation.navigate('ChildIssue');
   };
 
