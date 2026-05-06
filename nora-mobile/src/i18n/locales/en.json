@@ -907,7 +907,16 @@
       "subtitle": "Parenting is hard",
       "title": "But you don't have to do it alone.",
       "meetNora": "Meet Nora",
-      "description": "Your guide to raising confident, happy kids.\nScience-backed.\nPersonalized for your child (ages 1–7)"
+      "description": "Your guide to raising confident, happy kids.\nScience-backed.\nPersonalized for your child (ages 1–7)",
+      "labels": {
+        "childDevelopment": "Child Development",
+        "attachmentScience": "Attachment Science",
+        "speechTherapy": "Speech Therapy",
+        "socialLearning": "Social Learning Science",
+        "behaviorManagement": "Behavior Management",
+        "playTherapy": "Play Therapy",
+        "authoritativeParenting": "Authoritative Parenting"
+      }
     },
     "demo1B": {
       "text": "Get simple strategies that actually work."
@@ -940,11 +949,20 @@
     },
     "playSession1": {
       "title": "Prepare the Right Toys",
-      "subtitle": "To let your child's imagination run wild, pick unstructured toys. These allow them to be the boss of the play."
+      "subtitle": "To let your child's imagination run wild, pick unstructured toys. These allow them to be the boss of the play.",
+      "labels": {
+        "buildCreate": "BUILD & CREATE",
+        "imaginePretend": "IMAGINE & PRETEND",
+        "drawExplore": "DRAW & EXPLORE",
+        "solvePuzzle": "SOLVE & PUZZLE"
+      }
     },
     "playSession2": {
       "title": "Let Your Child Lead",
-      "subtitle": "For the next 5 minutes, your goal is to be your child's biggest fan, not their teacher.\nDescribe what they're doing, repeat their words."
+      "subtitle": "For the next 5 minutes, your goal is to be your child's biggest fan, not their teacher.\nDescribe what they're doing, repeat their words.",
+      "labels": {
+        "childLedPlay": "Child-Led Play"
+      }
     },
     "playSession3": {
       "title": "Record Using Nora App",

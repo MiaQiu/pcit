@@ -29,9 +29,9 @@ async function anthropicCall(apiKey, model, opts = {}) {
   const body = {
     model,
     max_tokens:  maxTokens,
-    temperature,
     messages: [{ role: 'user', content: prompt }],
   };
+  if (temperature !== null) body.temperature = temperature;
   if (systemPrompt) body.system = systemPrompt;
 
   const controller = new AbortController();

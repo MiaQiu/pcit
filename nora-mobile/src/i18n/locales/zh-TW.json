@@ -907,7 +907,16 @@
       "subtitle": "教養並不容易",
       "title": "但您無須獨自面對。",
       "meetNora": "認識 Nora",
-      "description": "您培養自信、快樂孩子的嚮導。\n基於科學實證。\n為您的孩子 (1–7 歲) 量身打造。"
+      "description": "您培養自信、快樂孩子的嚮導。\n基於科學實證。\n為您的孩子 (1–7 歲) 量身打造。",
+      "labels": {
+        "childDevelopment": "兒童發展",
+        "attachmentScience": "依附理論",
+        "speechTherapy": "語言治療",
+        "socialLearning": "社會學習理論",
+        "behaviorManagement": "行為管理",
+        "playTherapy": "遊戲治療",
+        "authoritativeParenting": "權威式教養"
+      }
     },
     "demo1B": {
       "text": "獲得真正有效的簡單策略。"
@@ -940,11 +949,20 @@
     },
     "playSession1": {
       "title": "準備合適的玩具",
-      "subtitle": "為了讓孩子的想像力盡情發揮，請選擇非結構化的玩具。這些玩具能讓他們在遊戲中掌握主導權。"
+      "subtitle": "為了讓孩子的想像力盡情發揮，請選擇非結構化的玩具。這些玩具能讓他們在遊戲中掌握主導權。",
+      "labels": {
+        "buildCreate": "建造與創作",
+        "imaginePretend": "想像與扮演",
+        "drawExplore": "繪畫與探索",
+        "solvePuzzle": "解謎與拼圖"
+      }
     },
     "playSession2": {
       "title": "讓孩子主導",
-      "subtitle": "在接下來的 5 分鐘內，您的目標是成為孩子最大的支持者，而不是老師。\n描述他們正在做的事，重複他們說的話。"
+      "subtitle": "在接下來的 5 分鐘內，您的目標是成為孩子最大的支持者，而不是老師。\n描述他們正在做的事，重複他們說的話。",
+      "labels": {
+        "childLedPlay": "孩子主導的遊戲"
+      }
     },
     "playSession3": {
       "title": "使用 Nora App 錄製",

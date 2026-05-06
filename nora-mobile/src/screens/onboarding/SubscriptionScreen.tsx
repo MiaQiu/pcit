@@ -268,13 +268,13 @@ export const SubscriptionScreen: React.FC = () => {
       </View>
 
       {/* Early User Benefits badge — only for new users */}
-      {!isReturningUser && (
+      {/* {!isReturningUser && (
         <View style={styles.badgeContainer}>
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{t('subscription.earlyUserBenefits')}</Text>
           </View>
         </View>
-      )}
+      )} */}
 
       {/* Scrollable Content */}
       <ScrollView
@@ -288,9 +288,9 @@ export const SubscriptionScreen: React.FC = () => {
         <Text style={styles.subtitle}>
           {isReturningUser ? t('subscription.priceMonthly') : t('subscription.priceFreeTrialThenMonthly')}
         </Text>
-        {!isReturningUser && (
+        {/* {!isReturningUser && (
           <Text style={styles.regularPrice}>{t('subscription.regularPrice')}</Text>
-        )}
+        )} */}
 
         {subscriptionError && (
           <View style={styles.errorContainer}>
@@ -379,7 +379,7 @@ export const SubscriptionScreen: React.FC = () => {
             </Text>
           )}
         </TouchableOpacity>
-        <Text style={styles.betaPricing}>{t('subscription.betaPricing')}</Text>
+        {/* <Text style={styles.betaPricing}>{t('subscription.betaPricing')}</Text> */}
       </View>
     </View>
   );
@@ -450,13 +450,14 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     textAlign: 'center',
     marginBottom: 8,
+    marginTop: 32,
   },
   subtitle: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 15,
     color: '#6B7280',
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 24,
   },
   regularPrice: {
     fontFamily: 'PlusJakartaSans_400Regular',

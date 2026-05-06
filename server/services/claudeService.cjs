@@ -65,12 +65,13 @@ async function callClaudeRaw(prompt, options = {}) {
     temperature  = 0.7,
     systemPrompt = null,
     model        = 'claude-sonnet-4-6',
+    timeout      = 60_000,
   } = options;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
 
-  const { text } = await anthropicCall(apiKey, model, { prompt, systemPrompt, maxTokens, temperature });
+  const { text } = await anthropicCall(apiKey, model, { prompt, systemPrompt, maxTokens, temperature, timeout });
   return text;
 }
 

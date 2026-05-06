@@ -14,6 +14,46 @@ import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const IMAGE_SIZE = SCREEN_WIDTH - 48;
+
+// A single floating label: dot + text, absolutely positioned
+// A single floating label: dot + text, absolutely positioned
+const Label: React.FC<{ text: string; style: object; align?: 'left' | 'right' }> = ({
+  text,
+  style,
+  align = 'left',
+}) => (
+  <View style={[labelStyles.wrapper, align === 'right' && labelStyles.wrapperRight, style]}>
+    {align === 'right' && <Text style={labelStyles.text}>{text}</Text>}
+    <View style={labelStyles.dot} />
+    {align === 'left' && <Text style={labelStyles.text}>{text}</Text>}
+  </View>
+);
+
+const labelStyles = StyleSheet.create({
+  wrapper: {
+    position: 'absolute',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  wrapperRight: {
+    flexDirection: 'row-reverse',
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#8C49D5',
+  },
+  text: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 11,
+    color: '#1F2937',
+    maxWidth: 90,
+    lineHeight: 15,
+  },
+});
 
 export const Demo1Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -32,15 +72,28 @@ export const Demo1Screen: React.FC = () => {
         {/* Title */}
         <Text style={styles.title}>{t('onboarding.demo1.title')}</Text>
 
-        {/* Image */}
+        {/* Image with floating labels */}
         <View style={styles.imageContainer}>
-          <View style={styles.cylinderContainer}>
-            <Image
-              source={require('../../../assets/images/demo1.png')}
-              style={styles.image}
-              resizeMode="contain"
-            />
-          </View>
+          <Image
+            source={require('../../../assets/images/demo1_clean.png')}
+            style={styles.image}
+            resizeMode="contain"
+          />
+
+          {/* Top */}
+          <Label text={t('onboarding.demo1.labels.childDevelopment')} style={{ top: '22%',  left: '40%' }} />
+          {/* Upper-right */}
+          <Label text={t('onboarding.demo1.labels.attachmentScience')}  style={{ top: '28%', left: '60%' }} />
+          {/* Upper-left */}
+          <Label text={t('onboarding.demo1.labels.speechTherapy')}      style={{ top: '28%', left: '24%'  }} />
+          {/* Right */}
+          <Label text={t('onboarding.demo1.labels.socialLearning')}     style={{ top: '36%', left: '70%' }} />
+          {/* Lower-right */}
+          <Label text={t('onboarding.demo1.labels.behaviorManagement')} style={{ top: '44%', left: '80%' }} />
+          {/* Left */}
+          <Label text={t('onboarding.demo1.labels.playTherapy')}        style={{ top: '36%', left: '13%'  }} />
+          {/* Lower-left */}
+          <Label text={t('onboarding.demo1.labels.authoritativeParenting')} style={{ top: '44%', left: '2%' }} />
         </View>
 
         {/* Meet Nora */}
@@ -79,7 +132,7 @@ const styles = StyleSheet.create({
     color: '#8C49D5',
     textAlign: 'center',
     marginBottom: 12,
-    marginTop:32
+    marginTop: 32,
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
@@ -88,28 +141,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 38,
     marginBottom: 18,
-    marginTop:18
+    marginTop: 18,
   },
   imageContainer: {
-    width: SCREEN_WIDTH - 48,
-    aspectRatio: 1.2,
+    width: IMAGE_SIZE,
+    aspectRatio: 1,
     marginBottom: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cylinderContainer: {
-    width: '95%',
-    aspectRatio: 1.6,
-    backgroundColor: '#EAF6F0',
-    borderRadius: 9999,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   image: {
     width: '100%',
     height: '100%',
-    alignSelf:'center'
   },
   meetTitle: {
     fontFamily: 'PlusJakartaSans_700Bold',
