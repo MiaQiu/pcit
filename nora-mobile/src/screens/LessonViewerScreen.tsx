@@ -374,10 +374,10 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
     })
   ).current;
 
-  // Load lesson detail from API
+  // Load lesson detail from API — re-fetch when language changes
   useEffect(() => {
     loadLessonDetail();
-  }, [lessonId]);
+  }, [lessonId, i18n.language]);
 
   // Listen for app coming to foreground and refresh if date changed
   useEffect(() => {

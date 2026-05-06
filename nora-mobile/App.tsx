@@ -1,5 +1,5 @@
 import './src/i18n';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, Text, AppState, Platform } from 'react-native';
 import { NavigationContainer, useNavigation, DefaultTheme } from '@react-navigation/native';
@@ -181,9 +181,10 @@ export default function App() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
   });
+  const [langReady, setLangReady] = useState(false);
 
   useEffect(() => {
-    loadSavedLanguage();
+    loadSavedLanguage().then(() => setLangReady(true));
   }, []);
 
   // Initialize Firebase Crashlytics
@@ -233,7 +234,7 @@ export default function App() {
     );
   }
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !langReady) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#8C49D5" />
