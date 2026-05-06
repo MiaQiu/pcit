@@ -37,6 +37,13 @@ type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed';
 // Get API URL from environment
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
+// Wraps a promise with a timeout; rejects with the given message if exceeded.
+const withTimeout = <T,>(promise: Promise<T>, ms: number, message: string): Promise<T> =>
+  Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
+  ]);
+
 export const RecordScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<RouteProp<RootTabParamList, 'Record'>>();
@@ -68,6 +75,10 @@ export const RecordScreen: React.FC = () => {
   const autoStopListenerRef = useRef<EmitterSubscription | null>(null);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const recordingStateRef = useRef<RecordingState>('idle');
+  // JS-side safety timer: fires durationSec+10s after recording starts in case native event is missed
+  const safetyTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Prevents processing the same auto-stopped recording twice (event vs polling race)
+  const isProcessingRef = useRef(false);
 
   // Capture the report timestamp that existed when this screen mounted, so we
   // only react to a *new* completed report (not one from a prior session).
@@ -149,6 +160,10 @@ export const RecordScreen: React.FC = () => {
       // Clean up duration interval
       if (durationIntervalRef.current) {
         clearInterval(durationIntervalRef.current);
+      }
+      // Clean up safety timer
+      if (safetyTimerRef.current) {
+        clearTimeout(safetyTimerRef.current);
       }
       // Clean up sound
       if (soundRef.current) {
@@ -306,6 +321,12 @@ export const RecordScreen: React.FC = () => {
             clearInterval(durationIntervalRef.current);
             durationIntervalRef.current = null;
           }
+          // Native stopped while JS still thinks we're recording — auto-stop event may
+          // have been missed. Recover by checking for a pending recording in UserDefaults.
+          if (recordingStateRef.current === 'recording') {
+            console.log('[RecordScreen] Polling detected native stopped — checking for pending recording');
+            checkPendingRecording();
+          }
         }
       } catch (error) {
         console.error('[RecordScreen] Error getting recording status:', error);
@@ -369,6 +390,7 @@ export const RecordScreen: React.FC = () => {
       console.log('[RecordScreen] Native recording started:', result.uri);
 
       setRecordingState('recording');
+      isProcessingRef.current = false;
 
       // Track recording started
       amplitudeService.trackRecordingStarted({
@@ -377,6 +399,35 @@ export const RecordScreen: React.FC = () => {
 
       // Reset failure count on success
       setRecordingFailureCount(0);
+
+      // JS-side safety timer: fires durationSec+10s after start.
+      // If UserDefaults has a pending recording, process it normally.
+      // If native is still recording (timer never fired), force-stop it so the
+      // recording isn't lost and the UI doesn't stay stuck forever.
+      if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
+      safetyTimerRef.current = setTimeout(async () => {
+        if (recordingStateRef.current !== 'recording') return;
+        console.log('[RecordScreen] Safety timer fired — checking state');
+        try {
+          const pending = await getPendingRecording();
+          if (pending) {
+            console.log('[RecordScreen] Safety timer: found pending recording, processing');
+            await handleAutoStop(pending.uri, pending.durationMillis);
+            return;
+          }
+          // No pending recording — native timer never fired. Force-stop.
+          const status = await getRecordingStatus();
+          if (status.isRecording) {
+            console.log('[RecordScreen] Safety timer: native still recording past limit — forcing stop');
+            const result = await stopNativeRecording();
+            if (result.uri) {
+              await handleAutoStop(result.uri, result.durationMillis);
+            }
+          }
+        } catch (err) {
+          console.error('[RecordScreen] Safety timer recovery failed:', err);
+        }
+      }, (durationSec + 10) * 1000);
 
       // Start duration polling (will auto-stop when app backgrounds)
       startDurationPolling();
@@ -417,6 +468,7 @@ export const RecordScreen: React.FC = () => {
   };
 
   const checkPendingRecording = async () => {
+    if (isProcessingRef.current) return;
     try {
       const pendingRecording = await getPendingRecording();
       if (pendingRecording) {
@@ -429,12 +481,26 @@ export const RecordScreen: React.FC = () => {
   };
 
   const handleAutoStop = async (uri: string, durationMillis: number) => {
+    // Prevent duplicate processing from simultaneous event + polling/timer triggers
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
+    // Cancel the JS safety timer — we're already handling the stop
+    if (safetyTimerRef.current) {
+      clearTimeout(safetyTimerRef.current);
+      safetyTimerRef.current = null;
+    }
+
     try {
       // CRITICAL: Clear pending recording from native module immediately
       // to prevent duplicate processing when app comes to foreground
       await getPendingRecording();
 
       // Clear duration update interval
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+        durationIntervalRef.current = null;
+      }
       if (timeoutRef.current) {
         clearInterval(timeoutRef.current as any);
         timeoutRef.current = null;
@@ -510,7 +576,7 @@ export const RecordScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('[RecordScreen] Error handling auto-stop:', error);
-      // End background task on error
+      isProcessingRef.current = false; // Allow future recovery attempts
       await endBackgroundTask();
       showToast(ErrorMessages.RECORDING.STOP_FAILED, 'error');
       setRecordingState('completed');
@@ -531,13 +597,21 @@ export const RecordScreen: React.FC = () => {
         autoStopListenerRef.current = null;
       }
 
-      // Stop native recording
-      const result = await stopNativeRecording();
+      // Stop native recording — 10s timeout guards against a hung bridge call
+      const result = await withTimeout(
+        stopNativeRecording(),
+        10_000,
+        'stopRecording timed out'
+      );
       const uri = result.uri;
       const durationSeconds = Math.floor(result.durationMillis / 1000);
 
       console.log('Recording saved to:', uri);
       console.log('Duration:', durationSeconds, 'seconds');
+
+      if (!uri) {
+        throw new Error('stopRecording returned empty URI');
+      }
 
       // Check minimum recording length
       if (durationSeconds < 10) {
@@ -599,6 +673,18 @@ export const RecordScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to stop recording:', error);
+      // Native recording may have already auto-stopped (common when user stops late).
+      // Try to recover the pending recording from UserDefaults before surfacing an error.
+      try {
+        const pending = await getPendingRecording();
+        if (pending) {
+          console.log('[RecordScreen] Recovered pending recording after failed stop');
+          await handleAutoStop(pending.uri, pending.durationMillis);
+          return;
+        }
+      } catch (recoveryError) {
+        console.error('[RecordScreen] Recovery attempt failed:', recoveryError);
+      }
       showToast(ErrorMessages.RECORDING.STOP_FAILED, 'error');
       setRecordingState('completed');
     }
@@ -608,12 +694,19 @@ export const RecordScreen: React.FC = () => {
   const resetRecording = () => {
     setRecordingState('idle');
     setRecordingDuration(0);
-    // Clear any pending timeouts
+    isProcessingRef.current = false;
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    // Remove auto-stop listener
+    if (safetyTimerRef.current) {
+      clearTimeout(safetyTimerRef.current);
+      safetyTimerRef.current = null;
+    }
+    if (durationIntervalRef.current) {
+      clearInterval(durationIntervalRef.current);
+      durationIntervalRef.current = null;
+    }
     if (autoStopListenerRef.current) {
       removeAutoStopListener(autoStopListenerRef.current);
       autoStopListenerRef.current = null;
