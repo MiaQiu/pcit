@@ -919,7 +919,12 @@
       }
     },
     "demo1B": {
-      "text": "獲得真正有效的簡單策略。"
+      "text": "獲得真正有效的簡單策略。",
+      "labels": {
+        "therapeuticPlay": "治療性遊戲技巧",
+        "settingBoundaries": "設立界限",
+        "manageEmotions": "管理情緒"
+      }
     },
     "demo2": {
       "text": "Nora 傾聽您的日常互動——遊戲時光、界線設定、大情緒噴發。"
@@ -939,10 +944,27 @@
       "criticism": "批評"
     },
     "demo3": {
-      "text": "基於真實時刻的個人化教練，以兒童發展科學為基礎。"
+      "text": "基於真實時刻的個人化教練，以兒童發展科學為基礎。",
+      "title": "Nora 教養指導角落",
+      "card1Label": "處理分心狀況",
+      "card1Body": "我注意到當一個小女孩在背景哭泣時，子奕陷入了「為什麼？」的循環。未來遇到類似的外部干擾或小危機時，您可以先簡短認同他的觀察，然後立即描述他的遊戲，例如：「你正在拿起粉紅色的麥克筆。」這能順暢地吸引他的注意力。",
+      "card2Label": "長遠影響",
+      "card2Body": "您在減少提問方面做得非常好。為了進一步幫助他在遊戲時間之外的挫折容忍力，試著用同樣描述性的語氣來標記情緒（「你現在感到很沮喪」），然後再嘗試講道理或設立界限。"
     },
     "demo4": {
-      "text": "幫助您的孩子茁壯成長。發揚他們的優點並支持其情感與社交成長。"
+      "text": "幫助您的孩子茁壯成長。發揚他們的優點並支持其情感與社交成長。",
+      "reportTitle": "芯誼的成長與學習",
+      "reportSubtitle": "觀察報告",
+      "reportBadge": "優秀的觀察",
+      "reportBody": "芯誼能注意到繪畫上的細節，例如其他人可能會忽略的眼睛。\n\n在 43 個月大時，芯誼展現了強烈的視覺辨別能力，這將有助於數學、科學和閱讀的學習。\n\n您可以透過提問開放性問題來進一步發展這個技能，例如：「你還注意到什麼？」",
+      "milestoneTitle": "芯誼的發展里程碑",
+      "axisLanguage": "語言",
+      "axisCognition": "認知",
+      "axisSocial": "社會",
+      "axisEmotional": "情緒",
+      "axisConnect": "連結",
+      "legendChild": "芯誼",
+      "legendMilestone": "同齡標準"
     },
     "demo5": {
       "text": "賦能每一位照顧者，支援 90 多種語言。"
@@ -970,7 +992,31 @@
     },
     "playSession4": {
       "title": "短暫遊戲，深度洞察",
-      "subtitle": "錄製將在 5 分鐘後自動停止。\n我們的 AI 將分析互動，並在幾分鐘內生成個人化報告。"
+      "subtitle": "錄製將在 5 分鐘後自動停止。\n我們的 AI 將分析互動，並在幾分鐘內生成個人化報告。",
+      "cards": {
+        "parentingPattern": "教養模式",
+        "sentenceTip": "逐句提示",
+        "momentCoaching": "當下輔導",
+        "gentleFocus": "柔和焦點",
+        "ebaTitle": "情緒銀行帳戶",
+        "ebaScore": "+79/100",
+        "ebaLabel": "需要關注",
+        "overallLabel": "整體",
+        "penSkills": "您的PEN技巧",
+        "penPraise": "讚賞（標記）",
+        "penEcho": "重述",
+        "penNarrate": "敘述",
+        "adultLabel": "成人",
+        "childLabel": "兒童",
+        "adultSays": "Cut, Cut.",
+        "childSays": "[喃喃自語]",
+        "repeatBadge": "重述",
+        "sentenceTipHint": "✓ 太棒了！\n做得好，您重述了安雅 (Anya) 的動作！",
+        "coachingLabel": "應對干擾",
+        "coachingSnippet": "我注意到當背景中有一個小女孩哭泣時，曾發生一些小小的干擾，此時 Ziyi 有點陷進了「為什麼？」的循環。您處理得很好，最終引導他回到他的藝術創作上。為了未來遇到外部干擾或發生小危機的情況，您可以簡短地認同他的觀察（「你聽到他的描述他的遊戲」），然後立即粉紅色馬克筆。這可以以平穩地將他的注意力帶回你們共同的活動中。",
+        "gentleFocusTitle": "下週的柔和焦點",
+        "focusSnippet": "在 Ziyi 平時掙扎的時刻 — 轉換、挫折，或者當他要求東西時 — 保持敘述。您的描述已經是他喜歡的一種關注方式。請將其作為您的超能力。"
+      }
     },
     "playSession5": {
       "title": "您的數據保持私密",

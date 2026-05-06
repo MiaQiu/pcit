@@ -61,8 +61,8 @@ export const PlaySession2Screen: React.FC = () => {
           />
           <PolaroidLabel
             text={t('onboarding.playSession2.labels.childLedPlay')}
-            top="83%"
-            rotate="2deg"
+            top="78%"
+            rotate="-2deg"
           />
         </View>
       </View>

@@ -919,7 +919,12 @@
       }
     },
     "demo1B": {
-      "text": "Get simple strategies that actually work."
+      "text": "Get simple strategies that actually work.",
+      "labels": {
+        "therapeuticPlay": "Therapeutic Play Techniques",
+        "settingBoundaries": "Setting Boundaries",
+        "manageEmotions": "Manage Emotions"
+      }
     },
     "demo2": {
       "text": "Nora listens to your day-to-day interactions — playtime, boundaries, big feelings."
@@ -939,10 +944,27 @@
       "criticism": "Criticism"
     },
     "demo3": {
-      "text": "Personalized coaching based on your real moments, grounded in child development science."
+      "text": "Personalized coaching based on your real moments, grounded in child development science.",
+      "title": "Nora Coaching Corner",
+      "card1Label": "Handling Distractions",
+      "card1Body": "I notice minor distractions when a little girl cried in the background, and Ziyi got a bit stuck in a \"why?\" loop. For future situations where an external distraction or minor crisis occurs, you can briefly validate his observation and immediately describe his play like \"You are picking up the pink marker.\" This smoothly anchors his attention.",
+      "card2Label": "Long Term Impact",
+      "card2Body": "You did a stellar job keeping questions to a minimum. To further help with his frustration tolerance outside of playtime, try using this same, descriptive tone to label his emotions when he gets upset (\"You are feeling frustrated right now\") before trying to reason with him or set a limit."
     },
     "demo4": {
-      "text": "Help your child thrive. Build on their strengths and support their emotional and social growth."
+      "text": "Help your child thrive. Build on their strengths and support their emotional and social growth.",
+      "reportTitle": "Ziyi's Growth & Learning",
+      "reportSubtitle": "Observation Report",
+      "reportBadge": "Excellent Observer",
+      "reportBody": "Ziyi can notice fine details in drawings, such as eyes that others might overlook.\n\nAt 43 months, Ziyi demonstrates strong visual discrimination — a skill that will support learning in math, science, and reading.\n\nYou can further develop this by asking open-ended questions like \"What else do you notice?\" when he discovers things.",
+      "milestoneTitle": "Ziyi's Developmental Milestones",
+      "axisLanguage": "Language",
+      "axisCognition": "Cognition",
+      "axisSocial": "Social",
+      "axisEmotional": "Emotional",
+      "axisConnect": "Connect",
+      "legendChild": "Ziyi",
+      "legendMilestone": "Age Milestone"
     },
     "demo5": {
       "text": "Empowering every caregiver,\nin 90+ languages."
@@ -970,7 +992,31 @@
     },
     "playSession4": {
       "title": "Short Play, Big Insights",
-      "subtitle": "The recording stops automatically after 5 minutes.\nOur AI analyzes the interaction and generates a personalized report in just a few minutes"
+      "subtitle": "The recording stops automatically after 5 minutes.\nOur AI analyzes the interaction and generates a personalized report in just a few minutes",
+      "cards": {
+        "parentingPattern": "PARENTING PATTERN",
+        "sentenceTip": "SENTENCE BY SENTENCE TIP",
+        "momentCoaching": "IN THE MOMENT COACHING",
+        "gentleFocus": "GENTLE FOCUS",
+        "ebaTitle": "Emotional Bank Account",
+        "ebaScore": "+79/100",
+        "ebaLabel": "Pay Attention",
+        "overallLabel": "Overall",
+        "penSkills": "Your PEN Skills",
+        "penPraise": "Praise (Labeled)",
+        "penEcho": "Echo",
+        "penNarrate": "Narrate",
+        "adultLabel": "Adult",
+        "childLabel": "Child",
+        "adultSays": "Cut, Cut.",
+        "childSays": "[mumbling]",
+        "repeatBadge": "Repeat",
+        "sentenceTipHint": "✓ Great job!\nYou repeated Ariya's action!",
+        "coachingLabel": "Handling Distractions",
+        "coachingSnippet": "I notice minor distractions when a little girl cried in the background, and Ziyi got a bit stuck in a \"why?\" loop. For future situations where an external distraction or minor crisis occurs, you can briefly validate his observation and immediately describe his play like \"You are picking up the pink marker.\" This smoothly anchors his attention.",
+        "gentleFocusTitle": "Next week's gentle focus",
+        "focusSnippet": "Keep narrating during moments when Ziyi usually struggles — tantrums, frustration, or when he's asking for things. Your narration is already his favorite kind of attention. Make it your superpower."
+      }
     },
     "playSession5": {
       "title": "Your data stays private",
