@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface OnboardingProgressHeaderProps {
   phase: number; // 1-4
@@ -13,7 +14,6 @@ interface OnboardingProgressHeaderProps {
   totalSteps: number; // total steps in current phase
 }
 
-const PHASE_NAMES = ['Basic data', 'Developmental snapshot', 'Wellbeing Snapshot'];
 const TOTAL_PHASES = 3;
 
 export const OnboardingProgressHeader: React.FC<OnboardingProgressHeaderProps> = ({
@@ -21,7 +21,8 @@ export const OnboardingProgressHeader: React.FC<OnboardingProgressHeaderProps> =
   step,
   totalSteps,
 }) => {
-  const phaseName = PHASE_NAMES[phase - 1] || '';
+  const { t } = useTranslation();
+  const phaseName = t(`onboarding.progressHeader.phase${phase}`, '') as string;
 
   return (
     <View style={styles.container}>
@@ -38,7 +39,7 @@ export const OnboardingProgressHeader: React.FC<OnboardingProgressHeaderProps> =
       <View style={styles.rightSection}>
         {/* Title + counter row */}
         <View style={styles.titleRow}>
-          <Text style={styles.title}>Personalizing Nora</Text>
+          <Text style={styles.title}>{t('onboarding.progressHeader.title')}</Text>
           <Text style={styles.counterText}>{phase}/{TOTAL_PHASES}</Text>
         </View>
 

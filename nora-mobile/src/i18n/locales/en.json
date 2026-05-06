@@ -774,6 +774,12 @@
   "onboarding": {
     "continue": "Continue",
     "back": "Back",
+    "progressHeader": {
+      "title": "Personalizing Nora",
+      "phase1": "Basic data",
+      "phase2": "Developmental snapshot",
+      "phase3": "Wellbeing Snapshot"
+    },
     "letsGo": "Let's go!  →",
     "letsBegin": "Let's Begin  →",
     "skipForNow": "Skip for Now",
@@ -947,7 +953,7 @@
       "text": "Personalized coaching based on your real moments, grounded in child development science.",
       "title": "Nora Coaching Corner",
       "card1Label": "Handling Distractions",
-      "card1Body": "I notice minor distractions when a little girl cried in the background, and Ziyi got a bit stuck in a \"why?\" loop. For future situations where an external distraction or minor crisis occurs, you can briefly validate his observation and immediately describe his play like \"You are picking up the pink marker.\" This smoothly anchors his attention.",
+      "card1Body": "I notice minor distractions when a little girl cried in the background, and Ziyi got a bit stuck in a \"why?\" loop. For future situations where an external distraction or minor crisis occurs, you can briefly validate his observation and immediately describe his play like \"You are picking up the pink marker.",
       "card2Label": "Long Term Impact",
       "card2Body": "You did a stellar job keeping questions to a minimum. To further help with his frustration tolerance outside of playtime, try using this same, descriptive tone to label his emotions when he gets upset (\"You are feeling frustrated right now\") before trying to reason with him or set a limit."
     },
