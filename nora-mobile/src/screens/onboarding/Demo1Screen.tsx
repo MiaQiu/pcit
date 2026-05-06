@@ -50,7 +50,7 @@ const labelStyles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 11,
     color: '#1F2937',
-    maxWidth: 90,
+    maxWidth: 110,
     lineHeight: 15,
   },
 });
@@ -81,19 +81,19 @@ export const Demo1Screen: React.FC = () => {
           />
 
           {/* Top */}
-          <Label text={t('onboarding.demo1.labels.childDevelopment')} style={{ top: '22%',  left: '40%' }} />
+          <Label text={t('onboarding.demo1.labels.childDevelopment')} style={{ top: '22%', left: '40%' }} />
           {/* Upper-right */}
-          <Label text={t('onboarding.demo1.labels.attachmentScience')}  style={{ top: '28%', left: '60%' }} />
+          <Label text={t('onboarding.demo1.labels.attachmentScience')}  style={{ top: '29%', left: '62%' }} align="right" />
           {/* Upper-left */}
-          <Label text={t('onboarding.demo1.labels.speechTherapy')}      style={{ top: '28%', left: '24%'  }} />
+          <Label text={t('onboarding.demo1.labels.speechTherapy')}      style={{ top: '29%', left: '24%' }} />
           {/* Right */}
-          <Label text={t('onboarding.demo1.labels.socialLearning')}     style={{ top: '36%', left: '70%' }} />
+          <Label text={t('onboarding.demo1.labels.socialLearning')}     style={{ top: '38%', left: '72%' }} align="right" />
           {/* Lower-right */}
-          <Label text={t('onboarding.demo1.labels.behaviorManagement')} style={{ top: '44%', left: '80%' }} />
+          <Label text={t('onboarding.demo1.labels.behaviorManagement')} style={{ top: '47%', left: '82%' }} align="right" />
           {/* Left */}
-          <Label text={t('onboarding.demo1.labels.playTherapy')}        style={{ top: '36%', left: '13%'  }} />
+          <Label text={t('onboarding.demo1.labels.playTherapy')}        style={{ top: '38%', left: '13%' }} />
           {/* Lower-left */}
-          <Label text={t('onboarding.demo1.labels.authoritativeParenting')} style={{ top: '44%', left: '2%' }} />
+          <Label text={t('onboarding.demo1.labels.authoritativeParenting')} style={{ top: '47%', left: '2%' }} />
         </View>
 
         {/* Meet Nora */}
