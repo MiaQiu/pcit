@@ -14,7 +14,7 @@ interface OnboardingProgressHeaderProps {
   totalSteps: number; // total steps in current phase
 }
 
-const TOTAL_PHASES = 3;
+const TOTAL_PHASES = 2;
 
 export const OnboardingProgressHeader: React.FC<OnboardingProgressHeaderProps> = ({
   phase,

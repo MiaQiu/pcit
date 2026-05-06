@@ -775,10 +775,9 @@
     "continue": "繼續",
     "back": "返回",
     "progressHeader": {
-      "title": "個人化芯誼",
+      "title": "個人化Nora",
       "phase1": "基本資料",
-      "phase2": "發展快照",
-      "phase3": "身心狀態快照"
+      "phase2": "發展快照"
     },
     "letsGo": "我們開始吧！  →",
     "letsBegin": "準備開始  →",
