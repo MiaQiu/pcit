@@ -77,6 +77,49 @@ export async function removeItem(key: string): Promise<void> {
   return AsyncStorage.removeItem(`user:${userId}:${key}`);
 }
 
+/**
+ * One-time migration: moves legacy device-level keys into the current user's
+ * namespace. Call once after setCurrentUserId() on every login. Safe to call
+ * repeatedly — skips any key that already has a user-scoped value.
+ *
+ * Old format → new format:
+ *   @notification_preferences → user:<id>:@notification_preferences
+ *   @nora_coach_messages_cache → user:<id>:@nora_coach_messages_cache
+ *   ... etc.
+ */
+const LEGACY_DEVICE_KEYS = [
+  '@notification_preferences',
+  '@nora_coach_messages_cache',
+  '@nora_psych_messages_cache',
+  '@nora_psych_requested',
+  '@report_chat_demo_shown',
+  '@discipline_phase_celebrated',
+];
+
+export async function migrateLegacyDeviceKeys(): Promise<void> {
+  const userId = await resolveUserId();
+  if (!userId) return;
+  try {
+    await Promise.all(
+      LEGACY_DEVICE_KEYS.map(async (key) => {
+        const newKey = `user:${userId}:${key}`;
+        const [newValue, oldValue] = await Promise.all([
+          AsyncStorage.getItem(newKey),
+          AsyncStorage.getItem(key),
+        ]);
+        // Only migrate if destination is empty and source has data
+        if (newValue === null && oldValue !== null) {
+          await AsyncStorage.setItem(newKey, oldValue);
+          await AsyncStorage.removeItem(key);
+          console.log(`[userStorage] Migrated legacy key: ${key}`);
+        }
+      })
+    );
+  } catch (error) {
+    console.error('[userStorage] migrateLegacyDeviceKeys error:', error);
+  }
+}
+
 export async function clearKeysForUser(userId: string): Promise<void> {
   try {
     const allKeys = await AsyncStorage.getAllKeys();

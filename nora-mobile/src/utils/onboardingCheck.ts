@@ -7,6 +7,7 @@ export async function checkOnboardingStep(
 ): Promise<{ step: string | null; user: any }> {
   const user = await authService.getCurrentUser(true);
   await userStorage.setCurrentUserId(user.id);
+  await userStorage.migrateLegacyDeviceKeys();
 
   if (!user.name || user.name === 'User') return { step: 'NameInput', user };
   if (!user.childName || user.childName === 'Child') return { step: 'ChildName', user };
