@@ -59,11 +59,59 @@ App UI strings (buttons, tab labels, error messages, etc.) are managed via `reac
 - Language is selected by the user in **Profile → Settings → Language**
 - The choice is persisted in AsyncStorage and restored on next launch
 - All screens and components use `const { t } = useTranslation()` and `t('key')`
-- Keys are namespaced by screen/component: `home.*`, `report.*`, `profile.*`, etc.
+- Keys are namespaced by screen/component: `home.*`, `report.*`, `profile.*`, `onboarding.*`, etc.
 
 To add or update a UI string:
 1. Add the English value to `en.json`
 2. Add the translated value to `zh-TW.json` (use the same key, empty string `""` as placeholder if not yet translated)
+
+---
+
+## Onboarding i18n patterns
+
+### Shared button components
+
+`OnboardingButton`, `OnboardingButtonRow`, and `MultipleChoiceScreen` all default to `t('onboarding.continue')` when no explicit button text is passed. To use a custom label, pass `continueText={t('some.key')}` explicitly — the i18n call must happen at the screen/config level since these components accept a plain string.
+
+The last WACB question (`WacbQuestion9`) demonstrates this: `wacbQuestions.config.ts` passes `continueText: t('onboarding.wacb.submitSurvey')`.
+
+### Progress header
+
+`OnboardingProgressHeader` reads `onboarding.progressHeader.title` and `onboarding.progressHeader.phase1` / `phase2` from the locale file. There are 2 phases total (phase 1 = basic data, phase 2 = developmental snapshot).
+
+### Image overlays
+
+Several onboarding screens replace baked-in English image text with a clean background image + absolutely positioned `<Text>` overlays:
+
+```tsx
+// imageContainer is sized to the exact pixel aspect ratio of the image
+// so that percentage positions map directly to image coordinates
+const IMAGE_W = SCREEN_WIDTH - 40;
+const IMAGE_H = IMAGE_W * (imageHeight / imageWidth); // from `sips -g pixelWidth,pixelHeight`
+
+<View style={{ width: IMAGE_W, height: IMAGE_H }}>
+  <Image source={...} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+  <Text style={{ position: 'absolute', top: '53%', left: '35%' }}>
+    {t('onboarding.screen.label')}
+  </Text>
+</View>
+```
+
+Key rules:
+- Use `resizeMode="contain"` — `"stretch"` distorts the image
+- Set `imageContainer` height to the exact pixel ratio (get dimensions via `sips -g pixelWidth pixelHeight <file>`) so there is no letterboxing and % positions are accurate
+- Positions are relative to `imageContainer`, not the screen
+
+### Dynamic child name interpolation
+
+Screens that show the child's name use `useOnboarding().data.childName` with a fallback, then pass it to i18next interpolation:
+
+```tsx
+const childName = data.childName || 'K';
+t('onboarding.screen.cardContent', { name: childName })
+// en.json:  "cardContent": "{{name}}'s session today..."
+// zh-TW.json: "cardContent": "{{name}} 今天的練習..."
+```
 
 ---
 
