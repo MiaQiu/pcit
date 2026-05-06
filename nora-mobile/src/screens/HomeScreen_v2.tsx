@@ -19,7 +19,6 @@ import {
   Linking,
   Platform,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Notifications from 'expo-notifications';
 import { scheduleDailyLessonReminder } from '../utils/notifications';
@@ -589,9 +588,9 @@ export const HomeScreen_v2: React.FC = () => {
     const timeString = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
     await scheduleDailyLessonReminder(timeString);
     try {
-      const saved = await AsyncStorage.getItem('@notification_preferences');
+      const saved = await userStorage.getItem('@notification_preferences');
       const prefs = saved ? JSON.parse(saved) : {};
-      await AsyncStorage.setItem('@notification_preferences', JSON.stringify({
+      await userStorage.setItem('@notification_preferences', JSON.stringify({
         ...prefs,
         dailyLessonReminder: true,
         dailyLessonTime: timeString,

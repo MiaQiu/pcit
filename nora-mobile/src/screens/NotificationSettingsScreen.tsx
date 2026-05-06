@@ -20,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as userStorage from '../lib/userStorage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Audio } from 'expo-av';
 import { FONTS, COLORS, SOUNDS } from '../constants/assets';
@@ -111,7 +111,7 @@ export const NotificationSettingsScreen: React.FC = () => {
           // Read saved preferences from storage to avoid overwriting with stale defaults
           let currentPrefs = preferences;
           try {
-            const stored = await AsyncStorage.getItem(STORAGE_KEY);
+            const stored = await userStorage.getItem(STORAGE_KEY);
             if (stored) {
               currentPrefs = { ...DEFAULT_PREFERENCES, ...JSON.parse(stored) };
             }
@@ -148,7 +148,7 @@ export const NotificationSettingsScreen: React.FC = () => {
 
   const loadPreferences = async () => {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      const stored = await userStorage.getItem(STORAGE_KEY);
       if (stored) {
         // Merge with defaults so any missing keys get filled in
         setPreferences({ ...DEFAULT_PREFERENCES, ...JSON.parse(stored) });
@@ -162,7 +162,7 @@ export const NotificationSettingsScreen: React.FC = () => {
 
   const savePreferences = async (newPreferences: NotificationPreferences) => {
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newPreferences));
+      await userStorage.setItem(STORAGE_KEY, JSON.stringify(newPreferences));
       setPreferences(newPreferences);
     } catch (error) {
       console.error('Failed to save notification preferences:', error);

@@ -21,7 +21,7 @@ import { RecordingCard } from '../components/RecordingCard';
 import { FONTS, COLORS, DRAGON_PURPLE, SOUNDS } from '../constants/assets';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as userStorage from '../lib/userStorage';
 import { sendNewReportNotification } from '../utils/notifications';
 import { startRecording as startNativeRecording, stopRecording as stopNativeRecording, getRecordingStatus, addAutoStopListener, removeAutoStopListener, getPendingRecording, endBackgroundTask, setCompletionSound as setNativeCompletionSound } from '../utils/AudioSessionManager';
 import type { EmitterSubscription } from 'react-native';
@@ -178,7 +178,7 @@ export const RecordScreen: React.FC = () => {
 
   const loadSoundPreference = async () => {
     try {
-      const prefsJson = await AsyncStorage.getItem('@notification_preferences');
+      const prefsJson = await userStorage.getItem('@notification_preferences');
       if (prefsJson) {
         const prefs = JSON.parse(prefsJson);
         if (prefs.cdiCompleteSound) {

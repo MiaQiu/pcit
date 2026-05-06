@@ -2,11 +2,9 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, AppStateStatus } from 'react-native';
 import { useAuthService } from './AppContext';
+import * as userStorage from '../lib/userStorage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
-
-const aiStorageKey    = (userId: string) => `@nora_coach_last_read_at_${userId}`;
-const psychStorageKey = (userId: string) => `@nora_psych_last_read_at_${userId}`;
 
 interface CoachUnreadContextType {
   unreadCount: number;       // total AI + psych (for tab badge)
@@ -62,37 +60,38 @@ export const CoachUnreadProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const ts = timestamp ?? new Date().toISOString();
     aiLastReadRef.current = ts;
     setAiUnreadCount(0);
-    if (currentUserIdRef.current) {
-      await AsyncStorage.setItem(aiStorageKey(currentUserIdRef.current), ts);
-    }
+    await userStorage.setItem('@nora_coach_last_read_at', ts);
   }, []);
 
   const markPsychAsRead = useCallback(async (timestamp?: string) => {
     const ts = timestamp ?? new Date().toISOString();
     psychLastReadRef.current = ts;
     setPsychUnreadCount(0);
-    if (currentUserIdRef.current) {
-      await AsyncStorage.setItem(psychStorageKey(currentUserIdRef.current), ts);
-    }
+    await userStorage.setItem('@nora_psych_last_read_at', ts);
   }, []);
 
   const reinitialize = useCallback(async (userId: string) => {
     currentUserIdRef.current = userId;
     aiLastReadRef.current    = new Date(0).toISOString();
     psychLastReadRef.current = new Date(0).toISOString();
+
     let [aiStored, psychStored] = await Promise.all([
-      AsyncStorage.getItem(aiStorageKey(userId)),
-      AsyncStorage.getItem(psychStorageKey(userId)),
+      userStorage.getItem('@nora_coach_last_read_at'),
+      userStorage.getItem('@nora_psych_last_read_at'),
     ]);
-    // One-time migration from old device-level keys
+
+    // One-time migration: old keys used userId embedded in key name
     if (!aiStored) {
-      aiStored = await AsyncStorage.getItem('@nora_coach_last_read_at');
-      if (aiStored) await AsyncStorage.setItem(aiStorageKey(userId), aiStored);
+      aiStored = await AsyncStorage.getItem(`@nora_coach_last_read_at_${userId}`);
+      if (!aiStored) aiStored = await AsyncStorage.getItem('@nora_coach_last_read_at');
+      if (aiStored) await userStorage.setItem('@nora_coach_last_read_at', aiStored);
     }
     if (!psychStored) {
-      psychStored = await AsyncStorage.getItem('@nora_psych_last_read_at');
-      if (psychStored) await AsyncStorage.setItem(psychStorageKey(userId), psychStored);
+      psychStored = await AsyncStorage.getItem(`@nora_psych_last_read_at_${userId}`);
+      if (!psychStored) psychStored = await AsyncStorage.getItem('@nora_psych_last_read_at');
+      if (psychStored) await userStorage.setItem('@nora_psych_last_read_at', psychStored);
     }
+
     if (aiStored)    aiLastReadRef.current    = aiStored;
     if (psychStored) psychLastReadRef.current = psychStored;
     await fetchUnread();

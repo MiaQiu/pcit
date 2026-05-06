@@ -17,7 +17,7 @@ import {
   Keyboard,
   ActivityIndicator,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as userStorage from '../lib/userStorage';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
@@ -45,7 +45,7 @@ interface Message {
 
 async function loadCache(): Promise<Message[]> {
   try {
-    const raw = await AsyncStorage.getItem(CACHE_KEY);
+    const raw = await userStorage.getItem(CACHE_KEY);
     if (!raw) return [];
     const msgs: Message[] = JSON.parse(raw);
     const cutoff = twoDaysAgo();
@@ -59,7 +59,7 @@ async function saveCache(messages: Message[]): Promise<void> {
   try {
     const cutoff = twoDaysAgo();
     const toSave = messages.filter(m => m.createdAt && new Date(m.createdAt) >= cutoff);
-    await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(toSave));
+    await userStorage.setItem(CACHE_KEY, JSON.stringify(toSave));
   } catch {}
 }
 

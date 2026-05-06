@@ -92,10 +92,7 @@ export const RootNavigator: React.FC = () => {
   // Handle logout
   const handleLogout = useCallback(async () => {
     console.log('User logged out - resetting auth state');
-    await Promise.all([
-      userStorage.clearCurrentUser(),
-      AsyncStorage.removeItem('@nora_coach_messages_cache'),
-    ]);
+    await userStorage.clearCurrentUser();
     amplitudeService.reset();
     setIsAuthenticated(false);
     setOnboardingStep(null);

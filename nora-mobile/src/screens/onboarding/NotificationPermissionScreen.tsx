@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as userStorage from '../../lib/userStorage';
 import { MaskedDinoImage } from '../../components/MaskedDinoImage';
 import { RootStackNavigationProp } from '../../navigation/types';
 import { FONTS, COLORS } from '../../constants/assets';
@@ -55,11 +55,11 @@ export const NotificationPermissionScreen: React.FC = () => {
         await scheduleDailyLessonReminder(reminderTime);
 
         try {
-          const prefsStr = await AsyncStorage.getItem('@notification_preferences');
+          const prefsStr = await userStorage.getItem('@notification_preferences');
           const prefs = prefsStr ? JSON.parse(prefsStr) : {};
           prefs.dailyLessonReminder = true;
           prefs.dailyLessonTime = reminderTime;
-          await AsyncStorage.setItem('@notification_preferences', JSON.stringify(prefs));
+          await userStorage.setItem('@notification_preferences', JSON.stringify(prefs));
         } catch (e) {
           console.error('Error saving reminder preference:', e);
         }

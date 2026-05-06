@@ -21,7 +21,7 @@ import {
   Keyboard,
   Image,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as userStorage from '../lib/userStorage';
 import { Video, ResizeMode } from 'expo-av';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,7 +47,7 @@ function twoDaysAgo(): Date {
 
 async function loadMessageCache(): Promise<Message[]> {
   try {
-    const raw = await AsyncStorage.getItem(CACHE_KEY);
+    const raw = await userStorage.getItem(CACHE_KEY);
     if (!raw) return [];
     const msgs: Message[] = JSON.parse(raw);
     const cutoff = twoDaysAgo();
@@ -61,7 +61,7 @@ async function saveMessageCache(messages: Message[]): Promise<void> {
   try {
     const cutoff = twoDaysAgo();
     const toSave = messages.filter(m => m.createdAt && new Date(m.createdAt) >= cutoff);
-    await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(toSave));
+    await userStorage.setItem(CACHE_KEY, JSON.stringify(toSave));
   } catch {}
 }
 
@@ -159,7 +159,7 @@ export const CoachChatScreen: React.FC = () => {
 
   // Load psych-requested flag on mount
   useEffect(() => {
-    AsyncStorage.getItem(PSYCH_REQUESTED_KEY).then(v => {
+    userStorage.getItem(PSYCH_REQUESTED_KEY).then(v => {
       if (v === 'true') setPsychRequested(true);
     });
   }, []);
@@ -356,7 +356,7 @@ export const CoachChatScreen: React.FC = () => {
         }
       );
       setShowHumanModal(false);
-      await AsyncStorage.setItem(PSYCH_REQUESTED_KEY, 'true');
+      await userStorage.setItem(PSYCH_REQUESTED_KEY, 'true');
       setPsychRequested(true);
       navigation.navigate('PsychologistChat');
     } catch {

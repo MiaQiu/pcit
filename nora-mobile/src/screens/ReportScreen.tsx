@@ -22,7 +22,7 @@ import { MarkdownText } from '../utils/MarkdownText';
 import { DragonCard } from '../components/DragonCard';
 import { MomentPlayer } from '../components/MomentPlayer';
 import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as userStorage from '../lib/userStorage';
 import { useTranslation } from 'react-i18next';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
@@ -576,13 +576,13 @@ export const ReportScreen: React.FC = () => {
     Animated.timing(chatDemoAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
       setShowChatDemo(false);
     });
-    await AsyncStorage.setItem('@report_chat_demo_shown', 'true');
+    await userStorage.setItem('@report_chat_demo_shown', 'true');
     if (navigate) navigation.push('CoachChat');
   }, [chatDemoAnim, navigation]);
 
   const dismissChatDemoMessage = useCallback(() => {
     setShowChatDemoMessage(false);
-    AsyncStorage.setItem('@report_chat_demo_shown', 'true');
+    userStorage.setItem('@report_chat_demo_shown', 'true');
   }, []);
 
   const handleScroll = useCallback((event: any) => {
@@ -591,7 +591,7 @@ export const ReportScreen: React.FC = () => {
     const screenHeight = Dimensions.get('window').height;
     if (scrollY + screenHeight * 0.65 >= aboutChildSectionY.current) {
       chatDemoTriggered.current = true;
-      AsyncStorage.getItem('@report_chat_demo_shown').then(shown => {
+      userStorage.getItem('@report_chat_demo_shown').then(shown => {
         if (shown) return;
         setShowChatDemo(true);
         Animated.spring(chatDemoAnim, { toValue: 1, useNativeDriver: true, tension: 60, friction: 10 }).start(() => {
@@ -661,7 +661,7 @@ export const ReportScreen: React.FC = () => {
     }).catch(() => {});
     // getDevelopmentalProgress is called in a separate useEffect once reportData is available
     // Show bubble immediately (no animation, no message) if demo was already seen
-    AsyncStorage.getItem('@report_chat_demo_shown').then(shown => {
+    userStorage.getItem('@report_chat_demo_shown').then(shown => {
       if (shown) {
         chatDemoAnim.setValue(1);
         setShowChatDemoMessage(false);
@@ -735,9 +735,9 @@ export const ReportScreen: React.FC = () => {
 
       // Show phase celebration if this is the first CDI session with score >= 80
       if ((data.noraScore ?? 0) >= 80) {
-        const celebrated = await AsyncStorage.getItem('@discipline_phase_celebrated');
+        const celebrated = await userStorage.getItem('@discipline_phase_celebrated');
         if (!celebrated) {
-          await AsyncStorage.setItem('@discipline_phase_celebrated', 'true');
+          await userStorage.setItem('@discipline_phase_celebrated', 'true');
           setShowPhaseCelebration(true);
         }
       }

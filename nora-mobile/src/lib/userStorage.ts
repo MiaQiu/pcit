@@ -2,15 +2,15 @@
  * User-scoped AsyncStorage
  *
  * Prefixes every key with `user:<userId>:` so different users on the same
- * device never share data. On login with a new userId the previous user's
- * keys are automatically cleared in the background.
+ * device never share data.
+ *
+ * Logout clears only the in-memory userId pointer — cached data is preserved
+ * on disk so re-login is instant and offline-first. Explicit data deletion
+ * (e.g. account deletion) should call clearKeysForUser() directly.
  *
  * Usage:
  *   import * as userStorage from '../lib/userStorage';
- *   await userStorage.setItem('module_picker_selected_module', key);
- *
- * Device-level keys (e.g. @notification_preferences) should continue
- * to use AsyncStorage directly — do NOT route them through this module.
+ *   await userStorage.setItem('notification_preferences', json);
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,18 +21,9 @@ let currentUserId: string | null = null;
 
 /**
  * Call this after a successful login / auth check with the authenticated user's ID.
- * If a different user was stored from a previous session, their keys are cleared
- * in the background before the new user's ID is recorded.
  */
 export async function setCurrentUserId(userId: string): Promise<void> {
   try {
-    const lastUserId = await AsyncStorage.getItem(LAST_USER_KEY);
-    if (lastUserId && lastUserId !== userId) {
-      // Different user — wipe their data before proceeding
-      clearKeysForUser(lastUserId).catch(err =>
-        console.error('[userStorage] Failed to clear previous user data:', err)
-      );
-    }
     currentUserId = userId;
     await AsyncStorage.setItem(LAST_USER_KEY, userId);
   } catch (error) {
@@ -42,13 +33,10 @@ export async function setCurrentUserId(userId: string): Promise<void> {
 }
 
 /**
- * Call this on logout. Clears all keys for the current user and resets
- * the in-memory userId so subsequent reads return null.
+ * Call this on logout. Clears the in-memory userId so subsequent reads
+ * return null, but leaves cached data on disk for fast re-login.
  */
 export async function clearCurrentUser(): Promise<void> {
-  if (currentUserId) {
-    await clearKeysForUser(currentUserId);
-  }
   currentUserId = null;
 }
 
@@ -89,7 +77,7 @@ export async function removeItem(key: string): Promise<void> {
   return AsyncStorage.removeItem(`user:${userId}:${key}`);
 }
 
-async function clearKeysForUser(userId: string): Promise<void> {
+export async function clearKeysForUser(userId: string): Promise<void> {
   try {
     const allKeys = await AsyncStorage.getAllKeys();
     const userKeys = allKeys.filter(key => key.startsWith(`user:${userId}:`));
