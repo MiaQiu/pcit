@@ -120,7 +120,7 @@ All require admin auth.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/admin/users` | List all users with name, email, joined date, last active, session count, tag |
+| `GET` | `/api/admin/users` | List all users with name, email, joined date, last active, session count, tag, child birthday, issue, and latest WACB total score |
 | `PUT` | `/api/admin/users/:id/tag` | Update user tag (`user` or `tester`) |
 | `GET` | `/api/admin/users/:id/profile` | User's completed lessons and sessions |
 
@@ -270,7 +270,7 @@ The body text textarea supports:
 
 ### Users (`/users`)
 
-- Table of all registered users: user ID (clickable), name, email, joined date, last active date, session count, tag
+- Table of all registered users: user ID (clickable), name, email, joined date, last active date, session count, tag, child birthday, issue, WACB score (latest `totalScore` from `wacbsurvey`)
 - Click any column header to sort (toggles asc/desc)
 - **Tag** column: inline dropdown to toggle between `user` and `tester` — persisted immediately via `PUT /api/admin/users/:id/tag`
 - Click a user ID to open the user detail page

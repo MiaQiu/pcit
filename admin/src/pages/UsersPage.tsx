@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getUsers, updateUserTag, UserSummary } from '../api/adminApi';
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
 
-type SortField = 'id' | 'name' | 'email' | 'createdAt' | 'lastActiveAt' | 'sessionCount' | 'tag';
+type SortField = 'id' | 'name' | 'email' | 'createdAt' | 'lastActiveAt' | 'sessionCount' | 'tag' | 'childBirthday' | 'issue' | 'wacbTotalScore';
 type SortDir = 'asc' | 'desc';
 
 export default function UsersPage() {
@@ -95,6 +95,9 @@ export default function UsersPage() {
                 <th style={thStyle} onClick={() => handleSort('lastActiveAt')}>Last Active{sortIndicator('lastActiveAt')}</th>
                 <th style={thStyle} onClick={() => handleSort('sessionCount')}>Sessions{sortIndicator('sessionCount')}</th>
                 <th style={thStyle} onClick={() => handleSort('tag')}>Tag{sortIndicator('tag')}</th>
+                <th style={thStyle} onClick={() => handleSort('childBirthday')}>Child Birthday{sortIndicator('childBirthday')}</th>
+                <th style={thStyle} onClick={() => handleSort('issue')}>Issue{sortIndicator('issue')}</th>
+                <th style={thStyle} onClick={() => handleSort('wacbTotalScore')}>WACB Score{sortIndicator('wacbTotalScore')}</th>
               </tr>
             </thead>
             <tbody>
@@ -123,6 +126,9 @@ export default function UsersPage() {
                       <option value="tester">tester</option>
                     </select>
                   </td>
+                  <td>{fmt(u.childBirthday)}</td>
+                  <td>{u.issue ?? '—'}</td>
+                  <td>{u.wacbTotalScore ?? '—'}</td>
                 </tr>
               ))}
             </tbody>

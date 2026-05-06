@@ -813,7 +813,6 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         pushToken: true,
         pushTokenUpdatedAt: true,
         createdAt: true,
-        lastSessionDate: true,
         developmentalVisible: true,
         subscriptionStatus: true,
         subscriptionPlan: true,
@@ -821,13 +820,35 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         subscriptionEndDate: true,
         trialStartDate: true,
         trialEndDate: true,
-        _count: { select: { Session: true } }
+        childBirthday: true,
+        issue: true,
+        _count: { select: { Session: true } },
+        WacbSurvey: {
+          select: { totalScore: true },
+          orderBy: { submittedAt: 'desc' },
+          take: 1,
+        },
+        Session: {
+          select: { createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+        UserLessonProgress: {
+          select: { completedAt: true },
+          orderBy: { completedAt: 'desc' },
+          take: 1,
+        },
       },
       orderBy: { createdAt: 'desc' }
     });
 
     const formatted = users.map(u => {
       const decrypted = decryptUserData(u);
+      const lastSession = u.Session[0]?.createdAt ?? null;
+      const lastLesson = u.UserLessonProgress[0]?.completedAt ?? null;
+      const lastActiveAt = lastSession && lastLesson
+        ? (lastSession > lastLesson ? lastSession : lastLesson)
+        : (lastSession ?? lastLesson);
       return {
         id: u.id,
         name: decrypted.name,
@@ -836,7 +857,7 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         hasPushToken: !!u.pushToken,
         pushTokenUpdatedAt: u.pushTokenUpdatedAt,
         createdAt: u.createdAt,
-        lastActiveAt: u.lastSessionDate,
+        lastActiveAt,
         sessionCount: u._count.Session,
         developmentalVisible: u.developmentalVisible,
         subscriptionStatus: u.subscriptionStatus,
@@ -845,6 +866,9 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         subscriptionEndDate: u.subscriptionEndDate,
         trialStartDate: u.trialStartDate,
         trialEndDate: u.trialEndDate,
+        childBirthday: u.childBirthday,
+        issue: u.issue,
+        wacbTotalScore: u.WacbSurvey[0]?.totalScore ?? null,
       };
     });
 

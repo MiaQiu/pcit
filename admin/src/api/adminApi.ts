@@ -98,6 +98,9 @@ export interface UserSummary {
   subscriptionEndDate: string | null;
   trialStartDate: string | null;
   trialEndDate: string | null;
+  childBirthday: string | null;
+  issue: string | null;
+  wacbTotalScore: number | null;
 }
 
 export interface SubscriptionUser {
