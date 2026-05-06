@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Polygon, Line, Text as SvgText } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { DemoTemplate } from './DemoTemplate';
+import amplitudeService from '../../services/amplitudeService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_W = SCREEN_WIDTH * 0.62;
@@ -88,6 +89,8 @@ export const Demo4Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { t } = useTranslation();
 
+  useEffect(() => { amplitudeService.trackOnboardingScreen('demo4', 9); }, []);
+
   const radarAxes = [
     t('onboarding.demo4.axisLanguage'),
     t('onboarding.demo4.axisCognition'),
@@ -100,7 +103,7 @@ export const Demo4Screen: React.FC = () => {
     <DemoTemplate
       text={t('onboarding.demo4.text')}
       onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('Demo3')}
-      onNext={() => navigation.navigate('Demo5')}
+      onNext={() => { amplitudeService.trackOnboardingStepCompleted('demo4', 9); navigation.navigate('Demo5'); }}
     >
       <View style={styles.scene}>
 

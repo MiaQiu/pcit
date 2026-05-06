@@ -226,6 +226,20 @@ class AmplitudeService {
   }
 
   /**
+   * Track onboarding screen viewed
+   */
+  trackOnboardingScreen(screen: string, step: number) {
+    this.trackEvent('Onboarding Screen Viewed', { screen, step });
+  }
+
+  /**
+   * Track onboarding step completed (user pressed continue)
+   */
+  trackOnboardingStepCompleted(screen: string, step: number) {
+    this.trackEvent('Onboarding Step Completed', { screen, step });
+  }
+
+  /**
    * Reset Amplitude (for logout)
    */
   reset() {

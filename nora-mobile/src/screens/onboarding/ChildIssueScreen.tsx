@@ -2,20 +2,12 @@
  * Child Issue Screen
  */
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
-import amplitudeService from '../../services/amplitudeService';
 
 export const ChildIssueScreen: React.FC = () => {
   const { t } = useTranslation();
-
-  useEffect(() => {
-    amplitudeService.trackEvent('Onboarding Screen Viewed', {
-      screen: 'child_issue',
-      step: 2,
-    });
-  }, []);
 
   return (
     <MultipleChoiceScreen
@@ -44,6 +36,8 @@ export const ChildIssueScreen: React.FC = () => {
       phase={1}
       stepInPhase={6}
       totalStepsInPhase={6}
+      screenName="child_issue"
+      screenStep={17}
     />
   );
 };

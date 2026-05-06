@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
+import amplitudeService from '../../services/amplitudeService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_SIZE = SCREEN_WIDTH - 48;
@@ -60,6 +61,8 @@ export const Demo1Screen: React.FC = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
+  useEffect(() => { amplitudeService.trackOnboardingScreen('demo1', 4); }, []);
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
@@ -105,7 +108,7 @@ export const Demo1Screen: React.FC = () => {
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('Demo1B')}
+          onPress={() => { amplitudeService.trackOnboardingStepCompleted('demo1', 4); navigation.navigate('Demo1B'); }}
           activeOpacity={0.85}
         >
           <Text style={styles.buttonText}>{t('onboarding.letsGo')}</Text>

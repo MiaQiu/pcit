@@ -23,6 +23,7 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { REVENUECAT_CONFIG } from '../../config/revenuecat';
+import amplitudeService from '../../services/amplitudeService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -44,6 +45,10 @@ export const SubscriptionScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const isReturningUser = !(data.name && data.name.trim() !== '');
+
+  useEffect(() => {
+    amplitudeService.trackOnboardingScreen('subscription', 35);
+  }, []);
 
   // Save all onboarding data to backend as soon as the subscription screen loads.
   // This ensures data is persisted even if the user exits without subscribing.
@@ -105,6 +110,7 @@ export const SubscriptionScreen: React.FC = () => {
       const result = await purchasePackage(packageToUse);
 
       if (result.success) {
+        amplitudeService.trackEvent('Subscription Trial Started', { plan: '1month', isReturningUser });
         // CRITICAL: Trust the webhook as source of truth for subscription status
         // If completeOnboarding fails (app crash, network error, battery dies),
         // the RevenueCat webhook will still update subscriptionStatus in backend.
@@ -166,6 +172,7 @@ export const SubscriptionScreen: React.FC = () => {
       const result = await restorePurchases();
 
       if (result.restored) {
+        amplitudeService.trackEvent('Subscription Restored', { isReturningUser });
         const isInitialOnboarding = data.name && data.name.trim() !== '';
         Alert.alert(
           t('subscription.restoreSuccessTitle'),
@@ -214,6 +221,7 @@ export const SubscriptionScreen: React.FC = () => {
   };
 
   const handleSkip = async () => {
+    amplitudeService.trackEvent('Subscription Skipped', { isReturningUser });
     setIsLoading(true);
     try {
       // Send onboarding data to backend without subscription

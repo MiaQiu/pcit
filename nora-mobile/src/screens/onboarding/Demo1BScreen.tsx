@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { DemoTemplate } from './DemoTemplate';
+import amplitudeService from '../../services/amplitudeService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -11,11 +12,13 @@ export const Demo1BScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { t } = useTranslation();
 
+  useEffect(() => { amplitudeService.trackOnboardingScreen('demo1b', 5); }, []);
+
   return (
     <DemoTemplate
       text={t('onboarding.demo1B.text')}
       onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('Demo1')}
-      onNext={() => navigation.navigate('Demo2')}
+      onNext={() => { amplitudeService.trackOnboardingStepCompleted('demo1b', 5); navigation.navigate('Demo2'); }}
     >
       <View style={styles.imageContainer}>
         <Image

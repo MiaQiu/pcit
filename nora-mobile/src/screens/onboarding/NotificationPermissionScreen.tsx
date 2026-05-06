@@ -3,7 +3,7 @@
  * Prompts user to enable push notifications at the end of onboarding
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { FONTS, COLORS } from '../../constants/assets';
 import { requestNotificationPermissions, scheduleDailyLessonReminder } from '../../utils/notifications';
 import { useAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import amplitudeService from '../../services/amplitudeService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -41,7 +42,12 @@ export const NotificationPermissionScreen: React.FC = () => {
   const [isRequesting, setIsRequesting] = useState(false);
   const insets = useSafeAreaInsets();
 
+  useEffect(() => {
+    amplitudeService.trackOnboardingScreen('notification_permission', 36);
+  }, []);
+
   const handleNotNow = () => {
+    amplitudeService.trackEvent('Notification Permission Skipped', {});
     navigation.replace('MainTabs');
   };
 
@@ -50,6 +56,7 @@ export const NotificationPermissionScreen: React.FC = () => {
     try {
       const accessToken = authService.getAccessToken();
       const granted = await requestNotificationPermissions(accessToken);
+      amplitudeService.trackNotificationPermission(granted);
       if (granted) {
         const reminderTime = data.reminderTime || '19:30';
         await scheduleDailyLessonReminder(reminderTime);

@@ -382,26 +382,10 @@ class AudioSessionManager: RCTEventEmitter, AVAudioRecorderDelegate {
   func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
     NSLog("[AudioSessionManager] 🔴 audioRecorderDidFinishRecording called, success: %@", flag ? "true" : "false")
 
-    // Audio interruption (phone call, Siri, etc.) — flag is false but the partial
-    // file still exists. Save it to UserDefaults so JS can recover and upload it.
-    if !flag {
-      NSLog("[AudioSessionManager] ❌ Recording interrupted (flag=false) — saving partial file for recovery")
-      if let url = recordingURL {
-        let durationMillis = recordingStartTime.map { Int(Date().timeIntervalSince($0) * 1000) } ?? 0
-        let defaults = UserDefaults.standard
-        defaults.set(url.path, forKey: "pendingRecordingUri")
-        defaults.set(durationMillis, forKey: "pendingRecordingDuration")
-        defaults.set(true, forKey: "pendingRecordingAutoStopped")
-        defaults.synchronize()
-        NSLog("[AudioSessionManager] 💾 Saved interrupted recording: %@, %d ms", url.path, durationMillis)
-        sendEvent(withName: "onRecordingAutoStopped", body: [
-          "uri": url.path,
-          "durationMillis": durationMillis
-        ])
-      }
-      cleanupRecording()
-      recordingStartTime = nil
-      recordingURL = nil
+    // Only handle auto-stop case here
+    // Manual stops are already handled by stopRecording() method
+    guard flag else {
+      NSLog("[AudioSessionManager] ❌ Recording finished unsuccessfully")
       return
     }
 

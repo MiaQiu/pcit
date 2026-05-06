@@ -29,6 +29,8 @@ export const RelationshipScreen: React.FC = () => {
       phase={1}
       stepInPhase={2}
       totalStepsInPhase={6}
+      screenName="relationship"
+      screenStep={13}
     />
   );
 };

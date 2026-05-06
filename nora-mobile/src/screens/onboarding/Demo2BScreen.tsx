@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { DemoTemplate } from './DemoTemplate';
+import amplitudeService from '../../services/amplitudeService';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface PenSkill {
@@ -65,6 +66,8 @@ export const Demo2BScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { t } = useTranslation();
 
+  useEffect(() => { amplitudeService.trackOnboardingScreen('demo2b', 7); }, []);
+
   const PEN_SKILLS: PenSkill[] = [
     { letter: 'P', rest: t('onboarding.demo2B.praiseLabeled'), score: '6/10', label: t('onboarding.demo2B.labelGood'), progress: 0.6, barColor: '#6B3FA0', scoreColor: '#6B3FA0' },
     { letter: 'E', rest: t('onboarding.demo2B.echo'), score: '3/10', label: t('onboarding.demo2B.labelPayAttention'), progress: 0.3, barColor: '#7B2020', scoreColor: '#7B2020' },
@@ -81,7 +84,7 @@ export const Demo2BScreen: React.FC = () => {
     <DemoTemplate
       text={t('onboarding.demo2B.text')}
       onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('Demo2')}
-      onNext={() => navigation.navigate('Demo3')}
+      onNext={() => { amplitudeService.trackOnboardingStepCompleted('demo2b', 7); navigation.navigate('Demo3'); }}
     >
       <View style={styles.cardWrapper}>
         <LinearGradient

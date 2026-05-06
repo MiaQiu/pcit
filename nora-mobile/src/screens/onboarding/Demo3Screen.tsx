@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { DemoTemplate } from './DemoTemplate';
+import amplitudeService from '../../services/amplitudeService';
 
 const CoachingCard: React.FC<{ label: string; body: string; shift?: boolean }> = ({ label, body, shift = false }) => (
   <View style={[card.wrapper, shift && card.shifted]}>
@@ -22,17 +23,19 @@ const CoachingCard: React.FC<{ label: string; body: string; shift?: boolean }> =
       </View>
     </LinearGradient>
   </View>
-);
+); 
 
 export const Demo3Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { t } = useTranslation();
 
+  useEffect(() => { amplitudeService.trackOnboardingScreen('demo3', 8); }, []);
+
   return (
     <DemoTemplate
       text={t('onboarding.demo3.text')}
       onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('Demo2B')}
-      onNext={() => navigation.navigate('Demo4')}
+      onNext={() => { amplitudeService.trackOnboardingStepCompleted('demo3', 8); navigation.navigate('Demo4'); }}
     >
       <View style={styles.container}>
         <LinearGradient
@@ -63,6 +66,8 @@ const styles = StyleSheet.create({
   container: {
     marginHorizontal: 24,
     marginTop: 50,
+    marginBottom: 50,
+   
   },
   outerBorder: {
     borderRadius: 24,
@@ -86,7 +91,7 @@ const styles = StyleSheet.create({
 const card = StyleSheet.create({
   wrapper: {
     alignSelf: 'flex-start',
-    width: '92%',
+    width: '94%',
   },
   shifted: {
     alignSelf: 'flex-end',
@@ -102,7 +107,7 @@ const card = StyleSheet.create({
   },
   label: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 13,
+    fontSize: 12,
     color: '#1F2937',
   },
   text: {

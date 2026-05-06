@@ -40,6 +40,7 @@ import { getTodaySingapore, toSingaporeDateString, getStartOfTodaySingapore, get
 import * as userStorage from '../lib/userStorage';
 import type { RelationshipToChild } from '@nora/core';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -442,6 +443,7 @@ export const HomeScreen_v2: React.FC = () => {
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    amplitudeService.trackScreenView('Home');
     loadUserProfile();
     loadData('full');
   }, []);
@@ -520,6 +522,7 @@ export const HomeScreen_v2: React.FC = () => {
     const reportReadKey = `report_read_${getTodaySingapore()}`;
     await userStorage.setItem(reportReadKey, latestRecordingId);
     setIsReportRead(true);
+    amplitudeService.trackReportViewed(latestRecordingId, undefined, { source: 'home' });
     navigation.push('Report', { recordingId: latestRecordingId });
   };
 
@@ -540,6 +543,7 @@ export const HomeScreen_v2: React.FC = () => {
 
   const handlePlanItemPress = async (item: TodayPlanItem) => {
     if (item.type === 'lesson') {
+      amplitudeService.trackLessonStarted(item.id, item.title, { source: 'home_today_plan' });
       navigation.push('LessonViewer', { lessonId: item.id });
     } else if (item.type === 'weekly-report') {
       await userStorage.setItem(`weekly_report_read_date_${item.id}`, getTodaySingapore());

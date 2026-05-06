@@ -47,7 +47,7 @@ export const PlaySession3Screen: React.FC = () => {
           <Text style={[styles.cardContent, { position: 'absolute', top: '56%', left: '31%', width: '40%' }]}>
             {t('onboarding.playSession3.cardContent', { name: childName })}
           </Text>
-          <Text style={[styles.cardButton, { position: 'absolute', top: '64%', left: '12%', right: '12%' }]}>
+          <Text style={[styles.cardButton, { position: 'absolute', top: '64%', left: '15%', right: '12%' }]}>
             {t('onboarding.playSession3.cardButton')}
           </Text>
         </View>
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   cardButton: {
     textAlign: 'center',
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 11,
+    fontSize: 9,
     color: '#FFFFFF',
   },
   footer: { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 12, gap: 12 },

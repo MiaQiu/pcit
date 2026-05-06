@@ -60,10 +60,15 @@ export const PlaySession1Screen: React.FC = () => {
             style={styles.image}
             resizeMode="contain"
           />
-          <QuadLabel text={t('onboarding.playSession1.labels.buildCreate')}    style={{ top: '41%', left: '20%',  transform: [{ rotate: '-7deg' }] }} />
+          <QuadLabel text={t('onboarding.playSession1.labels.buildCreate')}    style={{ top: '41%', left: '17%',  transform: [{ rotate: '-7deg' }] }} />
+          <QuadLabel text={t('onboarding.playSession1.labels.imaginePretend')} style={{ top: '41%', left: '57%', transform: [{ rotate: '5deg'  }] }} />
+          <QuadLabel text={t('onboarding.playSession1.labels.drawExplore')}    style={{ top: '84%', left: '17%',  transform: [{ rotate: '-7deg'  }] }} />
+          <QuadLabel text={t('onboarding.playSession1.labels.solvePuzzle')}    style={{ top: '84%', left: '57%', transform: [{ rotate: '5deg' }] }} />
+          
+          {/* <QuadLabel text={t('onboarding.playSession1.labels.buildCreate')}    style={{ top: '41%', left: '20%',  transform: [{ rotate: '-7deg' }] }} />
           <QuadLabel text={t('onboarding.playSession1.labels.imaginePretend')} style={{ top: '41%', left: '63%', transform: [{ rotate: '5deg'  }] }} />
           <QuadLabel text={t('onboarding.playSession1.labels.drawExplore')}    style={{ top: '84%', left: '23%',  transform: [{ rotate: '-7deg'  }] }} />
-          <QuadLabel text={t('onboarding.playSession1.labels.solvePuzzle')}    style={{ top: '84%', left: '63%', transform: [{ rotate: '5deg' }] }} />
+          <QuadLabel text={t('onboarding.playSession1.labels.solvePuzzle')}    style={{ top: '84%', left: '63%', transform: [{ rotate: '5deg' }] }} /> */}
         </View>
       </View>
 

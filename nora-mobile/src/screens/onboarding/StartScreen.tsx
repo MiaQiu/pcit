@@ -3,7 +3,7 @@
  * Introduction screen with "Get Started" button
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,12 +18,17 @@ import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { MaskedDinoImage } from '../../components/MaskedDinoImage';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../../services/amplitudeService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const StartScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<OnboardingStackNavigationProp>();
+
+  useEffect(() => {
+    amplitudeService.trackOnboardingScreen('start', 2);
+  }, []);
 
   const handleGetStarted = () => {
     navigation.navigate('CreateAccount');

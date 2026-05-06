@@ -29,6 +29,7 @@ import type { ModuleWithProgress, LessonCardData } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
 import { resolveImageUris } from '../services/lessonImageCache';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 const H_PAD = 20;
 const CARD_GAP = 10;
@@ -228,6 +229,7 @@ export const LearnScreen_v2: React.FC = () => {
 
   useFocusEffect(
     useCallback(() => {
+      amplitudeService.trackScreenView('Learn');
       scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
       loadCurrentModuleKey();
       if (modules.length > 0) loadData(false);
@@ -362,6 +364,7 @@ export const LearnScreen_v2: React.FC = () => {
       incomplete.find(l => l.dayNumber > currentDay) ??
       incomplete.sort((a, b) => a.dayNumber - b.dayNumber)[0];
 
+    amplitudeService.trackLessonStarted(lessonId, currentLesson?.title ?? '', { moduleKey, source: 'learn' });
     navigation.push('LessonViewer', { lessonId, moduleKey, nextLessonId: nextLesson?.id });
   };
 
