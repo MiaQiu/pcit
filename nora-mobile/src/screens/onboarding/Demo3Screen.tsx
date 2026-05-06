@@ -1,9 +1,28 @@
 import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { DemoTemplate } from './DemoTemplate';
+
+const CoachingCard: React.FC<{ label: string; body: string; shift?: boolean }> = ({ label, body, shift = false }) => (
+  <View style={[card.wrapper, shift && card.shifted]}>
+    <LinearGradient
+      colors={['#B8D4F5', '#C8C0F0', '#D8E8FF']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={card.border}
+    >
+      <View style={card.inner}>
+        <Text style={card.text}>
+          <Text style={card.label}>{label}: </Text>
+          {body}
+        </Text>
+      </View>
+    </LinearGradient>
+  </View>
+);
 
 export const Demo3Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -12,29 +31,84 @@ export const Demo3Screen: React.FC = () => {
   return (
     <DemoTemplate
       text={t('onboarding.demo3.text')}
-      onBack={() => navigation.goBack()}
+      onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('Demo2B')}
       onNext={() => navigation.navigate('Demo4')}
     >
-      <View style={styles.imageContainer}>
-        <Image
-          source={require('../../../assets/images/demo3.jpg')}
-          style={styles.image}
-          resizeMode="contain"
-        />
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#B8D4F5', '#C8C0F0', '#D8E8FF']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.outerBorder}
+        >
+          <View style={styles.innerBox}>
+            <Text style={styles.title}>{t('onboarding.demo3.title')}</Text>
+            <CoachingCard
+              label={t('onboarding.demo3.card1Label')}
+              body={t('onboarding.demo3.card1Body')}
+            />
+            <CoachingCard
+              label={t('onboarding.demo3.card2Label')}
+              body={t('onboarding.demo3.card2Body')}
+              shift
+            />
+          </View>
+        </LinearGradient>
       </View>
     </DemoTemplate>
   );
 };
 
 const styles = StyleSheet.create({
-  imageContainer: {
-    width: '95%',
-    flex: 1,
-    alignSelf: 'center',
-    marginTop:50
+  container: {
+    marginHorizontal: 24,
+    marginTop: 50,
   },
-  image: {
-    width: '100%',
-    height: '100%',
+  outerBorder: {
+    borderRadius: 24,
+    padding: 6,
+  },
+  innerBox: {
+    backgroundColor: '#FAFBFF',
+    borderRadius: 20,
+    padding: 18,
+    gap: 12,
+  },
+  title: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 17,
+    color: '#6B3FA0',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+});
+
+const card = StyleSheet.create({
+  wrapper: {
+    alignSelf: 'flex-start',
+    width: '92%',
+  },
+  shifted: {
+    alignSelf: 'flex-end',
+  },
+  border: {
+    borderRadius: 14,
+    padding: 2,
+  },
+  inner: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 12,
+  },
+  label: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 13,
+    color: '#1F2937',
+  },
+  text: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 13,
+    color: '#374151',
+    lineHeight: 19,
   },
 });

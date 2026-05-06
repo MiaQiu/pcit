@@ -12,7 +12,7 @@ export const Demo5Screen: React.FC = () => {
   return (
     <DemoTemplate
       text={t('onboarding.demo5.text')}
-      onBack={() => navigation.goBack()}
+      onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('Demo4')}
       onNext={() => navigation.navigate('ParentingIntro')}
     >
       <View style={styles.imageContainer}>

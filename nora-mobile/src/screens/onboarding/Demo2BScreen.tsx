@@ -80,7 +80,7 @@ export const Demo2BScreen: React.FC = () => {
   return (
     <DemoTemplate
       text={t('onboarding.demo2B.text')}
-      onBack={() => navigation.goBack()}
+      onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('Demo2')}
       onNext={() => navigation.navigate('Demo3')}
     >
       <View style={styles.cardWrapper}>
