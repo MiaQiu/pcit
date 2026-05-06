@@ -4,7 +4,7 @@
  * Supports both single-select and multi-select modes
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import { OnboardingStackNavigationProp } from '../navigation/types';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { OnboardingButtonRow } from './OnboardingButtonRow';
 import { OnboardingProgressHeader } from './OnboardingProgressHeader';
+import amplitudeService from '../services/amplitudeService';
 
 export interface MultipleChoiceOption {
   value: string | number;
@@ -46,6 +47,8 @@ export interface MultipleChoiceScreenProps {
   allowOtherOption?: boolean; // Enable "Others" option with text input
   otherOptionValue?: string; // Value identifier for the "Others" option (default: 'other')
   otherOptionPlaceholder?: string; // Placeholder text for the "Others" input
+  screenName?: string; // For amplitude tracking
+  screenStep?: number; // Onboarding step number for amplitude funnel
 }
 
 export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
@@ -55,7 +58,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   dataField,
   nextScreen,
   multiSelect = false,
-  continueText = 'Continue',
+  continueText,
   onBeforeNavigate,
   phase = 1,
   stepInPhase = 1,
@@ -65,6 +68,8 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   allowOtherOption = false,
   otherOptionValue = 'other',
   otherOptionPlaceholder = 'Please specify...',
+  screenName,
+  screenStep,
 }) => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
@@ -87,6 +92,12 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [otherText, setOtherText] = useState('');
   const autoNavigateTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (screenName && screenStep !== undefined) {
+      amplitudeService.trackOnboardingScreen(screenName, screenStep);
+    }
+  }, []);
 
   const handleSelect = (value: string | number) => {
     if (multiSelect) {
@@ -166,6 +177,9 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
       setIsLoading(false);
     }
 
+    if (screenName && screenStep !== undefined) {
+      amplitudeService.trackOnboardingStepCompleted(screenName, screenStep);
+    }
     navigation.navigate(nextScreen as any);
   };
 

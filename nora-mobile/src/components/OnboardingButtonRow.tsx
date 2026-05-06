@@ -12,14 +12,14 @@ interface OnboardingButtonRowProps {
   onBack?: () => void;
   onContinue: () => void;
   continueDisabled?: boolean;
-  continueText?: string;
+  continueText?: string | undefined;
 }
 
 export const OnboardingButtonRow: React.FC<OnboardingButtonRowProps> = ({
   onBack,
   onContinue,
   continueDisabled = false,
-  continueText = 'Continue',
+  continueText,
 }) => {
   return (
     <View style={styles.buttonRow}>
