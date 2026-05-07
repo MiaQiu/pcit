@@ -79,6 +79,16 @@ export const SubscriptionScreen: React.FC = () => {
   // Falls back to '...' while offerings are still loading.
   const priceString = selectedPackage?.product.priceString ?? '...';
 
+  // Trial end date = 30 days from today; shown in the reminder card.
+  const chargeDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toLocaleDateString(i18n.language === 'zh-TW' ? 'zh-TW' : 'en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+  })();
+
   // Format 0 in the product's currency so the symbol matches the storefront
   // (e.g. "S$0" for SGD, "$0" for USD, "NT$0" for TWD).
   const zeroCurrency = selectedPackage?.product.currencyCode
@@ -303,73 +313,52 @@ export const SubscriptionScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>
-          {isReturningUser ? t('subscription.subscribeToContinue') : t('subscription.howTrialWorks', { zeroCurrency })}
-        </Text>
-        <Text style={styles.subtitle}>
-          {isReturningUser ? t('subscription.priceMonthly', { price: priceString }) : t('subscription.priceFreeTrialThenMonthly', { price: priceString })}
-        </Text>
-        {/* {!isReturningUser && (
-          <Text style={styles.regularPrice}>{t('subscription.regularPrice')}</Text>
-        )} */}
-
         {subscriptionError && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{subscriptionError}</Text>
           </View>
         )}
 
-        {/* Timeline */}
-        <View style={styles.timeline}>
-          {/* Step 1 — Today */}
-          <View style={styles.timelineRow}>
-            <View style={styles.timelineLeft}>
-              <View style={[styles.timelineCircle, styles.timelineCircleActive]}>
-                <Text style={styles.timelineCircleText}>🔓</Text>
-              </View>
-              <View style={styles.timelineConnector} />
-            </View>
-            <View style={styles.timelineBody}>
-              <Text style={styles.timelineTitle}>{t('subscription.stepTodayTitle')}</Text>
-              <Text style={styles.timelineDesc}>{t('subscription.stepTodayDesc')}</Text>
-            </View>
-          </View>
+        {/* Main card — white, with cute illustration + bold "Due Today" hero + reminder pill */}
+        <View style={styles.card}>
+          {/* Smaller illustration inside the card */}
+          {/* <View style={styles.cardIllustration}>
+            <MaskedDinoImage style={styles.cardIllustrationImage} />
+          </View> */}
 
-          {/* Step 2 — Reminder (new users only) */}
+          <Text style={styles.title}>
+            {isReturningUser ? t('subscription.subscribeToContinue') : t('subscription.howTrialWorks', { zeroCurrency })}
+          </Text>
+          <Text style={styles.priceAfterTrial}>
+            {isReturningUser
+              ? t('subscription.priceMonthly', { price: priceString })
+              : t('subscription.priceAfterTrial', { price: priceString })}
+          </Text>
           {!isReturningUser && (
-            <View style={styles.timelineRow}>
-              <View style={styles.timelineLeft}>
-                <View style={[styles.timelineCircle, styles.timelineCircleActive]}>
-                  <Text style={styles.timelineCircleText}>🔔</Text>
-                </View>
-                <View style={styles.timelineConnector} />
-              </View>
-              <View style={styles.timelineBody}>
-                <Text style={styles.timelineTitle}>{t('subscription.step28DaysTitle')}</Text>
-                <Text style={styles.timelineDesc}>{t('subscription.step28DaysDesc')}</Text>
-              </View>
-            </View>
+            <Text style={styles.subtitle}>{t('subscription.priceFreeTrialThenMonthly')}</Text>
           )}
 
-          {/* Step 3 — Charge date */}
-          <View style={styles.timelineRow}>
-            <View style={styles.timelineLeft}>
-              <View style={[styles.timelineCircle, styles.timelineCircleActive]}>
-                <Text style={styles.timelineCircleText}>★</Text>
-              </View>
-            </View>
-            <View style={styles.timelineBody}>
-              <Text style={styles.timelineTitle}>
-                {isReturningUser ? t('subscription.stepTodayTitle') : t('subscription.step30DaysTitle')}
-              </Text>
-              <Text style={styles.timelineDesc}>
-                {isReturningUser
-                  ? t('subscription.stepChargedDescReturning', { price: priceString })
-                  : t('subscription.stepChargedDesc', { price: priceString })}
+          {/* Reminder — new users only */}
+          {!isReturningUser && (
+            <View style={styles.reminderCard}>
+              <Text style={styles.reminderIcon}>🔔</Text>
+              <Text style={styles.reminderText}>
+                <Text style={styles.reminderTextBold}>
+                  {t('subscription.reminderLabel', { defaultValue: 'Gentle reminder: ' })}
+                </Text>
+                {t('subscription.step28DaysDesc', { chargeDate })}
               </Text>
             </View>
-          </View>
+          )}
         </View>
+
+    
+
+        <Text style={styles.disclaimer}>
+          {isReturningUser ? t('subscription.disclaimerReturning', { price: priceString }) : t('subscription.disclaimerNew', { price: priceString })}
+          <Text style={styles.link} onPress={handleOpenTerms}>{t('subscription.terms')}</Text>{' '}and{' '}
+          <Text style={styles.link} onPress={handleOpenPrivacy}>{t('subscription.privacyPolicy')}</Text>.
+        </Text>
 
         <TouchableOpacity style={styles.restoreButton} onPress={handleRestore} activeOpacity={0.8}>
           <Text style={styles.restoreText}>{t('subscription.restorePurchase')}</Text>
@@ -378,12 +367,6 @@ export const SubscriptionScreen: React.FC = () => {
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
           <Text style={styles.logoutText}>{t('subscription.logOut')}</Text>
         </TouchableOpacity>
-
-        <Text style={styles.disclaimer}>
-          {isReturningUser ? t('subscription.disclaimerReturning', { price: priceString }) : t('subscription.disclaimerNew', { price: priceString })}
-          <Text style={styles.link} onPress={handleOpenTerms}>{t('subscription.terms')}</Text>{' '}and{' '}
-          <Text style={styles.link} onPress={handleOpenPrivacy}>{t('subscription.privacyPolicy')}</Text>.
-        </Text>
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -416,7 +399,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
 
-  // Hero — mirrors StartScreen exactly
+  // Hero — mirrors StartScreen exactly (UNCHANGED)
   dragonSection: {
     position: 'relative',
     width: SCREEN_WIDTH * 0.8,
@@ -452,7 +435,6 @@ const styles = StyleSheet.create({
   badgeContainer: {
     alignItems: 'center',
     marginTop: -20,
-    //marginBottom: 14,
   },
   badge: {
     borderWidth: 1,
@@ -468,21 +450,63 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
 
-  // Header
+  // Main card — white background to match the new design
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 18,
+    marginBottom: 24,
+    marginTop:34,
+    borderWidth: 1,
+    borderColor: 'rgba(140,107,194,0.10)',
+    // shadow
+    shadowColor: '#8C6BC2',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.14,
+    shadowRadius: 24,
+    elevation: 5,
+  },
+
+  // Cute illustration inside the card
+  cardIllustration: {
+    width: '100%',
+    height: 140,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  cardIllustrationImage: {
+    width: '70%',
+    height: '100%',
+  },
+
+  // Header (inside card)
   title: {
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    fontSize: 30,
+    color: '#111827',
+    textAlign: 'center',
+    letterSpacing: -0.5,
+    lineHeight: 34,
+    marginBottom: 8,
+  },
+  priceAfterTrial: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 26,
+    fontSize: 18,
     color: '#1F2937',
     textAlign: 'center',
     marginBottom: 8,
-    marginTop: 32,
   },
   subtitle: {
     fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 15,
-    color: '#6B7280',
+    fontSize: 15.5,
+    color: '#4B5563',
     textAlign: 'center',
-    marginBottom: 24,
+    lineHeight: 23,
+    marginHorizontal: 4,
+    marginBottom: 18,
   },
   regularPrice: {
     fontFamily: 'PlusJakartaSans_400Regular',
@@ -493,65 +517,32 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
 
-  // Timeline
-  timeline: {
-    marginBottom: 24,
-  },
-  timelineRow: {
+  // Reminder pill (inside card, at the bottom)
+  reminderCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    backgroundColor: '#F1E5FF',
+    borderWidth: 1,
+    borderColor: 'rgba(140,73,213,0.14)',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    gap: 8,
   },
-  timelineLeft: {
-    alignItems: 'center',
-    width: 44,
-    marginRight: 16,
-  },
-  timelineCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timelineCircleDone: {
-    backgroundColor: '#8C49D5',
-  },
-  timelineCircleActive: {
-    backgroundColor: '#8C49D5',
-  },
-  timelineCircleText: {
-    fontSize: 18,
-    color: '#FFFFFF',
-  },
-  timelineConnector: {
-    width: 3,
-    height: 56,
-    backgroundColor: '#E9D5FF',
-    borderRadius: 2,
-  },
-  timelineBody: {
-    flex: 1,
-    paddingTop: 6,
-    paddingBottom: 32,
-  },
-  timelineTitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 17,
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  timelineTitleDone: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 17,
-    color: '#9CA3AF',
-    textDecorationLine: 'line-through',
-    marginBottom: 4,
-  },
-  timelineDesc: {
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 14,
-    color: '#6B7280',
+  reminderIcon: {
+    fontSize: 16,
     lineHeight: 20,
+  },
+  reminderText: {
+    flex: 1,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    fontSize: 13.5,
+    color: '#5B21B6',
+    lineHeight: 19,
+  },
+  reminderTextBold: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: '#5B21B6',
   },
 
   // Restore / Logout
@@ -570,6 +561,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingVertical: 8,
     marginBottom: 12,
+    marginTop:44,
   },
   logoutText: {
     fontFamily: 'PlusJakartaSans_400Regular',
@@ -589,7 +581,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 
-  // Bottom bar
+  // Bottom bar (UNCHANGED)
   bottomBar: {
     position: 'absolute',
     bottom: 0,

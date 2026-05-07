@@ -233,7 +233,8 @@ export const LearnScreen_v2: React.FC = () => {
       scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
       loadCurrentModuleKey();
       if (modules.length > 0) fetchAndSave(i18n.language);
-    }, [modules.length])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [modules.length, i18n.language])
   );
 
   const loadCurrentModuleKey = async () => {

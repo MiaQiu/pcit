@@ -524,9 +524,11 @@ export const CoachChatScreen: React.FC = () => {
                   <Text style={styles.termsBody}>{t('coachChat.terms.section6Body')}</Text>
                 </ScrollView>
 
-                <TouchableOpacity style={styles.modalConfirm} onPress={() => setShowTerms(false)} activeOpacity={0.8}>
-                  <Text style={styles.modalConfirmText}>{t('coachChat.iUnderstand')}</Text>
-                </TouchableOpacity>
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.modalConfirm} onPress={() => setShowTerms(false)} activeOpacity={0.8}>
+                    <Text style={styles.modalConfirmText}>{t('coachChat.iUnderstand')}</Text>
+                  </TouchableOpacity>
+                </View>
               </>
             ) : (
               /* ── Request view ── */

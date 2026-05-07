@@ -455,7 +455,8 @@ export const HomeScreen_v2: React.FC = () => {
         return;
       }
       loadData('background');
-    }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [i18n.language])
   );
 
   // Reload when language changes so lesson titles come back in the right locale
@@ -506,7 +507,8 @@ export const HomeScreen_v2: React.FC = () => {
         tipOpacity.setValue(0);
         setShowTip(false);
       };
-    }, [showTipSequence])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showTipSequence, i18n.language])
   );
 
   // ─── Actions ──────────────────────────────────────────────────────────────
