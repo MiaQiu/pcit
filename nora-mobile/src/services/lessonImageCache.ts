@@ -52,16 +52,17 @@ async function downloadImage(
 /**
  * Resolve local cached URIs for a list of lessons.
  *
- * Returns immediately with whatever is already on disk. Also returns a
- * `pendingDownloads` promise that resolves with newly downloaded URIs once
- * background downloads finish (may be an empty object if nothing needed).
+ * Already-cached files are returned immediately via `uris`. Missing or stale
+ * images are downloaded in the background; `onImageReady` is called for each
+ * one as it finishes so callers can update UI progressively.
  *
  * Daily-check logic: within 24 h, cached entries are used as-is.
  * After 24 h, imageUpdatedAt is compared; only re-download if it changed.
  */
 export async function resolveImageUris(
-  lessons: Array<{ id: string; dragonImageUrl?: string | null; imageUpdatedAt?: string | null }>
-): Promise<{ uris: Record<string, string>; pendingDownloads: Promise<Record<string, string>> }> {
+  lessons: Array<{ id: string; dragonImageUrl?: string | null; imageUpdatedAt?: string | null }>,
+  onImageReady?: (lessonId: string, localUri: string) => void
+): Promise<{ uris: Record<string, string> }> {
   await ensureCacheDir();
   const metadata = await loadMetadata();
   const now = Date.now();
@@ -82,10 +83,8 @@ export async function resolveImageUris(
 
         if (now - entry.lastChecked >= CHECK_INTERVAL_MS) {
           if (entry.imageUpdatedAt !== (lesson.imageUpdatedAt ?? '')) {
-            // Image was updated — schedule re-download
             toDownload.push(lesson);
           } else {
-            // Still current — just refresh the check timestamp
             metadataUpdated[lesson.id] = { ...entry, lastChecked: now };
           }
         }
@@ -93,37 +92,32 @@ export async function resolveImageUris(
       }
     }
 
-    // Not cached or file missing
     toDownload.push(lesson);
   }
 
-  // Persist lastChecked updates without waiting
   if (Object.keys(metadataUpdated).length > 0) {
     saveMetadata({ ...metadata, ...metadataUpdated }).catch(() => {});
   }
 
-  const pendingDownloads = (async (): Promise<Record<string, string>> => {
-    if (toDownload.length === 0) return {};
+  if (toDownload.length > 0) {
+    // Download each image independently so they appear as soon as ready
+    (async () => {
+      const fresh = await loadMetadata();
+      await Promise.allSettled(
+        toDownload.map(async (lesson) => {
+          if (!lesson.dragonImageUrl) return;
+          const localUri = await downloadImage(
+            lesson.id,
+            lesson.dragonImageUrl,
+            lesson.imageUpdatedAt ?? '',
+            fresh
+          );
+          if (localUri) onImageReady?.(lesson.id, localUri);
+        })
+      );
+      saveMetadata(fresh).catch(() => {});
+    })();
+  }
 
-    const fresh = await loadMetadata();
-    const newUris: Record<string, string> = {};
-
-    await Promise.allSettled(
-      toDownload.map(async (lesson) => {
-        if (!lesson.dragonImageUrl) return;
-        const localUri = await downloadImage(
-          lesson.id,
-          lesson.dragonImageUrl,
-          lesson.imageUpdatedAt ?? '',
-          fresh
-        );
-        if (localUri) newUris[lesson.id] = localUri;
-      })
-    );
-
-    await saveMetadata(fresh);
-    return newUris;
-  })();
-
-  return { uris, pendingDownloads };
+  return { uris };
 }

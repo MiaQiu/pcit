@@ -25,9 +25,10 @@ import { useLessonService } from '../contexts/AppContext';
 import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
-import type { ModuleWithProgress, LessonCardData } from '@nora/core';
+import type { ModuleWithProgress, LessonCardData, ModuleListResponse, LessonListResponse } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
 import { resolveImageUris } from '../services/lessonImageCache';
+import { getCachedLessonData, saveLessonData, isCacheStale } from '../services/lessonDataCache';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 
@@ -219,11 +220,10 @@ export const LearnScreen_v2: React.FC = () => {
 
   useEffect(() => {
     if (allLessons.length === 0) return;
-    resolveImageUris(allLessons).then(({ uris, pendingDownloads }) => {
+    resolveImageUris(allLessons, (id, uri) => {
+      setLocalImageUris(prev => ({ ...prev, [id]: uri }));
+    }).then(({ uris }) => {
       if (Object.keys(uris).length > 0) setLocalImageUris(prev => ({ ...prev, ...uris }));
-      pendingDownloads.then(newUris => {
-        if (Object.keys(newUris).length > 0) setLocalImageUris(prev => ({ ...prev, ...newUris }));
-      });
     });
   }, [allLessons]);
 
@@ -232,7 +232,7 @@ export const LearnScreen_v2: React.FC = () => {
       amplitudeService.trackScreenView('Learn');
       scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
       loadCurrentModuleKey();
-      if (modules.length > 0) loadData(false);
+      if (modules.length > 0) fetchAndSave(i18n.language);
     }, [modules.length])
   );
 
@@ -245,28 +245,26 @@ export const LearnScreen_v2: React.FC = () => {
     }
   };
 
-  const loadData = async (showLoadingSpinner = true) => {
-    try {
-      if (showLoadingSpinner) setLoading(true);
-      else setIsRefreshing(true);
+  const applyData = useCallback((modulesRes: ModuleListResponse, lessonsRes: LessonListResponse) => {
+    handleApiSuccess();
+    setModules(modulesRes.modules);
+    setIsFoundationCompleted(modulesRes.isFoundationCompleted);
+    setRecommendedModules(modulesRes.recommendedModules || []);
+    const merged = lessonsRes.lessons.map(l => ({
+      ...l,
+      progress: l.progress ?? lessonsRes.userProgress?.[l.id],
+    }));
+    setAllLessons(merged);
+  }, []);
 
-      const locale = i18n.language;
+  const fetchAndSave = async (locale: string) => {
+    try {
       const [modulesRes, lessonsRes] = await Promise.all([
         lessonService.getModules(locale),
         lessonService.getLessons(undefined, locale),
       ]);
-
-      handleApiSuccess();
-      setModules(modulesRes.modules);
-      setIsFoundationCompleted(modulesRes.isFoundationCompleted);
-      setRecommendedModules(modulesRes.recommendedModules || []);
-
-      // Merge separate userProgress map into each lesson object
-      const merged = lessonsRes.lessons.map(l => ({
-        ...l,
-        progress: l.progress ?? lessonsRes.userProgress?.[l.id],
-      }));
-      setAllLessons(merged);
+      applyData(modulesRes, lessonsRes);
+      saveLessonData(locale, modulesRes, lessonsRes);
     } catch (err) {
       console.error('Failed to load learn data:', err);
       handleApiError(err);
@@ -274,6 +272,23 @@ export const LearnScreen_v2: React.FC = () => {
       setLoading(false);
       setIsRefreshing(false);
     }
+  };
+
+  const loadData = async (showLoadingSpinner = true) => {
+    const locale = i18n.language;
+    const cached = await getCachedLessonData(locale);
+
+    if (cached) {
+      applyData(cached.modulesRes, cached.lessonsRes);
+      setLoading(false);
+      setIsRefreshing(false);
+      if (isCacheStale(cached.cachedAt)) fetchAndSave(locale);
+      return;
+    }
+
+    if (showLoadingSpinner) setLoading(true);
+    else setIsRefreshing(true);
+    await fetchAndSave(locale);
   };
 
   // Lessons grouped by module key, sorted by dayNumber

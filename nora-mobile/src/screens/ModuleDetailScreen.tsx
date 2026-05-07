@@ -61,11 +61,10 @@ export const ModuleDetailScreen: React.FC = () => {
   useEffect(() => {
     const lessons = data?.lessons;
     if (!lessons || lessons.length === 0) return;
-    resolveImageUris(lessons).then(({ uris, pendingDownloads }) => {
+    resolveImageUris(lessons, (id, uri) => {
+      setLocalImageUris(prev => ({ ...prev, [id]: uri }));
+    }).then(({ uris }) => {
       if (Object.keys(uris).length > 0) setLocalImageUris(prev => ({ ...prev, ...uris }));
-      pendingDownloads.then(newUris => {
-        if (Object.keys(newUris).length > 0) setLocalImageUris(prev => ({ ...prev, ...newUris }));
-      });
     });
   }, [data]);
 
