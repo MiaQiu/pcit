@@ -178,7 +178,9 @@ const SKILL_LABEL_I18N_KEY: Record<string, string> = {
 
 const getSkillDisplayLabel = (apiLabel: string, t: Function): string => {
   const key = SKILL_LABEL_I18N_KEY[apiLabel];
-  return key ? t(`report.skillLabel.${key}`) : apiLabel;
+  if (!key) return apiLabel;
+  const translated = t(`report.skillLabel.${key}`);
+  return translated || apiLabel;
 };
 
 const getUtterancesForSkill = (

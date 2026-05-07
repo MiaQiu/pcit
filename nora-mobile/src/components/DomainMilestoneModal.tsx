@@ -135,7 +135,7 @@ export const DomainMilestoneModal: React.FC<DomainMilestoneModalProps> = ({
           </TouchableOpacity>
 
           {/* Title */}
-          <Text style={styles.title}>{t('domainMilestone.title', { domain })}</Text>
+          <Text style={styles.title}>{t('domainMilestone.title', { domain: domain ? t(`radarChart.domain.${domain}`, domain) : domain })}</Text>
 
           {/* Subtitle with counts */}
           {/* {!loading && milestones && (
@@ -175,7 +175,7 @@ export const DomainMilestoneModal: React.FC<DomainMilestoneModalProps> = ({
                     {t('domainMilestone.profilingStatus', {
                       childName: childName || t('domainMilestone.defaultChildName'),
                       status: profiling.developmental_status.toLowerCase(),
-                      domain,
+                      domain: domain ? t(`radarChart.domain.${domain}`, domain) : domain,
                     })}
                   </Text>
                 </View>

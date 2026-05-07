@@ -385,12 +385,12 @@
       "message": "與我們友善的 AI 教練 Nora 討論這次練習。"
     },
     "skillLabel": {
-      "praiseLabeleld": "",
-      "echo": "",
-      "narrate": "",
-      "questions": "",
-      "commands": "",
-      "criticism": ""
+      "praiseLabeleld": "具體讚美",
+      "echo": "複述",
+      "narrate": "描述",
+      "questions": "問句",
+      "commands": "指令",
+      "criticism": "批評"
     }
   },
   "lessonViewer": {
@@ -1163,6 +1163,19 @@
     "notYetObserved": "尚未觀察到",
     "noMilestones": "未發現此領域的里程碑。",
     "tips": "小撇步：{{tip}}"
+  },
+  "radarChart": {
+    "title": "發展里程碑",
+    "titleWithName": "{{name}} 的發展里程碑",
+    "yourChild": "您的孩子",
+    "ageBenchmark": "年齡基準",
+    "domain": {
+      "Language": "語言",
+      "Cognitive": "認知",
+      "Social": "社交",
+      "Emotional": "情緒",
+      "Connection": "親子連結"
+    }
   },
   "tabNav": {
     "home": "首頁",

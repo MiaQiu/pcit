@@ -1164,6 +1164,19 @@
     "noMilestones": "No milestones found for this domain.",
     "tips": "Tips: {{tip}}"
   },
+  "radarChart": {
+    "title": "Developmental Milestones",
+    "titleWithName": "{{name}}'s Developmental Milestones",
+    "yourChild": "Your Child",
+    "ageBenchmark": "Age Benchmark",
+    "domain": {
+      "Language": "Language",
+      "Cognitive": "Cognitive",
+      "Social": "Social",
+      "Emotional": "Emotional",
+      "Connection": "Connection"
+    }
+  },
   "tabNav": {
     "home": "Home",
     "record": "Record",

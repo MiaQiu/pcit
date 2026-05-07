@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import Svg, { Polygon, Line, Circle, G, Defs, Pattern, Path } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 import { DevelopmentalProgress, DomainType } from '@nora/core';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -87,6 +88,7 @@ const getLabelPosition = (index: number): { x: number; y: number; textAnchor: 's
 };
 
 export const RadarChart: React.FC<RadarChartProps> = ({ data, childName, onDomainPress, showTitle = true }) => {
+  const { t } = useTranslation();
   // Calculate normalized values for each domain
   // 100% = all milestones in that domain (total)
   // Child's value = (achieved + 0.5 * emerging) / total
@@ -132,7 +134,11 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, childName, onDomai
 
   return (
     <View style={styles.outerContainer}>
-      {showTitle && <Text style={styles.title}>{childName ? `${childName}'s ` : ''}Developmental Milestones</Text>}
+      {showTitle && (
+        <Text style={styles.title}>
+          {childName ? t('radarChart.titleWithName', { name: childName }) : t('radarChart.title')}
+        </Text>
+      )}
       <View style={styles.container}>
         <View style={styles.chartWrapper}>
         <Svg width={CHART_SIZE} height={CHART_SIZE}>
@@ -217,7 +223,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, childName, onDomai
               ]}
               {...(onDomainPress ? { onPress: () => onDomainPress(domain), activeOpacity: 0.7 } : {})}
             >
-              <Text style={[styles.label, onDomainPress && styles.labelTappable]}>{domain}</Text>
+              <Text style={[styles.label, onDomainPress && styles.labelTappable]}>{t(`radarChart.domain.${domain}`, domain)}</Text>
             </LabelWrapper>
           );
         })}
@@ -227,11 +233,11 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, childName, onDomai
         <View style={styles.legend}>
           <View style={styles.legendItem}>
             <View style={[styles.legendLine, styles.legendChildLine]} />
-            <Text style={styles.legendText}>{childName || 'Your Child'}</Text>
+            <Text style={styles.legendText}>{childName || t('radarChart.yourChild')}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendLine, styles.legendBenchmarkLine]} />
-            <Text style={styles.legendText}>Age Benchmark</Text>
+            <Text style={styles.legendText}>{t('radarChart.ageBenchmark')}</Text>
           </View>
         </View>
       </View>
