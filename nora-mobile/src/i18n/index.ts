@@ -1,6 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getLocales } from 'expo-localization';
 import en from './locales/en.json';
 import zhTW from './locales/zh-TW.json';
 
@@ -19,11 +20,22 @@ i18n
     compatibilityJSON: 'v4',
   });
 
+function detectDeviceLanguage(): string {
+  const locales = getLocales();
+  const primary = locales[0]?.languageTag ?? '';
+  // Match zh-TW, zh-Hant, zh-Hant-TW, etc.
+  if (primary.startsWith('zh-TW') || primary.startsWith('zh-Hant')) {
+    return 'zh-TW';
+  }
+  return 'en';
+}
+
 export async function loadSavedLanguage(): Promise<void> {
   try {
     const saved = await AsyncStorage.getItem(LANGUAGE_KEY);
-    if (saved && saved !== i18n.language) {
-      await i18n.changeLanguage(saved);
+    const lang = saved ?? detectDeviceLanguage();
+    if (lang !== i18n.language) {
+      await i18n.changeLanguage(lang);
     }
   } catch {
     // Non-critical — default language remains

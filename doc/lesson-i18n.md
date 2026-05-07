@@ -46,7 +46,7 @@ Each row is keyed by `(entityId, locale)`. All tables have `autoTranslated`, `re
 | `server/services/translationService.cjs` | Calls Claude API to translate a lesson bundle |
 | `server/scripts/translateLessons.cjs` | Batch migration script — translates all lessons |
 | `packages/nora-core/src/services/lessonService.ts` | Appends `?lang=` to all lesson/module fetches |
-| `nora-mobile/src/i18n/index.ts` | i18next init + AsyncStorage persistence for UI language |
+| `nora-mobile/src/i18n/index.ts` | i18next init, device-locale detection, AsyncStorage persistence for UI language |
 | `nora-mobile/src/i18n/locales/en.json` | English UI strings |
 | `nora-mobile/src/i18n/locales/zh-TW.json` | Traditional Chinese UI strings (fill in values to translate) |
 
@@ -56,8 +56,11 @@ Each row is keyed by `(entityId, locale)`. All tables have `autoTranslated`, `re
 
 App UI strings (buttons, tab labels, error messages, etc.) are managed via `react-i18next`.
 
-- Language is selected by the user in **Profile → Settings → Language**
-- The choice is persisted in AsyncStorage and restored on next launch
+- **On first launch**, the app auto-detects the iPhone's system language via `expo-localization`:
+  - Device locale is `zh-TW` or `zh-Hant*` → app starts in Traditional Chinese
+  - Any other locale → app starts in English
+- The user can override in **Profile → Settings → Language** at any time
+- The choice is persisted in AsyncStorage; on subsequent launches the saved preference takes priority over device locale
 - All screens and components use `const { t } = useTranslation()` and `t('key')`
 - Keys are namespaced by screen/component: `home.*`, `report.*`, `profile.*`, `onboarding.*`, etc.
 
@@ -132,6 +135,18 @@ import es from './locales/es.json';
 
 // In the i18next resources:
 'es': { translation: es },
+```
+
+Update `detectDeviceLanguage()` in the same file to map the new locale:
+
+```typescript
+function detectDeviceLanguage(): string {
+  const locales = getLocales();
+  const primary = locales[0]?.languageTag ?? '';
+  if (primary.startsWith('zh-TW') || primary.startsWith('zh-Hant')) return 'zh-TW';
+  if (primary.startsWith('es')) return 'es';  // add new mapping
+  return 'en';
+}
 ```
 
 Add the language option to the picker in `nora-mobile/src/screens/ProfileScreen.tsx`.

@@ -44,7 +44,8 @@
       "expo-notifications",
       "./plugins/withAudioSessionManager.js",
       "./plugins/withModularHeaders.js",
-      "@react-native-firebase/app"
+      "@react-native-firebase/app",
+      "expo-localization"
     ],
     "extra": {
       "eas": {
