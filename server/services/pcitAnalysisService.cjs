@@ -884,7 +884,8 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
 
     const formatPrompt = loadPromptWithVariables('cdiCoachingFormat', {
       COACHING_REPORT: coachingReport,
-      LANGUAGE_INSTRUCTION: variables.LANGUAGE_INSTRUCTION || ''
+      LANGUAGE_INSTRUCTION: variables.LANGUAGE_INSTRUCTION || '',
+      CHILD_GENDER: variables.CHILD_GENDER || 'child'
     });
 
     let formatted;
