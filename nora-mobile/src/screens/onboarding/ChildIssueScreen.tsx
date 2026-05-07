@@ -5,9 +5,15 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
+import { useAuthService } from '../../contexts/AppContext';
 
 export const ChildIssueScreen: React.FC = () => {
   const { t } = useTranslation();
+  const authService = useAuthService();
+
+  const handleBeforeNavigate = async (selectedValue: any) => {
+    authService.completeOnboarding({ issue: selectedValue }).catch(() => {});
+  };
 
   return (
     <MultipleChoiceScreen
@@ -38,6 +44,7 @@ export const ChildIssueScreen: React.FC = () => {
       totalStepsInPhase={6}
       screenName="child_issue"
       screenStep={17}
+      onBeforeNavigate={handleBeforeNavigate}
     />
   );
 };

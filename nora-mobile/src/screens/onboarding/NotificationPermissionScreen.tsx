@@ -31,7 +31,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export const NotificationPermissionScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const authService = useAuthService();
-  const { data } = useOnboarding();
+  const { data, completeOnboarding } = useOnboarding();
   const { t } = useTranslation();
 
   const BENEFITS = [
@@ -46,8 +46,9 @@ export const NotificationPermissionScreen: React.FC = () => {
     amplitudeService.trackOnboardingScreen('notification_permission', 36);
   }, []);
 
-  const handleNotNow = () => {
+  const handleNotNow = async () => {
     amplitudeService.trackEvent('Notification Permission Skipped', {});
+    await completeOnboarding();
     navigation.replace('MainTabs');
   };
 
@@ -81,6 +82,7 @@ export const NotificationPermissionScreen: React.FC = () => {
       console.error('Error requesting notification permissions:', error);
     } finally {
       setIsRequesting(false);
+      await completeOnboarding();
       navigation.replace('MainTabs');
     }
   };

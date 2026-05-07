@@ -13,11 +13,13 @@ import { Picker } from '@react-native-picker/picker';
 import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 import amplitudeService from '../../services/amplitudeService';
+import { useAuthService } from '../../contexts/AppContext';
 
 export const ChildBirthdayScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
   const { t } = useTranslation();
+  const authService = useAuthService();
 
   useEffect(() => { amplitudeService.trackOnboardingScreen('child_birthday', 16); }, []);
 
@@ -46,10 +48,10 @@ export const ChildBirthdayScreen: React.FC = () => {
   const childAge = getChildAge();
 
   const handleContinue = () => {
-    // Create a date from month and year (set day to 1st)
     const birthday = new Date(selectedYear, selectedMonth, 1);
     updateData({ childBirthday: birthday });
     amplitudeService.trackOnboardingStepCompleted('child_birthday', 16);
+    authService.completeOnboarding({ childBirthday: birthday }).catch(() => {});
     navigation.navigate('ChildIssue');
   };
 

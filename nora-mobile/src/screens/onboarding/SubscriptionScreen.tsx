@@ -20,8 +20,9 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import { useAuthService } from '../../contexts/AppContext';
+import { useAuthService, useLessonService } from '../../contexts/AppContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
+import { prefetchLessons } from '../../services/lessonDataCache';
 import { REVENUECAT_CONFIG } from '../../config/revenuecat';
 import amplitudeService from '../../services/amplitudeService';
 
@@ -29,9 +30,10 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const SubscriptionScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data, completeOnboarding } = useOnboarding();
   const authService = useAuthService();
+  const lessonService = useLessonService();
   const {
     availablePackages,
     isLoading: subscriptionLoading,
@@ -111,6 +113,8 @@ export const SubscriptionScreen: React.FC = () => {
 
       if (result.success) {
         amplitudeService.trackEvent('Subscription Trial Started', { plan: '1month', isReturningUser });
+        prefetchLessons(lessonService, i18n.language);
+
         // CRITICAL: Trust the webhook as source of truth for subscription status
         // If completeOnboarding fails (app crash, network error, battery dies),
         // the RevenueCat webhook will still update subscriptionStatus in backend.
@@ -137,6 +141,7 @@ export const SubscriptionScreen: React.FC = () => {
           navigation.navigate('NotificationPermission');
         } else {
           // Returning user - go directly to main app
+          await completeOnboarding();
           navigation.dispatch(
             CommonActions.reset({
               index: 0,
@@ -184,6 +189,7 @@ export const SubscriptionScreen: React.FC = () => {
                 navigation.navigate('NotificationPermission');
               } else {
                 // Returning user - go directly to main app
+                await completeOnboarding();
                 navigation.dispatch(
                   CommonActions.reset({
                     index: 0,
@@ -234,6 +240,7 @@ export const SubscriptionScreen: React.FC = () => {
         issue: data.issue || undefined,
       });
 
+      prefetchLessons(lessonService, i18n.language);
       // Navigate to NotificationPermission screen
       navigation.navigate('NotificationPermission');
     } catch (error: any) {

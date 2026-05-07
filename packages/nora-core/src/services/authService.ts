@@ -475,6 +475,7 @@ class AuthService {
     }
 
     const result = await response.json();
+    await this.cacheUser(result.user);
     return result.user;
   }
   async getChildIssues(): Promise<{ issues: Array<{ strategy: string; priorityRank: number; userIssues: string | null; clinicalLevel: string }> }> {

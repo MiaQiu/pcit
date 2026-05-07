@@ -14,11 +14,13 @@ import { OnboardingProgressHeader } from '../../components/OnboardingProgressHea
 import { OnboardingTextInput } from '../../components/OnboardingTextInput';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 import amplitudeService from '../../services/amplitudeService';
+import { useAuthService } from '../../contexts/AppContext';
 
 export const NameInputScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
   const { t } = useTranslation();
+  const authService = useAuthService();
   const [name, setName] = useState(data.name);
 
   useEffect(() => { amplitudeService.trackOnboardingScreen('name_input', 12); }, []);
@@ -27,6 +29,7 @@ export const NameInputScreen: React.FC = () => {
     if (name.trim()) {
       updateData({ name: name.trim() });
       amplitudeService.trackOnboardingStepCompleted('name_input', 12);
+      authService.completeOnboarding({ name: name.trim() }).catch(() => {});
       navigation.navigate('Relationship');
     }
   };

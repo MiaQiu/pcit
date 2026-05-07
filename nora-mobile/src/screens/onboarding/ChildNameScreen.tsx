@@ -14,11 +14,13 @@ import { OnboardingProgressHeader } from '../../components/OnboardingProgressHea
 import { OnboardingTextInput } from '../../components/OnboardingTextInput';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 import amplitudeService from '../../services/amplitudeService';
+import { useAuthService } from '../../contexts/AppContext';
 
 export const ChildNameScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
   const { t } = useTranslation();
+  const authService = useAuthService();
   const [childName, setChildName] = useState(data.childName);
 
   useEffect(() => { amplitudeService.trackOnboardingScreen('child_name', 14); }, []);
@@ -27,6 +29,7 @@ export const ChildNameScreen: React.FC = () => {
     if (childName.trim()) {
       updateData({ childName: childName.trim() });
       amplitudeService.trackOnboardingStepCompleted('child_name', 14);
+      authService.completeOnboarding({ childName: childName.trim() }).catch(() => {});
       navigation.navigate('ChildGender');
     }
   };
