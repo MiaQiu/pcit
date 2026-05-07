@@ -94,19 +94,18 @@ router.post('/social', async (req, res) => {
       // Create new user
       const encryptedData = encryptUserData({
         email,
-        name,
-        childName: 'Not Set', // Will be updated during onboarding
+        name: name || null,
+        childName: null,
       });
 
-      const encryptedChildName = encryptUserData({ childName: 'Child' }).childName;
       user = await prisma.user.create({
         data: {
           id: crypto.randomUUID(),
           email: encryptedData.email,
           emailHash,
           passwordHash: crypto.randomBytes(32).toString('hex'), // Random password for social auth
-          name: encryptedData.name,
-          childName: encryptedChildName,
+          name: encryptedData.name || null,
+          childName: null,
           childBirthYear: new Date().getFullYear() - 5, // Placeholder, matches email signup
           childConditions: JSON.stringify(['none']), // Will be updated during onboarding
         },

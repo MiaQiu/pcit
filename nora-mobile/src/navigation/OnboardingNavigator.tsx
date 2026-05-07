@@ -67,9 +67,9 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
   useEffect(() => {
     if (resumeUserData) {
       updateData({
-        name: resumeUserData.name !== 'User' ? resumeUserData.name : '',
+        name: resumeUserData.name || '',
         email: resumeUserData.email || '',
-        childName: resumeUserData.childName !== 'Child' ? resumeUserData.childName : '',
+        childName: resumeUserData.childName || '',
         childBirthday: resumeUserData.childBirthday ? new Date(resumeUserData.childBirthday) : null,
         issue: resumeUserData.issue || '',
         relationshipToChild: resumeUserData.relationshipToChild || null,

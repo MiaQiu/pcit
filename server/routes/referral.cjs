@@ -105,8 +105,8 @@ router.post('/register', registrationLimiter, async (req, res, next) => {
     // Encrypt sensitive fields exactly like POST /api/auth/signup
     const encryptedData = encryptUserData({
       email,
-      name: 'User',      // placeholder — triggers NameInput step in onboarding
-      childName: 'Child', // placeholder — triggers ChildName step in onboarding
+      name: null,
+      childName: null,
     });
 
     const newUser = await prisma.user.create({
@@ -115,8 +115,8 @@ router.post('/register', registrationLimiter, async (req, res, next) => {
         email: encryptedData.email,
         emailHash,
         passwordHash,
-        name: encryptedData.name,
-        childName: encryptedData.childName,
+        name: null,
+        childName: null,
         childBirthYear: new Date().getFullYear() - 3,
         childConditions: '[]',
         subscriptionPlan: 'FREE',

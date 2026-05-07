@@ -53,8 +53,8 @@ const signupSchema = Joi.object({
     .messages({
       'string.pattern.base': 'Password must contain at least 1 uppercase, 1 lowercase, and 1 number'
     }),
-  name: Joi.string().min(2).max(100).required(),
-  childName: Joi.string().min(1).max(50).required(),
+  name: Joi.string().max(100).allow('').optional(),
+  childName: Joi.string().max(50).allow('').optional(),
   childBirthYear: Joi.number().integer().min(1900).max(new Date().getFullYear()).required(),
   childBirthday: Joi.date().optional(),
   childConditions: Joi.array().items(Joi.string().max(200)).min(1).required(),
@@ -100,8 +100,8 @@ router.post('/signup', async (req, res, next) => {
     // Encrypt sensitive user data (email, name, childName)
     const encryptedData = encryptUserData({
       email,
-      name,
-      childName
+      name: name || null,
+      childName: childName || null,
     });
 
     // Create user with INACTIVE subscription status
@@ -112,8 +112,8 @@ router.post('/signup', async (req, res, next) => {
         email: encryptedData.email,
         emailHash,
         passwordHash,
-        name: encryptedData.name,
-        childName: encryptedData.childName,
+        name: encryptedData.name || null,
+        childName: encryptedData.childName || null,
         childBirthYear,
         childBirthday: childBirthday ? new Date(childBirthday) : null,
         childConditions: JSON.stringify(childConditions), // Stored as plain JSON

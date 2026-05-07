@@ -85,8 +85,8 @@ export const CreateAccountScreen: React.FC = () => {
       const response = await authService.signup({
         email: email.toLowerCase().trim(),
         password,
-        name: 'User', // Placeholder, will be updated in NameInputScreen
-        childName: 'Child', // Placeholder, will be updated in ChildNameScreen
+        name: '', // Placeholder — updated in NameInputScreen
+        childName: '', // Placeholder — updated in ChildNameScreen
         childBirthYear: new Date().getFullYear() - 5, // Placeholder
         childConditions: ['none'],// Placeholder
       });
