@@ -70,18 +70,24 @@ export const SubscriptionScreen: React.FC = () => {
     }
   }, []);
 
-  // Calculate trial end date (1 month from today)
-  const getTrialEndDate = () => {
-    const today = new Date();
-    const endDate = new Date(today);
-    endDate.setMonth(endDate.getMonth() + 1);
-    return endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
   // Find packages by product ID
   const selectedPackage = availablePackages.find(
     p => p.product.identifier === REVENUECAT_CONFIG.products.oneMonth
   );
+
+  // Use the App Store price string for the user's storefront locale.
+  // Falls back to '...' while offerings are still loading.
+  const priceString = selectedPackage?.product.priceString ?? '...';
+
+  // Format 0 in the product's currency so the symbol matches the storefront
+  // (e.g. "S$0" for SGD, "$0" for USD, "NT$0" for TWD).
+  const zeroCurrency = selectedPackage?.product.currencyCode
+    ? new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: selectedPackage.product.currencyCode,
+        maximumFractionDigits: 0,
+      }).format(0)
+    : '$0';
 
   console.log('[Subscription] Available packages:', availablePackages.map(p => p.product.identifier));
   console.log('[Subscription] Selected package:', selectedPackage?.product.identifier ?? 'NOT FOUND');
@@ -184,7 +190,7 @@ export const SubscriptionScreen: React.FC = () => {
           t('subscription.restoreSuccessMessage'),
           [{
             text: t('common.ok'),
-            onPress: () => {
+            onPress: async () => {
               if (isInitialOnboarding) {
                 navigation.navigate('NotificationPermission');
               } else {
@@ -298,10 +304,10 @@ export const SubscriptionScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>
-          {isReturningUser ? t('subscription.subscribeToContinue') : t('subscription.howTrialWorks')}
+          {isReturningUser ? t('subscription.subscribeToContinue') : t('subscription.howTrialWorks', { zeroCurrency })}
         </Text>
         <Text style={styles.subtitle}>
-          {isReturningUser ? t('subscription.priceMonthly') : t('subscription.priceFreeTrialThenMonthly')}
+          {isReturningUser ? t('subscription.priceMonthly', { price: priceString }) : t('subscription.priceFreeTrialThenMonthly', { price: priceString })}
         </Text>
         {/* {!isReturningUser && (
           <Text style={styles.regularPrice}>{t('subscription.regularPrice')}</Text>
@@ -315,21 +321,7 @@ export const SubscriptionScreen: React.FC = () => {
 
         {/* Timeline */}
         <View style={styles.timeline}>
-          {/* Step 1 */}
-          <View style={styles.timelineRow}>
-            <View style={styles.timelineLeft}>
-              <View style={[styles.timelineCircle, styles.timelineCircleDone]}>
-                <Text style={styles.timelineCircleText}>✓</Text>
-              </View>
-              <View style={styles.timelineConnector} />
-            </View>
-            <View style={styles.timelineBody}>
-              <Text style={styles.timelineTitleDone}>{t('subscription.stepProfileTitle')}</Text>
-              <Text style={styles.timelineDesc}>{t('subscription.stepProfileDesc')}</Text>
-            </View>
-          </View>
-
-          {/* Step 2 */}
+          {/* Step 1 — Today */}
           <View style={styles.timelineRow}>
             <View style={styles.timelineLeft}>
               <View style={[styles.timelineCircle, styles.timelineCircleActive]}>
@@ -343,7 +335,23 @@ export const SubscriptionScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Step 3 */}
+          {/* Step 2 — Reminder (new users only) */}
+          {!isReturningUser && (
+            <View style={styles.timelineRow}>
+              <View style={styles.timelineLeft}>
+                <View style={[styles.timelineCircle, styles.timelineCircleActive]}>
+                  <Text style={styles.timelineCircleText}>🔔</Text>
+                </View>
+                <View style={styles.timelineConnector} />
+              </View>
+              <View style={styles.timelineBody}>
+                <Text style={styles.timelineTitle}>{t('subscription.step28DaysTitle')}</Text>
+                <Text style={styles.timelineDesc}>{t('subscription.step28DaysDesc')}</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Step 3 — Charge date */}
           <View style={styles.timelineRow}>
             <View style={styles.timelineLeft}>
               <View style={[styles.timelineCircle, styles.timelineCircleActive]}>
@@ -355,7 +363,9 @@ export const SubscriptionScreen: React.FC = () => {
                 {isReturningUser ? t('subscription.stepTodayTitle') : t('subscription.step30DaysTitle')}
               </Text>
               <Text style={styles.timelineDesc}>
-                {isReturningUser ? t('subscription.stepChargedDescReturning') : t('subscription.stepChargedDesc')}
+                {isReturningUser
+                  ? t('subscription.stepChargedDescReturning', { price: priceString })
+                  : t('subscription.stepChargedDesc', { price: priceString })}
               </Text>
             </View>
           </View>
@@ -370,7 +380,7 @@ export const SubscriptionScreen: React.FC = () => {
         </TouchableOpacity>
 
         <Text style={styles.disclaimer}>
-          {isReturningUser ? t('subscription.disclaimerReturning') : t('subscription.disclaimerNew')}
+          {isReturningUser ? t('subscription.disclaimerReturning', { price: priceString }) : t('subscription.disclaimerNew', { price: priceString })}
           <Text style={styles.link} onPress={handleOpenTerms}>{t('subscription.terms')}</Text>{' '}and{' '}
           <Text style={styles.link} onPress={handleOpenPrivacy}>{t('subscription.privacyPolicy')}</Text>.
         </Text>
