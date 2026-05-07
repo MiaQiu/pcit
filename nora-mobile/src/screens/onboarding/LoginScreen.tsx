@@ -30,6 +30,7 @@ import amplitudeService from '../../services/amplitudeService';
 import { useGoogleAuth, signInWithApple } from '../../utils/socialAuth';
 import { checkOnboardingStep } from '../../utils/onboardingCheck';
 import { useCoachUnread } from '../../contexts/CoachUnreadContext';
+import { useUploadProcessing } from '../../contexts/UploadProcessingContext';
 import { useTranslation } from 'react-i18next';
 
 const PENDING_REFERRAL_KEY = '@nora_pending_referral_code';
@@ -48,6 +49,7 @@ export const LoginScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const { reinitialize: reinitializeUnread } = useCoachUnread();
+  const { reinitialize: reinitializeUpload } = useUploadProcessing();
   const { signIn: signInWithGoogle, request: googleRequest } = useGoogleAuth();
 
   // When opened via a referral deep link (nora://join?referralCode=...), store the code
@@ -62,6 +64,7 @@ export const LoginScreen: React.FC = () => {
   const navigateAfterAuth = async () => {
     const { step, user } = await checkOnboardingStep(authService);
     reinitializeUnread(user.id);
+    await reinitializeUpload();
     if (step) {
       navigation.dispatch(
         CommonActions.reset({

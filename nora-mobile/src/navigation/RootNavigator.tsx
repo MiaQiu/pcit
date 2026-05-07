@@ -33,6 +33,7 @@ import { ReferralScreen } from '../screens/ReferralScreen';
 import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
+import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { User } from '@nora/core';
 import amplitudeService from '../services/amplitudeService';
 import { checkOnboardingStep } from '../utils/onboardingCheck';
@@ -54,6 +55,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export const RootNavigator: React.FC = () => {
   const authService = useAuthService();
   const { reinitialize: reinitializeUnread } = useCoachUnread();
+  const { reinitialize: reinitializeUpload } = useUploadProcessing();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<string | null>(null);
@@ -199,6 +201,7 @@ export const RootNavigator: React.FC = () => {
   const checkOnboardingCompletion = async (): Promise<{ step: string | null; user: User }> => {
     const result = await checkOnboardingStep(authService);
     reinitializeUnread(result.user.id);
+    await reinitializeUpload();
     return result;
   };
 

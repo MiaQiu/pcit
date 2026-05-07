@@ -72,6 +72,7 @@ interface UploadProcessingContextType {
   uploadProgress: number;
   startUpload: (uri: string, durationSeconds: number, mode?: 'CDI' | 'PDI') => Promise<void>;
   reset: () => void;
+  reinitialize: () => Promise<void>;
   isProcessing: boolean;
   reportCompletedTimestamp: number | null;
 }
@@ -664,6 +665,18 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     }
   };
 
+  const reinitialize = async () => {
+    // Clear any in-memory state from the previous user, then load the new user's state
+    if (uploadXhrRef.current) {
+      uploadXhrRef.current.abort();
+      uploadXhrRef.current = null;
+    }
+    setState('idle');
+    setRecordingId(null);
+    setUploadProgress(0);
+    await loadState();
+  };
+
   const reset = async () => {
     console.log('[UploadProcessing] Resetting state - clearing processing state and storage');
 
@@ -693,6 +706,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     uploadProgress,
     startUpload,
     reset,
+    reinitialize,
     isProcessing: state === 'uploading' || state === 'processing',
     reportCompletedTimestamp,
   };
