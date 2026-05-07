@@ -38,20 +38,11 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
 
 const CACHE_KEY = '@nora_coach_messages_cache';
 
-function twoDaysAgo(): Date {
-  const d = new Date();
-  d.setDate(d.getDate() - 2);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
 async function loadMessageCache(): Promise<Message[]> {
   try {
     const raw = await userStorage.getItem(CACHE_KEY);
     if (!raw) return [];
-    const msgs: Message[] = JSON.parse(raw);
-    const cutoff = twoDaysAgo();
-    return msgs.filter(m => m.createdAt && new Date(m.createdAt) >= cutoff);
+    return JSON.parse(raw);
   } catch {
     return [];
   }
@@ -59,8 +50,14 @@ async function loadMessageCache(): Promise<Message[]> {
 
 async function saveMessageCache(messages: Message[]): Promise<void> {
   try {
-    const cutoff = twoDaysAgo();
-    const toSave = messages.filter(m => m.createdAt && new Date(m.createdAt) >= cutoff);
+    if (messages.length === 0) {
+      await userStorage.setItem(CACHE_KEY, JSON.stringify([]));
+      return;
+    }
+    const timestamps = messages.map(m => m.createdAt ? new Date(m.createdAt).getTime() : 0);
+    const latest = Math.max(...timestamps);
+    const cutoff = latest - 24 * 60 * 60 * 1000;
+    const toSave = messages.filter(m => m.createdAt && new Date(m.createdAt).getTime() >= cutoff);
     await userStorage.setItem(CACHE_KEY, JSON.stringify(toSave));
   } catch {}
 }
@@ -172,7 +169,7 @@ export const CoachChatScreen: React.FC = () => {
   // Load history (cache-first), then long-poll for new messages
   useEffect(() => {
     let cancelled = false;
-    let since = new Date().toISOString();
+    let since = '';
 
     async function init() {
       // 1. Load cache — display instantly
@@ -190,15 +187,14 @@ export const CoachChatScreen: React.FC = () => {
       if (cached.length > 0) {
         setMessages(cached);
         since = cached[cached.length - 1].createdAt!;
-      } else {
-        since = twoDaysAgo().toISOString();
       }
 
-      // 2. Fetch only messages newer than last cached from server
+      // 2. Fetch messages newer than last cached (or full history if no cache)
       try {
-        const r = await authService.authenticatedRequest(
-          `${API_URL}/api/coach/history?since=${encodeURIComponent(since)}`
-        );
+        const historyUrl = since
+          ? `${API_URL}/api/coach/history?since=${encodeURIComponent(since)}`
+          : `${API_URL}/api/coach/history`;
+        const r = await authService.authenticatedRequest(historyUrl);
         const data: { messages: Array<{ id: string; role: string; text: string; createdAt: string }> } = await r.json();
         if (cancelled) return;
 

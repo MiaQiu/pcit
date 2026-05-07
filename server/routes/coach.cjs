@@ -472,10 +472,17 @@ router.get('/unread', async (req, res, next) => {
     else if (thread === 'psych') roleFilter = { equals: 'psychologist' };
     else                    roleFilter = { notIn: ['user', 'user_psych'] };
 
-    const count = await prisma.coachChatMessage.count({
-      where: { userId: req.userId, role: roleFilter, createdAt: { gt: since } },
-    });
-    res.json({ count });
+    const [count, lastMsg] = await Promise.all([
+      prisma.coachChatMessage.count({
+        where: { userId: req.userId, role: roleFilter, createdAt: { gt: since } },
+      }),
+      prisma.coachChatMessage.findFirst({
+        where: { userId: req.userId, role: roleFilter },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true },
+      }),
+    ]);
+    res.json({ count, lastMessageAt: lastMsg?.createdAt ?? null });
   } catch (err) {
     next(err);
   }
@@ -537,15 +544,30 @@ router.get('/events', async (req, res, next) => {
 
 /**
  * GET /api/coach/history
- * Returns the authenticated user's full chat history (all roles), oldest first.
+ * Returns chat history oldest-first.
+ * - With ?since=<ISO>: messages newer than that timestamp (incremental sync).
+ * - Without since: messages within 1 day before the user's most recent message
+ *   (i.e. the last conversation window).
  */
 router.get('/history', async (req, res, next) => {
   try {
-    const since = req.query.since ? new Date(req.query.since) : undefined;
+    let since = req.query.since ? new Date(req.query.since) : undefined;
+
+    if (!since) {
+      const latest = await prisma.coachChatMessage.findFirst({
+        where: { userId: req.userId },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true },
+      });
+      if (latest) {
+        since = new Date(latest.createdAt.getTime() - 24 * 60 * 60 * 1000);
+      }
+    }
+
     const messages = await prisma.coachChatMessage.findMany({
       where: {
         userId: req.userId,
-        ...(since ? { createdAt: { gt: since } } : {}),
+        ...(since ? { createdAt: { gte: since } } : {}),
       },
       orderBy: { createdAt: 'asc' },
       select: { id: true, role: true, text: true, createdAt: true },

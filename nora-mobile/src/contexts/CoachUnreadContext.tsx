@@ -26,6 +26,7 @@ const CoachUnreadContext = createContext<CoachUnreadContextType>({
   reinitialize: async () => {},
 });
 
+
 export const CoachUnreadProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const authService = useAuthService();
   const [aiUnreadCount, setAiUnreadCount]       = useState(0);
@@ -51,6 +52,16 @@ export const CoachUnreadProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (!mountedRef.current) return;
       if (typeof aiData.count === 'number')    setAiUnreadCount(aiData.count);
       if (typeof psychData.count === 'number') setPsychUnreadCount(psychData.count);
+      // When no stored read-time exists, seed it with last-message + 2 days so stale
+      // conversations don't show as unread on a fresh device / cleared storage.
+      if (aiData.lastMessageAt && aiLastReadRef.current === new Date(0).toISOString()) {
+        aiLastReadRef.current = aiData.lastMessageAt;
+        await userStorage.setItem('@nora_coach_last_read_at', aiData.lastMessageAt);
+      }
+      if (psychData.lastMessageAt && psychLastReadRef.current === new Date(0).toISOString()) {
+        psychLastReadRef.current = psychData.lastMessageAt;
+        await userStorage.setItem('@nora_psych_last_read_at', psychData.lastMessageAt);
+      }
     } catch {
       // silently ignore network/auth errors
     }
