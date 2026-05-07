@@ -91,16 +91,23 @@ export const SubscriptionScreen: React.FC = () => {
 
   // Format 0 in the product's currency so the symbol matches the storefront
   // (e.g. "S$0" for SGD, "$0" for USD, "NT$0" for TWD).
+  // Pin to 'en-US' so the symbol (e.g. "S$") matches what the App Store
+  // returns in priceString, regardless of the device's display language.
   const zeroCurrency = selectedPackage?.product.currencyCode
-    ? new Intl.NumberFormat(undefined, {
+    ? new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: selectedPackage.product.currencyCode,
         maximumFractionDigits: 0,
       }).format(0)
     : '$0';
 
-  console.log('[Subscription] Available packages:', availablePackages.map(p => p.product.identifier));
-  console.log('[Subscription] Selected package:', selectedPackage?.product.identifier ?? 'NOT FOUND');
+  console.log('[Subscription] Available packages:', availablePackages.map(p =>
+    `${p.product.identifier} → ${p.product.priceString} (${p.product.currencyCode})`
+  ));
+  console.log('[Subscription] Selected package:', selectedPackage
+    ? `${selectedPackage.product.identifier} → ${selectedPackage.product.priceString} (${selectedPackage.product.currencyCode})`
+    : 'NOT FOUND'
+  );
 
   const handleBack = () => navigation.goBack();
 
@@ -335,7 +342,7 @@ export const SubscriptionScreen: React.FC = () => {
               : t('subscription.priceAfterTrial', { price: priceString })}
           </Text>
           {!isReturningUser && (
-            <Text style={styles.subtitle}>{t('subscription.priceFreeTrialThenMonthly')}</Text>
+            <Text style={styles.subtitle}>{t('subscription.priceFreeTrialThenMonthly', { price: priceString })}</Text>
           )}
 
           {/* Reminder — new users only */}
