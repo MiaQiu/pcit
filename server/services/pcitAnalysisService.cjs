@@ -1197,7 +1197,7 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
   const [geminiSettled, mlSettled] = await Promise.allSettled([
     callGeminiStreaming(
       [{ role: 'user', parts: [{ text: prompt }] }],
-      { temperature: 0.3, maxOutputTokens: 4096, timeout: 60000, sessionId }
+      { temperature: 0.3, maxOutputTokens: 16384, timeout: 60000, sessionId }
     ).then(raw => parseJSON(raw, 'object').value),
     classifySpeakersML(storagePath, utterances, sessionId)
   ]);

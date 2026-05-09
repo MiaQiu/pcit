@@ -89,10 +89,6 @@ export const SubscriptionScreen: React.FC = () => {
     });
   })();
 
-  // Format 0 in the product's currency so the symbol matches the storefront
-  // (e.g. "S$0" for SGD, "$0" for USD, "NT$0" for TWD).
-  // Pin to 'en-US' so the symbol (e.g. "S$") matches what the App Store
-  // returns in priceString, regardless of the device's display language.
   const zeroCurrency = selectedPackage?.product.currencyCode
     ? new Intl.NumberFormat('en-US', {
         style: 'currency',
