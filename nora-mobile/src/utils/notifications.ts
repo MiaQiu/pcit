@@ -186,7 +186,6 @@ export const scheduleDailyNotification = async (
         title,
         body,
         sound: true,
-        badge: 1,
         priority: Notifications.AndroidNotificationPriority.HIGH,
         // iOS-specific: ensure notification shows even when device is locked
         interruptionLevel: 'active' as any,
@@ -224,7 +223,6 @@ export const scheduleNotificationAfter = async (
         title,
         body,
         sound: true,
-        badge: 1,
         priority: Notifications.AndroidNotificationPriority.HIGH,
         // iOS-specific: ensure notification shows even when device is locked
         interruptionLevel: 'active' as any,
@@ -324,7 +322,6 @@ export const sendTestNotification = async (): Promise<void> => {
         title: "Test Notification",
         body: "Notifications are working!",
         sound: true,
-        badge: 1,
         priority: Notifications.AndroidNotificationPriority.HIGH,
         // iOS-specific: ensure notification shows even when device is locked
         interruptionLevel: 'active' as any,
