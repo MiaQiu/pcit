@@ -567,8 +567,9 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
         // Prepare file for upload
         try {
-          // Fetch the file as a blob
-          const fileResponse = await fetch(uri);
+          // Fetch the file as a blob — Android returns a bare path, needs file:// scheme
+          const fileUri = uri.startsWith('file://') ? uri : `file://${uri}`;
+          const fileResponse = await fetch(fileUri);
           const fileBlob = await fileResponse.blob();
 
           // Upload to S3

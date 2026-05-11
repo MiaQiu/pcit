@@ -2,9 +2,8 @@ import { NativeModules, NativeEventEmitter, Platform, EmitterSubscription } from
 
 const { AudioSessionManager } = NativeModules;
 
-// Create event emitter for iOS
 let eventEmitter: NativeEventEmitter | null = null;
-if (Platform.OS === 'ios' && AudioSessionManager) {
+if ((Platform.OS === 'ios' || Platform.OS === 'android') && AudioSessionManager) {
   eventEmitter = new NativeEventEmitter(AudioSessionManager);
 }
 
@@ -19,9 +18,7 @@ export interface RecordingStatus {
 }
 
 export const configureAudioSessionForRecording = async (): Promise<boolean> => {
-  if (Platform.OS !== 'ios') {
-    return true; // No-op for non-iOS platforms
-  }
+  if (!AudioSessionManager) return true;
 
   try {
     await AudioSessionManager.configureAudioSessionForRecording();
@@ -34,16 +31,14 @@ export const configureAudioSessionForRecording = async (): Promise<boolean> => {
 };
 
 export const setCompletionSound = (soundName: string): void => {
-  if (Platform.OS !== 'ios') {
-    return;
-  }
+  if (!AudioSessionManager) return;
   AudioSessionManager.setCompletionSound(soundName);
   console.log('[AudioSessionManager] Completion sound set to:', soundName);
 };
 
 export const startRecording = async (autoStopSeconds: number = 0): Promise<{ uri: string; status: string }> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('Native recording only supported on iOS');
+  if (!AudioSessionManager) {
+    throw new Error('AudioSessionManager native module not available');
   }
 
   try {
@@ -57,8 +52,8 @@ export const startRecording = async (autoStopSeconds: number = 0): Promise<{ uri
 };
 
 export const stopRecording = async (): Promise<RecordingResult> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('Native recording only supported on iOS');
+  if (!AudioSessionManager) {
+    throw new Error('AudioSessionManager native module not available');
   }
 
   try {
@@ -72,7 +67,7 @@ export const stopRecording = async (): Promise<RecordingResult> => {
 };
 
 export const getRecordingStatus = async (): Promise<RecordingStatus> => {
-  if (Platform.OS !== 'ios') {
+  if (!AudioSessionManager) {
     return { isRecording: false, durationMillis: 0 };
   }
 
@@ -86,9 +81,7 @@ export const getRecordingStatus = async (): Promise<RecordingStatus> => {
 };
 
 export const deactivateAudioSession = async (): Promise<boolean> => {
-  if (Platform.OS !== 'ios') {
-    return true; // No-op for non-iOS platforms
-  }
+  if (!AudioSessionManager) return true;
 
   try {
     await AudioSessionManager.deactivateAudioSession();
@@ -101,9 +94,7 @@ export const deactivateAudioSession = async (): Promise<boolean> => {
 };
 
 export const addAutoStopListener = (callback: (event: RecordingResult) => void): EmitterSubscription | null => {
-  if (Platform.OS !== 'ios' || !eventEmitter) {
-    return null;
-  }
+  if (!eventEmitter) return null;
 
   console.log('[AudioSessionManager] Adding auto-stop listener');
   return eventEmitter.addListener('onRecordingAutoStopped', callback);
@@ -117,9 +108,7 @@ export const removeAutoStopListener = (subscription: EmitterSubscription | null)
 };
 
 export const getPendingRecording = async (): Promise<RecordingResult | null> => {
-  if (Platform.OS !== 'ios') {
-    return null;
-  }
+  if (!AudioSessionManager) return null;
 
   try {
     const result = await AudioSessionManager.getPendingRecording();
@@ -135,9 +124,7 @@ export const getPendingRecording = async (): Promise<RecordingResult | null> => 
 };
 
 export const endBackgroundTask = async (): Promise<void> => {
-  if (Platform.OS !== 'ios') {
-    return;
-  }
+  if (!AudioSessionManager) return;
 
   try {
     await AudioSessionManager.endBackgroundTask();
