@@ -33,7 +33,14 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.chromamind.nora"
+      "package": "com.chromamind.nora",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MICROPHONE",
+        "android.permission.POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -45,6 +52,7 @@
       "./plugins/withAudioSessionManager.js",
       "./plugins/withModularHeaders.js",
       "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics",
       "expo-localization"
     ],
     "extra": {

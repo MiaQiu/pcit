@@ -6,10 +6,6 @@
 // Lesson Card Assets
 export const DRAGON_PURPLE = require('../../assets/images/dragon_image.png');
 
-// Button/Icon Assets
-export const ARROW_ICON_1 = require('../../assets/images/arrow-icon-1.png');
-export const ARROW_ICON_2 = require('../../assets/images/arrow-icon-2.png');
-
 // Design Tokens from Figma
 export const COLORS = {
   mainPurple: '#8C49D5',

@@ -27,7 +27,7 @@ import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { RootStackNavigationProp } from './src/navigation/types';
 import { NetworkStatusBar } from './src/components/NetworkStatusBar';
 import { ToastProvider, useToast } from './src/components/ToastManager';
-import { clearBadge } from './src/utils/notifications';
+import { clearBadge, setupAndroidNotificationChannels } from './src/utils/notifications';
 import * as userStorage from './src/lib/userStorage';
 import amplitudeService from './src/services/amplitudeService';
 import { REVENUECAT_CONFIG } from './src/config/revenuecat';
@@ -192,6 +192,11 @@ export default function App() {
     // Enable crash reporting (even in development for testing)
     crashlytics().setCrashlyticsCollectionEnabled(true);
     console.log('Firebase Crashlytics initialized');
+  }, []);
+
+  // Set up Android notification channels (idempotent, safe on every launch)
+  useEffect(() => {
+    setupAndroidNotificationChannels();
   }, []);
 
   // Initialize Amplitude Analytics

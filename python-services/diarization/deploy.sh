@@ -53,7 +53,7 @@ else
         --code ImageUri=${IMAGE_URI} \
         --role ${LAMBDA_ROLE_ARN} \
         --memory-size 4096 \
-        --timeout 120 \
+        --timeout 300 \
         --region ${REGION} > /dev/null
     aws lambda wait function-active \
         --function-name ${FUNCTION_NAME} \

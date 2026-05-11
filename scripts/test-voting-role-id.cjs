@@ -67,9 +67,18 @@ async function main() {
   );
   console.timeEnd('identifyRolesWithVoting');
 
+  // Pull ML confidence from roleIdentificationJson if present
+  const mlConf = {};
+  for (const [spk, info] of Object.entries(roleIdentificationJson.speaker_identification || {})) {
+    if (info._ml_confidence !== undefined) mlConf[spk] = info._ml_confidence;
+  }
+
   console.log('\n── Vote detail ─────────────────────────────────────────');
   for (const [spk, detail] of Object.entries(roleIdentificationJson._vote_detail || {})) {
-    const sources = detail.votes.map(v => `${v.source}→${v.role}`).join('  ');
+    const sources = detail.votes.map(v => {
+      const conf = v.source === 'ml' && mlConf[spk] !== undefined ? ` (conf=${mlConf[spk].toFixed(2)})` : '';
+      return `${v.source}→${v.role}${conf}`;
+    }).join('  ');
     const flag = detail.adult > 0 && detail.child > 0 ? '  ⚠️  DISAGREEMENT' : '';
     console.log(`  ${spk}: adult=${detail.adult} child=${detail.child} → ${detail.winner.toUpperCase()}${flag}`);
     console.log(`         ${sources}`);

@@ -35,6 +35,40 @@ try {
 }
 
 /**
+ * Create Android notification channels (required for Android 8+).
+ * Safe to call on every app start — channels are idempotent.
+ */
+export const setupAndroidNotificationChannels = async (): Promise<void> => {
+  if (Platform.OS !== 'android') return;
+
+  await Notifications.setNotificationChannelAsync('default', {
+    name: 'General',
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#8C49D5',
+    sound: 'default',
+  });
+
+  await Notifications.setNotificationChannelAsync('reminders', {
+    name: 'Practice Reminders',
+    description: 'Daily practice and lesson reminders',
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#8C49D5',
+    sound: 'default',
+  });
+
+  await Notifications.setNotificationChannelAsync('reports', {
+    name: 'Session Reports',
+    description: 'Notifications when your session reports are ready',
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#8C49D5',
+    sound: 'default',
+  });
+};
+
+/**
  * Clear notification badge
  */
 export const clearBadge = async (): Promise<void> => {

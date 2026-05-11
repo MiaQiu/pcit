@@ -1217,11 +1217,15 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
 
   if (mlSettled.status === 'fulfilled' && mlSettled.value) {
     const map = {};
+    const conf = {};
     for (const [id, info] of Object.entries(mlSettled.value)) {
-      if (info.role && info.role !== 'unknown') map[id] = info.role.toLowerCase();
+      if (info.role && info.role !== 'unknown') {
+        map[id] = info.role.toLowerCase();
+        conf[id] = info.confidence;
+      }
     }
     if (Object.keys(map).length > 0) {
-      votes.push({ source: 'ml', map, full: mlSettled.value });
+      votes.push({ source: 'ml', map, conf, full: mlSettled.value });
       console.log(`✅ [ROLE-ID-VOTE] ML: ${JSON.stringify(map)}`);
     }
   } else {
@@ -1284,7 +1288,7 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
 
   for (const speakerId of allSpeakers) {
     const speakerVotes = votes
-      .map(v => ({ source: v.source, role: v.map[speakerId] }))
+      .map(v => ({ source: v.source, role: v.map[speakerId], ...(v.conf?.[speakerId] !== undefined && { confidence: v.conf[speakerId] }) }))
       .filter(v => v.role);
     const adultN = speakerVotes.filter(v => v.role === 'adult').length;
     const childN = speakerVotes.filter(v => v.role === 'child').length;
@@ -1305,13 +1309,15 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
   const baseFull = (votes.find(v => v.source === 'gemini') || votes.find(v => v.source === 'claude'))?.full;
   const baseSpeakers = baseFull?.speaker_identification || {};
 
+  const mlVote = votes.find(v => v.source === 'ml');
   const speaker_identification = {};
   for (const [speakerId, role] of Object.entries(roleMap)) {
     const existing = baseSpeakers[speakerId] || {};
     speaker_identification[speakerId] = {
       ...existing,
       role: role.toUpperCase(),
-      utterance_count: uttCounts[speakerId] || existing.utterance_count || 0
+      utterance_count: uttCounts[speakerId] || existing.utterance_count || 0,
+      ...(mlVote?.conf?.[speakerId] !== undefined && { _ml_confidence: mlVote.conf[speakerId] })
     };
   }
 
