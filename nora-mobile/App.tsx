@@ -207,10 +207,13 @@ export default function App() {
   // Initialize RevenueCat
   useEffect(() => {
     const initRevenueCat = async () => {
-      if (Platform.OS === 'ios') {
+      const rcApiKey = Platform.OS === 'android'
+        ? REVENUECAT_CONFIG.apiKey.android
+        : REVENUECAT_CONFIG.apiKey.ios;
+      if (rcApiKey) {
         try {
           await Purchases.configure({
-            apiKey: REVENUECAT_CONFIG.apiKey.ios,
+            apiKey: rcApiKey,
           });
 
           // Enable debug logs in development

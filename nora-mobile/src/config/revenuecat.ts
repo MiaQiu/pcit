@@ -2,7 +2,7 @@ export const REVENUECAT_CONFIG = {
   // API Keys (from RevenueCat dashboard → API Keys)
   apiKey: {
     ios: 'appl_QQAcyXsMzXOOruYGuWSgZyzbumW',
-    // android: 'goog_xxx' // Add when you implement Android
+    android: 'goog_DKOHGTQTyMoZWiriILmLnJOfimp',
   },
 
   // Entitlement identifier (from RevenueCat dashboard → Entitlements)
