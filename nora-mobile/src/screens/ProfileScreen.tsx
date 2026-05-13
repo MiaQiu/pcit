@@ -19,7 +19,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import Purchases from 'react-native-purchases';
 import { useTranslation } from 'react-i18next';
 import { ProfileCircle } from '../components/ProfileCircle';
@@ -58,7 +57,6 @@ export const ProfileScreen: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
 
   // RevenueCat real-time subscription state (source of truth for display)
@@ -135,106 +133,6 @@ export const ProfileScreen: React.FC = () => {
     }
   };
 
-  const handleProfileImagePress = async () => {
-    try {
-      // Request permission
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (status !== 'granted') {
-        Alert.alert(t('profile.permissionRequiredTitle'), t('profile.permissionRequiredMessage'));
-        return;
-      }
-
-      // Launch image picker
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        await uploadProfileImage(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Image picker error:', error);
-      Alert.alert(t('common.error'), t('profile.errorPickImage'));
-    }
-  };
-
-  const uploadProfileImage = async (imageUri: string) => {
-    const uploadWithRetry = async (isRetry: boolean = false): Promise<any> => {
-      // Refresh token before upload if not a retry
-      if (!isRetry) {
-        await authService.refreshAccessToken();
-      }
-
-      // Create FormData
-      const formData = new FormData();
-
-      // Get file extension
-      const uriParts = imageUri.split('.');
-      const fileType = uriParts[uriParts.length - 1];
-
-      // Create file object for upload
-      const file: any = {
-        uri: imageUri,
-        name: `profile.${fileType}`,
-        type: `image/${fileType}`,
-      };
-
-      formData.append('image', file);
-
-      // Upload to server
-      const token = authService.getAccessToken();
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
-
-      const response = await fetch(`${apiUrl}/api/auth/upload-profile-image`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      // Handle 401 - token expired
-      if (response.status === 401 && !isRetry) {
-        console.log('[ProfileScreen] Token expired, refreshing and retrying...');
-        const refreshed = await authService.refreshAccessToken();
-        if (refreshed) {
-          return uploadWithRetry(true);
-        } else {
-          throw new Error('Session expired. Please log in again.');
-        }
-      }
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
-      }
-
-      return await response.json();
-    };
-
-    try {
-      setUploadingImage(true);
-
-      const data = await uploadWithRetry();
-
-      // Update local profile state
-      setProfile(prev => prev ? {
-        ...prev,
-        profileImageUrl: data.user.profileImageUrl
-      } : null);
-
-      Alert.alert(t('common.success'), t('profile.successImageUpdated'));
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      Alert.alert(t('common.error'), error.message || t('profile.errorUploadImage'));
-    } finally {
-      setUploadingImage(false);
-    }
-  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -495,11 +393,6 @@ export const ProfileScreen: React.FC = () => {
               imageUrl={profile?.profileImageUrl}
               relationshipToChild={profile?.relationshipToChild}
             />
-            {uploadingImage && (
-              <View style={styles.uploadingOverlay}>
-                <ActivityIndicator color="#FFFFFF" size="large" />
-              </View>
-            )}
             {/* <View style={styles.cameraIconContainer}>
               <Ionicons name="camera" size={20} color="#8C49D5" />
             </View> */}
