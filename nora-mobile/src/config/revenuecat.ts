@@ -15,10 +15,11 @@ export const REVENUECAT_CONFIG = {
     default: 'default',
   },
 
-  // Product identifiers
+  // Product identifiers — Android uses 'om.nora.premium.1m', iOS uses 'com.nora.premium.1m'
   products: {
-    oneMonth: 'com.nora.premium.1m',
-    threeMonth: 'com.nora.premium.3m',
-    oneYear: 'com.nora.premium.1y',
+    oneMonth: {
+      ios: 'com.nora.premium.1m',
+      android: 'om.nora.premium.1m',
+    },
   },
 };

@@ -14,6 +14,7 @@ import {
   Alert,
   Linking,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { MaskedDinoImage } from '../../components/MaskedDinoImage';
 import { useNavigation, CommonActions } from '@react-navigation/native';
@@ -70,9 +71,9 @@ export const SubscriptionScreen: React.FC = () => {
     }
   }, []);
 
-  // Find packages by product ID
+  // Find packages by product ID — Android appends ':basePlanId' so use startsWith
   const selectedPackage = availablePackages.find(
-    p => p.product.identifier === REVENUECAT_CONFIG.products.oneMonth
+    p => p.product.identifier.startsWith(Platform.OS === 'android' ? REVENUECAT_CONFIG.products.oneMonth.android : REVENUECAT_CONFIG.products.oneMonth.ios)
   );
 
   // Use the App Store price string for the user's storefront locale.
@@ -116,7 +117,7 @@ export const SubscriptionScreen: React.FC = () => {
       if (!packageToUse) {
         const packages = await refreshOfferings();
         packageToUse = packages.find(
-          p => p.product.identifier === REVENUECAT_CONFIG.products.oneMonth
+          p => p.product.identifier.startsWith(Platform.OS === 'android' ? REVENUECAT_CONFIG.products.oneMonth.android : REVENUECAT_CONFIG.products.oneMonth.ios)
         );
       }
 
