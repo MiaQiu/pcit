@@ -71,10 +71,8 @@ export const SubscriptionScreen: React.FC = () => {
     }
   }, []);
 
-  // Find packages by product ID — Android appends ':basePlanId' so use startsWith
-  const selectedPackage = availablePackages.find(
-    p => p.product.identifier.startsWith(Platform.OS === 'android' ? REVENUECAT_CONFIG.products.oneMonth.android : REVENUECAT_CONFIG.products.oneMonth.ios)
-  );
+  // Only one product offered — take the first available package
+  const selectedPackage = availablePackages[0] ?? null;
 
   // Use the App Store price string for the user's storefront locale.
   // Falls back to '...' while offerings are still loading.
@@ -116,9 +114,7 @@ export const SubscriptionScreen: React.FC = () => {
       let packageToUse = selectedPackage;
       if (!packageToUse) {
         const packages = await refreshOfferings();
-        packageToUse = packages.find(
-          p => p.product.identifier.startsWith(Platform.OS === 'android' ? REVENUECAT_CONFIG.products.oneMonth.android : REVENUECAT_CONFIG.products.oneMonth.ios)
-        );
+        packageToUse = packages[0] ?? null;
       }
 
       if (!packageToUse) {
@@ -172,6 +168,24 @@ export const SubscriptionScreen: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Purchase error:', error);
+
+      // Already owned — navigate directly since purchase is confirmed
+      if (error.userInfo?.readableErrorCode === 'ProductAlreadyPurchasedError' ||
+          error.userInfo?.code === 6) {
+        const isInitialOnboarding = data.name && data.name.trim() !== '';
+        if (isInitialOnboarding) {
+          navigation.navigate('NotificationPermission');
+        } else {
+          await completeOnboarding();
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'MainTabs' as any }],
+            })
+          );
+        }
+        return;
+      }
 
       // Only show error if user didn't cancel
       if (!error.userCancelled) {
