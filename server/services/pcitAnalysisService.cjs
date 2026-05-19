@@ -888,9 +888,48 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
       CHILD_GENDER: variables.CHILD_GENDER || 'child'
     });
 
+    const llmCallOpts = { model: 'flash', maxTokens: 4096, temperature: 0, label: 'coaching-format', schema: SCHEMAS.COACHING_FORMAT, sessionId, timeout: 120_000 };
+    const checkComplete = (result) => {
+      const sections = result?.sections;
+      const totalContentLen = sections?.reduce((sum, s) => sum + (s.content?.length || 0), 0) || 0;
+      return Array.isArray(sections)
+        && sections.length >= 3
+        && sections.every(s => s.title?.trim() && s.content?.trim())
+        && totalContentLen >= coachingReport.length * 0.6;
+    };
+
     let formatted;
     try {
-      formatted = await llmCall(formatPrompt, { model: 'flash', maxTokens: 4096, temperature: 0, label: 'coaching-format', schema: SCHEMAS.COACHING_FORMAT, sessionId });
+      formatted = await llmCall(formatPrompt, llmCallOpts);
+      if (!checkComplete(formatted)) {
+        const s = formatted?.sections;
+        const len = s?.reduce((sum, sec) => sum + (sec.content?.length || 0), 0) || 0;
+        console.warn(`⚠️ [CDI-COACHING] Format output incomplete (${s?.length || 0} sections, ${len}/${coachingReport.length} chars), retrying...`);
+        formatted = await llmCall(formatPrompt, llmCallOpts);
+        if (!checkComplete(formatted)) {
+          const s2 = formatted?.sections;
+          const len2 = s2?.reduce((sum, sec) => sum + (sec.content?.length || 0), 0) || 0;
+          console.warn(`⚠️ [CDI-COACHING] Format retry also incomplete (${s2?.length || 0} sections, ${len2}/${coachingReport.length} chars), escalating to Gemini Pro 3 streaming...`);
+          try {
+            const proRaw = await callGeminiStreaming(
+              [{ role: 'user', parts: [{ text: formatPrompt }] }],
+              { model: 'gemini-3-pro-preview', temperature: 0, maxOutputTokens: 8192, timeout: 300_000, sessionId }
+            );
+            const { value: proFormatted } = parseJSON(proRaw, 'object');
+            if (checkComplete(proFormatted)) {
+              formatted = proFormatted;
+            } else {
+              const s3 = proFormatted?.sections;
+              const len3 = s3?.reduce((sum, sec) => sum + (sec.content?.length || 0), 0) || 0;
+              console.warn(`⚠️ [CDI-COACHING] Pro 3 format also incomplete (${s3?.length || 0} sections, ${len3}/${coachingReport.length} chars), falling back to raw report`);
+              return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal, notifications };
+            }
+          } catch (proError) {
+            console.error('❌ [CDI-COACHING] Pro 3 format call failed:', proError.message);
+            return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal, notifications };
+          }
+        }
+      }
     } catch (formatError) {
       console.error('❌ [CDI-COACHING] Format call failed:', formatError.message);
       return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal, notifications };

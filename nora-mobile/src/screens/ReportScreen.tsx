@@ -981,7 +981,14 @@ export const ReportScreen: React.FC = () => {
         {reportData.mode === 'PDI' && reportData.pdiSkills && Array.isArray(reportData.pdiSkills) && reportData.pdiSkills.length > 0 ? (
           <PDICoachCorner pdiSkills={reportData.pdiSkills} commandSequences={reportData.pdiCommandSequences} summary={reportData.pdiSummary} recordingId={recordingId} navigation={navigation} tomorrowGoal={reportData.pdiTomorrowGoal} />
         ) : (
-          reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
+          !reportData.coachingCards && reportData.coachingSummary ? (
+            <View>
+              <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
+              <View style={styles.coachCard}>
+                <Text style={styles.coachDescription}>{reportData.coachingSummary}</Text>
+              </View>
+            </View>
+          ) : reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
             const items = reportData.coachingCards;
             // Detect new format (sections with title + content) vs legacy (CoachingCard objects)
             const isNewFormat = items.length > 0 && 'content' in items[0];
@@ -1057,7 +1064,8 @@ export const ReportScreen: React.FC = () => {
               </View>
             );
           })()
-        )}
+        )
+        }
 
         {/* What we learnt about Child */}
         {/* Section 1: What we learnt about child today */}
