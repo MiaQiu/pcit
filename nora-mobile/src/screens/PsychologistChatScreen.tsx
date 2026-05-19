@@ -24,6 +24,7 @@ import { COLORS, FONTS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
 
@@ -111,6 +112,7 @@ export const PsychologistChatScreen: React.FC = () => {
   // Auto-focus input on first entry
   useEffect(() => {
     const t = setTimeout(() => inputRef.current?.focus(), 300);
+    amplitudeService.trackEvent('Chat Opened', { chat: 'psychologist' });
     return () => clearTimeout(t);
   }, []);
 
@@ -214,6 +216,7 @@ export const PsychologistChatScreen: React.FC = () => {
     const text = input.trim();
     if (!text || sending) return;
 
+    amplitudeService.trackEvent('Chat Message Sent', { chat: 'psychologist' });
     setInput('');
     setSending(true);
     Keyboard.dismiss();

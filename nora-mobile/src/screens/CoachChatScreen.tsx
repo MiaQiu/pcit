@@ -29,6 +29,7 @@ import { COLORS, FONTS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 const PSYCH_REQUESTED_KEY = '@nora_psych_requested';
 
@@ -159,6 +160,7 @@ export const CoachChatScreen: React.FC = () => {
     userStorage.getItem(PSYCH_REQUESTED_KEY).then(v => {
       if (v === 'true') setPsychRequested(true);
     });
+    amplitudeService.trackEvent('Chat Opened', { chat: 'ai_coach' });
   }, []);
 
   // Clear AI unread badge on exit
@@ -278,6 +280,7 @@ export const CoachChatScreen: React.FC = () => {
     const text = input.trim();
     if (!text || loading) return;
 
+    amplitudeService.trackEvent('Chat Message Sent', { chat: 'ai_coach' });
     setInput('');
     setLoading(true);
     Keyboard.dismiss();
@@ -354,6 +357,7 @@ export const CoachChatScreen: React.FC = () => {
       setShowHumanModal(false);
       await userStorage.setItem(PSYCH_REQUESTED_KEY, 'true');
       setPsychRequested(true);
+      amplitudeService.trackEvent('Psychologist Requested', {});
       navigation.navigate('PsychologistChat');
     } catch {
       Alert.alert(t('common.error'), t('coachChat.errorSendRequest'));
@@ -416,7 +420,10 @@ export const CoachChatScreen: React.FC = () => {
                   <TouchableOpacity
                     key={s.title}
                     style={styles.suggestionCard}
-                    onPress={() => setInput(s.prompt)}
+                    onPress={() => {
+                      amplitudeService.trackEvent('Chat Suggestion Used', { chat: 'ai_coach', suggestion: s.title });
+                      setInput(s.prompt);
+                    }}
                     activeOpacity={0.75}
                   >
                     <Image source={s.image} style={styles.suggestionIcon} />
