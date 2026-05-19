@@ -283,9 +283,87 @@
     "speakerAdult": "大人",
     "speakerChild": "孩子",
     "speakerAdultN": "大人 {{n}}",
-    "speakerChildN": "孩子 {{n}}"
+    "speakerChildN": "孩子 {{n}}",
+    "pcitTags": {
+      "Echo": "覆誦",
+      "Labeled Praise": "具體讚美",
+      "Unlabeled Praise": "概括讚美",
+      "Narration": "敘事",
+      "Command": "指令",
+      "Question": "問句",
+      "Criticism": "批評",
+      "Neutral": "中立",
+      "Negative Talk": "負面語言",
+      "Direct Command": "直接指令",
+      "Indirect Command": "間接指令"
+    }
   },
   "weeklyReport": {
+    "weeklyRecap": "每週回顧",
+    "page3": {
+      "title": "本週的您——身為父母",
+      "noraNoticed": "Nora 觀察到的",
+      "metrics": {
+        "calendar": "練習天數",
+        "trophy": "個人最佳",
+        "star": "平均 Nora 分數",
+        "trending-up": "成長"
+      }
+    },
+    "page4": {
+      "title": "本週精彩時刻",
+      "empty": "本週暫無精彩時刻",
+      "dayNames": {
+        "Sun": "週日", "Mon": "週一", "Tue": "週二", "Wed": "週三",
+        "Thu": "週四", "Fri": "週五", "Sat": "週六"
+      },
+      "monthNames": {
+        "Jan": "1月", "Feb": "2月", "Mar": "3月", "Apr": "4月",
+        "May": "5月", "Jun": "6月", "Jul": "7月", "Aug": "8月",
+        "Sep": "9月", "Oct": "10月", "Nov": "11月", "Dec": "12月"
+      }
+    },
+    "page5": {
+      "title": "{{name}} 的這一週",
+      "shiningMoments": "閃亮時刻",
+      "empty": "繼續一起玩耍——我們將在這裡分享 {{name}} 的成長時刻。",
+      "categories": {
+        "chatbubble": "語言與聲音",
+        "bulb": "思考與學習",
+        "people": "一起玩耍",
+        "heart": "情緒感受",
+        "hand-left": "親子連結"
+      }
+    },
+    "page6": {
+      "title": "下週的練習重點",
+      "focusLabel": "下週的溫和目標",
+      "whyTitle": "為什麼這很重要",
+      "whySubtitle": "簡短的神經系統解釋。"
+    },
+    "page7": {
+      "strategies": {
+        "AGGRESSIVE_DE_ESCALATION": "行為降級",
+        "DIFFERENTIAL_ATTENTION": "注意力與專注",
+        "POSITIVE_REINFORCEMENT": "正向強化",
+        "RELATIONSHIP_BUFFERING": "關係建立",
+        "SKILL_COACHING": "技能指導"
+      }
+    },
+    "page2": {
+      "title": "您本週的情感銀行帳戶存款",
+      "totalDeposits": "總存款",
+      "tagline": "小小時刻，大大回報。",
+      "breakdown": "您的存款明細",
+      "massageTime": "練習時間",
+      "massageTimeDesc": "以溫暖和專注與孩子共同調節情緒的時間。",
+      "confidenceBoost": "自信提升",
+      "confidenceBoostDesc": "讓 {{name}} 感到有能力和自豪的稱讚。",
+      "beingHeard": "被傾聽（回應）",
+      "beingHeardDesc": "您反映了感受，讓孩子感到被理解。",
+      "beingSeen": "被看見（敘述）",
+      "beingSeenDesc": "您不帶評判地描述正在發生的事情。"
+    },
     "loading": "正在載入報告...",
     "noReport": "無可用報告",
     "goBack": "返回",

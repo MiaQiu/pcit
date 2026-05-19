@@ -283,9 +283,87 @@
     "speakerAdult": "Adult",
     "speakerChild": "Child",
     "speakerAdultN": "Adult {{n}}",
-    "speakerChildN": "Child {{n}}"
+    "speakerChildN": "Child {{n}}",
+    "pcitTags": {
+      "Echo": "Echo",
+      "Labeled Praise": "Labeled Praise",
+      "Unlabeled Praise": "Unlabeled Praise",
+      "Narration": "Narration",
+      "Command": "Command",
+      "Question": "Question",
+      "Criticism": "Criticism",
+      "Neutral": "Neutral",
+      "Negative Talk": "Negative Talk",
+      "Direct Command": "Direct Command",
+      "Indirect Command": "Indirect Command"
+    }
   },
   "weeklyReport": {
+    "weeklyRecap": "Weekly Recap",
+    "page3": {
+      "title": "You as a Parent This Week",
+      "noraNoticed": "What Nora noticed",
+      "metrics": {
+        "calendar": "Days practiced",
+        "trophy": "Personal best",
+        "star": "Avg Nora score",
+        "trending-up": "growth"
+      }
+    },
+    "page4": {
+      "title": "Weekly Moments",
+      "empty": "No top moments this week",
+      "dayNames": {
+        "Sun": "Sun", "Mon": "Mon", "Tue": "Tue", "Wed": "Wed",
+        "Thu": "Thu", "Fri": "Fri", "Sat": "Sat"
+      },
+      "monthNames": {
+        "Jan": "Jan", "Feb": "Feb", "Mar": "Mar", "Apr": "Apr",
+        "May": "May", "Jun": "Jun", "Jul": "Jul", "Aug": "Aug",
+        "Sep": "Sep", "Oct": "Oct", "Nov": "Nov", "Dec": "Dec"
+      }
+    },
+    "page5": {
+      "title": "{{name}}'s Week",
+      "shiningMoments": "Shining moments",
+      "empty": "Keep playing together — we'll share {{name}}'s growth moments here.",
+      "categories": {
+        "chatbubble": "Words & Voice",
+        "bulb": "Thinking & Learning",
+        "people": "Playing Together",
+        "heart": "Big Feelings",
+        "hand-left": "Your Bond"
+      }
+    },
+    "page6": {
+      "title": "Next Week's Focus",
+      "focusLabel": "Next week's gentle focus",
+      "whyTitle": "Why this matters",
+      "whySubtitle": "A quick nervous-system explanation."
+    },
+    "page7": {
+      "strategies": {
+        "AGGRESSIVE_DE_ESCALATION": "Behavior De-escalation",
+        "DIFFERENTIAL_ATTENTION": "Attention & Focus",
+        "POSITIVE_REINFORCEMENT": "Positive Reinforcement",
+        "RELATIONSHIP_BUFFERING": "Relationship Building",
+        "SKILL_COACHING": "Skill Coaching"
+      }
+    },
+    "page2": {
+      "title": "Your Weekly Emotional Bank Account Deposits",
+      "totalDeposits": "Total deposits",
+      "tagline": "Small moments. Big returns.",
+      "breakdown": "Your deposits breakdown",
+      "massageTime": "Massage time",
+      "massageTimeDesc": "Time spent co-regulating with warmth and presence.",
+      "confidenceBoost": "Confidence Boost",
+      "confidenceBoostDesc": "Praise that helped {{name}} feel capable and proud.",
+      "beingHeard": "Being heard (Echo)",
+      "beingHeardDesc": "You reflected feelings so they felt understood.",
+      "beingSeen": "Being seen (Narrate)",
+      "beingSeenDesc": "You described what was happening without judgment."
+    },
     "loading": "Loading report...",
     "noReport": "No report available",
     "goBack": "Go back",

@@ -11,6 +11,17 @@ const prisma = require('../services/db.cjs');
 const { generateWeeklyReport } = require('../services/weeklyReportService.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
 
+const PUSH_STRINGS = {
+  'en': {
+    title: 'Your Weekly Report is Ready!',
+    body: (weekLabel) => `Check out your progress for the week of ${weekLabel}`,
+  },
+  'zh-TW': {
+    title: '您的週報已準備好了！',
+    body: (weekLabel) => `查看您 ${weekLabel} 這週的進步`,
+  },
+};
+
 /**
  * Returns the Monday 00:00:00 UTC for the week that ended last Sunday.
  * e.g. if called on Mon 2026-03-30, returns Mon 2026-03-23.
@@ -73,10 +84,13 @@ async function runWeeklyReportJob() {
 
       // Only notify if this is the first time it's being published
       if (!wasAlreadyVisible) {
-        const weekLabel = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+        const userRow = await prisma.user.findUnique({ where: { id: userId }, select: { preferredLocale: true } });
+        const locale = userRow?.preferredLocale || 'en';
+        const strings = PUSH_STRINGS[locale] || PUSH_STRINGS['en'];
+        const weekLabel = weekStart.toLocaleDateString(locale === 'zh-TW' ? 'zh-TW' : 'en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
         const result = await sendPushNotificationToUser(userId, {
-          title: 'Your Weekly Report is Ready!',
-          body: `Check out your progress for the week of ${weekLabel}`,
+          title: strings.title,
+          body: strings.body(weekLabel),
           sound: 'default',
           data: {
             type: 'weekly_report',

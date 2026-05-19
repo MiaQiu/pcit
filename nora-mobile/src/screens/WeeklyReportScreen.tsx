@@ -66,16 +66,11 @@ export const WeeklyReportScreen: React.FC = () => {
   const loadChildIssues = async () => {
     try {
       const { issues } = await authService.getChildIssues();
-      const issueNames = issues.map((i) => {
-        if (i.userIssues) {
-          try {
-            const parsed = JSON.parse(i.userIssues);
-            if (Array.isArray(parsed)) return parsed[0];
-          } catch {}
-        }
-        return i.strategy.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase());
-      }).filter(Boolean).filter((name, idx, arr) => arr.indexOf(name) === idx);
-      setChildIssues(issueNames);
+      const strategyKeys = issues
+        .map((i) => i.strategy)
+        .filter(Boolean)
+        .filter((key, idx, arr) => arr.indexOf(key) === idx);
+      setChildIssues(strategyKeys);
     } catch (error) {
       console.log('Failed to load child issues:', error);
     }
@@ -156,7 +151,7 @@ export const WeeklyReportScreen: React.FC = () => {
   const renderPage1 = () => (
     <View style={styles.page1Content}>
       <View style={styles.page1TextContent}>
-        <Text style={styles.page1Subtitle}>Weekly Recap</Text>
+        <Text style={styles.page1Subtitle}>{t('weeklyReport.weeklyRecap')}</Text>
         <Text style={styles.page1Title}>
           {report?.headline || `${childName}'s Weekly Recap`}
         </Text>
@@ -184,11 +179,11 @@ export const WeeklyReportScreen: React.FC = () => {
         contentContainerStyle={styles.pageScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>Your Weekly Emotional Bank Account Deposits</Text>
+        <Text style={styles.pageTitle}>{t('weeklyReport.page2.title')}</Text>
 
         {/* Total Deposits Card */}
         <View style={styles.card}>
-          <Text style={styles.totalLabel}>Total deposits</Text>
+          <Text style={styles.totalLabel}>{t('weeklyReport.page2.totalDeposits')}</Text>
           <View style={styles.totalRow}>
             <Text style={styles.totalNumber}>{report.totalDeposits}</Text>
             <View style={styles.dragonAvatarContainer}>
@@ -199,11 +194,11 @@ export const WeeklyReportScreen: React.FC = () => {
               />
             </View>
           </View>
-          <Text style={styles.totalTagline}>Small moments. Big returns.</Text>
+          <Text style={styles.totalTagline}>{t('weeklyReport.page2.tagline')}</Text>
         </View>
 
         {/* Breakdown */}
-        <Text style={styles.sectionTitle}>Your deposits breakdown</Text>
+        <Text style={styles.sectionTitle}>{t('weeklyReport.page2.breakdown')}</Text>
 
         <View style={styles.depositGrid}>
           <View style={styles.depositCard}>
@@ -213,10 +208,8 @@ export const WeeklyReportScreen: React.FC = () => {
               </View>
               <Text style={styles.depositValue}>{report.massageTimeMinutes}m</Text>
             </View>
-            <Text style={styles.depositLabel}>Massage time</Text>
-            <Text style={styles.depositDesc}>
-              Time spent co-regulating with warmth and presence.
-            </Text>
+            <Text style={styles.depositLabel}>{t('weeklyReport.page2.massageTime')}</Text>
+            <Text style={styles.depositDesc}>{t('weeklyReport.page2.massageTimeDesc')}</Text>
           </View>
 
           <View style={styles.depositCard}>
@@ -226,10 +219,8 @@ export const WeeklyReportScreen: React.FC = () => {
               </View>
               <Text style={styles.depositValue}>{report.praiseCount}</Text>
             </View>
-            <Text style={styles.depositLabel}>Confidence Boost</Text>
-            <Text style={styles.depositDesc}>
-              Praise that helped {childName} feel capable and proud.
-            </Text>
+            <Text style={styles.depositLabel}>{t('weeklyReport.page2.confidenceBoost')}</Text>
+            <Text style={styles.depositDesc}>{t('weeklyReport.page2.confidenceBoostDesc', { name: childName })}</Text>
           </View>
 
           <View style={styles.depositCard}>
@@ -239,10 +230,8 @@ export const WeeklyReportScreen: React.FC = () => {
               </View>
               <Text style={styles.depositValue}>{report.echoCount}</Text>
             </View>
-            <Text style={styles.depositLabel}>Being heard (Echo)</Text>
-            <Text style={styles.depositDesc}>
-              You reflected feelings so they felt understood.
-            </Text>
+            <Text style={styles.depositLabel}>{t('weeklyReport.page2.beingHeard')}</Text>
+            <Text style={styles.depositDesc}>{t('weeklyReport.page2.beingHeardDesc')}</Text>
           </View>
 
           <View style={styles.depositCard}>
@@ -252,10 +241,8 @@ export const WeeklyReportScreen: React.FC = () => {
               </View>
               <Text style={styles.depositValue}>{report.narrateCount}</Text>
             </View>
-            <Text style={styles.depositLabel}>Being seen (Narrate)</Text>
-            <Text style={styles.depositDesc}>
-              You described what was happening without judgment.
-            </Text>
+            <Text style={styles.depositLabel}>{t('weeklyReport.page2.beingSeen')}</Text>
+            <Text style={styles.depositDesc}>{t('weeklyReport.page2.beingSeenDesc')}</Text>
           </View>
         </View>
       </ScrollView>
@@ -279,7 +266,7 @@ export const WeeklyReportScreen: React.FC = () => {
         contentContainerStyle={styles.pageScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>You as a Parent This Week</Text>
+        <Text style={styles.pageTitle}>{t('weeklyReport.page3.title')}</Text>
 
         {/* Section A: Identity Statement */}
         {report?.parentGrowthNarrative && (
@@ -308,7 +295,11 @@ export const WeeklyReportScreen: React.FC = () => {
                   />
                 </View>
                 <Text style={styles.growthMetricValue}>{metric.value}</Text>
-                <Text style={styles.growthMetricLabel}>{metric.label}</Text>
+                <Text style={styles.growthMetricLabel}>
+                  {metric.icon === 'trending-up'
+                    ? `${metric.label.split(' ').slice(0, -1).join(' ')} ${t('weeklyReport.page3.metrics.trending-up')}`
+                    : t(`weeklyReport.page3.metrics.${metric.icon}`, { defaultValue: metric.label })}
+                </Text>
               </View>
             ))}
           </View>
@@ -321,7 +312,7 @@ export const WeeklyReportScreen: React.FC = () => {
               <View style={styles.noraObservationIconCircle}>
                 <Ionicons name="eye-outline" size={18} color="#6366F1" />
               </View>
-              <Text style={styles.noraObservationTitle}>What Nora noticed</Text>
+              <Text style={styles.noraObservationTitle}>{t('weeklyReport.page3.noraNoticed')}</Text>
             </View>
             <Text style={styles.noraObservationText}>
               {report.noraObservation}
@@ -342,13 +333,13 @@ export const WeeklyReportScreen: React.FC = () => {
         contentContainerStyle={styles.pageScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>Weekly Moments</Text>
+        <Text style={styles.pageTitle}>{t('weeklyReport.page4.title')}</Text>
 
         {topMoments.length === 0 ? (
           <View style={styles.card}>
             <View style={styles.emptyChildState}>
               <Ionicons name="chatbubble-outline" size={24} color="#D1D5DB" />
-              <Text style={styles.emptyChildStateText}>No top moments this week</Text>
+              <Text style={styles.emptyChildStateText}>{t('weeklyReport.page4.empty')}</Text>
             </View>
           </View>
         ) : (
@@ -356,7 +347,12 @@ export const WeeklyReportScreen: React.FC = () => {
             {topMoments.map((moment: any, index: number) => (
               <View key={index} style={styles.momentBubble}>
                 <Text style={styles.momentBubbleDate}>
-                  {moment.dayLabel} {moment.dateLabel} — {moment.sessionTitle}
+                  {(() => {
+                    const day = t(`weeklyReport.page4.dayNames.${moment.dayLabel}`, { defaultValue: moment.dayLabel });
+                    const [mon, num] = (moment.dateLabel || '').split(' ');
+                    const month = t(`weeklyReport.page4.monthNames.${mon}`, { defaultValue: mon });
+                    return `${day} ${month} ${num} — ${moment.sessionTitle}`;
+                  })()}
                 </Text>
                 <Text style={styles.momentBubbleQuote}>"{moment.quote}"</Text>
                 {moment.audioUrl && moment.startTime != null && moment.endTime != null && (
@@ -386,20 +382,21 @@ export const WeeklyReportScreen: React.FC = () => {
       'hand-left': 'hand-left-outline',
     };
 
+    // Keyed by icon (language-neutral) since category names are now translated by Claude
     const categoryColorMap: Record<string, string> = {
-      'Words & Voice': '#EEF2FF',
-      'Thinking & Learning': '#FFF7ED',
-      'Playing Together': '#F0FDF4',
-      'Big Feelings': '#FEF2F2',
-      'Your Bond': '#F3E8FF',
+      'chatbubble': '#EEF2FF',
+      'bulb': '#FFF7ED',
+      'people': '#F0FDF4',
+      'heart': '#FEF2F2',
+      'hand-left': '#F3E8FF',
     };
 
     const categoryIconColorMap: Record<string, string> = {
-      'Words & Voice': '#6366F1',
-      'Thinking & Learning': '#EA580C',
-      'Playing Together': '#16A34A',
-      'Big Feelings': '#DC2626',
-      'Your Bond': COLORS.mainPurple,
+      'chatbubble': '#6366F1',
+      'bulb': '#EA580C',
+      'people': '#16A34A',
+      'heart': '#DC2626',
+      'hand-left': COLORS.mainPurple,
     };
 
     return (
@@ -408,7 +405,7 @@ export const WeeklyReportScreen: React.FC = () => {
         contentContainerStyle={styles.pageScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>{childName}'s Week</Text>
+        <Text style={styles.pageTitle}>{t('weeklyReport.page5.title', { name: childName })}</Text>
 
         {/* Section A: Child Spotlight */}
         {report?.childSpotlight && (
@@ -417,7 +414,7 @@ export const WeeklyReportScreen: React.FC = () => {
               <View style={[styles.childSpotlightIconCircle]}>
                 <Ionicons name="sparkles" size={20} color="#D97706" />
               </View>
-              <Text style={styles.childSpotlightLabel}>Shining moments</Text>
+              <Text style={styles.childSpotlightLabel}>{t('weeklyReport.page5.shiningMoments')}</Text>
             </View>
             <Text style={styles.childSpotlightText}>
               {report.childSpotlight}
@@ -431,15 +428,15 @@ export const WeeklyReportScreen: React.FC = () => {
             {snapshots.map((snapshot, index) => (
               <View key={index} style={styles.snapshotCard}>
                 <View style={styles.snapshotCategoryRow}>
-                  <View style={[styles.snapshotCategoryIconCircle, { backgroundColor: categoryColorMap[snapshot.category] || '#F3E8FF' }]}>
+                  <View style={[styles.snapshotCategoryIconCircle, { backgroundColor: categoryColorMap[snapshot.icon] || '#F3E8FF' }]}>
                     <Ionicons
                       name={snapshotIconMap[snapshot.icon] || 'sparkles'}
                       size={16}
-                      color={categoryIconColorMap[snapshot.category] || COLORS.mainPurple}
+                      color={categoryIconColorMap[snapshot.icon] || COLORS.mainPurple}
                     />
                   </View>
-                  <Text style={[styles.snapshotCategoryText, { color: categoryIconColorMap[snapshot.category] || COLORS.mainPurple }]}>
-                    {snapshot.category}
+                  <Text style={[styles.snapshotCategoryText, { color: categoryIconColorMap[snapshot.icon] || COLORS.mainPurple }]}>
+                    {t(`weeklyReport.page5.categories.${snapshot.icon}`, { defaultValue: snapshot.category })}
                   </Text>
                 </View>
                 <View style={styles.snapshotQuoteBox}>
@@ -465,7 +462,7 @@ export const WeeklyReportScreen: React.FC = () => {
             <View style={styles.emptyChildState}>
               <Ionicons name="sparkles" size={24} color="#D1D5DB" />
               <Text style={styles.emptyChildStateText}>
-                Keep playing together — we'll share {childName}'s growth moments here.
+                {t('weeklyReport.page5.empty', { name: childName })}
               </Text>
             </View>
           </View>
@@ -483,12 +480,12 @@ export const WeeklyReportScreen: React.FC = () => {
       contentContainerStyle={styles.pageScrollContent}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.pageTitle}>Next Week's Focus</Text>
+      <Text style={styles.pageTitle}>{t('weeklyReport.page6.title')}</Text>
 
       <View style={styles.card}>
         {/* Header */}
         <View style={styles.focusHeaderRow}>
-          <Text style={styles.focusLabel}>Next week's gentle focus</Text>
+          <Text style={styles.focusLabel}>{t('weeklyReport.page6.focusLabel')}</Text>
           <View style={styles.focusIconCircle}>
             <Ionicons name="sparkles" size={20} color="#EA580C" />
           </View>
@@ -511,8 +508,8 @@ export const WeeklyReportScreen: React.FC = () => {
           <View style={styles.whyToggleContent}>
             <Ionicons name="bulb-outline" size={18} color="#6B7280" />
             <View style={{ flex: 1 }}>
-              <Text style={styles.whyToggleTitle}>Why this matters</Text>
-              <Text style={styles.whyToggleSubtitle}>A quick nervous-system explanation.</Text>
+              <Text style={styles.whyToggleTitle}>{t('weeklyReport.page6.whyTitle')}</Text>
+              <Text style={styles.whyToggleSubtitle}>{t('weeklyReport.page6.whySubtitle')}</Text>
             </View>
             <Ionicons
               name={whyExpanded ? 'chevron-up' : 'chevron-down'}
@@ -593,7 +590,7 @@ export const WeeklyReportScreen: React.FC = () => {
             </Text>
             {childIssues.map((issue, index) => (
               <View key={issue} style={[styles.issueRow, index < childIssues.length - 1 && styles.issueRowBorder]}>
-                <Text style={styles.issueLabel}>{capitalize(issue)}</Text>
+                <Text style={styles.issueLabel}>{t(`weeklyReport.page7.strategies.${issue}`, { defaultValue: issue.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase()) })}</Text>
                 <View style={styles.ratingButtons}>
                   {RATINGS.map((rating) => (
                     <TouchableOpacity

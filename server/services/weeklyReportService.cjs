@@ -15,6 +15,28 @@ const { getUtterances } = require('../utils/utteranceUtils.cjs');
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+const LOCALE_NAMES = {
+  'en': 'English',
+  'zh-TW': 'Traditional Chinese (Taiwan)',
+};
+
+const GROWTH_METRIC_LABELS = {
+  'en': {
+    depositsGrowth: 'growth',
+    daysPracticed: 'Days practiced',
+    personalBest: 'Personal best',
+    avgScore: 'Avg Nora score',
+    daysOf7: 'of 7',
+  },
+  'zh-TW': {
+    depositsGrowth: '成長',
+    daysPracticed: '練習天數',
+    personalBest: '個人最佳',
+    avgScore: '平均 Nora 分數',
+    daysOf7: '/ 7 天',
+  },
+};
+
 // ============================================================================
 // Layer 1: Mechanical Aggregation
 // ============================================================================
@@ -282,7 +304,7 @@ async function aggregateWeekData(userId, childId, weekStart, weekEnd) {
 /**
  * Single Claude call to generate all personalized narrative content.
  */
-async function generateNarrativeContent(aggregatedData, childInfo) {
+async function generateNarrativeContent(aggregatedData, childInfo, locale = 'en') {
   const {
     totalDeposits, praiseCount, echoCount, narrateCount,
     questionCount, commandCount, sessionCount, uniqueDays,
@@ -327,7 +349,10 @@ async function generateNarrativeContent(aggregatedData, childInfo) {
     earliestProfilingText = `First session summary: "${earliestProfiling.summary}" (${new Date(earliestProfiling.createdAt).toLocaleDateString()})`;
   }
 
+  const outputLanguage = LOCALE_NAMES[locale] || 'English';
+
   const prompt = loadPromptWithVariables('weeklyReportNarrative', {
+    OUTPUT_LANGUAGE: outputLanguage,
     CHILD_NAME: childInfo.name,
     CHILD_AGE: childInfo.age || 'unknown',
     CHILD_GENDER: childInfo.gender || 'child',
@@ -372,7 +397,7 @@ async function generateNarrativeContent(aggregatedData, childInfo) {
  * @param {string} [weekStartDate] - ISO date string for Monday. Defaults to most recent Monday.
  * @returns {Object} The created/updated WeeklyReport
  */
-async function generateWeeklyReport(userId, weekStartDate) {
+async function generateWeeklyReport(userId, weekStartDate, locale = null) {
   console.log(`📊 [WEEKLY-REPORT] Starting generation for user ${userId}`);
 
   // 1. Resolve child
@@ -386,12 +411,15 @@ async function generateWeeklyReport(userId, weekStartDate) {
       childBirthday: true,
       issue: true,
       childConditions: true,
+      preferredLocale: true,
     },
   });
 
   if (!user) {
     throw new Error(`User ${userId} not found`);
   }
+
+  const resolvedLocale = locale || user.preferredLocale || 'en';
 
   const childName = user.childName ? decryptSensitiveData(user.childName) : 'the child';
   const childGender = user.childGender === 'BOY' ? 'boy' : user.childGender === 'GIRL' ? 'girl' : 'child';
@@ -452,39 +480,40 @@ async function generateWeeklyReport(userId, weekStartDate) {
       age: childAge,
       gender: childGender,
       clinicalFocus,
-    });
+    }, resolvedLocale);
     console.log(`📊 [WEEKLY-REPORT] AI narrative generated successfully`);
   } catch (err) {
     console.error(`📊 [WEEKLY-REPORT] AI narrative generation failed, saving mechanical data only:`, err.message);
   }
 
   // 5. Build growth metrics (data-driven micro-wins for page 3)
+  const metricLabels = GROWTH_METRIC_LABELS[resolvedLocale] || GROWTH_METRIC_LABELS['en'];
   const growthMetrics = [];
   if (aggregated.depositsTrend === 'up' && aggregated.depositsChangePercent > 0) {
     growthMetrics.push({
       icon: 'trending-up',
       value: `+${aggregated.depositsChangePercent}%`,
-      label: `${narrative?.strongestGrowthArea || 'Deposits'} growth`,
+      label: `${narrative?.strongestGrowthArea || 'Deposits'} ${metricLabels.depositsGrowth}`,
     });
   }
   if (aggregated.uniqueDays > 0) {
     growthMetrics.push({
       icon: 'calendar',
-      value: `${aggregated.uniqueDays} of 7`,
-      label: 'Days practiced',
+      value: `${aggregated.uniqueDays} ${metricLabels.daysOf7}`,
+      label: metricLabels.daysPracticed,
     });
   }
   if (aggregated.isPersonalBestScore && aggregated.bestSessionScore > 0) {
     growthMetrics.push({
       icon: 'trophy',
       value: String(aggregated.bestSessionScore),
-      label: 'Personal best',
+      label: metricLabels.personalBest,
     });
   } else if (aggregated.avgNoraScore) {
     growthMetrics.push({
       icon: 'star',
       value: String(aggregated.avgNoraScore),
-      label: 'Avg Nora score',
+      label: metricLabels.avgScore,
     });
   }
 

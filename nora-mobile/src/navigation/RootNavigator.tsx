@@ -37,6 +37,7 @@ import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { User } from '@nora/core';
 import amplitudeService from '../services/amplitudeService';
 import { checkOnboardingStep } from '../utils/onboardingCheck';
+import i18n from '../i18n';
 
 const APP_VERSION: string = require('../../app.json').expo.version;
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -164,6 +165,9 @@ export const RootNavigator: React.FC = () => {
           if (incompleteStep) {
             setResumeUserData(user);
           }
+          // Sync detected/saved UI language to server (covers first-launch device locale)
+          authService.setPreferredLocale(i18n.language).catch((err) => console.warn('[Lang] setPreferredLocale failed:', err));
+
           // Identify user on session restore so events are never anonymous
           amplitudeService.identifyUser(user.id, {
             email: user.email,

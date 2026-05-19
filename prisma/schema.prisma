@@ -414,6 +414,7 @@ model User {
   developmentalVisible     Boolean              @default(false)
   tag                      String               @default("user")
   referralCode          String?              @unique
+  preferredLocale       String               @default("en")
   LearningProgress      LearningProgress?
   ModuleHistory         ModuleHistory[]
   PasswordResetToken    PasswordResetToken[]

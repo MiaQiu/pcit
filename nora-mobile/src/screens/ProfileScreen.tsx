@@ -80,6 +80,7 @@ export const ProfileScreen: React.FC = () => {
     try {
       const customerInfo = await Purchases.getCustomerInfo();
       const entitlement = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium];
+      const hasActiveSubscription = customerInfo.activeSubscriptions.length > 0;
 
       if (entitlement) {
         setRcSubscription({
@@ -87,6 +88,13 @@ export const ProfileScreen: React.FC = () => {
           expirationDate: entitlement.expirationDate ? new Date(entitlement.expirationDate) : null,
           willRenew: entitlement.willRenew,
           periodType: entitlement.periodType,
+        });
+      } else if (hasActiveSubscription) {
+        setRcSubscription({
+          isActive: true,
+          expirationDate: null,
+          willRenew: true,
+          periodType: 'NORMAL',
         });
       } else {
         setRcSubscription({
@@ -334,7 +342,11 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const handleLanguagePress = () => {
-    const currentLang = i18n.language;
+    const applyLocale = (locale: string) => {
+      changeLanguage(locale);
+      authService.setPreferredLocale(locale).catch((err) => console.warn('[Lang] setPreferredLocale failed:', err));
+    };
+
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
@@ -342,14 +354,14 @@ export const ProfileScreen: React.FC = () => {
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
-          if (buttonIndex === 1) changeLanguage('en');
-          else if (buttonIndex === 2) changeLanguage('zh-TW');
+          if (buttonIndex === 1) applyLocale('en');
+          else if (buttonIndex === 2) applyLocale('zh-TW');
         }
       );
     } else {
       Alert.alert(t('languagePicker.title'), undefined, [
-        { text: t('languagePicker.english'), onPress: () => changeLanguage('en') },
-        { text: t('languagePicker.traditionalChinese'), onPress: () => changeLanguage('zh-TW') },
+        { text: t('languagePicker.english'), onPress: () => applyLocale('en') },
+        { text: t('languagePicker.traditionalChinese'), onPress: () => applyLocale('zh-TW') },
         { text: t('common.cancel'), style: 'cancel' },
       ]);
     }

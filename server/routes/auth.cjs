@@ -746,6 +746,29 @@ router.post('/upload-profile-image', require('../middleware/auth.cjs').requireAu
 });
 
 /**
+ * PATCH /api/auth/locale
+ * Persist the user's preferred UI/report language.
+ * Body: { locale: "en" | "zh-TW" }
+ */
+router.patch('/locale', require('../middleware/auth.cjs').requireAuth, async (req, res) => {
+  try {
+    const { locale } = req.body;
+    const SUPPORTED = new Set(['en', 'zh-TW']);
+    if (!locale || !SUPPORTED.has(locale)) {
+      return res.status(400).json({ error: `locale must be one of: ${[...SUPPORTED].join(', ')}` });
+    }
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: { preferredLocale: locale },
+    });
+    res.json({ preferredLocale: locale });
+  } catch (error) {
+    console.error('Update locale error:', error);
+    res.status(500).json({ error: 'Failed to update locale' });
+  }
+});
+
+/**
  * POST /api/auth/push-token
  * Register or update user's push notification token
  * Requires authentication

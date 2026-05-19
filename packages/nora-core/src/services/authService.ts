@@ -27,6 +27,7 @@ class AuthService {
   private apiUrl: string;
   private onSessionExpired?: () => void;
   private onLogout?: () => void;
+  private _inflight: Promise<User> | null = null;
 
   constructor(storage: StorageAdapter, apiUrl: string) {
     this.storage = storage;
@@ -209,55 +210,58 @@ class AuthService {
       }
     }
 
+    // Deduplicate concurrent fetches — all callers share one in-flight request.
+    if (this._inflight) {
+      return this._inflight;
+    }
+
     // Read stale cache before any network attempt — clearTokens() (called on 401 refresh
     // failure) wipes it, so we must capture it here while it still exists.
     const staleCacheRaw = await this.storage.getItem('cachedUser');
 
-    // Fetch from API
-    try {
-      const response = await fetch(`${this.apiUrl}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-          'ngrok-skip-browser-warning': 'true', // Skip ngrok warning page
-        },
-      });
+    this._inflight = (async () => {
+      try {
+        const response = await fetch(`${this.apiUrl}/api/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Try to refresh token
-          const refreshed = await this.refreshAccessToken();
-          if (refreshed) {
-            return this.getCurrentUser(forceRefresh);
+        if (!response.ok) {
+          if (response.status === 401) {
+            const refreshed = await this.refreshAccessToken();
+            if (refreshed) {
+              return this.getCurrentUser(forceRefresh);
+            }
+            throw new Error('Unauthorized');
           }
-          throw new Error('Unauthorized');
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.error || `Server error ${response.status}`);
         }
-        throw new Error('Failed to get user');
-      }
 
-      const data = await response.json();
-      const user = data.user;
-
-      // Cache the user data
-      await this.cacheUser(user);
-
-      return user;
-    } catch (error) {
-      // If we hit a network error and have a cached user (even expired), use it.
-      // Use the snapshot captured before the request — clearTokens() may have wiped it.
-      if (staleCacheRaw) {
-        console.log('[AuthService] Network error, using stale cache as fallback');
-        try {
-          const { user } = JSON.parse(staleCacheRaw);
-          return user;
-        } catch (parseError) {
-          // Cache corrupted, throw original error
-          throw error;
+        const data = await response.json();
+        const user = data.user;
+        await this.cacheUser(user);
+        return user;
+      } catch (error) {
+        if (staleCacheRaw) {
+          const reason = error instanceof Error ? error.message : String(error);
+          console.log(`[AuthService] Falling back to stale cache (${reason})`);
+          try {
+            const { user } = JSON.parse(staleCacheRaw);
+            return user;
+          } catch {
+            throw error;
+          }
         }
+        throw error;
+      } finally {
+        this._inflight = null;
       }
+    })();
 
-      // No cache available, throw the error
-      throw error;
-    }
+    return this._inflight;
   }
 
   /**
@@ -478,6 +482,20 @@ class AuthService {
     await this.cacheUser(result.user);
     return result.user;
   }
+  async setPreferredLocale(locale: string): Promise<void> {
+    const response = await this.authenticatedRequest(
+      `${this.apiUrl}/api/auth/locale`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale }),
+      }
+    );
+    if (!response.ok) {
+      throw new Error(await parseErrorResponse(response, 'Failed to update locale'));
+    }
+  }
+
   async getChildIssues(): Promise<{ issues: Array<{ strategy: string; priorityRank: number; userIssues: string | null; clinicalLevel: string }> }> {
     const response = await this.authenticatedRequest(
       `${this.apiUrl}/api/auth/child-issues`
