@@ -66,7 +66,8 @@ const CalendarView: React.FC<{
   onReportPress: (recordingId: string) => void;
   onWeeklyReportPress: (reportId: string) => void;
 }> = ({ recordingDates, lessonCompletionDates, recordings, weeklyReports, onReportPress, onWeeklyReportPress }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'en' ? 'en-US' : i18n.language;
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const autoSelectedRef = useRef(false);
@@ -137,7 +138,7 @@ const CalendarView: React.FC<{
   };
 
   const days = generateCalendarDays();
-  const monthName = currentMonth.toLocaleDateString('en-US', {
+  const monthName = currentMonth.toLocaleDateString(dateLocale, {
     month: 'short',
     year: 'numeric',
   });
@@ -166,7 +167,7 @@ const CalendarView: React.FC<{
 
   const formatSelectedDate = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    return d.toLocaleDateString(dateLocale, { weekday: 'long', month: 'long', day: 'numeric' });
   };
 
   return (

@@ -21,7 +21,8 @@ interface TranscriptSegment {
   start: number;
   end: number;
   role?: string;  // 'adult' or 'child'
-  tag?: string;   // PCIT tag
+  tag?: string;   // noraTag display name (e.g. 'Echo', 'Labeled Praise')
+  pcitTag?: string;  // DPICS code (e.g. 'RF', 'LP') — fallback if tag is absent
   feedback?: string;  // Feedback for adult utterances
   revisedFeedback?: string;  // Revised feedback from Call 4
   additionalTip?: string;  // Additional tip for desirable skills
@@ -334,8 +335,8 @@ export const TranscriptScreen: React.FC = () => {
 
               const speakerLabel = speakerLabels[segment.speaker] || 'Unknown';
               const speakerColor = speakerColors[segment.speaker] || '#FFFFFF';
-              const isAdult = speakerLabel.includes('Adult');
-              const pcitTag = segment.tag; // Get tag directly from database
+              const isAdult = segment.role === 'adult';
+              const pcitTag = segment.tag || null; // noraTag (display name) from database
 
               // Get tag color from mapping
               const getTagColor = (tag: string | undefined): string => {
@@ -397,7 +398,7 @@ export const TranscriptScreen: React.FC = () => {
                     </View>
                     {isAdult && pcitTag && (
                       <View style={[styles.tag, { backgroundColor: getTagColor(pcitTag) }]}>
-                        <Text style={styles.tagText}>{pcitTag}</Text>
+                        <Text style={styles.tagText}>{t(`transcript.pcitTags.${pcitTag}`, pcitTag)}</Text>
                       </View>
                     )}
                   </View>

@@ -80,8 +80,8 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const customerInfo = await Purchases.getCustomerInfo();
 
-      // Check if user has active "premium" entitlement
-      const hasActiveSubscription = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium] !== undefined;
+      const hasEntitlement = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium] !== undefined;
+      const hasActiveSubscription = hasEntitlement || customerInfo.activeSubscriptions.length > 0;
       setIsSubscribed(hasActiveSubscription);
 
       console.log('Subscription status:', hasActiveSubscription);
@@ -107,8 +107,8 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
 
-      // Check if purchase was successful
-      const isNowSubscribed = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium] !== undefined;
+      const isNowSubscribed = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium] !== undefined
+        || customerInfo.activeSubscriptions.length > 0;
       setIsSubscribed(isNowSubscribed);
 
       console.log('Purchase successful:', isNowSubscribed);
@@ -137,7 +137,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       console.log('Restoring purchases...');
 
       const customerInfo = await Purchases.restorePurchases();
-      const isNowSubscribed = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium] !== undefined;
+      const hasEntitlement = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium] !== undefined;
+      const hasActiveSubscription = customerInfo.activeSubscriptions.length > 0;
+      const isNowSubscribed = hasEntitlement || hasActiveSubscription;
 
       setIsSubscribed(isNowSubscribed);
 

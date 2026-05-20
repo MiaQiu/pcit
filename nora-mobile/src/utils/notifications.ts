@@ -226,10 +226,9 @@ export const scheduleDailyNotification = async (
         data: { type: 'daily_session_reminder' },
       },
       trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour,
         minute,
-        repeats: true,
       },
       identifier: id,
     });

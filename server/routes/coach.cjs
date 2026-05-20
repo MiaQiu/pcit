@@ -19,7 +19,7 @@ const MAX_HISTORY_MESSAGES = 20;    // conversation turns sent to LLM
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `**ROLE & OBJECTIVE**
+const BASE_SYSTEM_PROMPT = `**ROLE & OBJECTIVE**
 
 You are an expert Child Psychologist and PCIT (Parent-Child Interaction Therapy) Therapist acting as an AI coaching assistant for parents using the Nora app. Your goal is to answer parents' questions with empathy, clinical insight, and personalised context retrieved from the database.
 
@@ -27,9 +27,21 @@ You are an expert Child Psychologist and PCIT (Parent-Child Interaction Therapy)
 1. Use your tools to retrieve relevant data before answering — you do not need to call all tools for every message; decide which data is actually relevant.
 2. Strictly do not answer questions that are out of scope. State your limitation as AI. If something requires a human professional, advise the parent to tap "Talk to a Psychologist".
 3. We have branded the special time as "emotional massage" and the score is a deposit to their "emotional bank account". Do not mention PCIT in conversation with parents.
-4. Reply in a way that is easy to read on a mobile screen (no tables, no emoji). Sound like a warm, human therapist. 
+4. Reply in a way that is easy to read on a mobile screen (no tables, no emoji). Sound like a warm, human therapist.
 5. Add developmental psychology insights and explain from the child's perspective where appropriate.
 6. When discussing skill metrics: Labeled Praises, Echo, Narrate are the skills to build (goal 10+ each). Questions, Commands, and Criticisms are the skills to reduce.`;
+
+const LOCALE_NAMES = {
+  'en':    'English',
+  'zh-TW': 'Traditional Chinese (Taiwan)',
+};
+
+function buildSystemPrompt(locale) {
+  const langName = LOCALE_NAMES[locale] || LOCALE_NAMES['en'];
+  if (langName === LOCALE_NAMES['en']) return BASE_SYSTEM_PROMPT;
+  return `${BASE_SYSTEM_PROMPT}
+7. Always reply in ${langName}. Do not switch to another language even if the parent writes in a different language.`;
+}
 
 // ─── Tool declarations (sent to Gemini) ───────────────────────────────────────
 
@@ -247,7 +259,7 @@ const TOOL_STATUS = {
 
 // ─── Gemini agent loop ────────────────────────────────────────────────────────
 
-async function runAgentLoop(userId, userText, dbHistory, signal) {
+async function runAgentLoop(userId, userText, dbHistory, signal, locale = 'en') {
   const contents = [
     ...dbHistory.map(m => ({
       role: m.role === 'model' || m.role === 'psychologist' ? 'model' : 'user',
@@ -257,7 +269,7 @@ async function runAgentLoop(userId, userText, dbHistory, signal) {
   ];
 
   const baseBody = {
-    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    system_instruction: { parts: [{ text: buildSystemPrompt(locale) }] },
     tools: [{ function_declarations: TOOL_DECLARATIONS }],
     generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
   };
@@ -350,7 +362,7 @@ const CLAUDE_TOOLS = TOOL_DECLARATIONS.map(t => ({
   },
 }));
 
-async function runClaudeAgentLoop(userId, userText, dbHistory, signal) {
+async function runClaudeAgentLoop(userId, userText, dbHistory, signal, locale = 'en') {
   // Build messages array; Claude requires strict user/assistant alternation.
   // Merge consecutive same-role messages and drop leading assistant turns.
   const rawMessages = [
@@ -396,7 +408,7 @@ async function runClaudeAgentLoop(userId, userText, dbHistory, signal) {
         headers,
         body: JSON.stringify({
           model:       CLAUDE_FALLBACK_MODEL,
-          system:      SYSTEM_PROMPT,
+          system:      buildSystemPrompt(locale),
           tools:       CLAUDE_TOOLS,
           messages,
           max_tokens:  2048,
@@ -585,11 +597,12 @@ router.get('/history', async (req, res, next) => {
  */
 router.post('/chat', async (req, res, next) => {
   try {
-    const { message } = req.body;
+    const { message, locale } = req.body;
     if (!message || typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({ error: 'message is required' });
     }
     const userText = message.trim();
+    const userLocale = (typeof locale === 'string' && LOCALE_NAMES[locale]) ? locale : 'en';
 
     // Save & publish the user message immediately so admin sees it without waiting for LLM
     const userMsg = await prisma.coachChatMessage.create({
@@ -620,7 +633,7 @@ router.post('/chat', async (req, res, next) => {
     const isUserAbort = () => abortController.signal.aborted;
 
     try {
-      result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal);
+      result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal, userLocale);
     } catch (firstErr) {
       if (firstErr.name === 'AbortError' && isUserAbort()) {
         agentBus.clear(req.userId);
@@ -650,7 +663,7 @@ router.post('/chat', async (req, res, next) => {
       });
 
       try {
-        result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal);
+        result = await runAgentLoop(req.userId, userText, dbHistory, abortController.signal, userLocale);
       } catch (retryErr) {
         if (retryErr.name === 'AbortError' && isUserAbort()) {
           agentBus.clear(req.userId);
@@ -670,7 +683,7 @@ router.post('/chat', async (req, res, next) => {
         });
 
         try {
-          result = await runClaudeAgentLoop(req.userId, userText, dbHistory, abortController.signal);
+          result = await runClaudeAgentLoop(req.userId, userText, dbHistory, abortController.signal, userLocale);
         } catch (claudeErr) {
           agentBus.clear(req.userId);
           logLLMCall({

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { apiFetch } from '../api/client';
+import { apiFetchEnv } from '../api/client';
+import { useEnv, PROD_API_URL } from '../context/EnvContext';
 
 interface ChatUser {
   userId: string;
@@ -27,6 +28,10 @@ interface PsychRequest {
 type ChatTab = 'ai' | 'psychologist';
 
 export default function ChatPage() {
+  const { env, prodToken } = useEnv();
+  const envOptsRef = useRef<{ baseUrl?: string; token?: string } | undefined>(undefined);
+  envOptsRef.current = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
+
   const [users, setUsers] = useState<ChatUser[]>([]);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -61,13 +66,16 @@ export default function ChatPage() {
 
   const fetchUsers = useCallback((q: string, p: number) => {
     setLoadingUsers(true);
-    apiFetch<{ users: ChatUser[]; totalPages: number; page: number }>(
-      `/api/admin/coach/users?q=${encodeURIComponent(q)}&page=${p}`
+    apiFetchEnv<{ users: ChatUser[]; totalPages: number; page: number }>(
+      `/api/admin/coach/users?q=${encodeURIComponent(q)}&page=${p}`,
+      {},
+      envOptsRef.current
     )
       .then(data => { setUsers(data.users); setTotalPages(data.totalPages); })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load'))
       .finally(() => setLoadingUsers(false));
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [env, prodToken]);
 
   useEffect(() => { fetchUsers('', 1); }, [fetchUsers]);
 
@@ -84,15 +92,16 @@ export default function ChatPage() {
   }
 
   useEffect(() => {
-    apiFetch<{ requests: PsychRequest[] }>('/api/admin/coach/psychologist-requests')
+    apiFetchEnv<{ requests: PsychRequest[] }>('/api/admin/coach/psychologist-requests', {}, envOptsRef.current)
       .then(data => setPsychRequests(data.requests))
       .catch(() => {});
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [env, prodToken]);
 
   async function handleDismiss(id: string) {
     setDismissing(id);
     try {
-      await apiFetch(`/api/admin/coach/psychologist-requests/${id}/dismiss`, { method: 'POST' });
+      await apiFetchEnv(`/api/admin/coach/psychologist-requests/${id}/dismiss`, { method: 'POST' }, envOptsRef.current);
       setPsychRequests(prev => prev.filter(r => r.id !== id));
     } finally {
       setDismissing(null);
@@ -112,7 +121,7 @@ export default function ChatPage() {
     setSendError(null);
     setIsGenerating(false);
 
-    apiFetch<{ messages: ChatMessage[]; hasMore: boolean }>(`/api/admin/coach/chats/${selectedUserId}?limit=10`)
+    apiFetchEnv<{ messages: ChatMessage[]; hasMore: boolean }>(`/api/admin/coach/chats/${selectedUserId}?limit=10`, {}, envOptsRef.current)
       .then(data => {
         setMessages(data.messages);
         setHasMore(data.hasMore);
@@ -134,9 +143,10 @@ export default function ChatPage() {
       const controller = new AbortController();
       pollAbortRef.current = controller;
 
-      apiFetch<{ messages: ChatMessage[] }>(
+      apiFetchEnv<{ messages: ChatMessage[] }>(
         `/api/admin/coach/events/${uid}?since=${encodeURIComponent(sinceRef.current)}`,
-        { signal: controller.signal }
+        { signal: controller.signal },
+        envOptsRef.current
       )
         .then(data => {
           if (controller.signal.aborted) return;
@@ -163,7 +173,8 @@ export default function ChatPage() {
       pollAbortRef.current?.abort();
       pollAbortRef.current = null;
     };
-  }, [selectedUserId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUserId, env, prodToken]);
 
   // Clear reply text when switching tabs
   useEffect(() => {
@@ -179,8 +190,10 @@ export default function ChatPage() {
     const box = scrollBoxRef.current;
     const prevScrollHeight = box?.scrollHeight ?? 0;
     try {
-      const data = await apiFetch<{ messages: ChatMessage[]; hasMore: boolean }>(
-        `/api/admin/coach/chats/${selectedUserId}?limit=10&before=${encodeURIComponent(before)}`
+      const data = await apiFetchEnv<{ messages: ChatMessage[]; hasMore: boolean }>(
+        `/api/admin/coach/chats/${selectedUserId}?limit=10&before=${encodeURIComponent(before)}`,
+        {},
+        envOptsRef.current
       );
       setHasMore(data.hasMore);
       if (data.messages.length > 0) {
@@ -201,7 +214,7 @@ export default function ChatPage() {
     if (!selectedUserId || stopping) return;
     setStopping(true);
     try {
-      await apiFetch(`/api/admin/coach/chats/${selectedUserId}/stop`, { method: 'POST' });
+      await apiFetchEnv(`/api/admin/coach/chats/${selectedUserId}/stop`, { method: 'POST' }, envOptsRef.current);
       setIsGenerating(false);
     } catch {
       // ignore
@@ -215,9 +228,10 @@ export default function ChatPage() {
     setSending(true);
     setSendError(null);
     try {
-      await apiFetch<{ message: ChatMessage }>(
+      await apiFetchEnv<{ message: ChatMessage }>(
         `/api/admin/coach/chats/${selectedUserId}/reply`,
-        { method: 'POST', body: JSON.stringify({ message: replyText.trim(), mode: chatTab }) }
+        { method: 'POST', body: JSON.stringify({ message: replyText.trim(), mode: chatTab }) },
+        envOptsRef.current
       );
       setReplyText('');
     } catch (err: unknown) {

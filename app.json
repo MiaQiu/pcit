@@ -4,6 +4,9 @@
       "eas": {
         "projectId": "259ece1d-bc18-482f-86c4-704b7a62a1b4"
       }
+    },
+    "android": {
+      "package": "com.chromamind.noramonorepo"
     }
   }
 }

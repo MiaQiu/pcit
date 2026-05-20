@@ -121,7 +121,7 @@ const Bubble: React.FC<{ message: Message }> = ({ message }) => {
 export const CoachChatScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const authService = useAuthService();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { markAiAsRead, psychUnreadCount } = useCoachUnread();
   const flatListRef = useRef<FlatList>(null);
   const latestServerTsRef = useRef<string | undefined>(undefined);
@@ -311,7 +311,7 @@ export const CoachChatScreen: React.FC = () => {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text }),
+          body: JSON.stringify({ message: text, locale: i18n.language }),
         }
       );
 
