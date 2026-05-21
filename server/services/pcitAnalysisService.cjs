@@ -17,6 +17,7 @@ const { llmCall } = require('../llm/gateway.cjs');
 const { sendLLMFailureAlert } = require('../llm/alertEmail.cjs');
 const { sanitizeOutput } = require('../llm/sanitize.cjs');
 const { geminiCall } = require('../llm/providers/gemini.cjs');
+const { getOrCreateCache } = require('../llm/providers/geminiCache.cjs');
 const { parseJSON } = require('../llm/repair.cjs');
 const SCHEMAS = require('../llm/schemas/index.cjs');
 const { getUtterances, updateUtteranceRoles, updateUtteranceTags, updateRevisedFeedback, SILENT_SPEAKER_ID } = require('../utils/utteranceUtils.cjs');
@@ -302,6 +303,7 @@ async function callGeminiStreaming(contents, options = {}) {
     maxRetries = 3,
     sessionId = null,
     model: modelOverride = null,
+    cachedContent = null,
   } = options;
 
   let lastError;
@@ -327,6 +329,7 @@ async function callGeminiStreaming(contents, options = {}) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
+            ...(cachedContent ? { cachedContent } : {}),
             contents,
             generationConfig: {
               temperature,
@@ -1605,49 +1608,48 @@ All other feedback rules remain the same.` : '');
     // Create index mapping for later (idx -> utt.id)
     const idxToUttId = utterancesWithRoles.map(utt => utt.id);
 
-    // User prompt
-    const userPrompt = `**Input Format:**
-
-You will receive a chronological JSON list of dialogue turns with ${utterancesWithRoles.length} conversations:
+    // User prompt — transcript only; system instruction and DPICS manual are in the cache
+    const langLine = primaryLanguage && primaryLanguage !== 'eng'
+      ? `\n- Keep "code" as English DPICS codes (e.g. LP, BD, RF). Write "feedback" in ${getLanguageInstruction(primaryLanguage).replace('Write your entire response in ', '').replace('.', '')}.`
+      : '';
+    const userPrompt = `Code every utterance where role is "adult". Skip all "child" entries.
 
 ${JSON.stringify(utterancesData, null, 2)}
 
-Each item has:
-- role: Identify if the speaker is "parent" or "child"
-- text: The content to analyze
-
-**Output Specification:**
-
-Output only a valid JSON array of objects for the Parent segments.
-
-Format: [{"id": <int>, "code": <string>, "feedback": <string>}, ...]
-
-Do not include child segments in the output.
-
-Do not include markdown or whitespace (minified JSON).
-
-**CRITICAL INSTRUCTIONS:**
-- Return ONLY the JSON array, nothing else
-- Do NOT write any explanatory text before or after the JSON
-- Do NOT use markdown code blocks like \`\`\`json
-- Do NOT say "I'm ready" or "Here is the output" or any other text
-- Your ENTIRE response must be ONLY the JSON array starting with [ and ending with ]
-- First character of your response MUST be [
-- Last character of your response MUST be ]
-- Every parent segment MUST have both "code" and "feedback" fields${primaryLanguage && primaryLanguage !== 'eng' ? `\n- Always keep "code" values as English DPICS codes (e.g. LP, BD, RF). Write the "feedback" field in ${getLanguageInstruction(primaryLanguage).replace('Write your entire response in ', '').replace('.', '')}.` : ''}`;
+Return a minified JSON array for adult utterances only:
+[{"id": <int>, "code": <string>, "feedback": <string>}, ...]
+- Return ONLY the JSON array — no text, no markdown, no code fences
+- First character MUST be [, last character MUST be ]
+- Every adult entry MUST have both "code" and "feedback"${langLine}`;
 
     console.log(`📊 [ANALYSIS-STEP-8] Calling ${GEMINI_STREAMING_MODEL} (streaming) for PCIT coding...`);
     console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
 
+    // Resolve (or create) the context cache — DPICS manual PDF + coding rules.
+    // Falls back to the inline prompt if the Files API or cache API fails.
+    const DPICS_PDF_PATH = process.env.DPICS_PDF_PATH || require('path').join(__dirname, '../assets/DPICS-Manual.2.18.pdf');
+    let dpicsCache = null;
+    try {
+      dpicsCache = await getOrCreateCache(
+        isCDI ? 'dpics-cdi' : 'dpics-pdi',
+        DPICS_PDF_PATH,
+        dpicsSystemPrompt,
+        GEMINI_STREAMING_MODEL
+      );
+    } catch (cacheErr) {
+      console.warn(`⚠️ [ANALYSIS-STEP-8] Cache creation failed (${cacheErr.message}), falling back to inline prompt`);
+    }
+
     const pcitContents = [{
       role: 'user',
-      parts: [{ text: `${dpicsSystemPrompt}\n\n${userPrompt}` }]
+      parts: [{ text: dpicsCache ? userPrompt : `${dpicsSystemPrompt}\n\n${userPrompt}` }]
     }];
     const rawCoding = await callGeminiStreaming(pcitContents, {
       temperature:    0,
       maxOutputTokens: 32768,
       timeout:        300000,
       sessionId,
+      ...(dpicsCache ? { cachedContent: dpicsCache } : {}),
     });
     let repaired;
     ({ value: codingResults, repaired } = parseJSON(rawCoding, 'array'));
@@ -1671,15 +1673,16 @@ Do not include markdown or whitespace (minified JSON).
     if (missedAdultUtts.length > 0) {
       console.warn(`⚠️ [ANALYSIS-STEP-8] ${missedAdultUtts.length} adult utterances not coded — requesting supplemental coding...`);
       try {
-        const supplementalPrompt = `The following parent utterances were missed from a prior coding pass. Code each one and return ONLY a valid JSON array.
+        const supplementalPrompt = `These adult utterances were missed in the prior pass. Code each one and return ONLY a valid JSON array:
 
-${JSON.stringify(missedAdultUtts, null, 2)}
-
-Output: [{"id": <int>, "code": <string>, "feedback": <string>}, ...]`;
+${JSON.stringify(missedAdultUtts, null, 2)}`;
         const supplementalRaw = await callGeminiStreaming([{
           role: 'user',
-          parts: [{ text: `${dpicsSystemPrompt}\n\n${supplementalPrompt}` }]
-        }], { temperature: 0, maxOutputTokens: 8192, timeout: 120000, sessionId });
+          parts: [{ text: dpicsCache ? supplementalPrompt : `${dpicsSystemPrompt}\n\n${supplementalPrompt}` }]
+        }], {
+          temperature: 0, maxOutputTokens: 8192, timeout: 120000, sessionId,
+          ...(dpicsCache ? { cachedContent: dpicsCache } : {}),
+        });
         const { value: supplementalResults } = parseJSON(supplementalRaw, 'array');
         if (Array.isArray(supplementalResults) && supplementalResults.length > 0) {
           codingResults = [...codingResults, ...supplementalResults];
