@@ -132,11 +132,15 @@ All onboarding screens call `trackOnboardingScreen(screen, step)` on mount and `
 
 | Event | Method | Key Properties |
 |---|---|---|
-| `Recording Started` | `trackRecordingStarted()` | `source` |
+| `Recording Started` | `trackRecordingStarted()` | `source`, `sessionType` |
 | `Recording Completed` | `trackRecordingCompleted()` | `duration`, `fileSize` |
 | `Recording Uploaded` | `trackRecordingUploaded()` | `recordingId`, `duration` |
 
 `Recording Uploaded` is tracked in `UploadProcessingContext.tsx` after successful upload.
+
+**`sessionType` values for `Recording Started`:**
+- `'specialTime'` — play time session (CDI, 5 min)
+- `'discipline'` — discipline session (PDI, 10 min)
 
 ### Reports
 

@@ -395,6 +395,7 @@ export const RecordScreen: React.FC = () => {
       // Track recording started
       amplitudeService.trackRecordingStarted({
         source: 'record_tab',
+        sessionType: sessionMode,
       });
 
       // Reset failure count on success
