@@ -46,14 +46,14 @@ import amplitudeService from '../services/amplitudeService';
 
 interface WeeklyStats {
   daysCompleted: number;      // days with activity out of 7
-  minutesPlayed: number;      // total minutes across all recordings this week
+  logsThisWeek: number;       // ABC behavior logs submitted this week
   timesRecorded: number;      // number of recordings this week
   lessonsCompleted: number;   // lessons completed this week
 }
 
 interface TodayPlanItem {
   id: string;
-  type: 'lesson' | 'record' | 'weekly-report' | 'setup-reminder';
+  type: 'lesson' | 'record' | 'weekly-report' | 'setup-reminder' | 'log-behavior';
   label: string;
   title: string;
   duration?: string;
@@ -189,7 +189,7 @@ export const HomeScreen_v2: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats>({
     daysCompleted: 0,
-    minutesPlayed: 0,
+    logsThisWeek: 0,
     timesRecorded: 0,
     lessonsCompleted: 0,
   });
@@ -261,11 +261,30 @@ export const HomeScreen_v2: React.FC = () => {
       if (mode === 'full') setLoading(true);
       else if (mode === 'refresh') setIsRefreshing(true);
 
-      const [dashboardData, lessonsResponse, weeklyReportsData, currentUser] = await Promise.all([
+      const [dashboardData, lessonsResponse, weeklyReportsData, currentUser, abcLogsData] = await Promise.all([
         recordingService.getDashboard(),
         lessonService.getLessons(undefined, i18n.language),
         recordingService.getVisibleWeeklyReports().catch(() => ({ reports: [] })),
         authService.getCurrentUser().catch(() => null),
+        (async () => {
+          try {
+            const startOfWeek = (() => {
+              const d = new Date(Date.now() + 8 * 60 * 60 * 1000);
+              const day = d.getUTCDay();
+              const monday = new Date(d);
+              monday.setUTCDate(d.getUTCDate() - (day === 0 ? 6 : day - 1));
+              monday.setUTCHours(0, 0, 0, 0);
+              return monday;
+            })();
+            const r = await authService.authenticatedRequest(
+              `${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001'}/api/abc-logs?since=${startOfWeek.toISOString()}&limit=100`
+            );
+            const data = await r.json();
+            return { total: data.total ?? 0 };
+          } catch {
+            return { total: 0 };
+          }
+        })(),
       ]);
 
       const resolvedChildName = currentUser?.childName || childName;
@@ -297,12 +316,9 @@ export const HomeScreen_v2: React.FC = () => {
         return new Date(l.progress.completedAt) >= startOfWeek;
       });
 
-      // Approximate minutes: assume 5 min per recording (actual duration not in API)
-      const minutesPlayed = thisWeekRecordings.length * 5;
-
       setWeeklyStats({
         daysCompleted: uniqueDays.size,
-        minutesPlayed,
+        logsThisWeek: abcLogsData.total,
         timesRecorded: thisWeekRecordings.length,
         lessonsCompleted: lessonsThisWeek.length,
       });
@@ -386,6 +402,16 @@ export const HomeScreen_v2: React.FC = () => {
         label: t('homeV2.planRecordLabel'),
         title: t('homeV2.planRecordTitle', { childName: resolvedChildName }),
         isCompleted: hasCompleted,
+      });
+
+      // Log behavior — completed once they've submitted at least one ABC log today
+      const abcLoggedToday = await userStorage.getItem('abc_logged_today');
+      plan.push({
+        id: 'log-behavior',
+        type: 'log-behavior',
+        label: t('homeV2.planLogBehaviorLabel'),
+        title: t('homeV2.planLogBehaviorTitle'),
+        isCompleted: abcLoggedToday === getTodaySingapore(),
       });
 
       // Show weekly report plan item: completed if read today, hidden if read on a prior day
@@ -557,6 +583,8 @@ export const HomeScreen_v2: React.FC = () => {
       handleSetupReminderPress();
     } else if (item.type === 'record') {
       tabNavigation.navigate('Record');
+    } else if (item.type === 'log-behavior') {
+      navigation.push('ABCLog', { mode: 'challenging', source: 'quick' });
     }
   };
 
@@ -816,12 +844,12 @@ export const HomeScreen_v2: React.FC = () => {
             onPress={() => tabNavigation.navigate('Record')}
           />
           <StatPill
-            iconName="flash"
+            iconName="journal-outline"
             iconColor="#10B981"
-            value={String(weeklyStats.minutesPlayed)}
-            total="35"
-            unit={t('homeV2.statMins')}
-            onPress={() => tabNavigation.navigate('Record')}
+            value={String(weeklyStats.logsThisWeek)}
+            total="7"
+            unit={t('homeV2.statLogs')}
+            onPress={() => navigation.push('ABCLog', { mode: 'challenging', source: 'quick' })}
           />
           <StatPill
             iconName="happy-outline"

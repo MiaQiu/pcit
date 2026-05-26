@@ -107,6 +107,10 @@ export type RootStackParamList = {
   CoachChat: undefined;
   PsychologistChat: undefined;
   Referral: undefined;
+  ABCLog: {
+    mode: 'challenging';
+    source: 'quick';
+  };
 };
 
 export type RootTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;

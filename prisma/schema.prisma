@@ -304,6 +304,7 @@ model Session {
   coachingCards          Json?
   milestoneCelebrations  Json?
   userFeedback           Json?
+  codingReviewedAt       DateTime?
   User                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   Utterance              Utterance[]
   ChildProfiling         ChildProfiling?
@@ -433,6 +434,7 @@ model User {
   Child                 Child[]
   WeeklyReport          WeeklyReport[]
   CoachChatMessage      CoachChatMessage[]
+  AbcLog                AbcLog[]
   referralsGiven        Referral[]           @relation("ReferralsGiven")
   referralReceived      Referral?            @relation("ReferralReceived")
 
@@ -499,6 +501,7 @@ model Utterance {
   feedback        String?
   additionalTip   String?
   revisedFeedback String?
+  adminComment    String?
   Session         Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
@@ -565,6 +568,7 @@ model Child {
   ChildIssuePriority ChildIssuePriority[]
   UserSkillProgress  UserSkillProgress[]
   WeeklyReport       WeeklyReport[]
+  AbcLog             AbcLog[]
 
   @@index([userId])
 }
@@ -880,4 +884,29 @@ enum ReferralStatus {
   PENDING
   COMPLETED
   EXPIRED
+}
+
+model AbcLog {
+  id             String     @id @default(uuid())
+  userId         String
+  childId        String
+  logType        AbcLogType @default(CHALLENGING)
+  antecedents    String[]
+  behaviors      String[]
+  consequences   String[]
+  intensity      Int?
+  durationBucket String?
+  recordedAt     DateTime   @default(now())
+  createdAt      DateTime   @default(now())
+  User           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Child          Child      @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, recordedAt])
+  @@index([childId, recordedAt])
+}
+
+enum AbcLogType {
+  CHALLENGING
+  POSITIVE
 }

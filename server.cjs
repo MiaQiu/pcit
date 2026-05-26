@@ -208,6 +208,10 @@ app.use('/api/admin', adminRoutes);
 const coachRoutes = require('./server/routes/coach.cjs');
 app.use('/api/coach', coachRoutes);
 
+// Mount ABC behavior log routes
+const abcLogRoutes = require('./server/routes/abc-logs.cjs');
+app.use('/api/abc-logs', abcLogRoutes);
+
 // Serve admin portal build in production
 if (process.env.NODE_ENV === 'production') {
   const adminBuildPath = path.join(__dirname, 'admin', 'dist');

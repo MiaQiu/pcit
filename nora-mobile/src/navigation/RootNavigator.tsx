@@ -30,6 +30,7 @@ import { ModuleDetailScreen } from '../screens/ModuleDetailScreen';
 import { CoachChatScreen } from '../screens/CoachChatScreen';
 import { PsychologistChatScreen } from '../screens/PsychologistChatScreen';
 import { ReferralScreen } from '../screens/ReferralScreen';
+import { ABCLogScreen } from '../screens/ABCLogScreen';
 import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
@@ -364,6 +365,14 @@ export const RootNavigator: React.FC = () => {
         component={ReferralScreen}
         options={{
           animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ABCLog"
+        component={ABCLogScreen}
+        options={{
+          animation: 'slide_from_bottom',
+          headerShown: false,
         }}
       />
     </Stack.Navigator>
