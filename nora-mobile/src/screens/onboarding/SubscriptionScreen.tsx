@@ -49,6 +49,22 @@ export const SubscriptionScreen: React.FC = () => {
 
   const isReturningUser = !(data.name && data.name.trim() !== '');
 
+  // Reviewer bypass: skip paywall for Google Play review account
+  useEffect(() => {
+    authService.getCurrentUser().then(user => {
+      if (user?.email === 'test63@gmail.com') {
+        const isInitialOnboarding = data.name && data.name.trim() !== '';
+        if (isInitialOnboarding) {
+          navigation.navigate('NotificationPermission');
+        } else {
+          completeOnboarding().then(() => {
+            navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] }));
+          });
+        }
+      }
+    }).catch(() => {});
+  }, []);
+
   useEffect(() => {
     amplitudeService.trackOnboardingScreen('subscription', 35);
   }, []);
@@ -77,24 +93,6 @@ export const SubscriptionScreen: React.FC = () => {
   // Use the App Store price string for the user's storefront locale.
   // Falls back to '...' while offerings are still loading.
   const priceString = selectedPackage?.product.priceString ?? '...';
-
-  // Trial end date = 30 days from today; shown in the reminder card.
-  const chargeDate = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 30);
-    return d.toLocaleDateString(i18n.language === 'zh-TW' ? 'zh-TW' : 'en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
-  })();
-
-  const zeroCurrency = selectedPackage?.product.currencyCode
-    ? new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: selectedPackage.product.currencyCode,
-        maximumFractionDigits: 0,
-      }).format(0)
-    : '$0';
 
   console.log('[Subscription] Available packages:', availablePackages.map(p =>
     `${p.product.identifier} → ${p.product.priceString} (${p.product.currencyCode})`
@@ -262,9 +260,16 @@ export const SubscriptionScreen: React.FC = () => {
 
   const handleSkip = async () => {
     amplitudeService.trackEvent('Subscription Skipped', { isReturningUser });
+
+    if (isReturningUser) {
+      navigation.dispatch(
+        CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] })
+      );
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Send onboarding data to backend without subscription
       await authService.completeOnboarding({
         name: data.name,
         relationshipToChild: data.relationshipToChild || undefined,
@@ -275,7 +280,6 @@ export const SubscriptionScreen: React.FC = () => {
       });
 
       prefetchLessons(lessonService, i18n.language);
-      // Navigate to NotificationPermission screen
       navigation.navigate('NotificationPermission');
     } catch (error: any) {
       console.error('Complete onboarding error:', error);
@@ -337,44 +341,28 @@ export const SubscriptionScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Main card — white, with cute illustration + bold "Due Today" hero + reminder pill */}
         <View style={styles.card}>
-          {/* Smaller illustration inside the card */}
-          {/* <View style={styles.cardIllustration}>
-            <MaskedDinoImage style={styles.cardIllustrationImage} />
-          </View> */}
+          <Text style={styles.title}>{t('subscription.unlockPremium', { defaultValue: 'Unlock Premium' })}</Text>
+          <Text style={styles.priceAfterTrial}>{t('subscription.priceMonthly', { price: priceString })}</Text>
 
-          <Text style={styles.title}>
-            {isReturningUser ? t('subscription.subscribeToContinue') : t('subscription.howTrialWorks', { zeroCurrency })}
-          </Text>
-          <Text style={styles.priceAfterTrial}>
-            {isReturningUser
-              ? t('subscription.priceMonthly', { price: priceString })
-              : t('subscription.priceAfterTrial', { price: priceString })}
-          </Text>
-          {!isReturningUser && (
-            <Text style={styles.subtitle}>{t('subscription.priceFreeTrialThenMonthly', { price: priceString })}</Text>
-          )}
-
-          {/* Reminder — new users only */}
-          {!isReturningUser && (
-            <View style={styles.reminderCard}>
-              <Text style={styles.reminderIcon}>🔔</Text>
-              <Text style={styles.reminderText}>
-                <Text style={styles.reminderTextBold}>
-                  {t('subscription.reminderLabel', { defaultValue: 'Gentle reminder: ' })}
-                </Text>
-                {t('subscription.step28DaysDesc', { chargeDate })}
-              </Text>
-            </View>
-          )}
+          <View style={styles.featureList}>
+            {[
+              t('subscription.featureUnlimitedSessions', { defaultValue: 'Unlimited recording sessions' }),
+              t('subscription.featureAiReports', { defaultValue: 'AI coaching report after each session' }),
+              t('subscription.featureWeeklyInsights', { defaultValue: 'Weekly progress insights' }),
+              t('subscription.featureCoachChat', { defaultValue: 'Coach chat support' }),
+            ].map((feature, i) => (
+              <View key={i} style={styles.featureRow}>
+                <Text style={styles.featureCheck}>✓</Text>
+                <Text style={styles.featureText}>{feature}</Text>
+              </View>
+            ))}
+          </View>
         </View>
 
-    
-
         <Text style={styles.disclaimer}>
-          {isReturningUser ? t('subscription.disclaimerReturning', { price: priceString }) : t('subscription.disclaimerNew', { price: priceString })}
-          <Text style={styles.link} onPress={handleOpenTerms}>{t('subscription.terms')}</Text>{' '}and{' '}
+          {t('subscription.disclaimer', { price: priceString, defaultValue: `Renews at ${priceString}/month. Cancel anytime in Settings. By continuing, you agree to our ` })}
+          <Text style={styles.link} onPress={handleOpenTerms}>{t('subscription.terms')}</Text>{' '}{t('common.and', { defaultValue: 'and' })}{' '}
           <Text style={styles.link} onPress={handleOpenPrivacy}>{t('subscription.privacyPolicy')}</Text>.
         </Text>
 
@@ -382,9 +370,10 @@ export const SubscriptionScreen: React.FC = () => {
           <Text style={styles.restoreText}>{t('subscription.restorePurchase')}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
-          <Text style={styles.logoutText}>{t('subscription.logOut')}</Text>
+        <TouchableOpacity style={styles.skipButton} onPress={handleSkip} activeOpacity={0.8}>
+          <Text style={styles.skipText}>{t('subscription.skipForNow', { defaultValue: 'Continue with free version' })}</Text>
         </TouchableOpacity>
+
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -401,7 +390,7 @@ export const SubscriptionScreen: React.FC = () => {
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text style={styles.startButtonText}>
-              {isReturningUser ? t('subscription.subscribeNow') : t('subscription.startTrial')}
+              {t('subscription.subscribeNow')}
             </Text>
           )}
         </TouchableOpacity>
@@ -526,6 +515,27 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     marginBottom: 18,
   },
+  featureList: {
+    marginTop: 20,
+    gap: 12,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  featureCheck: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 16,
+    color: '#8C49D5',
+    width: 20,
+  },
+  featureText: {
+    fontFamily: 'PlusJakartaSans_500Medium',
+    fontSize: 15,
+    color: '#1F2937',
+    flex: 1,
+  },
   regularPrice: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 13,
@@ -574,6 +584,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8C49D5',
     textDecorationLine: 'underline',
+  },
+  skipButton: {
+    alignSelf: 'center',
+    paddingVertical: 8,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  skipText: {
+    fontFamily: 'PlusJakartaSans_500Medium',
+    fontSize: 14,
+    color: '#6B7280',
   },
   logoutButton: {
     alignSelf: 'center',

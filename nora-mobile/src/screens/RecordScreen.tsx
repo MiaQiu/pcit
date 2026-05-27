@@ -3,7 +3,7 @@
  * Audio recording screen for play sessions with PCIT skills tracking
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, ActivityIndicator, AppState, Linking, InteractionManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect, useRoute, RouteProp } from '@react-navigation/native';
@@ -21,6 +21,7 @@ import { RecordingCard } from '../components/RecordingCard';
 import { FONTS, COLORS, DRAGON_PURPLE, SOUNDS } from '../constants/assets';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import * as userStorage from '../lib/userStorage';
 import { sendNewReportNotification } from '../utils/notifications';
 import { startRecording as startNativeRecording, stopRecording as stopNativeRecording, getRecordingStatus, addAutoStopListener, removeAutoStopListener, getPendingRecording, endBackgroundTask, setCompletionSound as setNativeCompletionSound } from '../utils/AudioSessionManager';
@@ -51,9 +52,11 @@ export const RecordScreen: React.FC = () => {
   const recordingService = useRecordingService();
   const authService = useAuthService();
   const uploadProcessing = useUploadProcessing();
+  const { isSubscribed, isLoading: subscriptionLoading } = useSubscription();
   const { isOnline } = useNetworkStatus();
   const { showToast } = useToast();
 
+  const [isCheckingLimit, setIsCheckingLimit] = useState(!isSubscribed);
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [recordingFailureCount, setRecordingFailureCount] = useState(0);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -64,6 +67,46 @@ export const RecordScreen: React.FC = () => {
   const [completionSound, setCompletionSound] = useState<string>('Win');
   const [sessionMode, setSessionMode] = useState<'specialTime' | 'discipline'>('specialTime');
   const [isDisciplineLocked, setIsDisciplineLocked] = useState(false);
+
+  const FREE_SESSIONS_LIMIT = 3;
+
+  // Gate: redirect to subscription when free completed sessions are exhausted
+  useFocusEffect(
+    useCallback(() => {
+      if (isSubscribed) {
+        setIsCheckingLimit(false);
+        return;
+      }
+      if (subscriptionLoading) return;
+
+      const checkFreeLimit = async () => {
+        // Use cached flag to avoid an API call on every focus
+        const cached = await userStorage.getItem('@nora_free_limit_reached');
+        if (cached === 'true') {
+          navigation.navigate('Onboarding', { initialStep: 'Subscription' });
+          return;
+        }
+
+        try {
+          const { recordings } = await recordingService.getRecordings();
+          const completedCount = recordings.filter(
+            (r: any) => r.analysisStatus === 'COMPLETED'
+          ).length;
+
+          if (completedCount >= FREE_SESSIONS_LIMIT) {
+            await userStorage.setItem('@nora_free_limit_reached', 'true');
+            navigation.navigate('Onboarding', { initialStep: 'Subscription' });
+            return;
+          }
+        } catch {
+          // On API error, don't block the user
+        }
+        setIsCheckingLimit(false);
+      };
+
+      checkFreeLimit();
+    }, [subscriptionLoading, isSubscribed])
+  );
 
   // Keep ref in sync so useFocusEffect can read current value without being a dep
   useEffect(() => { recordingStateRef.current = recordingState; }, [recordingState]);
@@ -726,6 +769,10 @@ export const RecordScreen: React.FC = () => {
   };
 
   const canStartSession = permissionGranted && isOnline && !(sessionMode === 'discipline' && isDisciplineLocked);
+
+  if (isCheckingLimit) {
+    return <View style={{ flex: 1, backgroundColor: '#FFFFFF' }} />;
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right', 'bottom']}>
