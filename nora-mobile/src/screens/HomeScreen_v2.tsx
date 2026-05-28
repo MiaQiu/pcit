@@ -213,6 +213,8 @@ export const HomeScreen_v2: React.FC = () => {
   const [isWeeklyReportDismissed, setIsWeeklyReportDismissed] = useState(false);
   const [sessionNotifications, setSessionNotifications] = useState<{ postSession?: string; tomorrow?: string } | null>(null);
   const [chatIntroDismissed, setChatIntroDismissed] = useState(false);
+  const [abcLoggedToday, setAbcLoggedToday] = useState(false);
+  const [abcCardSkipped, setAbcCardSkipped] = useState(false);
 
   // ── Reminder presets (inside component to use t()) ──
   const REMINDER_PRESETS = [
@@ -371,6 +373,10 @@ export const HomeScreen_v2: React.FC = () => {
       // ── Chat intro dismissed ──
       const chatIntroDismissedVal = await userStorage.getItem('chat_intro_dismissed');
       setChatIntroDismissed(!!chatIntroDismissedVal);
+
+      // ── ABC tracker card ──
+      setAbcLoggedToday(await userStorage.getItem('abc_logged_today') === getTodaySingapore());
+      setAbcCardSkipped(await userStorage.getItem('abc_card_skipped') === getTodaySingapore());
 
       // ── Weekly score — sum of all completed session scores this week (max 300) ──
       const weeklyScoreSum = thisWeekRecordings
@@ -567,6 +573,15 @@ export const HomeScreen_v2: React.FC = () => {
   const handleChatIntroSkip = async () => {
     await userStorage.setItem('chat_intro_dismissed', 'true');
     setChatIntroDismissed(true);
+  };
+
+  const handleLogOutburst = () => {
+    navigation.push('ABCLog', { mode: 'challenging', source: 'quick' });
+  };
+
+  const handleAbcCardSkip = async () => {
+    await userStorage.setItem('abc_card_skipped', getTodaySingapore());
+    setAbcCardSkipped(true);
   };
 
   const handlePlanItemPress = async (item: TodayPlanItem) => {
@@ -991,6 +1006,24 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.recordButtonText}>{t('homeV2.chatWithCoach')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.skipButton} onPress={handleChatIntroSkip} activeOpacity={0.7}>
+                <Text style={styles.skipButtonText}>{t('homeV2.skipForNow')}</Text>
+              </TouchableOpacity>
+            </>
+          ) : hasRecordedSession && isReportRead && chatIntroDismissed && !abcLoggedToday && !abcCardSkipped ? (
+            <>
+              <View style={styles.massageHeader}>
+                <Ionicons name="journal-outline" size={14} color={COLORS.mainPurple} />
+                <Text style={styles.massageLabel}>Behavior Tracker</Text>
+              </View>
+              <Text style={styles.massageBody}>
+                Did anything challenging happen today? Log an outburst to help Nora spot patterns for{' '}
+                <Text style={styles.massageChildName}>{childName}</Text>.
+              </Text>
+              <TouchableOpacity style={styles.recordButton} onPress={handleLogOutburst} activeOpacity={0.85}>
+                <Ionicons name="create-outline" size={20} color="#fff" />
+                <Text style={styles.recordButtonText}>Log a Outburst</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.skipButton} onPress={handleAbcCardSkip} activeOpacity={0.7}>
                 <Text style={styles.skipButtonText}>{t('homeV2.skipForNow')}</Text>
               </TouchableOpacity>
             </>
