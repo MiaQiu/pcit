@@ -28,6 +28,24 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 const CUSTOM_TAGS_KEY = (category: string) => `abc_custom_tags_${category}`;
 const TOTAL_STEPS = 5;
 
+const INTRO_FEATURES = [
+  {
+    icon: 'create-outline' as const,
+    label: 'Log the triggers',
+    description: "Quickly note the \"what, when, and why\" behind an outburst.",
+  },
+  {
+    icon: 'analytics-outline' as const,
+    label: 'Let Nora spot patterns',
+    description: "As you log, Nora automatically tracks the frequency and intensity to find recurring triggers.",
+  },
+  {
+    icon: 'bulb-outline' as const,
+    label: 'Get tailored strategies',
+    description: "When Nora detects a pattern, you'll get instant, science-backed tips to handle future situations with confidence.",
+  },
+];
+
 const SUCCESS_MESSAGES = [
   "Logging helps us understand the pattern; thanks for staying consistent.",
   "Understanding the 'why' is the first step toward change.",
@@ -59,6 +77,7 @@ export const ABCLogScreen: React.FC = () => {
   const navigation = useNavigation();
   const authService = useAuthService();
 
+  const [showIntro, setShowIntro] = useState(true);
   const [step, setStep] = useState<StepIndex>(0);
 
   const [selected, setSelected] = useState<Record<Category, string[]>>({
@@ -298,6 +317,54 @@ export const ABCLogScreen: React.FC = () => {
       </ScrollView>
     );
   };
+
+  // ── Intro page ────────────────────────────────────────────────────────────
+
+  if (showIntro) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={styles.introContainer}>
+          <ScrollView contentContainerStyle={styles.introContent} showsVerticalScrollIndicator={false}>
+            {/* Icon */}
+            <View style={styles.introIconCircle}>
+              <Ionicons name="journal" size={36} color={COLORS.mainPurple} />
+            </View>
+
+            {/* Title */}
+            <Text style={styles.introTitle}>
+              Track, understand, and manage your child's big emotions.
+            </Text>
+
+            {/* Feature rows */}
+            <View style={styles.introFeatureList}>
+              {INTRO_FEATURES.map((f) => (
+                <View key={f.label} style={styles.introFeatureRow}>
+                  <View style={styles.introFeatureIcon}>
+                    <Ionicons name={f.icon} size={22} color={COLORS.mainPurple} />
+                  </View>
+                  <View style={styles.introFeatureText}>
+                    <Text style={styles.introFeatureLabel}>{f.label}</Text>
+                    <Text style={styles.introFeatureDesc}>{f.description}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+
+          {/* Footer — back + continue */}
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
+              <Text style={styles.backBtnText}>←</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.continueBtn} onPress={() => setShowIntro(false)} activeOpacity={0.8}>
+              <Text style={styles.continueBtnText}>Continue</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.skipLink} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // ── Time step (step 0) ─────────────────────────────────────────────────────
 
@@ -730,6 +797,69 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: 16,
     color: '#fff',
+  },
+
+  // Intro page
+  introContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 8,
+  },
+  introContent: {
+    paddingBottom: 24,
+  },
+  introIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#F3EEFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: 24,
+    marginTop: 8,
+  },
+  introTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 24,
+    color: '#1E2939',
+    textAlign: 'center',
+    lineHeight: 34,
+    marginBottom: 36,
+    paddingHorizontal: 8,
+  },
+  introFeatureList: {
+    gap: 24,
+  },
+  introFeatureRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 16,
+  },
+  introFeatureIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F3EEFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  introFeatureText: {
+    flex: 1,
+    paddingTop: 4,
+  },
+  introFeatureLabel: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: '#1E2939',
+    marginBottom: 4,
+  },
+  introFeatureDesc: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 22,
   },
 });
 
