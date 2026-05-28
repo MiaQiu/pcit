@@ -44,10 +44,45 @@ export const SubscriptionScreen: React.FC = () => {
     error: subscriptionError
   } = useSubscription();
 
-  const [selectedPlan] = useState<'1month'>('1month');
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
   const [isLoading, setIsLoading] = useState(false);
 
   const isReturningUser = !(data.name && data.name.trim() !== '');
+
+  const monthlyPackage = availablePackages.find(
+    p => p.packageType === 'MONTHLY' || p.product.identifier.includes('1m')
+  ) ?? null;
+  const yearlyPackage = availablePackages.find(
+    p => p.packageType === 'ANNUAL' || p.product.identifier.includes('1year')
+  ) ?? null;
+
+  const selectedPackage = selectedPlan === 'yearly'
+    ? (yearlyPackage ?? monthlyPackage)
+    : (monthlyPackage ?? yearlyPackage);
+
+  const monthlyPriceString = monthlyPackage?.product.priceString ?? '...';
+  const yearlyPriceString = yearlyPackage?.product.priceString ?? '...';
+
+  const savingsPercent = (() => {
+    const monthly = monthlyPackage?.product.price ?? 0;
+    const yearly = yearlyPackage?.product.price ?? 0;
+    if (!monthly || !yearly) return 0;
+    return Math.round((1 - yearly / (monthly * 12)) * 100);
+  })();
+
+  const yearlyPerMonthString = (() => {
+    if (!yearlyPackage) return '...';
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: yearlyPackage.product.currencyCode,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(yearlyPackage.product.price / 12);
+    } catch {
+      return '...';
+    }
+  })();
 
   // Reviewer bypass: skip paywall for Google Play review account
   useEffect(() => {
@@ -87,21 +122,6 @@ export const SubscriptionScreen: React.FC = () => {
     }
   }, []);
 
-  // Only one product offered — take the first available package
-  const selectedPackage = availablePackages[0] ?? null;
-
-  // Use the App Store price string for the user's storefront locale.
-  // Falls back to '...' while offerings are still loading.
-  const priceString = selectedPackage?.product.priceString ?? '...';
-
-  console.log('[Subscription] Available packages:', availablePackages.map(p =>
-    `${p.product.identifier} → ${p.product.priceString} (${p.product.currencyCode})`
-  ));
-  console.log('[Subscription] Selected package:', selectedPackage
-    ? `${selectedPackage.product.identifier} → ${selectedPackage.product.priceString} (${selectedPackage.product.currencyCode})`
-    : 'NOT FOUND'
-  );
-
   const handleBack = () => navigation.goBack();
 
   const handleStartTrial = async () => {
@@ -112,7 +132,8 @@ export const SubscriptionScreen: React.FC = () => {
       let packageToUse = selectedPackage;
       if (!packageToUse) {
         const packages = await refreshOfferings();
-        packageToUse = packages[0] ?? null;
+        const type = selectedPlan === 'yearly' ? 'ANNUAL' : 'MONTHLY';
+        packageToUse = packages.find(p => p.packageType === type) ?? packages[0] ?? null;
       }
 
       if (!packageToUse) {
@@ -126,7 +147,7 @@ export const SubscriptionScreen: React.FC = () => {
       const result = await purchasePackage(packageToUse);
 
       if (result.success) {
-        amplitudeService.trackEvent('Subscription Trial Started', { plan: '1month', isReturningUser });
+        amplitudeService.trackEvent('Subscription Trial Started', { plan: selectedPlan, isReturningUser });
         prefetchLessons(lessonService, i18n.language);
 
         // CRITICAL: Trust the webhook as source of truth for subscription status
@@ -343,14 +364,71 @@ export const SubscriptionScreen: React.FC = () => {
 
         <View style={styles.card}>
           <Text style={styles.title}>{t('subscription.unlockPremium', { defaultValue: 'Unlock Premium' })}</Text>
-          <Text style={styles.priceAfterTrial}>{t('subscription.priceMonthly', { price: priceString })}</Text>
+
+          {/* Plan selector */}
+          <View style={styles.planSelector}>
+            {/* Monthly */}
+            <TouchableOpacity
+              style={[styles.planCard, selectedPlan === 'monthly' && styles.planCardSelected]}
+              onPress={() => setSelectedPlan('monthly')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.planCardLeft}>
+                <Text style={[styles.planLabel, selectedPlan === 'monthly' && styles.planLabelSelected]}>
+                  {t('subscription.planMonthly', { defaultValue: 'Monthly' })}
+                </Text>
+              </View>
+              <View style={styles.planCardRight}>
+                <Text style={[styles.planPrice, selectedPlan === 'monthly' && styles.planPriceSelected]}>
+                  {monthlyPriceString}
+                </Text>
+                <Text style={[styles.planPeriod, selectedPlan === 'monthly' && styles.planPeriodSelected]}>
+                  {t('subscription.perMonth', { defaultValue: '/month' })}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Yearly */}
+            <TouchableOpacity
+              style={[styles.planCard, selectedPlan === 'yearly' && styles.planCardSelected]}
+              onPress={() => setSelectedPlan('yearly')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.popularBadge}>
+                <Text style={styles.popularBadgeText}>
+                  {t('subscription.popular', { defaultValue: 'Popular' })}
+                </Text>
+              </View>
+              <View style={styles.planCardLeft}>
+                <Text style={[styles.planLabel, selectedPlan === 'yearly' && styles.planLabelSelected]}>
+                  {t('subscription.planYearly', { defaultValue: 'Yearly' })}
+                </Text>
+                {savingsPercent > 0 && (
+                  <Text style={[styles.planSavings, selectedPlan === 'yearly' && styles.planSavingsSelected]}>
+                    {t('subscription.savedPercent', { percent: savingsPercent, defaultValue: `(SAVED ${savingsPercent}%)` })}
+                  </Text>
+                )}
+              </View>
+              <View style={styles.planCardRight}>
+                <Text style={[styles.planPrice, selectedPlan === 'yearly' && styles.planPriceSelected]}>
+                  {yearlyPerMonthString}
+                </Text>
+                <Text style={[styles.planPeriod, selectedPlan === 'yearly' && styles.planPeriodSelected]}>
+                  {t('subscription.perMonth', { defaultValue: '/month' })}
+                </Text>
+                <Text style={[styles.planBilledAnnually, selectedPlan === 'yearly' && styles.planBilledAnnuallySelected]}>
+                  {t('subscription.billedAnnuallyAt', { price: yearlyPriceString, defaultValue: `billed annually at ${yearlyPriceString}` })}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.featureList}>
             {[
               t('subscription.featureUnlimitedSessions', { defaultValue: 'Unlimited recording sessions' }),
               t('subscription.featureAiReports', { defaultValue: 'AI coaching report after each session' }),
               t('subscription.featureWeeklyInsights', { defaultValue: 'Weekly progress insights' }),
-              t('subscription.featureCoachChat', { defaultValue: 'Coach chat support' }),
+              //t('subscription.featureCoachChat', { defaultValue: 'Coach chat support' }),
             ].map((feature, i) => (
               <View key={i} style={styles.featureRow}>
                 <Text style={styles.featureCheck}>✓</Text>
@@ -361,7 +439,9 @@ export const SubscriptionScreen: React.FC = () => {
         </View>
 
         <Text style={styles.disclaimer}>
-          {t('subscription.disclaimer', { price: priceString, defaultValue: `Renews at ${priceString}/month. Cancel anytime in Settings. By continuing, you agree to our ` })}
+          {selectedPlan === 'yearly'
+            ? t('subscription.disclaimerYearly', { price: yearlyPriceString, defaultValue: `Renews at ${yearlyPriceString}/year. Cancel anytime in Settings. By continuing, you agree to our ` })
+            : t('subscription.disclaimer', { price: monthlyPriceString, defaultValue: `Renews at ${monthlyPriceString}/month. Cancel anytime in Settings. By continuing, you agree to our ` })}
           <Text style={styles.link} onPress={handleOpenTerms}>{t('subscription.terms')}</Text>{' '}{t('common.and', { defaultValue: 'and' })}{' '}
           <Text style={styles.link} onPress={handleOpenPrivacy}>{t('subscription.privacyPolicy')}</Text>.
         </Text>
@@ -370,12 +450,7 @@ export const SubscriptionScreen: React.FC = () => {
           <Text style={styles.restoreText}>{t('subscription.restorePurchase')}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip} activeOpacity={0.8}>
-          <Text style={styles.skipText}>{t('subscription.skipForNow', { defaultValue: 'Continue with free version' })}</Text>
-        </TouchableOpacity>
-
-
-        <View style={{ height: 100 }} />
+        <View style={{ height: 140 }} />
       </ScrollView>
 
       {/* Fixed Bottom Button */}
@@ -394,7 +469,10 @@ export const SubscriptionScreen: React.FC = () => {
             </Text>
           )}
         </TouchableOpacity>
-        {/* <Text style={styles.betaPricing}>{t('subscription.betaPricing')}</Text> */}
+
+        <TouchableOpacity style={styles.skipButton} onPress={handleSkip} activeOpacity={0.8}>
+          <Text style={styles.skipText}>{t('subscription.skipForNow', { defaultValue: 'Continue with free version' })}</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -411,7 +489,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: SCREEN_WIDTH * 0.8,
     height: SCREEN_WIDTH * 0.8,
-    marginTop: -20,
+    marginTop: -30,
     marginBottom: 8,
     alignSelf: 'center',
     alignItems: 'center',
@@ -420,7 +498,7 @@ const styles = StyleSheet.create({
   dragonContainer: {
     position: 'absolute',
     width: '125%',
-    height: '125%',
+    height: '100%',
     alignItems: 'center',
   },
   dragonImage: {
@@ -461,11 +539,11 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    paddingHorizontal: 24,
+    paddingHorizontal: 18,
     paddingTop: 20,
     paddingBottom: 18,
     marginBottom: 24,
-    marginTop:34,
+    marginTop:-10,
     borderWidth: 1,
     borderColor: 'rgba(140,107,194,0.10)',
     // shadow
@@ -514,6 +592,108 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     marginHorizontal: 4,
     marginBottom: 18,
+  },
+  planSelector: {
+    flexDirection: 'column',
+    gap: 10,
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  planCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    position: 'relative',
+    overflow: 'visible',
+  },
+  planCardSelected: {
+    borderColor: '#8C49D5',
+    backgroundColor: '#FAF5FF',
+  },
+  planCardLeft: {
+    flex: 1,
+  },
+  planCardRight: {
+    alignItems: 'flex-end',
+  },
+  planLabel: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 14,
+    color: '#6B7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  planLabelSelected: {
+    color: '#8C49D5',
+  },
+  planPrice: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 20,
+    color: '#1F2937',
+    textAlign: 'right',
+  },
+  planPriceSelected: {
+    color: '#111827',
+  },
+  planPeriod: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 11,
+    color: '#9CA3AF',
+    textAlign: 'right',
+  },
+  planPeriodSelected: {
+    color: '#8C49D5',
+  },
+  planSavings: {
+    fontFamily: 'PlusJakartaSans_500Medium',
+    fontSize: 18,
+    color: '#9CA3AF',
+    marginTop: 3,
+  },
+  planSavingsSelected: {
+    color: '#7C3AED',
+  },
+  planBilledAnnually: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 10,
+    color: '#9CA3AF',
+    marginTop: 2,
+    textAlign: 'right',
+  },
+  planBilledAnnuallySelected: {
+    color: '#8C49D5',
+  },
+  popularBadge: {
+    position: 'absolute',
+    top: -11,
+    backgroundColor: '#8C49D5',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  popularBadgeText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 10,
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  savingsBadge: {
+    position: 'absolute',
+    top: -11,
+    backgroundColor: '#8C49D5',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  savingsBadgeText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 10,
+    color: '#FFFFFF',
   },
   featureList: {
     marginTop: 20,
@@ -588,7 +768,7 @@ const styles = StyleSheet.create({
   skipButton: {
     alignSelf: 'center',
     paddingVertical: 8,
-    marginTop: 8,
+    marginTop: 0,
     marginBottom: 4,
   },
   skipText: {
@@ -629,7 +809,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 24,
     paddingTop: 12,
-    paddingBottom: 36,
+    paddingBottom: 10,
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
     alignItems: 'center',

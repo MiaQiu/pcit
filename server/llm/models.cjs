@@ -20,7 +20,7 @@ const MODELS = {
   // Gemini 3 — for notification generation
   'flash-3': {
     provider: 'gemini',
-    primary:  'gemini-3-pro-preview',
+    primary:  process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview',
     fallback: 'gemini-3-flash-preview',
   },
   // Extended reasoning — CDI coaching narrative (streaming, handled separately)
@@ -32,7 +32,7 @@ const MODELS = {
   // Gemini 3 Pro for PCIT coding — falls back to Claude Sonnet on failure
   pcit: {
     provider: 'gemini',
-    primary:  'gemini-3-pro-preview',
+    primary:  process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview',
   },
   // Anthropic path (AI_PROVIDER=claude-sonnet)
   claude: {

@@ -2081,4 +2081,178 @@ router.post('/coach/psychologist-requests/:id/dismiss', requireAdminAuth, async 
   }
 });
 
+// ============================================================================
+// CODING REVIEW
+// ============================================================================
+
+/**
+ * GET /api/admin/coding-review
+ * List sessions where pcitCodingDone = true, ordered by createdAt desc.
+ */
+router.get('/coding-review', requireAdminAuth, async (req, res) => {
+  try {
+    const [sessions, langRows] = await Promise.all([
+      prisma.session.findMany({
+        where: { pcitCodingDone: true },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          mode: true,
+          createdAt: true,
+          codingReviewedAt: true,
+          User: { select: { name: true, email: true } },
+        },
+      }),
+      prisma.$queryRaw`
+        SELECT id, "elevenLabsJson"->>'language_code' AS language
+        FROM "Session"
+        WHERE "pcitCodingDone" = true
+      `,
+    ]);
+    const langMap = Object.fromEntries(langRows.map(r => [r.id, r.language ?? null]));
+
+    // Compute accuracy for reviewed sessions only
+    const reviewedIds = sessions.filter(s => s.codingReviewedAt).map(s => s.id);
+    const accuracyMap = {};
+    if (reviewedIds.length > 0) {
+      const [totalCounts, incorrectCounts] = await Promise.all([
+        prisma.utterance.groupBy({
+          by: ['sessionId'],
+          where: { sessionId: { in: reviewedIds }, role: 'adult' },
+          _count: { id: true },
+        }),
+        prisma.utterance.groupBy({
+          by: ['sessionId'],
+          where: { sessionId: { in: reviewedIds }, role: 'adult', adminComment: { not: null } },
+          _count: { id: true },
+        }),
+      ]);
+      const totalMap = Object.fromEntries(totalCounts.map(r => [r.sessionId, r._count.id]));
+      const incorrectMap = Object.fromEntries(incorrectCounts.map(r => [r.sessionId, r._count.id]));
+      for (const sid of reviewedIds) {
+        const total = totalMap[sid] ?? 0;
+        const incorrect = incorrectMap[sid] ?? 0;
+        accuracyMap[sid] = total > 0 ? Math.round(((total - incorrect) / total) * 100) : 100;
+      }
+    }
+
+    res.json({
+      sessions: sessions.map(s => ({
+        id: s.id,
+        mode: s.mode,
+        createdAt: s.createdAt,
+        codingReviewedAt: s.codingReviewedAt,
+        language: langMap[s.id] ?? null,
+        accuracy: s.codingReviewedAt ? (accuracyMap[s.id] ?? 100) : null,
+        userName: s.User?.name ?? null,
+        userEmail: s.User?.email ?? null,
+      })),
+    });
+  } catch (err) {
+    console.error('GET /admin/coding-review error:', err);
+    res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
+});
+
+/**
+ * GET /api/admin/coding-review/:id
+ * Session detail: utterances joined with pcitCoding results.
+ */
+router.get('/coding-review/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const session = await prisma.session.findUnique({
+      where: { id: req.params.id },
+      select: {
+        id: true,
+        mode: true,
+        createdAt: true,
+        codingReviewedAt: true,
+        pcitCoding: true,
+        User: { select: { name: true, email: true } },
+      },
+    });
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    const utterances = await prisma.utterance.findMany({
+      where: { sessionId: req.params.id },
+      orderBy: { order: 'asc' },
+      select: { id: true, order: true, speaker: true, role: true, text: true, adminComment: true },
+    });
+
+    const codingResults = session.pcitCoding?.codingResults || [];
+    // codingResult.id is the utterance's positional index (0-based)
+    const codingByUttId = {};
+    for (const r of codingResults) {
+      const utt = utterances[r.id];
+      if (utt) codingByUttId[utt.id] = r;
+    }
+
+    res.json({
+      session: {
+        id: session.id,
+        mode: session.mode,
+        createdAt: session.createdAt,
+        codingReviewedAt: session.codingReviewedAt,
+        userName: session.User?.name ?? null,
+        userEmail: session.User?.email ?? null,
+      },
+      utterances: utterances.map(u => ({
+        id: u.id,
+        order: u.order,
+        speaker: u.speaker,
+        role: u.role ?? null,
+        text: u.text,
+        adminComment: u.adminComment ?? null,
+        coding: codingByUttId[u.id]
+          ? {
+              code: codingByUttId[u.id].code ?? null,
+              feedback: codingByUttId[u.id].feedback ?? null,
+              reference: codingByUttId[u.id].reference ?? null,
+              assumption: codingByUttId[u.id].assumption ?? null,
+            }
+          : null,
+      })),
+    });
+  } catch (err) {
+    console.error('GET /admin/coding-review/:id error:', err);
+    res.status(500).json({ error: 'Failed to fetch session detail' });
+  }
+});
+
+/**
+ * PUT /api/admin/coding-review/:id/comment/:utteranceId
+ * Save or clear an admin comment on a specific utterance.
+ */
+router.put('/coding-review/:id/comment/:utteranceId', requireAdminAuth, async (req, res) => {
+  try {
+    const { comment } = req.body;
+    await prisma.utterance.update({
+      where: { id: req.params.utteranceId, sessionId: req.params.id },
+      data: { adminComment: comment ?? null },
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('PUT /admin/coding-review comment error:', err);
+    res.status(500).json({ error: 'Failed to save comment' });
+  }
+});
+
+/**
+ * POST /api/admin/coding-review/:id/submit
+ * Mark a session as reviewed.
+ */
+router.post('/coding-review/:id/submit', requireAdminAuth, async (req, res) => {
+  try {
+    const session = await prisma.session.update({
+      where: { id: req.params.id },
+      data: { codingReviewedAt: new Date() },
+      select: { id: true, codingReviewedAt: true },
+    });
+    res.json({ ok: true, codingReviewedAt: session.codingReviewedAt });
+  } catch (err) {
+    console.error('POST /admin/coding-review submit error:', err);
+    res.status(500).json({ error: 'Failed to submit review' });
+  }
+});
+
 module.exports = router;

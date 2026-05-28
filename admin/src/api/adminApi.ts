@@ -530,6 +530,66 @@ export async function rerunCdiCoaching(sessionId: string, opts?: ApiEnvOpts): Pr
   );
 }
 
+// ---- Coding Review ----
+
+export interface CodingReviewSession {
+  id: string;
+  mode: string;
+  createdAt: string;
+  codingReviewedAt: string | null;
+  language: string | null;
+  accuracy: number | null;
+  userName: string | null;
+  userEmail: string | null;
+}
+
+export interface UtteranceCoding {
+  code: string | null;
+  feedback: string | null;
+  reference: string | null;
+  assumption: string | null;
+}
+
+export interface ReviewUtterance {
+  id: string;
+  order: number;
+  speaker: string;
+  role: string | null;
+  text: string;
+  adminComment: string | null;
+  coding: UtteranceCoding | null;
+}
+
+export interface CodingReviewDetail {
+  session: CodingReviewSession;
+  utterances: ReviewUtterance[];
+}
+
+export async function getCodingReviewSessions(opts?: ApiEnvOpts): Promise<CodingReviewSession[]> {
+  const data = await apiFetchEnv<{ sessions: CodingReviewSession[] }>('/api/admin/coding-review', {}, opts);
+  return data.sessions;
+}
+
+export async function getCodingReviewDetail(sessionId: string, opts?: ApiEnvOpts): Promise<CodingReviewDetail> {
+  return apiFetchEnv<CodingReviewDetail>(`/api/admin/coding-review/${sessionId}`, {}, opts);
+}
+
+export async function saveUtteranceComment(
+  sessionId: string,
+  utteranceId: string,
+  comment: string,
+  opts?: ApiEnvOpts
+): Promise<void> {
+  await apiFetchEnv(`/api/admin/coding-review/${sessionId}/comment/${utteranceId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ comment }),
+  }, opts);
+}
+
+export async function submitCodingReview(sessionId: string, opts?: ApiEnvOpts): Promise<{ codingReviewedAt: string }> {
+  return apiFetchEnv(`/api/admin/coding-review/${sessionId}/submit`, { method: 'POST' }, opts);
+}
+
 // ---- Sync to Prod ----
 
 export interface SyncResult {

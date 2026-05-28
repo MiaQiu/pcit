@@ -21,5 +21,9 @@ export const REVENUECAT_CONFIG = {
       ios: 'com.nora.premium.1m',
       android: 'om.nora.premium.1m',
     },
+    oneYear: {
+      ios: 'com.nora.premium.1year',
+      android: 'com.nora.premium.1year',
+    },
   },
 };

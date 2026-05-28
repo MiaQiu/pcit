@@ -13,7 +13,7 @@ const agentBus = require('../services/agentBus.cjs');
 const router = express.Router();
 router.use(requireAuth);
 
-const MODEL           = 'gemini-3-pro-preview';
+const MODEL           = process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview';
 const MAX_AGENT_TURNS = 6;          // tool-call rounds before giving up
 const MAX_HISTORY_MESSAGES = 20;    // conversation turns sent to LLM
 

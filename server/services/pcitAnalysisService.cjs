@@ -916,7 +916,7 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
           try {
             const proRaw = await callGeminiStreaming(
               [{ role: 'user', parts: [{ text: formatPrompt }] }],
-              { model: 'gemini-3-pro-preview', temperature: 0, maxOutputTokens: 8192, timeout: 300_000, sessionId }
+              { model: process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview', temperature: 0, maxOutputTokens: 8192, timeout: 300_000, sessionId }
             );
             const { value: proFormatted } = parseJSON(proRaw, 'object');
             if (checkComplete(proFormatted)) {

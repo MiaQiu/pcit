@@ -2282,3 +2282,108 @@ body {
   max-width: 220px;
   cursor: help;
 }
+
+/* ============================================
+   CODING REVIEW
+   ============================================ */
+
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-green {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-amber {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-strip {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.status-chip {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #f3f4f6;
+  color: var(--text);
+}
+
+.status-chip-amber {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-chip-green {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.filter-btn {
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: white;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-right: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.filter-btn:hover {
+  background: var(--bg);
+}
+
+.filter-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.mode-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #e0e7ff;
+  color: #3730a3;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.speaker-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.speaker-adult {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.speaker-child {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+.coding-review-table td {
+  vertical-align: top;
+}
+
+.child-row td {
+  background: #fafafa;
+}

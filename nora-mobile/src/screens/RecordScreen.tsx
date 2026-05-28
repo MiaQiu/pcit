@@ -300,9 +300,13 @@ export const RecordScreen: React.FC = () => {
     }
   };
 
-  // When screen comes back into focus, check if we need to reset
+  // When screen comes back into focus, check if we need to reset.
+  // Guard with isCheckingLimit so autoStart never fires while the subscription
+  // gate is still running — otherwise recording starts behind the paywall.
   useFocusEffect(
     React.useCallback(() => {
+      if (isCheckingLimit) return;
+
       // Track record screen viewed
       amplitudeService.trackScreenView('Record', {
         screen: 'record',
@@ -324,7 +328,7 @@ export const RecordScreen: React.FC = () => {
       if (!uploadProcessing.isProcessing && recordingStateRef.current !== 'recording') {
         resetRecording();
       }
-    }, [uploadProcessing.isProcessing, route.params?.autoStart])
+    }, [uploadProcessing.isProcessing, route.params?.autoStart, isCheckingLimit])
   );
 
   const requestPermissions = async (): Promise<boolean> => {
