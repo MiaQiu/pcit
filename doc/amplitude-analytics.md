@@ -147,6 +147,8 @@ All onboarding screens call `trackOnboardingScreen(screen, step)` on mount and `
 | Event | Method | Key Properties |
 |---|---|---|
 | `Report Viewed` | `trackReportViewed()` | `recordingId`, `score`, `source` |
+| `Weekly Report Tapped` | `trackWeeklyReportTapped()` | `reportId` |
+| `Weekly Report Viewed` | `trackWeeklyReportViewed()` | `reportId`, `headline` |
 
 **`source` values for `Report Viewed`:**
 - `'home'` — HomeScreen general
@@ -154,6 +156,9 @@ All onboarding screens call `trackOnboardingScreen(screen, step)` on mount and `
 - `'home_score_card'` — score card tap
 - `'progress_calendar'` — from ProgressScreen calendar
 - `'notification'` — from push notification tap
+
+`Weekly Report Tapped` fires in `ReportsSection.tsx` when a weekly report card is pressed.
+`Weekly Report Viewed` fires in `WeeklyReportScreen.tsx` once the report data loads successfully.
 
 ### Chat
 
@@ -163,6 +168,11 @@ All onboarding screens call `trackOnboardingScreen(screen, step)` on mount and `
 | `Chat Message Sent` | `CoachChatScreen`, `PsychologistChatScreen` | `chat: 'ai_coach' \| 'psychologist'` |
 | `Chat Suggestion Used` | `CoachChatScreen` | `chat: 'ai_coach'`, `suggestion` (suggestion title) |
 | `Psychologist Requested` | `CoachChatScreen` | — |
+| `Chat Bubble Tapped` | `HomeScreen_v2`, `ReportScreen` | `source` |
+
+**`source` values for `Chat Bubble Tapped`:**
+- `'home_fab'` — floating action button shown on home screen after first session
+- `'report_demo'` — animated demo bubble on the report screen
 
 ### Screen Views
 
@@ -217,6 +227,9 @@ class AmplitudeService {
   trackRecordingUploaded(recordingId: string, duration: number, properties: Record<string, any>): void
 
   trackReportViewed(recordingId: string, score?: number, properties: Record<string, any>): void
+  trackChatBubbleTapped(source: string): void
+  trackWeeklyReportTapped(reportId: string, properties?: Record<string, any>): void
+  trackWeeklyReportViewed(reportId: string, headline?: string | null, properties?: Record<string, any>): void
 
   trackNotificationPermission(granted: boolean): void
   trackNotificationReceived(type: string): void
@@ -245,6 +258,8 @@ These properties appear frequently across events:
 | `lessonTitle` | `string` | Lesson display name |
 | `moduleKey` | `string` | Module the lesson belongs to |
 | `recordingId` | `string` | Recording identifier |
+| `reportId` | `string` | Weekly report identifier |
+| `headline` | `string` | Weekly report headline text |
 | `duration` | `number` | Duration in seconds |
 | `score` | `number` | Report/assessment score |
 | `notificationType` | `string` | Type of notification |
