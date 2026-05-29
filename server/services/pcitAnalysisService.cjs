@@ -1166,11 +1166,8 @@ async function generatePDITwoChoicesAnalysis(utterances, childName, sessionId = 
 
   const transcript = utterances
     .filter(u => u.speaker !== SILENT_SPEAKER_ID)
-    .map((u) => {
-      const roleLabel = u.role === 'adult' ? 'Parent' : u.role === 'child' ? 'Child' : u.speaker;
-      const tagSuffix = u.pcitTag ? ` [${u.pcitTag}]` : '';
-      return `${roleLabel}: ${u.text}${tagSuffix}`;
-    }).join('\n');
+    .map((u) => `${u.speaker}: ${u.text}`)
+    .join('\n');
 
   const prompt = loadPromptWithVariables('pdiTwoChoicesFlow', {
     CHILD_NAME: childName || 'the child',
