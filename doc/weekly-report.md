@@ -45,43 +45,40 @@ The screen receives a `reportId` param and loads the pre-generated report from t
   - Being heard (`skills.label === 'Echo'` summed)
   - Being seen (`skills.label === 'Narrate'` summed)
 
-### Page 3 — Skill Celebration (Hardcoded)
-- Title: "You're an excellent Narrator"
-- Lavender container with two scenario cards
-- Each card: context label, bold description, audio icon, "Example script" box
-- Content is currently hardcoded; to be generated from session analysis
+### Page 3 — You as a Parent This Week
+- Title: "You as a Parent This Week"
+- **Identity statement card:** `parentGrowthNarrative` — AI-generated affirming statement with heart icon
+- **Growth metrics row:** Up to 3 stat cards from `growthMetrics` (icon, value, label) — e.g. trending-up, calendar, trophy, star
+- **What Nora Noticed card:** `noraObservation` — AI-generated observation about the parent's technique
 
 ### Page 4 — Weekly Moments Highlight
 - Title: "Weekly Moments Highlight"
-- Horizontal snap-to-card carousel of session top moments
-- Each card shows:
-  - Day badge + date
-  - Skill tag (top skill from that session)
-  - Session title
-  - Top moment quote (extracted via `topMomentUtteranceNumber` or `topMoment.quote`, with PCIT tags stripped)
-  - Celebration/feedback text
-  - `MomentPlayer` audio widget (if `audioUrl` + `topMomentStartTime/EndTime` available)
-  - "Saved / Emotional memory" footer
+- Vertical list of moment bubbles from `topMoments` (filtered to those with a `quote`)
+- Each bubble shows:
+  - Day + date label + session title
+  - Bold italic quote
+  - `MomentPlayer` audio widget (if `audioUrl` + `startTime`/`endTime` available)
 
-### Page 5 — Child Development Milestones
-- Title: "What We learnt about {childName}"
-- Lavender container with milestone cards from `analysis.milestoneCelebrations`
-- Each card: blue icon (sparkles for ACHIEVED, trending-up for EMERGING), title, action tip
-- Deduplicated across sessions by title
-- Fallback card shown if no milestones
+### Page 5 — Child's Week
+- Title: "{childName}'s Week"
+- **Shining Moments card:** `childSpotlight` — AI-generated highlight of the child's behaviour
+- **Growth Snapshot cards:** `growthSnapshots` array — each has `icon` (chatbubble, bulb, people, heart, hand-left), `childQuote`, `meaning`; category label translated via `weeklyReport.page5.categories.*`
+- **Progress Note:** `childProgressNote` — green leaf footer note
+- Fallback empty state if no spotlight or snapshots
 
-### Page 6 — Next Week's Focus (Hardcoded)
+### Page 6 — Next Week's Focus
 - Title: "Next Week's Focus"
-- Lavender container with focus heading, orange sparkle icon
-- Expandable "Why this matters" card (toggle via chevron)
-- Content is currently hardcoded; to be generated from analysis trends
+- **Focus card:** `focusHeading` + `focusSubtext` — AI-generated focus for the coming week
+- Expandable "Why this matters" section: `whyExplanation` (toggle via chevron)
 
 ### Page 7 — Quick Check-in
 - Title: "Quick Checkin"
 - **Mood selection:** 4 emoji chips (Grounded, Tired, Stretched, Hopeful) — single select with purple highlight
 - Disclaimer text
-- **Issue improvement ratings:** Each issue from `ChildIssuePriority` table (top 5 by `priorityRank`) shown as a row with Better / Same / Worse chips
-- Check-in responses are stored in local state only (submission endpoint TBD)
+- **Issue improvement ratings:** Items are pulled from the top 5 `ChildIssuePriority` rows (ordered by `priorityRank` ASC) for the user's child. Each row's `userIssues` (JSON array) and `wacbQuestions` (JSON array) are parsed, flattened, and deduplicated into a single list. Each item is shown as a row with Better / Same / Worse chips.
+  - `userIssues` keys (e.g. `adhd`, `attention_focus`) are translated via `issueTags.*` in the locale files
+  - `wacbQuestions` keys (e.g. `q1Dawdle`, `q3Disobey`) are prefixed `wacb:` internally and translated via `weeklyReport.page7.wacbQuestions.*`
+  - All possible wacb question keys: `q1Dawdle`, `q2MealBehavior`, `q3Disobey`, `q4Angry`, `q5Scream`, `q6Destroy`, `q7ProvokeFights`, `q8Interrupt`, `q9Attention`
 
 ## API Endpoints
 
@@ -91,7 +88,7 @@ The screen receives a `reportId` param and loads the pre-generated report from t
 | `GET` | `/api/config/weekly-reports/:id` | Full report detail (gated to owner + visible) — resolves presigned audio URLs at read time |
 | `PATCH` | `/api/config/weekly-reports/:id/checkin` | Save page 7 check-in responses (`moodSelection`, `issueRatings`) |
 | `GET` | `/api/auth/me` | User profile (childName) |
-| `GET` | `/api/auth/child-issues` | Top 5 `ChildIssuePriority` records for the user's child, ordered by `priorityRank` ASC |
+| `GET` | `/api/auth/child-issues` | Top 5 `ChildIssuePriority` records for the user's child, ordered by `priorityRank` ASC — returns `strategy`, `priorityRank`, `userIssues`, `wacbQuestions`, `clinicalLevel` |
 
 ## Key Types
 
@@ -170,6 +167,18 @@ The push notification payload includes `{ type: 'weekly_report', reportId }`. `A
 - **Background tap** — `addNotificationResponseReceivedListener` fires immediately and navigates to `WeeklyReport` with the `reportId`
 - **Cold-start tap** (app was killed) — `getLastNotificationResponseAsync` runs on mount and navigates once the navigation tree is ready
 
-## TODO
+## Regenerating a report manually
 
-- [ ] Replace hardcoded content on pages 3 and 6 with AI-generated text (page 1 headline is now AI-generated)
+To regenerate a specific report in prod (overwrites via upsert, restores visibility):
+
+```bash
+# 1. Ensure prod DB tunnel is open (localhost:5433)
+./scripts/start-prod-db-tunnel.sh
+
+# 2. Set REPORT_ID in the script, then run with prod DATABASE_URL
+DATABASE_URL="$(aws secretsmanager get-secret-value \
+  --secret-id arn:aws:secretsmanager:ap-southeast-1:059364397483:secret:nora/database-url-893xxi \
+  --region ap-southeast-1 --query SecretString --output text | \
+  sed 's|nora-prod.cjy4ccwg2d5q.ap-southeast-1.rds.amazonaws.com:5432|localhost:5433|')" \
+  node scripts/_tmp_regenerate_weekly_report.cjs
+```
