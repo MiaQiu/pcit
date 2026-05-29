@@ -341,15 +341,15 @@
     },
     "page7": {
       "wacbQuestions": {
-        "q1": "Dawdling or dragging feet",
-        "q2": "Misbehaving at mealtime",
-        "q3": "Refusing to listen or follow rules",
-        "q4": "Losing temper or physical aggression",
-        "q5": "Screaming fits or tantrums",
-        "q6": "Breaking things or rough play",
-        "q7": "Starting arguments or teasing",
-        "q8": "Interrupting or demanding attention",
-        "q9": "Struggling to focus or sit still"
+        "q1Dawdle": "Dawdling or dragging feet",
+        "q2MealBehavior": "Misbehaving at mealtime",
+        "q3Disobey": "Refusing to listen or follow rules",
+        "q4Angry": "Losing temper or physical aggression",
+        "q5Scream": "Screaming fits or tantrums",
+        "q6Destroy": "Breaking things or rough play",
+        "q7ProvokeFights": "Starting arguments or teasing",
+        "q8Interrupt": "Interrupting or demanding attention",
+        "q9Attention": "Struggling to focus or sit still"
       }
     },
     "page2": {
