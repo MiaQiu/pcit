@@ -41,7 +41,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
           style={styles.keyboardView}
-          behavior="padding"
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <View style={styles.content}>{children}</View>
         </KeyboardAvoidingView>

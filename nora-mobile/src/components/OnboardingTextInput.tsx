@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Platform } from 'react-native';
 
 interface OnboardingTextInputProps {
   title: string;
@@ -55,10 +55,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   input: {
-    height: 56,
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 40,
     color: '#4A5565',
     textAlign: 'center',
+    ...Platform.select({
+      ios: {
+        height: 56,
+      },
+      android: {
+        includeFontPadding: false,
+        textAlignVertical: 'center',
+        paddingVertical: 8,
+      },
+    }),
   },
 });
