@@ -29,6 +29,7 @@ import { MomentPlayer } from '../components/MomentPlayer';
 import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
+import amplitudeService from '../services/amplitudeService';
 import { WeeklyReportData } from '@nora/core';
 import { useTranslation } from 'react-i18next';
 
@@ -66,11 +67,34 @@ export const WeeklyReportScreen: React.FC = () => {
   const loadChildIssues = async () => {
     try {
       const { issues } = await authService.getChildIssues();
-      const strategyKeys = issues
-        .map((i) => i.strategy)
-        .filter(Boolean)
-        .filter((key, idx, arr) => arr.indexOf(key) === idx);
-      setChildIssues(strategyKeys);
+      const seen = new Set<string>();
+      const allKeys: string[] = [];
+
+      for (const issue of issues) {
+        if (issue.userIssues) {
+          try {
+            const parsed = JSON.parse(issue.userIssues);
+            if (Array.isArray(parsed)) {
+              for (const k of parsed) {
+                if (k && !seen.has(k)) { seen.add(k); allKeys.push(k); }
+              }
+            }
+          } catch {}
+        }
+        if (issue.wacbQuestions) {
+          try {
+            const parsed = JSON.parse(issue.wacbQuestions);
+            if (Array.isArray(parsed)) {
+              for (const k of parsed) {
+                const prefixed = `wacb:${k}`;
+                if (k && !seen.has(prefixed)) { seen.add(prefixed); allKeys.push(prefixed); }
+              }
+            }
+          } catch {}
+        }
+      }
+
+      setChildIssues(allKeys);
     } catch (error) {
       console.log('Failed to load child issues:', error);
     }
@@ -96,6 +120,7 @@ export const WeeklyReportScreen: React.FC = () => {
         setReport(reportData);
         if (reportData.moodSelection) setMoodSelection(reportData.moodSelection);
         if (reportData.issueRatings) setIssueRatings(reportData.issueRatings);
+        amplitudeService.trackWeeklyReportViewed(reportData.id, reportData.headline);
       }
     } catch (error) {
       console.log('Failed to load weekly report:', error);
@@ -590,7 +615,11 @@ export const WeeklyReportScreen: React.FC = () => {
             </Text>
             {childIssues.map((issue, index) => (
               <View key={issue} style={[styles.issueRow, index < childIssues.length - 1 && styles.issueRowBorder]}>
-                <Text style={styles.issueLabel}>{t(`weeklyReport.page7.strategies.${issue}`, { defaultValue: issue.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase()) })}</Text>
+                <Text style={styles.issueLabel}>
+                  {issue.startsWith('wacb:')
+                    ? t(`weeklyReport.page7.wacbQuestions.${issue.replace('wacb:', '')}`, { defaultValue: issue.replace('wacb:', '') })
+                    : t(`issueTags.${issue}`, { defaultValue: issue.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()) })}
+                </Text>
                 <View style={styles.ratingButtons}>
                   {RATINGS.map((rating) => (
                     <TouchableOpacity

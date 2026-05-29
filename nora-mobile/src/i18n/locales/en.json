@@ -340,12 +340,16 @@
       "whySubtitle": "A quick nervous-system explanation."
     },
     "page7": {
-      "strategies": {
-        "AGGRESSIVE_DE_ESCALATION": "Behavior De-escalation",
-        "DIFFERENTIAL_ATTENTION": "Attention & Focus",
-        "POSITIVE_REINFORCEMENT": "Positive Reinforcement",
-        "RELATIONSHIP_BUFFERING": "Relationship Building",
-        "SKILL_COACHING": "Skill Coaching"
+      "wacbQuestions": {
+        "q1": "Dawdling or dragging feet",
+        "q2": "Misbehaving at mealtime",
+        "q3": "Refusing to listen or follow rules",
+        "q4": "Losing temper or physical aggression",
+        "q5": "Screaming fits or tantrums",
+        "q6": "Breaking things or rough play",
+        "q7": "Starting arguments or teasing",
+        "q8": "Interrupting or demanding attention",
+        "q9": "Struggling to focus or sit still"
       }
     },
     "page2": {

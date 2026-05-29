@@ -24,6 +24,7 @@ import { MomentPlayer } from '../components/MomentPlayer';
 import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
 import * as userStorage from '../lib/userStorage';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
 
@@ -575,6 +576,7 @@ export const ReportScreen: React.FC = () => {
   const chatDemoTriggered = useRef(false);
 
   const dismissChatDemo = useCallback(async (navigate = false) => {
+    if (navigate) amplitudeService.trackChatBubbleTapped('report_demo');
     Animated.timing(chatDemoAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
       setShowChatDemo(false);
     });

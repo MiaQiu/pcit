@@ -194,6 +194,27 @@ class AmplitudeService {
   }
 
   /**
+   * Track chat bubble tapped
+   */
+  trackChatBubbleTapped(source: string) {
+    this.trackEvent('Chat Bubble Tapped', { source });
+  }
+
+  /**
+   * Track weekly report tapped (from reports list)
+   */
+  trackWeeklyReportTapped(reportId: string, properties: Record<string, any> = {}) {
+    this.trackEvent('Weekly Report Tapped', { reportId, ...properties });
+  }
+
+  /**
+   * Track weekly report viewed (screen loaded with data)
+   */
+  trackWeeklyReportViewed(reportId: string, headline?: string | null, properties: Record<string, any> = {}) {
+    this.trackEvent('Weekly Report Viewed', { reportId, headline, ...properties });
+  }
+
+  /**
    * Track notification permission
    */
   trackNotificationPermission(granted: boolean) {

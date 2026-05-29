@@ -57,6 +57,7 @@ export const RecordScreen: React.FC = () => {
   const { showToast } = useToast();
 
   const [isCheckingLimit, setIsCheckingLimit] = useState(!isSubscribed);
+  const isCheckingLimitRef = useRef(!isSubscribed);
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [recordingFailureCount, setRecordingFailureCount] = useState(0);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -74,9 +75,16 @@ export const RecordScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       if (isSubscribed) {
+        isCheckingLimitRef.current = false;
         setIsCheckingLimit(false);
         return;
       }
+
+      // Set the ref synchronously so the auto-start effect (which runs in the
+      // same cycle) immediately sees the blocked state before any re-render.
+      isCheckingLimitRef.current = true;
+      setIsCheckingLimit(true);
+
       if (subscriptionLoading) return;
 
       const checkFreeLimit = async () => {
@@ -101,6 +109,7 @@ export const RecordScreen: React.FC = () => {
         } catch {
           // On API error, don't block the user
         }
+        isCheckingLimitRef.current = false;
         setIsCheckingLimit(false);
       };
 
@@ -305,7 +314,7 @@ export const RecordScreen: React.FC = () => {
   // gate is still running — otherwise recording starts behind the paywall.
   useFocusEffect(
     React.useCallback(() => {
-      if (isCheckingLimit) return;
+      if (isCheckingLimitRef.current) return;
 
       // Track record screen viewed
       amplitudeService.trackScreenView('Record', {
@@ -328,7 +337,7 @@ export const RecordScreen: React.FC = () => {
       if (!uploadProcessing.isProcessing && recordingStateRef.current !== 'recording') {
         resetRecording();
       }
-    }, [uploadProcessing.isProcessing, route.params?.autoStart, isCheckingLimit])
+    }, [uploadProcessing.isProcessing, isCheckingLimit])
   );
 
   const requestPermissions = async (): Promise<boolean> => {

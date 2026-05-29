@@ -920,6 +920,7 @@ router.get('/child-issues', require('../middleware/auth.cjs').requireAuth, async
         strategy: true,
         priorityRank: true,
         userIssues: true,
+        wacbQuestions: true,
         clinicalLevel: true,
       }
     });

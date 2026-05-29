@@ -38,6 +38,7 @@ export async function setCurrentUserId(userId: string): Promise<void> {
  */
 export async function clearCurrentUser(): Promise<void> {
   currentUserId = null;
+  await AsyncStorage.removeItem(LAST_USER_KEY);
 }
 
 /**

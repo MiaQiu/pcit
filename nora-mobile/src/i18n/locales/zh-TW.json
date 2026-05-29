@@ -340,12 +340,16 @@
       "whySubtitle": "簡短的神經系統解釋。"
     },
     "page7": {
-      "strategies": {
-        "AGGRESSIVE_DE_ESCALATION": "行為降級",
-        "DIFFERENTIAL_ATTENTION": "注意力與專注",
-        "POSITIVE_REINFORCEMENT": "正向強化",
-        "RELATIONSHIP_BUFFERING": "關係建立",
-        "SKILL_COACHING": "技能指導"
+      "wacbQuestions": {
+        "q1": "拖延或故意磨蹭",
+        "q2": "用餐時行為不當",
+        "q3": "拒絕聽從或遵守規則",
+        "q4": "發脾氣或有肢體攻擊行為",
+        "q5": "尖叫或難以平息的脾氣",
+        "q6": "破壞物品或玩耍太粗魯",
+        "q7": "主動挑釁或故意取笑他人",
+        "q8": "打斷他人或不斷要求注意",
+        "q9": "難以專注或坐不住"
       }
     },
     "page2": {

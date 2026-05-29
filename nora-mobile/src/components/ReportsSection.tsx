@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RootStackNavigationProp } from '../navigation/types';
 import { useRecordingService } from '../contexts/AppContext';
 import * as userStorage from '../lib/userStorage';
+import amplitudeService from '../services/amplitudeService';
 
 interface Recording {
   id: string;
@@ -137,6 +138,7 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
               key={report.id}
               style={styles.weeklyCard}
               onPress={async () => {
+                amplitudeService.trackWeeklyReportTapped(report.id);
                 await userStorage.setItem(`weekly_report_dismissed_${report.id}`, 'true');
                 navigation.navigate('WeeklyReport', { reportId: report.id });
               }}

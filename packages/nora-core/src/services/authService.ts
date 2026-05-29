@@ -496,7 +496,7 @@ class AuthService {
     }
   }
 
-  async getChildIssues(): Promise<{ issues: Array<{ strategy: string; priorityRank: number; userIssues: string | null; clinicalLevel: string }> }> {
+  async getChildIssues(): Promise<{ issues: Array<{ strategy: string; priorityRank: number; userIssues: string | null; wacbQuestions: string | null; clinicalLevel: string }> }> {
     const response = await this.authenticatedRequest(
       `${this.apiUrl}/api/auth/child-issues`
     );

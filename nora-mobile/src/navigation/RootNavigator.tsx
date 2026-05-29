@@ -72,6 +72,7 @@ export const RootNavigator: React.FC = () => {
 
     await userStorage.clearCurrentUser();
     amplitudeService.reset();
+    await reinitializeUpload();
 
     // Update auth state
     setIsAuthenticated(false);
@@ -90,16 +91,17 @@ export const RootNavigator: React.FC = () => {
         },
       ]
     );
-  }, []);
+  }, [reinitializeUpload]);
 
   // Handle logout
   const handleLogout = useCallback(async () => {
     console.log('User logged out - resetting auth state');
     await userStorage.clearCurrentUser();
     amplitudeService.reset();
+    await reinitializeUpload();
     setIsAuthenticated(false);
     setOnboardingStep(null);
-  }, []);
+  }, [reinitializeUpload]);
 
   // Set up auth callbacks
   useEffect(() => {

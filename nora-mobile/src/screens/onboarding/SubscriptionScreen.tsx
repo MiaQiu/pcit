@@ -88,14 +88,9 @@ export const SubscriptionScreen: React.FC = () => {
   useEffect(() => {
     authService.getCurrentUser().then(user => {
       if (user?.email === 'test63@gmail.com') {
-        const isInitialOnboarding = data.name && data.name.trim() !== '';
-        if (isInitialOnboarding) {
-          navigation.navigate('NotificationPermission');
-        } else {
-          completeOnboarding().then(() => {
-            navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] }));
-          });
-        }
+        completeOnboarding().then(() => {
+          navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] }));
+        });
       }
     }).catch(() => {});
   }, []);
@@ -172,8 +167,13 @@ export const SubscriptionScreen: React.FC = () => {
             // Log but don't block - webhook will handle subscription status
             console.error('Onboarding completion failed (non-critical):', err);
           });
-          // Navigate to notification permission for new users
-          navigation.navigate('NotificationPermission');
+          await completeOnboarding();
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'MainTabs' as any }],
+            })
+          );
         } else {
           // Returning user - go directly to main app
           await completeOnboarding();
@@ -192,17 +192,13 @@ export const SubscriptionScreen: React.FC = () => {
       if (error.userInfo?.readableErrorCode === 'ProductAlreadyPurchasedError' ||
           error.userInfo?.code === 6) {
         const isInitialOnboarding = data.name && data.name.trim() !== '';
-        if (isInitialOnboarding) {
-          navigation.navigate('NotificationPermission');
-        } else {
-          await completeOnboarding();
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{ name: 'MainTabs' as any }],
-            })
-          );
-        }
+        await completeOnboarding();
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'MainTabs' as any }],
+          })
+        );
         return;
       }
 
@@ -231,25 +227,19 @@ export const SubscriptionScreen: React.FC = () => {
 
       if (result.restored) {
         amplitudeService.trackEvent('Subscription Restored', { isReturningUser });
-        const isInitialOnboarding = data.name && data.name.trim() !== '';
         Alert.alert(
           t('subscription.restoreSuccessTitle'),
           t('subscription.restoreSuccessMessage'),
           [{
             text: t('common.ok'),
             onPress: async () => {
-              if (isInitialOnboarding) {
-                navigation.navigate('NotificationPermission');
-              } else {
-                // Returning user - go directly to main app
-                await completeOnboarding();
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: 'MainTabs' as any }],
-                  })
-                );
-              }
+              await completeOnboarding();
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: 'MainTabs' as any }],
+                })
+              );
             }
           }]
         );
@@ -301,7 +291,10 @@ export const SubscriptionScreen: React.FC = () => {
       });
 
       prefetchLessons(lessonService, i18n.language);
-      navigation.navigate('NotificationPermission');
+      await completeOnboarding();
+      navigation.dispatch(
+        CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] })
+      );
     } catch (error: any) {
       console.error('Complete onboarding error:', error);
       Alert.alert(

@@ -17,7 +17,9 @@ import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
-
+import { useOnboarding } from '../../contexts/OnboardingContext';
+import { useAuthService, useLessonService } from '../../contexts/AppContext';
+import { prefetchLessons } from '../../services/lessonDataCache';
 import { OnboardingBackButton } from '../../components/OnboardingBackButton';
 import amplitudeService from '../../services/amplitudeService';
 
@@ -25,10 +27,30 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export const Intro3Screen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { data } = useOnboarding();
+  const authService = useAuthService();
+  const lessonService = useLessonService();
 
   useEffect(() => { amplitudeService.trackOnboardingScreen('intro3', 29); }, []);
+
+  const handleSkip = async () => {
+    try {
+      await authService.completeOnboarding({
+        name: data.name,
+        relationshipToChild: data.relationshipToChild || undefined,
+        childName: data.childName,
+        childGender: data.childGender || undefined,
+        childBirthday: data.childBirthday || undefined,
+        issue: data.issue || undefined,
+      });
+      prefetchLessons(lessonService, i18n.language);
+    } catch (err) {
+      console.error('Failed to save onboarding data:', err);
+    }
+    navigation.navigate('NotificationPermission');
+  };
 
   return (
     <View style={styles.container}>
@@ -66,7 +88,7 @@ export const Intro3Screen: React.FC = () => {
           </TouchableOpacity>
         </View>
         <TouchableOpacity
-          onPress={() => navigation.navigate('Subscription')}
+          onPress={handleSkip}
           activeOpacity={0.7}
         >
           <Text style={styles.skipText}>{t('onboarding.skipForNow')}</Text>
