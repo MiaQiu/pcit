@@ -3,27 +3,107 @@
  * User enters their child's birthday with a date picker
  */
 
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Platform, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { Picker } from '@react-native-picker/picker';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import { Picker } from '@react-native-picker/picker';
 import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 import amplitudeService from '../../services/amplitudeService';
 import { useAuthService } from '../../contexts/AppContext';
+
+// ─── Android custom scroll picker ────────────────────────────────────────────
+
+const ITEM_HEIGHT = 56;
+const PICKER_HEIGHT = ITEM_HEIGHT * 3;
+
+interface ScrollPickerProps {
+  items: string[];
+  selectedIndex: number;
+  onSelect: (index: number) => void;
+}
+
+const ScrollPicker: React.FC<ScrollPickerProps> = ({ items, selectedIndex, onSelect }) => {
+  const [activeIndex, setActiveIndex] = useState(selectedIndex);
+
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    setActiveIndex(Math.max(0, Math.min(items.length - 1, index)));
+  }, [items.length]);
+
+  const handleScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    const clamped = Math.max(0, Math.min(items.length - 1, index));
+    setActiveIndex(clamped);
+    onSelect(clamped);
+  }, [items.length, onSelect]);
+
+  return (
+    <View style={pickerStyles.container}>
+      <ScrollView
+        contentOffset={{ x: 0, y: selectedIndex * ITEM_HEIGHT }}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={ITEM_HEIGHT}
+        decelerationRate="fast"
+        onScroll={handleScroll}
+        onMomentumScrollEnd={handleScrollEnd}
+        onScrollEndDrag={handleScrollEnd}
+        contentContainerStyle={{ paddingVertical: ITEM_HEIGHT }}
+        scrollEventThrottle={16}
+      >
+        {items.map((item, index) => {
+          const isSelected = index === activeIndex;
+          return (
+            <View key={index} style={pickerStyles.item}>
+              <Text style={[pickerStyles.itemText, isSelected && pickerStyles.itemTextSelected]}>
+                {item}
+              </Text>
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+};
+
+const pickerStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    height: PICKER_HEIGHT,
+    overflow: 'hidden',
+  },
+  item: {
+    height: ITEM_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemText: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 18,
+    color: '#9CA3AF',
+  },
+  itemTextSelected: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 28,
+    color: '#1F1F1F',
+  },
+});
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
 
 export const ChildBirthdayScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
   const { t } = useTranslation();
   const authService = useAuthService();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => { amplitudeService.trackOnboardingScreen('child_birthday', 16); }, []);
 
-  // Get current date for defaults
   const currentDate = new Date();
   const initialMonth = data.childBirthday ? data.childBirthday.getMonth() : currentDate.getMonth();
   const initialYear = data.childBirthday ? data.childBirthday.getFullYear() : currentDate.getFullYear() - 3;
@@ -31,18 +111,16 @@ export const ChildBirthdayScreen: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState(initialMonth);
   const [selectedYear, setSelectedYear] = useState(initialYear);
 
-  // Calculate child's age in years
+  const currentYear = new Date().getFullYear();
+  const months = Array.from({ length: 12 }, (_, i) => t(`months.short${i}`));
+  const years = Array.from({ length: 13 }, (_, i) => String(currentYear - 12 + i));
+  const initialYearIndex = years.indexOf(String(initialYear));
+
   const getChildAge = () => {
     const birthday = new Date(selectedYear, selectedMonth, 1);
     const today = new Date();
-    const ageInYears = today.getFullYear() - birthday.getFullYear();
-    const monthDifference = today.getMonth() - birthday.getMonth();
-
-    // Adjust age if birthday hasn't occurred yet this year
-    if (monthDifference < 0) {
-      return ageInYears - 1;
-    }
-    return ageInYears;
+    const age = today.getFullYear() - birthday.getFullYear();
+    return today.getMonth() < birthday.getMonth() ? age - 1 : age;
   };
 
   const childAge = getChildAge();
@@ -63,14 +141,8 @@ export const ChildBirthdayScreen: React.FC = () => {
     }
   };
 
-  const months = Array.from({ length: 12 }, (_, i) => t(`months.short${i}`));
-
-  // Generate years array (from 12 years ago to current year)
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 13 }, (_, i) => currentYear - 12 + i);
-
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.content}>
         <OnboardingProgressHeader phase={1} step={5} totalSteps={6} />
 
@@ -78,38 +150,50 @@ export const ChildBirthdayScreen: React.FC = () => {
           <Text style={styles.title}>{t('onboarding.childBirthday.title', { name: data.childName })}</Text>
         </View>
 
-        {/* Month and Year Pickers */}
         <View style={styles.pickersContainer}>
-          {/* Month Picker */}
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={selectedMonth}
-              onValueChange={(itemValue) => setSelectedMonth(itemValue)}
-              style={styles.picker}
-              itemStyle={styles.pickerItem}
-            >
-              {months.map((month, index) => (
-                <Picker.Item key={index} label={month} value={index} />
-              ))}
-            </Picker>
-          </View>
-
-          {/* Year Picker */}
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={selectedYear}
-              onValueChange={(itemValue) => setSelectedYear(itemValue)}
-              style={styles.picker}
-              itemStyle={styles.pickerItem}
-            >
-              {years.map((year) => (
-                <Picker.Item key={year} label={year.toString()} value={year} />
-              ))}
-            </Picker>
-          </View>
+          {Platform.OS === 'ios' ? (
+            <>
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  selectedValue={selectedMonth}
+                  onValueChange={(v) => setSelectedMonth(v)}
+                  style={styles.picker}
+                  itemStyle={styles.pickerItem}
+                >
+                  {months.map((month, index) => (
+                    <Picker.Item key={index} label={month} value={index} />
+                  ))}
+                </Picker>
+              </View>
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  selectedValue={selectedYear}
+                  onValueChange={(v) => setSelectedYear(v)}
+                  style={styles.picker}
+                  itemStyle={styles.pickerItem}
+                >
+                  {years.map((year) => (
+                    <Picker.Item key={year} label={year} value={Number(year)} />
+                  ))}
+                </Picker>
+              </View>
+            </>
+          ) : (
+            <>
+              <ScrollPicker
+                items={months}
+                selectedIndex={initialMonth}
+                onSelect={setSelectedMonth}
+              />
+              <ScrollPicker
+                items={years}
+                selectedIndex={initialYearIndex >= 0 ? initialYearIndex : years.length - 4}
+                onSelect={(i) => setSelectedYear(Number(years[i]))}
+              />
+            </>
+          )}
         </View>
 
-        {/* Age-based message */}
         {(childAge < 2 || childAge > 7) && (
           <View style={styles.messageContainer}>
             <Text style={styles.messageText}>
@@ -119,14 +203,13 @@ export const ChildBirthdayScreen: React.FC = () => {
         )}
       </View>
 
-      {/* Button row pinned to bottom, outside picker's touch area */}
       <View style={styles.footer}>
         <OnboardingButtonRow
           onBack={handleBack}
           onContinue={handleContinue}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -145,19 +228,19 @@ const styles = StyleSheet.create({
   },
   header: {
     marginTop: 32,
-    marginBottom: 32,
+    marginBottom: 40,
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 24,
     color: '#4A5565',
-    marginBottom: 12,
     textAlign: 'center',
   },
   pickersContainer: {
     flexDirection: 'row',
-    gap: 12,
+    gap: Platform.OS === 'android' ? 0 : 12,
     marginBottom: 24,
+    paddingHorizontal: 8,
   },
   pickerWrapper: {
     flex: 1,
@@ -173,7 +256,6 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     marginTop: 16,
-    marginBottom: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#F3E8FF',
@@ -184,12 +266,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4A5565',
     lineHeight: 20,
-    textAlign: 'left',
-  },
-  boldText: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-  },
-  spacer: {
-    flex: 1,
   },
 });

@@ -9,10 +9,11 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
@@ -23,6 +24,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export const ParentingIntroScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => { amplitudeService.trackOnboardingScreen('parenting_intro', 11); }, []);
 
@@ -33,7 +35,7 @@ export const ParentingIntroScreen: React.FC = () => {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.content}>
         <Text style={styles.title}>{t('onboarding.parentingIntro.title')}</Text>
 
@@ -57,13 +59,13 @@ export const ParentingIntroScreen: React.FC = () => {
         </View>
       </View>
 
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + 12 }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('Demo5')}
           activeOpacity={0.8}
         >
-          <Text style={styles.backButtonText}>←</Text>
+          <Ionicons name="arrow-back" size={22} color="#1F2937" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
@@ -73,7 +75,7 @@ export const ParentingIntroScreen: React.FC = () => {
           <Text style={styles.buttonText}>{t('onboarding.parentingIntro.continueButton')}</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -144,7 +146,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 16,
     gap: 12,
   },
   backButton: {
@@ -155,10 +156,6 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  backButtonText: {
-    fontSize: 22,
-    color: '#1F2937',
   },
   button: {
     flex: 1,

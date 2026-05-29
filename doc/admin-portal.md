@@ -354,7 +354,7 @@ The send script hard-codes `daysLeft` and `trialEndFormatted` from the draft run
 - Shows the user's name, email, and ID
 - Two side-by-side tables:
   - **Lessons completed** — module, lesson title, completed date
-  - **Sessions** — session ID, mode, status, date
+  - **Sessions** — session ID, mode, status, score, date
 
 ### Notifications (`/notifications`)
 

@@ -8,11 +8,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   Image,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp, OnboardingStackParamList } from '../../navigation/types';
@@ -99,9 +99,10 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
 
   const markerPosition = Math.max(0, Math.min(1, (totalScore - SCALE_MIN) / SCALE_RANGE));
   const [nameLabelWidth, setNameLabelWidth] = useState(0);
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -252,7 +253,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
       </ScrollView>
 
       {/* Footer */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         <TouchableOpacity
           style={styles.button}
           onPress={() => { amplitudeService.trackOnboardingStepCompleted('child_behavior_profile', 28); navigation.navigate('Intro3'); }}
@@ -261,7 +262,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
           <Text style={styles.buttonText}>{t('onboarding.childBehaviorProfile.continueButton')}</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -522,7 +523,7 @@ const styles = StyleSheet.create({
   // Footer
   footer: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 16,
     backgroundColor: COLORS.white,
   },
   button: {

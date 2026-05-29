@@ -969,6 +969,7 @@ router.get('/users/:id/profile', requireAdminAuth, async (req, res) => {
           id: true,
           mode: true,
           analysisStatus: true,
+          overallScore: true,
           createdAt: true,
         },
         orderBy: { createdAt: 'desc' },
@@ -986,6 +987,7 @@ router.get('/users/:id/profile', requireAdminAuth, async (req, res) => {
         id: s.id,
         mode: s.mode,
         status: s.analysisStatus,
+        overallScore: s.overallScore,
         createdAt: s.createdAt,
       })),
     });

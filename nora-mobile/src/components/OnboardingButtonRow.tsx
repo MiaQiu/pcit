@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OnboardingBackButton } from './OnboardingBackButton';
 import { OnboardingButton } from './OnboardingButton';
 
@@ -21,8 +22,11 @@ export const OnboardingButtonRow: React.FC<OnboardingButtonRowProps> = ({
   continueDisabled = false,
   continueText,
 }) => {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = insets.bottom + 12;
+
   return (
-    <View style={styles.buttonRow}>
+    <View style={[styles.buttonRow, { paddingBottom: bottomPadding }]}>
       {onBack ? <OnboardingBackButton onPress={onBack} /> : null}
       <OnboardingButton
         onPress={onContinue}
@@ -38,7 +42,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
     paddingHorizontal: 0,
-    paddingBottom: 10,
     backgroundColor: '#FFFFFF',
     gap: 12,
   },

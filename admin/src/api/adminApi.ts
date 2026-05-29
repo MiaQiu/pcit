@@ -135,6 +135,7 @@ export interface UserProfile {
     id: string;
     mode: string;
     status: string;
+    overallScore: number | null;
     createdAt: string;
   }>;
 }

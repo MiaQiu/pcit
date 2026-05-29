@@ -9,11 +9,11 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   ImageSourcePropType,
   Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -38,8 +38,10 @@ export const IntroScreenTemplate: React.FC<IntroScreenTemplateProps> = ({
   onBack,
   header,
 }) => {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.content}>
         {header}
         {/* Content + Illustration centred as a group */}
@@ -69,7 +71,7 @@ export const IntroScreenTemplate: React.FC<IntroScreenTemplateProps> = ({
       </View>
 
       {/* Buttons */}
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, !onBack && { paddingBottom: insets.bottom + 12 }]}>
         {onBack ? (
           <OnboardingButtonRow
             onBack={onBack}
@@ -86,7 +88,7 @@ export const IntroScreenTemplate: React.FC<IntroScreenTemplateProps> = ({
           </TouchableOpacity>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

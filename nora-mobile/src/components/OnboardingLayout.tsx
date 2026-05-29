@@ -7,11 +7,11 @@ import React from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;
@@ -24,35 +24,38 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   useKeyboardAvoid = false,
   useScrollView = false,
 }) => {
+  const insets = useSafeAreaInsets();
+  const containerStyle = [styles.container, { paddingTop: insets.top }];
+
   if (useScrollView) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={containerStyle}>
         <View style={styles.wrapper}>
           <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
             <View style={styles.content}>{children}</View>
           </ScrollView>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (useKeyboardAvoid) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={containerStyle}>
         <KeyboardAvoidingView
           style={styles.keyboardView}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <View style={styles.content}>{children}</View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={containerStyle}>
       <View style={styles.content}>{children}</View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -78,7 +81,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 60,
-    //paddingBottom: 32,
     justifyContent: 'space-between',
   },
 });

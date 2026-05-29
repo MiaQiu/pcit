@@ -96,6 +96,7 @@ export default function UserDetailPage() {
                     <th>Session ID</th>
                     <th>Mode</th>
                     <th>Status</th>
+                    <th>Score</th>
                     <th>Date</th>
                   </tr>
                 </thead>
@@ -109,6 +110,7 @@ export default function UserDetailPage() {
                           {s.status}
                         </span>
                       </td>
+                      <td>{s.overallScore ?? '—'}</td>
                       <td>{fmt(s.createdAt)}</td>
                     </tr>
                   ))}

@@ -4,7 +4,8 @@
  */
 
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface OnboardingBackButtonProps {
   onPress: () => void;
@@ -19,7 +20,7 @@ export const OnboardingBackButton: React.FC<OnboardingBackButtonProps> = ({
       onPress={onPress}
       activeOpacity={0.85}
     >
-      <Text style={styles.buttonText}>←</Text>
+      <Ionicons name="arrow-back" size={22} color="#1F2937" />
     </TouchableOpacity>
   );
 };
@@ -33,9 +34,5 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  buttonText: {
-    fontSize: 22,
-    color: '#1F2937',
   },
 });

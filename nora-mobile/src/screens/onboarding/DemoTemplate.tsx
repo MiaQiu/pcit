@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -45,7 +46,7 @@ export const DemoTemplate: React.FC<DemoTemplateProps> = ({
       {/* Buttons — fixed at bottom */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         <TouchableOpacity style={styles.backButton} onPress={onBack} activeOpacity={0.85}>
-          <Text style={styles.backButtonText}>←</Text>
+          <Ionicons name="arrow-back" size={22} color="#1F2937" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={onNext} activeOpacity={0.85}>
           <Text style={styles.buttonText}>{t('onboarding.next')}</Text>
@@ -98,10 +99,6 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  backButtonText: {
-    fontSize: 22,
-    color: '#1F2937',
   },
   button: {
     flex: 1,

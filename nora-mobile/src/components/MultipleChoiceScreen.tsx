@@ -10,13 +10,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
   TextInput,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStackNavigationProp } from '../navigation/types';
@@ -73,6 +73,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
 }) => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
+  const insets = useSafeAreaInsets();
 
   // Get initial value from context
   const getInitialValue = () => {
@@ -207,11 +208,10 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
     : selectedValue !== null && selectedValue !== undefined;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.content}>
           {/* Progress Header */}
@@ -289,7 +289,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
           )}
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 
