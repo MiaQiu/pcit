@@ -45,6 +45,7 @@ export interface User {
   trialEndDate?: Date;
   subscriptionStartDate?: Date;
   subscriptionEndDate?: Date;
+  isFreeAccount?: boolean;
 }
 
 // Auth types

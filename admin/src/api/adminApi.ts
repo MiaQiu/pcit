@@ -92,6 +92,7 @@ export interface UserSummary {
   lastActiveAt: string | null;
   sessionCount: number;
   developmentalVisible: boolean;
+  isFreeAccount: boolean;
   subscriptionStatus: string;
   subscriptionPlan: string;
   subscriptionStartDate: string | null;
@@ -115,6 +116,7 @@ export interface SubscriptionUser {
   subscriptionEndDate: string | null;
   trialStartDate: string | null;
   trialEndDate: string | null;
+  isFreeAccount: boolean;
 }
 
 export interface TrialExpiryResult {
@@ -454,6 +456,42 @@ export async function toggleDevelopmentalVisibility(
   }, opts);
 }
 
+export async function toggleFreeAccount(
+  userId: string,
+  isFreeAccount: boolean,
+  opts?: ApiEnvOpts
+): Promise<{ userId: string; isFreeAccount: boolean }> {
+  return apiFetchEnv(`/api/admin/users/${userId}/free-account`, {
+    method: 'PUT',
+    body: JSON.stringify({ isFreeAccount }),
+  }, opts);
+}
+
+export interface WhitelistEntry {
+  id: string;
+  email: string;
+  createdAt: string;
+}
+
+export async function getFreeAccountWhitelist(opts?: ApiEnvOpts): Promise<WhitelistEntry[]> {
+  const data = await apiFetchEnv<{ entries: WhitelistEntry[] }>('/api/admin/free-account-whitelist', {}, opts);
+  return data.entries;
+}
+
+export async function addToFreeAccountWhitelist(
+  email: string,
+  opts?: ApiEnvOpts
+): Promise<{ entry: WhitelistEntry; userGranted: boolean }> {
+  return apiFetchEnv('/api/admin/free-account-whitelist', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  }, opts);
+}
+
+export async function removeFromFreeAccountWhitelist(id: string, opts?: ApiEnvOpts): Promise<void> {
+  await apiFetchEnv(`/api/admin/free-account-whitelist/${id}`, { method: 'DELETE' }, opts);
+}
+
 export async function sendNotifications(
   userIds: string[],
   title: string,
@@ -479,6 +517,17 @@ export async function sendTrialExpiryEmails(daysBeforeExpiry = 3, opts?: ApiEnvO
     method: 'POST',
     body: JSON.stringify({ daysBeforeExpiry }),
   }, opts);
+}
+
+export interface RCSyncResult {
+  ok: boolean;
+  synced: number;
+  failed: number;
+  skipped: number;
+}
+
+export async function syncSubscriptionsFromRC(opts?: ApiEnvOpts): Promise<RCSyncResult> {
+  return apiFetchEnv<RCSyncResult>('/api/admin/subscriptions/sync-from-rc', { method: 'POST' }, opts);
 }
 
 // ---- Sessions ----

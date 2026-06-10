@@ -110,6 +110,13 @@ router.post('/social', async (req, res) => {
           childConditions: JSON.stringify(['none']), // Will be updated during onboarding
         },
       });
+
+      // Auto-grant free account if email is whitelisted
+      const whitelisted = await prisma.freeAccountWhitelist.findUnique({ where: { emailHash } });
+      if (whitelisted) {
+        await prisma.user.update({ where: { id: user.id }, data: { isFreeAccount: true } });
+        user = { ...user, isFreeAccount: true };
+      }
     }
 
     // Decrypt user data

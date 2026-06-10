@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getSubscriptions, sendTrialExpiryEmails, SubscriptionUser } from '../api/adminApi';
+import { getSubscriptions, sendTrialExpiryEmails, syncSubscriptionsFromRC, toggleFreeAccount, SubscriptionUser } from '../api/adminApi';
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
 
 type SortField = 'name' | 'email' | 'createdAt' | 'subscriptionStatus' | 'subscriptionPlan' | 'trialEndDate' | 'subscriptionEndDate';
@@ -41,6 +41,12 @@ export default function SubscriptionsPage() {
   const [sendResult, setSendResult] = useState<{ found: number; sent: number; failed: number } | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [daysInput, setDaysInput] = useState('3');
+
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ synced: number; failed: number; skipped: number } | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  const [togglingFreeAccount, setTogglingFreeAccount] = useState<string | null>(null);
 
   useEffect(() => {
     const callOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
@@ -95,11 +101,47 @@ export default function SubscriptionsPage() {
     }
   }
 
+  async function handleSyncFromRC() {
+    if (!window.confirm('Fetch latest subscription data from RevenueCat for all users and update the database? This may take a minute.')) return;
+    const callOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
+    setSyncing(true);
+    setSyncResult(null);
+    setSyncError(null);
+    try {
+      const result = await syncSubscriptionsFromRC(callOpts);
+      setSyncResult({ synced: result.synced, failed: result.failed, skipped: result.skipped });
+      // Refresh table after sync
+      const fresh = await getSubscriptions(statusFilter || undefined, callOpts);
+      setUsers(fresh);
+    } catch (err: unknown) {
+      setSyncError(err instanceof Error ? err.message : 'Sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function handleToggleFreeAccount(user: SubscriptionUser) {
+    const next = !user.isFreeAccount;
+    const action = next ? 'Grant' : 'Revoke';
+    if (!window.confirm(`${action} free account access for ${user.name} (${user.email})?`)) return;
+    const callOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
+    setTogglingFreeAccount(user.id);
+    try {
+      await toggleFreeAccount(user.id, next, callOpts);
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, isFreeAccount: next } : u));
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to update');
+    } finally {
+      setTogglingFreeAccount(null);
+    }
+  }
+
   // Stats
   const countByStatus = users.reduce<Record<string, number>>((acc, u) => {
     acc[u.subscriptionStatus] = (acc[u.subscriptionStatus] ?? 0) + 1;
     return acc;
   }, {});
+  const freeAccountCount = users.filter(u => u.isFreeAccount).length;
 
   const thStyle = { cursor: 'pointer', userSelect: 'none' as const, whiteSpace: 'nowrap' as const };
 
@@ -139,6 +181,20 @@ export default function SubscriptionsPage() {
             <span style={{ color: '#6b7280', fontSize: 13 }}>{status}</span>
           </div>
         ))}
+        {freeAccountCount > 0 && (
+          <div style={{
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            borderRadius: 8,
+            padding: '8px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}>
+            <span style={{ fontWeight: 600 }}>{freeAccountCount}</span>
+            <span style={{ color: '#166534', fontSize: 13 }}>Free Account</span>
+          </div>
+        )}
       </div>
 
       {/* Controls */}
@@ -157,7 +213,20 @@ export default function SubscriptionsPage() {
           </select>
         </div>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', gap: 16 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
+              Sync status &amp; plan from RevenueCat
+            </label>
+            <button
+              className="btn btn-secondary"
+              onClick={handleSyncFromRC}
+              disabled={syncing}
+              style={{ height: 36 }}
+            >
+              {syncing ? 'Syncing…' : 'Sync from RevenueCat'}
+            </button>
+          </div>
           <div>
             <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
               Send expiry reminders — trial ending in
@@ -185,6 +254,14 @@ export default function SubscriptionsPage() {
         </div>
       </div>
 
+      {syncResult && (
+        <div className="success-banner" style={{ marginBottom: 8 }}>
+          RevenueCat sync complete — updated: {syncResult.synced}, failed: {syncResult.failed}, no RC record: {syncResult.skipped}
+        </div>
+      )}
+      {syncError && (
+        <div className="error-state" style={{ marginBottom: 8 }}>{syncError}</div>
+      )}
       {sendResult && (
         <div className="success-banner" style={{ marginBottom: 16 }}>
           Emails sent — found: {sendResult.found}, sent: {sendResult.sent}, failed: {sendResult.failed}
@@ -211,6 +288,7 @@ export default function SubscriptionsPage() {
                 <th style={thStyle} onClick={() => handleSort('trialEndDate')}>Trial End{sortIndicator('trialEndDate')}</th>
                 <th style={thStyle} onClick={() => handleSort('subscriptionEndDate')}>Sub End{sortIndicator('subscriptionEndDate')}</th>
                 <th style={thStyle} onClick={() => handleSort('createdAt')}>Joined{sortIndicator('createdAt')}</th>
+                <th>Free Account</th>
               </tr>
             </thead>
             <tbody>
@@ -253,6 +331,28 @@ export default function SubscriptionsPage() {
                     </td>
                     <td>{fmt(u.subscriptionEndDate)}</td>
                     <td>{fmt(u.createdAt)}</td>
+                    <td>
+                      {u.isFreeAccount && (
+                        <span style={{
+                          display: 'inline-block',
+                          background: '#dcfce7',
+                          color: '#166534',
+                          borderRadius: 10,
+                          padding: '1px 8px',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          marginRight: 6,
+                        }}>FREE</span>
+                      )}
+                      <button
+                        className="btn btn-secondary"
+                        style={{ fontSize: 12, padding: '2px 10px', height: 26 }}
+                        disabled={togglingFreeAccount === u.id}
+                        onClick={() => handleToggleFreeAccount(u)}
+                      >
+                        {togglingFreeAccount === u.id ? '…' : u.isFreeAccount ? 'Revoke' : 'Grant'}
+                      </button>
+                    </td>
                   </tr>
                 );
               })}

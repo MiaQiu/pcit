@@ -120,9 +120,10 @@ All require admin auth.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/admin/users` | List all users with name, email, joined date, last active, session count, tag, child birthday, issue, and latest WACB total score |
+| `GET` | `/api/admin/users` | List all users with name, email, joined date, last active, session count, tag, child birthday, issue, latest WACB total score, and `isFreeAccount` flag |
 | `PUT` | `/api/admin/users/:id/tag` | Update user tag (`user` or `tester`) |
 | `GET` | `/api/admin/users/:id/profile` | User's completed lessons and sessions |
+| `PUT` | `/api/admin/users/:id/free-account` | Grant or revoke free account access. Body: `{ isFreeAccount: boolean }` |
 
 ### Notifications
 
@@ -138,8 +139,20 @@ All require admin auth.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/admin/subscriptions` | List all users with subscription status/plan/trial dates. Optional `?status=` filter (TRIAL, ACTIVE, EXPIRED, CANCELLED, NONE, INACTIVE) |
+| `GET` | `/api/admin/subscriptions` | List all users with subscription status/plan/trial dates, and `isFreeAccount` flag. Optional `?status=` filter (TRIAL, ACTIVE, EXPIRED, CANCELLED, NONE, INACTIVE) |
+| `POST` | `/api/admin/subscriptions/sync-from-rc` | Fetch RevenueCat subscription data for every user and update the DB. Rate-limited (~100 req/min). Returns `{ synced, failed, skipped }` |
 | `POST` | `/api/admin/subscriptions/send-trial-expiry-emails` | Manually trigger trial expiry reminder emails. Body: `{ daysBeforeExpiry?: number }` (default: 3) |
+
+### Free Accounts
+
+All require admin auth.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `PUT` | `/api/admin/users/:id/free-account` | Grant or revoke free account for an existing user. Body: `{ isFreeAccount: boolean }` |
+| `GET` | `/api/admin/free-account-whitelist` | List all whitelist entries (emails that will receive free access on signup) |
+| `POST` | `/api/admin/free-account-whitelist` | Add an email to the whitelist. Body: `{ email: string }`. If the account already exists, grants free access immediately and returns `{ userGranted: true }` |
+| `DELETE` | `/api/admin/free-account-whitelist/:id` | Remove an email from the whitelist. Does **not** revoke access from users who have already signed up |
 
 ### Weekly Reports
 
@@ -206,7 +219,8 @@ admin/
     │   ├── LessonListPage.tsx            # Module-filterable table with delete
     │   ├── LessonEditorPage.tsx          # Split-pane: form + live preview
     │   ├── NotificationsPage.tsx         # User selection + notification sender
-    │   └── SubscriptionsPage.tsx         # Subscription status view + trial expiry email trigger
+    │   ├── SubscriptionsPage.tsx         # Subscription status view + trial expiry email trigger
+    │   └── FreeAccountsPage.tsx          # Grant/revoke free access; manage signup whitelist
     ├── components/
     │   ├── layout/
     │   │   └── AdminLayout.tsx           # Sidebar + content shell
@@ -281,9 +295,41 @@ The body text textarea supports:
 - Table of all users with their subscription status, plan, trial start/end, and subscription start/end dates
 - **Status badge** color-coded: TRIAL (amber), ACTIVE (green), EXPIRED (red), CANCELLED/NONE/INACTIVE (grey)
 - **Trial End** column highlights users whose trial expires within 7 days; shows days remaining in parentheses
+- **Free Account** column: shows a green "FREE" badge for free-account users; Grant/Revoke button per row
 - Filter dropdown to show only users in a specific status (TRIAL, ACTIVE, EXPIRED, etc.)
-- **Status summary strip** at the top showing counts per status
+- **Status summary strip** at the top showing counts per status, including free account count
+- **Sync from RevenueCat** button: fetches live subscription data from RevenueCat for all users, updates the DB, then refreshes the table. Takes ~1 min for 100 users (rate-limited). Use this whenever the displayed status/plan looks stale
 - **Send Emails** panel: set "days before expiry" (default 3), click "Send Emails" to immediately dispatch trial expiry reminder emails to all matching TRIAL users — useful for ad-hoc sends outside the daily cron
+
+### Free Accounts (`/free-accounts`)
+
+Central place to manage subscription-bypass access. Two sections:
+
+**Active — signed up**
+
+- Lists all users with `isFreeAccount = true` (already have an account)
+- Columns: name, email, joined date, Revoke button
+- **Revoke** removes free access; user falls back to normal subscription rules
+
+**Pending signup — whitelist**
+
+- Lists emails in `FreeAccountWhitelist` that have not yet signed up (deduped — emails that appear in the Active section are hidden)
+- Columns: email, date whitelisted, Remove button
+- **Remove** deletes the whitelist entry; does not affect users who have already signed up
+
+**Grant free access form** (top of page)
+
+- Enter any email address and click **Grant**
+- If an account with that email already exists: `isFreeAccount` is set to `true` immediately and the user moves to the Active section
+- If no account exists: the email is added to the whitelist and appears in the Pending section — free access is granted automatically when they sign up
+
+**How the whitelist works at signup:**
+
+When a new user signs up (email/password or social auth), the server computes a SHA-256 hash of their email and checks `FreeAccountWhitelist`. If a match is found, `isFreeAccount` is set to `true` before the session is created — the user never hits the paywall.
+
+**Mobile behaviour:**
+
+`SubscriptionContext` force-refreshes the user from the server on each app launch (`getCurrentUser(true)`) so the `isFreeAccount` flag is always current. When `isFreeAccount` is true, RevenueCat is skipped entirely and `isSubscribed` is set to `true`. Any stale `@nora_free_limit_reached` AsyncStorage flag is cleared so the Record tab never redirects to the subscription screen.
 
 ### Trial Expiry Notification System
 

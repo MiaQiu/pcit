@@ -221,21 +221,27 @@ class AuthService {
 
     this._inflight = (async () => {
       try {
-        const response = await fetch(`${this.apiUrl}/api/auth/me`, {
+        let response = await fetch(`${this.apiUrl}/api/auth/me`, {
           headers: {
             Authorization: `Bearer ${this.accessToken}`,
             'ngrok-skip-browser-warning': 'true',
           },
         });
 
+        if (response.status === 401) {
+          const refreshed = await this.refreshAccessToken();
+          if (!refreshed) throw new Error('Unauthorized');
+          // Retry inline — avoid recursive getCurrentUser() call while _inflight is still set,
+          // which would cause the promise to wait on itself and never resolve.
+          response = await fetch(`${this.apiUrl}/api/auth/me`, {
+            headers: {
+              Authorization: `Bearer ${this.accessToken}`,
+              'ngrok-skip-browser-warning': 'true',
+            },
+          });
+        }
+
         if (!response.ok) {
-          if (response.status === 401) {
-            const refreshed = await this.refreshAccessToken();
-            if (refreshed) {
-              return this.getCurrentUser(forceRefresh);
-            }
-            throw new Error('Unauthorized');
-          }
           const body = await response.json().catch(() => ({}));
           throw new Error(body.error || `Server error ${response.status}`);
         }

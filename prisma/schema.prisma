@@ -8,6 +8,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model FreeAccountWhitelist {
+  id        String   @id @default(uuid())
+  emailHash String   @unique
+  email     String
+  createdAt DateTime @default(now())
+
+  @@index([emailHash])
+}
+
 model Keyword {
   id         String   @id
   term       String   @unique
@@ -413,6 +422,7 @@ model User {
   pushTokenUpdatedAt       DateTime?
   revenueCatCustomerId     String?              @unique
   developmentalVisible     Boolean              @default(false)
+  isFreeAccount            Boolean              @default(false)
   tag                      String               @default("user")
   referralCode          String?              @unique
   preferredLocale       String               @default("en")
@@ -435,6 +445,7 @@ model User {
   WeeklyReport          WeeklyReport[]
   CoachChatMessage      CoachChatMessage[]
   AbcLog                AbcLog[]
+  AbcInsight            AbcInsight[]
   referralsGiven        Referral[]           @relation("ReferralsGiven")
   referralReceived      Referral?            @relation("ReferralReceived")
 
@@ -893,6 +904,9 @@ model AbcLog {
   logType        AbcLogType @default(CHALLENGING)
   antecedents    String[]
   behaviors      String[]
+  situations     String[]
+  places         String[]
+  persons        String[]
   consequences   String[]
   intensity      Int?
   durationBucket String?
@@ -909,4 +923,14 @@ model AbcLog {
 enum AbcLogType {
   CHALLENGING
   POSITIVE
+}
+
+model AbcInsight {
+  id        String   @id @default(uuid())
+  userId    String
+  insight   Json
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }

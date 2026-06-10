@@ -814,6 +814,7 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         pushTokenUpdatedAt: true,
         createdAt: true,
         developmentalVisible: true,
+        isFreeAccount: true,
         subscriptionStatus: true,
         subscriptionPlan: true,
         subscriptionStartDate: true,
@@ -860,6 +861,7 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         lastActiveAt,
         sessionCount: u._count.Session,
         developmentalVisible: u.developmentalVisible,
+        isFreeAccount: u.isFreeAccount,
         subscriptionStatus: u.subscriptionStatus,
         subscriptionPlan: u.subscriptionPlan,
         subscriptionStartDate: u.subscriptionStartDate,
@@ -1235,6 +1237,102 @@ router.put('/users/:id/developmental-visibility', requireAdminAuth, async (req, 
   } catch (error) {
     console.error('Admin toggle developmental visibility error:', error);
     res.status(500).json({ error: 'Failed to update developmental visibility' });
+  }
+});
+
+/**
+ * PUT /api/admin/users/:id/free-account
+ * Grant or revoke complimentary free access for a user
+ */
+router.put('/users/:id/free-account', requireAdminAuth, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { isFreeAccount } = req.body;
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { isFreeAccount: !!isFreeAccount },
+      select: { id: true, isFreeAccount: true },
+    });
+
+    res.json({ userId: updated.id, isFreeAccount: updated.isFreeAccount });
+  } catch (error) {
+    console.error('Admin toggle free account error:', error);
+    res.status(500).json({ error: 'Failed to update free account status' });
+  }
+});
+
+// ============================================================================
+// FREE ACCOUNT WHITELIST ENDPOINTS
+// ============================================================================
+
+/**
+ * GET /api/admin/free-account-whitelist
+ * List all whitelisted emails.
+ */
+router.get('/free-account-whitelist', requireAdminAuth, async (req, res) => {
+  try {
+    const entries = await prisma.freeAccountWhitelist.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, email: true, createdAt: true },
+    });
+    res.json({ entries });
+  } catch (error) {
+    console.error('Admin get whitelist error:', error);
+    res.status(500).json({ error: 'Failed to fetch whitelist' });
+  }
+});
+
+/**
+ * POST /api/admin/free-account-whitelist
+ * Add an email to the whitelist. Also grants isFreeAccount on the user if they already exist.
+ */
+router.post('/free-account-whitelist', requireAdminAuth, async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'email is required' });
+    }
+
+    const normalised = email.trim().toLowerCase();
+    const emailHash = crypto.createHash('sha256').update(normalised).digest('hex');
+
+    const entry = await prisma.freeAccountWhitelist.upsert({
+      where: { emailHash },
+      update: {},
+      create: { id: crypto.randomUUID(), emailHash, email: normalised },
+    });
+
+    // If the user already exists, grant isFreeAccount immediately
+    const existingUser = await prisma.user.findUnique({ where: { emailHash } });
+    if (existingUser && !existingUser.isFreeAccount) {
+      await prisma.user.update({ where: { id: existingUser.id }, data: { isFreeAccount: true } });
+    }
+
+    res.json({ entry, userGranted: !!existingUser });
+  } catch (error) {
+    console.error('Admin add whitelist error:', error);
+    res.status(500).json({ error: 'Failed to add to whitelist' });
+  }
+});
+
+/**
+ * DELETE /api/admin/free-account-whitelist/:id
+ * Remove an entry from the whitelist (does NOT revoke isFreeAccount on the user).
+ */
+router.delete('/free-account-whitelist/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.freeAccountWhitelist.delete({ where: { id } });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Admin delete whitelist error:', error);
+    res.status(500).json({ error: 'Failed to remove from whitelist' });
   }
 });
 
@@ -1756,6 +1854,72 @@ router.post('/sessions/:id/rerun-cdi-coaching', requireAdminAuth, async (req, re
 // SUBSCRIPTIONS
 // ============================================================================
 
+async function fetchRCSubscriber(userId) {
+  const key = process.env.REVENUECAT_SECRET_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(userId)}`, {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!res.ok) return null;
+    const { subscriber } = await res.json();
+    return subscriber;
+  } catch {
+    return null;
+  }
+}
+
+function mapRCSubscriberToFields(subscriber) {
+  const empty = { subscriptionStatus: 'NONE', subscriptionPlan: 'FREE', trialStartDate: null, trialEndDate: null, subscriptionStartDate: null, subscriptionEndDate: null };
+  if (!subscriber?.subscriptions || Object.keys(subscriber.subscriptions).length === 0) return empty;
+
+  const now = new Date();
+  const premiumEntitlement = subscriber.entitlements?.['Nora Premium'];
+  const isEntitlementActive = premiumEntitlement &&
+    (!premiumEntitlement.expires_date || new Date(premiumEntitlement.expires_date) > now);
+
+  let activeSub = null;
+  if (isEntitlementActive && premiumEntitlement.product_identifier) {
+    activeSub = subscriber.subscriptions[premiumEntitlement.product_identifier] ?? null;
+  }
+
+  let subscriptionStatus = 'NONE';
+  let subscriptionPlan = 'FREE';
+
+  if (isEntitlementActive && activeSub) {
+    if (activeSub.period_type === 'trial') {
+      subscriptionStatus = 'TRIAL';
+      subscriptionPlan = 'TRIAL';
+    } else {
+      subscriptionStatus = 'ACTIVE';
+      subscriptionPlan = 'PREMIUM';
+    }
+  } else {
+    const allSubs = Object.values(subscriber.subscriptions);
+    const hasAnyCancelled = allSubs.some(s => s.unsubscribe_detected_at);
+    const hasAnyExpired = allSubs.some(s => new Date(s.expires_date) < now);
+    if (hasAnyCancelled) {
+      subscriptionStatus = 'CANCELLED';
+    } else if (hasAnyExpired) {
+      subscriptionStatus = 'EXPIRED';
+    }
+  }
+
+  const trialEntry = Object.values(subscriber.subscriptions).find(s => s.period_type === 'trial');
+  const latestSub = Object.values(subscriber.subscriptions).sort(
+    (a, b) => new Date(b.purchase_date) - new Date(a.purchase_date)
+  )[0];
+
+  return {
+    subscriptionStatus,
+    subscriptionPlan,
+    trialStartDate: trialEntry ? new Date(trialEntry.purchase_date) : null,
+    trialEndDate: trialEntry ? new Date(trialEntry.expires_date) : null,
+    subscriptionStartDate: latestSub ? new Date(latestSub.purchase_date) : null,
+    subscriptionEndDate: latestSub ? new Date(latestSub.expires_date) : null,
+  };
+}
+
 /**
  * GET /api/admin/subscriptions
  * List all users with their subscription status and trial info.
@@ -1780,6 +1944,7 @@ router.get('/subscriptions', requireAdminAuth, async (req, res) => {
         subscriptionEndDate: true,
         trialStartDate: true,
         trialEndDate: true,
+        isFreeAccount: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -1798,6 +1963,7 @@ router.get('/subscriptions', requireAdminAuth, async (req, res) => {
         subscriptionEndDate: u.subscriptionEndDate,
         trialStartDate: u.trialStartDate,
         trialEndDate: u.trialEndDate,
+        isFreeAccount: u.isFreeAccount,
       };
     });
 
@@ -1825,6 +1991,45 @@ router.post('/subscriptions/send-trial-expiry-emails', requireAdminAuth, async (
   } catch (error) {
     console.error('Admin send trial expiry emails error:', error);
     res.status(500).json({ error: 'Failed to send trial expiry emails' });
+  }
+});
+
+/**
+ * POST /api/admin/subscriptions/sync-from-rc
+ * Fetch subscription data from RevenueCat for every user and update the DB.
+ * Rate-limited to ~100 req/min (600ms delay between calls).
+ * Returns { synced, failed, skipped }.
+ */
+router.post('/subscriptions/sync-from-rc', requireAdminAuth, async (req, res) => {
+  if (!process.env.REVENUECAT_SECRET_KEY) {
+    return res.status(503).json({ error: 'REVENUECAT_SECRET_KEY not configured' });
+  }
+
+  try {
+    const users = await prisma.user.findMany({ select: { id: true } });
+    let synced = 0, failed = 0, skipped = 0;
+
+    for (const user of users) {
+      await new Promise(r => setTimeout(r, 600));
+      const subscriber = await fetchRCSubscriber(user.id);
+      if (!subscriber) { skipped++; continue; }
+
+      const fields = mapRCSubscriberToFields(subscriber);
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: fields,
+        });
+        synced++;
+      } catch {
+        failed++;
+      }
+    }
+
+    res.json({ ok: true, synced, failed, skipped });
+  } catch (error) {
+    console.error('Admin sync-from-rc error:', error);
+    res.status(500).json({ error: 'Sync failed' });
   }
 });
 

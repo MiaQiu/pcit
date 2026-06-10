@@ -41,11 +41,13 @@ export const SubscriptionScreen: React.FC = () => {
     purchasePackage,
     restorePurchases,
     refreshOfferings,
+    checkSubscriptionStatus,
     error: subscriptionError
   } = useSubscription();
 
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
   const [isLoading, setIsLoading] = useState(false);
+  const [checkingFreeAccount, setCheckingFreeAccount] = useState(true);
 
   const isReturningUser = !(data.name && data.name.trim() !== '');
 
@@ -84,20 +86,23 @@ export const SubscriptionScreen: React.FC = () => {
     }
   })();
 
-  // Reviewer bypass: skip paywall for Google Play review account
+  // Bypass paywall for free-account users — render nothing until check completes to avoid flash
   useEffect(() => {
-    authService.getCurrentUser().then(user => {
-      if (user?.email === 'test63@gmail.com') {
-        completeOnboarding().then(() => {
-          navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] }));
-        });
+    authService.getCurrentUser(true).then(async user => {
+      if (user?.isFreeAccount) {
+        // Update SubscriptionContext so Record tab won't redirect again after this
+        await checkSubscriptionStatus();
+        await completeOnboarding();
+        navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] }));
+      } else {
+        setCheckingFreeAccount(false);
       }
-    }).catch(() => {});
+    }).catch(() => setCheckingFreeAccount(false));
   }, []);
 
   useEffect(() => {
-    amplitudeService.trackOnboardingScreen('subscription', 35);
-  }, []);
+    if (!checkingFreeAccount) amplitudeService.trackOnboardingScreen('subscription', 35);
+  }, [checkingFreeAccount]);
 
   // Save all onboarding data to backend as soon as the subscription screen loads.
   // This ensures data is persisted even if the user exits without subscribing.
@@ -116,6 +121,8 @@ export const SubscriptionScreen: React.FC = () => {
       });
     }
   }, []);
+
+  if (checkingFreeAccount) return null;
 
   const handleBack = () => navigation.goBack();
 

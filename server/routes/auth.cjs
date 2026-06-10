@@ -106,7 +106,7 @@ router.post('/signup', async (req, res, next) => {
 
     // Create user with INACTIVE subscription status
     // Subscription will be activated by RevenueCat webhook after purchase
-    const user = await prisma.user.create({
+    let user = await prisma.user.create({
       data: {
         id: crypto.randomUUID(),
         email: encryptedData.email,
@@ -123,6 +123,13 @@ router.post('/signup', async (req, res, next) => {
         subscriptionStatus: 'INACTIVE',
       }
     });
+
+    // Auto-grant free account if email is whitelisted
+    const whitelisted = await prisma.freeAccountWhitelist.findUnique({ where: { emailHash } });
+    if (whitelisted) {
+      await prisma.user.update({ where: { id: user.id }, data: { isFreeAccount: true } });
+      user = { ...user, isFreeAccount: true };
+    }
 
     // Decrypt user data for token and response
     const decryptedUser = decryptUserData(user);
@@ -542,7 +549,8 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
         trialStartDate: true,
         trialEndDate: true,
         subscriptionStartDate: true,
-        subscriptionEndDate: true
+        subscriptionEndDate: true,
+        isFreeAccount: true
       }
     });
 

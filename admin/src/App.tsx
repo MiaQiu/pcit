@@ -12,6 +12,7 @@ import KeywordsPage from './pages/KeywordsPage';
 import UsersPage from './pages/UsersPage';
 import UserDetailPage from './pages/UserDetailPage';
 import SubscriptionsPage from './pages/SubscriptionsPage';
+import FreeAccountsPage from './pages/FreeAccountsPage';
 import ChatPage from './pages/ChatPage';
 import CodingReviewListPage from './pages/CodingReviewListPage';
 import CodingReviewDetailPage from './pages/CodingReviewDetailPage';
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="users/:userId" element={<UserDetailPage />} />
           <Route path="users/:userId/weekly-reports" element={<UserWeeklyReportsPage />} />
           <Route path="subscriptions" element={<SubscriptionsPage />} />
+          <Route path="free-accounts" element={<FreeAccountsPage />} />
           <Route path="chat" element={<ChatPage />} />
           <Route path="coding-review" element={<CodingReviewListPage />} />
           <Route path="coding-review/:id" element={<CodingReviewDetailPage />} />
