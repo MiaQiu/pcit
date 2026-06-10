@@ -805,6 +805,7 @@ router.put('/modules/:key', requireAdminAuth, async (req, res) => {
 router.get('/users', requireAdminAuth, async (req, res) => {
   try {
     const users = await prisma.user.findMany({
+      where: { NOT: { emailHash: { startsWith: 'deleted_' } } },
       select: {
         id: true,
         name: true,
@@ -1928,7 +1929,10 @@ function mapRCSubscriberToFields(subscriber) {
 router.get('/subscriptions', requireAdminAuth, async (req, res) => {
   try {
     const { status } = req.query;
-    const where = status ? { subscriptionStatus: status } : {};
+    const where = {
+      NOT: { emailHash: { startsWith: 'deleted_' } },
+      ...(status ? { subscriptionStatus: status } : {}),
+    };
 
     const users = await prisma.user.findMany({
       where,
@@ -2006,7 +2010,10 @@ router.post('/subscriptions/sync-from-rc', requireAdminAuth, async (req, res) =>
   }
 
   try {
-    const users = await prisma.user.findMany({ select: { id: true } });
+    const users = await prisma.user.findMany({
+      where: { NOT: { emailHash: { startsWith: 'deleted_' } } },
+      select: { id: true },
+    });
     let synced = 0, failed = 0, skipped = 0;
 
     for (const user of users) {
@@ -2044,13 +2051,16 @@ router.get('/coach/users', requireAdminAuth, async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
 
-    const where = q ? {
-      OR: [
-        { id: { contains: q } },
-        { name: { contains: q, mode: 'insensitive' } },
-        { email: { contains: q, mode: 'insensitive' } },
-      ],
-    } : {};
+    const where = {
+      NOT: { emailHash: { startsWith: 'deleted_' } },
+      ...(q ? {
+        OR: [
+          { id: { contains: q } },
+          { name: { contains: q, mode: 'insensitive' } },
+          { email: { contains: q, mode: 'insensitive' } },
+        ],
+      } : {}),
+    };
 
     const page  = Math.max(1, parseInt(req.query.page) || 1);
     const limit = 10;

@@ -139,7 +139,7 @@ All require admin auth.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/admin/subscriptions` | List all users with subscription status/plan/trial dates, and `isFreeAccount` flag. Optional `?status=` filter (TRIAL, ACTIVE, EXPIRED, CANCELLED, NONE, INACTIVE) |
+| `GET` | `/api/admin/subscriptions` | List all non-deleted users with subscription status/plan/trial dates, and `isFreeAccount` flag. Optional `?status=` filter (TRIAL, ACTIVE, EXPIRED, CANCELLED, NONE, INACTIVE) |
 | `POST` | `/api/admin/subscriptions/sync-from-rc` | Fetch RevenueCat subscription data for every user and update the DB. Rate-limited (~100 req/min). Returns `{ synced, failed, skipped }` |
 | `POST` | `/api/admin/subscriptions/send-trial-expiry-emails` | Manually trigger trial expiry reminder emails. Body: `{ daysBeforeExpiry?: number }` (default: 3) |
 
