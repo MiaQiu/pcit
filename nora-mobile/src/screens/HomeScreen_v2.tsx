@@ -33,6 +33,7 @@ import { COLORS, FONTS } from '../constants/assets';
 const DRAGON_ANIMATION = require('../../assets/images/Dragon_anime.mov');
 import { RootStackNavigationProp, RootTabNavigationProp } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
@@ -130,9 +131,10 @@ const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, 
 interface PlanItemProps {
   item: TodayPlanItem;
   onPress: () => void;
+  locked?: boolean;
 }
 
-const PlanItem: React.FC<PlanItemProps> = ({ item, onPress }) => (
+const PlanItem: React.FC<PlanItemProps> = ({ item, onPress, locked }) => (
   <TouchableOpacity style={styles.planItem} onPress={onPress} activeOpacity={0.7}>
     {/* Checkbox */}
     <View style={[styles.planCheckbox, item.isCompleted && styles.planCheckboxDone]}>
@@ -152,6 +154,7 @@ const PlanItem: React.FC<PlanItemProps> = ({ item, onPress }) => (
         {item.duration ? <Text style={styles.planItemMuted}> ({item.duration})</Text> : null}
       </Text>
     </View>
+    {locked && <Ionicons name="lock-closed" size={15} color="#9CA3AF" />}
   </TouchableOpacity>
 );
 
@@ -168,6 +171,7 @@ export const HomeScreen_v2: React.FC = () => {
   const authService = useAuthService();
   const recordingService = useRecordingService();
   const uploadProcessing = useUploadProcessing();
+  const { isSubscribed } = useSubscription();
   const { isOnline } = useNetworkStatus();
   const { t, i18n } = useTranslation();
 
@@ -215,6 +219,7 @@ export const HomeScreen_v2: React.FC = () => {
   const [chatIntroDismissed, setChatIntroDismissed] = useState(false);
   const [abcLoggedToday, setAbcLoggedToday] = useState(false);
   const [abcCardSkipped, setAbcCardSkipped] = useState(false);
+  const [freeLimitReached, setFreeLimitReached] = useState(false);
 
   // ── Reminder presets (inside component to use t()) ──
   const REMINDER_PRESETS = [
@@ -377,6 +382,10 @@ export const HomeScreen_v2: React.FC = () => {
       // ── ABC tracker card ──
       setAbcLoggedToday(await userStorage.getItem('abc_logged_today') === getTodaySingapore());
       setAbcCardSkipped(await userStorage.getItem('abc_card_skipped') === getTodaySingapore());
+
+      // ── Record lock (free trial exhausted) ──
+      const freeLimitCached = await userStorage.getItem('@nora_free_limit_reached');
+      setFreeLimitReached(freeLimitCached === 'true');
 
       // ── Weekly score — sum of all completed session scores this week (max 300) ──
       const weeklyScoreSum = thisWeekRecordings
@@ -545,9 +554,13 @@ export const HomeScreen_v2: React.FC = () => {
 
   // ─── Actions ──────────────────────────────────────────────────────────────
 
-  const handleProfilePress = () => navigation.push('Profile');
+  const handleProfilePress = () => {
+    amplitudeService.trackEvent('Home Profile Tapped');
+    navigation.push('Profile');
+  };
 
   const handleRecordPress = () => {
+    amplitudeService.trackEvent('Home Record Pressed', { source: 'main_card' });
     tabNavigation.navigate('Record', { autoStart: true });
   };
 
@@ -561,34 +574,41 @@ export const HomeScreen_v2: React.FC = () => {
   };
 
   const handleRecordAgain = () => {
+    amplitudeService.trackEvent('Home Record Again Pressed');
     tabNavigation.navigate('Record', { autoStart: true });
   };
 
   const handleChatIntroChat = async () => {
+    amplitudeService.trackEvent('Home Chat Intro Chat Pressed');
     await userStorage.setItem('chat_intro_dismissed', 'true');
     setChatIntroDismissed(true);
     navigation.push('CoachChat');
   };
 
   const handleChatIntroSkip = async () => {
+    amplitudeService.trackEvent('Home Chat Intro Skipped');
     await userStorage.setItem('chat_intro_dismissed', 'true');
     setChatIntroDismissed(true);
   };
 
   const handleLogOutburst = () => {
+    amplitudeService.trackEvent('Home Log Outburst Pressed');
     navigation.push('ABCLog', { mode: 'challenging', source: 'quick' });
   };
 
   const handleAbcCardSkip = async () => {
+    amplitudeService.trackEvent('Home ABC Card Skipped');
     await userStorage.setItem('abc_card_skipped', getTodaySingapore());
     setAbcCardSkipped(true);
   };
 
   const handlePlanItemPress = async (item: TodayPlanItem) => {
+    amplitudeService.trackEvent('Home Plan Item Tapped', { type: item.type, id: item.id });
     if (item.type === 'lesson') {
       amplitudeService.trackLessonStarted(item.id, item.title, { source: 'home_today_plan' });
       navigation.push('LessonViewer', { lessonId: item.id });
     } else if (item.type === 'weekly-report') {
+      amplitudeService.trackWeeklyReportTapped(item.id, { source: 'home_today_plan' });
       await userStorage.setItem(`weekly_report_read_date_${item.id}`, getTodaySingapore());
       await userStorage.setItem(`weekly_report_dismissed_${item.id}`, 'true');
       setIsWeeklyReportDismissed(true);
@@ -604,6 +624,7 @@ export const HomeScreen_v2: React.FC = () => {
   };
 
   const handleSetupReminderPress = () => {
+    amplitudeService.trackEvent('Home Setup Reminder Tapped');
     setSelectedPreset(null);
     setShowCustomPicker(false);
     const d = new Date(); d.setHours(18, 30, 0, 0);
@@ -659,6 +680,9 @@ export const HomeScreen_v2: React.FC = () => {
     const h12 = h % 12 || 12;
     return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
   };
+
+  // ─── Derived: record lock ─────────────────────────────────────────────────
+  const isRecordLocked = !isSubscribed && freeLimitReached;
 
   // ─── Arc dimensions ───────────────────────────────────────────────────────
 
@@ -856,7 +880,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.daysCompleted)}
             total="7"
             unit={t('homeV2.statDays')}
-            onPress={() => tabNavigation.navigate('Record')}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'sessions' }); tabNavigation.navigate('Record'); }}
           />
           <StatPill
             iconName="journal-outline"
@@ -864,7 +888,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.logsThisWeek)}
             total="7"
             unit={t('homeV2.statLogs')}
-            onPress={() => navigation.push('ABCLog', { mode: 'challenging', source: 'quick' })}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'logs' }); navigation.push('ABCLog', { mode: 'challenging', source: 'quick' }); }}
           />
           <StatPill
             iconName="happy-outline"
@@ -872,7 +896,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.timesRecorded)}
             total="7"
             unit={t('homeV2.statTimes')}
-            onPress={() => tabNavigation.navigate('Record')}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'times' }); tabNavigation.navigate('Record'); }}
           />
           <StatPill
             iconName="book-outline"
@@ -880,7 +904,7 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.lessonsCompleted)}
             total="7"
             unit={t('homeV2.statLessons')}
-            onPress={() => tabNavigation.navigate('Learn')}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'lessons' }); tabNavigation.navigate('Learn'); }}
           />
         </View>
 
@@ -900,6 +924,7 @@ export const HomeScreen_v2: React.FC = () => {
               <TouchableOpacity
                 style={styles.recordButton}
                 onPress={async () => {
+                  amplitudeService.trackWeeklyReportTapped(latestWeeklyReport.id, { source: 'home_card' });
                   await userStorage.setItem(`weekly_report_read_date_${latestWeeklyReport.id}`, getTodaySingapore());
                   await userStorage.setItem(`weekly_report_dismissed_${latestWeeklyReport.id}`, 'true');
                   setIsWeeklyReportDismissed(true);
@@ -914,6 +939,7 @@ export const HomeScreen_v2: React.FC = () => {
               <TouchableOpacity
                 style={styles.skipButton}
                 onPress={async () => {
+                  amplitudeService.trackEvent('Home Weekly Report Skipped', { reportId: latestWeeklyReport.id });
                   await userStorage.setItem(`weekly_report_dismissed_${latestWeeklyReport.id}`, 'true');
                   setIsWeeklyReportDismissed(true);
                 }}
@@ -957,7 +983,7 @@ export const HomeScreen_v2: React.FC = () => {
                 activeOpacity={0.85}
                 disabled={!isOnline}
               >
-                <Ionicons name="mic" size={20} color="#fff" />
+                <Ionicons name={isRecordLocked ? 'lock-closed' : 'mic'} size={20} color="#fff" />
                 <Text style={styles.recordButtonText}>{t('homeV2.recordNow')}</Text>
               </TouchableOpacity>
             </>
@@ -1044,7 +1070,7 @@ export const HomeScreen_v2: React.FC = () => {
                 activeOpacity={0.85}
                 disabled={!isOnline}
               >
-                <Ionicons name="mic" size={20} color="#fff" />
+                <Ionicons name={isRecordLocked ? 'lock-closed' : 'mic'} size={20} color="#fff" />
                 <Text style={styles.recordButtonText}>{t('homeV2.recordAgain')}</Text>
               </TouchableOpacity>
             </>
@@ -1060,6 +1086,7 @@ export const HomeScreen_v2: React.FC = () => {
                 key={item.id}
                 item={item}
                 onPress={() => handlePlanItemPress(item)}
+                locked={isRecordLocked && item.type === 'record'}
               />
             ))}
           </View>
