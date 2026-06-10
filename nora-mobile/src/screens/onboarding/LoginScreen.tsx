@@ -55,6 +55,10 @@ export const LoginScreen: React.FC = () => {
   // When opened via a referral deep link (nora://join?referralCode=...), store the code
   // so it can be applied after successful login
   useEffect(() => {
+    amplitudeService.trackScreenView('Login');
+  }, []);
+
+  useEffect(() => {
     const code = route.params?.referralCode;
     if (code) {
       AsyncStorage.setItem(PENDING_REFERRAL_KEY, code).catch(() => {});

@@ -12,6 +12,7 @@ import { COLORS, FONTS } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService } from '../contexts/AppContext';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 type TranscriptScreenRouteProp = RouteProp<RootStackParamList, 'Transcript'>;
 
@@ -78,6 +79,7 @@ export const TranscriptScreen: React.FC = () => {
   const [pcitCoding, setPcitCoding] = useState<any>(null);
 
   useEffect(() => {
+    amplitudeService.trackScreenView('Transcript', { recordingId });
     loadTranscript();
   }, [recordingId]);
 
@@ -98,6 +100,7 @@ export const TranscriptScreen: React.FC = () => {
       setLoading(false);
     } catch (err: any) {
       console.error('Failed to load transcript:', err);
+      amplitudeService.trackError(err, 'TranscriptScreen.loadTranscript');
       setError(err.message || t('transcript.failedToLoad'));
       setLoading(false);
     }

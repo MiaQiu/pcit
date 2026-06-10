@@ -139,11 +139,13 @@ export const WeeklyReportScreen: React.FC = () => {
       setCheckinSaved(true);
     } catch (error) {
       console.log('Failed to save check-in:', error);
+      amplitudeService.trackError(error as Error, 'WeeklyReportScreen.saveCheckin');
     }
   };
 
   const handleBack = () => {
     if (currentPage > 1) {
+      amplitudeService.trackEvent('Weekly Report Page Back', { page: currentPage, reportId });
       setCurrentPage(currentPage - 1);
     }
   };
@@ -158,14 +160,17 @@ export const WeeklyReportScreen: React.FC = () => {
 
   const handleContinue = async () => {
     if (currentPage < TOTAL_PAGES) {
+      amplitudeService.trackEvent('Weekly Report Page Continue', { page: currentPage, reportId });
       setCurrentPage(currentPage + 1);
     } else {
+      amplitudeService.trackEvent('Weekly Report Check-in Submitted', { reportId, mood: moodSelection, hasRatings: Object.keys(issueRatings).length > 0 });
       await saveCheckin();
       navigateBack();
     }
   };
 
   const handleClose = async () => {
+    amplitudeService.trackEvent('Weekly Report Closed', { page: currentPage, reportId });
     if (currentPage === TOTAL_PAGES && (moodSelection || Object.keys(issueRatings).length > 0)) {
       await saveCheckin();
     }

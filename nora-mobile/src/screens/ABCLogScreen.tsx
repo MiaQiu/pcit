@@ -18,15 +18,20 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
-import { DEFAULT_TAGS, DURATION_BUCKETS, type DurationBucket } from '../data/abcTags';
-import { getAgeTier } from '../utils/abcAge';
+import {
+  ANTECEDENT_TAGS,
+  SITUATION_TAGS,
+  PLACE_TAGS,
+  PERSON_TAGS,
+  CONSEQUENCE_TAGS,
+} from '../data/abcTags';
 import { getTodaySingapore } from '../utils/timezone';
 import * as userStorage from '../lib/userStorage';
 import amplitudeService from '../services/amplitudeService';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 const CUSTOM_TAGS_KEY = (category: string) => `abc_custom_tags_${category}`;
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 const INTRO_FEATURES = [
   {
@@ -53,25 +58,34 @@ const SUCCESS_MESSAGES = [
   "Every log helps us see the bigger picture.",
 ];
 
-type StepIndex = 0 | 1 | 2 | 3 | 4;
-type Category = 'antecedents' | 'behaviors' | 'consequences';
+type StepIndex = 0 | 1 | 2 | 3 | 4 | 5;
+type Category = 'antecedents' | 'situations' | 'places' | 'persons' | 'consequences';
 
 const STEP_TITLES = [
   'When did it\nhappen?',
-  'What happened\nbefore?',
-  'What did your\nchild do?',
-  'How did\nyou respond?',
-  'How long\ndid it last?',
+  'What was the\nantecedent?',
+  'What else was\nhappening?',
+  'Where was your child\nwhen this happened?',
+  'Who else\nwas there?',
+  'What was the\nconsequence?',
 ];
 
 const STEP_SUBTITLES = [
   'Pick a time or mark as not sure',
-  'Select all that apply',
-  'Select all that apply',
-  'Select all that apply',
-  'Select all that apply',
+  'My child:',
+  'Select all that apply.',
+  'Select all that apply.',
+  'Select all that apply.',
+  'My child:',
 ];
 
+const DEFAULT_TAGS: Record<Category, string[]> = {
+  antecedents: ANTECEDENT_TAGS,
+  situations: SITUATION_TAGS,
+  places: PLACE_TAGS,
+  persons: PERSON_TAGS,
+  consequences: CONSEQUENCE_TAGS,
+};
 
 export const ABCLogScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -82,21 +96,18 @@ export const ABCLogScreen: React.FC = () => {
 
   const [selected, setSelected] = useState<Record<Category, string[]>>({
     antecedents: [],
-    behaviors: [],
+    situations: [],
+    places: [],
+    persons: [],
     consequences: [],
   });
   const [customTags, setCustomTags] = useState<Record<Category, string[]>>({
     antecedents: [],
-    behaviors: [],
+    situations: [],
+    places: [],
+    persons: [],
     consequences: [],
   });
-  const [defaultTags, setDefaultTags] = useState<Record<Category, string[]>>({
-    antecedents: DEFAULT_TAGS.toddler.antecedents,
-    behaviors: DEFAULT_TAGS.toddler.behaviors,
-    consequences: DEFAULT_TAGS.toddler.consequences,
-  });
-
-  const [durationBucket, setDurationBucket] = useState<DurationBucket | null>('2–5 minutes');
 
   const [timeNotSure, setTimeNotSure] = useState(false);
   const [recordedTime, setRecordedTime] = useState(() => {
@@ -114,34 +125,7 @@ export const ABCLogScreen: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const user = await authService.getCurrentUser();
-        const tier = getAgeTier(
-          user.childBirthday ? new Date(user.childBirthday) : null,
-          user.childBirthYear,
-        );
-        const tags = DEFAULT_TAGS[tier];
-        const [antCustom, behCustom, conCustom] = await Promise.all([
-          loadCustomTags('antecedents'),
-          loadCustomTags('behaviors'),
-          loadCustomTags('consequences'),
-        ]);
-        setDefaultTags({
-          antecedents: tags.antecedents,
-          behaviors: tags.behaviors,
-          consequences: tags.consequences,
-        });
-        setCustomTags({
-          antecedents: antCustom,
-          behaviors: behCustom,
-          consequences: conCustom,
-        });
-      } catch {
-        // keep toddler defaults already set in state
-      }
-    };
-    load();
+    amplitudeService.trackScreenView('ABC Log');
   }, []);
 
   const loadCustomTags = async (category: Category): Promise<string[]> => {
@@ -197,17 +181,18 @@ export const ABCLogScreen: React.FC = () => {
   };
 
   const goNext = () => {
-    if (step < 4) setStep((step + 1) as StepIndex);
+    amplitudeService.trackEvent('ABC Log Next Pressed', { step });
+    if (step < 5) setStep((step + 1) as StepIndex);
   };
 
   const goBack = () => {
+    amplitudeService.trackEvent('ABC Log Back Pressed', { step });
     if (step > 0) setStep((step - 1) as StepIndex);
     else navigation.goBack();
   };
 
   const canAdvance = () => {
     if (step === 1) return selected.antecedents.length > 0;
-    if (step === 2) return selected.behaviors.length > 0;
     return true;
   };
 
@@ -223,9 +208,10 @@ export const ABCLogScreen: React.FC = () => {
         body: JSON.stringify({
           logType: 'CHALLENGING',
           antecedents: selected.antecedents,
-          behaviors: selected.behaviors,
+          situations: selected.situations,
+          places: selected.places,
+          persons: selected.persons,
           consequences: selected.consequences,
-          durationBucket: durationBucket ?? undefined,
           recordedAt,
         }),
       });
@@ -235,9 +221,10 @@ export const ABCLogScreen: React.FC = () => {
       amplitudeService.trackEvent('abc_log_completed', {
         log_type: 'challenging',
         num_antecedents: selected.antecedents.length,
-        num_behaviors: selected.behaviors.length,
+        num_situations: selected.situations.length,
+        num_places: selected.places.length,
+        num_persons: selected.persons.length,
         num_consequences: selected.consequences.length,
-        duration_bucket: durationBucket,
         source: 'quick',
       });
 
@@ -245,6 +232,7 @@ export const ABCLogScreen: React.FC = () => {
       setShowSuccessModal(true);
     } catch (err) {
       console.error('[ABCLogScreen] submit error:', err);
+      amplitudeService.trackError(err as Error, 'ABCLogScreen.handleSubmit');
       Alert.alert('Error', 'Could not save the log. Please try again.');
     } finally {
       setSubmitting(false);
@@ -252,15 +240,16 @@ export const ABCLogScreen: React.FC = () => {
   };
 
   const handleClose = () => {
+    amplitudeService.trackEvent('ABC Log Closed');
     setShowSuccessModal(false);
     navigation.goBack();
   };
 
   const handleLogAnother = () => {
+    amplitudeService.trackEvent('ABC Log Another Pressed');
     setShowSuccessModal(false);
     setStep(0);
-    setSelected({ antecedents: [], behaviors: [], consequences: [] });
-    setDurationBucket('2–5 minutes');
+    setSelected({ antecedents: [], situations: [], places: [], persons: [], consequences: [] });
     setTimeNotSure(false);
     setRecordedTime(() => {
       const d = new Date();
@@ -269,10 +258,10 @@ export const ABCLogScreen: React.FC = () => {
     });
   };
 
-  // ── Tag list for steps 0–2 ──────────────────────────────────────────────────
+  // ── Tag list ───────────────────────────────────────────────────────────────
 
   const renderTagList = (category: Category) => {
-    const allTags = [...defaultTags[category], ...customTags[category]];
+    const allTags = [...DEFAULT_TAGS[category], ...customTags[category]];
     const isCustom = (tag: string) => customTags[category].includes(tag);
 
     return (
@@ -311,31 +300,28 @@ export const ABCLogScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             <Ionicons name="add-circle-outline" size={20} color={COLORS.mainPurple} />
-            <Text style={styles.addCustomLabel}>Add custom option</Text>
+            <Text style={styles.addCustomLabel}>Others</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
     );
   };
 
-  // ── Intro page ────────────────────────────────────────────────────────────
+  // ── Intro page ─────────────────────────────────────────────────────────────
 
   if (showIntro) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.introContainer}>
           <ScrollView contentContainerStyle={styles.introContent} showsVerticalScrollIndicator={false}>
-            {/* Icon */}
             <View style={styles.introIconCircle}>
               <Ionicons name="journal" size={36} color={COLORS.mainPurple} />
             </View>
 
-            {/* Title */}
             <Text style={styles.introTitle}>
               Track, understand, and manage your child's big emotions.
             </Text>
 
-            {/* Feature rows */}
             <View style={styles.introFeatureList}>
               {INTRO_FEATURES.map((f) => (
                 <View key={f.label} style={styles.introFeatureRow}>
@@ -351,7 +337,6 @@ export const ABCLogScreen: React.FC = () => {
             </View>
           </ScrollView>
 
-          {/* Footer — back + continue */}
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
               <Text style={styles.backBtnText}>←</Text>
@@ -370,7 +355,6 @@ export const ABCLogScreen: React.FC = () => {
 
   const renderTimePicker = () => (
     <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-      {/* Native hour spinner — dimmed when "Not sure" is on */}
       <View style={{ opacity: timeNotSure ? 0.3 : 1 }}>
         <DateTimePicker
           mode="time"
@@ -386,7 +370,6 @@ export const ABCLogScreen: React.FC = () => {
         />
       </View>
 
-      {/* Not sure toggle */}
       <TouchableOpacity
         style={[styles.optionCard, timeNotSure && styles.optionCardSelected, { justifyContent: 'center' }]}
         onPress={() => setTimeNotSure(v => !v)}
@@ -399,30 +382,7 @@ export const ABCLogScreen: React.FC = () => {
     </ScrollView>
   );
 
-  // ── Duration step (step 4) ─────────────────────────────────────────────────
-
-  const renderDetails = () => (
-    <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-      {DURATION_BUCKETS.map(bucket => {
-        const isSelected = durationBucket === bucket;
-        return (
-          <TouchableOpacity
-            key={bucket}
-            style={[styles.optionCard, isSelected && styles.optionCardSelected]}
-            onPress={() => setDurationBucket(isSelected ? null : bucket)}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.optionLabel, isSelected && styles.optionLabelSelected]}>
-              {bucket}
-            </Text>
-            {isSelected && <Ionicons name="checkmark-circle" size={24} color={COLORS.mainPurple} />}
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
-  );
-
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -452,9 +412,10 @@ export const ABCLogScreen: React.FC = () => {
           <View style={styles.contentArea}>
             {step === 0 && renderTimePicker()}
             {step === 1 && renderTagList('antecedents')}
-            {step === 2 && renderTagList('behaviors')}
-            {step === 3 && renderTagList('consequences')}
-            {step === 4 && renderDetails()}
+            {step === 2 && renderTagList('situations')}
+            {step === 3 && renderTagList('places')}
+            {step === 4 && renderTagList('persons')}
+            {step === 5 && renderTagList('consequences')}
           </View>
 
           {/* Button row */}
@@ -465,7 +426,7 @@ export const ABCLogScreen: React.FC = () => {
 
             <TouchableOpacity
               style={[styles.continueBtn, !canAdvance() && styles.continueBtnDisabled]}
-              onPress={step < 4 ? goNext : handleSubmit}
+              onPress={step < 5 ? goNext : handleSubmit}
               disabled={!canAdvance() || submitting}
               activeOpacity={0.8}
             >
@@ -473,7 +434,7 @@ export const ABCLogScreen: React.FC = () => {
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
                 <Text style={[styles.continueBtnText, !canAdvance() && styles.continueBtnTextDisabled]}>
-                  {step < 4 ? 'Continue' : 'Save Log'}
+                  {step < 5 ? 'Continue' : 'Save Log'}
                 </Text>
               )}
             </TouchableOpacity>
@@ -482,11 +443,11 @@ export const ABCLogScreen: React.FC = () => {
           {/* Skip link — always rendered to keep footer height consistent */}
           <TouchableOpacity
             style={styles.skipLink}
-            onPress={step < 4 ? goNext : handleSubmit}
-            disabled={step < 3}
+            onPress={step < 5 ? goNext : handleSubmit}
+            disabled={step < 2}
             activeOpacity={0.6}
           >
-            <Text style={[styles.skipLinkText, step < 3 && { opacity: 0 }]}>
+            <Text style={[styles.skipLinkText, step < 2 && { opacity: 0 }]}>
               Skip this step
             </Text>
           </TouchableOpacity>
@@ -531,7 +492,7 @@ export const ABCLogScreen: React.FC = () => {
           onPress={() => setShowCustomModal(false)}
         >
           <View style={styles.modalCard} onStartShouldSetResponder={() => true}>
-            <Text style={styles.modalTitle}>Add custom option</Text>
+            <Text style={styles.modalTitle}>Add other option</Text>
             <TextInput
               style={styles.modalInput}
               value={customTagInput}
@@ -577,7 +538,6 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
 
-  // Progress bar
   progressRow: {
     flexDirection: 'row',
     gap: 6,
@@ -596,7 +556,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.mainPurple,
   },
 
-  // Title
   title: {
     fontFamily: FONTS.bold,
     fontSize: 24,
@@ -613,7 +572,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  // Content
   contentArea: {
     flex: 1,
   },
@@ -621,7 +579,6 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
 
-  // Option cards — matches MultipleChoiceScreen exactly
   optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -648,7 +605,6 @@ const styles = StyleSheet.create({
     color: '#1E2939',
   },
 
-  // Add custom card
   addCustomCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -668,7 +624,6 @@ const styles = StyleSheet.create({
     color: COLORS.mainPurple,
   },
 
-  // Button row — matches OnboardingButtonRow
   buttonRow: {
     flexDirection: 'row',
     gap: 12,
@@ -718,7 +673,6 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
 
-  // Custom tag modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
@@ -799,7 +753,6 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
 
-  // Intro page
   introContainer: {
     flex: 1,
     paddingHorizontal: 24,
@@ -862,4 +815,3 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 });
-

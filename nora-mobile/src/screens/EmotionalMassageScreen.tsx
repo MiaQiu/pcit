@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import amplitudeService from '../services/amplitudeService';
 import Svg, {
   Path,
   Circle,
@@ -39,6 +40,7 @@ export const EmotionalMassageScreen: React.FC = () => {
   const bounceY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    amplitudeService.trackScreenView('Emotional Massage');
     Animated.loop(
       Animated.sequence([
         Animated.timing(bounceY, { toValue: -120, duration: 500, useNativeDriver: true }),
@@ -47,8 +49,16 @@ export const EmotionalMassageScreen: React.FC = () => {
     ).start();
   }, [bounceY]);
 
-  const goNext = () => setCurrentCard(c => Math.min(c + 1, TOTAL_CARDS - 1));
-  const goPrev = () => setCurrentCard(c => Math.max(c - 1, 0));
+  const goNext = () => {
+    const next = Math.min(currentCard + 1, TOTAL_CARDS - 1);
+    amplitudeService.trackEvent('Emotional Massage Card Viewed', { card: next });
+    setCurrentCard(next);
+  };
+  const goPrev = () => {
+    const prev = Math.max(currentCard - 1, 0);
+    amplitudeService.trackEvent('Emotional Massage Card Viewed', { card: prev });
+    setCurrentCard(prev);
+  };
 
   return (
     <SafeAreaView style={sh.safeArea}>

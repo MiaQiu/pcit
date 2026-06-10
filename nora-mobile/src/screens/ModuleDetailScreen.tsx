@@ -26,6 +26,7 @@ import type { ModuleDetailResponse } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
 import { resolveImageUris } from '../services/lessonImageCache';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 const H_PAD = 20;
 const CARD_GAP = 10;
@@ -54,6 +55,7 @@ export const ModuleDetailScreen: React.FC = () => {
   const [isCurrentModule, setIsCurrentModule] = useState(false);
 
   useEffect(() => {
+    amplitudeService.trackScreenView('Module Detail', { moduleKey });
     loadModuleDetail();
     checkIfCurrentModule();
   }, [moduleKey]);
@@ -86,6 +88,8 @@ export const ModuleDetailScreen: React.FC = () => {
       if (error?.status === 403 || error?.statusCode === 403) {
         setIsLocked(true);
         showToast(t('moduleDetail.completeFoundationFirst'), 'info');
+      } else {
+        amplitudeService.trackError(error, 'ModuleDetailScreen.loadModuleDetail');
       }
     } finally {
       setLoading(false);
@@ -102,6 +106,7 @@ export const ModuleDetailScreen: React.FC = () => {
 
   const handleSetAsCurrentModule = async () => {
     try {
+      amplitudeService.trackEvent('Module Set As Current', { moduleKey });
       await userStorage.setItem('module_picker_selected_module', moduleKey);
       setIsCurrentModule(true);
       showToast(t('moduleDetail.setAsDailyLesson'), 'success');
@@ -109,6 +114,8 @@ export const ModuleDetailScreen: React.FC = () => {
   };
 
   const handleLessonPress = (lessonId: string) => {
+    const lesson = data?.lessons.find(l => l.id === lessonId);
+    amplitudeService.trackLessonStarted(lessonId, lesson?.title || '', { source: 'module_detail', moduleKey });
     navigation.push('LessonViewer', { lessonId, moduleKey });
   };
 

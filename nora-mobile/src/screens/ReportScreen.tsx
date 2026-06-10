@@ -343,7 +343,7 @@ const PDICoachCorner: React.FC<{
         )}
         <TouchableOpacity
           style={styles.cardLinkButton}
-          onPress={() => navigation.navigate('Transcript', { recordingId })}
+          onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
         >
           <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
         </TouchableOpacity>
@@ -613,6 +613,7 @@ export const ReportScreen: React.FC = () => {
   }, [chatDemoAnim]);
 
   const handleSentimentPress = useCallback((sentiment: 'positive' | 'negative') => {
+    amplitudeService.trackEvent('Report Feedback Sentiment Selected', { sentiment, recordingId });
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setFeedbackSentiment(sentiment);
 
@@ -642,6 +643,7 @@ export const ReportScreen: React.FC = () => {
 
   const handleSubmitFeedback = useCallback(async () => {
     if (!feedbackSentiment) return;
+    amplitudeService.trackEvent('Report Feedback Submitted', { sentiment: feedbackSentiment, reasons: feedbackReasons, recordingId });
     try {
       await recordingService.submitReportFeedback(recordingId, {
         sentiment: feedbackSentiment,
@@ -657,6 +659,7 @@ export const ReportScreen: React.FC = () => {
   }, [feedbackSentiment, feedbackReasons, feedbackText, recordingId, recordingService]);
 
   useEffect(() => {
+    amplitudeService.trackScreenView('Report', { recordingId });
     loadReportData();
     loadChildName();
     loadDevelopmentalVisibility();
@@ -878,7 +881,7 @@ export const ReportScreen: React.FC = () => {
                   textColor={scoreColor}
                   prefix="+"
                   suffix={suffix}
-                  onPress={() => navigation.navigate('SkillExplanation', { skillKey: 'Overall', score, tip: reportData.tip ?? undefined })}
+                  onPress={() => { amplitudeService.trackEvent('Report Overall Score Tapped', { score }); navigation.navigate('SkillExplanation', { skillKey: 'Overall', score, tip: reportData.tip ?? undefined }); }}
                 />
               );
             })()}
@@ -906,11 +909,7 @@ export const ReportScreen: React.FC = () => {
                   color={rating.barColor}
                   textColor={rating.textColor}
                   suffix={rating.suffix}
-                  onPress={() => navigation.navigate('SkillUtterances', {
-                    skillKey: skill.label,
-                    recordingId,
-                    utterances: getUtterancesForSkill(reportData.transcript, skill.label),
-                  })}
+                  onPress={() => { amplitudeService.trackEvent('Report Skill Tapped', { skillKey: skill.label, progress: skill.progress }); navigation.navigate('SkillUtterances', { skillKey: skill.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, skill.label) }); }}
                 />
               );
             })}
@@ -936,11 +935,7 @@ export const ReportScreen: React.FC = () => {
                     <Text style={styles.avoidLabel}>{getSkillDisplayLabel(areaData.label, t)}</Text>
                     <TouchableOpacity
                       style={styles.avoidRightContainer}
-                      onPress={() => navigation.navigate('SkillUtterances', {
-                        skillKey: areaData.label,
-                        recordingId,
-                        utterances: getUtterancesForSkill(reportData.transcript, areaData.label),
-                      })}
+                      onPress={() => { amplitudeService.trackEvent('Report Area Avoided Tapped', { skillKey: areaData.label, count: areaData.count }); navigation.navigate('SkillUtterances', { skillKey: areaData.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, areaData.label) }); }}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
                       <Text style={[styles.countText, styles.countTextClickable, needsAttention ? styles.countTextAttention : styles.countTextExcellent]}>
@@ -1013,7 +1008,7 @@ export const ReportScreen: React.FC = () => {
                     )}
                     <TouchableOpacity
                       style={styles.cardLinkButton}
-                      onPress={() => navigation.navigate('Transcript', { recordingId })}
+                      onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
                     >
                       <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
                     </TouchableOpacity>
@@ -1057,7 +1052,7 @@ export const ReportScreen: React.FC = () => {
                       )}
                       <TouchableOpacity
                         style={styles.cardLinkButton}
-                        onPress={() => navigation.navigate('Transcript', { recordingId })}
+                        onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
                       >
                         <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
                       </TouchableOpacity>

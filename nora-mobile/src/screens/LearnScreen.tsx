@@ -20,6 +20,7 @@ import { useToast } from '../components/ToastManager';
 import type { ModuleWithProgress } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 export const LearnScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -40,6 +41,7 @@ export const LearnScreen: React.FC = () => {
   const [currentModuleKey, setCurrentModuleKey] = useState<string | null>(null);
 
   useEffect(() => {
+    amplitudeService.trackScreenView('Learn');
     loadModules();
   }, []);
 

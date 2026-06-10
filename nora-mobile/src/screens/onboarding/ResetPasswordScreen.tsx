@@ -21,6 +21,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStackNavigationProp, OnboardingStackParamList } from '../../navigation/types';
 import { useAuthService } from '../../contexts/AppContext';
+import amplitudeService from '../../services/amplitudeService';
 
 type ResetPasswordScreenRouteProp = RouteProp<OnboardingStackParamList, 'ResetPassword'>;
 
@@ -38,6 +39,7 @@ export const ResetPasswordScreen: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
+    amplitudeService.trackScreenView('Reset Password');
     // If token is provided in route params, use it
     if (route.params?.token) {
       setToken(route.params.token);
@@ -85,7 +87,7 @@ export const ResetPasswordScreen: React.FC = () => {
     try {
       setLoading(true);
       await authService.resetPassword(token.trim(), newPassword);
-
+      amplitudeService.trackEvent('Password Reset Completed');
       Alert.alert(
         t('resetPassword.successTitle'),
         t('resetPassword.successMessage'),
@@ -93,6 +95,7 @@ export const ResetPasswordScreen: React.FC = () => {
       );
     } catch (error: any) {
       console.error('Reset password error:', error);
+      amplitudeService.trackError(error, 'ResetPasswordScreen');
       Alert.alert(
         t('common.error'),
         error.message || t('resetPassword.errorFailedMessage')

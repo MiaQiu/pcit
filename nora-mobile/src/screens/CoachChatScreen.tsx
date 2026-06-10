@@ -317,7 +317,8 @@ export const CoachChatScreen: React.FC = () => {
 
       if (!response.ok) throw new Error(`Server error ${response.status}`);
       // Messages (user + AI) are delivered via the long-poll loop when publish() fires
-    } catch {
+    } catch (err) {
+      amplitudeService.trackEvent('Chat Send Error', { chat: 'ai_coach', error: err instanceof Error ? err.message : String(err) });
       setMessages(prev => [
         ...prev.filter(m => m.id !== optimisticId),
         { id: Date.now().toString(), role: 'model', text: t('coachChat.errorConnection') },
@@ -330,6 +331,7 @@ export const CoachChatScreen: React.FC = () => {
   }, [input, loading, scrollToEnd, authService]);
 
   const handleRequestHuman = useCallback(() => {
+    amplitudeService.trackEvent('Coach Chat Human Request Tapped');
     if (psychRequested) {
       navigation.navigate('PsychologistChat');
     } else {
@@ -359,7 +361,8 @@ export const CoachChatScreen: React.FC = () => {
       setPsychRequested(true);
       amplitudeService.trackEvent('Psychologist Requested', {});
       navigation.navigate('PsychologistChat');
-    } catch {
+    } catch (err) {
+      amplitudeService.trackEvent('Psychologist Request Error', { error: err instanceof Error ? err.message : String(err) });
       Alert.alert(t('common.error'), t('coachChat.errorSendRequest'));
     } finally {
       setSubmittingHuman(false);

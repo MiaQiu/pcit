@@ -3,7 +3,7 @@
  * Displays detailed explanation of PEN skills and areas to avoid
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 type SkillExplanationRouteProp = RouteProp<RootStackParamList, 'SkillExplanation'>;
 
@@ -44,6 +45,10 @@ export const SkillExplanationScreen: React.FC = () => {
   const showNextStep = isOverallScore && (score ?? 0) < 90 && tip;
 
   const canonicalKey = (SKILL_ALIASES[skillKey] || skillKey).toLowerCase();
+
+  useEffect(() => {
+    amplitudeService.trackScreenView('Skill Explanation', { skillKey, score });
+  }, []);
   const category = SKILL_CATEGORIES[canonicalKey];
 
   const explanation = isOverallScore ? null : {

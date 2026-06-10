@@ -3,7 +3,7 @@
  * Allows users to submit support requests with description and file attachments
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { FONTS, COLORS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 interface AttachedFile {
   uri: string;
@@ -38,6 +39,10 @@ export const SupportScreen: React.FC = () => {
   const [description, setDescription] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    amplitudeService.trackScreenView('Support');
+  }, []);
 
   const handleAttachFile = async () => {
     try {
@@ -164,6 +169,7 @@ export const SupportScreen: React.FC = () => {
 
       const result = await submitWithRetry();
       console.log('Support request submitted successfully:', result);
+      amplitudeService.trackEvent('Support Request Submitted', { hasAttachments: attachedFiles.length > 0 });
 
       Alert.alert(
         t('support.successTitle'),
@@ -182,6 +188,7 @@ export const SupportScreen: React.FC = () => {
       setAttachedFiles([]);
     } catch (error: any) {
       console.error('Submit error:', error);
+      amplitudeService.trackError(error, 'SupportScreen.handleSubmit');
       Alert.alert(t('common.error'), error.message || t('support.errorSubmit'));
     } finally {
       setIsSubmitting(false);

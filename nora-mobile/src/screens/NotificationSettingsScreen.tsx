@@ -31,6 +31,7 @@ import {
 } from '../utils/notifications';
 import { useAuthService } from '../contexts/AppContext';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 interface NotificationPreferences {
   dailyLessonReminder: boolean;
@@ -88,6 +89,7 @@ export const NotificationSettingsScreen: React.FC = () => {
   useEffect(() => {
     loadPreferences();
     checkNotificationPermissions();
+    amplitudeService.trackScreenView('Notification Settings');
   }, []);
 
   // Check permission status when screen comes into focus (e.g., returning from Settings)
@@ -223,6 +225,7 @@ export const NotificationSettingsScreen: React.FC = () => {
       [key]: !preferences[key],
     };
 
+    amplitudeService.trackEvent('Notification Setting Toggled', { key, enabled: newPreferences[key] });
     await savePreferences(newPreferences);
 
     // TODO: Schedule/cancel actual notifications based on preferences
@@ -323,6 +326,7 @@ export const NotificationSettingsScreen: React.FC = () => {
       [key]: soundId,
     };
 
+    amplitudeService.trackEvent('Notification Sound Selected', { type: soundPickerType, soundId });
     await savePreferences(newPreferences);
 
     // Play sound preview

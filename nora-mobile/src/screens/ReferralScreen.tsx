@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthService } from '../contexts/AppContext';
 import { FONTS, COLORS } from '../constants/assets';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -37,6 +38,7 @@ export const ReferralScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    amplitudeService.trackScreenView('Referral');
     fetchReferralCode();
   }, []);
 
@@ -50,6 +52,7 @@ export const ReferralScreen: React.FC = () => {
       const json = await res.json();
       setData(json);
     } catch (err) {
+      amplitudeService.trackError(err as Error, 'ReferralScreen.fetchReferralCode');
       Alert.alert(t('common.error'), t('referral.errorLoadReferral'));
     } finally {
       setLoading(false);
@@ -58,11 +61,15 @@ export const ReferralScreen: React.FC = () => {
 
   const handleShare = async () => {
     if (!data) return;
+    amplitudeService.trackEvent('Referral Share Tapped', { referralCode: data.code });
     try {
-      await Share.share({
+      const result = await Share.share({
         message: t('referral.shareMessage'),
         url: data.shareUrl,
       });
+      if (result.action === Share.sharedAction) {
+        amplitudeService.trackEvent('Referral Shared', { referralCode: data.code });
+      }
     } catch (err) {
       // User dismissed share sheet — no action needed
     }

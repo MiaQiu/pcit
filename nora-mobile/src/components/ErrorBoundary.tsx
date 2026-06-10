@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { FONTS } from '../constants/assets';
 import i18n from '../i18n';
+import amplitudeService from '../services/amplitudeService';
 
 interface Props {
   children: ReactNode;
@@ -44,6 +45,8 @@ export class ErrorBoundary extends Component<Props, State> {
     crashlytics().recordError(error);
     crashlytics().log('Error caught by ErrorBoundary');
     crashlytics().log(`Component stack: ${errorInfo.componentStack}`);
+
+    amplitudeService.trackError(error, 'ErrorBoundary');
 
     this.setState({
       error,

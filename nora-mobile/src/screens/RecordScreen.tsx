@@ -492,6 +492,7 @@ export const RecordScreen: React.FC = () => {
       startDurationPolling();
     } catch (error) {
       console.error('Failed to start recording:', error);
+      amplitudeService.trackError(error as Error, 'RecordScreen.startRecording');
       setRecordingState('idle');
 
       // Progressive escalation based on failure count

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Linking, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 const IOS_STORE_URL = process.env.EXPO_PUBLIC_IOS_STORE_URL || '';
 const ANDROID_STORE_URL = process.env.EXPO_PUBLIC_ANDROID_STORE_URL || '';
@@ -8,7 +9,12 @@ const ANDROID_STORE_URL = process.env.EXPO_PUBLIC_ANDROID_STORE_URL || '';
 export const ForceUpdateScreen: React.FC = () => {
   const { t } = useTranslation();
 
+  useEffect(() => {
+    amplitudeService.trackScreenView('Force Update');
+  }, []);
+
   const handleUpdate = () => {
+    amplitudeService.trackEvent('Force Update Button Pressed', { platform: Platform.OS });
     const url = Platform.OS === 'ios' ? IOS_STORE_URL : ANDROID_STORE_URL;
     if (url) {
       Linking.openURL(url);

@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useAuthService } from '../../contexts/AppContext';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../../services/amplitudeService';
 
 export const ForgotPasswordScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -30,6 +31,10 @@ export const ForgotPasswordScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+
+  useEffect(() => {
+    amplitudeService.trackScreenView('Forgot Password');
+  }, []);
 
   const handleSendResetEmail = async () => {
     if (!email.trim()) {
@@ -47,9 +52,11 @@ export const ForgotPasswordScreen: React.FC = () => {
     try {
       setLoading(true);
       await authService.forgotPassword(email.trim());
+      amplitudeService.trackEvent('Password Reset Requested');
       setEmailSent(true);
     } catch (error: any) {
       console.error('Forgot password error:', error);
+      amplitudeService.trackError(error, 'ForgotPasswordScreen');
       Alert.alert(t('common.error'), error.message || t('forgotPassword.errorFailedMessage'));
     } finally {
       setLoading(false);

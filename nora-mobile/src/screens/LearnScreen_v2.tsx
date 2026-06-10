@@ -432,7 +432,7 @@ export const LearnScreen_v2: React.FC = () => {
                 module={mod}
                 lessons={lessons}
                 onLessonPress={lessonId => handleLessonPress(lessonId, mod.key)}
-                onModulePress={() => navigation.push('ModuleDetail', { moduleKey: mod.key })}
+                onModulePress={() => { amplitudeService.trackEvent('Learn Module Tapped', { moduleKey: mod.key }); navigation.push('ModuleDetail', { moduleKey: mod.key }); }}
                 cardWidth={cardWidth}
                 showLockedNotice={showLockedNotice}
                 localImageUris={localImageUris}

@@ -4,7 +4,7 @@
  * with a link to the skill explanation screen.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 type SkillUtterancesRouteProp = RouteProp<RootStackParamList, 'SkillUtterances'>;
 
@@ -45,6 +46,10 @@ export const SkillUtterancesScreen: React.FC = () => {
   const nsKey = SKILL_KEY_MAP[skillKey] || skillKey.toLowerCase();
   const isPenSkill = PEN_SKILL_KEYS.has(skillKey);
   const accentColor = isPenSkill ? '#6750A4' : '#852221';
+
+  useEffect(() => {
+    amplitudeService.trackScreenView('Skill Utterances', { skillKey, recordingId });
+  }, []);
 
   const displayName = t(`skillInfo.${nsKey}.displayName` as any);
   const whatItIs = t(`skillInfo.${nsKey}.whatItIs` as any);

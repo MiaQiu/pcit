@@ -3,7 +3,7 @@
  * Displays the app's terms and conditions
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,10 +16,15 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 export const TermsAndConditionsScreen: React.FC = () => {
   const navigation = useNavigation();
   const { t } = useTranslation();
+
+  useEffect(() => {
+    amplitudeService.trackScreenView('Terms And Conditions');
+  }, []);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

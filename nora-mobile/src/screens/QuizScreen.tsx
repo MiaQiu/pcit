@@ -11,7 +11,7 @@
  * 5. User clicks "Continue" to go back to home
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ResponseButton } from '../components/ResponseButton';
@@ -21,6 +21,7 @@ import { Button } from '../components/Button';
 import { COLORS, FONTS } from '../constants/assets';
 import { LessonService, Quiz, QuizOption, SubmitQuizResponse } from '@nora/core';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 interface QuizScreenProps {
   route: {
@@ -43,6 +44,10 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [feedback, setFeedback] = useState<SubmitQuizResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    amplitudeService.trackScreenView('Quiz', { quizId, lessonId, currentSegment, totalSegments });
+  }, []);
 
   const handleSubmit = async () => {
     if (!selectedOption) return;
@@ -76,8 +81,10 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
       setFeedback(mockResponse);
       setIsSubmitted(true);
       setIsLoading(false);
+      amplitudeService.trackQuizAnswered(lessonId, quizId, isCorrect, 1);
     } catch (error) {
       console.error('Failed to submit quiz:', error);
+      amplitudeService.trackError(error as Error, 'QuizScreen.handleSubmit');
       Alert.alert(t('common.error'), t('quiz.errorSubmit'));
       setIsLoading(false);
     }

@@ -67,6 +67,10 @@ export const ProfileScreen: React.FC = () => {
     periodType: string | null;
   } | null>(null);
 
+  useEffect(() => {
+    amplitudeService.trackScreenView('Profile');
+  }, []);
+
   // Refresh profile when screen gains focus (ensures subscription status is current)
   useFocusEffect(
     React.useCallback(() => {
@@ -143,6 +147,7 @@ export const ProfileScreen: React.FC = () => {
 
 
   const handleLogout = () => {
+    amplitudeService.trackEvent('Profile Logout Tapped');
     Alert.alert(
       t('profile.logOutConfirmTitle'),
       t('profile.logOutConfirmMessage'),
@@ -158,6 +163,7 @@ export const ProfileScreen: React.FC = () => {
       setLoggingOut(true);
 
       await authService.logout();
+      amplitudeService.trackEvent('User Logged Out');
       amplitudeService.reset();
 
       navigation.reset({
@@ -173,6 +179,7 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const handleDeleteAccount = () => {
+    amplitudeService.trackEvent('Profile Delete Account Tapped');
     Alert.alert(
       t('profile.deleteConfirmTitle'),
       t('profile.deleteConfirmMessage'),
@@ -186,7 +193,7 @@ export const ProfileScreen: React.FC = () => {
   const performDeleteAccount = async () => {
     try {
       setDeletingAccount(true);
-
+      amplitudeService.trackEvent('User Account Deleted');
       await authService.deleteAccount();
 
       // Navigate to onboarding after successful deletion
@@ -203,9 +210,9 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const handleManageSubscription = async () => {
+    amplitudeService.trackEvent('Profile Manage Subscription Tapped');
     try {
       if (Platform.OS === 'ios') {
-        // iOS: Use RevenueCat's built-in method to show subscription management
         await Purchases.showManageSubscriptions();
       } else if (Platform.OS === 'android') {
         // Android: Open Google Play subscription management
@@ -216,11 +223,18 @@ export const ProfileScreen: React.FC = () => {
         if (supported) {
           await Linking.openURL(url);
         } else {
+          amplitudeService.trackEvent('Manage Subscription Error', { reason: 'url_not_supported', platform: Platform.OS });
           Alert.alert(t('common.error'), t('profile.errorManageSubscription'));
         }
       }
     } catch (error) {
       console.error('Failed to open subscription management:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      amplitudeService.trackEvent('Manage Subscription Error', {
+        reason: 'open_failed',
+        platform: Platform.OS,
+        error: errorMessage,
+      });
       Alert.alert(t('common.error'), t('profile.errorManageSubscriptionRetry'));
     }
   };
@@ -342,7 +356,9 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const handleLanguagePress = () => {
+    amplitudeService.trackEvent('Profile Language Tapped', { currentLanguage: i18n.language });
     const applyLocale = (locale: string) => {
+      amplitudeService.trackEvent('Profile Language Changed', { language: locale });
       changeLanguage(locale);
       authService.setPreferredLocale(locale).catch((err) => console.warn('[Lang] setPreferredLocale failed:', err));
     };
@@ -516,13 +532,31 @@ export const ProfileScreen: React.FC = () => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.linkButton}
-            activeOpacity={0.7}
-            onPress={handleManageSubscription}
-          >
-            <Text style={styles.linkButtonText}>{t('profile.manageSubscription')}</Text>
-          </TouchableOpacity>
+          {(() => {
+            const hasActiveSub = rcSubscription
+              ? rcSubscription.isActive
+              : (profile?.subscriptionStatus === 'ACTIVE' || profile?.subscriptionStatus === 'CANCELLED');
+            return hasActiveSub ? (
+              <TouchableOpacity
+                style={styles.linkButton}
+                activeOpacity={0.7}
+                onPress={handleManageSubscription}
+              >
+                <Text style={styles.linkButtonText}>{t('profile.manageSubscription')}</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.linkButton}
+                activeOpacity={0.7}
+                onPress={() => {
+                  amplitudeService.trackEvent('Profile Subscribe Tapped');
+                  navigation.navigate('Onboarding', { initialStep: 'Subscription' });
+                }}
+              >
+                <Text style={styles.linkButtonText}>{t('subscription.subscribeNow')}</Text>
+              </TouchableOpacity>
+            );
+          })()}
         </View>
 
         {/* Settings Section */}
@@ -533,7 +567,7 @@ export const ProfileScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.settingRow}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate('Referral')}
+              onPress={() => { amplitudeService.trackEvent('Profile Refer Friend Tapped'); navigation.navigate('Referral'); }}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="gift-outline" size={22} color="#1F2937" />
@@ -547,7 +581,7 @@ export const ProfileScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.settingRow}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate('NotificationSettings')}
+              onPress={() => { amplitudeService.trackEvent('Profile Notifications Tapped'); navigation.navigate('NotificationSettings'); }}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="notifications-outline" size={22} color="#1F2937" />
@@ -578,7 +612,7 @@ export const ProfileScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.settingRow}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate('Support')}
+              onPress={() => { amplitudeService.trackEvent('Profile Support Tapped'); navigation.navigate('Support'); }}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="help-circle-outline" size={22} color="#1F2937" />
@@ -592,7 +626,7 @@ export const ProfileScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.settingRow}
               activeOpacity={0.7}
-              onPress={() => Linking.openURL('https://hinora.co/terms')}
+              onPress={() => { amplitudeService.trackEvent('Profile Terms Tapped'); Linking.openURL('https://hinora.co/terms'); }}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="document-text-outline" size={22} color="#1F2937" />
@@ -606,7 +640,7 @@ export const ProfileScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.settingRow}
               activeOpacity={0.7}
-              onPress={() => Linking.openURL('https://hinora.co/privacy')}
+              onPress={() => { amplitudeService.trackEvent('Profile Privacy Policy Tapped'); Linking.openURL('https://hinora.co/privacy'); }}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="shield-checkmark-outline" size={22} color="#1F2937" />

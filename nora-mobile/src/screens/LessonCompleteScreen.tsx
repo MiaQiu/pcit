@@ -16,6 +16,7 @@ import { useLessonService } from '../contexts/AppContext';
 import { LessonDetailResponse } from '@nora/core';
 import { COLORS, FONTS } from '../constants/assets';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 type LessonCompleteScreenRouteProp = RouteProp<RootStackParamList, 'LessonComplete'>;
 
@@ -33,6 +34,7 @@ export const LessonCompleteScreen: React.FC = () => {
   const completedDays = [true, true, true, true, true, true, false];
 
   useEffect(() => {
+    amplitudeService.trackScreenView('Lesson Complete', { lessonId });
     loadLessonData();
   }, [lessonId]);
 
@@ -49,12 +51,12 @@ export const LessonCompleteScreen: React.FC = () => {
   };
 
   const handleContinue = () => {
-    // Navigate to Record tab to record play session
+    amplitudeService.trackEvent('Lesson Complete Record Pressed', { lessonId });
     navigation.navigate('MainTabs', { screen: 'Record' });
   };
 
   const handleGoHome = () => {
-    // Navigate back to Home tab
+    amplitudeService.trackEvent('Lesson Complete Home Pressed', { lessonId });
     navigation.navigate('MainTabs', { screen: 'Home' });
   };
 

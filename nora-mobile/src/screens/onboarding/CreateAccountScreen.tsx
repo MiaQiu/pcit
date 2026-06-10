@@ -3,7 +3,7 @@
  * Email/password signup
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -40,6 +40,10 @@ export const CreateAccountScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    amplitudeService.trackScreenView('Create Account');
+  }, []);
 
   // Validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -819,7 +819,7 @@ export const ProgressScreen: React.FC = () => {
                   <View style={[styles.progressFill, { width: `${percentage}%` }]} />
                 </View>
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('Report', { recordingId: lastSessionScore.recordingId })}
+                  onPress={() => { amplitudeService.trackReportViewed(lastSessionScore.recordingId, lastSessionScore.score, { source: 'progress_last_session' }); navigation.navigate('Report', { recordingId: lastSessionScore.recordingId }); }}
                   style={styles.linkContainer}
                 >
                   <Text style={styles.linkText}>{t('progress.readReport')}</Text>

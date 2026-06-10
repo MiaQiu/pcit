@@ -3,7 +3,7 @@
  * Displays the app's privacy policy
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,10 +16,15 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
 import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
 
 export const PrivacyPolicyScreen: React.FC = () => {
   const navigation = useNavigation();
   const { t } = useTranslation();
+
+  useEffect(() => {
+    amplitudeService.trackScreenView('Privacy Policy');
+  }, []);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
