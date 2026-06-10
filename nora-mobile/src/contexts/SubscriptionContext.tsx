@@ -4,6 +4,7 @@ import Purchases, {
   PurchasesPackage,
   CustomerInfo
 } from 'react-native-purchases';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { REVENUECAT_CONFIG } from '../config/revenuecat';
 import { useAuthService } from './AppContext';
 
@@ -22,7 +23,7 @@ interface SubscriptionContextType {
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
-export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SubscriptionProvider: React.FC<{ children: React.ReactNode; rcReady?: boolean }> = ({ children, rcReady = false }) => {
   const authService = useAuthService();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
@@ -36,13 +37,30 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // - LoginScreen: After successful login
   // This ensures webhooks always have the correct user ID
 
-  // Load offerings and subscription status in parallel (OPTIMIZED)
+  // Wait for RC to be configured before calling getCustomerInfo() — prevents
+  // the race condition where getCustomerInfo() fires before configure() completes
   useEffect(() => {
-    Promise.all([
-      loadOfferings(),
-      checkSubscriptionStatus()
-    ]).catch(err => console.error('Subscription init error:', err));
-  }, []);
+    if (!rcReady) return;
+
+    // Force-refresh user so isFreeAccount is always current (not stale cache).
+    authService.getCurrentUser(true).then(user => {
+      if (user?.isFreeAccount) {
+        setIsSubscribed(true);
+        setIsLoading(false);
+        loadOfferings().catch(() => {});
+        return; // RevenueCat check skipped — free account takes precedence
+      }
+      Promise.all([
+        loadOfferings(),
+        checkSubscriptionStatus()
+      ]).catch(err => console.error('Subscription init error:', err));
+    }).catch(() => {
+      Promise.all([
+        loadOfferings(),
+        checkSubscriptionStatus()
+      ]).catch(err => console.error('Subscription init error:', err));
+    });
+  }, [rcReady]);
 
   const loadOfferings = async () => {
     try {
@@ -78,8 +96,16 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const checkSubscriptionStatus = async () => {
     try {
-      const customerInfo = await Purchases.getCustomerInfo();
+      // isFreeAccount takes precedence over RevenueCat
+      const user = await authService.getCurrentUser(true);
+      if (user?.isFreeAccount) {
+        setIsSubscribed(true);
+        // Clear any stale free-session limit flag so Record tab never redirects
+        AsyncStorage.removeItem('@nora_free_limit_reached').catch(() => {});
+        return;
+      }
 
+      const customerInfo = await Purchases.getCustomerInfo();
       const hasEntitlement = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium] !== undefined;
       const hasActiveSubscription = hasEntitlement || customerInfo.activeSubscriptions.length > 0;
       setIsSubscribed(hasActiveSubscription);

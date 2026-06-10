@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Purchases from 'react-native-purchases';
 import * as userStorage from '../lib/userStorage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ForceUpdateScreen } from '../screens/ForceUpdateScreen';
@@ -209,6 +210,15 @@ export const RootNavigator: React.FC = () => {
     const result = await checkOnboardingStep(authService);
     reinitializeUnread(result.user.id);
     await reinitializeUpload();
+
+    // Ensure RC identity matches the authenticated user on every session restore.
+    // configure() in App.tsx reads @last_user_id but may be stale — logIn() corrects it.
+    try {
+      await Purchases.logIn(String(result.user.id));
+    } catch (e) {
+      console.warn('[RC] logIn failed on session restore:', e);
+    }
+
     return result;
   };
 

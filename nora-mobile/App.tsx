@@ -182,6 +182,7 @@ export default function App() {
     PlusJakartaSans_700Bold,
   });
   const [langReady, setLangReady] = useState(false);
+  const [rcReady, setRcReady] = useState(false);
 
   useEffect(() => {
     loadSavedLanguage().then(() => setLangReady(true));
@@ -204,7 +205,7 @@ export default function App() {
     amplitudeService.init();
   }, []);
 
-  // Initialize RevenueCat
+  // Initialize RevenueCat — must complete before SubscriptionProvider calls getCustomerInfo()
   useEffect(() => {
     const initRevenueCat = async () => {
       const rcApiKey = Platform.OS === 'android'
@@ -212,19 +213,25 @@ export default function App() {
         : REVENUECAT_CONFIG.apiKey.ios;
       if (rcApiKey) {
         try {
+          // Read saved user ID so returning users are never anonymous in RC
+          const savedUserId = await AsyncStorage.getItem('@last_user_id');
           await Purchases.configure({
             apiKey: rcApiKey,
+            appUserID: savedUserId ?? undefined,
           });
 
-          // Enable debug logs in development
           if (__DEV__) {
             await Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
           }
 
-          console.log('RevenueCat initialized successfully');
+          console.log('RevenueCat initialized:', savedUserId ? `user ${savedUserId}` : 'anonymous');
         } catch (error) {
           console.error('Error initializing RevenueCat:', error);
+        } finally {
+          setRcReady(true);
         }
+      } else {
+        setRcReady(true);
       }
     };
 
@@ -256,7 +263,7 @@ export default function App() {
         <SafeAreaProvider>
           <AppProvider>
             <CoachUnreadProvider>
-            <SubscriptionProvider>
+            <SubscriptionProvider rcReady={rcReady}>
               <OnboardingProvider>
                 <ToastProvider>
                   <NavigationContainer linking={linking} theme={navigationTheme}>

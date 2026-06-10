@@ -77,6 +77,8 @@ export const RecordScreen: React.FC = () => {
       if (isSubscribed) {
         isCheckingLimitRef.current = false;
         setIsCheckingLimit(false);
+        // Clear stale flag for users who subscribed after hitting the free limit
+        userStorage.removeItem('@nora_free_limit_reached').catch(() => {});
         return;
       }
 
