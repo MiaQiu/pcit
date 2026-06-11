@@ -47,6 +47,7 @@ import amplitudeService from '../services/amplitudeService';
 
 interface WeeklyStats {
   daysCompleted: number;      // days with activity out of 7
+  minutesPlayed: number;      // total minutes across all recordings this week
   logsThisWeek: number;       // ABC behavior logs submitted this week
   timesRecorded: number;      // number of recordings this week
   lessonsCompleted: number;   // lessons completed this week
@@ -193,6 +194,7 @@ export const HomeScreen_v2: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats>({
     daysCompleted: 0,
+    minutesPlayed: 0,
     logsThisWeek: 0,
     timesRecorded: 0,
     lessonsCompleted: 0,
@@ -304,8 +306,13 @@ export const HomeScreen_v2: React.FC = () => {
         return new Date(l.progress.completedAt) >= startOfWeek;
       });
 
+      const minutesPlayed = Math.round(
+        thisWeekRecordings.reduce((sum: number, r: any) => sum + (r.durationSeconds || 0), 0) / 60
+      );
+
       setWeeklyStats({
         daysCompleted: uniqueDays.size,
+        minutesPlayed,
         logsThisWeek: 0,
         timesRecorded: thisWeekRecordings.length,
         lessonsCompleted: lessonsThisWeek.length,
@@ -848,6 +855,14 @@ export const HomeScreen_v2: React.FC = () => {
             total="7"
             unit={t('homeV2.statDays')}
             onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'sessions' }); tabNavigation.navigate('Record'); }}
+          />
+          <StatPill
+            iconName="flash"
+            iconColor="#10B981"
+            value={String(weeklyStats.minutesPlayed)}
+            total="35"
+            unit={t('homeV2.statMins')}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'mins' }); tabNavigation.navigate('Record'); }}
           />
           <StatPill
             iconName="happy-outline"
