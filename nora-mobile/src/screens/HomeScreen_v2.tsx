@@ -971,29 +971,7 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.recordButtonText}>{t('homeV2.readReport')}</Text>
               </TouchableOpacity>
             </>
-          ) : hasRecordedSession && isReportRead && !chatIntroDismissed ? (
-            <>
-              <View style={styles.massageHeader}>
-                <Ionicons name="chatbubble-ellipses-outline" size={14} color={COLORS.mainPurple} />
-                <Text style={styles.massageLabel}>{t('homeV2.meetCoachLabel')}</Text>
-              </View>
-              <Text style={styles.massageBody}>
-                {t('homeV2.meetCoachBodyStart')}
-                <Text style={styles.massageChildName}>{childName}</Text>
-                {t('homeV2.meetCoachBodyEnd')}
-              </Text>
-              <TouchableOpacity
-                style={styles.recordButton}
-                onPress={handleChatIntroChat}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="chatbubble-ellipses" size={20} color="#fff" />
-                <Text style={styles.recordButtonText}>{t('homeV2.chatWithCoach')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.skipButton} onPress={handleChatIntroSkip} activeOpacity={0.7}>
-                <Text style={styles.skipButtonText}>{t('homeV2.skipForNow')}</Text>
-              </TouchableOpacity>
-            </>
+          // Chat intro card temporarily hidden
           ) : (
             <>
               <View style={styles.massageHeader}>
@@ -1034,15 +1012,15 @@ export const HomeScreen_v2: React.FC = () => {
         )}
         </ScrollView>
 
-      {/* Floating chat bubble — only shown after first completed play session */}
-      {hasAnySession && <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => { amplitudeService.trackChatBubbleTapped('home_fab'); navigation.push('CoachChat'); }}>
+      {/* Floating chat bubble — temporarily hidden */}
+      {/* {hasAnySession && <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => { amplitudeService.trackChatBubbleTapped('home_fab'); navigation.push('CoachChat'); }}>
         <Ionicons name="chatbox-ellipses" size={26} color="#fff" />
         {unreadCount > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : String(unreadCount)}</Text>
           </View>
         )}
-      </TouchableOpacity>}
+      </TouchableOpacity>} */}
 
       {/* ── Daily Reminder Setup Modal ── */}
       <Modal visible={showReminderModal} transparent animationType="slide" onRequestClose={() => setShowReminderModal(false)}>

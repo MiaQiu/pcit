@@ -1392,7 +1392,7 @@ export const ReportScreen: React.FC = () => {
         </View> */}
       </ScrollView>
 
-      {showChatDemo && (
+      {false && showChatDemo && ( // temporarily hidden
         <Animated.View
           style={[
             styles.chatDemoBubble,
