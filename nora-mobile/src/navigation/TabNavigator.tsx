@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import {
   HomeScreen,
   RecordScreen,
+  LogScreen,
   LearnScreen,
   ProgressScreen,
   EmotionalMassageScreen,
@@ -79,6 +80,22 @@ export const TabNavigator: React.FC = () => {
           ),
         }}
       />
+      {/* Log tab temporarily hidden
+      <Tab.Screen
+        name="Log"
+        component={LogScreen}
+        options={{
+          tabBarLabel: 'Log',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'journal' : 'journal-outline'}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      */}
       <Tab.Screen
         name="Learn"
         component={LearnScreen}
