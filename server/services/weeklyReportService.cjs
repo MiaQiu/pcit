@@ -20,6 +20,11 @@ const LOCALE_NAMES = {
   'zh-TW': 'Traditional Chinese (Taiwan)',
 };
 
+const SKILL_NAME_LABELS = {
+  'en': { Echo: 'Echo', Narrate: 'Narrate', Praise: 'Praise' },
+  'zh-TW': { Echo: '回應', Narrate: '行為描述', Praise: '讚美' },
+};
+
 const GROWTH_METRIC_LABELS = {
   'en': {
     depositsGrowth: 'growth',
@@ -488,12 +493,15 @@ async function generateWeeklyReport(userId, weekStartDate, locale = null) {
 
   // 5. Build growth metrics (data-driven micro-wins for page 3)
   const metricLabels = GROWTH_METRIC_LABELS[resolvedLocale] || GROWTH_METRIC_LABELS['en'];
+  const skillLabels = SKILL_NAME_LABELS[resolvedLocale] || SKILL_NAME_LABELS['en'];
   const growthMetrics = [];
   if (aggregated.depositsTrend === 'up' && aggregated.depositsChangePercent > 0) {
+    const rawArea = narrative?.strongestGrowthArea;
+    const localizedArea = rawArea ? (skillLabels[rawArea] || rawArea) : metricLabels.depositsGrowth;
     growthMetrics.push({
       icon: 'trending-up',
       value: `+${aggregated.depositsChangePercent}%`,
-      label: `${narrative?.strongestGrowthArea || 'Deposits'} ${metricLabels.depositsGrowth}`,
+      label: `${localizedArea} ${metricLabels.depositsGrowth}`,
     });
   }
   if (aggregated.uniqueDays > 0) {

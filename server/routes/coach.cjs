@@ -39,8 +39,12 @@ const LOCALE_NAMES = {
 function buildSystemPrompt(locale) {
   const langName = LOCALE_NAMES[locale] || LOCALE_NAMES['en'];
   if (langName === LOCALE_NAMES['en']) return BASE_SYSTEM_PROMPT;
-  return `${BASE_SYSTEM_PROMPT}
+  let prompt = `${BASE_SYSTEM_PROMPT}
 7. Always reply in ${langName}. Do not switch to another language even if the parent writes in a different language.`;
+  if (locale === 'zh-TW') {
+    prompt += '\n8. When referring to skill names in Chinese, use: Echo → 回應, Narrate → 行為描述, Labeled Praise → 具體讚美.';
+  }
+  return prompt;
 }
 
 // ─── Tool declarations (sent to Gemini) ───────────────────────────────────────

@@ -79,7 +79,11 @@ function getLanguageInstruction(languageCode) {
   if (!languageCode || languageCode === 'eng') return '';
   const name = LANGUAGE_NAMES[languageCode];
   if (!name) return '';
-  return `Write your entire response in ${name}.`;
+  let instruction = `Write your entire response in ${name}.`;
+  if (languageCode === 'zh-TW') {
+    instruction += ' Use these official skill name translations: Echo → 回應, Narrate/Narration → 行為描述, Labeled Praise → 具體讚美.';
+  }
+  return instruction;
 }
 
 module.exports = { getLanguageInstruction };
