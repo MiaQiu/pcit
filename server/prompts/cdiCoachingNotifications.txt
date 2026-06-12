@@ -9,6 +9,8 @@ Rules:
 - The postSession notification should acknowledge today's session metrics and connect them to today's result (1-2 sentences, positive)
 - The tomorrow notification should repeat the goal with the target number and tie it to a specific benefit for the child (1-2 sentences)
 
+{{LANGUAGE_INSTRUCTION}}
+
 **Child:** {{CHILD_NAME}}, {{CHILD_AGE_MONTHS}} months old
 
 **Current Session ({{SESSION_DURATION}}):**
