@@ -2,10 +2,12 @@ const express = require('express');
 const crypto = require('crypto');
 const multer = require('multer');
 const prisma = require('../services/db.cjs');
-const { generateAccessToken } = require('../utils/jwt.cjs');
+const { generateAccessToken, verifyAccessToken } = require('../utils/jwt.cjs');
 const { requireAdminAuth } = require('../middleware/adminAuth.cjs');
+const { verifyPassword } = require('../utils/password.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
-const { uploadLessonImage } = require('../services/storage-s3.cjs');
+const { uploadLessonImage, uploadAudioFile } = require('../services/storage-s3.cjs');
+const { processRecordingWithRetry } = require('../services/processingService.cjs');
 
 const uploadMiddleware = multer({
   storage: multer.memoryStorage(),
@@ -15,6 +17,30 @@ const uploadMiddleware = multer({
     else cb(new Error('Only image files are allowed'));
   },
 });
+
+const therapistUploadMiddleware = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('audio/') || file.mimetype.startsWith('video/')) cb(null, true);
+    else cb(new Error('Only audio and video files are allowed'));
+  },
+});
+
+// Accepts both admin and therapist JWTs
+function requirePortalAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  const payload = verifyAccessToken(authHeader.substring(7));
+  if (!payload || !['admin', 'therapist'].includes(payload.role)) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+  req.portalRole = payload.role;
+  req.portalUserId = payload.userId ?? null;
+  next();
+}
 
 const { generateWeeklyReport, resolveReportAudioUrls } = require('../services/weeklyReportService.cjs');
 const { generateCdiCoaching } = require('../services/pcitAnalysisService.cjs');
@@ -220,11 +246,46 @@ router.post('/auth/login', (req, res) => {
 });
 
 /**
- * GET /api/admin/auth/verify
- * Verify current admin token
+ * POST /api/admin/auth/therapist-login
+ * Therapist login with email + password. Requires isFreeAccount = true.
  */
-router.get('/auth/verify', requireAdminAuth, (req, res) => {
-  res.json({ valid: true, role: 'admin' });
+router.post('/auth/therapist-login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    const emailHash = crypto.createHash('sha256').update(email.toLowerCase()).digest('hex');
+    const user = await prisma.user.findUnique({ where: { emailHash } });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    const validPassword = await verifyPassword(password, user.passwordHash);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    if (!user.isFreeAccount) {
+      return res.status(403).json({ error: 'Therapist portal access not granted. Contact your administrator.' });
+    }
+
+    const token = generateAccessToken({ role: 'therapist', userId: user.id });
+    res.json({ token });
+  } catch (error) {
+    console.error('Therapist login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+/**
+ * GET /api/admin/auth/verify
+ * Verify current admin or therapist token
+ */
+router.get('/auth/verify', requirePortalAuth, (req, res) => {
+  res.json({ valid: true, role: req.portalRole });
 });
 
 // ============================================================================
@@ -2393,16 +2454,17 @@ router.get('/coding-review/:id', requireAdminAuth, async (req, res) => {
     const utterances = await prisma.utterance.findMany({
       where: { sessionId: req.params.id },
       orderBy: { order: 'asc' },
-      select: { id: true, order: true, speaker: true, role: true, text: true, adminComment: true },
+      select: { id: true, order: true, speaker: true, role: true, text: true, adminComment: true, pcitTag: true, feedback: true },
     });
 
-    const codingResults = session.pcitCoding?.codingResults || [];
-    // codingResult.id is the utterance's positional index (0-based)
-    const codingByUttId = {};
-    for (const r of codingResults) {
-      const utt = utterances[r.id];
-      if (utt) codingByUttId[utt.id] = r;
-    }
+    // Match coding results to adult utterances positionally (k-th adult utt ↔ k-th coding result sorted by r.id).
+    // This is immune to child utterance insertions, which don't shift the relative order of adult utterances.
+    const sortedCodingResults = [...(session.pcitCoding?.codingResults || [])].sort((a, b) => a.id - b.id);
+    const adultUtterances = utterances.filter(u => u.role === 'adult');
+    const extraByUttId = {};
+    adultUtterances.forEach((u, i) => {
+      if (sortedCodingResults[i]) extraByUttId[u.id] = sortedCodingResults[i];
+    });
 
     res.json({
       session: {
@@ -2413,22 +2475,25 @@ router.get('/coding-review/:id', requireAdminAuth, async (req, res) => {
         userName: session.User?.name ?? null,
         userEmail: session.User?.email ?? null,
       },
-      utterances: utterances.map(u => ({
-        id: u.id,
-        order: u.order,
-        speaker: u.speaker,
-        role: u.role ?? null,
-        text: u.text,
-        adminComment: u.adminComment ?? null,
-        coding: codingByUttId[u.id]
-          ? {
-              code: codingByUttId[u.id].code ?? null,
-              feedback: codingByUttId[u.id].feedback ?? null,
-              reference: codingByUttId[u.id].reference ?? null,
-              assumption: codingByUttId[u.id].assumption ?? null,
-            }
-          : null,
-      })),
+      utterances: utterances.map(u => {
+        const extra = extraByUttId[u.id];
+        return {
+          id: u.id,
+          order: u.order,
+          speaker: u.speaker,
+          role: u.role ?? null,
+          text: u.text,
+          adminComment: u.adminComment ?? null,
+          coding: u.pcitTag
+            ? {
+                code: u.pcitTag,
+                feedback: u.feedback ?? null,
+                reference: extra?.reference ?? null,
+                assumption: extra?.assumption ?? null,
+              }
+            : null,
+        };
+      }),
     });
   } catch (err) {
     console.error('GET /admin/coding-review/:id error:', err);
@@ -2469,6 +2534,170 @@ router.post('/coding-review/:id/submit', requireAdminAuth, async (req, res) => {
   } catch (err) {
     console.error('POST /admin/coding-review submit error:', err);
     res.status(500).json({ error: 'Failed to submit review' });
+  }
+});
+
+// ============================================================================
+// THERAPIST PORTAL ENDPOINTS
+// ============================================================================
+
+/**
+ * POST /api/admin/therapist/upload
+ * Upload an audio/video file for PCIT analysis.
+ * Accessible by both admin and therapist roles.
+ */
+router.post('/therapist/upload', requirePortalAuth, therapistUploadMiddleware.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'No file provided' });
+
+    const mode = req.body.mode === 'PDI' ? 'PDI' : 'CDI';
+    const durationSeconds = parseInt(req.body.durationSeconds || '300', 10);
+
+    // Therapists use their own userId; admins use a shared system user
+    let userId = req.portalUserId;
+    if (!userId) {
+      const systemUser = await prisma.user.upsert({
+        where: { email: 'portal-upload@nora.internal' },
+        update: {},
+        create: {
+          id: crypto.randomUUID(),
+          email: 'portal-upload@nora.internal',
+          passwordHash: crypto.randomUUID(),
+          name: 'Portal Upload',
+          childBirthYear: 2020,
+          childConditions: '',
+          tag: 'tester',
+        },
+      });
+      userId = systemUser.id;
+    }
+
+    const sessionId = crypto.randomUUID();
+
+    await prisma.session.create({
+      data: {
+        id: sessionId,
+        userId,
+        mode,
+        storagePath: 'pending_upload',
+        durationSeconds,
+        transcript: '',
+        aiFeedbackJSON: {},
+        pcitCoding: {},
+        tagCounts: {},
+        masteryAchieved: false,
+        riskScore: 0,
+        flaggedForReview: false,
+        analysisStatus: 'PENDING',
+      }
+    });
+
+    const storagePath = await uploadAudioFile(file.buffer, userId, sessionId, file.mimetype);
+
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: { storagePath, analysisStatus: 'PROCESSING' }
+    });
+
+    processRecordingWithRetry(sessionId, userId, storagePath, durationSeconds, 0, null)
+      .catch(async (err) => {
+        await prisma.session.update({
+          where: { id: sessionId },
+          data: {
+            analysisStatus: 'FAILED',
+            analysisError: err.userMessage || err.message || 'Processing failed',
+            analysisFailedAt: new Date(),
+            permanentFailure: true,
+          }
+        }).catch(() => {});
+      });
+
+    res.json({ sessionId });
+  } catch (err) {
+    console.error('Therapist upload error:', err);
+    res.status(500).json({ error: err.message || 'Upload failed' });
+  }
+});
+
+/**
+ * GET /api/admin/therapist/sessions/:id
+ * Poll analysis status and retrieve coding review data once complete.
+ * Accessible by both admin and therapist roles.
+ */
+router.get('/therapist/sessions/:id', requirePortalAuth, async (req, res) => {
+  try {
+    const session = await prisma.session.findUnique({
+      where: { id: req.params.id },
+      select: {
+        id: true,
+        mode: true,
+        createdAt: true,
+        userId: true,
+        analysisStatus: true,
+        analysisError: true,
+        codingReviewedAt: true,
+        pcitCoding: true,
+      }
+    });
+
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    // Therapists can only access their own sessions; admins can access all
+    if (req.portalRole === 'therapist' && session.userId !== req.portalUserId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (session.analysisStatus !== 'COMPLETED') {
+      return res.json({
+        analysisStatus: session.analysisStatus,
+        analysisError: session.analysisError ?? null,
+        session: { id: session.id, mode: session.mode, createdAt: session.createdAt, codingReviewedAt: null },
+        utterances: []
+      });
+    }
+
+    const utterances = await prisma.utterance.findMany({
+      where: { sessionId: req.params.id },
+      orderBy: { order: 'asc' },
+      select: { id: true, order: true, speaker: true, role: true, text: true, adminComment: true, pcitTag: true, feedback: true },
+    });
+
+    const extraByOrder = {};
+    for (const r of (session.pcitCoding?.codingResults || [])) {
+      if (r.id !== undefined) extraByOrder[r.id] = r;
+    }
+
+    res.json({
+      analysisStatus: session.analysisStatus,
+      analysisError: null,
+      session: {
+        id: session.id,
+        mode: session.mode,
+        createdAt: session.createdAt,
+        codingReviewedAt: session.codingReviewedAt,
+      },
+      utterances: utterances.map(u => {
+        const extra = extraByOrder[u.order];
+        return {
+          id: u.id,
+          order: u.order,
+          speaker: u.speaker,
+          role: u.role ?? null,
+          text: u.text,
+          adminComment: u.adminComment ?? null,
+          coding: u.pcitTag ? {
+            code: u.pcitTag,
+            feedback: u.feedback ?? null,
+            reference: extra?.reference ?? null,
+            assumption: extra?.assumption ?? null,
+          } : null,
+        };
+      })
+    });
+  } catch (err) {
+    console.error('Therapist session get error:', err);
+    res.status(500).json({ error: 'Failed to load session' });
   }
 });
 

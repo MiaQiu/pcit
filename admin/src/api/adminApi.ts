@@ -153,13 +153,55 @@ export async function login(password: string): Promise<string> {
   return data.token;
 }
 
-export async function verifyToken(): Promise<boolean> {
+export async function verifyToken(): Promise<{ valid: boolean; role: 'admin' | 'therapist' }> {
   try {
-    await apiFetch('/api/admin/auth/verify');
-    return true;
+    const data = await apiFetch<{ valid: boolean; role: 'admin' | 'therapist' }>('/api/admin/auth/verify');
+    return data;
   } catch {
-    return false;
+    return { valid: false, role: 'admin' };
   }
+}
+
+export async function therapistLogin(email: string, password: string): Promise<string> {
+  const data = await apiFetch<{ token: string }>('/api/admin/auth/therapist-login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+  setToken(data.token);
+  return data.token;
+}
+
+export interface TherapistSessionStatus {
+  analysisStatus: string;
+  analysisError: string | null;
+  session: { id: string; mode: string; createdAt: string; codingReviewedAt: string | null };
+  utterances: ReviewUtterance[];
+}
+
+export async function uploadTherapistSession(
+  file: File,
+  mode: 'CDI' | 'PDI',
+  durationSeconds: number
+): Promise<{ sessionId: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('mode', mode);
+  formData.append('durationSeconds', String(durationSeconds));
+
+  const token = (await import('./client')).getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch('/api/admin/therapist/upload', { method: 'POST', headers, body: formData });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Upload failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function getTherapistSession(sessionId: string): Promise<TherapistSessionStatus> {
+  return apiFetch<TherapistSessionStatus>(`/api/admin/therapist/sessions/${sessionId}`);
 }
 
 // ---- Lessons ----

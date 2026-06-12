@@ -30,3 +30,24 @@ scripts/debug-session-*
 lesson-content.txt
 .prod-infra-ids.txt
 .vercel
+.dpics-newmanual-cache.json
+
+# Google Play service account key (DO NOT COMMIT)
+nora-mobile/play-developer-api.json
+
+# Production database backups
+backups/
+
+# Temporary scripts
+scripts/_tmp_*
+
+# Local Claude Code config
+.claude/
+
+# Stale package symlinks
+expo
+nora-mobile@1.0.0
+
+# Large binary assets
+nora-mobile/assets/images/*.mov
+nora-mobile/assets/images/*.mp4

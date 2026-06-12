@@ -40,7 +40,10 @@ const DPICS_TO_TAG_MAP = {
   'Q': 'Question',           // Question
   'NTA': 'Criticism',        // Negative Talk
   'ID': 'Neutral',           // Informational Description
-  'AK': 'Neutral'            // Acknowledgement
+  'AK': 'Neutral',           // Acknowledgement
+  'TA': 'Neutral',           // Neutral Talk (new manual)
+  'DQ': 'Question',          // Descriptive/Reflective Question (new manual)
+  'IQ': 'Question',          // Information Question (new manual)
 };
 
 /**

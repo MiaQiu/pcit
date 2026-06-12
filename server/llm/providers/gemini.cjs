@@ -40,7 +40,8 @@ async function geminiCall(apiKey, model, body, { timeout = 60_000 } = {}) {
   }
 
   const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  const candidate = data.candidates?.[0];
+  const text = candidate?.content?.parts?.[0]?.text;
 
   if (!text) {
     const err     = new Error('Empty response from Gemini API');

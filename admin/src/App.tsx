@@ -16,20 +16,23 @@ import FreeAccountsPage from './pages/FreeAccountsPage';
 import ChatPage from './pages/ChatPage';
 import CodingReviewListPage from './pages/CodingReviewListPage';
 import CodingReviewDetailPage from './pages/CodingReviewDetailPage';
+import TherapistUploadPage from './pages/TherapistUploadPage';
 import AdminLayout from './components/layout/AdminLayout';
 
 export default function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, role } = useAuth();
+  const defaultPath = role === 'therapist' ? '/upload' : '/lessons';
 
   return (
     <Routes>
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
+        element={isAuthenticated ? <Navigate to={defaultPath} replace /> : <LoginPage />}
       />
       <Route element={<ProtectedRoute />}>
         <Route element={<AdminLayout />}>
-          <Route index element={<LessonListPage />} />
+          <Route index element={<Navigate to={defaultPath} replace />} />
+          <Route path="upload" element={<TherapistUploadPage />} />
           <Route path="lessons" element={<LessonListPage />} />
           <Route path="lessons/new" element={<LessonEditorPage />} />
           <Route path="lessons/:id" element={<LessonEditorPage />} />

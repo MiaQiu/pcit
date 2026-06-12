@@ -116,7 +116,7 @@ async function validateSessionQuality(utterances, durationSeconds, roleIdentific
 
 // AI_PROVIDER env var drives default model selection inside the gateway.
 const AI_PROVIDER = process.env.AI_PROVIDER || 'gemini-flash';
-const GEMINI_STREAMING_MODEL = process.env.GEMINI_STREAMING_MODEL || 'gemini-2.5-flash';
+const GEMINI_STREAMING_MODEL = process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview';
 
 // ============================================================================
 // Helper Functions
@@ -1735,13 +1735,11 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
       } else if (code === 'IC') {
         tagCounts.indirect_command++;
         tagCounts.command++;
-      } else if (code === 'Q') {
+      } else if (code === 'Q' || code === 'DQ' || code === 'IQ') {
         tagCounts.question++;
       } else if (code === 'NTA') {
         tagCounts.criticism++;
-      } else if (code === 'ID') {
-        tagCounts.neutral++;
-      } else if (code === 'AK') {
+      } else if (code === 'ID' || code === 'AK' || code === 'TA') {
         tagCounts.neutral++;
       }
     }

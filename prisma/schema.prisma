@@ -908,9 +908,10 @@ model AbcLog {
   places         String[]
   persons        String[]
   consequences   String[]
-  intensity      Int?
-  durationBucket String?
-  recordedAt     DateTime   @default(now())
+  intensity        Int?
+  durationBucket   String?
+  behaviorFunction String?
+  recordedAt       DateTime   @default(now())
   createdAt      DateTime   @default(now())
   User           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   Child          Child      @relation(fields: [childId], references: [id], onDelete: Cascade)
@@ -926,11 +927,14 @@ enum AbcLogType {
 }
 
 model AbcInsight {
-  id        String   @id @default(uuid())
-  userId    String
-  insight   Json
-  createdAt DateTime @default(now())
-  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String    @id @default(uuid())
+  userId         String
+  insight        Json
+  followUpRating Int?
+  followUpNote   String?
+  followUpAt     DateTime?
+  createdAt      DateTime  @default(now())
+  User           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }

@@ -11,6 +11,7 @@ import { Quiz, User } from '@nora/core';
 export type RootTabParamList = {
   Home: { showModulePicker?: boolean } | undefined;
   Record: { autoStart?: boolean } | undefined;
+  Log: undefined;
   Learn: undefined;
   Progress: { scrollToDevelopmental?: boolean } | undefined;
   EmotionalMassage: undefined;
@@ -108,8 +109,8 @@ export type RootStackParamList = {
   PsychologistChat: undefined;
   Referral: undefined;
   ABCLog: {
-    mode: 'challenging';
-    source: 'quick';
+    mode: 'challenging' | 'positive';
+    source: 'quick' | 'log_tab' | 'home';
   };
 };
 

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Nora",
     "slug": "nora-mobile",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "main": "index.ts",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,7 +24,7 @@
         ],
         "NSUserNotificationsUsageDescription": "Nora sends you helpful reminders to practice and learn, and notifies you when your session reports are ready."
       },
-      "buildNumber": "74"
+      "buildNumber": "82"
     },
     "android": {
       "adaptiveIcon": {
@@ -41,7 +41,7 @@
         "android.permission.FOREGROUND_SERVICE_MICROPHONE",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "versionCode": 8
+      "versionCode": 82
     },
     "web": {
       "favicon": "./assets/favicon.png"

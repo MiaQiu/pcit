@@ -11,6 +11,12 @@ const MODELS = {
     primary:  'gemini-2.5-flash',
     fallback: 'gemini-2.0-flash',
   },
+  // Gemini 3.5 Flash
+  'gemini-3.5-flash': {
+    provider: 'gemini',
+    primary:  'gemini-3.5-flash',
+    fallback: 'gemini-2.5-flash',
+  },
   // Gemini 3 Flash — uses streaming endpoint to avoid connection resets
   'gemini-3-flash-preview': {
     provider:  'gemini',

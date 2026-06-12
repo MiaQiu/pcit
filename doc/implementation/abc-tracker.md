@@ -1,7 +1,7 @@
-# Implementation: Nora ABC Tracker — Quick Log (Path 2)
+# Implementation: Nora ABC Tracker
 
 **Feature:** Antecedent–Behavior–Consequence (ABC) retroactive behavior tracker  
-**Scope:** Path 2 only — Quick Log flow. Live timer (Path 1) and positive log (Path 3) are deferred.  
+**Scope:** Challenging log, positive log, AI insight generation, follow-up loop.  
 **Clinical context:** Closes the PCIT loop — parents log real-world behavioral incidents to surface patterns for the coach and weekly reports.
 
 ---
@@ -11,34 +11,50 @@
 | Path | Status | Entry point |
 |---|---|---|
 | Path 1 — Live Timer | Deferred | — |
-| **Path 2 — Quick Log** | **Implemented** | WeeklyStats "logs" pill · Today's Plan "Log a Outburst" item |
-| Path 3 — Positive Log | Deferred | — |
+| **Path 2 — Challenging Log** | **Implemented** | Log tab · HomeScreen plan item |
+| **Path 3 — Positive Log** | **Implemented** | Log tab "Log a win" button |
 
 ---
 
 ## 1. Files Created / Modified
 
-### New files
+### New / rewritten screens
 
 | File | Purpose |
 |---|---|
-| `nora-mobile/src/data/abcTags.ts` | Age-gated default tag arrays and duration buckets |
-| `nora-mobile/src/utils/abcAge.ts` | `childBirthday`/`childBirthYear` → `toddler`/`school` tier |
-| `nora-mobile/src/screens/ABCLogScreen.tsx` | 5-step fast-tap log form |
-| `server/routes/abc-logs.cjs` | REST endpoints (POST, GET) |
-| `prisma/migrations/20260526000000_add_abc_logs/migration.sql` | DB migration |
+| `nora-mobile/src/screens/ABCLogScreen.tsx` | Multi-step log form (challenging + positive modes) |
+| `nora-mobile/src/screens/LogScreen.tsx` | Log tab — behavior insights dashboard |
+
+### Data & config
+
+| File | Purpose |
+|---|---|
+| `nora-mobile/src/data/abcTags.ts` | All tag arrays + behavior function options |
+| `server/routes/abc-logs.cjs` | REST endpoints (POST, GET logs, GET/POST insights) |
+
+### Database migrations (in order)
+
+| Migration | Change |
+|---|---|
+| `20260526000000_add_abc_logs` | Initial `AbcLog` table |
+| `20260602000000_abc_logs_restructure` | Added `behaviors`, `intensity`, `durationBucket`; added `situations`, `places`, `persons`; added `AbcInsight` table |
+| `20260603000000_add_abc_insights` | `followUpRating`, `followUpNote`, `followUpAt` on `AbcInsight` |
+| `20260608000000_abc_logs_restore_legacy_fields` | Restore compatibility fields |
+| `20260610000002_add_abc_behavior_function` | `behaviorFunction TEXT` on `AbcLog` |
+| `20260610000003_add_abc_insight_followup` | Ensured follow-up columns present on `AbcInsight` |
 
 ### Modified files
 
 | File | Change |
 |---|---|
-| `prisma/schema.prisma` | Added `AbcLog` model, `AbcLogType` enum, relations on `User` and `Child` |
+| `prisma/schema.prisma` | `AbcLog` + `AbcInsight` models; `AbcLogType` enum |
 | `server.cjs` | Mounted `/api/abc-logs` route |
-| `nora-mobile/src/navigation/types.ts` | Added `ABCLog` to `RootStackParamList` |
+| `nora-mobile/src/navigation/types.ts` | `ABCLog` params extended; `Log` tab added |
 | `nora-mobile/src/navigation/RootNavigator.tsx` | Registered `ABCLogScreen` |
-| `nora-mobile/src/screens/HomeScreen_v2.tsx` | Replaced mins pill → logs pill; added "Log a Outburst" plan item |
-| `nora-mobile/src/i18n/locales/en.json` | Added `statLogs`, `planLogBehaviorLabel`, `planLogBehaviorTitle` |
-| `nora-mobile/src/i18n/locales/zh-TW.json` | Same keys in Traditional Chinese |
+| `nora-mobile/src/navigation/TabNavigator.tsx` | Added `Log` tab (journal icon) |
+| `nora-mobile/src/screens/index.ts` | Exported `LogScreen` |
+
+> `nora-mobile/src/utils/abcAge.ts` was deleted — age-tiering was removed when tags were unified.
 
 ---
 
@@ -48,18 +64,23 @@
 
 ```prisma
 model AbcLog {
-  id             String     @id @default(uuid())
-  userId         String
-  childId        String
-  logType        AbcLogType @default(CHALLENGING)
-  antecedents    String[]
-  behaviors      String[]
-  consequences   String[]
-  durationBucket String?
-  recordedAt     DateTime   @default(now())
-  createdAt      DateTime   @default(now())
-  User           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Child          Child      @relation(fields: [childId], references: [id], onDelete: Cascade)
+  id               String     @id @default(uuid())
+  userId           String
+  childId          String
+  logType          AbcLogType @default(CHALLENGING)
+  antecedents      String[]
+  behaviors        String[]
+  situations       String[]
+  places           String[]
+  persons          String[]
+  consequences     String[]
+  intensity        Int?
+  durationBucket   String?
+  behaviorFunction String?
+  recordedAt       DateTime   @default(now())
+  createdAt        DateTime   @default(now())
+  User             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Child            Child      @relation(fields: [childId], references: [id], onDelete: Cascade)
   @@index([userId])
   @@index([userId, recordedAt])
   @@index([childId, recordedAt])
@@ -68,162 +89,286 @@ model AbcLog {
 enum AbcLogType { CHALLENGING POSITIVE }
 ```
 
-Note: `intensity` field was removed from the schema and is not collected.
+### `AbcInsight` Prisma model
+
+```prisma
+model AbcInsight {
+  id             String    @id @default(uuid())
+  userId         String
+  insight        Json      // { observation, validation, strategy, why }
+  followUpRating Int?      // 1–5 (😟=1, 😐=3, 😊=5)
+  followUpNote   String?
+  followUpAt     DateTime?
+  createdAt      DateTime  @default(now())
+  User           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+```
 
 ### Server endpoints
 
 ```
-POST /api/abc-logs   body: { logType?, antecedents, behaviors, consequences, durationBucket?, recordedAt? }
-GET  /api/abc-logs   query: ?since=ISO_DATE&limit=20&cursor=ID
+POST /api/abc-logs
+  body: { logType?, antecedents, behaviors?, situations?, places?, persons?,
+          consequences?, intensity?, durationBucket?, behaviorFunction?, recordedAt? }
+  → 201 { log }
+
+GET  /api/abc-logs
+  query: ?since=ISO_DATE&limit=20&cursor=ID
+  → { logs, total }
+
+GET  /api/abc-logs/insights
+  → { insight, insightId, cached }  or  { needsMoreLogs, logsNeeded }
+
+GET  /api/abc-logs/insights/latest
+  → { insightId, insight, followUpRating, followUpAt, createdAt }
+
+POST /api/abc-logs/insights/:id/followup
+  body: { rating: 1–5, note? }
+  → { insightId, followUpRating }
 ```
 
-Both require auth. The server auto-resolves `childId` via `prisma.child.findFirst({ where: { userId } })` — the client does not send a `childId`.
+All routes require auth. Server auto-resolves `childId` — client does not send it.
 
-`recordedAt` is optional; omitted when the user selects "Not sure" on the time step.
+**Validation:**
+- Positive logs: `antecedents` (positive behaviors) required
+- Challenging logs: `antecedents` AND `behaviors` required
 
 ---
 
 ## 3. Navigation
 
-`ABCLog` screen params:
 ```typescript
-ABCLog: { mode: 'challenging'; source: 'quick' }
+// RootStackParamList
+ABCLog: {
+  mode: 'challenging' | 'positive';
+  source: 'quick' | 'log_tab' | 'home';
+}
 ```
+
 Registered with `animation: 'slide_from_bottom'` and `headerShown: false`.
+
+`Log` tab: `RootTabParamList.Log = undefined`, positioned between Record and Learn.
 
 ---
 
 ## 4. ABCLogScreen — Step Flow
 
-```
-Step 0: Time → Step 1: Antecedent → Step 2: Behavior → Step 3: Consequence → Step 4: Duration
-```
+### Challenging mode (6 steps)
 
-### Step 0 — Time
+| Step | Question | Required | Notes |
+|---|---|---|---|
+| 0 | What did your child do? | Yes | `BEHAVIOR_TAGS`; no custom tags; safety overlay check |
+| 1 | What triggered it? | Yes | `ANTECEDENT_TAGS` + custom tags |
+| 2 | What happened right after? | No | `CONSEQUENCE_TAGS` with cross-step inference reordering; **quick save checkpoint** |
+| 3 | How was it? | No | Intensity 1–5 emoji + duration bucket; "Optional detail" phase begins |
+| 4 | What else was going on? | No | Combined step: situations + places + persons in one scrollable view |
+| 5 | When did it happen? | No | Hour chips (replaces DateTimePicker spinner) |
 
-- Native `DateTimePicker` in `display="spinner"` mode with `minuteInterval={60}` (hour-only)
-- Defaults to current hour with minutes zeroed
-- "Not sure" pill below the spinner — when active, dims the picker (`opacity: 0.3`) and omits `recordedAt` from the POST body
-- Scrolling the wheel automatically deactivates "Not sure"
+**Quick save at step 2:** Primary button says "Save Log"; a secondary "Add more context →" link advances to step 3 for optional detail.
 
-### Steps 1–3 — Tag selection (Antecedent / Behavior / Consequence)
+**Two-phase progress bar:** Visual divider separates segments 0–2 ("Quick capture") from segments 3–5 ("Optional detail"). Segments 3–5 render at opacity 0.2 until step ≥ 3.
 
-- Full-width pill cards (`height: 68`, `borderRadius: 36`), matching `MultipleChoiceScreen`
-- Multi-select; purple selected state with checkmark
-- `[+ Add custom option]` dashed pill (max 3 per category, stored in `userStorage` as `abc_custom_tags_{category}`)
-- Long-press a custom tag to delete it
-- Steps 1 (antecedents) and 2 (behaviors) require at least one selection to advance
-- Step 3 (consequences) is skippable
+### Positive mode (3 steps)
 
-### Step 4 — Duration
-
-- Same full-width pill card format as Steps 1–3 (single-select)
-- Options: `Less than 2 minutes` · `2–5 minutes` · `5–15 minutes` · `15–30 minutes` · `More than 30 minutes`
-- Default pre-selection: `2–5 minutes`
-- Skippable
-
-### Advance / skip logic
-
-| Step | Required? | Continue enabled when |
+| Step | Question | Required |
 |---|---|---|
-| 0 — Time | No | Always |
-| 1 — Antecedent | Yes | ≥ 1 tag selected |
-| 2 — Behavior | Yes | ≥ 1 tag selected |
-| 3 — Consequence | No | Always |
-| 4 — Duration | No | Always |
+| 0 | What did your child do well? | Yes |
+| 1 | What was happening? | No |
+| 2 | When did it happen? | No |
 
-"Skip this step" is always rendered (invisible on steps 0–2, active on steps 3–4) to keep footer height consistent across all steps.
+Green accent color (`#10B981`) throughout.
 
-### Footer layout
+### Intro screen
 
-All steps share an identical footer:
-1. Back arrow (←) + Continue/Save Log pill button
-2. "Skip this step" link (hidden on steps 0–2)
+Shown once per device (key `abc_intro_seen` in `userStorage`). Three feature bullets. Skippable with back arrow.
 
-### Submit
+### Safety overlay
 
-POSTs to `/api/abc-logs`, writes `abc_logged_today = today` to `userStorage`, then shows a success modal with:
+Triggered when a `SAFETY_BEHAVIORS` tag is selected at step 0 and `abc_safety_check_seen` is not set. Shows crisis resources (SG 999 / 1800-221-4444), then proceeds to submit on acknowledgement.
 
-- A random message from `SUCCESS_MESSAGES` (chosen at submit time):
-  - *"Logging helps us understand the pattern; thanks for staying consistent."*
-  - *"Understanding the 'why' is the first step toward change."*
-  - *"Your consistency is key to identifying behavior patterns."*
-  - *"Every log helps us see the bigger picture."*
-- **Log Another** — resets the form to step 0 (clears all selections, resets time to current hour)
-- **Close** — navigates back to the home screen
+`SAFETY_BEHAVIORS = new Set(['Hurting themselves', 'Hitting, kicking, or biting'])`
 
-### Age tier
+### Toast success (replaces blocking modal)
 
-Resolved from `authService.getCurrentUser()` on mount via `getAgeTier(childBirthday, childBirthYear)`. Toddler defaults are shown immediately while the async call is in flight.
+On save, a dark banner animates in from the top:
+- Shows a random contextual message
+- Auto-dismisses after 2.5 s → `navigation.goBack()`
+- "New Entry" button resets the form in place without navigating back
+
+### Frequency-sorted tags
+
+Tag usage frequencies stored in `userStorage` as `abc_tag_freq_{category}` (JSON object `{ [tag]: count }`). Incremented on each successful submission. Tags sorted by frequency descending on render; custom tags always at bottom; new tags retain natural order.
+
+### Cross-step consequence inference (step 2)
+
+`inferConsequenceTags(behaviors, antecedents)` re-orders `CONSEQUENCE_TAGS` based on current session selections:
+
+| Condition | Elevated tag |
+|---|---|
+| Yelling / Hitting / Crying selected | "My child got more attention…" |
+| "told no" antecedent | Want-related consequences |
+| "asked to do something" antecedent | Compliance/refusal consequences |
+| Running away / Refusing selected | "We stopped the activity…" |
+
+A "Reordered based on what you selected" badge (sparkles icon) appears when ordering differs from default.
+
+### Hour chips (step 5 / positive step 2)
+
+Nine time-of-day chips in a 2-column grid replacing the DateTimePicker spinner:
+
+| Label | Range | Stored hour |
+|---|---|---|
+| Early morning | 5–7am | 6 |
+| Before school | 7–9am | 8 |
+| Mid-morning | 9–11am | 10 |
+| Around lunch | 11am–1pm | 12 |
+| After lunch | 1–3pm | 14 |
+| After school | 3–5pm | 16 |
+| Early evening | 5–7pm | 18 |
+| Bedtime | 7–9pm | 20 |
+| Late night | 9pm+ | 21 |
+
+If no chip selected, `recordedAt` is omitted from POST body.
+
+### Custom tags
+
+Up to 3 custom tags per category stored in `userStorage` (`abc_custom_tags_{category}`). Added via modal; long-press to delete.
 
 ---
 
 ## 5. Tag Data (`nora-mobile/src/data/abcTags.ts`)
 
-### Age tiers
+All exports:
 
-| Tier | Criteria |
+| Export | Used at |
 |---|---|
-| `toddler` | 24–47 months (default / fallback) |
-| `school` | 48–96 months |
+| `BEHAVIOR_TAGS` | Challenging step 0 |
+| `ANTECEDENT_TAGS` | Challenging step 1 |
+| `CONSEQUENCE_TAGS` | Challenging step 2 |
+| `SITUATION_TAGS` | Challenging step 4 (situations) + positive step 1 |
+| `PLACE_TAGS` | Challenging step 4 (places) |
+| `PERSON_TAGS` | Challenging step 4 (persons) |
+| `POSITIVE_BEHAVIOR_TAGS` | Positive step 0 |
+| `BEHAVIOR_FUNCTION_OPTIONS` | 4 options with descriptions (Escape, Attention, Tangibles, Sensory) |
 
-### Default tags (toddler)
-
-**Antecedents:** Told 'No' · Activity Transition · Sharing Conflict · Tired/Hungry · Routine Interruption  
-**Behaviors:** Screaming/Tantrum · Biting/Scratching · Flopping to Floor · Throwing Objects · Elopement  
-**Consequences:** Verbal Redirection · Sensory Comfort · Planned Ignoring · Time-out Chair · Labeled Praise
-
-### Default tags (school-age)
-
-**Antecedents:** Task Demand · Screen Time Ended · Losing a Game · Sibling/Peer Conflict · School Transition  
-**Behaviors:** Verbal Defiance · Slamming Doors · Physical Aggression · Emotional Meltdown · Refusing to Comply  
-**Consequences:** Loss of Screen Privilege · Quiet Space · Instruction Repeated · Token/Reward · Time-out Chair
-
-### Duration buckets
-
-`Less than 2 minutes` · `2–5 minutes` · `5–15 minutes` · `15–30 minutes` · `More than 30 minutes`
+`SAFETY_BEHAVIORS` is a `Set` defined in `ABCLogScreen.tsx` (not exported from abcTags).
 
 ---
 
-## 6. HomeScreen_v2 Changes
+## 6. LogScreen — Behavior Insights Dashboard
 
-### Weekly stats pill
+`nora-mobile/src/screens/LogScreen.tsx` — the "Log" bottom tab screen.
 
-Replaced the `minutesPlayed` / flash pill:
+### Tabs
 
+| Tab | Label | Content |
+|---|---|---|
+| Challenging | "Tough moments" | Insights + pattern grid + recent logs |
+| Positive | "Bright spots" | Recent wins + activity summary |
+
+### Challenging tab layout (top to bottom)
+
+1. **This week card** — 7-day dot strip + summary line
+2. **InsightCard** (inline, auto-fetched) — or `buildingCard` (progress dots) when < 5 challenging logs
+3. **Pattern grid** — most frequent antecedents/consequences/behaviors; gated at ≥ 5 logs
+4. **Wins nudge** — tappable green card prompting positive log; shown when no positive logs and ≥ 2 challenging logs
+5. **Recent logs card** — last 5 entries
+
+### InsightCard (inline, replaces modal + "Ask Nora" button)
+
+- **No "Ask Nora" button** — removed entirely
+- **Auto-fetched** in `fetchLogs` after logs load, when `challengingCount >= 5` and `!insightFetchedRef.current`
+- `insightFetchedRef` reset to `false` on each `useFocusEffect` so insight re-fetches on every screen focus
+- Loading state: spinner + "Reading your logs…"
+- Error state: "Could not load. Tap ↻ to retry."
+- Refresh button (↻) in card header
+
+InsightCard sections:
+| Section label | Insight field |
+|---|---|
+| What Nora noticed | `observation` |
+| Validation | `validation` |
+| Try this | `strategy` |
+| Why it works | `why` |
+
+### Follow-up rating (inside InsightCard)
+
+Three emoji buttons (😟 / 😐 / 😊) mapping to ratings 1 / 3 / 5. On submit, calls `POST /api/abc-logs/insights/:id/followup`. Done state shows checkmark + feedback text. Rating is included in future LLM prompts for novelty tracking.
+
+### Empty state
+
+Both "Log a moment" and "Log a win" buttons side by side.
+
+---
+
+## 7. AI Insight Generation
+
+### Trigger
+
+`GET /api/abc-logs/insights` — called automatically when ≥ 5 challenging logs exist. Returns cached insight if it was generated after the most recent log's `createdAt`.
+
+### Input
+
+- Up to 20 most recent challenging logs (formatted with day/time, pipe-separated fields)
+- Up to 10 most recent positive logs (top-5 frequency summary)
+- Child age + conditions from user profile
+- Up to 5 past insights with their follow-up ratings (for novelty constraint)
+
+### LLM config
+
+```javascript
+llmCall(prompt, {
+  model: 'gemini-2.5-flash',
+  output: 'json',
+  maxTokens: 2000,
+  temperature: 0.3,
+  label: 'abc-insight',
+  _geminiConfig: { thinkingConfig: { thinkingBudget: 1024 } },
+})
 ```
-Before: ⚡ {minutesPlayed}/35 mins
-After:  📓 {logsThisWeek}/7  logs   (taps → ABCLog)
+
+### Output schema
+
+```json
+{
+  "observation": "...",
+  "validation": "...",
+  "strategy": "...",
+  "why": "..."
+}
 ```
 
-`logsThisWeek` is fetched in parallel in `loadData` via `GET /api/abc-logs?since={startOfWeek}`.
+### Prompt constraints
+
+- Novelty: new observation + strategy must differ from all past insights
+- Safety: never suggest physical punishment; acknowledge self-harm/aggression and refer to therapist
+- Strategy: 3–4 numbered concrete steps covering both cooperation and escalation scenarios
+- PCIT skill reference: name relevant skill (Labeled Praise, Narration, Echo, Effective Command, Follow-Through, Strategic Ignoring) at end of `why` if genuinely applicable
+
+---
+
+## 8. HomeScreen Integration
 
 ### Today's Plan item
 
 ```
-[ □ ] Log a Outburst:  Track behavior patterns
+[ □ ] Log a Moment:  Track behavior patterns
 ```
 
-- Added after the Record session item
-- `isCompleted: true` if `userStorage.getItem('abc_logged_today') === today`
-- Tapping navigates to `ABCLog` with `{ mode: 'challenging', source: 'quick' }`
-
-### i18n keys
-
-| Key | EN | ZH-TW |
-|---|---|---|
-| `statLogs` | `logs` | `記錄` |
-| `planLogBehaviorLabel` | `Log a Outburst:` | `記錄一次爆發：` |
-| `planLogBehaviorTitle` | `Track behavior patterns` | `追蹤行為模式` |
+- Completed when `userStorage.getItem('abc_logged_today') === today`
+- Taps → `ABCLog { mode: 'challenging', source: 'home' }`
+- Positive log completion stored as `abc_positive_logged_today`
 
 ---
 
-## 7. Deferred (Phase 2)
+## 9. Deferred
 
 | Item | Notes |
 |---|---|
 | Live Timer (Path 1) | Requires `ABCContext` with `AppState`-aware stopwatch |
-| Positive Log (Path 3) | Warm theme variant, `POSITIVE_TAGS` arrays |
 | Weekly Report integration | Aggregate log count + most common antecedent |
 | Coach Chat context injection | Last 5 logs injected into coach prompt |
 | Cross-device custom tag sync | Currently device-local only (`userStorage`) |
+| Log trend chart | Weekly log count over past 4–6 weeks |
+| Behavior function UI | `BEHAVIOR_FUNCTION_OPTIONS` defined but no step to select it yet |
