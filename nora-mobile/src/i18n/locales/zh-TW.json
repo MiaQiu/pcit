@@ -417,7 +417,7 @@
       "emotionalBankAccount": "情感銀行帳戶",
       "penSkills": "您的 PEN 技能",
       "penSkillsSubtitle": "提升自信與配合度",
-      "areasToAvoid": "應避免的區域",
+      "areasToAvoid": "應避免的區域 (總數<=3)",
       "areasToAvoidSubtitle": "會干擾專注力與創造力",
       "topMoment": "最佳時刻",
       "coachsCorner": "教練專區",

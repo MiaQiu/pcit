@@ -830,7 +830,8 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
       YESTERDAY_GOAL_SECTION:        yesterdayGoal ? `Yesterday's Focus Goal: ${yesterdayGoal}` : 'None',
       HISTORICAL_METRICS_SECTION:    variables.HISTORICAL_METRICS_SECTION || 'No prior sessions.',
       PERFORMANCE_VS_GOAL_SECTION:   buildPerformanceVsGoalSection(historicalCdiSessions, tagCounts, yesterdayGoal),
-      GOAL_DIRECTIVE:                `Focus: ${directive.focus_skill}\nTarget: ${directive.target_number}\nStrategy: ${directive.strategy}`
+      GOAL_DIRECTIVE:                `Focus: ${directive.focus_skill}\nTarget: ${directive.target_number}\nStrategy: ${directive.strategy}`,
+      LANGUAGE_INSTRUCTION:          variables.LANGUAGE_INSTRUCTION || ''
     });
     const { value: notifResult } = parseJSON(
       await callGeminiStreaming([{ role: 'user', parts: [{ text: notifPrompt }] }], {

@@ -417,7 +417,7 @@
       "emotionalBankAccount": "Emotional Bank Account",
       "penSkills": "Your PEN Skills",
       "penSkillsSubtitle": "Boost Confidence and Compliance",
-      "areasToAvoid": "Areas to Avoid",
+      "areasToAvoid": "Areas to Avoid (total<=3)",
       "areasToAvoidSubtitle": "Disrupts focus and creativity",
       "topMoment": "Top Moment",
       "coachsCorner": "Coach's Corner",

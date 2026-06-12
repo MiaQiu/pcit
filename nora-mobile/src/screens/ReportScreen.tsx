@@ -918,41 +918,57 @@ export const ReportScreen: React.FC = () => {
 
         {/* Areas to Avoid */}
         <View style={styles.avoidSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('report.section.areasToAvoid')}</Text>
-            {/* <Text style={styles.totalText}>Total &lt; 3</Text> */}
-          </View>
-          <Text style={styles.sectionSubtitle}>{t('report.section.areasToAvoidSubtitle')}</Text>
-          <View style={styles.avoidContainer}>
-            {reportData.areasToAvoid
-              .filter(area => !(reportData.mode === 'PDI' && (typeof area === 'string' ? area : area.label) === 'Commands'))
-              .map((area, index) => {
-              const areaData = typeof area === 'string' ? { label: area, count: 0 } : area;
-              const needsAttention = areaData.count > 0;
-              return (
-                <View key={index} style={styles.avoidItem}>
-                  <View style={styles.avoidRow}>
-                    <Text style={styles.avoidLabel}>{getSkillDisplayLabel(areaData.label, t)}</Text>
-                    <TouchableOpacity
-                      style={styles.avoidRightContainer}
-                      onPress={() => { amplitudeService.trackEvent('Report Area Avoided Tapped', { skillKey: areaData.label, count: areaData.count }); navigation.navigate('SkillUtterances', { skillKey: areaData.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, areaData.label) }); }}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Text style={[styles.countText, styles.countTextClickable, needsAttention ? styles.countTextAttention : styles.countTextExcellent]}>
-                        {areaData.count}{needsAttention ? ' ' + t('report.skillRating.payAttention') : ' ' + t('report.skillRating.excellent')}
-                        <Ionicons name="chevron-forward" size={12} color={needsAttention ? '#852221' : '#6750A4'} />
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.circlesContainer}>
-                    {Array.from({ length: areaData.count }).map((_, i) => (
-                      <View key={i} style={[styles.circle, needsAttention && styles.circleAttention]} />
-                    ))}
-                  </View>
+          {(() => {
+            const filteredAreas = reportData.areasToAvoid
+              .filter(area => !(reportData.mode === 'PDI' && (typeof area === 'string' ? area : area.label) === 'Commands'));
+            const avoidTotal = filteredAreas.reduce((s: number, a: any) => s + (typeof a === 'string' ? 0 : (a.count || 0)), 0);
+            let avoidRatingSuffix: string;
+            let avoidRatingColor: string;
+            if (avoidTotal > 3) {
+              avoidRatingSuffix = t('report.skillRating.payAttention');
+              avoidRatingColor = '#852221';
+            } else if (avoidTotal === 0) {
+              avoidRatingSuffix = t('report.skillRating.excellent');
+              avoidRatingColor = '#6750A4';
+            } else {
+              avoidRatingSuffix = t('report.skillRating.good');
+              avoidRatingColor = '#6750A4';
+            }
+            return (
+              <>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>{t('report.section.areasToAvoid')}</Text>
+                  <Text style={[styles.skillRatingBadge, { color: avoidRatingColor }]}>{avoidTotal} {avoidRatingSuffix}</Text>
                 </View>
-              );
-            })}
-          </View>
+                <Text style={styles.sectionSubtitle}>{t('report.section.areasToAvoidSubtitle')}</Text>
+                <View style={styles.avoidContainer}>
+                  {filteredAreas.map((area, index) => {
+                    const areaData = typeof area === 'string' ? { label: area, count: 0 } : area;
+                    const needsAttention = areaData.count > 0;
+                    return (
+                      <View key={index} style={styles.avoidItem}>
+                        <View style={styles.avoidRow}>
+                          <Text style={styles.avoidLabel}>{getSkillDisplayLabel(areaData.label, t)}</Text>
+                          <TouchableOpacity
+                            style={styles.avoidRightContainer}
+                            onPress={() => { amplitudeService.trackEvent('Report Area Avoided Tapped', { skillKey: areaData.label, count: areaData.count }); navigation.navigate('SkillUtterances', { skillKey: areaData.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, areaData.label) }); }}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Ionicons name="chevron-forward" size={12} color={needsAttention ? '#852221' : '#6750A4'} />
+                          </TouchableOpacity>
+                        </View>
+                        <View style={styles.circlesContainer}>
+                          {Array.from({ length: areaData.count }).map((_, i) => (
+                            <View key={i} style={[styles.circle, needsAttention && styles.circleAttention]} />
+                          ))}
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              </>
+            );
+          })()}
         </View>
 
         {/* Top Moment */}
@@ -1587,6 +1603,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 0,
+  },
+  skillRatingBadge: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
   },
   sectionTitle: {
     fontFamily: FONTS.bold,
