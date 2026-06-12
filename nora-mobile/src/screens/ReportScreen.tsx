@@ -898,21 +898,30 @@ export const ReportScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>{t('report.section.penSkills')}</Text>
           <Text style={styles.sectionSubtitle}>{t('report.section.penSkillsSubtitle')}</Text>
           <View style={styles.skillsContainer}>
-            {reportData.skills.map((skill, index) => {
-              const rating = getSkillRating(skill.progress, t);
-              return (
-                <SkillProgressBar
-                  key={index}
-                  label={getSkillDisplayLabel(skill.label, t)}
-                  progress={skill.progress}
-                  maxValue={10}
-                  color={rating.barColor}
-                  textColor={rating.textColor}
-                  suffix={rating.suffix}
-                  onPress={() => { amplitudeService.trackEvent('Report Skill Tapped', { skillKey: skill.label, progress: skill.progress }); navigation.navigate('SkillUtterances', { skillKey: skill.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, skill.label) }); }}
-                />
-              );
-            })}
+            {(() => {
+              const childUtteranceCount = reportData.transcript
+                ? reportData.transcript.filter(u => u.role === 'child').length
+                : 0;
+              const echoTarget = childUtteranceCount < 10
+                ? Math.round(childUtteranceCount * 0.75)
+                : 10;
+              return reportData.skills.map((skill, index) => {
+                const maxValue = skill.label === 'Echo' ? echoTarget : 10;
+                const rating = getSkillRating(skill.progress, t);
+                return (
+                  <SkillProgressBar
+                    key={index}
+                    label={getSkillDisplayLabel(skill.label, t)}
+                    progress={skill.progress}
+                    maxValue={maxValue}
+                    color={rating.barColor}
+                    textColor={rating.textColor}
+                    suffix={rating.suffix}
+                    onPress={() => { amplitudeService.trackEvent('Report Skill Tapped', { skillKey: skill.label, progress: skill.progress }); navigation.navigate('SkillUtterances', { skillKey: skill.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, skill.label) }); }}
+                  />
+                );
+              });
+            })()}
           </View>
         </View>
 
