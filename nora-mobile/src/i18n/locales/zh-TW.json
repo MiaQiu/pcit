@@ -283,10 +283,10 @@
     "speakerAdultN": "大人 {{n}}",
     "speakerChildN": "孩子 {{n}}",
     "pcitTags": {
-      "Echo": "覆誦",
+      "Echo": "回應",
       "Labeled Praise": "具體讚美",
       "Unlabeled Praise": "概括讚美",
-      "Narration": "敘事",
+      "Narration": "行為描述",
       "Command": "指令",
       "Question": "問句",
       "Criticism": "批評",
@@ -466,8 +466,8 @@
     },
     "skillLabel": {
       "praiseLabeleld": "具體讚美",
-      "echo": "複述",
-      "narrate": "描述",
+      "echo": "回應",
+      "narrate": "行為描述",
       "questions": "問句",
       "commands": "指令",
       "criticism": "批評"
@@ -752,21 +752,21 @@
       "contextDescription": "這些是您精確命名孩子做對了什麼的時刻——具體的陳述能告訴他們精確該重複哪些行為。"
     },
     "echo": {
-      "title": "覆誦",
-      "displayName": "覆誦",
+      "title": "回應",
+      "displayName": "回應",
       "whatItIs": "重複或改述孩子說的話。如果他們說「大塔！」，您回答「是的，一個非常大的塔！」。",
       "whyImportant": "這被稱為「言語的擁抱」，它能提供即時的認可並證明您在傾聽。它同時也是語言榜樣，在不進行「提款式糾正」的情況下示範正確的語法。",
-      "inDailyLife": "使用能量匹配。如果孩子對一個小發現感到興奮，請用同樣熱情的「覆誦」來回應。這證明您與他們的世界是同步的。",
-      "contextTitle": "什麼算覆誦？",
+      "inDailyLife": "使用能量匹配。如果孩子對一個小發現感到興奮，請用同樣熱情的「回應」來回應。這證明您與他們的世界是同步的。",
+      "contextTitle": "什麼算回應？",
       "contextDescription": "這些是您重複或改述孩子的話語，展現您完全在傾聽並認同他們所說的話。"
     },
     "narrate": {
-      "title": "敘事",
-      "displayName": "敘事",
+      "title": "行為描述",
+      "displayName": "行為描述",
       "whatItIs": "像體育評論員一樣大聲描述孩子的行為。例如：「你正把紅色的車子停進車庫裡。」",
       "whyImportant": "它能創造「共同關注」，這是提高孩子專注力和注意力跨度最有效的方法。這傳達了他們的行動重要到足以獲得您的全身心關注。",
-      "inDailyLife": "用敘事代替提問。與其問「你在畫什麼？」，不如試試「你正在用綠色的蠟筆畫大圓圈」。這提供了關注，卻不會帶給孩子「表現壓力」。",
-      "contextTitle": "什麼算敘事？",
+      "inDailyLife": "用行為描述代替提問。與其問「你在畫什麼？」，不如試試「你正在用綠色的蠟筆畫大圓圈」。這提供了關注，卻不會帶給孩子「表現壓力」。",
+      "contextTitle": "什麼算行為描述？",
       "contextDescription": "這些是您大聲描述孩子行為的時刻，將您的全副注意力集中在他們正在做的事情上。"
     },
     "question": {
@@ -1025,8 +1025,8 @@
       "penSkills": "您的 PEN 技能",
       "areasToAvoid": "應避免的區域",
       "praiseLabeled": "讚美 (具體描述)",
-      "echo": "覆誦",
-      "narrate": "敘事",
+      "echo": "回應",
+      "narrate": "行為描述",
       "labelGood": "良好",
       "labelPayAttention": "值得關注",
       "labelExcellent": "優異",
@@ -1149,7 +1149,7 @@
     "playTimeTab": "遊戲時間 (5分)",
     "disciplineTab": "管教階段 (10分)",
     "lockMessage": "有效的管教是建立在強大連結的基礎上。缺乏連結，指令會感覺像要求；有了連結，指令則是引導。",
-    "lockGoal": "在單次特別時間練習中獲得 80 分以上的存款，即可解鎖管教引導",
+    "lockGoal": "在單次特別時間練習中獲得 80 分以上的存款，即可解鎖管教",
     "lockBankMessage": "這能確保在您進入管教階段前，您的「關係銀行帳戶」是滿溢的。",
     "do": {
       "praise": {
@@ -1157,11 +1157,11 @@
         "description": "當個啦啦隊。明確告訴孩子您喜歡他行為的哪些部分。"
       },
       "echo": {
-        "title": "覆誦",
+        "title": "回應",
         "description": "重複他們說的話。透過重述他們的話語來表現您正在傾聽。"
       },
       "narrate": {
-        "title": "敘事",
+        "title": "行為描述",
         "description": "像體育主播一樣描述他們的動作，不帶評論。"
       }
     },
