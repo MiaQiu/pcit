@@ -58,6 +58,23 @@ export default function SubscriptionsPage() {
       .finally(() => setLoading(false));
   }, [env, prodToken, statusFilter]);
 
+  // Auto-sync from RevenueCat on page load (when env or prodToken changes)
+  useEffect(() => {
+    const callOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
+    setSyncing(true);
+    setSyncResult(null);
+    setSyncError(null);
+    syncSubscriptionsFromRC(callOpts)
+      .then(result => {
+        setSyncResult({ synced: result.synced, failed: result.failed, skipped: result.skipped });
+        return getSubscriptions(statusFilter || undefined, callOpts);
+      })
+      .then(setUsers)
+      .catch(() => {/* silent — manual sync button still available */})
+      .finally(() => setSyncing(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [env, prodToken]);
+
   function handleSort(field: SortField) {
     if (field === sortField) {
       setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -102,7 +119,6 @@ export default function SubscriptionsPage() {
   }
 
   async function handleSyncFromRC() {
-    if (!window.confirm('Fetch latest subscription data from RevenueCat for all users and update the database? This may take a minute.')) return;
     const callOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
     setSyncing(true);
     setSyncResult(null);

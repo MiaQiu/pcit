@@ -48,10 +48,12 @@ async function handleSubscriptionActivation(userId, event) {
   await prisma.user.update({
     where: { id: userId },
     data: {
-      subscriptionStatus: 'ACTIVE',
+      subscriptionStatus: isTrialPeriod ? 'TRIAL' : 'ACTIVE',
       subscriptionPlan: isTrialPeriod ? 'TRIAL' : 'PREMIUM',
       subscriptionStartDate: startDate,
       subscriptionEndDate: expirationDate,
+      trialStartDate: isTrialPeriod ? startDate : undefined,
+      trialEndDate: isTrialPeriod ? expirationDate : undefined,
       revenueCatCustomerId: event.app_user_id,
     },
   });
