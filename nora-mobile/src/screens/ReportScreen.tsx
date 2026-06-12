@@ -908,6 +908,7 @@ export const ReportScreen: React.FC = () => {
               return reportData.skills.map((skill, index) => {
                 const maxValue = skill.label === 'Echo' ? echoTarget : 10;
                 const rating = getSkillRating(skill.progress, t, maxValue);
+                const isDynamicEcho = skill.label === 'Echo' && childUtteranceCount < 10;
                 return (
                   <SkillProgressBar
                     key={index}
@@ -916,13 +917,27 @@ export const ReportScreen: React.FC = () => {
                     maxValue={maxValue}
                     color={rating.barColor}
                     textColor={rating.textColor}
-                    suffix={rating.suffix}
+                    suffix={isDynamicEcho ? `${rating.suffix}*` : rating.suffix}
                     onPress={() => { amplitudeService.trackEvent('Report Skill Tapped', { skillKey: skill.label, progress: skill.progress }); navigation.navigate('SkillUtterances', { skillKey: skill.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, skill.label), target: maxValue, childUtteranceCount }); }}
                   />
                 );
               });
             })()}
           </View>
+          {(() => {
+            const childUtteranceCount = reportData.transcript
+              ? reportData.transcript.filter(u => u.role === 'child').length
+              : 0;
+            if (childUtteranceCount >= 10) return null;
+            const echoSkill = reportData.skills.find(s => s.label === 'Echo');
+            if (!echoSkill) return null;
+            const echoTarget = Math.round(childUtteranceCount * 0.75);
+            return (
+              <Text style={styles.echoFootnote}>
+                {`* ${t('skillInfo.echoGoalDynamic' as any, { count: childUtteranceCount, target: echoTarget })}`}
+              </Text>
+            );
+          })()}
         </View>
 
         {/* Areas to Avoid */}
@@ -1636,6 +1651,13 @@ const styles = StyleSheet.create({
   },
   skillsContainer: {
     gap: 4,
+  },
+  echoFootnote: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 18,
+    marginTop: 8,
   },
   avoidContainer: {
     gap: 16,
