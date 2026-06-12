@@ -720,6 +720,9 @@
     "learnAbout": "Learn about {{name}}",
     "noUtterances": "No {{name}} utterances recorded in this session.",
     "readFullConversation": "Read Full Conversation",
+    "sessionGoal": "Goal",
+    "goalDisplay": "Goal: {{target}} times / 5 min",
+    "echoGoalDynamic": "When your child speaks fewer than 10 times, the target adjusts to 75% of their utterances. Your child spoke {{count}} times this session, so the goal is {{target}}.",
     "noraScore": {
       "title": "Nora Score",
       "introduction": "Your Nora Score is the daily balance you keep in your child's Emotional Bank Account. It measures your \"Connection Capital\"—the ratio of P.E.N. deposits to behavioral withdrawals made during your 5-minute Special Play Time.",
@@ -749,7 +752,8 @@
       "whyImportant": "It builds Self-Efficacy (a child's belief in their ability to succeed). By labeling the action, you tell the child exactly which behaviors to repeat.",
       "inDailyLife": "Be a \"detective\" for the Positive Opposite. If your child usually struggles to wait, the moment you see them sitting patiently, use a Labeled Praise: \"I'm so proud of how patiently you are waiting for your snack.\"",
       "contextTitle": "What counts as Praise?",
-      "contextDescription": "These are moments where you named exactly what your child did well — specific statements that tell them precisely which behaviour to repeat."
+      "contextDescription": "These are moments where you named exactly what your child did well — specific statements that tell them precisely which behaviour to repeat.",
+      "targetNote": "Your goal is {{target}} Labeled Praises per session. This is the threshold where specific feedback begins to reliably build a child's confidence and positive behaviors."
     },
     "echo": {
       "title": "Echo",
@@ -758,7 +762,8 @@
       "whyImportant": "Known as a Verbal Hug, it provides immediate validation and proves you are listening. It also acts as Language Modeling, showing correct grammar without the \"withdrawal\" of a correction.",
       "inDailyLife": "Use Energy Matching. If your child is excited about a small discovery, match their enthusiasm with an Echo. This proves you are \"in sync\" with their world.",
       "contextTitle": "What counts as Echo?",
-      "contextDescription": "These are moments where you repeated or rephrased your child's own words, showing you were fully listening and validating what they said."
+      "contextDescription": "These are moments where you repeated or rephrased your child's own words, showing you were fully listening and validating what they said.",
+      "targetNote": "Your goal is {{target}} Echoes this session. When your child speaks fewer than 10 times, the target adjusts to 75% of their utterances — keeping the goal realistic no matter how much they spoke."
     },
     "narrate": {
       "title": "Narrate",
@@ -767,7 +772,8 @@
       "whyImportant": "It creates Joint Attention, which is the most effective way to improve a child's focus and attention span. It signals that their actions are important enough for your full attention.",
       "inDailyLife": "Replace questions with narration. Instead of asking \"What are you drawing?\", try \"You are using the green crayon to make big circles.\" This provides attention without putting \"Performance Pressure\" on the child.",
       "contextTitle": "What counts as Narration?",
-      "contextDescription": "These are moments where you described your child's actions aloud, directing your full attention to what they were doing."
+      "contextDescription": "These are moments where you described your child's actions aloud, directing your full attention to what they were doing.",
+      "targetNote": "Your goal is {{target}} Narrations per session — roughly one comment per minute of play. Consistent narration sustains joint attention and supports language growth."
     },
     "question": {
       "title": "Questions",

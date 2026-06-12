@@ -72,10 +72,10 @@ const getSkillType = (tag?: string): 'desirable' | 'undesirable' | 'neutral' => 
 };
 
 // Helper to get skill rating info based on progress value
-const getSkillRating = (progress: number, t: Function): { barColor?: string; textColor?: string; suffix?: string } => {
-  if (progress <= 5) {
+const getSkillRating = (progress: number, t: Function, maxValue: number = 10): { barColor?: string; textColor?: string; suffix?: string } => {
+  if (progress <= maxValue * 0.5) {
     return { barColor: '#852221', textColor: '#852221', suffix: t('report.skillRating.payAttention') };
-  } else if (progress <= 8) {
+  } else if (progress <= maxValue * 0.8) {
     return { barColor: '#6750A4', textColor: '#6750A4', suffix: t('report.skillRating.good') };
   } else {
     return { barColor: '#6750A4', textColor: '#6750A4', suffix: t('report.skillRating.excellent') };
@@ -907,7 +907,7 @@ export const ReportScreen: React.FC = () => {
                 : 10;
               return reportData.skills.map((skill, index) => {
                 const maxValue = skill.label === 'Echo' ? echoTarget : 10;
-                const rating = getSkillRating(skill.progress, t);
+                const rating = getSkillRating(skill.progress, t, maxValue);
                 return (
                   <SkillProgressBar
                     key={index}
@@ -917,7 +917,7 @@ export const ReportScreen: React.FC = () => {
                     color={rating.barColor}
                     textColor={rating.textColor}
                     suffix={rating.suffix}
-                    onPress={() => { amplitudeService.trackEvent('Report Skill Tapped', { skillKey: skill.label, progress: skill.progress }); navigation.navigate('SkillUtterances', { skillKey: skill.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, skill.label) }); }}
+                    onPress={() => { amplitudeService.trackEvent('Report Skill Tapped', { skillKey: skill.label, progress: skill.progress }); navigation.navigate('SkillUtterances', { skillKey: skill.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, skill.label), target: maxValue, childUtteranceCount }); }}
                   />
                 );
               });

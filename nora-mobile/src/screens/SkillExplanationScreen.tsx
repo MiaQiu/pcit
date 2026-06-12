@@ -38,7 +38,7 @@ const SKILL_CATEGORIES: Record<string, 'pen' | 'avoid'> = {
 export const SkillExplanationScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<SkillExplanationRouteProp>();
-  const { skillKey, score, tip } = route.params;
+  const { skillKey, score, tip, target } = route.params;
   const { t } = useTranslation();
 
   const isOverallScore = skillKey === 'Overall';
@@ -57,6 +57,7 @@ export const SkillExplanationScreen: React.FC = () => {
     whatItIs: t(`skillInfo.${canonicalKey}.whatItIs` as any),
     whyImportant: t(`skillInfo.${canonicalKey}.whyImportant` as any),
     inDailyLife: t(`skillInfo.${canonicalKey}.inDailyLife` as any),
+    targetNote: target != null ? t(`skillInfo.${canonicalKey}.targetNote` as any, { target }) : null,
   };
 
   const getNoraScoreData = () => {
@@ -218,6 +219,17 @@ export const SkillExplanationScreen: React.FC = () => {
           </View>
           <Text style={styles.sectionText}>{explanation.inDailyLife}</Text>
         </View>
+
+        {/* Session Goal */}
+        {explanation.targetNote && (
+          <View style={[styles.section, { backgroundColor: '#F5F3FF', borderWidth: 1.5, borderColor: accentColor }]}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="flag-outline" size={22} color={accentColor} />
+              <Text style={styles.sectionTitle}>{t('skillInfo.sessionGoal')}</Text>
+            </View>
+            <Text style={styles.sectionText}>{explanation.targetNote}</Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

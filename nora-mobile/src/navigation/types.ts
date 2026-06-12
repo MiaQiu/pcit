@@ -95,6 +95,7 @@ export type RootStackParamList = {
     skillKey: string;
     score?: number; // Optional score for Overall Nora Score
     tip?: string; // Optional tip for Next Step section
+    target?: number; // Session goal for PEN skills
   };
   SkillUtterances: {
     skillKey: string;
@@ -103,6 +104,8 @@ export type RootStackParamList = {
       preceding?: { role?: string; text: string };
       main: { role?: string; text: string; tag?: string; feedback?: string };
     }>;
+    target?: number; // Session goal for PEN skills
+    childUtteranceCount?: number; // For Echo dynamic target explanation
   };
   WeeklyReport: { reportId: string };
   CoachChat: undefined;

@@ -40,7 +40,7 @@ const RolePill: React.FC<{ role?: string }> = ({ role }) => {
 export const SkillUtterancesScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<SkillUtterancesRouteProp>();
-  const { skillKey, recordingId, utterances } = route.params;
+  const { skillKey, recordingId, utterances, target, childUtteranceCount } = route.params;
   const { t } = useTranslation();
 
   const nsKey = SKILL_KEY_MAP[skillKey] || skillKey.toLowerCase();
@@ -74,7 +74,7 @@ export const SkillUtterancesScreen: React.FC = () => {
         {/* Skill info card linking to full explanation */}
         <TouchableOpacity
           style={[styles.explainCard, { borderColor: accentColor }]}
-          onPress={() => navigation.navigate('SkillExplanation', { skillKey })}
+          onPress={() => navigation.navigate('SkillExplanation', { skillKey, target })}
           activeOpacity={0.7}
         >
           <View style={styles.explainCardHeader}>
@@ -88,6 +88,23 @@ export const SkillUtterancesScreen: React.FC = () => {
             <Text style={styles.whatItIsText}>{whatItIs}</Text>
           )}
         </TouchableOpacity>
+
+        {/* Session goal */}
+        {isPenSkill && target != null && (
+          <View style={[styles.goalBadge, { borderColor: accentColor }]}>
+            <Ionicons name="flag-outline" size={16} color={accentColor} />
+            <View style={styles.goalTextBlock}>
+              <Text style={[styles.goalText, { color: accentColor }]}>
+                {t('skillInfo.goalDisplay' as any, { target })}
+              </Text>
+              {skillKey === 'Echo' && childUtteranceCount != null && childUtteranceCount < 10 && (
+                <Text style={styles.goalSubText}>
+                  {t('skillInfo.echoGoalDynamic' as any, { count: childUtteranceCount, target })}
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* Session context */}
         {contextTitle && (
@@ -209,6 +226,30 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     lineHeight: 21,
     marginTop: 10,
+  },
+  goalBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+  goalTextBlock: {
+    flex: 1,
+    gap: 4,
+  },
+  goalText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+  },
+  goalSubText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 19,
   },
   contextSection: {
     marginBottom: 16,
