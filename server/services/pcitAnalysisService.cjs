@@ -1742,8 +1742,10 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
         tagCounts.question++;
       } else if (code === 'NTA') {
         tagCounts.criticism++;
-      } else if (code === 'ID' || code === 'AK' || code === 'TA') {
+      } else if (code === 'ID' || code === 'AK' || code === 'TA' || code === 'AN') {
         tagCounts.neutral++;
+      } else if (code === 'NC' || code === 'Uncoded') {
+        // not counted toward any metric
       }
     }
 

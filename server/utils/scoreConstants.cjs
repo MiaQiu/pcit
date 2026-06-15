@@ -44,6 +44,9 @@ const DPICS_TO_TAG_MAP = {
   'TA': 'Neutral',           // Neutral Talk (new manual)
   'DQ': 'Question',          // Descriptive/Reflective Question (new manual)
   'IQ': 'Question',          // Information Question (new manual)
+  'AN': 'Neutral',           // Answer — parent responds to child's question (new manual)
+  'NC': 'Not Coded',         // No Code — non-verbal or uncodeable (new manual)
+  'Uncoded': 'Not Coded',    // Model fallback when utterance cannot be classified
 };
 
 /**
