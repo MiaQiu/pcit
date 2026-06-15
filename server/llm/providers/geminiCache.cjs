@@ -79,18 +79,23 @@ async function getOrUploadFile(filePath, mimeType) {
 // ─── Context Cache API ────────────────────────────────────────────────────────
 
 /**
- * POST /cachedContents — creates a context cache that embeds:
- *   - fileUri  : the uploaded DPICS manual (PDF) as cache contents
- *   - systemInstruction : the coding rules from dpicsCoding.txt
+ * POST /cachedContents — creates a context cache that embeds one or more uploaded files
+ * plus a system instruction.
  *
  * @param {string} apiKey
  * @param {string} model             - bare model ID, e.g. 'gemini-2.5-flash'
- * @param {string} fileUri           - URI returned by Files API
- * @param {string} systemInstruction - text from dpicsCoding.txt (+ PDI override if needed)
+ * @param {string|Array<{mimeType,fileUri}>} fileUriOrFiles
+ *   - string: single PDF URI (legacy)
+ *   - Array:  [{ mimeType, fileUri }, ...] for multi-file caches
+ * @param {string} systemInstruction - coding rules / system prompt
  * @param {string} [ttl='86400s']
  * @returns {Promise<string>} cache resource name, e.g. 'cachedContents/abc123'
  */
-async function createCache(apiKey, model, fileUri, systemInstruction, ttl = '86400s') {
+async function createCache(apiKey, model, fileUriOrFiles, systemInstruction, ttl = '86400s') {
+  const files = Array.isArray(fileUriOrFiles)
+    ? fileUriOrFiles
+    : [{ mimeType: 'application/pdf', fileUri: fileUriOrFiles }];
+
   const url  = `${BASE_URL}/cachedContents?key=${apiKey}`;
   const body = {
     model: `models/${model}`,
@@ -100,9 +105,7 @@ async function createCache(apiKey, model, fileUri, systemInstruction, ttl = '864
     },
     contents: [{
       role: 'user',
-      parts: [{
-        fileData: { mimeType: 'application/pdf', fileUri },
-      }],
+      parts: files.map(f => ({ fileData: { mimeType: f.mimeType, fileUri: f.fileUri } })),
     }],
     ttl,
   };
@@ -126,12 +129,13 @@ async function createCache(apiKey, model, fileUri, systemInstruction, ttl = '864
  * Return (or refresh) the context cache for a given variant.
  *
  * @param {string} variant           - logical key, e.g. 'dpics-cdi' or 'dpics-pdi'
- * @param {string} pdfPath           - absolute path to the DPICS manual PDF
+ * @param {string} pdfPath           - absolute path to the primary PDF
  * @param {string} systemInstruction - dpicsCoding.txt content (+ any PDI override)
  * @param {string} model             - Gemini model ID
+ * @param {Array<{path,mimeType}>}   [extraFiles] - additional files to include in the cache
  * @returns {Promise<string>} cache resource name
  */
-async function getOrCreateCache(variant, pdfPath, systemInstruction, model) {
+async function getOrCreateCache(variant, pdfPath, systemInstruction, model, extraFiles = []) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not set');
 
@@ -143,11 +147,16 @@ async function getOrCreateCache(variant, pdfPath, systemInstruction, model) {
     return entry.name;
   }
 
-  // Ensure the PDF is uploaded (reuses existing upload if still valid)
-  const fileUri = await getOrUploadFile(pdfPath, 'application/pdf');
+  // Upload primary PDF + any extra files (reuses existing uploads if still valid)
+  const primaryUri = await getOrUploadFile(pdfPath, 'application/pdf');
+  const files = [{ mimeType: 'application/pdf', fileUri: primaryUri }];
+  for (const f of extraFiles) {
+    const uri = await getOrUploadFile(f.path, f.mimeType);
+    files.push({ mimeType: f.mimeType, fileUri: uri });
+  }
 
-  console.log(`📦 [GEMINI-CACHE] Creating ${variant} context cache (model: ${model})...`);
-  const name = await createCache(apiKey, model, fileUri, systemInstruction);
+  console.log(`📦 [GEMINI-CACHE] Creating ${variant} context cache (model: ${model}, files: ${files.length})...`);
+  const name = await createCache(apiKey, model, files, systemInstruction);
   _cacheRegistry[variant] = { name, expiresAt: now + 86_400_000 }; // 24 h
   console.log(`✅ [GEMINI-CACHE] Created ${variant} cache: ${name}`);
   return name;

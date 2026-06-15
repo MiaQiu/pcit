@@ -1623,16 +1623,18 @@ Return a minified JSON array for adult utterances only:
     console.log(`📊 [ANALYSIS-STEP-8] Calling ${GEMINI_STREAMING_MODEL} (streaming) for PCIT coding...`);
     console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
 
-    // Resolve (or create) the context cache — DPICS manual PDF + coding rules.
+    // Resolve (or create) the context cache — DPICS manual PDF + appendix + coding rules.
     // Falls back to the inline prompt if the Files API or cache API fails.
-    const DPICS_PDF_PATH = process.env.DPICS_PDF_PATH || require('path').join(__dirname, '../assets/DPICS-Manual.2.18.pdf');
+    const DPICS_PDF_PATH      = process.env.DPICS_PDF_PATH      || require('path').join(__dirname, '../assets/Manual_for_the_Dyadic_Parent-Child_Interaction_Cod.pdf');
+    const DPICS_APPENDIX_PATH = process.env.DPICS_APPENDIX_PATH || require('path').join(__dirname, '../assets/appendix A - words_sufficiently_positive.json');
     let dpicsCache = null;
     try {
       dpicsCache = await getOrCreateCache(
         isCDI ? 'dpics-cdi' : 'dpics-pdi',
         DPICS_PDF_PATH,
         dpicsSystemPrompt,
-        GEMINI_STREAMING_MODEL
+        GEMINI_STREAMING_MODEL,
+        [{ path: DPICS_APPENDIX_PATH, mimeType: 'application/json' }]
       );
     } catch (cacheErr) {
       console.warn(`⚠️ [ANALYSIS-STEP-8] Cache creation failed (${cacheErr.message}), falling back to inline prompt`);

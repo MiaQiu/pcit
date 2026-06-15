@@ -15,6 +15,7 @@ const { createAnonymizedRequest } = require('../utils/anonymization.cjs');
 const { createUtterances, extractAndInsertSilentSlots } = require('../utils/utteranceUtils.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { parseElevenLabsTranscript, formatUtterancesAsText } = require('../utils/parseElevenLabsTranscript.cjs');
+const { reSegmentUtterances } = require('../utils/dpicsSegmenter.cjs');
 
 // S3 Client for downloading audio files
 const AWS_REGION = process.env.AWS_REGION || 'us-east-1';
@@ -354,6 +355,7 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
   );
 
   let utterances;
+  let transcriptWords = [];  // word-level ElevenLabs data for DPICS timestamp recovery
   let transcriptFormatted;
 
   try {
@@ -369,6 +371,7 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
       console.log(`Raw ElevenLabs JSON (v2) stored for session ${sessionId}`);
 
       utterances = merged;
+      transcriptWords = result.words || [];
 
     } else {
       // Single-pass: v1 or v2
@@ -387,11 +390,15 @@ async function transcribeRecording(sessionId, userId, storagePath, durationSecon
 
       // Parse into utterances
       utterances = parseElevenLabsTranscript(result);
+      transcriptWords = result.words || [];
     }
 
     if (utterances.length === 0) {
       throw new Error('No utterances parsed from ElevenLabs response');
     }
+
+    // Re-segment utterances according to DPICS Complete Thought rules
+    utterances = await reSegmentUtterances(utterances, transcriptWords);
 
     // Format transcript for storage
     transcriptFormatted = formatUtterancesAsText(utterances);
