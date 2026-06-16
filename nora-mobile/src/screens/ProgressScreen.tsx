@@ -323,9 +323,9 @@ const ScoreChart: React.FC<ScoreChartProps> = ({ data }) => {
   const { t } = useTranslation();
   const chartWidth = SCREEN_WIDTH - 48 - 40; // padding + margins
   const chartHeight = 180;
-  const maxDataPoints = 10; // Always show 10 points on x-axis
-  const pointSpacing = chartWidth / (maxDataPoints - 1); // Space between points
-  const leftPadding = 10; // No padding, start at edge
+  const maxDataPoints = 10;
+  const displayData = data.slice(-maxDataPoints);
+  const pointSpacing = chartWidth / (maxDataPoints - 1);
 
   if (data.length === 0) {
     return (
@@ -342,14 +342,12 @@ const ScoreChart: React.FC<ScoreChartProps> = ({ data }) => {
   const minScore = 0;
   const scoreRange = maxScore - minScore;
 
-  // Calculate points for the line (only for actual data)
-  const points = data.map((item, index) => {
-    const x = leftPadding + (index * pointSpacing);
+  const points = displayData.map((item, index) => {
+    const x = index * pointSpacing;
     const y = chartHeight - ((item.score - minScore) / scoreRange) * chartHeight;
     return { x, y };
   });
 
-  // Create path data
   const pathData = points
     .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x},${point.y}`)
     .join(' ');
@@ -360,9 +358,6 @@ const ScoreChart: React.FC<ScoreChartProps> = ({ data }) => {
       <View style={styles.chartWrapper}>
         {/* Y-axis labels */}
         <View style={styles.yAxisLabels}>
-          {/* <Text style={styles.axisLabel}>{Math.round(maxScore)}</Text>
-          <Text style={styles.axisLabel}>{Math.round((maxScore + minScore) / 2)}</Text>
-          <Text style={styles.axisLabel}>{Math.round(minScore)}</Text> */}
           <Text style={styles.axisLabel}>{100}</Text>
           <Text style={styles.axisLabel}>{80}</Text>
           <Text style={styles.axisLabel}>{60}</Text>
@@ -413,28 +408,22 @@ const ScoreChart: React.FC<ScoreChartProps> = ({ data }) => {
             ))}
           </Svg>
 
-          {/* X-axis labels - show day numbers for all 10 positions */}
+          {/* X-axis labels */}
           <View style={styles.xAxisLabelsContainer}>
             <View style={styles.xAxisLabels}>
               {Array.from({ length: maxDataPoints }).map((_, index) => {
-                const hasData = index < data.length;
-
+                const item = displayData[index];
+                const showMonth = item && (index === 0 || item.month !== displayData[index - 1].month);
                 return (
                   <View key={index} style={styles.xAxisLabelCell}>
-                    {hasData ? (
-                      <Text style={styles.xAxisLabel}>
-                        {data[index].day}
-                      </Text>
-                    ) : null}
+                    {item && <Text style={styles.xAxisLabel}>{item.day}</Text>}
+                    <Text style={[styles.monthLabel, { opacity: showMonth ? 1 : 0 }]}>
+                      {item ? item.month : ''}
+                    </Text>
                   </View>
                 );
               })}
             </View>
-
-            {/* Month label below the axis */}
-            {data.length > 0 && (
-              <Text style={styles.monthLabel}>{data[0].month}</Text>
-            )}
           </View>
         </View>
       </View>
@@ -1114,8 +1103,7 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 10,
     color: '#9CA3AF',
-    marginTop: 4,
-    marginLeft: 0,
+    marginTop: 2,
   },
   noDataContainer: {
     height: 180,

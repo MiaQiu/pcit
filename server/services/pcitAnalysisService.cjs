@@ -1013,31 +1013,29 @@ No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` :
 
 
 /**
- * Format utterances with their current feedback for review
- * @param {Array} utterances - Utterances with tags and feedback
- * @returns {string} Formatted string showing utterances with current feedback
+ * Format utterances for the review-feedback pass
+ * @param {Array} utterances - Utterances with roles and PCIT tags
+ * @returns {string} Formatted transcript string
  */
-function formatUtterancesWithFeedback(utterances) {
+function formatUtterancesForReview(utterances) {
   return utterances.map((u, i) => {
     if (u.speaker === SILENT_SPEAKER_ID) {
       const duration = (u.endTime - u.startTime).toFixed(1);
-      return `[${String(i).padStart(2, '0')}] ⏸️ SILENCE (${duration}s)
-    Tag: SILENT
-    Current feedback: "${u.feedback || 'None'}"`;
+      return `[${String(i).padStart(2, '0')}] ⏸️ SILENCE (${duration}s)`;
     }
-    return `[${String(i).padStart(2, '0')}] ${u.speaker}: "${u.text}"
-    Tag: ${u.pcitTag || 'None'}
-    Current feedback: "${u.feedback || 'None'}"`;
-  }).join('\n\n');
+    const roleLabel = u.role === 'adult' ? 'Parent' : u.role === 'child' ? 'Child' : u.speaker;
+    const tagSuffix = u.pcitTag ? ` [${u.pcitTag}]` : '';
+    return `[${String(i).padStart(2, '0')}] ${roleLabel}: "${u.text}"${tagSuffix}`;
+  }).join('\n');
 }
 
 /**
- * Generate review feedback prompt for CDI session
- * Reviews and revises feedback for parent utterances and selects key silence slots
+ * Generate feedback prompt for CDI/PDI session
+ * Writes feedback from scratch for all coded parent utterances and selected silence slots
  */
 function generateReviewFeedbackPrompt(counts, utterances, isCDI = true, pdiResult = null, language = null) {
   const commandCoachingSection = isCDI
-    ? `   **For undesirable skills (NTA, DC, IC, Q, UP)**, provide constructive, warm feedback with specific alternatives (e.g. suggest a BD or LP instead of a command or question).`
+    ? `   **For undesirable skills (NTA, DC, IC, Q, UP)**: 1 coaching sentence with a specific PRIDE alternative (BD, LP, or RF) per the DPICS manual. Reference what the parent actually said. Before finalising, verify your suggested alternative: does it contain a "?" → it's a Q; does it direct the child ("put X", "can you...") → it's an IC; does it evaluate negatively → it's NTA. Rephrase until it's a clean PRIDE skill.`
     : `   **Commands — PDI focus:**
    - **DC (Direct Command)** is a TARGET SKILL in PDI. Reinforce it warmly. Coach on quality: was it direct, specific, positively phrased, one at a time, age-appropriate, and calm? Do not suggest replacing it with a PRIDE skill.
    - **IC (Indirect Command)** is still undesirable. Coach the parent toward a DC instead (e.g. "Try stating it directly: 'Please put the block down.'").
@@ -1048,7 +1046,7 @@ function generateReviewFeedbackPrompt(counts, utterances, isCDI = true, pdiResul
      • Was follow-through consistent — brief and matter-of-fact, without nagging or over-explaining?
      • Was LP used immediately after the child complied?
      Attach coaching to the specific utterance ID where the breakdown occurred (or reinforce the utterance where it went well).
-   **For all other undesirable skills (NTA, Q, UP)**, provide constructive, warm feedback with specific alternatives.`;
+   **For all other undesirable skills (NTA, Q, UP)**: 1 coaching sentence with a specific PRIDE alternative per the DPICS manual. Verify the alternative contains no "?", no directives, and no negative evaluations.`;
 
   const metricsSection = isCDI
     ? `- Labeled Praises: ${counts.praise} (goal: 10+)
@@ -1067,17 +1065,19 @@ function generateReviewFeedbackPrompt(counts, utterances, isCDI = true, pdiResul
     ? `\n**PDI Two Choices Flow Analysis:**\n${JSON.stringify({ pdiSkills: pdiResult.pdiSkills, commandSequences: pdiResult.commandSequences }, null, 2)}\n\nUse this analysis to inform feedback on command sequences. Reference specific command sequences when coaching on DC/IC utterances.\n`
     : '';
 
-  return `You are an expert PCIT parent-child interaction therapyst.
+  return `You are an expert PCIT parent-child interaction therapist. You have access to the DPICS manual and Appendix A (sufficiently positive words). Refer to them when writing suggested alternatives for undesirable skills.
 
 **Session Metrics:**
 ${metricsSection}
 ${pdiTwoChoicesSection}
-**All Utterances with Current Feedback:**
-${formatUtterancesWithFeedback(utterances)}
+**Full Session Transcript:**
+${formatUtterancesForReview(utterances)}
 
 **Your Task:**
-1. Take into consideration the session metrics, knowing how well parent perform in each category, and the conversation context, propose revised feedback if it provides additional value.
-   **For desirable skills (LP, BD, RF, RQ)**, do not change the original feedback. You may add an "additional_tip" only if it is extremely insightful and would help the parent improve their overall performance.
+1. Write feedback for every coded Parent utterance (those with a DPICS tag in brackets).
+   **For desirable skills (LP, BD, RF, RQ)**: 1 short warm sentence reinforcing what the parent did well. Reference what they actually said — be specific, not generic. You may add an "additional_tip" only if it is extremely insightful and would help the parent improve their overall performance.
+   **For neutral codes (AK, ID, TC, NC)**: set feedback to null — skip these.
+   Child utterances have no tag — skip them entirely.
 ${commandCoachingSection}
 
 2. Identify any silence slots that:
@@ -1092,8 +1092,10 @@ Return ONLY a valid JSON array. Each item has:
 - "additional_tip": optional extra tip for desirable skills (null if not applicable)
 
 **Rules:**
+- Include ALL parent utterances that have a DPICS tag
 - Maximum 3 silence slots
-- Keep feedback warm, specific, and actionable
+- Be specific — reference what the parent actually said, never write generic boilerplate
+- Suggested alternatives must be valid PRIDE skills — verify no "?", no directives, no negative evaluations
 - Return ONLY the JSON array, no other text
 
 No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` : ''}`;
@@ -1119,20 +1121,43 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true, 
 
   console.log('✅ [CDI-FEEDBACK] Combined feedback result:', JSON.stringify(feedbackData).substring(0, 300));
 
-  // Call 2: Review and revise feedback for utterances and silence slots
-  console.log('📝 [CDI-FEEDBACK] Running Review Feedback for utterances and silence slots...');
+  // Call 2: Write feedback for all coded parent utterances using DPICS manual cache
+  console.log('📝 [CDI-FEEDBACK] Running feedback generation with DPICS manual cache...');
   let revisedFeedback = [];
   try {
-    const reviewData = await llmCall(
-      generateReviewFeedbackPrompt(counts, utterances, isCDI, pdiResult, language),
-      { temperature: 0.5, output: 'array', label: 'review-feedback', schema: SCHEMAS.REVIEW_FEEDBACK, sessionId }
+    const DPICS_PDF_PATH      = process.env.DPICS_PDF_PATH      || require('path').join(__dirname, '../assets/Manual_for_the_Dyadic_Parent-Child_Interaction_Cod.pdf');
+    const DPICS_APPENDIX_PATH = process.env.DPICS_APPENDIX_PATH || require('path').join(__dirname, '../assets/appendix A - words_sufficiently_positive.json');
+    const dpicsSystemPrompt   = loadPrompt('dpicsCoding') + (!isCDI ? `
+
+**PDI SESSION — Feedback Override for Commands:**
+This is a PDI (Parent-Directed Interaction) session. The rules above apply for coding, but the feedback generation strategy for commands is different:
+- **DC (Direct Command)**: DC is a TARGET SKILL in PDI. Do NOT suggest replacing it with a PRIDE skill. Instead, briefly reinforce it or coach on quality (e.g. was it direct, specific, calm, positively phrased?).
+- **IC (Indirect Command)**: Still undesirable. Coach toward a DC instead (e.g. "Try stating it directly: 'Please put the block down.'"). Do NOT suggest using BD or LP.
+All other feedback rules remain the same.` : '');
+
+    let feedbackCache = null;
+    try {
+      feedbackCache = await getOrCreateCache(
+        isCDI ? 'dpics-cdi' : 'dpics-pdi',
+        DPICS_PDF_PATH,
+        dpicsSystemPrompt,
+        GEMINI_STREAMING_MODEL,
+        [{ path: DPICS_APPENDIX_PATH, mimeType: 'application/json' }]
+      );
+    } catch (cacheErr) {
+      console.warn(`⚠️ [CDI-FEEDBACK] Cache resolution failed (${cacheErr.message}), proceeding without cache`);
+    }
+
+    const reviewPrompt = generateReviewFeedbackPrompt(counts, utterances, isCDI, pdiResult, language);
+    const rawReview = await callGeminiStreaming(
+      [{ role: 'user', parts: [{ text: reviewPrompt }] }],
+      { temperature: 0.5, maxOutputTokens: 8192, timeout: 120000, sessionId, ...(feedbackCache ? { cachedContent: feedbackCache } : {}) }
     );
-    // reviewData should be an array directly since we asked for JSON array
+    const { value: reviewData } = parseJSON(rawReview, 'array');
     revisedFeedback = Array.isArray(reviewData) ? reviewData : [];
     console.log('✅ [CDI-FEEDBACK] Review feedback result:', JSON.stringify(revisedFeedback).substring(0, 300));
   } catch (reviewError) {
     console.error('⚠️ [CDI-FEEDBACK] Review feedback failed, continuing without revised feedback:', reviewError.message);
-    // Continue without revised feedback - it's an enhancement, not critical
   }
 
   // Assemble final result
@@ -1607,18 +1632,15 @@ All other feedback rules remain the same.` : '');
     const idxToUttId = utterancesWithRoles.map(utt => utt.id);
 
     // User prompt — transcript only; system instruction and DPICS manual are in the cache
-    const langLine = primaryLanguage && primaryLanguage !== 'eng'
-      ? `\n- Keep "code" as English DPICS codes (e.g. LP, BD, RF). Write "feedback" in ${getLanguageInstruction(primaryLanguage).replace('Write your entire response in ', '').replace('.', '')}.`
-      : '';
     const userPrompt = `Code every utterance where role is "adult". Skip all "child" entries.
 
 ${JSON.stringify(utterancesData, null, 2)}
 
 Return a minified JSON array for adult utterances only:
-[{"id": <int>, "code": <string>, "feedback": <string>}, ...]
+[{"id": <int>, "code": <string>}, ...]
 - Return ONLY the JSON array — no text, no markdown, no code fences
 - First character MUST be [, last character MUST be ]
-- Every adult entry MUST have both "code" and "feedback"${langLine}`;
+- Every adult entry MUST have "id" and "code"`;
 
     console.log(`📊 [ANALYSIS-STEP-8] Calling ${GEMINI_STREAMING_MODEL} (streaming) for PCIT coding...`);
     console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
@@ -1696,7 +1718,6 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
     // Build ID-to-tag maps for efficient updates
     const pcitTagMap = {};
     const noraTagMap = {};
-    const feedbackMap = {};
 
     for (const result of codingResults) {
       if (result.id !== undefined && result.code) {
@@ -1704,16 +1725,13 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
         if (actualUttId) {
           pcitTagMap[actualUttId] = result.code;
           noraTagMap[actualUttId] = DPICS_TO_TAG_MAP[result.code] || result.code;
-          if (result.feedback) {
-            feedbackMap[actualUttId] = result.feedback;
-          }
         }
       }
     }
 
-    // Update utterances with PCIT tags, Nora tags, and feedback in database
-    await updateUtteranceTags(sessionId, pcitTagMap, noraTagMap, feedbackMap);
-    console.log(`Updated tags and feedback for ${Object.keys(pcitTagMap).length} utterances`);
+    // Update utterances with PCIT tags and Nora tags in database
+    await updateUtteranceTags(sessionId, pcitTagMap, noraTagMap);
+    console.log(`Updated tags for ${Object.keys(pcitTagMap).length} utterances`);
 
     // Count codes from JSON results
     for (const result of codingResults) {

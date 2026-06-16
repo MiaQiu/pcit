@@ -14,18 +14,3 @@ When coding Labeled Praise, sub-classify into one of four levels instead of gene
 - LP4 (Regulatory Praise): Praises emotional regulation — calm voice, accepting a limit, sharing, or self-control. (e.g., "I love how you used your gentle hands!", "Great job accepting that so calmly!")
 - Decision Rule: If uncertain between LP sub-levels, prefer the lower level (LP1 over LP2, etc.). If uncertain between LP and UP, code UP.
 
-***Feedback Generation Strategy***
-For every coded Parent segment, generate a "feedback" string (1–2 sentences max, warm and encouraging tone, linking to impact on child):
-
-1. DESIRABLE SKILLS (LP, BD, RF, RQ):
-   - Goal: Reinforce the positive behavior with warmth and encouragement.
-   - Action: Acknowledge or praise the parent for using the skill.
-   - Limit to 1 short sentence only.
-
-2. UNDESIRABLE SKILLS (NTA, DC, IC, Q, UP):
-   - Goal: Coach the parent to use a PRIDE skill instead (gentle, supportive tone).
-   - Action: Give a specific, friendly recommendation of what they could say differently in that context.
-   - Limit to 1 short sentence only.
-
-3. NEUTRAL CODES (AK, ID, TC):
-   - Set feedback to "" — no feedback needed.

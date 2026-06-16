@@ -5,7 +5,7 @@ require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env'
 const prisma = require('../services/db.cjs');
 const { parseElevenLabsTranscript, formatUtterancesAsText } = require('../utils/parseElevenLabsTranscript.cjs');
 const { reSegmentUtterances } = require('../utils/dpicsSegmenter.cjs');
-const { createUtterances, extractAndInsertSilentSlots } = require('../utils/utteranceUtils.cjs');
+const { createUtterances, extractAndInsertSilentSlots, updateUtteranceRoles } = require('../utils/utteranceUtils.cjs');
 const { analyzePCITCoding } = require('../services/pcitAnalysisService.cjs');
 
 const SESSION_ID = process.argv[2];
@@ -34,7 +34,7 @@ async function main() {
   }
   console.log(`   elevenLabsJson: ${elevenLabsJson.words?.length ?? 0} words\n`);
 
-  // ── Reset state ────────────────────────────────────────────────────────────
+  // ── Reset state (clear checkpoints so analysis runs fresh) ───────────────
   await prisma.utterance.deleteMany({ where: { sessionId: SESSION_ID } });
   await prisma.session.update({
     where: { id: SESSION_ID },
@@ -44,9 +44,12 @@ async function main() {
       analysisError:    null,
       analysisFailedAt: null,
       permanentFailure: false,
+      pcitCodingDone:   false,
+      pcitCoding:       null,
+      tagCounts:        null,
     }
   });
-  console.log('✅ State reset — utterances cleared\n');
+  console.log('✅ State reset — utterances + coding checkpoints cleared\n');
 
   // ── Step 1: Parse + DPICS segmentation ────────────────────────────────────
   console.log(`${'─'.repeat(70)}`);
@@ -75,7 +78,21 @@ async function main() {
     threshold: 3.0,
     recordingDuration: session.durationSeconds
   });
-  console.log(`✅ ${utterances.length} utterances + ${silentResult.count} silent slots written\n`);
+  console.log(`✅ ${utterances.length} utterances + ${silentResult.count} silent slots written`);
+
+  // Apply existing role mapping to the new utterances so the analysis
+  // checkpoint doesn't skip coding with role=null rows.
+  const roleIdJson = session.roleIdentificationJson;
+  if (roleIdJson?.speaker_identification) {
+    const roleMap = {};
+    for (const [speakerId, info] of Object.entries(roleIdJson.speaker_identification)) {
+      roleMap[speakerId] = info.role?.toLowerCase() === 'adult' ? 'adult' : 'child';
+    }
+    await updateUtteranceRoles(SESSION_ID, roleMap);
+    console.log(`✅ Roles re-applied from existing roleIdentificationJson: ${JSON.stringify(roleMap)}\n`);
+  } else {
+    console.log('⚠️  No roleIdentificationJson — roles will be determined during analysis\n');
+  }
 
   // ── Step 2: PCIT analysis ──────────────────────────────────────────────────
   console.log(`${'─'.repeat(70)}`);
