@@ -42,6 +42,7 @@ export const WeeklyReportScreen: React.FC = () => {
   const { t } = useTranslation();
   const recordingService = useRecordingService();
   const authService = useAuthService();
+  const { reportId } = route.params;
   const [currentPage, setCurrentPage] = useState(1);
   const [report, setReport] = useState<WeeklyReportData | null>(null);
   const [childIssues, setChildIssues] = useState<string[]>([]);
@@ -103,7 +104,6 @@ export const WeeklyReportScreen: React.FC = () => {
   const loadReport = async () => {
     try {
       setLoading(true);
-      const { reportId } = route.params;
 
       let reportData: WeeklyReportData | null = null;
 
