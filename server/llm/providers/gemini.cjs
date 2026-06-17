@@ -14,17 +14,18 @@ const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
  * @param {number} [opts.timeout=60000] - AbortController timeout in ms
  * @returns {Promise<{ text: string, usage: { inputTokens: number|null, outputTokens: number|null } }>}
  */
-async function geminiCall(apiKey, model, body, { timeout = 60_000 } = {}) {
+async function geminiCall(apiKey, model, body, { timeout = 60_000, cachedContent = null } = {}) {
   const url        = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const controller = new AbortController();
   const timer      = setTimeout(() => controller.abort(), timeout);
+  const fullBody   = cachedContent ? { cachedContent, ...body } : body;
 
   let response;
   try {
     response = await fetch(url, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(body),
+      body:    JSON.stringify(fullBody),
       signal:  controller.signal,
     });
   } finally {
@@ -68,17 +69,18 @@ async function geminiCall(apiKey, model, body, { timeout = 60_000 } = {}) {
  * @param {number} [opts.timeout=60000] - AbortController timeout in ms
  * @returns {Promise<{ text: string, usage: { inputTokens: null, outputTokens: null } }>}
  */
-async function geminiStreamCall(apiKey, model, body, { timeout = 60_000 } = {}) {
+async function geminiStreamCall(apiKey, model, body, { timeout = 60_000, cachedContent = null } = {}) {
   const url        = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${apiKey}&alt=sse`;
   const controller = new AbortController();
   const timer      = setTimeout(() => controller.abort(), timeout);
+  const fullBody   = cachedContent ? { cachedContent, ...body } : body;
 
   let response;
   try {
     response = await fetch(url, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(body),
+      body:    JSON.stringify(fullBody),
       signal:  controller.signal,
     });
   } finally {

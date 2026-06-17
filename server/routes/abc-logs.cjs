@@ -230,11 +230,8 @@ Tone & Formatting [STRICT]: Speak directly to the parent using "you" and "your c
 }`;
 
     const insight = await llmCall(prompt, {
-      model: 'gemini-2.5-flash',
-      output: 'json',
-      maxTokens: 2000,
-      temperature: 0.3,
-      label: 'abc-insight',
+      profile:      'abc-insight',
+      label:        'abc-insight',
       _geminiConfig: { thinkingConfig: { thinkingBudget: 1024 } },
     });
 

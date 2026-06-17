@@ -16,16 +16,14 @@
  */
 
 const { resolveModel }    = require('./models.cjs');
+const { PROFILES }        = require('./profiles.cjs');
 const { geminiCall, geminiStreamCall } = require('./providers/gemini.cjs');
 const { anthropicCall }   = require('./providers/anthropic.cjs');
+const { getOrCreateCache } = require('./providers/geminiCache.cjs');
 const { parseJSON }       = require('./repair.cjs');
 const { logLLMCall }      = require('./logger.cjs');
 const { sanitizeOutput }  = require('./sanitize.cjs');
 const { sendLLMFailureAlert } = require('./alertEmail.cjs');
-
-function _defaultModelKey() {
-  return process.env.AI_PROVIDER || 'gemini-2.0-flash';
-}
 
 /**
  * Make an LLM call through the gateway.
@@ -46,8 +44,15 @@ function _defaultModelKey() {
  * @returns {Promise<Object|Array|string>}
  */
 async function llmCall(prompt, options = {}) {
+  // Pull profile and cache out before merging so they don't pollute destructuring
+  const { profile = null, cache = null, ...rest } = options;
+
+  // Merge profile defaults with explicit options — explicit always wins
+  const profileDefaults = profile ? (PROFILES[profile] ?? {}) : {};
+  const merged = { ...profileDefaults, ...rest };
+
   const {
-    model: modelKey  = _defaultModelKey(),
+    model: modelKey  = 'gemini',
     output           = 'json',
     maxTokens        = 2048,
     temperature      = 0.7,
@@ -57,11 +62,30 @@ async function llmCall(prompt, options = {}) {
     schema           = null,
     _geminiConfig    = {},
     sessionId        = null,
-  } = options;
+  } = merged;
 
   const modelDef  = resolveModel(modelKey);
   const hasSchema = schema !== null && modelDef.provider === 'gemini';
   const start     = Date.now();
+
+  // Resolve context cache when the model supports it.
+  // cache.systemPrompt is used both for cache creation and as a text fallback
+  // when the cache is unavailable (prepended to the prompt by the provider).
+  const effectiveSystemPrompt = systemPrompt || cache?.systemPrompt || null;
+  let cachedContent = null;
+  if (cache && modelDef.supportsCache) {
+    try {
+      cachedContent = await getOrCreateCache(
+        cache.key,
+        cache.primaryFile,
+        cache.systemPrompt || systemPrompt,
+        modelDef.primary,
+        cache.extraFiles || []
+      );
+    } catch (cacheErr) {
+      console.warn(`[gateway:${label}] cache miss, proceeding without: ${cacheErr.message}`);
+    }
+  }
 
   // Mutable tracking state — populated during execution, read in finally
   const track = {
@@ -81,7 +105,7 @@ async function llmCall(prompt, options = {}) {
 
   try {
     // ── First attempt: retries on primary, then falls back if all fail ────────
-    const first = await _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
+    const first = await _callWithFallback(modelDef, prompt, effectiveSystemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent);
     track.model        = first.model;
     track.usedFallback = first.fallback;
     track.inputTokens  = first.usage?.inputTokens  ?? null;
@@ -100,7 +124,7 @@ async function llmCall(prompt, options = {}) {
       track.usedRetry = true;
       console.warn(`[gateway:${label}] JSON parse failed${hasSchema ? ' (schema active)' : ''}, retrying... (${parseErr.message.substring(0, 80)})`);
 
-      const retry = await _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
+      const retry = await _callWithFallback(modelDef, prompt, effectiveSystemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent);
       track.model        = retry.model;
       track.inputTokens  = retry.usage?.inputTokens  ?? null;
       track.outputTokens = retry.usage?.outputTokens ?? null;
@@ -150,16 +174,15 @@ function _isRetryable(err) {
 
 /**
  * Returns the fallback modelDef for a given primary modelDef, or null if none.
- * Gemini falls back to modelDef.fallback (same provider).
- * Claude falls back to FALLBACK_MODEL (any provider).
+ * Uses modelDef.fallback when defined (both Gemini and Claude).
  */
 function _getFallback(modelDef) {
-  if (modelDef.provider === 'gemini' && modelDef.fallback) {
-    return resolveModel(modelDef.fallback);
+  if (modelDef.fallback) {
+    const fallbackDef = resolveModel(modelDef.fallback);
+    if (fallbackDef.primary === modelDef.primary) return null;
+    return fallbackDef;
   }
-  const fallbackDef = _fallbackModelDef();
-  if (fallbackDef.primary === modelDef.primary) return null; // already on fallback
-  return fallbackDef;
+  return null;
 }
 
 /**
@@ -167,7 +190,7 @@ function _getFallback(modelDef) {
  * (network errors, timeouts, 429/5xx HTTP errors).
  * JSON-parse retries are handled separately in llmCall.
  */
-async function _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label) {
+async function _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent) {
   let lastErr;
   for (let attempt = 0; attempt <= _RETRY_DELAYS.length; attempt++) {
     if (attempt > 0) {
@@ -176,7 +199,7 @@ async function _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, tempera
       await new Promise(r => setTimeout(r, delay));
     }
     try {
-      return await _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig);
+      return await _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent);
     } catch (err) {
       lastErr = err;
       if (!_isRetryable(err)) throw err;
@@ -187,18 +210,19 @@ async function _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, tempera
 
 /**
  * Tries the primary model with retries, then the fallback model with retries if all fail.
- * Matches callGeminiStreaming behaviour: exhaust retries before falling back.
+ * cachedContent is only passed to the primary model — fallback always receives null so the
+ * system prompt is prepended as plain text instead (cache is Gemini-specific).
  */
-async function _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label) {
+async function _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent) {
   try {
-    return await _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
+    return await _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent);
   } catch (primaryErr) {
     // Only fall back after retryable failures — non-retryable errors (4xx, bad config) propagate immediately
     if (!_isRetryable(primaryErr)) throw primaryErr;
     const fallbackDef = _getFallback(modelDef);
     if (!fallbackDef) throw primaryErr;
     console.warn(`[gateway:${label}] all retries exhausted, falling back to ${fallbackDef.primary}... (${primaryErr.message.substring(0, 80)})`);
-    const result = await _callWithRetry(fallbackDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label);
+    const result = await _callWithRetry(fallbackDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label, null);
     return { ...result, fallback: true };
   }
 }
@@ -206,41 +230,44 @@ async function _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temp
 /**
  * Single attempt for the given modelDef — primary model only, no fallback.
  */
-async function _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig) {
+async function _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent) {
   if (modelDef.provider === 'gemini') {
     if (modelDef.streaming) {
-      return _geminiStreamCall(modelDef.primary, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig);
+      return _geminiStreamCall(modelDef.primary, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent);
     }
-    return _geminiCall(modelDef.primary, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig);
+    return _geminiCall(modelDef.primary, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent);
   }
+  // Claude does not support cachedContent; systemPrompt is handled by anthropicCall
   return _claudeCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout);
 }
 
-async function _geminiStreamCall(model, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig) {
+async function _geminiStreamCall(model, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig, cachedContent) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
 
-  const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
+  // Skip systemPrompt prepend when cachedContent is present — it's already embedded in the cache
+  const fullPrompt = (systemPrompt && !cachedContent) ? `${systemPrompt}\n\n${prompt}` : prompt;
   const body = {
     contents:         [{ parts: [{ text: fullPrompt }] }],
     generationConfig: { temperature, maxOutputTokens: maxTokens, ...extraConfig },
   };
 
-  const { text, usage } = await geminiStreamCall(apiKey, model, body, { timeout });
+  const { text, usage } = await geminiStreamCall(apiKey, model, body, { timeout, cachedContent });
   return { text, usage, model, fallback: false };
 }
 
-async function _geminiCall(model, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig) {
+async function _geminiCall(model, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig, cachedContent) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
 
-  const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
+  // Skip systemPrompt prepend when cachedContent is present — it's already embedded in the cache
+  const fullPrompt = (systemPrompt && !cachedContent) ? `${systemPrompt}\n\n${prompt}` : prompt;
   const body = {
     contents: [{ parts: [{ text: fullPrompt }] }],
     generationConfig: { temperature, maxOutputTokens: maxTokens, ...extraConfig },
   };
 
-  const { text, usage } = await geminiCall(apiKey, model, body, { timeout });
+  const { text, usage } = await geminiCall(apiKey, model, body, { timeout, cachedContent });
   return { text, usage, model, fallback: false };
 }
 

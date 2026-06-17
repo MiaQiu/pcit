@@ -1,6 +1,6 @@
 'use strict';
 
-const { callClaudeRaw } = require('./claudeService.cjs');
+const { llmTextCall } = require('./claudeService.cjs');
 const { parseJSON } = require('../llm/repair.cjs');
 
 const LOCALE_NAMES = {
@@ -29,7 +29,7 @@ async function translateLessonBundle(bundle, targetLocale) {
 
 ${JSON.stringify(bundle, null, 2)}`;
 
-  const text = await callClaudeRaw(prompt, {
+  const text = await llmTextCall(prompt, {
     systemPrompt: SYSTEM_PROMPT,
     model: 'claude-opus-4-7',
     maxTokens: 16000,

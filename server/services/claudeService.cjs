@@ -1,82 +1,60 @@
 'use strict';
 
 /**
- * Claude API Service
- * Thin wrapper that delegates to the LLM gateway infrastructure.
- * All exports are preserved for backward compatibility.
+ * LLM Service — thin wrapper around the gateway for callers that predate llmCall.
  */
 
-const { anthropicCall } = require('../llm/providers/anthropic.cjs');
-const { parseJSON }     = require('../llm/repair.cjs');
+const { llmCall }   = require('../llm/gateway.cjs');
+const { parseJSON } = require('../llm/repair.cjs');
 
-/**
- * Parse JSON from a model response (alias for gateway repair.parseJSON).
- * Kept for backward compatibility — prefer importing parseJSON from llm/repair directly.
- * @param {string}           text
- * @param {'object'|'array'} type
- * @returns {Object|Array}
- */
-function parseClaudeJsonResponse(text, type = 'object') {
+function parseJsonResponse(text, type = 'object') {
   const { value } = parseJSON(text, type);
   return value;
 }
 
-/**
- * Call Claude API and return parsed JSON.
- * @param {string} prompt
- * @param {Object} [options]
- * @param {number}  [options.maxTokens=2048]
- * @param {number}  [options.temperature=0.7]
- * @param {string}  [options.systemPrompt]
- * @param {string}  [options.model='claude-sonnet-4-6']
- * @param {string}  [options.responseType='object'] - 'object' | 'array'
- * @returns {Promise<Object|Array>}
- */
-async function callClaudeForFeedback(prompt, options = {}) {
+async function llmJsonCall(prompt, options = {}) {
   const {
     maxTokens    = 2048,
     temperature  = 0.7,
     systemPrompt = null,
-    model        = 'claude-sonnet-4-6',
     responseType = 'object',
   } = options;
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
-
-  const { text } = await anthropicCall(apiKey, model, { prompt, systemPrompt, maxTokens, temperature });
-  const { value } = parseJSON(text, responseType);
-  return value;
+  return llmCall(prompt, {
+    model:       'gemini',
+    output:      responseType === 'array' ? 'array' : 'json',
+    maxTokens,
+    temperature,
+    systemPrompt,
+    label:       'llm-json',
+  });
 }
 
-/**
- * Call Claude API and return raw text (no JSON parsing).
- * @param {string} prompt
- * @param {Object} [options]
- * @param {number}  [options.maxTokens=2048]
- * @param {number}  [options.temperature=0.7]
- * @param {string}  [options.systemPrompt]
- * @param {string}  [options.model='claude-sonnet-4-6']
- * @returns {Promise<string>}
- */
-async function callClaudeRaw(prompt, options = {}) {
+async function llmTextCall(prompt, options = {}) {
   const {
     maxTokens    = 2048,
     temperature  = 0.7,
     systemPrompt = null,
-    model        = 'claude-sonnet-4-6',
     timeout      = 60_000,
   } = options;
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
-
-  const { text } = await anthropicCall(apiKey, model, { prompt, systemPrompt, maxTokens, temperature, timeout });
-  return text;
+  return llmCall(prompt, {
+    model:       'gemini',
+    output:      'text',
+    maxTokens,
+    temperature,
+    systemPrompt,
+    timeout,
+    label:       'llm-text',
+  });
 }
 
 module.exports = {
-  callClaudeForFeedback,
-  callClaudeRaw,
-  parseClaudeJsonResponse,
+  llmJsonCall,
+  llmTextCall,
+  parseJsonResponse,
+  // legacy aliases — remove once all callers are updated
+  callClaudeForFeedback:  llmJsonCall,
+  callClaudeRaw:          llmTextCall,
+  parseClaudeJsonResponse: parseJsonResponse,
 };

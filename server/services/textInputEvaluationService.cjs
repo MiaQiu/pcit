@@ -62,10 +62,9 @@ Example response format:
 
   try {
     const result = await llmCall(evaluationPrompt, {
-      temperature: 0.3,
-      maxTokens: 512,
+      profile:      'text-input-eval',
       systemPrompt: SYSTEM_PROMPT,
-      label: 'text-input-eval',
+      label:        'text-input-eval',
     });
 
     // Validate and normalize the response

@@ -2,69 +2,37 @@
 
 /**
  * LLM Model Registry
- * To add or swap a model, change it here — nothing else needs to change.
+ * Two models: gemini (primary path) and claude (fallback / explicit calls).
+ *
+ * gemini: gemini-3.5-flash → gemini-3.1-pro-preview on failure
+ * claude: claude-sonnet-4-6 → claude-haiku-4-5-20251001 on failure
  */
+
 const MODELS = {
-  // Fast, cheap — default for all analysis calls; falls back to FALLBACK_MODEL (Claude Sonnet)
-  flash: {
-    provider: 'gemini',
-    primary:  'gemini-2.5-flash',
-    fallback: 'gemini-2.0-flash',
+  gemini: {
+    provider:      'gemini',
+    primary:       'gemini-3.5-flash',
+    fallback:      'gemini-3.1-pro-preview',
+    streaming:     true,
+    supportsCache: true,
   },
-  // Gemini 3.5 Flash
-  'gemini-3.5-flash': {
-    provider: 'gemini',
-    primary:  'gemini-3.5-flash',
-    fallback: 'gemini-2.5-flash',
-  },
-  // Gemini 3 Flash — uses streaming endpoint to avoid connection resets
-  'gemini-3-flash-preview': {
-    provider:  'gemini',
-    primary:   'gemini-3-flash-preview',
-    streaming: true,
-  },
-  // Gemini 3 — for notification generation
-  'flash-3': {
-    provider: 'gemini',
-    primary:  process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview',
-    fallback: 'gemini-3-flash-preview',
-  },
-  // Extended reasoning — CDI coaching narrative (streaming, handled separately)
-  pro: {
-    provider: 'gemini',
-    primary:  process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview',
-    streaming: true,
-  },
-  // Gemini 3 Pro for PCIT coding — falls back to Claude Sonnet on failure
-  pcit: {
-    provider: 'gemini',
-    primary:  process.env.GEMINI_STREAMING_MODEL || 'gemini-3.1-pro-preview',
-  },
-  // Anthropic path (AI_PROVIDER=claude-sonnet)
   claude: {
     provider: 'anthropic',
     primary:  'claude-sonnet-4-6',
+    fallback: 'claude-haiku-4-5-20251001',
   },
 };
 
 /**
- * Resolve a model key to its definition.
+ * Resolve a model key or full model ID to a model definition.
  * Accepts:
- *  - Named keys: 'flash', 'claude', 'pro'
- *  - Full model IDs: 'claude-sonnet-4-6', 'claude-opus-4-6', 'gemini-2.0-flash', etc.
- *  - Legacy AI_PROVIDER values: 'gemini-flash', 'claude-sonnet'
- * @param {string} key
- * @returns {Object} model definition
+ *  - Named keys: 'gemini' | 'claude'
+ *  - Full model IDs: 'gemini-3.5-flash', 'claude-sonnet-4-6', etc.
  */
 function resolveModel(key) {
-  // Named keys
   if (MODELS[key]) return MODELS[key];
-  // Legacy values
-  if (key === 'gemini-flash') return MODELS.flash;
-  if (key === 'claude-sonnet') return MODELS.claude;
-  // Full model IDs — infer provider from prefix
-  if (key.startsWith('claude-')) return { provider: 'anthropic', primary: key };
-  if (key.startsWith('gemini-')) return { provider: 'gemini', primary: key, fallback: MODELS.flash.primary };
+  if (key.startsWith('claude-')) return { provider: 'anthropic', primary: key, fallback: MODELS.claude.fallback };
+  if (key.startsWith('gemini-')) return { provider: 'gemini', primary: key, fallback: MODELS.gemini.fallback, streaming: true, supportsCache: true };
   throw new Error(`[llm/models] Unknown model key: "${key}"`);
 }
 

@@ -1,0 +1,15 @@
+this is transcripts from a 5 mins parent-child play session. as a pcit therapist and child developmental psychologist, can you provide feedbacks to parents on the play session. can you also highlight what are the things you notice with the child?
+
+**Child Info:**
+- {{CHILD_NAME}}, {{AGE_DISPLAY}} {{GENDER}}
+
+**Session Metrics:**
+- Labeled Praises: {{PRAISE}} (goal: 10+)
+- Reflections: {{ECHO}} (goal: 10+)
+- Behavioral Descriptions: {{NARRATION}} (goal: 10+)
+- Questions: {{QUESTION}} (reduce)
+- Commands: {{COMMAND}} (reduce)
+- Criticisms: {{CRITICISM}} (eliminate)
+
+**Transcript:**
+{{TRANSCRIPT}}

@@ -135,26 +135,12 @@ async function reSegmentUtterances(utterances, words) {
   console.log(`📝 [DPICS-SEGMENTER] Re-segmenting ${utterances.length} utterances...`);
   try {
     splitResults = await llmCall(prompt, {
-      model:       'gemini-3.5-flash',
-      output:      'array',
-      temperature: 0,
-      maxTokens:   8192,
-      label:       'dpics-segmenter'
+      profile: 'segmenter',
+      label:   'dpics-segmenter',
     });
   } catch (err) {
-    console.warn(`⚠️ [DPICS-SEGMENTER] Flash failed (${err.message}), retrying with Pro 3...`);
-    try {
-      splitResults = await llmCall(prompt, {
-        model:       'gemini-3.1-pro-preview',
-        output:      'array',
-        temperature: 0,
-        maxTokens:   8192,
-        label:       'dpics-segmenter-fallback'
-      });
-    } catch (err2) {
-      console.warn(`⚠️ [DPICS-SEGMENTER] Pro 3 also failed (${err2.message}), keeping original utterances`);
-      return utterances;
-    }
+    console.warn(`⚠️ [DPICS-SEGMENTER] Segmenter failed (${err.message}), keeping original utterances`);
+    return utterances;
   }
 
   if (!Array.isArray(splitResults) || splitResults.length === 0) {

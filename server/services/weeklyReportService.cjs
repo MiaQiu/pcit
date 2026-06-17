@@ -383,9 +383,8 @@ async function generateNarrativeContent(aggregatedData, childInfo, locale = 'en'
   });
 
   const result = await llmCall(prompt, {
-    temperature: 0.7,
-    maxTokens: 2000,
-    label: 'weekly-report',
+    profile: 'weekly-report',
+    label:   'weekly-report',
   });
 
   return result;

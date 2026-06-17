@@ -2454,7 +2454,7 @@ router.get('/coding-review/:id', requireAdminAuth, async (req, res) => {
     const utterances = await prisma.utterance.findMany({
       where: { sessionId: req.params.id },
       orderBy: { order: 'asc' },
-      select: { id: true, order: true, speaker: true, role: true, text: true, adminComment: true, pcitTag: true, feedback: true },
+      select: { id: true, order: true, speaker: true, role: true, text: true, adminComment: true, pcitTag: true, feedback: true, revisedFeedback: true, additionalTip: true },
     });
 
     // Match coding results to adult utterances positionally (k-th adult utt ↔ k-th coding result sorted by r.id).
@@ -2487,7 +2487,8 @@ router.get('/coding-review/:id', requireAdminAuth, async (req, res) => {
           coding: u.pcitTag
             ? {
                 code: u.pcitTag,
-                feedback: u.feedback ?? null,
+                feedback: u.revisedFeedback ?? u.feedback ?? null,
+                additionalTip: u.additionalTip ?? null,
                 reference: extra?.reference ?? null,
                 assumption: extra?.assumption ?? null,
               }
@@ -2660,7 +2661,7 @@ router.get('/therapist/sessions/:id', requirePortalAuth, async (req, res) => {
     const utterances = await prisma.utterance.findMany({
       where: { sessionId: req.params.id },
       orderBy: { order: 'asc' },
-      select: { id: true, order: true, speaker: true, role: true, text: true, adminComment: true, pcitTag: true, feedback: true },
+      select: { id: true, order: true, speaker: true, role: true, text: true, adminComment: true, pcitTag: true, feedback: true, revisedFeedback: true, additionalTip: true },
     });
 
     const extraByOrder = {};
@@ -2688,7 +2689,8 @@ router.get('/therapist/sessions/:id', requirePortalAuth, async (req, res) => {
           adminComment: u.adminComment ?? null,
           coding: u.pcitTag ? {
             code: u.pcitTag,
-            feedback: u.feedback ?? null,
+            feedback: u.revisedFeedback ?? u.feedback ?? null,
+            additionalTip: u.additionalTip ?? null,
             reference: extra?.reference ?? null,
             assumption: extra?.assumption ?? null,
           } : null,
