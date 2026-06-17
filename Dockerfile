@@ -7,6 +7,13 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
+# ── Build web signup app ──────────────────────────────────────────────────────
+COPY web/package*.json ./web/
+RUN cd web && npm ci
+COPY web ./web/
+RUN cd web && npm run build
+# ─────────────────────────────────────────────────────────────────────────────
+
 # Copy package files
 COPY package*.json ./
 
@@ -23,6 +30,7 @@ COPY server ./server/
 COPY public ./public/
 COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
+# web/dist already present from the build step above
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \

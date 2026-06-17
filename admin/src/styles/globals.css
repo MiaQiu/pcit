@@ -92,7 +92,7 @@ body {
   border-color: var(--primary);
 }
 
-.login-card button {
+.login-card form button {
   padding: 12px;
   background: var(--primary);
   color: white;
@@ -105,11 +105,11 @@ body {
   transition: background 0.2s;
 }
 
-.login-card button:hover:not(:disabled) {
+.login-card form button:hover:not(:disabled) {
   background: var(--primary-dark);
 }
 
-.login-card button:disabled {
+.login-card form button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -133,7 +133,7 @@ body {
   padding: 8px;
   border: none;
   border-radius: 6px;
-  background: none;
+  background: white;
   font-size: 14px;
   font-weight: 500;
   font-family: inherit;
@@ -143,8 +143,8 @@ body {
 }
 
 .login-tab.active {
-  background: white;
-  color: var(--text);
+  background: var(--primary);
+  color: white;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   font-weight: 600;
 }

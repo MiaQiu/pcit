@@ -9,13 +9,24 @@ import { OnboardingStackParamList, RootStackParamList } from './types';
 import { RouteProp } from '@react-navigation/native';
 import { useOnboarding } from '../contexts/OnboardingContext';
 
-// Import onboarding screens (will be created next)
+// Flow: Welcome → Start → (Login | CreateAccount) → Demo1–5 → ParentingIntro →
+//   NameInput → Relationship → ChildName → ChildGender → ChildBirthday →
+//   ChildIssue → ChildSnapshotIntro → WacbQuestion1–9 → ChildBehaviorProfile →
+//   Intro3 → PlaySession1–5 → NotificationPermission → MainTabs
+// Subscription is a standalone screen entered from RecordScreen / ProfileScreen.
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { StartScreen } from '../screens/onboarding/StartScreen';
 import { LoginScreen } from '../screens/onboarding/LoginScreen';
 import { ForgotPasswordScreen } from '../screens/onboarding/ForgotPasswordScreen';
 import { ResetPasswordScreen } from '../screens/onboarding/ResetPasswordScreen';
 import { CreateAccountScreen } from '../screens/onboarding/CreateAccountScreen';
+import { Demo1Screen } from '../screens/onboarding/Demo1Screen';
+import { Demo1BScreen } from '../screens/onboarding/Demo1BScreen';
+import { Demo2Screen } from '../screens/onboarding/Demo2Screen';
+import { Demo2BScreen } from '../screens/onboarding/Demo2BScreen';
+import { Demo3Screen } from '../screens/onboarding/Demo3Screen';
+import { Demo4Screen } from '../screens/onboarding/Demo4Screen';
+import { Demo5Screen } from '../screens/onboarding/Demo5Screen';
 import { ParentingIntroScreen } from '../screens/onboarding/ParentingIntroScreen';
 import { NameInputScreen } from '../screens/onboarding/NameInputScreen';
 import { RelationshipScreen } from '../screens/onboarding/RelationshipScreen';
@@ -33,13 +44,6 @@ import { WacbQuestion6Screen } from '../screens/onboarding/WacbQuestion6Screen';
 import { WacbQuestion7Screen } from '../screens/onboarding/WacbQuestion7Screen';
 import { WacbQuestion8Screen } from '../screens/onboarding/WacbQuestion8Screen';
 import { WacbQuestion9Screen } from '../screens/onboarding/WacbQuestion9Screen';
-import { Demo1Screen } from '../screens/onboarding/Demo1Screen';
-import { Demo1BScreen } from '../screens/onboarding/Demo1BScreen';
-import { Demo2Screen } from '../screens/onboarding/Demo2Screen';
-import { Demo2BScreen } from '../screens/onboarding/Demo2BScreen';
-import { Demo3Screen } from '../screens/onboarding/Demo3Screen';
-import { Demo4Screen } from '../screens/onboarding/Demo4Screen';
-import { Demo5Screen } from '../screens/onboarding/Demo5Screen';
 import { ChildBehaviorProfileScreen } from '../screens/onboarding/ChildBehaviorProfileScreen';
 import { Intro3Screen } from '../screens/onboarding/Intro3Screen';
 import { PlaySession1Screen } from '../screens/onboarding/PlaySession1Screen';

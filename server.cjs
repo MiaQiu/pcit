@@ -48,6 +48,7 @@ const corsOptions = {
       'https://www.hinora.co',
       'https://admin.hinora.co',
       'http://localhost:5173',
+      'http://localhost:5174',  // web app dev port
       'http://localhost:3000'
     ];
 
@@ -69,20 +70,19 @@ const corsOptions = {
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 app.use(cors(corsOptions));
 
 // Body parser (increase limit for audio file uploads)
-// Capture raw body for webhook signature verification
+// Capture raw body for webhook signature verification (RevenueCat + Stripe)
 app.use(express.json({
   limit: '50mb',
   verify: (req, res, buf) => {
-    // Store raw body for webhook signature verification
-    if (req.originalUrl.includes('/webhooks/')) {
-      req.rawBody = buf.toString();
+    if (req.originalUrl.includes('/webhooks/') || req.originalUrl.includes('/stripe/webhook')) {
+      req.rawBody = buf;
     }
   }
 }));
@@ -187,6 +187,10 @@ app.use('/api/recordings', recordingRoutes);
 const webhookRoutes = require('./server/routes/webhooks.cjs');
 app.use('/api/webhooks', webhookRoutes);
 
+// Mount Stripe routes (web subscription — webhook uses express.raw, must come before express.json)
+const stripeRoutes = require('./server/routes/stripe.cjs');
+app.use('/api/stripe', stripeRoutes);
+
 // Mount referral routes
 const referralRoutes = require('./server/routes/referral.cjs');
 app.use('/api/referral', referralRoutes);
@@ -220,6 +224,12 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(adminBuildPath, 'index.html'));
   });
 
+  // Serve web onboarding (signup flow) at /signup
+  const webBuildPath = path.join(__dirname, 'web', 'dist');
+  app.use('/signup', express.static(webBuildPath));
+  app.get('/signup/*', (req, res) => {
+    res.sendFile(path.join(webBuildPath, 'index.html'));
+  });
 }
 
 // Send flagged items to coach via email

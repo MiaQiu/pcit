@@ -421,6 +421,8 @@ model User {
   pushToken                String?
   pushTokenUpdatedAt       DateTime?
   revenueCatCustomerId     String?              @unique
+  stripeCustomerId         String?              @unique
+  stripeSubscriptionId     String?              @unique
   developmentalVisible     Boolean              @default(false)
   isFreeAccount            Boolean              @default(false)
   tag                      String               @default("user")
