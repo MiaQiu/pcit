@@ -1023,6 +1023,12 @@ export const ReportScreen: React.FC = () => {
               <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
               <View style={styles.coachCard}>
                 <Text style={styles.coachDescription}>{reportData.coachingSummary}</Text>
+                <TouchableOpacity
+                  style={styles.cardLinkButton}
+                  onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
+                >
+                  <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
+                </TouchableOpacity>
               </View>
             </View>
           ) : reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
