@@ -1,0 +1,1648 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session-2",
+      "utterances": [
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "好。",
+          "verbalization": "好。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（我）好。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好 (<2s，發語詞 well)， 來。 （與案母下句>2s）",
+          "code": "DC",
+          "verbalization": "好， 來。",
+          "visual_observation": "",
+          "comment": "(<2s，發語詞 well) （與案母下句>2s）",
+          "enriched": "好，（我們）來。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "那我們… (此句未完成，不予計數)",
+          "verbalization": "那我們…",
+          "visual_observation": "",
+          "comment": "(此句未完成，不予計數)",
+          "code": "NC",
+          "enriched": "那我們…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你看。",
+          "code": "DC",
+          "verbalization": "你看。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）你看。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "媽咪。",
+          "verbalization": "媽咪。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "媽咪。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽想要把這個猴子放在樹上捏。",
+          "code": "TA",
+          "verbalization": "媽媽想要把這個猴子放在樹上捏。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "媽媽想要把（小猴子）放在樹上捏。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "小猴子耶。",
+          "code": "TA",
+          "verbalization": "小猴子耶。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（這是）小猴子耶。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這… (此句未完成，不予計數)",
+          "verbalization": "這…",
+          "visual_observation": "",
+          "comment": "(此句未完成，不予計數)",
+          "enriched": "這…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這有沒有辦法？",
+          "code": "Q",
+          "verbalization": "這有沒有辦法？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（小猴子）有沒有辦法（放在樹上）？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "沒有辦法。",
+          "verbalization": "沒有辦法。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（小猴子）沒有辦法（放在樹上）。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "為什麼？",
+          "code": "Q",
+          "verbalization": "為什麼？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（為什麼）（小猴子沒有辦法放在樹上）？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "因為、因為… (此句未完成，不予計數)",
+          "verbalization": "因為、因為…",
+          "visual_observation": "",
+          "comment": "(此句未完成，不予計數)",
+          "enriched": "因為、因為…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "ㄟˊ。（案母研究猴子時，自行發出的疑問詞，不予計數）",
+          "verbalization": "ㄟˊ。",
+          "visual_observation": "",
+          "comment": "（案母研究猴子時，自行發出的疑問詞，不予計數）",
+          "code": "NC",
+          "enriched": "ㄟˊ。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "牠的腳耶。 (案母正拿著樂高猴子仔細研究)",
+          "code": "TA",
+          "verbalization": "牠的腳耶。",
+          "visual_observation": "(案母正拿著樂高猴子仔細研究)",
+          "comment": "",
+          "enriched": "（小猴子）的腳耶。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "ㄟˊ。（案母研究猴子時，自行發出的疑問詞，不予計數）",
+          "verbalization": "ㄟˊ。",
+          "visual_observation": "",
+          "comment": "（案母研究猴子時，自行發出的疑問詞，不予計數）",
+          "code": "NC",
+          "enriched": "ㄟˊ。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "牠好像真的沒有辦法弄。",
+          "code": "TA",
+          "verbalization": "牠好像真的沒有辦法弄。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（小猴子）好像真的沒有辦法弄（在樹上）。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這怎麼弄？",
+          "code": "Q",
+          "verbalization": "這怎麼弄？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（小猴子）怎麼弄（在樹上）？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX (< 2s，個案名) ，你幫媽媽弄。 (案母將猴子遞給個案，個案將猴子拿在手中研究)",
+          "code": "DC",
+          "verbalization": "XX，你幫媽媽弄。",
+          "visual_observation": "(案母將猴子遞給個案，個案將猴子拿在手中研究)",
+          "comment": "(< 2s，個案名)",
+          "enriched": "XX，你幫媽媽弄（小猴子）。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "幫媽媽弄到在樹上。 （個案持續將猴子拿在手上，>5s後仍未把猴子放到樹上）",
+          "code": "DC",
+          "verbalization": "幫媽媽弄到在樹上。",
+          "visual_observation": "（個案持續將猴子拿在手上，>5s後仍未把猴子放到樹上）",
+          "comment": "",
+          "enriched": "（你）幫媽媽弄（小猴子）到在樹上。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "樹、樹在哪裡？ (案母說完後自己到玩具箱裡找樹)",
+          "code": "Q",
+          "verbalization": "樹、樹在哪裡？",
+          "visual_observation": "(案母說完後自己到玩具箱裡找樹)",
+          "comment": "",
+          "enriched": "樹、樹在哪裡？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "(個案看向假山旁的椰子樹)  樹在這裡。",
+          "verbalization": "樹在這裡。",
+          "visual_observation": "(個案看向假山旁的椰子樹)",
+          "comment": "",
+          "enriched": "樹在這裡。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "那換一個樹好了。 (個案邊說邊將樹葉拔起來，並將樹葉放到桌上)",
+          "verbalization": "那換一個樹好了。",
+          "visual_observation": "(個案邊說邊將樹葉拔起來，並將樹葉放到桌上)",
+          "comment": "",
+          "enriched": "那（我們）換一個樹好了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "齁齁齁~ (案母看見個案將樹葉拔起而發出的音效聲)",
+          "verbalization": "齁齁齁~",
+          "visual_observation": "",
+          "comment": "(案母看見個案將樹葉拔起而發出的音效聲)",
+          "code": "NC",
+          "enriched": "齁齁齁~"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "那換一個樹。",
+          "verbalization": "那換一個樹。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "那（我們）換一個樹。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "阿你小猴子勒？",
+          "code": "Q",
+          "verbalization": "阿你小猴子勒？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "阿你（的）小猴子（放哪裡）勒？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "小猴子勒？",
+          "code": "Q",
+          "verbalization": "小猴子勒？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你的）小猴子（放哪裡）勒？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "小猴子要在樹上捏 （<2s） 、在樹上捏。 (個案有試圖將手上的猴子放到樹上，但發現無法固定後就將猴子拿下來)",
+          "code": "TA",
+          "verbalization": "小猴子要在樹上捏、在樹上捏。",
+          "visual_observation": "(個案有試圖將手上的猴子放到樹上，但發現無法固定後就將猴子拿下來)",
+          "comment": "（<2s）",
+          "enriched": "小猴子要在樹上捏、（小猴子要）在樹上捏。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "小、小猴子等一下再… (個案手上拿著猴子，邊說邊離開桌子走到玩具箱旁邊) (此句未完成，不予計數)",
+          "verbalization": "小、小猴子等一下再…",
+          "visual_observation": "(個案手上拿著猴子，邊說邊離開桌子走到玩具箱旁邊)",
+          "comment": "(此句未完成，不予計數)",
+          "enriched": "小、小猴子等一下再（放）。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你、你幫我啦。",
+          "code": "DC",
+          "verbalization": "你、你幫我啦。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "你、你幫我（放小猴子）啦。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你幫我一下啦， (接下句，< 2s)",
+          "code": "DC",
+          "verbalization": "你幫我一下啦，",
+          "visual_observation": "",
+          "comment": "(接下句，< 2s)",
+          "enriched": "你幫我（放小猴子）一下啦，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "過來。",
+          "code": "DC",
+          "verbalization": "過來。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）過來。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "等一下。",
+          "verbalization": "等一下。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）等一下。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我們把這個 （指猴子） 弄上去阿。",
+          "code": "IC",
+          "verbalization": "我們把這個弄上去阿。",
+          "visual_observation": "（指猴子）",
+          "comment": "",
+          "enriched": "我們把（小猴子）弄（到樹）上去阿。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "那你幫我把小猴子弄在樹上。 （個案接續將猴子放在椰子樹上）",
+          "code": "DC",
+          "verbalization": "那你幫我把小猴子弄在樹上。",
+          "visual_observation": "（個案接續將猴子放在椰子樹上）",
+          "comment": "",
+          "enriched": "那你幫我把小猴子弄在樹上。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "阿不然拿這一個勒？ (個案指山上的綠色藤蔓)",
+          "verbalization": "阿不然拿這一個勒？",
+          "visual_observation": "(個案指山上的綠色藤蔓)",
+          "comment": "",
+          "enriched": "阿不然（我們）拿（另一個玩具）勒？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "嗯嗯。 (案母發出否定個案所指的綠色藤蔓處的聲音)",
+          "code": "NTA",
+          "verbalization": "嗯嗯。",
+          "visual_observation": "",
+          "comment": "(案母發出否定個案所指的綠色藤蔓處的聲音)",
+          "enriched": "嗯編碼：嗯嗯。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "(案母用手指著假山右前方的椰子樹)  我要放這裡。",
+          "code": "TA",
+          "verbalization": "我要放這裡。",
+          "visual_observation": "(案母用手指著假山右前方的椰子樹)",
+          "comment": "",
+          "enriched": "我要（把小猴子）放這裡。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你會不會弄？ (案母語氣中性)",
+          "code": "Q",
+          "verbalization": "你會不會弄？",
+          "visual_observation": "",
+          "comment": "(案母語氣中性)",
+          "enriched": "（你）你會不會弄（小猴子）？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "好了。 (個案將猴子擺在樹上，但沒有將兩者卡在一起)",
+          "verbalization": "好了。",
+          "visual_observation": "(個案將猴子擺在樹上，但沒有將兩者卡在一起)",
+          "comment": "",
+          "enriched": "（我）（把小猴子放）好了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "是這樣嗎？ (案母語氣質疑)",
+          "code": "NTA",
+          "verbalization": "是這樣嗎？",
+          "visual_observation": "",
+          "comment": "(案母語氣質疑)",
+          "enriched": "（小猴子放的位置）是這樣嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這樣子會摔下來捏。 (案母語氣質疑)",
+          "code": "NTA",
+          "verbalization": "這樣子會摔下來捏。",
+          "visual_observation": "",
+          "comment": "(案母語氣質疑)",
+          "enriched": "（小猴子）這樣子會摔下來捏。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "ㄟˊ (案母自己嘗試後發現也無法將猴子裝在樹上，而發出此疑惑聲，此句不予計數)",
+          "verbalization": "ㄟˊ",
+          "visual_observation": "",
+          "comment": "(案母自己嘗試後發現也無法將猴子裝在樹上，而發出此疑惑聲，此句不予計數)",
+          "code": "NC",
+          "enriched": "ㄟˊ"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這個沒辦法弄， (<2s) XX (個案名) 。 (案母轉而將猴子裝在綠色底板上)",
+          "code": "TA",
+          "verbalization": "這個沒辦法弄， XX。",
+          "visual_observation": "(案母轉而將猴子裝在綠色底板上)",
+          "comment": "(<2s) (個案名)",
+          "enriched": "（小猴子）沒辦法弄（在樹上）， XX。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這沒有辦法。",
+          "code": "TA",
+          "verbalization": "這沒有辦法。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（小猴子）沒有辦法（放在樹上）。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "(案母把猴子放到人群中後，自己發出驚呼聲並說此句話) 哇 (<2s) ，跑到人那邊去了。",
+          "code": "TA",
+          "verbalization": "哇，跑到人那邊去了。",
+          "visual_observation": "(案母把猴子放到人群中後，自己發出驚呼聲並說此句話)",
+          "comment": "(<2s)",
+          "enriched": "哇，（小猴子）跑到人那邊去了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "大家趕快跑 (<2s) 、趕快跑。 (案母讓樂高人假裝逃跑)",
+          "code": "TA",
+          "verbalization": "大家趕快跑、趕快跑。",
+          "visual_observation": "(案母讓樂高人假裝逃跑)",
+          "comment": "(<2s)",
+          "enriched": "大家趕快跑、趕快跑。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "哇~  (個案聽到後，拔起樂高人假扮逃跑所發出的尖叫聲)",
+          "verbalization": "哇~",
+          "visual_observation": "",
+          "comment": "(個案聽到後，拔起樂高人假扮逃跑所發出的尖叫聲)",
+          "enriched": "哇~"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "呵呵呵哈~ (個案笑聲) (no code)",
+          "verbalization": "呵呵呵哈~",
+          "visual_observation": "",
+          "comment": "(個案笑聲) (no code)",
+          "enriched": "呵呵呵哈~"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "他直接跑到裡面。",
+          "verbalization": "他直接跑到裡面。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（小猴子）直接跑到（人）裡面。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "呵呵。 (案母的笑聲)",
+          "code": "TA",
+          "verbalization": "呵呵。",
+          "visual_observation": "",
+          "comment": "(案母的笑聲)",
+          "enriched": "呵呵。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇~  (案母亦假扮樂高人逃跑，並發出驚嚇逃跑的尖叫聲) (<2s)  趕快跑 。(案母抓著樂高人跑來跑去，案母此句的主詞為樂高人並非小孩)",
+          "code": "TA",
+          "verbalization": "哇~ 趕快跑。",
+          "visual_observation": "(案母抓著樂高人跑來跑去，案母此句的主詞為樂高人並非小孩)",
+          "comment": "(案母亦假扮樂高人逃跑，並發出驚嚇逃跑的尖叫聲) (<2s)",
+          "enriched": "哇~ （大家）趕快跑。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "趕快跑。",
+          "verbalization": "趕快跑。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（大家）趕快跑。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "跑到我這邊。 (個案將底板上的樂高人抓起至自己手上)",
+          "verbalization": "跑到我這邊。",
+          "visual_observation": "(個案將底板上的樂高人抓起至自己手上)",
+          "comment": "",
+          "enriched": "（小猴子）跑到我這邊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX (< 2s，個案名) ，我們來把那個北極熊… （案母語句未完成，不予計數）",
+          "verbalization": "XX，我們來把那個北極熊…",
+          "visual_observation": "",
+          "comment": "(< 2s，個案名) （案母語句未完成，不予計數）",
+          "code": "NC",
+          "enriched": "XX，我們來把那個北極熊…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我們來幫他做一個家，好不好？",
+          "code": "IC",
+          "verbalization": "我們來幫他做一個家，好不好？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "我們來幫（北極熊）做一個家，好不好？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "可是北極熊不會怕冷。 (個案把北極熊拔起，裝至案母前面的綠底板、有樂高人在的地方)",
+          "verbalization": "可是北極熊不會怕冷。",
+          "visual_observation": "(個案把北極熊拔起，裝至案母前面的綠底板、有樂高人在的地方)",
+          "comment": "",
+          "enriched": "可是北極熊不會怕冷。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "蛤？",
+          "code": "Q",
+          "verbalization": "蛤？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "蛤？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "牠不會怕冷， (接下句，< 2s)",
+          "code": "TA",
+          "verbalization": "牠不會怕冷，",
+          "visual_observation": "",
+          "comment": "(接下句，< 2s)",
+          "enriched": "（北極熊）不會怕冷，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "可是人會… (案母看到個案將北極熊放到樂高小人前方時，改說下句話，而此句未說完，故不予計數)",
+          "verbalization": "可是人會…",
+          "visual_observation": "(案母看到個案將北極熊放到樂高小人前方時，改說下句話，而此句未說完，故不予計數)",
+          "comment": "",
+          "code": "NC",
+          "enriched": "可是人會（怕冷）…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "唉呦喂~ (案母看到北極熊在有樂高人在的地方) (接下句，< 2s)",
+          "code": "TA",
+          "verbalization": "唉呦喂~",
+          "visual_observation": "(案母看到北極熊在有樂高人在的地方)",
+          "comment": "(接下句，< 2s)",
+          "enriched": "唉呦喂~"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好大隻喔。",
+          "code": "TA",
+          "verbalization": "好大隻喔。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（北極熊）好大隻喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我要趕快跑囉。 (案母扮演的樂高小人要趕緊逃跑；個案後續未延續案母之假扮玩法，故不予計數)",
+          "verbalization": "我要趕快跑囉。",
+          "visual_observation": "",
+          "comment": "(案母扮演的樂高小人要趕緊逃跑；個案後續未延續案母之假扮玩法，故不予計數)",
+          "code": "TBD",
+          "enriched": "我要趕快跑囉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "北極熊住在這一邊。 (個案再讓北極熊住到山前的柵欄裡、旁邊沒有樂高人)",
+          "verbalization": "北極熊住在這一邊。",
+          "visual_observation": "(個案再讓北極熊住到山前的柵欄裡、旁邊沒有樂高人)",
+          "comment": "",
+          "enriched": "北極熊住在這一邊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "住在那裏？",
+          "code": "Q",
+          "verbalization": "住在那裏？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（北極熊）住在那裏？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "在這一邊。",
+          "verbalization": "在這一邊。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（北極熊）在這一邊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "那邊喔， (< 2s) 好。",
+          "code": "RF",
+          "verbalization": "那邊喔，好。",
+          "visual_observation": "",
+          "comment": "(< 2s)",
+          "enriched": "（北極熊住）那邊喔，好。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "有關起來嗎？",
+          "code": "Q",
+          "verbalization": "有關起來嗎？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）（把北極熊）有關起來嗎？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "有阿。",
+          "verbalization": "有阿。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（我）有（把北極熊關起來）阿。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "有喔。",
+          "code": "RF",
+          "verbalization": "有喔。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）有（把北極熊關起來）喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "在這邊。 (個案此句指北極熊前面有欄杆圍住)",
+          "verbalization": "在這邊。",
+          "visual_observation": "(個案此句指北極熊前面有欄杆圍住)",
+          "comment": "",
+          "enriched": "（北極熊）在這邊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你幫它關起來了欸。 (個案先前已經將北極熊放在柵欄裡未再拿出，案母做此句描述時已超過五秒)",
+          "code": "TA",
+          "verbalization": "你幫它關起來了欸。",
+          "visual_observation": "(個案先前已經將北極熊放在柵欄裡未再拿出，案母做此句描述時已超過五秒)",
+          "comment": "",
+          "enriched": "你幫（北極熊）關起來了欸。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "因為它的食物在這邊。 (個案指著假山上的肉塊)",
+          "verbalization": "因為它的食物在這邊。",
+          "visual_observation": "(個案指著假山上的肉塊)",
+          "comment": "",
+          "enriched": "因為（北極熊）的食物在這邊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "它的食物在那邊喔。",
+          "code": "RF",
+          "verbalization": "它的食物在那邊喔。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（北極熊）的食物在那邊喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "它怎麼吃？ (個案將北極熊拔起移至肉塊旁邊假裝吃肉)",
+          "code": "Q",
+          "verbalization": "它怎麼吃？",
+          "visual_observation": "(個案將北極熊拔起移至肉塊旁邊假裝吃肉)",
+          "comment": "",
+          "enriched": "（北極熊）怎麼吃（食物）？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇賽!  (案母看著個案讓北極熊爬下假山時發出的聲音)",
+          "code": "TA",
+          "verbalization": "哇賽!",
+          "visual_observation": "",
+          "comment": "(案母看著個案讓北極熊爬下假山時發出的聲音)",
+          "enriched": "哇賽!"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "xx (個案與案母上句同時說話，且聲音較小，難以判斷個案意思，故不予計數)",
+          "verbalization": "xx",
+          "visual_observation": "",
+          "comment": "(個案與案母上句同時說話，且聲音較小，難以判斷個案意思，故不予計數)",
+          "enriched": "xx"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "吃什麼東西呀？",
+          "code": "Q",
+          "verbalization": "吃什麼東西呀？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（北極熊）吃什麼東西呀？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "吃那個阿。",
+          "verbalization": "吃那個阿。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（北極熊）吃（骨頭）阿。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "它吃什麼東西？",
+          "code": "Q",
+          "verbalization": "它吃什麼東西？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（北極熊）吃什麼東西？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "它吃骨頭。",
+          "verbalization": "它吃骨頭。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（北極熊）吃骨頭。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "它吃骨頭喔。",
+          "code": "RF",
+          "verbalization": "它吃骨頭喔。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（北極熊）吃骨頭喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "那你要不要幫我放一些花？ (案母從箱子拿了一些花出來，個案跑至玩具箱旁邊找玩具)",
+          "code": "Q",
+          "verbalization": "那你要不要幫我放一些花？",
+          "visual_observation": "(案母從箱子拿了一些花出來，個案跑至玩具箱旁邊找玩具)",
+          "comment": "",
+          "enriched": "那你要不要幫我放一些花？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "放一些花在地上看起來才會漂亮，好不好？",
+          "code": "IC",
+          "verbalization": "放一些花在地上看起來才會漂亮，好不好？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）放一些花在地上看起來才會漂亮，好不好？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好不好？ (個案此時在玩具箱裡找玩具)",
+          "code": "Q",
+          "verbalization": "好不好？",
+          "visual_observation": "(個案此時在玩具箱裡找玩具)",
+          "comment": "",
+          "enriched": "（這樣）好不好？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "等一下  。",
+          "verbalization": "等一下。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）等一下。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這裡呀。",
+          "code": "TA",
+          "verbalization": "這裡呀。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（花要放）這裡呀。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯？",
+          "verbalization": "嗯？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "嗯？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "幫我把花放到上面去才漂亮。",
+          "code": "DC",
+          "verbalization": "幫我把花放到上面去才漂亮。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）幫我把花放到上面去才漂亮。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這裡很多顏色的花， （<2s，接下句）(案母從玩具箱裡拿出花給個案看)",
+          "code": "TA",
+          "verbalization": "這裡很多顏色的花，",
+          "visual_observation": "(案母從玩具箱裡拿出花給個案看)",
+          "comment": "（<2s，接下句）",
+          "enriched": "這裡（有）很多顏色的花，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你幫媽咪放 （花） ， (接下句，< 2s)（個案未於5s內放花）",
+          "code": "DC",
+          "verbalization": "你幫媽咪放，",
+          "visual_observation": "（花） （個案未於5s內放花）",
+          "comment": "(接下句，< 2s)",
+          "enriched": "你幫媽咪放（花），"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "快點。",
+          "code": "DC",
+          "verbalization": "快點。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）快點（放）。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "媽咪這什麼啊？ (個案從玩具箱裡拿出其他動物)",
+          "verbalization": "媽咪這什麼啊？",
+          "visual_observation": "(個案從玩具箱裡拿出其他動物)",
+          "comment": "",
+          "enriched": "媽咪（這個玩具）是什麼啊？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你幫媽咪弄。",
+          "code": "DC",
+          "verbalization": "你幫媽咪弄。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "你幫媽咪弄（花）。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "還有一個 (<2s) 、還有一個媽媽的大象。 (個案從玩具箱裡拿出的是小象)",
+          "verbalization": "還有一個、還有一個媽媽的大象。",
+          "visual_observation": "(個案從玩具箱裡拿出的是小象)",
+          "comment": "(<2s)",
+          "enriched": "還有一個、還有一個媽媽的大象。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "小象齁。 (案母此指的是個案手上的樂高小象)",
+          "code": "TA",
+          "verbalization": "小象齁。",
+          "visual_observation": "",
+          "comment": "(案母此指的是個案手上的樂高小象)",
+          "enriched": "（這是）小象齁。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇 (<2s，發語詞，無微笑、鼓掌、正向碰觸) ~那沒有地方關耶 ，(接下句，< 2s)",
+          "code": "TA",
+          "verbalization": "哇~那沒有地方關耶，",
+          "visual_observation": "",
+          "comment": "(<2s，發語詞，無微笑、鼓掌、正向碰觸) (接下句，< 2s)",
+          "enriched": "哇~那（小象）沒有地方關耶，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "怎麼辦？",
+          "code": "Q",
+          "verbalization": "怎麼辦？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（我們）怎麼辦？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這樣阿。",
+          "verbalization": "這樣阿。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（要）這樣（關）阿。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "拿起來。 (個案將小岩山拔起來，把小象裝在原本小岩山的位置)",
+          "verbalization": "拿起來。",
+          "visual_observation": "(個案將小岩山拔起來，把小象裝在原本小岩山的位置)",
+          "comment": "",
+          "enriched": "（把小象）拿起來。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "痾~ (案母發出狀聲詞)",
+          "verbalization": "痾~",
+          "visual_observation": "",
+          "comment": "(案母發出狀聲詞)",
+          "code": "NC",
+          "enriched": "痾~"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "然後… (此句未完成，不予計數)",
+          "verbalization": "然後…",
+          "visual_observation": "",
+          "comment": "(此句未完成，不予計數)",
+          "enriched": "然後…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "怎麼那麼厲害呀。",
+          "code": "UP",
+          "verbalization": "怎麼那麼厲害呀。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）怎麼那麼厲害呀。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "噫~ (個案發出的聲音，不予計數)",
+          "verbalization": "噫~",
+          "visual_observation": "",
+          "comment": "(個案發出的聲音，不予計數)",
+          "enriched": "噫~"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "阿你的欄杆咧？ (個案擺上小象的地方沒有欄杆，於是案母詢問並放一個黃色欄杆在個案面前)",
+          "code": "Q",
+          "verbalization": "阿你的欄杆咧？",
+          "visual_observation": "(個案擺上小象的地方沒有欄杆，於是案母詢問並放一個黃色欄杆在個案面前)",
+          "comment": "",
+          "enriched": "阿你的欄杆咧？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "欄杆… (個案思索著可將欄杆擺在哪，個案未說完案母即插話詢問，此句不予計數)",
+          "verbalization": "欄杆…",
+          "visual_observation": "(個案思索著可將欄杆擺在哪，個案未說完案母即插話詢問，此句不予計數)",
+          "comment": "",
+          "enriched": "欄杆…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "要放哪裡？",
+          "code": "Q",
+          "verbalization": "要放哪裡？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（欄杆）要放哪裡？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這阿。 (個案將欄杆裝到綠底板上)",
+          "verbalization": "這阿。",
+          "visual_observation": "(個案將欄杆裝到綠底板上)",
+          "comment": "",
+          "enriched": "（放）這（裡）阿。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這裡勒？ (案母手上還有一隻欄杆，此句意思是問說案母手上那個欄杆該怎麼處理，隨後案母將欄杆拿給個案)  (案母與個案下句同時說話)",
+          "code": "Q",
+          "verbalization": "這裡勒？",
+          "visual_observation": "(案母手上還有一隻欄杆，此句意思是問說案母手上那個欄杆該怎麼處理，隨後案母將欄杆拿給個案)",
+          "comment": "(案母與個案下句同時說話)",
+          "enriched": "（欄杆放）這裡勒？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "放在這邊。 (個案與案母上句同時說話)",
+          "verbalization": "放在這邊。",
+          "visual_observation": "",
+          "comment": "(個案與案母上句同時說話)",
+          "enriched": "（把欄杆）放在這邊。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "然後… (此句未完成，不予計數)",
+          "verbalization": "然後…",
+          "visual_observation": "",
+          "comment": "(此句未完成，不予計數)",
+          "enriched": "然後…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這個呢？ (案母拿了一隻欄杆準備要裝在底板上)",
+          "code": "Q",
+          "verbalization": "這個呢？",
+          "visual_observation": "(案母拿了一隻欄杆準備要裝在底板上)",
+          "comment": "",
+          "enriched": "（欄杆）呢？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這個。 (個案主動協助案母裝欄杆到綠底板上)",
+          "verbalization": "這個。",
+          "visual_observation": "(個案主動協助案母裝欄杆到綠底板上)",
+          "comment": "",
+          "enriched": "（放）（欄杆）。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好， (<2s) 我要放這。 (個案主主動協助案母，與案母一起將欄杆在底板上裝好)",
+          "code": "TA",
+          "verbalization": "好，我要放這。",
+          "visual_observation": "(個案主主動協助案母，與案母一起將欄杆在底板上裝好)",
+          "comment": "(<2s)",
+          "enriched": "好，我要（把欄杆）放這。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "謝謝你。",
+          "code": "UP",
+          "verbalization": "謝謝你。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（我）謝謝你。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "xx個… (個案音量較小，難以判斷個案語意，故不予計數)",
+          "verbalization": "xx個…",
+          "visual_observation": "",
+          "comment": "(個案音量較小，難以判斷個案語意，故不予計數)",
+          "enriched": "xx個…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好。",
+          "code": "TA",
+          "verbalization": "好。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "好。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "花花放哪裡？",
+          "verbalization": "花花放哪裡？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "花花放哪裡？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "花花放哪裡？",
+          "code": "Q",
+          "verbalization": "花花放哪裡？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你問）花花放哪裡？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "(個案將花種到咖啡色欄杆上)  喔~ (<2)， 好漂亮喔！",
+          "code": "UP",
+          "verbalization": "喔~， 好漂亮喔！",
+          "visual_observation": "(個案將花種到咖啡色欄杆上)",
+          "comment": "(<2)",
+          "enriched": "喔~， （花花）好漂亮喔！"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "嗚 (<2s) ，這裡還有花花。 (案母看到個案將花種到咖啡色欄杆上)",
+          "code": "TA",
+          "verbalization": "嗚，這裡還有花花。",
+          "visual_observation": "(案母看到個案將花種到咖啡色欄杆上)",
+          "comment": "(<2s)",
+          "enriched": "嗚，這裡還有花花。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "不一樣顏色的花。",
+          "code": "TA",
+          "verbalization": "不一樣顏色的花。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（這是）不一樣顏色的花。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這個不要用。 (個案將案母原先種在草地上的花拔起來)",
+          "verbalization": "這個不要用。",
+          "visual_observation": "(個案將案母原先種在草地上的花拔起來)",
+          "comment": "",
+          "enriched": "（花）不要用。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我、我如果長地板上阿。",
+          "code": "TA",
+          "verbalization": "我、我如果長地板上阿。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "我、我如果（把花）長（種）地板上阿。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "花開這裡呀，也很漂亮阿。",
+          "code": "TA",
+          "verbalization": "花開這裡呀，也很漂亮阿。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "花開這裡呀，（花）也很漂亮阿。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "阿那邊也要有花。 (案母邊說邊將花種到放置假山的綠色底板上)",
+          "code": "TA",
+          "verbalization": "阿那邊也要有花。",
+          "visual_observation": "(案母邊說邊將花種到放置假山的綠色底板上)",
+          "comment": "",
+          "enriched": "阿那邊也要有花。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "阿這邊… (此句未完成，不予計數)",
+          "verbalization": "阿這邊…",
+          "visual_observation": "",
+          "comment": "(此句未完成，不予計數)",
+          "code": "NC",
+          "enriched": "阿這邊…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "那邊呢？",
+          "code": "Q",
+          "verbalization": "那邊呢？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "那邊呢？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你那邊呢？",
+          "code": "Q",
+          "verbalization": "你那邊呢？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "你那邊呢？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX (個案名字，< 2s) ，那邊。 (案母用手指著放置假山的綠色底板，示意個案也可以去那邊種花)",
+          "code": "TA",
+          "verbalization": "XX，那邊。",
+          "visual_observation": "(案母用手指著放置假山的綠色底板，示意個案也可以去那邊種花)",
+          "comment": "(個案名字，< 2s)",
+          "enriched": "XX，那邊（也要種花）。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "那邊也要種花阿。",
+          "code": "TA",
+          "verbalization": "那邊也要種花阿。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "那邊也要種花阿。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "過來。 (個案將放置假山的綠色底板上的花拔起來，拿到另一片綠色底板上)",
+          "verbalization": "過來。",
+          "visual_observation": "(個案將放置假山的綠色底板上的花拔起來，拿到另一片綠色底板上)",
+          "comment": "",
+          "enriched": "（你）過來。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "過來這邊。",
+          "verbalization": "過來這邊。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）過來這邊。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "過來。",
+          "verbalization": "過來。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）過來。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "全部種在上面喔？ (案母詢問個案是否將花都要種在欄杆\"上\")",
+          "code": "Q",
+          "verbalization": "全部種在上面喔？",
+          "visual_observation": "",
+          "comment": "(案母詢問個案是否將花都要種在欄杆\"上\")",
+          "enriched": "（你把花）全部種在上面喔？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "對。",
+          "verbalization": "對。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（我把花全部種在上面）對。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "阿我種地上咧？",
+          "code": "Q",
+          "verbalization": "阿我種地上咧？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "阿我（把花）種地上咧？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "地上…可以呀。",
+          "verbalization": "地上…可以呀。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（種在）地上…可以呀。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我們種地上，好不好？ (案母邊說邊將花種在綠色底板上)",
+          "code": "IC",
+          "verbalization": "我們種地上，好不好？",
+          "visual_observation": "(案母邊說邊將花種在綠色底板上)",
+          "comment": "",
+          "enriched": "我們（把花）種地上，好不好？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "好。",
+          "verbalization": "好。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（我們種地上）好。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好 (<2秒，發語詞) 來 (<2秒) ，",
+          "code": "DC",
+          "verbalization": "好 來 ，",
+          "visual_observation": "",
+          "comment": "(<2秒，發語詞) (<2秒)",
+          "enriched": "好，（我們）來，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "阿換那邊。 (案母指個案換種到假山那邊的綠色底板上)",
+          "code": "DC",
+          "verbalization": "阿換那邊。",
+          "visual_observation": "(案母指個案換種到假山那邊的綠色底板上)",
+          "comment": "",
+          "enriched": "阿（我們）換（種）那邊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "那邊的地板也要種花阿。",
+          "code": "TA",
+          "verbalization": "那邊的地板也要種花阿。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "那邊的地板也要種花阿。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "才會漂亮。",
+          "code": "TA",
+          "verbalization": "才會漂亮。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（這樣）才會漂亮。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "喔喔~ (案母此時將綠底板移動，而個案嘗試種的花則因為案母移動而沒卡住，發出的驚呼聲，不予計數)",
+          "verbalization": "喔喔~",
+          "visual_observation": "",
+          "comment": "(案母此時將綠底板移動，而個案嘗試種的花則因為案母移動而沒卡住，發出的驚呼聲，不予計數)",
+          "enriched": "喔喔~"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這邊吶~ (案母指出草地上確切位置)",
+          "code": "TA",
+          "verbalization": "這邊吶~",
+          "visual_observation": "(案母指出草地上確切位置)",
+          "comment": "",
+          "enriched": "（種）這邊吶~"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "喔。",
+          "verbalization": "喔。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "好了。 (個案將花種到案母指定的位置)",
+          "verbalization": "好了。",
+          "visual_observation": "(個案將花種到案母指定的位置)",
+          "comment": "",
+          "enriched": "（我）（種）好了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "(案母從玩具箱內拿出車子)  我們來做一台車子好了 ，(<2s, 接下句)",
+          "code": "IC",
+          "verbalization": "我們來做一台車子好了，",
+          "visual_observation": "(案母從玩具箱內拿出車子)",
+          "comment": "(<2s, 接下句)",
+          "enriched": "我們來做一台車子好了，"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這個。 (個案從玩具箱拿了手推車出來，並決定是這一台)",
+          "verbalization": "這個。",
+          "visual_observation": "(個案從玩具箱拿了手推車出來，並決定是這一台)",
+          "comment": "",
+          "enriched": "（用）（積木）。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "載著小朋友去參觀動物好了。 (案母意思為要用案母手上拿的那台車，載人去參觀動物，但後來個案自己拿了樂高人放在自己拿的手推車上，未理會案母)",
+          "code": "DC",
+          "verbalization": "載著小朋友去參觀動物好了。",
+          "visual_observation": "(案母意思為要用案母手上拿的那台車，載人去參觀動物，但後來個案自己拿了樂高人放在自己拿的手推車上，未理會案母)",
+          "comment": "",
+          "enriched": "（車子）載著小朋友去參觀動物好了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這一個。 (個案拿了一隻樂高人)",
+          "verbalization": "這一個。",
+          "visual_observation": "(個案拿了一隻樂高人)",
+          "comment": "",
+          "enriched": "（用）（積木）。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好。",
+          "code": "TA",
+          "verbalization": "好。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "好。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嘿嘿 (個案把樂高小人放進自己手推車內載著走，感到有趣而發出的笑聲，不予計數)",
+          "verbalization": "嘿嘿",
+          "visual_observation": "(個案把樂高小人放進自己手推車內載著走)",
+          "comment": "感到有趣而發出的笑聲，不予計數",
+          "enriched": "嘿嘿"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "有沒有？",
+          "code": "Q",
+          "verbalization": "有沒有？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你記不記得）有沒有（坐車車）？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你去…你去動物園的時候爸爸，不是帶你去坐車車嗎？",
+          "code": "Q",
+          "verbalization": "你去…你去動物園的時候爸爸，不是帶你去坐車車嗎？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "你去…你去動物園的時候爸爸，不是帶你去坐車車嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "坐車車是不是去看動物？ (個案此時將樂高人放進一台手推車上)",
+          "code": "Q",
+          "verbalization": "坐車車是不是去看動物？",
+          "visual_observation": "(個案此時將樂高人放進一台手推車上)",
+          "comment": "",
+          "enriched": "（我們）坐車車是不是去看動物？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "坐在車車上面去看動物，有沒有？",
+          "code": "Q",
+          "verbalization": "坐在車車上面去看動物，有沒有？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（我們）坐在車車上面去看動物，有沒有？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "有沒有啦？",
+          "code": "Q",
+          "verbalization": "有沒有啦？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）有沒有（坐車車去看動物）啦？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "有沒有？",
+          "code": "Q",
+          "verbalization": "有沒有？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（你）有沒有（坐車車去看動物）？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯~~ (個案用手推車載著樂高小人，此句為模仿車子引擎聲，不予計數)",
+          "verbalization": "嗯~~",
+          "visual_observation": "",
+          "comment": "(個案用手推車載著樂高小人，此句為模仿車子引擎聲，不予計數)",
+          "enriched": "嗯~~"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "他在追人。",
+          "verbalization": "他在追人。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（動物）在追人。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "爸爸帶你去壽山、壽山動物園的時候是不是也有坐車車？",
+          "code": "Q",
+          "verbalization": "爸爸帶你去壽山、壽山動物園的時候是不是也有坐車車？",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "爸爸帶你去壽山、壽山動物園的時候是不是也有坐車車？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "媽咪，妳看他跑到那邊了。 (個案將樂高人放在假山左邊的白色底板上)",
+          "verbalization": "媽咪，妳看他跑到那邊了。",
+          "visual_observation": "(個案將樂高人放在假山左邊的白色底板上)",
+          "comment": "",
+          "enriched": "媽咪，妳看（動物）跑到那邊了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "然後貓熊熊… (個案把北極熊拿到有人在的白色板子上)",
+          "verbalization": "然後貓熊熊…",
+          "visual_observation": "(個案把北極熊拿到有人在的白色板子上)",
+          "comment": "",
+          "enriched": "然後貓熊熊…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你這裡還沒做完捏。 (案母意思為剛剛要求個案和自己共同做車子，但個案還沒做完就自己在玩)",
+          "code": "NTA",
+          "verbalization": "你這裡還沒做完捏。",
+          "visual_observation": "",
+          "comment": "(案母意思為剛剛要求個案和自己共同做車子，但個案還沒做完就自己在玩)",
+          "enriched": "你這裡（車子）還沒做完捏。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "乓！ (個案模擬北極熊跳起來的狀聲詞，不予計數)",
+          "verbalization": "乓！",
+          "visual_observation": "",
+          "comment": "(個案模擬北極熊跳起來的狀聲詞，不予計數)",
+          "enriched": "乓！"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Roarrrrrrr!  (個案拿北極熊追樂高人，此為模仿北極熊追人發出的吼叫聲)",
+          "verbalization": "Roarrrrrrr!",
+          "visual_observation": "",
+          "comment": "(個案拿北極熊追樂高人，此為模仿北極熊追人發出的吼叫聲)",
+          "enriched": "Roarrrrrrr!"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你看。 (案母讓樂高人坐在車子上，要個案看)",
+          "code": "DC",
+          "verbalization": "你看。",
+          "visual_observation": "(案母讓樂高人坐在車子上，要個案看)",
+          "comment": "",
+          "enriched": "（你）你看。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "救命啊，xx。 (個案後半句講話較快且字句較模糊，難以判斷個案語句)",
+          "verbalization": "救命啊，xx。",
+          "visual_observation": "",
+          "comment": "(個案後半句講話較快且字句較模糊，難以判斷個案語句)",
+          "enriched": "救命啊，xx。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "它們坐好了。",
+          "code": "TA",
+          "verbalization": "它們坐好了。",
+          "visual_observation": "",
+          "comment": "",
+          "enriched": "（小朋友）坐好了。"
+        }
+      ]
+    }
+  ]
+}

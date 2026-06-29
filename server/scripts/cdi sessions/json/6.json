@@ -1,0 +1,772 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session-6",
+      "utterances": [
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案從玩具箱拿出灑水器與鴨子澆水壺）（我要）把澆水的都拿出來。",
+          "verbalization": "把澆水的都拿出來。",
+          "visual_observation": "（個案從玩具箱拿出灑水器與鴨子澆水壺）",
+          "comment": "（我要）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你把灑水器拿起來。（同時符合RF及BD，故記為RF）",
+          "code": "RF",
+          "verbalization": "喔，你把灑水器拿起來。",
+          "visual_observation": "",
+          "comment": "（<2s）（同時符合RF及BD，故記為RF）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案把灑水器放在桌上時沒放穩，不小心讓灑水器掉到地上）唉呦。（狀聲詞，故不予記數）",
+          "verbalization": "唉呦。",
+          "visual_observation": "（個案把灑水器放在桌上時沒放穩，不小心讓灑水器掉到地上）",
+          "comment": "（狀聲詞，故不予記數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案立即把灑水器撿回桌上）謝謝你把灑水器從地上撿起來。",
+          "code": "LP",
+          "verbalization": "謝謝你把灑水器從地上撿起來。",
+          "visual_observation": "（個案立即把灑水器撿回桌上）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從玩具箱中拿出農場）哇（<2s），你又拿了一個很大的一個建築的東西。",
+          "code": "BD",
+          "verbalization": "哇，你又拿了一個很大的一個建築的東西。",
+          "visual_observation": "（個案從玩具箱中拿出農場）",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把農場放到綠色底板，並調整農場讓農場不會再底板晃動）謝謝你很有耐心的把它（農場）放好。",
+          "code": "LP",
+          "verbalization": "謝謝你很有耐心的把它放好。",
+          "visual_observation": "（個案把農場放到綠色底板，並調整農場讓農場不會再底板晃動）",
+          "comment": "（農場）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把農場的門關起來）還有謝謝你把它（農場）的門關好。",
+          "code": "LP",
+          "verbalization": "還有謝謝你把它的門關好。",
+          "visual_observation": "（個案把農場的門關起來）",
+          "comment": "（農場）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從玩具箱中拿出藍色花盆，並把泥土放上去）你拿了一個藍色的花盆。",
+          "code": "BD",
+          "verbalization": "你拿了一個藍色的花盆。",
+          "visual_observation": "（個案從玩具箱中拿出藍色花盆，並把泥土放上去）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你把花放到藍色花盆裡面去。（個案僅在盆栽上放泥土，尚未放花，故計為TA）【建議案母可行為描述「你把泥土放到藍色花盆裡面」】",
+          "code": "TA",
+          "verbalization": "你把花放到藍色花盆裡面去。",
+          "visual_observation": "",
+          "comment": "（個案僅在盆栽上放泥土，尚未放花，故計為TA）【建議案母可行為描述「你把泥土放到藍色花盆裡面」】"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "欸（<2s），你很聰明喔，你知道方形的黏土（推測案母口誤，此指泥土）可以放到方形的花盆裡面喔。",
+          "code": "LP",
+          "verbalization": "欸，你很聰明喔，你知道方形的黏土可以放到方形的花盆裡面喔。",
+          "visual_observation": "",
+          "comment": "（<2s）（推測案母口誤，此指泥土）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（因個案拿到小的方形泥土，而花盆為大花盆，故泥土會掉進花盆的較深處，而個案持續嘗試把泥土放在正確的位置）（泥土）都放不好。（語氣中性）",
+          "verbalization": "都放不好。",
+          "visual_observation": "（因個案拿到小的方形泥土，而花盆為大花盆，故泥土會掉進花盆的較深處，而個案持續嘗試把泥土放在正確的位置）",
+          "comment": "（泥土）（語氣中性）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你很棒喔，你很有耐心地把黏土（推測案母口誤，此指泥土）放好。【建議案母此處可先回應個案「你覺得這個泥土不好裝」，再接續此具體稱讚，此外，案母也可從玩具箱中拿出大的方形泥土，並引導個案「媽媽發現有大的泥土欸，可以放在大的花盆裡面」】",
+          "code": "LP",
+          "verbalization": "喔，你很棒喔，你很有耐心地把黏土放好。",
+          "visual_observation": "",
+          "comment": "（<2s）（推測案母口誤，此指泥土）【建議案母此處可先回應個案「你覺得這個泥土不好裝」，再接續此具體稱讚，此外，案母也可從玩具箱中拿出大的方形泥土，並引導個案「媽媽發現有大的泥土欸，可以放在大的花盆裡面」】"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "不是黏土。（個案音量放大，語氣加重且稍帶不耐煩，個案不禮貌說話，故不予計數）",
+          "verbalization": "不是黏土。",
+          "visual_observation": "",
+          "comment": "（個案音量放大，語氣加重且稍帶不耐煩，個案不禮貌說話，故不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "(案母轉頭看，並拿其他玩具起來玩)【此處個案不禮貌說話，案母此處選擇性忽略個案，做得很好】",
+          "verbalization": "",
+          "visual_observation": "(案母轉頭看，並拿其他玩具起來玩)",
+          "comment": "【此處個案不禮貌說話，案母此處選擇性忽略個案，做得很好】"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把泥土固定在盆栽裡）喔（<2s），（你）很棒喔，你把泥土放好了。【個案已停止不禮貌說話，案母此處給予個案策略性政向注意力，做得很好】",
+          "code": "LP",
+          "verbalization": "喔，很棒喔，你把泥土放好了。",
+          "visual_observation": "（個案把泥土固定在盆栽裡）",
+          "comment": "（<2s）（你）【個案已停止不禮貌說話，案母此處給予個案策略性政向注意力，做得很好】"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從夾鏈袋中拿出樹枝，並插在泥土上）你拿了一個樹枝。",
+          "code": "BD",
+          "verbalization": "你拿了一個樹枝。",
+          "visual_observation": "（個案從夾鏈袋中拿出樹枝，並插在泥土上）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你把樹枝插的很棒喔（<2s），一下子就插進去了。",
+          "code": "LP",
+          "verbalization": "喔，你把樹枝插的很棒喔，一下子就插進去了。",
+          "visual_observation": "",
+          "comment": "（<2s）（<2s）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從夾鏈袋中拿出葉子）你又拿了…（案母語句被個案下句打斷，故不予計數）",
+          "verbalization": "你又拿了…",
+          "visual_observation": "（個案從夾鏈袋中拿出葉子）",
+          "comment": "（案母語句被個案下句打斷，故不予計數）",
+          "code": "NC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案把樹葉裝在樹枝上）耳機聽的到嗎？（語氣中性）",
+          "verbalization": "耳機聽的到嗎？",
+          "visual_observation": "（個案把樹葉裝在樹枝上）",
+          "comment": "（語氣中性）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你想知道耳機聽不聽得到。【建議案母可接續具體稱讚個案「媽媽很喜歡你用有禮貌的方式跟媽媽說話喔」】",
+          "code": "RF",
+          "verbalization": "喔，你想知道耳機聽不聽得到。",
+          "visual_observation": "",
+          "comment": "（<2s）【建議案母可接續具體稱讚個案「媽媽很喜歡你用有禮貌的方式跟媽媽說話喔」】"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "可以呀。",
+          "code": "TA",
+          "verbalization": "可以呀。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你拿了一片葉子，（<2s，接下句）",
+          "code": "BD",
+          "verbalization": "你拿了一片葉子，",
+          "visual_observation": "",
+          "comment": "（<2s，接下句）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "然後把葉子把它放到樹枝上面。",
+          "code": "BD",
+          "verbalization": "然後把葉子把它放到樹枝上面。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s），你….（案母語句被個案下句打斷，故不予計數）",
+          "verbalization": "哇，你….",
+          "visual_observation": "",
+          "comment": "（<2s）（案母語句被個案下句打斷，故不予計數）",
+          "code": "NC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案把黃色花朵裝在樹枝上）玩好這個（玩具）就要玩新玩具嗎？（與遊戲內容無關，故不予計數）",
+          "verbalization": "玩好這個就要玩新玩具嗎？",
+          "visual_observation": "（個案把黃色花朵裝在樹枝上）",
+          "comment": "（玩具）（與遊戲內容無關，故不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你把黃色的花種好了（<2s），（你）很棒欸。",
+          "code": "LP",
+          "verbalization": "喔，你把黃色的花種好了，很棒欸。",
+          "visual_observation": "",
+          "comment": "（<2s）（<2s）（你）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "之後會玩新玩具嗎？（語氣中性，個案連續說話，故不予計數）",
+          "verbalization": "之後會玩新玩具嗎？",
+          "visual_observation": "",
+          "comment": "（語氣中性，個案連續說話，故不予計數）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "等我玩完就玩新玩具嗎？（語氣中性）",
+          "verbalization": "等我玩完就玩新玩具嗎？",
+          "visual_observation": "",
+          "comment": "（語氣中性）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你想知道等一下是不是可以玩新玩具嗎。",
+          "code": "RF",
+          "verbalization": "喔，你想知道等一下是不是可以玩新玩具嗎。",
+          "visual_observation": "",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "會阿。",
+          "code": "TA",
+          "verbalization": "會阿。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案拿起澆水器幫花澆水）你現在在幫花澆水。",
+          "code": "BD",
+          "verbalization": "你現在在幫花澆水。",
+          "visual_observation": "（個案拿起澆水器幫花澆水）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "謝謝你幫花澆水。",
+          "code": "LP",
+          "verbalization": "謝謝你幫花澆水。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這樣它就可以快快長大囉。",
+          "code": "TA",
+          "verbalization": "這樣它就可以快快長大囉。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案把灑水器放在桌上，並轉身翻找玩具箱的泥土）長大吧。（與案母下句同時說話，故不予計數）",
+          "code": "TA",
+          "verbalization": "長大吧。",
+          "visual_observation": "（個案把灑水器放在桌上，並轉身翻找玩具箱的泥土）",
+          "comment": "（與案母下句同時說話，故不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽發現你把那個灑水器把它很好的放在旁邊…（<2s，案母改口）整齊的放在旁邊，（你）很棒喔。",
+          "code": "LP",
+          "verbalization": "媽媽發現你把那個灑水器把它很好的放在旁邊…整齊的放在旁邊，很棒喔。",
+          "visual_observation": "",
+          "comment": "（<2s，案母改口）（你）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把泥土與花盆拿到桌上）哇（<2s），你又拿了一些花盆上來。",
+          "code": "BD",
+          "verbalization": "哇，你又拿了一些花盆上來。",
+          "visual_observation": "（個案把泥土與花盆拿到桌上）",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案持續翻找玩具箱）你又繼續在找東西。",
+          "code": "BD",
+          "verbalization": "你又繼續在找東西。",
+          "visual_observation": "（個案持續翻找玩具箱）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把疊在一起的花盆拆開，並放在桌上）你把花盆一個一個放好。（「放好」過於模糊，故計為TA）【建議案母此處可更具體稱讚個案「你很棒喔，把花盆很整齊的放在桌上」】",
+          "code": "TA",
+          "verbalization": "你把花盆一個一個放好。",
+          "visual_observation": "（個案把疊在一起的花盆拆開，並放在桌上）",
+          "comment": "（「放好」過於模糊，故計為TA）【建議案母此處可更具體稱讚個案「你很棒喔，把花盆很整齊的放在桌上」】"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿起小的圓形泥土）一個是小的（泥土）。（與案母下句同時說話，故不予計數）",
+          "verbalization": "一個是小的。",
+          "visual_observation": "（個案拿起小的圓形泥土）",
+          "comment": "（泥土）（與案母下句同時說話，故不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你拿了一個圓形的泥土。",
+          "code": "BD",
+          "verbalization": "你拿了一個圓形的泥土。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案小的圓形泥土放進小的圓形花盆裡面）你把圓形的泥土放在花盆裡面。",
+          "code": "BD",
+          "verbalization": "你把圓形的泥土放在花盆裡面。",
+          "visual_observation": "（個案小的圓形泥土放進小的圓形花盆裡面）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你有發現這個圓形泥土比較小（<2s），需要放在小的花盆（<2s），（你）很棒喔（<2s），有發現到欸。【案母此處具體稱讚的很好】",
+          "code": "LP",
+          "verbalization": "你有發現這個圓形泥土比較小，需要放在小的花盆，很棒喔，有發現到欸。",
+          "visual_observation": "",
+          "comment": "（<2s）（<2s）（你）（<2s）【案母此處具體稱讚的很好】"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從夾鏈袋中拿出樹枝，並插在泥土上）你又拿了一根樹枝出來。",
+          "code": "BD",
+          "verbalization": "你又拿了一根樹枝出來。",
+          "visual_observation": "（個案從夾鏈袋中拿出樹枝，並插在泥土上）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把一片葉子裝在樹枝上）你再把一片葉子放到樹枝上面。",
+          "code": "BD",
+          "verbalization": "你再把一片葉子放到樹枝上面。",
+          "visual_observation": "（個案把一片葉子裝在樹枝上）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s），（你）很厲害喔，一下子就把樹葉把它放好了。",
+          "code": "LP",
+          "verbalization": "哇，很厲害喔，一下子就把樹葉把它放好了。",
+          "visual_observation": "",
+          "comment": "（<2s）（你）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從夾鏈袋中拿出粉紅色花朵，並裝在樹枝上）你又拿了一片粉紅色的花。",
+          "code": "BD",
+          "verbalization": "你又拿了一片粉紅色的花。",
+          "visual_observation": "（個案從夾鏈袋中拿出粉紅色花朵，並裝在樹枝上）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s），你一下子就把花做好了欸，你好厲害喔。",
+          "code": "LP",
+          "verbalization": "哇，你一下子就把花做好了欸，你好厲害喔。",
+          "visual_observation": "",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案發現花盆上的花插歪了，故個案把泥土拿起來調整花的位置）哇（<2s），謝謝你很有耐心地把花種好。",
+          "code": "LP",
+          "verbalization": "哇，謝謝你很有耐心地把花種好。",
+          "visual_observation": "（個案發現花盆上的花插歪了，故個案把泥土拿起來調整花的位置）",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案再把泥土與花重新放回花盆時，泥土沒有對準花盆，所以泥土在花盆裡面呈現傾斜）唉呦。（狀聲詞，故不予計數）",
+          "verbalization": "唉呦。",
+          "visual_observation": "（個案再把泥土與花重新放回花盆時，泥土沒有對準花盆，所以泥土在花盆裡面呈現傾斜）",
+          "comment": "（狀聲詞，故不予計數）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案把花整枝拿起來，並重新把泥土放上花盆）我（的泥土）都放不平均。（語氣中性）",
+          "verbalization": "我都放不平均。",
+          "visual_observation": "（個案把花整枝拿起來，並重新把泥土放上花盆）",
+          "comment": "（的泥土）（語氣中性）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你覺得你放不平均喔。（語氣中性）【建議案母可以玩具作為主詞給予回應「你覺得你的泥土放不平均」，以避免此負向語句】",
+          "code": "NTA",
+          "verbalization": "你覺得你放不平均喔。",
+          "visual_observation": "",
+          "comment": "（語氣中性）【建議案母可以玩具作為主詞給予回應「你覺得你的泥土放不平均」，以避免此負向語句】"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "都放…（<2s）都不平均。（語氣中性）",
+          "verbalization": "都放…都不平均。",
+          "visual_observation": "",
+          "comment": "（<2s）（語氣中性）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案成功把泥土放在花盆上）Okay（<2s），放平均了。【建議案母可以玩具作為主詞給予回應「你覺得這泥土很難放平均」】",
+          "code": "TA",
+          "verbalization": "Okay，放平均了。",
+          "visual_observation": "（個案成功把泥土放在花盆上）",
+          "comment": "（<2s）【建議案母可以玩具作為主詞給予回應「你覺得這泥土很難放平均」】"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案重新把花插回盆栽上）你很棒喔，再把樹葉把它插…（<2s，案母改口）又插好一朵花了。",
+          "code": "LP",
+          "verbalization": "你很棒喔，再把樹葉把它插…又插好一朵花了。",
+          "visual_observation": "（個案重新把花插回盆栽上）",
+          "comment": "（<2s，案母改口）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把大的方形泥土放在大的方形盆栽上）你再把一個方形的泥土放到方形的花盆裡。",
+          "code": "BD",
+          "verbalization": "你再把一個方形的泥土放到方形的花盆裡。",
+          "visual_observation": "（個案把大的方形泥土放在大的方形盆栽上）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你這次有發現到這個方形的泥土是大的可以放到大的花盆裡（<2s），（你）很厲害欸。",
+          "code": "LP",
+          "verbalization": "你這次有發現到這個方形的泥土是大的可以放到大的花盆裡，很厲害欸。",
+          "visual_observation": "",
+          "comment": "（<2s）（你）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從夾鏈袋中拿出樹枝與樹葉）你又拿了一些葉子還有樹枝。",
+          "code": "BD",
+          "verbalization": "你又拿了一些葉子還有樹枝。",
+          "visual_observation": "（個案從夾鏈袋中拿出樹枝與樹葉）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案用手指向剛剛種好的花）這個（粉紅色花）忘記澆水。（語氣中性）",
+          "verbalization": "這個忘記澆水。",
+          "visual_observation": "（個案用手指向剛剛種好的花）",
+          "comment": "（粉紅色花）（語氣中性）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你覺得你忘記澆水了喔。",
+          "code": "RF",
+          "verbalization": "你覺得你忘記澆水了喔。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案拿起澆水器幫花澆水）哇（<2s），謝謝你幫花澆水。",
+          "code": "LP",
+          "verbalization": "哇，謝謝你幫花澆水。",
+          "visual_observation": "（個案拿起澆水器幫花澆水）",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這樣它們就可以快快長大囉。",
+          "code": "TA",
+          "verbalization": "這樣它們就可以快快長大囉。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把樹枝插進泥土裡面，並把樹葉裝在樹枝上）你再把樹枝插到泥土裡面。",
+          "code": "BD",
+          "verbalization": "你再把樹枝插到泥土裡面。",
+          "visual_observation": "（個案把樹枝插進泥土裡面，並把樹葉裝在樹枝上）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你再把它的樹葉掛上去。",
+          "code": "BD",
+          "verbalization": "你再把它的樹葉掛上去。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把葉子用反面朝上的方式裝上樹枝，個案立即發現，並拿起來重新把葉子翻成正面裝上樹枝）哇（<2s），你很棒喔，你發現（葉子）裝反了，（<2s，接下句）",
+          "code": "LP",
+          "verbalization": "哇，你很棒喔，你發現裝反了，",
+          "visual_observation": "（個案把葉子用反面朝上的方式裝上樹枝，個案立即發現，並拿起來重新把葉子翻成正面裝上樹枝）",
+          "comment": "（<2s）（葉子）（<2s，接下句）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（你）再把它（葉子）拿起來",
+          "code": "BD",
+          "verbalization": "再把它拿起來",
+          "visual_observation": "",
+          "comment": "（你）（葉子）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "放好。（「「放好」過於模糊，故計為TA）",
+          "code": "TA",
+          "verbalization": "放好。",
+          "visual_observation": "",
+          "comment": "（「「放好」過於模糊，故計為TA）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從夾鏈袋中拿出黃色的花）你又拿了一朵黃色的花。",
+          "code": "BD",
+          "verbalization": "你又拿了一朵黃色的花。",
+          "visual_observation": "（個案從夾鏈袋中拿出黃色的花）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把黃色花裝在樹枝上）哇（<2s），你一下子就把花做好了，（你）很厲害欸。",
+          "code": "LP",
+          "verbalization": "哇，你一下子就把花做好了，很厲害欸。",
+          "visual_observation": "（個案把黃色花裝在樹枝上）",
+          "comment": "（<2s）（你）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案拿澆水器幫花澆水）（你）〉在幫花澆水",
+          "code": "BD",
+          "verbalization": "〉在幫花澆水",
+          "visual_observation": "（個案拿澆水器幫花澆水）",
+          "comment": "（你）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案拿灑水器澆水）（你）再幫它（花）灑一點水。",
+          "code": "BD",
+          "verbalization": "再幫它灑一點水。",
+          "visual_observation": "（個案拿灑水器澆水）",
+          "comment": "（你）（花）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s），這樣花就可以快快長大了。",
+          "code": "TA",
+          "verbalization": "哇，這樣花就可以快快長大了。",
+          "visual_observation": "",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "謝謝你。【建議案母此處可具體稱讚個案「謝謝你替這些花灑水喔。」】",
+          "code": "UP",
+          "verbalization": "謝謝你。",
+          "visual_observation": "",
+          "comment": "【建議案母此處可具體稱讚個案「謝謝你替這些花灑水喔。」】"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿起黃色的方形花盆，並用看的方式尋找其他花盆）這（花盆）還有一個。",
+          "verbalization": "這還有一個。",
+          "visual_observation": "（個案拿起黃色的方形花盆，並用看的方式尋找其他花盆）",
+          "comment": "（花盆）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你覺得這個花盆還有一個喔。",
+          "code": "RF",
+          "verbalization": "喔，你覺得這個花盆還有一個喔。",
+          "visual_observation": "",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "你找一下。（語氣稍帶指使）",
+          "verbalization": "你找一下。",
+          "visual_observation": "",
+          "comment": "（語氣稍帶指使）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你想要媽媽幫你找一下喔。【建議案母此處可忽略個案，並表示「如果是媽媽的話會用有禮貌的方式請別人幫忙喔」】",
+          "code": "RF",
+          "verbalization": "喔，你想要媽媽幫你找一下喔。",
+          "visual_observation": "",
+          "comment": "（<2s）【建議案母此處可忽略個案，並表示「如果是媽媽的話會用有禮貌的方式請別人幫忙喔」】"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "有嗎？（語氣中性）",
+          "verbalization": "有嗎？",
+          "visual_observation": "",
+          "comment": "（語氣中性）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你覺得(想知道)還有沒有花盆。",
+          "code": "RF",
+          "verbalization": "喔，你覺得還有沒有花盆。",
+          "visual_observation": "",
+          "comment": "（<2s）(想知道)"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽來看一下。",
+          "code": "TA",
+          "verbalization": "媽媽來看一下。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案持續翻找玩具箱，推測個案此處想找的是泥土，而案母誤會個案要找花盆）泥土、泥土。（語氣中性）",
+          "verbalization": "泥土、泥土。",
+          "visual_observation": "（個案持續翻找玩具箱，推測個案此處想找的是泥土，而案母誤會個案要找花盆）",
+          "comment": "（語氣中性）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），泥土。【建議此處可回應成「你想要知道還有沒有黏土。」】",
+          "code": "RF",
+          "verbalization": "喔，泥土。",
+          "visual_observation": "",
+          "comment": "（<2s）【建議此處可回應成「你想要知道還有沒有黏土。」】"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從玩具箱中拿出大的方形泥土）哇（<2s），你好厲害喔，你有發現另一塊泥土。",
+          "code": "LP",
+          "verbalization": "哇，你好厲害喔，你有發現另一塊泥土。",
+          "visual_observation": "（個案從玩具箱中拿出大的方形泥土）",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案嘗試把大的方形泥土放進小的方形花盆）（泥土）太大了。",
+          "verbalization": "太大了。",
+          "visual_observation": "（個案嘗試把大的方形泥土放進小的方形花盆）",
+          "comment": "（泥土）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你覺得這塊泥土太大了喔。",
+          "code": "RF",
+          "verbalization": "喔，你覺得這塊泥土太大了喔。",
+          "visual_observation": "",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "那這泥土要放哪裡？（語氣中性）",
+          "verbalization": "那這泥土要放哪裡？",
+          "visual_observation": "",
+          "comment": "（語氣中性）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你覺得(想知道)這個泥土要放哪裡喔。【建議「你覺得」可改成「想知道」】",
+          "code": "RF",
+          "verbalization": "喔，你覺得這個泥土要放哪裡喔。",
+          "visual_observation": "",
+          "comment": "（<2s）(想知道)【建議「你覺得」可改成「想知道」】"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從玩具箱中拿出狗屋）喔（<2s），你找到狗狗的房子…（<2s，案母改口）屋子欸。",
+          "code": "BD",
+          "verbalization": "喔，你找到狗狗的房子…屋子欸。",
+          "visual_observation": "（個案從玩具箱中拿出狗屋）",
+          "comment": "（<2s）（<2s，案母改口）"
+        }
+      ]
+    }
+  ]
+}

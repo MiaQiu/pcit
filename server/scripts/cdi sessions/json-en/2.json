@@ -1,0 +1,1138 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session-2",
+      "utterances": [
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Okay.",
+          "verbalization": "Okay."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Okay, come here.",
+          "verbalization": "Okay, come here.",
+          "code": "DC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Then we...",
+          "verbalization": "Then we...",
+          "code": "NC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Look.",
+          "verbalization": "Look.",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mommy.",
+          "verbalization": "Mommy."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Mommy wants to put this monkey on the tree.",
+          "verbalization": "Mommy wants to put this monkey on the tree.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "A little monkey!",
+          "verbalization": "A little monkey!",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "This...",
+          "verbalization": "This..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Is there a way to do this?",
+          "verbalization": "Is there a way to do this?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "There's no way.",
+          "verbalization": "There's no way."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Why?",
+          "verbalization": "Why?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Because, because...",
+          "verbalization": "Because, because..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Huh?",
+          "verbalization": "Huh?",
+          "code": "NC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Its feet!",
+          "verbalization": "Its feet!",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Huh?",
+          "verbalization": "Huh?",
+          "code": "NC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "It really seems like there's no way to do it.",
+          "verbalization": "It really seems like there's no way to do it.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "How do you do this?",
+          "verbalization": "How do you do this?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX, help Mommy do it.",
+          "verbalization": "XX, help Mommy do it.",
+          "code": "DC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Help Mommy put it on the tree.",
+          "verbalization": "Help Mommy put it on the tree.",
+          "code": "DC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Where, where is the tree?",
+          "verbalization": "Where, where is the tree?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "The tree is here.",
+          "verbalization": "The tree is here."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "How about we switch to another tree?",
+          "verbalization": "How about we switch to another tree?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Ooh ooh ooh~",
+          "verbalization": "Ooh ooh ooh~",
+          "code": "NC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Then let's switch to another tree.",
+          "verbalization": "Then let's switch to another tree."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And where is your little monkey?",
+          "verbalization": "And where is your little monkey?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Where's the little monkey?",
+          "verbalization": "Where's the little monkey?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "The little monkey should be on the tree, on the tree.",
+          "verbalization": "The little monkey should be on the tree, on the tree.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "The li- little monkey, in a bit...",
+          "verbalization": "The li- little monkey, in a bit..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You, you help me.",
+          "verbalization": "You, you help me.",
+          "code": "DC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Help me out a bit,",
+          "verbalization": "Help me out a bit,",
+          "code": "DC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Come here.",
+          "verbalization": "Come here.",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Wait a minute.",
+          "verbalization": "Wait a minute."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Let's put this up there.",
+          "verbalization": "Let's put this up there.",
+          "code": "IC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Then help me put the little monkey on the tree.",
+          "verbalization": "Then help me put the little monkey on the tree.",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "What about this one instead?",
+          "verbalization": "What about this one instead?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Mm-hmm.",
+          "verbalization": "Mm-hmm.",
+          "code": "NTA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "I want to put it here.",
+          "verbalization": "I want to put it here.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Do you know how to do it?",
+          "verbalization": "Do you know how to do it?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Done.",
+          "verbalization": "Done."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Is it like this?",
+          "verbalization": "Is it like this?",
+          "code": "NTA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "It's gonna fall down like this.",
+          "verbalization": "It's gonna fall down like this.",
+          "code": "NTA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Huh?",
+          "verbalization": "Huh?",
+          "code": "NC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "We can't do this, XX.",
+          "verbalization": "We can't do this, XX.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "There's no way to do this.",
+          "verbalization": "There's no way to do this.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, it ran over to the people.",
+          "verbalization": "Wow, it ran over to the people.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Everyone run fast, run fast.",
+          "verbalization": "Everyone run fast, run fast.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Wow~",
+          "verbalization": "Wow~"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Heheheha~",
+          "verbalization": "Heheheha~"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "It ran straight inside.",
+          "verbalization": "It ran straight inside."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Hehe.",
+          "verbalization": "Hehe.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow~ run fast.",
+          "verbalization": "Wow~ run fast.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Run fast.",
+          "verbalization": "Run fast."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "It ran over to me.",
+          "verbalization": "It ran over to me."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX, let's take that polar bear...",
+          "verbalization": "XX, let's take that polar bear...",
+          "code": "NC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Let's make a home for him, okay?",
+          "verbalization": "Let's make a home for him, okay?",
+          "code": "IC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "But polar bears aren't afraid of the cold.",
+          "verbalization": "But polar bears aren't afraid of the cold."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Huh?",
+          "verbalization": "Huh?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "It's not afraid of the cold,",
+          "verbalization": "It's not afraid of the cold,",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "but people are...",
+          "verbalization": "but people are...",
+          "code": "NC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh my~",
+          "verbalization": "Oh my~",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "It's so big.",
+          "verbalization": "It's so big.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "I'm gonna run fast.",
+          "verbalization": "I'm gonna run fast.",
+          "code": "TBD"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "The polar bear lives on this side.",
+          "verbalization": "The polar bear lives on this side."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Lives there?",
+          "verbalization": "Lives there?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "On this side.",
+          "verbalization": "On this side."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Over there, okay.",
+          "verbalization": "Over there, okay.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Is it closed?",
+          "verbalization": "Is it closed?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah.",
+          "verbalization": "Yeah."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Yep.",
+          "verbalization": "Yep.",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Over here.",
+          "verbalization": "Over here."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you closed it.",
+          "verbalization": "Oh, you closed it.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Because its food is over here.",
+          "verbalization": "Because its food is over here."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Its food is over there.",
+          "verbalization": "Its food is over there.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "How does it eat?",
+          "verbalization": "How does it eat?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow!",
+          "verbalization": "Wow!",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "xx",
+          "verbalization": "xx"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What is it eating?",
+          "verbalization": "What is it eating?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Eating that.",
+          "verbalization": "Eating that."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What does it eat?",
+          "verbalization": "What does it eat?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "It eats bones.",
+          "verbalization": "It eats bones."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "It eats bones.",
+          "verbalization": "It eats bones.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Do you want to help me put some flowers?",
+          "verbalization": "Do you want to help me put some flowers?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Putting some flowers on the ground will make it look pretty, okay?",
+          "verbalization": "Putting some flowers on the ground will make it look pretty, okay?",
+          "code": "IC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Okay?",
+          "verbalization": "Okay?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Wait a minute.",
+          "verbalization": "Wait a minute."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Right here.",
+          "verbalization": "Right here.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Huh?",
+          "verbalization": "Huh?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Help me put the flowers up there so it looks pretty.",
+          "verbalization": "Help me put the flowers up there so it looks pretty.",
+          "code": "DC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "There are lots of colorful flowers here,",
+          "verbalization": "There are lots of colorful flowers here,",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "you help Mommy put them,",
+          "verbalization": "you help Mommy put them,",
+          "code": "DC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "hurry up.",
+          "verbalization": "hurry up.",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mommy, what's this?",
+          "verbalization": "Mommy, what's this?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You help Mommy do it.",
+          "verbalization": "You help Mommy do it.",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "There's another one, there's another mommy elephant.",
+          "verbalization": "There's another one, there's another mommy elephant."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "A baby elephant, right?",
+          "verbalization": "A baby elephant, right?",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow~ there's no place to keep them,",
+          "verbalization": "Wow~ there's no place to keep them,",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What should we do?",
+          "verbalization": "What should we do?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Like this.",
+          "verbalization": "Like this."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Pick it up.",
+          "verbalization": "Pick it up."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Uh~",
+          "verbalization": "Uh~",
+          "code": "NC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "And then...",
+          "verbalization": "And then..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "How are you so good at this?",
+          "verbalization": "How are you so good at this?",
+          "code": "UP"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Oh~",
+          "verbalization": "Oh~"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Where's your fence?",
+          "verbalization": "Where's your fence?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "The fence...",
+          "verbalization": "The fence..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Where should we put it?",
+          "verbalization": "Where should we put it?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Here.",
+          "verbalization": "Here."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What about here?",
+          "verbalization": "What about here?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Put it here.",
+          "verbalization": "Put it here."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "And then...",
+          "verbalization": "And then..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What about this one?",
+          "verbalization": "What about this one?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "This one.",
+          "verbalization": "This one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Okay, I want to put it here.",
+          "verbalization": "Okay, I want to put it here.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Thank you.",
+          "verbalization": "Thank you.",
+          "code": "UP"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "xx...",
+          "verbalization": "xx..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Okay.",
+          "verbalization": "Okay.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Where do the flowers go?",
+          "verbalization": "Where do the flowers go?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Where do the flowers go?",
+          "verbalization": "Where do the flowers go?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh~, so pretty!",
+          "verbalization": "Oh~, so pretty!",
+          "code": "UP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Ooh, there are more flowers here.",
+          "verbalization": "Ooh, there are more flowers here.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Different colored flowers.",
+          "verbalization": "Different colored flowers.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Don't use this one.",
+          "verbalization": "Don't use this one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "If I, if I grow on the floor.",
+          "verbalization": "If I, if I grow on the floor.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Flowers blooming here is really pretty too.",
+          "verbalization": "Flowers blooming here is really pretty too.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And there should be flowers over there too.",
+          "verbalization": "And there should be flowers over there too.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And here...",
+          "verbalization": "And here...",
+          "code": "NC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What about over there?",
+          "verbalization": "What about over there?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What about on your side?",
+          "verbalization": "What about on your side?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX, over there.",
+          "verbalization": "XX, over there.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "We need to plant flowers over there too.",
+          "verbalization": "We need to plant flowers over there too.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Come here.",
+          "verbalization": "Come here."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Come over here.",
+          "verbalization": "Come over here."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Come here.",
+          "verbalization": "Come here."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Planting all of them on top?",
+          "verbalization": "Planting all of them on top?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah.",
+          "verbalization": "Yeah."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What if I plant them on the ground?",
+          "verbalization": "What if I plant them on the ground?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "On the ground... sure.",
+          "verbalization": "On the ground... sure."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Let's plant them on the ground, okay?",
+          "verbalization": "Let's plant them on the ground, okay?",
+          "code": "IC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Okay.",
+          "verbalization": "Okay."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Okay, here,",
+          "verbalization": "Okay, here,",
+          "code": "DC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And now over there.",
+          "verbalization": "And now over there.",
+          "code": "DC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "We need to plant flowers on the floor over there too.",
+          "verbalization": "We need to plant flowers on the floor over there too.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "To make it pretty.",
+          "verbalization": "To make it pretty.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Oh oh~",
+          "verbalization": "Oh oh~"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Over here~",
+          "verbalization": "Over here~",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Oh.",
+          "verbalization": "Oh."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Okay.",
+          "verbalization": "Okay."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Let's make a car,",
+          "verbalization": "Let's make a car,",
+          "code": "IC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "This one.",
+          "verbalization": "This one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "To take the kids to see the animals.",
+          "verbalization": "To take the kids to see the animals.",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "This one.",
+          "verbalization": "This one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Okay.",
+          "verbalization": "Okay.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Heheh",
+          "verbalization": "Heheh"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Right?",
+          "verbalization": "Right?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "When you went... when you went to the zoo, didn't Daddy take you on a car ride?",
+          "verbalization": "When you went... when you went to the zoo, didn't Daddy take you on a car ride?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Riding the car was to see the animals, right?",
+          "verbalization": "Riding the car was to see the animals, right?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Sitting in the car to see the animals, right?",
+          "verbalization": "Sitting in the car to see the animals, right?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Right?",
+          "verbalization": "Right?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Right?",
+          "verbalization": "Right?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mmhmm~~",
+          "verbalization": "Mmhmm~~"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "He's chasing someone.",
+          "verbalization": "He's chasing someone."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "When Daddy took you to Shoushan, Shoushan Zoo, did you also ride in a car?",
+          "verbalization": "When Daddy took you to Shoushan, Shoushan Zoo, did you also ride in a car?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mommy, look, he ran over there.",
+          "verbalization": "Mommy, look, he ran over there."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "And then the panda...",
+          "verbalization": "And then the panda..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You're not done with this part yet.",
+          "verbalization": "You're not done with this part yet.",
+          "code": "NTA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Bang!",
+          "verbalization": "Bang!"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Roarrrrrrr!",
+          "verbalization": "Roarrrrrrr!"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Look.",
+          "verbalization": "Look.",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Help, xx.",
+          "verbalization": "Help, xx."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "They're sitting down.",
+          "verbalization": "They're sitting down.",
+          "code": "TA"
+        }
+      ]
+    }
+  ]
+}

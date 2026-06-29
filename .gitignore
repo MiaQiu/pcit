@@ -51,3 +51,5 @@ nora-mobile@1.0.0
 # Large binary assets
 nora-mobile/assets/images/*.mov
 nora-mobile/assets/images/*.mp4
+eval-results/
+server/llm/providers/.gemini-cache-registry.json

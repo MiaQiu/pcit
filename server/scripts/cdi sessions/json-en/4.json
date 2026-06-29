@@ -1,0 +1,571 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session-1",
+      "utterances": [
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What does XX want, want to do now?",
+          "verbalization": "What does XX want, want to do now?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Want to do a big makeover.",
+          "verbalization": "Want to do a big makeover."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Big makeover.",
+          "verbalization": "Big makeover.",
+          "code": "NC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX, you want to do a big makeover?",
+          "verbalization": "XX, you want to do a big makeover?",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah.",
+          "verbalization": "Yeah."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh.",
+          "verbalization": "Oh.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mhm, where should we start first?",
+          "verbalization": "Mhm, where should we start first?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, starting with...",
+          "verbalization": "Oh, starting with...",
+          "code": "NC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Whatever you want to do, I'll do it with you.",
+          "verbalization": "Whatever you want to do, I'll do it with you.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah, because I can't think of anything.",
+          "verbalization": "Yeah, because I can't think of anything."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "That's why I'm asking you.",
+          "verbalization": "That's why I'm asking you."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Mhm, everything XX does is great.",
+          "verbalization": "Mhm, everything XX does is great.",
+          "code": "UP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Mommy will... copy you.",
+          "verbalization": "Mommy will... copy you.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "I'll copy you.",
+          "verbalization": "I'll copy you.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Oh, then...",
+          "verbalization": "Oh, then..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you found—XX found a toilet.",
+          "verbalization": "Oh, you found—XX found a toilet.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I think this...",
+          "verbalization": "I think this..."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Huh?",
+          "verbalization": "Huh?"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Hey, I don't think we need to do a big makeover.",
+          "verbalization": "Hey, I don't think we need to do a big makeover."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Mhm, XX, what you're holding is that...",
+          "verbalization": "Mhm, XX, what you're holding is that...",
+          "code": "NC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "It's some, some kind of... some, that simulator...",
+          "verbalization": "It's some, some kind of... some, that simulator..."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Hmm, how come there isn't one?",
+          "verbalization": "Hmm, how come there isn't one?"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "What's this?",
+          "verbalization": "What's this?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Is what XX got a... fishing rod?",
+          "verbalization": "Is what XX got a... fishing rod?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "A showerhead.",
+          "verbalization": "A showerhead."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What XX got is a fishing rod.",
+          "verbalization": "What XX got is a fishing rod.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Oh.",
+          "verbalization": "Oh."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Hey.",
+          "verbalization": "Hey."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Then let's make a lake.",
+          "verbalization": "Then let's make a lake."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Hey, you took two blocks.",
+          "verbalization": "Hey, you took two blocks.",
+          "code": "BD"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah, yeah.",
+          "verbalization": "Yeah, yeah."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "These two...",
+          "verbalization": "These two..."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Okay, and then someone has to hold this one.",
+          "verbalization": "Okay, and then someone has to hold this one."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "And then I also want to get the fish.",
+          "verbalization": "And then I also want to get the fish."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "What's this?",
+          "verbalization": "What's this?"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Hey, a picnic mat!",
+          "verbalization": "Hey, a picnic mat!"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Hey, XX, you found a picnic mat!",
+          "verbalization": "Hey, XX, you found a picnic mat!",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You found the picnic mat.",
+          "verbalization": "You found the picnic mat.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mhm, *whoosh*.",
+          "verbalization": "Mhm, *whoosh*."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX is spreading the picnic mat on the grass.",
+          "verbalization": "XX is spreading the picnic mat on the grass.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And red and green, you matched them really nicely!",
+          "verbalization": "And red and green, you matched them really nicely!",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, XX, you put the Lego figure on the picnic mat.",
+          "verbalization": "Wow, XX, you put the Lego figure on the picnic mat.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Hey, I'm copying you.",
+          "verbalization": "Hey, I'm copying you.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "I'm copying you.",
+          "verbalization": "I'm copying you.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, I'm putting a puppy here.",
+          "verbalization": "Oh, I'm putting a puppy here.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "And then like this.",
+          "verbalization": "And then like this."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Hey, oh.",
+          "verbalization": "Hey, oh.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You clipped the puppy's leash onto Lego sister.",
+          "verbalization": "You clipped the puppy's leash onto Lego sister.",
+          "code": "BD"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Lego sister.",
+          "verbalization": "Lego sister."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Lego sister.",
+          "verbalization": "Lego sister.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Hey, you put Lego sister on the grass.",
+          "verbalization": "Hey, you put Lego sister on the grass.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "It's so steady!",
+          "verbalization": "It's so steady!",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Wow, so is this part built like this?",
+          "verbalization": "Wow, so is this part built like this?"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Then I'll use that one.",
+          "verbalization": "Then I'll use that one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Sure.",
+          "verbalization": "Sure.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Heh heh heh.",
+          "verbalization": "Heh heh heh."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Your, your decisions are all good.",
+          "verbalization": "Your, your decisions are all good.",
+          "code": "UP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, you also put a Lego grandpa next to the blue baseplate.",
+          "verbalization": "Wow, you also put a Lego grandpa next to the blue baseplate.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, XX, you put, clipped that fishing rod onto the block grandpa.",
+          "verbalization": "Oh, XX, you put, clipped that fishing rod onto the block grandpa.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh.",
+          "verbalization": "Oh.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Ah, then sitting in the lake...",
+          "verbalization": "Ah, then sitting in the lake...",
+          "code": "NC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX, you're using the blue baseplate as a lake now.",
+          "verbalization": "XX, you're using the blue baseplate as a lake now.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And building it into a lake, right?",
+          "verbalization": "And building it into a lake, right?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah.",
+          "verbalization": "Yeah."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, this design of yours, the one XX designed is really pretty.",
+          "verbalization": "Wow, this design of yours, the one XX designed is really pretty.",
+          "code": "UP"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Hey, found it!",
+          "verbalization": "Hey, found it!"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, XX found a fish.",
+          "verbalization": "Oh, XX found a fish.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Putting a fish...",
+          "verbalization": "Putting a fish...",
+          "code": "NC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, grandpa is by the lake, XX is having grandpa fish by the lake.",
+          "verbalization": "Oh, grandpa is by the lake, XX is having grandpa fish by the lake.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Hey, look, I found fire!",
+          "verbalization": "Hey, look, I found fire!",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Oof!",
+          "verbalization": "Oof!"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "It's a forest fire!",
+          "verbalization": "It's a forest fire!"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh.",
+          "verbalization": "Oh.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Huh?",
+          "verbalization": "Huh?"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Bread.",
+          "verbalization": "Bread."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX found, found a piece of bread.",
+          "verbalization": "XX found, found a piece of bread.",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Hey, put it on.",
+          "verbalization": "Hey, put it on."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "And then, a whole bunch of oranges.",
+          "verbalization": "And then, a whole bunch of oranges."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Look, I found, found some corn!",
+          "verbalization": "Look, I found, found some corn!",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Huh?",
+          "verbalization": "Huh?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "We can let big sister and them eat it together at a picnic.",
+          "verbalization": "We can let big sister and them eat it together at a picnic.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Then we want corn.",
+          "verbalization": "Then we want corn."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "We need to plant carrots.",
+          "verbalization": "We need to plant carrots."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You want to plant, XX wants to plant carrots.",
+          "verbalization": "You want to plant, XX wants to plant carrots.",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "But there's no fork.",
+          "verbalization": "But there's no fork."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh.",
+          "verbalization": "Oh.",
+          "code": "TA"
+        }
+      ]
+    }
+  ]
+}

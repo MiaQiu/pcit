@@ -1,0 +1,598 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session-6",
+      "utterances": [
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Take out all the watering stuff.",
+          "verbalization": "Take out all the watering stuff."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you picked up the watering can.",
+          "verbalization": "Oh, you picked up the watering can.",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Oops.",
+          "verbalization": "Oops."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Thank you for picking up the watering can from the floor.",
+          "verbalization": "Thank you for picking up the watering can from the floor.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, you got another really big building thing.",
+          "verbalization": "Wow, you got another really big building thing.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Thank you for being so patient and putting it in place.",
+          "verbalization": "Thank you for being so patient and putting it in place.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And thank you for closing its door properly.",
+          "verbalization": "And thank you for closing its door properly.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You got a blue flowerpot.",
+          "verbalization": "You got a blue flowerpot.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You're putting the flower into the blue flowerpot.",
+          "verbalization": "You're putting the flower into the blue flowerpot.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Hey, you're so smart, you know that the square clay can go into the square flowerpot.",
+          "verbalization": "Hey, you're so smart, you know that the square clay can go into the square flowerpot.",
+          "code": "LP"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "They won't stay in place.",
+          "verbalization": "They won't stay in place."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you're doing great, you're very patiently putting the clay in place.",
+          "verbalization": "Oh, you're doing great, you're very patiently putting the clay in place.",
+          "code": "LP"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "It's not clay.",
+          "verbalization": "It's not clay."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "",
+          "verbalization": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, great job, you put the dirt in.",
+          "verbalization": "Oh, great job, you put the dirt in.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You got a twig.",
+          "verbalization": "You got a twig.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you did a great job sticking the twig in, it went right in.",
+          "verbalization": "Oh, you did a great job sticking the twig in, it went right in.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You got another...",
+          "verbalization": "You got another...",
+          "code": "NC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Can you hear through the headphones?",
+          "verbalization": "Can you hear through the headphones?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you want to know if you can hear through the headphones.",
+          "verbalization": "Oh, you want to know if you can hear through the headphones.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Yes, you can.",
+          "verbalization": "Yes, you can.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You got a leaf,",
+          "verbalization": "You got a leaf,",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And then you put the leaf onto the twig.",
+          "verbalization": "And then you put the leaf onto the twig.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, you...",
+          "verbalization": "Wow, you...",
+          "code": "NC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Are we going to play with new toys after we finish this?",
+          "verbalization": "Are we going to play with new toys after we finish this?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you planted the yellow flower, that's great.",
+          "verbalization": "Oh, you planted the yellow flower, that's great.",
+          "code": "LP"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Will we play with new toys later?",
+          "verbalization": "Will we play with new toys later?"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Will we play with new toys when I'm done playing?",
+          "verbalization": "Will we play with new toys when I'm done playing?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you want to know if we can play with new toys in a little bit.",
+          "verbalization": "Oh, you want to know if we can play with new toys in a little bit.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Yes, we will.",
+          "verbalization": "Yes, we will.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You're watering the flowers right now.",
+          "verbalization": "You're watering the flowers right now.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Thank you for watering the flowers.",
+          "verbalization": "Thank you for watering the flowers.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "So they can grow up fast.",
+          "verbalization": "So they can grow up fast.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Grow up!",
+          "verbalization": "Grow up!",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Mommy noticed that you put the watering can nicely to the side... neatly to the side, that's great.",
+          "verbalization": "Mommy noticed that you put the watering can nicely to the side... neatly to the side, that's great.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, you brought up some more flowerpots.",
+          "verbalization": "Wow, you brought up some more flowerpots.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You're still looking for things.",
+          "verbalization": "You're still looking for things.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You're putting the flowerpots in place one by one.",
+          "verbalization": "You're putting the flowerpots in place one by one.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "One is small.",
+          "verbalization": "One is small."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You got a round piece of dirt.",
+          "verbalization": "You got a round piece of dirt.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You put the round clay inside the flowerpot.",
+          "verbalization": "You put the round clay inside the flowerpot.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You noticed this round clay is smaller and needs to go in the small flowerpot, great job noticing that!",
+          "verbalization": "You noticed this round clay is smaller and needs to go in the small flowerpot, great job noticing that!",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You took out another twig.",
+          "verbalization": "You took out another twig.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And you put a leaf on top of the twig.",
+          "verbalization": "And you put a leaf on top of the twig.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, you're so good at this, you got the leaf on in no time.",
+          "verbalization": "Wow, you're so good at this, you got the leaf on in no time.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You took another pink flower.",
+          "verbalization": "You took another pink flower.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, you made the flower in no time, you're so good!",
+          "verbalization": "Wow, you made the flower in no time, you're so good!",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, thank you for being so patient planting the flower.",
+          "verbalization": "Wow, thank you for being so patient planting the flower.",
+          "code": "LP"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Oops.",
+          "verbalization": "Oops."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I can't get them even.",
+          "verbalization": "I can't get them even."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You think you didn't put them evenly?",
+          "verbalization": "You think you didn't put them evenly?",
+          "code": "NTA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "They're all... they're not even.",
+          "verbalization": "They're all... they're not even."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Okay, now they're even.",
+          "verbalization": "Okay, now they're even.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Great job, you put the leaf... and put together another flower.",
+          "verbalization": "Great job, you put the leaf... and put together another flower.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Now you're putting a square piece of clay into the square flowerpot.",
+          "verbalization": "Now you're putting a square piece of clay into the square flowerpot.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "This time you noticed that this square clay is big and can go in the big flowerpot, that's great!",
+          "verbalization": "This time you noticed that this square clay is big and can go in the big flowerpot, that's great!",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You took some more leaves and twigs.",
+          "verbalization": "You took some more leaves and twigs.",
+          "code": "BD"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Forgot to water this one.",
+          "verbalization": "Forgot to water this one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You think you forgot to water it?",
+          "verbalization": "You think you forgot to water it?",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, thank you for watering the flower.",
+          "verbalization": "Wow, thank you for watering the flower.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Now they can grow up nice and fast.",
+          "verbalization": "Now they can grow up nice and fast.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Now you're sticking the twig into the clay.",
+          "verbalization": "Now you're sticking the twig into the clay.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And now you're hanging its leaves on.",
+          "verbalization": "And now you're hanging its leaves on.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, great job, you noticed it was on backwards,",
+          "verbalization": "Wow, great job, you noticed it was on backwards,",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "and took it off again",
+          "verbalization": "and took it off again",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "to put it on right.",
+          "verbalization": "to put it on right.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You took another yellow flower.",
+          "verbalization": "You took another yellow flower.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, you made the flower in no time, that's great!",
+          "verbalization": "Wow, you made the flower in no time, that's great!",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Watering the flower.",
+          "verbalization": "Watering the flower.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Sprinkling a little more water on it.",
+          "verbalization": "Sprinkling a little more water on it.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, now the flower can grow up nice and fast.",
+          "verbalization": "Wow, now the flower can grow up nice and fast.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Thank you.",
+          "verbalization": "Thank you.",
+          "code": "UP"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "There's another one here.",
+          "verbalization": "There's another one here."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you think there's another flowerpot?",
+          "verbalization": "Oh, you think there's another flowerpot?",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Look for it.",
+          "verbalization": "Look for it."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you want Mommy to help you look for it?",
+          "verbalization": "Oh, you want Mommy to help you look for it?",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Is there one?",
+          "verbalization": "Is there one?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you're wondering if there are any more flowerpots.",
+          "verbalization": "Oh, you're wondering if there are any more flowerpots.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Let Mommy take a look.",
+          "verbalization": "Let Mommy take a look.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Dirt, dirt.",
+          "verbalization": "Dirt, dirt."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, dirt.",
+          "verbalization": "Oh, dirt.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, you're so good, you found another piece of dirt.",
+          "verbalization": "Wow, you're so good, you found another piece of dirt.",
+          "code": "LP"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Too big.",
+          "verbalization": "Too big."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you think this piece of dirt is too big.",
+          "verbalization": "Oh, you think this piece of dirt is too big.",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Then where does this dirt go?",
+          "verbalization": "Then where does this dirt go?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you're thinking about where this dirt should go.",
+          "verbalization": "Oh, you're thinking about where this dirt should go.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you found the dog's house... doghouse.",
+          "verbalization": "Oh, you found the dog's house... doghouse.",
+          "code": "BD"
+        }
+      ]
+    }
+  ]
+}

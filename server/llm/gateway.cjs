@@ -71,14 +71,22 @@ async function llmCall(prompt, options = {}) {
   // Resolve context cache when the model supports it.
   // cache.systemPrompt is used both for cache creation and as a text fallback
   // when the cache is unavailable (prepended to the prompt by the provider).
+  // cache.filesOnly opts out of baking systemPrompt into the cache at all — the cache then
+  // holds only the large reusable files (e.g. a manual PDF), keyed independent of prompt
+  // content, so the same cache survives across many different prompts being tested. The
+  // systemPrompt is instead prepended into the per-call prompt text (same mechanism as the
+  // no-cache fallback below) rather than sent via Gemini's systemInstruction field — Gemini
+  // rejects combining cachedContent with a systemInstruction field, but does not reject
+  // combining cachedContent with ordinary prompt/contents text.
   const effectiveSystemPrompt = systemPrompt || cache?.systemPrompt || null;
+  const cacheFilesOnly = !!cache?.filesOnly;
   let cachedContent = null;
   if (cache && modelDef.supportsCache) {
     try {
       cachedContent = await getOrCreateCache(
         cache.key,
         cache.primaryFile,
-        cache.systemPrompt || systemPrompt,
+        cacheFilesOnly ? null : (cache.systemPrompt || systemPrompt),
         modelDef.primary,
         cache.extraFiles || []
       );
@@ -105,7 +113,7 @@ async function llmCall(prompt, options = {}) {
 
   try {
     // ── First attempt: retries on primary, then falls back if all fail ────────
-    const first = await _callWithFallback(modelDef, prompt, effectiveSystemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent);
+    const first = await _callWithFallback(modelDef, prompt, effectiveSystemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent, cacheFilesOnly);
     track.model        = first.model;
     track.usedFallback = first.fallback;
     track.inputTokens  = first.usage?.inputTokens  ?? null;
@@ -124,7 +132,7 @@ async function llmCall(prompt, options = {}) {
       track.usedRetry = true;
       console.warn(`[gateway:${label}] JSON parse failed${hasSchema ? ' (schema active)' : ''}, retrying... (${parseErr.message.substring(0, 80)})`);
 
-      const retry = await _callWithFallback(modelDef, prompt, effectiveSystemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent);
+      const retry = await _callWithFallback(modelDef, prompt, effectiveSystemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent, cacheFilesOnly);
       track.model        = retry.model;
       track.inputTokens  = retry.usage?.inputTokens  ?? null;
       track.outputTokens = retry.usage?.outputTokens ?? null;
@@ -190,7 +198,7 @@ function _getFallback(modelDef) {
  * (network errors, timeouts, 429/5xx HTTP errors).
  * JSON-parse retries are handled separately in llmCall.
  */
-async function _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent) {
+async function _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent, cacheFilesOnly = false) {
   let lastErr;
   for (let attempt = 0; attempt <= _RETRY_DELAYS.length; attempt++) {
     if (attempt > 0) {
@@ -199,7 +207,7 @@ async function _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, tempera
       await new Promise(r => setTimeout(r, delay));
     }
     try {
-      return await _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent);
+      return await _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent, cacheFilesOnly);
     } catch (err) {
       lastErr = err;
       if (!_isRetryable(err)) throw err;
@@ -213,16 +221,16 @@ async function _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, tempera
  * cachedContent is only passed to the primary model — fallback always receives null so the
  * system prompt is prepended as plain text instead (cache is Gemini-specific).
  */
-async function _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent) {
+async function _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent, cacheFilesOnly = false) {
   try {
-    return await _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent);
+    return await _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label, cachedContent, cacheFilesOnly);
   } catch (primaryErr) {
     // Only fall back after retryable failures — non-retryable errors (4xx, bad config) propagate immediately
     if (!_isRetryable(primaryErr)) throw primaryErr;
     const fallbackDef = _getFallback(modelDef);
     if (!fallbackDef) throw primaryErr;
     console.warn(`[gateway:${label}] all retries exhausted, falling back to ${fallbackDef.primary}... (${primaryErr.message.substring(0, 80)})`);
-    const result = await _callWithRetry(fallbackDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label, null);
+    const result = await _callWithRetry(fallbackDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, label, null, false);
     return { ...result, fallback: true };
   }
 }
@@ -230,23 +238,26 @@ async function _callWithFallback(modelDef, prompt, systemPrompt, maxTokens, temp
 /**
  * Single attempt for the given modelDef — primary model only, no fallback.
  */
-async function _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent) {
+async function _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent, cacheFilesOnly = false) {
   if (modelDef.provider === 'gemini') {
     if (modelDef.streaming) {
-      return _geminiStreamCall(modelDef.primary, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent);
+      return _geminiStreamCall(modelDef.primary, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent, cacheFilesOnly);
     }
-    return _geminiCall(modelDef.primary, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent);
+    return _geminiCall(modelDef.primary, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent, cacheFilesOnly);
   }
   // Claude does not support cachedContent; systemPrompt is handled by anthropicCall
   return _claudeCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout);
 }
 
-async function _geminiStreamCall(model, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig, cachedContent) {
+async function _geminiStreamCall(model, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig, cachedContent, cacheFilesOnly = false) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
 
-  // Skip systemPrompt prepend when cachedContent is present — it's already embedded in the cache
-  const fullPrompt = (systemPrompt && !cachedContent) ? `${systemPrompt}\n\n${prompt}` : prompt;
+  // Prepend systemPrompt as plain text whenever it's not already baked into the cache —
+  // either there's no cache at all, or the cache is files-only (cacheFilesOnly). Gemini
+  // rejects a separate systemInstruction field alongside cachedContent, but plain prompt
+  // text alongside cachedContent is fine.
+  const fullPrompt = (systemPrompt && (!cachedContent || cacheFilesOnly)) ? `${systemPrompt}\n\n${prompt}` : prompt;
   const body = {
     contents:         [{ parts: [{ text: fullPrompt }] }],
     generationConfig: { temperature, maxOutputTokens: maxTokens, ...extraConfig },
@@ -256,12 +267,13 @@ async function _geminiStreamCall(model, prompt, systemPrompt, maxTokens, tempera
   return { text, usage, model, fallback: false };
 }
 
-async function _geminiCall(model, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig, cachedContent) {
+async function _geminiCall(model, prompt, systemPrompt, maxTokens, temperature, timeout, extraConfig, cachedContent, cacheFilesOnly = false) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
 
-  // Skip systemPrompt prepend when cachedContent is present — it's already embedded in the cache
-  const fullPrompt = (systemPrompt && !cachedContent) ? `${systemPrompt}\n\n${prompt}` : prompt;
+  // Prepend systemPrompt as plain text whenever it's not already baked into the cache —
+  // either there's no cache at all, or the cache is files-only (cacheFilesOnly).
+  const fullPrompt = (systemPrompt && (!cachedContent || cacheFilesOnly)) ? `${systemPrompt}\n\n${prompt}` : prompt;
   const body = {
     contents: [{ parts: [{ text: fullPrompt }] }],
     generationConfig: { temperature, maxOutputTokens: maxTokens, ...extraConfig },

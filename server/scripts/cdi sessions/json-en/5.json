@@ -1,0 +1,492 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session-5",
+      "utterances": [
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you got the camper.",
+          "verbalization": "Oh, you got the camper.",
+          "code": "BD"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "What is camping?",
+          "verbalization": "What is camping?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What's a camper?",
+          "verbalization": "What's a camper?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "The camper can carry stuff.",
+          "verbalization": "The camper can carry stuff.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you're so good, you know to connect the camper to the back of the car.",
+          "verbalization": "Oh, you're so good, you know to connect the camper to the back of the car.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "That way, the car can pull the camper along.",
+          "verbalization": "That way, the car can pull the camper along.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You got the swing.",
+          "verbalization": "You got the swing.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, you got a Lego kid.",
+          "verbalization": "Wow, you got a Lego kid.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You put the kid...",
+          "verbalization": "You put the kid...",
+          "code": "NC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "xxx",
+          "verbalization": "xxx"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Mm, you put the kid on the swing.",
+          "verbalization": "Mm, you put the kid on the swing.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You're so good, you're being... you're playing with the toys gently.",
+          "verbalization": "You're so good, you're being... you're playing with the toys gently.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You're gently pushing him on the swing.",
+          "verbalization": "You're gently pushing him on the swing.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You put the swing on the grass.",
+          "verbalization": "You put the swing on the grass.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, you're putting the cover on the camper.",
+          "verbalization": "Wow, you're putting the cover on the camper.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You got a red... little canoe.",
+          "verbalization": "You got a red... little canoe.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Ah, you got the grandpa Lego figure.",
+          "verbalization": "Ah, you got the grandpa Lego figure.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You put grandpa inside the camper.",
+          "verbalization": "You put grandpa inside the camper.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You got another kid wearing a green hat.",
+          "verbalization": "You got another kid wearing a green hat.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You put him inside the camper too.",
+          "verbalization": "You put him inside the camper too.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You got another kid wearing a blue hat.",
+          "verbalization": "You got another kid wearing a blue hat.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, the kid with the blue hat is sitting next to grandpa.",
+          "verbalization": "Wow, the kid with the blue hat is sitting next to grandpa.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "It looks like it can only carry one person.",
+          "verbalization": "It looks like it can only carry one person."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Mm, the camper is big, it can carry a lot of people.",
+          "verbalization": "Mm, the camper is big, it can carry a lot of people.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, great job! You figured out how to make the kid sit properly.",
+          "verbalization": "Oh, great job! You figured out how to make the kid sit properly.",
+          "code": "LP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You got another little girl.",
+          "verbalization": "You got another little girl.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Also sitting...",
+          "verbalization": "Also sitting...",
+          "code": "NC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you put the little girl inside the camper.",
+          "verbalization": "Oh, you put the little girl inside the camper.",
+          "code": "BD"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "xxx",
+          "verbalization": "xxx"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Mm, there's no more room.",
+          "verbalization": "Mm, there's no more room.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "No more room.",
+          "verbalization": "No more room."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "No more room.",
+          "verbalization": "No more room.",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Oof",
+          "verbalization": "Oof"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Put it together.",
+          "verbalization": "Put it together.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Cover the car.",
+          "verbalization": "Cover the car.",
+          "code": "BD"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "This grandpa is going to drive.",
+          "verbalization": "This grandpa is going to drive."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Grandpa's driving.",
+          "verbalization": "Grandpa's driving.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You put the roof on the car.",
+          "verbalization": "You put the roof on the car.",
+          "code": "BD"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Put the cover on it.",
+          "verbalization": "Put the cover on it."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Mm.",
+          "verbalization": "Mm.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Ah, Grandpa is...",
+          "verbalization": "Ah, Grandpa is..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, you found Grandma!",
+          "verbalization": "Wow, you found Grandma!",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Grandma's Lego figure.",
+          "verbalization": "Grandma's Lego figure.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Grandma is sitting in the camper.",
+          "verbalization": "Grandma is sitting in the camper.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You're letting the Grandpa Lego figure drive.",
+          "verbalization": "You're letting the Grandpa Lego figure drive.",
+          "code": "BD"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Driving.",
+          "verbalization": "Driving."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Go drive the red car.",
+          "verbalization": "Go drive the red car.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "The red car can pull the camper along.",
+          "verbalization": "The red car can pull the camper along.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "This is a camper.",
+          "verbalization": "This is a camper."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Yeah.",
+          "verbalization": "Yeah.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Why is it called a camper?",
+          "verbalization": "Why is it called a camper?"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "The camper is really big.",
+          "verbalization": "The camper is really big.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "It can go to camping spots to camp.",
+          "verbalization": "It can go to camping spots to camp.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Campers can carry a lot of things too, you know.",
+          "verbalization": "Campers can carry a lot of things too, you know.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Hey, why can't he sit?",
+          "verbalization": "Hey, why can't he sit?"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I can't press this down.",
+          "verbalization": "I can't press this down."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Mommy try.",
+          "verbalization": "Mommy try.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Okay, let me help.",
+          "verbalization": "Okay, let me help.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Put his little hands up.",
+          "verbalization": "Put his little hands up.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Let's see like this.",
+          "verbalization": "Let's see like this.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Mm okay, Grandpa is all seated.",
+          "verbalization": "Mm okay, Grandpa is all seated.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You got another little girl.",
+          "verbalization": "You got another little girl.",
+          "code": "BD"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Have her sit behind Grandpa, mm, great job.",
+          "verbalization": "Have her sit behind Grandpa, mm, great job.",
+          "code": "LP"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Okay, off we go!",
+          "verbalization": "Okay, off we go!"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Having the little kid sit in the car and sit nicely, that's great.",
+          "verbalization": "Having the little kid sit in the car and sit nicely, that's great.",
+          "code": "UP"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You let Grandpa drive the red car.",
+          "verbalization": "You let Grandpa drive the red car.",
+          "code": "BD"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I don't want this toy.",
+          "verbalization": "I don't want this toy."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I don't want..., I don't want this toy.",
+          "verbalization": "I don't want..., I don't want this toy."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I want the cooking one.",
+          "verbalization": "I want the cooking one."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I want the cooking one.",
+          "verbalization": "I want the cooking one."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I want, I want the cooking one.",
+          "verbalization": "I want, I want the cooking one."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I want the cooking one.",
+          "verbalization": "I want the cooking one."
+        }
+      ]
+    }
+  ]
+}

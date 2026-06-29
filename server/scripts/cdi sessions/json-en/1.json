@@ -1,0 +1,1042 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session-1",
+      "utterances": [
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Here, how do you want to put it?",
+          "verbalization": "Here, how do you want to put it?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Green.",
+          "verbalization": "Green."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mm-hmm.",
+          "verbalization": "Mm-hmm."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "How do you want to put it?",
+          "verbalization": "How do you want to put it?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Here.",
+          "verbalization": "Here.",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Line up the red ones.",
+          "verbalization": "Line up the red ones."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You want red.",
+          "verbalization": "You want red.",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mm-hmm.",
+          "verbalization": "Mm-hmm."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "I'll get it for you.",
+          "verbalization": "I'll get it for you.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mm-hmm.",
+          "verbalization": "Mm-hmm."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "xxxx.",
+          "verbalization": "xxxx."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What color do you want next?",
+          "verbalization": "What color do you want next?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um... mm-hmm.",
+          "verbalization": "Um... mm-hmm."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What color do you want next?",
+          "verbalization": "What color do you want next?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um... this one.",
+          "verbalization": "Um... this one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What color?",
+          "verbalization": "What color?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "I'll get it for you.",
+          "verbalization": "I'll get it for you.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "This one.",
+          "verbalization": "This one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "This color?",
+          "verbalization": "This color?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mm-hmm.",
+          "verbalization": "Mm-hmm."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Brown.",
+          "verbalization": "Brown.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "This one.",
+          "verbalization": "This one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "This one?",
+          "verbalization": "This one?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah.",
+          "verbalization": "Yeah."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "The big one?",
+          "verbalization": "The big one?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah, the big one.",
+          "verbalization": "Yeah, the big one."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Pick all of these up.",
+          "verbalization": "Pick all of these up."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "This, um... oh.",
+          "verbalization": "This, um... oh."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Okay, here you go.",
+          "verbalization": "Okay, here you go.",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Okay.",
+          "verbalization": "Okay."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Do you want to put it like this?",
+          "verbalization": "Do you want to put it like this?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "No.",
+          "verbalization": "No."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "This doesn't seem to press down.",
+          "verbalization": "This doesn't seem to press down.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Not like this.",
+          "verbalization": "Not like this."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "This goes, goes here, right?",
+          "verbalization": "This goes, goes here, right?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mm-hmm.",
+          "verbalization": "Mm-hmm."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Or does it go here?",
+          "verbalization": "Or does it go here?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah, put it here.",
+          "verbalization": "Yeah, put it here."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Okay.",
+          "verbalization": "Okay.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Put it... here first.",
+          "verbalization": "Put it... here first."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "It won't go over.",
+          "verbalization": "It won't go over."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "This one, no.",
+          "verbalization": "This one, no."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "You want to press it down, right?",
+          "verbalization": "You want to press it down, right?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah.",
+          "verbalization": "Yeah."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Like this.",
+          "verbalization": "Like this.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah.",
+          "verbalization": "Yeah."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Like this, right?",
+          "verbalization": "Like this, right?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Like this, right?",
+          "verbalization": "Like this, right?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah.",
+          "verbalization": "Yeah."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What color next?",
+          "verbalization": "What color next?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "I'll get it for you.",
+          "verbalization": "I'll get it for you.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um, I want, I want the yellow blo...",
+          "verbalization": "Um, I want, I want the yellow blo..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "The yellow one is this one.",
+          "verbalization": "The yellow one is this one.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "That one is red.",
+          "verbalization": "That one is red.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And what color is this?",
+          "verbalization": "And what color is this?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um...",
+          "verbalization": "Um..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Do you want this color?",
+          "verbalization": "Do you want this color?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yellow.",
+          "verbalization": "Yellow."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What do you want to do for them?",
+          "verbalization": "What do you want to do for them?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Build a house.",
+          "verbalization": "Build a house."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "It's just that I don't know how to build it,",
+          "verbalization": "It's just that I don't know how to build it,"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Achoo.",
+          "verbalization": "Achoo."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, well, just build it however you want.",
+          "verbalization": "Oh, well, just build it however you want.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um...",
+          "verbalization": "Um..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What kind of house do you want to build?",
+          "verbalization": "What kind of house do you want to build?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um, build a house where they can do that.",
+          "verbalization": "Um, build a house where they can do that."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Ke~~~~",
+          "verbalization": "Ke~~~~"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Hehehehe.",
+          "verbalization": "Hehehehe.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What's wrong?",
+          "verbalization": "What's wrong?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "No,",
+          "verbalization": "No,"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I sneezed,",
+          "verbalization": "I sneezed,"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "and then it...",
+          "verbalization": "and then it..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you sneezed.",
+          "verbalization": "Oh, you sneezed.",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "When I sneeze, another layer of stuff goes 'ke~'.",
+          "verbalization": "When I sneeze, another layer of stuff goes 'ke~'."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "How do you, how else do you want to build it?",
+          "verbalization": "How do you, how else do you want to build it?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um...",
+          "verbalization": "Um..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What color do you want?",
+          "verbalization": "What color do you want?",
+          "code": "Q"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "I'll get it for you.",
+          "verbalization": "I'll get it for you.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um... yellow.",
+          "verbalization": "Um... yellow."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Yellow, okay.",
+          "verbalization": "Yellow, okay.",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mm-hmm.",
+          "verbalization": "Mm-hmm."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "This one is yellow.",
+          "verbalization": "This one is yellow.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Right.",
+          "verbalization": "Right."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And what other color do you want?",
+          "verbalization": "And what other color do you want?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um... um... blue.",
+          "verbalization": "Um... um... blue."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Blue, huh.",
+          "verbalization": "Blue, huh.",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah.",
+          "verbalization": "Yeah."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And then?",
+          "verbalization": "And then?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um... um...",
+          "verbalization": "Um... um..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What color next?",
+          "verbalization": "What color next?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Green.",
+          "verbalization": "Green."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Okay, here.",
+          "verbalization": "Okay, here.",
+          "code": "DC"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "What color next?",
+          "verbalization": "What color next?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um... want... yellow.",
+          "verbalization": "Um... want... yellow."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "This one is yellow.",
+          "verbalization": "This one is yellow.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Okay.",
+          "verbalization": "Okay."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And next?",
+          "verbalization": "And next?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um... red.",
+          "verbalization": "Um... red."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Red.",
+          "verbalization": "Red.",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Spread the two out a bit.",
+          "verbalization": "Spread the two out a bit."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow.",
+          "verbalization": "Wow.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And next?",
+          "verbalization": "And next?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um... I want another red one.",
+          "verbalization": "Um... I want another red one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh.",
+          "verbalization": "Oh.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "There's a red one over here by me.",
+          "verbalization": "There's a red one over here by me."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Red, huh.",
+          "verbalization": "Red, huh.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "That one is yellow.",
+          "verbalization": "That one is yellow.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I want yellow.",
+          "verbalization": "I want yellow."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh.",
+          "verbalization": "Oh.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Ah um, I want two yellow ones.",
+          "verbalization": "Ah um, I want two yellow ones."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh.",
+          "verbalization": "Oh.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "This one, and...",
+          "verbalization": "This one, and..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Two red ones?",
+          "verbalization": "Two red ones?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah.",
+          "verbalization": "Yeah."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Red, there's a red one here too.",
+          "verbalization": "Red, there's a red one here too.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Ah, I want, I want thi...",
+          "verbalization": "Ah, I want, I want thi..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Okay, then you take that one.",
+          "verbalization": "Okay, then you take that one.",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Red.",
+          "verbalization": "Red."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Sit down.",
+          "verbalization": "Sit down.",
+          "code": "DC"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Ah, I want another yellow one.",
+          "verbalization": "Ah, I want another yellow one."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Oh, I want another yellow one.",
+          "verbalization": "Oh, I want another yellow one."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Oh, I also want...",
+          "verbalization": "Oh, I also want..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Yellow.",
+          "verbalization": "Yellow.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "There's a yellow one right here.",
+          "verbalization": "There's a yellow one right here.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um...",
+          "verbalization": "Um..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "That's red.",
+          "verbalization": "That's red.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I want red.",
+          "verbalization": "I want red."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And what other color do you want?",
+          "verbalization": "And what other color do you want?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Want, want, want another red one.",
+          "verbalization": "Want, want, want another red one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "There's one right here.",
+          "verbalization": "There's one right here.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Want another one, want another one.",
+          "verbalization": "Want another one, want another one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "This one?",
+          "verbalization": "This one?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Mm, yeah.",
+          "verbalization": "Mm, yeah."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um, no, no.",
+          "verbalization": "Um, no, no."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I said it wrong.",
+          "verbalization": "I said it wrong."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um, also want...",
+          "verbalization": "Um, also want..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Ah, here it is.",
+          "verbalization": "Ah, here it is.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "This is it.",
+          "verbalization": "This is it.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "This one",
+          "verbalization": "This one"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Also want this one.",
+          "verbalization": "Also want this one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And then?",
+          "verbalization": "And then?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Want, want, want, th... al... also want, want a, a red one.",
+          "verbalization": "Want, want, want, th... al... also want, want a, a red one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "A red one.",
+          "verbalization": "A red one.",
+          "code": "RF"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Here.",
+          "verbalization": "Here.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um...",
+          "verbalization": "Um..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "This one.",
+          "verbalization": "This one.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Um... this red one, this red one.",
+          "verbalization": "Um... this red one, this red one."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh.",
+          "verbalization": "Oh.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Wow, you're building a tall building, are you?",
+          "verbalization": "Wow, you're building a tall building, are you?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I, I'm not building a tall building.",
+          "verbalization": "I, I'm not building a tall building."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Then what are you building?",
+          "verbalization": "Then what are you building?",
+          "code": "Q"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I... I want to build...",
+          "verbalization": "I... I want to build..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Here, there's a red one here too.",
+          "verbalization": "Here, there's a red one here too.",
+          "code": "TA"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "I want to build, build a home for the zoo.",
+          "verbalization": "I want to build, build a home for the zoo."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh, you want to build a home for the zoo.",
+          "verbalization": "Oh, you want to build a home for the zoo.",
+          "code": "RF"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "Yeah.",
+          "verbalization": "Yeah."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "The zoo's home is also lined up like this.",
+          "verbalization": "The zoo's home is also lined up like this."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "Oh.",
+          "verbalization": "Oh.",
+          "code": "TA"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "And what else?",
+          "verbalization": "And what else?",
+          "code": "Q"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1360 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session-1",
+      "utterances": [
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母將積木板推往個案方向）來（<2s），你要怎麼放？",
+          "code": "Q",
+          "verbalization": "來，你要怎麼放？",
+          "visual_observation": "（案母將積木板推往個案方向）",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "綠色。",
+          "verbalization": "綠色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯。（個案思考時所發出的聲音，不予計數）",
+          "verbalization": "嗯。",
+          "visual_observation": "",
+          "comment": "（個案思考時所發出的聲音，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你要怎麼放？",
+          "code": "Q",
+          "verbalization": "你要怎麼放？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "來。（與案母下句>2s）",
+          "code": "DC",
+          "verbalization": "來。",
+          "visual_observation": "",
+          "comment": "（與案母下句>2s）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿紅色積木）排紅色的。",
+          "verbalization": "排紅色的。",
+          "visual_observation": "（個案拿紅色積木）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你要紅色的。",
+          "code": "RF",
+          "verbalization": "你要紅色的。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯。",
+          "verbalization": "嗯。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母又拿一個紅色積木給個案）我幫你拿。",
+          "code": "TA",
+          "verbalization": "我幫你拿。",
+          "visual_observation": "（案母又拿一個紅色積木給個案）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯。",
+          "verbalization": "嗯。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "xxxx。（錄音檔聽不清楚個案說話，不予計數）",
+          "verbalization": "xxxx。",
+          "visual_observation": "",
+          "comment": "（錄音檔聽不清楚個案說話，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "再來要什麼顏色？",
+          "code": "Q",
+          "verbalization": "再來要什麼顏色？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯…嗯。（個案思考時所發出的聲音，不予計數）",
+          "verbalization": "嗯…嗯。",
+          "visual_observation": "",
+          "comment": "（個案思考時所發出的聲音，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你再來要什麼顏色？",
+          "code": "Q",
+          "verbalization": "你再來要什麼顏色？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯…這個。",
+          "verbalization": "嗯…這個。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "什麼顏色？",
+          "code": "Q",
+          "verbalization": "什麼顏色？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我幫你拿。",
+          "code": "TA",
+          "verbalization": "我幫你拿。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案嘗試拔起咖啡色積木）這個。",
+          "verbalization": "這個。",
+          "visual_observation": "（個案嘗試拔起咖啡色積木）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母替個案拔咖啡色積木）這個顏色喔？（案母語調上揚）",
+          "code": "Q",
+          "verbalization": "這個顏色喔？",
+          "visual_observation": "（案母替個案拔咖啡色積木）",
+          "comment": "（案母語調上揚）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯。",
+          "verbalization": "嗯。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母將咖啡色積木拿給個案）咖啡色喔。（案母語調下沉）",
+          "code": "TA",
+          "verbalization": "咖啡色喔。",
+          "visual_observation": "（案母將咖啡色積木拿給個案）",
+          "comment": "（案母語調下沉）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案指著底下的紅積木板）這個。",
+          "verbalization": "這個。",
+          "visual_observation": "（個案指著底下的紅積木板）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這個？（案母語調上揚）",
+          "code": "Q",
+          "verbalization": "這個？",
+          "visual_observation": "",
+          "comment": "（案母語調上揚）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "對。",
+          "verbalization": "對。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "大的？（案母語調上揚）",
+          "code": "Q",
+          "verbalization": "大的？",
+          "visual_observation": "",
+          "comment": "（案母語調上揚）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯，大的啊。",
+          "verbalization": "嗯，大的啊。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（案母開始拆蓋在紅積木板上的積木）把這個［紅積木板上的積木］全部拿起來。",
+          "verbalization": "把這個全部拿起來。",
+          "visual_observation": "（案母開始拆蓋在紅積木板上的積木）",
+          "comment": "［紅積木板上的積木］"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案也開始拆紅積木板上的積木）這個，恩…欸。",
+          "verbalization": "這個，恩…欸。",
+          "visual_observation": "（個案也開始拆紅積木板上的積木）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母將積木拆完後，拿起紅色積木板到個案面前）好（<2s），拿去。（個案將紅積木板拿走）",
+          "code": "DC",
+          "verbalization": "好，拿去。",
+          "visual_observation": "（案母將積木拆完後，拿起紅色積木板到個案面前） （個案將紅積木板拿走）",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "好。（個案嘗試將紅積木板裝在底板上）",
+          "verbalization": "好。",
+          "visual_observation": "（個案嘗試將紅積木板裝在底板上）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母移動紅積木板）你要放這樣嗎？",
+          "code": "Q",
+          "verbalization": "你要放這樣嗎？",
+          "visual_observation": "（案母移動紅積木板）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "不要。",
+          "verbalization": "不要。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母嘗試協助個案將積木板裝在底板上）這個［積木板］好像壓不下去。",
+          "code": "TA",
+          "verbalization": "這個好像壓不下去。",
+          "visual_observation": "（案母嘗試協助個案將積木板裝在底板上）",
+          "comment": "［積木板］"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "不是這樣。",
+          "verbalization": "不是這樣。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母將紅積木板移到另一邊）這個放、放在這邊的對不對？",
+          "code": "Q",
+          "verbalization": "這個放、放在這邊的對不對？",
+          "visual_observation": "（案母將紅積木板移到另一邊）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯。",
+          "verbalization": "嗯。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母將紅積木板放回個案原先擺的位置）還是放在這邊？",
+          "code": "Q",
+          "verbalization": "還是放在這邊？",
+          "visual_observation": "（案母將紅積木板放回個案原先擺的位置）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案指著另一邊）嗯，放在這邊。",
+          "verbalization": "嗯，放在這邊。",
+          "visual_observation": "（個案指著另一邊）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好。",
+          "code": "TA",
+          "verbalization": "好。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案嘗試裝黃積木板）先放在…這邊。",
+          "verbalization": "先放在…這邊。",
+          "visual_observation": "（個案嘗試裝黃積木板）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案嘗試裝紅積木板）放不過去。",
+          "verbalization": "放不過去。",
+          "visual_observation": "（個案嘗試裝紅積木板）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拔起幾塊積木）這個，不。",
+          "verbalization": "這個，不。",
+          "visual_observation": "（個案拔起幾塊積木）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案嘗試將紅積木板裝在底板上）你要壓下去是不是？",
+          "code": "Q",
+          "verbalization": "你要壓下去是不是？",
+          "visual_observation": "（個案嘗試將紅積木板裝在底板上）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯。",
+          "verbalization": "嗯。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母協助個案裝上紅積木板）這樣。",
+          "code": "TA",
+          "verbalization": "這樣。",
+          "visual_observation": "（案母協助個案裝上紅積木板）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯。",
+          "verbalization": "嗯。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這樣齁？",
+          "code": "Q",
+          "verbalization": "這樣齁？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案嘗試裝黃積木板，案母協助個案裝上）這樣齁？",
+          "code": "Q",
+          "verbalization": "這樣齁？",
+          "visual_observation": "（個案嘗試裝黃積木板，案母協助個案裝上）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯。",
+          "verbalization": "嗯。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "再來要什麼顏色？",
+          "code": "Q",
+          "verbalization": "再來要什麼顏色？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我幫你拿。",
+          "code": "TA",
+          "verbalization": "我幫你拿。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿著紅色積木）嗯，我要、我要黃色的積的。",
+          "verbalization": "嗯，我要、我要黃色的積的。",
+          "visual_observation": "（個案拿著紅色積木）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿起黃色積木）黃色的是這個捏。",
+          "code": "TA",
+          "verbalization": "黃色的是這個捏。",
+          "visual_observation": "（案母拿起黃色積木）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母指個案手中積木）那個是紅色耶。",
+          "code": "TA",
+          "verbalization": "那個是紅色耶。",
+          "visual_observation": "（案母指個案手中積木）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿起黃色積木）啊這是什麼顏色？",
+          "code": "Q",
+          "verbalization": "啊這是什麼顏色？",
+          "visual_observation": "（案母拿起黃色積木）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯…（個案思考時所發出的聲音，不予計數）",
+          "verbalization": "嗯…",
+          "visual_observation": "",
+          "comment": "（個案思考時所發出的聲音，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你要這個顏色嗎？",
+          "code": "Q",
+          "verbalization": "你要這個顏色嗎？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "黃色。",
+          "verbalization": "黃色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案持續在蓋積木）你要幫它們幹什麼？",
+          "code": "Q",
+          "verbalization": "你要幫它們幹什麼？",
+          "visual_observation": "（個案持續在蓋積木）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "蓋房子。",
+          "verbalization": "蓋房子。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "只是我不知道要怎麼蓋，",
+          "verbalization": "只是我不知道要怎麼蓋，",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "哈啾［個案打噴嚏聲］。",
+          "verbalization": "哈啾。",
+          "visual_observation": "",
+          "comment": "［個案打噴嚏聲］"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），啊看你想怎麼蓋啊。",
+          "code": "TA",
+          "verbalization": "喔，啊看你想怎麼蓋啊。",
+          "visual_observation": "",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯…（個案思考時所發出的聲音，不予計數）",
+          "verbalization": "嗯…",
+          "visual_observation": "",
+          "comment": "（個案思考時所發出的聲音，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你要蓋成怎樣的房子？",
+          "code": "Q",
+          "verbalization": "你要蓋成怎樣的房子？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯，蓋成它們可以那樣子的房子。",
+          "verbalization": "嗯，蓋成它們可以那樣子的房子。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "科~~~~（個案發出清鼻涕的聲音，不予計數）",
+          "verbalization": "科~~~~",
+          "visual_observation": "",
+          "comment": "（個案發出清鼻涕的聲音，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "呵呵呵呵。（案母笑聲）",
+          "code": "TA",
+          "verbalization": "呵呵呵呵。",
+          "visual_observation": "",
+          "comment": "（案母笑聲）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你怎麼了？",
+          "code": "Q",
+          "verbalization": "你怎麼了？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "不是，",
+          "verbalization": "不是，",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我是阿啾了，（<2s，接下句）",
+          "verbalization": "我是阿啾了，",
+          "visual_observation": "",
+          "comment": "（<2s，接下句）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "就又會...（此句未完成，不予計數）",
+          "verbalization": "就又會...",
+          "visual_observation": "",
+          "comment": "（此句未完成，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你哈啾喔。",
+          "code": "RF",
+          "verbalization": "喔，你哈啾喔。",
+          "visual_observation": "",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我阿啾就又打一層東西就\"科~［個案發出清鼻涕聲］\"。",
+          "verbalization": "我阿啾就又打一層東西就\"科~\"。",
+          "visual_observation": "",
+          "comment": "［個案發出清鼻涕聲］"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你要（案母改口）、還要蓋怎樣？",
+          "code": "Q",
+          "verbalization": "你要、還要蓋怎樣？",
+          "visual_observation": "",
+          "comment": "（案母改口）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯…（個案思考時所發出的聲音，不予計數）",
+          "verbalization": "嗯…",
+          "visual_observation": "",
+          "comment": "（個案思考時所發出的聲音，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你要什麼顏色？",
+          "code": "Q",
+          "verbalization": "你要什麼顏色？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我幫你拿。",
+          "code": "TA",
+          "verbalization": "我幫你拿。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯…黃色。",
+          "verbalization": "嗯…黃色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "黃色喔。",
+          "code": "RF",
+          "verbalization": "黃色喔。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯。",
+          "verbalization": "嗯。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿黃色積木給個案）這個是黃色。",
+          "code": "TA",
+          "verbalization": "這個是黃色。",
+          "visual_observation": "（案母拿黃色積木給個案）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "對。",
+          "verbalization": "對。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "啊還要什麼顏色？",
+          "code": "Q",
+          "verbalization": "啊還要什麼顏色？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯…嗯…藍色。",
+          "verbalization": "嗯…嗯…藍色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿藍色積木給個案）藍色喔。",
+          "code": "RF",
+          "verbalization": "藍色喔。",
+          "visual_observation": "（案母拿藍色積木給個案）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯。",
+          "verbalization": "嗯。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "然後呢？",
+          "code": "Q",
+          "verbalization": "然後呢？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯…嗯…（個案思考時所發出的聲音，不予計數）",
+          "verbalization": "嗯…嗯…",
+          "visual_observation": "",
+          "comment": "（個案思考時所發出的聲音，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "再來要什麼顏色？",
+          "code": "Q",
+          "verbalization": "再來要什麼顏色？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "綠色。",
+          "verbalization": "綠色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿一個綠色積木給個案）好（<2s），來（與案母下句>2s）。（個案拿走積木）",
+          "code": "DC",
+          "verbalization": "好，來。",
+          "visual_observation": "（案母拿一個綠色積木給個案） （個案拿走積木）",
+          "comment": "（<2s） （與案母下句>2s）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "再來要什麼顏色？",
+          "code": "Q",
+          "verbalization": "再來要什麼顏色？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯…要...黃色。",
+          "verbalization": "嗯…要...黃色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿一個黃色積木給個案）黃色是這個喔。",
+          "code": "TA",
+          "verbalization": "黃色是這個喔。",
+          "visual_observation": "（案母拿一個黃色積木給個案）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "好。",
+          "verbalization": "好。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "再來呢？",
+          "code": "Q",
+          "verbalization": "再來呢？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯…紅色。",
+          "verbalization": "嗯…紅色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿一個紅色積木給個案）紅色。",
+          "code": "RF",
+          "verbalization": "紅色。",
+          "visual_observation": "（案母拿一個紅色積木給個案）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案同時蓋兩塊積木）兩個放開一點。",
+          "verbalization": "兩個放開一點。",
+          "visual_observation": "（個案同時蓋兩塊積木）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案蓋的積木掉到地上）哇。（案母驚呼聲）",
+          "code": "TA",
+          "verbalization": "哇。",
+          "visual_observation": "（個案蓋的積木掉到地上）",
+          "comment": "（案母驚呼聲）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "再來呢？",
+          "code": "Q",
+          "verbalization": "再來呢？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯…還要一個紅色。",
+          "verbalization": "嗯…還要一個紅色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔。",
+          "code": "TA",
+          "verbalization": "喔。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿起黃色積木）一個紅色在我這邊。",
+          "verbalization": "一個紅色在我這邊。",
+          "visual_observation": "（個案拿起黃色積木）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "紅色喔。",
+          "code": "RF",
+          "verbalization": "紅色喔。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母指著個案拿的黃色積木）那個是黃色。",
+          "code": "TA",
+          "verbalization": "那個是黃色。",
+          "visual_observation": "（案母指著個案拿的黃色積木）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我要黃色。",
+          "verbalization": "我要黃色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔。",
+          "code": "TA",
+          "verbalization": "喔。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "啊嗯，我要兩個黃的。",
+          "verbalization": "啊嗯，我要兩個黃的。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔。",
+          "code": "TA",
+          "verbalization": "喔。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿起紅色積木）這個，還有…（此句未完成，不予計數）",
+          "verbalization": "這個，還有…",
+          "visual_observation": "（個案拿起紅色積木）",
+          "comment": "（此句未完成，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "兩個紅色喔？",
+          "code": "Q",
+          "verbalization": "兩個紅色喔？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯。",
+          "verbalization": "嗯。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿紅色積木）紅色（案母改口），這裡也有一個紅色啊。",
+          "code": "TA",
+          "verbalization": "紅色，這裡也有一個紅色啊。",
+          "visual_observation": "（案母拿紅色積木）",
+          "comment": "（案母改口）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "啊，我要、我要這…（此句未完成，不予計數）",
+          "verbalization": "啊，我要、我要這…",
+          "visual_observation": "",
+          "comment": "（此句未完成，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好（<2s），那你拿那裡［玩具箱］。（個案從玩具箱中拿出積木）",
+          "code": "DC",
+          "verbalization": "好，那你拿那裡。",
+          "visual_observation": "（個案從玩具箱中拿出積木）",
+          "comment": "（<2s） ［玩具箱］"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "紅色。",
+          "verbalization": "紅色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母把椅子拉近個案）坐著。（個案坐在椅子上）",
+          "code": "DC",
+          "verbalization": "坐著。",
+          "visual_observation": "（案母把椅子拉近個案） （個案坐在椅子上）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "啊，我還要一個黃色。",
+          "verbalization": "啊，我還要一個黃色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "喔，我還要一個黃色。",
+          "verbalization": "喔，我還要一個黃色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "喔，我還要…（此句未完成，不計數）",
+          "verbalization": "喔，我還要…",
+          "visual_observation": "",
+          "comment": "（此句未完成，不計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "黃色。",
+          "code": "RF",
+          "verbalization": "黃色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母一邊拿出一個黃色積木，一邊說）這裡有一個黃色啊。",
+          "code": "TA",
+          "verbalization": "這裡有一個黃色啊。",
+          "visual_observation": "（案母一邊拿出一個黃色積木，一邊說）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案從玩具箱中拿出紅色積木）嗯…（個案思考時所發出的聲音，不予計數）",
+          "verbalization": "嗯…",
+          "visual_observation": "（個案從玩具箱中拿出紅色積木）",
+          "comment": "（個案思考時所發出的聲音，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母指個案手中的紅色積木）那是紅色。",
+          "code": "TA",
+          "verbalization": "那是紅色。",
+          "visual_observation": "（案母指個案手中的紅色積木）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我要紅色。",
+          "verbalization": "我要紅色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "啊還要什麼顏色？",
+          "code": "Q",
+          "verbalization": "啊還要什麼顏色？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案在玩具箱中找積木）還要、還要、還要一個紅色。",
+          "verbalization": "還要、還要、還要一個紅色。",
+          "visual_observation": "（個案在玩具箱中找積木）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿紅色積木）這裡有一個啊。",
+          "code": "TA",
+          "verbalization": "這裡有一個啊。",
+          "visual_observation": "（案母拿紅色積木）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案持續在玩具箱中找積木）還要一個、還要一個啦。",
+          "verbalization": "還要一個、還要一個啦。",
+          "visual_observation": "（個案持續在玩具箱中找積木）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿紅色正方形積木）這個嗎？",
+          "code": "Q",
+          "verbalization": "這個嗎？",
+          "visual_observation": "（案母拿紅色正方形積木）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯，對。",
+          "verbalization": "嗯，對。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯，不是(<2s)、不是。",
+          "verbalization": "嗯，不是、不是。",
+          "visual_observation": "",
+          "comment": "(<2s)"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我說錯了。",
+          "verbalization": "我說錯了。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯還要…（個案從玩具箱中拿出紅色長方形積木）（此句未完成，不予計數）",
+          "verbalization": "嗯還要…",
+          "visual_observation": "（個案從玩具箱中拿出紅色長方形積木）",
+          "comment": "（此句未完成，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "啊這裡就是［紅色正方形積木］了啊。（案母語氣中性）",
+          "code": "TA",
+          "verbalization": "啊這裡就是了啊。",
+          "visual_observation": "",
+          "comment": "［紅色正方形積木］ （案母語氣中性）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這個［紅色正方形積木］就是了啊。（案母語氣中性）",
+          "code": "TA",
+          "verbalization": "這個就是了啊。",
+          "visual_observation": "",
+          "comment": "［紅色正方形積木］ （案母語氣中性）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿紅色長方形積木）這個",
+          "verbalization": "這個",
+          "visual_observation": "（個案拿紅色長方形積木）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "還要這個。",
+          "verbalization": "還要這個。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "然後呢？",
+          "code": "Q",
+          "verbalization": "然後呢？",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "還要、還要、還要、這…還還要、要一、一個紅色。",
+          "verbalization": "還要、還要、還要、這…還還要、要一、一個紅色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "一個紅色。",
+          "code": "RF",
+          "verbalization": "一個紅色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿正方形紅色積木給個案）這裡。",
+          "code": "TA",
+          "verbalization": "這裡。",
+          "visual_observation": "（案母拿正方形紅色積木給個案）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯…（個案思考時所發出的聲音，不予計數）",
+          "verbalization": "嗯…",
+          "visual_observation": "",
+          "comment": "（個案思考時所發出的聲音，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿正方形紅色積木）這個啊。",
+          "code": "TA",
+          "verbalization": "這個啊。",
+          "visual_observation": "（案母拿正方形紅色積木）",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案從玩具箱中拿長方形紅色積木）嗯…這個紅色、這個紅色。",
+          "verbalization": "嗯…這個紅色、這個紅色。",
+          "visual_observation": "（個案從玩具箱中拿長方形紅色積木）",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔。",
+          "code": "TA",
+          "verbalization": "喔。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案將積木疊高）哇（表情中性，<2s），你要蓋高樓喔（<2s），是嗎？",
+          "code": "Q",
+          "verbalization": "哇，你要蓋高樓喔，是嗎？",
+          "visual_observation": "（個案將積木疊高）",
+          "comment": "（表情中性，<2s） （<2s）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我、我不是要蓋高樓。",
+          "verbalization": "我、我不是要蓋高樓。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "不然你是要蓋什麼？（案母語氣中性）",
+          "code": "Q",
+          "verbalization": "不然你是要蓋什麼？",
+          "visual_observation": "",
+          "comment": "（案母語氣中性）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案在玩具箱中找積木）我…我要蓋…（此句未完成，不予計數）",
+          "verbalization": "我…我要蓋…",
+          "visual_observation": "（個案在玩具箱中找積木）",
+          "comment": "（此句未完成，不予計數）"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這裡、這裡也有一個紅色。",
+          "code": "TA",
+          "verbalization": "這裡、這裡也有一個紅色。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我要蓋、蓋動物園的家。",
+          "verbalization": "我要蓋、蓋動物園的家。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你要蓋動物園的家。",
+          "code": "RF",
+          "verbalization": "喔，你要蓋動物園的家。",
+          "visual_observation": "",
+          "comment": "（<2s）"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "對阿。",
+          "verbalization": "對阿。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "動物園的家也是這樣排的。",
+          "verbalization": "動物園的家也是這樣排的。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔。",
+          "code": "TA",
+          "verbalization": "喔。",
+          "visual_observation": "",
+          "comment": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "啊還要呢？",
+          "code": "Q",
+          "verbalization": "啊還要呢？",
+          "visual_observation": "",
+          "comment": ""
+        }
+      ]
+    }
+  ]
+}
