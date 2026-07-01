@@ -25,11 +25,15 @@ against human-coded ground truth, without overfitting to the 6 available samples
 ### `dpics-eval-run.cjs` flags
 
 - `--session <label>` — required, e.g. `session-3`.
+- `--grounding <cache|embed|none>` — required. Where the DPICS manual lives:
+  - `cache` — Gemini's native `cachedContents` mechanism. Only valid for models with `supportsCache: true` in `llm/models.cjs` (today: `gemini`).
+  - `embed` — manual + appendix embedded as plain text in the system field. Works for any model; required for models with no cache mechanism (DeepSeek, Qwen, OpenAI, Claude).
+  - `none` — no manual at all; tests whether the coding prompt is self-contained.
+- `--rules-location <user|cache>` — required iff `--grounding cache` (error otherwise). Whether the coding-rules prompt is prepended to every user message (`user`, cache stays manual-only and reusable across prompt variants) or baked into the cache alongside the manual (`cache`, cache is specific to that prompt revision).
 - `--prompt <name>` — prompt file in `server/prompts/`, default `dpicsCoding`.
-- `--model <key>` — `gemini` (default) or `claude`.
-- `--manual <path>` — swap the grounding manual PDF (default: the new-manual PDF).
-- `--no-cache` — skip the Gemini context cache entirely; prompt is self-contained, no manual/appendix attached. For testing prompts with no "see manual" references.
-- `--legacy-cache` — diagnostic-only flag, reverts to the old per-prompt cache (see "Caching" below). Not for normal use.
+- `--model <key>` — `gemini` (default) or any other key/model id in `llm/models.cjs`.
+- `--manual <path>` — swap the grounding manual PDF (default: the new-manual PDF). Ignored under `--grounding none`.
+- `--few-shot <labels>` — comma-separated session labels prepended as fully-coded reference examples.
 
 ## Scoring philosophy
 
@@ -835,6 +839,203 @@ Enrichment **hurt** on every session with meaningful content.
 
 ---
 
+## DeepSeek experiment — embed-manual approach
+
+### Setup
+
+DeepSeek's API (OpenAI-compatible) has no file-upload or context-cache equivalent. The manual PDF and appendix must be embedded inline. The `--embed-manual` flag was added to `dpics-eval-run.cjs` to handle this:
+
+- **System message** (fixed, never changes between runs): manual text (extracted via `pdftotext`, ~568K chars) + appendix JSON
+- **User message** (changes per prompt iteration): v10 rules (~12K chars) + utterances (~11–14K chars)
+
+Splitting this way keeps the system message stable so future API-level caching (if DeepSeek adds it) would require no changes.
+
+Total context per call: ~160K tokens. Prompt saved to `prompts/deepseek/` for reference (`system.txt` + `session-{N}-user.txt`).
+
+Eval command:
+```bash
+node server/scripts/dpics-eval-run.cjs --session session-N --model deepseek-v4-flash --prompt dpicsCoding-agentic-v10 --embed-manual
+```
+
+### Results — `dpicsCoding-agentic-v10` (`d8c3cbc7`), all 6 sessions
+
+#### Single-run comparison: Flash v4 vs Pro v4 vs Gemini Pro
+
+| Session | n | DS Flash v4 | DS Pro v4 | Gemini Pro (75f, 3-run avg) |
+|---|---|---|---|---|
+| s1 | 79 | **97.47%** | 93.67% | 100.00% |
+| s2 | 108 | 85.19% | 82.41% | 91.36% |
+| s3 | 99 | 86.87% | 77.78% | 91.25% |
+| s4 | 46 | 84.78% | 78.26% | 92.75% |
+| s5 | 51 | 88.24% | 88.24% | 90.20% |
+| s6 | 66 | **93.94%** | **93.94%** | 92.93% |
+| **Total** | **449** | **89.31%** | **85.30%** | **93.10%** |
+
+Latency: Flash ~40–55s per session; Pro ~110s. Both single-call, no Gemini cache overhead.
+
+#### Multi-run variance — DeepSeek Flash v4 (4 runs)
+
+After moving the UUID nonce to the front of the user message (same position as Gemini's nonce):
+
+| Session | Run 1 | Run 2 | Run 3 | Run 4 | Avg |
+|---|---|---|---|---|---|
+| s1 | 97.47% | 97.47% | 96.20% | **100.00%** | **97.79%** |
+| s2 | 85.19% | 87.04% | 86.11% | 86.11% | **86.11%** |
+| s3 | 86.87% | 86.87% | 83.84% | 84.85% | **85.61%** |
+| s4 | 84.78% | 71.74% | 71.74% | 80.43% | **77.17%** |
+| s5 | 88.24% | 88.24% | 92.16% | 88.24% | **89.22%** |
+| s6 | 93.94% | 89.39% | 93.94% | 92.42% | **92.42%** |
+| **Total** | **89.31%** | **87.75%** | **87.75%** | **89.53%** | **88.59%** |
+
+**4-run average: 88.59%**, range 87.75–89.53%. **s4 is the main variance source** (71–85%), driven by 9 structurally ambiguous utterances that flip across runs:
+- TA/NC/BD boundary: `媽媽會...學你`, `嗯，XX，你手上拿的是那個`, `你找到野餐墊`, `喔，你發現、XX有發現有馬桶`
+- UP/LP boundary: `哇，你這個設計...真的很漂亮`
+- RF/TA: `XX你想做大改造喔`
+
+Nonce position (front vs after rules) did not meaningfully change variance — s4 instability is content-driven, not caching-driven.
+
+### Key findings
+
+1. **Flash beats Pro by 4 pp** (89.31% vs 85.30%), and is ~2× faster. For DeepSeek, Flash is the clear choice.
+
+2. **DeepSeek Flash 4-run avg (88.59%) vs Gemini Flash 3-run avg (90.13%)** — gap is ~1.5 pp. Substantially narrower than the single-run comparison suggested.
+
+3. **DeepSeek Flash vs Gemini Pro gap is ~4.5 pp** (88.59% vs 93.10%) on a robust multi-run basis.
+
+4. **s4 is DeepSeek's weak session** (avg 77%) vs Gemini Pro's 92.75%. Same ambiguous utterances drive variance on both providers; DeepSeek resolves them less consistently.
+
+5. **s6 is stable across providers** — 92–94% on every model and every run.
+
+### NTA performance
+
+NTA is highly unstable for DeepSeek Flash across runs:
+
+| Run | NTA accuracy | Notes |
+|---|---|---|
+| Run 1 | 3/9 = 33.3% | TA×3, DQ×2, RF×1 |
+| Run 2 | 3/9 = 33.3% | |
+| Run 3 | 3/9 = 33.3% | |
+| Run 4 (front nonce) | 2/9 = 22.2% | gained `椅子、你的椅子沒有擺好。`, lost others |
+| **DS Pro v4** | **4/9 = 44.4%** | TA×2, DQ×2, RF×1 |
+| **Gemini Pro (`75f09222`)** | **4/9 = 44.4%** | — |
+
+DeepSeek Flash NTA recall is 22–33% across runs — worse than Pro (44%) and Gemini Pro (44%), and unstable. The same core cases (`嗯嗯。`→TA, `是這樣嗎？`→DQ, `你覺得你放不平均喔。`→RF) are wrong on every run of every model. NTA weakness is structural and model-agnostic, not DeepSeek-specific.
+
+### Manual-only baseline
+
+Running with a condensed user prompt (subject/output format rules only, relying on the full manual for coding rules — no v10 decision rules):
+
+| Session | manual-only | v10 rules | Δ |
+|---|---|---|---|
+| s1 | 98.73% | 97.47% | +1.3 |
+| s2 | 82.41% | 85.19% | -2.8 |
+| s3 | 81.82% | 86.87% | -5.1 |
+| s4 | 67.39% | 84.78% | **-17.4** |
+| s5 | 84.31% | 88.24% | -3.9 |
+| s6 | 62.12% | 93.94% | **-31.8** |
+| **Total** | **79.24%** | **89.31%** | **-10.1** |
+
+The v10 decision rules add **+10 pp** overall. s4 and s6 collapse without them (-17 and -32 pp) — both are heavy in LP/BD/DC distinctions where the explicit rules do the most work. The manual alone is insufficient for these finer-grained codes.
+
+---
+
+## No-cache baseline across models (`d8c3cbc7`)
+
+All runs use `dpicsCoding-agentic-v10` (hash `d8c3cbc7`) with `--no-cache` — v10 rules prepended as plain text to the user message, no manual/appendix attached. Nonce prepended to every user message. Single run each.
+
+### Gemini Flash and Pro — no-cache vs embed-manual
+
+| Session | n | Flash no-cache | Flash embed-manual (4-run avg) | Pro no-cache | Pro embed-manual (1 run) |
+|---|---|---|---|---|---|
+| s1 | 79 | 96.20% | 97.05% | 94.94% | 93.67% |
+| s2 | 108 | 87.04% | 86.11% | 87.96% | 82.41% |
+| s3 | 99 | 84.85% | 85.86% | 85.86% | 77.78% |
+| s4 | 46 | 78.26% | 76.09% | 80.43% | 78.26% |
+| s5 | 51 | 86.27% | 89.55% | 90.20% | 88.24% |
+| s6 | 66 | 93.94% | 92.42% | 92.42% | 93.94% |
+| **Total** | **449** | **88.18%** | **88.59%** | **88.42%** | **85.30%** |
+
+**No-cache essentially matches or beats embed-manual for both Gemini models.** The v10 rules alone are sufficient — embedding the 568K-char manual adds nothing measurable for Flash (+0.4 pp), and actively hurts Pro (-3.1 pp on embed-manual vs no-cache). This contrasts with DeepSeek, where embed-manual scores 88.59% (4-run avg) — very close to Gemini's no-cache numbers.
+
+The gap between Gemini (cached manual, `75f09222`) at **93.10%** and no-cache at **88.18–88.42%** reveals that the +5 pp gain from Gemini's file-cache approach comes from the combination of the manual PDF *and* the `75f09222` prompt hash's subject CoT field, not just having the manual text present. Running `d8c3cbc7` (which also has the subject field) no-cache shows that simply having the manual inline doesn't replicate Gemini's native cached-manual performance.
+
+### gpt-4o no-cache
+
+gpt-4o was set up as a new provider (OpenAI-compatible, `max_completion_tokens` capped at 16384). The full embed-manual approach is not viable: at 159K tokens, the prompt exceeds gpt-4o's 128K context window and OpenAI Tier 1's 30K TPM limit.
+
+Tested via `--user-prompt-dir` using the pre-saved DeepSeek prompts (which embed v10 rules in the user message). No system prompt is set when `--user-prompt-dir` is active — the saved file is self-contained.
+
+| Session | n | gpt-4o (no-cache, user-prompt-dir) | Flash no-cache | Pro no-cache |
+|---|---|---|---|---|
+| s1 | 79 | 75.95% | 96.20% | 94.94% |
+| s2 | 108 | 78.70% | 87.04% | 87.96% |
+| s3 | 99 | 84.85% | 84.85% | 85.86% |
+| s4 | 46 | 60.87% | 78.26% | 80.43% |
+| s5 | 51 | 78.43% | 86.27% | 90.20% |
+| s6 | 66 | 87.88% | 93.94% | 92.42% |
+| **Total** | **449** | **79.51%** | **88.18%** | **88.42%** |
+
+gpt-4o scores **79.51%** — ~9 pp below both Gemini models on the same rules-only input. s4 (60.87%) is notably weak. The context for these calls was the DeepSeek embed-manual user message (which includes v10 rules + utterances but was designed for a DeepSeek system-message context), so some prompt-model mismatch is expected. A gpt-4o-native prompt may perform better.
+
+**Rate limits:** Tier 1 is 30K TPM for gpt-4o. Running 6 sessions in parallel (each ~13–24K tokens) saturates the limit. Sessions must be run sequentially. Tier 2 requires $50+ cumulative spend.
+
+---
+
+## Flash vs Pro disagreement arbitration
+
+### Experiment design
+
+For each of the 6 sessions (no-cache, `d8c3cbc7`), disagreements between Gemini Flash and Gemini Pro at the **exact code level** were extracted. Cases where both models gave different codes but both happened to land in the correct category were identified. Only cases where at least one model was categorically wrong ("meaningful" disagreements) were passed to an arbiter.
+
+The arbiter call: Gemini Pro + cached manual (filesOnly cache), single call with all disagreement cases formatted as a structured prompt (utterance + ±2-utterance context window + both model predictions).
+
+Script: `server/scripts/dpics-disagree-arbitrate.cjs`
+
+### Results
+
+| | Count |
+|---|---|
+| Total exact-code disagreements | 67 |
+| Both categorically correct (different codes, same category) | 38 |
+| **Meaningful disagreements (≥1 model wrong)** | **29** |
+
+Among the 67 exact-code disagreements, 38 were not real errors by category match — Flash and Pro gave different codes that both mapped to the correct category (e.g. Q vs DQ both correct). Only 29 disagreements represent a genuine coding error.
+
+**Breakdown of the 29 meaningful cases:**
+
+| Situation | Count | Arbiter correct |
+|---|---|---|
+| Flash correct, Pro wrong | 12 | 7/12 (agreed with Flash) |
+| Pro correct, Flash wrong | 15 | 9/15 (agreed with Pro) |
+| Both wrong | 2 | 1/2 (uniquely correct) |
+| **Total** | **29** | **17/29 = 58.6%** |
+
+On the 29 hard cases, Pro edges Flash (15 vs 12 correct), and the arbiter with the full manual gets 17/29 — better than either model alone (+2 from Flash, +2 from Pro). The manual is providing a meaningful tiebreak on genuine boundary cases.
+
+### Combined (agree → use agreed code; disagree → use arbiter code) accuracy
+
+| Session | n | Combined + arbiter |
+|---|---|---|
+| s1 | 79 | 100.00% |
+| s2 | 108 | 88.99% |
+| s3 | 99 | 83.17% |
+| s4 | 46 | 76.09% |
+| s5 | 51 | 86.27% |
+| s6 | 66 | 93.94% |
+| **Total** | **452*** | **88.72%** |
+
+\* Slight count difference (452 vs 449) because the union of Flash and Pro covers a few utterances missed by one model.
+
+The ensemble (88.72%) improves over Flash alone (88.18%) and Pro alone (88.42%) by +0.5 pp. Gains are modest because the 29 hard cases have a ceiling: even with the full manual, the arbiter only reaches 58.6% on them.
+
+### Error patterns in arbitration failures (12/29 wrong after arbitration)
+
+- **RF vs TA for short acknowledgments** (`那邊喔，好`, `有喔`): Both models and arbiter call TA; ground truth is RF. The model consistently misses that brief acknowledgments of a child's statement are RF.
+- **Contextual DC vs TA** (s5: `去開紅色的車子`, `把手手舉起來`, `這樣子看看`): Arbiter sides with Pro (TA) but Flash was right (DC). These are play-context commands without explicit imperative markers — the arbiter lacks the visual context to distinguish.
+- **LP/BD/UP boundary** (s4: `放得好穩喔`, `哇，你這個設計...真的很漂亮`): Arbiter picks LP/BD where ground truth is TA/UP. Praise threshold judgment is still inconsistent.
+
+---
+
 ## Open items
 
 - **Best prompt**: `agentic-v10` (hash `75f09222`) with `gemini-3.1-pro-preview` + new manual + seed=42 + nonce is the current best at **93.10%** (all 6 sessions, 3-run avg). This is a meaningful improvement over the previous best cluster (`agentic-v1`/`agentic-v4` at ~91-92%). However, the old-vs-new manual advantage has reversed — further investigation needed to confirm whether this is a property of v10's subject field or a general trend.
@@ -845,3 +1046,5 @@ Enrichment **hurt** on every session with meaningful content.
 - `doc/codingTest.md`'s session-ID table is stale relative to the most recent re-seed.
 - The mechanism-mixing audit only checked prompts already in the original Results table — any future addition to `eval-results/dpics/` should be checked against `noCache`/`legacycache`/timestamp-cutoff logic before pooling.
 - **Nonce + seed interactions with `legacyCache`**: seed=42 achieved perfect determinism on s1/s5/s6 but not s2/s3/s4. Whether the variance in the larger sessions is due to the explicit cache bypassing the seed, or intrinsic model non-determinism at scale, is unconfirmed.
+- **gpt-4o baseline is 79.51%** on no-cache with the DeepSeek user-prompt-dir. A gpt-4o-native prompt (not recycled from DeepSeek's embed-manual format) may score higher. Tier 1 rate limits (30K TPM) require sequential runs; Tier 2 needs $50+ spend. Embed-manual is not viable for OpenAI — 160K tokens exceed both the 128K context window and any reasonable rate limit.
+- **Qwen experiments** (qwen3.7-max embed-manual, `d8c3cbc7`) were rate-limited before all 6 sessions could complete. Results are incomplete and not included in this doc. The international API endpoint (`dashscope-intl.aliyuncs.com`) is confirmed working; burst rate limits are aggressive and sessions must be run with long delays between them.

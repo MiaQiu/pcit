@@ -1,0 +1,809 @@
+Code every utterance where role is "adult". Skip all "child" entries.
+
+[
+  {
+    "id": 0,
+    "role": "adult",
+    "text": "來，你要怎麼放？"
+  },
+  {
+    "id": 1,
+    "role": "child",
+    "text": "綠色。"
+  },
+  {
+    "id": 2,
+    "role": "child",
+    "text": "嗯。"
+  },
+  {
+    "id": 3,
+    "role": "adult",
+    "text": "你要怎麼放？"
+  },
+  {
+    "id": 4,
+    "role": "adult",
+    "text": "來。"
+  },
+  {
+    "id": 5,
+    "role": "child",
+    "text": "排紅色的。"
+  },
+  {
+    "id": 6,
+    "role": "adult",
+    "text": "你要紅色的。"
+  },
+  {
+    "id": 7,
+    "role": "child",
+    "text": "嗯。"
+  },
+  {
+    "id": 8,
+    "role": "adult",
+    "text": "我幫你拿。"
+  },
+  {
+    "id": 9,
+    "role": "child",
+    "text": "嗯。"
+  },
+  {
+    "id": 10,
+    "role": "child",
+    "text": "xxxx。"
+  },
+  {
+    "id": 11,
+    "role": "adult",
+    "text": "再來要什麼顏色？"
+  },
+  {
+    "id": 12,
+    "role": "child",
+    "text": "嗯…嗯。"
+  },
+  {
+    "id": 13,
+    "role": "adult",
+    "text": "你再來要什麼顏色？"
+  },
+  {
+    "id": 14,
+    "role": "child",
+    "text": "嗯…這個。"
+  },
+  {
+    "id": 15,
+    "role": "adult",
+    "text": "什麼顏色？"
+  },
+  {
+    "id": 16,
+    "role": "adult",
+    "text": "我幫你拿。"
+  },
+  {
+    "id": 17,
+    "role": "child",
+    "text": "這個。"
+  },
+  {
+    "id": 18,
+    "role": "adult",
+    "text": "這個顏色喔？"
+  },
+  {
+    "id": 19,
+    "role": "child",
+    "text": "嗯。"
+  },
+  {
+    "id": 20,
+    "role": "adult",
+    "text": "咖啡色喔。"
+  },
+  {
+    "id": 21,
+    "role": "child",
+    "text": "這個。"
+  },
+  {
+    "id": 22,
+    "role": "adult",
+    "text": "這個？"
+  },
+  {
+    "id": 23,
+    "role": "child",
+    "text": "對。"
+  },
+  {
+    "id": 24,
+    "role": "adult",
+    "text": "大的？"
+  },
+  {
+    "id": 25,
+    "role": "child",
+    "text": "嗯，大的啊。"
+  },
+  {
+    "id": 26,
+    "role": "child",
+    "text": "把這個全部拿起來。"
+  },
+  {
+    "id": 27,
+    "role": "child",
+    "text": "這個，恩…欸。"
+  },
+  {
+    "id": 28,
+    "role": "adult",
+    "text": "好，拿去。"
+  },
+  {
+    "id": 29,
+    "role": "child",
+    "text": "好。"
+  },
+  {
+    "id": 30,
+    "role": "adult",
+    "text": "你要放這樣嗎？"
+  },
+  {
+    "id": 31,
+    "role": "child",
+    "text": "不要。"
+  },
+  {
+    "id": 32,
+    "role": "adult",
+    "text": "這個好像壓不下去。"
+  },
+  {
+    "id": 33,
+    "role": "child",
+    "text": "不是這樣。"
+  },
+  {
+    "id": 34,
+    "role": "adult",
+    "text": "這個放、放在這邊的對不對？"
+  },
+  {
+    "id": 35,
+    "role": "child",
+    "text": "嗯。"
+  },
+  {
+    "id": 36,
+    "role": "adult",
+    "text": "還是放在這邊？"
+  },
+  {
+    "id": 37,
+    "role": "child",
+    "text": "嗯，放在這邊。"
+  },
+  {
+    "id": 38,
+    "role": "adult",
+    "text": "好。"
+  },
+  {
+    "id": 39,
+    "role": "child",
+    "text": "先放在…這邊。"
+  },
+  {
+    "id": 40,
+    "role": "child",
+    "text": "放不過去。"
+  },
+  {
+    "id": 41,
+    "role": "child",
+    "text": "這個，不。"
+  },
+  {
+    "id": 42,
+    "role": "adult",
+    "text": "你要壓下去是不是？"
+  },
+  {
+    "id": 43,
+    "role": "child",
+    "text": "嗯。"
+  },
+  {
+    "id": 44,
+    "role": "adult",
+    "text": "這樣。"
+  },
+  {
+    "id": 45,
+    "role": "child",
+    "text": "嗯。"
+  },
+  {
+    "id": 46,
+    "role": "adult",
+    "text": "這樣齁？"
+  },
+  {
+    "id": 47,
+    "role": "adult",
+    "text": "這樣齁？"
+  },
+  {
+    "id": 48,
+    "role": "child",
+    "text": "嗯。"
+  },
+  {
+    "id": 49,
+    "role": "adult",
+    "text": "再來要什麼顏色？"
+  },
+  {
+    "id": 50,
+    "role": "adult",
+    "text": "我幫你拿。"
+  },
+  {
+    "id": 51,
+    "role": "child",
+    "text": "嗯，我要、我要黃色的積的。"
+  },
+  {
+    "id": 52,
+    "role": "adult",
+    "text": "黃色的是這個捏。"
+  },
+  {
+    "id": 53,
+    "role": "adult",
+    "text": "那個是紅色耶。"
+  },
+  {
+    "id": 54,
+    "role": "adult",
+    "text": "啊這是什麼顏色？"
+  },
+  {
+    "id": 55,
+    "role": "child",
+    "text": "嗯…"
+  },
+  {
+    "id": 56,
+    "role": "adult",
+    "text": "你要這個顏色嗎？"
+  },
+  {
+    "id": 57,
+    "role": "child",
+    "text": "黃色。"
+  },
+  {
+    "id": 58,
+    "role": "adult",
+    "text": "你要幫它們幹什麼？"
+  },
+  {
+    "id": 59,
+    "role": "child",
+    "text": "蓋房子。"
+  },
+  {
+    "id": 60,
+    "role": "child",
+    "text": "只是我不知道要怎麼蓋，"
+  },
+  {
+    "id": 61,
+    "role": "child",
+    "text": "哈啾。"
+  },
+  {
+    "id": 62,
+    "role": "adult",
+    "text": "喔，啊看你想怎麼蓋啊。"
+  },
+  {
+    "id": 63,
+    "role": "child",
+    "text": "嗯…"
+  },
+  {
+    "id": 64,
+    "role": "adult",
+    "text": "你要蓋成怎樣的房子？"
+  },
+  {
+    "id": 65,
+    "role": "child",
+    "text": "嗯，蓋成它們可以那樣子的房子。"
+  },
+  {
+    "id": 66,
+    "role": "child",
+    "text": "科~~~~"
+  },
+  {
+    "id": 67,
+    "role": "adult",
+    "text": "呵呵呵呵。"
+  },
+  {
+    "id": 68,
+    "role": "adult",
+    "text": "你怎麼了？"
+  },
+  {
+    "id": 69,
+    "role": "child",
+    "text": "不是，"
+  },
+  {
+    "id": 70,
+    "role": "child",
+    "text": "我是阿啾了，"
+  },
+  {
+    "id": 71,
+    "role": "child",
+    "text": "就又會..."
+  },
+  {
+    "id": 72,
+    "role": "adult",
+    "text": "喔，你哈啾喔。"
+  },
+  {
+    "id": 73,
+    "role": "child",
+    "text": "我阿啾就又打一層東西就\"科~\"。"
+  },
+  {
+    "id": 74,
+    "role": "adult",
+    "text": "你要、還要蓋怎樣？"
+  },
+  {
+    "id": 75,
+    "role": "child",
+    "text": "嗯…"
+  },
+  {
+    "id": 76,
+    "role": "adult",
+    "text": "你要什麼顏色？"
+  },
+  {
+    "id": 77,
+    "role": "adult",
+    "text": "我幫你拿。"
+  },
+  {
+    "id": 78,
+    "role": "child",
+    "text": "嗯…黃色。"
+  },
+  {
+    "id": 79,
+    "role": "adult",
+    "text": "黃色喔。"
+  },
+  {
+    "id": 80,
+    "role": "child",
+    "text": "嗯。"
+  },
+  {
+    "id": 81,
+    "role": "adult",
+    "text": "這個是黃色。"
+  },
+  {
+    "id": 82,
+    "role": "child",
+    "text": "對。"
+  },
+  {
+    "id": 83,
+    "role": "adult",
+    "text": "啊還要什麼顏色？"
+  },
+  {
+    "id": 84,
+    "role": "child",
+    "text": "嗯…嗯…藍色。"
+  },
+  {
+    "id": 85,
+    "role": "adult",
+    "text": "藍色喔。"
+  },
+  {
+    "id": 86,
+    "role": "child",
+    "text": "嗯。"
+  },
+  {
+    "id": 87,
+    "role": "adult",
+    "text": "然後呢？"
+  },
+  {
+    "id": 88,
+    "role": "child",
+    "text": "嗯…嗯…"
+  },
+  {
+    "id": 89,
+    "role": "adult",
+    "text": "再來要什麼顏色？"
+  },
+  {
+    "id": 90,
+    "role": "child",
+    "text": "綠色。"
+  },
+  {
+    "id": 91,
+    "role": "adult",
+    "text": "好，來。"
+  },
+  {
+    "id": 92,
+    "role": "adult",
+    "text": "再來要什麼顏色？"
+  },
+  {
+    "id": 93,
+    "role": "child",
+    "text": "嗯…要...黃色。"
+  },
+  {
+    "id": 94,
+    "role": "adult",
+    "text": "黃色是這個喔。"
+  },
+  {
+    "id": 95,
+    "role": "child",
+    "text": "好。"
+  },
+  {
+    "id": 96,
+    "role": "adult",
+    "text": "再來呢？"
+  },
+  {
+    "id": 97,
+    "role": "child",
+    "text": "嗯…紅色。"
+  },
+  {
+    "id": 98,
+    "role": "adult",
+    "text": "紅色。"
+  },
+  {
+    "id": 99,
+    "role": "child",
+    "text": "兩個放開一點。"
+  },
+  {
+    "id": 100,
+    "role": "adult",
+    "text": "哇。"
+  },
+  {
+    "id": 101,
+    "role": "adult",
+    "text": "再來呢？"
+  },
+  {
+    "id": 102,
+    "role": "child",
+    "text": "嗯…還要一個紅色。"
+  },
+  {
+    "id": 103,
+    "role": "adult",
+    "text": "喔。"
+  },
+  {
+    "id": 104,
+    "role": "child",
+    "text": "一個紅色在我這邊。"
+  },
+  {
+    "id": 105,
+    "role": "adult",
+    "text": "紅色喔。"
+  },
+  {
+    "id": 106,
+    "role": "adult",
+    "text": "那個是黃色。"
+  },
+  {
+    "id": 107,
+    "role": "child",
+    "text": "我要黃色。"
+  },
+  {
+    "id": 108,
+    "role": "adult",
+    "text": "喔。"
+  },
+  {
+    "id": 109,
+    "role": "child",
+    "text": "啊嗯，我要兩個黃的。"
+  },
+  {
+    "id": 110,
+    "role": "adult",
+    "text": "喔。"
+  },
+  {
+    "id": 111,
+    "role": "child",
+    "text": "這個，還有…"
+  },
+  {
+    "id": 112,
+    "role": "adult",
+    "text": "兩個紅色喔？"
+  },
+  {
+    "id": 113,
+    "role": "child",
+    "text": "嗯。"
+  },
+  {
+    "id": 114,
+    "role": "adult",
+    "text": "紅色，這裡也有一個紅色啊。"
+  },
+  {
+    "id": 115,
+    "role": "child",
+    "text": "啊，我要、我要這…"
+  },
+  {
+    "id": 116,
+    "role": "adult",
+    "text": "好，那你拿那裡。"
+  },
+  {
+    "id": 117,
+    "role": "child",
+    "text": "紅色。"
+  },
+  {
+    "id": 118,
+    "role": "adult",
+    "text": "坐著。"
+  },
+  {
+    "id": 119,
+    "role": "child",
+    "text": "啊，我還要一個黃色。"
+  },
+  {
+    "id": 120,
+    "role": "child",
+    "text": "喔，我還要一個黃色。"
+  },
+  {
+    "id": 121,
+    "role": "child",
+    "text": "喔，我還要…"
+  },
+  {
+    "id": 122,
+    "role": "adult",
+    "text": "黃色。"
+  },
+  {
+    "id": 123,
+    "role": "adult",
+    "text": "這裡有一個黃色啊。"
+  },
+  {
+    "id": 124,
+    "role": "child",
+    "text": "嗯…"
+  },
+  {
+    "id": 125,
+    "role": "adult",
+    "text": "那是紅色。"
+  },
+  {
+    "id": 126,
+    "role": "child",
+    "text": "我要紅色。"
+  },
+  {
+    "id": 127,
+    "role": "adult",
+    "text": "啊還要什麼顏色？"
+  },
+  {
+    "id": 128,
+    "role": "child",
+    "text": "還要、還要、還要一個紅色。"
+  },
+  {
+    "id": 129,
+    "role": "adult",
+    "text": "這裡有一個啊。"
+  },
+  {
+    "id": 130,
+    "role": "child",
+    "text": "還要一個、還要一個啦。"
+  },
+  {
+    "id": 131,
+    "role": "adult",
+    "text": "這個嗎？"
+  },
+  {
+    "id": 132,
+    "role": "child",
+    "text": "嗯，對。"
+  },
+  {
+    "id": 133,
+    "role": "child",
+    "text": "嗯，不是、不是。"
+  },
+  {
+    "id": 134,
+    "role": "child",
+    "text": "我說錯了。"
+  },
+  {
+    "id": 135,
+    "role": "child",
+    "text": "嗯還要…"
+  },
+  {
+    "id": 136,
+    "role": "adult",
+    "text": "啊這裡就是了啊。"
+  },
+  {
+    "id": 137,
+    "role": "adult",
+    "text": "這個就是了啊。"
+  },
+  {
+    "id": 138,
+    "role": "child",
+    "text": "這個"
+  },
+  {
+    "id": 139,
+    "role": "child",
+    "text": "還要這個。"
+  },
+  {
+    "id": 140,
+    "role": "adult",
+    "text": "然後呢？"
+  },
+  {
+    "id": 141,
+    "role": "child",
+    "text": "還要、還要、還要、這…還還要、要一、一個紅色。"
+  },
+  {
+    "id": 142,
+    "role": "adult",
+    "text": "一個紅色。"
+  },
+  {
+    "id": 143,
+    "role": "adult",
+    "text": "這裡。"
+  },
+  {
+    "id": 144,
+    "role": "child",
+    "text": "嗯…"
+  },
+  {
+    "id": 145,
+    "role": "adult",
+    "text": "這個啊。"
+  },
+  {
+    "id": 146,
+    "role": "child",
+    "text": "嗯…這個紅色、這個紅色。"
+  },
+  {
+    "id": 147,
+    "role": "adult",
+    "text": "喔。"
+  },
+  {
+    "id": 148,
+    "role": "adult",
+    "text": "哇，你要蓋高樓喔，是嗎？"
+  },
+  {
+    "id": 149,
+    "role": "child",
+    "text": "我、我不是要蓋高樓。"
+  },
+  {
+    "id": 150,
+    "role": "adult",
+    "text": "不然你是要蓋什麼？"
+  },
+  {
+    "id": 151,
+    "role": "child",
+    "text": "我…我要蓋…"
+  },
+  {
+    "id": 152,
+    "role": "adult",
+    "text": "這裡、這裡也有一個紅色。"
+  },
+  {
+    "id": 153,
+    "role": "child",
+    "text": "我要蓋、蓋動物園的家。"
+  },
+  {
+    "id": 154,
+    "role": "adult",
+    "text": "喔，你要蓋動物園的家。"
+  },
+  {
+    "id": 155,
+    "role": "child",
+    "text": "對阿。"
+  },
+  {
+    "id": 156,
+    "role": "child",
+    "text": "動物園的家也是這樣排的。"
+  },
+  {
+    "id": 157,
+    "role": "adult",
+    "text": "喔。"
+  },
+  {
+    "id": 158,
+    "role": "adult",
+    "text": "啊還要呢？"
+  }
+]
+
+Return a minified JSON array for adult utterances only:
+[{"id": <int>, "subject": <string>, "reasoning": <string>, "code": <string>}, ...]
+- "subject": who or what the utterance is primarily about — choose the most specific applicable label:
+  "兒童" (the child), "物品/玩具" (an object or toy), "家長自身" (the parent themselves), "遊戲角色" (a pretend/play character), "第三方" (another person not the child), "不明" (unclear)
+- "reasoning": one sentence naming the decisive feature or rule that determines the code (e.g. "肯定句 + 描述兒童當下動作 → BD" or "呼應兒童剛才說的話 → RF 優先於 BD")
+- "code": the single DPICS code
+- Return ONLY the JSON array — no text, no markdown, no code fences
+- First character MUST be [, last character MUST be ]
+- Every adult entry MUST have "id", "subject", "reasoning", and "code"

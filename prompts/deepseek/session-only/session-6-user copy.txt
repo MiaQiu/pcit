@@ -1,0 +1,444 @@
+Code every utterance where role is "adult". Skip all "child" entries.
+
+[
+  {
+    "id": 0,
+    "role": "child",
+    "text": "把澆水的都拿出來。"
+  },
+  {
+    "id": 1,
+    "role": "adult",
+    "text": "喔，你把灑水器拿起來。"
+  },
+  {
+    "id": 2,
+    "role": "child",
+    "text": "唉呦。"
+  },
+  {
+    "id": 3,
+    "role": "adult",
+    "text": "謝謝你把灑水器從地上撿起來。"
+  },
+  {
+    "id": 4,
+    "role": "adult",
+    "text": "哇，你又拿了一個很大的一個建築的東西。"
+  },
+  {
+    "id": 5,
+    "role": "adult",
+    "text": "謝謝你很有耐心的把它放好。"
+  },
+  {
+    "id": 6,
+    "role": "adult",
+    "text": "還有謝謝你把它的門關好。"
+  },
+  {
+    "id": 7,
+    "role": "adult",
+    "text": "你拿了一個藍色的花盆。"
+  },
+  {
+    "id": 8,
+    "role": "adult",
+    "text": "你把花放到藍色花盆裡面去。"
+  },
+  {
+    "id": 9,
+    "role": "adult",
+    "text": "欸，你很聰明喔，你知道方形的黏土可以放到方形的花盆裡面喔。"
+  },
+  {
+    "id": 10,
+    "role": "child",
+    "text": "都放不好。"
+  },
+  {
+    "id": 11,
+    "role": "adult",
+    "text": "喔，你很棒喔，你很有耐心地把黏土放好。"
+  },
+  {
+    "id": 12,
+    "role": "child",
+    "text": "不是黏土。"
+  },
+  {
+    "id": 13,
+    "role": "adult",
+    "text": "喔，很棒喔，你把泥土放好了。"
+  },
+  {
+    "id": 14,
+    "role": "adult",
+    "text": "你拿了一個樹枝。"
+  },
+  {
+    "id": 15,
+    "role": "adult",
+    "text": "喔，你把樹枝插的很棒喔，一下子就插進去了。"
+  },
+  {
+    "id": 16,
+    "role": "adult",
+    "text": "你又拿了…"
+  },
+  {
+    "id": 17,
+    "role": "child",
+    "text": "耳機聽的到嗎？"
+  },
+  {
+    "id": 18,
+    "role": "adult",
+    "text": "喔，你想知道耳機聽不聽得到。"
+  },
+  {
+    "id": 19,
+    "role": "adult",
+    "text": "可以呀。"
+  },
+  {
+    "id": 20,
+    "role": "adult",
+    "text": "你拿了一片葉子，"
+  },
+  {
+    "id": 21,
+    "role": "adult",
+    "text": "然後把葉子把它放到樹枝上面。"
+  },
+  {
+    "id": 22,
+    "role": "adult",
+    "text": "哇，你…."
+  },
+  {
+    "id": 23,
+    "role": "child",
+    "text": "玩好這個就要玩新玩具嗎？"
+  },
+  {
+    "id": 24,
+    "role": "adult",
+    "text": "喔，你把黃色的花種好了，很棒欸。"
+  },
+  {
+    "id": 25,
+    "role": "child",
+    "text": "之後會玩新玩具嗎？"
+  },
+  {
+    "id": 26,
+    "role": "child",
+    "text": "等我玩完就玩新玩具嗎？"
+  },
+  {
+    "id": 27,
+    "role": "adult",
+    "text": "喔，你想知道等一下是不是可以玩新玩具嗎。"
+  },
+  {
+    "id": 28,
+    "role": "adult",
+    "text": "會阿。"
+  },
+  {
+    "id": 29,
+    "role": "adult",
+    "text": "你現在在幫花澆水。"
+  },
+  {
+    "id": 30,
+    "role": "adult",
+    "text": "謝謝你幫花澆水。"
+  },
+  {
+    "id": 31,
+    "role": "adult",
+    "text": "這樣它就可以快快長大囉。"
+  },
+  {
+    "id": 32,
+    "role": "child",
+    "text": "長大吧。"
+  },
+  {
+    "id": 33,
+    "role": "adult",
+    "text": "媽媽發現你把那個灑水器把它很好的放在旁邊…整齊的放在旁邊，很棒喔。"
+  },
+  {
+    "id": 34,
+    "role": "adult",
+    "text": "哇，你又拿了一些花盆上來。"
+  },
+  {
+    "id": 35,
+    "role": "adult",
+    "text": "你又繼續在找東西。"
+  },
+  {
+    "id": 36,
+    "role": "adult",
+    "text": "你把花盆一個一個放好。"
+  },
+  {
+    "id": 37,
+    "role": "child",
+    "text": "一個是小的。"
+  },
+  {
+    "id": 38,
+    "role": "adult",
+    "text": "你拿了一個圓形的泥土。"
+  },
+  {
+    "id": 39,
+    "role": "adult",
+    "text": "你把圓形的泥土放在花盆裡面。"
+  },
+  {
+    "id": 40,
+    "role": "adult",
+    "text": "你有發現這個圓形泥土比較小，需要放在小的花盆，很棒喔，有發現到欸。"
+  },
+  {
+    "id": 41,
+    "role": "adult",
+    "text": "你又拿了一根樹枝出來。"
+  },
+  {
+    "id": 42,
+    "role": "adult",
+    "text": "你再把一片葉子放到樹枝上面。"
+  },
+  {
+    "id": 43,
+    "role": "adult",
+    "text": "哇，很厲害喔，一下子就把樹葉把它放好了。"
+  },
+  {
+    "id": 44,
+    "role": "adult",
+    "text": "你又拿了一片粉紅色的花。"
+  },
+  {
+    "id": 45,
+    "role": "adult",
+    "text": "哇，你一下子就把花做好了欸，你好厲害喔。"
+  },
+  {
+    "id": 46,
+    "role": "adult",
+    "text": "哇，謝謝你很有耐心地把花種好。"
+  },
+  {
+    "id": 47,
+    "role": "child",
+    "text": "唉呦。"
+  },
+  {
+    "id": 48,
+    "role": "child",
+    "text": "我都放不平均。"
+  },
+  {
+    "id": 49,
+    "role": "adult",
+    "text": "你覺得你放不平均喔。"
+  },
+  {
+    "id": 50,
+    "role": "child",
+    "text": "都放…都不平均。"
+  },
+  {
+    "id": 51,
+    "role": "adult",
+    "text": "Okay，放平均了。"
+  },
+  {
+    "id": 52,
+    "role": "adult",
+    "text": "你很棒喔，再把樹葉把它插…又插好一朵花了。"
+  },
+  {
+    "id": 53,
+    "role": "adult",
+    "text": "你再把一個方形的泥土放到方形的花盆裡。"
+  },
+  {
+    "id": 54,
+    "role": "adult",
+    "text": "你這次有發現到這個方形的泥土是大的可以放到大的花盆裡，很厲害欸。"
+  },
+  {
+    "id": 55,
+    "role": "adult",
+    "text": "你又拿了一些葉子還有樹枝。"
+  },
+  {
+    "id": 56,
+    "role": "child",
+    "text": "這個忘記澆水。"
+  },
+  {
+    "id": 57,
+    "role": "adult",
+    "text": "你覺得你忘記澆水了喔。"
+  },
+  {
+    "id": 58,
+    "role": "adult",
+    "text": "哇，謝謝你幫花澆水。"
+  },
+  {
+    "id": 59,
+    "role": "adult",
+    "text": "這樣它們就可以快快長大囉。"
+  },
+  {
+    "id": 60,
+    "role": "adult",
+    "text": "你再把樹枝插到泥土裡面。"
+  },
+  {
+    "id": 61,
+    "role": "adult",
+    "text": "你再把它的樹葉掛上去。"
+  },
+  {
+    "id": 62,
+    "role": "adult",
+    "text": "哇，你很棒喔，你發現裝反了，"
+  },
+  {
+    "id": 63,
+    "role": "adult",
+    "text": "再把它拿起來"
+  },
+  {
+    "id": 64,
+    "role": "adult",
+    "text": "放好。"
+  },
+  {
+    "id": 65,
+    "role": "adult",
+    "text": "你又拿了一朵黃色的花。"
+  },
+  {
+    "id": 66,
+    "role": "adult",
+    "text": "哇，你一下子就把花做好了，很厲害欸。"
+  },
+  {
+    "id": 67,
+    "role": "adult",
+    "text": "〉在幫花澆水"
+  },
+  {
+    "id": 68,
+    "role": "adult",
+    "text": "再幫它灑一點水。"
+  },
+  {
+    "id": 69,
+    "role": "adult",
+    "text": "哇，這樣花就可以快快長大了。"
+  },
+  {
+    "id": 70,
+    "role": "adult",
+    "text": "謝謝你。"
+  },
+  {
+    "id": 71,
+    "role": "child",
+    "text": "這還有一個。"
+  },
+  {
+    "id": 72,
+    "role": "adult",
+    "text": "喔，你覺得這個花盆還有一個喔。"
+  },
+  {
+    "id": 73,
+    "role": "child",
+    "text": "你找一下。"
+  },
+  {
+    "id": 74,
+    "role": "adult",
+    "text": "喔，你想要媽媽幫你找一下喔。"
+  },
+  {
+    "id": 75,
+    "role": "child",
+    "text": "有嗎？"
+  },
+  {
+    "id": 76,
+    "role": "adult",
+    "text": "喔，你覺得還有沒有花盆。"
+  },
+  {
+    "id": 77,
+    "role": "adult",
+    "text": "媽媽來看一下。"
+  },
+  {
+    "id": 78,
+    "role": "child",
+    "text": "泥土、泥土。"
+  },
+  {
+    "id": 79,
+    "role": "adult",
+    "text": "喔，泥土。"
+  },
+  {
+    "id": 80,
+    "role": "adult",
+    "text": "哇，你好厲害喔，你有發現另一塊泥土。"
+  },
+  {
+    "id": 81,
+    "role": "child",
+    "text": "太大了。"
+  },
+  {
+    "id": 82,
+    "role": "adult",
+    "text": "喔，你覺得這塊泥土太大了喔。"
+  },
+  {
+    "id": 83,
+    "role": "child",
+    "text": "那這泥土要放哪裡？"
+  },
+  {
+    "id": 84,
+    "role": "adult",
+    "text": "喔，你覺得這個泥土要放哪裡喔。"
+  },
+  {
+    "id": 85,
+    "role": "adult",
+    "text": "喔，你找到狗狗的房子…屋子欸。"
+  }
+]
+
+Return a minified JSON array for adult utterances only:
+[{"id": <int>, "subject": <string>, "reasoning": <string>, "code": <string>}, ...]
+- "subject": who or what the utterance is primarily about — choose the most specific applicable label:
+  "兒童" (the child), "物品/玩具" (an object or toy), "家長自身" (the parent themselves), "遊戲角色" (a pretend/play character), "第三方" (another person not the child), "不明" (unclear)
+- "reasoning": one sentence naming the decisive feature or rule that determines the code (e.g. "肯定句 + 描述兒童當下動作 → BD" or "呼應兒童剛才說的話 → RF 優先於 BD")
+- "code": the single DPICS code
+- Return ONLY the JSON array — no text, no markdown, no code fences
+- First character MUST be [, last character MUST be ]
+- Every adult entry MUST have "id", "subject", "reasoning", and "code"

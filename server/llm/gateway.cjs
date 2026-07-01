@@ -19,6 +19,9 @@ const { resolveModel }    = require('./models.cjs');
 const { PROFILES }        = require('./profiles.cjs');
 const { geminiCall, geminiStreamCall } = require('./providers/gemini.cjs');
 const { anthropicCall }   = require('./providers/anthropic.cjs');
+const { deepseekCall }    = require('./providers/deepseek.cjs');
+const { qwenCall }        = require('./providers/qwen.cjs');
+const { openaiCall }      = require('./providers/openai.cjs');
 const { getOrCreateCache } = require('./providers/geminiCache.cjs');
 const { parseJSON }       = require('./repair.cjs');
 const { logLLMCall }      = require('./logger.cjs');
@@ -103,6 +106,7 @@ async function llmCall(prompt, options = {}) {
     usedRetry:    false,
     inputTokens:  null,
     outputTokens: null,
+    thinkingTokens: null,
     ok:           true,
     error:        null,
   };
@@ -118,6 +122,7 @@ async function llmCall(prompt, options = {}) {
     track.usedFallback = first.fallback;
     track.inputTokens  = first.usage?.inputTokens  ?? null;
     track.outputTokens = first.usage?.outputTokens ?? null;
+    track.thinkingTokens = first.usage?.thinkingTokens ?? null;
 
     if (output === 'text') return sanitizeOutput(first.text);
 
@@ -136,6 +141,7 @@ async function llmCall(prompt, options = {}) {
       track.model        = retry.model;
       track.inputTokens  = retry.usage?.inputTokens  ?? null;
       track.outputTokens = retry.usage?.outputTokens ?? null;
+      track.thinkingTokens = retry.usage?.thinkingTokens ?? null;
 
       const { value, repaired } = parseJSON(retry.text, type);
       track.usedRepair = repaired;
@@ -154,6 +160,7 @@ async function llmCall(prompt, options = {}) {
       latencyMs:    Date.now() - start,
       inputTokens:  track.inputTokens,
       outputTokens: track.outputTokens,
+      thinkingTokens: track.thinkingTokens,
       hasSchema,
       usedFallback: track.usedFallback,
       usedRepair:   track.usedRepair,
@@ -245,6 +252,15 @@ async function _call(modelDef, prompt, systemPrompt, maxTokens, temperature, tim
     }
     return _geminiCall(modelDef.primary, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent, cacheFilesOnly);
   }
+  if (modelDef.provider === 'deepseek') {
+    return _deepseekCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout);
+  }
+  if (modelDef.provider === 'qwen') {
+    return _qwenCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout);
+  }
+  if (modelDef.provider === 'openai') {
+    return _openaiCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout);
+  }
   // Claude does not support cachedContent; systemPrompt is handled by anthropicCall
   return _claudeCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout);
 }
@@ -287,6 +303,27 @@ async function _claudeCall(modelDef, prompt, systemPrompt, maxTokens, temperatur
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
   const { text, usage } = await anthropicCall(apiKey, modelDef.primary, { prompt, systemPrompt, maxTokens, temperature, timeout });
+  return { text, usage, model: modelDef.primary, fallback: false };
+}
+
+async function _deepseekCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout) {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) throw new Error('DEEPSEEK_API_KEY not configured');
+  const { text, usage } = await deepseekCall(apiKey, modelDef.primary, { prompt, systemPrompt, maxTokens, temperature, timeout });
+  return { text, usage, model: modelDef.primary, fallback: false };
+}
+
+async function _qwenCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout) {
+  const apiKey = process.env.QWEN_API_KEY;
+  if (!apiKey) throw new Error('QWEN_API_KEY not configured');
+  const { text, usage } = await qwenCall(apiKey, modelDef.primary, { prompt, systemPrompt, maxTokens, temperature, timeout });
+  return { text, usage, model: modelDef.primary, fallback: false };
+}
+
+async function _openaiCall(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
+  const { text, usage } = await openaiCall(apiKey, modelDef.primary, { prompt, systemPrompt, maxTokens, temperature, timeout });
   return { text, usage, model: modelDef.primary, fallback: false };
 }
 

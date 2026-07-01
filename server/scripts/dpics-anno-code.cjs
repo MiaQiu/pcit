@@ -48,13 +48,14 @@ async function codeSession(filename, sessionNum) {
 ${JSON.stringify(utterancesData, null, 2)}
 
 Return a minified JSON array for adult utterances only:
-[{"id": <int>, "subject": <string>, "code": <string>}, ...]
+[{"id": <int>, "subject": <string>, "reasoning": <string>, "code": <string>}, ...]
 - "subject": who or what the utterance is primarily about — choose the most specific applicable label:
   "兒童" (the child), "物品/玩具" (an object or toy), "家長自身" (the parent themselves), "遊戲角色" (a pretend/play character), "第三方" (another person not the child), "不明" (unclear)
+- "reasoning": one sentence naming the decisive feature or rule that determines the code (e.g. "肯定句 + 描述兒童當下動作 → BD" or "呼應兒童剛才說的話 → RF 優先於 BD")
 - "code": the single DPICS code
 - Return ONLY the JSON array — no text, no markdown, no code fences
 - First character MUST be [, last character MUST be ]
-- Every adult entry MUST have "id", "subject", and "code"`;
+- Every adult entry MUST have "id", "subject", "reasoning", and "code"`;
 
   console.log(`  [s${sessionNum}] Coding with Pro (${utterancesData.filter(u=>u.role==='adult').length} adult utts)...`);
 

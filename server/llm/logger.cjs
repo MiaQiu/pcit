@@ -10,8 +10,9 @@
  *   model        — model ID that actually responded
  *   provider     — "gemini" | "anthropic"
  *   latencyMs    — wall-clock time for the full llmCall()
- *   inputTokens  — prompt token count (null if unavailable)
- *   outputTokens — completion token count (null if unavailable)
+ *   inputTokens    — prompt token count (null if unavailable)
+ *   outputTokens   — completion token count, includes thinkingTokens if present (null if unavailable)
+ *   thinkingTokens — hidden reasoning token count, billed at output rate (null if not a thinking call)
  *   hasSchema    — true if Gemini responseSchema was applied
  *   usedFallback — true if primary model failed and fallback was used
  *   usedRepair   — true if jsonrepair fixed malformed JSON
@@ -24,8 +25,9 @@ function logLLMCall({
   model,
   provider,
   latencyMs,
-  inputTokens  = null,
-  outputTokens = null,
+  inputTokens    = null,
+  outputTokens   = null,
+  thinkingTokens = null,
   hasSchema    = false,
   usedFallback = false,
   usedRepair   = false,
@@ -41,6 +43,7 @@ function logLLMCall({
     latencyMs,
     inputTokens,
     outputTokens,
+    thinkingTokens,
     hasSchema,
     usedFallback,
     usedRepair,

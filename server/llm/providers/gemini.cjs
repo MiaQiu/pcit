@@ -98,35 +98,28 @@ async function geminiStreamCall(apiKey, model, body, { timeout = 60_000, cachedC
   const decoder = new TextDecoder();
   let fullText = '';
   let buffer   = '';
+  let usageMetadata = null;
+
+  const consumeLine = (line) => {
+    if (!line.startsWith('data: ')) return;
+    const jsonStr = line.slice(6).trim();
+    if (!jsonStr || jsonStr === '[DONE]') return;
+    try {
+      const data = JSON.parse(jsonStr);
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) fullText += text;
+      // Gemini sends usageMetadata on each chunk (cumulative); the last chunk has the final counts.
+      if (data.usageMetadata) usageMetadata = data.usageMetadata;
+    } catch (_) {}
+  };
 
   for await (const chunk of response.body) {
     buffer += decoder.decode(chunk, { stream: true });
     const lines = buffer.split('\n');
     buffer = lines.pop() || '';
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        const jsonStr = line.slice(6).trim();
-        if (jsonStr && jsonStr !== '[DONE]') {
-          try {
-            const data = JSON.parse(jsonStr);
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) fullText += text;
-          } catch (_) {}
-        }
-      }
-    }
+    for (const line of lines) consumeLine(line);
   }
-
-  if (buffer.startsWith('data: ')) {
-    const jsonStr = buffer.slice(6).trim();
-    if (jsonStr && jsonStr !== '[DONE]') {
-      try {
-        const data = JSON.parse(jsonStr);
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) fullText += text;
-      } catch (_) {}
-    }
-  }
+  consumeLine(buffer);
 
   if (!fullText) {
     const err     = new Error('Empty response from Gemini streaming API');
@@ -134,7 +127,16 @@ async function geminiStreamCall(apiKey, model, body, { timeout = 60_000, cachedC
     throw err;
   }
 
-  return { text: fullText, usage: { inputTokens: null, outputTokens: null } };
+  const usage = {
+    inputTokens:  usageMetadata?.promptTokenCount     ?? null,
+    outputTokens: usageMetadata?.candidatesTokenCount ?? null,
+  };
+  if (usageMetadata?.thoughtsTokenCount != null) {
+    usage.outputTokens = (usage.outputTokens ?? 0) + usageMetadata.thoughtsTokenCount;
+    usage.thinkingTokens = usageMetadata.thoughtsTokenCount;
+  }
+
+  return { text: fullText, usage };
 }
 
 module.exports = { geminiCall, geminiStreamCall };

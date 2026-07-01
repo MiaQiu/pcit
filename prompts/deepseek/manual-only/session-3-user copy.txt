@@ -1,0 +1,724 @@
+你是「雙向親子互動編碼系統」（Dyadic Parent-Child Interaction Coding System，簡稱 DPICS）的專家級編碼員。請根據提供的 DPICS 手冊及附錄中的準則與階層架構，為逐字稿中每一個家長（成人）的口語表達分配正確的 DPICS 編碼。
+
+---
+
+## 輸出格式 — 主語 + 推理 + 單一編碼
+
+在為每句話語選擇編碼之前，**先判斷主語**（該話語主要關於誰或什麼）：
+- **兒童**：話語以兒童為主體（最常見）
+- **物品/玩具**：話語描述的是某個物品、玩具或道具本身的狀態
+- **家長自身**：家長在描述自己的行為或感受
+- **遊戲角色**：假裝遊戲中的虛構角色（如樂高人、動物玩偶）為主體，並非兒童本人
+- **第三方**：提及的是不在場的第三者
+- **不明**：主語不清楚
+
+主語判定直接影響編碼：
+- 主語為**遊戲角色**或**物品**而非兒童本人 → 通常為 **TA**（旁白），而非 DC/IC/BD
+- 主語為**兒童** + 描述當下可觀察行為 → 可能為 **BD**
+- 主語為**家長自身** → 通常為 **TA**，而非 DC/BD
+
+確定主語後，**用一句話說明關鍵的編碼理由**（「reasoning」欄位）：指出觸發最終編碼的核心特徵或決策規則，例如「肯定句 + 描述兒童當下動作 → BD」或「呼應兒童剛才說的話 → RF 優先於 BD」。不需要列舉所有考量，只需點出決定性的那一點。
+
+每一個被編碼的話語都只能從下方標準的 DPICS 編碼列表中獲得「一個」編碼。絕對不要輸出組合、模糊或複合的編碼（例如：「TA + DC」是無效的，這不是真實的編碼且會被拒絕）。如果一句話似乎符合多個編碼，請勿將它們結合在一起，而是應用下方提供的優先順序／決策規則來選出單一最佳編碼。
+
+**有效編碼 — 完整且唯一的合法清單：**
+
+| 代碼 | 全名 |
+|---|---|
+| NTA | Negative Talk |
+| DC | Direct Command |
+| IC | Indirect Command |
+| LP | Labeled Praise |
+| UP | Unlabeled Praise |
+| IQ | Information Question |
+| DQ | Descriptive/Reflective Question |
+| RF | Reflective Statement |
+| BD | Behavioral Description |
+| TA | Neutral Talk |
+| NC | No Code（不完整的陳述、純噪音/音效、無溝通內容） |
+
+⚠️ **硬性限制：`code` 欄位必須且只能是上表中的其中一個代碼（區分大小寫）。任何不在此清單中的輸出（例如 PRO、AN、AK、ID、LP1、LP2 等）都是無效的，會被系統拒絕。如果不確定，請從 TA 或 NC 中選一個，而不是發明新代碼。**
+
+
+---
+
+[nonce:1bd56c36-f16e-4d2e-8f0b-82a482667a97]
+Code every utterance where role is "adult". Skip all "child" entries.
+
+[
+  {
+    "id": 0,
+    "role": "adult",
+    "text": "好拉，XX，我們現在要收囉！"
+  },
+  {
+    "id": 1,
+    "role": "child",
+    "text": "為什麼？"
+  },
+  {
+    "id": 2,
+    "role": "adult",
+    "text": "對阿 ，阿姨他們要回家了，"
+  },
+  {
+    "id": 3,
+    "role": "adult",
+    "text": "我們也要回家了。"
+  },
+  {
+    "id": 4,
+    "role": "adult",
+    "text": "所以我們把玩具收一收吧。"
+  },
+  {
+    "id": 5,
+    "role": "child",
+    "text": "等一下。"
+  },
+  {
+    "id": 6,
+    "role": "adult",
+    "text": "好嗎？"
+  },
+  {
+    "id": 7,
+    "role": "adult",
+    "text": "好嗎？"
+  },
+  {
+    "id": 8,
+    "role": "child",
+    "text": "可是，我們再玩一下下。"
+  },
+  {
+    "id": 9,
+    "role": "adult",
+    "text": "可是時間到了捏。"
+  },
+  {
+    "id": 10,
+    "role": "adult",
+    "text": "阿姨他們要回去了耶。"
+  },
+  {
+    "id": 11,
+    "role": "adult",
+    "text": "等一下這裡要關電燈了喔。"
+  },
+  {
+    "id": 12,
+    "role": "child",
+    "text": "好。"
+  },
+  {
+    "id": 13,
+    "role": "adult",
+    "text": "好，"
+  },
+  {
+    "id": 14,
+    "role": "adult",
+    "text": "那我們收一收。"
+  },
+  {
+    "id": 15,
+    "role": "adult",
+    "text": "你好棒喔嘿。"
+  },
+  {
+    "id": 16,
+    "role": "adult",
+    "text": "今天很棒喔。"
+  },
+  {
+    "id": 17,
+    "role": "adult",
+    "text": "小力一點，小力一點，小力一點。"
+  },
+  {
+    "id": 18,
+    "role": "adult",
+    "text": "小力喔。"
+  },
+  {
+    "id": 19,
+    "role": "adult",
+    "text": "收玩具很棒，"
+  },
+  {
+    "id": 20,
+    "role": "adult",
+    "text": "阿輕輕放會更棒喔。"
+  },
+  {
+    "id": 21,
+    "role": "adult",
+    "text": "小力唷。"
+  },
+  {
+    "id": 22,
+    "role": "adult",
+    "text": "喔，好厲害。"
+  },
+  {
+    "id": 23,
+    "role": "adult",
+    "text": "喔，好厲害。"
+  },
+  {
+    "id": 24,
+    "role": "adult",
+    "text": "小聲一點， 小聲一點。"
+  },
+  {
+    "id": 25,
+    "role": "adult",
+    "text": "要輕輕放。"
+  },
+  {
+    "id": 26,
+    "role": "adult",
+    "text": "要愛惜玩具。"
+  },
+  {
+    "id": 27,
+    "role": "child",
+    "text": "阿這個城堡要收嗎？"
+  },
+  {
+    "id": 28,
+    "role": "adult",
+    "text": "要，"
+  },
+  {
+    "id": 29,
+    "role": "adult",
+    "text": "通通都要。"
+  },
+  {
+    "id": 30,
+    "role": "adult",
+    "text": "小力一點。"
+  },
+  {
+    "id": 31,
+    "role": "adult",
+    "text": "媽媽跟你說要...要...，玩具要愛惜喔。"
+  },
+  {
+    "id": 32,
+    "role": "child",
+    "text": "送往那邊。"
+  },
+  {
+    "id": 33,
+    "role": "adult",
+    "text": "喔對，"
+  },
+  {
+    "id": 34,
+    "role": "adult",
+    "text": "地上的也撿起來。"
+  },
+  {
+    "id": 35,
+    "role": "adult",
+    "text": "這都要收、收進去。"
+  },
+  {
+    "id": 36,
+    "role": "child",
+    "text": "媽咪。"
+  },
+  {
+    "id": 37,
+    "role": "child",
+    "text": "媽咪我們明天再用這一個"
+  },
+  {
+    "id": 38,
+    "role": "adult",
+    "text": "好啊、好啊、好啊。"
+  },
+  {
+    "id": 39,
+    "role": "adult",
+    "text": "但那些阿姨要回去了耶。"
+  },
+  {
+    "id": 40,
+    "role": "child",
+    "text": "為什麼？"
+  },
+  {
+    "id": 41,
+    "role": "adult",
+    "text": "對阿，因為很晚了，"
+  },
+  {
+    "id": 42,
+    "role": "adult",
+    "text": "他們要回家吃飯休息。"
+  },
+  {
+    "id": 43,
+    "role": "child",
+    "text": "媽咪，阿這個咧？"
+  },
+  {
+    "id": 44,
+    "role": "adult",
+    "text": "那個放著就好。"
+  },
+  {
+    "id": 45,
+    "role": "adult",
+    "text": "阿你桌上的玩具還沒有收好阿。"
+  },
+  {
+    "id": 46,
+    "role": "adult",
+    "text": "全部，"
+  },
+  {
+    "id": 47,
+    "role": "adult",
+    "text": "你一樣一樣慢慢收，"
+  },
+  {
+    "id": 48,
+    "role": "adult",
+    "text": "都放到盒子裡面去"
+  },
+  {
+    "id": 49,
+    "role": "adult",
+    "text": "哇！"
+  },
+  {
+    "id": 50,
+    "role": "child",
+    "text": "媽咪，"
+  },
+  {
+    "id": 51,
+    "role": "adult",
+    "text": "有。"
+  },
+  {
+    "id": 52,
+    "role": "child",
+    "text": "你收地上的好嗎？"
+  },
+  {
+    "id": 53,
+    "role": "adult",
+    "text": "你自己收好不好？"
+  },
+  {
+    "id": 54,
+    "role": "adult",
+    "text": "你很棒。"
+  },
+  {
+    "id": 55,
+    "role": "adult",
+    "text": "你把它收好，我等一下跟爸爸說，你今天表現得很好"
+  },
+  {
+    "id": 56,
+    "role": "adult",
+    "text": "哇~"
+  },
+  {
+    "id": 57,
+    "role": "adult",
+    "text": "你為什麼要把、把它倒進去？"
+  },
+  {
+    "id": 58,
+    "role": "adult",
+    "text": "好，來，你那個放那裏。"
+  },
+  {
+    "id": 59,
+    "role": "adult",
+    "text": "因為這樣太重、太多了。"
+  },
+  {
+    "id": 60,
+    "role": "child",
+    "text": "哪裡的多，因為我是大力士。"
+  },
+  {
+    "id": 61,
+    "role": "adult",
+    "text": "你是大力士？"
+  },
+  {
+    "id": 62,
+    "role": "adult",
+    "text": "我怕這個椅子壞掉耶。"
+  },
+  {
+    "id": 63,
+    "role": "child",
+    "text": "耶咻，呵呵呵呵呵"
+  },
+  {
+    "id": 64,
+    "role": "adult",
+    "text": "好，還有哪裡？"
+  },
+  {
+    "id": 65,
+    "role": "child",
+    "text": "這邊。"
+  },
+  {
+    "id": 66,
+    "role": "adult",
+    "text": "你的大象和長頸鹿呢？"
+  },
+  {
+    "id": 67,
+    "role": "child",
+    "text": "大象。"
+  },
+  {
+    "id": 68,
+    "role": "adult",
+    "text": "牠想要回家了喔。"
+  },
+  {
+    "id": 69,
+    "role": "child",
+    "text": "爸爸沒有要帶我回去阿？"
+  },
+  {
+    "id": 70,
+    "role": "adult",
+    "text": "爸爸等一下會來接你了。"
+  },
+  {
+    "id": 71,
+    "role": "adult",
+    "text": "那你、你趕快把它收一收，我們就可以回家囉。"
+  },
+  {
+    "id": 72,
+    "role": "adult",
+    "text": "小力一點。"
+  },
+  {
+    "id": 73,
+    "role": "adult",
+    "text": "好，那個板子，"
+  },
+  {
+    "id": 74,
+    "role": "child",
+    "text": "這個咧？"
+  },
+  {
+    "id": 75,
+    "role": "adult",
+    "text": "你那個板子你放那邊好了。"
+  },
+  {
+    "id": 76,
+    "role": "adult",
+    "text": "放那邊啦。"
+  },
+  {
+    "id": 77,
+    "role": "adult",
+    "text": "你放在這裡怎麼再繼續放？"
+  },
+  {
+    "id": 78,
+    "role": "adult",
+    "text": "好。"
+  },
+  {
+    "id": 79,
+    "role": "adult",
+    "text": "嗚！"
+  },
+  {
+    "id": 80,
+    "role": "adult",
+    "text": "齁齁齁齁齁齁齁齁齁。"
+  },
+  {
+    "id": 81,
+    "role": "adult",
+    "text": "這麼大一個。"
+  },
+  {
+    "id": 82,
+    "role": "child",
+    "text": "對。"
+  },
+  {
+    "id": 83,
+    "role": "adult",
+    "text": "它滿出來了耶。"
+  },
+  {
+    "id": 84,
+    "role": "adult",
+    "text": "滿出來了。"
+  },
+  {
+    "id": 85,
+    "role": "child",
+    "text": "我們明天再做。"
+  },
+  {
+    "id": 86,
+    "role": "adult",
+    "text": "好啊。"
+  },
+  {
+    "id": 87,
+    "role": "child",
+    "text": "明天我們再…"
+  },
+  {
+    "id": 88,
+    "role": "adult",
+    "text": "下禮拜媽媽再帶你來好不好？"
+  },
+  {
+    "id": 89,
+    "role": "child",
+    "text": "好。"
+  },
+  {
+    "id": 90,
+    "role": "adult",
+    "text": "好，來，收起來。"
+  },
+  {
+    "id": 91,
+    "role": "adult",
+    "text": "嗚~哇塞！ 真的是大力士耶！"
+  },
+  {
+    "id": 92,
+    "role": "adult",
+    "text": "厚，好厲害喔。"
+  },
+  {
+    "id": 93,
+    "role": "adult",
+    "text": "好厲害喔。"
+  },
+  {
+    "id": 94,
+    "role": "adult",
+    "text": "哦~"
+  },
+  {
+    "id": 95,
+    "role": "adult",
+    "text": "還有哪邊還有？"
+  },
+  {
+    "id": 96,
+    "role": "adult",
+    "text": "還有哪裡還有？"
+  },
+  {
+    "id": 97,
+    "role": "adult",
+    "text": "哪邊？"
+  },
+  {
+    "id": 98,
+    "role": "adult",
+    "text": "看一看地上喔。"
+  },
+  {
+    "id": 99,
+    "role": "adult",
+    "text": "那邊。"
+  },
+  {
+    "id": 100,
+    "role": "adult",
+    "text": "齁。"
+  },
+  {
+    "id": 101,
+    "role": "adult",
+    "text": "哇，好棒喔"
+  },
+  {
+    "id": 102,
+    "role": "adult",
+    "text": "好了"
+  },
+  {
+    "id": 103,
+    "role": "adult",
+    "text": "阿椅子咧？"
+  },
+  {
+    "id": 104,
+    "role": "adult",
+    "text": "這個放著就好。"
+  },
+  {
+    "id": 105,
+    "role": "child",
+    "text": "喔。"
+  },
+  {
+    "id": 106,
+    "role": "adult",
+    "text": "因為這太重了。"
+  },
+  {
+    "id": 107,
+    "role": "adult",
+    "text": "椅子呢？"
+  },
+  {
+    "id": 108,
+    "role": "child",
+    "text": "椅子，椅子好了"
+  },
+  {
+    "id": 109,
+    "role": "adult",
+    "text": "椅子勒？"
+  },
+  {
+    "id": 110,
+    "role": "adult",
+    "text": "椅子要放好阿。"
+  },
+  {
+    "id": 111,
+    "role": "adult",
+    "text": "椅子要放好。"
+  },
+  {
+    "id": 112,
+    "role": "child",
+    "text": "嗯？"
+  },
+  {
+    "id": 113,
+    "role": "adult",
+    "text": "椅子、你的椅子沒有擺好。"
+  },
+  {
+    "id": 114,
+    "role": "child",
+    "text": "媽咪。"
+  },
+  {
+    "id": 115,
+    "role": "adult",
+    "text": "好，等一下我們再開門。"
+  },
+  {
+    "id": 116,
+    "role": "adult",
+    "text": "你先過來，"
+  },
+  {
+    "id": 117,
+    "role": "adult",
+    "text": "把椅子擺好。"
+  },
+  {
+    "id": 118,
+    "role": "adult",
+    "text": "我的椅子擺好囉。"
+  },
+  {
+    "id": 119,
+    "role": "adult",
+    "text": "你的勒？"
+  },
+  {
+    "id": 120,
+    "role": "adult",
+    "text": "來 ，我們要一起把它、我們一起搬。"
+  },
+  {
+    "id": 121,
+    "role": "child",
+    "text": "欸咻欸咻"
+  },
+  {
+    "id": 122,
+    "role": "adult",
+    "text": "好，來這裡， 好。"
+  },
+  {
+    "id": 123,
+    "role": "adult",
+    "text": "這裡勒？"
+  },
+  {
+    "id": 124,
+    "role": "adult",
+    "text": "放好"
+  },
+  {
+    "id": 125,
+    "role": "child",
+    "text": "呵"
+  },
+  {
+    "id": 126,
+    "role": "adult",
+    "text": "這個椅子呢？"
+  },
+  {
+    "id": 127,
+    "role": "adult",
+    "text": "也要放好。"
+  },
+  {
+    "id": 128,
+    "role": "child",
+    "text": "好了。"
+  },
+  {
+    "id": 129,
+    "role": "child",
+    "text": "x出去。"
+  },
+  {
+    "id": 130,
+    "role": "child",
+    "text": "唹、唹。"
+  },
+  {
+    "id": 131,
+    "role": "child",
+    "text": "欸、欸。"
+  },
+  {
+    "id": 132,
+    "role": "adult",
+    "text": "等一下阿姨就會來開門了。"
+  }
+]
+
+Return a minified JSON array for adult utterances only:
+[{"id": <int>, "subject": <string>, "reasoning": <string>, "code": <string>}, ...]
+- "subject": who or what the utterance is primarily about — choose the most specific applicable label:
+  "兒童" (the child), "物品/玩具" (an object or toy), "家長自身" (the parent themselves), "遊戲角色" (a pretend/play character), "第三方" (another person not the child), "不明" (unclear)
+- "reasoning": one sentence naming the decisive feature or rule that determines the code (e.g. "肯定句 + 描述兒童當下動作 → BD" or "呼應兒童剛才說的話 → RF 優先於 BD")
+- "code": the single DPICS code
+- Return ONLY the JSON array — no text, no markdown, no code fences
+- First character MUST be [, last character MUST be ]
+- Every adult entry MUST have "id", "subject", "reasoning", and "code"

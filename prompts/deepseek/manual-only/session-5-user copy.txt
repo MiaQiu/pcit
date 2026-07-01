@@ -1,0 +1,419 @@
+你是「雙向親子互動編碼系統」（Dyadic Parent-Child Interaction Coding System，簡稱 DPICS）的專家級編碼員。請根據提供的 DPICS 手冊及附錄中的準則與階層架構，為逐字稿中每一個家長（成人）的口語表達分配正確的 DPICS 編碼。
+
+---
+
+## 輸出格式 — 主語 + 推理 + 單一編碼
+
+在為每句話語選擇編碼之前，**先判斷主語**（該話語主要關於誰或什麼）：
+- **兒童**：話語以兒童為主體（最常見）
+- **物品/玩具**：話語描述的是某個物品、玩具或道具本身的狀態
+- **家長自身**：家長在描述自己的行為或感受
+- **遊戲角色**：假裝遊戲中的虛構角色（如樂高人、動物玩偶）為主體，並非兒童本人
+- **第三方**：提及的是不在場的第三者
+- **不明**：主語不清楚
+
+主語判定直接影響編碼：
+- 主語為**遊戲角色**或**物品**而非兒童本人 → 通常為 **TA**（旁白），而非 DC/IC/BD
+- 主語為**兒童** + 描述當下可觀察行為 → 可能為 **BD**
+- 主語為**家長自身** → 通常為 **TA**，而非 DC/BD
+
+確定主語後，**用一句話說明關鍵的編碼理由**（「reasoning」欄位）：指出觸發最終編碼的核心特徵或決策規則，例如「肯定句 + 描述兒童當下動作 → BD」或「呼應兒童剛才說的話 → RF 優先於 BD」。不需要列舉所有考量，只需點出決定性的那一點。
+
+每一個被編碼的話語都只能從下方標準的 DPICS 編碼列表中獲得「一個」編碼。絕對不要輸出組合、模糊或複合的編碼（例如：「TA + DC」是無效的，這不是真實的編碼且會被拒絕）。如果一句話似乎符合多個編碼，請勿將它們結合在一起，而是應用下方提供的優先順序／決策規則來選出單一最佳編碼。
+
+**有效編碼 — 完整且唯一的合法清單：**
+
+| 代碼 | 全名 |
+|---|---|
+| NTA | Negative Talk |
+| DC | Direct Command |
+| IC | Indirect Command |
+| LP | Labeled Praise |
+| UP | Unlabeled Praise |
+| IQ | Information Question |
+| DQ | Descriptive/Reflective Question |
+| RF | Reflective Statement |
+| BD | Behavioral Description |
+| TA | Neutral Talk |
+| NC | No Code（不完整的陳述、純噪音/音效、無溝通內容） |
+
+⚠️ **硬性限制：`code` 欄位必須且只能是上表中的其中一個代碼（區分大小寫）。任何不在此清單中的輸出（例如 PRO、AN、AK、ID、LP1、LP2 等）都是無效的，會被系統拒絕。如果不確定，請從 TA 或 NC 中選一個，而不是發明新代碼。**
+
+
+---
+
+[nonce:3526dd95-f47a-498c-8819-2ce31afeb20d]
+Code every utterance where role is "adult". Skip all "child" entries.
+
+[
+  {
+    "id": 0,
+    "role": "adult",
+    "text": "喔，你拿了露營車欸"
+  },
+  {
+    "id": 1,
+    "role": "child",
+    "text": "什麼是叫露營？"
+  },
+  {
+    "id": 2,
+    "role": "adult",
+    "text": "什麼是露營車？"
+  },
+  {
+    "id": 3,
+    "role": "adult",
+    "text": "露營車可以載貨喔"
+  },
+  {
+    "id": 4,
+    "role": "adult",
+    "text": "喔，你很棒欸，知道把露營車接在轎車後面"
+  },
+  {
+    "id": 5,
+    "role": "adult",
+    "text": "這樣轎車可以拉著露營車一起走"
+  },
+  {
+    "id": 6,
+    "role": "adult",
+    "text": "你拿了盪鞦韆"
+  },
+  {
+    "id": 7,
+    "role": "adult",
+    "text": "哇，你拿了一個樂高人小朋友"
+  },
+  {
+    "id": 8,
+    "role": "adult",
+    "text": "你把小朋友"
+  },
+  {
+    "id": 9,
+    "role": "child",
+    "text": "xxx"
+  },
+  {
+    "id": 10,
+    "role": "adult",
+    "text": "恩，你把小朋友放在盪鞦韆上面"
+  },
+  {
+    "id": 11,
+    "role": "adult",
+    "text": "你很棒喔，你有乖…你有輕輕地玩玩具"
+  },
+  {
+    "id": 12,
+    "role": "adult",
+    "text": "你有輕輕地幫他盪鞦韆"
+  },
+  {
+    "id": 13,
+    "role": "adult",
+    "text": "你把盪鞦韆放在草地上"
+  },
+  {
+    "id": 14,
+    "role": "adult",
+    "text": "哇，你在幫露營車蓋上蓋子"
+  },
+  {
+    "id": 15,
+    "role": "adult",
+    "text": "你拿了一個紅色的…小木舟"
+  },
+  {
+    "id": 16,
+    "role": "adult",
+    "text": "阿，你拿了爺爺的樂高人"
+  },
+  {
+    "id": 17,
+    "role": "adult",
+    "text": "你讓爺爺坐到露營車裡面"
+  },
+  {
+    "id": 18,
+    "role": "adult",
+    "text": "你又拿了一個戴綠色帽子的小朋友"
+  },
+  {
+    "id": 19,
+    "role": "adult",
+    "text": "你也讓他坐在露營車裡面"
+  },
+  {
+    "id": 20,
+    "role": "adult",
+    "text": "你又拿了一個戴藍色帽子的小朋友"
+  },
+  {
+    "id": 21,
+    "role": "adult",
+    "text": "哇，藍色帽子小朋友坐在爺爺的旁邊"
+  },
+  {
+    "id": 22,
+    "role": "child",
+    "text": "好像它只能載一個人"
+  },
+  {
+    "id": 23,
+    "role": "adult",
+    "text": "恩，露營車很大可以載很多人"
+  },
+  {
+    "id": 24,
+    "role": "adult",
+    "text": "喔，好棒，你有發現可以讓小朋友好好地坐好"
+  },
+  {
+    "id": 25,
+    "role": "adult",
+    "text": "你又拿了一個小女生"
+  },
+  {
+    "id": 26,
+    "role": "adult",
+    "text": "一樣坐在"
+  },
+  {
+    "id": 27,
+    "role": "adult",
+    "text": "喔，你讓小女生坐在露營車裡面"
+  },
+  {
+    "id": 28,
+    "role": "child",
+    "text": "xxx"
+  },
+  {
+    "id": 29,
+    "role": "adult",
+    "text": "恩，坐不下了"
+  },
+  {
+    "id": 30,
+    "role": "child",
+    "text": "坐不下了"
+  },
+  {
+    "id": 31,
+    "role": "adult",
+    "text": "坐不下了"
+  },
+  {
+    "id": 32,
+    "role": "child",
+    "text": "欸咻"
+  },
+  {
+    "id": 33,
+    "role": "adult",
+    "text": "裝起來"
+  },
+  {
+    "id": 34,
+    "role": "adult",
+    "text": "把車子蓋起來"
+  },
+  {
+    "id": 35,
+    "role": "child",
+    "text": "這爺爺要來開車"
+  },
+  {
+    "id": 36,
+    "role": "adult",
+    "text": "爺爺開車"
+  },
+  {
+    "id": 37,
+    "role": "adult",
+    "text": "你把車頂蓋起來"
+  },
+  {
+    "id": 38,
+    "role": "child",
+    "text": "把它蓋上蓋子"
+  },
+  {
+    "id": 39,
+    "role": "adult",
+    "text": "恩"
+  },
+  {
+    "id": 40,
+    "role": "child",
+    "text": "阿，爺爺是"
+  },
+  {
+    "id": 41,
+    "role": "adult",
+    "text": "哇，你找到奶奶了"
+  },
+  {
+    "id": 42,
+    "role": "adult",
+    "text": "奶奶的樂高人"
+  },
+  {
+    "id": 43,
+    "role": "adult",
+    "text": "奶奶坐在露營車"
+  },
+  {
+    "id": 44,
+    "role": "adult",
+    "text": "你讓爺爺樂高人去開車"
+  },
+  {
+    "id": 45,
+    "role": "child",
+    "text": "開車"
+  },
+  {
+    "id": 46,
+    "role": "adult",
+    "text": "去開紅色的車子"
+  },
+  {
+    "id": 47,
+    "role": "adult",
+    "text": "紅色的車子可以拉著露營車一起跑"
+  },
+  {
+    "id": 48,
+    "role": "child",
+    "text": "這個是露營車"
+  },
+  {
+    "id": 49,
+    "role": "adult",
+    "text": "對"
+  },
+  {
+    "id": 50,
+    "role": "child",
+    "text": "為什麼叫它露營車？"
+  },
+  {
+    "id": 51,
+    "role": "adult",
+    "text": "露營車它很大台"
+  },
+  {
+    "id": 52,
+    "role": "adult",
+    "text": "可以去露營的地方 露營"
+  },
+  {
+    "id": 53,
+    "role": "adult",
+    "text": "露營車也可以載很多東西喔"
+  },
+  {
+    "id": 54,
+    "role": "child",
+    "text": "欸，為什麼他不行坐？"
+  },
+  {
+    "id": 55,
+    "role": "child",
+    "text": "我這個不行壓下去"
+  },
+  {
+    "id": 56,
+    "role": "adult",
+    "text": "媽媽試"
+  },
+  {
+    "id": 57,
+    "role": "adult",
+    "text": "好，我來幫忙"
+  },
+  {
+    "id": 58,
+    "role": "adult",
+    "text": "把手手舉起來"
+  },
+  {
+    "id": 59,
+    "role": "adult",
+    "text": "這樣子看看"
+  },
+  {
+    "id": 60,
+    "role": "adult",
+    "text": "恩好，爺爺坐好了"
+  },
+  {
+    "id": 61,
+    "role": "adult",
+    "text": "你又拿了一個小女生"
+  },
+  {
+    "id": 62,
+    "role": "adult",
+    "text": "讓他坐在爺爺的後面，恩，很棒"
+  },
+  {
+    "id": 63,
+    "role": "child",
+    "text": "好，開囉"
+  },
+  {
+    "id": 64,
+    "role": "adult",
+    "text": "讓小朋友坐車子有乖乖坐好，很棒喔"
+  },
+  {
+    "id": 65,
+    "role": "adult",
+    "text": "你讓爺爺開紅色的車子"
+  },
+  {
+    "id": 66,
+    "role": "child",
+    "text": "我不想這個玩具"
+  },
+  {
+    "id": 67,
+    "role": "child",
+    "text": "我不想要…，我不想這個玩具"
+  },
+  {
+    "id": 68,
+    "role": "child",
+    "text": "我想要煮菜的"
+  },
+  {
+    "id": 69,
+    "role": "child",
+    "text": "我想要煮菜的"
+  },
+  {
+    "id": 70,
+    "role": "child",
+    "text": "我想要、我想要煮菜的"
+  },
+  {
+    "id": 71,
+    "role": "child",
+    "text": "我想要煮菜的"
+  }
+]
+
+Return a minified JSON array for adult utterances only:
+[{"id": <int>, "subject": <string>, "reasoning": <string>, "code": <string>}, ...]
+- "subject": who or what the utterance is primarily about — choose the most specific applicable label:
+  "兒童" (the child), "物品/玩具" (an object or toy), "家長自身" (the parent themselves), "遊戲角色" (a pretend/play character), "第三方" (another person not the child), "不明" (unclear)
+- "reasoning": one sentence naming the decisive feature or rule that determines the code (e.g. "肯定句 + 描述兒童當下動作 → BD" or "呼應兒童剛才說的話 → RF 優先於 BD")
+- "code": the single DPICS code
+- Return ONLY the JSON array — no text, no markdown, no code fences
+- First character MUST be [, last character MUST be ]
+- Every adult entry MUST have "id", "subject", "reasoning", and "code"
