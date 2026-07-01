@@ -163,9 +163,12 @@ async function createCache(apiKey, model, fileUriOrFiles, systemInstruction, ttl
  * @param {string} systemInstruction - dpicsCoding.txt content (+ any PDI override)
  * @param {string} model             - Gemini model ID
  * @param {Array<{path,mimeType}>}   [extraFiles] - additional files to include in the cache
+ * @param {string} [ttl='7200s']     - cache TTL, Gemini duration format (e.g. '3600s'). Also
+ *   governs how long the local registry considers this cache reusable — must match whatever
+ *   TTL was actually used, or the registry's freshness bookkeeping will be wrong.
  * @returns {Promise<string>} cache resource name
  */
-async function getOrCreateCache(variant, pdfPath, systemInstruction, model, extraFiles = []) {
+async function getOrCreateCache(variant, pdfPath, systemInstruction, model, extraFiles = [], ttl = '7200s') {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not set');
 
@@ -186,8 +189,9 @@ async function getOrCreateCache(variant, pdfPath, systemInstruction, model, extr
   }
 
   console.log(`📦 [GEMINI-CACHE] Creating ${variant} context cache (model: ${model}, files: ${files.length})...`);
-  const name = await createCache(apiKey, model, files, systemInstruction);
-  _cacheRegistry[variant] = { name, expiresAt: now + 2 * 3_600_000 }; // 2 h
+  const name = await createCache(apiKey, model, files, systemInstruction, ttl);
+  const ttlMs = parseFloat(ttl) * 1000; // Gemini duration format, e.g. '7200s' or '3.5s'
+  _cacheRegistry[variant] = { name, expiresAt: now + ttlMs };
   saveRegistry();
   console.log(`✅ [GEMINI-CACHE] Created ${variant} cache: ${name}`);
   return name;
