@@ -50,8 +50,13 @@ async function llmCall(prompt, options = {}) {
   // Pull profile and cache out before merging so they don't pollute destructuring
   const { profile = null, cache = null, ...rest } = options;
 
+  // Validate profile name early to catch typos — a wrong profile silently uses bad defaults
+  if (profile && !PROFILES[profile]) {
+    throw new Error(`Unknown LLM profile: '${profile}'`);
+  }
+
   // Merge profile defaults with explicit options — explicit always wins
-  const profileDefaults = profile ? (PROFILES[profile] ?? {}) : {};
+  const profileDefaults = profile ? PROFILES[profile] : {};
   const merged = { ...profileDefaults, ...rest };
 
   const {

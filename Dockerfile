@@ -11,7 +11,8 @@ WORKDIR /app
 COPY web/package*.json ./web/
 RUN cd web && npm ci
 COPY web ./web/
-RUN cd web && npm run build
+ARG VITE_API_URL=https://wpwpawhz29.ap-southeast-1.awsapprunner.com
+RUN cd web && VITE_API_URL=$VITE_API_URL npm run build
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Copy package files

@@ -423,6 +423,7 @@ model User {
   revenueCatCustomerId     String?              @unique
   stripeCustomerId         String?              @unique
   stripeSubscriptionId     String?              @unique
+  subscriptionSource       String?              // 'stripe' | 'revenuecat' | 'admin'
   developmentalVisible     Boolean              @default(false)
   isFreeAccount            Boolean              @default(false)
   tag                      String               @default("user")
@@ -739,6 +740,7 @@ enum SubscriptionStatus {
   NONE
   TRIAL
   INACTIVE
+  PAST_DUE
 }
 
 enum SupportPriority {

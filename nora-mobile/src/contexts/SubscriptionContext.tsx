@@ -42,13 +42,15 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode; rcReady
   useEffect(() => {
     if (!rcReady) return;
 
-    // Force-refresh user so isFreeAccount is always current (not stale cache).
+    // Force-refresh user so isFreeAccount/isSubscribed are always current (not stale cache).
+    // isSubscribed is computed server-side and covers both Stripe (web) and RevenueCat (mobile)
+    // subscribers — web-acquired users are recognized without a RevenueCat entitlement.
     authService.getCurrentUser(true).then(user => {
-      if (user?.isFreeAccount) {
+      if (user?.isFreeAccount || user?.isSubscribed) {
         setIsSubscribed(true);
         setIsLoading(false);
-        loadOfferings().catch(() => {});
-        return; // RevenueCat check skipped — free account takes precedence
+        loadOfferings().catch(() => {}); // still load so in-app purchase is available
+        return;
       }
       Promise.all([
         loadOfferings(),
@@ -96,15 +98,15 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode; rcReady
 
   const checkSubscriptionStatus = async () => {
     try {
-      // isFreeAccount takes precedence over RevenueCat
+      // Server is the source of truth — covers both Stripe (web) and RevenueCat (mobile)
       const user = await authService.getCurrentUser(true);
-      if (user?.isFreeAccount) {
+      if (user?.isFreeAccount || user?.isSubscribed) {
         setIsSubscribed(true);
-        // Clear any stale free-session limit flag so Record tab never redirects
         AsyncStorage.removeItem('@nora_free_limit_reached').catch(() => {});
         return;
       }
 
+      // Fallback to RevenueCat for users whose server status may not reflect a recent purchase
       const customerInfo = await Purchases.getCustomerInfo();
       const hasEntitlement = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.premium] !== undefined;
       const hasActiveSubscription = hasEntitlement || customerInfo.activeSubscriptions.length > 0;

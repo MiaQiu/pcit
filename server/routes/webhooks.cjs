@@ -49,7 +49,8 @@ async function handleSubscriptionActivation(userId, event) {
     where: { id: userId },
     data: {
       subscriptionStatus: isTrialPeriod ? 'TRIAL' : 'ACTIVE',
-      subscriptionPlan: isTrialPeriod ? 'TRIAL' : 'PREMIUM',
+      subscriptionPlan: 'PREMIUM',
+      subscriptionSource: 'revenuecat',
       subscriptionStartDate: startDate,
       subscriptionEndDate: expirationDate,
       trialStartDate: isTrialPeriod ? startDate : undefined,

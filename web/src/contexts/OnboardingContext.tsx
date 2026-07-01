@@ -1,15 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export interface WacbAnswers {
+  parentingStressLevel?: number;
   q1Dawdle?: number;
   q2MealBehavior?: number;
-  q3RefuseRules?: number;
-  q4Temper?: number;
-  q5ScreamingFit?: number;
-  q6BreakThings?: number;
-  q7Arguments?: number;
+  q3Disobey?: number;
+  q4Angry?: number;
+  q5Scream?: number;
+  q6Destroy?: number;
+  q7ProvokeFights?: number;
   q8Interrupt?: number;
-  q9Focus?: number;
+  q9Attention?: number;
 }
 
 export interface OnboardingData {

@@ -14,15 +14,15 @@ interface Question {
 }
 
 const QUESTIONS: Question[] = [
-  { key: 'q1Dawdle', text: (name) => `In the past two weeks, how often has ${name} taken too long to do things or dragged their feet on purpose?` },
+  { key: 'q1Dawdle',       text: (name) => `In the past two weeks, how often has ${name} taken too long to do things or dragged their feet on purpose?` },
   { key: 'q2MealBehavior', text: (name) => `In the past two weeks, how often has ${name} acted up or misbehaved while eating?` },
-  { key: 'q3RefuseRules', text: (name) => `In the past two weeks, how often has ${name} refused to listen or said 'no' to rules?` },
-  { key: 'q4Temper', text: (name) => `In the past two weeks, how often has ${name} lost their temper or acted physically rough?` },
-  { key: 'q5ScreamingFit', text: (name) => `In the past two weeks, how often has ${name} had a screaming fit or tantrum that was hard to stop?` },
-  { key: 'q6BreakThings', text: (name) => `In the past two weeks, how often has ${name} broken things or been too rough with other people's toys?` },
-  { key: 'q7Arguments', text: (name) => `In the past two weeks, how often has ${name} started arguments or teased others on purpose?` },
-  { key: 'q8Interrupt', text: (name) => `In the past two weeks, how often has ${name} interrupted conversations or demanded constant attention?` },
-  { key: 'q9Focus', text: (name) => `In the past two weeks, how often has ${name} struggled to focus or been unable to sit still?` },
+  { key: 'q3Disobey',      text: (name) => `In the past two weeks, how often has ${name} refused to listen or said 'no' to rules?` },
+  { key: 'q4Angry',        text: (name) => `In the past two weeks, how often has ${name} lost their temper or acted physically rough?` },
+  { key: 'q5Scream',       text: (name) => `In the past two weeks, how often has ${name} had a screaming fit or tantrum that was hard to stop?` },
+  { key: 'q6Destroy',      text: (name) => `In the past two weeks, how often has ${name} broken things or been too rough with other people's toys?` },
+  { key: 'q7ProvokeFights', text: (name) => `In the past two weeks, how often has ${name} started arguments or teased others on purpose?` },
+  { key: 'q8Interrupt',    text: (name) => `In the past two weeks, how often has ${name} interrupted conversations or demanded constant attention?` },
+  { key: 'q9Attention',    text: (name) => `In the past two weeks, how often has ${name} struggled to focus or been unable to sit still?` },
 ];
 
 export default function WacbQuestionScreen() {
@@ -53,7 +53,11 @@ export default function WacbQuestionScreen() {
       }
       setSubmitting(true);
       try {
-        await submitWacbSurvey({ ...data.wacb, [question.key]: val }, data.accessToken);
+        await submitWacbSurvey({
+          parentingStressLevel: data.wacb.parentingStressLevel ?? 3,
+          ...data.wacb,
+          [question.key]: val,
+        }, data.accessToken);
       } catch (e: unknown) {
         console.warn('WACB submit error:', e);
       } finally {

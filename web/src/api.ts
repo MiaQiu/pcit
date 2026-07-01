@@ -1,7 +1,4 @@
-const isProd = window.location.hostname === 'hinora.co';
-export const API_BASE = isProd
-  ? 'https://wpwpawhz29.ap-southeast-1.awsapprunner.com'
-  : 'http://localhost:3001';
+export const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 async function request<T>(
   path: string,
@@ -95,15 +92,16 @@ export function completeOnboarding(payload: CompleteOnboardingPayload, token: st
 }
 
 export interface WacbPayload {
+  parentingStressLevel?: number;
   q1Dawdle?: number;
   q2MealBehavior?: number;
-  q3RefuseRules?: number;
-  q4Temper?: number;
-  q5ScreamingFit?: number;
-  q6BreakThings?: number;
-  q7Arguments?: number;
+  q3Disobey?: number;
+  q4Angry?: number;
+  q5Scream?: number;
+  q6Destroy?: number;
+  q7ProvokeFights?: number;
   q8Interrupt?: number;
-  q9Focus?: number;
+  q9Attention?: number;
 }
 
 export function submitWacbSurvey(payload: WacbPayload, token: string) {

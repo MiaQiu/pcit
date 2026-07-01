@@ -18,15 +18,19 @@ async function llmJsonCall(prompt, options = {}) {
     temperature  = 0.7,
     systemPrompt = null,
     responseType = 'object',
+    model        = 'gemini',
+    label        = 'llm-json',
+    profile      = null,
   } = options;
 
   return llmCall(prompt, {
-    model:       'gemini',
+    model,
     output:      responseType === 'array' ? 'array' : 'json',
     maxTokens,
     temperature,
     systemPrompt,
-    label:       'llm-json',
+    label,
+    profile,
   });
 }
 
@@ -36,16 +40,20 @@ async function llmTextCall(prompt, options = {}) {
     temperature  = 0.7,
     systemPrompt = null,
     timeout      = 60_000,
+    model        = 'gemini',
+    label        = 'llm-text',
+    profile      = null,
   } = options;
 
   return llmCall(prompt, {
-    model:       'gemini',
+    model,
     output:      'text',
     maxTokens,
     temperature,
     systemPrompt,
     timeout,
-    label:       'llm-text',
+    label,
+    profile,
   });
 }
 

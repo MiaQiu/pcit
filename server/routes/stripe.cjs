@@ -15,6 +15,9 @@ function stripe() {
 const router = express.Router();
 
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+if (!STRIPE_WEBHOOK_SECRET) {
+  console.warn('[STRIPE] STRIPE_WEBHOOK_SECRET is not set — webhook signature verification will fail');
+}
 
 // Price IDs — set these in env after creating products in Stripe dashboard
 const PRICE_IDS = {
@@ -82,19 +85,27 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    // Create or retrieve Stripe customer
+    // Create or retrieve Stripe customer — search by email first to avoid duplicates
+    // from concurrent requests (both see null stripeCustomerId and both try to create)
     let stripeCustomerId = user.stripeCustomerId;
     if (!stripeCustomerId) {
-      const customer = await stripe().customers.create({
+      const existing = await stripe().customers.list({ email: user.email, limit: 1 });
+      const customer = existing.data[0] ?? await stripe().customers.create({
         email: user.email,
         name: user.name || undefined,
         metadata: { userId: String(userId) },
       });
       stripeCustomerId = customer.id;
-      await prisma.user.update({
-        where: { id: userId },
-        data: { stripeCustomerId },
-      });
+      try {
+        await prisma.user.update({
+          where: { id: userId },
+          data: { stripeCustomerId },
+        });
+      } catch (e) {
+        // Unique constraint violation: another request already wrote the customer ID
+        const refreshed = await prisma.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
+        stripeCustomerId = refreshed?.stripeCustomerId ?? stripeCustomerId;
+      }
     }
 
     const session = await stripe().checkout.sessions.create({
@@ -153,9 +164,29 @@ router.post('/webhook', async (req, res) => {
         await handleSubscriptionDeleted(subscription);
         break;
       }
+      case 'invoice.paid': {
+        const invoice = event.data.object;
+        await handleInvoicePaid(invoice);
+        break;
+      }
       case 'invoice.payment_failed': {
         const invoice = event.data.object;
         await handlePaymentFailed(invoice);
+        break;
+      }
+      case 'invoice.payment_action_required': {
+        const invoice = event.data.object;
+        console.log(`[STRIPE] Payment action required for invoice ${invoice.id}, customer: ${invoice.customer}`);
+        break;
+      }
+      case 'customer.subscription.trial_will_end': {
+        const subscription = event.data.object;
+        console.log(`[STRIPE] Trial ending soon for subscription ${subscription.id}`);
+        break;
+      }
+      case 'charge.refunded': {
+        const charge = event.data.object;
+        await handleChargeRefunded(charge);
         break;
       }
       default:
@@ -180,17 +211,19 @@ async function handleCheckoutCompleted(session) {
   const subscription = await stripe().subscriptions.retrieve(subscriptionId);
   const isTrialActive = subscription.status === 'trialing';
   const currentPeriodEnd = new Date(subscription.current_period_end * 1000);
+  const trialStart = subscription.trial_start ? new Date(subscription.trial_start * 1000) : null;
   const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
 
   await prisma.user.update({
-    where: { id: parseInt(userId) },
+    where: { id: userId },  // userId is a UUID string — do not parseInt
     data: {
       stripeSubscriptionId: subscriptionId,
       subscriptionStatus: isTrialActive ? 'TRIAL' : 'ACTIVE',
-      subscriptionPlan: isTrialActive ? 'TRIAL' : 'PREMIUM',
+      subscriptionPlan: 'PREMIUM',  // trial is still a premium subscription
+      subscriptionSource: 'stripe',
       subscriptionStartDate: new Date(subscription.start_date * 1000),
       subscriptionEndDate: currentPeriodEnd,
-      trialStartDate: isTrialActive ? new Date() : undefined,
+      trialStartDate: trialStart,
       trialEndDate: trialEnd,
     },
   });
@@ -240,6 +273,25 @@ async function handleSubscriptionDeleted(subscription) {
   console.log(`[STRIPE] Subscription cancelled for user ${user.id}`);
 }
 
+async function handleInvoicePaid(invoice) {
+  if (!invoice.subscription) return;
+  const user = await prisma.user.findUnique({ where: { stripeSubscriptionId: invoice.subscription } });
+  if (!user) return;
+
+  // Update subscriptionEndDate on every successful renewal
+  const subscription = await stripe().subscriptions.retrieve(invoice.subscription);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      subscriptionStatus: 'ACTIVE',
+      subscriptionPlan: 'PREMIUM',
+      subscriptionEndDate: new Date(subscription.current_period_end * 1000),
+    },
+  });
+
+  console.log(`[STRIPE] Invoice paid for user ${user.id}, period end: ${new Date(subscription.current_period_end * 1000).toISOString()}`);
+}
+
 async function handlePaymentFailed(invoice) {
   const customerId = invoice.customer;
   if (!customerId) return;
@@ -247,8 +299,30 @@ async function handlePaymentFailed(invoice) {
   const user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } });
   if (!user) return;
 
-  console.log(`[STRIPE] Payment failed for user ${user.id}, invoice: ${invoice.id}`);
-  // Could send notification here
+  // Set PAST_DUE — user retains access during Stripe's retry window (~14 days)
+  // customer.subscription.deleted fires after all retries fail, which sets EXPIRED
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { subscriptionStatus: 'PAST_DUE' },
+  });
+
+  console.log(`[STRIPE] Payment failed for user ${user.id}, invoice: ${invoice.id} — set PAST_DUE`);
+}
+
+async function handleChargeRefunded(charge) {
+  if (!charge.customer) return;
+  const user = await prisma.user.findUnique({ where: { stripeCustomerId: charge.customer } });
+  if (!user) return;
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      subscriptionStatus: 'EXPIRED',
+      subscriptionPlan: 'FREE',
+    },
+  });
+
+  console.log(`[STRIPE] Charge refunded for user ${user.id}, charge: ${charge.id} — set EXPIRED`);
 }
 
 module.exports = router;

@@ -546,6 +546,7 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
         createdAt: true,
         subscriptionPlan: true,
         subscriptionStatus: true,
+        subscriptionSource: true,
         trialStartDate: true,
         trialEndDate: true,
         subscriptionStartDate: true,
@@ -576,7 +577,12 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
       select: { id: true }
     });
 
-    res.json({ user: { ...decryptedUser, disciplineUnlocked: !!hasQualifyingScore } });
+    const isSubscribed = decryptedUser.isFreeAccount
+      || (['ACTIVE', 'TRIAL', 'CANCELLED', 'PAST_DUE'].includes(decryptedUser.subscriptionStatus)
+          && decryptedUser.subscriptionEndDate
+          && decryptedUser.subscriptionEndDate > new Date());
+
+    res.json({ user: { ...decryptedUser, disciplineUnlocked: !!hasQualifyingScore, isSubscribed: !!isSubscribed } });
 
   } catch (error) {
     console.error('Get user error:', error);
