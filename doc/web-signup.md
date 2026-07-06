@@ -227,6 +227,16 @@ GET /signup/*  →  web/dist/index.html   (SPA fallback)
 
 ---
 
+## B2B2C Partner Signups
+
+Business partners (clinics, employers) receive unique QR codes (`hinora.co/p/:slug`) that route users into the standard web signup flow with a customised offer — extended trial, group discount coupon, and filtered plan selection applied automatically at Stripe checkout.
+
+The partner flow is a superset of this flow: all the same screens, same webhook lifecycle, same `isSubscribed` check. The only differences are the `partnerSlug` sent at signup, and the checkout session being configured from the partner's `config` JSON.
+
+See `doc/partners.md` for the full partner documentation.
+
+---
+
 ## Relationship to the Mobile Subscription Flow
 
 | | Web portal (Stripe) | Mobile app (RevenueCat) |

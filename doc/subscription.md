@@ -17,8 +17,19 @@ How the app decides whether a user has access to paid features.
 When determining access, **the first truthy condition wins**:
 
 1. `user.isFreeAccount === true` → full access, RevenueCat is never called
-2. RevenueCat `customerInfo` has an active entitlement or active subscription → full access
-3. Otherwise → free tier (up to 3 completed sessions, then paywall)
+2. `user.isSubscribed === true` (server-computed) → full access, RevenueCat is never called
+   - Covers Stripe subscribers (web signup) and partner subscribers — both invisible to RevenueCat
+3. RevenueCat `customerInfo` has an active entitlement or active subscription → full access
+4. Otherwise → free tier (up to 3 completed sessions, then paywall)
+
+`isSubscribed` is computed in `GET /api/auth/me`:
+```js
+isSubscribed = isFreeAccount
+  || (['ACTIVE', 'TRIAL', 'CANCELLED', 'PAST_DUE'].includes(subscriptionStatus)
+      && subscriptionEndDate > now)
+```
+
+See `doc/partners.md` for the B2B2C partner flow and `doc/web-signup.md` for the Stripe web checkout flow.
 
 ## Check Points
 
