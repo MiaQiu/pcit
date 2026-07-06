@@ -82,8 +82,20 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
       return res.status(500).json({ error: `Stripe price ID for ${plan} plan not configured.` });
     }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { partner: true },
+    });
     if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Resolve partner config (used to customise trial days, coupon, and plan availability)
+    const partnerConfig = (user.partner?.status === 'ACTIVE') ? user.partner.config : null;
+
+    // Validate requested plan against partner's allowed plans
+    const allowedPlans = partnerConfig?.plans ?? ['monthly', 'yearly'];
+    if (!allowedPlans.includes(plan)) {
+      return res.status(400).json({ error: `This partner offer only supports: ${allowedPlans.join(', ')}` });
+    }
 
     // Create or retrieve Stripe customer — search by email first to avoid duplicates
     // from concurrent requests (both see null stripeCustomerId and both try to create)
@@ -108,15 +120,19 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
       }
     }
 
+    const trialDays = partnerConfig?.trialDays ?? 7;
+    const stripeCouponId = partnerConfig?.discount?.stripeCouponId ?? null;
+
     const session = await stripe().checkout.sessions.create({
       customer: stripeCustomerId,
       payment_method_types: ['card'],
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
-        trial_period_days: 7,
+        trial_period_days: trialDays,
         metadata: { userId: String(userId) },
       },
+      ...(stripeCouponId ? { discounts: [{ coupon: stripeCouponId }] } : {}),
       success_url: successUrl || `${process.env.WEB_APP_URL || 'https://hinora.co'}/success`,
       cancel_url: cancelUrl || `${process.env.WEB_APP_URL || 'https://hinora.co'}/subscribe`,
       metadata: { userId: String(userId), plan },

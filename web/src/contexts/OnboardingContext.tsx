@@ -13,11 +13,22 @@ export interface WacbAnswers {
   q9Attention?: number;
 }
 
+export interface PartnerInfo {
+  slug: string;
+  name: string;
+  welcomeMessage: string | null;
+  trialDays: number;
+  plans: ('monthly' | 'yearly')[];
+  discountLabel: string | null;
+}
+
 export interface OnboardingData {
   // auth
   email: string;
   password: string;
   accessToken: string | null;
+  // partner (set when user arrived via /p/:slug)
+  partnerInfo: PartnerInfo | null;
   // profile
   name: string;
   relationshipToChild: string | null;
@@ -35,6 +46,7 @@ interface OnboardingContextValue {
   setEmail: (email: string) => void;
   setPassword: (password: string) => void;
   setAccessToken: (token: string | null) => void;
+  setPartnerInfo: (info: PartnerInfo | null) => void;
   setName: (name: string) => void;
   setRelationshipToChild: (rel: string | null) => void;
   setChildName: (name: string) => void;
@@ -45,10 +57,20 @@ interface OnboardingContextValue {
   setWacbAnswer: (key: keyof WacbAnswers, value: number) => void;
 }
 
+function loadPartnerInfo(): PartnerInfo | null {
+  try {
+    const raw = localStorage.getItem('partnerInfo');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 const defaultData: OnboardingData = {
   email: '',
   password: '',
   accessToken: localStorage.getItem('accessToken'),
+  partnerInfo: loadPartnerInfo(),
   name: '',
   relationshipToChild: null,
   childName: '',
@@ -64,18 +86,20 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<OnboardingData>(defaultData);
 
-  // Persist accessToken to localStorage whenever it changes
   useEffect(() => {
-    if (data.accessToken) {
-      localStorage.setItem('accessToken', data.accessToken);
-    } else {
-      localStorage.removeItem('accessToken');
-    }
+    if (data.accessToken) localStorage.setItem('accessToken', data.accessToken);
+    else localStorage.removeItem('accessToken');
   }, [data.accessToken]);
+
+  useEffect(() => {
+    if (data.partnerInfo) localStorage.setItem('partnerInfo', JSON.stringify(data.partnerInfo));
+    else localStorage.removeItem('partnerInfo');
+  }, [data.partnerInfo]);
 
   const setEmail = useCallback((email: string) => setData(d => ({ ...d, email })), []);
   const setPassword = useCallback((password: string) => setData(d => ({ ...d, password })), []);
   const setAccessToken = useCallback((accessToken: string | null) => setData(d => ({ ...d, accessToken })), []);
+  const setPartnerInfo = useCallback((partnerInfo: PartnerInfo | null) => setData(d => ({ ...d, partnerInfo })), []);
   const setName = useCallback((name: string) => setData(d => ({ ...d, name })), []);
   const setRelationshipToChild = useCallback((relationshipToChild: string | null) => setData(d => ({ ...d, relationshipToChild })), []);
   const setChildName = useCallback((childName: string) => setData(d => ({ ...d, childName })), []);
@@ -93,6 +117,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       setEmail,
       setPassword,
       setAccessToken,
+      setPartnerInfo,
       setName,
       setRelationshipToChild,
       setChildName,

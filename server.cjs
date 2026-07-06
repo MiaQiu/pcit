@@ -191,6 +191,15 @@ app.use('/api/webhooks', webhookRoutes);
 const stripeRoutes = require('./server/routes/stripe.cjs');
 app.use('/api/stripe', stripeRoutes);
 
+// Mount partner routes (public — QR code landing + partner validation)
+const partnerRoutes = require('./server/routes/partner.cjs');
+app.use('/api/partner', partnerRoutes);
+
+// Short partner URL redirect: /p/:slug → /signup/p/:slug (web SPA handles it)
+app.get('/p/:slug', (req, res) => {
+  res.redirect(302, `/signup/p/${req.params.slug}`);
+});
+
 // Mount referral routes
 const referralRoutes = require('./server/routes/referral.cjs');
 app.use('/api/referral', referralRoutes);

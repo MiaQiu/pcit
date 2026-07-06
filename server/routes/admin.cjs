@@ -2703,4 +2703,188 @@ router.get('/therapist/sessions/:id', requirePortalAuth, async (req, res) => {
   }
 });
 
+// ============================================================================
+// PARTNER MANAGEMENT
+// ============================================================================
+
+let _adminStripe = null;
+function adminStripe() {
+  if (!_adminStripe) {
+    if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured');
+    _adminStripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  }
+  return _adminStripe;
+}
+
+function discountLabel(discount) {
+  if (!discount) return null;
+  const amount = discount.percentOff
+    ? `${discount.percentOff}% off`
+    : `$${(discount.amountOff / 100).toFixed(2)} off`;
+  if (discount.duration === 'forever') return `${amount} forever`;
+  if (discount.duration === 'once') return `${amount} on first payment`;
+  if (discount.duration === 'repeating') return `${amount} for ${discount.durationMonths} months`;
+  return amount;
+}
+
+async function syncStripeCoupon(partnerName, slug, discount, expiresAt, maxRedemptions, existingCouponId) {
+  if (!discount || (!discount.percentOff && !discount.amountOff)) return null;
+
+  // Archive old coupon if discount config changed
+  if (existingCouponId) {
+    try { await adminStripe().coupons.del(existingCouponId); } catch (_) {}
+  }
+
+  const couponParams = {
+    name: `${partnerName} Partner Discount`,
+    duration: discount.duration,
+    ...(discount.percentOff ? { percent_off: discount.percentOff } : {}),
+    ...(discount.amountOff ? { amount_off: discount.amountOff, currency: discount.currency ?? 'sgd' } : {}),
+    ...(discount.duration === 'repeating' ? { duration_in_months: discount.durationMonths } : {}),
+    ...(maxRedemptions ? { max_redemptions: maxRedemptions } : {}),
+    ...(expiresAt ? { redeem_by: Math.floor(new Date(expiresAt).getTime() / 1000) } : {}),
+    metadata: { partnerSlug: slug },
+  };
+
+  const coupon = await adminStripe().coupons.create(couponParams);
+  return coupon.id;
+}
+
+// GET /api/admin/partners
+router.get('/partners', requireAdminAuth, async (req, res) => {
+  try {
+    const partners = await prisma.partner.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { users: true } } },
+    });
+    res.json(partners.map(p => ({
+      ...p,
+      userCount: p._count.users,
+      discountLabel: discountLabel(p.config?.discount ?? null),
+    })));
+  } catch (err) {
+    console.error('[admin] partners list error:', err);
+    res.status(500).json({ error: 'Failed to fetch partners' });
+  }
+});
+
+// GET /api/admin/partners/:id
+router.get('/partners/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const partner = await prisma.partner.findUnique({
+      where: { id: req.params.id },
+      include: { _count: { select: { users: true } } },
+    });
+    if (!partner) return res.status(404).json({ error: 'Partner not found' });
+    res.json({ ...partner, userCount: partner._count.users, discountLabel: discountLabel(partner.config?.discount ?? null) });
+  } catch (err) {
+    console.error('[admin] partner get error:', err);
+    res.status(500).json({ error: 'Failed to fetch partner' });
+  }
+});
+
+// POST /api/admin/partners
+router.post('/partners', requireAdminAuth, async (req, res) => {
+  try {
+    const {
+      slug, name, trialDays = 7, plans = ['monthly', 'yearly'],
+      discount, welcomeMessage, maxRedemptions, expiresAt,
+    } = req.body;
+
+    if (!slug || !name) return res.status(400).json({ error: 'slug and name are required' });
+
+    const existing = await prisma.partner.findUnique({ where: { slug } });
+    if (existing) return res.status(409).json({ error: `Slug '${slug}' is already in use` });
+
+    const stripeCouponId = await syncStripeCoupon(name, slug, discount, expiresAt, maxRedemptions, null);
+
+    const config = {
+      trialDays,
+      plans,
+      discount: discount ? { ...discount, stripeCouponId } : null,
+      welcomeMessage: welcomeMessage ?? null,
+      maxRedemptions: maxRedemptions ?? null,
+    };
+
+    const partner = await prisma.partner.create({
+      data: {
+        id: crypto.randomUUID(),
+        slug,
+        name,
+        config,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+      },
+    });
+
+    res.status(201).json(partner);
+  } catch (err) {
+    console.error('[admin] partner create error:', err);
+    res.status(500).json({ error: 'Failed to create partner' });
+  }
+});
+
+// PATCH /api/admin/partners/:id
+router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const partner = await prisma.partner.findUnique({ where: { id } });
+    if (!partner) return res.status(404).json({ error: 'Partner not found' });
+
+    const {
+      name, status, trialDays, plans, discount, welcomeMessage, maxRedemptions, expiresAt,
+    } = req.body;
+
+    const oldConfig = partner.config;
+    const newDiscount = discount !== undefined ? discount : oldConfig.discount;
+
+    // Re-create Stripe coupon only if discount fields changed
+    let stripeCouponId = oldConfig.discount?.stripeCouponId ?? null;
+    const discountChanged = JSON.stringify(discount) !== JSON.stringify(oldConfig.discount);
+    if (discountChanged) {
+      stripeCouponId = await syncStripeCoupon(
+        name ?? partner.name,
+        partner.slug,
+        newDiscount,
+        expiresAt ?? partner.expiresAt,
+        maxRedemptions ?? oldConfig.maxRedemptions,
+        oldConfig.discount?.stripeCouponId ?? null,
+      );
+    }
+
+    const config = {
+      trialDays: trialDays ?? oldConfig.trialDays,
+      plans: plans ?? oldConfig.plans,
+      discount: newDiscount ? { ...newDiscount, stripeCouponId } : null,
+      welcomeMessage: welcomeMessage !== undefined ? welcomeMessage : oldConfig.welcomeMessage,
+      maxRedemptions: maxRedemptions !== undefined ? maxRedemptions : oldConfig.maxRedemptions,
+    };
+
+    const updated = await prisma.partner.update({
+      where: { id },
+      data: {
+        ...(name ? { name } : {}),
+        ...(status ? { status } : {}),
+        config,
+        expiresAt: expiresAt !== undefined ? (expiresAt ? new Date(expiresAt) : null) : partner.expiresAt,
+      },
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.error('[admin] partner update error:', err);
+    res.status(500).json({ error: 'Failed to update partner' });
+  }
+});
+
+// DELETE /api/admin/partners/:id  — soft-delete (set EXPIRED)
+router.delete('/partners/:id', requireAdminAuth, async (req, res) => {
+  try {
+    await prisma.partner.update({ where: { id: req.params.id }, data: { status: 'EXPIRED' } });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[admin] partner delete error:', err);
+    res.status(500).json({ error: 'Failed to deactivate partner' });
+  }
+});
+
 module.exports = router;

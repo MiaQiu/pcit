@@ -16,7 +16,13 @@ const CheckIcon = () => (
 export default function SubscriptionScreen() {
   const navigate = useNavigate();
   const { data } = useOnboarding();
-  const [selectedPlan, setSelectedPlan] = useState<Plan>('yearly');
+  const partner = data.partnerInfo;
+
+  // Only show plans allowed by the partner config (or both if no partner)
+  const allowedPlans: Plan[] = (partner?.plans ?? ['monthly', 'yearly']) as Plan[];
+  const [selectedPlan, setSelectedPlan] = useState<Plan>(
+    allowedPlans.includes('yearly') ? 'yearly' : allowedPlans[0]
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [prices, setPrices] = useState<StripePrices | null>(null);
@@ -62,60 +68,69 @@ export default function SubscriptionScreen() {
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <h1 className="text-white text-2xl font-bold mb-1">Start Your Free Trial</h1>
-          <p className="text-white/70 text-sm">7 days free, cancel anytime</p>
+          <p className="text-white/70 text-sm">
+            {partner ? `${partner.trialDays} days free` : '7 days free'}, cancel anytime
+          </p>
+          {partner?.discountLabel && (
+            <div className="mt-2 inline-block bg-white/20 rounded-full px-3 py-1">
+              <span className="text-white text-xs font-semibold">{partner.discountLabel}</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-6 pt-6 pb-4">
-        {/* Plan options */}
+        {/* Plan options — filtered to partner's allowed plans */}
         <div className="flex flex-col gap-3 mb-6">
-          {/* Yearly */}
-          <button
-            onClick={() => setSelectedPlan('yearly')}
-            className={`relative w-full text-left rounded-xl border-2 p-5 transition-all duration-150
-              ${selectedPlan === 'yearly' ? 'border-[#8C49D5] bg-[#F5F3FF]' : 'border-gray-200 bg-white hover:border-gray-300'}`}
-          >
-            <div className="absolute -top-3 left-4">
-              <span className="bg-[#8C49D5] text-white text-xs font-bold px-3 py-1 rounded-full">
-                BEST VALUE{savingsPercent > 0 ? ` · SAVE ${savingsPercent}%` : ''}
-              </span>
-            </div>
-            <div className="flex items-center justify-between mt-1">
-              <div>
-                <p className="font-bold text-[#1E2939] text-base">Yearly</p>
-                <p className="text-[#6B7280] text-sm">
-                  {pricesLoading ? '...' : `${yearlyPerMonth}/month, billed annually`}
-                </p>
+          {allowedPlans.includes('yearly') && (
+            <button
+              onClick={() => setSelectedPlan('yearly')}
+              className={`relative w-full text-left rounded-xl border-2 p-5 transition-all duration-150
+                ${selectedPlan === 'yearly' ? 'border-[#8C49D5] bg-[#F5F3FF]' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+            >
+              <div className="absolute -top-3 left-4">
+                <span className="bg-[#8C49D5] text-white text-xs font-bold px-3 py-1 rounded-full">
+                  BEST VALUE{savingsPercent > 0 ? ` · SAVE ${savingsPercent}%` : ''}
+                </span>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-[#1E2939] text-xl">
-                  {pricesLoading ? '...' : yearlyFormatted}
-                </p>
-                <p className="text-[#6B7280] text-xs">per year</p>
+              <div className="flex items-center justify-between mt-1">
+                <div>
+                  <p className="font-bold text-[#1E2939] text-base">Yearly</p>
+                  <p className="text-[#6B7280] text-sm">
+                    {pricesLoading ? '...' : `${yearlyPerMonth}/month, billed annually`}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-[#1E2939] text-xl">
+                    {pricesLoading ? '...' : yearlyFormatted}
+                  </p>
+                  <p className="text-[#6B7280] text-xs">per year</p>
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+          )}
 
-          {/* Monthly */}
-          <button
-            onClick={() => setSelectedPlan('monthly')}
-            className={`w-full text-left rounded-xl border-2 p-5 transition-all duration-150
-              ${selectedPlan === 'monthly' ? 'border-[#8C49D5] bg-[#F5F3FF]' : 'border-gray-200 bg-white hover:border-gray-300'}`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-bold text-[#1E2939] text-base">Monthly</p>
-                <p className="text-[#6B7280] text-sm">Flexible, cancel anytime</p>
+          {allowedPlans.includes('monthly') && (
+            <button
+              onClick={() => setSelectedPlan('monthly')}
+              className={`w-full text-left rounded-xl border-2 p-5 transition-all duration-150
+                ${selectedPlan === 'monthly' ? 'border-[#8C49D5] bg-[#F5F3FF]' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-[#1E2939] text-base">Monthly</p>
+                  <p className="text-[#6B7280] text-sm">Flexible, cancel anytime</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-[#1E2939] text-xl">
+                    {pricesLoading ? '...' : monthlyFormatted}
+                  </p>
+                  <p className="text-[#6B7280] text-xs">per month</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-[#1E2939] text-xl">
-                  {pricesLoading ? '...' : monthlyFormatted}
-                </p>
-                <p className="text-[#6B7280] text-xs">per month</p>
-              </div>
-            </div>
-          </button>
+            </button>
+          )}
         </div>
 
         {/* What's included */}
@@ -149,7 +164,7 @@ export default function SubscriptionScreen() {
       {/* Fixed footer */}
       <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
         <PrimaryButton onClick={handleSubscribe} loading={loading || pricesLoading}>
-          Start 7-day free trial
+          Start {partner ? `${partner.trialDays}-day` : '7-day'} free trial
         </PrimaryButton>
         <div className="flex justify-center mt-3">
           <button
@@ -160,7 +175,8 @@ export default function SubscriptionScreen() {
           </button>
         </div>
         <p className="text-center text-xs text-gray-400 mt-2">
-          Free for 7 days, then {pricesLoading ? '...' : `${selectedPrice}/${selectedPlan === 'yearly' ? 'year' : 'month'}`}. Cancel anytime.
+          Free for {partner ? partner.trialDays : 7} days, then {pricesLoading ? '...' : `${selectedPrice}/${selectedPlan === 'yearly' ? 'year' : 'month'}`}
+          {partner?.discountLabel ? ` (${partner.discountLabel})` : ''}. Cancel anytime.
         </p>
       </div>
     </OnboardingLayout>

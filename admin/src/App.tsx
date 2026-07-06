@@ -17,6 +17,7 @@ import ChatPage from './pages/ChatPage';
 import CodingReviewListPage from './pages/CodingReviewListPage';
 import CodingReviewDetailPage from './pages/CodingReviewDetailPage';
 import TherapistUploadPage from './pages/TherapistUploadPage';
+import PartnersPage from './pages/PartnersPage';
 import AdminLayout from './components/layout/AdminLayout';
 
 export default function App() {
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="users/:userId/weekly-reports" element={<UserWeeklyReportsPage />} />
           <Route path="subscriptions" element={<SubscriptionsPage />} />
           <Route path="free-accounts" element={<FreeAccountsPage />} />
+          <Route path="partners" element={<PartnersPage />} />
           <Route path="chat" element={<ChatPage />} />
           <Route path="coding-review" element={<CodingReviewListPage />} />
           <Route path="coding-review/:id" element={<CodingReviewDetailPage />} />

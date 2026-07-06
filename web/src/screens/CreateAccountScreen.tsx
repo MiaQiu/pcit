@@ -42,6 +42,7 @@ export default function CreateAccountScreen() {
         childBirthday: data.childBirthday ? new Date(data.childBirthday).toISOString() : undefined,
         childConditions,
         issue: data.issue.join(', ') || undefined,
+        partnerSlug: data.partnerInfo?.slug ?? undefined,
       });
       setEmail(emailVal);
       setPassword(passwordVal);

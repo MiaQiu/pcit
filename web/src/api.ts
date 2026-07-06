@@ -53,12 +53,25 @@ export function signup(
     childBirthday?: string;
     childConditions?: string[];
     issue?: string;
+    partnerSlug?: string;
   } = {}
 ) {
   return request<AuthResponse>('/api/auth/signup', {
     method: 'POST',
     body: JSON.stringify({ email, password, ...extra }),
   });
+}
+
+export interface PartnerInfo {
+  name: string;
+  welcomeMessage: string | null;
+  trialDays: number;
+  plans: ('monthly' | 'yearly')[];
+  discountLabel: string | null;
+}
+
+export function validatePartner(slug: string) {
+  return request<PartnerInfo>(`/api/partner/validate/${encodeURIComponent(slug)}`);
 }
 
 export function login(email: string, password: string) {

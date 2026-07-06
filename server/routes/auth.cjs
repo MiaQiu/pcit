@@ -59,7 +59,8 @@ const signupSchema = Joi.object({
   childBirthday: Joi.date().optional(),
   childConditions: Joi.array().items(Joi.string().max(200)).min(1).required(),
   issue: Joi.string().min(1).optional(),
-  therapistId: Joi.string().uuid().optional()
+  therapistId: Joi.string().uuid().optional(),
+  partnerSlug: Joi.string().max(100).optional(),
 });
 
 const loginSchema = Joi.object({
@@ -77,7 +78,23 @@ router.post('/signup', async (req, res, next) => {
       return next(new ValidationError(errors[0], errors));
     }
 
-    const { email, password, name, childName, childBirthYear, childBirthday, childConditions, issue, therapistId } = value;
+    const { email, password, name, childName, childBirthYear, childBirthday, childConditions, issue, therapistId, partnerSlug } = value;
+
+    // Resolve partner before creating user so we can fail early
+    let partner = null;
+    if (partnerSlug) {
+      partner = await prisma.partner.findUnique({ where: { slug: partnerSlug } });
+      if (!partner || partner.status !== 'ACTIVE') {
+        return next(new ValidationError('Invalid or inactive partner link'));
+      }
+      if (partner.expiresAt && new Date(partner.expiresAt) < new Date()) {
+        return next(new ValidationError('This partner link has expired'));
+      }
+      const cfg = partner.config;
+      if (cfg.maxRedemptions != null && partner.redemptions >= cfg.maxRedemptions) {
+        return next(new ValidationError('This partner link has reached its limit'));
+      }
+    }
 
     // Create email hash for querying (since email will be encrypted)
     const emailHash = crypto.createHash('sha256').update(email.toLowerCase()).digest('hex');
@@ -119,10 +136,20 @@ router.post('/signup', async (req, res, next) => {
         childConditions: JSON.stringify(childConditions), // Stored as plain JSON
         issue,
         therapistId,
+        partnerId: partner?.id ?? null,
+        subscriptionSource: partner ? 'partner' : null,
         subscriptionPlan: 'FREE',
         subscriptionStatus: 'INACTIVE',
       }
     });
+
+    // Increment partner redemption counter atomically
+    if (partner) {
+      await prisma.partner.update({
+        where: { id: partner.id },
+        data: { redemptions: { increment: 1 } },
+      });
+    }
 
     // Auto-grant free account if email is whitelisted
     const whitelisted = await prisma.freeAccountWhitelist.findUnique({ where: { emailHash } });

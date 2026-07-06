@@ -698,3 +698,76 @@ export async function syncToProd(): Promise<SyncResult> {
   });
   return data.synced;
 }
+
+// ---- Partner Management ----
+
+export interface PartnerDiscount {
+  percentOff?: number;
+  amountOff?: number;   // in cents
+  currency?: string;    // required if amountOff set, default 'sgd'
+  duration: 'once' | 'repeating' | 'forever';
+  durationMonths?: number;
+  stripeCouponId?: string; // auto-populated by server
+}
+
+export interface PartnerConfig {
+  trialDays: number;
+  plans: ('monthly' | 'yearly')[];
+  discount: PartnerDiscount | null;
+  welcomeMessage: string | null;
+  maxRedemptions: number | null;
+}
+
+export interface Partner {
+  id: string;
+  slug: string;
+  name: string;
+  status: 'ACTIVE' | 'PAUSED' | 'EXPIRED';
+  config: PartnerConfig;
+  expiresAt: string | null;
+  redemptions: number;
+  userCount: number;
+  discountLabel: string | null;
+  createdAt: string;
+}
+
+export interface PartnerCreatePayload {
+  slug: string;
+  name: string;
+  trialDays?: number;
+  plans?: ('monthly' | 'yearly')[];
+  discount?: Omit<PartnerDiscount, 'stripeCouponId'>;
+  welcomeMessage?: string;
+  maxRedemptions?: number;
+  expiresAt?: string;
+}
+
+export async function getPartners(opts?: ApiEnvOpts): Promise<Partner[]> {
+  return apiFetchEnv('/api/admin/partners', {}, opts);
+}
+
+export async function getPartner(id: string, opts?: ApiEnvOpts): Promise<Partner> {
+  return apiFetchEnv(`/api/admin/partners/${id}`, {}, opts);
+}
+
+export async function createPartner(payload: PartnerCreatePayload, opts?: ApiEnvOpts): Promise<Partner> {
+  return apiFetchEnv('/api/admin/partners', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, opts);
+}
+
+export async function updatePartner(
+  id: string,
+  payload: Partial<PartnerCreatePayload & { status: string }>,
+  opts?: ApiEnvOpts
+): Promise<Partner> {
+  return apiFetchEnv(`/api/admin/partners/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  }, opts);
+}
+
+export async function deactivatePartner(id: string, opts?: ApiEnvOpts): Promise<void> {
+  await apiFetchEnv(`/api/admin/partners/${id}`, { method: 'DELETE' }, opts);
+}

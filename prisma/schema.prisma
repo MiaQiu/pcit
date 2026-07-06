@@ -451,10 +451,13 @@ model User {
   AbcInsight            AbcInsight[]
   referralsGiven        Referral[]           @relation("ReferralsGiven")
   referralReceived      Referral?            @relation("ReferralReceived")
+  partnerId             String?
+  partner               Partner?             @relation(fields: [partnerId], references: [id])
 
   @@index([emailHash])
   @@index([pushToken])
   @@index([therapistId])
+  @@index([partnerId])
 }
 
 model UserLessonProgress {
@@ -725,6 +728,24 @@ enum RelationshipToChild {
 enum SessionMode {
   CDI
   PDI
+}
+
+model Partner {
+  id          String        @id @default(uuid())
+  slug        String        @unique
+  name        String
+  status      PartnerStatus @default(ACTIVE)
+  config      Json          // PartnerConfig: { trialDays, plans, discount, stripeCouponId, welcomeMessage, maxRedemptions }
+  expiresAt   DateTime?
+  redemptions Int           @default(0)
+  createdAt   DateTime      @default(now())
+  users       User[]
+}
+
+enum PartnerStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED
 }
 
 enum SubscriptionPlan {

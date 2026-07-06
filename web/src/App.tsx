@@ -40,12 +40,16 @@ import PlaySession5Screen from './screens/play/PlaySession5Screen';
 // Final screens
 import SubscriptionScreen from './screens/SubscriptionScreen';
 import SuccessScreen from './screens/SuccessScreen';
+import PartnerLandingScreen from './screens/PartnerLandingScreen';
 
 export default function App() {
   return (
     <BrowserRouter basename="/signup">
       <OnboardingProvider>
         <Routes>
+          {/* Partner landing — QR code destination */}
+          <Route path="/p/:slug" element={<PartnerLandingScreen />} />
+
           {/* Landing & Auth */}
           <Route path="/" element={<LandingScreen />} />
           <Route path="/login" element={<LoginScreen />} />
