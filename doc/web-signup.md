@@ -21,6 +21,7 @@ Express server  (server.cjs)
   │
   ├── POST /api/auth/signup          ← create account
   ├── POST /api/auth/login           ← return JWT
+  ├── GET  /api/auth/me              ← returns isSubscribed (computed server-side)
   ├── PATCH /api/auth/complete-onboarding
   ├── POST /api/wacb-survey
   │
@@ -80,6 +81,9 @@ The `OnboardingContext` (`web/src/contexts/OnboardingContext.tsx`) holds all col
 | `STRIPE_PRICE_MONTHLY` | Stripe Price ID for the monthly plan (`price_…`) |
 | `STRIPE_PRICE_YEARLY` | Stripe Price ID for the yearly plan (`price_…`) |
 | `WEB_APP_URL` | Base URL for redirect after checkout (default: `https://hinora.co`) |
+| `VITE_API_URL` | **Build-time** env var for the web SPA — set to the server's public URL |
+
+`STRIPE_WEBHOOK_SECRET` is validated at startup; if missing, webhook signature verification fails and all events are rejected.
 
 Create the products and prices in the Stripe dashboard first, then copy the price IDs into your environment.
 
@@ -87,39 +91,89 @@ Create the products and prices in the Stripe dashboard first, then copy the pric
 
 1. User selects monthly or yearly on `/subscribe`.
 2. Frontend calls `POST /api/stripe/create-checkout-session` with the plan and success/cancel URLs.
-3. Server creates (or reuses) a Stripe Customer for the user, then creates a Checkout Session with a 7-day trial.
+3. Server looks up the Stripe Customer by email (or creates one if none exists), then creates a Checkout Session with a 7-day free trial.
 4. Server returns the hosted Checkout URL; browser redirects there.
 5. Stripe handles payment collection. On success, Stripe redirects to `/signup/success` and fires a webhook.
+
+**Race condition guard:** The customer-creation step searches Stripe by email before creating, to prevent duplicate customers when two simultaneous requests both see `stripeCustomerId = null` in the DB.
 
 ### Webhook Events
 
 All events arrive at `POST /api/stripe/webhook`. The raw request body is captured by the Express JSON middleware (`req.rawBody`) for signature verification.
 
-| Event | Handler |
-|---|---|
-| `checkout.session.completed` | Saves `stripeSubscriptionId` to user; sets `subscriptionStatus` to `TRIAL` or `ACTIVE` and writes trial/end dates |
-| `customer.subscription.updated` | Syncs `subscriptionStatus` (`TRIAL` / `ACTIVE` / `EXPIRED`) and `subscriptionEndDate` |
-| `customer.subscription.deleted` | Sets status to `CANCELLED`, plan to `FREE` |
-| `invoice.payment_failed` | Logs the failure (notification hook point) |
+| Event | Handler | Action |
+|---|---|---|
+| `checkout.session.completed` | `handleCheckoutCompleted` | Writes `stripeSubscriptionId`; sets `subscriptionStatus` to `TRIAL` or `ACTIVE`, `subscriptionPlan` to `PREMIUM`, `subscriptionSource` to `'stripe'`; writes trial start/end dates from Stripe timestamps |
+| `customer.subscription.updated` | `handleSubscriptionUpdated` | Syncs `subscriptionStatus` and `subscriptionEndDate` |
+| `customer.subscription.deleted` | `handleSubscriptionDeleted` | Sets status to `CANCELLED`, plan to `FREE`, keeps `subscriptionEndDate` so access holds until period end |
+| `invoice.paid` | `handleInvoicePaid` | Updates `subscriptionEndDate` on every renewal — critical for keeping access after the first billing cycle |
+| `invoice.payment_failed` | `handlePaymentFailed` | Sets `subscriptionStatus` to `PAST_DUE`; user retains access during Stripe's retry window (~14 days) |
+| `customer.subscription.trial_will_end` | — | Logged (3-day warning; hook point for reminder email) |
+| `invoice.payment_action_required` | — | Logged (3D Secure edge case) |
+| `charge.refunded` | `handleChargeRefunded` | Sets status to `EXPIRED`, plan to `FREE` immediately |
 
-Register the webhook endpoint in the Stripe dashboard:
+Register these events in the Stripe dashboard webhook settings:
 
 ```
 https://hinora.co/api/stripe/webhook
 ```
 
-Events to enable: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
+Events to enable: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`, `invoice.payment_action_required`, `customer.subscription.trial_will_end`, `charge.refunded`.
+
+### Subscription Status Lifecycle
+
+```
+(checkout)
+    │
+    ▼
+TRIAL ──────────────────────────────────────────────────────► ACTIVE
+  (trial_end, invoice.paid)                                   │
+                                                              │ (payment fails)
+                                                              ▼
+                                                          PAST_DUE
+                                                              │
+                        ┌─────────────────────────────────────┤
+                        │ (all retries fail,                  │ (payment recovers,
+                        │  subscription.deleted)              │  invoice.paid)
+                        ▼                                     ▼
+                     EXPIRED                              ACTIVE
+                     
+(cancel) ──► CANCELLED  (access continues until subscriptionEndDate)
+(refund)  ──► EXPIRED   (immediate)
+```
+
+`subscriptionPlan` is `PREMIUM` during TRIAL, ACTIVE, PAST_DUE, and CANCELLED; reverts to `FREE` on EXPIRED.
 
 ### Database Fields
 
-Two fields were added to `User` in `prisma/migrations/20260616000000_add_stripe_fields/migration.sql`:
+Migration `20260616000000_add_stripe_fields` added:
 
 ```prisma
 stripeCustomerId     String? @unique
 stripeSubscriptionId String? @unique
 ```
 
-These sit alongside the existing RevenueCat and subscription status fields. The webhook handlers write to the same `subscriptionStatus` / `subscriptionPlan` / `subscriptionEndDate` columns that the mobile RevenueCat flow uses, so the admin portal and `isFreeAccount` logic continue to work unchanged.
+Migration `20260617000000_add_subscription_source` added:
+
+```prisma
+subscriptionSource   String?   // 'stripe' | 'revenuecat' | 'admin'
+```
+
+And extended the `SubscriptionStatus` enum with `PAST_DUE`.
+
+---
+
+## Server-side `isSubscribed`
+
+`GET /api/auth/me` now returns a computed `isSubscribed` boolean alongside the raw subscription fields:
+
+```js
+isSubscribed = isFreeAccount
+  || (subscriptionStatus in ['ACTIVE', 'TRIAL', 'CANCELLED', 'PAST_DUE']
+      && subscriptionEndDate > now)
+```
+
+Clients should use `isSubscribed` as their single gating check rather than inspecting individual status/plan fields. `CANCELLED` is included because users retain access until `subscriptionEndDate` even after cancellation.
 
 ---
 
@@ -135,7 +189,7 @@ npm install
 npm run dev          # runs on port 5174, proxies /api to 3001 via vite.config.ts
 ```
 
-The web app API client (`web/src/api.ts`) auto-selects `http://localhost:3001` when the hostname is not `hinora.co`.
+The web app API client (`web/src/api.ts`) uses `import.meta.env.VITE_API_URL`. In development, leave it unset — the Vite dev server proxy routes `/api` to `localhost:3001` automatically.
 
 To test the Stripe webhook locally, use the Stripe CLI:
 
@@ -149,13 +203,20 @@ Copy the signing secret it prints and set it as `STRIPE_WEBHOOK_SECRET` in your 
 
 ## Production Build (Docker)
 
-The `Dockerfile` builds the web app before copying server files:
+The `Dockerfile` builds the web app before copying server files, injecting the API URL at build time:
 
 ```dockerfile
 COPY web/package*.json ./web/
 RUN cd web && npm ci
 COPY web ./web/
-RUN cd web && npm run build
+ARG VITE_API_URL=https://wpwpawhz29.ap-southeast-1.awsapprunner.com
+RUN cd web && VITE_API_URL=$VITE_API_URL npm run build
+```
+
+To point a staging build at a different backend:
+
+```bash
+docker build --build-arg VITE_API_URL=https://staging.example.com .
 ```
 
 The compiled output lands in `web/dist`. Express serves it in production:
@@ -173,7 +234,27 @@ GET /signup/*  →  web/dist/index.html   (SPA fallback)
 | Entry point | hinora.co/signup | App Store / Play Store |
 | Payment processor | Stripe | Apple / Google via RevenueCat |
 | Subscription record | `stripeCustomerId` + `stripeSubscriptionId` | RevenueCat entitlement |
-| `subscriptionStatus` set by | Stripe webhook | RevenueCat webhook |
-| `isFreeAccount` bypass | Works for both — checked first, skips payment | Same |
+| `subscriptionStatus` set by | Stripe webhooks | RevenueCat webhook |
+| `subscriptionSource` | `'stripe'` | `'revenuecat'` |
+| Access gate (mobile) | Server `isSubscribed` + RevenueCat fallback | Server `isSubscribed` + RevenueCat fallback |
 
-Both paths converge on the same `User` row and `subscriptionStatus` field. The mobile app's `SubscriptionContext` reads `isFreeAccount` and calls RevenueCat's `getCustomerInfo()` — it has no awareness of the Stripe fields. If a user subscribes via the web and then opens the mobile app, their `subscriptionStatus` will be `ACTIVE` in the database, but the mobile app will still call RevenueCat and may show a paywall unless `isFreeAccount` is set. For web-acquired subscribers, consider setting `isFreeAccount = true` in the `checkout.session.completed` webhook handler as an interim bridge until RevenueCat-less mobile access is implemented.
+Both paths converge on the same `User` row. The mobile `SubscriptionContext` checks the server's `isSubscribed` flag first (from `/api/auth/me`), which is true for Stripe subscribers. If `isSubscribed` is true, RevenueCat is not consulted for gating — it is only used for the in-app purchase flow itself. This means a user who subscribes on the web and then opens the mobile app will not see a paywall, even without a RevenueCat entitlement.
+
+A new mobile app build is required for this change to take effect for existing installs.
+
+### WACB Survey Field Names
+
+The WACB survey (`POST /api/wacb-survey`) requires these exact field names — the web app was previously sending different keys and receiving 400 errors:
+
+| Field | Required | Notes |
+|---|---|---|
+| `parentingStressLevel` | Yes | 1–7; web app defaults to `3` if not collected |
+| `q1Dawdle` | Yes | 1–5 |
+| `q2MealBehavior` | Yes | 1–5 |
+| `q3Disobey` | Yes | 1–5 |
+| `q4Angry` | Yes | 1–5 |
+| `q5Scream` | Yes | 1–5 |
+| `q6Destroy` | Yes | 1–5 |
+| `q7ProvokeFights` | Yes | 1–5 |
+| `q8Interrupt` | Yes | 1–5 |
+| `q9Attention` | Yes | 1–5 |
