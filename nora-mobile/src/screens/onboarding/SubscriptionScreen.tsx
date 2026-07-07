@@ -86,10 +86,13 @@ export const SubscriptionScreen: React.FC = () => {
     }
   })();
 
-  // Bypass paywall for free-account users — render nothing until check completes to avoid flash
+  // Bypass paywall for free-account users AND users who are already subscribed
+  // (e.g. Stripe/web subscribers with no RevenueCat entitlement) — otherwise they'd
+  // see "Subscribe Now" here and could be charged a second time via StoreKit.
+  // Render nothing until check completes to avoid flash.
   useEffect(() => {
     authService.getCurrentUser(true).then(async user => {
-      if (user?.isFreeAccount) {
+      if (user?.isFreeAccount || user?.isSubscribed) {
         // Update SubscriptionContext so Record tab won't redirect again after this
         await checkSubscriptionStatus();
         await completeOnboarding();

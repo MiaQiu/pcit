@@ -4,7 +4,7 @@
 
 // Subscription types
 export type SubscriptionPlan = 'TRIAL' | 'PREMIUM' | 'FREE';
-export type SubscriptionStatus = 'INACTIVE' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+export type SubscriptionStatus = 'INACTIVE' | 'ACTIVE' | 'TRIAL' | 'PAST_DUE' | 'EXPIRED' | 'CANCELLED';
 export type RelationshipToChild = 'MOTHER' | 'FATHER' | 'GRANDMOTHER' | 'GRANDFATHER' | 'GUARDIAN' | 'OTHER';
 
 export interface SubscriptionInfo {
@@ -41,6 +41,7 @@ export interface User {
   // Subscription fields
   subscriptionPlan?: SubscriptionPlan;
   subscriptionStatus?: SubscriptionStatus;
+  subscriptionSource?: 'stripe' | 'revenuecat' | 'admin' | null;
   trialStartDate?: Date;
   trialEndDate?: Date;
   subscriptionStartDate?: Date;

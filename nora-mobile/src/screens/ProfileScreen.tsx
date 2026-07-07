@@ -42,6 +42,7 @@ interface UserProfile {
   issue?: string | string[];
   subscriptionPlan?: SubscriptionPlan;
   subscriptionStatus?: SubscriptionStatus;
+  subscriptionSource?: 'stripe' | 'revenuecat' | 'admin' | null;
   trialStartDate?: Date;
   trialEndDate?: Date;
   subscriptionStartDate?: Date;
@@ -132,6 +133,7 @@ export const ProfileScreen: React.FC = () => {
         issue: user.issue,
         subscriptionPlan: user.subscriptionPlan,
         subscriptionStatus: user.subscriptionStatus,
+        subscriptionSource: user.subscriptionSource,
         trialStartDate: user.trialStartDate,
         trialEndDate: user.trialEndDate,
         subscriptionStartDate: user.subscriptionStartDate,
@@ -211,6 +213,26 @@ export const ProfileScreen: React.FC = () => {
 
   const handleManageSubscription = async () => {
     amplitudeService.trackEvent('Profile Manage Subscription Tapped');
+
+    // Web-signup subscribers live entirely in Stripe — there's no App Store/Play Store
+    // subscription to show, so route them to Stripe's own Billing Portal instead.
+    if (profile?.subscriptionSource === 'stripe') {
+      try {
+        const { url } = await authService.createBillingPortalSession();
+        await Linking.openURL(url);
+      } catch (error) {
+        console.error('Failed to open Stripe billing portal:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        amplitudeService.trackEvent('Manage Subscription Error', {
+          reason: 'stripe_portal_failed',
+          platform: Platform.OS,
+          error: errorMessage,
+        });
+        Alert.alert(t('common.error'), t('profile.errorManageSubscriptionRetry'));
+      }
+      return;
+    }
+
     try {
       if (Platform.OS === 'ios') {
         await Purchases.showManageSubscriptions();
@@ -281,9 +303,12 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const getSubscriptionInfo = () => {
-    // Use RevenueCat data as source of truth (instant updates after purchase)
-    // Fall back to backend data if RevenueCat hasn't loaded yet
-    if (rcSubscription) {
+    // Web-signup (Stripe) subscribers have no RevenueCat entitlement — RC will report
+    // them as inactive even though they're paying via Stripe. Always trust the backend
+    // for these users so we don't show "Free" to an active subscriber.
+    // Otherwise, use RevenueCat data as source of truth (instant updates after purchase),
+    // falling back to backend data if RevenueCat hasn't loaded yet.
+    if (rcSubscription && profile?.subscriptionSource !== 'stripe') {
       const { isActive, expirationDate, willRenew, periodType } = rcSubscription;
 
       // Determine plan name
@@ -533,9 +558,14 @@ export const ProfileScreen: React.FC = () => {
           </TouchableOpacity>
 
           {(() => {
-            const hasActiveSub = rcSubscription
+            const hasActiveSub = (rcSubscription && profile?.subscriptionSource !== 'stripe')
               ? rcSubscription.isActive
-              : (profile?.subscriptionStatus === 'ACTIVE' || profile?.subscriptionStatus === 'CANCELLED');
+              : (
+                profile?.subscriptionStatus === 'ACTIVE'
+                || profile?.subscriptionStatus === 'CANCELLED'
+                || profile?.subscriptionStatus === 'TRIAL'
+                || profile?.subscriptionStatus === 'PAST_DUE'
+              );
             return hasActiveSub ? (
               <TouchableOpacity
                 style={styles.linkButton}
