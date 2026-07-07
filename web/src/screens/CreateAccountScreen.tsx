@@ -47,7 +47,7 @@ export default function CreateAccountScreen() {
       setEmail(emailVal);
       setPassword(passwordVal);
       setAccessToken(res.accessToken);
-      navigate('/subscribe');
+      navigate('/onboarding/name');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Sign up failed. Please try again.');
     } finally {
@@ -58,7 +58,7 @@ export default function CreateAccountScreen() {
   return (
     <OnboardingLayout>
       <div className="flex items-center px-4 pt-2">
-        <BackButton to="/play/5" />
+        <BackButton to="/" />
       </div>
 
       <div className="flex-1 flex flex-col px-6 pt-4 pb-8">
@@ -107,9 +107,9 @@ export default function CreateAccountScreen() {
 
           <p className="text-center text-xs text-gray-400 mt-4 leading-relaxed">
             By creating an account, you agree to our{' '}
-            <a href="#" className="text-[#8C49D5] underline">Terms of Service</a>
+            <a href="https://hinora.co/terms" target="_blank" rel="noopener noreferrer" className="text-[#8C49D5] underline">Terms of Service</a>
             {' '}and{' '}
-            <a href="#" className="text-[#8C49D5] underline">Privacy Policy</a>
+            <a href="https://hinora.co/privacy" target="_blank" rel="noopener noreferrer" className="text-[#8C49D5] underline">Privacy Policy</a>
           </p>
         </div>
       </div>

@@ -710,10 +710,15 @@ export interface PartnerDiscount {
   stripeCouponId?: string; // auto-populated by server
 }
 
+export interface PartnerDiscounts {
+  monthly: PartnerDiscount | null;
+  yearly: PartnerDiscount | null;
+}
+
 export interface PartnerConfig {
   trialDays: number;
   plans: ('monthly' | 'yearly')[];
-  discount: PartnerDiscount | null;
+  discounts: PartnerDiscounts;
   welcomeMessage: string | null;
   maxRedemptions: number | null;
 }
@@ -727,7 +732,7 @@ export interface Partner {
   expiresAt: string | null;
   redemptions: number;
   userCount: number;
-  discountLabel: string | null;
+  discountLabels: { monthly: string | null; yearly: string | null };
   createdAt: string;
 }
 
@@ -736,7 +741,10 @@ export interface PartnerCreatePayload {
   name: string;
   trialDays?: number;
   plans?: ('monthly' | 'yearly')[];
-  discount?: Omit<PartnerDiscount, 'stripeCouponId'>;
+  discounts?: {
+    monthly?: Omit<PartnerDiscount, 'stripeCouponId'> | null;
+    yearly?: Omit<PartnerDiscount, 'stripeCouponId'> | null;
+  };
   welcomeMessage?: string;
   maxRedemptions?: number;
   expiresAt?: string;

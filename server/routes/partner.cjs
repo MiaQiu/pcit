@@ -1,17 +1,16 @@
 const express = require('express');
 const prisma = require('../services/db.cjs');
+const { discountLabel, normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
 
 const router = express.Router();
 
-function discountLabel(discount) {
+function planDiscountInfo(discount) {
   if (!discount) return null;
-  const amount = discount.percentOff
-    ? `${discount.percentOff}% off`
-    : `$${(discount.amountOff / 100).toFixed(2)} off`;
-  if (discount.duration === 'forever') return `${amount} forever`;
-  if (discount.duration === 'once') return `${amount} on first payment`;
-  if (discount.duration === 'repeating') return `${amount} for ${discount.durationMonths} months`;
-  return amount;
+  return {
+    label: discountLabel(discount),
+    percentOff: discount.percentOff ?? null,
+    amountOff: discount.amountOff ?? null, // cents, matches Stripe convention
+  };
 }
 
 // GET /api/partner/validate/:slug
@@ -31,12 +30,17 @@ router.get('/validate/:slug', async (req, res) => {
       return res.status(410).json({ error: 'This partner link has reached its limit' });
     }
 
+    const discounts = normalizeDiscounts(config);
+
     res.json({
       name: partner.name,
       welcomeMessage: config.welcomeMessage ?? null,
       trialDays: config.trialDays ?? 7,
       plans: config.plans ?? ['monthly', 'yearly'],
-      discountLabel: discountLabel(config.discount ?? null),
+      discounts: {
+        monthly: planDiscountInfo(discounts.monthly),
+        yearly: planDiscountInfo(discounts.yearly),
+      },
     });
   } catch (err) {
     console.error('[partner] validate error:', err);

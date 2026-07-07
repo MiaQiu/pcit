@@ -10,13 +10,13 @@ export default function NameInputScreen() {
   const [nameVal, setNameVal] = useState(data.name);
 
   return (
-    <OnboardingLayout progress={29} backTo="/onboarding/parenting-intro">
+    <OnboardingLayout progress={29} backTo="/create-account">
 
-      <div className="flex-1 flex flex-col px-6 pt-6 pb-8">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-2">
+      <div className="flex-1 flex flex-col px-4 pt-6 pb-8">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 text-center">
           What's your name?
         </h1>
-        <p className="text-[#6B7280] text-sm mb-8">
+        <p className="text-[#6B7280] text-sm mb-8 text-center">
           We'll use this to personalize your experience with Nora.
         </p>
 
@@ -39,7 +39,7 @@ export default function NameInputScreen() {
           />
         </div>
 
-        <div className="mt-auto">
+        <div className="mt-auto -mx-3">
           <PrimaryButton
             onClick={() => {
               if (nameVal.trim()) {

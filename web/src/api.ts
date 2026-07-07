@@ -62,12 +62,21 @@ export function signup(
   });
 }
 
+export interface PlanDiscountInfo {
+  label: string;
+  percentOff: number | null;
+  amountOff: number | null; // cents
+}
+
 export interface PartnerInfo {
   name: string;
   welcomeMessage: string | null;
   trialDays: number;
   plans: ('monthly' | 'yearly')[];
-  discountLabel: string | null;
+  discounts: {
+    monthly: PlanDiscountInfo | null;
+    yearly: PlanDiscountInfo | null;
+  };
 }
 
 export function validatePartner(slug: string) {

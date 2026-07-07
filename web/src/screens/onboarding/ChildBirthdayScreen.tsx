@@ -57,11 +57,11 @@ export default function ChildBirthdayScreen() {
   return (
     <OnboardingLayout progress={42} backTo="/onboarding/child-gender">
 
-      <div className="flex-1 flex flex-col px-6 pt-6 pb-8">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight">
+      <div className="flex-1 flex flex-col px-4 pt-6 pb-8">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight text-center">
           When is {childName}'s birthday?
         </h1>
-        <p className="text-[#6B7280] text-sm mb-8">
+        <p className="text-[#6B7280] text-sm mb-8 text-center">
           This helps us tailor activities and milestones to the right age.
         </p>
 
@@ -95,7 +95,7 @@ export default function ChildBirthdayScreen() {
           </div>
         </div>
 
-        {isValid && (
+        {/* {isValid && (
           <div className="bg-[#F9F7FF] rounded-xl p-4 mb-6">
             <p className="text-[#6B7280] text-sm">
               Birthday:{' '}
@@ -104,9 +104,9 @@ export default function ChildBirthdayScreen() {
               </span>
             </p>
           </div>
-        )}
+        )} */}
 
-        <div className="mt-auto">
+        <div className="mt-auto -mx-3">
           <PrimaryButton
             onClick={handleContinue}
             disabled={!isValid}

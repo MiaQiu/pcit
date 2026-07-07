@@ -33,10 +33,30 @@ const emptyForm: PartnerCreatePayload = {
   welcomeMessage: '',
   maxRedemptions: undefined,
   expiresAt: '',
-  discount: undefined,
 };
 
+type PlanKey = 'monthly' | 'yearly';
 type DiscountDuration = 'once' | 'repeating' | 'forever';
+
+interface DiscountFormState {
+  enabled: boolean;
+  type: 'percent' | 'amount';
+  duration: DiscountDuration;
+  percentOff: number;
+  amountOff: number;
+  currency: string;
+  durationMonths: number;
+}
+
+const emptyDiscountState = (): DiscountFormState => ({
+  enabled: false, type: 'percent', duration: 'forever',
+  percentOff: 20, amountOff: 1000, currency: 'sgd', durationMonths: 3,
+});
+
+const emptyDiscountStates = (): Record<PlanKey, DiscountFormState> => ({
+  monthly: emptyDiscountState(),
+  yearly: emptyDiscountState(),
+});
 
 export default function PartnersPage() {
   const { env, prodToken } = useEnv();
@@ -50,9 +70,7 @@ export default function PartnersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<PartnerCreatePayload>(emptyForm);
-  const [hasDiscount, setHasDiscount] = useState(false);
-  const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent');
-  const [discountDuration, setDiscountDuration] = useState<DiscountDuration>('forever');
+  const [discountStates, setDiscountStates] = useState<Record<PlanKey, DiscountFormState>>(emptyDiscountStates());
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -76,9 +94,7 @@ export default function PartnersPage() {
 
   function openCreate() {
     setForm(emptyForm);
-    setHasDiscount(false);
-    setDiscountType('percent');
-    setDiscountDuration('forever');
+    setDiscountStates(emptyDiscountStates());
     setEditingId(null);
     setSaveError(null);
     setShowForm(true);
@@ -95,28 +111,36 @@ export default function PartnersPage() {
       maxRedemptions: cfg.maxRedemptions ?? undefined,
       expiresAt: p.expiresAt ? p.expiresAt.slice(0, 10) : '',
     });
-    if (cfg.discount) {
-      setHasDiscount(true);
-      setDiscountType(cfg.discount.percentOff != null ? 'percent' : 'amount');
-      setDiscountDuration(cfg.discount.duration as DiscountDuration);
-    } else {
-      setHasDiscount(false);
-    }
+    const next = emptyDiscountStates();
+    (['monthly', 'yearly'] as const).forEach(plan => {
+      const d = cfg.discounts?.[plan];
+      if (d) {
+        next[plan] = {
+          enabled: true,
+          type: d.percentOff != null ? 'percent' : 'amount',
+          duration: d.duration as DiscountDuration,
+          percentOff: d.percentOff ?? 20,
+          amountOff: d.amountOff ?? 1000,
+          currency: d.currency ?? 'sgd',
+          durationMonths: d.durationMonths ?? 3,
+        };
+      }
+    });
+    setDiscountStates(next);
     setEditingId(p.id);
     setSaveError(null);
     setShowForm(true);
   }
 
-  function buildDiscount() {
-    if (!hasDiscount) return undefined;
-    const base = {
-      duration: discountDuration,
-      ...(discountDuration === 'repeating' ? { durationMonths: form.discount?.durationMonths ?? 3 } : {}),
+  function buildDiscounts(): PartnerCreatePayload['discounts'] {
+    const build = (s: DiscountFormState) => {
+      if (!s.enabled) return null;
+      const base = { duration: s.duration, ...(s.duration === 'repeating' ? { durationMonths: s.durationMonths } : {}) };
+      return s.type === 'percent'
+        ? { ...base, percentOff: s.percentOff }
+        : { ...base, amountOff: s.amountOff, currency: s.currency };
     };
-    if (discountType === 'percent') {
-      return { ...base, percentOff: form.discount?.percentOff ?? 20 };
-    }
-    return { ...base, amountOff: form.discount?.amountOff ?? 1000, currency: form.discount?.currency ?? 'sgd' };
+    return { monthly: build(discountStates.monthly), yearly: build(discountStates.yearly) };
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -126,7 +150,7 @@ export default function PartnersPage() {
     try {
       const payload: PartnerCreatePayload = {
         ...form,
-        discount: buildDiscount(),
+        discounts: buildDiscounts(),
         maxRedemptions: form.maxRedemptions || undefined,
         expiresAt: form.expiresAt || undefined,
         welcomeMessage: form.welcomeMessage || undefined,
@@ -275,63 +299,77 @@ export default function PartnersPage() {
               </div>
             </div>
 
-            {/* Discount */}
+            {/* Discounts — configured independently per plan, only for plans currently shown */}
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}>
-                <input type="checkbox" checked={hasDiscount} onChange={e => setHasDiscount(e.target.checked)} />
-                <span style={{ fontWeight: 600 }}>Apply a discount</span>
-              </label>
-              {hasDiscount && (
-                <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 14 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                    <label style={{ fontSize: 13 }}>
-                      <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>Type</span>
-                      <select style={inputStyle} value={discountType} onChange={e => setDiscountType(e.target.value as 'percent' | 'amount')}>
-                        <option value="percent">Percent off</option>
-                        <option value="amount">Amount off</option>
-                      </select>
-                    </label>
-                    {discountType === 'percent' ? (
-                      <label style={{ fontSize: 13 }}>
-                        <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>% off</span>
-                        <input
-                          type="number" min={1} max={100} style={inputStyle}
-                          value={form.discount?.percentOff ?? 20}
-                          onChange={e => setForm(f => ({ ...f, discount: { ...f.discount, percentOff: Number(e.target.value), duration: discountDuration } }))}
-                        />
-                      </label>
-                    ) : (
-                      <label style={{ fontSize: 13 }}>
-                        <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>Amount off (cents)</span>
-                        <input
-                          type="number" min={1} style={inputStyle}
-                          value={form.discount?.amountOff ?? 1000}
-                          placeholder="e.g. 1000 = $10"
-                          onChange={e => setForm(f => ({ ...f, discount: { ...f.discount, amountOff: Number(e.target.value), duration: discountDuration } }))}
-                        />
-                      </label>
-                    )}
-                    <label style={{ fontSize: 13 }}>
-                      <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>Duration</span>
-                      <select style={inputStyle} value={discountDuration} onChange={e => setDiscountDuration(e.target.value as DiscountDuration)}>
-                        <option value="forever">Forever</option>
-                        <option value="once">First payment only</option>
-                        <option value="repeating">N months</option>
-                      </select>
-                    </label>
-                    {discountDuration === 'repeating' && (
-                      <label style={{ fontSize: 13 }}>
-                        <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>Months</span>
-                        <input
-                          type="number" min={1} style={inputStyle}
-                          value={form.discount?.durationMonths ?? 3}
-                          onChange={e => setForm(f => ({ ...f, discount: { ...f.discount, durationMonths: Number(e.target.value), duration: 'repeating' } }))}
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-              )}
+              <span style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>Discounts</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {(['monthly', 'yearly'] as const)
+                  .filter(plan => form.plans?.includes(plan))
+                  .map(plan => {
+                    const s = discountStates[plan];
+                    const update = (patch: Partial<DiscountFormState>) =>
+                      setDiscountStates(prev => ({ ...prev, [plan]: { ...prev[plan], ...patch } }));
+                    return (
+                      <div key={plan} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 14 }}>
+                        <label style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, marginBottom: s.enabled ? 10 : 0, cursor: 'pointer' }}>
+                          <input type="checkbox" checked={s.enabled} onChange={e => update({ enabled: e.target.checked })} />
+                          <span style={{ fontWeight: 600 }}>
+                            Apply a discount to {plan.charAt(0).toUpperCase() + plan.slice(1)}
+                          </span>
+                        </label>
+                        {s.enabled && (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                            <label style={{ fontSize: 13 }}>
+                              <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>Type</span>
+                              <select style={inputStyle} value={s.type} onChange={e => update({ type: e.target.value as 'percent' | 'amount' })}>
+                                <option value="percent">Percent off</option>
+                                <option value="amount">Amount off</option>
+                              </select>
+                            </label>
+                            {s.type === 'percent' ? (
+                              <label style={{ fontSize: 13 }}>
+                                <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>% off</span>
+                                <input
+                                  type="number" min={1} max={100} style={inputStyle}
+                                  value={s.percentOff}
+                                  onChange={e => update({ percentOff: Number(e.target.value) })}
+                                />
+                              </label>
+                            ) : (
+                              <label style={{ fontSize: 13 }}>
+                                <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>Amount off (cents)</span>
+                                <input
+                                  type="number" min={1} style={inputStyle}
+                                  value={s.amountOff}
+                                  placeholder="e.g. 1000 = $10"
+                                  onChange={e => update({ amountOff: Number(e.target.value) })}
+                                />
+                              </label>
+                            )}
+                            <label style={{ fontSize: 13 }}>
+                              <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>Duration</span>
+                              <select style={inputStyle} value={s.duration} onChange={e => update({ duration: e.target.value as DiscountDuration })}>
+                                <option value="forever">Forever</option>
+                                <option value="once">First payment only</option>
+                                <option value="repeating">N months</option>
+                              </select>
+                            </label>
+                            {s.duration === 'repeating' && (
+                              <label style={{ fontSize: 13 }}>
+                                <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>Months</span>
+                                <input
+                                  type="number" min={1} style={inputStyle}
+                                  value={s.durationMonths}
+                                  onChange={e => update({ durationMonths: Number(e.target.value) })}
+                                />
+                              </label>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
             </div>
 
             {saveError && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 10 }}>{saveError}</p>}
@@ -390,7 +428,12 @@ export default function PartnersPage() {
                   </td>
                   <td style={{ fontSize: 13 }}>
                     <p style={{ margin: '0 0 2px' }}>{p.config.trialDays}d trial · {planLabels(p.config.plans)}</p>
-                    {p.discountLabel && <p style={{ margin: 0, color: '#7c3aed', fontWeight: 600 }}>{p.discountLabel}</p>}
+                    {p.discountLabels.monthly && (
+                      <p style={{ margin: 0, color: '#7c3aed', fontWeight: 600 }}>Monthly: {p.discountLabels.monthly}</p>
+                    )}
+                    {p.discountLabels.yearly && (
+                      <p style={{ margin: 0, color: '#7c3aed', fontWeight: 600 }}>Yearly: {p.discountLabels.yearly}</p>
+                    )}
                   </td>
                   <td style={{ fontSize: 13 }}>
                     {p.redemptions}{p.config.maxRedemptions ? ` / ${p.config.maxRedemptions}` : ''} signups

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import PrimaryButton from '../../components/PrimaryButton';
+import play5Image from '../../assets/images/play5.png';
 
 const privacyItems = [
   {
@@ -50,30 +51,20 @@ export default function PlaySession5Screen() {
 
   return (
     <OnboardingLayout progress={100} backTo="/play/4">
-      {/* Illustration */}
-      <div className="w-full h-52 bg-[#EDE9FE] flex items-center justify-center relative overflow-hidden">
-        <div className="text-center z-10">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" className="mx-auto mb-3">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="#8C49D5" strokeWidth="1.5"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#8C49D5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <circle cx="12" cy="16" r="1.5" fill="#8C49D5"/>
-          </svg>
-          <div className="bg-white rounded-xl px-6 py-3 shadow-sm">
-            <p className="text-[#1E2939] font-bold text-sm">Your data is safe</p>
-            <p className="text-[#6B7280] text-xs">End-to-end protected</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 pt-5 pb-4">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight">
+      <div className="flex-1 overflow-y-auto px-4 pt-5 pb-4">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight text-center">
           Your data stays private
         </h1>
-        <p className="text-[#6B7280] text-sm mb-6 leading-relaxed">
+        <p className="text-[#6B7280] text-sm mb-6 leading-relaxed text-center">
           Your data is always protected and never shared without your permission.
         </p>
 
-        <div className="flex flex-col gap-2.5 mb-8">
+        {/* Illustration */}
+        <div className="w-full flex items-center justify-center my-8">
+          <img src={play5Image} alt="" className="w-full max-w-xs h-auto" />
+        </div>
+
+        {/* <div className="flex flex-col gap-2.5 mb-8">
           {privacyItems.map(item => (
             <div key={item.title} className="flex gap-4 items-start border border-gray-200 rounded-xl p-4">
               <div className="w-9 h-9 bg-[#EDE9FE] rounded-lg flex items-center justify-center flex-shrink-0">
@@ -85,11 +76,11 @@ export default function PlaySession5Screen() {
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
 
       </div>
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
-        <PrimaryButton onClick={() => navigate('/create-account')}>
+      <div className="px-1 pb-8 pt-3">
+        <PrimaryButton onClick={() => navigate('/subscribe')}>
             Continue
           </PrimaryButton>
         </div>

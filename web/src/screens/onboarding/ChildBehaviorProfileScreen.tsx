@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useOnboarding, computeWacbScore, getBehaviorCategory, getBehaviorProfile } from '../../contexts/OnboardingContext';
@@ -27,6 +27,8 @@ const sectionIcons = {
 
 export default function ChildBehaviorProfileScreen() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const locked = searchParams.get('locked') === 'true';
   const { data } = useOnboarding();
   const childName = data.childName || 'Your child';
 
@@ -43,15 +45,27 @@ export default function ChildBehaviorProfileScreen() {
   return (
     <OnboardingLayout progress={81} backTo="/onboarding/wacb/9">
 
-      <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4">
-        <h1 className="text-[#1E2939] text-xl font-bold leading-tight mb-1">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+        <h1 className="text-[#1E2939] text-xl font-bold leading-tight mb-1 text-center">
           {childName}'s Behavior Profile
         </h1>
-        <p className="text-[#6B7280] text-sm mb-6">
+        <p className="text-[#6B7280] text-sm mb-6 text-center">
           Based on your responses over the past two weeks
         </p>
 
-        <div className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: profile.bgColor }}>
+        <div className="relative rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: profile.bgColor }}>
+          {locked && (
+            <button
+              onClick={() => navigate('/onboarding/wacb/1')}
+              className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6 gap-2"
+              style={{ backgroundColor: 'rgba(243, 244, 246, 0.92)' }}
+            >
+              <span className="text-2xl">🔒</span>
+              <span className="text-[#1E2939] text-sm font-medium leading-snug">
+                To unlock the behavior profile insights, you can click here to answer those behavior questions for us to personalize the plan
+              </span>
+            </button>
+          )}
           <div className="px-5 py-4">
             <div className="flex items-center justify-between mb-3">
               <span className="font-bold text-base" style={{ color: profile.color }}>
@@ -86,7 +100,7 @@ export default function ChildBehaviorProfileScreen() {
         </div>
       </div>
 
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
+      <div className="px-1 pb-8 pt-3">
         <PrimaryButton onClick={() => navigate('/onboarding/intro3')}>
           Introducing Emotional Massage
         </PrimaryButton>

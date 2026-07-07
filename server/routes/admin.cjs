@@ -2716,18 +2716,9 @@ function adminStripe() {
   return _adminStripe;
 }
 
-function discountLabel(discount) {
-  if (!discount) return null;
-  const amount = discount.percentOff
-    ? `${discount.percentOff}% off`
-    : `$${(discount.amountOff / 100).toFixed(2)} off`;
-  if (discount.duration === 'forever') return `${amount} forever`;
-  if (discount.duration === 'once') return `${amount} on first payment`;
-  if (discount.duration === 'repeating') return `${amount} for ${discount.durationMonths} months`;
-  return amount;
-}
+const { discountLabel, normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
 
-async function syncStripeCoupon(partnerName, slug, discount, expiresAt, maxRedemptions, existingCouponId) {
+async function syncStripeCoupon(partnerName, slug, planLabel, discount, expiresAt, maxRedemptions, existingCouponId) {
   if (!discount || (!discount.percentOff && !discount.amountOff)) return null;
 
   // Archive old coupon if discount config changed
@@ -2736,18 +2727,39 @@ async function syncStripeCoupon(partnerName, slug, discount, expiresAt, maxRedem
   }
 
   const couponParams = {
-    name: `${partnerName} Partner Discount`,
+    name: `${partnerName} Partner Discount (${planLabel})`,
     duration: discount.duration,
     ...(discount.percentOff ? { percent_off: discount.percentOff } : {}),
     ...(discount.amountOff ? { amount_off: discount.amountOff, currency: discount.currency ?? 'sgd' } : {}),
     ...(discount.duration === 'repeating' ? { duration_in_months: discount.durationMonths } : {}),
     ...(maxRedemptions ? { max_redemptions: maxRedemptions } : {}),
     ...(expiresAt ? { redeem_by: Math.floor(new Date(expiresAt).getTime() / 1000) } : {}),
-    metadata: { partnerSlug: slug },
+    metadata: { partnerSlug: slug, plan: planLabel },
   };
 
   const coupon = await adminStripe().coupons.create(couponParams);
   return coupon.id;
+}
+
+// Syncs both plans' Stripe coupons, only recreating a coupon for a plan whose discount
+// actually changed (per-plan, not a whole-object diff — editing the yearly discount
+// shouldn't churn the monthly coupon).
+async function syncDiscounts(partnerName, slug, newDiscounts, expiresAt, maxRedemptions, oldDiscounts) {
+  const result = {};
+  for (const plan of ['monthly', 'yearly']) {
+    const next = newDiscounts?.[plan] ?? null;
+    const prev = oldDiscounts?.[plan] ?? null;
+    const changed = JSON.stringify(next) !== JSON.stringify(prev ? { ...prev, stripeCouponId: undefined } : null);
+    if (!changed) {
+      result[plan] = prev;
+      continue;
+    }
+    const stripeCouponId = await syncStripeCoupon(
+      partnerName, slug, plan, next, expiresAt, maxRedemptions, prev?.stripeCouponId ?? null
+    );
+    result[plan] = next ? { ...next, stripeCouponId } : null;
+  }
+  return result;
 }
 
 // GET /api/admin/partners
@@ -2757,11 +2769,18 @@ router.get('/partners', requireAdminAuth, async (req, res) => {
       orderBy: { createdAt: 'desc' },
       include: { _count: { select: { users: true } } },
     });
-    res.json(partners.map(p => ({
-      ...p,
-      userCount: p._count.users,
-      discountLabel: discountLabel(p.config?.discount ?? null),
-    })));
+    res.json(partners.map(p => {
+      const discounts = normalizeDiscounts(p.config);
+      return {
+        ...p,
+        config: { ...p.config, discounts }, // always the resolved per-plan shape, regardless of storage format
+        userCount: p._count.users,
+        discountLabels: {
+          monthly: discountLabel(discounts.monthly),
+          yearly: discountLabel(discounts.yearly),
+        },
+      };
+    }));
   } catch (err) {
     console.error('[admin] partners list error:', err);
     res.status(500).json({ error: 'Failed to fetch partners' });
@@ -2776,7 +2795,13 @@ router.get('/partners/:id', requireAdminAuth, async (req, res) => {
       include: { _count: { select: { users: true } } },
     });
     if (!partner) return res.status(404).json({ error: 'Partner not found' });
-    res.json({ ...partner, userCount: partner._count.users, discountLabel: discountLabel(partner.config?.discount ?? null) });
+    const discounts = normalizeDiscounts(partner.config);
+    res.json({
+      ...partner,
+      config: { ...partner.config, discounts },
+      userCount: partner._count.users,
+      discountLabels: { monthly: discountLabel(discounts.monthly), yearly: discountLabel(discounts.yearly) },
+    });
   } catch (err) {
     console.error('[admin] partner get error:', err);
     res.status(500).json({ error: 'Failed to fetch partner' });
@@ -2788,7 +2813,7 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
   try {
     const {
       slug, name, trialDays = 7, plans = ['monthly', 'yearly'],
-      discount, welcomeMessage, maxRedemptions, expiresAt,
+      discounts, welcomeMessage, maxRedemptions, expiresAt,
     } = req.body;
 
     if (!slug || !name) return res.status(400).json({ error: 'slug and name are required' });
@@ -2796,12 +2821,12 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
     const existing = await prisma.partner.findUnique({ where: { slug } });
     if (existing) return res.status(409).json({ error: `Slug '${slug}' is already in use` });
 
-    const stripeCouponId = await syncStripeCoupon(name, slug, discount, expiresAt, maxRedemptions, null);
+    const syncedDiscounts = await syncDiscounts(name, slug, discounts, expiresAt, maxRedemptions, null);
 
     const config = {
       trialDays,
       plans,
-      discount: discount ? { ...discount, stripeCouponId } : null,
+      discounts: syncedDiscounts,
       welcomeMessage: welcomeMessage ?? null,
       maxRedemptions: maxRedemptions ?? null,
     };
@@ -2831,30 +2856,24 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
     if (!partner) return res.status(404).json({ error: 'Partner not found' });
 
     const {
-      name, status, trialDays, plans, discount, welcomeMessage, maxRedemptions, expiresAt,
+      name, status, trialDays, plans, discounts, welcomeMessage, maxRedemptions, expiresAt,
     } = req.body;
 
     const oldConfig = partner.config;
-    const newDiscount = discount !== undefined ? discount : oldConfig.discount;
+    const oldDiscounts = normalizeDiscounts(oldConfig); // reads either old or new shape
+    const newDiscounts = discounts !== undefined ? discounts : oldDiscounts;
 
-    // Re-create Stripe coupon only if discount fields changed
-    let stripeCouponId = oldConfig.discount?.stripeCouponId ?? null;
-    const discountChanged = JSON.stringify(discount) !== JSON.stringify(oldConfig.discount);
-    if (discountChanged) {
-      stripeCouponId = await syncStripeCoupon(
-        name ?? partner.name,
-        partner.slug,
-        newDiscount,
-        expiresAt ?? partner.expiresAt,
-        maxRedemptions ?? oldConfig.maxRedemptions,
-        oldConfig.discount?.stripeCouponId ?? null,
-      );
-    }
+    const syncedDiscounts = discounts !== undefined
+      ? await syncDiscounts(
+          name ?? partner.name, partner.slug, newDiscounts,
+          expiresAt ?? partner.expiresAt, maxRedemptions ?? oldConfig.maxRedemptions, oldDiscounts,
+        )
+      : oldDiscounts;
 
     const config = {
       trialDays: trialDays ?? oldConfig.trialDays,
       plans: plans ?? oldConfig.plans,
-      discount: newDiscount ? { ...newDiscount, stripeCouponId } : null,
+      discounts: syncedDiscounts,
       welcomeMessage: welcomeMessage !== undefined ? welcomeMessage : oldConfig.welcomeMessage,
       maxRedemptions: maxRedemptions !== undefined ? maxRedemptions : oldConfig.maxRedemptions,
     };

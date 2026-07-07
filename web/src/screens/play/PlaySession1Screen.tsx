@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import PrimaryButton from '../../components/PrimaryButton';
+import play1Image from '../../assets/images/play1.png';
 
 const toyCategories = [
   {
@@ -49,27 +50,20 @@ export default function PlaySession1Screen() {
 
   return (
     <OnboardingLayout progress={87} backTo="/onboarding/intro3">
-      {/* Illustration */}
-      <div className="w-full h-52 bg-[#EDE9FE] flex items-center justify-center relative overflow-hidden">
-        <svg width="180" height="160" viewBox="0 0 180 160" fill="none">
-          {/* Toy shelf abstract */}
-          <rect x="20" y="100" width="140" height="8" rx="4" fill="#C4B5FD"/>
-          <rect x="30" y="70" width="34" height="32" rx="6" fill="#8C49D5" opacity="0.5"/>
-          <rect x="73" y="60" width="34" height="42" rx="6" fill="#8C49D5" opacity="0.7"/>
-          <rect x="116" y="75" width="34" height="27" rx="6" fill="#8C49D5" opacity="0.4"/>
-
-        </svg>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 pt-5 pb-4">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight">
+      <div className="flex-1 overflow-y-auto px-4 pt-5 pb-4">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight text-center">
           Prepare the Right Toys
         </h1>
-        <p className="text-[#6B7280] text-sm mb-6 leading-relaxed">
+        <p className="text-[#6B7280] text-sm mb-6 leading-relaxed text-center">
           To let your child's imagination run wild, pick unstructured toys. These allow them to be the boss of the play.
         </p>
 
-        <div className="grid grid-cols-2 gap-2.5 mb-8">
+        {/* Illustration */}
+        <div className="w-full flex items-center justify-center my-8">
+          <img src={play1Image} alt="" className="w-full h-auto" />
+        </div>
+
+        {/* <div className="grid grid-cols-2 gap-2.5 mb-8">
           {toyCategories.map(cat => (
             <div key={cat.label} className="bg-[#F9F7FF] border border-[#EDE9FE] rounded-xl p-4">
               <div className="mb-2">{cat.icon}</div>
@@ -77,10 +71,10 @@ export default function PlaySession1Screen() {
               <p className="text-[#6B7280] text-xs leading-relaxed">{cat.desc}</p>
             </div>
           ))}
-        </div>
+        </div> */}
 
       </div>
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
+      <div className="px-1 pb-8 pt-3">
         <PrimaryButton onClick={() => navigate('/play/2')}>
             Continue
           </PrimaryButton>

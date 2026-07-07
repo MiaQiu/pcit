@@ -735,7 +735,9 @@ model Partner {
   slug        String        @unique
   name        String
   status      PartnerStatus @default(ACTIVE)
-  config      Json          // PartnerConfig: { trialDays, plans, discount, stripeCouponId, welcomeMessage, maxRedemptions }
+  config      Json          // PartnerConfig: { trialDays, plans, discounts: { monthly, yearly }, welcomeMessage, maxRedemptions }
+                            // (older rows may still have a single legacy `discount` field instead of
+                            // `discounts` — see server/utils/partnerDiscount.cjs normalizeDiscounts())
   expiresAt   DateTime?
   redemptions Int           @default(0)
   createdAt   DateTime      @default(now())

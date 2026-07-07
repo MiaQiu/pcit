@@ -1,11 +1,11 @@
 import React from 'react';
 
 const SCALE_OPTIONS = [
-  { value: 1, label: 'Never' },
-  { value: 2, label: 'Rarely' },
-  { value: 3, label: 'Sometimes' },
-  { value: 4, label: 'Often' },
-  { value: 5, label: 'Very Often' },
+  { value: 1, label: 'Never (Not at All)' },
+  { value: 2, label: 'Rarely (1–2 times a week)' },
+  { value: 3, label: 'Sometimes (3–4 times a week)' },
+  { value: 4, label: 'Often (5–6 times a week)' },
+  { value: 5, label: 'Very often (more than 6 times a week)' },
 ];
 
 interface ScaleQuestionProps {

@@ -81,29 +81,29 @@ export default function WacbQuestionScreen() {
     <OnboardingLayout progress={progress} onBack={handleBack}>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4">
-        <div className="mb-4">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+        <div className="mb-4 text-center">
           <span className="text-xs font-semibold text-[#8C49D5] uppercase tracking-wide">
             Question {qNum} of 9
           </span>
         </div>
 
-        <h1 className="text-[#1E2939] text-xl font-bold mb-6 leading-snug">
+        <h1 className="text-[#1E2939] text-xl font-bold mb-6 leading-snug text-center">
           {question.text(childName)}
         </h1>
 
-        <div className="bg-[#F9F7FF] border border-[#EDE9FE] rounded-xl p-4 mb-6">
-          <p className="text-[#6B7280] text-xs italic">
+        {/* <div className="rounded-xl p-4 mb-6">
+          <p className="text-[#6B7280] text-xs">
             There are no right or wrong answers — and this is not a diagnosis.
           </p>
-        </div>
+        </div> */}
 
         <ScaleQuestion value={currentValue} onChange={handleAnswer} />
 
       </div>
 
       {/* Fixed button footer */}
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
+      <div className="px-1 pb-8 pt-3">
         <PrimaryButton
           onClick={() => handleAnswer(currentValue!)}
           disabled={currentValue === undefined}

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import PrimaryButton from '../../components/PrimaryButton';
+import demo1bImage from '../../assets/images/demo1b.png';
 
 const strategies = [
   {
@@ -36,30 +37,18 @@ export default function Demo1BScreen() {
 
   return (
     <OnboardingLayout progress={6} backTo="/demo/1">
-      {/* Illustration */}
-      <div className="w-full h-60 bg-[#8C49D5] flex items-center justify-center relative overflow-hidden">
-        <div className="absolute top-6 left-6 w-14 h-14 bg-white/10 rounded-2xl" />
-        <div className="absolute bottom-6 right-6 w-10 h-10 bg-white/10 rounded-xl" />
-        <div className="absolute top-8 right-12 w-8 h-8 bg-white/10 rounded-full" />
-        <svg width="120" height="100" viewBox="0 0 120 100" fill="none" className="relative z-10">
-          {/* Three pillars */}
-          <rect x="10" y="50" width="24" height="44" rx="4" fill="white" opacity="0.3"/>
-          <rect x="48" y="30" width="24" height="64" rx="4" fill="white" opacity="0.5"/>
-          <rect x="86" y="16" width="24" height="78" rx="4" fill="white" opacity="0.7"/>
-          {/* Stars at top of pillars */}
-          <circle cx="22" cy="44" r="4" fill="white" opacity="0.6"/>
-          <circle cx="60" cy="24" r="4" fill="white" opacity="0.8"/>
-          <circle cx="98" cy="10" r="4" fill="white"/>
-        </svg>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 pt-5 pb-4">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-4 leading-tight">
+      <div className="flex-1 overflow-y-auto px-4 pt-5 pb-4">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-4 leading-tight text-center">
           Get simple strategies that actually work.
         </h1>
-        <p className="text-[#6B7280] text-sm mb-6 leading-relaxed">
+        <p className="text-[#6B7280] text-sm mb-6 leading-relaxed text-center">
           Nora gives you practical, evidence-based techniques you can use every day to support your child's growth.
         </p>
+
+        {/* Illustration */}
+        <div className="w-full flex items-center justify-center my-8">
+          <img src={demo1bImage} alt="" className="w-full max-w-xs h-auto" />
+        </div>
 
         <div className="flex flex-col gap-2.5 mb-8">
           {strategies.map(s => (
@@ -73,7 +62,7 @@ export default function Demo1BScreen() {
         </div>
 
       </div>
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
+      <div className="px-1 pb-8 pt-3">
         <PrimaryButton onClick={() => navigate('/demo/2')}>
             Continue
           </PrimaryButton>

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import PrimaryButton from '../../components/PrimaryButton';
+import dragonImage from '../../assets/images/dragon.png';
 
 const benefits = [
   {
@@ -41,23 +42,18 @@ export default function ParentingIntroScreen() {
   return (
     <OnboardingLayout progress={26} backTo="/demo/5">
 
-      <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4">
-        {/* Illustration */}
-        <div className="h-44 bg-[#EDE9FE] rounded-2xl flex items-center justify-center overflow-hidden mb-6">
-          <svg width="160" height="140" viewBox="0 0 160 140" fill="none">
-            <circle cx="80" cy="70" r="50" fill="#C4B5FD" opacity="0.4"/>
-            <circle cx="80" cy="70" r="34" fill="#8C49D5" opacity="0.15"/>
-            <text x="80" y="78" textAnchor="middle" fontSize="28" fontWeight="700" fill="#8C49D5" fontFamily="system-ui">5 min</text>
-            <text x="80" y="96" textAnchor="middle" fontSize="11" fill="#8C49D5" fontFamily="system-ui">daily</text>
-          </svg>
-        </div>
-
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight text-center">
           Just 5 minutes a day can make a difference.
         </h1>
-        <p className="text-[#6B7280] text-sm mb-6">
+        <p className="text-[#6B7280] text-sm mb-6 text-center">
           Small, consistent moments of intentional play build lasting change for your child.
         </p>
+
+        {/* Illustration */}
+        <div className="flex items-center justify-center my-8">
+          <img src={dragonImage} alt="" className="w-40 h-auto" />
+        </div>
 
         <div className="flex flex-col gap-3">
           {benefits.map(b => (
@@ -74,7 +70,7 @@ export default function ParentingIntroScreen() {
         </div>
       </div>
 
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
+      <div className="px-1 pb-8 pt-3">
         <PrimaryButton onClick={() => navigate('/onboarding/name')}>
           Get Your Personalized Plan
         </PrimaryButton>

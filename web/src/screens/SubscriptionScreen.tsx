@@ -35,11 +35,51 @@ export default function SubscriptionScreen() {
       .finally(() => setPricesLoading(false));
   }, []);
 
+  // Discounted price = what actually gets charged after the trial, once the partner's Stripe
+  // coupon (percentOff or amountOff, matching Stripe's own discount fields) is applied — the
+  // same math Stripe's checkout will do, so the price shown here isn't just a promise.
+  // Each plan has its own independent discount (possibly none) — never assume one plan's
+  // discount applies to the other.
+  const monthlyDiscount = partner?.discounts?.monthly ?? null;
+  const yearlyDiscount = partner?.discounts?.yearly ?? null;
+
+  const applyDiscount = (amount: number, discount: typeof monthlyDiscount): number => {
+    if (!discount) return amount;
+    if (discount.percentOff) return amount * (1 - discount.percentOff / 100);
+    if (discount.amountOff) return Math.max(amount - discount.amountOff / 100, 0);
+    return amount;
+  };
+  const formatPrice = (amount: number, currency: string) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+
   const yearlyFormatted = prices?.yearly?.formatted ?? '—';
   const monthlyFormatted = prices?.monthly?.formatted ?? '—';
   const yearlyPerMonth = prices?.yearlyPerMonth ?? '—';
   const savingsPercent = prices?.savingsPercent ?? 0;
-  const selectedPrice = selectedPlan === 'yearly' ? yearlyFormatted : monthlyFormatted;
+
+  const yearlyDiscounted = prices?.yearly && yearlyDiscount
+    ? formatPrice(applyDiscount(prices.yearly.amount, yearlyDiscount), prices.yearly.currency)
+    : null;
+  // Computed off the monthly price (not yearly/12) so it's mathematically consistent with
+  // the monthly price now shown crossed out next to it — same discount %, same base amount.
+  const yearlyPerMonthDiscounted = prices?.monthly && yearlyDiscount
+    ? formatPrice(applyDiscount(prices.monthly.amount, yearlyDiscount), prices.monthly.currency)
+    : null;
+  const monthlyDiscounted = prices?.monthly && monthlyDiscount
+    ? formatPrice(applyDiscount(prices.monthly.amount, monthlyDiscount), prices.monthly.currency)
+    : null;
+
+  // "SAVE 29% + 20%" — the base yearly-vs-monthly savings, plus the yearly plan's own
+  // discount on top of it, shown as two separate figures rather than merged into one.
+  const saveBadge = [
+    savingsPercent > 0 ? `${savingsPercent}%` : null,
+    yearlyDiscount?.percentOff ? `${yearlyDiscount.percentOff}%` : null,
+  ].filter(Boolean).join(' + ');
+
+  const selectedDiscount = selectedPlan === 'yearly' ? yearlyDiscount : monthlyDiscount;
+  const selectedPrice = selectedPlan === 'yearly'
+    ? (yearlyDiscounted ?? yearlyFormatted)
+    : (monthlyDiscounted ?? monthlyFormatted);
 
   const handleSubscribe = async () => {
     setLoading(true);
@@ -59,28 +99,28 @@ export default function SubscriptionScreen() {
 
   return (
     <OnboardingLayout>
+      {/* <p className="text-center text-[#1E2939] text-xl font-semibold mt-1 mb-4">Choose an option</p> */}
+
       {/* Header */}
-      <div className="w-full bg-[#8C49D5] px-6 pt-8 pb-8 text-center relative overflow-hidden flex-shrink-0">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/4" />
-        <div className="relative z-10">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="mx-auto mb-3">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <h1 className="text-white text-2xl font-bold mb-1">Start Your Free Trial</h1>
-          <p className="text-white/70 text-sm">
-            {partner ? `${partner.trialDays} days free` : '7 days free'}, cancel anytime
-          </p>
-          {partner?.discountLabel && (
-            <div className="mt-2 inline-block bg-white/20 rounded-full px-3 py-1">
-              <span className="text-white text-xs font-semibold">{partner.discountLabel}</span>
+      <div className="w-full px-6 pt-8 pb-8 text-center flex-shrink-0">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-1">Start Your Free Trial</h1>
+        <p className="text-[#1E2939]/70 text-sm">
+          {partner ? `${partner.trialDays} days free` : '7 days free'}, cancel anytime
+        </p>
+        {/* {(['monthly', 'yearly'] as const)
+          .filter(plan => partner?.discounts?.[plan])
+          .map(plan => (
+            <div key={plan} className="mt-2 inline-flex items-center gap-2 bg-[#F5F3FF] rounded-full px-3 py-1">
+              <span className="text-[#8C49D5] text-xs font-semibold">
+                Special discount{partner?.name ? ` for ${partner.name}` : ''} ({plan}):
+              </span>
+              <span className="text-[#1E2939] text-xs font-semibold">{partner!.discounts[plan]!.label}</span>
             </div>
-          )}
-        </div>
+          ))} */}
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-6 pt-6 pb-4">
+      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-4">
         {/* Plan options — filtered to partner's allowed plans */}
         <div className="flex flex-col gap-3 mb-6">
           {allowedPlans.includes('yearly') && (
@@ -91,22 +131,23 @@ export default function SubscriptionScreen() {
             >
               <div className="absolute -top-3 left-4">
                 <span className="bg-[#8C49D5] text-white text-xs font-bold px-3 py-1 rounded-full">
-                  BEST VALUE{savingsPercent > 0 ? ` · SAVE ${savingsPercent}%` : ''}
+                  {yearlyDiscount
+                    ? `Special discount for ${partner?.name}: ${yearlyDiscount.percentOff != null ? `${yearlyDiscount.percentOff}% off` : yearlyDiscount.label}`
+                    : `BEST VALUE${saveBadge ? ` · SAVE ${saveBadge}` : ''}`}
                 </span>
               </div>
-              <div className="flex items-center justify-between mt-1">
-                <div>
-                  <p className="font-bold text-[#1E2939] text-base">Yearly</p>
-                  <p className="text-[#6B7280] text-sm">
-                    {pricesLoading ? '...' : `${yearlyPerMonth}/month, billed annually`}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-[#1E2939] text-xl">
-                    {pricesLoading ? '...' : yearlyFormatted}
-                  </p>
-                  <p className="text-[#6B7280] text-xs">per year</p>
-                </div>
+              <p className="font-bold text-[#1E2939] text-base mt-1">Yearly</p>
+              <div className="mt-1">
+                {yearlyPerMonthDiscounted && (
+                  // For partner customers, anchor the crossed-out "original" price to the
+                  // monthly plan's price rather than yearly's own (already lower) per-month
+                  // equivalent, so the partner discount reads as a bigger jump down.
+                  <p className="text-[#9CA3AF] text-lg line-through">{monthlyFormatted}/month</p>
+                )}
+                <p className="font-bold text-[#1E2939] text-2xl">
+                  {pricesLoading ? '...' : `${yearlyPerMonthDiscounted ?? yearlyPerMonth}/month`}{' '}
+                  <span className="text-[#6B7280] text-sm font-normal">(billed annually)</span>
+                </p>
               </div>
             </button>
           )}
@@ -114,20 +155,25 @@ export default function SubscriptionScreen() {
           {allowedPlans.includes('monthly') && (
             <button
               onClick={() => setSelectedPlan('monthly')}
-              className={`w-full text-left rounded-xl border-2 p-5 transition-all duration-150
+              className={`relative w-full text-left rounded-xl border-2 p-5 transition-all duration-150
                 ${selectedPlan === 'monthly' ? 'border-[#8C49D5] bg-[#F5F3FF]' : 'border-gray-200 bg-white hover:border-gray-300'}`}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-[#1E2939] text-base">Monthly</p>
-                  <p className="text-[#6B7280] text-sm">Flexible, cancel anytime</p>
+              {monthlyDiscount && (
+                <div className="absolute -top-3 left-4">
+                  <span className="bg-[#8C49D5] text-white text-xs font-bold px-3 py-1 rounded-full">
+                    {`Special discount for ${partner?.name}: ${monthlyDiscount.percentOff != null ? `${monthlyDiscount.percentOff}% off` : monthlyDiscount.label}`}
+                  </span>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-[#1E2939] text-xl">
-                    {pricesLoading ? '...' : monthlyFormatted}
-                  </p>
-                  <p className="text-[#6B7280] text-xs">per month</p>
-                </div>
+              )}
+              <p className="font-bold text-[#1E2939] text-base mt-1">Monthly</p>
+              <div className="mt-1">
+                {monthlyDiscounted && (
+                  <p className="text-[#9CA3AF] text-lg line-through">{monthlyFormatted}/month</p>
+                )}
+                <p className="font-bold text-[#1E2939] text-2xl">
+                  {pricesLoading ? '...' : `${monthlyDiscounted ?? monthlyFormatted}/month`}{' '}
+                  <span className="text-[#6B7280] text-sm font-normal">(billed monthly)</span>
+                </p>
               </div>
             </button>
           )}
@@ -162,7 +208,7 @@ export default function SubscriptionScreen() {
       </div>
 
       {/* Fixed footer */}
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
+      <div className="px-1 pb-8 pt-3">
         <PrimaryButton onClick={handleSubscribe} loading={loading || pricesLoading}>
           Start {partner ? `${partner.trialDays}-day` : '7-day'} free trial
         </PrimaryButton>
@@ -174,10 +220,10 @@ export default function SubscriptionScreen() {
             Skip for Now
           </button>
         </div>
-        <p className="text-center text-xs text-gray-400 mt-2">
+        {/* <p className="text-center text-xs text-gray-400 mt-2">
           Free for {partner ? partner.trialDays : 7} days, then {pricesLoading ? '...' : `${selectedPrice}/${selectedPlan === 'yearly' ? 'year' : 'month'}`}
-          {partner?.discountLabel ? ` (${partner.discountLabel})` : ''}. Cancel anytime.
-        </p>
+          {selectedDiscount ? ` (${selectedDiscount.label})` : ''}. Cancel anytime.
+        </p> */}
       </div>
     </OnboardingLayout>
   );

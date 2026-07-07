@@ -19,11 +19,11 @@ export default function ChildGenderScreen() {
   return (
     <OnboardingLayout progress={39} backTo="/onboarding/child-name">
 
-      <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight text-center">
           What is {childName}'s gender?
         </h1>
-        <p className="text-[#6B7280] text-sm mb-6">
+        <p className="text-[#6B7280] text-sm mb-6 text-center">
           Used only to personalize guidance.
         </p>
 
@@ -34,7 +34,7 @@ export default function ChildGenderScreen() {
         />
       </div>
 
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
+      <div className="px-1 pb-8 pt-3">
         <PrimaryButton
           onClick={() => navigate('/onboarding/child-birthday')}
           disabled={!data.childGender}

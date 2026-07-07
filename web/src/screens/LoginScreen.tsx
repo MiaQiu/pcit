@@ -26,7 +26,7 @@ export default function LoginScreen() {
       setEmail(emailVal);
       setPassword(passwordVal);
       setAccessToken(res.accessToken);
-      navigate('/demo/1');
+      navigate('/onboarding/name');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Login failed. Please try again.');
     } finally {

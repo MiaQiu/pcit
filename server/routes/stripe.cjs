@@ -2,6 +2,8 @@
 const express = require('express');
 const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
+const { decryptSensitiveData } = require('../utils/encryption.cjs');
+const { normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
 
 let _stripe = null;
 function stripe() {
@@ -88,6 +90,10 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
+    // email/name are stored encrypted at rest — must decrypt before handing to Stripe
+    const userEmail = decryptSensitiveData(user.email);
+    const userName = decryptSensitiveData(user.name);
+
     // Resolve partner config (used to customise trial days, coupon, and plan availability)
     const partnerConfig = (user.partner?.status === 'ACTIVE') ? user.partner.config : null;
 
@@ -101,10 +107,10 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
     // from concurrent requests (both see null stripeCustomerId and both try to create)
     let stripeCustomerId = user.stripeCustomerId;
     if (!stripeCustomerId) {
-      const existing = await stripe().customers.list({ email: user.email, limit: 1 });
+      const existing = await stripe().customers.list({ email: userEmail, limit: 1 });
       const customer = existing.data[0] ?? await stripe().customers.create({
-        email: user.email,
-        name: user.name || undefined,
+        email: userEmail,
+        name: userName || undefined,
         metadata: { userId: String(userId) },
       });
       stripeCustomerId = customer.id;
@@ -121,7 +127,8 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
     }
 
     const trialDays = partnerConfig?.trialDays ?? 7;
-    const stripeCouponId = partnerConfig?.discount?.stripeCouponId ?? null;
+    // Discounts are configured per-plan — use whichever plan the user actually selected.
+    const stripeCouponId = partnerConfig ? normalizeDiscounts(partnerConfig)[plan]?.stripeCouponId ?? null : null;
 
     const session = await stripe().checkout.sessions.create({
       customer: stripeCustomerId,

@@ -13,13 +13,22 @@ export interface WacbAnswers {
   q9Attention?: number;
 }
 
+export interface PlanDiscountInfo {
+  label: string;
+  percentOff: number | null;
+  amountOff: number | null; // cents
+}
+
 export interface PartnerInfo {
   slug: string;
   name: string;
   welcomeMessage: string | null;
   trialDays: number;
   plans: ('monthly' | 'yearly')[];
-  discountLabel: string | null;
+  discounts: {
+    monthly: PlanDiscountInfo | null;
+    yearly: PlanDiscountInfo | null;
+  };
 }
 
 export interface OnboardingData {

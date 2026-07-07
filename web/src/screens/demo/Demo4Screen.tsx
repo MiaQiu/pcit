@@ -52,40 +52,40 @@ export default function Demo4Screen() {
 
   return (
     <OnboardingLayout progress={19} backTo="/demo/3">
-      {/* Illustration — skill metrics */}
-      <div className="w-full h-60 bg-[#EDE9FE] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl w-full max-w-xs shadow-sm overflow-hidden">
-          <div className="bg-[#8C49D5] px-4 py-3">
-            <span className="text-white text-sm font-semibold">Growth & Learning</span>
-          </div>
-          <div className="p-4">
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { label: 'Social Skills', value: 78 },
-                { label: 'Emotional Reg.', value: 65 },
-                { label: 'Focus', value: 82 },
-                { label: 'Language', value: 71 },
-              ].map(item => (
-                <div key={item.label} className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-[#6B7280] mb-1">{item.label}</p>
-                  <div className="w-full h-1.5 bg-gray-200 rounded-full">
-                    <div className="h-full bg-[#8C49D5] rounded-full" style={{ width: `${item.value}%` }} />
+      <div className="flex-1 overflow-y-auto px-4 pt-5 pb-4">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-4 leading-tight text-center">
+          Help your child thrive.
+        </h1>
+        <p className="text-[#6B7280] text-sm mb-6 leading-relaxed text-center">
+          Build on their strengths and support their emotional and social growth.
+        </p>
+
+        {/* Illustration — skill metrics */}
+        <div className="w-full flex items-center justify-center my-8">
+          <div className="bg-white rounded-2xl w-full max-w-xs shadow-sm overflow-hidden">
+            <div className="bg-[#8C49D5] px-4 py-3">
+              <span className="text-white text-sm font-semibold">Growth & Learning</span>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: 'Social Skills', value: 78 },
+                  { label: 'Emotional Reg.', value: 65 },
+                  { label: 'Focus', value: 82 },
+                  { label: 'Language', value: 71 },
+                ].map(item => (
+                  <div key={item.label} className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-[#6B7280] mb-1">{item.label}</p>
+                    <div className="w-full h-1.5 bg-gray-200 rounded-full">
+                      <div className="h-full bg-[#8C49D5] rounded-full" style={{ width: `${item.value}%` }} />
+                    </div>
+                    <p className="text-xs font-bold text-[#1E2939] mt-1">{item.value}%</p>
                   </div>
-                  <p className="text-xs font-bold text-[#1E2939] mt-1">{item.value}%</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 pt-5 pb-4">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-4 leading-tight">
-          Help your child thrive.
-        </h1>
-        <p className="text-[#6B7280] text-sm mb-6 leading-relaxed">
-          Build on their strengths and support their emotional and social growth.
-        </p>
 
         <div className="flex flex-col gap-2.5 mb-8">
           {growthAreas.map(item => (
@@ -102,7 +102,7 @@ export default function Demo4Screen() {
         </div>
 
       </div>
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
+      <div className="px-1 pb-8 pt-3">
         <PrimaryButton onClick={() => navigate('/demo/5')}>
             Continue
           </PrimaryButton>

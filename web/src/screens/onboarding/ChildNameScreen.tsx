@@ -12,11 +12,11 @@ export default function ChildNameScreen() {
   return (
     <OnboardingLayout progress={35} backTo="/onboarding/relationship">
 
-      <div className="flex-1 flex flex-col px-6 pt-6 pb-8">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-2">
+      <div className="flex-1 flex flex-col px-4 pt-6 pb-8">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 text-center">
           What's your child's name?
         </h1>
-        <p className="text-[#6B7280] text-sm mb-8">
+        <p className="text-[#6B7280] text-sm mb-8 text-center">
           We'll use this to make coaching feel more personal.
         </p>
 
@@ -39,7 +39,7 @@ export default function ChildNameScreen() {
           />
         </div>
 
-        <div className="mt-auto">
+        <div className="mt-auto -mx-3">
           <PrimaryButton
             onClick={() => {
               if (nameVal.trim()) {

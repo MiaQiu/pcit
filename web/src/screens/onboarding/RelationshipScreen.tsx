@@ -20,11 +20,11 @@ export default function RelationshipScreen() {
   return (
     <OnboardingLayout progress={32} backTo="/onboarding/name">
 
-      <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight text-center">
           Hi {data.name || 'there'}, what is your relationship to the child?
         </h1>
-        <p className="text-[#6B7280] text-sm mb-6">
+        <p className="text-[#6B7280] text-sm mb-6 text-center">
           This helps us tailor guidance to your role.
         </p>
 
@@ -35,7 +35,7 @@ export default function RelationshipScreen() {
         />
       </div>
 
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
+      <div className="px-1 pb-8 pt-3">
         <PrimaryButton
           onClick={() => navigate('/onboarding/child-name')}
           disabled={!data.relationshipToChild}

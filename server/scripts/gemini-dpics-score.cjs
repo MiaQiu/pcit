@@ -89,6 +89,41 @@ function scoreCall(call, groundTruth) {
   };
 }
 
+// Baked into result.dm on every regeneration (writeResultDm below always overwrites the
+// whole file from scratch) — keep this in sync with doc/gemini-dpics-call.dm, which has
+// the full write-up.
+const USAGE_HEADER = `# DPICS Gemini call results
+
+## Scripts
+
+- **gemini-dpics-call.cjs** — calls Gemini once per session, tracks cost (generation +
+  cache write + cache storage).
+  \`\`\`
+  node server/scripts/gemini-dpics-call.cjs --model flash|pro [--cache] [--session <label>]
+    [--prompt <name>] [--ttl <duration>] [--keep-cache]
+  \`\`\`
+  - \`--model\` \`flash\` → gemini-3.5-flash (default) | \`pro\` → gemini-3.1-pro-preview
+  - \`--cache\` upload manual + prompt file into a Gemini context cache, reused across all
+    sessions in the run; omit for no manual, prompt sent as systemInstruction instead
+  - \`--session\` one session only (e.g. \`session-3\`); omit to run all six
+  - \`--prompt\` prompt file under server/prompts/, no .txt (default: dpicsCoding-agentic-v10)
+  - \`--ttl\` cache TTL override, only with --cache (default: 900s)
+  - \`--keep-cache\` skip end-of-run TTL shrink (leaves full TTL committed/billed)
+
+- **gemini-dpics-score.cjs** — scores saved call output against DB ground truth (cached
+  locally after first use, no DB needed afterward), regenerates this file from scratch.
+  \`\`\`
+  node server/scripts/gemini-dpics-score.cjs [--dir <path>]
+  \`\`\`
+  Default \`--dir\`: \`eval-results/dpics/gemini-calls\`. Re-run this any time after new
+  \`gemini-dpics-call.cjs\` batches to refresh the leaderboard below.
+
+Full write-up (cost model, TTL/caching mechanics, production comparison): \`doc/gemini-dpics-call.dm\`.
+
+---
+
+`;
+
 function writeResultDm(dir, leaderboardRows, leaderboard) {
   const groups = {};
   for (const r of leaderboardRows) {
@@ -146,7 +181,7 @@ function writeResultDm(dir, leaderboardRows, leaderboard) {
       ].join('\n');
     });
 
-  const content = `# DPICS Gemini call results\n\n${sections.join('\n\n')}\n`;
+  const content = `${USAGE_HEADER}${sections.join('\n\n')}\n`;
   const outPath = path.join(dir, 'result.dm');
   fs.writeFileSync(outPath, content);
   console.log(`\nWrote ${outPath}`);

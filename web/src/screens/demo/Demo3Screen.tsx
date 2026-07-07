@@ -41,34 +41,34 @@ export default function Demo3Screen() {
 
   return (
     <OnboardingLayout progress={16} backTo="/demo/2b">
-      {/* Illustration — coaching insight card */}
-      <div className="w-full h-60 bg-[#EDE9FE] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl w-full max-w-xs shadow-sm overflow-hidden">
-          <div className="bg-[#8C49D5] px-4 py-3 flex items-center gap-2">
-            <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-              <span className="text-[#8C49D5] text-xs font-bold">N</span>
+      <div className="flex-1 overflow-y-auto px-4 pt-5 pb-4">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight text-center">
+          Nora Coaching Corner
+        </h1>
+        <p className="text-[#6B7280] text-sm mb-6 leading-relaxed text-center">
+          Personalized coaching based on your real moments, grounded in child development science.
+        </p>
+
+        {/* Illustration — coaching insight card */}
+        <div className="w-full flex items-center justify-center my-8">
+          <div className="bg-white rounded-2xl w-full max-w-xs shadow-sm overflow-hidden">
+            <div className="bg-[#8C49D5] px-4 py-3 flex items-center gap-2">
+              <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                <span className="text-[#8C49D5] text-xs font-bold">N</span>
+              </div>
+              <span className="text-white text-sm font-semibold">Nora Coaching Corner</span>
             </div>
-            <span className="text-white text-sm font-semibold">Nora Coaching Corner</span>
-          </div>
-          <div className="p-4">
-            <p className="text-xs font-semibold text-[#8C49D5] mb-1">Today's Insight</p>
-            <p className="text-sm font-semibold text-[#1E2939] mb-2">Great job narrating during block play!</p>
-            <p className="text-xs text-[#6B7280] mb-3">You used 4 behavior descriptions, which helps your child feel seen and builds vocabulary.</p>
-            <div className="bg-[#F9F7FF] rounded-xl p-3">
-              <p className="text-xs font-semibold text-[#1E2939] mb-1">Try this next time:</p>
-              <p className="text-xs text-[#6B7280]">"You're building so carefully — one block at a time!"</p>
+            <div className="p-4">
+              <p className="text-xs font-semibold text-[#8C49D5] mb-1">Today's Insight</p>
+              <p className="text-sm font-semibold text-[#1E2939] mb-2">Great job narrating during block play!</p>
+              <p className="text-xs text-[#6B7280] mb-3">You used 4 behavior descriptions, which helps your child feel seen and builds vocabulary.</p>
+              <div className="bg-[#F9F7FF] rounded-xl p-3">
+                <p className="text-xs font-semibold text-[#1E2939] mb-1">Try this next time:</p>
+                <p className="text-xs text-[#6B7280]">"You're building so carefully — one block at a time!"</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 pt-5 pb-4">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight">
-          Nora Coaching Corner
-        </h1>
-        <p className="text-[#6B7280] text-sm mb-6 leading-relaxed">
-          Personalized coaching based on your real moments, grounded in child development science.
-        </p>
 
         <div className="flex flex-col gap-2.5 mb-8">
           {highlights.map(item => (
@@ -85,7 +85,7 @@ export default function Demo3Screen() {
         </div>
 
       </div>
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
+      <div className="px-1 pb-8 pt-3">
         <PrimaryButton onClick={() => navigate('/demo/4')}>
             Continue
           </PrimaryButton>

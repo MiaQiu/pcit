@@ -39,11 +39,11 @@ export default function ChildIssueScreen() {
     <OnboardingLayout progress={45} backTo="/onboarding/child-birthday">
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight text-center">
           What would feel most helpful to you as a parent?
         </h1>
-        <p className="text-[#6B7280] text-sm mb-6">
+        <p className="text-[#6B7280] text-sm mb-6 text-center">
           Pick the ones that resonate most.
         </p>
 
@@ -73,7 +73,7 @@ export default function ChildIssueScreen() {
       </div>
 
       {/* Fixed button footer */}
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
+      <div className="px-1 pb-8 pt-3">
         <PrimaryButton
           onClick={handleContinue}
           disabled={data.issue.length === 0}

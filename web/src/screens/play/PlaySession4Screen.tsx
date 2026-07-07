@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import PrimaryButton from '../../components/PrimaryButton';
+import play4Image from '../../assets/images/play4.jpg';
 
 const features = [
   {
@@ -52,45 +53,20 @@ export default function PlaySession4Screen() {
 
   return (
     <OnboardingLayout progress={97} backTo="/play/3">
-      {/* Illustration */}
-      <div className="w-full h-52 bg-[#EDE9FE] flex items-center justify-center p-4 relative overflow-hidden">
-        <div className="flex gap-3 z-10">
-          <div className="bg-white rounded-2xl p-3 shadow-sm w-32">
-            <p className="text-xs font-bold text-[#8C49D5] mb-2">PEN Skills</p>
-            <div className="flex flex-col gap-1.5">
-              {[['Praise', 3], ['Echo', 5], ['Narrate', 4]].map(([k, v]) => (
-                <div key={k as string} className="flex items-center gap-1">
-                  <span className="text-xs text-gray-500 w-12">{k}</span>
-                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full">
-                    <div className="h-full bg-[#8C49D5] rounded-full" style={{ width: `${(v as number) * 20}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-3 shadow-sm w-28">
-            <p className="text-xs font-bold text-green-600 mb-2">Today's Wins</p>
-            {['Great narrating!', 'Active listening', 'Child led 85%'].map(w => (
-              <div key={w} className="flex items-center gap-1.5 mb-1.5">
-                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                  <path d="M1 4L3.5 6.5L9 1" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="text-xs text-gray-600">{w}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 pt-5 pb-4">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight">
+      <div className="flex-1 overflow-y-auto px-4 pt-5 pb-4">
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight text-center">
           Short Play, Big Insights
         </h1>
-        <p className="text-[#6B7280] text-sm mb-6 leading-relaxed">
+        <p className="text-[#6B7280] text-sm mb-6 leading-relaxed text-center">
           The recording stops automatically after 5 minutes. Our AI analyzes the interaction and generates a personalized report.
         </p>
 
-        <div className="flex flex-col gap-2.5 mb-8">
+        {/* Illustration */}
+        <div className="w-full flex items-center justify-center my-8">
+          <img src={play4Image} alt="" className="w-full h-auto" />
+        </div>
+
+        {/* <div className="flex flex-col gap-2.5 mb-8">
           {features.map(item => (
             <div key={item.title} className="flex gap-4 items-start border border-gray-200 rounded-xl p-4">
               <div className="w-9 h-9 bg-[#EDE9FE] rounded-lg flex items-center justify-center flex-shrink-0">
@@ -102,10 +78,10 @@ export default function PlaySession4Screen() {
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
 
       </div>
-      <div className="px-6 pb-8 pt-3 bg-white border-t border-gray-100">
+      <div className="px-1 pb-8 pt-3">
         <PrimaryButton onClick={() => navigate('/play/5')}>
             Continue
           </PrimaryButton>
