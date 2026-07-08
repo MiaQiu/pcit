@@ -47,6 +47,7 @@ const corsOptions = {
       'https://hinora.co',
       'https://www.hinora.co',
       'https://admin.hinora.co',
+      'https://signup.hinora.co',
       'http://localhost:5173',
       'http://localhost:5174',  // web app dev port
       'http://localhost:3000'
