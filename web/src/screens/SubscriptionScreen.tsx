@@ -208,7 +208,7 @@ export default function SubscriptionScreen() {
       </div>
 
       {/* Fixed footer */}
-      <div className="px-1 pb-8 pt-3">
+      <div className="px-1 pb-2 pt-3">
         <PrimaryButton onClick={handleSubscribe} loading={loading || pricesLoading}>
           Start {partner ? `${partner.trialDays}-day` : '7-day'} free trial
         </PrimaryButton>

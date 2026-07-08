@@ -102,7 +102,7 @@ export default function Demo4Screen() {
         </div>
 
       </div>
-      <div className="px-1 pb-8 pt-3">
+      <div className="px-1 pb-2 pt-3">
         <PrimaryButton onClick={() => navigate('/demo/5')}>
             Continue
           </PrimaryButton>

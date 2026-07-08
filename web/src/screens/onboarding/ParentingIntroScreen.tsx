@@ -70,7 +70,7 @@ export default function ParentingIntroScreen() {
         </div>
       </div>
 
-      <div className="px-1 pb-8 pt-3">
+      <div className="px-1 pb-2 pt-3">
         <PrimaryButton onClick={() => navigate('/onboarding/name')}>
           Get Your Personalized Plan
         </PrimaryButton>
