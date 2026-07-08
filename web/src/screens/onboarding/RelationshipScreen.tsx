@@ -35,7 +35,7 @@ export default function RelationshipScreen() {
         />
       </div>
 
-      <div className="px-1 pb-8 pt-3">
+      <div className="px-1 pb-2 pt-3">
         <PrimaryButton
           onClick={() => navigate('/onboarding/child-name')}
           disabled={!data.relationshipToChild}
