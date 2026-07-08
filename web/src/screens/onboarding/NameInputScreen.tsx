@@ -12,7 +12,7 @@ export default function NameInputScreen() {
   return (
     <OnboardingLayout progress={29} backTo="/create-account">
 
-      <div className="flex-1 flex flex-col px-4 pt-6 pb-8">
+      <div className="flex-1 flex flex-col px-4 pt-6 pb-2">
         <h1 className="text-[#1E2939] text-2xl font-bold mb-2 text-center">
           What's your name?
         </h1>

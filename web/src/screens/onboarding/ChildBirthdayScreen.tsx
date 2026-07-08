@@ -57,7 +57,7 @@ export default function ChildBirthdayScreen() {
   return (
     <OnboardingLayout progress={42} backTo="/onboarding/child-gender">
 
-      <div className="flex-1 flex flex-col px-4 pt-6 pb-8">
+      <div className="flex-1 flex flex-col px-4 pt-6 pb-2">
         <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight text-center">
           When is {childName}'s birthday?
         </h1>
