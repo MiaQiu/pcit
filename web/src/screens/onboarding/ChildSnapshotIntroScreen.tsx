@@ -87,7 +87,7 @@ export default function ChildSnapshotIntroScreen() {
         </PrimaryButton>
         <button
           onClick={() => navigate('/onboarding/behavior-profile?locked=true')}
-          className="w-full mt-3 h-12 text-[#6B7280] font-medium text-sm hover:text-[#1E2939] transition-colors"
+          className="w-full mt-1 py-2 text-[#6B7280] font-medium text-sm hover:text-[#1E2939] transition-colors"
         >
           Skip for Now
         </button>
