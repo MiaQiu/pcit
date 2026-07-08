@@ -22,7 +22,7 @@ export default function PlaySession2Screen() {
           <img src={play2Image} alt="" className="w-full max-w-xs h-auto" />
         </div>
 
-        <div className="flex flex-col gap-3 mb-8">
+        {/* <div className="flex flex-col gap-3 mb-8">
           <div className="bg-[#EDE9FE] rounded-xl p-4">
             <p className="text-[#8C49D5] font-bold text-sm mb-1">Say:</p>
             <p className="text-[#1E2939] text-sm italic">"You're stacking the blocks so high!"</p>
@@ -35,7 +35,7 @@ export default function PlaySession2Screen() {
             <p className="text-red-600 font-bold text-sm mb-1">Avoid:</p>
             <p className="text-[#6B7280] text-sm italic">"Why did you do that?" or "Don't do it like that"</p>
           </div>
-        </div>
+        </div> */}
 
       </div>
       <div className="px-1 pb-2 pt-3">
