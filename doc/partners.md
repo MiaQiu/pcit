@@ -11,13 +11,16 @@ Partner QR code → hinora.co/p/sgh-family
                         │  (Express redirect)
                         ▼
               hinora.co/signup/p/sgh-family
-                        │  (web SPA, PartnerLandingScreen)
+                        │  (web SPA, PartnerLandingScreen — no visible UI)
                         │
               GET /api/partner/validate/sgh-family
-              ← { name, trialDays, plans, discountLabel, welcomeMessage }
+              ← { name, trialDays, plans, welcomeMessage,
+                   discounts: { monthly: {...}|null, yearly: {...}|null } }
                         │
-              User sees partner-branded landing page
-              Clicks "Get Started"
+              Saved into OnboardingContext (→ localStorage), then
+              immediately redirected to hinora.co/signup/ (replace, no history entry)
+                        │
+              User clicks "Get Started" on the (undifferentiated) landing page
                         │
               /create-account
               POST /api/auth/signup { email, password, ..., partnerSlug: "sgh-family" }
@@ -25,21 +28,23 @@ Partner QR code → hinora.co/p/sgh-family
                       writes User.partnerId
                       increments Partner.redemptions
                         │
-              Onboarding (unchanged)
+              Onboarding (name → ... → intro3) → Play sessions 1–5
                         │
-              /subscribe  ← shows partner trial days + discount badge
-                           shows only plans allowed by partner config
+              /subscribe  ← each plan card shows its OWN discount (if configured),
+                             its own "Special discount for X" badge, and independent pricing
                         │
-              POST /api/stripe/create-checkout-session
-              Server reads user.partner.config:
+              POST /api/stripe/create-checkout-session { plan }
+              Server reads user.partner.config, resolves discounts for the SELECTED plan only:
                 - trial_period_days = config.trialDays
-                - discounts = [{ coupon: config.discount.stripeCouponId }]
+                - discounts = [{ coupon: discounts[plan].stripeCouponId }]  (if set for that plan)
                 - validates requested plan is in config.plans
                         │
-              Stripe Checkout (discounted)
+              Stripe Checkout (discounted per the selected plan's own coupon)
                         │
               checkout.session.completed webhook → existing lifecycle
 ```
+
+**Note:** the partner landing page (`PartnerLandingScreen`) used to show a partner-branded offer page with its own "Get Started" button. It no longer does — visiting `/p/:slug` now silently loads and saves the partner config, then redirects straight into the normal signup flow. This was a deliberate simplification; see "Web SPA changes" below.
 
 ---
 
@@ -73,49 +78,67 @@ Migration: `prisma/migrations/20260701000000_add_partner/`
 
 The `config` column is a JSON object. All behaviour is driven by editing this field — no code change is needed to onboard a new partner or change their offer.
 
+Discounts are configured **per plan** — `plans` controls which plans are offered at all, and `discounts.monthly` / `discounts.yearly` independently control whether (and how) each of those plans is discounted. A plan can be shown with no discount, both plans can have different discounts, or only one plan can have a discount at all.
+
 ```ts
+interface PartnerDiscount {
+  percentOff?:     number;                    // e.g. 20 = 20% off
+  amountOff?:      number;                    // in cents (mutually exclusive with percentOff)
+  currency?:       string;                    // required if amountOff set, default 'sgd'
+  duration:        'once'|'repeating'|'forever';
+  durationMonths?: number;                    // required if duration='repeating'
+  stripeCouponId?: string;                    // auto-populated by server; do not set manually
+}
+
 interface PartnerConfig {
   trialDays:       number;                    // free trial length (default 7)
   plans:           ('monthly'|'yearly')[];    // which plans to show at checkout
-  discount: {
-    percentOff?:   number;                    // e.g. 20 = 20% off
-    amountOff?:    number;                    // in cents (mutually exclusive with percentOff)
-    currency?:     string;                    // required if amountOff set, default 'sgd'
-    duration:      'once'|'repeating'|'forever';
-    durationMonths?: number;                  // required if duration='repeating'
-    stripeCouponId?: string;                  // auto-populated by server; do not set manually
-  } | null;
-  welcomeMessage?: string;                    // shown on partner landing page
+  discounts: {
+    monthly: PartnerDiscount | null;
+    yearly:  PartnerDiscount | null;
+  };
+  welcomeMessage?: string;                    // stored + returned by the API, not currently rendered anywhere
   maxRedemptions?: number | null;             // null = unlimited
 }
 ```
 
+**Back-compat:** partners created before per-plan discounts existed still have the old shape — a single `config.discount` field shared across all plans, instead of `config.discounts`. `server/utils/partnerDiscount.cjs`'s `normalizeDiscounts(config)` reads either shape transparently (old configs are treated as if the shared discount applied to every plan listed in `config.plans`), so nothing needed to be manually migrated. The next time an admin saves that partner through the portal, it's rewritten in the new per-plan shape.
+
 **Example configs:**
 
 ```jsonc
-// 30-day trial, 20% off forever, both plans
+// 30-day trial, 20% off forever on yearly only, both plans shown
 {
   "trialDays": 30, "plans": ["monthly","yearly"],
-  "discount": { "percentOff": 20, "duration": "forever" },
+  "discounts": {
+    "monthly": null,
+    "yearly": { "percentOff": 20, "duration": "forever" }
+  },
   "welcomeMessage": "Welcome, SGH partners!"
 }
 
-// 14-day trial, $10 off first payment, monthly only, 500-person cap
+// 14-day trial, $10 off first payment on monthly, monthly only, 500-person cap
 {
   "trialDays": 14, "plans": ["monthly"],
-  "discount": { "amountOff": 1000, "currency": "sgd", "duration": "once" },
+  "discounts": {
+    "monthly": { "amountOff": 1000, "currency": "sgd", "duration": "once" },
+    "yearly": null
+  },
   "maxRedemptions": 500
 }
 
-// 90-day trial, 100% off for 3 months (free quarter), yearly only
+// 90-day trial, different discounts on each plan
 {
-  "trialDays": 90, "plans": ["yearly"],
-  "discount": { "percentOff": 100, "duration": "repeating", "durationMonths": 3 }
+  "trialDays": 90, "plans": ["monthly", "yearly"],
+  "discounts": {
+    "monthly": { "percentOff": 10, "duration": "once" },
+    "yearly": { "percentOff": 100, "duration": "repeating", "durationMonths": 3 }
+  }
 }
 
-// Extended trial only, no discount
+// Extended trial only, no discount on either plan
 {
-  "trialDays": 30, "plans": ["monthly","yearly"], "discount": null
+  "trialDays": 30, "plans": ["monthly","yearly"], "discounts": { "monthly": null, "yearly": null }
 }
 ```
 
@@ -123,14 +146,16 @@ interface PartnerConfig {
 
 ## Stripe coupon lifecycle
 
-When a partner is created or its discount config changes, the server **auto-creates a Stripe coupon** and stores the coupon ID in `config.discount.stripeCouponId`. Admins never touch Stripe directly.
+Each plan's discount gets its **own independent Stripe coupon** — a partner with discounts on both monthly and yearly has two separate coupons, named `"{partner name} Partner Discount (monthly)"` / `"(yearly)"`. The server auto-creates/re-creates these and stores each coupon ID in `config.discounts.<plan>.stripeCouponId`. Admins never touch Stripe directly.
+
+Changing one plan's discount only touches that plan's coupon — editing the yearly discount does not recreate or affect the monthly coupon (`syncDiscounts()` in `server/routes/admin.cjs` diffs each plan independently).
 
 | Admin action | Stripe effect |
 |---|---|
-| Create partner with discount | New coupon created, ID written to config |
-| Update partner with changed discount | Old coupon archived (deleted), new coupon created |
-| Update partner without changing discount | Existing coupon unchanged |
-| Deactivate partner (status=EXPIRED) | Coupon left in Stripe (existing users unaffected) |
+| Create partner with a plan's discount | New coupon created for that plan, ID written to config |
+| Update a plan's discount | That plan's old coupon archived (deleted), new coupon created |
+| Update partner without changing a plan's discount | That plan's existing coupon unchanged |
+| Deactivate partner (status=EXPIRED) | Coupons left in Stripe (existing users unaffected) |
 
 The coupon is attached to the checkout session via `session.discounts`, not to the subscription directly.
 
@@ -170,20 +195,23 @@ Response:
   "welcomeMessage": "Welcome, SGH partners!",
   "trialDays": 30,
   "plans": ["monthly", "yearly"],
-  "discountLabel": "20% off forever"
+  "discounts": {
+    "monthly": null,
+    "yearly": { "label": "20% off forever", "percentOff": 20, "amountOff": null }
+  }
 }
 ```
 
-`discountLabel` is a human-readable string computed from the discount config. It is safe to display verbatim.
+`discounts.<plan>.label` is a human-readable string computed from that plan's discount config, safe to display verbatim. `percentOff`/`amountOff` are the raw values, used by the client to compute and display the actual discounted price (not just show the label).
 
 ### Admin (requires admin JWT)
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/api/admin/partners` | GET | List all partners (includes `userCount`, `discountLabel`) |
-| `/api/admin/partners` | POST | Create partner + auto-create Stripe coupon |
+| `/api/admin/partners` | GET | List all partners (includes `userCount`, `discountLabels: {monthly, yearly}`) |
+| `/api/admin/partners` | POST | Create partner + auto-create Stripe coupon(s) for whichever plans have a discount |
 | `/api/admin/partners/:id` | GET | Single partner detail |
-| `/api/admin/partners/:id` | PATCH | Update config; re-creates coupon if discount changed |
+| `/api/admin/partners/:id` | PATCH | Update config; re-creates a plan's coupon only if that plan's discount changed |
 | `/api/admin/partners/:id` | DELETE | Soft-deactivate (sets status=EXPIRED) |
 
 **Create/update body:**
@@ -193,9 +221,9 @@ Response:
   "name": "SGH Family Medicine",
   "trialDays": 30,
   "plans": ["monthly", "yearly"],
-  "discount": {
-    "percentOff": 20,
-    "duration": "forever"
+  "discounts": {
+    "monthly": null,
+    "yearly": { "percentOff": 20, "duration": "forever" }
   },
   "welcomeMessage": "Welcome, SGH partners!",
   "maxRedemptions": 500,
@@ -203,7 +231,7 @@ Response:
 }
 ```
 
-`slug` is immutable after creation. `discount.stripeCouponId` is always set by the server — omit it from requests.
+`slug` is immutable after creation. `discounts.<plan>.stripeCouponId` is always set by the server — omit it from requests. Omitting `discounts` entirely on a PATCH leaves existing discounts untouched.
 
 ---
 
@@ -212,43 +240,55 @@ Response:
 **Partners page** (`/partners` in the admin portal):
 
 - **Create** — form with all config fields; slug is auto-suggested from name (lowercased, spaces → hyphens)
-- **Edit** — same form, slug is read-only; discount changes trigger coupon re-creation
+- **Edit** — same form, slug is read-only; each plan's discount block is independent — editing yearly's discount doesn't touch monthly's, and vice versa
+- **Discounts** — one block per plan currently checked under "Available plans"; each has its own "Apply a discount" toggle, type (percent/amount), amount, and duration
 - **URL copy** — one-click copy of the short partner URL (`hinora.co/p/:slug`)
-- **Table** — shows offer summary (trial days, plans, discount label), redemption count vs cap, user count, status badge, created date
+- **Table** — shows offer summary (trial days, plans), a discount line per plan that has one, redemption count vs cap, user count, status badge, created date
 - **Deactivate** — sets status=EXPIRED; existing users retain access, new signups are blocked
 
 ---
 
 ## Web SPA changes
 
-**`PartnerLandingScreen`** (`web/src/screens/PartnerLandingScreen.tsx`):
+**`PartnerLandingScreen`** (`web/src/screens/PartnerLandingScreen.tsx`) — **no visible UI**:
 - Route: `/signup/p/:slug`
 - Calls `/api/partner/validate/:slug` on mount
-- Shows partner name, welcome message, offer highlights (trial days, discount label)
-- Stores `PartnerInfo` (slug + config) in `OnboardingContext` and `localStorage` — survives page refresh across the flow
-- Invalid/expired slug shows an error state with a link to the standard signup
+- On success, saves `PartnerInfo` into `OnboardingContext` (→ `localStorage`)
+- Always redirects to `/` (`navigate('/', { replace: true })`) whether validation succeeded or failed — an invalid/expired slug just falls through to the normal signup flow with no partner attached, rather than showing an error dead-end. `replace` means the partner-link URL never sits in browser history.
+- This used to render a partner-branded landing page with its own "Get Started" button and offer highlights; that was removed in favor of the silent-redirect-into-normal-flow behavior described above.
 
-**`OnboardingContext`** — new `partnerInfo` field:
+**`OnboardingContext`** — `partnerInfo` field, now with per-plan discounts:
 ```ts
+interface PlanDiscountInfo {
+  label: string;
+  percentOff: number | null;
+  amountOff: number | null; // cents
+}
+
 interface PartnerInfo {
   slug: string;
   name: string;
   welcomeMessage: string | null;
   trialDays: number;
   plans: ('monthly' | 'yearly')[];
-  discountLabel: string | null;
+  discounts: {
+    monthly: PlanDiscountInfo | null;
+    yearly: PlanDiscountInfo | null;
+  };
 }
 ```
 
-Persisted to `localStorage` under key `partnerInfo`. Cleared when set to null.
+Persisted to `localStorage` under key `partnerInfo`. Cleared when set to null. Since this is set by `PartnerLandingScreen` *before* the redirect to `/`, it's already available by the time the user reaches `/create-account` and `/subscribe`, regardless of the fact that visiting `/p/:slug` no longer shows its own screen.
 
-**`CreateAccountScreen`** — passes `partnerSlug: data.partnerInfo?.slug` in the signup payload.
+**`CreateAccountScreen`** — passes `partnerSlug: data.partnerInfo?.slug` in the signup payload. It's also now the **first** screen after Landing (see flow-order change below), so `partnerInfo` (if any) is already set by the time this fires.
 
-**`SubscriptionScreen`** — when `partnerInfo` is set:
+**`SubscriptionScreen`** — when `partnerInfo` is set, each plan card is independent:
 - Filters plan cards to `partnerInfo.plans` only
+- Each plan shows its **own** discount (or none) — strikethrough original price + discounted price, computed client-side with the same percentOff/amountOff math Stripe's checkout applies, so the display isn't just a promise
+- Each plan's top-left badge shows "Special discount for {partner name}: X% off" if that specific plan has a discount, otherwise Yearly falls back to the generic "BEST VALUE · SAVE X%" badge (Monthly has no fallback badge)
+- For partner customers with a yearly discount, the crossed-out "original" price on the Yearly card is anchored to the **monthly plan's price** (not yearly's own already-cheaper per-month rate) — and the discounted "offer" price is recalculated off that same monthly baseline, so the two numbers shown together are mathematically consistent
 - Replaces "7 days free" with the partner's trial days throughout
-- Shows a discount badge in the header
-- Button label and footer copy reflect the actual trial length
+- Footer copy shows the discount label only for whichever plan is currently selected
 
 ---
 
@@ -274,11 +314,12 @@ Redemption counter is incremented **at signup time**, not at checkout completion
 ### Onboard a new partner
 
 1. Admin portal → Partners → **+ New Partner**
-2. Fill: name, slug (e.g. `hospital-name`), trial days, discount config, optional cap + expiry
-3. Click **Create partner** — Stripe coupon is auto-created
-4. Click **Copy** next to the partner's slug to get `hinora.co/p/hospital-name`
-5. Generate a QR code from that URL (any QR generator; encode as-is)
-6. Hand off URL / QR code to partner
+2. Fill: name, slug (e.g. `hospital-name`), trial days, available plans, optional cap + expiry
+3. For each available plan you want discounted, tick **Apply a discount** in that plan's block and fill in its type/amount/duration
+4. Click **Create partner** — a Stripe coupon is auto-created per discounted plan
+5. Click **Copy** next to the partner's slug to get `hinora.co/p/hospital-name`
+6. Generate a QR code from that URL (any QR generator; encode as-is)
+7. Hand off URL / QR code to partner
 
 ### Pause a partner temporarily
 
@@ -288,7 +329,7 @@ To re-activate: `PATCH /api/admin/partners/:id` with `{ "status": "ACTIVE" }` (d
 
 ### Change a partner's discount
 
-Admin portal → Partners → **Edit** → update discount fields → **Save changes**. The server archives the old Stripe coupon and creates a new one. The URL stays the same; subsequent signups get the new discount.
+Admin portal → Partners → **Edit** → update the specific plan's discount block → **Save changes**. The server archives that plan's old Stripe coupon and creates a new one — the other plan's coupon is untouched. The URL stays the same; subsequent signups get the new discount.
 
 ### Check usage
 

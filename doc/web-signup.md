@@ -41,14 +41,11 @@ The web app is a standard SPA rooted at `/signup`. In production it is built int
 
 ```
 /signup                  Landing
-  └─ /create-account     Register (email + password)
+  └─ /create-account     Register (email + password) — FIRST step after Landing
   └─ /login              Returning user
 
 After auth:
 
-/demo/1 → 1b → 2 → 2b → 3 → 4 → 5        Product demo slides
-
-/onboarding/parenting-intro
 /onboarding/name
 /onboarding/relationship
 /onboarding/child-name
@@ -66,7 +63,11 @@ After auth:
 /success                                   Confirmation + App Store / Play Store links
 ```
 
-The `OnboardingContext` (`web/src/contexts/OnboardingContext.tsx`) holds all collected data (name, child info, WACB answers, JWT) in memory across the flow and submits it to the API at the right steps.
+**Flow order:** Landing → Create Account → Onboarding → Play sessions → Subscribe → Success. Account creation happens *before* onboarding (not after, as an earlier version of this flow had it) — the account is created with placeholder/default profile fields, then `ChildBirthdayScreen` and `WacbQuestionScreen` PATCH the real collected data into the profile via `completeOnboarding()`/`submitWacbSurvey()` once `data.accessToken` exists. Back-button targets (`backTo` prop on `OnboardingLayout`, and `CreateAccountScreen`'s `BackButton`) must stay in sync with this order — check every screen along the chain if you reorder it again.
+
+`/demo/1…5` and `/onboarding/parenting-intro` still exist as screens/routes but nothing currently navigates into them from the live flow — they're orphaned, not part of the reachable app. Worth cleaning up or reconnecting, but left as-is since removing them wasn't in scope of the flow-order fix.
+
+The `OnboardingContext` (`web/src/contexts/OnboardingContext.tsx`) holds all collected data (name, child info, WACB answers, JWT, and `partnerInfo` if the user arrived via a partner link — see `doc/partners.md`) in memory (persisted to `localStorage`) across the flow and submits it to the API at the right steps.
 
 ---
 
@@ -91,11 +92,13 @@ Create the products and prices in the Stripe dashboard first, then copy the pric
 
 1. User selects monthly or yearly on `/subscribe`.
 2. Frontend calls `POST /api/stripe/create-checkout-session` with the plan and success/cancel URLs.
-3. Server looks up the Stripe Customer by email (or creates one if none exists), then creates a Checkout Session with a 7-day free trial.
+3. Server looks up the Stripe Customer by email (or creates one if none exists), applies the user's partner discount for the selected plan if any (see `doc/partners.md`), then creates a Checkout Session with the applicable trial length.
 4. Server returns the hosted Checkout URL; browser redirects there.
 5. Stripe handles payment collection. On success, Stripe redirects to `/signup/success` and fires a webhook.
 
 **Race condition guard:** The customer-creation step searches Stripe by email before creating, to prevent duplicate customers when two simultaneous requests both see `stripeCustomerId = null` in the DB.
+
+**Decrypt before sending to Stripe:** `User.email`/`User.name` are stored encrypted at rest (`server/utils/encryption.cjs`, applied uniformly regardless of environment). `create-checkout-session` must decrypt them (`decryptSensitiveData`) before passing to `stripe().customers.list`/`.create` — passing the raw ciphertext fails with Stripe's `email_invalid` error, since it's not a real email address. This bit us once; every route that touches `user.email`/`user.name` from a fresh Prisma fetch needs the same decryption step.
 
 ### Webhook Events
 

@@ -10,12 +10,12 @@ Collect the following from the partner before opening the portal:
 
 | Item | Example | Notes |
 |---|---|---|
-| Organisation name | SGH Family Medicine | Shown on the partner landing page |
+| Organisation name | SGH Family Medicine | Shown in the discount badge on the pricing screen |
 | Short identifier | `sgh-family` | Used in the URL — lowercase, hyphens only, no spaces |
 | Trial length | 30 days | How many free days before the first charge |
-| Discount | 20% off forever | Percent off, or a fixed dollar amount off |
+| Discount **per plan** | Yearly: 20% off forever. Monthly: none | Each plan can have its own discount (percent or fixed amount), or no discount at all |
 | Which plans | Monthly and yearly | Or monthly-only / yearly-only |
-| Welcome message | "Welcome, SGH partners! ..." | Optional. Shown on the landing page under the org name |
+| Welcome message | "Welcome, SGH partners! ..." | Optional. Not currently shown anywhere in the UI (see note in Step 6) — kept for future use |
 | Maximum signups | 500 | Optional. Leave blank for unlimited |
 | Link expiry | 31 Dec 2027 | Optional. Leave blank if the deal has no end date |
 
@@ -44,7 +44,7 @@ Click **+ New Partner** in the top-right corner. A form appears.
 Fill in each field:
 
 **Name** *(required)*
-The organisation's full display name. This is shown to users on the landing page.
+The organisation's full display name. Shown to users in the discount badge on the pricing screen (e.g. "Special discount for SGH Family Medicine: 20% off").
 Example: `SGH Family Medicine`
 
 **Slug** *(required, set once)*
@@ -53,8 +53,7 @@ Rules: lowercase letters, numbers, and hyphens only. No spaces.
 Example: `sgh-family`
 
 **Welcome message** *(optional)*
-A one-line message shown under the organisation name on the landing page.
-Example: `Welcome, SGH Family Medicine partners! Enjoy your exclusive offer.`
+Not currently displayed anywhere in the app — the field still exists in case a future screen surfaces it, but there's no need to fill it in today.
 
 **Trial days**
 Number of free days before Stripe charges the user. Default is 7. Change to the agreed trial length (e.g. 30).
@@ -68,7 +67,9 @@ Date after which the link stops working. Leave blank if the partnership has no e
 **Available plans**
 Tick which plans to show at checkout. Both monthly and yearly are ticked by default. Untick one if the partner deal covers only one billing cycle.
 
-**Apply a discount** — tick this box if a discount was agreed:
+**Discounts** — one independent block appears below for each plan you've ticked above (e.g. a "Monthly" block and a "Yearly" block). Each plan's discount is configured completely separately — a partner deal might discount only the yearly plan, only the monthly plan, both with different terms, or neither.
+
+For each plan you want to discount, tick **Apply a discount to \<Plan\>** in that plan's block:
 
   - **Type**: choose *Percent off* (most common) or *Amount off* (fixed dollar)
   - If *Percent off*: enter the percentage (e.g. `20` for 20% off)
@@ -78,9 +79,11 @@ Tick which plans to show at checkout. Both monthly and yearly are ticked by defa
     - *First payment only* — one-time discount on the first charge after the trial
     - *N months* — discount applies for a set number of months; enter the number when prompted
 
+Leave a plan's "Apply a discount" box unticked if that plan should be offered at full price.
+
 Click **Create partner**.
 
-The system will create a Stripe coupon automatically. You do not need to do anything in Stripe.
+The system will create a Stripe coupon automatically for each plan that has a discount configured. You do not need to do anything in Stripe.
 
 ---
 
@@ -119,19 +122,15 @@ Open the partner URL in a browser (or scan the QR code with your phone):
 https://hinora.co/p/sgh-family
 ```
 
-You should see:
-- The partner landing page with the organisation name
-- The welcome message (if one was set)
-- The correct trial length (e.g. "30-day free trial")
-- The discount label (e.g. "20% off forever") if a discount was configured
-- A "Get Started" button
+**There is no visible partner landing page anymore** — the link loads the partner's offer in the background and immediately redirects to the normal signup screen (`/signup/`). This is expected; you won't see anything partner-specific until you reach `/subscribe` later in the flow. If the slug is invalid or expired, this redirect still happens (silently, with no partner discount attached) rather than showing an error page.
 
-Tap **Get Started** and verify the signup flow loads normally.
+Click through **Get Started** → **Create your account** and the rest of onboarding as a real user would.
 
 On the **/subscribe** screen, confirm:
-- The trial length in the header and button matches what was agreed
+- Each plan's price reflects the agreed discount (strikethrough original price + discounted price), only on the plan(s) that were configured with a discount
+- The plan's badge reads "Special discount for \<Organisation Name\>: X% off" on the discounted plan(s)
 - Only the agreed plans are shown (e.g. only Monthly, if that was the deal)
-- The discount label appears in the header
+- The trial length in the header and button matches what was agreed
 
 You do not need to complete a payment to confirm the setup is correct.
 
@@ -145,7 +144,7 @@ Send the partner contact:
 2. **The QR code image** (PNG or SVG)
 3. A brief description of what their users will see:
 
-> *"When your users scan the QR code or open the link, they will be taken to a Nora signup page showing your organisation name and their exclusive offer: a [X]-day free trial and [discount]. They create an account, complete a short onboarding, then start a Stripe subscription at the discounted rate. After subscribing, they download the Nora app to begin."*
+> *"When your users scan the QR code or open the link, they'll land on the Nora signup page. They create an account, complete a short onboarding, and when they reach the pricing screen their exclusive offer — a [X]-day free trial and [discount] — is already applied automatically. After subscribing, they download the Nora app to begin."*
 
 ---
 
@@ -170,9 +169,9 @@ The Stripe coupon is automatically updated (the old one is archived, a new one i
 
 The URL and QR code do not change.
 
-### Change the welcome message or plan options
+### Change the available plans
 
-Admin portal → Partners → **Edit** → update → **Save changes**. Takes effect immediately for all new visitors.
+Admin portal → Partners → **Edit** → update **Available plans** → **Save changes**. Takes effect immediately for all new visitors. (The welcome message field can be edited too, but nothing in the app currently displays it.)
 
 ### Increase or remove the redemption cap
 
@@ -198,18 +197,16 @@ The URL automatically returns "this link has expired" once the expiry date passe
 
 ## Troubleshooting
 
-**The landing page shows "Link unavailable"**
-- Check the slug in the URL matches exactly what was created (case-sensitive, hyphens not underscores)
-- Check the partner status in the admin portal — it may be PAUSED or EXPIRED
-- Check the expiry date has not passed
-- Check the redemption cap has not been hit
+**The partner link doesn't seem to do anything special — no error, but also no offer**
+- This is largely expected now: the link redirects silently with no visible confirmation. Check the partner's discount actually shows up later, on `/subscribe` — that's the real test, not the link itself.
+- If it's genuinely not applying: check the slug in the URL matches exactly what was created (case-sensitive, hyphens not underscores), and check the partner status/expiry/redemption cap in the admin portal (an inactive/expired/over-cap link silently falls back to the normal no-partner flow rather than showing an error).
 
 **Users are not seeing the discount at checkout**
-- Confirm a discount was configured on the partner (check the discount label in the Partners table — it should show e.g. "20% off forever")
-- Ask the user to clear their browser localStorage and retry from the partner URL. The partner context must be set before signup — if a user navigates directly to `/create-account` without going through the partner link first, no discount is applied.
+- Confirm a discount was actually configured **on that specific plan** — check the Partners table, which shows a separate discount line per plan (e.g. "Yearly: 20% off forever"). A discount on yearly does not apply to monthly, and vice versa.
+- Ask the user to clear their browser's `localStorage` and retry from the partner URL. The partner context is saved to `localStorage` the moment the `/p/:slug` link is visited (even though nothing appears onscreen) — if a user reaches `/create-account` without ever having opened the partner link first, no discount is applied.
 
 **The discount is showing the wrong amount**
-- The discount shown to users is computed at Stripe checkout time from the coupon. If the coupon was recently changed, the old coupon may still be attached to a user's checkout session in progress. Ask the user to go back to `/subscribe` and start a new checkout.
+- The discount shown to users is computed both client-side (for display, from the same percent/amount config) and at Stripe checkout time (from the coupon) — they should always match. If the coupon was recently changed, the old coupon may still be attached to a user's checkout session in progress. Ask the user to go back to `/subscribe` and start a new checkout.
 
 **The redemption count seems higher than expected**
 - Redemptions are counted at signup, not at checkout completion. Users who created an account through the partner link but have not yet subscribed are included in the count. The **Users** column shows only those who completed checkout.
