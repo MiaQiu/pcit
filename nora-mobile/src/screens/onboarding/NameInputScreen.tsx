@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
@@ -36,9 +36,24 @@ export const NameInputScreen: React.FC = () => {
 
   const isValid = name.trim().length > 0;
 
+  // TEMPORARY — dev-only escape hatch so testers stuck mid-onboarding (e.g. accounts created
+  // via web signup) can log out without reinstalling the app. Remove before shipping.
+  const handleDevLogout = async () => {
+    try {
+      await authService.logout();
+      navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Welcome' }] }));
+    } catch (error) {
+      console.error('Dev logout error:', error);
+    }
+  };
+
   return (
     <OnboardingLayout useKeyboardAvoid>
       <OnboardingProgressHeader phase={1} step={1} totalSteps={6} />
+
+      <TouchableOpacity onPress={handleDevLogout} style={styles.devLogoutButton}>
+        <Text style={styles.devLogoutText}>[DEV] Log out</Text>
+      </TouchableOpacity>
 
       <OnboardingTextInput
         title={t('onboarding.nameInput.title')}
@@ -61,5 +76,16 @@ export const NameInputScreen: React.FC = () => {
 const styles = StyleSheet.create({
   spacer: {
     flex: 1,
+  },
+  // TEMPORARY — remove alongside handleDevLogout above.
+  devLogoutButton: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  devLogoutText: {
+    color: '#EF4444',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
