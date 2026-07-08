@@ -3,9 +3,10 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/signup',
-  // VITE_API_URL must be set at build time for production.
-  // Dev server proxies /api to localhost:3001 so VITE_API_URL can be left unset locally.
+  base: '/',
+  // VITE_API_URL is optional. Leave it unset to use relative /api paths — the Vite dev
+  // server proxies those to localhost:3001 below, and vercel.json rewrites them to the
+  // production API when deployed. Only set it explicitly for the Docker/App Runner build.
   server: {
     port: 5174,
     proxy: {

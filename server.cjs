@@ -195,9 +195,10 @@ app.use('/api/stripe', stripeRoutes);
 const partnerRoutes = require('./server/routes/partner.cjs');
 app.use('/api/partner', partnerRoutes);
 
-// Short partner URL redirect: /p/:slug → /signup/p/:slug (web SPA handles it)
+// Short partner URL redirect: /p/:slug → signup.hinora.co/p/:slug (web SPA handles it)
 app.get('/p/:slug', (req, res) => {
-  res.redirect(302, `/signup/p/${req.params.slug}`);
+  const signupAppUrl = process.env.SIGNUP_APP_URL || 'https://signup.hinora.co';
+  res.redirect(302, `${signupAppUrl}/p/${req.params.slug}`);
 });
 
 // Mount referral routes

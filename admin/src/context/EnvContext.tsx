@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode } from 'react';
 
 export type Env = 'dev' | 'prod';
 
-export const PROD_API_URL = 'https://p2tgddmyxt.us-east-1.awsapprunner.com';
+export const PROD_API_URL = 'https://wpwpawhz29.ap-southeast-1.awsapprunner.com';
 
 const PROD_TOKEN_KEY = 'nora_admin_token_prod';
 

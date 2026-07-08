@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://wpwpawhz29.ap-southeast-1.awsapprunner.com/api/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

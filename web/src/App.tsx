@@ -44,7 +44,7 @@ import PartnerLandingScreen from './screens/PartnerLandingScreen';
 
 export default function App() {
   return (
-    <BrowserRouter basename="/signup">
+    <BrowserRouter>
       <OnboardingProvider>
         <Routes>
           {/* Partner landing — QR code destination */}

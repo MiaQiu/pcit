@@ -87,7 +87,7 @@ export default function SubscriptionScreen() {
     try {
       const result = await createCheckoutSession({
         plan: selectedPlan,
-        successUrl: `${window.location.origin}/signup/success`,
+        successUrl: `${window.location.origin}/success`,
         cancelUrl: window.location.href,
       }, data.accessToken);
       window.location.href = result.url;
