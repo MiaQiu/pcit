@@ -5,12 +5,15 @@ import PrimaryButton from '../../components/PrimaryButton';
 import MultipleChoice from '../../components/MultipleChoice';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
+// Values must match the server's relationshipToChild enum (server/routes/auth.cjs) exactly —
+// it 400s the whole complete-onboarding request (including every other bundled field) on
+// any mismatch, so this can't drift from ['MOTHER','FATHER','GRANDMOTHER','GRANDFATHER','GUARDIAN','OTHER'].
 const options = [
-  { value: 'Mother', label: 'Mother' },
-  { value: 'Father', label: 'Father' },
-  { value: 'Grandmother', label: 'Grandmother' },
-  { value: 'Grandfather', label: 'Grandfather' },
-  { value: 'Other', label: 'Other' },
+  { value: 'MOTHER', label: 'Mother' },
+  { value: 'FATHER', label: 'Father' },
+  { value: 'GRANDMOTHER', label: 'Grandmother' },
+  { value: 'GRANDFATHER', label: 'Grandfather' },
+  { value: 'OTHER', label: 'Other' },
 ];
 
 export default function RelationshipScreen() {

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import { completeOnboarding } from '../../api';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -23,34 +22,24 @@ export default function ChildBirthdayScreen() {
   const [year, setYear] = useState<number>(
     data.childBirthday ? data.childBirthday.getFullYear() : -1
   );
-  const [loading, setLoading] = useState(false);
-
   const childName = data.childName || 'your child';
   const isValid = month >= 0 && year > 0;
 
-  const handleContinue = async () => {
+  const getChildAge = () => {
+    const birthday = new Date(year, month, 1);
+    const today = new Date();
+    const age = today.getFullYear() - birthday.getFullYear();
+    return today.getMonth() < birthday.getMonth() ? age - 1 : age;
+  };
+  const childAge = isValid ? getChildAge() : null;
+  const showAgeWarning = childAge !== null && (childAge < 2 || childAge > 7);
+
+  const handleContinue = () => {
     if (!isValid) return;
     const birthday = new Date(year, month, 1);
     setChildBirthday(birthday);
-
-    if (data.accessToken && data.name && data.relationshipToChild && data.childName && data.childGender) {
-      setLoading(true);
-      try {
-        await completeOnboarding({
-          name: data.name,
-          relationshipToChild: data.relationshipToChild,
-          childName: data.childName,
-          childGender: data.childGender,
-          childBirthday: birthday.toISOString(),
-          issue: data.issue,
-        }, data.accessToken);
-      } catch {
-        // Non-blocking
-      } finally {
-        setLoading(false);
-      }
-    }
-
+    // Synced to the backend later, in ChildIssueScreen — that's the last field collected in
+    // this sequence, so everything (including issue) is available in one consolidated PATCH.
     navigate('/onboarding/child-issue');
   };
 
@@ -95,22 +84,18 @@ export default function ChildBirthdayScreen() {
           </div>
         </div>
 
-        {/* {isValid && (
-          <div className="bg-[#F9F7FF] rounded-xl p-4 mb-6">
-            <p className="text-[#6B7280] text-sm">
-              Birthday:{' '}
-              <span className="font-semibold text-[#1E2939]">
-                {MONTHS[month]} {year}
-              </span>
+        {showAgeWarning && (
+          <div className="bg-[#F3E8FF] rounded-xl px-4 py-3 mb-6">
+            <p className="text-[#4A5565] text-sm leading-relaxed">
+              * Note on Age Suitability: Nora's method is clinically evidenced to be most effective for children between 2 and 7 years old. However, the foundational skills taught here, such as positive reinforcement and emotional regulation, can be adapted and beneficial for children of any age.
             </p>
           </div>
-        )} */}
+        )}
 
         <div className="mt-auto -mx-3">
           <PrimaryButton
             onClick={handleContinue}
             disabled={!isValid}
-            loading={loading}
           >
             Continue
           </PrimaryButton>

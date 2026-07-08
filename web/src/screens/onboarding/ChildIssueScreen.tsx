@@ -4,6 +4,7 @@ import OnboardingLayout from '../../components/OnboardingLayout';
 import PrimaryButton from '../../components/PrimaryButton';
 import MultipleChoice from '../../components/MultipleChoice';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { completeOnboarding } from '../../api';
 
 const issueOptions = [
   { value: 'Behavior Challenges (Tantrums, Arguing)', label: 'Behavior Challenges (Tantrums, Arguing)' },
@@ -23,6 +24,7 @@ export default function ChildIssueScreen() {
   const navigate = useNavigate();
   const { data, setIssue, setIssueOther } = useOnboarding();
   const [otherText, setOtherText] = useState(data.issueOther);
+  const [loading, setLoading] = useState(false);
   const showOther = data.issue.includes('Others');
 
   const handleChange = (vals: string | string[]) => {
@@ -30,8 +32,32 @@ export default function ChildIssueScreen() {
     setIssue(arr);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (showOther) setIssueOther(otherText);
+
+    // Consolidated sync point: by now every field NameInputScreen..ChildIssueScreen collects is
+    // available, so this is the one place we PATCH them all to the backend (only relevant if
+    // signup already happened — i.e. accessToken exists, which is always true in the current
+    // Landing -> Create Account -> Onboarding flow order). Mobile app login relies on these
+    // fields being populated to decide whether to skip its own onboarding.
+    if (data.accessToken && data.name && data.relationshipToChild && data.childName && data.childGender && data.childBirthday) {
+      setLoading(true);
+      try {
+        await completeOnboarding({
+          name: data.name,
+          relationshipToChild: data.relationshipToChild,
+          childName: data.childName,
+          childGender: data.childGender,
+          childBirthday: data.childBirthday.toISOString(),
+          issue: data.issue,
+        }, data.accessToken);
+      } catch {
+        // Non-blocking
+      } finally {
+        setLoading(false);
+      }
+    }
+
     navigate('/onboarding/snapshot-intro');
   };
 
@@ -77,6 +103,7 @@ export default function ChildIssueScreen() {
         <PrimaryButton
           onClick={handleContinue}
           disabled={data.issue.length === 0}
+          loading={loading}
         >
           Continue
         </PrimaryButton>

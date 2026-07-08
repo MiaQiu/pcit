@@ -5,10 +5,13 @@ import PrimaryButton from '../../components/PrimaryButton';
 import MultipleChoice from '../../components/MultipleChoice';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
+// Values must match the server's childGender enum (server/routes/auth.cjs) exactly —
+// it 400s the whole complete-onboarding request (including every other bundled field)
+// on any mismatch, so this can't drift from ['BOY', 'GIRL', 'OTHER'].
 const options = [
-  { value: 'Boy', label: 'Boy' },
-  { value: 'Girl', label: 'Girl' },
-  { value: 'Prefer not to share', label: 'Prefer not to share' },
+  { value: 'BOY', label: 'Boy' },
+  { value: 'GIRL', label: 'Girl' },
+  { value: 'OTHER', label: 'Prefer not to share' },
 ];
 
 export default function ChildGenderScreen() {
