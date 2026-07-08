@@ -16,6 +16,15 @@ function stripe() {
 
 const router = express.Router();
 
+// As of Stripe API version 2026-05-27.dahlia, `current_period_end` no longer exists on the
+// top-level Subscription object — it moved to the subscription item (subscription.items has
+// exactly one item for our single-price subscriptions). Reading the old top-level field
+// silently returns undefined, producing an Invalid Date wherever it's used. Falls back to the
+// top-level field too, in case a future/older API version restores it there.
+function getCurrentPeriodEnd(subscription) {
+  return subscription.items?.data?.[0]?.current_period_end ?? subscription.current_period_end;
+}
+
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 if (!STRIPE_WEBHOOK_SECRET) {
   console.warn('[STRIPE] STRIPE_WEBHOOK_SECRET is not set — webhook signature verification will fail');
@@ -152,6 +161,33 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
   }
 });
 
+// POST /api/stripe/create-portal-session
+// Creates a Stripe Billing Portal session so a web-signup (Stripe) subscriber can manage or
+// cancel their subscription. Not applicable to RevenueCat (IAP) subscribers — the mobile app
+// only calls this when subscriptionSource === 'stripe'.
+router.post('/create-portal-session', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { returnUrl } = req.body;
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user.stripeCustomerId) {
+      return res.status(400).json({ error: 'No Stripe subscription found for this account' });
+    }
+
+    const session = await stripe().billingPortal.sessions.create({
+      customer: user.stripeCustomerId,
+      return_url: returnUrl || process.env.WEB_APP_URL || 'https://hinora.co',
+    });
+
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error('Stripe create-portal-session error:', error);
+    res.status(500).json({ error: 'Failed to create billing portal session' });
+  }
+});
+
 // POST /api/stripe/webhook
 // Raw body is captured by the global express.json verify callback into req.rawBody
 router.post('/webhook', async (req, res) => {
@@ -233,7 +269,7 @@ async function handleCheckoutCompleted(session) {
 
   const subscription = await stripe().subscriptions.retrieve(subscriptionId);
   const isTrialActive = subscription.status === 'trialing';
-  const currentPeriodEnd = new Date(subscription.current_period_end * 1000);
+  const currentPeriodEnd = new Date(getCurrentPeriodEnd(subscription) * 1000);
   const trialStart = subscription.trial_start ? new Date(subscription.trial_start * 1000) : null;
   const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
 
@@ -262,7 +298,7 @@ async function handleSubscriptionUpdated(subscription) {
 
   const isActive = ['active', 'trialing'].includes(subscription.status);
   const isTrialActive = subscription.status === 'trialing';
-  const currentPeriodEnd = new Date(subscription.current_period_end * 1000);
+  const currentPeriodEnd = new Date(getCurrentPeriodEnd(subscription) * 1000);
   const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
 
   await prisma.user.update({
@@ -289,7 +325,7 @@ async function handleSubscriptionDeleted(subscription) {
     data: {
       subscriptionStatus: 'CANCELLED',
       subscriptionPlan: 'FREE',
-      subscriptionEndDate: new Date(subscription.current_period_end * 1000),
+      subscriptionEndDate: new Date(getCurrentPeriodEnd(subscription) * 1000),
     },
   });
 
@@ -308,11 +344,11 @@ async function handleInvoicePaid(invoice) {
     data: {
       subscriptionStatus: 'ACTIVE',
       subscriptionPlan: 'PREMIUM',
-      subscriptionEndDate: new Date(subscription.current_period_end * 1000),
+      subscriptionEndDate: new Date(getCurrentPeriodEnd(subscription) * 1000),
     },
   });
 
-  console.log(`[STRIPE] Invoice paid for user ${user.id}, period end: ${new Date(subscription.current_period_end * 1000).toISOString()}`);
+  console.log(`[STRIPE] Invoice paid for user ${user.id}, period end: ${new Date(getCurrentPeriodEnd(subscription) * 1000).toISOString()}`);
 }
 
 async function handlePaymentFailed(invoice) {

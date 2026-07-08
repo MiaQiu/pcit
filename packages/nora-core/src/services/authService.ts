@@ -488,6 +488,31 @@ class AuthService {
     await this.cacheUser(result.user);
     return result.user;
   }
+
+  /**
+   * Create a Stripe Billing Portal session so a web-signup (Stripe) subscriber can manage
+   * or cancel their subscription. Only relevant when user.subscriptionSource === 'stripe' —
+   * RevenueCat (IAP) subscribers manage via Purchases.showManageSubscriptions() instead.
+   */
+  async createBillingPortalSession(returnUrl?: string): Promise<{ url: string }> {
+    const response = await this.authenticatedRequest(
+      `${this.apiUrl}/api/stripe/create-portal-session`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ returnUrl }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(await parseErrorResponse(response, 'Failed to create billing portal session'));
+    }
+
+    return response.json();
+  }
+
   async setPreferredLocale(locale: string): Promise<void> {
     const response = await this.authenticatedRequest(
       `${this.apiUrl}/api/auth/locale`,
