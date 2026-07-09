@@ -121,10 +121,10 @@ async function getOrUploadFile(filePath, mimeType) {
  *   across different prompts. (Gemini rejects combining cachedContent with a separate
  *   systemInstruction field at call time — but prepending into the regular prompt/contents
  *   text, the same way the no-cache fallback already works, is not subject to that restriction.)
- * @param {string} [ttl='7200s'] - 2 h TTL for context caches.
+ * @param {string} [ttl='600s'] - 10 min TTL for context caches.
  * @returns {Promise<string>} cache resource name, e.g. 'cachedContents/abc123'
  */
-async function createCache(apiKey, model, fileUriOrFiles, systemInstruction, ttl = '7200s') {
+async function createCache(apiKey, model, fileUriOrFiles, systemInstruction, ttl = '600s') {
   const files = Array.isArray(fileUriOrFiles)
     ? fileUriOrFiles
     : [{ mimeType: 'application/pdf', fileUri: fileUriOrFiles }];
@@ -163,12 +163,12 @@ async function createCache(apiKey, model, fileUriOrFiles, systemInstruction, ttl
  * @param {string} systemInstruction - dpicsCoding.txt content (+ any PDI override)
  * @param {string} model             - Gemini model ID
  * @param {Array<{path,mimeType}>}   [extraFiles] - additional files to include in the cache
- * @param {string} [ttl='7200s']     - cache TTL, Gemini duration format (e.g. '3600s'). Also
+ * @param {string} [ttl='600s']      - cache TTL, Gemini duration format (e.g. '3600s'). Also
  *   governs how long the local registry considers this cache reusable — must match whatever
  *   TTL was actually used, or the registry's freshness bookkeeping will be wrong.
  * @returns {Promise<string>} cache resource name
  */
-async function getOrCreateCache(variant, pdfPath, systemInstruction, model, extraFiles = [], ttl = '7200s') {
+async function getOrCreateCache(variant, pdfPath, systemInstruction, model, extraFiles = [], ttl = '600s') {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not set');
 

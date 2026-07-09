@@ -15,8 +15,7 @@ const { getLanguageInstruction } = require('../utils/languageUtils.cjs');
 const { classifySpeakersML } = require('./mlDiarizationService.cjs');
 
 // DPICS asset paths — referenced by gateway cache config for coding and review feedback
-const DPICS_PDF_PATH      = process.env.DPICS_PDF_PATH      || require('path').join(__dirname, '../assets/Manual_for_the_Dyadic_Parent-Child_Interaction_Cod.pdf');
-const DPICS_APPENDIX_PATH = process.env.DPICS_APPENDIX_PATH || require('path').join(__dirname, '../assets/appendix A - words_sufficiently_positive.json');
+const DPICS_PDF_PATH      = process.env.DPICS_PDF_PATH      || require('path').join(__dirname, '../assets/DPICS-Manual.2.18.pdf');
 
 // ============================================================================
 // Session Quality Gate
@@ -902,7 +901,7 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true, 
   console.log('📝 [CDI-FEEDBACK] Running feedback generation with DPICS manual cache...');
   let revisedFeedback = [];
   try {
-    const dpicsSystemPrompt = loadPrompt('dpicsCoding') + (!isCDI ? `
+    const dpicsSystemPrompt = loadPrompt('dpicsCoding-agentic-v10') + (!isCDI ? `
 
 **PDI SESSION — Feedback Override for Commands:**
 This is a PDI (Parent-Directed Interaction) session. The rules above apply for coding, but the feedback generation strategy for commands is different:
@@ -917,7 +916,6 @@ All other feedback rules remain the same.` : '');
         key:         isCDI ? 'dpics-cdi' : 'dpics-pdi',
         primaryFile: DPICS_PDF_PATH,
         systemPrompt: dpicsSystemPrompt,
-        extraFiles:  [{ path: DPICS_APPENDIX_PATH, mimeType: 'application/json' }],
       },
       label:    'review-feedback',
       sessionId,
@@ -1377,7 +1375,7 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
     console.log(`   Adult speakers: ${adultSpeakerIds}`);
 
     // Load DPICS system prompt, with PDI-specific feedback override appended
-    const dpicsSystemPrompt = loadPrompt('dpicsCoding') + (!isCDI ? `
+    const dpicsSystemPrompt = loadPrompt('dpicsCoding-agentic-v10') + (!isCDI ? `
 
 **PDI SESSION — Feedback Override for Commands:**
 This is a PDI (Parent-Directed Interaction) session. The rules above apply for coding, but the feedback generation strategy for commands is different:
@@ -1411,7 +1409,6 @@ Return a minified JSON array for adult utterances only:
       key:         isCDI ? 'dpics-cdi' : 'dpics-pdi',
       primaryFile: DPICS_PDF_PATH,
       systemPrompt: dpicsSystemPrompt,
-      extraFiles:  [{ path: DPICS_APPENDIX_PATH, mimeType: 'application/json' }],
     };
 
     console.log(`📊 [ANALYSIS-STEP-8] Calling reasoning model for PCIT coding...`);
