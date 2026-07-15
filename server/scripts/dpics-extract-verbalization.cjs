@@ -1,13 +1,15 @@
 'use strict';
 /**
  * Extracts clean verbalization from annotated text fields in CDI session JSONs
- * that lack a separate verbalization field (currently 4.json and 5.json).
+ * that lack a separate verbalization field.
  *
  * The text field contains mixed content: actual speech + parenthetical observations
  * + coaching suggestions in 【...】 + timing markers + "not counted" notes.
  * This script uses Gemini Flash to extract only what was actually spoken.
  *
- * Usage: node server/scripts/dpics-extract-verbalization.cjs
+ * Usage: node server/scripts/dpics-extract-verbalization.cjs [dir] [file1,file2,...]
+ *   dir              defaults to server/scripts/cdi sessions/json
+ *   file1,file2,...  defaults to 4.json,5.json (the original files lacking verbalization)
  */
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 
@@ -16,7 +18,7 @@ const path   = require('path');
 const crypto = require('crypto');
 const { llmCall } = require('../llm/gateway.cjs');
 
-const JSON_DIR = path.join(__dirname, 'cdi sessions/json');
+const JSON_DIR = process.argv[2] ? path.resolve(process.argv[2]) : path.join(__dirname, 'cdi sessions/json');
 
 const SYSTEM_PROMPT = `你是中文親子互動逐字稿的前處理專家。
 
@@ -100,7 +102,7 @@ ${JSON.stringify(input, null, 2)}
 }
 
 async function main() {
-  const files = ['4.json', '5.json'];
+  const files = process.argv[3] ? process.argv[3].split(',') : ['4.json', '5.json'];
   console.log(`Extracting verbalization for ${files.length} sessions...`);
   await Promise.all(files.map(extractVerbalization));
   console.log('\nDone. Now re-run dpics-enrich.cjs for these sessions.');

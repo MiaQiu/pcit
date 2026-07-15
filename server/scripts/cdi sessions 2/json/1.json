@@ -1,0 +1,889 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session2-1",
+      "utterances": [
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案用湯杓將烤雞拿出烤箱時，不小心讓烤雞掉在腿上，又讓湯杓掉在地上）嗚啊...（狀聲詞，不予計數）",
+          "verbalization": "嗚啊..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "欸。",
+          "code": "NTA",
+          "verbalization": "欸。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案用手將烤雞放回烤箱，並撿起掉在地上的湯杓）重新烤吧。",
+          "verbalization": "重新烤吧。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "啊你用手去摸不會燙到喔。",
+          "code": "NTA",
+          "verbalization": "啊你用手去摸不會燙到喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "不會。",
+          "verbalization": "不會。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "為什麼？（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "為什麼？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "不知道為什麼。",
+          "verbalization": "不知道為什麼。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（烤箱鈴響後，個案再次用湯杓拿烤雞）我是無敵鐵金剛。",
+          "verbalization": "我是無敵鐵金剛。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案順利將烤雞放進爐台上裝有其他肉類的盤子）喔。",
+          "code": "TA",
+          "verbalization": "喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將裝有肉類的盤子拿在手上） 肥滋滋菜單來囉。",
+          "verbalization": "肥滋滋菜單來囉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "超肥。（案父語氣中性）",
+          "code": "TA",
+          "verbalization": "超肥。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我不敢吃了（<2s）（案父語氣嘲諷）",
+          "code": "NTA",
+          "verbalization": "我不敢吃了"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我…(未說完不計)",
+          "verbalization": "我…"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "肥滋滋菜單。",
+          "verbalization": "肥滋滋菜單。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這種套餐的名字叫做肥滋滋菜單。",
+          "verbalization": "這種套餐的名字叫做肥滋滋菜單。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這我們全家人都吃不完。（案父語氣中性）",
+          "code": "TA",
+          "verbalization": "這我們全家人都吃不完。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我跟你說你只要在店裡看到這種東西，（<2s，接下句）",
+          "verbalization": "我跟你說你只要在店裡看到這種東西，"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "你一定會點的。",
+          "verbalization": "你一定會點的。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "為什麼我一定會點？（案父語氣中性）",
+          "code": "Q",
+          "verbalization": "為什麼我一定會點？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案開始在盤子上假裝擠蕃茄醬）你點了肥滋滋套餐。",
+          "verbalization": "你點了肥滋滋套餐。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "所以我來幫你肥滋滋套餐。",
+          "verbalization": "所以我來幫你肥滋滋套餐。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這是你、你的菜單叫「肥滋滋」。（案父語氣中性）",
+          "code": "TA",
+          "verbalization": "這是你、你的菜單叫「肥滋滋」。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將盤子放在案父面前）來（<2s，發語詞），肥滋滋套餐。",
+          "verbalization": "來，肥滋滋套餐。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "請慢用。",
+          "verbalization": "請慢用。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "啊有叉、有叉子嗎？（案父語氣中性）",
+          "code": "Q",
+          "verbalization": "啊有叉、有叉子嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案將叉子和刀子放在桌上）還有刀。",
+          "code": "TA",
+          "verbalization": "還有刀。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "請慢用。",
+          "verbalization": "請慢用。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父用刀子假裝切雞腿）切雞腿。",
+          "code": "TA",
+          "verbalization": "切雞腿。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "要、你沒有...（與個案下句同時說話，語句未完成，不予計數）",
+          "verbalization": "要、你沒有..."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案從玩具箱拿出豬排）這裡還有一個肥滋滋套餐。",
+          "verbalization": "這裡還有一個肥滋滋套餐。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你沒有給我一個盤子，（<2s，接下句）",
+          "code": "NTA",
+          "verbalization": "你沒有給我一個盤子，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我怎麼吃啊？（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "我怎麼吃啊？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "全部在這裡吃喔!（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "全部在這裡吃喔!"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案在爐台上假裝用鍋子煎漢堡排）對。",
+          "verbalization": "對。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這樣怎麼吃啊？（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "這樣怎麼吃啊？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將裝有漢堡排的鍋子拿到案父面前）可以吧。",
+          "verbalization": "可以吧。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "可以...（與個案下句同時說話，語句未完成，不予計數）",
+          "verbalization": "可以..."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "誒（<2s），等一下。",
+          "verbalization": "誒，等一下。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將漢堡排倒在案父面前的盤子上）還有一個肥、肥滋滋套餐來囉。",
+          "verbalization": "還有一個肥、肥滋滋套餐來囉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "漢堡、漢堡肉喔。",
+          "code": "TA",
+          "verbalization": "漢堡、漢堡肉喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這是什麼肉？（案父語氣中性）",
+          "code": "Q",
+          "verbalization": "這是什麼肉？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案用輕拋的方式將鍋子裡的肉拋在盤子上）",
+          "verbalization": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "欸。",
+          "code": "NTA",
+          "verbalization": "欸。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拋出去的肉將盤子上的其他肉碰掉在桌上）呵呵...（個案笑聲，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將炸蝦從玩具箱放在案父面前的盤子上）還有一個肥滋滋的。",
+          "verbalization": "還有一個肥滋滋的。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父用手指個案炸蝦）沒熟。",
+          "code": "NTA",
+          "verbalization": "沒熟。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將炸蝦拿到爐台上）呵呵...（個案笑聲，狀聲詞，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "怎麼被你發現了勒？",
+          "verbalization": "怎麼被你發現了勒？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我就在你旁邊看，（<2s，接下句）",
+          "code": "TA",
+          "verbalization": "我就在你旁邊看，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我要怎麼不發現？（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "我要怎麼不發現？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將炸蝦拿到案父面前的盤子上）好了。",
+          "verbalization": "好了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "太肥了啦。(批評個案成品)",
+          "code": "NTA",
+          "verbalization": "太肥了啦。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "肥滋滋套餐。",
+          "verbalization": "肥滋滋套餐。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "吃到飽喔。（案父語氣中性）",
+          "code": "TA",
+          "verbalization": "吃到飽喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案翻找玩具箱）還有什麼肥滋滋套餐？",
+          "verbalization": "還有什麼肥滋滋套餐？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "吃肉吃到飽。",
+          "code": "TA",
+          "verbalization": "吃肉吃到飽。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父將剝成兩半）哥哥（<2s，bid for attention）這是什麼肉啊？",
+          "code": "Q",
+          "verbalization": "哥哥這是什麼肉啊？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "看不太懂。",
+          "code": "TA",
+          "verbalization": "看不太懂。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這什麼肉啊？",
+          "code": "Q",
+          "verbalization": "這什麼肉啊？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "肉肉肉。",
+          "verbalization": "肉肉肉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這個它的名字叫作肉肉肉。",
+          "verbalization": "這個它的名字叫作肉肉肉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "你從沒看別人煮嗎？",
+          "verbalization": "你從沒看別人煮嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父邊笑邊覆誦個案的話）肉肉肉。",
+          "code": "RF",
+          "verbalization": "肉肉肉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父將雞腿拿到個案面前）那這個名字叫作什麼啊？",
+          "code": "Q",
+          "verbalization": "那這個名字叫作什麼啊？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "雞雞雞這樣。",
+          "code": "TA",
+          "verbalization": "雞雞雞這樣。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "雞雞。",
+          "verbalization": "雞雞。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這雞啊。",
+          "code": "RF",
+          "verbalization": "這雞啊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父拿起牛排）這個是什麼肉？",
+          "code": "Q",
+          "verbalization": "這個是什麼肉？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父將牛排拿到自己和個案中間）哥哥（<2s，bid for attention），這是什麼肉？",
+          "code": "Q",
+          "verbalization": "哥哥，這是什麼肉？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "牛排嗎？（此時個案將魚放進鍋子裡假裝煮魚）",
+          "code": "Q",
+          "verbalization": "牛排嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哥哥（<2s，bid for attention），這是牛排嗎？",
+          "code": "Q",
+          "verbalization": "哥哥，這是牛排嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父拿起炸蝦）這是蝦子。",
+          "code": "TA",
+          "verbalization": "這是蝦子。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案仍持續假裝在煮魚，爐台發出煮水的聲音）嗯（<2s），有水的聲音耶。",
+          "code": "TA",
+          "verbalization": "嗯，有水的聲音耶。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父用手指爐台上的鍋子）喔（<2s），燉、燉、燉鍋的嗎？",
+          "code": "Q",
+          "verbalization": "喔，燉、燉、燉鍋的嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "燉鍋的聲音。",
+          "code": "TA",
+          "verbalization": "燉鍋的聲音。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案邊說邊將燉魚的鍋蓋打開）請喝魚湯。",
+          "verbalization": "請喝魚湯。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），魚湯裡面有魚耶。",
+          "code": "TA",
+          "verbalization": "喔，魚湯裡面有魚耶。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "魚湯。",
+          "code": "TA",
+          "verbalization": "魚湯。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案再次翻找玩具箱）肥滋滋套餐。",
+          "verbalization": "肥滋滋套餐。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好像好好玩喔。",
+          "code": "TA",
+          "verbalization": "好像好好玩喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "還有魚耶。",
+          "code": "TA",
+          "verbalization": "還有魚耶。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父將魚剝開）哥哥（>2s，bid for attention）。",
+          "code": "IC",
+          "verbalization": "哥哥。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "幹嘛？",
+          "verbalization": "幹嘛？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我吃到魚的骨頭了。",
+          "code": "TA",
+          "verbalization": "我吃到魚的骨頭了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "然後勒？",
+          "verbalization": "然後勒？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "沒有，（<2s，接下句）",
+          "code": "TA",
+          "verbalization": "沒有，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我給你看啊。",
+          "code": "TA",
+          "verbalization": "我給你看啊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父將魚骨拿到個案面前）這魚還可以打開。",
+          "code": "TA",
+          "verbalization": "這魚還可以打開。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我知道啊。",
+          "verbalization": "我知道啊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父嘗試將魚重新黏起來）這魚可以合起來。",
+          "code": "TA",
+          "verbalization": "這魚可以合起來。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父用手指魚眼）可是牠[魚]眼睛不能弄起來，（<2s，接下句）",
+          "code": "TA",
+          "verbalization": "可是牠眼睛不能弄起來，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "不然我就可以說我吃魚眼睛了（<2s），對不對？",
+          "code": "Q",
+          "verbalization": "不然我就可以說我吃魚眼睛了，對不對？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "魚的眼睛。",
+          "code": "TA",
+          "verbalization": "魚的眼睛。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "好了（<2s），你還要點什麼？",
+          "verbalization": "好了，你還要點什麼？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你都是肉耶。（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "你都是肉耶。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "再一次、再一份肥滋滋套餐。（個案假裝案父點餐）",
+          "verbalization": "再一次、再一份肥滋滋套餐。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "是的。",
+          "verbalization": "是的。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案假裝再做一份餐點）ㄐㄧㄡ、ㄐㄧㄡ...（個案發出的聲音，狀聲詞，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "來（<2s，發語詞），空氣套餐，（<2s，接下句）",
+          "verbalization": "來，空氣套餐，"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案假裝將餐點遞給案父）肥滋滋套餐。",
+          "verbalization": "肥滋滋套餐。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "空氣為什麼是肥滋滋？（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "空氣為什麼是肥滋滋？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "空氣肥滋滋套餐（<2s），請用。",
+          "verbalization": "空氣肥滋滋套餐，請用。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "空氣為什麼是肥滋滋？（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "空氣為什麼是肥滋滋？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿起桌上裝肉的綠盤）放這個、這個就叫肥滋滋套餐啦。",
+          "verbalization": "放這個、這個就叫肥滋滋套餐啦。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將綠盤放在案父面前）還有這個。",
+          "verbalization": "還有這個。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父用手指綠盤）這個冷掉了。(語氣中性)",
+          "code": "TA",
+          "verbalization": "這個冷掉了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你拿出來太久了。(帶有責怪意味地說)",
+          "code": "NTA",
+          "verbalization": "你拿出來太久了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案先將裝熱狗的綠盤放在爐台上，一邊打開烤箱）那個是放那個嗎？（由前後推測案父第一個那個是指「裝熱狗的盤子」，第二個那個是指「爐台」）（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "那個是放那個嗎？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "不是。",
+          "verbalization": "不是。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "應該是放烤箱吧。",
+          "code": "TA",
+          "verbalization": "應該是放烤箱吧。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "說得很對。（個案將熱狗放進烤箱，並按下烤箱上的按鈕）",
+          "verbalization": "說得很對。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案走到遊戲室角落的玩具堆旁）這是什麼？",
+          "verbalization": "這是什麼？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案開始查看地上另外兩堆玩具）嗯？",
+          "verbalization": "嗯？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），水果啊。",
+          "code": "TA",
+          "verbalization": "喔，水果啊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我等一下要吃水果。",
+          "code": "TA",
+          "verbalization": "我等一下要吃水果。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將裝有葡萄和辣椒的鍋子拿給案父）水果。",
+          "verbalization": "水果。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父將裝水果的鍋子放在桌上）我等下要吃水果。",
+          "code": "TA",
+          "verbalization": "我等下要吃水果。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將鍋子裡的辣椒拿在手上）你的辣椒套餐，（<2s，接下句）",
+          "verbalization": "你的辣椒套餐，"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將辣椒拿到案父面前）來（<2s，發語詞），請慢用。",
+          "verbalization": "來，請慢用。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案邊說邊笑）辣椒套餐。",
+          "verbalization": "辣椒套餐。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父將辣椒拿在手上）我不敢吃。",
+          "code": "TA",
+          "verbalization": "我不敢吃。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "你點了辣椒套餐。",
+          "verbalization": "你點了辣椒套餐。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我又沒有點。(帶有責怪意味地說)",
+          "code": "NTA",
+          "verbalization": "我又沒有點。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿起蕃茄醬）哼哼...（個案笑聲，狀聲詞，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案假裝將蕃茄醬擠在辣椒上）蕃茄醬辣椒套餐。",
+          "verbalization": "蕃茄醬辣椒套餐。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "蕃茄醬加辣椒很噁心耶。",
+          "code": "NTA",
+          "verbalization": "蕃茄醬加辣椒很噁心耶。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我等一下要吃菜啦。",
+          "code": "TA",
+          "verbalization": "我等一下要吃菜啦。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案翻找玩具箱）好喔。",
+          "verbalization": "好喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "菜、我看看有什麼菜。",
+          "verbalization": "菜、我看看有什麼菜。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將高麗菜放在案父面前的鍋子裡）萵苣。",
+          "verbalization": "萵苣。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父先將萵苣打開，再黏回原本的樣子）你又沒有煮。",
+          "code": "NTA",
+          "verbalization": "你又沒有煮。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "萵苣幹嘛煮？",
+          "verbalization": "萵苣幹嘛煮？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將萵苣放進水槽）喔對（<2s），還要洗。",
+          "verbalization": "喔對，還要洗。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），(它還)要洗。",
+          "code": "RF",
+          "verbalization": "喔，要洗。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "差一點點、差點吃到要拉肚子。",
+          "code": "TA",
+          "verbalization": "差一點點、差點吃到要拉肚子。"
+        }
+      ]
+    }
+  ]
+}

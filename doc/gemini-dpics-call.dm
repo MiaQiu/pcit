@@ -21,7 +21,7 @@ node server/scripts/gemini-dpics-call.cjs --model flash|pro [--cache] [--session
 |---|---|
 | `--model` | `flash` → `gemini-3.5-flash` (default), `pro` → `gemini-3.1-pro-preview`. Also accepts a full model id. |
 | `--cache` | Upload `DPICS-Manual.2.18.pdf` + the prompt file and wrap them in a Gemini context cache (`cachedContents`), reused across every session in this run. User message becomes session data only. If omitted, no manual at all — the prompt file is sent as `systemInstruction`, user message is session data only. |
-| `--session` | Run one session file only, e.g. `--session session-3`. Omit to run all six under `prompts/deepseek/session-only/`. |
+| `--session` | Run one session file only, e.g. `--session session-3`. Omit to run all files under `prompts/deepseek/session-only/`. |
 | `--prompt` | Prompt file name under `server/prompts/`, without `.txt`. Default: `dpicsCoding-agentic-v10`. |
 | `--ttl` | Only with `--cache`. Overrides the cache's TTL at creation (Gemini duration format, e.g. `--ttl 600s`). Default: `900s` (15m). Scoped to this script only — does not change the shared `geminiCache.cjs` default (`7200s`) that production relies on. |
 | `--keep-cache` | Only with `--cache`. Skip end-of-run TTL shrink, leave the cache at its full committed TTL (e.g. planning another `--cache` batch against the same prompt soon). |
@@ -114,7 +114,44 @@ Default `--dir`: `eval-results/dpics/gemini-calls`.
 
 ### dpics-ground-truth.cjs
 
-`getGroundTruth(label)` — checks `eval-results/dpics/ground-truth/<label>.json` first; only falls back to the DB (via `prisma`, requires the SSH tunnel — `scripts/start-db-tunnel.sh`) on a cache miss, then persists. All six sessions (`session-1`..`session-6`) are cached locally already, so scoring runs need no DB access at all in the common case.
+`getGroundTruth(label)` — checks `eval-results/dpics/ground-truth/<label>.json` first; only falls back to the DB (via `prisma`, requires the SSH tunnel — `scripts/start-db-tunnel.sh`) on a cache miss, then persists. All 12 sessions (`session-1`..`session-6`, `session2-1`..`session2-6`) are cached locally already, so scoring runs need no DB access at all in the common case. Fully generic over the label — any key present in `eval-results/dpics/sessions.json` works, no code changes needed to add a new batch.
+
+---
+
+## Second batch (`session2`, added 2026-07-09)
+
+Extended coverage to the 6 `session2-*` sessions (see `doc/codingTest.md`) using the same two scripts. Two things had to be built/fixed first, since this tooling had only ever been run against the original `session-1`..`session-6`:
+
+1. **No export script existed** for the `prompts/deepseek/session-only/<label>-user.txt` format (lead-in line + `{id, role, text}` JSON array + the fixed trailing output-schema instructions) — the original 6 were a one-off manual export. Generated the `session2-*-user.txt` equivalents with a throwaway script pulling `getUtterances(sessionId)` per label from `eval-results/dpics/sessions.json`, using the DB `order` field directly as `id` (same invariant `gemini-dpics-score.cjs` already relies on).
+2. **Label-derivation bug in `gemini-dpics-call.cjs`**: the per-call `label` was derived via `file.match(/session-\d+/)?.[0] || file`, which assumes every filename contains a literal `session-<digits>` substring. `session2-1-user.txt` doesn't (`session2-1`, no hyphen right after `session`) — silently fell through to the `|| file` branch and recorded the raw filename (`"session2-1-user.txt"`) as the session label, which would have broken `getGroundTruth()` lookups. Fixed by deriving the label by stripping the known `-user.txt`/`-user copy.txt` suffix instead of pattern-matching a specific prefix shape:
+   ```js
+   const label = file.replace(/\.txt$/, '').replace(/-user( copy)?$/, '');
+   ```
+   One already-completed call (`session2-1`) had recorded the bad label before the fix was caught — patched its output `.json`/`.prompt.txt` in place (renamed + corrected the `session` field) rather than re-spending on a re-run.
+
+Ran `dpicsCoding-agentic-v10`, `gemini-3.1-pro-preview`, `--cache`, one session per invocation (12 sequential invocations total across both batches share this cache key, so each pays its own one-time cache-write fee — no way to batch multiple explicit `--session` labels into one shared-cache invocation without extending `--session` to accept a comma-separated list, not yet done).
+
+Updated leaderboard (`dpicsCoding-agentic-v10`, `gemini-3.1-pro-preview`, cache), all 12 sessions:
+
+| session | exact | category | cost |
+|---|---|---|---|
+| session-1 | 44/79 (55.7%) | 79/79 (100%) | $0.15603 |
+| session-2 | 67/108 (62.04%) | 99/108 (91.67%) | $0.15693 |
+| session-3 | 75/99 (75.76%) | 89/99 (89.9%) | $0.13199 |
+| session-4 | 35/46 (76.09%) | 38/46 (82.61%) | $0.12642 |
+| session-5 | 48/51 (94.12%) | 49/51 (96.08%) | $0.09618 |
+| session-6 | 61/66 (92.42%) | 61/66 (92.42%) | $0.11852 |
+| session2-1 | 39/70 (55.71%) | 51/70 (72.86%) | $0.14580 |
+| session2-2 | 70/98 (71.43%) | 77/98 (78.57%) | $0.16994 |
+| session2-3 | 62/96 (64.58%) | 75/96 (78.13%) | $0.17225 |
+| session2-4 | 60/65 (92.31%) | 61/65 (93.85%) | $0.12854 |
+| session2-5 | 84/89 (94.38%) | 84/89 (94.38%) | $0.14840 |
+| session2-6 | 59/83 (71.08%) | 77/83 (92.77%) | $0.13334 |
+| **total** | 704/950 (74.11%) | 840/950 (88.42%) | $1.68433 |
+| cache write (one-time, 7x) | | | $0.48132 |
+| **grand total (incl. cache write)** | | | $2.16565 |
+
+Category accuracy on the session2 batch alone (425/501 = 84.83%) is close to the original 6-session batch's 92.43%, but with a wider per-session spread: the three father-child pretreatment-assessment sessions (`session2-1/2/3`) sit at 72-79% while the three CDI-coaching sessions (`session2-4/5/6`) sit at 92-94% — a split not seen in the original batch (all six of which were CDI-coaching-style, no pretreatment assessments). Worth treating as a hypothesis (pretreatment-assessment content structurally harder to code, or father-child role is a factor) rather than a settled conclusion — no isolating experiment has been run yet.
 
 ---
 

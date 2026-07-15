@@ -264,7 +264,7 @@ async function main() {
   let totalCost = 0;
 
   for (const file of sessionFiles) {
-    const label = file.match(/session-\d+/)?.[0] || file;
+    const label = file.replace(/\.txt$/, '').replace(/-user( copy)?$/, '');
     const userMessage = fs.readFileSync(path.join(SESSION_DIR, file), 'utf-8');
 
     // Nonce-prefix the system instruction per call (nocache path only) so Gemini's

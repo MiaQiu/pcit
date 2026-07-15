@@ -1,0 +1,744 @@
+Code every utterance where role is "adult". Skip all "child" entries.
+
+[
+  {
+    "id": 0,
+    "role": "adult",
+    "text": "我們準備收玩具了。"
+  },
+  {
+    "id": 1,
+    "role": "adult",
+    "text": "你幫、你幫忙把所有玩具都收起來。"
+  },
+  {
+    "id": 2,
+    "role": "adult",
+    "text": "等一下那個、等一下那個哥哥他們會進來。"
+  },
+  {
+    "id": 3,
+    "role": "adult",
+    "text": "這玩具蠻好玩的。"
+  },
+  {
+    "id": 4,
+    "role": "adult",
+    "text": "可是我發現、可是我發現…"
+  },
+  {
+    "id": 5,
+    "role": "child",
+    "text": "嗯？"
+  },
+  {
+    "id": 6,
+    "role": "adult",
+    "text": "你好像…"
+  },
+  {
+    "id": 7,
+    "role": "child",
+    "text": "我好像甚麼？"
+  },
+  {
+    "id": 8,
+    "role": "adult",
+    "text": "不知道，"
+  },
+  {
+    "id": 9,
+    "role": "adult",
+    "text": "感覺很亂"
+  },
+  {
+    "id": 10,
+    "role": "child",
+    "text": "攏黑白(ㄡㄅㄟ)煮"
+  },
+  {
+    "id": 11,
+    "role": "adult",
+    "text": "嘿，ㄡㄅㄟ煮，"
+  },
+  {
+    "id": 12,
+    "role": "adult",
+    "text": "黑白(ㄡㄅㄟ)玩(ㄙㄥˋ)"
+  },
+  {
+    "id": 13,
+    "role": "child",
+    "text": "嗯，你點的肥滋滋套餐還沒吃欸。"
+  },
+  {
+    "id": 14,
+    "role": "adult",
+    "text": "我沒有點餒。"
+  },
+  {
+    "id": 15,
+    "role": "child",
+    "text": "你有"
+  },
+  {
+    "id": 16,
+    "role": "adult",
+    "text": "是你\"特製\"的捏!"
+  },
+  {
+    "id": 17,
+    "role": "child",
+    "text": "不是，"
+  },
+  {
+    "id": 18,
+    "role": "child",
+    "text": "你點了空氣套餐就有免費的肥滋滋套餐，懂嗎？"
+  },
+  {
+    "id": 19,
+    "role": "adult",
+    "text": "不懂。"
+  },
+  {
+    "id": 20,
+    "role": "child",
+    "text": "這是優惠。"
+  },
+  {
+    "id": 21,
+    "role": "adult",
+    "text": "優惠喔"
+  },
+  {
+    "id": 22,
+    "role": "adult",
+    "text": "你、你在學校玩遊戲都是這樣子，蛤？"
+  },
+  {
+    "id": 23,
+    "role": "child",
+    "text": "拍謝，"
+  },
+  {
+    "id": 24,
+    "role": "child",
+    "text": "我在學校沒有玩這個。"
+  },
+  {
+    "id": 25,
+    "role": "adult",
+    "text": "拍謝，"
+  },
+  {
+    "id": 26,
+    "role": "adult",
+    "text": "你在學校沒有玩遊戲。"
+  },
+  {
+    "id": 27,
+    "role": "adult",
+    "text": "有吧。"
+  },
+  {
+    "id": 28,
+    "role": "adult",
+    "text": "欸、欸，"
+  },
+  {
+    "id": 29,
+    "role": "adult",
+    "text": "放好"
+  },
+  {
+    "id": 30,
+    "role": "adult",
+    "text": "放好。"
+  },
+  {
+    "id": 31,
+    "role": "child",
+    "text": "喔。"
+  },
+  {
+    "id": 32,
+    "role": "child",
+    "text": "呵呵..."
+  },
+  {
+    "id": 33,
+    "role": "adult",
+    "text": "不要搗亂。"
+  },
+  {
+    "id": 34,
+    "role": "adult",
+    "text": "還有嗎？"
+  },
+  {
+    "id": 35,
+    "role": "adult",
+    "text": "檢查一下。"
+  },
+  {
+    "id": 36,
+    "role": "adult",
+    "text": "收、收乾淨。"
+  },
+  {
+    "id": 37,
+    "role": "adult",
+    "text": "啊那個裡面有嗎？"
+  },
+  {
+    "id": 38,
+    "role": "adult",
+    "text": "有沒有？"
+  },
+  {
+    "id": 39,
+    "role": "child",
+    "text": "沒有。"
+  },
+  {
+    "id": 40,
+    "role": "adult",
+    "text": "好。"
+  },
+  {
+    "id": 41,
+    "role": "adult",
+    "text": "收完啦。"
+  },
+  {
+    "id": 42,
+    "role": "adult",
+    "text": "你在照鏡子喔。"
+  },
+  {
+    "id": 43,
+    "role": "adult",
+    "text": "收完啦。"
+  },
+  {
+    "id": 44,
+    "role": "adult",
+    "text": "好，收完啦。"
+  },
+  {
+    "id": 45,
+    "role": "adult",
+    "text": "這個、這個哥哥、這個是小火"
+  },
+  {
+    "id": 46,
+    "role": "adult",
+    "text": "大火，是不是？"
+  },
+  {
+    "id": 47,
+    "role": "child",
+    "text": "不是。"
+  },
+  {
+    "id": 48,
+    "role": "adult",
+    "text": "那你最行，"
+  },
+  {
+    "id": 49,
+    "role": "adult",
+    "text": "你教我。"
+  },
+  {
+    "id": 50,
+    "role": "adult",
+    "text": "這是定時。"
+  },
+  {
+    "id": 51,
+    "role": "adult",
+    "text": "再來，啊這個勒？"
+  },
+  {
+    "id": 52,
+    "role": "adult",
+    "text": "這幾個按鈕是什麼？"
+  },
+  {
+    "id": 53,
+    "role": "adult",
+    "text": "這個是這個。"
+  },
+  {
+    "id": 54,
+    "role": "adult",
+    "text": "喔、喔，我知道了。"
+  },
+  {
+    "id": 55,
+    "role": "adult",
+    "text": "這個是這個。"
+  },
+  {
+    "id": 56,
+    "role": "adult",
+    "text": "這個是這個。"
+  },
+  {
+    "id": 57,
+    "role": "child",
+    "text": "你兩個都按。"
+  },
+  {
+    "id": 58,
+    "role": "child",
+    "text": "然後這樣同時壓下去，"
+  },
+  {
+    "id": 59,
+    "role": "child",
+    "text": "懂嗎？"
+  },
+  {
+    "id": 60,
+    "role": "adult",
+    "text": "喔、按了它會亮燈哪。"
+  },
+  {
+    "id": 61,
+    "role": "adult",
+    "text": "就是有開關哪。"
+  },
+  {
+    "id": 62,
+    "role": "adult",
+    "text": "有通電哪。"
+  },
+  {
+    "id": 63,
+    "role": "child",
+    "text": "嗯，是連線。"
+  },
+  {
+    "id": 64,
+    "role": "adult",
+    "text": "啊這個勒？"
+  },
+  {
+    "id": 65,
+    "role": "adult",
+    "text": "這個是按了就有聲音。"
+  },
+  {
+    "id": 66,
+    "role": "adult",
+    "text": "這個是烤的。"
+  },
+  {
+    "id": 67,
+    "role": "adult",
+    "text": "這個壓了有水喔。"
+  },
+  {
+    "id": 68,
+    "role": "child",
+    "text": "有哇，當然有阿。"
+  },
+  {
+    "id": 69,
+    "role": "adult",
+    "text": "流出來了餒。"
+  },
+  {
+    "id": 70,
+    "role": "adult",
+    "text": "流好多餒。"
+  },
+  {
+    "id": 71,
+    "role": "child",
+    "text": "對阿。"
+  },
+  {
+    "id": 72,
+    "role": "adult",
+    "text": "噗哧"
+  },
+  {
+    "id": 73,
+    "role": "adult",
+    "text": "沒有啦，"
+  },
+  {
+    "id": 74,
+    "role": "adult",
+    "text": "這邊沒有水啦。"
+  },
+  {
+    "id": 75,
+    "role": "adult",
+    "text": "有水它會準備冰水在這裡。"
+  },
+  {
+    "id": 76,
+    "role": "adult",
+    "text": "有沒有看到？"
+  },
+  {
+    "id": 77,
+    "role": "adult",
+    "text": "好。"
+  },
+  {
+    "id": 78,
+    "role": "child",
+    "text": "那裡勒？"
+  },
+  {
+    "id": 79,
+    "role": "adult",
+    "text": "蛤，你問我。"
+  },
+  {
+    "id": 80,
+    "role": "child",
+    "text": "不是、不是、不是。"
+  },
+  {
+    "id": 81,
+    "role": "adult",
+    "text": "你在看什麼？"
+  },
+  {
+    "id": 82,
+    "role": "child",
+    "text": "你看。"
+  },
+  {
+    "id": 83,
+    "role": "adult",
+    "text": "你在看什麼？"
+  },
+  {
+    "id": 84,
+    "role": "child",
+    "text": "哈囉。"
+  },
+  {
+    "id": 85,
+    "role": "adult",
+    "text": "喔，那裡有攝影機。"
+  },
+  {
+    "id": 86,
+    "role": "adult",
+    "text": "哥哥、哥哥，我問你喔。"
+  },
+  {
+    "id": 87,
+    "role": "child",
+    "text": "你問我。"
+  },
+  {
+    "id": 88,
+    "role": "adult",
+    "text": "你在學校玩遊戲是不是很故意？"
+  },
+  {
+    "id": 89,
+    "role": "adult",
+    "text": "你剛剛是不是很故意？"
+  },
+  {
+    "id": 90,
+    "role": "child",
+    "text": "對。"
+  },
+  {
+    "id": 91,
+    "role": "adult",
+    "text": "為什麼你要那麼故意？"
+  },
+  {
+    "id": 92,
+    "role": "child",
+    "text": "因為你很好玩。"
+  },
+  {
+    "id": 93,
+    "role": "adult",
+    "text": "什麼叫做我很好玩？"
+  },
+  {
+    "id": 94,
+    "role": "child",
+    "text": "因為你很好玩。"
+  },
+  {
+    "id": 95,
+    "role": "adult",
+    "text": "你很故意喔。"
+  },
+  {
+    "id": 96,
+    "role": "adult",
+    "text": "你很故意喔。"
+  },
+  {
+    "id": 97,
+    "role": "child",
+    "text": "因為你很好玩。"
+  },
+  {
+    "id": 98,
+    "role": "adult",
+    "text": "我發現你很故意喔。"
+  },
+  {
+    "id": 99,
+    "role": "adult",
+    "text": "亂玩喔。"
+  },
+  {
+    "id": 100,
+    "role": "child",
+    "text": "因為你很好玩。"
+  },
+  {
+    "id": 101,
+    "role": "adult",
+    "text": "為什麼我很好玩？"
+  },
+  {
+    "id": 102,
+    "role": "child",
+    "text": "因為你很搞笑。"
+  },
+  {
+    "id": 103,
+    "role": "adult",
+    "text": "我是搞笑。"
+  },
+  {
+    "id": 104,
+    "role": "adult",
+    "text": "可是我發現你High過頭了，對不對？"
+  },
+  {
+    "id": 105,
+    "role": "adult",
+    "text": "是不是？"
+  },
+  {
+    "id": 106,
+    "role": "adult",
+    "text": "說話。"
+  },
+  {
+    "id": 107,
+    "role": "child",
+    "text": "好，我拿一點剝皮辣椒。"
+  },
+  {
+    "id": 108,
+    "role": "adult",
+    "text": "這萵苣跟辣有什麼關係？"
+  },
+  {
+    "id": 109,
+    "role": "adult",
+    "text": "啊，水果你還把我加蕃茄醬。"
+  },
+  {
+    "id": 110,
+    "role": "adult",
+    "text": "你覺得這樣很搞笑，是不是？"
+  },
+  {
+    "id": 111,
+    "role": "child",
+    "text": "那是好吃，"
+  },
+  {
+    "id": 112,
+    "role": "child",
+    "text": "又超美味。"
+  },
+  {
+    "id": 113,
+    "role": "child",
+    "text": "那個蕃茄醬不是ㄧ般的蕃茄醬。"
+  },
+  {
+    "id": 114,
+    "role": "adult",
+    "text": "是什麼蕃茄醬？"
+  },
+  {
+    "id": 115,
+    "role": "child",
+    "text": "嗯，特製蕃茄醬，"
+  },
+  {
+    "id": 116,
+    "role": "child",
+    "text": "懂嗎？"
+  },
+  {
+    "id": 117,
+    "role": "adult",
+    "text": "不懂。"
+  },
+  {
+    "id": 118,
+    "role": "child",
+    "text": "你都還沒吃。"
+  },
+  {
+    "id": 119,
+    "role": "adult",
+    "text": "我有吃啊。"
+  },
+  {
+    "id": 120,
+    "role": "child",
+    "text": "你怎麼知道？"
+  },
+  {
+    "id": 121,
+    "role": "adult",
+    "text": "我剛剛有吃啦。"
+  },
+  {
+    "id": 122,
+    "role": "child",
+    "text": "那個蕃茄醬超好吃的。"
+  },
+  {
+    "id": 123,
+    "role": "child",
+    "text": "我可以灌一瓶給你看。"
+  },
+  {
+    "id": 124,
+    "role": "adult",
+    "text": "你在學校是不是都是這樣？"
+  },
+  {
+    "id": 125,
+    "role": "adult",
+    "text": "蛤，XX。"
+  },
+  {
+    "id": 126,
+    "role": "adult",
+    "text": "你在學校都是這樣感覺搞笑、很搞笑，是不是？"
+  },
+  {
+    "id": 127,
+    "role": "adult",
+    "text": "是嗎？"
+  },
+  {
+    "id": 128,
+    "role": "child",
+    "text": "欸。"
+  },
+  {
+    "id": 129,
+    "role": "adult",
+    "text": "是嗎？"
+  },
+  {
+    "id": 130,
+    "role": "child",
+    "text": "對。"
+  },
+  {
+    "id": 131,
+    "role": "adult",
+    "text": "你在學校跟同學玩各種遊戲，"
+  },
+  {
+    "id": 132,
+    "role": "adult",
+    "text": "你都覺得這樣很搞笑，是不是？"
+  },
+  {
+    "id": 133,
+    "role": "child",
+    "text": "嗯。"
+  },
+  {
+    "id": 134,
+    "role": "adult",
+    "text": "是嗎？"
+  },
+  {
+    "id": 135,
+    "role": "adult",
+    "text": "你都會這樣，是不是？"
+  },
+  {
+    "id": 136,
+    "role": "adult",
+    "text": "可是我覺得你搞笑有點過頭了餒。"
+  },
+  {
+    "id": 137,
+    "role": "child",
+    "text": "這不叫過頭，"
+  },
+  {
+    "id": 138,
+    "role": "child",
+    "text": "這叫特大搞笑。"
+  },
+  {
+    "id": 139,
+    "role": "adult",
+    "text": "特大。"
+  },
+  {
+    "id": 140,
+    "role": "adult",
+    "text": "就搞笑到很過頭叫特大。"
+  },
+  {
+    "id": 141,
+    "role": "child",
+    "text": "一般的、一般的特大搞笑。"
+  },
+  {
+    "id": 142,
+    "role": "adult",
+    "text": "一般的特大搞笑。"
+  },
+  {
+    "id": 143,
+    "role": "adult",
+    "text": "一般又特大，"
+  },
+  {
+    "id": 144,
+    "role": "adult",
+    "text": "聽不懂。"
+  },
+  {
+    "id": 145,
+    "role": "child",
+    "text": "我也、我也不知道我在講什麼。"
+  }
+]
+
+Return a minified JSON array for adult utterances only:
+[{"id": <int>, "subject": <string>, "reasoning": <string>, "code": <string>}, ...]
+- "subject": who or what the utterance is primarily about — choose the most specific applicable label:
+  "兒童" (the child), "物品/玩具" (an object or toy), "家長自身" (the parent themselves), "遊戲角色" (a pretend/play character), "第三方" (another person not the child), "不明" (unclear)
+- "reasoning": one sentence naming the decisive feature or rule that determines the code (e.g. "肯定句 + 描述兒童當下動作 → BD" or "呼應兒童剛才說的話 → RF 優先於 BD")
+- "code": the single DPICS code
+- Return ONLY the JSON array — no text, no markdown, no code fences
+- First character MUST be [, last character MUST be ]
+- Every adult entry MUST have "id", "subject", "reasoning", and "code"

@@ -1,0 +1,689 @@
+Code every utterance where role is "adult". Skip all "child" entries.
+
+[
+  {
+    "id": 0,
+    "role": "adult",
+    "text": "哥哥，哇，你又找到夾子了耶。"
+  },
+  {
+    "id": 1,
+    "role": "adult",
+    "text": "你開始在夾一些上面的裝飾品。"
+  },
+  {
+    "id": 2,
+    "role": "adult",
+    "text": "你夾了一個黃黃的香蕉片。"
+  },
+  {
+    "id": 3,
+    "role": "adult",
+    "text": "哇，哥哥你很棒耶，你馬上就找到香蕉片了。"
+  },
+  {
+    "id": 4,
+    "role": "adult",
+    "text": "你又夾了一塊小餅乾。"
+  },
+  {
+    "id": 5,
+    "role": "adult",
+    "text": "看起來很好吃喔。"
+  },
+  {
+    "id": 6,
+    "role": "child",
+    "text": "又、我又夾了一個香蕉片。"
+  },
+  {
+    "id": 7,
+    "role": "adult",
+    "text": "喔，你找了...，你很好耶，你又找到一個香蕉片了。"
+  },
+  {
+    "id": 8,
+    "role": "adult",
+    "text": "現在哥哥夾到了一個白色的奶油球，"
+  },
+  {
+    "id": 9,
+    "role": "adult",
+    "text": "還有一個草莓。"
+  },
+  {
+    "id": 10,
+    "role": "adult",
+    "text": "你一次夾了兩個"
+  },
+  {
+    "id": 11,
+    "role": "adult",
+    "text": "你真會夾。"
+  },
+  {
+    "id": 12,
+    "role": "adult",
+    "text": "哇，你又夾到一顆不一樣的草莓了。"
+  },
+  {
+    "id": 13,
+    "role": "child",
+    "text": "我又夾香蕉。"
+  },
+  {
+    "id": 14,
+    "role": "adult",
+    "text": "你又夾了香蕉片了。"
+  },
+  {
+    "id": 15,
+    "role": "adult",
+    "text": "哇，你有看到..."
+  },
+  {
+    "id": 16,
+    "role": "child",
+    "text": "我有夾子。"
+  },
+  {
+    "id": 17,
+    "role": "adult",
+    "text": "你用夾子夾。"
+  },
+  {
+    "id": 18,
+    "role": "child",
+    "text": "我又夾了這個。"
+  },
+  {
+    "id": 19,
+    "role": "adult",
+    "text": "喔，你又夾了一個奶油。"
+  },
+  {
+    "id": 20,
+    "role": "child",
+    "text": "我又夾了啦。"
+  },
+  {
+    "id": 21,
+    "role": "adult",
+    "text": "你又夾了一根好像是脆笛酥餒。"
+  },
+  {
+    "id": 22,
+    "role": "child",
+    "text": "這什麼呢？"
+  },
+  {
+    "id": 23,
+    "role": "adult",
+    "text": "脆笛酥。"
+  },
+  {
+    "id": 24,
+    "role": "adult",
+    "text": "哥哥想知道這個是什麼。"
+  },
+  {
+    "id": 25,
+    "role": "adult",
+    "text": "脆笛酥一種巧克力餅乾。"
+  },
+  {
+    "id": 26,
+    "role": "child",
+    "text": "這什麼口.."
+  },
+  {
+    "id": 27,
+    "role": "adult",
+    "text": "你又夾了一個草莓。"
+  },
+  {
+    "id": 28,
+    "role": "child",
+    "text": "我夾…"
+  },
+  {
+    "id": 29,
+    "role": "adult",
+    "text": "你一次可以夾兩種口味的奶油球耶，你真的很棒喔。"
+  },
+  {
+    "id": 30,
+    "role": "child",
+    "text": "這、這是巧克力的嗎？"
+  },
+  {
+    "id": 31,
+    "role": "adult",
+    "text": "是啊，"
+  },
+  {
+    "id": 32,
+    "role": "adult",
+    "text": "哥哥你知道這是巧克力的。"
+  },
+  {
+    "id": 33,
+    "role": "child",
+    "text": "掉下去下面。"
+  },
+  {
+    "id": 34,
+    "role": "adult",
+    "text": "掉下去了。"
+  },
+  {
+    "id": 35,
+    "role": "child",
+    "text": "今天、媽媽，今天跟誰上呢？"
+  },
+  {
+    "id": 36,
+    "role": "adult",
+    "text": "跟媽媽啊。"
+  },
+  {
+    "id": 37,
+    "role": "adult",
+    "text": "你想知道跟媽媽一起上。"
+  },
+  {
+    "id": 38,
+    "role": "child",
+    "text": "跟完媽媽要跟誰上呢？"
+  },
+  {
+    "id": 39,
+    "role": "adult",
+    "text": "跟完媽媽要跟誰上？"
+  },
+  {
+    "id": 40,
+    "role": "adult",
+    "text": "跟媽媽上完就回家上別的、玩別的啊。"
+  },
+  {
+    "id": 41,
+    "role": "child",
+    "text": "玩什麼呢？"
+  },
+  {
+    "id": 42,
+    "role": "adult",
+    "text": "你想知道玩什麼喔。"
+  },
+  {
+    "id": 43,
+    "role": "child",
+    "text": "特別時間。"
+  },
+  {
+    "id": 44,
+    "role": "adult",
+    "text": "晚上回家我們再看看。"
+  },
+  {
+    "id": 45,
+    "role": "adult",
+    "text": "哥哥你夾了一個栗子口味的奶油球。"
+  },
+  {
+    "id": 46,
+    "role": "child",
+    "text": "回家、在這裡、回家有、在家有特別時間嗎？"
+  },
+  {
+    "id": 47,
+    "role": "adult",
+    "text": "今天有啊。"
+  },
+  {
+    "id": 48,
+    "role": "adult",
+    "text": "媽媽找到一個瑞士捲喔。"
+  },
+  {
+    "id": 49,
+    "role": "child",
+    "text": "我又夾、我又拿了一個。"
+  },
+  {
+    "id": 50,
+    "role": "adult",
+    "text": "你又夾了一個脆笛酥，很好。"
+  },
+  {
+    "id": 51,
+    "role": "adult",
+    "text": "來，媽媽找到一個瑞士捲。"
+  },
+  {
+    "id": 52,
+    "role": "adult",
+    "text": "我要用哥哥剛剛夾出來的奶油球來插在瑞士捲上面。"
+  },
+  {
+    "id": 53,
+    "role": "child",
+    "text": "夾不起來。"
+  },
+  {
+    "id": 54,
+    "role": "adult",
+    "text": "媽媽又找了一個白色的奶油球來插了。"
+  },
+  {
+    "id": 55,
+    "role": "child",
+    "text": "媽媽，學我夾這個了嗎？"
+  },
+  {
+    "id": 56,
+    "role": "adult",
+    "text": "喔，你想要媽媽跟你一起夾。"
+  },
+  {
+    "id": 57,
+    "role": "adult",
+    "text": "你想要媽媽學你。"
+  },
+  {
+    "id": 58,
+    "role": "adult",
+    "text": "好，媽媽學你。"
+  },
+  {
+    "id": 59,
+    "role": "child",
+    "text": "又夾了一個草莓。"
+  },
+  {
+    "id": 60,
+    "role": "adult",
+    "text": "喔，你找了一個草莓。"
+  },
+  {
+    "id": 61,
+    "role": "child",
+    "text": "那是因為夾了草...，你要學..."
+  },
+  {
+    "id": 62,
+    "role": "adult",
+    "text": "媽媽學你夾、夾了一個草莓。"
+  },
+  {
+    "id": 63,
+    "role": "adult",
+    "text": "媽媽學你夾了一個草莓。"
+  },
+  {
+    "id": 64,
+    "role": "child",
+    "text": "這邊瑞士捲。"
+  },
+  {
+    "id": 65,
+    "role": "adult",
+    "text": "哇，哥哥找到瑞士...，草莓了。"
+  },
+  {
+    "id": 66,
+    "role": "adult",
+    "text": "你又夾了一個奶油球。"
+  },
+  {
+    "id": 67,
+    "role": "adult",
+    "text": "來，媽媽也學你夾了一個小的奶油球。"
+  },
+  {
+    "id": 68,
+    "role": "adult",
+    "text": "你夾了一個栗子口味的奶油球。"
+  },
+  {
+    "id": 69,
+    "role": "adult",
+    "text": "媽媽也學你夾一個栗子口味的。"
+  },
+  {
+    "id": 70,
+    "role": "adult",
+    "text": "媽媽把你夾到的栗子口味把它插到瑞士捲上面去，"
+  },
+  {
+    "id": 71,
+    "role": "adult",
+    "text": "讓它看起來很好吃。"
+  },
+  {
+    "id": 72,
+    "role": "child",
+    "text": "這個也要。"
+  },
+  {
+    "id": 73,
+    "role": "adult",
+    "text": "好，你也想要把這個夾上、插上去。"
+  },
+  {
+    "id": 74,
+    "role": "child",
+    "text": "這個也要。"
+  },
+  {
+    "id": 75,
+    "role": "adult",
+    "text": "好。"
+  },
+  {
+    "id": 76,
+    "role": "child",
+    "text": "這什麼呢？"
+  },
+  {
+    "id": 77,
+    "role": "child",
+    "text": "這什麼呢？"
+  },
+  {
+    "id": 78,
+    "role": "adult",
+    "text": "哥哥你好棒喔，你能發現巧克力。"
+  },
+  {
+    "id": 79,
+    "role": "adult",
+    "text": "你找到一個巧克力。"
+  },
+  {
+    "id": 80,
+    "role": "adult",
+    "text": "你想要把它插到這。"
+  },
+  {
+    "id": 81,
+    "role": "adult",
+    "text": "媽咪就來把它插上去。"
+  },
+  {
+    "id": 82,
+    "role": "child",
+    "text": "那這個也要。"
+  },
+  {
+    "id": 83,
+    "role": "adult",
+    "text": "好，哥哥你很棒，你想要來裝飾它耶，"
+  },
+  {
+    "id": 84,
+    "role": "adult",
+    "text": "把它裝得更漂亮。"
+  },
+  {
+    "id": 85,
+    "role": "adult",
+    "text": "哇，哥哥好棒，一直夾。"
+  },
+  {
+    "id": 86,
+    "role": "adult",
+    "text": "夾了好多喔。"
+  },
+  {
+    "id": 87,
+    "role": "adult",
+    "text": "夾了超多的巧克力球。"
+  },
+  {
+    "id": 88,
+    "role": "adult",
+    "text": "會讓這個瑞士捲變得更好吃喔。"
+  },
+  {
+    "id": 89,
+    "role": "adult",
+    "text": "來啦，媽媽把你夾出來的插上去。"
+  },
+  {
+    "id": 90,
+    "role": "adult",
+    "text": "媽媽一直插，"
+  },
+  {
+    "id": 91,
+    "role": "adult",
+    "text": "媽媽一直插、一直插。"
+  },
+  {
+    "id": 92,
+    "role": "child",
+    "text": "這個也是。"
+  },
+  {
+    "id": 93,
+    "role": "adult",
+    "text": "好，這個也是。"
+  },
+  {
+    "id": 94,
+    "role": "adult",
+    "text": "這個脆笛酥，來，媽媽把它夾上去。"
+  },
+  {
+    "id": 95,
+    "role": "child",
+    "text": "這個也要。"
+  },
+  {
+    "id": 96,
+    "role": "adult",
+    "text": "哇，哥哥你又夾了一個了。"
+  },
+  {
+    "id": 97,
+    "role": "child",
+    "text": "這個也要。"
+  },
+  {
+    "id": 98,
+    "role": "child",
+    "text": "這個也要。"
+  },
+  {
+    "id": 99,
+    "role": "adult",
+    "text": "好，哥哥又繼續夾。"
+  },
+  {
+    "id": 100,
+    "role": "child",
+    "text": "這個也有。"
+  },
+  {
+    "id": 101,
+    "role": "adult",
+    "text": "哇，哥哥你夾了..."
+  },
+  {
+    "id": 102,
+    "role": "child",
+    "text": "這個有。"
+  },
+  {
+    "id": 103,
+    "role": "adult",
+    "text": "你現在夾了一顆巧克力球。"
+  },
+  {
+    "id": 104,
+    "role": "adult",
+    "text": "你又找到了一個巧克力球了。"
+  },
+  {
+    "id": 105,
+    "role": "child",
+    "text": "這個也要。"
+  },
+  {
+    "id": 106,
+    "role": "adult",
+    "text": "哥哥想讓你的巧克力變得很有、很好吃。"
+  },
+  {
+    "id": 107,
+    "role": "adult",
+    "text": "有很多種的口味。"
+  },
+  {
+    "id": 108,
+    "role": "child",
+    "text": "這個xx"
+  },
+  {
+    "id": 109,
+    "role": "adult",
+    "text": "哇，哥哥又一直夾。"
+  },
+  {
+    "id": 110,
+    "role": "adult",
+    "text": "哥哥你好有耐心喔，可以把全部的巧克力球全部都夾出來。"
+  },
+  {
+    "id": 111,
+    "role": "adult",
+    "text": "超有耐心的喔。"
+  },
+  {
+    "id": 112,
+    "role": "child",
+    "text": "沒有、這裡沒有了。"
+  },
+  {
+    "id": 113,
+    "role": "adult",
+    "text": "哇，你全部都把它夾出來了，你真的好有耐心喔。"
+  },
+  {
+    "id": 114,
+    "role": "adult",
+    "text": "來，那媽媽把這個瑞士捲都...，把你夾出來的不同的口味的奶油球都插上去了，"
+  },
+  {
+    "id": 115,
+    "role": "adult",
+    "text": "讓這個瑞士捲變得很好吃喔。"
+  },
+  {
+    "id": 116,
+    "role": "adult",
+    "text": "媽媽找到了一個盤子。"
+  },
+  {
+    "id": 117,
+    "role": "adult",
+    "text": "喔，你找到一個盤子。"
+  },
+  {
+    "id": 118,
+    "role": "adult",
+    "text": "媽媽又找到了一個杯子。"
+  },
+  {
+    "id": 119,
+    "role": "adult",
+    "text": "媽媽看到這個杯子裡面好多的水果。"
+  },
+  {
+    "id": 120,
+    "role": "adult",
+    "text": "有奇異果、有櫻桃、有香蕉。"
+  },
+  {
+    "id": 121,
+    "role": "adult",
+    "text": "哇，媽媽把這個杯子插上去了。"
+  },
+  {
+    "id": 122,
+    "role": "child",
+    "text": "香蕉在哪邊呢？"
+  },
+  {
+    "id": 123,
+    "role": "adult",
+    "text": "哥哥想知道香蕉在哪邊。"
+  },
+  {
+    "id": 124,
+    "role": "adult",
+    "text": "在這裡啊。"
+  },
+  {
+    "id": 125,
+    "role": "adult",
+    "text": "哥哥很棒喔，會想要知道東西在哪裡。"
+  },
+  {
+    "id": 126,
+    "role": "adult",
+    "text": "這個香蕉看起來很好吃。"
+  },
+  {
+    "id": 127,
+    "role": "adult",
+    "text": "媽媽把它放到杯子上面去。"
+  },
+  {
+    "id": 128,
+    "role": "child",
+    "text": "xx"
+  },
+  {
+    "id": 129,
+    "role": "adult",
+    "text": "我找到了一個東西。"
+  },
+  {
+    "id": 130,
+    "role": "adult",
+    "text": "找到了一個、一片巧克力。"
+  },
+  {
+    "id": 131,
+    "role": "child",
+    "text": "這個是、這是什麼呢？"
+  },
+  {
+    "id": 132,
+    "role": "adult",
+    "text": "哇，哥哥想知道那是什麼。"
+  },
+  {
+    "id": 133,
+    "role": "child",
+    "text": "蛋糕。"
+  },
+  {
+    "id": 134,
+    "role": "adult",
+    "text": "喔，這是另外一種口味的瑞士捲。"
+  }
+]
+
+Return a minified JSON array for adult utterances only:
+[{"id": <int>, "subject": <string>, "reasoning": <string>, "code": <string>}, ...]
+- "subject": who or what the utterance is primarily about — choose the most specific applicable label:
+  "兒童" (the child), "物品/玩具" (an object or toy), "家長自身" (the parent themselves), "遊戲角色" (a pretend/play character), "第三方" (another person not the child), "不明" (unclear)
+- "reasoning": one sentence naming the decisive feature or rule that determines the code (e.g. "肯定句 + 描述兒童當下動作 → BD" or "呼應兒童剛才說的話 → RF 優先於 BD")
+- "code": the single DPICS code
+- Return ONLY the JSON array — no text, no markdown, no code fences
+- First character MUST be [, last character MUST be ]
+- Every adult entry MUST have "id", "subject", "reasoning", and "code"

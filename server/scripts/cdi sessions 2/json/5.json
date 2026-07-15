@@ -1,0 +1,908 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session2-5",
+      "utterances": [
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從玩具箱拿出夾子）哥哥（<2s，bid for attention），哇（<2s，案母表情中性），你又找到夾子了耶。",
+          "code": "BD",
+          "verbalization": "哥哥，哇，你又找到夾子了耶。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案將夾子伸進裝飾品盒）你開始在夾一些上面的裝飾品。",
+          "code": "BD",
+          "verbalization": "你開始在夾一些上面的裝飾品。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你夾了一個黃黃的香蕉片。",
+          "code": "BD",
+          "verbalization": "你夾了一個黃黃的香蕉片。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案母表情中性），哥哥你很棒耶（<2s），你馬上就找到香蕉片了。",
+          "code": "LP",
+          "verbalization": "哇，哥哥你很棒耶，你馬上就找到香蕉片了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你又夾了一塊小餅乾。",
+          "code": "BD",
+          "verbalization": "你又夾了一塊小餅乾。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "看起來很好吃喔。（案母稱讚到玩具，故計為TA）",
+          "code": "TA",
+          "verbalization": "看起來很好吃喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案再從裝飾品盒夾出另一片香蕉片）又、我又夾了一個香蕉片。",
+          "verbalization": "又、我又夾了一個香蕉片。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你找了...（<2s，案母改口），你很好耶（<2s），你又找到一個香蕉片了。",
+          "code": "LP",
+          "verbalization": "喔，你找了...，你很好耶，你又找到一個香蕉片了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "現在哥哥夾到了一個白色的奶油球，（<2s，接下句）",
+          "code": "BD",
+          "verbalization": "現在哥哥夾到了一個白色的奶油球，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案將草莓夾到桌上）還有一個草莓。",
+          "code": "TA",
+          "verbalization": "還有一個草莓。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你一次夾了兩個（<2s）(完整句意)",
+          "code": "BD",
+          "verbalization": "你一次夾了兩個"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你真會夾。",
+          "code": "LP",
+          "verbalization": "你真會夾。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案母表情中性），你又夾到一顆不一樣的草莓了。",
+          "code": "BD",
+          "verbalization": "哇，你又夾到一顆不一樣的草莓了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案又夾起半截香蕉）我又夾香蕉。",
+          "verbalization": "我又夾香蕉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你又夾了香蕉片了。（同時符合BD與RF，故計為RF）",
+          "code": "RF",
+          "verbalization": "你又夾了香蕉片了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s），你有看到...（案母語句未完成，故不予計數）",
+          "verbalization": "哇，你有看到..."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我有夾子。",
+          "verbalization": "我有夾子。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你用夾子夾。（同時符合BD與RF，故計為RF）",
+          "code": "RF",
+          "verbalization": "你用夾子夾。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將奶油球夾到桌上）我又夾了這個。",
+          "verbalization": "我又夾了這個。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你又夾了一個奶油。（同時符合BD與RF，故計為RF）",
+          "code": "RF",
+          "verbalization": "喔，你又夾了一個奶油。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將巧克力棒夾到桌上）我又夾了啦。",
+          "verbalization": "我又夾了啦。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你又夾了一根好像是脆笛酥餒。（同時符合BD與RF，故計為RF）",
+          "code": "RF",
+          "verbalization": "你又夾了一根好像是脆笛酥餒。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案用手指巧克力棒）這什麼呢？",
+          "verbalization": "這什麼呢？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "脆笛酥。",
+          "code": "TA",
+          "verbalization": "脆笛酥。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哥哥想知道這個是什麼。 【此句因講了上句話，故無法計成回應】",
+          "code": "TA",
+          "verbalization": "哥哥想知道這個是什麼。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "脆笛酥一種巧克力餅乾。（案母與個案下句同時說話）",
+          "code": "TA",
+          "verbalization": "脆笛酥一種巧克力餅乾。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這什麼口..（個案與案母下句同時說話，個案語句未完成故不予計數）",
+          "verbalization": "這什麼口.."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你又夾了一個草莓。",
+          "code": "BD",
+          "verbalization": "你又夾了一個草莓。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案同時將咖啡色和白色奶油球夾到桌上）我夾…（個案語句未完成，不予計數）",
+          "verbalization": "我夾…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你一次可以夾兩種口味的奶油球耶，你真的很棒喔。",
+          "code": "LP",
+          "verbalization": "你一次可以夾兩種口味的奶油球耶，你真的很棒喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案再夾一個咖啡色奶油球）這、這是巧克力的嗎？",
+          "verbalization": "這、這是巧克力的嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "是啊（Yes），（<2s，接下句）",
+          "code": "TA",
+          "verbalization": "是啊，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哥哥你知道這是巧克力的。（「知道」非具體動詞，故計為TA）",
+          "code": "TA",
+          "verbalization": "哥哥你知道這是巧克力的。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案不小心將手上的咖啡色奶油球弄掉在地上）掉下去下面。",
+          "verbalization": "掉下去下面。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "掉下去了。",
+          "code": "RF",
+          "verbalization": "掉下去了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案一邊用夾子加奶油球，一邊表示此句）今天、媽媽（<2s，bid for attention），今天跟誰上呢？(詢問今天晚上特別遊戲的時間，媽媽要跟誰玩。談論非正在玩的活動)",
+          "verbalization": "今天、媽媽，今天跟誰上呢？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "跟媽媽啊。 【建議第一次詢問時可先回應「你想知道今天要跟誰一起上」，再回答「媽媽現在想專心玩這個遊戲」「玩完後再跟你說」】",
+          "code": "TA",
+          "verbalization": "跟媽媽啊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你想知道跟媽媽一起上。 (因案母先回答，故此句計為TA)",
+          "code": "TA",
+          "verbalization": "你想知道跟媽媽一起上。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "跟完媽媽要跟誰上呢？（個案談論與當下遊戲情境無關的話題，建議案母予以忽略）",
+          "verbalization": "跟完媽媽要跟誰上呢？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "跟完媽媽要跟誰上？ 【建議案母可先忽略個案談論與當下遊戲無關的話題之行為】",
+          "verbalization": "跟完媽媽要跟誰上？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "跟媽媽上完就回家上別的、玩別的啊。 【建議案母可先忽略個案談論與當下遊戲無關的話題之行為】",
+          "verbalization": "跟媽媽上完就回家上別的、玩別的啊。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "玩什麼呢？（個案談論與當下遊戲情境無關的話題，建議案母予以忽略）",
+          "verbalization": "玩什麼呢？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你想知道玩什麼喔。 【建議案母可先忽略個案談論與當下遊戲無關的話題之行為】",
+          "verbalization": "你想知道玩什麼喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "特別時間。（個案談論與當下遊戲情境無關的話題，建議案母予以忽略）",
+          "verbalization": "特別時間。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "晚上回家我們再看看。 【建議案母可先忽略個案談論與當下遊戲無關的話題之行為】",
+          "verbalization": "晚上回家我們再看看。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哥哥你夾了一個栗子口味的奶油球。 【案母很棒，有嘗試描述個案的遊戲行為，以重新引導個案回到遊戲中】",
+          "code": "BD",
+          "verbalization": "哥哥你夾了一個栗子口味的奶油球。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "回家、在這裡、回家有、在家有特別時間嗎？（個案談論與遊戲情境無關的話題，建議案母予以忽略）",
+          "verbalization": "回家、在這裡、回家有、在家有特別時間嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "今天有啊。 【建議案母可先忽略個案談論與當下遊戲無關的話題之行為】",
+          "verbalization": "今天有啊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽找到一個瑞士捲喔。 【案母很棒，有拿出新的玩具以嘗試轉移個案的注意力到遊戲活動上】",
+          "code": "TA",
+          "verbalization": "媽媽找到一個瑞士捲喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案又夾出一個巧克力棒）我又夾、我又拿了一個。",
+          "verbalization": "我又夾、我又拿了一個。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你又夾了一個脆笛酥（<2s），很好。",
+          "code": "LP",
+          "verbalization": "你又夾了一個脆笛酥，很好。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "來（<2s，發語詞），媽媽找到一個瑞士捲。",
+          "code": "TA",
+          "verbalization": "來，媽媽找到一個瑞士捲。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母將栗子口味的奶油球裝在瑞士捲蛋糕上）我要用哥哥剛剛夾出來的奶油球來插在瑞士捲上面。",
+          "code": "TA",
+          "verbalization": "我要用哥哥剛剛夾出來的奶油球來插在瑞士捲上面。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案正嘗試從裝飾品盒夾起脆迪酥）夾不起來。",
+          "verbalization": "夾不起來。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽又找了一個白色的奶油球來插了。",
+          "code": "TA",
+          "verbalization": "媽媽又找了一個白色的奶油球來插了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "媽媽（<2s，bid for attention），學我夾這個了嗎？",
+          "verbalization": "媽媽，學我夾這個了嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你想要媽媽跟你一起夾。",
+          "code": "RF",
+          "verbalization": "喔，你想要媽媽跟你一起夾。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你想要媽媽學你。（此為描述個案的想法，故計為TA）",
+          "code": "TA",
+          "verbalization": "你想要媽媽學你。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好（<2s），媽媽學你。（案母拿出另一個夾子）",
+          "code": "TA",
+          "verbalization": "好，媽媽學你。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將草莓夾到桌上）又夾了一個草莓。",
+          "verbalization": "又夾了一個草莓。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你找了一個草莓。（同時符合BD與RF，故計為RF）",
+          "code": "RF",
+          "verbalization": "喔，你找了一個草莓。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "那是因為夾了草...（<2s，個案改口），你要學...（語句未完成，不予計數）",
+          "verbalization": "那是因為夾了草...，你要學..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽學你夾（<2s）、夾了一個草莓。(此處案母回應的很好，但應個案此句話沒講完，故在此才計TA)",
+          "code": "TA",
+          "verbalization": "媽媽學你夾、夾了一個草莓。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽學你夾了一個草莓。",
+          "code": "TA",
+          "verbalization": "媽媽學你夾了一個草莓。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案嘗試將草莓裝在瑞士捲蛋糕上，但沒插上後就放棄了）這邊瑞士捲。",
+          "verbalization": "這邊瑞士捲。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s），哥哥找到瑞士...（<2s，案母改口），草莓了。",
+          "code": "BD",
+          "verbalization": "哇，哥哥找到瑞士...，草莓了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你又夾了一個奶油球。",
+          "code": "BD",
+          "verbalization": "你又夾了一個奶油球。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "來（<2s，發語詞），媽媽也學你夾了一個小的奶油球。",
+          "code": "TA",
+          "verbalization": "來，媽媽也學你夾了一個小的奶油球。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你夾了一個栗子口味的奶油球。",
+          "code": "BD",
+          "verbalization": "你夾了一個栗子口味的奶油球。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽也學你夾一個栗子口味的。",
+          "code": "TA",
+          "verbalization": "媽媽也學你夾一個栗子口味的。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿起個案夾到桌上的奶油球）媽媽把你夾到的栗子口味把它[奶油球]插到瑞士捲上面去，（<2s，接下句）",
+          "code": "TA",
+          "verbalization": "媽媽把你夾到的栗子口味把它插到瑞士捲上面去，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "讓它[瑞士捲]看起來很好吃。",
+          "code": "TA",
+          "verbalization": "讓它看起來很好吃。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案又夾了一個白色奶油球到桌上）這個也要。",
+          "verbalization": "這個也要。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好（<2s），你也想要把這個夾上（案母改口，<2s）、插上去。",
+          "code": "TA",
+          "verbalization": "好，你也想要把這個夾上、插上去。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將咖啡色的餅乾夾到桌上）這個也要。",
+          "verbalization": "這個也要。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好。",
+          "code": "TA",
+          "verbalization": "好。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿起咖啡色的餅乾）這什麼呢？（個案與案母下下句同時說話，案母無法回應，不予計數）",
+          "verbalization": "這什麼呢？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這什麼呢？（個案與案母下句同時說話，案母無法回應，不予計數）",
+          "verbalization": "這什麼呢？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哥哥你好棒喔（<2s），你能發現巧克力。（案母與個案上句及上上去同時說話）",
+          "code": "LP",
+          "verbalization": "哥哥你好棒喔，你能發現巧克力。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你找到一個巧克力。",
+          "code": "BD",
+          "verbalization": "你找到一個巧克力。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你想要把它[巧克力]插到這。（案母描述個案的想法，故計為TA）",
+          "code": "TA",
+          "verbalization": "你想要把它插到這。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽咪就來把它[巧克力]插上去。",
+          "code": "TA",
+          "verbalization": "媽咪就來把它插上去。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案夾出了一個白色奶油球）那這個也要。",
+          "verbalization": "那這個也要。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好（<2s），哥哥你很棒，你想要來裝飾它[瑞士捲]耶，",
+          "code": "LP",
+          "verbalization": "好，哥哥你很棒，你想要來裝飾它耶，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "把它[瑞士捲]裝得更漂亮。",
+          "code": "LP",
+          "verbalization": "把它裝得更漂亮。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案持續將巧克力奶油球夾出盒子）哇（<2s，案母表情中性），哥哥好棒，一直夾。",
+          "code": "LP",
+          "verbalization": "哇，哥哥好棒，一直夾。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "夾了好多喔。",
+          "code": "BD",
+          "verbalization": "夾了好多喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "夾了超多的巧克力球。",
+          "code": "BD",
+          "verbalization": "夾了超多的巧克力球。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "會讓這個瑞士捲變得更好吃喔。（案母進行機會教育）",
+          "code": "TA",
+          "verbalization": "會讓這個瑞士捲變得更好吃喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "來啦（<2s，發語詞），媽媽把你夾出來的插上去。",
+          "code": "TA",
+          "verbalization": "來啦，媽媽把你夾出來的插上去。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽一直插，（<2s，接下句）",
+          "code": "TA",
+          "verbalization": "媽媽一直插，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽一直插、一直插。",
+          "code": "TA",
+          "verbalization": "媽媽一直插、一直插。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案夾出另一個巧克力棒）這個也是。",
+          "verbalization": "這個也是。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好（<2s），這個也是。(媽媽這裏回應的很好)",
+          "code": "RF",
+          "verbalization": "好，這個也是。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這個脆笛酥，來（發語詞，<2s），媽媽把它夾上去。（案母與個案下句同時說話）",
+          "code": "TA",
+          "verbalization": "這個脆笛酥，來，媽媽把它夾上去。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將栗子口味的奶油球放在桌上）這個也要。（個案與案母上句同時說話，案母無法回應，不予計數）",
+          "verbalization": "這個也要。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案母表情中性），哥哥你又夾了一個了。",
+          "code": "BD",
+          "verbalization": "哇，哥哥你又夾了一個了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將栗子口味奶油球夾到桌上）這個也要。（個案連續說話，案母回應其中一句即可，故此句不予計數）",
+          "verbalization": "這個也要。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這個也要。",
+          "verbalization": "這個也要。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好（<2s），哥哥又繼續夾。",
+          "code": "BD",
+          "verbalization": "好，哥哥又繼續夾。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案又夾出一個白色奶油球）這個也有。",
+          "verbalization": "這個也有。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s），哥哥你夾了...（語句未完成，不予計數）",
+          "verbalization": "哇，哥哥你夾了..."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案夾起一個巧克力球）這個有。",
+          "verbalization": "這個有。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你現在夾了一顆巧克力球。",
+          "code": "BD",
+          "verbalization": "你現在夾了一顆巧克力球。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案又夾出一個巧克力球）你又找到了一個巧克力球了。",
+          "code": "BD",
+          "verbalization": "你又找到了一個巧克力球了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這個也要。",
+          "verbalization": "這個也要。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案繼續夾出奶油球）哥哥想讓你的巧克力變得很有、很好吃。（此為描述個案的想法，故計為TA）",
+          "code": "TA",
+          "verbalization": "哥哥想讓你的巧克力變得很有、很好吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "有很多種的口味。",
+          "code": "TA",
+          "verbalization": "有很多種的口味。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案持續嘗試從裝飾品盒內夾出裝飾品）這個xx（個案聲音模糊，錄音檔亦聽不清楚，案母無法回應，不予計數）",
+          "verbalization": "這個xx"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案母表情中性），哥哥又一直夾。",
+          "code": "BD",
+          "verbalization": "哇，哥哥又一直夾。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哥哥你好有耐心喔，可以把全部的巧克力球全部都夾出來。（<2s，接下句）",
+          "code": "LP",
+          "verbalization": "哥哥你好有耐心喔，可以把全部的巧克力球全部都夾出來。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "超有耐心的喔。",
+          "code": "UP",
+          "verbalization": "超有耐心的喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案夾出裝飾品盒內的所有裝飾品）沒有、這裡沒有了。",
+          "verbalization": "沒有、這裡沒有了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案母表情中性），你全部都把它[裝飾品]夾出來了（<2s），你真的好有耐心喔。",
+          "code": "LP",
+          "verbalization": "哇，你全部都把它夾出來了，你真的好有耐心喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "來（<2s），那媽媽把這個瑞士捲都...（<2s，案母改口），把你夾出來的不同的口味的奶油球都插上去了，（<2s，接下句）",
+          "code": "TA",
+          "verbalization": "來，那媽媽把這個瑞士捲都...，把你夾出來的不同的口味的奶油球都插上去了，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "讓這個瑞士捲變得很好吃喔。",
+          "code": "TA",
+          "verbalization": "讓這個瑞士捲變得很好吃喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽找到了一個盤子。",
+          "code": "TA",
+          "verbalization": "媽媽找到了一個盤子。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你找到一個盤子。",
+          "code": "BD",
+          "verbalization": "喔，你找到一個盤子。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽又找到了一個杯子。",
+          "code": "TA",
+          "verbalization": "媽媽又找到了一個杯子。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿出一個畫有水果圖案的杯子）媽媽看到這個杯子裡面好多的水果。",
+          "code": "TA",
+          "verbalization": "媽媽看到這個杯子裡面好多的水果。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "有奇異果、有櫻桃、有香蕉。（案母未分別用手指）",
+          "code": "TA",
+          "verbalization": "有奇異果、有櫻桃、有香蕉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母正準備將杯子插上杯座時，個案直接從案母手中拿走杯子）哇（<2s，案母表情中性），媽媽把這個杯子插上去了。",
+          "code": "TA",
+          "verbalization": "哇，媽媽把這個杯子插上去了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "香蕉在哪邊呢？",
+          "verbalization": "香蕉在哪邊呢？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哥哥想知道香蕉在哪邊。",
+          "code": "RF",
+          "verbalization": "哥哥想知道香蕉在哪邊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母用手指杯子上的香蕉圖案）在這裡啊。",
+          "code": "TA",
+          "verbalization": "在這裡啊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哥哥很棒喔（<2s），會想要知道東西在哪裡。",
+          "code": "LP",
+          "verbalization": "哥哥很棒喔，會想要知道東西在哪裡。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這個香蕉看起來很好吃。（案母稱讚玩具，故計為TA）",
+          "code": "TA",
+          "verbalization": "這個香蕉看起來很好吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母從個案手中拿走杯子，並將杯子放進杯座）媽媽把它[杯子]放到杯子上面去。",
+          "code": "TA",
+          "verbalization": "媽媽把它放到杯子上面去。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將手伸進玩具箱）xx（個案聲音模糊，錄音檔亦聽不清楚，案母無法回應，不予計數）",
+          "verbalization": "xx"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母正在翻找玩具箱）我找到了一個東西。",
+          "code": "TA",
+          "verbalization": "我找到了一個東西。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿出一個巧克力甜甜圈）(我)找到了一個、一片巧克力。",
+          "code": "TA",
+          "verbalization": "找到了一個、一片巧克力。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案嘗試拿出另外一些瑞士捲蛋糕）這個是、這是什麼呢？",
+          "verbalization": "這個是、這是什麼呢？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案母表情中性），哥哥想知道那是什麼。",
+          "code": "RF",
+          "verbalization": "哇，哥哥想知道那是什麼。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "蛋糕。",
+          "verbalization": "蛋糕。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿出箱子裡的瑞士捲蛋糕）喔（<2s），這是另外一種口味的瑞士捲。",
+          "code": "TA",
+          "verbalization": "喔，這是另外一種口味的瑞士捲。"
+        }
+      ]
+    }
+  ]
+}

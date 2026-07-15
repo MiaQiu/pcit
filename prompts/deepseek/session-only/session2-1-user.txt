@@ -1,0 +1,664 @@
+Code every utterance where role is "adult". Skip all "child" entries.
+
+[
+  {
+    "id": 0,
+    "role": "child",
+    "text": "嗚啊..."
+  },
+  {
+    "id": 1,
+    "role": "adult",
+    "text": "欸。"
+  },
+  {
+    "id": 2,
+    "role": "child",
+    "text": "重新烤吧。"
+  },
+  {
+    "id": 3,
+    "role": "adult",
+    "text": "啊你用手去摸不會燙到喔。"
+  },
+  {
+    "id": 4,
+    "role": "child",
+    "text": "不會。"
+  },
+  {
+    "id": 5,
+    "role": "adult",
+    "text": "為什麼？"
+  },
+  {
+    "id": 6,
+    "role": "child",
+    "text": "不知道為什麼。"
+  },
+  {
+    "id": 7,
+    "role": "child",
+    "text": "我是無敵鐵金剛。"
+  },
+  {
+    "id": 8,
+    "role": "adult",
+    "text": "喔。"
+  },
+  {
+    "id": 9,
+    "role": "child",
+    "text": "肥滋滋菜單來囉。"
+  },
+  {
+    "id": 10,
+    "role": "adult",
+    "text": "超肥。"
+  },
+  {
+    "id": 11,
+    "role": "adult",
+    "text": "我不敢吃了"
+  },
+  {
+    "id": 12,
+    "role": "adult",
+    "text": "我…"
+  },
+  {
+    "id": 13,
+    "role": "child",
+    "text": "肥滋滋菜單。"
+  },
+  {
+    "id": 14,
+    "role": "child",
+    "text": "這種套餐的名字叫做肥滋滋菜單。"
+  },
+  {
+    "id": 15,
+    "role": "adult",
+    "text": "這我們全家人都吃不完。"
+  },
+  {
+    "id": 16,
+    "role": "child",
+    "text": "我跟你說你只要在店裡看到這種東西，"
+  },
+  {
+    "id": 17,
+    "role": "child",
+    "text": "你一定會點的。"
+  },
+  {
+    "id": 18,
+    "role": "adult",
+    "text": "為什麼我一定會點？"
+  },
+  {
+    "id": 19,
+    "role": "child",
+    "text": "你點了肥滋滋套餐。"
+  },
+  {
+    "id": 20,
+    "role": "child",
+    "text": "所以我來幫你肥滋滋套餐。"
+  },
+  {
+    "id": 21,
+    "role": "adult",
+    "text": "這是你、你的菜單叫「肥滋滋」。"
+  },
+  {
+    "id": 22,
+    "role": "child",
+    "text": "來，肥滋滋套餐。"
+  },
+  {
+    "id": 23,
+    "role": "child",
+    "text": "請慢用。"
+  },
+  {
+    "id": 24,
+    "role": "adult",
+    "text": "啊有叉、有叉子嗎？"
+  },
+  {
+    "id": 25,
+    "role": "adult",
+    "text": "還有刀。"
+  },
+  {
+    "id": 26,
+    "role": "child",
+    "text": "請慢用。"
+  },
+  {
+    "id": 27,
+    "role": "adult",
+    "text": "切雞腿。"
+  },
+  {
+    "id": 28,
+    "role": "adult",
+    "text": "要、你沒有..."
+  },
+  {
+    "id": 29,
+    "role": "child",
+    "text": "這裡還有一個肥滋滋套餐。"
+  },
+  {
+    "id": 30,
+    "role": "adult",
+    "text": "你沒有給我一個盤子，"
+  },
+  {
+    "id": 31,
+    "role": "adult",
+    "text": "我怎麼吃啊？"
+  },
+  {
+    "id": 32,
+    "role": "adult",
+    "text": "全部在這裡吃喔!"
+  },
+  {
+    "id": 33,
+    "role": "child",
+    "text": "對。"
+  },
+  {
+    "id": 34,
+    "role": "adult",
+    "text": "這樣怎麼吃啊？"
+  },
+  {
+    "id": 35,
+    "role": "child",
+    "text": "可以吧。"
+  },
+  {
+    "id": 36,
+    "role": "adult",
+    "text": "可以..."
+  },
+  {
+    "id": 37,
+    "role": "child",
+    "text": "誒，等一下。"
+  },
+  {
+    "id": 38,
+    "role": "child",
+    "text": "還有一個肥、肥滋滋套餐來囉。"
+  },
+  {
+    "id": 39,
+    "role": "adult",
+    "text": "漢堡、漢堡肉喔。"
+  },
+  {
+    "id": 40,
+    "role": "adult",
+    "text": "這是什麼肉？"
+  },
+  {
+    "id": 41,
+    "role": "adult",
+    "text": "欸。"
+  },
+  {
+    "id": 42,
+    "role": "child",
+    "text": "還有一個肥滋滋的。"
+  },
+  {
+    "id": 43,
+    "role": "adult",
+    "text": "沒熟。"
+  },
+  {
+    "id": 44,
+    "role": "child",
+    "text": "怎麼被你發現了勒？"
+  },
+  {
+    "id": 45,
+    "role": "adult",
+    "text": "我就在你旁邊看，"
+  },
+  {
+    "id": 46,
+    "role": "adult",
+    "text": "我要怎麼不發現？"
+  },
+  {
+    "id": 47,
+    "role": "child",
+    "text": "好了。"
+  },
+  {
+    "id": 48,
+    "role": "adult",
+    "text": "太肥了啦。"
+  },
+  {
+    "id": 49,
+    "role": "child",
+    "text": "肥滋滋套餐。"
+  },
+  {
+    "id": 50,
+    "role": "adult",
+    "text": "吃到飽喔。"
+  },
+  {
+    "id": 51,
+    "role": "child",
+    "text": "還有什麼肥滋滋套餐？"
+  },
+  {
+    "id": 52,
+    "role": "adult",
+    "text": "吃肉吃到飽。"
+  },
+  {
+    "id": 53,
+    "role": "adult",
+    "text": "哥哥這是什麼肉啊？"
+  },
+  {
+    "id": 54,
+    "role": "adult",
+    "text": "看不太懂。"
+  },
+  {
+    "id": 55,
+    "role": "adult",
+    "text": "這什麼肉啊？"
+  },
+  {
+    "id": 56,
+    "role": "child",
+    "text": "肉肉肉。"
+  },
+  {
+    "id": 57,
+    "role": "child",
+    "text": "這個它的名字叫作肉肉肉。"
+  },
+  {
+    "id": 58,
+    "role": "child",
+    "text": "你從沒看別人煮嗎？"
+  },
+  {
+    "id": 59,
+    "role": "adult",
+    "text": "肉肉肉。"
+  },
+  {
+    "id": 60,
+    "role": "adult",
+    "text": "那這個名字叫作什麼啊？"
+  },
+  {
+    "id": 61,
+    "role": "adult",
+    "text": "雞雞雞這樣。"
+  },
+  {
+    "id": 62,
+    "role": "child",
+    "text": "雞雞。"
+  },
+  {
+    "id": 63,
+    "role": "adult",
+    "text": "這雞啊。"
+  },
+  {
+    "id": 64,
+    "role": "adult",
+    "text": "這個是什麼肉？"
+  },
+  {
+    "id": 65,
+    "role": "adult",
+    "text": "哥哥，這是什麼肉？"
+  },
+  {
+    "id": 66,
+    "role": "adult",
+    "text": "牛排嗎？"
+  },
+  {
+    "id": 67,
+    "role": "adult",
+    "text": "哥哥，這是牛排嗎？"
+  },
+  {
+    "id": 68,
+    "role": "adult",
+    "text": "這是蝦子。"
+  },
+  {
+    "id": 69,
+    "role": "adult",
+    "text": "嗯，有水的聲音耶。"
+  },
+  {
+    "id": 70,
+    "role": "adult",
+    "text": "喔，燉、燉、燉鍋的嗎？"
+  },
+  {
+    "id": 71,
+    "role": "adult",
+    "text": "燉鍋的聲音。"
+  },
+  {
+    "id": 72,
+    "role": "child",
+    "text": "請喝魚湯。"
+  },
+  {
+    "id": 73,
+    "role": "adult",
+    "text": "喔，魚湯裡面有魚耶。"
+  },
+  {
+    "id": 74,
+    "role": "adult",
+    "text": "魚湯。"
+  },
+  {
+    "id": 75,
+    "role": "child",
+    "text": "肥滋滋套餐。"
+  },
+  {
+    "id": 76,
+    "role": "adult",
+    "text": "好像好好玩喔。"
+  },
+  {
+    "id": 77,
+    "role": "adult",
+    "text": "還有魚耶。"
+  },
+  {
+    "id": 78,
+    "role": "adult",
+    "text": "哥哥。"
+  },
+  {
+    "id": 79,
+    "role": "child",
+    "text": "幹嘛？"
+  },
+  {
+    "id": 80,
+    "role": "adult",
+    "text": "我吃到魚的骨頭了。"
+  },
+  {
+    "id": 81,
+    "role": "child",
+    "text": "然後勒？"
+  },
+  {
+    "id": 82,
+    "role": "adult",
+    "text": "沒有，"
+  },
+  {
+    "id": 83,
+    "role": "adult",
+    "text": "我給你看啊。"
+  },
+  {
+    "id": 84,
+    "role": "adult",
+    "text": "這魚還可以打開。"
+  },
+  {
+    "id": 85,
+    "role": "child",
+    "text": "我知道啊。"
+  },
+  {
+    "id": 86,
+    "role": "adult",
+    "text": "這魚可以合起來。"
+  },
+  {
+    "id": 87,
+    "role": "adult",
+    "text": "可是牠眼睛不能弄起來，"
+  },
+  {
+    "id": 88,
+    "role": "adult",
+    "text": "不然我就可以說我吃魚眼睛了，對不對？"
+  },
+  {
+    "id": 89,
+    "role": "adult",
+    "text": "魚的眼睛。"
+  },
+  {
+    "id": 90,
+    "role": "child",
+    "text": "好了，你還要點什麼？"
+  },
+  {
+    "id": 91,
+    "role": "adult",
+    "text": "你都是肉耶。"
+  },
+  {
+    "id": 92,
+    "role": "child",
+    "text": "再一次、再一份肥滋滋套餐。"
+  },
+  {
+    "id": 93,
+    "role": "child",
+    "text": "是的。"
+  },
+  {
+    "id": 94,
+    "role": "child",
+    "text": "來，空氣套餐，"
+  },
+  {
+    "id": 95,
+    "role": "child",
+    "text": "肥滋滋套餐。"
+  },
+  {
+    "id": 96,
+    "role": "adult",
+    "text": "空氣為什麼是肥滋滋？"
+  },
+  {
+    "id": 97,
+    "role": "child",
+    "text": "空氣肥滋滋套餐，請用。"
+  },
+  {
+    "id": 98,
+    "role": "adult",
+    "text": "空氣為什麼是肥滋滋？"
+  },
+  {
+    "id": 99,
+    "role": "child",
+    "text": "放這個、這個就叫肥滋滋套餐啦。"
+  },
+  {
+    "id": 100,
+    "role": "child",
+    "text": "還有這個。"
+  },
+  {
+    "id": 101,
+    "role": "adult",
+    "text": "這個冷掉了。"
+  },
+  {
+    "id": 102,
+    "role": "adult",
+    "text": "你拿出來太久了。"
+  },
+  {
+    "id": 103,
+    "role": "adult",
+    "text": "那個是放那個嗎？"
+  },
+  {
+    "id": 104,
+    "role": "child",
+    "text": "不是。"
+  },
+  {
+    "id": 105,
+    "role": "adult",
+    "text": "應該是放烤箱吧。"
+  },
+  {
+    "id": 106,
+    "role": "child",
+    "text": "說得很對。"
+  },
+  {
+    "id": 107,
+    "role": "child",
+    "text": "這是什麼？"
+  },
+  {
+    "id": 108,
+    "role": "child",
+    "text": "嗯？"
+  },
+  {
+    "id": 109,
+    "role": "adult",
+    "text": "喔，水果啊。"
+  },
+  {
+    "id": 110,
+    "role": "adult",
+    "text": "我等一下要吃水果。"
+  },
+  {
+    "id": 111,
+    "role": "child",
+    "text": "水果。"
+  },
+  {
+    "id": 112,
+    "role": "adult",
+    "text": "我等下要吃水果。"
+  },
+  {
+    "id": 113,
+    "role": "child",
+    "text": "你的辣椒套餐，"
+  },
+  {
+    "id": 114,
+    "role": "child",
+    "text": "來，請慢用。"
+  },
+  {
+    "id": 115,
+    "role": "child",
+    "text": "辣椒套餐。"
+  },
+  {
+    "id": 116,
+    "role": "adult",
+    "text": "我不敢吃。"
+  },
+  {
+    "id": 117,
+    "role": "child",
+    "text": "你點了辣椒套餐。"
+  },
+  {
+    "id": 118,
+    "role": "adult",
+    "text": "我又沒有點。"
+  },
+  {
+    "id": 119,
+    "role": "child",
+    "text": "蕃茄醬辣椒套餐。"
+  },
+  {
+    "id": 120,
+    "role": "adult",
+    "text": "蕃茄醬加辣椒很噁心耶。"
+  },
+  {
+    "id": 121,
+    "role": "adult",
+    "text": "我等一下要吃菜啦。"
+  },
+  {
+    "id": 122,
+    "role": "child",
+    "text": "好喔。"
+  },
+  {
+    "id": 123,
+    "role": "child",
+    "text": "菜、我看看有什麼菜。"
+  },
+  {
+    "id": 124,
+    "role": "child",
+    "text": "萵苣。"
+  },
+  {
+    "id": 125,
+    "role": "adult",
+    "text": "你又沒有煮。"
+  },
+  {
+    "id": 126,
+    "role": "child",
+    "text": "萵苣幹嘛煮？"
+  },
+  {
+    "id": 127,
+    "role": "child",
+    "text": "喔對，還要洗。"
+  },
+  {
+    "id": 128,
+    "role": "adult",
+    "text": "喔，要洗。"
+  },
+  {
+    "id": 129,
+    "role": "adult",
+    "text": "差一點點、差點吃到要拉肚子。"
+  }
+]
+
+Return a minified JSON array for adult utterances only:
+[{"id": <int>, "subject": <string>, "reasoning": <string>, "code": <string>}, ...]
+- "subject": who or what the utterance is primarily about — choose the most specific applicable label:
+  "兒童" (the child), "物品/玩具" (an object or toy), "家長自身" (the parent themselves), "遊戲角色" (a pretend/play character), "第三方" (another person not the child), "不明" (unclear)
+- "reasoning": one sentence naming the decisive feature or rule that determines the code (e.g. "肯定句 + 描述兒童當下動作 → BD" or "呼應兒童剛才說的話 → RF 優先於 BD")
+- "code": the single DPICS code
+- Return ONLY the JSON array — no text, no markdown, no code fences
+- First character MUST be [, last character MUST be ]
+- Every adult entry MUST have "id", "subject", "reasoning", and "code"

@@ -1,0 +1,836 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session2-4",
+      "utterances": [
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母正嘗試把掉落的葉子裝在樹上，但過程中有另一個積木掉落）一直掉餒。",
+          "code": "TA",
+          "verbalization": "一直掉餒。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案正嘗試把香蕉卡在樹上的肉的上面）要放這裡。",
+          "verbalization": "要放這裡。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "香蕉在這裡。",
+          "verbalization": "香蕉在這裡。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案成功把香蕉裝在樹上的肉的上面）哇（<2s，案母表情中性），哥哥（<2s，bid for attention），你把香蕉卡住了欸。",
+          "code": "BD",
+          "verbalization": "哇，哥哥，你把香蕉卡住了欸。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哥哥很好喔，都沒有掉下來。 【案母似乎在都沒有之後省略了\"'讓香蕉\"，故此句計為UP。】",
+          "code": "UP",
+          "verbalization": "哥哥很好喔，都沒有掉下來。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿出一隻長頸鹿）我拿長頸鹿起來。",
+          "verbalization": "我拿長頸鹿起來。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案母表情中性），你找到一隻長頸鹿餒。（同時符合BD和RF，故計為RF）",
+          "code": "RF",
+          "verbalization": "哇，你找到一隻長頸鹿餒。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案把長頸鹿裝在香蕉旁邊）它在這裡吃香蕉。",
+          "verbalization": "它在這裡吃香蕉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你讓長頸鹿吃香蕉喔。（同時符合BD和RF，故計為RF）",
+          "code": "RF",
+          "verbalization": "你讓長頸鹿吃香蕉喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "是。",
+          "verbalization": "是。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將香蕉放到長頸鹿嘴邊）給你(指長頸)。(連續說話只要回其中一句即可)",
+          "verbalization": "給你。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "長頸鹿我要給你了。",
+          "verbalization": "長頸鹿我要給你了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你在餵長頸鹿吃香蕉。",
+          "code": "BD",
+          "verbalization": "你在餵長頸鹿吃香蕉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿出大象）大象也要。",
+          "verbalization": "大象也要。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "大象也要吃。",
+          "code": "RF",
+          "verbalization": "大象也要吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "(香蕉)好好吃。（案母稱讚玩具）",
+          "code": "TA",
+          "verbalization": "好好吃。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "大象也可以吃了。",
+          "verbalization": "大象也可以吃了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "大象也可以吃香蕉。",
+          "code": "RF",
+          "verbalization": "大象也可以吃香蕉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "大象也要在學校吃香蕉。",
+          "verbalization": "大象也要在學校吃香蕉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "大象要在學校吃香蕉。",
+          "code": "RF",
+          "verbalization": "大象要在學校吃香蕉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我可以去大象的學校嗎？",
+          "verbalization": "我可以去大象的學校嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "大象的學校。",
+          "code": "RF",
+          "verbalization": "大象的學校。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "大象也是小朋友嗎？",
+          "verbalization": "大象也是小朋友嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "大象不是小朋友。（案母回答個案問題）",
+          "code": "TA",
+          "verbalization": "大象不是小朋友。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "大象是動物。",
+          "code": "TA",
+          "verbalization": "大象是動物。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "它[大象]可以吃香蕉。",
+          "code": "TA",
+          "verbalization": "它可以吃香蕉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "xxxxx（個案聲音過小，錄音檔亦聽不清楚，案母無法回應，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿出樂高人）喔他、這個也可以吃香蕉。",
+          "verbalization": "喔他、這個也可以吃香蕉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你找到了一個哥哥。",
+          "code": "BD",
+          "verbalization": "你找到了一個哥哥。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "他[樂高人]可以吃香蕉。【此句因講了上句話，故無法計成回應】",
+          "code": "TA",
+          "verbalization": "他可以吃香蕉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案把樂高人裝在底板上）給你餵（<2s）、給你吃香蕉。",
+          "verbalization": "給你餵、給你吃香蕉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你把他立著(裝在底板上)。",
+          "code": "BD",
+          "verbalization": "你把他立著。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你想要讓哥哥吃香蕉。【此句因講了上句話，故無法計成回應】",
+          "code": "TA",
+          "verbalization": "你想要讓哥哥吃香蕉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案語句未完成，不予計數）靠近他、這隻他、他就..",
+          "verbalization": "靠近他、這隻他、他就.."
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這是我做、這是我做長頸鹿[此指個案裝在底板上的長頸鹿]喔。",
+          "verbalization": "這是我做、這是我做長頸鹿喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這是你找到的長頸鹿。(與個案語意內容有出入，故計為TA)",
+          "code": "TA",
+          "verbalization": "這是你找到的長頸鹿。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我有做長頸鹿。",
+          "verbalization": "我有做長頸鹿。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你找到了一隻長頸鹿。（個案當下並無在找長頸鹿）",
+          "code": "TA",
+          "verbalization": "你找到了一隻長頸鹿。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這是我去歐托做的。",
+          "verbalization": "這是我去歐托做的。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你去歐托托有做長頸鹿。",
+          "code": "RF",
+          "verbalization": "你去歐托托有做長頸鹿。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "是的。",
+          "verbalization": "是的。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你去歐托托有做長頸鹿，是不是？",
+          "code": "Q",
+          "verbalization": "你去歐托托有做長頸鹿，是不是？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "恩。",
+          "verbalization": "恩。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "(個案當下沒有在玩玩具，站在旁邊說此句話) 快要用別的玩具了。(談論非正在玩的活動，可忽略)",
+          "verbalization": "快要用別的玩具了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我找到欄杆了。",
+          "code": "TA",
+          "verbalization": "我找到欄杆了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "等一下、等一下就要換別的玩具。(第一次詢問非正在玩的活動)",
+          "verbalization": "等一下、等一下就要換別的玩具。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "等一下就要換用夾子的玩具嗎？(連續說話只需要回應一句，且此為第二次詢問非正在玩的活動，可忽略)",
+          "verbalization": "等一下就要換用夾子的玩具嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "媽媽不知道餒。",
+          "code": "TA",
+          "verbalization": "媽媽不知道餒。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你想知道等一下會不會換別的玩具。(案母已先回答，故此句不計RF)",
+          "code": "TA",
+          "verbalization": "你想知道等一下會不會換別的玩具。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我想要換夾子玩具。【第三次詢問非正在玩的活動，可忽略】",
+          "verbalization": "我想要換夾子玩具。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你想要換夾子的玩具。【建議案母此句可忽略】",
+          "verbalization": "你想要換夾子的玩具。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "是。",
+          "verbalization": "是。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母在長頸鹿旁邊蓋咖啡色柵欄）那媽媽在幫它蓋一個圍欄。",
+          "code": "TA",
+          "verbalization": "那媽媽在幫它蓋一個圍欄。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我要把它圍起來。",
+          "code": "TA",
+          "verbalization": "我要把它圍起來。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿出一隻斑馬）這個也要。",
+          "verbalization": "這個也要。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "阿你找到了一隻斑馬。",
+          "code": "BD",
+          "verbalization": "阿你找到了一隻斑馬。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案僅嘗試在將斑馬裝到底板上，尚未完全裝上去）你讓斑馬也卡住了。（案母描述個案尚未完成的行為，且是以完成式做描述，故計為TA）",
+          "code": "TA",
+          "verbalization": "你讓斑馬也卡住了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（由於個案持續嘗試在把斑馬卡上去，案母發現個案尚未將斑馬成功裝上去，故又補充表示此句）（想）要把它卡住。（此處的\"要\"為\"想要\"，雖個案有做出卡上去的動作，原應計為BD，但因Nora無法看影檔 可統一將\"想要\"計為TA）",
+          "code": "TA",
+          "verbalization": "要把它卡住。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案繼續嘗試把斑馬裝到底板上）斑馬。",
+          "verbalization": "斑馬。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案成功把斑馬裝在底板上）哇（<2s，案母表情中性），你把它卡住了。",
+          "code": "BD",
+          "verbalization": "哇，你把它卡住了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我想帶它去摘香蕉（<2s）、摘香蕉。",
+          "verbalization": "我想帶它去摘香蕉、摘香蕉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你想帶它去摘香蕉。",
+          "code": "RF",
+          "verbalization": "你想帶它去摘香蕉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "那裡有香蕉。",
+          "code": "TA",
+          "verbalization": "那裡有香蕉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案讓斑馬走到樹的旁邊，然後自己把香蕉摘下來）摘（<2s）、摘香蕉。",
+          "verbalization": "摘、摘香蕉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你幫、幫斑馬把香蕉摘下來了。（同時符合BD和RF，故計為RF）",
+          "code": "RF",
+          "verbalization": "你幫、幫斑馬把香蕉摘下來了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "摘。",
+          "verbalization": "摘。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你幫它摘下來了。（同時符合BD和RF，故計為RF）",
+          "code": "RF",
+          "verbalization": "你幫它摘下來了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我摘下來了。",
+          "verbalization": "我摘下來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "(你)摘下來了。（同時符合BD和RF，故計為RF）",
+          "code": "RF",
+          "verbalization": "摘下來了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案指向樹上的肉）其他這個就不可以摘了。",
+          "verbalization": "其他這個就不可以摘了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "其他那個那是肉塊。",
+          "code": "TA",
+          "verbalization": "其他那個那是肉塊。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "那肉塊還香蕉嗎？",
+          "verbalization": "那肉塊還香蕉嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "那是肉塊。",
+          "code": "TA",
+          "verbalization": "那是肉塊。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這個是（<2s）、這個香蕉肉塊。",
+          "verbalization": "這個是、這個香蕉肉塊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你覺得它是香蕉。",
+          "code": "TA",
+          "verbalization": "你覺得它是香蕉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "它是香蕉肉塊。【此時則可忽略個案】",
+          "verbalization": "它是香蕉肉塊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這個是肉塊。（案母語氣中性）",
+          "code": "TA",
+          "verbalization": "這個是肉塊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿出母獅子）肉塊給（案母改口，<2s）、媽媽拿肉塊給花豹 (案母口誤，其為獅子)吃。",
+          "code": "TA",
+          "verbalization": "肉塊給、媽媽拿肉塊給花豹吃。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "花豹。",
+          "verbalization": "花豹。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我拿肉塊給花豹吃。",
+          "code": "TA",
+          "verbalization": "我拿肉塊給花豹吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母讓母獅子假裝吃肉）好吃。",
+          "code": "TA",
+          "verbalization": "好吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "肉。",
+          "code": "TA",
+          "verbalization": "肉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母拿出公獅子）獅子也要吃。",
+          "code": "TA",
+          "verbalization": "獅子也要吃。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我要帶、我要帶大象去摘香蕉。（個案正嘗試把剛剛摘過的香蕉再裝回到樹上）",
+          "verbalization": "我要帶、我要帶大象去摘香蕉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你要帶大象摘香蕉。",
+          "code": "RF",
+          "verbalization": "你要帶大象摘香蕉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案在嘗試裝香蕉時，不小心把葉子往下壓，使得整個樹上的積木全部翻倒）倒、倒下來了。",
+          "verbalization": "倒、倒下來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "倒下來了。(中性語氣)",
+          "code": "RF",
+          "verbalization": "倒下來了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "用倒了。",
+          "verbalization": "用倒了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "倒下來了。(中性語氣)",
+          "code": "RF",
+          "verbalization": "倒下來了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "用倒了欸。",
+          "verbalization": "用倒了欸。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "用倒了，（<2s，接下句）(中性語氣)",
+          "code": "RF",
+          "verbalization": "用倒了，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "沒關係。",
+          "code": "TA",
+          "verbalization": "沒關係。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "好。",
+          "verbalization": "好。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我們一起把它蓋回去。",
+          "code": "IC",
+          "verbalization": "我們一起把它蓋回去。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "好，恩。",
+          "verbalization": "好，恩。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你把它蓋上去了。",
+          "code": "BD",
+          "verbalization": "喔，你把它蓋上去了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我要摘香蕉。",
+          "verbalization": "我要摘香蕉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你要摘香蕉。",
+          "code": "RF",
+          "verbalization": "你要摘香蕉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "摘下來了。",
+          "verbalization": "摘下來了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "已經、已經摘下來了。",
+          "verbalization": "已經、已經摘下來了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（由於有一塊長型積木在掉落的過程中有一小角裂開，故案母把那塊長形積木移到一旁，導致樹上的葉子無法穩固裝上去，故個案在摘香蕉時，葉子又脫落）呃..為什麼這樣子？",
+          "verbalization": "呃..為什麼這樣子？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "xx（個案聲音過小，錄音檔亦聽不清楚，案母無法回應，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "(個案試圖將葉子裝在樹上，但無法裝上去，於是把葉子交給案母，當案母在替個案裝葉子時，個案說此話)我想要用夾子的。（再次提到要玩另一組玩具，可忽略）",
+          "verbalization": "我想要用夾子的。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案正在假裝剝香蕉）你在剝香蕉。",
+          "code": "BD",
+          "verbalization": "你在剝香蕉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你幫它剝皮喔。",
+          "code": "BD",
+          "verbalization": "你幫它剝皮喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案剝完香蕉後，把香蕉餵給大象）阿姆、阿姆。（個案模擬吃東西的聲音，狀聲詞不予計數）",
+          "verbalization": "阿姆、阿姆。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案母表情中性），你知道香蕉要剝皮。（此為描述個案擁有知識，故計為TA）",
+          "code": "TA",
+          "verbalization": "哇，你知道香蕉要剝皮。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我餵大象吃。(個案做出餵大象的動作)",
+          "verbalization": "我餵大象吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你餵大象吃。（同時符合BD和RF，故計為RF）",
+          "code": "RF",
+          "verbalization": "你餵大象吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你餵大象吃了香蕉。(距個案做出餵的動作<5s)",
+          "code": "BD",
+          "verbalization": "你餵大象吃了香蕉。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿起斑馬又放下）小驢子有嘴巴嗎？",
+          "verbalization": "小驢子有嘴巴嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "小驢子。",
+          "code": "RF",
+          "verbalization": "小驢子。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "小驢子的嘴巴。",
+          "code": "TA",
+          "verbalization": "小驢子的嘴巴。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這是斑馬。（案母語氣中性）",
+          "code": "TA",
+          "verbalization": "這是斑馬。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "斑馬有嘴巴嗎？",
+          "verbalization": "斑馬有嘴巴嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "斑馬有嘴巴阿。",
+          "code": "TA",
+          "verbalization": "斑馬有嘴巴阿。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "有嘴巴。",
+          "verbalization": "有嘴巴。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "斑馬有嘴巴。",
+          "code": "RF",
+          "verbalization": "斑馬有嘴巴。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案當下突然把手放在自己的口罩上，摀住嘴巴，並說此句話，推測其當下不知道要玩什麼，於是跟案母聊跟遊戲無關之話題，建議此處可忽略個案）我這裡蓋起來了。",
+          "verbalization": "我這裡蓋起來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你把它蓋起來了。 【建議案母可先忽略個案談論與當下遊戲無關的話題之行為】",
+          "verbalization": "你把它蓋起來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "因為你戴口罩了。 【建議案母需避免繼續與個案談論與當下遊戲無關的話題】",
+          "verbalization": "因為你戴口罩了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "因為這裡有鼻子被蓋起來了。（個案在談論與當下遊戲無關的話題，建議案母可予以忽略）",
+          "verbalization": "因為這裡有鼻子被蓋起來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "那裡有鼻子被蓋起來了。 【建議案母可先忽略個案談論與當下遊戲無關的話題之行為】",
+          "verbalization": "那裡有鼻子被蓋起來了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "鼻子這裡被蓋起來了。（個案在談論與當下遊戲無關的話題，建議案母可予以忽略）",
+          "verbalization": "鼻子這裡被蓋起來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案母回到遊戲中，將斑馬裝到底板上）我要讓斑馬吃草。",
+          "code": "TA",
+          "verbalization": "我要讓斑馬吃草。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我發現斑馬可以吃草。",
+          "code": "TA",
+          "verbalization": "我發現斑馬可以吃草。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我想要…（時間到，不予計數）",
+          "verbalization": "我想要…"
+        }
+      ]
+    }
+  ]
+}

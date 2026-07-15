@@ -1,0 +1,774 @@
+Code every utterance where role is "adult". Skip all "child" entries.
+
+[
+  {
+    "id": 0,
+    "role": "adult",
+    "text": "哥哥。"
+  },
+  {
+    "id": 1,
+    "role": "child",
+    "text": "幹嘛？"
+  },
+  {
+    "id": 2,
+    "role": "adult",
+    "text": "我想要煮青菜餒。"
+  },
+  {
+    "id": 3,
+    "role": "child",
+    "text": "青菜。"
+  },
+  {
+    "id": 4,
+    "role": "adult",
+    "text": "你可不可以把青菜放在煎台裡面煎啊？"
+  },
+  {
+    "id": 5,
+    "role": "child",
+    "text": "可以啊。"
+  },
+  {
+    "id": 6,
+    "role": "adult",
+    "text": "然後炒一炒"
+  },
+  {
+    "id": 7,
+    "role": "adult",
+    "text": "煎一煎。"
+  },
+  {
+    "id": 8,
+    "role": "adult",
+    "text": "然後你要、你要煎。"
+  },
+  {
+    "id": 9,
+    "role": "adult",
+    "text": "你不要亂煎喔。"
+  },
+  {
+    "id": 10,
+    "role": "adult",
+    "text": "你找一些好、好吃的出來，"
+  },
+  {
+    "id": 11,
+    "role": "adult",
+    "text": "煎。"
+  },
+  {
+    "id": 12,
+    "role": "child",
+    "text": "好吃的。"
+  },
+  {
+    "id": 13,
+    "role": "adult",
+    "text": "對啊，"
+  },
+  {
+    "id": 14,
+    "role": "adult",
+    "text": "不然你剛剛那個太肥了啊。"
+  },
+  {
+    "id": 15,
+    "role": "adult",
+    "text": "我要吃菜。"
+  },
+  {
+    "id": 16,
+    "role": "adult",
+    "text": "那吃完菜之後我要吃水果。"
+  },
+  {
+    "id": 17,
+    "role": "child",
+    "text": "辣椒套餐。"
+  },
+  {
+    "id": 18,
+    "role": "adult",
+    "text": "你這樣太噁心了啦，"
+  },
+  {
+    "id": 19,
+    "role": "adult",
+    "text": "全部都丟進去，怎麼加啊？"
+  },
+  {
+    "id": 20,
+    "role": "child",
+    "text": "可以。"
+  },
+  {
+    "id": 21,
+    "role": "adult",
+    "text": "不要啦、不要。"
+  },
+  {
+    "id": 22,
+    "role": "child",
+    "text": "沙拉、這沙拉。"
+  },
+  {
+    "id": 23,
+    "role": "adult",
+    "text": "沙拉用煎的？"
+  },
+  {
+    "id": 24,
+    "role": "adult",
+    "text": "沙拉餒、沙拉是生的餒。"
+  },
+  {
+    "id": 25,
+    "role": "child",
+    "text": "等一下。"
+  },
+  {
+    "id": 26,
+    "role": "adult",
+    "text": "先洗菜。"
+  },
+  {
+    "id": 27,
+    "role": "adult",
+    "text": "好，都一起洗。"
+  },
+  {
+    "id": 28,
+    "role": "adult",
+    "text": "洗完之後你挑一些菜出來，"
+  },
+  {
+    "id": 29,
+    "role": "adult",
+    "text": "煎。"
+  },
+  {
+    "id": 30,
+    "role": "adult",
+    "text": "不要一次全部啦。"
+  },
+  {
+    "id": 31,
+    "role": "child",
+    "text": "你的熱狗。"
+  },
+  {
+    "id": 32,
+    "role": "adult",
+    "text": "好，可是...，我等一下吃。"
+  },
+  {
+    "id": 33,
+    "role": "adult",
+    "text": "這個不是放這裡的啦。"
+  },
+  {
+    "id": 34,
+    "role": "adult",
+    "text": "挑一些菜起來，"
+  },
+  {
+    "id": 35,
+    "role": "adult",
+    "text": "煎。"
+  },
+  {
+    "id": 36,
+    "role": "adult",
+    "text": "我想我要吃什麼。"
+  },
+  {
+    "id": 37,
+    "role": "child",
+    "text": "這個，"
+  },
+  {
+    "id": 38,
+    "role": "child",
+    "text": "你要吃辣椒我知道的。"
+  },
+  {
+    "id": 39,
+    "role": "adult",
+    "text": "我沒有要吃辣椒。"
+  },
+  {
+    "id": 40,
+    "role": "child",
+    "text": "可惡啊。"
+  },
+  {
+    "id": 41,
+    "role": "child",
+    "text": "要要要加辣椒。"
+  },
+  {
+    "id": 42,
+    "role": "adult",
+    "text": "我要吃茄子、茄子。"
+  },
+  {
+    "id": 43,
+    "role": "child",
+    "text": "綠茄子。"
+  },
+  {
+    "id": 44,
+    "role": "adult",
+    "text": "還有...，我要吃茄子跟花椰菜。"
+  },
+  {
+    "id": 45,
+    "role": "adult",
+    "text": "啊為什麼你還有一顆鳳梨啊？"
+  },
+  {
+    "id": 46,
+    "role": "adult",
+    "text": "這樣太噁了。"
+  },
+  {
+    "id": 47,
+    "role": "child",
+    "text": "什麼？"
+  },
+  {
+    "id": 48,
+    "role": "adult",
+    "text": "這個等一下"
+  },
+  {
+    "id": 49,
+    "role": "adult",
+    "text": "這個要吃沙拉。"
+  },
+  {
+    "id": 50,
+    "role": "adult",
+    "text": "你先幫我煎這個。"
+  },
+  {
+    "id": 51,
+    "role": "adult",
+    "text": "你先幫我炒這個好了。"
+  },
+  {
+    "id": 52,
+    "role": "adult",
+    "text": "這個是什麼？"
+  },
+  {
+    "id": 53,
+    "role": "adult",
+    "text": "ㄌㄟㄢ ㄇㄨ嗎？"
+  },
+  {
+    "id": 54,
+    "role": "child",
+    "text": "等一下。"
+  },
+  {
+    "id": 55,
+    "role": "adult",
+    "text": "那你先幫我弄那個。"
+  },
+  {
+    "id": 56,
+    "role": "adult",
+    "text": "弄一弄。"
+  },
+  {
+    "id": 57,
+    "role": "adult",
+    "text": "弄個盤子。"
+  },
+  {
+    "id": 58,
+    "role": "adult",
+    "text": "弄一弄。"
+  },
+  {
+    "id": 59,
+    "role": "adult",
+    "text": "弄個盤子。"
+  },
+  {
+    "id": 60,
+    "role": "child",
+    "text": "加上有辣椒。"
+  },
+  {
+    "id": 61,
+    "role": "adult",
+    "text": "那我弄了辣椒只有我能夠吃嗎？"
+  },
+  {
+    "id": 62,
+    "role": "adult",
+    "text": "妹妹又不敢吃。"
+  },
+  {
+    "id": 63,
+    "role": "child",
+    "text": "沒關係。"
+  },
+  {
+    "id": 64,
+    "role": "adult",
+    "text": "那你不用搖一搖喔？"
+  },
+  {
+    "id": 65,
+    "role": "child",
+    "text": "不用。"
+  },
+  {
+    "id": 66,
+    "role": "adult",
+    "text": "搖一搖。"
+  },
+  {
+    "id": 67,
+    "role": "adult",
+    "text": "翻一翻啊。"
+  },
+  {
+    "id": 68,
+    "role": "adult",
+    "text": "那你的、你的那個勒？"
+  },
+  {
+    "id": 69,
+    "role": "child",
+    "text": "等一下。"
+  },
+  {
+    "id": 70,
+    "role": "adult",
+    "text": "翻一翻啊。"
+  },
+  {
+    "id": 71,
+    "role": "child",
+    "text": "我要來挑戰。"
+  },
+  {
+    "id": 72,
+    "role": "adult",
+    "text": "欸~。"
+  },
+  {
+    "id": 73,
+    "role": "adult",
+    "text": "大廚喔~"
+  },
+  {
+    "id": 74,
+    "role": "child",
+    "text": "好了，繼續。"
+  },
+  {
+    "id": 75,
+    "role": "adult",
+    "text": "喔，大廚都是這樣，是不是？"
+  },
+  {
+    "id": 76,
+    "role": "adult",
+    "text": "好了啊。"
+  },
+  {
+    "id": 77,
+    "role": "child",
+    "text": "還沒。"
+  },
+  {
+    "id": 78,
+    "role": "adult",
+    "text": "喔。"
+  },
+  {
+    "id": 79,
+    "role": "child",
+    "text": "好了。"
+  },
+  {
+    "id": 80,
+    "role": "adult",
+    "text": "啊，盤子。"
+  },
+  {
+    "id": 81,
+    "role": "child",
+    "text": "辣椒套餐。"
+  },
+  {
+    "id": 82,
+    "role": "adult",
+    "text": "好，那就辣椒套餐。"
+  },
+  {
+    "id": 83,
+    "role": "child",
+    "text": "請慢用。"
+  },
+  {
+    "id": 84,
+    "role": "adult",
+    "text": "啊我要吃水果。"
+  },
+  {
+    "id": 85,
+    "role": "child",
+    "text": "水果套餐嗎？"
+  },
+  {
+    "id": 86,
+    "role": "adult",
+    "text": "對。"
+  },
+  {
+    "id": 87,
+    "role": "child",
+    "text": "來一份。"
+  },
+  {
+    "id": 88,
+    "role": "adult",
+    "text": "啊，先沙拉、先沙拉。"
+  },
+  {
+    "id": 89,
+    "role": "child",
+    "text": "沙拉套餐。"
+  },
+  {
+    "id": 90,
+    "role": "adult",
+    "text": "我要吃沙拉。"
+  },
+  {
+    "id": 91,
+    "role": "adult",
+    "text": "沙拉要給我洗乾淨喔。"
+  },
+  {
+    "id": 92,
+    "role": "adult",
+    "text": "沙拉是生的喔。"
+  },
+  {
+    "id": 93,
+    "role": "adult",
+    "text": "沙拉洗乾淨。"
+  },
+  {
+    "id": 94,
+    "role": "adult",
+    "text": "洗完沙拉之後還有水果。"
+  },
+  {
+    "id": 95,
+    "role": "child",
+    "text": "請慢用。"
+  },
+  {
+    "id": 96,
+    "role": "adult",
+    "text": "ㄒㄧㄨ ㄍㄧㄣˋㄚ ㄅㄚ˙。"
+  },
+  {
+    "id": 97,
+    "role": "adult",
+    "text": "你有沒有洗乾淨？"
+  },
+  {
+    "id": 98,
+    "role": "child",
+    "text": "有。"
+  },
+  {
+    "id": 99,
+    "role": "adult",
+    "text": "沒有。"
+  },
+  {
+    "id": 100,
+    "role": "child",
+    "text": "那再洗一次。"
+  },
+  {
+    "id": 101,
+    "role": "child",
+    "text": "請慢用。"
+  },
+  {
+    "id": 102,
+    "role": "adult",
+    "text": "你是時間過那麼快喔。"
+  },
+  {
+    "id": 103,
+    "role": "adult",
+    "text": "呼──，洗乾淨了。"
+  },
+  {
+    "id": 104,
+    "role": "child",
+    "text": "說得沒錯。"
+  },
+  {
+    "id": 105,
+    "role": "child",
+    "text": "你說得非常好。"
+  },
+  {
+    "id": 106,
+    "role": "child",
+    "text": "我要再做水果沙拉了啊。"
+  },
+  {
+    "id": 107,
+    "role": "child",
+    "text": "好。"
+  },
+  {
+    "id": 108,
+    "role": "adult",
+    "text": "我說要水果沙拉。"
+  },
+  {
+    "id": 109,
+    "role": "adult",
+    "text": "我要水果沙拉。"
+  },
+  {
+    "id": 110,
+    "role": "adult",
+    "text": "欸，哥哥。"
+  },
+  {
+    "id": 111,
+    "role": "child",
+    "text": "怎麼了？"
+  },
+  {
+    "id": 112,
+    "role": "adult",
+    "text": "等一下弄完之後要把盤子洗一洗喔。"
+  },
+  {
+    "id": 113,
+    "role": "adult",
+    "text": "你可以幫忙洗盤子嗎？"
+  },
+  {
+    "id": 114,
+    "role": "child",
+    "text": "可以啊。"
+  },
+  {
+    "id": 115,
+    "role": "adult",
+    "text": "你在幹嘛？"
+  },
+  {
+    "id": 116,
+    "role": "adult",
+    "text": "喔，你先把蔬菜...，你先把水果挑出來。"
+  },
+  {
+    "id": 117,
+    "role": "adult",
+    "text": "一次、一次塞滿喔。"
+  },
+  {
+    "id": 118,
+    "role": "adult",
+    "text": "這樣太噁心了。"
+  },
+  {
+    "id": 119,
+    "role": "adult",
+    "text": "這樣洗不乾淨啦。"
+  },
+  {
+    "id": 120,
+    "role": "child",
+    "text": "全果汁。"
+  },
+  {
+    "id": 121,
+    "role": "adult",
+    "text": "齁。"
+  },
+  {
+    "id": 122,
+    "role": "adult",
+    "text": "這樣洗不乾淨。"
+  },
+  {
+    "id": 123,
+    "role": "adult",
+    "text": "水果要一顆一顆洗啦。"
+  },
+  {
+    "id": 124,
+    "role": "child",
+    "text": "你看，"
+  },
+  {
+    "id": 125,
+    "role": "child",
+    "text": "這樣比較新鮮。"
+  },
+  {
+    "id": 126,
+    "role": "adult",
+    "text": "為什麼這樣比較新鮮？"
+  },
+  {
+    "id": 127,
+    "role": "child",
+    "text": "我也不知道。"
+  },
+  {
+    "id": 128,
+    "role": "adult",
+    "text": "新鮮不是用在這裡的餒。"
+  },
+  {
+    "id": 129,
+    "role": "adult",
+    "text": "你知道新鮮的意思是什麼嗎？"
+  },
+  {
+    "id": 130,
+    "role": "child",
+    "text": "就是新鮮。"
+  },
+  {
+    "id": 131,
+    "role": "adult",
+    "text": "喔，啊這個洗乾淨跟新鮮沒關係啊。"
+  },
+  {
+    "id": 132,
+    "role": "child",
+    "text": "對。"
+  },
+  {
+    "id": 133,
+    "role": "adult",
+    "text": "水果要去煮。"
+  },
+  {
+    "id": 134,
+    "role": "adult",
+    "text": "會融化餒。"
+  },
+  {
+    "id": 135,
+    "role": "child",
+    "text": "耶。"
+  },
+  {
+    "id": 136,
+    "role": "adult",
+    "text": "你水果拿去煮就融化了餒。"
+  },
+  {
+    "id": 137,
+    "role": "child",
+    "text": "沒關係。"
+  },
+  {
+    "id": 138,
+    "role": "child",
+    "text": "這樣比較好吃。"
+  },
+  {
+    "id": 139,
+    "role": "adult",
+    "text": "那我以後水果煮一煮給你吃，好不好？"
+  },
+  {
+    "id": 140,
+    "role": "child",
+    "text": "但是你又沒有在弄水果給我吃。"
+  },
+  {
+    "id": 141,
+    "role": "adult",
+    "text": "有啦，"
+  },
+  {
+    "id": 142,
+    "role": "adult",
+    "text": "阿嬤都有削水果啊。"
+  },
+  {
+    "id": 143,
+    "role": "adult",
+    "text": "削水果啊。"
+  },
+  {
+    "id": 144,
+    "role": "adult",
+    "text": "水果為什麼要煮？"
+  },
+  {
+    "id": 145,
+    "role": "child",
+    "text": "我也不知道為什麼。"
+  },
+  {
+    "id": 146,
+    "role": "child",
+    "text": "煮了比較新鮮。"
+  },
+  {
+    "id": 147,
+    "role": "adult",
+    "text": "所以你亂..."
+  },
+  {
+    "id": 148,
+    "role": "adult",
+    "text": "所以你亂玩的，是不是？"
+  },
+  {
+    "id": 149,
+    "role": "child",
+    "text": "對。"
+  },
+  {
+    "id": 150,
+    "role": "child",
+    "text": "你還要吃什麼？"
+  },
+  {
+    "id": 151,
+    "role": "adult",
+    "text": "我...，你又沒有削水果給我吃。"
+  }
+]
+
+Return a minified JSON array for adult utterances only:
+[{"id": <int>, "subject": <string>, "reasoning": <string>, "code": <string>}, ...]
+- "subject": who or what the utterance is primarily about — choose the most specific applicable label:
+  "兒童" (the child), "物品/玩具" (an object or toy), "家長自身" (the parent themselves), "遊戲角色" (a pretend/play character), "第三方" (another person not the child), "不明" (unclear)
+- "reasoning": one sentence naming the decisive feature or rule that determines the code (e.g. "肯定句 + 描述兒童當下動作 → BD" or "呼應兒童剛才說的話 → RF 優先於 BD")
+- "code": the single DPICS code
+- Return ONLY the JSON array — no text, no markdown, no code fences
+- First character MUST be [, last character MUST be ]
+- Every adult entry MUST have "id", "subject", "reasoning", and "code"

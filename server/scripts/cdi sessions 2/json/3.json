@@ -1,0 +1,1029 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session2-3",
+      "utterances": [
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我們準備收玩具了。",
+          "code": "IC",
+          "verbalization": "我們準備收玩具了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你幫、你幫忙把所有玩具都收起來。",
+          "code": "DC",
+          "verbalization": "你幫、你幫忙把所有玩具都收起來。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "等一下那個、等一下那個哥哥他們會進來。",
+          "code": "TA",
+          "verbalization": "等一下那個、等一下那個哥哥他們會進來。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這玩具蠻好玩的。",
+          "code": "TA",
+          "verbalization": "這玩具蠻好玩的。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "可是我發現、可是我發現…（語句未完成）。",
+          "verbalization": "可是我發現、可是我發現…"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯？（個案語調上揚）",
+          "verbalization": "嗯？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你好像…（語句未完成）。",
+          "verbalization": "你好像…"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我好像甚麼？",
+          "verbalization": "我好像甚麼？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "不知道，（<2s，接下句）",
+          "code": "TA",
+          "verbalization": "不知道，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "感覺很亂（與個案下句同時說話）。(是對孩子目前行為的負向評價。)",
+          "code": "NTA",
+          "verbalization": "感覺很亂"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案持續將玩具收進玩具箱）攏黑白(ㄡㄅㄟ)煮（台語「都亂煮」）（與案父上句同時說話）。",
+          "verbalization": "攏黑白(ㄡㄅㄟ)煮"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "嘿（<2s），ㄡㄅㄟ煮，（台語「亂煮」的意思）。",
+          "code": "NTA",
+          "verbalization": "嘿，ㄡㄅㄟ煮，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "黑白(ㄡㄅㄟ)玩(ㄙㄥˋ)（台語「亂玩」的意思）",
+          "code": "NTA",
+          "verbalization": "黑白(ㄡㄅㄟ)玩(ㄙㄥˋ)"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將裝肉的盤子拿到案父面前）嗯（<2s），你點的肥滋滋套餐還沒吃欸。",
+          "verbalization": "嗯，你點的肥滋滋套餐還沒吃欸。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我沒有點餒。",
+          "code": "TA",
+          "verbalization": "我沒有點餒。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "你有（與案父下句同時說話）。",
+          "verbalization": "你有"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "是你\"特製\"的捏!（與個案上句同時說話）。（案父在「特製」兩個字加重語氣，帶諷刺口吻）",
+          "code": "NTA",
+          "verbalization": "是你\"特製\"的捏!"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "不是，（<2s，接下句）",
+          "verbalization": "不是，"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "你點了空氣套餐就有免費的肥滋滋套餐（<2s），懂嗎？",
+          "verbalization": "你點了空氣套餐就有免費的肥滋滋套餐，懂嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "不懂。(案父語氣中性)",
+          "code": "TA",
+          "verbalization": "不懂。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案邊說邊將玩具收進玩具箱）這是優惠。",
+          "verbalization": "這是優惠。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "優惠喔（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "優惠喔"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你、你在學校玩遊戲都是這樣子（<2s），蛤？（案父語氣質疑）（案父用手摸個案的頭）",
+          "code": "NTA",
+          "verbalization": "你、你在學校玩遊戲都是這樣子，蛤？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "拍謝（台語「抱歉」之意），（<2s，接下句）",
+          "verbalization": "拍謝，"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案一邊收玩具一邊回答）我在學校沒有玩這個（推測個案此處是指廚房組）。",
+          "verbalization": "我在學校沒有玩這個。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "拍謝（台語「抱歉」之意），（<2s，接下句）（個案連續說話，案父回應個案上上句）",
+          "code": "RF",
+          "verbalization": "拍謝，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你在學校沒有玩遊戲。",
+          "code": "RF",
+          "verbalization": "你在學校沒有玩遊戲。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "有吧。（案父語氣中性；具推測性之語尾助詞）",
+          "code": "TA",
+          "verbalization": "有吧。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案撿起地上玩具後，彎腰低頭將玩具從跨下放進玩具箱）欸、欸，（<2s，接下句）",
+          "code": "NTA",
+          "verbalization": "欸、欸，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "放好（<2s，接下句）",
+          "code": "DC",
+          "verbalization": "放好"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "放好。",
+          "code": "DC",
+          "verbalization": "放好。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "喔。",
+          "verbalization": "喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "呵呵...（個案轉身將玩具箱裡的玩具擺在玩具較不密集的地方）",
+          "verbalization": "呵呵..."
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "不要搗亂。",
+          "code": "NTA",
+          "verbalization": "不要搗亂。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案將地上剩下的兩堆玩具撿起來）還有嗎？",
+          "code": "Q",
+          "verbalization": "還有嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "檢查一下。",
+          "code": "DC",
+          "verbalization": "檢查一下。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "收（<2s）、收乾淨。",
+          "code": "DC",
+          "verbalization": "收、收乾淨。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "咻──...（個案將兩堆玩具收進玩具箱時發出的聲音，狀聲詞，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父邊說邊指著烤箱）啊那個（烤箱）裡面有嗎？",
+          "code": "Q",
+          "verbalization": "啊那個裡面有嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案將水槽下方的鍋子收進玩具箱）有沒有？",
+          "code": "Q",
+          "verbalization": "有沒有？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案彎腰看向烤箱的方向）沒有。",
+          "verbalization": "沒有。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好 (>2s)。",
+          "code": "TA",
+          "verbalization": "好。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "收完啦。",
+          "code": "TA",
+          "verbalization": "收完啦。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案起身面朝單面鏡）你在照鏡子喔。",
+          "code": "TA",
+          "verbalization": "你在照鏡子喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案頭探向單面鏡）ㄏㄥ～（個案發出的聲音 hng～，狀聲詞，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父打開烤箱）收完啦。",
+          "code": "TA",
+          "verbalization": "收完啦。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好（<2s），收完啦。",
+          "code": "TA",
+          "verbalization": "好，收完啦。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父用手指烤箱最左邊的按鈕）這個、這個哥哥（<2s，bid for attention）、這個是小火（<2s，接下句）",
+          "code": "TA",
+          "verbalization": "這個、這個哥哥、這個是小火"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父接續指著烤箱上左邊數來第二個按鈕）大火（<2s），是不是？",
+          "code": "Q",
+          "verbalization": "大火，是不是？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "不是。",
+          "verbalization": "不是。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "那你最行（<2s），(有反諷之意味)",
+          "code": "NTA",
+          "verbalization": "那你最行，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你教我。",
+          "code": "DC",
+          "verbalization": "你教我。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案按下烤箱上的定時按鈕）這是定時。",
+          "code": "TA",
+          "verbalization": "這是定時。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父用手指右邊數來第二個按鈕）再來（<2s），啊這個勒？",
+          "code": "Q",
+          "verbalization": "再來，啊這個勒？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父從左邊往右依序指著烤箱上所有的按鈕）這幾個按鈕是什麼？",
+          "code": "Q",
+          "verbalization": "這幾個按鈕是什麼？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父用手指右邊數來第二個按鈕時，個案肢體協助案父指爐台上的煎台）這個（右邊數來第二個按鈕）是這個（煎台）。",
+          "code": "TA",
+          "verbalization": "這個是這個。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔、喔（<2s），我知道了。",
+          "code": "TA",
+          "verbalization": "喔、喔，我知道了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父先指最左邊的按鈕，再指爐台上較小的圓形爐火）這個（最左邊的按鈕）是這個（爐台上小的圓形爐火）。",
+          "code": "TA",
+          "verbalization": "這個是這個。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父接續指左邊數來第二個按鈕，再指爐台上較大的圓形爐火）這個（左邊數來第二個按鈕）是這個（爐台上大的圓形爐火）。",
+          "code": "TA",
+          "verbalization": "這個是這個。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將兩個爐火都打開）你兩個都按。",
+          "verbalization": "你兩個都按。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（接續同時壓下兩個亮著的燈）然後這樣同時壓下去，（<2s，接下句）",
+          "verbalization": "然後這樣同時壓下去，"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "懂嗎？",
+          "verbalization": "懂嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s）、按了它會亮燈哪。",
+          "code": "TA",
+          "verbalization": "喔、按了它會亮燈哪。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "就是有開關哪。",
+          "code": "TA",
+          "verbalization": "就是有開關哪。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父用手指熄滅後的燈）有通電哪。",
+          "code": "TA",
+          "verbalization": "有通電哪。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯（<2s），是連線。",
+          "verbalization": "嗯，是連線。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父接著用手指煎台的按鈕）啊這個勒？",
+          "code": "Q",
+          "verbalization": "啊這個勒？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父按下煎台的按鈕）這個是按了就有聲音。",
+          "code": "TA",
+          "verbalization": "這個是按了就有聲音。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父打開烤箱）這個是烤的。",
+          "code": "TA",
+          "verbalization": "這個是烤的。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父輕壓水龍頭）這個壓了有水喔。",
+          "code": "TA",
+          "verbalization": "這個壓了有水喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "有哇（<2s），當然有阿。",
+          "verbalization": "有哇，當然有阿。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "哼哼...（個案得意的笑聲，狀聲詞，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父用手指比劃水龍頭下方，假裝有流水）流出來了餒。",
+          "code": "TA",
+          "verbalization": "流出來了餒。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "流好多餒。",
+          "code": "TA",
+          "verbalization": "流好多餒。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "對阿。",
+          "verbalization": "對阿。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "噗哧 (噴笑、忍不住笑聲)",
+          "code": "TA",
+          "verbalization": "噗哧"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "流出來就...呼呼...（個案講到一半開始發笑，語句未完成，不予計數）。",
+          "verbalization": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "沒有啦，（<2s，接下句）",
+          "code": "TA",
+          "verbalization": "沒有啦，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這邊沒有水啦。",
+          "code": "TA",
+          "verbalization": "這邊沒有水啦。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父用手指水龍頭後面）有水它(水龍頭)會準備冰水在這裡。",
+          "code": "TA",
+          "verbalization": "有水它會準備冰水在這裡。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "有沒有看到？",
+          "code": "Q",
+          "verbalization": "有沒有看到？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好。",
+          "code": "TA",
+          "verbalization": "好。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案低頭看向水龍頭）那裡勒？",
+          "verbalization": "那裡勒？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "蛤（<2s），你問我。",
+          "code": "TA",
+          "verbalization": "蛤，你問我。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "不是、不是、不是。（個案走到遊戲室中央，抬頭看向攝影機）",
+          "verbalization": "不是、不是、不是。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從遊戲室中央移動到案父身後）你在看什麼？",
+          "code": "Q",
+          "verbalization": "你在看什麼？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案用手指攝影機）你看。",
+          "verbalization": "你看。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你在看什麼？",
+          "code": "Q",
+          "verbalization": "你在看什麼？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案對著攝影機的方向揮手）哈囉。",
+          "verbalization": "哈囉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），那裡有攝影機。",
+          "code": "TA",
+          "verbalization": "喔，那裡有攝影機。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父坐在椅子上）哥哥、哥哥（<2s，bid for attention），我問你喔。",
+          "code": "TA",
+          "verbalization": "哥哥、哥哥，我問你喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將一隻手搭在案父肩上）你問我。",
+          "verbalization": "你問我。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你在學校玩遊戲是不是很故意？（案父語氣中性）",
+          "code": "NTA",
+          "verbalization": "你在學校玩遊戲是不是很故意？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你剛剛是不是很故意？（案父語氣中性）",
+          "code": "NTA",
+          "verbalization": "你剛剛是不是很故意？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "對。（個案點頭）",
+          "verbalization": "對。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "為什麼你要那麼故意？（案父語氣中性）",
+          "code": "NTA",
+          "verbalization": "為什麼你要那麼故意？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案坐在案父腿上）因為你很好玩。",
+          "verbalization": "因為你很好玩。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父邊笑邊說）什麼叫做我很好玩？",
+          "code": "Q",
+          "verbalization": "什麼叫做我很好玩？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案邊笑邊說）因為你很好玩。",
+          "verbalization": "因為你很好玩。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父指著個案）你很故意喔。",
+          "code": "NTA",
+          "verbalization": "你很故意喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你很故意喔。",
+          "code": "NTA",
+          "verbalization": "你很故意喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案邊笑邊說）因為你很好玩。",
+          "verbalization": "因為你很好玩。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我發現你很故意喔。",
+          "code": "NTA",
+          "verbalization": "我發現你很故意喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "亂玩喔。",
+          "code": "NTA",
+          "verbalization": "亂玩喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案開始把玩案父的手）因為你很好玩。",
+          "verbalization": "因為你很好玩。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "為什麼我很好玩？（案父語氣中性）",
+          "code": "Q",
+          "verbalization": "為什麼我很好玩？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "因為你很搞笑。",
+          "verbalization": "因為你很搞笑。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我是搞笑。",
+          "code": "RF",
+          "verbalization": "我是搞笑。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "可是我發現你High過頭了（<2s），對不對？",
+          "code": "NTA",
+          "verbalization": "可是我發現你High過頭了，對不對？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "是不是？",
+          "code": "Q",
+          "verbalization": "是不是？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "說話。",
+          "code": "DC",
+          "verbalization": "說話。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "好（<2s），我拿一點剝皮辣椒。（個案將辣椒和萵苣從玩具箱拿到案父面前）",
+          "verbalization": "好，我拿一點剝皮辣椒。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這萵苣跟辣有什麼關係？（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "這萵苣跟辣有什麼關係？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "啊（<2s），水果你還把我加蕃茄醬。（案父略帶指責語氣）",
+          "code": "NTA",
+          "verbalization": "啊，水果你還把我加蕃茄醬。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "哼哼哼...（個案笑聲，狀聲詞，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你覺得這樣很搞笑（<2s），是不是？（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "你覺得這樣很搞笑，是不是？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "那是好吃，（<2s，接下句）",
+          "verbalization": "那是好吃，"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "又超美味。",
+          "verbalization": "又超美味。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你覺得、你覺得這樣很...（與個案上句同時說話，語句未完成，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "那個蕃茄醬不是ㄧ般的蕃茄醬。",
+          "verbalization": "那個蕃茄醬不是ㄧ般的蕃茄醬。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "是什麼蕃茄醬？（案父語氣中性）",
+          "code": "Q",
+          "verbalization": "是什麼蕃茄醬？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "嗯（<2s），特製蕃茄醬，（<2s，接下句）",
+          "verbalization": "嗯，特製蕃茄醬，"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "懂嗎？",
+          "verbalization": "懂嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "不懂。",
+          "code": "TA",
+          "verbalization": "不懂。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "你都還沒吃。",
+          "verbalization": "你都還沒吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我有吃啊。",
+          "code": "TA",
+          "verbalization": "我有吃啊。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "你怎麼知道？",
+          "verbalization": "你怎麼知道？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "我剛剛有吃啦。",
+          "code": "TA",
+          "verbalization": "我剛剛有吃啦。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "那個蕃茄醬超好吃的。",
+          "verbalization": "那個蕃茄醬超好吃的。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我可以灌一瓶給你看。（個案做出喝東西的動作）",
+          "verbalization": "我可以灌一瓶給你看。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "哼哼...（個案笑聲，狀聲詞，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你在學校是不是都是這樣？(語氣中性)",
+          "code": "NTA",
+          "verbalization": "你在學校是不是都是這樣？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "蛤（<2s），XX[個案名]。（>2s，bid for attention）",
+          "code": "IC",
+          "verbalization": "蛤，XX。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你在學校都是這樣感覺搞笑、很搞笑（<2s），是不是？（案父語氣略為質疑）",
+          "code": "NTA",
+          "verbalization": "你在學校都是這樣感覺搞笑、很搞笑，是不是？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "是嗎？（案父語氣中性）",
+          "code": "Q",
+          "verbalization": "是嗎？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案坐在案父旁邊）欸。（個案點頭）",
+          "verbalization": "欸。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "是嗎？（案父語氣中性）",
+          "code": "Q",
+          "verbalization": "是嗎？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "對。（個案點頭）",
+          "verbalization": "對。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你在學校跟同學玩各種遊戲，（<2s，接下句）",
+          "code": "TA",
+          "verbalization": "你在學校跟同學玩各種遊戲，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你都覺得這樣很搞笑（<2s），是不是？（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "你都覺得這樣很搞笑，是不是？"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（案父摸個案的頭）嗯。",
+          "verbalization": "嗯。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "是嗎？（個案點頭）",
+          "code": "Q",
+          "verbalization": "是嗎？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你都會這樣（<2s），是不是？（個案點頭）",
+          "code": "NTA",
+          "verbalization": "你都會這樣，是不是？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "可是我覺得你搞笑有點過頭了餒。",
+          "code": "NTA",
+          "verbalization": "可是我覺得你搞笑有點過頭了餒。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這不叫過頭，（<2s，接下句）",
+          "verbalization": "這不叫過頭，"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這叫特大搞笑。",
+          "verbalization": "這叫特大搞笑。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "特大。",
+          "code": "RF",
+          "verbalization": "特大。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "就搞笑到很過頭叫特大。",
+          "code": "NTA",
+          "verbalization": "就搞笑到很過頭叫特大。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "一般的、一般的特大搞笑。",
+          "verbalization": "一般的、一般的特大搞笑。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "一般的特大搞笑。（案父語氣中性）",
+          "code": "RF",
+          "verbalization": "一般的特大搞笑。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "一般又特大，（<2s，接下句）（案父語氣質疑）",
+          "code": "NTA",
+          "verbalization": "一般又特大，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "聽不懂。",
+          "code": "TA",
+          "verbalization": "聽不懂。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我也、我也不知道我在講什麼。",
+          "verbalization": "我也、我也不知道我在講什麼。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "ㄏㄧㄏㄧㄏㄧ...（個案笑聲，狀聲詞，不予計數）",
+          "verbalization": ""
+        }
+      ]
+    }
+  ]
+}

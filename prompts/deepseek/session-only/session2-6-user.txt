@@ -1,0 +1,584 @@
+Code every utterance where role is "adult". Skip all "child" entries.
+
+[
+  {
+    "id": 0,
+    "role": "adult",
+    "text": "哇，你拿了一個蠟燭。"
+  },
+  {
+    "id": 1,
+    "role": "adult",
+    "text": "喔，你想要把那個火拉出來。"
+  },
+  {
+    "id": 2,
+    "role": "adult",
+    "text": "哇，XX好厲害喔，XX把那個火拉出來了欸。"
+  },
+  {
+    "id": 3,
+    "role": "child",
+    "text": "拉出來它就怎麼了？"
+  },
+  {
+    "id": 4,
+    "role": "adult",
+    "text": "喔，你想知道拉出来會怎樣。"
+  },
+  {
+    "id": 5,
+    "role": "adult",
+    "text": "拉出來它就會燃燒。"
+  },
+  {
+    "id": 6,
+    "role": "child",
+    "text": "燃燒它就怎麼？"
+  },
+  {
+    "id": 7,
+    "role": "adult",
+    "text": "你想知道燃燒會怎樣嗎"
+  },
+  {
+    "id": 8,
+    "role": "adult",
+    "text": "燒到你的手會痛痛。"
+  },
+  {
+    "id": 9,
+    "role": "adult",
+    "text": "好，你放回去了。"
+  },
+  {
+    "id": 10,
+    "role": "adult",
+    "text": "哇，你又拿了一支不一樣的蠟燭。"
+  },
+  {
+    "id": 11,
+    "role": "adult",
+    "text": "哇，你一直搖。"
+  },
+  {
+    "id": 12,
+    "role": "adult",
+    "text": "喔，好，你想要把火焰搖出來。"
+  },
+  {
+    "id": 13,
+    "role": "adult",
+    "text": "哇，你搖出來了。"
+  },
+  {
+    "id": 14,
+    "role": "adult",
+    "text": "哇，XX好棒，XX終於把火焰搖出來了。"
+  },
+  {
+    "id": 15,
+    "role": "adult",
+    "text": "XX又搖出來了。"
+  },
+  {
+    "id": 16,
+    "role": "adult",
+    "text": "XX很厲害欸，XX每一根蠟燭的火焰都被你搖出來了。"
+  },
+  {
+    "id": 17,
+    "role": "adult",
+    "text": "哇，XX拿了一個巧克力阿。"
+  },
+  {
+    "id": 18,
+    "role": "adult",
+    "text": "哇，還有一個櫻桃。"
+  },
+  {
+    "id": 19,
+    "role": "child",
+    "text": "阿姆。"
+  },
+  {
+    "id": 20,
+    "role": "adult",
+    "text": "XX假裝吃櫻桃。"
+  },
+  {
+    "id": 21,
+    "role": "child",
+    "text": "這邊。"
+  },
+  {
+    "id": 22,
+    "role": "adult",
+    "text": "XX又拿了一隻不一樣的蠟燭。"
+  },
+  {
+    "id": 23,
+    "role": "adult",
+    "text": "哇，XX又把火焰甩出來了。"
+  },
+  {
+    "id": 24,
+    "role": "adult",
+    "text": "XX一直甩火焰，"
+  },
+  {
+    "id": 25,
+    "role": "adult",
+    "text": "火焰就被你甩出來了。"
+  },
+  {
+    "id": 26,
+    "role": "adult",
+    "text": "全部的火焰都被你甩出來了。"
+  },
+  {
+    "id": 27,
+    "role": "adult",
+    "text": "XX太厲害了，XX會甩火焰了。"
+  },
+  {
+    "id": 28,
+    "role": "adult",
+    "text": "XX現在把玩具盒蓋起來。"
+  },
+  {
+    "id": 29,
+    "role": "adult",
+    "text": "哇，XX好厲害欸，你蓋得起來欸。"
+  },
+  {
+    "id": 30,
+    "role": "adult",
+    "text": "你也知道、你知道要從這裡按下去喔，這麼棒。"
+  },
+  {
+    "id": 31,
+    "role": "adult",
+    "text": "XX蓋好了。"
+  },
+  {
+    "id": 32,
+    "role": "adult",
+    "text": "XX蓋好了。"
+  },
+  {
+    "id": 33,
+    "role": "adult",
+    "text": "XX已經把它蓋好了，好棒，"
+  },
+  {
+    "id": 34,
+    "role": "adult",
+    "text": "好棒，XX蓋好了。"
+  },
+  {
+    "id": 35,
+    "role": "child",
+    "text": "因恩。"
+  },
+  {
+    "id": 36,
+    "role": "adult",
+    "text": "XX蓋好了。"
+  },
+  {
+    "id": 37,
+    "role": "child",
+    "text": "還…"
+  },
+  {
+    "id": 38,
+    "role": "adult",
+    "text": "現在…"
+  },
+  {
+    "id": 39,
+    "role": "adult",
+    "text": "喔，XX現在拿蛋糕了。"
+  },
+  {
+    "id": 40,
+    "role": "adult",
+    "text": "XX現在拿了一塊蛋糕。"
+  },
+  {
+    "id": 41,
+    "role": "child",
+    "text": "一小塊。"
+  },
+  {
+    "id": 42,
+    "role": "adult",
+    "text": "喔，XX繼續拿蛋糕喔。"
+  },
+  {
+    "id": 43,
+    "role": "adult",
+    "text": "哇、哇，XX拿了好多蛋糕，好棒喔，"
+  },
+  {
+    "id": 44,
+    "role": "adult",
+    "text": "好厲害。"
+  },
+  {
+    "id": 45,
+    "role": "adult",
+    "text": "XX一次就拿了三塊了，好厲害。"
+  },
+  {
+    "id": 46,
+    "role": "adult",
+    "text": "XX現在把蛋糕分開了。"
+  },
+  {
+    "id": 47,
+    "role": "adult",
+    "text": "哇，XX又拿一顆。"
+  },
+  {
+    "id": 48,
+    "role": "adult",
+    "text": "XX快要全部拿出來了。"
+  },
+  {
+    "id": 49,
+    "role": "adult",
+    "text": "哇，好棒阿，XX把全部的蛋糕都拿出來了。"
+  },
+  {
+    "id": 50,
+    "role": "child",
+    "text": "爸爸，給你吃。"
+  },
+  {
+    "id": 51,
+    "role": "child",
+    "text": "爸爸、爸爸，給你吃。"
+  },
+  {
+    "id": 52,
+    "role": "adult",
+    "text": "喔，XX想要拿蛋糕給爸爸吃。"
+  },
+  {
+    "id": 53,
+    "role": "adult",
+    "text": "爸爸好高興喔，XX拿蛋糕給爸爸吃。"
+  },
+  {
+    "id": 54,
+    "role": "adult",
+    "text": "爸爸最喜歡吃蛋糕了。"
+  },
+  {
+    "id": 55,
+    "role": "child",
+    "text": "這個是什麼？"
+  },
+  {
+    "id": 56,
+    "role": "adult",
+    "text": "哇，XX拿了一罐糖。"
+  },
+  {
+    "id": 57,
+    "role": "child",
+    "text": "糖給你吃。"
+  },
+  {
+    "id": 58,
+    "role": "adult",
+    "text": "好，謝謝XX。"
+  },
+  {
+    "id": 59,
+    "role": "adult",
+    "text": "好，那爸爸把糖…"
+  },
+  {
+    "id": 60,
+    "role": "child",
+    "text": "甜甜圈給你吃。"
+  },
+  {
+    "id": 61,
+    "role": "adult",
+    "text": "哇，甜甜圈。"
+  },
+  {
+    "id": 62,
+    "role": "adult",
+    "text": "XX拿了一個甜甜圈欸。"
+  },
+  {
+    "id": 63,
+    "role": "child",
+    "text": "這個也給你吃。"
+  },
+  {
+    "id": 64,
+    "role": "adult",
+    "text": "好，爸爸要把糖加在蛋糕上面。"
+  },
+  {
+    "id": 65,
+    "role": "adult",
+    "text": "加在蛋糕上面。"
+  },
+  {
+    "id": 66,
+    "role": "adult",
+    "text": "加上去。"
+  },
+  {
+    "id": 67,
+    "role": "adult",
+    "text": "加上去蛋糕變得好好吃喔。"
+  },
+  {
+    "id": 68,
+    "role": "child",
+    "text": "甜甜圈給你吃。"
+  },
+  {
+    "id": 69,
+    "role": "adult",
+    "text": "喔，好，謝謝XX，XX又拿了一個甜甜圈。"
+  },
+  {
+    "id": 70,
+    "role": "adult",
+    "text": "好，XX、XX，爸爸、爸爸、爸爸先把蛋糕合起來。"
+  },
+  {
+    "id": 71,
+    "role": "child",
+    "text": "爸爸，這個給你吃。"
+  },
+  {
+    "id": 72,
+    "role": "adult",
+    "text": "爸爸把蛋糕合起來。"
+  },
+  {
+    "id": 73,
+    "role": "child",
+    "text": "這個。"
+  },
+  {
+    "id": 74,
+    "role": "adult",
+    "text": "哇，XX又拿了吐司，"
+  },
+  {
+    "id": 75,
+    "role": "adult",
+    "text": "要給爸爸吃。"
+  },
+  {
+    "id": 76,
+    "role": "adult",
+    "text": "謝謝XX。"
+  },
+  {
+    "id": 77,
+    "role": "child",
+    "text": "吐、吐司給你吃。"
+  },
+  {
+    "id": 78,
+    "role": "adult",
+    "text": "XX喜，爸爸喜歡吃。"
+  },
+  {
+    "id": 79,
+    "role": "adult",
+    "text": "XX好厲害喔。"
+  },
+  {
+    "id": 80,
+    "role": "adult",
+    "text": "好棒棒喔。"
+  },
+  {
+    "id": 81,
+    "role": "child",
+    "text": "要再拿盤子給你裝喔。"
+  },
+  {
+    "id": 82,
+    "role": "child",
+    "text": "拿盤子給你裝。"
+  },
+  {
+    "id": 83,
+    "role": "adult",
+    "text": "哇，XX好厲害，XX知道要用盤子裝比較乾淨欸。"
+  },
+  {
+    "id": 84,
+    "role": "adult",
+    "text": "喔，用盤子裝才不會掉。"
+  },
+  {
+    "id": 85,
+    "role": "adult",
+    "text": "XX好乖喔。"
+  },
+  {
+    "id": 86,
+    "role": "adult",
+    "text": "謝謝XX。"
+  },
+  {
+    "id": 87,
+    "role": "child",
+    "text": "這個也要吃喔。"
+  },
+  {
+    "id": 88,
+    "role": "adult",
+    "text": "喔，好、好、好，爸爸加、爸爸加糖糖。"
+  },
+  {
+    "id": 89,
+    "role": "child",
+    "text": "我幫你拿一個櫻桃。"
+  },
+  {
+    "id": 90,
+    "role": "adult",
+    "text": "好，謝謝XX。"
+  },
+  {
+    "id": 91,
+    "role": "child",
+    "text": "這個、這個。"
+  },
+  {
+    "id": 92,
+    "role": "adult",
+    "text": "喔，巧克力。"
+  },
+  {
+    "id": 93,
+    "role": "child",
+    "text": "巧克力給你吃。"
+  },
+  {
+    "id": 94,
+    "role": "adult",
+    "text": "好，謝謝XX。"
+  },
+  {
+    "id": 95,
+    "role": "child",
+    "text": "這個也給你吃。"
+  },
+  {
+    "id": 96,
+    "role": "adult",
+    "text": "謝謝、謝謝XX，給爸爸櫻桃。"
+  },
+  {
+    "id": 97,
+    "role": "child",
+    "text": "這個。"
+  },
+  {
+    "id": 98,
+    "role": "adult",
+    "text": "哇，XX又拿一個橘子給爸爸吃欸。"
+  },
+  {
+    "id": 99,
+    "role": "adult",
+    "text": "哇，爸爸吃了好多的東西喔。"
+  },
+  {
+    "id": 100,
+    "role": "adult",
+    "text": "好棒喔。"
+  },
+  {
+    "id": 101,
+    "role": "child",
+    "text": "這個。"
+  },
+  {
+    "id": 102,
+    "role": "adult",
+    "text": "這個也是巧克力阿。"
+  },
+  {
+    "id": 103,
+    "role": "adult",
+    "text": "你好棒喔。"
+  },
+  {
+    "id": 104,
+    "role": "adult",
+    "text": "爸爸把巧克力放在甜甜圈上面。"
+  },
+  {
+    "id": 105,
+    "role": "child",
+    "text": "爸爸，好吃的給你吃。"
+  },
+  {
+    "id": 106,
+    "role": "adult",
+    "text": "謝謝XX送爸爸一個蛋糕，"
+  },
+  {
+    "id": 107,
+    "role": "adult",
+    "text": "XX好乖喔。"
+  },
+  {
+    "id": 108,
+    "role": "adult",
+    "text": "謝謝XX。"
+  },
+  {
+    "id": 109,
+    "role": "child",
+    "text": "不客氣。"
+  },
+  {
+    "id": 110,
+    "role": "adult",
+    "text": "哇，XX好乖，XX會說不客氣欸。"
+  },
+  {
+    "id": 111,
+    "role": "child",
+    "text": "蠟、我插蠟燭。"
+  },
+  {
+    "id": 112,
+    "role": "adult",
+    "text": "哇，XX，一根蠟燭。"
+  },
+  {
+    "id": 113,
+    "role": "adult",
+    "text": "好，XX把蠟燭插上去了，XX好棒喔。"
+  }
+]
+
+Return a minified JSON array for adult utterances only:
+[{"id": <int>, "subject": <string>, "reasoning": <string>, "code": <string>}, ...]
+- "subject": who or what the utterance is primarily about — choose the most specific applicable label:
+  "兒童" (the child), "物品/玩具" (an object or toy), "家長自身" (the parent themselves), "遊戲角色" (a pretend/play character), "第三方" (another person not the child), "不明" (unclear)
+- "reasoning": one sentence naming the decisive feature or rule that determines the code (e.g. "肯定句 + 描述兒童當下動作 → BD" or "呼應兒童剛才說的話 → RF 優先於 BD")
+- "code": the single DPICS code
+- Return ONLY the JSON array — no text, no markdown, no code fences
+- First character MUST be [, last character MUST be ]
+- Every adult entry MUST have "id", "subject", "reasoning", and "code"

@@ -46,13 +46,14 @@ function cleanText(raw) {
 }
 
 function parseArgs(argv) {
-  const args = { fixturesDir: null, prompt: 'dpicsCoding-v4', model: 'gemini-default', out: null, resultsDir: null, runs: 1 };
+  const args = { fixturesDir: null, prompt: 'dpicsCoding-v4', model: 'gemini-default', out: null, resultsDir: null, runs: 1, labelPrefix: 'session' };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--prompt') args.prompt = argv[++i];
     else if (argv[i] === '--model') args.model = argv[++i];
     else if (argv[i] === '--out') args.out = argv[++i];
     else if (argv[i] === '--results-dir') args.resultsDir = argv[++i];
     else if (argv[i] === '--runs') args.runs = parseInt(argv[++i], 10);
+    else if (argv[i] === '--label-prefix') args.labelPrefix = argv[++i];
     else if (!args.fixturesDir) args.fixturesDir = argv[i];
   }
   return args;
@@ -100,13 +101,13 @@ function csvField(value) {
 function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.fixturesDir) {
-    console.error('Usage: node server/scripts/dpics-eval-table.cjs <fixturesDir> --prompt <name> [--model <key>] [--out <path>]');
+    console.error('Usage: node server/scripts/dpics-eval-table.cjs <fixturesDir> --prompt <name> [--model <key>] [--out <path>] [--label-prefix <prefix>]');
     process.exit(1);
   }
 
   const dir = path.resolve(args.fixturesDir);
   const files = fs.readdirSync(dir).filter(f => f.endsWith('.json')).sort();
-  const outPath = args.out || path.join(RESULTS_DIR, `${args.prompt}__review-tables.csv`);
+  const outPath = args.out || path.join(RESULTS_DIR, `${args.labelPrefix === 'session' ? '' : args.labelPrefix + '__'}${args.prompt}__review-tables.csv`);
 
   const n = args.runs;
   const runHeaders = n === 1
@@ -116,7 +117,7 @@ function main() {
   const lines = [header.map(csvField).join(',')];
 
   files.forEach((f, idx) => {
-    const label = `session-${idx + 1}`;
+    const label = `${args.labelPrefix}-${idx + 1}`;
     const fixture = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf-8'));
     const canonicalRows = buildCanonicalRows(fixture.sessions[0].utterances);
 

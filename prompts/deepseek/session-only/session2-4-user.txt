@@ -1,0 +1,639 @@
+Code every utterance where role is "adult". Skip all "child" entries.
+
+[
+  {
+    "id": 0,
+    "role": "adult",
+    "text": "一直掉餒。"
+  },
+  {
+    "id": 1,
+    "role": "child",
+    "text": "要放這裡。"
+  },
+  {
+    "id": 2,
+    "role": "child",
+    "text": "香蕉在這裡。"
+  },
+  {
+    "id": 3,
+    "role": "adult",
+    "text": "哇，哥哥，你把香蕉卡住了欸。"
+  },
+  {
+    "id": 4,
+    "role": "adult",
+    "text": "哥哥很好喔，都沒有掉下來。"
+  },
+  {
+    "id": 5,
+    "role": "child",
+    "text": "我拿長頸鹿起來。"
+  },
+  {
+    "id": 6,
+    "role": "adult",
+    "text": "哇，你找到一隻長頸鹿餒。"
+  },
+  {
+    "id": 7,
+    "role": "child",
+    "text": "它在這裡吃香蕉。"
+  },
+  {
+    "id": 8,
+    "role": "adult",
+    "text": "你讓長頸鹿吃香蕉喔。"
+  },
+  {
+    "id": 9,
+    "role": "child",
+    "text": "是。"
+  },
+  {
+    "id": 10,
+    "role": "child",
+    "text": "給你。"
+  },
+  {
+    "id": 11,
+    "role": "child",
+    "text": "長頸鹿我要給你了。"
+  },
+  {
+    "id": 12,
+    "role": "adult",
+    "text": "你在餵長頸鹿吃香蕉。"
+  },
+  {
+    "id": 13,
+    "role": "child",
+    "text": "大象也要。"
+  },
+  {
+    "id": 14,
+    "role": "adult",
+    "text": "大象也要吃。"
+  },
+  {
+    "id": 15,
+    "role": "adult",
+    "text": "好好吃。"
+  },
+  {
+    "id": 16,
+    "role": "child",
+    "text": "大象也可以吃了。"
+  },
+  {
+    "id": 17,
+    "role": "adult",
+    "text": "大象也可以吃香蕉。"
+  },
+  {
+    "id": 18,
+    "role": "child",
+    "text": "大象也要在學校吃香蕉。"
+  },
+  {
+    "id": 19,
+    "role": "adult",
+    "text": "大象要在學校吃香蕉。"
+  },
+  {
+    "id": 20,
+    "role": "child",
+    "text": "我可以去大象的學校嗎？"
+  },
+  {
+    "id": 21,
+    "role": "adult",
+    "text": "大象的學校。"
+  },
+  {
+    "id": 22,
+    "role": "child",
+    "text": "大象也是小朋友嗎？"
+  },
+  {
+    "id": 23,
+    "role": "adult",
+    "text": "大象不是小朋友。"
+  },
+  {
+    "id": 24,
+    "role": "adult",
+    "text": "大象是動物。"
+  },
+  {
+    "id": 25,
+    "role": "adult",
+    "text": "它可以吃香蕉。"
+  },
+  {
+    "id": 26,
+    "role": "child",
+    "text": "喔他、這個也可以吃香蕉。"
+  },
+  {
+    "id": 27,
+    "role": "adult",
+    "text": "你找到了一個哥哥。"
+  },
+  {
+    "id": 28,
+    "role": "adult",
+    "text": "他可以吃香蕉。"
+  },
+  {
+    "id": 29,
+    "role": "child",
+    "text": "給你餵、給你吃香蕉。"
+  },
+  {
+    "id": 30,
+    "role": "adult",
+    "text": "你把他立著。"
+  },
+  {
+    "id": 31,
+    "role": "adult",
+    "text": "你想要讓哥哥吃香蕉。"
+  },
+  {
+    "id": 32,
+    "role": "child",
+    "text": "靠近他、這隻他、他就.."
+  },
+  {
+    "id": 33,
+    "role": "child",
+    "text": "這是我做、這是我做長頸鹿喔。"
+  },
+  {
+    "id": 34,
+    "role": "adult",
+    "text": "這是你找到的長頸鹿。"
+  },
+  {
+    "id": 35,
+    "role": "child",
+    "text": "我有做長頸鹿。"
+  },
+  {
+    "id": 36,
+    "role": "adult",
+    "text": "你找到了一隻長頸鹿。"
+  },
+  {
+    "id": 37,
+    "role": "child",
+    "text": "這是我去歐托做的。"
+  },
+  {
+    "id": 38,
+    "role": "adult",
+    "text": "你去歐托托有做長頸鹿。"
+  },
+  {
+    "id": 39,
+    "role": "child",
+    "text": "是的。"
+  },
+  {
+    "id": 40,
+    "role": "adult",
+    "text": "你去歐托托有做長頸鹿，是不是？"
+  },
+  {
+    "id": 41,
+    "role": "child",
+    "text": "恩。"
+  },
+  {
+    "id": 42,
+    "role": "child",
+    "text": "快要用別的玩具了。"
+  },
+  {
+    "id": 43,
+    "role": "adult",
+    "text": "我找到欄杆了。"
+  },
+  {
+    "id": 44,
+    "role": "child",
+    "text": "等一下、等一下就要換別的玩具。"
+  },
+  {
+    "id": 45,
+    "role": "child",
+    "text": "等一下就要換用夾子的玩具嗎？"
+  },
+  {
+    "id": 46,
+    "role": "adult",
+    "text": "媽媽不知道餒。"
+  },
+  {
+    "id": 47,
+    "role": "adult",
+    "text": "你想知道等一下會不會換別的玩具。"
+  },
+  {
+    "id": 48,
+    "role": "child",
+    "text": "我想要換夾子玩具。"
+  },
+  {
+    "id": 49,
+    "role": "adult",
+    "text": "你想要換夾子的玩具。"
+  },
+  {
+    "id": 50,
+    "role": "child",
+    "text": "是。"
+  },
+  {
+    "id": 51,
+    "role": "adult",
+    "text": "那媽媽在幫它蓋一個圍欄。"
+  },
+  {
+    "id": 52,
+    "role": "adult",
+    "text": "我要把它圍起來。"
+  },
+  {
+    "id": 53,
+    "role": "child",
+    "text": "這個也要。"
+  },
+  {
+    "id": 54,
+    "role": "adult",
+    "text": "阿你找到了一隻斑馬。"
+  },
+  {
+    "id": 55,
+    "role": "adult",
+    "text": "你讓斑馬也卡住了。"
+  },
+  {
+    "id": 56,
+    "role": "adult",
+    "text": "要把它卡住。"
+  },
+  {
+    "id": 57,
+    "role": "child",
+    "text": "斑馬。"
+  },
+  {
+    "id": 58,
+    "role": "adult",
+    "text": "哇，你把它卡住了。"
+  },
+  {
+    "id": 59,
+    "role": "child",
+    "text": "我想帶它去摘香蕉、摘香蕉。"
+  },
+  {
+    "id": 60,
+    "role": "adult",
+    "text": "你想帶它去摘香蕉。"
+  },
+  {
+    "id": 61,
+    "role": "adult",
+    "text": "那裡有香蕉。"
+  },
+  {
+    "id": 62,
+    "role": "child",
+    "text": "摘、摘香蕉。"
+  },
+  {
+    "id": 63,
+    "role": "adult",
+    "text": "你幫、幫斑馬把香蕉摘下來了。"
+  },
+  {
+    "id": 64,
+    "role": "child",
+    "text": "摘。"
+  },
+  {
+    "id": 65,
+    "role": "adult",
+    "text": "你幫它摘下來了。"
+  },
+  {
+    "id": 66,
+    "role": "child",
+    "text": "我摘下來了。"
+  },
+  {
+    "id": 67,
+    "role": "adult",
+    "text": "摘下來了。"
+  },
+  {
+    "id": 68,
+    "role": "child",
+    "text": "其他這個就不可以摘了。"
+  },
+  {
+    "id": 69,
+    "role": "adult",
+    "text": "其他那個那是肉塊。"
+  },
+  {
+    "id": 70,
+    "role": "child",
+    "text": "那肉塊還香蕉嗎？"
+  },
+  {
+    "id": 71,
+    "role": "adult",
+    "text": "那是肉塊。"
+  },
+  {
+    "id": 72,
+    "role": "child",
+    "text": "這個是、這個香蕉肉塊。"
+  },
+  {
+    "id": 73,
+    "role": "adult",
+    "text": "你覺得它是香蕉。"
+  },
+  {
+    "id": 74,
+    "role": "child",
+    "text": "它是香蕉肉塊。"
+  },
+  {
+    "id": 75,
+    "role": "adult",
+    "text": "這個是肉塊。"
+  },
+  {
+    "id": 76,
+    "role": "adult",
+    "text": "肉塊給、媽媽拿肉塊給花豹吃。"
+  },
+  {
+    "id": 77,
+    "role": "child",
+    "text": "花豹。"
+  },
+  {
+    "id": 78,
+    "role": "adult",
+    "text": "我拿肉塊給花豹吃。"
+  },
+  {
+    "id": 79,
+    "role": "adult",
+    "text": "好吃。"
+  },
+  {
+    "id": 80,
+    "role": "adult",
+    "text": "肉。"
+  },
+  {
+    "id": 81,
+    "role": "adult",
+    "text": "獅子也要吃。"
+  },
+  {
+    "id": 82,
+    "role": "child",
+    "text": "我要帶、我要帶大象去摘香蕉。"
+  },
+  {
+    "id": 83,
+    "role": "adult",
+    "text": "你要帶大象摘香蕉。"
+  },
+  {
+    "id": 84,
+    "role": "child",
+    "text": "倒、倒下來了。"
+  },
+  {
+    "id": 85,
+    "role": "adult",
+    "text": "倒下來了。"
+  },
+  {
+    "id": 86,
+    "role": "child",
+    "text": "用倒了。"
+  },
+  {
+    "id": 87,
+    "role": "adult",
+    "text": "倒下來了。"
+  },
+  {
+    "id": 88,
+    "role": "child",
+    "text": "用倒了欸。"
+  },
+  {
+    "id": 89,
+    "role": "adult",
+    "text": "用倒了，"
+  },
+  {
+    "id": 90,
+    "role": "adult",
+    "text": "沒關係。"
+  },
+  {
+    "id": 91,
+    "role": "child",
+    "text": "好。"
+  },
+  {
+    "id": 92,
+    "role": "adult",
+    "text": "我們一起把它蓋回去。"
+  },
+  {
+    "id": 93,
+    "role": "child",
+    "text": "好，恩。"
+  },
+  {
+    "id": 94,
+    "role": "adult",
+    "text": "喔，你把它蓋上去了。"
+  },
+  {
+    "id": 95,
+    "role": "child",
+    "text": "我要摘香蕉。"
+  },
+  {
+    "id": 96,
+    "role": "adult",
+    "text": "你要摘香蕉。"
+  },
+  {
+    "id": 97,
+    "role": "child",
+    "text": "摘下來了。"
+  },
+  {
+    "id": 98,
+    "role": "child",
+    "text": "已經、已經摘下來了。"
+  },
+  {
+    "id": 99,
+    "role": "child",
+    "text": "呃..為什麼這樣子？"
+  },
+  {
+    "id": 100,
+    "role": "child",
+    "text": "我想要用夾子的。"
+  },
+  {
+    "id": 101,
+    "role": "adult",
+    "text": "你在剝香蕉。"
+  },
+  {
+    "id": 102,
+    "role": "adult",
+    "text": "你幫它剝皮喔。"
+  },
+  {
+    "id": 103,
+    "role": "child",
+    "text": "阿姆、阿姆。"
+  },
+  {
+    "id": 104,
+    "role": "adult",
+    "text": "哇，你知道香蕉要剝皮。"
+  },
+  {
+    "id": 105,
+    "role": "child",
+    "text": "我餵大象吃。"
+  },
+  {
+    "id": 106,
+    "role": "adult",
+    "text": "你餵大象吃。"
+  },
+  {
+    "id": 107,
+    "role": "adult",
+    "text": "你餵大象吃了香蕉。"
+  },
+  {
+    "id": 108,
+    "role": "child",
+    "text": "小驢子有嘴巴嗎？"
+  },
+  {
+    "id": 109,
+    "role": "adult",
+    "text": "小驢子。"
+  },
+  {
+    "id": 110,
+    "role": "adult",
+    "text": "小驢子的嘴巴。"
+  },
+  {
+    "id": 111,
+    "role": "adult",
+    "text": "這是斑馬。"
+  },
+  {
+    "id": 112,
+    "role": "child",
+    "text": "斑馬有嘴巴嗎？"
+  },
+  {
+    "id": 113,
+    "role": "adult",
+    "text": "斑馬有嘴巴阿。"
+  },
+  {
+    "id": 114,
+    "role": "child",
+    "text": "有嘴巴。"
+  },
+  {
+    "id": 115,
+    "role": "adult",
+    "text": "斑馬有嘴巴。"
+  },
+  {
+    "id": 116,
+    "role": "child",
+    "text": "我這裡蓋起來了。"
+  },
+  {
+    "id": 117,
+    "role": "adult",
+    "text": "你把它蓋起來了。"
+  },
+  {
+    "id": 118,
+    "role": "adult",
+    "text": "因為你戴口罩了。"
+  },
+  {
+    "id": 119,
+    "role": "child",
+    "text": "因為這裡有鼻子被蓋起來了。"
+  },
+  {
+    "id": 120,
+    "role": "adult",
+    "text": "那裡有鼻子被蓋起來了。"
+  },
+  {
+    "id": 121,
+    "role": "child",
+    "text": "鼻子這裡被蓋起來了。"
+  },
+  {
+    "id": 122,
+    "role": "adult",
+    "text": "我要讓斑馬吃草。"
+  },
+  {
+    "id": 123,
+    "role": "adult",
+    "text": "我發現斑馬可以吃草。"
+  },
+  {
+    "id": 124,
+    "role": "child",
+    "text": "我想要…"
+  }
+]
+
+Return a minified JSON array for adult utterances only:
+[{"id": <int>, "subject": <string>, "reasoning": <string>, "code": <string>}, ...]
+- "subject": who or what the utterance is primarily about — choose the most specific applicable label:
+  "兒童" (the child), "物品/玩具" (an object or toy), "家長自身" (the parent themselves), "遊戲角色" (a pretend/play character), "第三方" (another person not the child), "不明" (unclear)
+- "reasoning": one sentence naming the decisive feature or rule that determines the code (e.g. "肯定句 + 描述兒童當下動作 → BD" or "呼應兒童剛才說的話 → RF 優先於 BD")
+- "code": the single DPICS code
+- Return ONLY the JSON array — no text, no markdown, no code fences
+- First character MUST be [, last character MUST be ]
+- Every adult entry MUST have "id", "subject", "reasoning", and "code"

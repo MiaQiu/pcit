@@ -1,0 +1,788 @@
+{
+  "sessions": [
+    {
+      "label": "cdi-session2-6",
+      "utterances": [
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從裝飾品盒中拿出一根蠟燭）哇（<2s，案父表情中性），你拿了一個蠟燭。",
+          "code": "BD",
+          "verbalization": "哇，你拿了一個蠟燭。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案用手指試著把蠟燭的火拉出來）喔（<2s），你想要把那個火拉出來。（此處案父使用\"想要\"，雖個案有做出試著把蠟燭的火拉出來的動作原應計為BD，但因Nora無法看影檔，可統一將\"想要\"計為TA）",
+          "code": "TA",
+          "verbalization": "喔，你想要把那個火拉出來。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案成功把蠟燭的火焰拉出來）哇（<2s，案父表情中性），XX[個案名]好厲害喔，XX把那個火拉出來了欸。",
+          "code": "LP",
+          "verbalization": "哇，XX好厲害喔，XX把那個火拉出來了欸。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "拉出來它就怎麼了？",
+          "verbalization": "拉出來它就怎麼了？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），你想知道拉出來會怎樣。",
+          "code": "RF",
+          "verbalization": "喔，你想知道拉出来會怎樣。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "拉出來(後)它就會燃燒。",
+          "code": "TA",
+          "verbalization": "拉出來它就會燃燒。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "燃燒它就怎麼？",
+          "verbalization": "燃燒它就怎麼？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你想知道燃燒會怎樣嗎 【RF 的核心是父母重述、改述或延伸孩子先前的語言內容，且保留孩子原本語意。即使父母的反映以「疑問語調」或「嗎？」結尾，只要主要功能是在確認或反映孩子的話，而不是要求孩子提供新資訊，仍可計 RF。】",
+          "code": "RF",
+          "verbalization": "你想知道燃燒會怎樣嗎"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "xx（個案聲音過小且模糊，錄音檔亦聽不清楚，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "燒到你的手會痛痛。（案父進行機會教育）",
+          "code": "TA",
+          "verbalization": "燒到你的手會痛痛。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把手上的蠟燭放回裝飾品盒裡）好（<2s），你放回去了。",
+          "code": "BD",
+          "verbalization": "好，你放回去了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從裝飾品盒中拿出另一根蠟燭）哇（<2s，案父表情中性），你又拿了一支不一樣的蠟燭。",
+          "code": "BD",
+          "verbalization": "哇，你又拿了一支不一樣的蠟燭。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案正在搖動蠟燭）哇（<2s，案父表情中性），你一直搖。",
+          "code": "BD",
+          "verbalization": "哇，你一直搖。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），好（<2s），你想要把火焰搖出來。（此處案父使用\"想要\"，雖個案有做出試著把火焰搖出來的動作原應計為BD，但因Nora無法看影檔，可統一將\"想要\"計為TA）",
+          "code": "BD",
+          "verbalization": "喔，好，你想要把火焰搖出來。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案成功把蠟燭的火焰搖出來）哇（<2s，案父表情中性），你搖出來了。",
+          "code": "BD",
+          "verbalization": "哇，你搖出來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案父表情中性），XX好棒，XX終於把火焰搖出來了。",
+          "code": "LP",
+          "verbalization": "哇，XX好棒，XX終於把火焰搖出來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案繼續再搖蠟燭，並再次成功把火焰搖出來）XX又搖出來了。",
+          "code": "BD",
+          "verbalization": "XX又搖出來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX很厲害欸，XX每一根蠟燭的火焰都被你搖出來了。",
+          "code": "LP",
+          "verbalization": "XX很厲害欸，XX每一根蠟燭的火焰都被你搖出來了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "xx（個案聲音過小且模糊，錄音檔亦聽不清楚，不予計數）",
+          "verbalization": ""
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案從裝飾品盒中拿出咖啡色餅乾）哇（<2s，案父表情中性），XX拿了一個巧克力阿。",
+          "code": "BD",
+          "verbalization": "哇，XX拿了一個巧克力阿。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案拿出一個櫻桃）哇（<2s，案父表情中性），還有一個櫻桃。",
+          "code": "TA",
+          "verbalization": "哇，還有一個櫻桃。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "阿姆。（個案將櫻桃放在嘴巴前(以口罩隔著)，並發出假裝吃櫻桃的聲音，狀聲詞不予計數）",
+          "verbalization": "阿姆。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX假裝吃櫻桃。(個案有做出假裝吃的動作，故計為BD)",
+          "code": "BD",
+          "verbalization": "XX假裝吃櫻桃。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "這邊。",
+          "verbalization": "這邊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案拿出另一根黃色蠟燭）XX又拿了一隻不一樣的蠟燭。",
+          "code": "BD",
+          "verbalization": "XX又拿了一隻不一樣的蠟燭。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案再次成功把蠟燭的火焰搖出來）哇（<2s，案父表情中性），XX又把火焰甩出來了。",
+          "code": "BD",
+          "verbalization": "哇，XX又把火焰甩出來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（由於火焰又掉下去，故個案繼續嘗試把火焰搖出來）XX一直甩火焰，（<2s，接下句）",
+          "code": "BD",
+          "verbalization": "XX一直甩火焰，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "火焰就被你甩出來了。（雖是被動陳述，因主詞是個案，故計為BD）",
+          "code": "BD",
+          "verbalization": "火焰就被你甩出來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "全部的(整的個)火焰都被你甩出來了。（雖是被動的陳述，因主詞是個案，故計為BD）",
+          "code": "BD",
+          "verbalization": "全部的火焰都被你甩出來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX太厲害了，XX會甩火焰了。",
+          "code": "LP",
+          "verbalization": "XX太厲害了，XX會甩火焰了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把裝飾品盒的蓋子蓋上）XX現在把玩具盒蓋起來。",
+          "code": "BD",
+          "verbalization": "XX現在把玩具盒蓋起來。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案父表情中性），XX好厲害欸，你蓋得起來欸。",
+          "code": "LP",
+          "verbalization": "哇，XX好厲害欸，你蓋得起來欸。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案正嘗試壓下樂扣盒的扣子）你也知道(改口)、你知道要從這裡按下去喔，這麼棒。",
+          "code": "LP",
+          "verbalization": "你也知道、你知道要從這裡按下去喔，這麼棒。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案正嘗試壓下樂扣盒的扣子，雖未完全壓緊，但已有蓋上）XX蓋好了。（<2s，接下句）",
+          "code": "BD",
+          "verbalization": "XX蓋好了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX蓋好了。",
+          "code": "BD",
+          "verbalization": "XX蓋好了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案成功把扣子扣上）XX已經把它蓋好了，好棒，（<2s，接下句）",
+          "code": "LP",
+          "verbalization": "XX已經把它蓋好了，好棒，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好棒（案父鼓掌），XX蓋好了。",
+          "code": "LP",
+          "verbalization": "好棒，XX蓋好了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "因恩。（個案聲音模糊，無法分辨其意，案父無法回應，不予計數）",
+          "verbalization": "因恩。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX蓋好了。（距離個案從事此行為>5s，故計為TA）",
+          "code": "TA",
+          "verbalization": "XX蓋好了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "還…（個案語句未完成，不予計數）",
+          "verbalization": "還…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "現在…（案父語句未完成，不予計數）",
+          "verbalization": "現在…"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案拿出一塊蛋糕）喔（<2s），XX現在拿蛋糕了。（<2s，接下句）",
+          "code": "BD",
+          "verbalization": "喔，XX現在拿蛋糕了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX現在拿了一塊蛋糕。",
+          "code": "BD",
+          "verbalization": "XX現在拿了一塊蛋糕。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "一小塊。",
+          "verbalization": "一小塊。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案繼續從箱子拿起蛋糕）喔（<2s），XX繼續拿蛋糕喔。",
+          "code": "BD",
+          "verbalization": "喔，XX繼續拿蛋糕喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案一次拿出三塊蛋糕到桌上）哇、哇（<2s，案父表情中性），XX拿了好多蛋糕，好棒喔，（<2s，接下句）",
+          "code": "LP",
+          "verbalization": "哇、哇，XX拿了好多蛋糕，好棒喔，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好厲害。",
+          "code": "UP",
+          "verbalization": "好厲害。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX一次就拿了三塊了，好厲害。",
+          "code": "LP",
+          "verbalization": "XX一次就拿了三塊了，好厲害。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案把兩塊黏在一起的蛋糕拔開）XX現在把蛋糕分開了。",
+          "code": "BD",
+          "verbalization": "XX現在把蛋糕分開了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案再度拿出一塊蛋糕）哇（<2s，案父表情中性），XX又拿一顆。",
+          "code": "BD",
+          "verbalization": "哇，XX又拿一顆。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX快要全部拿出來了。（個案尚未全部拿出來，此僅是描述蛋糕快要全部拿出來的狀態，故計為TA）",
+          "code": "TA",
+          "verbalization": "XX快要全部拿出來了。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案拿出最後一塊蛋糕）哇（<2s，案父表情中性），好棒阿，XX把全部的蛋糕都拿出來了。（案父與個案下句同時說話）",
+          "code": "LP",
+          "verbalization": "哇，好棒阿，XX把全部的蛋糕都拿出來了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "爸爸（<2s，bid for attention），給你吃。（個案與案父上句同時說話，案父無法回應，不予計數）",
+          "verbalization": "爸爸，給你吃。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案用手去摸蛋糕）爸爸、爸爸（<2s，bid for attention），給你吃。",
+          "verbalization": "爸爸、爸爸，給你吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），XX想要拿蛋糕給爸爸吃。",
+          "code": "RF",
+          "verbalization": "喔，XX想要拿蛋糕給爸爸吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "爸爸好高興喔，XX拿蛋糕給爸爸吃。",
+          "code": "LP",
+          "verbalization": "爸爸好高興喔，XX拿蛋糕給爸爸吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "爸爸最喜歡吃蛋糕了。",
+          "code": "TA",
+          "verbalization": "爸爸最喜歡吃蛋糕了。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿著糖粉罐）這個是什麼？",
+          "verbalization": "這個是什麼？"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案父表情中性），XX拿了一罐糖。",
+          "code": "BD",
+          "verbalization": "哇，XX拿了一罐糖。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "糖給你吃。",
+          "verbalization": "糖給你吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好（<2s），謝謝XX。",
+          "code": "UP",
+          "verbalization": "好，謝謝XX。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父正在示範將糖粉撒在蛋糕上）好，那爸爸把糖…（案父語句被個案下句打斷，語句未完成，不予計數）",
+          "verbalization": "好，那爸爸把糖…"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案將甜甜圈遞給案父）甜甜圈給你吃。",
+          "verbalization": "甜甜圈給你吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案父表情中性），甜甜圈。",
+          "code": "RF",
+          "verbalization": "哇，甜甜圈。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX拿了一個甜甜圈欸。（距離個案從事此行為<2s）",
+          "code": "BD",
+          "verbalization": "XX拿了一個甜甜圈欸。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案再次拿起糖粉罐）這個也給你吃。",
+          "verbalization": "這個也給你吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父正在示範將糖粉撒在蛋糕上）好（<2s），爸爸要把糖加在蛋糕上面。",
+          "code": "TA",
+          "verbalization": "好，爸爸要把糖加在蛋糕上面。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父繼續示範將糖粉撒在蛋糕上）加在蛋糕上面。（此為案父描述自己的行為）",
+          "code": "TA",
+          "verbalization": "加在蛋糕上面。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父繼續示範將糖粉撒在蛋糕上）加上去。（此為案父描述自己的行為）",
+          "code": "TA",
+          "verbalization": "加上去。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "加上去蛋糕變得好好吃喔。",
+          "code": "TA",
+          "verbalization": "加上去蛋糕變得好好吃喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿出另一個甜甜圈）甜甜圈給你吃。",
+          "verbalization": "甜甜圈給你吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），好（<2s），謝謝XX，XX又拿了一個甜甜圈。",
+          "code": "LP",
+          "verbalization": "喔，好，謝謝XX，XX又拿了一個甜甜圈。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好（<2s），XX（<2s，bid for attention）、XX（<2s，bid for attention），爸爸（<2s）、爸爸（<2s）、爸爸先把蛋糕合起來。（案父與個案下句同時說話）",
+          "code": "TA",
+          "verbalization": "好，XX、XX，爸爸、爸爸、爸爸先把蛋糕合起來。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "爸爸（<2s，bid for attention），這個給你吃。（個案與案父上句同時說話，案父無法回應，不予計數）",
+          "verbalization": "爸爸，這個給你吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "爸爸把蛋糕合起來。",
+          "code": "TA",
+          "verbalization": "爸爸把蛋糕合起來。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿出吐司並放到桌上）這個。",
+          "verbalization": "這個。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案父表情中性），XX又拿了吐司，（<2s，接下句）",
+          "code": "BD",
+          "verbalization": "哇，XX又拿了吐司，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（想）要給爸爸吃。（此為描述個案的想法，故計為TA）",
+          "code": "TA",
+          "verbalization": "要給爸爸吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "謝謝XX。",
+          "code": "UP",
+          "verbalization": "謝謝XX。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "吐、吐司給你吃。",
+          "verbalization": "吐、吐司給你吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX喜（案父改口，<2s），爸爸喜歡吃。",
+          "code": "TA",
+          "verbalization": "XX喜，爸爸喜歡吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX好厲害喔。",
+          "code": "UP",
+          "verbalization": "XX好厲害喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好棒棒喔。（案父與個案下句同時說話）",
+          "code": "UP",
+          "verbalization": "好棒棒喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案正在翻找玩具箱）要再拿盤子給你裝喔。（個案與案父上句同時說話，案父無法回應，不予計數）",
+          "verbalization": "要再拿盤子給你裝喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案從玩具箱中拿出盤子）拿盤子給你裝。",
+          "verbalization": "拿盤子給你裝。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案父表情中性），XX好厲害，XX知道要用盤子裝比較乾淨欸。",
+          "code": "LP",
+          "verbalization": "哇，XX好厲害，XX知道要用盤子裝比較乾淨欸。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），用盤子裝才不會掉。（案父進行機會教育）",
+          "code": "TA",
+          "verbalization": "喔，用盤子裝才不會掉。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX好乖喔。",
+          "code": "UP",
+          "verbalization": "XX好乖喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "謝謝XX。",
+          "code": "UP",
+          "verbalization": "謝謝XX。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案把糖粉罐移到案父桌前）這個也要吃喔。",
+          "verbalization": "這個也要吃喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（案父用糖粉罐在甜甜圈上假裝撒）喔（<2s），好（<2s）、好（<2s）、好，爸爸加（<2s）、爸爸加糖糖。",
+          "code": "TA",
+          "verbalization": "喔，好、好、好，爸爸加、爸爸加糖糖。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "我幫你拿一個櫻桃。",
+          "verbalization": "我幫你拿一個櫻桃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好（<2s），謝謝XX。",
+          "code": "UP",
+          "verbalization": "好，謝謝XX。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案從裝飾品盒中拿出鴨鴨餅乾）這個（<2s）、這個。",
+          "verbalization": "這個、這個。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "喔（<2s），巧克力。",
+          "code": "TA",
+          "verbalization": "喔，巧克力。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "巧克力給你吃。",
+          "verbalization": "巧克力給你吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好（<2s），謝謝XX。",
+          "code": "UP",
+          "verbalization": "好，謝謝XX。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案把櫻桃遞給案父）這個也給你吃。",
+          "verbalization": "這個也給你吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "謝謝（<2s）、謝謝XX，給爸爸櫻桃。（案父與個案下句同時說話）",
+          "code": "LP",
+          "verbalization": "謝謝、謝謝XX，給爸爸櫻桃。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿出橘子）這個。（個案與案父上句同時說話，案父無法回應，不予計數）",
+          "verbalization": "這個。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（當案父將手掌攤開時，個案自行將橘子遞給案父）哇（<2s，案父表情中性），XX又拿一個橘子給爸爸吃欸。",
+          "code": "BD",
+          "verbalization": "哇，XX又拿一個橘子給爸爸吃欸。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案父表情中性），爸爸吃了好多的東西喔。",
+          "code": "TA",
+          "verbalization": "哇，爸爸吃了好多的東西喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "好棒喔。",
+          "code": "UP",
+          "verbalization": "好棒喔。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案拿出巧克力奶油球）這個。",
+          "verbalization": "這個。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "這個也是巧克力阿。（後續案父直接從個案手中拿走巧克力奶油球）",
+          "code": "RF",
+          "verbalization": "這個也是巧克力阿。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "你好棒喔。",
+          "code": "UP",
+          "verbalization": "你好棒喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "爸爸把巧克力放在甜甜圈上面。",
+          "code": "TA",
+          "verbalization": "爸爸把巧克力放在甜甜圈上面。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案把完整的蛋糕遞給案父）爸爸（<2s，bid for attention），好吃的給你吃。",
+          "verbalization": "爸爸，好吃的給你吃。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "謝謝XX送爸爸一個蛋糕，（<2s，接下句）",
+          "code": "LP",
+          "verbalization": "謝謝XX送爸爸一個蛋糕，"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "XX好乖喔。（<2s，接下句）",
+          "code": "UP",
+          "verbalization": "XX好乖喔。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "謝謝XX。",
+          "code": "UP",
+          "verbalization": "謝謝XX。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "不客氣。 【因為孩子已經完成一次自然的社交互動，建議不需要特別去回應。CDI 的重點不是把每一句對話都回完，而是把注意力持續放在孩子目前的遊戲與正向行為上。】",
+          "verbalization": "不客氣。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案父表情中性），XX好乖，XX會說不客氣欸。",
+          "code": "LP",
+          "verbalization": "哇，XX好乖，XX會說不客氣欸。"
+        },
+        {
+          "role": "child",
+          "speaker": "child",
+          "text": "（個案從裝飾品盒中拿出一根蠟燭）蠟、我插(一根)蠟燭。",
+          "verbalization": "蠟、我插蠟燭。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "哇（<2s，案父表情中性），XX（<2s，bid for attention），一根蠟燭。",
+          "code": "RF",
+          "verbalization": "哇，XX，一根蠟燭。"
+        },
+        {
+          "role": "adult",
+          "speaker": "parent",
+          "text": "（個案將蠟燭插到蛋糕上）好（<2s），XX把蠟燭插上去了，XX好棒喔。（案父鼓掌）",
+          "code": "LP",
+          "verbalization": "好，XX把蠟燭插上去了，XX好棒喔。"
+        }
+      ]
+    }
+  ]
+}
