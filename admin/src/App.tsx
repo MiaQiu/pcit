@@ -4,6 +4,8 @@ import ProtectedRoute from './auth/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import LessonListPage from './pages/LessonListPage';
 import LessonEditorPage from './pages/LessonEditorPage';
+import LessonContentV2ListPage from './pages/LessonContentV2ListPage';
+import LessonContentV2EditorPage from './pages/LessonContentV2EditorPage';
 import NotificationsPage from './pages/NotificationsPage';
 import SessionsPage from './pages/SessionsPage';
 import SettingsPage from './pages/SettingsPage';
@@ -37,6 +39,8 @@ export default function App() {
           <Route path="lessons" element={<LessonListPage />} />
           <Route path="lessons/new" element={<LessonEditorPage />} />
           <Route path="lessons/:id" element={<LessonEditorPage />} />
+          <Route path="content-v2" element={<LessonContentV2ListPage />} />
+          <Route path="content-v2/:id" element={<LessonContentV2EditorPage />} />
           <Route path="keywords" element={<KeywordsPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="sessions" element={<SessionsPage />} />

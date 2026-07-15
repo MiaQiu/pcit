@@ -27,6 +27,7 @@ import * as userStorage from '../lib/userStorage';
 import { resolveImageUris } from '../services/lessonImageCache';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 
 const H_PAD = 20;
 const CARD_GAP = 10;
@@ -116,7 +117,11 @@ export const ModuleDetailScreen: React.FC = () => {
   const handleLessonPress = (lessonId: string) => {
     const lesson = data?.lessons.find(l => l.id === lessonId);
     amplitudeService.trackLessonStarted(lessonId, lesson?.title || '', { source: 'module_detail', moduleKey });
-    navigation.push('LessonViewer', { lessonId, moduleKey });
+    if (CONTENT_V2_MODULES.includes(moduleKey)) {
+      navigation.push('LessonViewerV2', { lessonId, moduleKey, moduleTitle: data?.module?.title });
+    } else {
+      navigation.push('LessonViewer', { lessonId, moduleKey });
+    }
   };
 
   // Shared top bar — always rendered so layout is stable across all states

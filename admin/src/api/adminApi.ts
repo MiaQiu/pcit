@@ -64,6 +64,9 @@ export interface LessonDetail {
   estimatedMinutes: number;
   teachesCategories: string[];
   dragonImageUrl: string | null;
+  contentV2: string | null;
+  audioUrl: string | null;
+  wordTimings: WordTiming[] | null;
   backgroundColor: string;
   ellipse77Color: string;
   ellipse78Color: string;
@@ -251,6 +254,45 @@ export async function uploadLessonImage(id: string, file: File): Promise<{ drago
   const form = new FormData();
   form.append('image', file);
   const res = await fetch(`/api/admin/lessons/${id}/image`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Upload failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function updateLessonContentV2(
+  id: string,
+  updates: { contentV2?: string; audioUrl?: string | null; wordTimings?: WordTiming[] | null }
+): Promise<{ contentV2: string | null; audioUrl: string | null; wordTimings: WordTiming[] | null }> {
+  return apiFetch(`/api/admin/lessons/${id}/content-v2`, {
+    method: 'PATCH',
+    body: JSON.stringify(updates),
+  });
+}
+
+export interface WordTiming {
+  text: string;
+  start: number;
+  end: number;
+}
+
+export interface UploadLessonAudioResult {
+  audioUrl: string;
+  transcriptText: string | null;
+  wordTimings: WordTiming[] | null;
+  transcriptionError: string | null;
+}
+
+export async function uploadLessonAudio(id: string, file: File): Promise<UploadLessonAudioResult> {
+  const token = (await import('./client')).getToken();
+  const form = new FormData();
+  form.append('audio', file);
+  const res = await fetch(`/api/admin/lessons/${id}/audio`, {
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: form,

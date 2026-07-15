@@ -6,8 +6,9 @@ const { generateAccessToken, verifyAccessToken } = require('../utils/jwt.cjs');
 const { requireAdminAuth } = require('../middleware/adminAuth.cjs');
 const { verifyPassword } = require('../utils/password.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
-const { uploadLessonImage, uploadAudioFile } = require('../services/storage-s3.cjs');
+const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, resolveLessonAudioUrl } = require('../services/storage-s3.cjs');
 const { processRecordingWithRetry } = require('../services/processingService.cjs');
+const { transcribeLessonNarration } = require('../services/transcriptionService.cjs');
 
 const uploadMiddleware = multer({
   storage: multer.memoryStorage(),
@@ -24,6 +25,15 @@ const therapistUploadMiddleware = multer({
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith('audio/') || file.mimetype.startsWith('video/')) cb(null, true);
     else cb(new Error('Only audio and video files are allowed'));
+  },
+});
+
+const lessonAudioUploadMiddleware = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('audio/')) cb(null, true);
+    else cb(new Error('Only audio files are allowed'));
   },
 });
 
@@ -363,6 +373,7 @@ router.get('/lessons/:id', requireAdminAuth, async (req, res) => {
     res.json({
       lesson: {
         ...lesson,
+        audioUrl: await resolveLessonAudioUrl(lesson.audioUrl),
         segments: lesson.LessonSegment,
         quiz: lesson.Quiz ? {
           ...lesson.Quiz,
@@ -739,6 +750,91 @@ router.post('/lessons/:id/image', requireAdminAuth, uploadMiddleware.single('ima
   } catch (error) {
     console.error('Admin lesson image upload error:', error);
     res.status(500).json({ error: error.message || 'Failed to upload image' });
+  }
+});
+
+/**
+ * POST /api/admin/lessons/:id/audio
+ * Upload lesson narration audio to S3, persist the URL, and transcribe it via
+ * ElevenLabs to get word-level timings (for LiveScriptCard highlighting) plus
+ * a plain transcript the admin can drop into Lesson Content for formatting.
+ * Transcription failure doesn't fail the upload — the audio is saved either way.
+ */
+router.post('/lessons/:id/audio', requireAdminAuth, lessonAudioUploadMiddleware.single('audio'), async (req, res) => {
+  try {
+    const lessonId = req.params.id;
+
+    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+    if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
+
+    if (!req.file) return res.status(400).json({ error: 'No audio file provided' });
+
+    const ext = (req.file.originalname.split('.').pop() || 'mp3').toLowerCase();
+    const audioUrl = await uploadLessonAudio(req.file.buffer, lessonId, ext);
+
+    let transcriptText = null;
+    let wordTimings = null;
+    let transcriptionError = null;
+    try {
+      const transcript = await transcribeLessonNarration(req.file.buffer, lessonId, ext);
+      transcriptText = transcript.text;
+      wordTimings = transcript.wordTimings;
+    } catch (transcribeErr) {
+      console.error('Lesson audio transcription error:', transcribeErr);
+      transcriptionError = transcribeErr.message || 'Transcription failed';
+    }
+
+    const updateFields = { audioUrl, updatedAt: new Date() };
+    if (wordTimings) updateFields.wordTimings = wordTimings;
+
+    await prisma.lesson.update({
+      where: { id: lessonId },
+      data: updateFields,
+    });
+
+    res.json({
+      audioUrl: await resolveLessonAudioUrl(audioUrl),
+      transcriptText,
+      wordTimings,
+      transcriptionError,
+    });
+  } catch (error) {
+    console.error('Admin lesson audio upload error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload audio' });
+  }
+});
+
+/**
+ * PATCH /api/admin/lessons/:id/content-v2
+ * Update the v2 lesson content text and/or clear the audio URL.
+ * Scoped separately from PUT /lessons/:id so it never touches segments/quiz.
+ */
+router.patch('/lessons/:id/content-v2', requireAdminAuth, async (req, res) => {
+  try {
+    const lessonId = req.params.id;
+    const { contentV2, audioUrl, wordTimings } = req.body;
+
+    const existing = await prisma.lesson.findUnique({ where: { id: lessonId } });
+    if (!existing) return res.status(404).json({ error: 'Lesson not found' });
+
+    const updateFields = { updatedAt: new Date() };
+    if (contentV2 !== undefined) updateFields.contentV2 = contentV2;
+    if (audioUrl !== undefined) updateFields.audioUrl = audioUrl;
+    if (wordTimings !== undefined) updateFields.wordTimings = wordTimings;
+
+    const updated = await prisma.lesson.update({
+      where: { id: lessonId },
+      data: updateFields,
+    });
+
+    res.json({
+      contentV2: updated.contentV2,
+      audioUrl: await resolveLessonAudioUrl(updated.audioUrl),
+      wordTimings: updated.wordTimings,
+    });
+  } catch (error) {
+    console.error('Admin lesson content-v2 update error:', error);
+    res.status(500).json({ error: error.message || 'Failed to update content' });
   }
 });
 

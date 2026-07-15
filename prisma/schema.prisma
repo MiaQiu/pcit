@@ -78,6 +78,9 @@ model Lesson {
   estimatedMinutes   Int                  @default(2)
   teachesCategories  String[]
   dragonImageUrl     String?
+  contentV2          String?
+  audioUrl           String?
+  wordTimings        Json?
   backgroundColor    String               @default("#E4E4FF")
   ellipse77Color     String               @default("#9BD4DF")
   ellipse78Color     String               @default("#A6E0CB")
@@ -708,6 +711,10 @@ enum LessonModule {
   DISCIPLINE
   EMOTIONAL_MASSAGE
   ADHD
+  WELCOME
+  POSITIVE_PLAY
+  CALM_DISCIPLINE
+  BIG_FEELINGS_TANTRUMS
 }
 
 enum ProgressStatus {

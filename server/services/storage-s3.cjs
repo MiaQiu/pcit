@@ -449,6 +449,17 @@ async function resolveDragonImageUrl(value) {
 }
 
 /**
+ * Resolve a lesson audioUrl to a presigned URL when it points to S3.
+ * Same shape as resolveDragonImageUrl — the bucket is private, so the raw
+ * upload URL stored on the lesson must be re-signed before it's readable.
+ * @param {string|null} value
+ * @returns {Promise<string|null>}
+ */
+async function resolveLessonAudioUrl(value) {
+  return resolveDragonImageUrl(value);
+}
+
+/**
  * Check if S3 is enabled and configured
  * @returns {boolean}
  */
@@ -489,6 +500,39 @@ async function uploadLessonImage(fileBuffer, lessonId, extension = 'jpg') {
   return publicUrl;
 }
 
+/**
+ * Upload lesson narration audio to AWS S3 (bucket is private — read via resolveLessonAudioUrl)
+ * @param {Buffer} fileBuffer
+ * @param {string} lessonId
+ * @param {string} extension - e.g. 'mp3', 'm4a', 'wav', 'aac'
+ * @returns {Promise<string>} - Public S3 URL or mock path
+ */
+async function uploadLessonAudio(fileBuffer, lessonId, extension = 'mp3') {
+  if (!S3_ENABLED || !s3Client) {
+    console.warn('S3 not configured, using mock storage path for lesson audio');
+    return `mock://lessons/${lessonId}/audio.${extension}`;
+  }
+
+  const contentTypeMap = { mp3: 'audio/mpeg', m4a: 'audio/mp4', wav: 'audio/wav', aac: 'audio/aac' };
+  const contentType = contentTypeMap[extension.toLowerCase()] || 'audio/mpeg';
+  const key = `lessons/${lessonId}/audio.${extension}`;
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: contentType,
+    Metadata: { lessonId, uploadedAt: new Date().toISOString() },
+    ServerSideEncryption: 'AES256',
+  });
+
+  await s3Client.send(command);
+
+  const publicUrl = `https://${bucketName}.s3.${AWS_REGION}.amazonaws.com/${key}`;
+  console.log(`Lesson audio uploaded to S3: ${key}`);
+  return publicUrl;
+}
+
 module.exports = {
   uploadAudioFile,
   deleteAudioFile,
@@ -499,6 +543,8 @@ module.exports = {
   deleteProfileImage,
   uploadSupportAttachment,
   uploadLessonImage,
+  uploadLessonAudio,
   resolveDragonImageUrl,
+  resolveLessonAudioUrl,
   isS3Enabled
 };

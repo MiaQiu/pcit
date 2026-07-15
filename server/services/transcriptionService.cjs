@@ -75,14 +75,16 @@ async function downloadAudioFromS3(storagePath) {
  * @param {string} extension - File extension
  * @param {string} modelId - 'scribe_v1' or 'scribe_v2'
  * @param {string} [childName] - Child's name as keyterm
+ * @param {Object} [opts] - { diarize?: boolean } — defaults to diarized (coaching sessions)
  * @returns {Promise<Object>} ElevenLabs API response
  */
-async function callElevenLabs(audioBuffer, requestId, extension, modelId, childName) {
+async function callElevenLabs(audioBuffer, requestId, extension, modelId, childName, opts = {}) {
   const elevenLabsApiKey = process.env.ELEVENLABS_API_KEY;
   if (!elevenLabsApiKey) {
     throw new Error('ElevenLabs API key not configured');
   }
 
+  const { diarize = true } = opts;
   const contentType = CONTENT_TYPE_MAP[extension] || 'audio/m4a';
 
   const formData = new FormData();
@@ -91,8 +93,8 @@ async function callElevenLabs(audioBuffer, requestId, extension, modelId, childN
     contentType: contentType
   });
   formData.append('model_id', modelId);
-  formData.append('diarize', 'true');
-  formData.append('diarization_threshold', 0.1);
+  formData.append('diarize', diarize ? 'true' : 'false');
+  if (diarize) formData.append('diarization_threshold', 0.1);
   formData.append('temperature', 0);
   formData.append('tag_audio_events', 'true');
   formData.append('timestamps_granularity', 'word');
@@ -127,6 +129,21 @@ async function callElevenLabs(audioBuffer, requestId, extension, modelId, childN
  */
 async function transcribeWithElevenLabs(audioBuffer, requestId, extension, childName) {
   return callElevenLabs(audioBuffer, requestId, extension, 'scribe_v1', childName);
+}
+
+/**
+ * Transcribe a single-narrator lesson audio file (no diarization needed).
+ * @param {Buffer} audioBuffer
+ * @param {string} lessonId - used only for the uploaded filename
+ * @param {string} extension
+ * @returns {Promise<{ text: string, wordTimings: Array<{text: string, start: number, end: number}> }>}
+ */
+async function transcribeLessonNarration(audioBuffer, lessonId, extension) {
+  const result = await callElevenLabs(audioBuffer, lessonId, extension, 'scribe_v2', undefined, { diarize: false });
+  const wordTimings = (result.words || [])
+    .filter((w) => w.type === 'word')
+    .map((w) => ({ text: w.text, start: w.start, end: w.end }));
+  return { text: result.text || '', wordTimings };
 }
 
 // ============================================================================
@@ -440,6 +457,7 @@ module.exports = {
   transcribeRecording,
   downloadAudioFromS3,
   transcribeWithElevenLabs,
+  transcribeLessonNarration,
   callElevenLabs,
   transcribeTwoPass,
   computeDiarizationDivergence,

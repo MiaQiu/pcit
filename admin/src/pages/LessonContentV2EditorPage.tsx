@@ -1,0 +1,177 @@
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getLesson, updateLessonContentV2, uploadLessonAudio } from '../api/adminApi';
+import { handleBoldShortcut, insertTextareaMarker } from '../utils/textFormatting';
+
+export default function LessonContentV2EditorPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const [title, setTitle] = useState('');
+  const [contentV2, setContentV2] = useState('');
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    getLesson(id)
+      .then((data) => {
+        setTitle(data.title);
+        setContentV2(data.contentV2 || '');
+        setAudioUrl(data.audioUrl);
+      })
+      .catch((err) => {
+        alert('Failed to load lesson: ' + err.message);
+        navigate('/content-v2');
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const handleSave = async () => {
+    if (!id) return;
+    setSaving(true);
+    try {
+      await updateLessonContentV2(id, { contentV2 });
+    } catch (err: any) {
+      alert('Failed to save: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAudioChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const { audioUrl: newUrl, transcriptText, transcriptionError } = await uploadLessonAudio(id, file);
+      setAudioUrl(newUrl);
+
+      if (transcriptionError) {
+        setUploadError(`Audio saved, but transcription failed: ${transcriptionError}`);
+      } else if (transcriptText) {
+        const replace = !contentV2.trim() || window.confirm(
+          'Replace Lesson Content with the new transcript? (Your current text will be lost — copy it first if you want to keep it.)'
+        );
+        if (replace) setContentV2(transcriptText);
+      }
+    } catch (err: any) {
+      setUploadError(err.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveAudio = async () => {
+    if (!id) return;
+    try {
+      await updateLessonContentV2(id, { audioUrl: null, wordTimings: null });
+      setAudioUrl(null);
+    } catch (err: any) {
+      alert('Failed to remove audio: ' + err.message);
+    }
+  };
+
+  const applyMarker = (opts: { before: string; after?: string; linePrefix?: boolean }) => {
+    if (!textareaRef.current) return;
+    insertTextareaMarker(textareaRef.current, setContentV2, opts);
+  };
+
+  if (loading) {
+    return <div className="page"><div className="loading-state">Loading lesson...</div></div>;
+  }
+
+  return (
+    <div className="page editor-page">
+      <div className="page-header">
+        <div>
+          <h1>Content V2: {title}</h1>
+          <p className="page-subtitle">ID: {id}</p>
+        </div>
+        <div className="header-actions">
+          <button className="btn-secondary" onClick={() => navigate('/content-v2')}>Cancel</button>
+          <button className="btn-primary" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving...' : 'Save Content'}
+          </button>
+        </div>
+      </div>
+
+      <div className="editor-section">
+        <h2>Audio Narration</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {audioUrl && !audioUrl.startsWith('mock://') && (
+            <audio controls src={audioUrl} style={{ maxWidth: 320 }} />
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/*"
+              style={{ display: 'none' }}
+              onChange={handleAudioChange}
+            />
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? 'Uploading & transcribing…' : audioUrl ? 'Replace Audio' : 'Upload Audio'}
+            </button>
+            {audioUrl && !uploading && (
+              <button type="button" className="btn-danger-sm" onClick={handleRemoveAudio}>
+                Remove
+              </button>
+            )}
+            {uploadError && <p style={{ color: '#ef4444', fontSize: 13, margin: 0 }}>{uploadError}</p>}
+            {audioUrl && (
+              <p style={{ fontSize: 12, color: '#9ca3af', margin: 0, wordBreak: 'break-all', maxWidth: 320 }}>
+                {audioUrl}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="editor-section">
+        <h2>Lesson Content</h2>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+          <button
+            type="button"
+            className="btn-secondary-sm"
+            onClick={() => applyMarker({ before: '**', after: '**' })}
+          >
+            Bold
+          </button>
+          <button
+            type="button"
+            className="btn-secondary-sm"
+            onClick={() => applyMarker({ before: '* ', linePrefix: true })}
+          >
+            Bullet
+          </button>
+        </div>
+        <div className="form-group">
+          <textarea
+            ref={textareaRef}
+            value={contentV2}
+            onChange={(e) => setContentV2(e.target.value)}
+            onKeyDown={(e) => handleBoldShortcut(e, setContentV2)}
+            placeholder="Lesson content (supports Ctrl+B for bold, * for bullet points, blank lines for paragraphs)"
+            rows={20}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

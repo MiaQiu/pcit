@@ -208,7 +208,8 @@ export type LessonModule =
   | 'RELOCATION' | 'DIVORCE' | 'DEVELOPMENT' | 'PROCRASTINATION'
   | 'PATIENCE' | 'RESPONSIBILITY' | 'MEALS' | 'AGGRESSION'
   | 'CONFLICT' | 'FOCUS' | 'DEFIANCE' | 'SAFETY'
-  | 'SCREENS' | 'SEPARATION' | 'SPECIAL';
+  | 'SCREENS' | 'SEPARATION' | 'SPECIAL'
+  | 'WELCOME' | 'POSITIVE_PLAY' | 'CALM_DISCIPLINE' | 'BIG_FEELINGS_TANTRUMS';
 
 export type ContentType = 'TEXT' | 'EXAMPLE' | 'TIP' | 'SCRIPT' | 'CALLOUT' | 'TEXT_INPUT';
 export type ProgressStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
@@ -264,8 +265,22 @@ export interface Lesson {
   segments?: LessonSegment[];
   quiz?: Quiz;
 
+  // V2 lesson content: audio narration + lightweight-markdown text (used by LessonViewerScreen_v2)
+  contentV2?: string;
+  audioUrl?: string;
+  // Word-level timing for the audioUrl narration (from forced alignment/transcription),
+  // used to drive precise word-by-word highlighting in LiveScriptCard. Absent for most
+  // lessons today; when missing, LiveScriptCard falls back to a paragraph-level estimate.
+  wordTimings?: WordTiming[];
+
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface WordTiming {
+  text: string;
+  start: number; // seconds
+  end: number; // seconds
 }
 
 export interface LessonSegment {

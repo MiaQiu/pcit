@@ -9,7 +9,7 @@ const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
 
 const { evaluateTextInput } = require('../services/textInputEvaluationService.cjs');
-const { resolveDragonImageUrl } = require('../services/storage-s3.cjs');
+const { resolveDragonImageUrl, resolveLessonAudioUrl } = require('../services/storage-s3.cjs');
 const { localeMiddleware } = require('../middleware/locale.cjs');
 
 const router = express.Router();
@@ -426,6 +426,7 @@ router.get('/:id', requireAuth, async (req, res) => {
       : null;
     const lessonResponse = {
       ...translatedLesson,
+      audioUrl: await resolveLessonAudioUrl(translatedLesson.audioUrl),
       segments: lesson.LessonSegment.map(seg => applySegmentTx(seg, segmentTxMap[seg.id])),
       quiz: quizWithOptions ? applyQuizTx(quizWithOptions, quizTx) : null,
       LessonSegment: undefined,

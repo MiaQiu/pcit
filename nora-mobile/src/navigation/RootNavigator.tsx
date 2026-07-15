@@ -20,6 +20,7 @@ import { SupportScreen } from '../screens/SupportScreen';
 import { TermsAndConditionsScreen } from '../screens/TermsAndConditionsScreen';
 import { PrivacyPolicyScreen } from '../screens/PrivacyPolicyScreen';
 import { LessonViewerScreen } from '../screens/LessonViewerScreen';
+import { LessonViewerScreenV2 } from '../screens/LessonViewerScreen_v2';
 import { QuizScreen } from '../screens/QuizScreen';
 import { LessonCompleteScreen } from '../screens/LessonCompleteScreen';
 import { ReportScreen } from '../screens/ReportScreen';
@@ -303,6 +304,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="LessonViewer"
         component={LessonViewerScreen}
+        options={{
+          animation: 'none',
+        }}
+      />
+      <Stack.Screen
+        name="LessonViewerV2"
+        component={LessonViewerScreenV2}
         options={{
           animation: 'none',
         }}

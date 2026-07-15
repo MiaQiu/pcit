@@ -1,6 +1,7 @@
 import { KeyboardEvent } from 'react';
 import { Segment } from '../../api/adminApi';
 import { normalizeHtml } from '../../utils/htmlNormalizer';
+import { handleBoldShortcut as sharedHandleBoldShortcut } from '../../utils/textFormatting';
 
 function adjustTopPadding(html: string, delta: number): string {
   // Walk tags in order; skip elements that are absolute-positioned (decorative backgrounds)
@@ -47,44 +48,7 @@ function handleBoldShortcut(
   e: KeyboardEvent<HTMLTextAreaElement>,
   onChange: (updates: Partial<Segment>) => void
 ) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-    e.preventDefault();
-    const ta = e.currentTarget;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const text = ta.value;
-    const selected = text.slice(start, end);
-
-    if (start === end) return; // nothing selected
-
-    // Toggle: if already wrapped in **, remove them; otherwise add them
-    const before = text.slice(0, start);
-    const after = text.slice(end);
-    const alreadyBold =
-      before.endsWith('**') && after.startsWith('**');
-
-    let newText: string;
-    let newStart: number;
-    let newEnd: number;
-
-    if (alreadyBold) {
-      newText = before.slice(0, -2) + selected + after.slice(2);
-      newStart = start - 2;
-      newEnd = end - 2;
-    } else {
-      newText = before + '**' + selected + '**' + after;
-      newStart = start + 2;
-      newEnd = end + 2;
-    }
-
-    onChange({ bodyText: newText });
-
-    // Restore selection after React re-render
-    requestAnimationFrame(() => {
-      ta.selectionStart = newStart;
-      ta.selectionEnd = newEnd;
-    });
-  }
+  sharedHandleBoldShortcut(e, (newText) => onChange({ bodyText: newText }));
 }
 
 interface Props {

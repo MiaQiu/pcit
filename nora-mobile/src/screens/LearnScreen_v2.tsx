@@ -31,6 +31,7 @@ import { resolveImageUris } from '../services/lessonImageCache';
 import { getCachedLessonData, saveLessonData, isCacheStale } from '../services/lessonDataCache';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 
 const H_PAD = 20;
 const CARD_GAP = 10;
@@ -381,7 +382,11 @@ export const LearnScreen_v2: React.FC = () => {
       incomplete.sort((a, b) => a.dayNumber - b.dayNumber)[0];
 
     amplitudeService.trackLessonStarted(lessonId, currentLesson?.title ?? '', { moduleKey, source: 'learn' });
-    navigation.push('LessonViewer', { lessonId, moduleKey, nextLessonId: nextLesson?.id });
+    if (CONTENT_V2_MODULES.includes(moduleKey)) {
+      navigation.push('LessonViewerV2', { lessonId, moduleKey, moduleTitle: mod?.title, nextLessonId: nextLesson?.id });
+    } else {
+      navigation.push('LessonViewer', { lessonId, moduleKey, nextLessonId: nextLesson?.id });
+    }
   };
 
   const visibleModules = sortedModules.filter(m => filteredLessonsByModule.has(m.key));
