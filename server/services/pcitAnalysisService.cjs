@@ -901,7 +901,7 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true, 
   console.log('📝 [CDI-FEEDBACK] Running feedback generation with DPICS manual cache...');
   let revisedFeedback = [];
   try {
-    const dpicsSystemPrompt = loadPrompt('dpicsCoding-agentic-v10') + (!isCDI ? `
+    const dpicsSystemPrompt = loadPrompt('dpicsCoding-agentic-v10-4') + (!isCDI ? `
 
 **PDI SESSION — Feedback Override for Commands:**
 This is a PDI (Parent-Directed Interaction) session. The rules above apply for coding, but the feedback generation strategy for commands is different:
@@ -1375,7 +1375,7 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
     console.log(`   Adult speakers: ${adultSpeakerIds}`);
 
     // Load DPICS system prompt, with PDI-specific feedback override appended
-    const dpicsSystemPrompt = loadPrompt('dpicsCoding-agentic-v10') + (!isCDI ? `
+    const dpicsSystemPrompt = loadPrompt('dpicsCoding-agentic-v10-4') + (!isCDI ? `
 
 **PDI SESSION — Feedback Override for Commands:**
 This is a PDI (Parent-Directed Interaction) session. The rules above apply for coding, but the feedback generation strategy for commands is different:
