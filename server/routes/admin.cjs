@@ -785,7 +785,15 @@ router.post('/lessons/:id/audio', requireAdminAuth, lessonAudioUploadMiddleware.
     }
 
     const updateFields = { audioUrl, updatedAt: new Date() };
-    if (wordTimings) updateFields.wordTimings = wordTimings;
+    if (wordTimings) {
+      updateFields.wordTimings = wordTimings;
+      // Duration proxy: end time of the last transcribed word. Approximate
+      // (misses trailing silence) but avoids needing an audio-parsing
+      // dependency just for a display duration.
+      if (wordTimings.length > 0) {
+        updateFields.durationSeconds = Math.floor(wordTimings[wordTimings.length - 1].end);
+      }
+    }
 
     await prisma.lesson.update({
       where: { id: lessonId },
@@ -796,6 +804,7 @@ router.post('/lessons/:id/audio', requireAdminAuth, lessonAudioUploadMiddleware.
       audioUrl: await resolveLessonAudioUrl(audioUrl),
       transcriptText,
       wordTimings,
+      durationSeconds: updateFields.durationSeconds ?? null,
       transcriptionError,
     });
   } catch (error) {
@@ -812,7 +821,7 @@ router.post('/lessons/:id/audio', requireAdminAuth, lessonAudioUploadMiddleware.
 router.patch('/lessons/:id/content-v2', requireAdminAuth, async (req, res) => {
   try {
     const lessonId = req.params.id;
-    const { contentV2, audioUrl, wordTimings } = req.body;
+    const { contentV2, audioUrl, wordTimings, durationSeconds } = req.body;
 
     const existing = await prisma.lesson.findUnique({ where: { id: lessonId } });
     if (!existing) return res.status(404).json({ error: 'Lesson not found' });
@@ -821,6 +830,7 @@ router.patch('/lessons/:id/content-v2', requireAdminAuth, async (req, res) => {
     if (contentV2 !== undefined) updateFields.contentV2 = contentV2;
     if (audioUrl !== undefined) updateFields.audioUrl = audioUrl;
     if (wordTimings !== undefined) updateFields.wordTimings = wordTimings;
+    if (durationSeconds !== undefined) updateFields.durationSeconds = durationSeconds;
 
     const updated = await prisma.lesson.update({
       where: { id: lessonId },
@@ -831,6 +841,7 @@ router.patch('/lessons/:id/content-v2', requireAdminAuth, async (req, res) => {
       contentV2: updated.contentV2,
       audioUrl: await resolveLessonAudioUrl(updated.audioUrl),
       wordTimings: updated.wordTimings,
+      durationSeconds: updated.durationSeconds,
     });
   } catch (error) {
     console.error('Admin lesson content-v2 update error:', error);

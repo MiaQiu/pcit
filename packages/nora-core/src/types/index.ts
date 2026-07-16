@@ -272,6 +272,9 @@ export interface Lesson {
   // used to drive precise word-by-word highlighting in LiveScriptCard. Absent for most
   // lessons today; when missing, LiveScriptCard falls back to a paragraph-level estimate.
   wordTimings?: WordTiming[];
+  // Narration length in seconds — derived from the last wordTimings entry's end time
+  // when audio is uploaded/transcribed. Absent for lessons with no audio yet.
+  durationSeconds?: number | null;
 
   createdAt: Date;
   updatedAt: Date;
@@ -367,6 +370,8 @@ export interface LessonCardData {
   dayNumber: number;
   dragonImageUrl?: string;
   imageUpdatedAt?: string;
+  durationSeconds?: number | null;
+  audioUrl?: string | null;
   backgroundColor: string;
   ellipse77Color: string;
   ellipse78Color: string;

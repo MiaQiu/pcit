@@ -698,6 +698,11 @@
     "noLessonsFound": "No lessons found",
     "tryDifferentSearch": "Try a different search term"
   },
+  "learnV3": {
+    "title": "Professor Yi-Chuen Chen",
+    "subtitle": "Clinical Child Psychologist",
+    "noLessonsFound": "No lessons found"
+  },
   "privacyPolicy": {
     "headerTitle": "Privacy Policy"
   },

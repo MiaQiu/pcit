@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { AudioPlayBar } from '../components/AudioPlayBar';
@@ -17,7 +18,7 @@ import { COLORS, FONTS } from '../constants/assets';
 import type { LessonDetailResponse, LessonCardData } from '@nora/core';
 import { useLessonService } from '../contexts/AppContext';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
-import { useLessonAudioPlayer } from '../hooks/useLessonAudioPlayer';
+import { useLessonPlayer } from '../contexts/LessonPlayerContext';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import amplitudeService from '../services/amplitudeService';
@@ -114,16 +115,46 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
   const prevLesson = currentIndex > 0 ? dayOrdered[currentIndex - 1] : undefined;
   const nextLesson = currentIndex >= 0 && currentIndex < dayOrdered.length - 1 ? dayOrdered[currentIndex + 1] : undefined;
 
-  const handleFinish = useCallback(() => {
-    setCurrentLessonId((id) => {
-      const idx = dayOrdered.findIndex((l) => l.id === id);
-      const next = idx >= 0 && idx < dayOrdered.length - 1 ? dayOrdered[idx + 1] : undefined;
-      return next ? next.id : id;
-    });
-  }, [dayOrdered]);
+  const player = useLessonPlayer();
 
   const lesson = lessonData?.lesson;
-  const player = useLessonAudioPlayer(lesson?.audioUrl, { onFinish: handleFinish });
+
+  // Attach to (or start) the shared player for whichever lesson this screen
+  // is currently showing. No-ops if it's already the active track elsewhere
+  // (e.g. started from the LearnScreen_v3 mini-player), so opening this
+  // screen inherits the exact playing/paused state and position instead of
+  // restarting a second Sound instance for the same audio.
+  useEffect(() => {
+    if (!lesson) return;
+    player.loadLesson(lesson.id, lesson.audioUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson?.id, lesson?.audioUrl]);
+
+  const handleFinish = useCallback(
+    (finishedId: string) => {
+      const idx = dayOrdered.findIndex((l) => l.id === finishedId);
+      const next = idx >= 0 && idx < dayOrdered.length - 1 ? dayOrdered[idx + 1] : undefined;
+      if (next) {
+        setCurrentLessonId(next.id);
+        player.loadLesson(next.id, next.audioUrl);
+      } else {
+        player.clear();
+      }
+      lessonService
+        .completeLesson(finishedId)
+        .catch((err) => console.error('Failed to mark lesson completed:', err));
+    },
+    [dayOrdered, lessonService, player]
+  );
+
+  // Only the focused screen should own "what plays next" — LearnScreen_v3
+  // registers its own (cross-module) handler while it's on top.
+  useFocusEffect(
+    useCallback(() => {
+      player.setOnFinish(handleFinish);
+      return () => player.setOnFinish(null);
+    }, [handleFinish, player])
+  );
 
   const blocks = useMemo(() => formatLessonContentV2(lesson?.contentV2 || ''), [lesson?.contentV2]);
 

@@ -81,6 +81,7 @@ model Lesson {
   contentV2          String?
   audioUrl           String?
   wordTimings        Json?
+  durationSeconds    Int?
   backgroundColor    String               @default("#E4E4FF")
   ellipse77Color     String               @default("#9BD4DF")
   ellipse78Color     String               @default("#A6E0CB")

@@ -67,6 +67,7 @@ export interface LessonDetail {
   contentV2: string | null;
   audioUrl: string | null;
   wordTimings: WordTiming[] | null;
+  durationSeconds: number | null;
   backgroundColor: string;
   ellipse77Color: string;
   ellipse78Color: string;
@@ -267,8 +268,8 @@ export async function uploadLessonImage(id: string, file: File): Promise<{ drago
 
 export async function updateLessonContentV2(
   id: string,
-  updates: { contentV2?: string; audioUrl?: string | null; wordTimings?: WordTiming[] | null }
-): Promise<{ contentV2: string | null; audioUrl: string | null; wordTimings: WordTiming[] | null }> {
+  updates: { contentV2?: string; audioUrl?: string | null; wordTimings?: WordTiming[] | null; durationSeconds?: number | null }
+): Promise<{ contentV2: string | null; audioUrl: string | null; wordTimings: WordTiming[] | null; durationSeconds: number | null }> {
   return apiFetch(`/api/admin/lessons/${id}/content-v2`, {
     method: 'PATCH',
     body: JSON.stringify(updates),
@@ -285,6 +286,7 @@ export interface UploadLessonAudioResult {
   audioUrl: string;
   transcriptText: string | null;
   wordTimings: WordTiming[] | null;
+  durationSeconds: number | null;
   transcriptionError: string | null;
 }
 

@@ -12,6 +12,10 @@ const RATE_STEPS = [1.0, 1.25, 1.5, 2.0];
 
 interface UseLessonAudioPlayerOptions {
   onFinish?: () => void;
+  /** Start playing as soon as the track finishes loading, instead of the
+   * default preload-paused behavior (used by LessonViewerScreen_v2 so the
+   * scrubber shows duration before the user presses play). */
+  autoPlay?: boolean;
 }
 
 export function useLessonAudioPlayer(audioUrl: string | undefined, options: UseLessonAudioPlayerOptions = {}) {
@@ -23,6 +27,8 @@ export function useLessonAudioPlayer(audioUrl: string | undefined, options: UseL
   const soundRef = useRef<Audio.Sound | null>(null);
   const onFinishRef = useRef(options.onFinish);
   onFinishRef.current = options.onFinish;
+  const autoPlayRef = useRef(options.autoPlay);
+  autoPlayRef.current = options.autoPlay;
 
   const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
     if (!status.isLoaded) return;
@@ -58,7 +64,7 @@ export function useLessonAudioPlayer(audioUrl: string | undefined, options: UseL
         });
         const { sound } = await Audio.Sound.createAsync(
           { uri: audioUrl },
-          { shouldPlay: false },
+          { shouldPlay: !!autoPlayRef.current },
           onPlaybackStatusUpdate
         );
         if (cancelled) {
@@ -66,6 +72,7 @@ export function useLessonAudioPlayer(audioUrl: string | undefined, options: UseL
           return;
         }
         soundRef.current = sound;
+        if (autoPlayRef.current) setIsPlaying(true);
       } catch (error) {
         console.error('useLessonAudioPlayer preload error:', error);
       } finally {

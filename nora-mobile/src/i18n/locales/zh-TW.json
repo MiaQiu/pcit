@@ -698,6 +698,11 @@
     "noLessonsFound": "找不到課程",
     "tryDifferentSearch": "嘗試不同的關鍵字"
   },
+  "learnV3": {
+    "title": "Professor Yi-Chuen Chen",
+    "subtitle": "臨床兒童心理學家",
+    "noLessonsFound": "找不到課程"
+  },
   "privacyPolicy": {
     "headerTitle": "隱私權政策"
   },

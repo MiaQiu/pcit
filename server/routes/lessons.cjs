@@ -104,6 +104,8 @@ async function formatLessonCard(lesson, userProgress) {
     dayNumber: lesson.dayNumber,
     dragonImageUrl: await resolveDragonImageUrl(lesson.dragonImageUrl),
     imageUpdatedAt: lesson.updatedAt,
+    durationSeconds: lesson.durationSeconds ?? null,
+    audioUrl: await resolveLessonAudioUrl(lesson.audioUrl),
     backgroundColor: lesson.backgroundColor,
     ellipse77Color: lesson.ellipse77Color,
     ellipse78Color: lesson.ellipse78Color,

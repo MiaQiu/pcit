@@ -22,6 +22,7 @@ import { AppProvider } from './src/contexts/AppContext';
 import { CoachUnreadProvider } from './src/contexts/CoachUnreadContext';
 import { OnboardingProvider } from './src/contexts/OnboardingContext';
 import { UploadProcessingProvider } from './src/contexts/UploadProcessingContext';
+import { LessonPlayerProvider } from './src/contexts/LessonPlayerContext';
 import { SubscriptionProvider } from './src/contexts/SubscriptionContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { RootStackNavigationProp } from './src/navigation/types';
@@ -262,6 +263,7 @@ export default function App() {
       <ErrorBoundary>
         <SafeAreaProvider>
           <AppProvider>
+            <LessonPlayerProvider>
             <CoachUnreadProvider>
             <SubscriptionProvider rcReady={rcReady}>
               <OnboardingProvider>
@@ -273,6 +275,7 @@ export default function App() {
               </OnboardingProvider>
             </SubscriptionProvider>
             </CoachUnreadProvider>
+            </LessonPlayerProvider>
           </AppProvider>
         </SafeAreaProvider>
       </ErrorBoundary>
