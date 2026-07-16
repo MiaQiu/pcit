@@ -311,6 +311,52 @@ export const LearnScreen_v3: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+      <View style={styles.coverBand}>
+        <Image source={require('../../assets/images/prof_chen.png')} style={styles.coverImage} resizeMode="cover" />
+        <View style={styles.coverTextColumn}>
+          <Text style={styles.coverTitle} numberOfLines={2}>{t('learnV3.title')}</Text>
+          <Text style={styles.coverSubtitle} numberOfLines={1}>{t('learnV3.subtitle')}</Text>
+        </View>
+      </View>
+
+      <View style={styles.progressCard}>
+        <View style={styles.progressRow}>
+          <View style={styles.progressTextColumn}>
+            <Text style={styles.progressText}>
+              {completedCount} / {totalCount} lessons · {percent}% learned
+            </Text>
+            <View style={styles.progressBarTrack}>
+              <View style={[styles.progressBarFill, { width: `${percent}%` }]} />
+            </View>
+          </View>
+          {continueLesson && (
+            <TouchableOpacity style={styles.continueButton} onPress={() => handlePlayCirclePress(continueLesson)}>
+              <Ionicons name="play" size={13} color="#FFFFFF" />
+              <Text style={styles.continueButtonText}>Continue</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        {continueLesson && (
+          <Text style={styles.continueLine} numberOfLines={1}>
+            Continue: {continueLesson.title}
+          </Text>
+        )}
+      </View>
+
+      <View style={styles.filterRow}>
+        <TouchableOpacity style={styles.filterChip} onPress={() => setShowModuleModal(true)}>
+          <Text style={styles.filterChipText} numberOfLines={1}>
+            {moduleFilter ? moduleByKey.get(moduleFilter)?.title ?? 'Module' : 'All Modules'}
+          </Text>
+          <Ionicons name="chevron-down" size={14} color={COLORS.textDark} />
+        </TouchableOpacity>
+
+        <View style={styles.unfinishedToggle}>
+          <Text style={styles.unfinishedText}>Only unfinished</Text>
+          <Switch value={onlyUnfinished} onValueChange={setOnlyUnfinished} />
+        </View>
+      </View>
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -324,52 +370,6 @@ export const LearnScreen_v3: React.FC = () => {
           />
         }
       >
-        <View style={styles.coverBand}>
-          <Image source={require('../../assets/images/prof_chen.png')} style={styles.coverImage} resizeMode="cover" />
-          <View style={styles.coverTextColumn}>
-            <Text style={styles.coverTitle} numberOfLines={2}>{t('learnV3.title')}</Text>
-            <Text style={styles.coverSubtitle} numberOfLines={1}>{t('learnV3.subtitle')}</Text>
-          </View>
-        </View>
-
-        <View style={styles.progressCard}>
-          <View style={styles.progressRow}>
-            <View style={styles.progressTextColumn}>
-              <Text style={styles.progressText}>
-                {completedCount} / {totalCount} lessons · {percent}% learned
-              </Text>
-              <View style={styles.progressBarTrack}>
-                <View style={[styles.progressBarFill, { width: `${percent}%` }]} />
-              </View>
-            </View>
-            {continueLesson && (
-              <TouchableOpacity style={styles.continueButton} onPress={() => handleLessonPress(continueLesson)}>
-                <Ionicons name="play" size={13} color="#FFFFFF" />
-                <Text style={styles.continueButtonText}>Continue</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          {continueLesson && (
-            <Text style={styles.continueLine} numberOfLines={1}>
-              Continue: {continueLesson.title}
-            </Text>
-          )}
-        </View>
-
-        <View style={styles.filterRow}>
-          <TouchableOpacity style={styles.filterChip} onPress={() => setShowModuleModal(true)}>
-            <Text style={styles.filterChipText} numberOfLines={1}>
-              {moduleFilter ? moduleByKey.get(moduleFilter)?.title ?? 'Module' : 'All Modules'}
-            </Text>
-            <Ionicons name="chevron-down" size={14} color={COLORS.textDark} />
-          </TouchableOpacity>
-
-          <View style={styles.unfinishedToggle}>
-            <Text style={styles.unfinishedText}>Only unfinished</Text>
-            <Switch value={onlyUnfinished} onValueChange={setOnlyUnfinished} />
-          </View>
-        </View>
-
         <View style={styles.list}>
           {groupedForDisplay.map(group => (
             <View key={group.module.key}>
