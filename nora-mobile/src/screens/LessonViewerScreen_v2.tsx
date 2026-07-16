@@ -6,18 +6,20 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { AudioPlayBar } from '../components/AudioPlayBar';
 import { LiveScriptCard } from '../components/LiveScriptCard';
-import { LessonPlaylistSheet } from '../components/LessonPlaylistSheet';
+import { LessonPlaylistSheet, PlaylistModule } from '../components/LessonPlaylistSheet';
 import { COLORS, FONTS } from '../constants/assets';
-import type { LessonDetailResponse, LessonCardData, LessonModule } from '@nora/core';
+import type { LessonDetailResponse, LessonCardData } from '@nora/core';
 import { useLessonService } from '../contexts/AppContext';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import { useLessonAudioPlayer } from '../hooks/useLessonAudioPlayer';
+import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
+import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import amplitudeService from '../services/amplitudeService';
 
 interface LessonViewerScreenV2Props {
@@ -47,7 +49,9 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
   const [loading, setLoading] = useState(true);
   const [lessonData, setLessonData] = useState<LessonDetailResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [siblingLessons, setSiblingLessons] = useState<LessonCardData[]>([]);
+  const [playlistLessons, setPlaylistLessons] = useState<LessonCardData[]>([]);
+  const [playlistModules, setPlaylistModules] = useState<PlaylistModule[]>([]);
+  const [contentHeight, setContentHeight] = useState(0);
   const isFirstLoad = useRef(true);
 
   useEffect(() => {
@@ -78,22 +82,33 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
   }, [currentLessonId]);
 
   useEffect(() => {
-    if (!moduleKey) return;
     let cancelled = false;
-    lessonService
-      .getLessons(moduleKey as LessonModule, i18n.language)
-      .then((res) => {
-        if (!cancelled) setSiblingLessons(res.lessons);
+    Promise.all([
+      lessonService.getLessons(undefined, i18n.language),
+      lessonService.getModules(i18n.language),
+    ])
+      .then(([lessonsRes, modulesRes]) => {
+        if (cancelled) return;
+        setPlaylistLessons(lessonsRes.lessons.filter((l) => CONTENT_V2_MODULES.includes(l.module)));
+        setPlaylistModules(
+          modulesRes.modules
+            .filter((m) => CONTENT_V2_MODULES.includes(m.key))
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((m) => ({ key: m.key, title: m.title }))
+        );
       })
-      .catch((err) => console.error('Failed to load sibling lessons:', err));
+      .catch((err) => console.error('Failed to load playlist lessons/modules:', err));
     return () => {
       cancelled = true;
     };
-  }, [moduleKey, i18n.language]);
+  }, [i18n.language]);
 
   const dayOrdered = useMemo(
-    () => [...siblingLessons].sort((a, b) => a.dayNumber - b.dayNumber),
-    [siblingLessons]
+    () =>
+      playlistLessons
+        .filter((l) => !moduleKey || l.module === moduleKey)
+        .sort((a, b) => a.dayNumber - b.dayNumber),
+    [playlistLessons, moduleKey]
   );
   const currentIndex = dayOrdered.findIndex((l) => l.id === currentLessonId);
   const prevLesson = currentIndex > 0 ? dayOrdered[currentIndex - 1] : undefined;
@@ -141,57 +156,62 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => navigation.goBack()}
-          accessibilityLabel="Close lesson"
-        >
-          <Ionicons name="chevron-down" size={24} color={COLORS.textDark} />
-        </TouchableOpacity>
-        <View style={styles.headerTextColumn}>
-          {resolvedModuleTitle ? (
-            <Text style={styles.headerModule} numberOfLines={1}>{resolvedModuleTitle}</Text>
-          ) : null}
-          <Text style={styles.headerTitle} numberOfLines={1}>Day {lesson.dayNumber} · {lesson.title}</Text>
+      <View onLayout={(e) => setContentHeight(e.nativeEvent.layout.height)}>
+        <View style={styles.navRow}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => navigation.goBack()}
+            accessibilityLabel="Close lesson"
+          >
+            <Ionicons name="chevron-down" size={24} color={COLORS.textDark} />
+          </TouchableOpacity>
         </View>
-        <View style={styles.closeButton} />
-      </View>
 
-      <LiveScriptCard
-        blocks={blocks}
-        wordTimings={lesson.wordTimings}
-        positionMillis={player.positionMillis}
-        durationMillis={player.durationMillis}
-      />
+        <View style={styles.identityRow}>
+          <Image source={require('../../assets/images/prof_chen.png')} style={styles.identityImage} resizeMode="cover" />
+          <View style={styles.identityTextColumn}>
+            <Text style={styles.identityTitle} numberOfLines={2}>
+              Day {lesson.dayNumber} · {lesson.title}
+            </Text>
+            {resolvedModuleTitle ? (
+              <Text style={styles.identitySubtitle} numberOfLines={1}>{resolvedModuleTitle}</Text>
+            ) : null}
+          </View>
+        </View>
 
-      {lesson.audioUrl ? (
-        <AudioPlayBar
-          isLoading={player.isLoading}
-          isPlaying={player.isPlaying}
+        <LiveScriptCard
+          blocks={blocks}
+          wordTimings={lesson.wordTimings}
           positionMillis={player.positionMillis}
           durationMillis={player.durationMillis}
-          rate={player.rate}
-          onPlayPause={handlePlayPause}
-          onPause={player.pause}
-          onSeekTo={player.seekTo}
-          onSeekBy={player.seekBy}
-          onCycleRate={player.cycleRate}
-          onPrev={prevLesson ? () => setCurrentLessonId(prevLesson.id) : undefined}
-          onNext={nextLesson ? () => setCurrentLessonId(nextLesson.id) : undefined}
-          hasPrev={!!prevLesson}
-          hasNext={!!nextLesson}
         />
-      ) : null}
 
-      {moduleKey ? (
-        <LessonPlaylistSheet
-          lessons={siblingLessons}
-          moduleTitle={resolvedModuleTitle}
-          currentLessonId={currentLessonId}
-          onSelectLesson={setCurrentLessonId}
-        />
-      ) : null}
+        {lesson.audioUrl ? (
+          <AudioPlayBar
+            isLoading={player.isLoading}
+            isPlaying={player.isPlaying}
+            positionMillis={player.positionMillis}
+            durationMillis={player.durationMillis}
+            rate={player.rate}
+            onPlayPause={handlePlayPause}
+            onSeekTo={player.seekTo}
+            onSeekBy={player.seekBy}
+            onCycleRate={player.cycleRate}
+            onPrev={prevLesson ? () => setCurrentLessonId(prevLesson.id) : undefined}
+            onNext={nextLesson ? () => setCurrentLessonId(nextLesson.id) : undefined}
+            hasPrev={!!prevLesson}
+            hasNext={!!nextLesson}
+          />
+        ) : null}
+      </View>
+
+      <LessonPlaylistSheet
+        lessons={playlistLessons}
+        modules={playlistModules}
+        currentLessonId={currentLessonId}
+        onSelectLesson={setCurrentLessonId}
+        collapsedTop={contentHeight}
+      />
     </SafeAreaView>
   );
 };
@@ -199,7 +219,7 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
   },
   centered: {
     flex: 1,
@@ -209,12 +229,11 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: FONTS.regular,
     fontSize: 16,
-    color: COLORS.textDark,
+    color: LESSON_TEXT_DARK,
   },
-  header: {
+  navRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
@@ -224,20 +243,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTextColumn: {
-    flex: 1,
+  identityRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 8,
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 16,
   },
-  headerModule: {
-    fontFamily: FONTS.regular,
-    fontSize: 12,
-    color: '#9CA3AF',
+  identityImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    marginRight: 14,
+    overflow: 'hidden',
   },
-  headerTitle: {
+  identityTextColumn: {
+    flex: 1,
+  },
+  identityTitle: {
     fontFamily: FONTS.regular,
-    fontSize: 15,
-    color: COLORS.textDark,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
+    color: LESSON_TEXT_DARK,
+    lineHeight: 24,
+  },
+  identitySubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: LESSON_TEXT_GREY,
+    marginTop: 6,
   },
 });

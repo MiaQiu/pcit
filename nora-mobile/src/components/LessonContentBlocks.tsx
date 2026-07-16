@@ -8,7 +8,8 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, FONTS } from '../constants/assets';
+import { FONTS } from '../constants/assets';
+import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import type { ContentBlock } from '../utils/formatLessonContentV2';
 
 interface LessonContentBlocksProps {
@@ -48,7 +49,7 @@ const styles = StyleSheet.create({
   bulletDot: {
     fontFamily: FONTS.regular,
     fontSize: 15,
-    color: COLORS.textDark,
+    color: LESSON_TEXT_DARK,
     marginRight: 8,
     lineHeight: 24,
   },
@@ -56,19 +57,19 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     fontSize: 15,
     lineHeight: 24,
-    color: COLORS.textDark,
+    color: LESSON_TEXT_DARK,
   },
   bulletText: {
     flex: 1,
     fontFamily: FONTS.regular,
     fontSize: 15,
     lineHeight: 24,
-    color: COLORS.textDark,
+    color: LESSON_TEXT_DARK,
   },
   bold: {
     fontWeight: '700',
   },
   dimmed: {
-    color: '#B5B9C2',
+    color: LESSON_TEXT_GREY,
   },
 });

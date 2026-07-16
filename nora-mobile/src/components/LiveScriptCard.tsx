@@ -15,8 +15,10 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
+import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import { LessonContentBlocks } from './LessonContentBlocks';
 import { groupWordTimingsIntoSentences } from '../utils/groupWordTimings';
 import type { ContentBlock } from '../utils/formatLessonContentV2';
@@ -107,6 +109,11 @@ export const LiveScriptCard: React.FC<LiveScriptCardProps> = ({ blocks, wordTimi
               </View>
             ))}
       </ScrollView>
+      <LinearGradient
+        colors={['rgba(245,245,248,0)', '#F5F5F8']}
+        style={styles.bottomFade}
+        pointerEvents="none"
+      />
       <TouchableOpacity style={styles.expandButton} onPress={() => setExpanded(true)} accessibilityLabel="Expand script">
         <Ionicons name="expand" size={16} color={COLORS.textDark} />
       </TouchableOpacity>
@@ -148,9 +155,9 @@ export const LiveScriptCard: React.FC<LiveScriptCardProps> = ({ blocks, wordTimi
 
 const styles = StyleSheet.create({
   card: {
-    marginHorizontal: 16,
-    marginTop: 8,
-    height: 320,
+    marginHorizontal: 8,
+    marginTop: -10,
+    height: 220,
     backgroundColor: '#F5F5F8',
     borderRadius: 16,
     padding: 16,
@@ -171,10 +178,17 @@ const styles = StyleSheet.create({
     lineHeight: 30,
   },
   wordSpoken: {
-    color: COLORS.textDark,
+    color: LESSON_TEXT_DARK,
   },
   wordPending: {
-    color: '#B5B9C2',
+    color: LESSON_TEXT_GREY,
+  },
+  bottomFade: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 28,
   },
   expandButton: {
     position: 'absolute',
@@ -183,7 +197,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: '#E5E6EA',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -204,7 +218,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textDark,
+    color: LESSON_TEXT_DARK,
   },
   modalClose: {
     width: 32,
@@ -214,7 +228,7 @@ const styles = StyleSheet.create({
   },
   modalCloseIcon: {
     fontSize: 24,
-    color: COLORS.textDark,
+    color: LESSON_TEXT_DARK,
   },
   modalScrollContent: {
     padding: 20,
