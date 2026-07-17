@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { FONTS } from '../constants/assets';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import type { ContentBlock } from '../utils/formatLessonContentV2';
@@ -21,6 +21,13 @@ export const LessonContentBlocks: React.FC<LessonContentBlocksProps> = ({ blocks
   return (
     <>
       {blocks.map((block, i) => {
+        if (block.type === 'image') {
+          return (
+            <View key={i} style={styles.imageRow}>
+              <Image source={{ uri: block.url }} style={styles.contentImage} resizeMode="cover" />
+            </View>
+          );
+        }
         const dimmed = activeIndex !== undefined && i !== activeIndex;
         return (
           <View key={i} style={block.type === 'bullet' ? styles.bulletRow : styles.paragraph}>
@@ -67,9 +74,21 @@ const styles = StyleSheet.create({
     color: LESSON_TEXT_DARK,
   },
   bold: {
-    fontWeight: '700',
+    // fontWeight alone doesn't work here — PlusJakartaSans is loaded as
+    // separate per-weight font families (see FONTS in constants/assets),
+    // not weight variants of one family, so RN's fontWeight is a no-op on it.
+    fontFamily: FONTS.bold,
   },
   dimmed: {
     color: LESSON_TEXT_GREY,
+  },
+  imageRow: {
+    marginBottom: 16,
+  },
+  contentImage: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: 12,
+    backgroundColor: '#E5E6EA',
   },
 });

@@ -1,18 +1,22 @@
 /**
  * Lightweight parser for LessonViewerScreen_v2 content: **bold**, "* " bullets,
- * and blank-line paragraph breaks. Mirrors the authoring convention already used
- * for LessonSegment.bodyText, kept intentionally separate from the segment-card
- * formatter in LessonViewerScreen.tsx (which is coupled to keyword highlighting).
+ * ![](url) images on their own line, and blank-line paragraph breaks. Mirrors
+ * the authoring convention already used for LessonSegment.bodyText, kept
+ * intentionally separate from the segment-card formatter in
+ * LessonViewerScreen.tsx (which is coupled to keyword highlighting).
  */
 
 export type ContentBlock =
   | { type: 'paragraph'; runs: TextRun[] }
-  | { type: 'bullet'; runs: TextRun[] };
+  | { type: 'bullet'; runs: TextRun[] }
+  | { type: 'image'; url: string };
 
 export interface TextRun {
   text: string;
   bold: boolean;
 }
+
+const IMAGE_LINE = /^!\[\]\(([^)]+)\)$/;
 
 function parseRuns(line: string): TextRun[] {
   const runs: TextRun[] = [];
@@ -50,6 +54,12 @@ export function formatLessonContentV2(content: string): ContentBlock[] {
       flushParagraph();
       continue;
     }
+    const imageMatch = line.match(IMAGE_LINE);
+    if (imageMatch) {
+      flushParagraph();
+      blocks.push({ type: 'image', url: imageMatch[1] });
+      continue;
+    }
     if (line.startsWith('* ')) {
       flushParagraph();
       blocks.push({ type: 'bullet', runs: parseRuns(line.slice(2)) });
@@ -60,4 +70,56 @@ export function formatLessonContentV2(content: string): ContentBlock[] {
   flushParagraph();
 
   return blocks;
+}
+
+// ---------------------------------------------------------------------------
+// Chunk-level flattening — used by LiveScriptCard's live-highlighting mode so
+// it can show **bold**/bullets/images from contentV2 (the admin-edited source
+// of truth) while still advancing word-by-word during playback. Kept separate
+// from wordTimings, whose word list comes straight from the original audio
+// transcription and can drift from contentV2 once an admin edits the text
+// (removing filler words, changing punctuation, adding images, etc). Image
+// blocks always become their own chunk (no words) so they render in place —
+// and stay visible — instead of being silently dropped by a text-only flatten.
+// ---------------------------------------------------------------------------
+
+export interface DisplayWord {
+  text: string;
+  bold: boolean;
+}
+
+export type DisplayChunk =
+  | { type: 'sentence'; words: DisplayWord[] }
+  | { type: 'image'; url: string };
+
+const SENTENCE_END = /[.!?]["')\]]?$/;
+
+export function flattenBlocksToChunks(blocks: ContentBlock[]): DisplayChunk[] {
+  const chunks: DisplayChunk[] = [];
+
+  for (const block of blocks) {
+    if (block.type === 'image') {
+      chunks.push({ type: 'image', url: block.url });
+      continue;
+    }
+
+    let current: DisplayWord[] = [];
+    for (const run of block.runs) {
+      for (const text of run.text.split(/\s+/).filter(Boolean)) {
+        current.push({ text, bold: run.bold });
+        if (SENTENCE_END.test(text)) {
+          chunks.push({ type: 'sentence', words: current });
+          current = [];
+        }
+      }
+    }
+    if (current.length > 0) chunks.push({ type: 'sentence', words: current });
+  }
+
+  return chunks;
+}
+
+/** Total word count across all 'sentence' chunks (images don't count as words). */
+export function countChunkWords(chunks: DisplayChunk[]): number {
+  return chunks.reduce((sum, c) => (c.type === 'sentence' ? sum + c.words.length : sum), 0);
 }

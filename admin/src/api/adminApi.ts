@@ -306,6 +306,28 @@ export async function uploadLessonAudio(id: string, file: File): Promise<UploadL
   return res.json();
 }
 
+export interface UploadLessonContentImageResult {
+  key: string;
+  marker: string;
+  url: string;
+}
+
+export async function uploadLessonContentImage(id: string, file: File): Promise<UploadLessonContentImageResult> {
+  const token = (await import('./client')).getToken();
+  const form = new FormData();
+  form.append('image', file);
+  const res = await fetch(`/api/admin/lessons/${id}/content-image`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Upload failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 // ---- Modules ----
 
 export async function getModules(): Promise<ModuleSummary[]> {

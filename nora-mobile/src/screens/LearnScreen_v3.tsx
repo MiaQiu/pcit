@@ -37,27 +37,28 @@ import amplitudeService from '../services/amplitudeService';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 import { useLessonPlayer } from '../contexts/LessonPlayerContext';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
+import { LessonContentBlocks } from '../components/LessonContentBlocks';
+import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
+
 const lastViewedMillis = (l: LessonCardData) =>
   l.progress?.lastViewedAt ? new Date(l.progress.lastViewedAt).getTime() : 0;
 
-// The Read modal shows contentV2 as plain prose. Some lessons' contentV2 is
-// authored as blank-line-separated paragraphs (handled here); others are one
-// unbroken transcript blob with no paragraph markers at all — for those,
-// fall back to grouping sentences so it isn't one giant wall of text.
+// The Read modal renders contentV2 through the same formatLessonContentV2 +
+// LessonContentBlocks pipeline used elsewhere, so **bold**/"* " bullets/images
+// set in the admin editor actually render instead of showing as plain text.
+// The one gap that pipeline doesn't cover: a lesson whose contentV2 is a raw,
+// not-yet-formatted transcript (no paragraph breaks, no bold, no bullets, no
+// images — i.e. nothing for the parser to key off) comes back as one giant
+// paragraph. Only THAT case falls back to grouping sentences so it isn't a
+// wall of text.
 const SENTENCES_PER_FALLBACK_PARAGRAPH = 7;
-const splitIntoReadableParagraphs = (text: string): string[] => {
-  const stripped = text.replace(/\*\*(.+?)\*\*/g, '$1').replace(/^\* /gm, '');
-  const paragraphs = stripped.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+const isUnformattedBlob = (text: string): boolean =>
+  !/\n\s*\n/.test(text) && !/\*\*/.test(text) && !/^\* /m.test(text) && !/!\[\]\(/.test(text);
+const splitIntoSentenceParagraphs = (text: string): string[] => {
+  const sentences = text.match(/[^.!?]+[.!?]+(\s+|$)/g) ?? [text];
   const result: string[] = [];
-  for (const paragraph of paragraphs) {
-    if (paragraph.length <= 400) {
-      result.push(paragraph);
-      continue;
-    }
-    const sentences = paragraph.match(/[^.!?]+[.!?]+(\s+|$)/g) ?? [paragraph];
-    for (let i = 0; i < sentences.length; i += SENTENCES_PER_FALLBACK_PARAGRAPH) {
-      result.push(sentences.slice(i, i + SENTENCES_PER_FALLBACK_PARAGRAPH).join('').trim());
-    }
+  for (let i = 0; i < sentences.length; i += SENTENCES_PER_FALLBACK_PARAGRAPH) {
+    result.push(sentences.slice(i, i + SENTENCES_PER_FALLBACK_PARAGRAPH).join('').trim());
   }
   return result.filter(Boolean);
 };
@@ -302,7 +303,14 @@ export const LearnScreen_v3: React.FC = () => {
     }
   };
 
-  const scriptParagraphs = useMemo(() => splitIntoReadableParagraphs(scriptContent), [scriptContent]);
+  const scriptFallbackParagraphs = useMemo(
+    () => (isUnformattedBlob(scriptContent) ? splitIntoSentenceParagraphs(scriptContent) : null),
+    [scriptContent]
+  );
+  const scriptBlocks = useMemo(
+    () => (scriptFallbackParagraphs ? [] : formatLessonContentV2(scriptContent)),
+    [scriptContent, scriptFallbackParagraphs]
+  );
 
   const renderLessonRow = (lesson: LessonCardData) => {
     const isCompleted = lesson.progress?.status === 'COMPLETED';
@@ -527,11 +535,15 @@ export const LearnScreen_v3: React.FC = () => {
                   <View style={styles.scriptDivider} />
                 </View>
               )}
-              {scriptParagraphs.map((paragraph, i) => (
-                <Text key={i} style={[styles.scriptParagraph, i === 0 && styles.scriptParagraphLede]}>
-                  {paragraph}
-                </Text>
-              ))}
+              {scriptFallbackParagraphs ? (
+                scriptFallbackParagraphs.map((paragraph, i) => (
+                  <Text key={i} style={styles.scriptParagraph}>
+                    {paragraph}
+                  </Text>
+                ))
+              ) : (
+                <LessonContentBlocks blocks={scriptBlocks} />
+              )}
             </ScrollView>
           )}
         </View>
@@ -1006,10 +1018,5 @@ const styles = StyleSheet.create({
     lineHeight: 27,
     color: LESSON_TEXT_DARK,
     marginBottom: 20,
-  },
-  scriptParagraphLede: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 17,
-    lineHeight: 28,
   },
 });

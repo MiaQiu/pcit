@@ -6,7 +6,7 @@ const { generateAccessToken, verifyAccessToken } = require('../utils/jwt.cjs');
 const { requireAdminAuth } = require('../middleware/adminAuth.cjs');
 const { verifyPassword } = require('../utils/password.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
-const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, resolveLessonAudioUrl } = require('../services/storage-s3.cjs');
+const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, uploadLessonContentImage, resolveLessonAudioUrl } = require('../services/storage-s3.cjs');
 const { processRecordingWithRetry } = require('../services/processingService.cjs');
 const { transcribeLessonNarration } = require('../services/transcriptionService.cjs');
 
@@ -749,6 +749,32 @@ router.post('/lessons/:id/image', requireAdminAuth, uploadMiddleware.single('ima
     res.json({ dragonImageUrl: imageUrl });
   } catch (error) {
     console.error('Admin lesson image upload error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload image' });
+  }
+});
+
+/**
+ * POST /api/admin/lessons/:id/content-image
+ * Upload an image to embed inline in the Lesson Content textarea (between
+ * paragraphs). Doesn't touch any lesson field — the admin inserts the
+ * returned marker into contentV2 text themselves, same as bold/bullet markers.
+ * Not persisted here; PATCH /lessons/:id/content-v2 saves the text as usual.
+ */
+router.post('/lessons/:id/content-image', requireAdminAuth, uploadMiddleware.single('image'), async (req, res) => {
+  try {
+    const lessonId = req.params.id;
+
+    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+    if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
+
+    if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+
+    const ext = (req.file.originalname.split('.').pop() || 'jpg').toLowerCase();
+    const key = await uploadLessonContentImage(req.file.buffer, lessonId, ext);
+
+    res.json({ key, marker: `![](${key})`, url: await resolveLessonAudioUrl(key) });
+  } catch (error) {
+    console.error('Admin lesson content-image upload error:', error);
     res.status(500).json({ error: error.message || 'Failed to upload image' });
   }
 });

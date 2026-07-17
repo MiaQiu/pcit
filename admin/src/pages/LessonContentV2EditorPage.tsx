@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getLesson, updateLessonContentV2, uploadLessonAudio } from '../api/adminApi';
+import { getLesson, updateLessonContentV2, uploadLessonAudio, uploadLessonContentImage } from '../api/adminApi';
 import { handleBoldShortcut, insertTextareaMarker } from '../utils/textFormatting';
 
 export default function LessonContentV2EditorPage() {
@@ -14,9 +14,12 @@ export default function LessonContentV2EditorPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -85,6 +88,23 @@ export default function LessonContentV2EditorPage() {
   const applyMarker = (opts: { before: string; after?: string; linePrefix?: boolean }) => {
     if (!textareaRef.current) return;
     insertTextareaMarker(textareaRef.current, setContentV2, opts);
+  };
+
+  const handleImageInsert = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+
+    setImageUploadError(null);
+    setUploadingImage(true);
+    try {
+      const { marker } = await uploadLessonContentImage(id, file);
+      applyMarker({ before: `\n\n${marker}\n\n` });
+    } catch (err: any) {
+      setImageUploadError(err.message || 'Image upload failed');
+    } finally {
+      setUploadingImage(false);
+      if (imageInputRef.current) imageInputRef.current.value = '';
+    }
   };
 
   if (loading) {
@@ -160,7 +180,26 @@ export default function LessonContentV2EditorPage() {
           >
             Bullet
           </button>
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleImageInsert}
+          />
+          <button
+            type="button"
+            className="btn-secondary-sm"
+            onClick={() => imageInputRef.current?.click()}
+            disabled={uploadingImage}
+          >
+            {uploadingImage ? 'Uploading image…' : 'Insert Image'}
+          </button>
         </div>
+        {imageUploadError && <p style={{ color: '#ef4444', fontSize: 13, margin: '0 0 8px' }}>{imageUploadError}</p>}
+        <p style={{ fontSize: 12, color: '#9ca3af', margin: '0 0 8px' }}>
+          Inserts an image marker at the cursor, on its own paragraph. Move the <code>![](...)</code> line to reposition it.
+        </p>
         <div className="form-group">
           <textarea
             ref={textareaRef}

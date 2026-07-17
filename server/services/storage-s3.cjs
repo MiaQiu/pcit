@@ -1,4 +1,5 @@
 // AWS S3 Storage service for audio file management
+const crypto = require('crypto');
 const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl: getSignedUrlSDK } = require('@aws-sdk/s3-request-presigner');
 
@@ -533,6 +534,64 @@ async function uploadLessonAudio(fileBuffer, lessonId, extension = 'mp3') {
   return publicUrl;
 }
 
+/**
+ * Upload an image to embed inline within Lesson.contentV2 (between paragraphs).
+ * Unlike uploadLessonImage (one fixed key per lesson, for the single
+ * dragonImageUrl thumbnail), a lesson can have many content images, so each
+ * gets its own unique key under a content-images/ subfolder.
+ * @param {Buffer} fileBuffer
+ * @param {string} lessonId
+ * @param {string} extension - e.g. 'jpg', 'png', 'webp'
+ * @returns {Promise<string>} - S3 key (not a full URL — resolve via resolveContentImageUrls)
+ */
+async function uploadLessonContentImage(fileBuffer, lessonId, extension = 'jpg') {
+  const key = `lessons/${lessonId}/content-images/${crypto.randomUUID()}.${extension}`;
+
+  if (!S3_ENABLED || !s3Client) {
+    console.warn('S3 not configured, using mock storage path for lesson content image');
+    return `mock://${key}`;
+  }
+
+  const contentTypeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
+  const contentType = contentTypeMap[extension.toLowerCase()] || 'image/jpeg';
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: contentType,
+    Metadata: { lessonId, uploadedAt: new Date().toISOString() },
+    ServerSideEncryption: 'AES256',
+  });
+
+  await s3Client.send(command);
+
+  console.log(`Lesson content image uploaded to S3: ${key}`);
+  return key;
+}
+
+// Matches markdown-style image markers embedded in contentV2, e.g. ![](lessons/WELCOME-1/content-images/abc.jpg)
+const CONTENT_IMAGE_MARKER = /!\[\]\(([^)]+)\)/g;
+
+/**
+ * Replace every embedded content-image key in a contentV2 string with a
+ * presigned, readable URL. Keys are stored raw (like audioUrl/dragonImageUrl)
+ * since the bucket is private and a presigned URL saved into the text would
+ * eventually expire.
+ * @param {string|null} text
+ * @returns {Promise<string|null>}
+ */
+async function resolveContentImageUrls(text) {
+  if (!text || !text.includes('![](')) return text;
+
+  const keys = [...text.matchAll(CONTENT_IMAGE_MARKER)].map(m => m[1]);
+  const uniqueKeys = [...new Set(keys)];
+  const resolved = await Promise.all(uniqueKeys.map(key => resolveDragonImageUrl(key)));
+  const urlByKey = Object.fromEntries(uniqueKeys.map((key, i) => [key, resolved[i]]));
+
+  return text.replace(CONTENT_IMAGE_MARKER, (match, key) => `![](${urlByKey[key] ?? key})`);
+}
+
 module.exports = {
   uploadAudioFile,
   deleteAudioFile,
@@ -544,7 +603,9 @@ module.exports = {
   uploadSupportAttachment,
   uploadLessonImage,
   uploadLessonAudio,
+  uploadLessonContentImage,
   resolveDragonImageUrl,
   resolveLessonAudioUrl,
+  resolveContentImageUrls,
   isS3Enabled
 };
