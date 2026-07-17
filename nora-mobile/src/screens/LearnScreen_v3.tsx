@@ -21,7 +21,7 @@ import {
   Switch,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Polygon, Circle } from 'react-native-svg';
@@ -36,9 +36,31 @@ import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 import { useLessonPlayer } from '../contexts/LessonPlayerContext';
-
+import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 const lastViewedMillis = (l: LessonCardData) =>
   l.progress?.lastViewedAt ? new Date(l.progress.lastViewedAt).getTime() : 0;
+
+// The Read modal shows contentV2 as plain prose. Some lessons' contentV2 is
+// authored as blank-line-separated paragraphs (handled here); others are one
+// unbroken transcript blob with no paragraph markers at all — for those,
+// fall back to grouping sentences so it isn't one giant wall of text.
+const SENTENCES_PER_FALLBACK_PARAGRAPH = 7;
+const splitIntoReadableParagraphs = (text: string): string[] => {
+  const stripped = text.replace(/\*\*(.+?)\*\*/g, '$1').replace(/^\* /gm, '');
+  const paragraphs = stripped.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+  const result: string[] = [];
+  for (const paragraph of paragraphs) {
+    if (paragraph.length <= 400) {
+      result.push(paragraph);
+      continue;
+    }
+    const sentences = paragraph.match(/[^.!?]+[.!?]+(\s+|$)/g) ?? [paragraph];
+    for (let i = 0; i < sentences.length; i += SENTENCES_PER_FALLBACK_PARAGRAPH) {
+      result.push(sentences.slice(i, i + SENTENCES_PER_FALLBACK_PARAGRAPH).join('').trim());
+    }
+  }
+  return result.filter(Boolean);
+};
 
 // Lessons with no audio/wordTimings yet have no durationSeconds — use a
 // clearly-a-placeholder fallback rather than fabricating a number.
@@ -59,6 +81,7 @@ export const LearnScreen_v3: React.FC = () => {
   const lessonService = useLessonService();
   const { isOnline } = useNetworkStatus();
   const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const [modules, setModules] = useState<ModuleWithProgress[]>([]);
   const [allLessons, setAllLessons] = useState<LessonCardData[]>([]);
@@ -68,6 +91,9 @@ export const LearnScreen_v3: React.FC = () => {
   const [moduleFilter, setModuleFilter] = useState<LessonModule | null>(null);
   const [onlyUnfinished, setOnlyUnfinished] = useState(false);
   const [showModuleModal, setShowModuleModal] = useState(false);
+  const [scriptLesson, setScriptLesson] = useState<LessonCardData | null>(null);
+  const [scriptContent, setScriptContent] = useState<string>('');
+  const [scriptLoading, setScriptLoading] = useState(false);
   const player = useLessonPlayer();
 
   const applyData = useCallback((modulesRes: ModuleListResponse, lessonsRes: LessonListResponse) => {
@@ -196,6 +222,18 @@ export const LearnScreen_v3: React.FC = () => {
     return orderedLessons.find(l => l.progress?.status !== 'COMPLETED');
   }, [orderedLessons]);
 
+  const lastLearntLesson = useMemo(() => {
+    return orderedLessons
+      .filter(l => l.progress?.lastViewedAt)
+      .sort((a, b) => lastViewedMillis(b) - lastViewedMillis(a))[0];
+  }, [orderedLessons]);
+
+  // While a lesson is actively playing, it takes over "Continue" and the
+  // "Last viewed" badge — whatever's currently mid-playback beats stale
+  // progress-based history.
+  const displayContinueLesson = playingLesson ?? continueLesson;
+  const displayLastLearntLesson = playingLesson ?? lastLearntLesson;
+
   const displayedLessons = useMemo(() => {
     let list = orderedLessons;
     if (moduleFilter) list = list.filter(l => l.module === moduleFilter);
@@ -250,14 +288,36 @@ export const LearnScreen_v3: React.FC = () => {
     }
   };
 
+  const handleReadPress = async (lesson: LessonCardData) => {
+    setScriptLesson(lesson);
+    setScriptContent('');
+    setScriptLoading(true);
+    try {
+      const detail = await lessonService.getLessonDetail(lesson.id, i18n.language);
+      setScriptContent(detail.lesson.contentV2 || '');
+    } catch (err) {
+      console.error('Failed to load lesson script:', err);
+    } finally {
+      setScriptLoading(false);
+    }
+  };
+
+  const scriptParagraphs = useMemo(() => splitIntoReadableParagraphs(scriptContent), [scriptContent]);
+
   const renderLessonRow = (lesson: LessonCardData) => {
     const isCompleted = lesson.progress?.status === 'COMPLETED';
     const isThisPlaying = player.activeLessonId === lesson.id;
     const durationLabel = formatDuration(lesson.durationSeconds);
+    const isLastLearnt = displayLastLearntLesson?.id === lesson.id;
     return (
       <View key={lesson.id} style={styles.row}>
+        {isLastLearnt && (
+          <View style={styles.lastLearntBadge}>
+            <Text style={styles.lastLearntBadgeText}>Last viewed</Text>
+          </View>
+        )}
         <TouchableOpacity
-          style={styles.rowTitleTouchable}
+          style={[styles.rowTitleTouchable, isLastLearnt && styles.rowTitleTouchableLastLearnt]}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           onPress={() => handleLessonPress(lesson)}
         >
@@ -273,29 +333,34 @@ export const LearnScreen_v3: React.FC = () => {
           </Text>
         </TouchableOpacity>
         <View style={styles.rowMetaRow}>
-          <Text style={styles.rowDuration}>
+          <Text style={[styles.rowDuration, isCompleted && styles.rowDurationCompleted]}>
             {durationLabel}
             {isCompleted ? ' | completed' : ''}
           </Text>
-          <TouchableOpacity
-            style={styles.playCircle}
-            onPress={() => handlePlayCirclePress(lesson)}
-          >
-            {isThisPlaying ? (
-              <Ionicons name={player.isPlaying ? 'pause' : 'play'} size={15} color={COLORS.mainPurple} />
-            ) : (
-              <Svg width={14} height={14} viewBox="0 0 14 14">
-                <Polygon
-                  points="3,2 3,12 12,7"
-                  fill="none"
-                  stroke="#6B7280"
-                  strokeWidth={2}
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-              </Svg>
-            )}
-          </TouchableOpacity>
+          <View style={styles.rowActions}>
+            <TouchableOpacity style={styles.readButton} onPress={() => handleReadPress(lesson)}>
+              <Text style={styles.readButtonText}>Read</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.playCircle}
+              onPress={() => handlePlayCirclePress(lesson)}
+            >
+              {isThisPlaying ? (
+                <Ionicons name={player.isPlaying ? 'pause' : 'play'} size={15} color={COLORS.mainPurple} />
+              ) : (
+                <Svg width={14} height={14} viewBox="0 0 14 14">
+                  <Polygon
+                    points="3,2 3,12 12,7"
+                    fill="none"
+                    stroke="#6B7280"
+                    strokeWidth={2}
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                </Svg>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -315,7 +380,7 @@ export const LearnScreen_v3: React.FC = () => {
         <Image source={require('../../assets/images/prof_chen.png')} style={styles.coverImage} resizeMode="cover" />
         <View style={styles.coverTextColumn}>
           <Text style={styles.coverTitle} numberOfLines={2}>{t('learnV3.title')}</Text>
-          <Text style={styles.coverSubtitle} numberOfLines={1}>{t('learnV3.subtitle')}</Text>
+          <Text style={styles.coverSubtitle} numberOfLines={2}>{t('learnV3.subtitle')}</Text>
         </View>
       </View>
 
@@ -329,63 +394,69 @@ export const LearnScreen_v3: React.FC = () => {
               <View style={[styles.progressBarFill, { width: `${percent}%` }]} />
             </View>
           </View>
-          {continueLesson && (
-            <TouchableOpacity style={styles.continueButton} onPress={() => handlePlayCirclePress(continueLesson)}>
+          {displayContinueLesson && (
+            <TouchableOpacity style={styles.continueButton} onPress={() => handlePlayCirclePress(displayContinueLesson)}>
               <Ionicons name="play" size={13} color="#FFFFFF" />
               <Text style={styles.continueButtonText}>Continue</Text>
             </TouchableOpacity>
           )}
         </View>
-        {continueLesson && (
+        {displayContinueLesson && (
           <Text style={styles.continueLine} numberOfLines={1}>
-            Continue: {continueLesson.title}
+            Continue: {displayContinueLesson.title}
           </Text>
         )}
       </View>
 
-      <View style={styles.filterRow}>
-        <TouchableOpacity style={styles.filterChip} onPress={() => setShowModuleModal(true)}>
-          <Text style={styles.filterChipText} numberOfLines={1}>
-            {moduleFilter ? moduleByKey.get(moduleFilter)?.title ?? 'Module' : 'All Modules'}
-          </Text>
-          <Ionicons name="chevron-down" size={14} color={COLORS.textDark} />
-        </TouchableOpacity>
+      <View style={styles.playlistCard}>
+        <View style={styles.filterRow}>
+          <TouchableOpacity style={styles.filterChip} onPress={() => setShowModuleModal(true)}>
+            <Text style={styles.filterChipText} numberOfLines={1}>
+              {moduleFilter ? moduleByKey.get(moduleFilter)?.title ?? 'Module' : 'All Modules'}
+            </Text>
+            <Ionicons name="chevron-down" size={14} color={COLORS.textDark} />
+          </TouchableOpacity>
 
-        <View style={styles.unfinishedToggle}>
-          <Text style={styles.unfinishedText}>Only unfinished</Text>
-          <Switch value={onlyUnfinished} onValueChange={setOnlyUnfinished} />
+          <View style={styles.unfinishedToggle}>
+            <Text style={styles.unfinishedText}>Only unfinished</Text>
+            <Switch
+              style={styles.unfinishedSwitch}
+              value={onlyUnfinished}
+              onValueChange={setOnlyUnfinished}
+            />
+          </View>
         </View>
+
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={() => loadData(false)}
+              enabled={isOnline}
+              tintColor={COLORS.mainPurple}
+            />
+          }
+        >
+          <View style={styles.list}>
+            {groupedForDisplay.map(group => (
+              <View key={group.module.key}>
+                <Text style={styles.sectionHeader}>
+                  {group.module.title} ({group.module.lessonCount} lessons)
+                </Text>
+                {group.lessons.map(lesson => renderLessonRow(lesson))}
+              </View>
+            ))}
+            {displayedLessons.length === 0 && (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyTitle}>{t('learnV3.noLessonsFound')}</Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
       </View>
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={() => loadData(false)}
-            enabled={isOnline}
-            tintColor={COLORS.mainPurple}
-          />
-        }
-      >
-        <View style={styles.list}>
-          {groupedForDisplay.map(group => (
-            <View key={group.module.key}>
-              <Text style={styles.sectionHeader}>
-                {group.module.title} ({group.module.lessonCount} lessons)
-              </Text>
-              {group.lessons.map(lesson => renderLessonRow(lesson))}
-            </View>
-          ))}
-          {displayedLessons.length === 0 && (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>{t('learnV3.noLessonsFound')}</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
 
       <Modal visible={showModuleModal} transparent animationType="fade" onRequestClose={() => setShowModuleModal(false)}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowModuleModal(false)}>
@@ -418,6 +489,52 @@ export const LearnScreen_v3: React.FC = () => {
             </ScrollView>
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      <Modal visible={!!scriptLesson} animationType="slide" onRequestClose={() => setScriptLesson(null)}>
+        <View style={[styles.scriptModalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+          <View style={styles.scriptModalHeader}>
+            <TouchableOpacity
+              onPress={() => setScriptLesson(null)}
+              style={styles.scriptModalClose}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="chevron-back" size={24} color={COLORS.textDark} />
+            </TouchableOpacity>
+          </View>
+          {scriptLoading ? (
+            <View style={styles.scriptModalLoading}>
+              <ActivityIndicator size="large" color={COLORS.mainPurple} />
+            </View>
+          ) : (
+            <ScrollView contentContainerStyle={styles.scriptModalScrollContent} showsVerticalScrollIndicator={false}>
+              {scriptLesson && (
+                <View style={styles.scriptArticleHeader}>
+                  <View
+                    style={[
+                      styles.scriptEyebrow,
+                      { backgroundColor: moduleByKey.get(scriptLesson.module)?.backgroundColor ?? COLORS.cardPurple },
+                    ]}
+                  >
+                    <Text style={styles.scriptEyebrowText}>
+                      {moduleByKey.get(scriptLesson.module)?.title ?? 'Lesson'}
+                    </Text>
+                  </View>
+                  <Text style={styles.scriptArticleTitle}>{scriptLesson.title}</Text>
+                  <Text style={styles.scriptArticleMeta}>
+                    Day {scriptLesson.dayNumber} · {formatDuration(scriptLesson.durationSeconds)}
+                  </Text>
+                  <View style={styles.scriptDivider} />
+                </View>
+              )}
+              {scriptParagraphs.map((paragraph, i) => (
+                <Text key={i} style={[styles.scriptParagraph, i === 0 && styles.scriptParagraphLede]}>
+                  {paragraph}
+                </Text>
+              ))}
+            </ScrollView>
+          )}
+        </View>
       </Modal>
 
       {playingLesson && (
@@ -472,7 +589,7 @@ export const LearnScreen_v3: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFFFFF' },
+  screen: { flex: 1, backgroundColor: '#F6F7FB' },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 40 },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF' },
@@ -480,7 +597,7 @@ const styles = StyleSheet.create({
   coverBand: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F6F7FB',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
@@ -495,22 +612,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   coverTitle: {
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.bold,
     fontSize: 18,
     fontWeight: '700',
     color: COLORS.textDark,
     lineHeight: 24,
   },
   coverSubtitle: {
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.bold,
     fontSize: 13,
-    color: '#9CA3AF',
+    color: COLORS.textDark,
     marginTop: 6,
   },
 
   progressCard: {
-    backgroundColor: '#F5F5F5',
-    marginHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 10,
     marginTop: 4,
     borderRadius: 16,
     padding: 16,
@@ -560,27 +677,50 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   continueLine: {
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.bold,
     fontSize: 12,
-    color: '#9CA3AF',
+    color: COLORS.mainPurple,
+    backgroundColor: COLORS.cardPurple,
     marginTop: 10,
+    paddingHorizontal: 5,
+    paddingVertical: 6,
+    borderRadius: 8,
+    overflow: 'hidden',
+    alignSelf: 'flex-start',
   },
 
+  playlistCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 10,
+    marginTop: 16,
+    marginBottom: -20,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
   filterRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    marginTop: 20,
+    paddingBottom: 12,
     marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
     gap: 8,
   },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#F3F4F6',
+    //backgroundColor: '#F3F4F6',
     borderRadius: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 0,
     paddingVertical: 8,
     maxWidth: 130,
   },
@@ -601,10 +741,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textDark,
   },
+  unfinishedSwitch: {
+    transform: [{ scale: 0.5 }],
+    // transform doesn't shrink the reserved layout box — pull the leftover
+    // space in so the toggle sits close to its label instead of floating.
+    marginVertical: -6,
+    marginHorizontal: -8,
+  },
 
   list: {
     marginTop: 8,
-    paddingHorizontal: 16,
   },
   sectionHeader: {
     fontFamily: FONTS.bold,
@@ -614,26 +760,48 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   row: {
-    paddingVertical: 14,
+    position: 'relative',
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
+  },
+  lastLearntBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: COLORS.cardPurple,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 5,
+    //marginBottom:3,
+  },
+  lastLearntBadgeText: {
+    fontFamily: FONTS.bold,
+    fontSize: 12,
+    color: COLORS.mainPurple,
   },
   rowTitleTouchable: {
     width: '100%',
     paddingVertical: 8,
     marginVertical: -8,
   },
+  // The "Last viewed" badge sits absolutely above this row's top edge —
+  // nudge the title down so there's a clean 2px gap instead of overlapping.
+  rowTitleTouchableLastLearnt: {
+    marginTop: 0,
+  },
   rowTitle: {
     fontFamily: FONTS.semiBold,
     fontSize: 14,
     color: COLORS.textDark,
-    lineHeight: 14,
+    lineHeight: 18,
+    //marginTop:3,
   },
   rowTitlePlaying: {
     color: COLORS.mainPurple,
   },
   rowTitleCompleted: {
-    color: '#9CA3AF',
+    color: '#8B8F9A',
   },
   rowMetaRow: {
     flexDirection: 'row',
@@ -641,10 +809,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 0,
   },
+  rowActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  readButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+  },
+  readButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: COLORS.textDark,
+  },
   rowDuration: {
     fontFamily: FONTS.regular,
     fontSize: 12,
     color: '#9CA3AF',
+  },
+  rowDurationCompleted: {
+    color: '#8B8F9A',
   },
   playCircle: {
     width: 28,
@@ -654,7 +841,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 20,
-    marginTop: 5,
   },
 
   emptyState: {
@@ -692,7 +878,7 @@ const styles = StyleSheet.create({
   modalOptionText: {
     fontFamily: FONTS.regular,
     fontSize: 15,
-    color: COLORS.textDark,
+    color: '#687087',
   },
   modalOptionTextDisabled: {
     color: '#BBBBBB',
@@ -751,5 +937,79 @@ const styles = StyleSheet.create({
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  scriptModalContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  scriptModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  scriptModalClose: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scriptModalLoading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scriptModalScrollContent: {
+    paddingTop: 8,
+    paddingBottom: 40,
+    paddingHorizontal: 28,
+  },
+  scriptArticleHeader: {
+    marginBottom: 8,
+  },
+  scriptEyebrow: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 14,
+  },
+  scriptEyebrowText: {
+    fontFamily: FONTS.bold,
+    fontSize: 12,
+    color: COLORS.textDark,
+  },
+  scriptArticleTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 25,
+    lineHeight: 33,
+    color: LESSON_TEXT_DARK,
+    marginBottom: 10,
+  },
+  scriptArticleMeta: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: LESSON_TEXT_GREY,
+    marginBottom: 22,
+  },
+  scriptDivider: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginBottom: 22,
+  },
+  scriptParagraph: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    lineHeight: 27,
+    color: LESSON_TEXT_DARK,
+    marginBottom: 20,
+  },
+  scriptParagraphLede: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 17,
+    lineHeight: 28,
   },
 });
