@@ -342,3 +342,25 @@ Admin portal → Partners → **Edit** → update the specific plan's discount b
 ### Check usage
 
 Partners table shows redemptions (signup count) vs cap, and user count (those who completed checkout). The gap between the two is users who signed up but haven't subscribed yet.
+
+---
+
+## Pending decisions
+
+### Partner users silently losing their offer via mobile IAP
+
+**Problem:** if a partner user skips checkout on web and later subscribes from the mobile app instead, they get RevenueCat's standard App Store/Play pricing and trial — the partner's discount and custom trial length are silently lost, not just deferred (see "If a partner user skips the subscription step" above). Today the mobile app has no way to even detect this case: `GET /api/auth/me` (`server/routes/auth.cjs:558-583`) doesn't select `partnerId`, and the shared `User` type (`packages/nora-core/src/types/index.ts:21-50`) doesn't have a `partnerId`/`partner` field either — so `nora-mobile/src/screens/onboarding/SubscriptionScreen.tsx` can't tell a partner user apart from a self-serve one before showing the generic RevenueCat paywall.
+
+**Industry-standard fix:** don't try to replicate the Stripe coupon/trial inside RevenueCat (that requires App Store Promotional Offers / Play offer codes — signed per-product offers generated server-side, real ongoing engineering). Instead, gate the in-app purchase button for partner-attributed users who haven't completed web checkout and redirect them back to finish it there, which is the standard way sponsored/enterprise subscriptions are handled outside platform IAP.
+
+**Where the gate would go (traced, not yet implemented):**
+1. `server/routes/auth.cjs:558-583` — add `partnerId` (and a `partner: { slug, name }` include) to the `/api/auth/me` select.
+2. `packages/nora-core/src/types/index.ts:21-50` — add `partnerId`/`partner` to the `User` type; also fix `subscriptionSource`'s type union, which is missing the `'partner'` literal that `auth.cjs:140` actually assigns at signup.
+3. `nora-mobile/src/screens/onboarding/SubscriptionScreen.tsx:93-104` — in the `else` branch (currently just `setCheckingFreeAccount(false)`, falling through to the standard paywall), branch on `partnerId` set + `subscriptionSource !== 'stripe'` to show a different state instead.
+4. `nora-mobile/src/screens/ProfileScreen.tsx:120-148` (`loadProfile`) — same field-whitelisting pattern; would need the same fields added if the Profile tab should also reflect a pending partner offer.
+
+**Scope options, not yet decided:**
+- **Scoped-down:** keep the same detection, but just block/warn on the existing paywall (e.g. an `Alert` plus a link out to web signup) rather than build a bespoke screen. Minimal effort.
+- **Full treatment:** replace the paywall with a dedicated partner-offer view (partner name/branding, actual discount/trial pulled from `GET /api/partner/validate/:slug`, custom copy). More design/engineering work for what's likely a small volume of users.
+
+No implementation has started on this — flagging so it isn't forgotten before a partner user actually hits it in practice.
