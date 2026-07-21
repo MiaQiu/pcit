@@ -178,6 +178,13 @@ Partner users go through the **same Stripe checkout** as self-serve users. After
 
 `User.partnerId` is informational — used for attribution/reporting and to look up the discount config at checkout time. It does not gate access independently.
 
+### If a partner user skips the subscription step
+
+Both the web signup flow (`web/src/screens/SubscriptionScreen.tsx`, "Skip for Now") and the mobile onboarding flow (`nora-mobile/src/screens/onboarding/SubscriptionScreen.tsx`, "Continue with free version") let a user proceed without ever calling Stripe/RevenueCat. `subscriptionStatus` stays `INACTIVE` (its default at signup, `server/routes/auth.cjs:142`), so `isSubscribed` is `false` — a skipped partner user is not distinguishable from a skipped self-serve user.
+
+- **Partner attribution is not lost.** `partnerId` and the redemption count are written at signup time regardless of whether checkout happens (`auth.cjs:150`; see "Redemption counter" note above). The partner's `trialDays`/discount config is read from `user.partner.config` at checkout time (`server/routes/stripe.cjs:107,138,140`), so the partner's offer is still honored whenever the user eventually does subscribe — skipping only defers it, it doesn't forfeit it.
+- **Mobile falls back to the 3-free-session cap.** `RecordScreen.tsx`'s `FREE_SESSIONS_LIMIT = 3` gate is skipped entirely while `isSubscribed` is true, but for a skipped user it applies exactly as it would for a non-partner user. After 3 completed sessions, `RecordScreen` redirects to the same `SubscriptionScreen` (still showing the partner's trial/discount, since that's resolved server-side at checkout, not baked into the redirect). Tapping skip again there just bounces the user straight back — `@nora_free_limit_reached` is cached locally, so the gate re-triggers on the next visit to `RecordScreen` without needing to re-count sessions. The rest of the app (Lessons, Profile, etc.) stays accessible; only recording is blocked.
+
 ---
 
 ## API reference
