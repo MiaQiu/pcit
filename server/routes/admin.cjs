@@ -6,7 +6,7 @@ const { generateAccessToken, verifyAccessToken } = require('../utils/jwt.cjs');
 const { requireAdminAuth } = require('../middleware/adminAuth.cjs');
 const { verifyPassword } = require('../utils/password.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
-const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, uploadLessonContentImage, resolveLessonAudioUrl } = require('../services/storage-s3.cjs');
+const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo, uploadBrandingImage, resolveLessonAudioUrl } = require('../services/storage-s3.cjs');
 const { processRecordingWithRetry } = require('../services/processingService.cjs');
 const { transcribeLessonNarration } = require('../services/transcriptionService.cjs');
 
@@ -34,6 +34,15 @@ const lessonAudioUploadMiddleware = multer({
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith('audio/')) cb(null, true);
     else cb(new Error('Only audio files are allowed'));
+  },
+});
+
+const lessonContentVideoUploadMiddleware = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('video/')) cb(null, true);
+    else cb(new Error('Only video files are allowed'));
   },
 });
 
@@ -776,6 +785,31 @@ router.post('/lessons/:id/content-image', requireAdminAuth, uploadMiddleware.sin
   } catch (error) {
     console.error('Admin lesson content-image upload error:', error);
     res.status(500).json({ error: error.message || 'Failed to upload image' });
+  }
+});
+
+/**
+ * POST /api/admin/lessons/:id/content-video
+ * Upload a video to embed inline in the Lesson Content textarea (between
+ * paragraphs). Same shape as content-image — doesn't touch any lesson field,
+ * the admin inserts the returned marker into contentV2 text themselves.
+ */
+router.post('/lessons/:id/content-video', requireAdminAuth, lessonContentVideoUploadMiddleware.single('video'), async (req, res) => {
+  try {
+    const lessonId = req.params.id;
+
+    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+    if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
+
+    if (!req.file) return res.status(400).json({ error: 'No video file provided' });
+
+    const ext = (req.file.originalname.split('.').pop() || 'mp4').toLowerCase();
+    const key = await uploadLessonContentVideo(req.file.buffer, lessonId, ext);
+
+    res.json({ key, marker: `![video](${key})`, url: await resolveLessonAudioUrl(key) });
+  } catch (error) {
+    console.error('Admin lesson content-video upload error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload video' });
   }
 });
 
@@ -1579,6 +1613,106 @@ router.put('/settings/report-visibility', requireAdminAuth, async (req, res) => 
   } catch (error) {
     console.error('Admin update report visibility error:', error);
     res.status(500).json({ error: 'Failed to update report visibility settings' });
+  }
+});
+
+const BRANDING_IMAGES_KEY = 'branding-images';
+// Maps a slot param to the AppConfig field it fills and the mobile screen it drives.
+const BRANDING_IMAGE_SLOTS = {
+  'learn-cover': 'learnCoverKey',   // LearnScreen_v3 cover band image
+  'lesson-viewer': 'lessonViewerKey', // LessonViewerScreen_v2 identity-row image
+};
+
+// Shared shape returned by all three branding-images endpoints below (and by
+// the mobile-facing GET /api/lessons/branding-images). null fields mean "use
+// the bundled default" (images) or "use the i18n default copy" (title/subtitle).
+async function buildBrandingResponse(value) {
+  const [learnCoverUrl, lessonViewerUrl] = await Promise.all([
+    resolveLessonAudioUrl(value.learnCoverKey || null),
+    resolveLessonAudioUrl(value.lessonViewerKey || null),
+  ]);
+  return {
+    learnCoverUrl,
+    lessonViewerUrl,
+    learnTitle: value.learnTitle || null,
+    learnSubtitle: value.learnSubtitle || null,
+  };
+}
+
+/**
+ * GET /api/admin/settings/branding-images
+ * Get the current Learn tab / lesson viewer branding image URLs (resolved,
+ * presigned) plus the Learn tab header title/subtitle. null means "use the
+ * bundled/i18n default".
+ */
+router.get('/settings/branding-images', requireAdminAuth, async (req, res) => {
+  try {
+    const config = await prisma.appConfig.findUnique({ where: { key: BRANDING_IMAGES_KEY } });
+    res.json(await buildBrandingResponse(config?.value || {}));
+  } catch (error) {
+    console.error('Admin get branding images error:', error);
+    res.status(500).json({ error: 'Failed to fetch branding images' });
+  }
+});
+
+/**
+ * POST /api/admin/settings/branding-images/:slot
+ * Upload a replacement for one branding image slot ('learn-cover' or
+ * 'lesson-viewer') and save its key to AppConfig in one request.
+ */
+router.post('/settings/branding-images/:slot', requireAdminAuth, uploadMiddleware.single('image'), async (req, res) => {
+  try {
+    const { slot } = req.params;
+    const field = BRANDING_IMAGE_SLOTS[slot];
+    if (!field) return res.status(400).json({ error: `Unknown branding image slot: ${slot}` });
+
+    if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+
+    const ext = (req.file.originalname.split('.').pop() || 'jpg').toLowerCase();
+    const key = await uploadBrandingImage(req.file.buffer, slot, ext);
+
+    const existing = await prisma.appConfig.findUnique({ where: { key: BRANDING_IMAGES_KEY } });
+    const value = { ...(existing?.value || {}), [field]: key };
+
+    await prisma.appConfig.upsert({
+      where: { key: BRANDING_IMAGES_KEY },
+      update: { value },
+      create: { key: BRANDING_IMAGES_KEY, value },
+    });
+
+    res.json(await buildBrandingResponse(value));
+  } catch (error) {
+    console.error('Admin upload branding image error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload branding image' });
+  }
+});
+
+/**
+ * PUT /api/admin/settings/learn-header
+ * Update the Learn tab cover band's title/subtitle text. Empty string clears
+ * back to the i18n default (stored as null, not '').
+ */
+router.put('/settings/learn-header', requireAdminAuth, async (req, res) => {
+  try {
+    const { title, subtitle } = req.body;
+
+    const existing = await prisma.appConfig.findUnique({ where: { key: BRANDING_IMAGES_KEY } });
+    const value = {
+      ...(existing?.value || {}),
+      learnTitle: title?.trim() || null,
+      learnSubtitle: subtitle?.trim() || null,
+    };
+
+    await prisma.appConfig.upsert({
+      where: { key: BRANDING_IMAGES_KEY },
+      update: { value },
+      create: { key: BRANDING_IMAGES_KEY, value },
+    });
+
+    res.json(await buildBrandingResponse(value));
+  } catch (error) {
+    console.error('Admin update learn header error:', error);
+    res.status(500).json({ error: error.message || 'Failed to update learn header' });
   }
 });
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getLesson, updateLessonContentV2, uploadLessonAudio, uploadLessonContentImage } from '../api/adminApi';
+import { getLesson, updateLessonContentV2, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo } from '../api/adminApi';
 import { handleBoldShortcut, insertTextareaMarker } from '../utils/textFormatting';
 
 export default function LessonContentV2EditorPage() {
@@ -16,10 +16,13 @@ export default function LessonContentV2EditorPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -104,6 +107,23 @@ export default function LessonContentV2EditorPage() {
     } finally {
       setUploadingImage(false);
       if (imageInputRef.current) imageInputRef.current.value = '';
+    }
+  };
+
+  const handleVideoInsert = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+
+    setVideoUploadError(null);
+    setUploadingVideo(true);
+    try {
+      const { marker } = await uploadLessonContentVideo(id, file);
+      applyMarker({ before: `\n\n${marker}\n\n` });
+    } catch (err: any) {
+      setVideoUploadError(err.message || 'Video upload failed');
+    } finally {
+      setUploadingVideo(false);
+      if (videoInputRef.current) videoInputRef.current.value = '';
     }
   };
 
@@ -195,10 +215,26 @@ export default function LessonContentV2EditorPage() {
           >
             {uploadingImage ? 'Uploading image…' : 'Insert Image'}
           </button>
+          <input
+            ref={videoInputRef}
+            type="file"
+            accept="video/*"
+            style={{ display: 'none' }}
+            onChange={handleVideoInsert}
+          />
+          <button
+            type="button"
+            className="btn-secondary-sm"
+            onClick={() => videoInputRef.current?.click()}
+            disabled={uploadingVideo}
+          >
+            {uploadingVideo ? 'Uploading video…' : 'Insert Video'}
+          </button>
         </div>
         {imageUploadError && <p style={{ color: '#ef4444', fontSize: 13, margin: '0 0 8px' }}>{imageUploadError}</p>}
+        {videoUploadError && <p style={{ color: '#ef4444', fontSize: 13, margin: '0 0 8px' }}>{videoUploadError}</p>}
         <p style={{ fontSize: 12, color: '#9ca3af', margin: '0 0 8px' }}>
-          Inserts an image marker at the cursor, on its own paragraph. Move the <code>![](...)</code> line to reposition it.
+          Inserts an image/video marker at the cursor, on its own paragraph. Move the <code>![](...)</code> / <code>![video](...)</code> line to reposition it.
         </p>
         <div className="form-group">
           <textarea

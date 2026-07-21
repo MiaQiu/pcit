@@ -429,7 +429,7 @@ async function resolveDragonImageUrl(value) {
   if (value.startsWith('mock://')) return value;
 
   // Bare S3 key
-  if (value.startsWith('lessons/')) {
+  if (value.startsWith('lessons/') || value.startsWith('branding/')) {
     console.log(`[lesson-image] resolving bare key: ${value}`);
     return getPresignedReadUrl(value);
   }
@@ -438,7 +438,7 @@ async function resolveDragonImageUrl(value) {
   if (value.startsWith('https://') && value.includes('.amazonaws.com/')) {
     const key = value.replace(/^https:\/\/[^/]+\//, '');
     console.log(`[lesson-image] resolving full S3 URL, extracted key: ${key}`);
-    if (key.startsWith('lessons/')) {
+    if (key.startsWith('lessons/') || key.startsWith('branding/')) {
       // Always re-sign with current bucket regardless of source bucket (handles dev→prod syncs)
       return getPresignedReadUrl(key);
     }
@@ -499,6 +499,42 @@ async function uploadLessonImage(fileBuffer, lessonId, extension = 'jpg') {
   const publicUrl = `https://${bucketName}.s3.${AWS_REGION}.amazonaws.com/${key}`;
   console.log(`Lesson image uploaded to S3: ${key}`);
   return publicUrl;
+}
+
+/**
+ * Upload a global branding image (e.g. the Learn tab cover / lesson viewer
+ * identity image) to a fixed per-slot key — one image per slot, overwritten
+ * on re-upload, same fixed-key pattern as uploadLessonImage's dragonImageUrl.
+ * Bucket is private — read via resolveDragonImageUrl (handles `branding/` keys).
+ * @param {Buffer} fileBuffer
+ * @param {string} slot - identifies which branding image, e.g. 'learn-cover'
+ * @param {string} extension - e.g. 'jpg', 'png', 'webp'
+ * @returns {Promise<string>} - S3 key (not a full URL)
+ */
+async function uploadBrandingImage(fileBuffer, slot, extension = 'jpg') {
+  const key = `branding/${slot}.${extension}`;
+
+  if (!S3_ENABLED || !s3Client) {
+    console.warn('S3 not configured, using mock storage path for branding image');
+    return `mock://${key}`;
+  }
+
+  const contentTypeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
+  const contentType = contentTypeMap[extension.toLowerCase()] || 'image/jpeg';
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: contentType,
+    Metadata: { slot, uploadedAt: new Date().toISOString() },
+    ServerSideEncryption: 'AES256',
+  });
+
+  await s3Client.send(command);
+
+  console.log(`Branding image uploaded to S3: ${key}`);
+  return key;
 }
 
 /**
@@ -570,26 +606,62 @@ async function uploadLessonContentImage(fileBuffer, lessonId, extension = 'jpg')
   return key;
 }
 
-// Matches markdown-style image markers embedded in contentV2, e.g. ![](lessons/WELCOME-1/content-images/abc.jpg)
-const CONTENT_IMAGE_MARKER = /!\[\]\(([^)]+)\)/g;
+/**
+ * Upload a video to embed inline within Lesson.contentV2 (between paragraphs).
+ * Same shape as uploadLessonContentImage — a lesson can have many, so each
+ * gets its own unique key under a content-videos/ subfolder.
+ * @param {Buffer} fileBuffer
+ * @param {string} lessonId
+ * @param {string} extension - e.g. 'mp4', 'mov', 'webm'
+ * @returns {Promise<string>} - S3 key (not a full URL — resolve via resolveContentMediaUrls)
+ */
+async function uploadLessonContentVideo(fileBuffer, lessonId, extension = 'mp4') {
+  const key = `lessons/${lessonId}/content-videos/${crypto.randomUUID()}.${extension}`;
+
+  if (!S3_ENABLED || !s3Client) {
+    console.warn('S3 not configured, using mock storage path for lesson content video');
+    return `mock://${key}`;
+  }
+
+  const contentTypeMap = { mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', m4v: 'video/x-m4v' };
+  const contentType = contentTypeMap[extension.toLowerCase()] || 'video/mp4';
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: contentType,
+    Metadata: { lessonId, uploadedAt: new Date().toISOString() },
+    ServerSideEncryption: 'AES256',
+  });
+
+  await s3Client.send(command);
+
+  console.log(`Lesson content video uploaded to S3: ${key}`);
+  return key;
+}
+
+// Matches markdown-style image/video markers embedded in contentV2, e.g.
+// ![](lessons/WELCOME-1/content-images/abc.jpg) or ![video](lessons/.../content-videos/abc.mp4)
+const CONTENT_MEDIA_MARKER = /!\[(video)?\]\(([^)]+)\)/g;
 
 /**
- * Replace every embedded content-image key in a contentV2 string with a
- * presigned, readable URL. Keys are stored raw (like audioUrl/dragonImageUrl)
- * since the bucket is private and a presigned URL saved into the text would
- * eventually expire.
+ * Replace every embedded content-image/content-video key in a contentV2
+ * string with a presigned, readable URL. Keys are stored raw (like
+ * audioUrl/dragonImageUrl) since the bucket is private and a presigned URL
+ * saved into the text would eventually expire.
  * @param {string|null} text
  * @returns {Promise<string|null>}
  */
-async function resolveContentImageUrls(text) {
-  if (!text || !text.includes('![](')) return text;
+async function resolveContentMediaUrls(text) {
+  if (!text || !text.includes('![')) return text;
 
-  const keys = [...text.matchAll(CONTENT_IMAGE_MARKER)].map(m => m[1]);
+  const keys = [...text.matchAll(CONTENT_MEDIA_MARKER)].map(m => m[2]);
   const uniqueKeys = [...new Set(keys)];
   const resolved = await Promise.all(uniqueKeys.map(key => resolveDragonImageUrl(key)));
   const urlByKey = Object.fromEntries(uniqueKeys.map((key, i) => [key, resolved[i]]));
 
-  return text.replace(CONTENT_IMAGE_MARKER, (match, key) => `![](${urlByKey[key] ?? key})`);
+  return text.replace(CONTENT_MEDIA_MARKER, (match, tag, key) => `![${tag || ''}](${urlByKey[key] ?? key})`);
 }
 
 module.exports = {
@@ -604,8 +676,10 @@ module.exports = {
   uploadLessonImage,
   uploadLessonAudio,
   uploadLessonContentImage,
+  uploadLessonContentVideo,
+  uploadBrandingImage,
   resolveDragonImageUrl,
   resolveLessonAudioUrl,
-  resolveContentImageUrls,
+  resolveContentMediaUrls,
   isS3Enabled
 };

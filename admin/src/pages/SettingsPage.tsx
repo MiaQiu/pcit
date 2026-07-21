@@ -1,8 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   getReportVisibility,
   updateReportVisibility,
   ReportVisibility,
+  getBrandingImages,
+  uploadBrandingImage,
+  BrandingImages,
+  BrandingImageSlot,
 } from '../api/adminApi';
 
 export default function SettingsPage() {
@@ -15,8 +19,20 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  const [branding, setBranding] = useState<BrandingImages>({
+    learnCoverUrl: null,
+    lessonViewerUrl: null,
+    learnTitle: null,
+    learnSubtitle: null,
+  });
+  const [uploadingSlot, setUploadingSlot] = useState<BrandingImageSlot | null>(null);
+  const [brandingError, setBrandingError] = useState<string | null>(null);
+  const learnCoverInputRef = useRef<HTMLInputElement>(null);
+  const lessonViewerInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     loadSettings();
+    loadBranding();
   }, []);
 
   const loadSettings = async () => {
@@ -27,6 +43,31 @@ export default function SettingsPage() {
       console.error('Failed to load settings:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadBranding = async () => {
+    try {
+      setBranding(await getBrandingImages());
+    } catch (err) {
+      console.error('Failed to load branding images:', err);
+    }
+  };
+
+  const handleBrandingUpload = async (slot: BrandingImageSlot, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setBrandingError(null);
+    setUploadingSlot(slot);
+    try {
+      setBranding(await uploadBrandingImage(slot, file));
+    } catch (err: any) {
+      setBrandingError(err.message || 'Upload failed');
+    } finally {
+      setUploadingSlot(null);
+      const ref = slot === 'learn-cover' ? learnCoverInputRef : lessonViewerInputRef;
+      if (ref.current) ref.current.value = '';
     }
   };
 
@@ -63,6 +104,44 @@ export default function SettingsPage() {
         <div>
           <h1>Settings</h1>
           <p className="page-subtitle">Configure app-wide settings</p>
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <h2>Branding Images</h2>
+        <p className="settings-description">
+          Images shown in the mobile app's Learn tab cover band and the lesson viewer's identity row. Leave unset to use the bundled default.
+        </p>
+
+        {brandingError && <p style={{ color: '#ef4444', fontSize: 13, margin: '0 0 12px' }}>{brandingError}</p>}
+
+        <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+          {([
+            { slot: 'learn-cover' as const, label: 'Learn Tab Cover Image', url: branding.learnCoverUrl, ref: learnCoverInputRef },
+            { slot: 'lesson-viewer' as const, label: 'Lesson Viewer Identity Image', url: branding.lessonViewerUrl, ref: lessonViewerInputRef },
+          ]).map(({ slot, label, url, ref }) => (
+            <div key={slot} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span className="settings-toggle-label">{label}</span>
+              {url && !url.startsWith('mock://') && (
+                <img src={url} alt={label} style={{ width: 140, height: 140, objectFit: 'cover', borderRadius: 12 }} />
+              )}
+              <input
+                ref={ref}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={(e) => handleBrandingUpload(slot, e)}
+              />
+              <button
+                type="button"
+                className="btn-secondary-sm"
+                onClick={() => ref.current?.click()}
+                disabled={uploadingSlot === slot}
+              >
+                {uploadingSlot === slot ? 'Uploading…' : url ? 'Replace' : 'Upload'}
+              </button>
+            </div>
+          ))}
         </div>
       </div>
 

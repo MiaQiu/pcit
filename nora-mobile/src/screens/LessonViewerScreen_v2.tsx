@@ -23,6 +23,10 @@ import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import amplitudeService from '../services/amplitudeService';
 
+// Admin-configurable via Settings → Branding in the admin portal; falls back
+// to this bundled asset when no custom image has been uploaded.
+const DEFAULT_IDENTITY_IMAGE = require('../../assets/images/prof_chen.png');
+
 interface LessonViewerScreenV2Props {
   route: {
     params: {
@@ -53,7 +57,15 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
   const [playlistLessons, setPlaylistLessons] = useState<LessonCardData[]>([]);
   const [playlistModules, setPlaylistModules] = useState<PlaylistModule[]>([]);
   const [contentHeight, setContentHeight] = useState(0);
+  const [identityImageUrl, setIdentityImageUrl] = useState<string | null>(null);
   const isFirstLoad = useRef(true);
+
+  useEffect(() => {
+    lessonService.getBrandingImages()
+      .then(({ lessonViewerUrl }) => setIdentityImageUrl(lessonViewerUrl))
+      .catch((err) => console.error('Failed to load branding images:', err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -199,7 +211,7 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
         </View>
 
         <View style={styles.identityRow}>
-          <Image source={require('../../assets/images/prof_chen.png')} style={styles.identityImage} resizeMode="cover" />
+          <Image source={identityImageUrl ? { uri: identityImageUrl } : DEFAULT_IDENTITY_IMAGE} style={styles.identityImage} resizeMode="cover" />
           <View style={styles.identityTextColumn}>
             <Text style={styles.identityTitle} numberOfLines={2}>
               Day {lesson.dayNumber} · {lesson.title}

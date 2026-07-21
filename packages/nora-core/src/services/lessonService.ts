@@ -14,6 +14,7 @@ import type {
   SubmitTextInputRequest,
   SubmitTextInputResponse,
   TextInputResponse,
+  BrandingImagesResponse,
 } from '../types';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 import type AuthService from './authService';
@@ -76,6 +77,32 @@ class LessonService {
       const error = await response.json().catch(() => ({}));
       throw new ApiError(
         error.error || 'Failed to fetch modules',
+        response.status,
+        response.statusText,
+        error.code
+      );
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get the admin-configurable Learn tab / lesson viewer branding images.
+   * Either field is null when the admin hasn't set a custom one — callers
+   * fall back to the bundled default asset in that case.
+   */
+  async getBrandingImages(): Promise<BrandingImagesResponse> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/lessons/branding-images`,
+      {
+        method: 'GET',
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new ApiError(
+        error.error || 'Failed to fetch branding images',
         response.status,
         response.statusText,
         error.code

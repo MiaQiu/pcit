@@ -419,6 +419,16 @@ export interface LearningStatsResponse {
   streak: number;
 }
 
+// Admin-configurable Learn tab / lesson viewer branding images. Either field
+// is null when the admin hasn't set a custom one — callers fall back to the
+// bundled default asset in that case.
+export interface BrandingImagesResponse {
+  learnCoverUrl: string | null;
+  lessonViewerUrl: string | null;
+  learnTitle: string | null;
+  learnSubtitle: string | null;
+}
+
 // ============================================================================
 // TEXT INPUT TYPES
 // Interactive text input segments with AI evaluation

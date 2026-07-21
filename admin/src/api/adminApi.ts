@@ -328,6 +328,28 @@ export async function uploadLessonContentImage(id: string, file: File): Promise<
   return res.json();
 }
 
+export interface UploadLessonContentVideoResult {
+  key: string;
+  marker: string;
+  url: string;
+}
+
+export async function uploadLessonContentVideo(id: string, file: File): Promise<UploadLessonContentVideoResult> {
+  const token = (await import('./client')).getToken();
+  const form = new FormData();
+  form.append('video', file);
+  const res = await fetch(`/api/admin/lessons/${id}/content-video`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Upload failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 // ---- Modules ----
 
 export async function getModules(): Promise<ModuleSummary[]> {
@@ -525,6 +547,42 @@ export async function updateReportVisibility(
   return apiFetch<ReportVisibility>('/api/admin/settings/report-visibility', {
     method: 'PUT',
     body: JSON.stringify(visibility),
+  });
+}
+
+export interface BrandingImages {
+  learnCoverUrl: string | null;
+  lessonViewerUrl: string | null;
+  learnTitle: string | null;
+  learnSubtitle: string | null;
+}
+
+export type BrandingImageSlot = 'learn-cover' | 'lesson-viewer';
+
+export async function getBrandingImages(): Promise<BrandingImages> {
+  return apiFetch<BrandingImages>('/api/admin/settings/branding-images');
+}
+
+export async function uploadBrandingImage(slot: BrandingImageSlot, file: File): Promise<BrandingImages> {
+  const token = (await import('./client')).getToken();
+  const form = new FormData();
+  form.append('image', file);
+  const res = await fetch(`/api/admin/settings/branding-images/${slot}`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Upload failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function updateLearnHeader(title: string, subtitle: string): Promise<BrandingImages> {
+  return apiFetch<BrandingImages>('/api/admin/settings/learn-header', {
+    method: 'PUT',
+    body: JSON.stringify({ title, subtitle }),
   });
 }
 

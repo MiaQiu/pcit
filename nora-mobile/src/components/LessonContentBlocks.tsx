@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import { Video, ResizeMode } from 'expo-av';
 import { FONTS } from '../constants/assets';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import type { ContentBlock } from '../utils/formatLessonContentV2';
@@ -25,6 +26,19 @@ export const LessonContentBlocks: React.FC<LessonContentBlocksProps> = ({ blocks
           return (
             <View key={i} style={styles.imageRow}>
               <Image source={{ uri: block.url }} style={styles.contentImage} resizeMode="cover" />
+            </View>
+          );
+        }
+        if (block.type === 'video') {
+          return (
+            <View key={i} style={styles.imageRow}>
+              <Video
+                source={{ uri: block.url }}
+                style={styles.contentImage}
+                resizeMode={ResizeMode.CONTAIN}
+                useNativeControls
+                shouldPlay={false}
+              />
             </View>
           );
         }

@@ -40,20 +40,24 @@ import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerCol
 import { LessonContentBlocks } from '../components/LessonContentBlocks';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 
+// Admin-configurable via Settings → Branding in the admin portal; falls back
+// to this bundled asset when no custom image has been uploaded.
+const DEFAULT_COVER_IMAGE = require('../../assets/images/prof_chen.png');
+
 const lastViewedMillis = (l: LessonCardData) =>
   l.progress?.lastViewedAt ? new Date(l.progress.lastViewedAt).getTime() : 0;
 
 // The Read modal renders contentV2 through the same formatLessonContentV2 +
-// LessonContentBlocks pipeline used elsewhere, so **bold**/"* " bullets/images
-// set in the admin editor actually render instead of showing as plain text.
-// The one gap that pipeline doesn't cover: a lesson whose contentV2 is a raw,
-// not-yet-formatted transcript (no paragraph breaks, no bold, no bullets, no
-// images — i.e. nothing for the parser to key off) comes back as one giant
-// paragraph. Only THAT case falls back to grouping sentences so it isn't a
-// wall of text.
+// LessonContentBlocks pipeline used elsewhere, so **bold**/"* " bullets/images/
+// videos set in the admin editor actually render instead of showing as plain
+// text. The one gap that pipeline doesn't cover: a lesson whose contentV2 is
+// a raw, not-yet-formatted transcript (no paragraph breaks, no bold, no
+// bullets, no media — i.e. nothing for the parser to key off) comes back as
+// one giant paragraph. Only THAT case falls back to grouping sentences so it
+// isn't a wall of text.
 const SENTENCES_PER_FALLBACK_PARAGRAPH = 7;
 const isUnformattedBlob = (text: string): boolean =>
-  !/\n\s*\n/.test(text) && !/\*\*/.test(text) && !/^\* /m.test(text) && !/!\[\]\(/.test(text);
+  !/\n\s*\n/.test(text) && !/\*\*/.test(text) && !/^\* /m.test(text) && !/!\[/.test(text);
 const splitIntoSentenceParagraphs = (text: string): string[] => {
   const sentences = text.match(/[^.!?]+[.!?]+(\s+|$)/g) ?? [text];
   const result: string[] = [];
@@ -95,7 +99,25 @@ export const LearnScreen_v3: React.FC = () => {
   const [scriptLesson, setScriptLesson] = useState<LessonCardData | null>(null);
   const [scriptContent, setScriptContent] = useState<string>('');
   const [scriptLoading, setScriptLoading] = useState(false);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [coverTitle, setCoverTitle] = useState<string | null>(null);
+  const [coverSubtitle, setCoverSubtitle] = useState<string | null>(null);
+  // Gates the initial render so the cover band never flashes the bundled
+  // default image/copy before the admin-configured branding loads.
+  const [brandingLoading, setBrandingLoading] = useState(true);
   const player = useLessonPlayer();
+
+  useEffect(() => {
+    lessonService.getBrandingImages()
+      .then(({ learnCoverUrl, learnTitle, learnSubtitle }) => {
+        setCoverImageUrl(learnCoverUrl);
+        setCoverTitle(learnTitle);
+        setCoverSubtitle(learnSubtitle);
+      })
+      .catch((err) => console.error('Failed to load branding images:', err))
+      .finally(() => setBrandingLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const applyData = useCallback((modulesRes: ModuleListResponse, lessonsRes: LessonListResponse) => {
     handleApiSuccess();
@@ -152,9 +174,9 @@ export const LearnScreen_v3: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       amplitudeService.trackScreenView('Learn');
-      if (modules.length > 0) fetchAndSave(i18n.language);
+      fetchAndSave(i18n.language);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [modules.length, i18n.language])
+    }, [i18n.language])
   );
 
   const moduleByKey = useMemo(() => new Map(modules.map(m => [m.key, m])), [modules]);
@@ -293,6 +315,17 @@ export const LearnScreen_v3: React.FC = () => {
     setScriptLesson(lesson);
     setScriptContent('');
     setScriptLoading(true);
+
+    // Reading counts as viewing it — touch lastViewedAt so the "Last viewed"
+    // badge picks it up, same as playing does. Don't set status here if the
+    // lesson is already completed, so reopening a finished lesson to reread
+    // it doesn't flip it back to IN_PROGRESS.
+    const isCompleted = lesson.progress?.status === 'COMPLETED';
+    lessonService
+      .updateProgress(lesson.id, isCompleted ? { currentSegment: 1 } : { currentSegment: 1, status: 'IN_PROGRESS' })
+      .then(() => fetchAndSave(i18n.language))
+      .catch((err) => console.error('Failed to mark lesson as viewed:', err));
+
     try {
       const detail = await lessonService.getLessonDetail(lesson.id, i18n.language);
       setScriptContent(detail.lesson.contentV2 || '');
@@ -374,7 +407,7 @@ export const LearnScreen_v3: React.FC = () => {
     );
   };
 
-  if (loading) {
+  if (loading || brandingLoading) {
     return (
       <SafeAreaView style={styles.loadingWrap}>
         <ActivityIndicator size="large" color={COLORS.mainPurple} />
@@ -385,10 +418,10 @@ export const LearnScreen_v3: React.FC = () => {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.coverBand}>
-        <Image source={require('../../assets/images/prof_chen.png')} style={styles.coverImage} resizeMode="cover" />
+        <Image source={coverImageUrl ? { uri: coverImageUrl } : DEFAULT_COVER_IMAGE} style={styles.coverImage} resizeMode="cover" />
         <View style={styles.coverTextColumn}>
-          <Text style={styles.coverTitle} numberOfLines={2}>{t('learnV3.title')}</Text>
-          <Text style={styles.coverSubtitle} numberOfLines={2}>{t('learnV3.subtitle')}</Text>
+          <Text style={styles.coverTitle} numberOfLines={2}>{coverTitle ?? t('learnV3.title')}</Text>
+          <Text style={styles.coverSubtitle} numberOfLines={2}>{coverSubtitle ?? t('learnV3.subtitle')}</Text>
         </View>
       </View>
 

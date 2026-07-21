@@ -1,15 +1,17 @@
 /**
  * Lightweight parser for LessonViewerScreen_v2 content: **bold**, "* " bullets,
- * ![](url) images on their own line, and blank-line paragraph breaks. Mirrors
- * the authoring convention already used for LessonSegment.bodyText, kept
- * intentionally separate from the segment-card formatter in
- * LessonViewerScreen.tsx (which is coupled to keyword highlighting).
+ * ![](url) images / ![video](url) videos on their own line, and blank-line
+ * paragraph breaks. Mirrors the authoring convention already used for
+ * LessonSegment.bodyText, kept intentionally separate from the segment-card
+ * formatter in LessonViewerScreen.tsx (which is coupled to keyword
+ * highlighting).
  */
 
 export type ContentBlock =
   | { type: 'paragraph'; runs: TextRun[] }
   | { type: 'bullet'; runs: TextRun[] }
-  | { type: 'image'; url: string };
+  | { type: 'image'; url: string }
+  | { type: 'video'; url: string };
 
 export interface TextRun {
   text: string;
@@ -17,6 +19,7 @@ export interface TextRun {
 }
 
 const IMAGE_LINE = /^!\[\]\(([^)]+)\)$/;
+const VIDEO_LINE = /^!\[video\]\(([^)]+)\)$/;
 
 function parseRuns(line: string): TextRun[] {
   const runs: TextRun[] = [];
@@ -54,6 +57,12 @@ export function formatLessonContentV2(content: string): ContentBlock[] {
       flushParagraph();
       continue;
     }
+    const videoMatch = line.match(VIDEO_LINE);
+    if (videoMatch) {
+      flushParagraph();
+      blocks.push({ type: 'video', url: videoMatch[1] });
+      continue;
+    }
     const imageMatch = line.match(IMAGE_LINE);
     if (imageMatch) {
       flushParagraph();
@@ -74,13 +83,14 @@ export function formatLessonContentV2(content: string): ContentBlock[] {
 
 // ---------------------------------------------------------------------------
 // Chunk-level flattening — used by LiveScriptCard's live-highlighting mode so
-// it can show **bold**/bullets/images from contentV2 (the admin-edited source
-// of truth) while still advancing word-by-word during playback. Kept separate
-// from wordTimings, whose word list comes straight from the original audio
-// transcription and can drift from contentV2 once an admin edits the text
-// (removing filler words, changing punctuation, adding images, etc). Image
-// blocks always become their own chunk (no words) so they render in place —
-// and stay visible — instead of being silently dropped by a text-only flatten.
+// it can show **bold**/bullets/images/videos from contentV2 (the admin-edited
+// source of truth) while still advancing word-by-word during playback. Kept
+// separate from wordTimings, whose word list comes straight from the original
+// audio transcription and can drift from contentV2 once an admin edits the
+// text (removing filler words, changing punctuation, adding media, etc).
+// Image/video blocks always become their own chunk (no words) so they render
+// in place — and stay visible — instead of being silently dropped by a
+// text-only flatten.
 // ---------------------------------------------------------------------------
 
 export interface DisplayWord {
@@ -90,7 +100,8 @@ export interface DisplayWord {
 
 export type DisplayChunk =
   | { type: 'sentence'; words: DisplayWord[] }
-  | { type: 'image'; url: string };
+  | { type: 'image'; url: string }
+  | { type: 'video'; url: string };
 
 const SENTENCE_END = /[.!?]["')\]]?$/;
 
@@ -100,6 +111,10 @@ export function flattenBlocksToChunks(blocks: ContentBlock[]): DisplayChunk[] {
   for (const block of blocks) {
     if (block.type === 'image') {
       chunks.push({ type: 'image', url: block.url });
+      continue;
+    }
+    if (block.type === 'video') {
+      chunks.push({ type: 'video', url: block.url });
       continue;
     }
 

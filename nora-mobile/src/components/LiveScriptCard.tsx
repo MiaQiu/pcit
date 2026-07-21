@@ -22,6 +22,7 @@
 
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, ScrollView, LayoutChangeEvent } from 'react-native';
+import { Video, ResizeMode } from 'expo-av';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -110,6 +111,23 @@ export const LiveScriptCard: React.FC<LiveScriptCardProps> = ({ blocks, wordTimi
             style={styles.imageRow}
           >
             <Image source={{ uri: chunk.url }} style={styles.contentImage} resizeMode="cover" />
+          </View>
+        );
+      }
+      if (chunk.type === 'video') {
+        return (
+          <View
+            key={index}
+            onLayout={(e: LayoutChangeEvent) => { chunkOffsets.current[index] = e.nativeEvent.layout.y; }}
+            style={styles.imageRow}
+          >
+            <Video
+              source={{ uri: chunk.url }}
+              style={styles.contentImage}
+              resizeMode={ResizeMode.CONTAIN}
+              useNativeControls
+              shouldPlay={false}
+            />
           </View>
         );
       }

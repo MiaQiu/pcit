@@ -9,7 +9,7 @@ const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
 
 const { evaluateTextInput } = require('../services/textInputEvaluationService.cjs');
-const { resolveDragonImageUrl, resolveLessonAudioUrl, resolveContentImageUrls } = require('../services/storage-s3.cjs');
+const { resolveDragonImageUrl, resolveLessonAudioUrl, resolveContentMediaUrls } = require('../services/storage-s3.cjs');
 const { localeMiddleware } = require('../middleware/locale.cjs');
 
 const router = express.Router();
@@ -117,6 +117,35 @@ async function formatLessonCard(lesson, userProgress) {
 // ============================================================================
 // LESSON ENDPOINTS
 // ============================================================================
+
+/**
+ * GET /api/lessons/branding-images
+ * Admin-configurable images for LearnScreen_v3's cover band and
+ * LessonViewerScreen_v2's identity row, plus the cover band's title/subtitle
+ * text. null means "use the bundled/i18n default" — set via the admin
+ * portal's Settings page (images) and Content V2 list page (title/subtitle).
+ */
+router.get('/branding-images', requireAuth, async (req, res) => {
+  try {
+    const config = await prisma.appConfig.findUnique({ where: { key: 'branding-images' } });
+    const value = config?.value || {};
+
+    const [learnCoverUrl, lessonViewerUrl] = await Promise.all([
+      resolveLessonAudioUrl(value.learnCoverKey || null),
+      resolveLessonAudioUrl(value.lessonViewerKey || null),
+    ]);
+
+    res.json({
+      learnCoverUrl,
+      lessonViewerUrl,
+      learnTitle: value.learnTitle || null,
+      learnSubtitle: value.learnSubtitle || null,
+    });
+  } catch (error) {
+    console.error('Get branding images error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch branding images' });
+  }
+});
 
 /**
  * GET /api/lessons
@@ -429,7 +458,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     const lessonResponse = {
       ...translatedLesson,
       audioUrl: await resolveLessonAudioUrl(translatedLesson.audioUrl),
-      contentV2: await resolveContentImageUrls(translatedLesson.contentV2),
+      contentV2: await resolveContentMediaUrls(translatedLesson.contentV2),
       segments: lesson.LessonSegment.map(seg => applySegmentTx(seg, segmentTxMap[seg.id])),
       quiz: quizWithOptions ? applyQuizTx(quizWithOptions, quizTx) : null,
       LessonSegment: undefined,
