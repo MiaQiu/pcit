@@ -370,7 +370,7 @@ export const LearnScreen_v3: React.FC = () => {
             ]}
             numberOfLines={2}
           >
-            {lesson.title}
+            Day {lesson.dayNumber} · {lesson.title}
           </Text>
         </TouchableOpacity>
         <View style={styles.rowMetaRow}>
