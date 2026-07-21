@@ -5,7 +5,7 @@ import {
 } from '../api/adminApi';
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
 
-const BASE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://hinora.co';
+const BASE_URL = 'https://signup.hinora.co';
 
 function partnerUrl(slug: string) {
   return `${BASE_URL}/p/${slug}`;
