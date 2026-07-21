@@ -60,10 +60,8 @@ export default function SubscriptionScreen() {
   const yearlyDiscounted = prices?.yearly && yearlyDiscount
     ? formatPrice(applyDiscount(prices.yearly.amount, yearlyDiscount), prices.yearly.currency)
     : null;
-  // Computed off the monthly price (not yearly/12) so it's mathematically consistent with
-  // the monthly price now shown crossed out next to it — same discount %, same base amount.
-  const yearlyPerMonthDiscounted = prices?.monthly && yearlyDiscount
-    ? formatPrice(applyDiscount(prices.monthly.amount, yearlyDiscount), prices.monthly.currency)
+  const yearlyPerMonthDiscounted = prices?.yearly && yearlyDiscount
+    ? formatPrice(applyDiscount(prices.yearly.amount, yearlyDiscount) / 12, prices.yearly.currency)
     : null;
   const monthlyDiscounted = prices?.monthly && monthlyDiscount
     ? formatPrice(applyDiscount(prices.monthly.amount, monthlyDiscount), prices.monthly.currency)
@@ -139,10 +137,7 @@ export default function SubscriptionScreen() {
               <p className="font-bold text-[#1E2939] text-base mt-1">Yearly</p>
               <div className="mt-1">
                 {yearlyPerMonthDiscounted && (
-                  // For partner customers, anchor the crossed-out "original" price to the
-                  // monthly plan's price rather than yearly's own (already lower) per-month
-                  // equivalent, so the partner discount reads as a bigger jump down.
-                  <p className="text-[#9CA3AF] text-lg line-through">{monthlyFormatted}/month</p>
+                  <p className="text-[#9CA3AF] text-lg line-through">{yearlyPerMonth}/month</p>
                 )}
                 <p className="font-bold text-[#1E2939] text-2xl">
                   {pricesLoading ? '...' : `${yearlyPerMonthDiscounted ?? yearlyPerMonth}/month`}{' '}

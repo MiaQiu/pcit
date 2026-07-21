@@ -286,7 +286,7 @@ Persisted to `localStorage` under key `partnerInfo`. Cleared when set to null. S
 - Filters plan cards to `partnerInfo.plans` only
 - Each plan shows its **own** discount (or none) — strikethrough original price + discounted price, computed client-side with the same percentOff/amountOff math Stripe's checkout applies, so the display isn't just a promise
 - Each plan's top-left badge shows "Special discount for {partner name}: X% off" if that specific plan has a discount, otherwise Yearly falls back to the generic "BEST VALUE · SAVE X%" badge (Monthly has no fallback badge)
-- For partner customers with a yearly discount, the crossed-out "original" price on the Yearly card is anchored to the **monthly plan's price** (not yearly's own already-cheaper per-month rate) — and the discounted "offer" price is recalculated off that same monthly baseline, so the two numbers shown together are mathematically consistent
+- For partner customers with a yearly discount, both the crossed-out "original" per-month price and the discounted "offer" price on the Yearly card are derived from the **yearly plan's own base price** (yearly amount ÷ 12), before and after the discount respectively
 - Replaces "7 days free" with the partner's trial days throughout
 - Footer copy shows the discount label only for whichever plan is currently selected
 
