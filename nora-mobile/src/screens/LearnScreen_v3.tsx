@@ -773,7 +773,8 @@ const styles = StyleSheet.create({
   },
   row: {
     position: 'relative',
-    paddingVertical: 8,
+    paddingTop: 16,
+    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
@@ -819,12 +820,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 0,
+    marginTop: 8,
   },
   rowActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+   // marginTop: 0,
   },
   readButton: {
     paddingHorizontal: 10,
