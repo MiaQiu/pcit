@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nora AI - Interactive Booth Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.2.2/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://cdn.jsdelivr.net/npm/ionicons@7.2.2/dist/ionicons/ionicons.js"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .fade-in { animation: fadeIn 0.3s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .card-shadow { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  </style>
+</head>
+<body class="bg-[#F6F7FB] text-[#1E2939] min-h-screen flex flex-col justify-between p-6 select-none">
+
+  <!-- Top Header -->
+  <header class="max-w-4xl mx-auto w-full bg-white rounded-2xl card-shadow border border-[#F0F0F0] p-5 mb-6">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-11 h-11 rounded-full bg-[#8C49D5] flex items-center justify-center font-extrabold text-xl text-white shadow-[0_2px_8px_rgba(140,73,213,0.35)]">N</div>
+        <div>
+          <h1 class="font-extrabold text-lg leading-tight text-[#1E2939]">Nora AI</h1>
+          <p class="text-xs text-[#6B7280]">Your Parenting Co-Pilot</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- <span class="inline-flex items-center gap-1.5 bg-[#ECFDF5] text-[#059669] text-xs font-bold px-3 py-1.5 rounded-full">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span> Demo Ready
+        </span> -->
+        <button onclick="resetDemo()" class="text-xs bg-white hover:bg-[#F3F4F6] text-[#6B7280] font-semibold px-3 py-1.5 rounded-full border border-[#E5E7EB] transition flex items-center gap-1">
+          <ion-icon name="refresh-outline" style="font-size:14px;"></ion-icon> Restart Demo
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Stepper -->
+    <div class="flex items-center justify-center gap-2 sm:gap-3 mt-5 pt-5 border-t border-[#F0F0F0] flex-wrap">
+      <button onclick="jumpToStep(1)" class="flex items-center gap-2 cursor-pointer bg-transparent border-0 p-0">
+        <div id="step-circle-1" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-[#8C49D5] text-white">1</div>
+        <span id="step-label-1" class="text-sm font-bold text-[#8C49D5] hidden sm:inline">Profile</span>
+      </button>
+      <div id="step-line-1" class="w-6 sm:w-12 h-0.5 bg-[#E5E7EB]"></div>
+      <button onclick="jumpToStep(2)" class="flex items-center gap-2 cursor-pointer bg-transparent border-0 p-0">
+        <div id="step-circle-2" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border border-[#E5E7EB] text-[#9CA3AF] bg-white">2</div>
+        <span id="step-label-2" class="text-sm font-semibold text-[#9CA3AF] hidden sm:inline">Dashboard</span>
+      </button>
+      <div id="step-line-2" class="w-6 sm:w-12 h-0.5 bg-[#E5E7EB]"></div>
+      <button onclick="jumpToStep(3)" class="flex items-center gap-2 cursor-pointer bg-transparent border-0 p-0">
+        <div id="step-circle-3" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border border-[#E5E7EB] text-[#9CA3AF] bg-white">3</div>
+        <span id="step-label-3" class="text-sm font-semibold text-[#9CA3AF] hidden sm:inline">Practice</span>
+      </button>
+      <div id="step-line-3" class="w-6 sm:w-12 h-0.5 bg-[#E5E7EB]"></div>
+      <button onclick="jumpToStep(4)" class="flex items-center gap-2 cursor-pointer bg-transparent border-0 p-0">
+        <div id="step-circle-4" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border border-[#E5E7EB] text-[#9CA3AF] bg-white">4</div>
+        <span id="step-label-4" class="text-sm font-semibold text-[#9CA3AF] hidden sm:inline">Report</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="max-w-4xl mx-auto w-full flex-1 flex flex-col justify-center">
+
+    <!-- STEP 1: PROFILE SELECTION -->
+    <div id="step-1" class="fade-in space-y-4">
+      <!-- <div class="text-center space-y-2">
+        <h2 class="text-3xl font-extrabold tracking-tight text-[#1E2939]">Let's personalize your demo</h2>
+        <p class="text-[#6B7280] max-w-md mx-auto">Select a child profile and primary goal to see how Nora AI supports your 5-minute daily play.</p>
+      </div> -->
+
+      <div class="bg-white border border-[#F0F0F0] rounded-2xl p-6 card-shadow space-y-8">
+        <!-- Age Group -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-full bg-[#E4E4FF] text-[#8C49D5] text-xs font-bold flex items-center justify-center shrink-0">1</span>
+            <span class="font-bold text-[#1E2939]">Select Child Age Group</span>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <button onclick="selectAge('2-3 Years', event)" class="age-btn border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] rounded-2xl transition py-5 flex flex-col items-center gap-2">
+              <div class="w-16 h-16 rounded-full bg-[#F1EDFF] flex items-center justify-center">
+                <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
+                  <circle cx="32" cy="34" r="20" fill="#FBD9C4"/>
+                  <path d="M13 33a19 19 0 0 1 38 0H13z" fill="#8C49D5"/>
+                  <circle cx="32" cy="15" r="4.5" fill="none" stroke="#8C49D5" stroke-width="3" stroke-dasharray="16 30" stroke-linecap="round"/>
+                  <circle cx="25" cy="34" r="2.3" fill="#1E2939"/>
+                  <circle cx="39" cy="34" r="2.3" fill="#1E2939"/>
+                  <circle cx="20" cy="40" r="2.6" fill="#F7A9A0" opacity="0.55"/>
+                  <circle cx="44" cy="40" r="2.6" fill="#F7A9A0" opacity="0.55"/>
+                  <path d="M25 42q7 6 14 0" stroke="#1E2939" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <span class="age-label font-bold text-[#1E2939]">2–3 Years</span>
+            </button>
+            <button onclick="selectAge('4-5 Years', event)" class="age-btn border-2 border-[#8C49D5] bg-[#F9F7FF] rounded-2xl transition py-5 flex flex-col items-center gap-2">
+              <div class="w-16 h-16 rounded-full bg-[#ECEAFB] flex items-center justify-center">
+                <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
+                  <circle cx="32" cy="34" r="20" fill="#FBD9C4"/>
+                  <path d="M12 32a20 20 0 0 1 40 0c0-4-3-9-8-9-2 2-6 2-8 0-2 2-14 2-16 0-4 1-8 4-8 9z" fill="#4C3A8C"/>
+                  <circle cx="25" cy="35" r="2.3" fill="#1E2939"/>
+                  <circle cx="39" cy="35" r="2.3" fill="#1E2939"/>
+                  <circle cx="20" cy="41" r="2.6" fill="#F7A9A0" opacity="0.55"/>
+                  <circle cx="44" cy="41" r="2.6" fill="#F7A9A0" opacity="0.55"/>
+                  <path d="M25 43q7 6 14 0" stroke="#1E2939" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <span class="age-label font-bold text-[#8C49D5]">4–5 Years</span>
+            </button>
+            <button onclick="selectAge('6-7 Years', event)" class="age-btn border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] rounded-2xl transition py-5 flex flex-col items-center gap-2">
+              <div class="w-16 h-16 rounded-full bg-[#E3F6F1] flex items-center justify-center">
+                <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
+                  <circle cx="32" cy="34" r="20" fill="#FBD9C4"/>
+                  <path d="M11 31a21 21 0 0 1 42 0c-3-3-9-6-13-4-3-2-13-2-16 0-4-2-10 1-13 4z" fill="#1E8A78"/>
+                  <circle cx="25" cy="35" r="2.3" fill="#1E2939"/>
+                  <circle cx="39" cy="35" r="2.3" fill="#1E2939"/>
+                  <circle cx="20" cy="41" r="2.6" fill="#F7A9A0" opacity="0.55"/>
+                  <circle cx="44" cy="41" r="2.6" fill="#F7A9A0" opacity="0.55"/>
+                  <path d="M25 43q7 6 14 0" stroke="#1E2939" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <span class="age-label font-bold text-[#1E2939]">6–7 Years</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Primary Goal -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-full bg-[#E4E4FF] text-[#8C49D5] text-xs font-bold flex items-center justify-center shrink-0">2</span>
+            <span class="font-bold text-[#1E2939]">Primary Goal</span>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <button onclick="selectGoalCard('Focus &amp; Attention Span', 'Advanced Attention &amp; Focus Builder', event)" class="goal-btn border-2 border-[#8C49D5] bg-[#F5F0FF] hover:bg-[#EDE4FB] p-5 rounded-2xl text-left transition flex items-start space-x-4">
+              <div class="w-12 h-12 rounded-full bg-[#E4E4FF] flex items-center justify-center shrink-0">
+                <ion-icon name="locate-outline" style="font-size:24px;color:#8C49D5;"></ion-icon>
+              </div>
+              <div>
+                <div class="goal-title font-bold text-lg text-[#8C49D5]">Focus &amp; Attention Span</div>
+                <div class="text-xs text-[#6B7280] mt-1">For easily distracted kids or flitting between toys.</div>
+              </div>
+            </button>
+            <button onclick="selectGoalCard('Language &amp; Vocabulary', 'Language Expansion Coaching', event)" class="goal-btn border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] p-5 rounded-2xl text-left transition flex items-start space-x-4">
+              <div class="w-12 h-12 rounded-full bg-[#DFF3F6] flex items-center justify-center shrink-0">
+                <ion-icon name="chatbubbles-outline" style="font-size:22px;color:#1E93A6;"></ion-icon>
+              </div>
+              <div>
+                <div class="goal-title font-bold text-lg text-[#1E2939]">Language &amp; Vocabulary</div>
+                <div class="text-xs text-[#6B7280] mt-1">For late talkers or boosting sentence structure.</div>
+              </div>
+            </button>
+            <button onclick="selectGoalCard('Cooperation &amp; Boundaries', 'Structured Boundary Setting', event)" class="goal-btn border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] p-5 rounded-2xl text-left transition flex items-start space-x-4">
+              <div class="w-12 h-12 rounded-full bg-[#FFE4C0] flex items-center justify-center shrink-0">
+                <ion-icon name="hand-left-outline" style="font-size:22px;color:#B4650A;"></ion-icon>
+              </div>
+              <div>
+                <div class="goal-title font-bold text-lg text-[#1E2939]">Cooperation &amp; Boundaries</div>
+                <div class="text-xs text-[#6B7280] mt-1">Reduce tantrums and resistance without shouting.</div>
+              </div>
+            </button>
+            <button onclick="selectGoalCard('Daily Relational Bonding', 'Secure Attachment Builder', event)" class="goal-btn border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] p-5 rounded-2xl text-left transition flex items-start space-x-4">
+              <div class="w-12 h-12 rounded-full bg-[#FFE1EC] flex items-center justify-center shrink-0">
+                <ion-icon name="heart-outline" style="font-size:22px;color:#D6336C;"></ion-icon>
+              </div>
+              <div>
+                <div class="goal-title font-bold text-lg text-[#1E2939]">Relational Bonding</div>
+                <div class="text-xs text-[#6B7280] mt-1">Deepen parent-child connection in busy routines.</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <button onclick="continueToDashboard()" class="w-full bg-gradient-to-r from-[#9B6DE8] to-[#7C3AED] text-white font-bold text-lg py-4 rounded-full shadow-[0_4px_12px_rgba(124,58,237,0.35)] transition hover:opacity-95 flex justify-center items-center space-x-2">
+          <span>Continue to Dashboard</span>
+          <ion-icon name="arrow-forward-outline" style="font-size:20px;"></ion-icon>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-center gap-1.5 text-xs text-[#9CA3AF]">
+        <ion-icon name="shield-checkmark-outline" style="font-size:14px;"></ion-icon>
+        All recommendations are evidence-based and child psychologists-reviewed.
+      </div>
+    </div>
+
+    <!-- STEP 2: TAILORED DASHBOARD -->
+    <div id="step-2" class="hidden fade-in space-y-6">
+      <div class="bg-white border border-[#F0F0F0] rounded-2xl p-6 card-shadow">
+        <div class="flex justify-between items-start border-b border-[#F0F0F0] pb-4 mb-6">
+          <div>
+            <span id="dash-age" class="text-xs font-bold uppercase tracking-widest bg-[#E4E4FF] text-[#8C49D5] px-3 py-1 rounded-full">4-5 Years</span>
+            <h2 id="dash-goal-title" class="text-2xl font-extrabold mt-2 text-[#1E2939] flex items-center gap-2">
+              <ion-icon name="locate-outline" style="font-size:22px;color:#8C49D5;"></ion-icon>
+              Advanced Attention &amp; Focus Builder
+            </h2>
+          </div>
+          <div class="text-right">
+            <span class="text-xs text-[#6B7280]">Recommended Daily Dose</span>
+            <div class="text-lg font-bold text-[#8C49D5] flex items-center justify-end gap-1">
+              <ion-icon name="time-outline" style="font-size:18px;"></ion-icon> 5 Mins / Day
+            </div>
+          </div>
+        </div>
+
+        <!-- Goal Explanation -->
+        <div class="mb-6">
+          <p id="goal-intro" class="text-sm text-[#4B5563] leading-relaxed"></p>
+          <div class="bg-[#F5F0FF] border border-[#D9C9F5] rounded-xl p-4 mt-3">
+            <div class="flex items-center gap-2 mb-1.5">
+              <ion-icon name="school-outline" style="font-size:16px;color:#8C49D5;"></ion-icon>
+              <span id="goal-age-badge" class="text-xs font-bold uppercase tracking-widest text-[#8C49D5]">Ages 4-5</span>
+            </div>
+            <p id="goal-age-detail" class="text-sm text-[#1E2939]/80 leading-relaxed"></p>
+          </div>
+        </div>
+
+        <!-- The PEN vs CCQ Section -->
+        <div class="grid grid-cols-2 gap-6 mb-6">
+          <div class="bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl p-4">
+            <h3 class="text-[#059669] font-bold text-sm tracking-wider uppercase mb-3 flex items-center gap-1.5">
+              <ion-icon name="checkmark-circle" style="font-size:16px;"></ion-icon><span id="pen-header">Focus Builders</span>
+            </h3>
+            <ul class="space-y-2.5 text-sm">
+              <li onclick="openSkillModal('pen', 0)" class="flex items-center justify-between cursor-pointer hover:bg-[#D1FAE5]/60 rounded-lg -mx-1 px-1 py-1 transition"><strong class="text-[#1E2939] flex items-center gap-1">Praise<ion-icon id="pen-star-1" name="star" class="hidden" style="font-size:12px;color:#F59E0B;"></ion-icon></strong><span id="pen-desc-1" class="hidden">Releases dopamine to reward persistence and mental stamina.</span><ion-icon name="chevron-forward-outline" style="font-size:14px;color:#9CA3AF;"></ion-icon></li>
+              <li onclick="openSkillModal('pen', 1)" class="flex items-center justify-between cursor-pointer hover:bg-[#D1FAE5]/60 rounded-lg -mx-1 px-1 py-1 transition"><strong class="text-[#1E2939] flex items-center gap-1">Narrate<ion-icon id="pen-star-2" name="star" class="hidden" style="font-size:12px;color:#F59E0B;"></ion-icon></strong><span id="pen-desc-2" class="hidden">Acts as a sports commentator, anchoring wandering attention to the present task.</span><ion-icon name="chevron-forward-outline" style="font-size:14px;color:#9CA3AF;"></ion-icon></li>
+              <li onclick="openSkillModal('pen', 2)" class="flex items-center justify-between cursor-pointer hover:bg-[#D1FAE5]/60 rounded-lg -mx-1 px-1 py-1 transition"><strong class="text-[#1E2939] flex items-center gap-1">Echo<ion-icon id="pen-star-3" name="star" class="hidden" style="font-size:12px;color:#F59E0B;"></ion-icon></strong><span id="pen-desc-3" class="hidden">Validates their internal thought flow without breaking concentration.</span><ion-icon name="chevron-forward-outline" style="font-size:14px;color:#9CA3AF;"></ion-icon></li>
+            </ul>
+          </div>
+
+          <div class="bg-[#FEF2F2] border border-[#FECACA] rounded-xl p-4">
+            <h3 class="text-[#DC2626] font-bold text-sm tracking-wider uppercase mb-3 flex items-center gap-1.5">
+              <ion-icon name="close-circle" style="font-size:16px;"></ion-icon> <span id="ccq-header">Focus Breakers</span>
+            </h3>
+            <ul class="space-y-2.5 text-sm">
+              <li onclick="openSkillModal('ccq', 0)" class="flex items-center justify-between cursor-pointer hover:bg-[#FEE2E2]/60 rounded-lg -mx-1 px-1 py-1 transition"><strong class="text-[#1E2939] flex items-center gap-1">Questions<ion-icon id="ccq-star-1" name="star" class="hidden" style="font-size:12px;color:#F59E0B;"></ion-icon></strong><span id="ccq-desc-1" class="hidden">Forces language processing, breaking spatial "flow state."</span><ion-icon name="chevron-forward-outline" style="font-size:14px;color:#9CA3AF;"></ion-icon></li>
+              <li onclick="openSkillModal('ccq', 1)" class="flex items-center justify-between cursor-pointer hover:bg-[#FEE2E2]/60 rounded-lg -mx-1 px-1 py-1 transition"><strong class="text-[#1E2939] flex items-center gap-1">Commands<ion-icon id="ccq-star-2" name="star" class="hidden" style="font-size:12px;color:#F59E0B;"></ion-icon></strong><span id="ccq-desc-2" class="hidden">Kills natural curiosity and internal motivation to stay engaged.</span><ion-icon name="chevron-forward-outline" style="font-size:14px;color:#9CA3AF;"></ion-icon></li>
+              <li onclick="openSkillModal('ccq', 2)" class="flex items-center justify-between cursor-pointer hover:bg-[#FEE2E2]/60 rounded-lg -mx-1 px-1 py-1 transition"><strong class="text-[#1E2939] flex items-center gap-1">Criticism<ion-icon id="ccq-star-3" name="star" class="hidden" style="font-size:12px;color:#F59E0B;"></ion-icon></strong><span id="ccq-desc-3" class="hidden">Spikes cortisol, shutting down the prefrontal focus cortex.</span><ion-icon name="chevron-forward-outline" style="font-size:14px;color:#9CA3AF;"></ion-icon></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Recommended Toys -->
+        <div class="bg-[#FBF7FE] border border-[#FFD9A0] rounded-xl p-4 mb-6">
+          <h3 class="text-[#B4650A] font-bold text-sm tracking-wider uppercase mb-3">Recommended Toys</h3>
+          <div id="toy-gallery" class="grid grid-cols-4 gap-3"></div>
+        </div>
+
+        <!-- Advisor Note -->
+        <!-- <div class="bg-[#F5F0FF] border border-[#D9C9F5] rounded-xl p-4 flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-full bg-[#8C49D5] shrink-0 flex items-center justify-center font-bold text-lg text-white">Dr</div>
+          <div class="text-sm">
+            <div class="font-bold text-[#8C49D5]">Prof. Chen Yichuen's Clinical Note:</div>
+            <div class="text-[#1E2939]/80 italic mt-0.5">"By narrating your child's play instead of asking questions, you act as an external prefrontal cortex—holding their attention to the task until their internal focus muscles mature."</div>
+          </div>
+        </div> -->
+      </div>
+
+      <button onclick="startRoleplay()" class="w-full bg-[#8C49D5] hover:bg-[#7A3DC0] text-white font-bold text-lg py-4 rounded-2xl shadow-[0_2px_8px_rgba(140,73,213,0.35)] transition flex justify-center items-center space-x-2">
+        <span>Start 2-Minute Play Simulation</span>
+        <ion-icon name="arrow-forward-outline" style="font-size:20px;"></ion-icon>
+      </button>
+    </div>
+
+    <!-- STEP 3: ROLEPLAY SCENARIOS -->
+    <div id="step-3" class="hidden fade-in space-y-6">
+      <div class="flex justify-between items-center text-sm font-semibold text-[#6B7280] border-b border-[#E5E7EB] pb-2">
+        <span id="scenario-counter">Scenario 1 of 3</span>
+        <span class="text-[#8C49D5]">Special Time Play Session</span>
+      </div>
+
+      <div class="bg-white border border-[#F0F0F0] rounded-2xl p-6 card-shadow space-y-6">
+        <!-- Scenario Visual & Setup -->
+        <div id="scenario-visual-icon" class="flex items-center space-x-4 bg-[#F6F7FB] p-4 rounded-xl border border-[#F0F0F0]">
+          <div class="w-14 h-14 rounded-full bg-[#E4E4FF] flex items-center justify-center shrink-0">
+            <ion-icon id="scenario-icon" name="train-outline" style="font-size:28px;color:#8C49D5;"></ion-icon>
+          </div>
+          <div>
+            <h3 id="scenario-title" class="font-bold text-lg text-[#1E2939]">The Toy Hopper</h3>
+            <p id="scenario-desc" class="text-[#6B7280] text-sm mt-1">Your child is playing with trains, but after 10 seconds, they get distracted by a toy dinosaur across the room and start walking away.</p>
+          </div>
+        </div>
+
+        <!-- Scenario Video -->
+        <video id="scenario-video" class="hidden w-full rounded-xl bg-black" playsinline></video>
+
+        <!-- Prompt -->
+        <div id="scenario-prompt" class="space-y-3">
+          <div id="scenario-prompt-text" class="font-bold text-sm uppercase tracking-wider text-[#8C49D5]">What do you say to keep them engaged?</div>
+          <div id="options-container" class="space-y-3">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Feedback Box (Hidden initially) -->
+        <div id="feedback-box" class="hidden rounded-xl p-4 border text-sm space-y-2 fade-in">
+          <div class="flex items-center space-x-2 font-bold text-base" id="feedback-title"></div>
+          <p id="feedback-text" class="text-[#1E2939]/80"></p>
+          <div class="pt-2 flex justify-end">
+            <button onclick="nextScenario()" class="bg-[#8C49D5] hover:bg-[#7A3DC0] text-white font-bold px-5 py-2 rounded-lg shadow transition">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: COACHING REPORT -->
+    <div id="step-4" class="hidden fade-in">
+    <div class="bg-[#F3F4F6] border border-[#E5E7EB] rounded-2xl p-6 space-y-4">
+      <div class="text-center space-y-1">
+        <span class="text-xs font-bold uppercase tracking-widest bg-[#ECFDF5] text-[#059669] px-3 py-1 rounded-full">Session Complete</span>
+        <h2 class="text-3xl font-extrabold mt-2 text-[#1E2939]">Nora Post-Session Report</h2>
+        <p class="text-[#6B7280] text-sm">Here is what Nora's AI generated from your 5-minute play session.</p>
+      </div>
+
+      <!-- Score Hero -->
+      <div class="bg-white border border-[#F0F0F0] rounded-2xl card-shadow p-6 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-sm tracking-wider uppercase text-[#8C49D5] flex items-center gap-1.5">
+            <ion-icon name="heart-outline" style="font-size:16px;"></ion-icon> Emotional Bank Account
+          </h3>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="flex-1 bg-white h-3 rounded-full overflow-hidden">
+            <div id="score-bar-fill" class="h-full bg-[#8C49D5] rounded-full transition-all duration-500" style="width:55%"></div>
+          </div>
+          <span class="flex items-baseline gap-1 shrink-0">
+            <span id="final-score" class="text-2xl font-black text-[#1E2939]">55</span>
+            <span class="text-xs font-semibold text-[#6B7280]">pts</span>
+          </span>
+        </div>
+        <p id="score-caption" class="text-xs text-[#6B7280]">You avoided questions and commands, allowing natural executive function growth.</p>
+      </div>
+
+      <!-- Session Skills (PEN Skills + Areas to Avoid) -->
+      <div class="bg-white border border-[#F0F0F0] rounded-2xl card-shadow grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-[#F0F0F0]">
+        <div class="p-6 space-y-4">
+          <h3 class="font-bold text-sm tracking-wider uppercase text-[#6B7280] flex items-center gap-1.5">
+            <ion-icon name="checkmark-circle" style="font-size:16px;color:#059669;"></ion-icon> PEN Skills
+          </h3>
+          <div class="space-y-3">
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-semibold"><span class="text-[#1E2939]">Praise</span><span id="pen-score-praise-label" class="text-[#8C49D5]">100%</span></div>
+              <div class="w-full bg-[#F0F0F0] h-2 rounded-full overflow-hidden"><div id="pen-score-praise-bar" class="h-full bg-[#8C49D5] rounded-full transition-all duration-500" style="width:100%"></div></div>
+            </div>
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-semibold"><span class="text-[#1E2939]">Echo</span><span id="pen-score-echo-label" class="text-[#8C49D5]">100%</span></div>
+              <div class="w-full bg-[#F0F0F0] h-2 rounded-full overflow-hidden"><div id="pen-score-echo-bar" class="h-full bg-[#8C49D5] rounded-full transition-all duration-500" style="width:100%"></div></div>
+            </div>
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-semibold"><span class="text-[#1E2939]">Narrate</span><span id="pen-score-narrate-label" class="text-[#8C49D5]">100%</span></div>
+              <div class="w-full bg-[#F0F0F0] h-2 rounded-full overflow-hidden"><div id="pen-score-narrate-bar" class="h-full bg-[#8C49D5] rounded-full transition-all duration-500" style="width:100%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <h3 class="font-bold text-sm tracking-wider uppercase text-[#6B7280] flex items-center gap-1.5">
+            <ion-icon name="close-circle" style="font-size:16px;color:#DC2626;"></ion-icon> Areas to Avoid
+          </h3>
+          <div class="space-y-3">
+            <div class="space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-[#1E2939]">Questions</span>
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#EF4444]"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F0F0F0]"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F0F0F0]"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F0F0F0]"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F0F0F0]"></span>
+                  </div>
+                  <span class="text-[10px] text-[#6B7280] w-12 text-right">1 time</span>
+                </div>
+              </div>
+              <div class="h-2"></div>
+            </div>
+            <div class="space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-[#1E2939]">Commands</span>
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#EF4444]"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#EF4444]"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F0F0F0]"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F0F0F0]"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F0F0F0]"></span>
+                  </div>
+                  <span class="text-[10px] text-[#6B7280] w-12 text-right">2 times</span>
+                </div>
+              </div>
+              <div class="h-2"></div>
+            </div>
+            <div class="space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-[#1E2939]">Criticism</span>
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F0F0F0]"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F0F0F0]"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F0F0F0]"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F0F0F0]"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F0F0F0]"></span>
+                  </div>
+                  <span class="text-[10px] text-[#6B7280] w-12 text-right">0 times</span>
+                </div>
+              </div>
+              <div class="h-2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coach's Insights (Top Moment + Coach's Corner) -->
+      <div class="bg-white border border-[#F0F0F0] rounded-2xl card-shadow divide-y divide-[#F0F0F0]">
+        <div class="p-6 space-y-3">
+          <h3 class="font-bold text-sm tracking-wider uppercase text-[#6B7280] flex items-center gap-1.5">
+            <ion-icon name="sparkles-outline" style="font-size:16px;color:#8C49D5;"></ion-icon> Top Moment
+          </h3>
+          <div class="bg-[#F6F7FB] rounded-xl p-4 flex items-center gap-3 border border-[#F0F0F0]">
+            <button id="moment-play-btn" onclick="toggleMomentPlay()" class="w-10 h-10 rounded-full bg-[#8C49D5] flex items-center justify-center shrink-0 text-white">
+              <ion-icon id="moment-play-icon" name="play" style="font-size:16px;"></ion-icon>
+            </button>
+            <div class="flex-1 flex items-end gap-0.5 h-6">
+              <span class="w-1 bg-[#8C49D5]/30 rounded-full" style="height:35%"></span>
+              <span class="w-1 bg-[#8C49D5]/50 rounded-full" style="height:70%"></span>
+              <span class="w-1 bg-[#8C49D5]/40 rounded-full" style="height:50%"></span>
+              <span class="w-1 bg-[#8C49D5]/70 rounded-full" style="height:90%"></span>
+              <span class="w-1 bg-[#8C49D5]/40 rounded-full" style="height:45%"></span>
+              <span class="w-1 bg-[#8C49D5]/60 rounded-full" style="height:80%"></span>
+              <span class="w-1 bg-[#8C49D5]/30 rounded-full" style="height:30%"></span>
+              <span class="w-1 bg-[#8C49D5]/50 rounded-full" style="height:65%"></span>
+              <span class="w-1 bg-[#8C49D5]/40 rounded-full" style="height:40%"></span>
+              <span class="w-1 bg-[#8C49D5]/60 rounded-full" style="height:75%"></span>
+            </div>
+            <span class="text-xs text-[#6B7280] shrink-0">0:08</span>
+          </div>
+          <p class="text-sm italic text-[#1E2939]/80">"Yes! That is a super soft, hopping rabbit!"</p>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <h3 class="font-bold text-sm tracking-wider uppercase text-[#8C49D5] flex items-center gap-1.5">
+            <ion-icon name="bulb-outline" style="font-size:16px;"></ion-icon> Coach's Corner
+          </h3>
+          <p class="text-sm text-[#1E2939]/80 leading-relaxed">When Bob proudly said "fuzzy wabbit," you didn't correct him — you just said it back the right way: "That is a super soft, hopping rabbit!" This is called <strong class="text-[#1E2939]">gentle repeating</strong>, and it helps Bob hear the right sound without feeling embarrassed, so he stayed relaxed and kept talking instead of going quiet. You also didn't quiz him on saying it "correctly," which kept things feeling like <strong class="text-[#1E2939]">play, not a test</strong> — probably why he stayed focused for a full <strong class="text-[#1E2939]">5 minutes</strong> today instead of his usual 2.</p>
+          <p class="text-sm text-[#1E2939]/80 leading-relaxed">Because you didn't correct him, Bob is learning that talking to you feels <strong class="text-[#1E2939]">safe, not scary</strong> — and that's likely why he's picking up new words so fast. Tomorrow, try the same trick with two or three more animal sounds: just repeat what he says back the right way, and he'll keep learning without ever feeling like he got something wrong.</p>
+          <!-- <div class="pt-3 border-t border-[#D9C9F5] space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span class="text-[#6B7280] flex items-center gap-1"><ion-icon name="trending-up-outline" style="font-size:14px;color:#8C49D5;"></ion-icon> Projected 14-Day Growth — Sustained Attention</span>
+              <span class="text-[#8C49D5]">3x Improvement</span>
+            </div>
+            <div class="w-full bg-white h-1.5 rounded-full overflow-hidden flex">
+              <div class="bg-[#C9AEEC] h-full w-1/3 relative group"><span class="absolute text-[9px] pl-1 font-bold text-[#1E2939] -top-4">Day 1: 1.5m</span></div>
+              <div class="bg-[#8C49D5] h-full w-2/3 relative group"><span class="absolute text-[9px] pl-1 font-bold text-[#1E2939] -top-4">Day 14: 4.5m</span></div>
+            </div>
+          </div> -->
+        </div>
+      </div>
+
+      <!-- Feedback Widget -->
+      <!-- <div class="bg-white border border-[#F0F0F0] rounded-2xl p-6 card-shadow flex items-center justify-between">
+        <span class="text-sm font-semibold text-[#1E2939]">Was this report helpful?</span>
+        <div class="flex items-center gap-2">
+          <button id="thumbs-up-btn" onclick="rateFeedback(true)" class="w-10 h-10 rounded-full border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] transition">
+            <ion-icon name="thumbs-up-outline" style="font-size:18px;"></ion-icon>
+          </button>
+          <button id="thumbs-down-btn" onclick="rateFeedback(false)" class="w-10 h-10 rounded-full border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] transition">
+            <ion-icon name="thumbs-down-outline" style="font-size:18px;"></ion-icon>
+          </button>
+        </div>
+      </div> -->
+
+      <!-- Child Insights (What We Learned About Bob + Developmental Milestones) -->
+      <div class="bg-white border border-[#F0F0F0] rounded-2xl card-shadow divide-y divide-[#F0F0F0]">
+        <div class="p-6 space-y-3">
+          <h3 class="font-bold text-sm tracking-wider uppercase text-[#6B7280] flex items-center gap-1.5">
+            <ion-icon name="happy-outline" style="font-size:16px;color:#8C49D5;"></ion-icon> What We Learned About Bob
+          </h3>
+          <ul class="space-y-2.5">
+            <li class="flex items-start gap-2 text-sm text-[#1E2939]/80 leading-relaxed">
+              <ion-icon name="trending-up-outline" style="font-size:16px;color:#8C49D5;flex-shrink:0;margin-top:2px;"></ion-icon>
+              <span>Bob's attention span for an activity has increased from <strong class="text-[#1E2939]">2 minutes</strong> to <strong class="text-[#1E2939]">5 minutes</strong>.</span>
+            </li>
+            <li class="flex items-start gap-2 text-sm text-[#1E2939]/80 leading-relaxed">
+              <ion-icon name="chatbubble-ellipses-outline" style="font-size:16px;color:#8C49D5;flex-shrink:0;margin-top:2px;"></ion-icon>
+              <span>Bob's spontaneous use of new descriptive words has doubled — from <strong class="text-[#1E2939]">2 words</strong> per session to <strong class="text-[#1E2939]">4 words</strong> today.</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="p-6 space-y-3">
+          <h3 class="font-bold text-sm tracking-wider uppercase text-[#6B7280] flex items-center gap-1.5">
+            <ion-icon name="analytics-outline" style="font-size:16px;color:#8C49D5;"></ion-icon> Developmental Milestones
+          </h3>
+          <p class="text-xs text-[#6B7280]">Tap a domain to see what's been achieved, emerging, or not yet observed.</p>
+          <div class="flex justify-center">
+            <svg width="280" height="260" viewBox="-40 -15 320 260">
+              <!-- Grid rings -->
+              <polygon points="120,30 205.6,92.2 172.9,192.8 67.1,192.8 34.4,92.2" fill="none" stroke="#E5E7EB" stroke-width="1"/>
+              <polygon points="120,75 162.8,106.1 146.5,156.4 93.5,156.4 77.2,106.1" fill="none" stroke="#E5E7EB" stroke-width="1"/>
+              <!-- Axis lines -->
+              <line x1="120" y1="120" x2="120" y2="30" stroke="#E5E7EB" stroke-width="1"/>
+              <line x1="120" y1="120" x2="205.6" y2="92.2" stroke="#E5E7EB" stroke-width="1"/>
+              <line x1="120" y1="120" x2="172.9" y2="192.8" stroke="#E5E7EB" stroke-width="1"/>
+              <line x1="120" y1="120" x2="67.1" y2="192.8" stroke="#E5E7EB" stroke-width="1"/>
+              <line x1="120" y1="120" x2="34.4" y2="92.2" stroke="#E5E7EB" stroke-width="1"/>
+              <!-- Age benchmark polygon -->
+              <polygon points="120,61.5 175.6,101.9 154.4,167.3 85.6,167.3 64.4,101.9" fill="none" stroke="#FFB380" stroke-width="1.5" stroke-dasharray="4 3"/>
+              <!-- Child value polygon -->
+              <polygon points="120,52.5 171.4,103.3 165.0,181.9 83.0,171.0 43.0,95.0" fill="#8C49D5" fill-opacity="0.35" stroke="#8C49D5" stroke-width="2"/>
+              <!-- Axis labels (tap to open domain modal) -->
+              <g onclick="openDomainModal('Language')" style="cursor:pointer;">
+                <text x="120" y="10" text-anchor="middle" font-size="11" font-weight="700" fill="#1E2939">Language</text>
+              </g>
+              <g onclick="openDomainModal('Cognitive')" style="cursor:pointer;">
+                <text x="245" y="83" text-anchor="middle" font-size="11" font-weight="700" fill="#1E2939">Cognitive</text>
+              </g>
+              <g onclick="openDomainModal('Social')" style="cursor:pointer;">
+                <text x="200" y="212" text-anchor="middle" font-size="11" font-weight="700" fill="#1E2939">Social</text>
+              </g>
+              <g onclick="openDomainModal('Emotional')" style="cursor:pointer;">
+                <text x="40" y="212" text-anchor="middle" font-size="11" font-weight="700" fill="#1E2939">Emotional</text>
+              </g>
+              <g onclick="openDomainModal('Connection')" style="cursor:pointer;">
+                <text x="-8" y="83" text-anchor="middle" font-size="11" font-weight="700" fill="#1E2939">Connection</text>
+              </g>
+            </svg>
+          </div>
+          <div class="flex items-center justify-center gap-4 text-[10px] text-[#6B7280]">
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#8C49D5]"></span> Bob</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full border border-[#FFB380]"></span> Age Benchmark</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA Section -->
+      <div class="bg-[#8C49D5] border border-[#7A3DC0] rounded-2xl p-6 flex items-center justify-between shadow-[0_2px_8px_rgba(140,73,213,0.35)]">
+        <div class="space-y-1 max-w-md">
+          <h3 class="font-bold text-lg text-white">Want this coaching in your living room?</h3>
+          <p class="text-xs text-white/80">Scan to download Nora app</p>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+          <div class="bg-white p-3 rounded-xl flex flex-col items-center justify-center shadow-lg gap-1">
+            <img src="demo images/applestore_nora.png" alt="Scan to download Nora on the App Store" class="w-20 h-20 rounded-lg object-contain">
+            <span class="text-[9px] font-bold text-[#6B7280] uppercase tracking-wide">App Store</span>
+          </div>
+          <div class="bg-white p-3 rounded-xl flex flex-col items-center justify-center shadow-lg gap-1">
+            <img src="demo images/playstore_nora.png" alt="Scan to download Nora on Google Play" class="w-20 h-20 rounded-lg object-contain">
+            <span class="text-[9px] font-bold text-[#6B7280] uppercase tracking-wide">Google Play</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Footer -->
+  <footer class="max-w-4xl mx-auto w-full text-center border-t border-[#E5E7EB] pt-4 mt-6 text-xs text-[#9CA3AF]">
+    Nee Soon AI &amp; Innovation Festival 2026 • Booth C1 • Nora AI Family Wellness Platform
+  </footer>
+
+  <!-- Skill Detail Modal -->
+  <div id="skill-modal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6" onclick="closeSkillModal(event)">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 card-shadow max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <div class="flex items-start justify-between mb-3 gap-3">
+        <div>
+          <span id="skill-modal-badge" class="text-[10px] font-bold uppercase tracking-widest bg-[#ECFDF5] text-[#059669] px-2 py-0.5 rounded-full">Why it works</span>
+          <h3 id="skill-modal-title" class="text-xl font-extrabold text-[#1E2939] mt-2 flex items-center gap-1.5">
+            Narrate <ion-icon id="skill-modal-star" name="star" class="hidden" style="font-size:16px;color:#F59E0B;"></ion-icon>
+          </h3>
+        </div>
+        <button onclick="closeSkillModal()" class="text-[#9CA3AF] hover:text-[#1E2939] transition shrink-0">
+          <ion-icon name="close-outline" style="font-size:24px;"></ion-icon>
+        </button>
+      </div>
+      <p id="skill-modal-why" class="text-sm font-bold text-[#8C49D5] mb-3 leading-snug"></p>
+      <div id="skill-modal-body" class="text-sm text-[#4B5563] space-y-3 leading-relaxed"></div>
+    </div>
+  </div>
+
+  <!-- Domain Milestone Modal -->
+  <div id="domain-modal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6" onclick="closeDomainModal(event)">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 card-shadow max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <div class="flex items-start justify-between mb-4 gap-3">
+        <h3 id="domain-modal-title" class="text-xl font-extrabold text-[#1E2939] flex items-center gap-1.5">
+          <ion-icon name="analytics-outline" style="font-size:18px;color:#8C49D5;"></ion-icon> Language
+        </h3>
+        <button onclick="closeDomainModal()" class="text-[#9CA3AF] hover:text-[#1E2939] transition shrink-0">
+          <ion-icon name="close-outline" style="font-size:24px;"></ion-icon>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <div class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#059669] mb-2"><ion-icon name="trophy-outline" style="font-size:14px;"></ion-icon> Achieved</div>
+          <div id="domain-modal-achieved" class="space-y-2"></div>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#B4650A] mb-2"><ion-icon name="sparkles-outline" style="font-size:14px;"></ion-icon> Emerging</div>
+          <div id="domain-modal-emerging" class="space-y-2"></div>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#9CA3AF] mb-2"><ion-icon name="ellipse-outline" style="font-size:14px;"></ion-icon> Not Yet Observed</div>
+          <div id="domain-modal-not-yet" class="space-y-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script>
+    let currentStep = 1;
+    let selectedAge = "4-5 Years";
+    let selectedGoal = "Focus & Attention Span";
+    let selectedSubtitle = "Advanced Attention & Focus Builder";
+    let currentScenarioIdx = 0;
+    let correctChoices = 0;
+    let scenarioResults = [];
+
+    const skillDetails = {
+      "Focus & Attention Span": {
+        builderLabel: "Focus Builders",
+        breakerLabel: "Focus Breakers",
+        pen: [
+          { name: "Praise", starred: false, why: "Praising their persistence, not just the outcome, rewards the exact behavior that builds a longer attention span over time.", body: [] },
+          { name: "Narrate", starred: true, why: "It acts like a spotlight that keeps their brain locked onto what they are doing.", body: [
+            //"Think of Narration like being a friendly sports broadcaster. When you just describe what your child is doing out loud (\"You are putting the blue car in the garage!\"), you keep them engaged without interrupting their train of thought.",
+           // "When adults ask questions (\"What color is that car?\") or give directions (\"Park it over here instead\"), it actually forces a child to stop their play and think about what you want. Simply narrating what you see keeps their eyes and brain glued to the toy, which naturally stretches how long they can play independently."
+          ] },
+          { name: "Echo", starred: false, why: "Repeating back what they say—without quizzing them—keeps them in the game instead of pulling them out of it to answer you.", body: [] }
+        ],
+        ccq: [
+          { name: "Questions", starred: true, why: "Every question interrupts their focus, forcing a switch from \"doing\" to \"answering\"—the fastest way to break a child's concentration during play.", body: [] },
+          { name: "Commands", starred: false, why: "Taking over with directions shifts the task from their idea to yours, and kids stop focusing the moment it's no longer their own plan.", body: [] },
+          { name: "Criticism", starred: false, why: "Correcting them mid-task signals danger to their brain, and a stressed brain can't stay locked onto a toy.", body: [] }
+        ]
+      },
+      "Language & Vocabulary": {
+        builderLabel: "Language Builders",
+        breakerLabel: "Language Breakers",
+        pen: [
+          { name: "Praise", starred: false, why: "Celebrating their attempts to use new words—even imperfect ones—tells them talking is safe and worth doing more of.", body: [] },
+          { name: "Narrate", starred: false, why: "Describing what they're doing out loud surrounds them with vocabulary tied directly to what they're seeing and touching, which is how new words stick fastest.", body: [] },
+          { name: "Echo", starred: true, why: "It gives them a word upgrade right when they are listening best.", body: [
+            "Echoing means repeating back what your child says, but adding a little bonus word or two. Instead of correcting their speech or drilling them with flashcards—which can make kids nervous and quiet—you just reply with excitement using the new words.",
+            "If your toddler says, \"Big dog!\" you echo back, \"Yes! That is a big, spotted dog running fast!\" They hear the new descriptive words right when they care about them most. Plus, it proves you are listening, which makes them eager to keep talking."
+          ] }
+        ],
+        ccq: [
+          { name: "Questions", starred: true, why: "Asking them to perform on demand (\"What's this called?\") creates pressure that makes many kids clam up instead of experimenting with language freely.", body: [] },
+          { name: "Commands", starred: false, why: "Directing them what to say or do shrinks their talking to short, reactive replies instead of full sentences.", body: [] },
+          { name: "Criticism", starred: false, why: "Correcting grammar mistakes directly makes kids self-conscious and less willing to try out new words out loud.", body: [] }
+        ]
+      },
+      "Cooperation & Boundaries": {
+        builderLabel: "Cooperation Builders",
+        breakerLabel: "Cooperation Breakers",
+        pen: [
+          { name: "Praise", starred: true, why: "Kids repeat whatever gets your attention.", body: [
+            "Children love getting big, loud attention from parents. Unfortunately, acting out or ignoring boundaries is often the fastest way for them to get it.",
+            "During play time, you can flip this script by catching them being good. Use specific praise for friendly, cooperative behavior: \"Thank you for sharing the green crayon with me so gently!\" or \"I really love how carefully you handed me that block!\" When listening and being gentle gets lots of warm, happy attention from you, they naturally want to do it more often throughout the day."
+          ] },
+          { name: "Narrate", starred: false, why: "Describing what they're doing shows them you're fully tuned in, which fills their need for attention without them needing to act out to get it.", body: [] },
+          { name: "Echo", starred: false, why: "Repeating their words back signals that their voice matters, which lowers the urge to test limits just to be heard.", body: [] }
+        ],
+        ccq: [
+          { name: "Questions", starred: false, why: "A quizzing question can feel like a test, inviting resistance instead of the cooperative response you're hoping for.", body: [] },
+          { name: "Commands", starred: true, why: "Every command hands you control of their play, and kids naturally push back to reclaim it—turning play time into a power struggle instead of a cooperative one.", body: [] },
+          { name: "Criticism", starred: false, why: "Pointing out what they did wrong drains the \"connection cup\" that cooperative behavior depends on, fueling more defiance later.", body: [] }
+        ]
+      },
+      "Daily Relational Bonding": {
+        builderLabel: "Connection Builders",
+        breakerLabel: "Connection Breakers",
+        pen: [
+          { name: "Praise", starred: false, why: "Warm, specific praise during play builds a bond rooted in acceptance rather than performance, which is what makes a child feel unconditionally loved.", body: [] },
+          { name: "Narrate", starred: true, why: "It is absolute proof that you are 100% paying attention to them.", body: [
+            "Kids can instantly tell when your body is in the room, but your mind is checking your phone or thinking about the grocery list. You cannot narrate a child's play if your mind is somewhere else.",
+            "When you sit down and say, \"You're making the teddy bear jump over the pillow,\" you are sending a powerful message: \"I see you, I care about your world, and right now, you are the most important thing to me.\" That simple feeling of being deeply seen and appreciated fills your child's emotional tank faster than anything else."
+          ] },
+          { name: "Echo", starred: false, why: "Repeating their words back shows you're not just hearing them, you're absorbed in their world—which is the feeling secure attachment is built on.", body: [] }
+        ],
+        ccq: [
+          { name: "Questions", starred: false, why: "Turning play into a Q&A shifts the mood from togetherness to interrogation, breaking the emotional flow you're trying to build.", body: [] },
+          { name: "Commands", starred: false, why: "Directing their play reintroduces a power hierarchy right when the goal is to feel like equals sharing a moment.", body: [] },
+          { name: "Criticism", starred: true, why: "Even gentle correction during bonding time tells a child their ideas aren't quite good enough, which chips away at the safety that a secure attachment depends on.", body: [] }
+        ]
+      }
+    };
+
+    const goalExplanations = {
+      "Focus & Attention Span": {
+        intro: "By describing and narrating the child's play without redirecting them or asking quizzing questions, parents remove the cognitive performance pressure that often triggers distraction. This creates a calm, low-stakes environment where a child's natural intrinsic interest can anchor and stretch without interruption.",
+        byAge: {
+          "2-3 Years": "Toddlers naturally flit from toy to toy as they explore their environment. When you sit with them and simply imitate or describe their actions (\"You put the red block in the bucket!\"), your focused presence acts as a cognitive anchor, holding their attention on a single sensory task for progressively longer stretches.",
+          "4-5 Years": "Preschoolers begin building simple, multi-step play sequences. When you follow their lead in building a tower or setting up a train track—resisting the adult urge to suggest \"what comes next\"—their focus deepens because they remain in full creative control of the outcome.",
+          "6-7 Years": "Kindergartners are developing executive function and the capacity for sustained imaginative projects. Letting them direct a complex Lego build or an elaborate pretend-play storyline from start to finish trains their brain to persist through challenges without relying on adult direction."
+        }
+      },
+      "Language & Vocabulary": {
+        intro: "Special Play Time relies on \"reflective speech\"—repeating, labeling, and expanding on what the child says or does while stripping away interrogative questions (\"What color is that?\"). This lowers communication anxiety and floods the child's ear with rich, context-driven vocabulary right at the edge of their current speaking capability.",
+        byAge: {
+          "2-3 Years": "For late talkers or developing toddlers, narrating their physical actions like a sports commentator (\"You are pushing the big green truck fast!\") pairs functional verbs and adjectives directly with what they are seeing and touching, sparking natural imitation without speech pressure.",
+          "4-5 Years": "As sentence structures explode, use conversational expansion to introduce descriptive complexity. When your child says, \"The doggy barked,\" you respond, \"Yes, the spotted doggy barked loudly because he saw a cat!\" which models grammar and vocabulary seamlessly within their own narrative.",
+          "6-7 Years": "Enhance storytelling, abstract thinking, and narrative structure. When they narrate an elaborate scenario with action figures or dolls, your active listening and sophisticated paraphrasing (\"Ah, the astronaut is investigating the mysterious cave!\") help them absorb advanced vocabulary and emotional labels."
+        }
+      },
+      "Cooperation & Boundaries": {
+        intro: "Children are wired to cooperate with adults when their \"connection cup\" is full and they feel a sense of personal agency. Special Play Time establishes a steady bank account of positive attention, reducing the underlying need for defiance, power struggles, or negative attention-seeking behaviors throughout the rest of the day.",
+        byAge: {
+          "2-3 Years": "Toddlers hear \"no\" dozens of times a day for safety reasons. Giving them 10 daily minutes where they are the boss fills their developmental need for autonomy, making them significantly more willing to transition to non-preferred tasks like diaper changes or bedtime afterward.",
+          "4-5 Years": "Defiance at this stage often stems from feeling powerless or disconnected. By strategically using labeled praise during play to catch them being cooperative (\"Thank you for sharing the green crayon with me so gently!\"), you reinforce the exact prosocial behaviors you want to see outside the playroom.",
+          "6-7 Years": "Kindergartners test boundaries to assert their growing independence. When you dedicate uninterrupted daily time to listen to them and follow their rules, it deepens mutual respect; they become much more responsive to household limits because they trust their voice is valued by you daily."
+        }
+      },
+      "Daily Relational Bonding": {
+        intro: "For busy parents, quality beats quantity every time. Just 10 to 15 minutes of 100% undivided attention—no phones, no chores, no mental checklists—signals to the child that they are your absolute top priority, forging a secure emotional attachment that withstands daily scheduling chaos.",
+        byAge: {
+          "2-3 Years": "Physical closeness, eye contact, and shared laughter during simple sensory or motor play (like rolling a ball back and forth or building a pillow fort) release oxytocin, soothing separation anxiety from daycare or work separations and grounding both parent and toddler.",
+          "4-5 Years": "Children at this age express love and process their world through shared imaginative play. Fully entering their pretend world—becoming the patient in their doctor's office or the customer in their restaurant—speaks their primary emotional language directly, creating joyful shared memories.",
+          "6-7 Years": "As kids become more independent and spend hours away at school, a predictable daily ritual of \"just you and me time\" anchors the relationship. It creates a trusted, low-pressure bridge where they feel safe opening up about their day, their friendships, and their worries."
+        }
+      }
+    };
+
+    const toysByAge = {
+      "2-3 Years": { type: "image", src: "demo images/toys-2-3.png" },
+      "4-5 Years": { type: "image", src: "demo images/toys 4-5.png" },
+      "6-7 Years": { type: "image", src: "demo images/toys 6-7.png" }
+    };
+
+    function renderToyGallery() {
+      const gallery = document.getElementById('toy-gallery');
+      gallery.innerHTML = '';
+      const data = toysByAge[selectedAge];
+      if (data.type === 'image') {
+        gallery.className = 'grid grid-cols-1';
+        const img = document.createElement('img');
+        img.src = data.src;
+        img.className = 'w-full rounded-xl object-cover';
+        gallery.appendChild(img);
+      } else {
+        gallery.className = 'grid grid-cols-4 gap-3';
+        data.items.forEach(svg => {
+          const tile = document.createElement('div');
+          tile.className = 'w-full aspect-square rounded-xl bg-[#FFE4C0] flex items-center justify-center';
+          tile.innerHTML = svg;
+          gallery.appendChild(tile);
+        });
+      }
+    }
+
+    const scenarios = [
+      {
+        icon: "ear-outline",
+        title: "The Fuzzy 'Wabbit'",
+        desc: "Your child picks up a toy rabbit, makes it hop across the table, and says proudly, \"Look! A fuzzy wabbit!\"",
+        video: "demo images/rabbit_cut.mp4",
+        prompt: "How to best help the child to learn the correct pronunciation?",
+        options: [
+          { text: '"Yes! That is a super soft, hopping rabbit!"', type: 'Echo (Corrective Modeling)', correct: true, feedback: "Success! By naturally echoing the word with the correct 'R' sound, you give them the right audio blueprint without making them feel corrected or self-conscious." },
+          { text: '"It\'s not a wabbit, it\'s a r-r-rabbit. Watch my mouth: Rrr-abbit."', type: 'Criticism / Correction', correct: false, feedback: "Directly pointing out the error acts as a criticism. It can cause embarrassment and make the child want to talk less, defeating the goal of building communication confidence." },
+          { text: '"Good try! But can you say \'rabbit\' for me correctly before it hops?"', type: 'Command / Quizzing', correct: false, feedback: "Turning playtime into a speech drill adds pressure and interrupts the fun. When kids feel like they have to perform to keep playing, they often shut down." }
+        ]
+      },
+      /* Hidden for now:
+      {
+        icon: "cube-outline",
+        title: "The Creative Tower",
+        desc: "Your child stacks a red block on top of a yellow toy car and shouts excitedly, 'Car go up!'",
+        options: [
+          { text: '"Blocks don\'t go on cars. Let\'s build a proper tower on the table."', type: 'Criticism', correct: false, feedback: "Even mild criticism spikes cortisol (stress hormone), which immediately shuts down the prefrontal cortex responsible for focus." },
+          { text: '"Yes, the car goes up! I love how creatively you stacked that red block on your car!"', type: 'Echo & Praise (PEN)', correct: true, feedback: "Success! Echoing their words validates their thought flow, and specific praise reinforces mental stamina and engagement." },
+          { text: '"What is that supposed to be? Why is the block on the car?"', type: 'Question', correct: false, feedback: "Quizzing children during play makes them feel tested, reducing spontaneous focus and verbal communication." }
+        ]
+      },
+      */
+      {
+        icon: "extension-puzzle-outline",
+        title: "The Stubborn Puzzle",
+        desc: "Your child is trying to jam a square puzzle piece into a round hole, starting to grunt with frustration.",
+        video: "demo images/puzzle0.mp4",
+        options: [
+          { text: '"You are working so hard to find the right spot for that blue piece!"', type: 'Narrate & Praise (PEN)', correct: true, feedback: "Success! Praising their effort builds emotional resilience and frustration tolerance—the building blocks of long-term attention spans." },
+          { text: '"No, that\'s the wrong spot. Put it in the square hole over there."', type: 'Command', correct: false, feedback: "Taking over or commanding solves the puzzle, but robs the child of the chance to build independent attention and problem-solving skills." },
+          { text: '"Can\'t you see it doesn\'t fit there? Why don\'t you try turning it?"', type: 'Question / Criticism', correct: false, feedback: "Combining questions with subtle criticism causes frustration shutdowns, leading the child to abandon the task entirely." }
+        ]
+      }
+    ];
+
+    function hideAll() {
+      document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
+    }
+
+    function selectAge(age, evt) {
+      selectedAge = age;
+      document.querySelectorAll('.age-btn').forEach(btn => {
+        btn.classList.remove('border-2', 'border-[#8C49D5]', 'bg-[#F9F7FF]');
+        btn.classList.add('border', 'border-[#E5E7EB]', 'bg-white');
+        btn.querySelector('.age-label').classList.remove('text-[#8C49D5]');
+        btn.querySelector('.age-label').classList.add('text-[#1E2939]');
+      });
+      const target = evt.currentTarget;
+      target.classList.remove('border', 'border-[#E5E7EB]', 'bg-white');
+      target.classList.add('border-2', 'border-[#8C49D5]', 'bg-[#F9F7FF]');
+      target.querySelector('.age-label').classList.remove('text-[#1E2939]');
+      target.querySelector('.age-label').classList.add('text-[#8C49D5]');
+    }
+
+    function selectGoalCard(goal, subtitle, evt) {
+      selectedGoal = goal;
+      selectedSubtitle = subtitle;
+      document.querySelectorAll('.goal-btn').forEach(btn => {
+        btn.classList.remove('border-2', 'border-[#8C49D5]', 'bg-[#F5F0FF]', 'hover:bg-[#EDE4FB]');
+        btn.classList.add('border', 'border-[#E5E7EB]', 'bg-white', 'hover:bg-[#F9FAFB]');
+        btn.querySelector('.goal-title').classList.remove('text-[#8C49D5]');
+        btn.querySelector('.goal-title').classList.add('text-[#1E2939]');
+      });
+      const target = evt.currentTarget;
+      target.classList.remove('border', 'border-[#E5E7EB]', 'bg-white', 'hover:bg-[#F9FAFB]');
+      target.classList.add('border-2', 'border-[#8C49D5]', 'bg-[#F5F0FF]', 'hover:bg-[#EDE4FB]');
+      target.querySelector('.goal-title').classList.remove('text-[#1E2939]');
+      target.querySelector('.goal-title').classList.add('text-[#8C49D5]');
+    }
+
+    function continueToDashboard() {
+      document.getElementById('dash-age').innerText = selectedAge;
+      document.getElementById('dash-goal-title').lastChild.textContent = ' ' + selectedSubtitle;
+
+      const explanation = goalExplanations[selectedGoal];
+      //document.getElementById('goal-intro').innerText = explanation.intro;
+      document.getElementById('goal-age-badge').innerText = 'Ages ' + selectedAge.replace(' Years', '');
+      document.getElementById('goal-age-detail').innerText = explanation.byAge[selectedAge];
+
+      const skills = skillDetails[selectedGoal];
+      document.getElementById('pen-header').innerText = skills.builderLabel;
+      document.getElementById('ccq-header').innerText = skills.breakerLabel;
+      ['pen', 'ccq'].forEach(cat => {
+        skills[cat].forEach((item, i) => {
+          document.getElementById(cat + '-desc-' + (i + 1)).innerText = item.why;
+          document.getElementById(cat + '-star-' + (i + 1)).classList.toggle('hidden', !item.starred);
+        });
+      });
+
+      renderToyGallery();
+
+      hideAll();
+      document.getElementById('step-2').classList.remove('hidden');
+      currentStep = 2;
+      updateStepper();
+    }
+
+    function startRoleplay() {
+      currentScenarioIdx = 0;
+      correctChoices = 0;
+      scenarioResults = [];
+      loadScenario();
+      hideAll();
+      document.getElementById('step-3').classList.remove('hidden');
+      currentStep = 3;
+      updateStepper();
+    }
+
+    function loadScenario() {
+      const data = scenarios[currentScenarioIdx];
+      document.getElementById('scenario-counter').innerText = `Scenario ${currentScenarioIdx + 1} of ${scenarios.length}`;
+      document.getElementById('scenario-prompt-text').innerText = data.prompt || "What do you say to keep them engaged?";
+      document.getElementById('feedback-box').classList.add('hidden');
+
+      const iconBlock = document.getElementById('scenario-visual-icon');
+      const videoEl = document.getElementById('scenario-video');
+      const promptBlock = document.getElementById('scenario-prompt');
+
+      videoEl.pause();
+      videoEl.onended = null;
+
+      if (data.video) {
+        iconBlock.classList.add('hidden');
+        promptBlock.classList.add('hidden');
+        videoEl.classList.remove('hidden');
+        videoEl.src = data.video;
+        videoEl.controls = false;
+        videoEl.load();
+        videoEl.play();
+        videoEl.onended = () => {
+          videoEl.controls = true;
+          promptBlock.classList.remove('hidden');
+        };
+      } else {
+        videoEl.classList.add('hidden');
+        iconBlock.classList.remove('hidden');
+        document.getElementById('scenario-icon').setAttribute('name', data.icon);
+        document.getElementById('scenario-title').innerText = data.title;
+        document.getElementById('scenario-desc').innerText = data.desc;
+        promptBlock.classList.remove('hidden');
+      }
+
+      const container = document.getElementById('options-container');
+      container.innerHTML = '';
+      data.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = "w-full text-left p-4 rounded-xl border border-[#E5E7EB] bg-white hover:border-[#8C49D5] hover:bg-[#F5F0FF] transition flex items-start space-x-3";
+        btn.innerHTML = `<span class="bg-[#F3F4F6] text-[#6B7280] text-xs font-semibold px-2 py-1 rounded-md border border-[#E5E7EB] shrink-0 mt-0.5">${opt.type}</span> <span class="text-sm font-medium text-[#1E2939]">${opt.text}</span>`;
+        btn.onclick = () => selectOption(opt, btn);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectOption(opt, btnEl) {
+      // Reset all buttons back to their unselected style so a different option can be picked
+      const container = document.getElementById('options-container');
+      container.querySelectorAll('button').forEach(b => {
+        b.classList.remove('border-[#10B981]', 'bg-[#ECFDF5]', 'border-[#EF4444]', 'bg-[#FEF2F2]');
+        b.classList.add('border-[#E5E7EB]', 'bg-white');
+      });
+
+      const fbBox = document.getElementById('feedback-box');
+      const fbTitle = document.getElementById('feedback-title');
+      const fbText = document.getElementById('feedback-text');
+
+      fbBox.classList.remove('hidden', 'bg-[#ECFDF5]', 'border-[#A7F3D0]', 'bg-[#FEF2F2]', 'border-[#FECACA]');
+
+      scenarioResults[currentScenarioIdx] = opt.correct;
+
+      if (opt.correct) {
+        btnEl.classList.remove('border-[#E5E7EB]', 'bg-white');
+        btnEl.classList.add('border-[#10B981]', 'bg-[#ECFDF5]');
+        fbBox.classList.add('bg-[#ECFDF5]', 'border-[#A7F3D0]');
+        fbTitle.innerHTML = `<ion-icon name="checkmark-circle" style="font-size:20px;color:#059669;"></ion-icon><span class="text-[#059669]">Great Choice! Child focuses & smiles.</span>`;
+      } else {
+        btnEl.classList.remove('border-[#E5E7EB]', 'bg-white');
+        btnEl.classList.add('border-[#EF4444]', 'bg-[#FEF2F2]');
+        fbBox.classList.add('bg-[#FEF2F2]', 'border-[#FECACA]');
+        fbTitle.innerHTML = `<ion-icon name="close-circle" style="font-size:20px;color:#DC2626;"></ion-icon><span class="text-[#DC2626]">Cognitive Flow Broken. Child looks away.</span>`;
+      }
+
+      fbText.innerText = opt.feedback;
+    }
+
+    function nextScenario() {
+      currentScenarioIdx++;
+      if (currentScenarioIdx < scenarios.length) {
+        loadScenario();
+      } else {
+        showReport();
+      }
+    }
+
+    function showReport() {
+      hideAll();
+      correctChoices = scenarioResults.filter(r => r === true).length;
+      const hasAnswers = scenarioResults.length > 0;
+      const score = hasAnswers ? Math.round((correctChoices / scenarios.length) * 100) : 55;
+
+      document.getElementById('final-score').innerText = `${score}`;
+      document.getElementById('score-bar-fill').style.width = `${score}%`;
+
+      const captionEl = document.getElementById('score-caption');
+      if (score >= 80) {
+        captionEl.innerText = `You deposited ${score} points into Bob's emotional bank account today — that kind of calm, consistent attention is exactly what builds his sense of security and focus.`;
+      } else if (score >= 50) {
+        captionEl.innerText = `You deposited ${score} points into Bob's emotional bank account today — a great start. A few more Narrate and Praise moments tomorrow will grow that balance even further.`;
+      } else {
+        captionEl.innerText = `You still deposited ${score} points into Bob's emotional bank account today — every bit of Narrate and Praise builds the trust and focus he's growing.`;
+      }
+
+      const penScores = {
+        praise: score,
+        echo: Math.max(score - 15, 10),
+        narrate: Math.min(score + 5, 100)
+      };
+      ['praise', 'echo', 'narrate'].forEach(skill => {
+        document.getElementById(`pen-score-${skill}-label`).innerText = `${penScores[skill]}%`;
+        document.getElementById(`pen-score-${skill}-bar`).style.width = `${penScores[skill]}%`;
+      });
+
+      document.getElementById('step-4').classList.remove('hidden');
+      currentStep = 4;
+      updateStepper();
+    }
+
+    function resetDemo() {
+      hideAll();
+      document.getElementById('step-1').classList.remove('hidden');
+      currentStep = 1;
+      updateStepper();
+    }
+
+    function jumpToStep(step) {
+      if (step === currentStep) return;
+      if (step === 1) resetDemo();
+      else if (step === 2) continueToDashboard();
+      else if (step === 3) startRoleplay();
+      else if (step === 4) showReport();
+    }
+
+    function openSkillModal(category, index) {
+      const item = skillDetails[selectedGoal][category][index];
+      const isPen = category === 'pen';
+
+      const badge = document.getElementById('skill-modal-badge');
+      badge.innerText = isPen ? 'Why it works' : 'Why it hurts';
+      badge.className = isPen
+        ? 'text-[10px] font-bold uppercase tracking-widest bg-[#ECFDF5] text-[#059669] px-2 py-0.5 rounded-full'
+        : 'text-[10px] font-bold uppercase tracking-widest bg-[#FEF2F2] text-[#DC2626] px-2 py-0.5 rounded-full';
+
+      document.getElementById('skill-modal-title').firstChild.textContent = item.name + ' ';
+      document.getElementById('skill-modal-star').classList.toggle('hidden', !item.starred);
+      document.getElementById('skill-modal-why').innerText = item.why;
+
+      const bodyEl = document.getElementById('skill-modal-body');
+      bodyEl.innerHTML = '';
+      item.body.forEach(paragraph => {
+        const p = document.createElement('p');
+        p.innerText = paragraph;
+        bodyEl.appendChild(p);
+      });
+
+      document.getElementById('skill-modal').classList.remove('hidden');
+    }
+
+    function closeSkillModal(evt) {
+      document.getElementById('skill-modal').classList.add('hidden');
+    }
+
+    const domainMilestoneData = {
+      Language: {
+        achieved: [{ title: "Uses 4-5 word sentences", note: "Observed consistently during Special Time play." }],
+        emerging: [{ title: "Asks \"why\" and \"how\" questions", note: "Starting to appear in everyday conversation." }],
+        notYet: [{ title: "Tells a simple story with a beginning and end", note: "Try prompting with open-ended narration during play." }]
+      },
+      Cognitive: {
+        achieved: [{ title: "Sorts objects by color and shape", note: "Confidently demonstrated with toys and blocks." }],
+        emerging: [{ title: "Counts up to 10 objects accurately", note: "Getting close — occasional skips past 6 or 7." }],
+        notYet: [{ title: "Understands the concept of \"yesterday\" and \"tomorrow\"", note: "Typical for this age — keep narrating daily routines." }]
+      },
+      Social: {
+        achieved: [{ title: "Takes turns during simple games", note: "Consistently waits their turn without prompting." }],
+        emerging: [{ title: "Shares toys without prompting", note: "Happens more often when praised in the moment." }],
+        notYet: [{ title: "Negotiates rules with peers during play", note: "Still developing — most kids reach this a bit later." }]
+      },
+      Emotional: {
+        achieved: [{ title: "Names basic feelings (happy, sad, mad)", note: "Uses feeling words spontaneously during play." }],
+        emerging: [{ title: "Uses words instead of tantrums when frustrated", note: "Improving — Praise for calm moments reinforces this." }],
+        notYet: [{ title: "Calms down independently after being upset", note: "Still needs co-regulation from a caregiver, which is expected now." }]
+      },
+      Connection: {
+        achieved: [{ title: "Seeks out parent during Special Time", note: "Consistently initiates play together." }],
+        emerging: [{ title: "Initiates hugs and affection spontaneously", note: "Happening more since daily Special Time started." }],
+        notYet: [{ title: "Comforts others when they're upset", note: "An early-empathy skill that typically develops next." }]
+      }
+    };
+
+    function renderDomainList(containerId, items) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'bg-[#F6F7FB] border border-[#F0F0F0] rounded-lg p-3';
+        card.innerHTML = `<div class="text-sm font-semibold text-[#1E2939]">${item.title}</div><div class="text-xs text-[#6B7280] mt-0.5">${item.note}</div>`;
+        container.appendChild(card);
+      });
+    }
+
+    function openDomainModal(domain) {
+      const data = domainMilestoneData[domain];
+      document.getElementById('domain-modal-title').lastChild.textContent = ' ' + domain;
+      renderDomainList('domain-modal-achieved', data.achieved);
+      renderDomainList('domain-modal-emerging', data.emerging);
+      renderDomainList('domain-modal-not-yet', data.notYet);
+      document.getElementById('domain-modal').classList.remove('hidden');
+    }
+
+    function closeDomainModal(evt) {
+      document.getElementById('domain-modal').classList.add('hidden');
+    }
+
+    function rateFeedback(isPositive) {
+      const upBtn = document.getElementById('thumbs-up-btn');
+      const downBtn = document.getElementById('thumbs-down-btn');
+      const neutral = 'w-10 h-10 rounded-full border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] transition';
+      const activeUp = 'w-10 h-10 rounded-full border border-[#A7F3D0] bg-[#ECFDF5] flex items-center justify-center text-[#059669] transition';
+      const activeDown = 'w-10 h-10 rounded-full border border-[#FECACA] bg-[#FEF2F2] flex items-center justify-center text-[#DC2626] transition';
+      upBtn.className = isPositive ? activeUp : neutral;
+      downBtn.className = isPositive ? neutral : activeDown;
+    }
+
+    function toggleMomentPlay() {
+      const icon = document.getElementById('moment-play-icon');
+      const playing = icon.getAttribute('name') === 'pause';
+      icon.setAttribute('name', playing ? 'play' : 'pause');
+    }
+
+    function updateStepper() {
+      for (let i = 1; i <= 4; i++) {
+        const circle = document.getElementById('step-circle-' + i);
+        const label = document.getElementById('step-label-' + i);
+        if (i < currentStep) {
+          circle.className = 'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-[#8C49D5] text-white';
+          circle.innerHTML = '<ion-icon name="checkmark" style="font-size:14px;"></ion-icon>';
+          label.className = 'text-sm font-bold text-[#8C49D5] hidden sm:inline';
+        } else if (i === currentStep) {
+          circle.className = 'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-[#8C49D5] text-white';
+          circle.innerText = i;
+          label.className = 'text-sm font-bold text-[#8C49D5] hidden sm:inline';
+        } else {
+          circle.className = 'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border border-[#E5E7EB] text-[#9CA3AF] bg-white';
+          circle.innerText = i;
+          label.className = 'text-sm font-semibold text-[#9CA3AF] hidden sm:inline';
+        }
+        if (i < 4) {
+          document.getElementById('step-line-' + i).className = i < currentStep ? 'w-6 sm:w-12 h-0.5 bg-[#8C49D5]' : 'w-6 sm:w-12 h-0.5 bg-[#E5E7EB]';
+        }
+      }
+    }
+
+    updateStepper();
+  </script>
+</body>
+</html>
