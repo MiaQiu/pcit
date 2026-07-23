@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
 import en from './locales/en.json';
 import zhTW from './locales/zh-TW.json';
+import zhCN from './locales/zh-CN.json';
 
 export const LANGUAGE_KEY = '@nora_language';
 
@@ -13,6 +14,7 @@ i18n
     resources: {
       en: { translation: en },
       'zh-TW': { translation: zhTW },
+      'zh-CN': { translation: zhCN },
     },
     lng: 'en',
     fallbackLng: 'en',
@@ -26,6 +28,10 @@ function detectDeviceLanguage(): string {
   // Match zh-TW, zh-Hant, zh-Hant-TW, etc.
   if (primary.startsWith('zh-TW') || primary.startsWith('zh-Hant')) {
     return 'zh-TW';
+  }
+  // Match zh-CN, zh-Hans, zh-Hans-CN, zh-SG, etc.
+  if (primary.startsWith('zh-CN') || primary.startsWith('zh-Hans') || primary.startsWith('zh-SG')) {
+    return 'zh-CN';
   }
   return 'en';
 }

@@ -99,10 +99,19 @@ model Lesson {
 model LessonTranslation {
   lessonId         String
   locale           String
-  title            String
+  title            String?
   subtitle         String?
-  shortDescription String
+  shortDescription String?
   objectives       String[]
+  // Content V2 (audio-first) per-locale fields. Nullable independently of
+  // title/subtitle/etc — a Content V2 translation row is typically authored
+  // via the admin Content V2 editor (one locale, one lesson, one save) rather
+  // than the classic batch translateLessons.cjs script, so it's normal for a
+  // row to have only these fields set, or only the classic ones, not both.
+  contentV2        String?
+  audioUrl         String?
+  wordTimings      Json?
+  durationSeconds  Int?
   autoTranslated   Boolean  @default(true)
   reviewed         Boolean  @default(false)
   translatedAt     DateTime @default(now())

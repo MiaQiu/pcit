@@ -16,7 +16,7 @@ require('dotenv').config();
 const prisma = require('../services/db.cjs');
 const { translateLessonBundle, LOCALE_NAMES } = require('../services/translationService.cjs');
 
-const TARGET_LOCALES = Object.keys(LOCALE_NAMES); // ['zh-TW']
+const TARGET_LOCALES = Object.keys(LOCALE_NAMES); // ['zh-TW', 'zh-CN']
 
 function buildBundle(lesson) {
   return {

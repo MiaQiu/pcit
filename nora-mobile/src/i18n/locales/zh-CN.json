@@ -1,0 +1,1349 @@
+{
+  "common": {
+    "error": "错误",
+    "cancel": "取消",
+    "ok": "确定",
+    "retry": "重试",
+    "success": "成功",
+    "loading": "加载中...",
+    "done": "完成"
+  },
+  "months": {
+    "0": "一月",
+    "1": "二月",
+    "2": "三月",
+    "3": "四月",
+    "4": "五月",
+    "5": "六月",
+    "6": "七月",
+    "7": "八月",
+    "8": "九月",
+    "9": "十月",
+    "10": "十一月",
+    "11": "十二月",
+    "short0": "1月",
+    "short1": "2月",
+    "short2": "3月",
+    "short3": "4月",
+    "short4": "5月",
+    "short5": "6月",
+    "short6": "7月",
+    "short7": "8月",
+    "short8": "9月",
+    "short9": "10月",
+    "short10": "11月",
+    "short11": "12月"
+  },
+  "start": {
+    "subtitle": "每天 5 分钟，让孩子更平静、更快乐。",
+    "getStarted": "立即开始",
+    "alreadyHaveAccount": "我已经有帐号了",
+    "termsPrefix": "点击继续即表示您同意 Nora 的\n",
+    "termsOfService": "服务条款",
+    "termsAnd": " 与 ",
+    "privacyPolicy": "隐私权政策"
+  },
+  "login": {
+    "title": "登录您的帐号",
+    "emailPlaceholder": "电子邮件地址",
+    "passwordPlaceholder": "密码",
+    "logIn": "登录",
+    "forgotPassword": "忘记密码？",
+    "signInWithApple": "使用 Apple 登录",
+    "signInWithGoogle": "使用 Google 登录",
+    "errorEmptyTitle": "错误",
+    "errorEmptyMessage": "请输入您的电子邮件和密码",
+    "loginFailedTitle": "登录失败",
+    "appleSignInFailedMessage": "Apple 登录失败",
+    "googleSignInFailedMessage": "Google 登录失败"
+  },
+  "createAccount": {
+    "title": "创建您的帐号",
+    "emailLabel": "电子邮件",
+    "emailPlaceholder": "your@email.com",
+    "emailInvalid": "请输入有效的电子邮件",
+    "passwordLabel": "密码",
+    "passwordPlaceholder": "至少 8 个字符",
+    "passwordWeak": "需包含 8 个以上字符，且含大小写字母与数字",
+    "confirmPasswordLabel": "确认密码",
+    "confirmPasswordPlaceholder": "再次输入密码",
+    "passwordMismatch": "密码不相符",
+    "createButton": "创建帐号",
+    "invalidEmailTitle": "无效的电子邮件",
+    "invalidEmailMessage": "请输入有效的电子邮件地址",
+    "weakPasswordTitle": "密码强度不足",
+    "weakPasswordMessage": "密码必须至少 8 个字符，并包含 1 个大写字母、1 个小写字母和 1 个数字",
+    "passwordMismatchTitle": "密码不相符",
+    "signupFailedTitle": "注册失败"
+  },
+  "forgotPassword": {
+    "title": "忘记密码？",
+    "subtitle": "输入您的电子邮件地址，我们将向您发送重设密码的指示",
+    "emailLabel": "电子邮件",
+    "emailPlaceholder": "输入您的电子邮件",
+    "sendResetLink": "发送重设链接",
+    "rememberPassword": "想起密码了？",
+    "logIn": "登录",
+    "errorEmptyMessage": "请输入您的电子邮件地址",
+    "errorInvalidMessage": "请输入有效的电子邮件地址",
+    "errorFailedMessage": "发送重设密码邮件失败，请再试一次。",
+    "checkEmailTitle": "请检查您的电子邮件",
+    "sentDescription": "我们已将重设指示发送至",
+    "sentInstructions": "请检查您的电子邮件并点击链接以重设密码。若未看到邮件，请检查垃圾邮件箱。",
+    "backToLogin": "返回登录",
+    "didntReceive": "没收到邮件？",
+    "tryAgain": "再试一次"
+  },
+  "resetPassword": {
+    "title": "重设密码",
+    "subtitle": "请在下方输入您的新密码",
+    "resetTokenLabel": "重设验证码",
+    "resetTokenPlaceholder": "输入邮件中的验证码",
+    "newPasswordLabel": "新密码",
+    "newPasswordPlaceholder": "输入新密码",
+    "passwordHint": "至少 8 个字符，且含大小写字母与数字",
+    "confirmPasswordLabel": "确认新密码",
+    "confirmPasswordPlaceholder": "确认新密码",
+    "resetButton": "重设密码",
+    "rememberPassword": "想起密码了？",
+    "logIn": "登录",
+    "errorTokenRequired": "需填写重设验证码",
+    "errorPasswordRequired": "请输入您的新密码",
+    "errorPasswordMismatch": "密码不相符",
+    "successTitle": "成功",
+    "successMessage": "您的密码已成功重设。请使用新密码登录。",
+    "errorFailedMessage": "重设密码失败，链接可能已过期。"
+  },
+  "subscription": {
+    "unlockPremium": "解锁高端版",
+    "priceMonthly": "每月 {{price}}",
+    "featureUnlimitedSessions": "无限录音次数",
+    "featureAiReports": "每次会话后的 AI 教练报告",
+    "featureWeeklyInsights": "每周进度洞察",
+    "featureCoachChat": "教练聊天支持",
+    "planMonthly": "月缴",
+    "planYearly": "年缴",
+    "popular": "热门",
+    "perMonth": "/月",
+    "perYear": "/年",
+    "savePercent": "省 {{percent}}%",
+    "savedPercent": "(省 {{percent}}%)",
+    "billedAnnuallyAt": "每年计费 {{price}}",
+    "disclaimer": "每月自动以 {{price}} 续订。可随时在「设置」中取消。点击继续即表示您同意我们的 ",
+    "disclaimerYearly": "每年自动以 {{price}} 续订。可随时在「设置」中取消。点击继续即表示您同意我们的 ",
+    "restorePurchase": "恢复购买",
+    "logOut": "注销",
+    "terms": "条款",
+    "privacyPolicy": "隐私权政策",
+    "subscribeNow": "立即订阅",
+    "skipForNow": "继续使用免费版",
+    "betaPricing": "早期支持者限量测试优惠价",
+    "notAvailableTitle": "暂时无法使用",
+    "notAvailableMessage": "目前暂时无法使用月费计划，请稍后再试。",
+    "purchaseFailedTitle": "购买失败",
+    "purchaseFailedMessage": "无法开始试用。如果您已被扣款，请点击「恢复购买」。",
+    "restorePurchaseButton": "恢复购买",
+    "tryAgain": "再试一次",
+    "restoreSuccessTitle": "成功",
+    "restoreSuccessMessage": "您的订阅已恢复！",
+    "noPurchasesTitle": "未发现购买纪录",
+    "noPurchasesMessage": "我们找不到任何可恢复的购买纪录。",
+    "restoreFailedTitle": "恢复失败",
+    "restoreFailedMessage": "无法恢复购买，请再试一次。",
+    "errorSetup": "设置失败，请再试一次。",
+    "logoutError": "注销失败，请再试一次。"
+  },
+  "notificationPermission": {
+    "title": "打开通知",
+    "description": "通过温馨提醒，能更轻松地创建保持活在当下的持久习惯。",
+    "benefitReminders": "5 分钟游戏提醒",
+    "benefitInsights": "录音后的即时分析",
+    "benefitReports": "每周进度报告",
+    "enabling": "打开中...",
+    "enable": "打开",
+    "notNow": "暂不打开",
+    "disabledTitle": "通知已关闭",
+    "disabledMessage": "您稍后可以在「设置」中打开通知。"
+  },
+  "notificationSettings": {
+    "title": "通知",
+    "loading": "加载中...",
+    "permissionBannerTitle": "通知已关闭",
+    "permissionBannerSubtitle": "若要接收提醒和更新，请在设备「设置」中打开通知。",
+    "openSettings": "打开设置",
+    "dailyReminders": "每日提醒",
+    "dailySessionReminder": "每日练习提醒",
+    "dailySessionReminderDesc": "提醒您完成每日特别时间练习",
+    "reminderTime": "提醒时间",
+    "playSounds": "播放练习音效",
+    "connectPhase": "链接阶段",
+    "connectPhaseDesc": "5 分钟游戏练习结束时的音效",
+    "disciplinePhase": "管教阶段",
+    "disciplinePhaseDesc": "从孩子主导游戏转换到管教阶段时的音效",
+    "infoText": "您可以随时更改这些设置。通知时间和频率可能会有所不同。",
+    "selectTime": "选择时间",
+    "pickerCancel": "取消",
+    "pickerDone": "完成",
+    "connectPhaseSoundTitle": "链接阶段音效",
+    "disciplinePhaseSoundTitle": "管教阶段音效",
+    "errorSavePreferences": "保存偏好设置失败",
+    "errorPlaySound": "播放音效预览失败",
+    "notificationsDisabledTitle": "通知已关闭",
+    "notificationsDisabledMessage": "请在设备设置中打开通知以接收提醒。",
+    "sounds": {
+      "winChime": "胜利风铃",
+      "gentleBell": "温和铃声",
+      "voiceReminder": "语音提醒"
+    }
+  },
+  "profile": {
+    "title": "个人文件",
+    "loadingProfile": "正在加载文件...",
+    "account": "帐号",
+    "emailLabel": "电子邮件",
+    "childNameLabel": "孩子姓名",
+    "childAgeLabel": "孩子年龄",
+    "childAgeValue": "{{age}} 岁",
+    "primaryFocusLabel": "主要关注领域",
+    "issueNotSpecified": "未指定",
+    "subscriptionSection": "订阅状态",
+    "currentPlan": "目前方案",
+    "manageSubscription": "管理订阅",
+    "settings": "设置",
+    "referFriend": "推荐好友",
+    "notifications": "通知",
+    "support": "技术支持",
+    "termsAndConditions": "服务条款",
+    "privacyPolicy": "隐私权政策",
+    "language": "语言",
+    "logOut": "注销",
+    "deleteAccount": "删除帐号",
+    "permissionRequiredTitle": "需要权限",
+    "permissionRequiredMessage": "请允许访问您的相片以更换个人头像。",
+    "errorPickImage": "选取图片失败",
+    "errorLoadProfile": "加载文件信息失败",
+    "errorUploadImage": "上传图片失败",
+    "successImageUpdated": "个人头像已成功更新",
+    "logOutConfirmTitle": "注销",
+    "logOutConfirmMessage": "确定要注销吗？",
+    "logOutConfirmButton": "注销",
+    "deleteConfirmTitle": "删除帐号",
+    "deleteConfirmMessage": "这将永久删除您的帐号及其关联的所有个人信息。您将失去所有游戏纪录与分析报告。此操作无法复原。",
+    "deleteConfirmButton": "删除帐号",
+    "errorLogOut": "注销失败，请再试一次。",
+    "errorManageSubscription": "无法打开订阅管理",
+    "errorManageSubscriptionRetry": "无法打开订阅管理，请再试一次。",
+    "errorDeleteAccount": "删除帐号失败。请再试一次或联系技术支持。",
+    "issueTags": {
+      "behavior_challenges": "行为挑战 (闹脾气、争执)",
+      "big_emotions": "处理大情绪",
+      "frustration_tolerance": "挫折忍受度低",
+      "new_baby_in_the_house": "家有新生儿",
+      "moving_house": "搬家或转学",
+      "parental_divorce": "应对父母离异",
+      "social": "培养社交情绪技能",
+      "attention_focus": "注意力与集中力问题",
+      "adhd": "ADHD / 注意力不足过动症",
+      "parenting_strategies": "学习更有效的教养策略",
+      "defiance": "反抗行为",
+      "aggression": "攻击性行为",
+      "emotional": "情绪调节",
+      "routine": "常规与结构",
+      "general": "一般行为"
+    },
+    "planNames": {
+      "premiumTrial": "高端试用版",
+      "premium": "高端版",
+      "free": "免费版"
+    },
+    "subscriptionStatus": {
+      "subscriptionExpired": "订阅已过期",
+      "noActiveSubscription": "无使用中订阅",
+      "trialEnds": "试用将于 {{date}} 结束",
+      "cancelledEnds": "已取消，将于 {{date}} 终止",
+      "renews": "续订日期：{{date}}",
+      "active": "使用中",
+      "cancelled": "已取消"
+    }
+  },
+  "home": {
+    "unableToLoadProfile": "脱机时无法加载个人文件",
+    "sessionProcessing": "最近的游戏练习正在处理中。完成后我们将通知您。",
+    "completeSession": "完成一次游戏练习以查看您的分数！"
+  },
+  "transcript": {
+    "headerTitle": "完整对话纪录",
+    "loading": "正在加载对话纪录...",
+    "failedToLoad": "加载对话纪录失败",
+    "speakerLegend": "讲者标示",
+    "noTranscript": "无可用对话纪录",
+    "silentMoment": "静默时刻",
+    "speakerAdult": "大人",
+    "speakerChild": "孩子",
+    "speakerAdultN": "大人 {{n}}",
+    "speakerChildN": "孩子 {{n}}",
+    "pcitTags": {
+      "Echo": "回应",
+      "Labeled Praise": "具体赞美",
+      "Unlabeled Praise": "概括赞美",
+      "Narration": "行为描述",
+      "Command": "指令",
+      "Question": "问句",
+      "Criticism": "批评",
+      "Neutral": "中立",
+      "Negative Talk": "负面语言",
+      "Direct Command": "直接指令",
+      "Indirect Command": "间接指令"
+    }
+  },
+  "weeklyReport": {
+    "weeklyRecap": "每周回顾",
+    "page3": {
+      "title": "本周的您——身为父母",
+      "noraNoticed": "Nora 观察到的",
+      "metrics": {
+        "calendar": "练习天数",
+        "trophy": "个人最佳",
+        "star": "平均 Nora 分数",
+        "trending-up": "成长"
+      }
+    },
+    "page4": {
+      "title": "本周精彩时刻",
+      "empty": "本周暂无精彩时刻",
+      "dayNames": {
+        "Sun": "周日",
+        "Mon": "周一",
+        "Tue": "周二",
+        "Wed": "周三",
+        "Thu": "周四",
+        "Fri": "周五",
+        "Sat": "周六"
+      },
+      "monthNames": {
+        "Jan": "1月",
+        "Feb": "2月",
+        "Mar": "3月",
+        "Apr": "4月",
+        "May": "5月",
+        "Jun": "6月",
+        "Jul": "7月",
+        "Aug": "8月",
+        "Sep": "9月",
+        "Oct": "10月",
+        "Nov": "11月",
+        "Dec": "12月"
+      }
+    },
+    "page5": {
+      "title": "{{name}} 的这一周",
+      "shiningMoments": "闪亮时刻",
+      "empty": "继续一起玩耍——我们将在这里分享 {{name}} 的成长时刻。",
+      "categories": {
+        "chatbubble": "语言与声音",
+        "bulb": "思考与学习",
+        "people": "一起玩耍",
+        "heart": "情绪感受",
+        "hand-left": "亲子链接"
+      }
+    },
+    "page6": {
+      "title": "下周的练习重点",
+      "focusLabel": "下周的温和目标",
+      "whyTitle": "为什么这很重要",
+      "whySubtitle": "简短的神经系统解释。"
+    },
+    "page7": {
+      "wacbQuestions": {
+        "q1Dawdle": "拖延或故意磨蹭",
+        "q2MealBehavior": "用餐时行为不当",
+        "q3Disobey": "拒绝听从或遵守规则",
+        "q4Angry": "发脾气或有肢体攻击行为",
+        "q5Scream": "尖叫或难以平息的脾气",
+        "q6Destroy": "破坏物品或玩耍太粗鲁",
+        "q7ProvokeFights": "主动挑衅或故意取笑他人",
+        "q8Interrupt": "打断他人或不断要求注意",
+        "q9Attention": "难以专注或坐不住"
+      }
+    },
+    "page2": {
+      "title": "您本周的情感银行帐户存款",
+      "totalDeposits": "总存款",
+      "tagline": "小小时刻，大大回报。",
+      "breakdown": "您的存款明细",
+      "massageTime": "练习时间",
+      "massageTimeDesc": "以温暖和专注与孩子共同调节情绪的时间。",
+      "confidenceBoost": "自信提升",
+      "confidenceBoostDesc": "让 {{name}} 感到有能力和自豪的称赞。",
+      "beingHeard": "被倾听（回应）",
+      "beingHeardDesc": "您反映了感受，让孩子感到被理解。",
+      "beingSeen": "被看见（叙述）",
+      "beingSeenDesc": "您不带评判地描述正在发生的事情。"
+    },
+    "loading": "正在加载报告...",
+    "noReport": "无可用报告",
+    "goBack": "返回",
+    "defaultFocusHeading": "本周请继续练习您的技能。",
+    "defaultFocusSubtext": "不求完美，贵在坚持。",
+    "buttonBack": "← 返回",
+    "buttonContinue": "继续 →",
+    "buttonSubmit": "提交",
+    "checkInTitle": "快速心情签到",
+    "checkInMoodQuestion": "您本周过得如何？",
+    "checkInDisclaimer": "这不是评分——而是帮助教练调整下一次的建议。",
+    "checkInImprovementQuestion": "您是否在正努力改善的领域中看到进步？",
+    "moods": {
+      "grounded": "踏实",
+      "tired": "疲惫",
+      "stretched": "紧绷",
+      "hopeful": "充满希望"
+    },
+    "ratings": {
+      "better": "好转",
+      "same": "不变",
+      "worse": "变差"
+    }
+  },
+  "report": {
+    "headerTitle": "今日情感按摩回顾",
+    "analyzingSession": "正在分析您的练习...",
+    "loadingReport": "正在加载报告...",
+    "failedToLoad": "加载报告失败",
+    "tryAgain": "再试一次",
+    "overallLabel": "总体",
+    "speakerAdult": "大人",
+    "speakerChild": "孩子",
+    "speakerAdultN": "大人 {{n}}",
+    "speakerChildN": "孩子 {{n}}",
+    "speakerUnknown": "未知",
+    "feedbackYes": "是",
+    "feedbackNotReally": "不太满意",
+    "feedbackWhatBetter": "哪里可以做得更好？",
+    "feedbackPlaceholder": "我们该如何改进？",
+    "feedbackSubmit": "提交",
+    "negativeReasons": {
+      "tooGeneric": "太过笼统",
+      "notAccurate": "不够准确",
+      "hardToUnderstand": "难以理解",
+      "missingSomething": "缺少内容"
+    },
+    "section": {
+      "emotionalBankAccount": "情感银行帐户",
+      "penSkills": "您的 PEN 技能",
+      "penSkillsSubtitle": "提升自信与配合度",
+      "areasToAvoid": "应避免的区域 (总数<=3)",
+      "areasToAvoidSubtitle": "会干扰专注力与创造力",
+      "topMoment": "最佳时刻",
+      "coachsCorner": "教练专区",
+      "whatWeLearnt": "我们对 {{childName}} 的新发现",
+      "developmentalMilestones": "发展里程碑",
+      "developmentalMilestonesWithName": "{{childName}} 的发展里程碑"
+    },
+    "subsection": {
+      "observation": "观察",
+      "newMilestone": "新里程碑 ({{category}})"
+    },
+    "skillRating": {
+      "payAttention": "(值得关注)",
+      "good": "(良好)",
+      "excellent": "(优异)"
+    },
+    "pdi": {
+      "commandSequencesSubtitle": "每个指令串行的详细回馈",
+      "sequenceTitle": "串行 {{index}}：{{title}}",
+      "command": "指令：",
+      "waitTime": "等待时间：",
+      "followThrough": "贯彻运行：",
+      "coachsTip": "教练小撇步："
+    },
+    "coachingCard": {
+      "tomorrowsGoal": "明日目标：",
+      "readFullTranscript": "阅读带有提示的完整对话",
+      "summary": "总结：",
+      "tipForNextSession": "下次练习的小撇步：",
+      "insteadOf": "与其说：",
+      "try": "试着说：",
+      "applyInDailyLife": "日常应用："
+    },
+    "milestone": {
+      "lockedBadge": "完成 5 次练习后打开 · {{count}}/5 已完成",
+      "lockedDescription": "追踪孩子在语言、认知、社交、情绪和链接方面的成长——并与同龄基准进行比较。",
+      "achieved": "{{childName}} 已经精通了「{{title}}」！",
+      "emerging": "{{childName}} 开始展现「{{title}}」的能力！"
+    },
+    "feedback": {
+      "thankYou": "感谢您的回馈！",
+      "question": "这份报告对您有帮助吗？"
+    },
+    "chatDemo": {
+      "message": "与我们友善的 AI 教练 Nora 讨论这次练习。"
+    },
+    "skillLabel": {
+      "praiseLabeleld": "具体赞美",
+      "echo": "回应",
+      "narrate": "行为描述",
+      "questions": "问句",
+      "commands": "指令",
+      "criticism": "批评"
+    }
+  },
+  "lessonViewer": {
+    "contentUpdatedTitle": "内容已更新",
+    "contentUpdatedMessage": "本课程已更新。请重新选取以查看最新版本。",
+    "errorEvaluateResponse": "评估您的回答失败，请再试一次。",
+    "quizBadge": "猜猜看",
+    "yourResponse": "您的回答：",
+    "evaluating": "评估中...",
+    "typePlaceholder": "在此输入您的答案...",
+    "buttonContinue": "继续 →",
+    "buttonCheckAnswer": "检查答案",
+    "buttonTakeQuiz": "进行测验 →",
+    "buttonNextLesson": "下一课 →",
+    "buttonBack": "← 返回",
+    "loadingLesson": "加载课程中..."
+  },
+  "progress": {
+    "weeklyReport": "每周报告",
+    "lessonsCompleted": "已完成课程",
+    "playSessions": "游戏练习次数",
+    "currentStreak": "目前连续纪录",
+    "pastReports": "过往报告",
+    "weeklyReportSchedule": "周报于每周一生成。",
+    "mon": "周一",
+    "tue": "周二",
+    "wed": "周三",
+    "thu": "周四",
+    "fri": "周五",
+    "sat": "周六",
+    "sun": "周日",
+    "playTime": "游戏时间",
+    "discipline": "管教",
+    "sessionReport": "练习报告",
+    "overallNoraScore": "整体 Nora 指数",
+    "noDataYet": "尚无数据",
+    "reportsTitle": "报告",
+    "lastSessionDeposits": "上次练习存款",
+    "readReport": "阅读报告",
+    "progressTitle": "进度"
+  },
+  "quiz": {
+    "badge": "快速检查",
+    "checkAnswer": "检查答案",
+    "back": "← 返回",
+    "continue": "继续 →",
+    "errorSubmit": "提交测验失败，请再试一次。"
+  },
+  "learn": {
+    "title": "探索课程",
+    "filterAll": "全部",
+    "moduleLibrary": "模块库",
+    "completedModules": "已完成模块",
+    "foundationLockedNotice": "其他模块已锁定。请先完成「基础」模块。",
+    "completeFoundationFirst": "请先完成基础模块",
+    "couldntLoadModules": "无法加载模块",
+    "noModulesFound": "找不到模块",
+    "tryDifferentSearch": "尝试不同的关键字或筛选条件"
+  },
+  "record": {
+    "uploadingRecording": "正在上传录音...",
+    "analyzingTitle": "正在分析游戏时间...\n这需要几分钟。",
+    "analyzingSubtitle1": "Nora 正在听取赞美、语气和轮流交互的模式，以提供个人化的建议。",
+    "analyzingSubtitle2": "报告准备就绪后，系统会自动带您回到首页。",
+    "micPermissionRequired": "需要麦克风权限才能录音",
+    "recordButton": "录制",
+    "stopRecordingButton": "停止录制",
+    "permissionRequiredTitle": "需要权限",
+    "permissionRequiredMessage": "请授予麦克风权限以录制练习对话。",
+    "recordingIssueTitle": "录音发生问题",
+    "recordingIssueMessage": "启动录音时发生困难。\n\n请检查：\n• 麦克风权限已打开\n• 没有其他应用程序正在使用麦克风\n• 您的设备空间足够",
+    "checkSettings": "检查设置",
+    "tryAgain": "再试一次",
+    "sorryCantRecordTitle": "抱歉",
+    "sorryCantRecordMessage": "录音持续失败。这可能是设备兼容性问题。",
+    "contactSupport": "联系技术支持",
+    "tooShortTitle": "录音时间太短",
+    "tooShortMessage": "我们需要更长一点的游戏时间才能提供有帮助的分析。请再试一次。",
+    "uploadFailedTitle": "上传失败",
+    "uploadFailedMessage": "无法上传您的录音。请检查网络连接并再试一次。",
+    "retry": "重试"
+  },
+  "forceUpdate": {
+    "title": "需要更新",
+    "message": "Nora 有新版本。请更新以继续使用。",
+    "updateButton": "立即更新"
+  },
+  "errorBoundary": {
+    "title": "发生错误",
+    "defaultMessage": "发生非预期的错误",
+    "tryAgain": "再试一次"
+  },
+  "networkStatus": {
+    "offline": "无网络连接"
+  },
+  "referral": {
+    "headerTitle": "推荐好友",
+    "heroTitle": "赠送好友 1 个月免费体验",
+    "heroSubtitle": "当您的好友在试用后订阅时，您也将获得 1 个月免费订阅。",
+    "yourInviteLink": "您的邀请链接",
+    "shareButton": "分享邀请链接",
+    "shareMessage": "我一直在使用 Nora 来改善教养方式——它真的很有帮助！使用我的链接可获得 1 个月免费体验：",
+    "yourReferrals": "您的推荐纪录",
+    "friendJoined_one": "{{count}} 位朋友已加入",
+    "friendJoined_other": "{{count}} 位朋友已加入",
+    "subscribed_one": "{{count}} 位已订阅",
+    "subscribed_other": "{{count}} 位已订阅",
+    "monthEarned_one": "获得 +{{count}} 个月",
+    "monthEarned_other": "获得 +{{count}} 个月",
+    "onFreeTrial_one": "{{count}} 位正在免费试用",
+    "onFreeTrial_other": "{{count}} 位正在免费试用",
+    "emptyStats": "分享您的链接以开始。您将在此看到您的推荐进度。",
+    "howItWorks": "运作方式",
+    "step1": "与好友分享您的链接",
+    "step2": "他们注册并获得 1 个月免费体验",
+    "step3": "当他们正式订阅时，您获得 1 个月免费订阅",
+    "errorLoadReferral": "无法加载您的推荐代码。请再试一次。"
+  },
+  "support": {
+    "headerTitle": "技术支持",
+    "introText": "遇到困难或需要协助吗？请在下方描述您的问题，我们会尽快回复您。",
+    "emailLabel": "电子邮件 *",
+    "emailPlaceholder": "your.email@example.com",
+    "descriptionLabel": "描述 *",
+    "descriptionPlaceholder": "描述您的问题或疑问...",
+    "attachments": "附件",
+    "attachFile": "夹带文件",
+    "submitButton": "提交请求",
+    "requiredFieldTitle": "必填字段",
+    "requiredEmailMessage": "请输入您的电子邮件地址。",
+    "requiredDescriptionMessage": "请输入问题描述。",
+    "invalidEmailTitle": "无效的电子邮件",
+    "invalidEmailMessage": "请输入有效的电子邮件地址。",
+    "successTitle": "请求已提交",
+    "successMessage": "感谢您的联系。我们将审核您的请求并尽快回复。",
+    "filesAttached": "已夹带 {{count}} 个文件",
+    "errorAttachFile": "夹带文件失败，请再试一次。",
+    "errorSubmit": "提交请求失败，请再试一次。"
+  },
+  "psychologistChat": {
+    "headerTitle": "心理师",
+    "headerSub": "Nora 临床团队",
+    "psychologist": "心理师",
+    "emptyTitle": "请在此描述您的情况与问题",
+    "emptyBody": "我们团队的心理师将在 24 小时内与您联系。",
+    "inputPlaceholder": "发送消息给心理师..."
+  },
+  "homeV2": {
+    "headerTitle": "首页",
+    "weeklyDeposit": "{{childName}} 的每周存款",
+    "statDays": "天数",
+    "statMins": "分钟",
+    "statLogs": "记录",
+    "statTimes": "次数",
+    "statLessons": "课程",
+    "tipPerfect": "完美的 7/7！👑\n您太传奇了！",
+    "tipDaysDown": "已达成 {{count}} 天！🌟\n我们能挑战满 7 天吗？",
+    "tipAimFor4": "目标每周 4 天\n进度会更快喔",
+    "weeklyReportLabel": "每周报告已生成！",
+    "weeklyReportFallback": "您的每周总结已准备就绪。来看看 {{childName}} 本周的进步。",
+    "viewWeeklyReport": "查看每周报告",
+    "skipForNow": "暂时跳过",
+    "dailyEmotionalMassageLabel": "每日情感按摩",
+    "analyzingSession": "很棒的练习！我们正在为您与 ",
+    "analyzingSessionSuffix": " 的游戏时间进行分析。报告即将完成。",
+    "letChildLeadStart": "让 ",
+    "letChildLeadMiddle": " 主导今天的 5 分钟游戏，来增加他们的情感存款。每天轻松进步，见证 ",
+    "letChildLeadEnd": " 的成长。",
+    "recordNow": "立即录制游戏时间",
+    "reportReadyStart": "做得好！您的练习报告已准备就绪。看看 ",
+    "reportReadyEnd": " 今天表现如何。",
+    "readReport": "阅读今日报告",
+    "meetCoachLabel": "认识您的 AI 教练",
+    "meetCoachBodyStart": "看到右下角的对话气泡了吗？那是您的 AI 教练 Nora。您可以询问任何问题——教养小撇步、接下来该怎么做，或是 ",
+    "meetCoachBodyEnd": " 的进度。",
+    "chatWithCoach": "与教练对话",
+    "recordAgain": "再次录制",
+    "todaysPlan": "今日计划",
+    "planLessonLabel": "每日学习：",
+    "planLessonDuration": "5 分钟阅读",
+    "planRecordLabel": "开始情感按摩：",
+    "planRecordTitle": "与 {{childName}} 的 5 分钟游戏",
+    "planWeeklyReportLabel": "每周报告：",
+    "planWeeklyReportTitle": "查看本周进度",
+    "planLogBehaviorLabel": "记录一次爆发：",
+    "planLogBehaviorTitle": "追踪行为模式",
+    "planReminderLabel": "设置每日提醒：",
+    "planReminderTitle": "通过每日提醒保持连续纪录",
+    "enableNotificationsTitle": "打开通知",
+    "enableNotificationsMessage": "若要设置每日提醒，请在「设置」中打开此应用程序的通知。",
+    "notNow": "暂不打开",
+    "openSettings": "打开设置",
+    "reminderModalTitle": "设置每日提醒",
+    "reminderModalBody1": "孩子喜欢规律。许多家长发现 ",
+    "reminderModalHighlight1": "「放学后重聚」",
+    "reminderModalOr": " 或 ",
+    "reminderModalHighlight2": "「晚餐前游戏」",
+    "reminderModalHighlight3": "「周末早晨」",
+    "reminderModalBody2": " 的效果最好。让孩子来决定时间吧。",
+    "reminderCustomTime": "自定义时间：{{time}}",
+    "setReminder": "设置提醒",
+    "reminderPresets": {
+      "beforeSchool": "上学前充电",
+      "afterSchool": "放学后重聚",
+      "beforeSleep": "睡前游戏时间"
+    },
+    "recordMessages": {
+      "0start": "您做得太棒了！准备好再次闪耀了吗？与 ",
+      "0end": " 录制另一个练习，见证奇迹发生！ ✨",
+      "1start": "保持那股惊人的气势！与 ",
+      "1end": " 进行另一个有趣的练习吧！",
+      "2start": "到目前为止都很出色！与 ",
+      "2end": " 再进行 5 分钟的特别时间，继续共同成长！ 🌟",
+      "3start": "您可以做到的！与 ",
+      "3end": " 再录制一次快速愉快的练习，庆祝您的进步！",
+      "4start": "准备好迎接更多乐趣了吗？与 ",
+      "4end": " 捕捉另一个超赞的游戏时光吧！"
+    }
+  },
+  "learnV2": {
+    "title": "探索课程",
+    "subtitle": "为您精选",
+    "lockedNotice": "先完成基础模块以解锁此模块。",
+    "completeFoundationFirst": "请先完成基础模块",
+    "noLessonsFound": "找不到课程",
+    "tryDifferentSearch": "尝试不同的关键字"
+  },
+  "learnV3": {
+    "title": "Professor Yi-Chuen Chen",
+    "subtitle": "临床儿童心理学家",
+    "noLessonsFound": "找不到课程"
+  },
+  "privacyPolicy": {
+    "headerTitle": "隐私权政策"
+  },
+  "termsAndConditions": {
+    "headerTitle": "服务条款"
+  },
+  "skillInfo": {
+    "theScience": "科学原理解析",
+    "theResult": "预期成效",
+    "theNextStep": "下一步练习",
+    "skillDetails": "技能详情",
+    "skillNotAvailable": "暂无此技能的信息。",
+    "penSkill": "P.E.N. 技能",
+    "areaToAvoid": "应避免的区域",
+    "whatItIsLabel": "定义",
+    "whyImportantLabel": "重要性",
+    "whyAvoidLabel": "为什么要避免",
+    "inDailyLifeLabel": "日常应用",
+    "utterancesHeader": "{{name}} 的语句",
+    "learnAbout": "了解 {{name}}",
+    "noUtterances": "本次练习未记录到 {{name}} 的语句。",
+    "readFullConversation": "阅读完整对话",
+    "sessionGoal": "目标",
+    "goalDisplay": "目标：{{target}}次/5分钟",
+    "echoGoalDynamic": "当孩子的发话次数少于 10 次时，目标会调整为发话次数的 75%。本次孩子说了 {{count}} 次，目标为 {{target}} 次。",
+    "noraScore": {
+      "title": "Nora 指数",
+      "introduction": "您的 Nora 指数代表您在孩子「情感银行帐户」中的每日余额。它衡量的是您的「链接资本」——即在 5 分钟特别游戏时间内，P.E.N. 存款与行为提款的比率。",
+      "excellent": {
+        "rating": "表现优异",
+        "summary": "您的链接满溢！您今天存入了大量情感。通过保持高密度的技能应用并避免提款，您向孩子传达了他们是被安全对待、被看见且被支持的信号。",
+        "science": "您孩子的大脑高层（逻辑与同理心）已完全启动并居于主导地位。",
+        "result": "您孩子今日的情绪韧性很高。有了充足的存款，他们能更轻松地处理挫折、过渡和强烈的情绪。"
+      },
+      "good": {
+        "rating": "表现良好",
+        "summary": "您正在创建坚实的基础。您的银行帐户有健康的正向余额。您成功实践了「大脑体育馆」的锻炼，并跟随孩子的领导。",
+        "science": "通过专注於单纯的链接，您成功平衡了皮质醇与催产素。",
+        "result": "您的孩子拥有了稳定的情绪缓冲区。他们感受到与您的链接，这降低了他们开始新的一天时的压力水平。"
+      },
+      "payAttention": {
+        "rating": "值得关注",
+        "summary": "关系中的「渗漏」偶尔会发生。分数较低通常意味着「提款率」（指令、提问或批评）偏高。这是忙碌教养中的正常现象，但这是一个信号，提醒帐户需要储值了。",
+        "science": "低余额可能触发低层大脑（生存模式），使孩子对压力更敏感。",
+        "result": "当「链接资本」较低时，您的孩子应对挑战的情绪体力可能较差，导致更快的挫折感或「防御性」行为。"
+      }
+    },
+    "praise": {
+      "title": "赞美 (具体描述)",
+      "displayName": "赞美",
+      "whatItIs": "具体的回馈，精确指出您欣赏的行为。不只是说「好棒」，而是说「我好喜欢你这么仔细地堆栈这些积木」。",
+      "whyImportant": "它能创建自我性能感（孩子相信自己能成功的能力）。通过描述行为，您能告诉孩子具体应该重复哪些优良行为。",
+      "inDailyLife": "当个「正向侦探」。如果孩子平时很难等待，当你看见他们安静坐着的那一刻，立刻使用具体赞美：「我为你能这么耐心地等待点心感到骄傲。」",
+      "contextTitle": "什么算赞美？",
+      "contextDescription": "这些是您精确命名孩子做对了什么的时刻——具体的陈述能告诉他们精确该重复哪些行为。",
+      "targetNote": "本次目标为 {{target}} 次具体赞美。这个次数是让孩子开始可靠地创建自信与正向行为的门槛。"
+    },
+    "echo": {
+      "title": "回应",
+      "displayName": "回应",
+      "whatItIs": "重复或改述孩子说的话。如果他们说「大塔！」，您回答「是的，一个非常大的塔！」。",
+      "whyImportant": "这被称为「言语的拥抱」，它能提供即时的认可并证明您在倾听。它同时也是语言榜样，在不进行「提款式纠正」的情况下示范正确的语法。",
+      "inDailyLife": "使用能量匹配。如果孩子对一个小发现感到兴奋，请用同样热情的「回应」来回应。这证明您与他们的世界是同步的。",
+      "contextTitle": "什么算回应？",
+      "contextDescription": "这些是您重复或改述孩子的话语，展现您完全在倾听并认同他们所说的话。",
+      "targetNote": "本次回应目标为 {{target}} 次。当孩子的发话次数少于 10 次时，目标会自动调整为发话次数的 75%，确保目标在任何情况下都切合实际。"
+    },
+    "narrate": {
+      "title": "行为描述",
+      "displayName": "行为描述",
+      "whatItIs": "像体育评论员一样大声描述孩子的行为。例如：「你正把红色的车子停进车库里。」",
+      "whyImportant": "它能创造「共同关注」，这是提高孩子专注力和注意力跨度最有效的方法。这传达了他们的行动重要到足以获得您的全身心关注。",
+      "inDailyLife": "用行为描述代替提问。与其问「你在画什么？」，不如试试「你正在用绿色的蜡笔画大圆圈」。这提供了关注，却不会带给孩子「表现压力」。",
+      "contextTitle": "什么算行为描述？",
+      "contextDescription": "这些是您大声描述孩子行为的时刻，将您的全副注意力集中在他们正在做的事情上。",
+      "targetNote": "本次目标为 {{target}} 次行为描述，大约每分钟一句话。持续的行为描述有助于维持共同注意力，并促进孩子的语言发展。"
+    },
+    "question": {
+      "title": "提问",
+      "displayName": "提问",
+      "whatItIs": "甚至是「有帮助」的问题，例如「那是什么颜色？」或「你今天过得好吗？」。",
+      "whyImportant": "提问往往是「隐藏的指令」。它们迫使孩子停止游戏来「回答您」，这会打破他们的「心流」（深度沉浸）。",
+      "inDailyLife": "练习「积极的沉默」。当孩子放学回家时，避免连珠炮式的提问。使用 P.E.N. 技能来叙事他们的动作，直到他们感到足够安全并自愿分享信息。",
+      "contextTitle": "什么算提问？",
+      "contextDescription": "这些是您询问内容的时刻——即便出发点良好，提问仍可能成为中断孩子专注力和心流的隐藏指令。"
+    },
+    "command": {
+      "title": "指令",
+      "displayName": "指令",
+      "whatItIs": "任何您告诉孩子该怎么做的指示（例如：「把积木放那里」或「把玩具给我」）。",
+      "whyImportant": "指令会夺走孩子的主导权，并可能触发权力斗争。",
+      "inDailyLife": "10:1 修复原则：\n\n• 减少指令量：目标是减少您一天中给出的总指令数。\n\n• 修复链接：将每个指令视为 10 美元的提款。为了保持帐户余额为正，目标是在每给出 1 个指令后，使用 10 次 P.E.N. 技能。这能修复链接，确保您的孩子在神经系统上是处于「接收」而非「防御」状态。",
+      "contextTitle": "本次练习中",
+      "contextDescription": "这些是您给出指示或引导孩子行为的时刻，这可能会将主导权从他们身上移开。"
+    },
+    "criticism": {
+      "title": "批评",
+      "displayName": "批评",
+      "whatItIs": "任何表示反对的话语，包括「不」、「停止」、「别这样」或纠正错误。",
+      "whyImportant": "这会造成「负面关注陷阱」。如果您通过批评来给予某行为关注，可能会意外地强化该行为。",
+      "inDailyLife": "对轻微的错误行为（如抱怨或噘嘴）使用「策略性忽视」。保持面无表情并将注意力转开。一旦该行为停止，立即加入「具体赞美」来奖励正向的转变。",
+      "contextTitle": "什么算批评？",
+      "contextDescription": "这些是您使用否定性语言的时刻——说「不」、「停止」、「别这样」或纠正错误，这可能会意外强化该行为。"
+    }
+  },
+  "moduleDetail": {
+    "moduleLocked": "模块已锁定",
+    "lockedMessage": "请先完成基础模块以解锁此模块。",
+    "goToFoundation": "前往基础模块",
+    "completeFoundationFirst": "请先完成基础模块",
+    "setAsDailyLesson": "设为每日课程",
+    "currentModule": "目前模块"
+  },
+  "coachChat": {
+    "headerTitle": "Nora 教练",
+    "headerSub": "AI 教养教练",
+    "talkToPsychologist": "咨询心理师",
+    "psychologist": "心理师",
+    "greetingWithName": "嗨 {{name}}！",
+    "greetingDefault": "您好！",
+    "guideSubtitle": "让我们今天一起支持 {{childName}}。\n这里有一些建议给您：",
+    "yourChild": "您的孩子",
+    "inputPlaceholder": "询问 Nora 任何问题...",
+    "errorConnection": "发生错误。请检查网络连接并再试一次。",
+    "errorSendRequest": "发送请求失败。请再试一次。",
+    "suggestions": {
+      "understandTitle": "了解我的孩子",
+      "understandPrompt": "为什么我的孩子会这样做？",
+      "whatToDoTitle": "我现在该怎么办",
+      "whatToDoPrompt": "在这种情况下我该怎么做？",
+      "confidenceTitle": "充满自信的教养",
+      "confidencePrompt": "我的处理方式正确吗？",
+      "planTitle": "我的 Nora 计划",
+      "planPrompt": "解释我的教养建议与重点"
+    },
+    "iUnderstand": "我了解了",
+    "psychologistReplyTime": "我们的儿童心理师团队将在 24 小时内在此回复您。",
+    "agreeToTerms": "我同意服务条款，并同意将我的信息分享给心理师团队。",
+    "readTerms": "阅读服务条款",
+    "sendRequest": "发送请求",
+    "terms": {
+      "title": "服务条款",
+      "section1Title": "1. 目的",
+      "section1Body": "通过请求咨询心理师，您即要求 Nora 为您联系我们团队中的合格儿童心理师。此服务旨在提供除了应用程序内 AI 教练之外的专业支持。",
+      "section2Title": "2. 我们分享的信息",
+      "section2Body": "为了让心理师能提供个人化支持，我们将与其分享以下信息：",
+      "section2Bullet1": "- 您的姓名和电子邮件",
+      "section2Bullet2": "- 您孩子的姓名、年龄和性别",
+      "section2Bullet3": "- 您孩子的行为评估结果，包括注册时识别的主要与次要关注问题",
+      "section2Bullet4": "- 您近期情感按摩练习活动的摘要",
+      "section3Title": "3. 信息用途",
+      "section3Body": "此信息仅用于您的咨询目的。心理师将在联系您前进行审阅，以便提供相关且符合背景的指引，您无须重复背景信息。",
+      "section4Title": "4. 保密性",
+      "section4Body": "所有分享的信息在我们的临床团队内严格保密。不会揭露给第三方、贩售或用于行销。我们团队的操作遵循与儿童心理实务标准一致的专业保密义务。",
+      "section5Title": "5. 回复时间",
+      "section5Body": "我们的心理师团队将在 24 小时内通过对话窗口与您联系。此服务不适用于紧急状况。如果您或您的孩子面临即时危险，请联系当地急救服务或危机专线。",
+      "section6Title": "6. 您的同意",
+      "section6Body": "勾选方框并提交此请求，即代表您确认已阅读并理解这些条款，并给予知情同意将上述信息分享给我们的心理师团队。"
+    }
+  },
+  "languagePicker": {
+    "title": "语言",
+    "english": "English",
+    "traditionalChinese": "繁体中文",
+    "simplifiedChinese": "简体中文"
+  },
+  "onboarding": {
+    "continue": "继续",
+    "back": "返回",
+    "progressHeader": {
+      "title": "个人化Nora",
+      "phase1": "基本数据",
+      "phase2": "发展快照"
+    },
+    "letsGo": "我们开始吧！  →",
+    "letsBegin": "准备开始  →",
+    "skipForNow": "暂时跳过",
+    "nameInput": {
+      "title": "您怎么称呼？"
+    },
+    "childName": {
+      "title": "您的孩子叫什么名字？"
+    },
+    "relationship": {
+      "headerText": "这能帮助我们为您的角色量身打造引导内容。",
+      "title": "嗨 {{name}}，您是孩子的谁？",
+      "mother": "母亲",
+      "father": "父亲",
+      "grandmother": "祖母/外祖母",
+      "grandfather": "祖父/外祖父",
+      "other": "其他"
+    },
+    "childGender": {
+      "headerText": "仅用于提供个人化的引导内容。",
+      "title": "{{name}} 的性别是？",
+      "boy": "男孩",
+      "girl": "女孩",
+      "preferNotToShare": "不便透露"
+    },
+    "childBirthday": {
+      "title": "{{name}} 的生日是什么时候？",
+      "ageSuitabilityNote": "* 年龄适用说明：Nora 的方法经临床证实对 2 至 7 岁的孩子最有效。然而，这里教导的内核技能（如正向强化和情绪调节）可以灵活调整，并对任何年龄的孩子都有帮助。"
+    },
+    "childIssue": {
+      "headerText": "答案没有对错。请选择所有适用的选项。",
+      "title": "Nora 能如何帮助您？",
+      "behaviorChallenges": "行为挑战 (闹脾气、争执)",
+      "bigEmotions": "处理大情绪",
+      "frustrationTolerance": "挫折忍受度低",
+      "newBaby": "家有新生儿",
+      "movingHouse": "搬家或转学",
+      "parentalDivorce": "应对父母离异",
+      "social": "培养社交情绪技能",
+      "attentionFocus": "注意力与集中力问题",
+      "adhd": "ADHD / 注意力不足过动症",
+      "parentingStrategies": "学习更有效的教养策略",
+      "other": "其他",
+      "otherPlaceholder": "请描述该问题..."
+    },
+    "childSnapshotIntro": {
+      "description": "嗨 {{userName}}，感谢您分享来这里的原因。您找对地方了。我们将询问几个快速问题，以进一步了解 {{childName}} 最近的表现，并为您量身打造支持。"
+    },
+    "childBehaviorProfile": {
+      "speechBubble": "Nora 已为 {{childName}} 生成了行为特征描述，并为您制定了个人化计划。",
+      "cardTitle": "{{childName}} 的行为特征快照",
+      "lockText": "要解锁行为特征洞察，您可以点击此处回答行为问题，以便我们个人化您的计划",
+      "currentSnapshot": "目前状态：{{title}}",
+      "whatThisMeans": "这代表什么",
+      "startingPlan": "您的入门计划",
+      "whatToExpect": "预期成效",
+      "continueButton": "介绍情感按摩  →",
+      "barSegments": {
+        "stable": "稳定",
+        "mild": "轻微",
+        "medium": "中度",
+        "high": "高度"
+      },
+      "snapshotTitles": {
+        "stable": "发展达标",
+        "mild": "需要些许支持",
+        "medium": "需要更多支持",
+        "high": "需要额外支持"
+      },
+      "barLabels": {
+        "stable": "发展达标",
+        "mild": "些许支持",
+        "medium": "更多支持",
+        "high": "额外支持"
+      },
+      "categories": {
+        "stable": {
+          "whatThisMeans": "您的孩子通常能以符合年龄的方式管理情绪、注意力和行为。",
+          "startingPlan": "每天进行 5 分钟「情感按摩」——这是一种简单的孩子主导游戏，您只需跟随孩子的引导并全然同在。\n\n一个小小的时刻，就能加强链接并支持正向行为。",
+          "whatToExpect": "您可能会在几周内开始注意到细微的转变。\n随着时间推移，您也将学会如何支持情绪并设置温和的界线。"
+        },
+        "mild": {
+          "whatThisMeans": "您的孩子有时可能在倾听、管理情绪或在日常生活中保持专注方面遇到困难。\n这个年龄常见一些小挑战。有了正确的支持，他们能快速进步。",
+          "startingPlan": "每天进行 5 分钟「情感按摩」——这是一个简单的孩子主导游戏，由您跟随孩子的引导。这能加强你们的链接，并帮助随着时间减少行为挣扎。",
+          "whatToExpect": "许多家庭在 2-3 周内就会注意到变化。\n在那之后，我们将引导您处理情绪与界线。"
+        },
+        "medium": {
+          "whatThisMeans": "您的孩子在日常时刻可能经常在情绪、专注力或合作方面遇到困难。\n目前某些时刻可能感觉更具挑战性。通过持续的支持，非常有机会达成具意义的进步。",
+          "startingPlan": "从每天 5 分钟「情感按摩」开始——以冷静、专注的方式跟随孩子的引导。\n\n链接是改变的起点——并能随着时间支持更好的行为。",
+          "whatToExpect": "只要持之以恒，进步通常会在几周内开始。\n我们将引导您处理情绪、界线及各种日常状况。"
+        },
+        "high": {
+          "whatThisMeans": "您的孩子在日常生活中管理情绪或保持专注方面可能遇到困难。\n您并不孤单——许多家庭都经历过这些。有了正确的支持，正向的改变是会发生的。",
+          "startingPlan": "从每天 5 分钟「情感按摩」开始——温和地跟随孩子的引导，并与他们全然同在。\n\n这能为改变奠定安全的基础，并随着时间支持行为发展。",
+          "whatToExpect": "微小的改变会在几周内开始出现。\n我们将密切引导您处理情绪、界线和日常挑战。"
+        }
+      }
+    },
+    "wacb": {
+      "headerText": "答案没有对错——且这并非诊断。",
+      "scaleNever": "从不 (完全没有)",
+      "scaleRarely": "很少 (每周 1–2 次)",
+      "scaleSometimes": "有时 (每周 3–4 次)",
+      "scaleOften": "经常 (每周 5–6 次)",
+      "scaleVeryOften": "非常频繁 (每周超过 6 次)",
+      "submitSurvey": "提交问卷",
+      "q1": "在过去两周内，{{name}} 有多常做事花太长时间或故意拖延？",
+      "q2": "在过去两周内，{{name}} 在进餐时有多常表现不佳或不守规矩？",
+      "q3": "在过去两周内，{{name}} 有多常拒绝听从或对规定说「不」？",
+      "q4": "在过去两周内，{{name}} 有多常发脾气或动作粗鲁？",
+      "q5": "在过去两周内，{{name}} 有多常尖叫哭闹或难以停止地大发脾气？",
+      "q6": "在过去两周内，{{name}} 有多常弄坏东西或对别人的玩具太粗鲁？",
+      "q7": "在过去两周内，{{name}} 有多常故意挑起争端或取笑他人？",
+      "q8": "在过去两周内，{{name}} 有多常打断谈话或要求持续的关注？",
+      "q9": "在过去两周内，{{name}} 有多常难以专注或无法静坐？",
+      "submissionError": "提交错误",
+      "submissionFailed": "提交问卷失败，请再试一次。"
+    },
+    "intro3": {
+      "title": "情感按摩",
+      "description": "每天只需 5 分钟与孩子的简单游戏。通过跟随孩子的领导并全然同在，您能支持他们创建正向行为、发展社交技能并提升专注力。"
+    },
+    "parentingIntro": {
+      "title": "每天只需 5 分钟，就能带来改变。",
+      "benefit1": "创建更强的链接",
+      "benefit2": "减少行为问题",
+      "benefit3": "提升社交、情绪与专注力",
+      "continueButton": "获取个人化计划  →"
+    },
+    "demo1": {
+      "subtitle": "教养并不容易",
+      "title": "但您无须独自面对。",
+      "meetNora": "认识 Nora",
+      "description": "您培养自信、快乐孩子的向导。\n基于科学实证。\n为您的孩子 (1–7 岁) 量身打造。",
+      "labels": {
+        "childDevelopment": "儿童发展",
+        "attachmentScience": "依附理论",
+        "speechTherapy": "语言治疗",
+        "socialLearning": "社会学习理论",
+        "behaviorManagement": "行为管理",
+        "playTherapy": "游戏治疗",
+        "authoritativeParenting": "权威式教养"
+      }
+    },
+    "demo1B": {
+      "text": "获得真正有效的简单策略。",
+      "labels": {
+        "therapeuticPlay": "治疗性游戏技巧",
+        "settingBoundaries": "设立界限",
+        "manageEmotions": "管理情绪"
+      }
+    },
+    "demo2": {
+      "text": "Nora 倾听您的日常交互——游戏时光、界线设置、大情绪喷发。"
+    },
+    "demo2B": {
+      "text": "Nora 协助您理解您的教养风格与模式。",
+      "penSkills": "您的 PEN 技能",
+      "areasToAvoid": "应避免的区域",
+      "praiseLabeled": "赞美 (具体描述)",
+      "echo": "回应",
+      "narrate": "行为描述",
+      "labelGood": "良好",
+      "labelPayAttention": "值得关注",
+      "labelExcellent": "优异",
+      "questions": "提问",
+      "commands": "指令",
+      "criticism": "批评"
+    },
+    "demo3": {
+      "text": "基于真实时刻的个人化教练，以儿童发展科学为基础。",
+      "title": "Nora 教养指导角落",
+      "card1Label": "处理分心状况",
+      "card1Body": "我注意到当一个小女孩在背景哭泣时，子奕陷入了「为什么？」的循环。未来遇到类似的外部干扰或小危机时，您可以先简短认同他的观察，然后立即描述他的游戏，例如：「你正在拿起粉红色的麦克笔。」这能顺畅地吸引他的注意力。",
+      "card2Label": "长远影响",
+      "card2Body": "您在减少提问方面做得非常好。为了进一步帮助他在游戏时间之外的挫折容忍力，试着用同样描述性的语气来标记情绪（「你现在感到很沮丧」），然后再尝试讲道理或设立界限。"
+    },
+    "demo4": {
+      "text": "帮助您的孩子茁壮成长。发扬他们的优点并支持其情感与社交成长。",
+      "reportTitle": "芯谊的成长与学习",
+      "reportSubtitle": "观察报告",
+      "reportBadge": "优秀的观察",
+      "reportBody": "芯谊能注意到绘画上的细节，例如其他人可能会忽略的眼睛。\n\n在 43 个月大时，芯谊展现了强烈的视觉辨别能力，这将有助于数学、科学和阅读的学习。\n\n您可以通过提问开放性问题来进一步发展这个技能，例如：「你还注意到什么？」",
+      "milestoneTitle": "芯谊的发展里程碑",
+      "axisLanguage": "语言",
+      "axisCognition": "认知",
+      "axisSocial": "社会",
+      "axisEmotional": "情绪",
+      "axisConnect": "链接",
+      "legendChild": "芯谊",
+      "legendMilestone": "同龄标准"
+    },
+    "demo5": {
+      "text": "赋能每一位照顾者，支持 90 多种语言。"
+    },
+    "playSession1": {
+      "title": "准备合适的玩具",
+      "subtitle": "为了让孩子的想像力尽情发挥，请选择非结构化的玩具。这些玩具能让他们在游戏中掌握主导权。",
+      "labels": {
+        "buildCreate": "建造与创作",
+        "imaginePretend": "想像与扮演",
+        "drawExplore": "绘画与探索",
+        "solvePuzzle": "解谜与拼图"
+      }
+    },
+    "playSession2": {
+      "title": "让孩子主导",
+      "subtitle": "在接下来的 5 分钟内，您的目标是成为孩子最大的支持者，而不是老师。\n描述他们正在做的事，重复他们说的话。",
+      "labels": {
+        "childLedPlay": "孩子主导的游戏"
+      }
+    },
+    "playSession3": {
+      "title": "使用 Nora App 录制",
+      "subtitle": "将手机放在附近能清楚听到对话的地方。您无须手持——只需专注于游戏！",
+      "cardLabel": "每日情感按摩",
+      "cardContent": "让{{name}}主导今天的5分钟游戏，来增加他们的情感存款。每天轻松进步，见证{{name}}的成长。",
+      "cardButton": "立即录制游戏时间"
+    },
+    "playSession4": {
+      "title": "短暂游戏，深度洞察",
+      "subtitle": "录制将在 5 分钟后自动停止。\n我们的 AI 将分析交互，并在几分钟内生成个人化报告。",
+      "cards": {
+        "parentingPattern": "教养模式",
+        "sentenceTip": "逐句提示",
+        "momentCoaching": "当下辅导",
+        "gentleFocus": "柔和焦点",
+        "ebaTitle": "情绪银行帐户",
+        "ebaScore": "+79/100",
+        "ebaLabel": "需要关注",
+        "overallLabel": "整体",
+        "penSkills": "您的PEN技巧",
+        "penPraise": "赞赏（标记）",
+        "penEcho": "重述",
+        "penNarrate": "叙述",
+        "adultLabel": "成人",
+        "childLabel": "儿童",
+        "adultSays": "Cut, Cut.",
+        "childSays": "[喃喃自语]",
+        "repeatBadge": "重述",
+        "sentenceTipHint": "✓ 太棒了！\n做得好，您重述了安雅 (Anya) 的动作！",
+        "coachingLabel": "应对干扰",
+        "coachingSnippet": "我注意到当背景中有一个小女孩哭泣时，曾发生一些小小的干扰，此时 Ziyi 有点陷进了「为什么？」的循环。您处理得很好，最终引导他回到他的艺术创作上。为了未来遇到外部干扰或发生小危机的情况，您可以简短地认同他的观察（「你听到他的描述他的游戏」），然后立即粉红色马克笔。这可以以平稳地将他的注意力带回你们共同的活动中。",
+        "gentleFocusTitle": "下周的柔和焦点",
+        "focusSnippet": "在 Ziyi 平时挣扎的时刻 — 转换、挫折，或者当他要求东西时 — 保持叙述。您的描述已经是他喜欢的一种关注方式。请将其作为您的超能力。"
+      }
+    },
+    "playSession5": {
+      "title": "您的数据保持私密",
+      "subtitle": "您的数据始终受到保护，未经您的许可绝不分享。"
+    },
+    "next": "下一步  →"
+  },
+  "quizFeedback": {
+    "correct": "正确！",
+    "notQuite": "不完全正确！"
+  },
+  "recordingCard": {
+    "recording": "录音中...\n游戏时请自然对话！录音将在 {{minutes}} 分钟时自动停止。",
+    "startPrompt": "开始录制您的游戏练习",
+    "record": "录制",
+    "stop": "停止"
+  },
+  "lessonCard": {
+    "locked": "已锁定 🔒",
+    "startReading": "开始阅读"
+  },
+  "howToRecord": {
+    "title": "如何录制",
+    "step1": "将手机放在附近，确保能清楚听到两人的声音。",
+    "step2": "按下下方的「开始录制」。",
+    "step3": "与孩子自然地游戏 {{minutes}} 分钟。",
+    "step4": "我们将在 {{minutes}} 分钟后自动停止并给予回馈！"
+  },
+  "recordingGuide": {
+    "doSectionTitle": "要做的事 - PEN 技能",
+    "dontSectionTitle": "不该做的事",
+    "reminderText": "记住，这是「孩子主导」的游戏。只需跟随 {{childName}} 的引导。",
+    "connectionFirstTitle": "链接优先 – PEN 技能",
+    "disciplineDoTitle": "管教期间 – 要做的事",
+    "disciplineReminder": "记住，每给出一个指令，目标是使用约 10 次 P.E.N. 交互来重建链接。",
+    "playTimeTab": "游戏时间 (5分)",
+    "disciplineTab": "管教阶段 (10分)",
+    "lockMessage": "有效的管教是创建在强大链接的基础上。缺乏链接，指令会感觉像要求；有了链接，指令则是引导。",
+    "lockGoal": "在单次特别时间练习中获得 80 分以上的存款，即可解锁管教",
+    "lockBankMessage": "这能确保在您进入管教阶段前，您的「关系银行帐户」是满溢的。",
+    "do": {
+      "praise": {
+        "title": "赞美",
+        "description": "当个啦啦队。明确告诉孩子您喜欢他行为的哪些部分。"
+      },
+      "echo": {
+        "title": "回应",
+        "description": "重复他们说的话。通过重述他们的话语来表现您正在倾听。"
+      },
+      "narrate": {
+        "title": "行为描述",
+        "description": "像体育主播一样描述他们的动作，不带评论。"
+      }
+    },
+    "dont": {
+      "command": "指令",
+      "question": "提问",
+      "criticize": "批评"
+    },
+    "discipline": {
+      "command": {
+        "title": "有效的指令：",
+        "description": "直接、正向、单一、具体"
+      },
+      "followThrough": {
+        "title": "始终贯彻运行：",
+        "description": "5秒等待 → 给予选择 → 5秒等待 → 运行该选择"
+      },
+      "mindsets": {
+        "title": "内核心态：",
+        "description": "一致性、保持冷静"
+      }
+    }
+  },
+  "nextActionCard": {
+    "upNext": "接下来",
+    "continue": "继续",
+    "lastSessionDeposits": "上次练习存款",
+    "readReport": {
+      "title": "阅读您的报告与洞察",
+      "description": "查看本次练习的分析。",
+      "encouragement": "太棒了！您的报告已准备就绪！"
+    },
+    "extraPractice": "额外练习",
+    "record": {
+      "title": "录制您的游戏练习",
+      "description": "学以致用能让学习速度快 2 倍。通过录制练习来实践您的新技能。",
+      "encouragement": "做得好，完成了今天的课程！现在让我们来录制游戏练习吧。"
+    },
+    "recordAgain": {
+      "title": "挑战更高分",
+      "description": "熟能生巧。再次录制游戏练习来实践刚收到的回馈。",
+      "encouragement": "太棒了！想不想再练习一次？"
+    },
+    "readReportLink": "阅读报告"
+  },
+  "modulePicker": {
+    "title": "选择下一个模块！",
+    "congrats": "恭喜完成基础课程！",
+    "infoAutoSelected": "我们已根据您孩子的需求与目标设置了下一个模块",
+    "infoBrowse": "您可以随时在「探索」画面浏览可用模块并更改每日课程",
+    "recommended": "为您推荐",
+    "otherModules": "其他模块",
+    "availableModules": "可用模块",
+    "current": "目前",
+    "lesson": "课程",
+    "lessons": "课程",
+    "done": "已完成",
+    "ok": "确定"
+  },
+  "reports": {
+    "title": "报告",
+    "recentSessions": "近期纪录",
+    "childDirected": "孩子主导",
+    "parentDirected": "家长主导",
+    "weeklyReports": "每周报告",
+    "weeklyReport": "每周报告",
+    "thisMonth": "本月",
+    "sessions": "练习次数",
+    "avgScore": "平均分数",
+    "developmentalMilestones": "发展里程碑",
+    "milestoneLocked": "完成 5 次练习后打开 · {{count}}/5 已完成",
+    "milestoneDesc": "追踪孩子在语言、认知、社交、情绪和链接方面的成长——并与同龄基准进行比较。"
+  },
+  "domainMilestone": {
+    "title": "{{domain}} 里程碑",
+    "languageNote": "语法里程碑 (如时态、复数、冠词) 以英文为准，可能不适用于所有语言。",
+    "loading": "正在加载里程碑...",
+    "profilingStatus": "{{childName}} 的 {{domain}} 发展评估为 {{status}}。",
+    "defaultChildName": "您的孩子",
+    "achieved": "已达成",
+    "emerging": "发展中",
+    "notYetObserved": "尚未观察到",
+    "noMilestones": "未发现此领域的里程碑。",
+    "tips": "小撇步：{{tip}}"
+  },
+  "radarChart": {
+    "title": "发展里程碑",
+    "titleWithName": "{{name}} 的发展里程碑",
+    "yourChild": "您的孩子",
+    "ageBenchmark": "年龄基准",
+    "domain": {
+      "Language": "语言",
+      "Cognitive": "认知",
+      "Social": "社交",
+      "Emotional": "情绪",
+      "Connection": "亲子链接"
+    }
+  },
+  "tabNav": {
+    "home": "首页",
+    "record": "录制",
+    "learn": "课程",
+    "report": "报告"
+  },
+  "firstLessonCard": {
+    "label": "开始您的旅程",
+    "title": "阅读您的第一堂 2 分钟课程",
+    "description": "课程是只需 2 分钟的短文，内容讲述在游戏时间创建链接的重要性。",
+    "startReading": "开始阅读 📖"
+  },
+  "milestoneTimeline": {
+    "title": "里程碑进度",
+    "noData": "尚无里程碑纪录",
+    "legendAchieved": "已达成",
+    "legendTotal": "总计 (包含发展中)"
+  },
+  "phaseCelebration": {
+    "title": "您已精通特别游戏时间！",
+    "message": "做得太好了！获得 80 分以上，代表您已经与 {{childName}} 创建了稳固且充满链接的基础。",
+    "unlockTitle": "管教模式已解锁",
+    "unlockDescriptionPrefix": "您现在可以获得关于有效管教的个人化指导。只需前往「",
+    "recordTab": "录制",
+    "unlockDescriptionMiddle": "」标签页，选择「",
+    "disciplineMode": "管教阶段 (10分)",
+    "unlockDescriptionSuffix": "」，即可录制一段与 {{childName}} 真实的管教时刻。",
+    "beforeYouBegin": "开始之前",
+    "suggestionPrefix": "我们建议您先完成「",
+    "notListeningLessons": "不听话与争执",
+    "suggestionMiddle": "」模块的课程——这些课程将为您提供架构，让您的管教练习发挥最大效果。\n\n同时，请继续进行特别时间的练习，持续为 {{childName}} 的情感银行帐户存款。",
+    "gotIt": "我知道了！"
+  },
+  "whatsNew": {
+    "title": "最新消息",
+    "version": "版本 {{version}}",
+    "updateNow": "立即更新",
+    "maybeLater": "稍后再说"
+  },
+  "textInputFeedback": {
+    "greatJob": "做得太棒了！",
+    "keepPracticing": "继续练习！",
+    "tipsForImprovement": "改进建议：",
+    "idealAnswer": "理想答案："
+  },
+  "streak": {
+    "title": "连续纪录",
+    "mon": "一",
+    "tue": "二",
+    "wed": "三",
+    "thu": "四",
+    "fri": "五",
+    "sat": "六",
+    "sun": "日"
+  },
+  "moduleCard": {
+    "lessonCount_one": "{{count}} 堂课程",
+    "lessonCount_other": "{{count}} 堂课程",
+    "current": "目前"
+  }
+}

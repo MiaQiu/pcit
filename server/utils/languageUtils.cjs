@@ -57,6 +57,7 @@ const LANGUAGE_NAMES = {
   cmn: 'Mandarin Chinese',
   zho: 'Mandarin Chinese',  // ISO 639-3 macrolanguage code used by ElevenLabs
   'zh-TW': 'Traditional Chinese',
+  'zh-CN': 'Simplified Chinese',
   mar: 'Marathi',
   nep: 'Nepali',
   ori: 'Odia',
@@ -82,6 +83,9 @@ function getLanguageInstruction(languageCode) {
   let instruction = `Write your entire response in ${name}.`;
   if (languageCode === 'zh-TW') {
     instruction += ' Use these official skill name translations: Echo → 回應, Narrate/Narration → 行為描述, Labeled Praise → 具體讚美.';
+  }
+  if (languageCode === 'zh-CN') {
+    instruction += ' Use these official skill name translations: Echo → 回应, Narrate/Narration → 行为描述, Labeled Praise → 具体赞美.';
   }
   return instruction;
 }

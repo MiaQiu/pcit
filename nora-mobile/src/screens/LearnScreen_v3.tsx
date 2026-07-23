@@ -20,6 +20,9 @@ import {
   Modal,
   Switch,
   Image,
+  Alert,
+  Platform,
+  ActionSheetIOS,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -27,13 +30,14 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Polygon, Circle } from 'react-native-svg';
 import { FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
-import { useLessonService } from '../contexts/AppContext';
+import { useAuthService, useLessonService } from '../contexts/AppContext';
 import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import type { ModuleWithProgress, LessonCardData, LessonModule, ModuleListResponse, LessonListResponse } from '@nora/core';
 import { getCachedLessonData, saveLessonData, isCacheStale } from '../services/lessonDataCache';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { changeLanguage } from '../i18n';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 import { useLessonPlayer } from '../contexts/LessonPlayerContext';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
@@ -84,6 +88,7 @@ const PLAYER_RING_CIRCUMFERENCE = 2 * Math.PI * PLAYER_RING_RADIUS;
 export const LearnScreen_v3: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const lessonService = useLessonService();
+  const authService = useAuthService();
   const { isOnline } = useNetworkStatus();
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -407,6 +412,38 @@ export const LearnScreen_v3: React.FC = () => {
     );
   };
 
+  const handleLanguagePress = () => {
+    amplitudeService.trackEvent('Learn Language Tapped', { currentLanguage: i18n.language });
+    const applyLocale = (locale: string) => {
+      amplitudeService.trackEvent('Learn Language Changed', { language: locale });
+      changeLanguage(locale);
+      authService.setPreferredLocale(locale).catch((err) => console.warn('[Lang] setPreferredLocale failed:', err));
+    };
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [t('common.cancel'), t('languagePicker.english'), t('languagePicker.traditionalChinese'), t('languagePicker.simplifiedChinese')],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) applyLocale('en');
+          else if (buttonIndex === 2) applyLocale('zh-TW');
+          else if (buttonIndex === 3) applyLocale('zh-CN');
+        }
+      );
+    } else {
+      Alert.alert(t('languagePicker.title'), undefined, [
+        { text: t('languagePicker.english'), onPress: () => applyLocale('en') },
+        { text: t('languagePicker.traditionalChinese'), onPress: () => applyLocale('zh-TW') },
+        { text: t('languagePicker.simplifiedChinese'), onPress: () => applyLocale('zh-CN') },
+        { text: t('common.cancel'), style: 'cancel' },
+      ]);
+    }
+  };
+
+  const languageBadgeLabel = i18n.language === 'zh-TW' ? '繁' : i18n.language === 'zh-CN' ? '简' : 'EN';
+
   if (loading || brandingLoading) {
     return (
       <SafeAreaView style={styles.loadingWrap}>
@@ -423,6 +460,10 @@ export const LearnScreen_v3: React.FC = () => {
           <Text style={styles.coverTitle} numberOfLines={2}>{coverTitle ?? t('learnV3.title')}</Text>
           <Text style={styles.coverSubtitle} numberOfLines={2}>{coverSubtitle ?? t('learnV3.subtitle')}</Text>
         </View>
+        <TouchableOpacity style={styles.languageBadge} onPress={handleLanguagePress}>
+          <Ionicons name="language" size={14} color={COLORS.mainPurple} />
+          <Text style={styles.languageBadgeText}>{languageBadgeLabel}</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.progressCard}>
@@ -668,6 +709,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.textDark,
     marginTop: 6,
+  },
+  languageBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 4,
+  },
+  languageBadgeText: {
+    fontFamily: FONTS.bold,
+    fontSize: 12,
+    color: COLORS.mainPurple,
   },
 
   progressCard: {

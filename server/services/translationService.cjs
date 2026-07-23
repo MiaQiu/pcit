@@ -5,6 +5,7 @@ const { parseJSON } = require('../llm/repair.cjs');
 
 const LOCALE_NAMES = {
   'zh-TW': 'Traditional Chinese (Taiwan)',
+  'zh-CN': 'Simplified Chinese (Mainland China)',
 };
 
 const SYSTEM_PROMPT = `You are a professional translator specializing in parenting education content.

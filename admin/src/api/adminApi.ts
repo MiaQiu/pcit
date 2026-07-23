@@ -221,6 +221,25 @@ export async function getLesson(id: string): Promise<LessonDetail> {
   return data.lesson;
 }
 
+export interface ContentV2Translation {
+  contentV2: string | null;
+  audioUrl: string | null;
+  wordTimings: WordTiming[] | null;
+  durationSeconds: number | null;
+  reviewed: boolean;
+}
+
+// Like getLesson, but also loads the given locale's existing Content V2
+// translation (if any) alongside the always-English base lesson fields.
+// Used by the Content V2 editor's locale switcher.
+export async function getLessonWithTranslation(
+  id: string,
+  locale?: string
+): Promise<{ lesson: LessonDetail; contentV2Translation: ContentV2Translation | null }> {
+  const params = locale && locale !== 'en' ? `?locale=${locale}` : '';
+  return apiFetch(`/api/admin/lessons/${id}${params}`);
+}
+
 export async function createLesson(
   lesson: Partial<LessonDetail>,
   segments: Partial<Segment>[],
@@ -268,11 +287,12 @@ export async function uploadLessonImage(id: string, file: File): Promise<{ drago
 
 export async function updateLessonContentV2(
   id: string,
-  updates: { contentV2?: string; audioUrl?: string | null; wordTimings?: WordTiming[] | null; durationSeconds?: number | null }
+  updates: { contentV2?: string; audioUrl?: string | null; wordTimings?: WordTiming[] | null; durationSeconds?: number | null },
+  locale?: string
 ): Promise<{ contentV2: string | null; audioUrl: string | null; wordTimings: WordTiming[] | null; durationSeconds: number | null }> {
   return apiFetch(`/api/admin/lessons/${id}/content-v2`, {
     method: 'PATCH',
-    body: JSON.stringify(updates),
+    body: JSON.stringify(locale && locale !== 'en' ? { ...updates, locale } : updates),
   });
 }
 
@@ -290,11 +310,12 @@ export interface UploadLessonAudioResult {
   transcriptionError: string | null;
 }
 
-export async function uploadLessonAudio(id: string, file: File): Promise<UploadLessonAudioResult> {
+export async function uploadLessonAudio(id: string, file: File, locale?: string): Promise<UploadLessonAudioResult> {
   const token = (await import('./client')).getToken();
   const form = new FormData();
   form.append('audio', file);
-  const res = await fetch(`/api/admin/lessons/${id}/audio`, {
+  const params = locale && locale !== 'en' ? `?locale=${locale}` : '';
+  const res = await fetch(`/api/admin/lessons/${id}/audio${params}`, {
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: form,

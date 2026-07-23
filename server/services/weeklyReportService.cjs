@@ -18,11 +18,13 @@ const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 const LOCALE_NAMES = {
   'en': 'English',
   'zh-TW': 'Traditional Chinese (Taiwan)',
+  'zh-CN': 'Simplified Chinese (Mainland China)',
 };
 
 const SKILL_NAME_LABELS = {
   'en': { Echo: 'Echo', Narrate: 'Narrate', Praise: 'Praise' },
   'zh-TW': { Echo: '回應', Narrate: '行為描述', Praise: '讚美' },
+  'zh-CN': { Echo: '回应', Narrate: '行为描述', Praise: '赞美' },
 };
 
 const GROWTH_METRIC_LABELS = {
@@ -38,6 +40,13 @@ const GROWTH_METRIC_LABELS = {
     daysPracticed: '練習天數',
     personalBest: '個人最佳',
     avgScore: '平均 Nora 分數',
+    daysOf7: '/ 7 天',
+  },
+  'zh-CN': {
+    depositsGrowth: '成长',
+    daysPracticed: '练习天数',
+    personalBest: '个人最佳',
+    avgScore: '平均 Nora 分数',
     daysOf7: '/ 7 天',
   },
 };

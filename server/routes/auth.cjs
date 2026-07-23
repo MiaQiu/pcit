@@ -789,12 +789,12 @@ router.post('/upload-profile-image', require('../middleware/auth.cjs').requireAu
 /**
  * PATCH /api/auth/locale
  * Persist the user's preferred UI/report language.
- * Body: { locale: "en" | "zh-TW" }
+ * Body: { locale: "en" | "zh-TW" | "zh-CN" }
  */
 router.patch('/locale', require('../middleware/auth.cjs').requireAuth, async (req, res) => {
   try {
     const { locale } = req.body;
-    const SUPPORTED = new Set(['en', 'zh-TW']);
+    const SUPPORTED = new Set(['en', 'zh-TW', 'zh-CN']);
     if (!locale || !SUPPORTED.has(locale)) {
       return res.status(400).json({ error: `locale must be one of: ${[...SUPPORTED].join(', ')}` });
     }

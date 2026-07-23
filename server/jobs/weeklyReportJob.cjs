@@ -20,6 +20,10 @@ const PUSH_STRINGS = {
     title: '您的週報已準備好了！',
     body: (weekLabel) => `查看您 ${weekLabel} 這週的進步`,
   },
+  'zh-CN': {
+    title: '您的周报已准备好了！',
+    body: (weekLabel) => `查看您 ${weekLabel} 这周的进步`,
+  },
 };
 
 /**
@@ -87,7 +91,8 @@ async function runWeeklyReportJob() {
         const userRow = await prisma.user.findUnique({ where: { id: userId }, select: { preferredLocale: true } });
         const locale = userRow?.preferredLocale || 'en';
         const strings = PUSH_STRINGS[locale] || PUSH_STRINGS['en'];
-        const weekLabel = weekStart.toLocaleDateString(locale === 'zh-TW' ? 'zh-TW' : 'en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+        const dateLocale = (locale === 'zh-TW' || locale === 'zh-CN') ? locale : 'en-US';
+        const weekLabel = weekStart.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', timeZone: 'UTC' });
         const result = await sendPushNotificationToUser(userId, {
           title: strings.title,
           body: strings.body(weekLabel),

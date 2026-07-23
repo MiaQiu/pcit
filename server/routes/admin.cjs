@@ -379,6 +379,24 @@ router.get('/lessons/:id', requireAdminAuth, async (req, res) => {
       return res.status(404).json({ error: 'Lesson not found' });
     }
 
+    // Content V2 editor passes ?locale= to also load that locale's existing
+    // translation (if any), so it can show/edit non-English content alongside
+    // the always-English base lesson fields.
+    let contentV2Translation = null;
+    const { locale } = req.query;
+    if (locale && locale !== 'en') {
+      const tx = await prisma.lessonTranslation.findUnique({
+        where: { lessonId_locale: { lessonId: req.params.id, locale } }
+      });
+      contentV2Translation = tx ? {
+        contentV2: tx.contentV2,
+        audioUrl: await resolveLessonAudioUrl(tx.audioUrl),
+        wordTimings: tx.wordTimings,
+        durationSeconds: tx.durationSeconds,
+        reviewed: tx.reviewed,
+      } : null;
+    }
+
     res.json({
       lesson: {
         ...lesson,
@@ -391,7 +409,8 @@ router.get('/lessons/:id', requireAdminAuth, async (req, res) => {
         } : null,
         LessonSegment: undefined,
         Quiz: undefined
-      }
+      },
+      contentV2Translation
     });
   } catch (error) {
     console.error('Admin get lesson detail error:', error);
@@ -819,10 +838,18 @@ router.post('/lessons/:id/content-video', requireAdminAuth, lessonContentVideoUp
  * ElevenLabs to get word-level timings (for LiveScriptCard highlighting) plus
  * a plain transcript the admin can drop into Lesson Content for formatting.
  * Transcription failure doesn't fail the upload — the audio is saved either way.
+ *
+ * ?locale= targets a translation instead of the base (English) lesson: the
+ * audio is stored under a locale-scoped S3 key and persisted to
+ * LessonTranslation rather than Lesson. Omit/pass 'en' for the original
+ * English-editing behavior. ElevenLabs auto-detects the spoken language, so
+ * no language hint is needed for non-English narration.
  */
 router.post('/lessons/:id/audio', requireAdminAuth, lessonAudioUploadMiddleware.single('audio'), async (req, res) => {
   try {
     const lessonId = req.params.id;
+    const locale = req.query.locale;
+    const isTranslation = locale && locale !== 'en';
 
     const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
     if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
@@ -830,7 +857,7 @@ router.post('/lessons/:id/audio', requireAdminAuth, lessonAudioUploadMiddleware.
     if (!req.file) return res.status(400).json({ error: 'No audio file provided' });
 
     const ext = (req.file.originalname.split('.').pop() || 'mp3').toLowerCase();
-    const audioUrl = await uploadLessonAudio(req.file.buffer, lessonId, ext);
+    const audioUrl = await uploadLessonAudio(req.file.buffer, lessonId, ext, locale);
 
     let transcriptText = null;
     let wordTimings = null;
@@ -844,7 +871,7 @@ router.post('/lessons/:id/audio', requireAdminAuth, lessonAudioUploadMiddleware.
       transcriptionError = transcribeErr.message || 'Transcription failed';
     }
 
-    const updateFields = { audioUrl, updatedAt: new Date() };
+    const updateFields = { audioUrl };
     if (wordTimings) {
       updateFields.wordTimings = wordTimings;
       // Duration proxy: end time of the last transcribed word. Approximate
@@ -855,10 +882,18 @@ router.post('/lessons/:id/audio', requireAdminAuth, lessonAudioUploadMiddleware.
       }
     }
 
-    await prisma.lesson.update({
-      where: { id: lessonId },
-      data: updateFields,
-    });
+    if (isTranslation) {
+      await prisma.lessonTranslation.upsert({
+        where: { lessonId_locale: { lessonId, locale } },
+        update: updateFields,
+        create: { lessonId, locale, objectives: [], ...updateFields },
+      });
+    } else {
+      await prisma.lesson.update({
+        where: { id: lessonId },
+        data: { ...updateFields, updatedAt: new Date() },
+      });
+    }
 
     res.json({
       audioUrl: await resolveLessonAudioUrl(audioUrl),
@@ -877,14 +912,40 @@ router.post('/lessons/:id/audio', requireAdminAuth, lessonAudioUploadMiddleware.
  * PATCH /api/admin/lessons/:id/content-v2
  * Update the v2 lesson content text and/or clear the audio URL.
  * Scoped separately from PUT /lessons/:id so it never touches segments/quiz.
+ *
+ * ?locale= (or a "locale" field in the body) targets a translation instead
+ * of the base (English) lesson: fields are upserted into LessonTranslation
+ * rather than updating Lesson directly. Omit/pass 'en' for the original
+ * English-editing behavior.
  */
 router.patch('/lessons/:id/content-v2', requireAdminAuth, async (req, res) => {
   try {
     const lessonId = req.params.id;
-    const { contentV2, audioUrl, wordTimings, durationSeconds } = req.body;
+    const { contentV2, audioUrl, wordTimings, durationSeconds, locale } = req.body;
 
     const existing = await prisma.lesson.findUnique({ where: { id: lessonId } });
     if (!existing) return res.status(404).json({ error: 'Lesson not found' });
+
+    if (locale && locale !== 'en') {
+      const updateFields = {};
+      if (contentV2 !== undefined) updateFields.contentV2 = contentV2;
+      if (audioUrl !== undefined) updateFields.audioUrl = audioUrl;
+      if (wordTimings !== undefined) updateFields.wordTimings = wordTimings;
+      if (durationSeconds !== undefined) updateFields.durationSeconds = durationSeconds;
+
+      const updated = await prisma.lessonTranslation.upsert({
+        where: { lessonId_locale: { lessonId, locale } },
+        update: updateFields,
+        create: { lessonId, locale, objectives: [], ...updateFields },
+      });
+
+      return res.json({
+        contentV2: updated.contentV2,
+        audioUrl: await resolveLessonAudioUrl(updated.audioUrl),
+        wordTimings: updated.wordTimings,
+        durationSeconds: updated.durationSeconds,
+      });
+    }
 
     const updateFields = { updatedAt: new Date() };
     if (contentV2 !== undefined) updateFields.contentV2 = contentV2;

@@ -542,17 +542,20 @@ async function uploadBrandingImage(fileBuffer, slot, extension = 'jpg') {
  * @param {Buffer} fileBuffer
  * @param {string} lessonId
  * @param {string} extension - e.g. 'mp3', 'm4a', 'wav', 'aac'
+ * @param {string} [locale] - non-English locale scopes the key so it doesn't
+ *   overwrite the English narration, e.g. lessons/{id}/audio-zh-CN.mp3
  * @returns {Promise<string>} - Public S3 URL or mock path
  */
-async function uploadLessonAudio(fileBuffer, lessonId, extension = 'mp3') {
+async function uploadLessonAudio(fileBuffer, lessonId, extension = 'mp3', locale) {
+  const suffix = locale && locale !== 'en' ? `-${locale}` : '';
   if (!S3_ENABLED || !s3Client) {
     console.warn('S3 not configured, using mock storage path for lesson audio');
-    return `mock://lessons/${lessonId}/audio.${extension}`;
+    return `mock://lessons/${lessonId}/audio${suffix}.${extension}`;
   }
 
   const contentTypeMap = { mp3: 'audio/mpeg', m4a: 'audio/mp4', wav: 'audio/wav', aac: 'audio/aac' };
   const contentType = contentTypeMap[extension.toLowerCase()] || 'audio/mpeg';
-  const key = `lessons/${lessonId}/audio.${extension}`;
+  const key = `lessons/${lessonId}/audio${suffix}.${extension}`;
 
   const command = new PutObjectCommand({
     Bucket: bucketName,

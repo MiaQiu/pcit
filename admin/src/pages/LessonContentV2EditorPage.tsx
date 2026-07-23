@@ -1,13 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getLesson, updateLessonContentV2, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo } from '../api/adminApi';
+import { getLessonWithTranslation, updateLessonContentV2, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo } from '../api/adminApi';
 import { handleBoldShortcut, insertTextareaMarker } from '../utils/textFormatting';
+
+// Content locales this editor supports authoring for, beyond the always-present English source.
+const LOCALES: { value: string; label: string }[] = [
+  { value: 'en', label: 'English' },
+  { value: 'zh-TW', label: '繁體中文 (zh-TW)' },
+  { value: 'zh-CN', label: '简体中文 (zh-CN)' },
+];
 
 export default function LessonContentV2EditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const [title, setTitle] = useState('');
+  const [locale, setLocale] = useState('en');
   const [contentV2, setContentV2] = useState('');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,24 +35,29 @@ export default function LessonContentV2EditorPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    getLesson(id)
-      .then((data) => {
-        setTitle(data.title);
-        setContentV2(data.contentV2 || '');
-        setAudioUrl(data.audioUrl);
+    getLessonWithTranslation(id, locale)
+      .then(({ lesson, contentV2Translation }) => {
+        setTitle(lesson.title);
+        if (locale === 'en') {
+          setContentV2(lesson.contentV2 || '');
+          setAudioUrl(lesson.audioUrl);
+        } else {
+          setContentV2(contentV2Translation?.contentV2 || '');
+          setAudioUrl(contentV2Translation?.audioUrl || null);
+        }
       })
       .catch((err) => {
         alert('Failed to load lesson: ' + err.message);
         navigate('/content-v2');
       })
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, locale]);
 
   const handleSave = async () => {
     if (!id) return;
     setSaving(true);
     try {
-      await updateLessonContentV2(id, { contentV2 });
+      await updateLessonContentV2(id, { contentV2 }, locale);
     } catch (err: any) {
       alert('Failed to save: ' + err.message);
     } finally {
@@ -59,7 +72,7 @@ export default function LessonContentV2EditorPage() {
     setUploadError(null);
     setUploading(true);
     try {
-      const { audioUrl: newUrl, transcriptText, transcriptionError } = await uploadLessonAudio(id, file);
+      const { audioUrl: newUrl, transcriptText, transcriptionError } = await uploadLessonAudio(id, file, locale);
       setAudioUrl(newUrl);
 
       if (transcriptionError) {
@@ -81,7 +94,7 @@ export default function LessonContentV2EditorPage() {
   const handleRemoveAudio = async () => {
     if (!id) return;
     try {
-      await updateLessonContentV2(id, { audioUrl: null, wordTimings: null });
+      await updateLessonContentV2(id, { audioUrl: null, wordTimings: null }, locale);
       setAudioUrl(null);
     } catch (err: any) {
       alert('Failed to remove audio: ' + err.message);
@@ -139,12 +152,29 @@ export default function LessonContentV2EditorPage() {
           <p className="page-subtitle">ID: {id}</p>
         </div>
         <div className="header-actions">
+          <select
+            value={locale}
+            onChange={(e) => setLocale(e.target.value)}
+            style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #d1d5db' }}
+          >
+            {LOCALES.map((l) => (
+              <option key={l.value} value={l.value}>{l.label}</option>
+            ))}
+          </select>
           <button className="btn-secondary" onClick={() => navigate('/content-v2')}>Cancel</button>
           <button className="btn-primary" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Save Content'}
           </button>
         </div>
       </div>
+
+      {locale !== 'en' && (
+        <p style={{ fontSize: 13, color: '#6b7280', margin: '-8px 0 16px' }}>
+          Editing the <strong>{LOCALES.find((l) => l.value === locale)?.label}</strong> translation. Title/subtitle
+          shown in the lesson list stay English here — this page only edits the narration/script for this locale.
+          The English source is always kept separately; switch back to English above to view or edit it.
+        </p>
+      )}
 
       <div className="editor-section">
         <h2>Audio Narration</h2>

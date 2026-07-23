@@ -391,18 +391,20 @@ export const ProfileScreen: React.FC = () => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: [t('common.cancel'), t('languagePicker.english'), t('languagePicker.traditionalChinese')],
+          options: [t('common.cancel'), t('languagePicker.english'), t('languagePicker.traditionalChinese'), t('languagePicker.simplifiedChinese')],
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
           if (buttonIndex === 1) applyLocale('en');
           else if (buttonIndex === 2) applyLocale('zh-TW');
+          else if (buttonIndex === 3) applyLocale('zh-CN');
         }
       );
     } else {
       Alert.alert(t('languagePicker.title'), undefined, [
         { text: t('languagePicker.english'), onPress: () => applyLocale('en') },
         { text: t('languagePicker.traditionalChinese'), onPress: () => applyLocale('zh-TW') },
+        { text: t('languagePicker.simplifiedChinese'), onPress: () => applyLocale('zh-CN') },
         { text: t('common.cancel'), style: 'cancel' },
       ]);
     }
@@ -410,6 +412,8 @@ export const ProfileScreen: React.FC = () => {
 
   const currentLanguageLabel = i18n.language === 'zh-TW'
     ? t('languagePicker.traditionalChinese')
+    : i18n.language === 'zh-CN'
+    ? t('languagePicker.simplifiedChinese')
     : t('languagePicker.english');
 
   if (loading) {

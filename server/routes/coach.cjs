@@ -34,6 +34,7 @@ You are an expert Child Psychologist and PCIT (Parent-Child Interaction Therapy)
 const LOCALE_NAMES = {
   'en':    'English',
   'zh-TW': 'Traditional Chinese (Taiwan)',
+  'zh-CN': 'Simplified Chinese (Mainland China)',
 };
 
 function buildSystemPrompt(locale) {
@@ -43,6 +44,9 @@ function buildSystemPrompt(locale) {
 7. Always reply in ${langName}. Do not switch to another language even if the parent writes in a different language.`;
   if (locale === 'zh-TW') {
     prompt += '\n8. When referring to skill names in Chinese, use: Echo → 回應, Narrate → 行為描述, Labeled Praise → 具體讚美.';
+  }
+  if (locale === 'zh-CN') {
+    prompt += '\n8. When referring to skill names in Chinese, use: Echo → 回应, Narrate → 行为描述, Labeled Praise → 具体赞美.';
   }
   return prompt;
 }

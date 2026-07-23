@@ -1268,12 +1268,14 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
 
   // Detect primary language from ElevenLabs transcription result.
   // If ElevenLabs detects Chinese (zho/cmn) and the user's preferred language is
-  // Traditional Chinese (zh-TW), honour that preference over the generic Mandarin code.
+  // a specific Chinese variant (zh-TW/zh-CN), honour that preference over the
+  // generic Mandarin code.
   const detectedLanguage = session.elevenLabsJson?.language_code || null;
   const CHINESE_CODES = new Set(['zho', 'cmn']);
+  const CHINESE_LOCALES = new Set(['zh-TW', 'zh-CN']);
   const primaryLanguage = (
-    CHINESE_CODES.has(detectedLanguage) && preferredLanguage === 'zh-TW'
-  ) ? 'zh-TW' : detectedLanguage;
+    CHINESE_CODES.has(detectedLanguage) && CHINESE_LOCALES.has(preferredLanguage)
+  ) ? preferredLanguage : detectedLanguage;
   if (primaryLanguage && primaryLanguage !== 'eng') {
     console.log(`🌐 [ANALYSIS] Primary language: ${primaryLanguage} (detected: ${detectedLanguage}, preferred: ${preferredLanguage || 'none'})`);
   }

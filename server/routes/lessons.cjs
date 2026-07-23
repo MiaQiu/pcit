@@ -61,6 +61,13 @@ function applyLessonTx(lesson, tx) {
     subtitle: tx.subtitle ?? lesson.subtitle,
     shortDescription: tx.shortDescription ?? lesson.shortDescription,
     objectives: tx.objectives ?? lesson.objectives,
+    // Content V2 (audio-first) fields — each falls back to the English
+    // source independently, so a lesson can have e.g. translated text but
+    // still-English audio if narration hasn't been recorded for this locale yet.
+    contentV2: tx.contentV2 ?? lesson.contentV2,
+    audioUrl: tx.audioUrl ?? lesson.audioUrl,
+    wordTimings: tx.wordTimings ?? lesson.wordTimings,
+    durationSeconds: tx.durationSeconds ?? lesson.durationSeconds,
   };
 }
 

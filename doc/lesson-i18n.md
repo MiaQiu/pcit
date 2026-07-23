@@ -2,15 +2,46 @@
 
 This document covers both **content translations** (lesson and module text stored in the DB) and **UI translations** (buttons, labels, etc. in the app).
 
+**Supported locales:** `en`, `zh-TW` (Traditional Chinese), `zh-CN` (Simplified Chinese).
+
+> **zh-CN status:** UI strings, AI coach replies, session-analysis language handling, and weekly reports are fully wired up. `ModuleTranslation` / `LessonTranslation` DB content is **not yet seeded for zh-CN** — paused while lesson content is being reworked audio-first. Run step 3–4 of [Adding a new language](#adding-a-new-language) for `zh-CN` once that lands.
+
+> **Audio-first (Content V2) lessons are not covered by anything in this document.** The new podcast-style lesson format (`Lesson.contentV2`/`audioUrl`/`wordTimings` — see `doc/learning/README.md`) has **no translation mechanism at all**, in any locale, including `zh-TW`. See [Audio-first (Content V2) lessons](#audio-first-content-v2-lessons) below.
+
 ---
 
 ## Architecture overview
 
 | Layer | What is translated | How |
 |---|---|---|
-| Lesson content | Lesson titles, segments, quizzes | DB translation tables; returned by API on `?lang=` |
+| Lesson content (classic, segment/quiz) | Lesson titles, segments, quizzes | DB translation tables; returned by API on `?lang=` |
 | Module content | Module titles, descriptions | DB translation table (`ModuleTranslation`); returned by API on `?lang=` |
 | App UI strings | Buttons, labels, error messages | `react-i18next` JSON files in `nora-mobile/src/i18n/locales/` |
+| Lesson content (audio-first, Content V2) | Nothing | **Not built** — see [below](#audio-first-content-v2-lessons) |
+
+---
+
+## Audio-first (Content V2) lessons
+
+The podcast-style lesson format — `LearnScreen_v3`, `LessonViewerScreen_v2`, driven by `Lesson.contentV2`/`audioUrl`/`wordTimings` rather than `LessonSegment`/`Quiz` — is a separate content model from everything else in this document, and it currently has **zero i18n support**, in any locale. Full architecture: `doc/learning/README.md`.
+
+**Current DB status** (checked live, this will drift as content is added): 9 lessons have `contentV2` populated (all in `WELCOME`/`POSITIVE_PLAY`), all 9 have narration audio, and **none have any `LessonTranslation` row at all** — not even English-to-`zh-TW` title/subtitle, which every classic lesson has.
+
+### Why the existing machinery doesn't help
+
+- **`LessonTranslation` only covers `title`/`subtitle`/`shortDescription`/`objectives`** — the lesson-card metadata shown in list views. It has no field for `contentV2`, `audioUrl`, or `wordTimings`. Even seeding `zh-TW` rows for a Content V2 lesson today would translate its title in the Learn tab list but leave the actual script/narration in whatever language it was authored in.
+- **There's no `LessonContentV2Translation` table or equivalent.** `contentV2` is a single free-text field (lightweight markdown: `**bold**`, `* bullets`, `![]()` images, `![video]()` videos — see `doc/learning/README.md`), not a set of structured fields like `LessonSegment`, so translating it isn't just "run the existing `translateLessons.cjs` pattern against a new table" — the text-splitting logic (`formatLessonContentV2.ts`) and the inline-media markers would need to survive translation, similar to how `customHtml` is translated as a full string today with tags/placeholders preserved (see [Translation notes](#translation-notes)).
+- **Audio can't be machine-translated the way text can.** A `zh-TW` version of a Content V2 lesson needs *narration re-recorded or re-generated in Traditional Chinese*, not just translated text — text translation alone would desync the (already-fragile, see `doc/learning/README.md`'s `LiveScriptCard` section) relationship between `contentV2` and `wordTimings`. `wordTimings` itself is per-audio-file (from ElevenLabs transcription of that specific recording) and would need to be regenerated per locale, not translated.
+
+### What adding a language would actually take
+
+Roughly, in order:
+1. Add a `contentV2` translation column or table (schema decision: reuse `LessonTranslation` with a new nullable field, since it's one field, vs. a dedicated table matching the `(lessonId, locale)` pattern used elsewhere).
+2. Decide the audio strategy — record/generate narration per locale, upload via the existing `POST /api/admin/lessons/:id/audio` flow (which already transcribes via ElevenLabs to get `wordTimings`), but scoped per-locale rather than overwriting the single `audioUrl`/`wordTimings` fields on `Lesson`.
+3. Extend `server/routes/lessons.cjs`'s lesson-detail response to apply the new translation on `?lang=`, same pattern as `applyLessonTx()`.
+4. Extend the admin Content V2 editor (`LessonContentV2EditorPage.tsx`) to author per-locale — today it edits one `contentV2`/`audioUrl` pair with no locale concept at all.
+
+None of this has started. This is a bigger lift than adding a new *language* to the existing system (the ["Adding a new language"](#adding-a-new-language) walkthrough below) — it's adding translation *capability* to a content type that doesn't have any yet.
 
 ---
 
@@ -48,7 +79,15 @@ Each row is keyed by `(entityId, locale)`. All tables have `autoTranslated`, `re
 | `packages/nora-core/src/services/lessonService.ts` | Appends `?lang=` to all lesson/module fetches |
 | `nora-mobile/src/i18n/index.ts` | i18next init, device-locale detection, AsyncStorage persistence for UI language |
 | `nora-mobile/src/i18n/locales/en.json` | English UI strings |
-| `nora-mobile/src/i18n/locales/zh-TW.json` | Traditional Chinese UI strings (fill in values to translate) |
+| `nora-mobile/src/i18n/locales/zh-TW.json` | Traditional Chinese UI strings |
+| `nora-mobile/src/i18n/locales/zh-CN.json` | Simplified Chinese UI strings |
+| `nora-mobile/src/screens/ProfileScreen.tsx` | Language picker (Settings → Language) |
+| `server/routes/auth.cjs` | `PATCH /api/auth/locale` — persists `User.preferredLocale`; has its own locale whitelist |
+| `server/routes/coach.cjs` | AI coach chat — replies in the user's locale, has its own `LOCALE_NAMES` map |
+| `server/utils/languageUtils.cjs` | Maps ElevenLabs transcription language codes to prompt instructions for session analysis |
+| `server/services/pcitAnalysisService.cjs` | Honors `zh-TW`/`zh-CN` preference over the generic Mandarin ElevenLabs code (`zho`/`cmn`) |
+| `server/services/weeklyReportService.cjs` | Weekly report narrative language + hardcoded metric/skill labels |
+| `server/jobs/weeklyReportJob.cjs` | Weekly report push notification strings, keyed by locale |
 
 ---
 
@@ -58,6 +97,7 @@ App UI strings (buttons, tab labels, error messages, etc.) are managed via `reac
 
 - **On first launch**, the app auto-detects the iPhone's system language via `expo-localization`:
   - Device locale is `zh-TW` or `zh-Hant*` → app starts in Traditional Chinese
+  - Device locale is `zh-CN`, `zh-Hans*`, or `zh-SG` → app starts in Simplified Chinese
   - Any other locale → app starts in English
 - The user can override in **Profile → Settings → Language** at any time
 - The choice is persisted in AsyncStorage; on subsequent launches the saved preference takes priority over device locale
@@ -120,6 +160,8 @@ t('onboarding.screen.cardContent', { name: childName })
 
 ## Adding a new language
 
+The example below uses a hypothetical `es` (Spanish) locale to show the pattern. `zh-CN` was added following these same steps — see the note under each step for what that actually touched.
+
 ### 1. Add UI translations
 
 Create a new locale JSON file:
@@ -127,6 +169,8 @@ Create a new locale JSON file:
 ```
 nora-mobile/src/i18n/locales/<locale>.json   # e.g. es.json
 ```
+
+> `zh-CN`: seeded by machine-converting the complete `zh-TW.json` (Traditional → Simplified characters + mainland lexicon, e.g. 軟體→软件) rather than translating from English from scratch, then spot-checked for key parity against `en.json`.
 
 Register it in `nora-mobile/src/i18n/index.ts`:
 
@@ -144,31 +188,47 @@ function detectDeviceLanguage(): string {
   const locales = getLocales();
   const primary = locales[0]?.languageTag ?? '';
   if (primary.startsWith('zh-TW') || primary.startsWith('zh-Hant')) return 'zh-TW';
+  if (primary.startsWith('zh-CN') || primary.startsWith('zh-Hans') || primary.startsWith('zh-SG')) return 'zh-CN';
   if (primary.startsWith('es')) return 'es';  // add new mapping
   return 'en';
 }
 ```
 
-Add the language option to the picker in `nora-mobile/src/screens/ProfileScreen.tsx`.
+Add a `languagePicker.<locale>` label key to **every** locale JSON file (`en.json`, `zh-TW.json`, `zh-CN.json`, ...) — the picker needs a label for the new option in each language, not just the new language's own file.
+
+Add the language option to the picker in `nora-mobile/src/screens/ProfileScreen.tsx` — both the iOS `ActionSheetIOS` branch and the Android `Alert` branch, plus the `currentLanguageLabel` lookup.
 
 ### 2. Register the locale on the backend
 
 In `server/middleware/locale.cjs`, add the new locale to `SUPPORTED_LOCALES` and add a fuzzy match if needed:
 
 ```javascript
-const SUPPORTED_LOCALES = new Set(['en', 'zh-TW', 'es']); // add here
+const SUPPORTED_LOCALES = new Set(['en', 'zh-TW', 'zh-CN', 'es']); // add here
 
 if (lang === 'es') return 'es';
 ```
 
-In `server/services/translationService.cjs`, add the locale name used in the Claude prompt:
+In `server/routes/auth.cjs`, `PATCH /api/auth/locale` has its own whitelist — add it there too, or saving the preference silently 400s:
+
+```javascript
+const SUPPORTED = new Set(['en', 'zh-TW', 'zh-CN', 'es']); // add here
+```
+
+In `server/services/translationService.cjs`, add the locale name used in the Claude prompt (this also auto-extends `translateLessons.cjs`'s `TARGET_LOCALES`, which is derived from this map's keys):
 
 ```javascript
 const LOCALE_NAMES = {
   'zh-TW': 'Traditional Chinese (Taiwan)',
+  'zh-CN': 'Simplified Chinese (Mainland China)',
   'es': 'Spanish (Latin America)',   // add here
 };
 ```
+
+In `server/routes/coach.cjs`, add the locale to its own `LOCALE_NAMES` map so the AI coach replies in that language, plus skill-name translations in `buildSystemPrompt()` if the language needs them.
+
+In `server/utils/languageUtils.cjs`, add the locale to `LANGUAGE_NAMES` (used for ElevenLabs session-analysis prompts) and, if relevant, a skill-name instruction branch in `getLanguageInstruction()`.
+
+If the new locale is a Chinese variant, also extend the `CHINESE_LOCALES` set in `server/services/pcitAnalysisService.cjs` so a user's locale preference (not just the generic ElevenLabs `zho`/`cmn` code) is honored when picking the transcription language.
 
 ### 3. Translate module content
 
@@ -306,17 +366,19 @@ Weekly reports are AI-generated narratives (not DB translation rows). Language i
 const LOCALE_NAMES = {
   'en': 'English',
   'zh-TW': 'Traditional Chinese (Taiwan)',
+  'zh-CN': 'Simplified Chinese (Mainland China)',
 };
 ```
 
 ### Adding a new language
 
-Add the locale → language-name entry to `LOCALE_NAMES` in `server/services/weeklyReportService.cjs`:
+Add the locale → language-name entry to `LOCALE_NAMES` in `server/services/weeklyReportService.cjs`, plus `SKILL_NAME_LABELS` in the same file:
 
 ```javascript
 const LOCALE_NAMES = {
   'en': 'English',
   'zh-TW': 'Traditional Chinese (Taiwan)',
+  'zh-CN': 'Simplified Chinese (Mainland China)',
   'es': 'Spanish (Latin America)',  // add here
 };
 ```
@@ -358,7 +420,7 @@ Only part of the weekly report is translated today. The table below tracks every
 | `consistencyMessage` | AI | ✅ | |
 | `growthMetrics[].label` | Hardcoded in service | ✅ | `GROWTH_METRIC_LABELS` map in `weeklyReportService.cjs` keyed by locale |
 | `growthMetrics[].value` | Mechanical (numbers) | ✅ | Numeric — language-neutral |
-| Weekly report UI labels | `react-i18next` | ✅ | `zh-TW.json` has full `weeklyReport.*` translations |
+| Weekly report UI labels | `react-i18next` | ✅ | `zh-TW.json` and `zh-CN.json` have full `weeklyReport.*` translations |
 | Push notification title/body | Hardcoded in job | ✅ | `PUSH_STRINGS` map in `weeklyReportJob.cjs` keyed by locale; fetches `preferredLocale` per user before sending |
 
 ### Adding a new language

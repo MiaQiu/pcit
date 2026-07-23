@@ -866,7 +866,8 @@
   "languagePicker": {
     "title": "語言",
     "english": "English",
-    "traditionalChinese": "繁體中文"
+    "traditionalChinese": "繁體中文",
+    "simplifiedChinese": "簡體中文"
   },
   "onboarding": {
     "continue": "繼續",

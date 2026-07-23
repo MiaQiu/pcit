@@ -1,12 +1,14 @@
 'use strict';
 
-const SUPPORTED_LOCALES = new Set(['en', 'zh-TW']);
+const SUPPORTED_LOCALES = new Set(['en', 'zh-TW', 'zh-CN']);
 const DEFAULT_LOCALE = 'en';
 
 function normalizeLocale(raw) {
   if (!raw) return DEFAULT_LOCALE;
   const trimmed = raw.split(',')[0].trim(); // handle "zh-TW,zh;q=0.9"
   if (SUPPORTED_LOCALES.has(trimmed)) return trimmed;
+  if (trimmed === 'zh-Hant' || trimmed.startsWith('zh-Hant-')) return 'zh-TW';
+  if (trimmed === 'zh-Hans' || trimmed.startsWith('zh-Hans-')) return 'zh-CN';
   const lang = trimmed.split('-')[0].toLowerCase();
   if (lang === 'zh') return 'zh-TW';
   if (lang === 'en') return 'en';
