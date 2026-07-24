@@ -15,6 +15,21 @@
     .fade-in { animation: fadeIn 0.3s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .card-shadow { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .spinner {
+      width: 64px; height: 64px;
+      border: 6px solid #E4E4FF;
+      border-top-color: #8C49D5;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .word-reveal {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(6px);
+      animation: wordFadeIn 0.45s ease forwards;
+    }
+    @keyframes wordFadeIn { to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body class="bg-[#F6F7FB] text-[#1E2939] min-h-screen flex flex-col justify-between p-6 select-none">
@@ -64,7 +79,7 @@
   </header>
 
   <!-- Main Content Area -->
-  <main class="max-w-4xl mx-auto w-full flex-1 flex flex-col justify-center">
+  <main class="max-w-4xl mx-auto w-full flex-1 flex flex-col justify-start">
 
     <!-- STEP 1: PROFILE SELECTION -->
     <div id="step-1" class="fade-in space-y-4">
@@ -74,54 +89,36 @@
       </div> -->
 
       <div class="bg-white border border-[#F0F0F0] rounded-2xl p-6 card-shadow space-y-8">
-        <!-- Age Group -->
+        <!-- Role -->
         <div>
           <div class="flex items-center gap-2 mb-4">
             <span class="w-6 h-6 rounded-full bg-[#E4E4FF] text-[#8C49D5] text-xs font-bold flex items-center justify-center shrink-0">1</span>
+            <span class="font-bold text-[#1E2939]">Select Your Role</span>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <button onclick="selectRole('Caregiver', event)" class="role-btn border-2 border-[#8C49D5] bg-[#F9F7FF] rounded-2xl transition py-5 flex flex-col items-center gap-2">
+              <span class="role-label font-bold text-[#8C49D5]">Caregiver</span>
+            </button>
+            <button onclick="selectRole('Teacher', event)" class="role-btn border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] rounded-2xl transition py-5 flex flex-col items-center gap-2">
+              <span class="role-label font-bold text-[#1E2939]">Teacher</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Age Group -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-full bg-[#E4E4FF] text-[#8C49D5] text-xs font-bold flex items-center justify-center shrink-0">2</span>
             <span class="font-bold text-[#1E2939]">Select Child Age Group</span>
           </div>
           <div class="grid grid-cols-3 gap-4">
             <button onclick="selectAge('2-3 Years', event)" class="age-btn border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] rounded-2xl transition py-5 flex flex-col items-center gap-2">
-              <div class="w-16 h-16 rounded-full bg-[#F1EDFF] flex items-center justify-center">
-                <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
-                  <circle cx="32" cy="34" r="20" fill="#FBD9C4"/>
-                  <path d="M13 33a19 19 0 0 1 38 0H13z" fill="#8C49D5"/>
-                  <circle cx="32" cy="15" r="4.5" fill="none" stroke="#8C49D5" stroke-width="3" stroke-dasharray="16 30" stroke-linecap="round"/>
-                  <circle cx="25" cy="34" r="2.3" fill="#1E2939"/>
-                  <circle cx="39" cy="34" r="2.3" fill="#1E2939"/>
-                  <circle cx="20" cy="40" r="2.6" fill="#F7A9A0" opacity="0.55"/>
-                  <circle cx="44" cy="40" r="2.6" fill="#F7A9A0" opacity="0.55"/>
-                  <path d="M25 42q7 6 14 0" stroke="#1E2939" stroke-width="2.3" fill="none" stroke-linecap="round"/>
-                </svg>
-              </div>
               <span class="age-label font-bold text-[#1E2939]">2–3 Years</span>
             </button>
             <button onclick="selectAge('4-5 Years', event)" class="age-btn border-2 border-[#8C49D5] bg-[#F9F7FF] rounded-2xl transition py-5 flex flex-col items-center gap-2">
-              <div class="w-16 h-16 rounded-full bg-[#ECEAFB] flex items-center justify-center">
-                <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
-                  <circle cx="32" cy="34" r="20" fill="#FBD9C4"/>
-                  <path d="M12 32a20 20 0 0 1 40 0c0-4-3-9-8-9-2 2-6 2-8 0-2 2-14 2-16 0-4 1-8 4-8 9z" fill="#4C3A8C"/>
-                  <circle cx="25" cy="35" r="2.3" fill="#1E2939"/>
-                  <circle cx="39" cy="35" r="2.3" fill="#1E2939"/>
-                  <circle cx="20" cy="41" r="2.6" fill="#F7A9A0" opacity="0.55"/>
-                  <circle cx="44" cy="41" r="2.6" fill="#F7A9A0" opacity="0.55"/>
-                  <path d="M25 43q7 6 14 0" stroke="#1E2939" stroke-width="2.3" fill="none" stroke-linecap="round"/>
-                </svg>
-              </div>
               <span class="age-label font-bold text-[#8C49D5]">4–5 Years</span>
             </button>
             <button onclick="selectAge('6-7 Years', event)" class="age-btn border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] rounded-2xl transition py-5 flex flex-col items-center gap-2">
-              <div class="w-16 h-16 rounded-full bg-[#E3F6F1] flex items-center justify-center">
-                <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
-                  <circle cx="32" cy="34" r="20" fill="#FBD9C4"/>
-                  <path d="M11 31a21 21 0 0 1 42 0c-3-3-9-6-13-4-3-2-13-2-16 0-4-2-10 1-13 4z" fill="#1E8A78"/>
-                  <circle cx="25" cy="35" r="2.3" fill="#1E2939"/>
-                  <circle cx="39" cy="35" r="2.3" fill="#1E2939"/>
-                  <circle cx="20" cy="41" r="2.6" fill="#F7A9A0" opacity="0.55"/>
-                  <circle cx="44" cy="41" r="2.6" fill="#F7A9A0" opacity="0.55"/>
-                  <path d="M25 43q7 6 14 0" stroke="#1E2939" stroke-width="2.3" fill="none" stroke-linecap="round"/>
-                </svg>
-              </div>
               <span class="age-label font-bold text-[#1E2939]">6–7 Years</span>
             </button>
           </div>
@@ -130,7 +127,7 @@
         <!-- Primary Goal -->
         <div>
           <div class="flex items-center gap-2 mb-4">
-            <span class="w-6 h-6 rounded-full bg-[#E4E4FF] text-[#8C49D5] text-xs font-bold flex items-center justify-center shrink-0">2</span>
+            <span class="w-6 h-6 rounded-full bg-[#E4E4FF] text-[#8C49D5] text-xs font-bold flex items-center justify-center shrink-0">3</span>
             <span class="font-bold text-[#1E2939]">Primary Goal</span>
           </div>
           <div class="grid grid-cols-2 gap-4">
@@ -168,6 +165,24 @@
               <div>
                 <div class="goal-title font-bold text-lg text-[#1E2939]">Relational Bonding</div>
                 <div class="text-xs text-[#6B7280] mt-1">Deepen parent-child connection in busy routines.</div>
+              </div>
+            </button>
+            <button onclick="selectGoalCard('Autism Spectrum Disorder (ASD) &amp; Neurodivergence', 'Connection Through Their World', event)" class="goal-btn border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] p-5 rounded-2xl text-left transition flex items-start space-x-4">
+              <div class="w-12 h-12 rounded-full bg-[#E3EEFF] flex items-center justify-center shrink-0">
+                <ion-icon name="extension-puzzle-outline" style="font-size:22px;color:#3B6FD6;"></ion-icon>
+              </div>
+              <div>
+                <div class="goal-title font-bold text-lg text-[#1E2939]">ASD &amp; Neurodivergence</div>
+                <div class="text-xs text-[#6B7280] mt-1">For sensory differences or rigid, repetitive play styles.</div>
+              </div>
+            </button>
+            <button onclick="selectGoalCard('Developmental Delay', 'Building Confidence at Their Own Pace', event)" class="goal-btn border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] p-5 rounded-2xl text-left transition flex items-start space-x-4">
+              <div class="w-12 h-12 rounded-full bg-[#E6F7EA] flex items-center justify-center shrink-0">
+                <ion-icon name="leaf-outline" style="font-size:22px;color:#2F9E52;"></ion-icon>
+              </div>
+              <div>
+                <div class="goal-title font-bold text-lg text-[#1E2939]">Developmental Delay</div>
+                <div class="text-xs text-[#6B7280] mt-1">For speech, motor, cognitive, or global delays.</div>
               </div>
             </button>
           </div>
@@ -284,10 +299,14 @@
 
         <!-- Scenario Video -->
         <video id="scenario-video" class="hidden w-full rounded-xl bg-black" playsinline></video>
+        <div id="scenario-video-caption" class="hidden bg-[#F6F7FB] p-4 rounded-xl border border-[#F0F0F0]">
+          <h3 id="scenario-video-title" class="font-bold text-lg text-[#1E2939]"></h3>
+          <p id="scenario-video-desc" class="text-[#6B7280] text-sm mt-1"></p>
+        </div>
 
         <!-- Prompt -->
         <div id="scenario-prompt" class="space-y-3">
-          <div id="scenario-prompt-text" class="font-bold text-sm uppercase tracking-wider text-[#8C49D5]">What do you say to keep them engaged?</div>
+          <div id="scenario-prompt-text" class="font-bold text-sm uppercase tracking-wider text-[#8C49D5] pl-4">What do you say to keep them engaged?</div>
           <div id="options-container" class="space-y-3">
             <!-- Dynamically populated -->
           </div>
@@ -302,6 +321,12 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- STEP LOADING: GENERATING REPORT -->
+    <div id="step-loading" class="hidden fade-in flex flex-col items-center justify-center text-center py-24 space-y-6">
+      <div class="spinner"></div>
+      <p id="loading-text" class="text-lg font-semibold text-[#1E2939] max-w-md leading-relaxed"></p>
     </div>
 
     <!-- STEP 4: COACHING REPORT -->
@@ -610,6 +635,7 @@
   <!-- Application Logic -->
   <script>
     let currentStep = 1;
+    let selectedRole = "Caregiver";
     let selectedAge = "4-5 Years";
     let selectedGoal = "Focus & Attention Span";
     let selectedSubtitle = "Advanced Attention & Focus Builder";
@@ -685,6 +711,46 @@
           { name: "Commands", starred: false, why: "Directing their play reintroduces a power hierarchy right when the goal is to feel like equals sharing a moment.", body: [] },
           { name: "Criticism", starred: true, why: "Even gentle correction during bonding time tells a child their ideas aren't quite good enough, which chips away at the safety that a secure attachment depends on.", body: [] }
         ]
+      },
+      "Autism Spectrum Disorder (ASD) & Neurodivergence": {
+        builderLabel: "Connection Builders",
+        breakerLabel: "Connection Breakers",
+        pen: [
+          { name: "Praise", starred: false, why: "Quiet, specific praise for their focus—rather than a big \"good job!\"—reinforces engagement without overwhelming them with attention.", body: [] },
+          { name: "Narrate", starred: true, why: "It acts as a gentle bridge, connecting with them verbally without demanding eye contact or a spoken answer.", body: [
+            "Many children with ASD experience \"demand avoidance\" or sensory overload when adults give them orders (\"Look at me,\" \"Hold the car this way,\" \"Say thank you\"). Even well-meaning suggestions can feel like heavy social demands that trigger a shutdown or tantrum.",
+            "Narrating acts as a gentle bridge instead. By acting like a calm sports commentator (\"You are spinning the red wheel so fast, and now it's slowing down\"), you connect with them verbally without demanding eye contact or a spoken answer—sharing their space and celebrating their focus on their own terms."
+          ] },
+          { name: "Echo", starred: false, why: "Repeating their words or sounds back, without asking them to say more, shows acceptance without adding social pressure.", body: [] }
+        ],
+        ccq: [
+          { name: "Questions", starred: false, why: "Questions demand a verbal response on the spot, which can feel like a test and trigger withdrawal or shutdown.", body: [] },
+          { name: "Commands", starred: true, why: "Every command—even a gentle one—can feel like a heavy social demand that triggers a shutdown or tantrum.", body: [
+            "Many children with ASD experience \"demand avoidance\" or sensory overload when adults give them orders, even well-meaning ones like \"Look at me\" or \"Hold it this way.\"",
+            "Stopping all commands removes this pressure entirely, making social interaction feel relaxing instead of draining—so connection can happen on their terms, not yours."
+          ] },
+          { name: "Criticism", starred: false, why: "Correcting an unusual play pattern signals that their natural way of engaging with the world isn't acceptable.", body: [] }
+        ]
+      },
+      "Developmental Delay": {
+        builderLabel: "Confidence Builders",
+        breakerLabel: "Confidence Breakers",
+        pen: [
+          { name: "Praise", starred: true, why: "It rewires their brain's reward system to feel proud of effort and persistence, not just getting it right.", body: [
+            "When a child has a delay, well-meaning adults constantly fall into \"therapy mode\"—correcting how they hold a crayon, how they pronounce a word, or how they stack a block (\"No, hold it like this,\" \"Try again, use your other hand\"). While helpful in therapy, constantly being corrected at home can make a child feel broken or like they're failing.",
+            "Pairing uncorrected play with Specific Praise for Effort (\"I love how hard you are trying to balance that block!\" or \"You are being so persistent with that toy!\") rewires their brain's reward system. Instead of getting frustrated when something is difficult, they learn to feel proud of their own hard work and resilience—the exact mindset they need to make progress in their therapies."
+          ] },
+          { name: "Narrate", starred: false, why: "Describing what they're doing—without correcting how they do it—lets them experience an activity at their own pace, free of pressure.", body: [] },
+          { name: "Echo", starred: false, why: "Repeating back their attempts at words or sounds, however imperfect, encourages them to keep trying without fear of being wrong.", body: [] }
+        ],
+        ccq: [
+          { name: "Questions", starred: false, why: "Quizzing them on something they find difficult can turn play into one more test they might fail.", body: [] },
+          { name: "Commands", starred: false, why: "Directing how a task \"should\" be done takes over the one space where they get to feel fully competent.", body: [] },
+          { name: "Criticism", starred: true, why: "Constant correction at home turns off the one place a child gets to feel fully successful.", body: [
+            "When a child has a delay, well-meaning adults constantly fall into \"therapy mode\"—correcting how they hold a crayon, how they pronounce a word, or how they stack a block. While helpful in therapy, constantly being corrected at home makes a child feel like they are broken or failing.",
+            "Stopping all correction turns off \"instruction mode\" and lets your child experience pure, uncompromised success—exactly what their confidence needs between therapy sessions."
+          ] }
+        ]
       }
     };
 
@@ -719,6 +785,22 @@
           "2-3 Years": "Physical closeness, eye contact, and shared laughter during simple sensory or motor play (like rolling a ball back and forth or building a pillow fort) release oxytocin, soothing separation anxiety from daycare or work separations and grounding both parent and toddler.",
           "4-5 Years": "Children at this age express love and process their world through shared imaginative play. Fully entering their pretend world—becoming the patient in their doctor's office or the customer in their restaurant—speaks their primary emotional language directly, creating joyful shared memories.",
           "6-7 Years": "As kids become more independent and spend hours away at school, a predictable daily ritual of \"just you and me time\" anchors the relationship. It creates a trusted, low-pressure bridge where they feel safe opening up about their day, their friendships, and their worries."
+        }
+      },
+      "Autism Spectrum Disorder (ASD) & Neurodivergence": {
+        intro: "Special Play Time reduces social and sensory overload by letting the child completely control the environment. Instead of trying to pull a neurodivergent child into our world—which can feel unpredictable and overwhelming—you join their world. This shared joy builds natural eye contact, joint attention, and social trust far faster than forced socialization.",
+        byAge: {
+          "2-3 Years": "Toddlers on the spectrum often engage in sensory play, like spinning wheels, lining up blocks, or dropping objects. When you sit next to them and join in without trying to change what they are doing, you send a powerful message: \"Your interests are safe with me.\" This shared focus naturally encourages them to glance your way and share the moment without feeling cornered.",
+          "4-5 Years": "Children at this age may rely on rigid play routines or repeat movie scripts (echolalia). By following their exact routines and acting out their scripts with them, you turn a solo routine into a two-way connection. Once they trust that you won't hijack their game, they become much more open to gentle flexibility and shared problem-solving.",
+          "6-7 Years": "As school demands increase, kindergartners on the spectrum spend all day masking or trying to fit into a neurotypical world, which drains their battery. Special time serves as a daily decompression chamber. Celebrating their intense \"special interests\" (whether it's trains, dinosaurs, or maps) validates their identity and lowers stress hormones, preventing after-school meltdowns."
+        }
+      },
+      "Developmental Delay": {
+        intro: "Children with developmental delays spend much of their day hitting frustration walls—struggling with tasks that come easily to their peers, or being shuffled from one therapy appointment to another. Special Play Time strips away all \"pass/fail\" expectations. It gives them a daily arena where they are 100% competent, which builds the emotional stamina and confidence they need to keep tackling hard developmental milestones.",
+        byAge: {
+          "2-3 Years": "Whether a child has a motor delay or is slower to explore, following their lead prevents the frustration of adult-imposed milestones. If they just want to splash their hands in water or bang two cups together, celebrating that simple sensory joy builds their physical coordination and self-soothing skills at their own natural pace.",
+          "4-5 Years": "Preschoolers with delays often prefer toys or games designed for younger children. Special time provides a judgment-free zone where you meet them at their developmental age rather than their chronological age. Enjoying simple cause-and-effect toys together builds their attention span and cognitive sequencing without the shame of \"falling behind.\"",
+          "6-7 Years": "Around kindergarten, children with developmental delays often start noticing that peers can draw better, run faster, or speak clearer than they can. This can crush their self-esteem. Your uninterrupted, delighted attention during play builds a shield of self-worth around them, proving that their value isn't tied to how fast they learn or perform."
         }
       }
     };
@@ -790,6 +872,21 @@
 
     function hideAll() {
       document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
+    }
+
+    function selectRole(role, evt) {
+      selectedRole = role;
+      document.querySelectorAll('.role-btn').forEach(btn => {
+        btn.classList.remove('border-2', 'border-[#8C49D5]', 'bg-[#F9F7FF]');
+        btn.classList.add('border', 'border-[#E5E7EB]', 'bg-white');
+        btn.querySelector('.role-label').classList.remove('text-[#8C49D5]');
+        btn.querySelector('.role-label').classList.add('text-[#1E2939]');
+      });
+      const target = evt.currentTarget;
+      target.classList.remove('border', 'border-[#E5E7EB]', 'bg-white');
+      target.classList.add('border-2', 'border-[#8C49D5]', 'bg-[#F9F7FF]');
+      target.querySelector('.role-label').classList.remove('text-[#1E2939]');
+      target.querySelector('.role-label').classList.add('text-[#8C49D5]');
     }
 
     function selectAge(age, evt) {
@@ -874,6 +971,8 @@
       videoEl.pause();
       videoEl.onended = null;
 
+      const videoCaption = document.getElementById('scenario-video-caption');
+
       if (data.video) {
         iconBlock.classList.add('hidden');
         promptBlock.classList.add('hidden');
@@ -886,8 +985,13 @@
           videoEl.controls = true;
           promptBlock.classList.remove('hidden');
         };
+
+        videoCaption.classList.remove('hidden');
+        document.getElementById('scenario-video-title').innerText = data.title;
+        document.getElementById('scenario-video-desc').innerText = data.desc;
       } else {
         videoEl.classList.add('hidden');
+        videoCaption.classList.add('hidden');
         iconBlock.classList.remove('hidden');
         document.getElementById('scenario-icon').setAttribute('name', data.icon);
         document.getElementById('scenario-title').innerText = data.title;
@@ -942,8 +1046,39 @@
       if (currentScenarioIdx < scenarios.length) {
         loadScenario();
       } else {
-        showReport();
+        startLoading();
       }
+    }
+
+    const loadingTextByRole = {
+      Caregiver: "At home, Nora listens to real play sessions between you and your child for 5 minutes, and give personalised report.",
+      Teacher: "Scenario based training for teachers to prepare for real classroom moments, and build confidence handling everyday behavior challenges."
+    };
+
+    function renderLoadingText(text) {
+      const container = document.getElementById('loading-text');
+      container.innerHTML = '';
+      const words = text.split(' ');
+      words.forEach((word, i) => {
+        const span = document.createElement('span');
+        span.className = 'word-reveal';
+        span.style.animationDelay = (i * 0.12) + 's';
+        span.textContent = word + (i < words.length - 1 ? ' ' : '');
+        container.appendChild(span);
+      });
+      return words.length;
+    }
+
+    function startLoading() {
+      hideAll();
+      document.getElementById('step-loading').classList.remove('hidden');
+      currentStep = 4;
+      updateStepper();
+
+      const text = loadingTextByRole[selectedRole] || loadingTextByRole.Caregiver;
+      const wordCount = renderLoadingText(text);
+      const totalDelay = wordCount * 120 + 450 + 3000;
+      setTimeout(showReport, totalDelay);
     }
 
     function showReport() {
