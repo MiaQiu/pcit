@@ -30,7 +30,7 @@ import { Video, ResizeMode } from 'expo-av';
 import { ProfileCircle } from '../components/ProfileCircle';
 import { COLORS, FONTS } from '../constants/assets';
 
-const DRAGON_ANIMATION = require('../../assets/images/Dragon_anime.mov');
+const DRAGON_ANIMATION = require('../../assets/images/dragon_amine3.mov');
 import { RootStackNavigationProp, RootTabNavigationProp } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useSubscription } from '../contexts/SubscriptionContext';

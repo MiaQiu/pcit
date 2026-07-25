@@ -1,25 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getLessonWithTranslation, updateLessonContentV2, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo } from '../api/adminApi';
+import { getLessonWithTranslation, updateLessonContentV2, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo, deleteLesson } from '../api/adminApi';
 import { handleBoldShortcut, insertTextareaMarker } from '../utils/textFormatting';
-
-// Content locales this editor supports authoring for, beyond the always-present English source.
-const LOCALES: { value: string; label: string }[] = [
-  { value: 'en', label: 'English' },
-  { value: 'zh-TW', label: '繁體中文 (zh-TW)' },
-  { value: 'zh-CN', label: '简体中文 (zh-CN)' },
-];
+import { LOCALES } from '../constants/locales';
 
 export default function LessonContentV2EditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const [title, setTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
   const [locale, setLocale] = useState('en');
   const [contentV2, setContentV2] = useState('');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -38,6 +34,7 @@ export default function LessonContentV2EditorPage() {
     getLessonWithTranslation(id, locale)
       .then(({ lesson, contentV2Translation }) => {
         setTitle(lesson.title);
+        setSubtitle(lesson.subtitle || '');
         if (locale === 'en') {
           setContentV2(lesson.contentV2 || '');
           setAudioUrl(lesson.audioUrl);
@@ -57,11 +54,25 @@ export default function LessonContentV2EditorPage() {
     if (!id) return;
     setSaving(true);
     try {
-      await updateLessonContentV2(id, { contentV2 }, locale);
+      const updates = locale === 'en' ? { contentV2, title, subtitle } : { contentV2 };
+      await updateLessonContentV2(id, updates, locale);
     } catch (err: any) {
       alert('Failed to save: ' + err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    if (!window.confirm(`Delete "${title}" (${id})? This can't be undone.`)) return;
+    setDeleting(true);
+    try {
+      await deleteLesson(id);
+      navigate('/content-v2');
+    } catch (err: any) {
+      alert('Failed to delete lesson: ' + err.message);
+      setDeleting(false);
     }
   };
 
@@ -165,6 +176,9 @@ export default function LessonContentV2EditorPage() {
           <button className="btn-primary" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Save Content'}
           </button>
+          <button className="btn-danger-sm" onClick={handleDelete} disabled={deleting}>
+            {deleting ? 'Deleting...' : 'Delete Lesson'}
+          </button>
         </div>
       </div>
 
@@ -174,6 +188,25 @@ export default function LessonContentV2EditorPage() {
           shown in the lesson list stay English here — this page only edits the narration/script for this locale.
           The English source is always kept separately; switch back to English above to view or edit it.
         </p>
+      )}
+
+      {locale === 'en' && (
+        <div className="editor-section">
+          <h2>Lesson Metadata</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 420 }}>
+            <div className="form-group">
+              <label>Title</label>
+              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label>Subtitle</label>
+              <input type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
+            </div>
+          </div>
+          <p style={{ fontSize: 12, color: '#9ca3af', margin: '8px 0 0' }}>
+            Saved together with the content below when you click "Save Content".
+          </p>
+        </div>
       )}
 
       <div className="editor-section">

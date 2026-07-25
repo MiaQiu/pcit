@@ -701,7 +701,20 @@
   "learnV3": {
     "title": "Professor Yi-Chuen Chen",
     "subtitle": "臨床兒童心理學家",
-    "noLessonsFound": "找不到課程"
+    "noLessonsFound": "找不到課程",
+    "lastViewed": "上次學習",
+    "read": "閱讀",
+    "completed": "已完成",
+    "continue": "繼續",
+    "continueLabel": "繼續：{{title}}",
+    "progressLine": "{{completed}} / {{total}} 課程 · 已學習 {{percent}}%",
+    "allModules": "所有模組",
+    "module": "模組",
+    "onlyUnfinished": "只看未完成",
+    "sectionHeader": "{{title}}（{{count}} 課程）",
+    "rowTitle": "第 {{day}} 天 · {{title}}",
+    "readMeta": "第 {{day}} 天 · {{duration}}",
+    "lessonFallback": "課程"
   },
   "privacyPolicy": {
     "headerTitle": "隱私權政策"

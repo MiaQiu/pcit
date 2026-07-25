@@ -701,7 +701,20 @@
   "learnV3": {
     "title": "Nora Foundations",
     "subtitle": "Professor Yi-Chuen Chen: Ph.D., Clinical Child Psychologist",
-    "noLessonsFound": "No lessons found"
+    "noLessonsFound": "No lessons found",
+    "lastViewed": "Last viewed",
+    "read": "Read",
+    "completed": "completed",
+    "continue": "Continue",
+    "continueLabel": "Continue: {{title}}",
+    "progressLine": "{{completed}} / {{total}} lessons · {{percent}}% learned",
+    "allModules": "All Modules",
+    "module": "Module",
+    "onlyUnfinished": "Only unfinished",
+    "sectionHeader": "{{title}} ({{count}} lessons)",
+    "rowTitle": "Day {{day}} · {{title}}",
+    "readMeta": "Day {{day}} · {{duration}}",
+    "lessonFallback": "Lesson"
   },
   "privacyPolicy": {
     "headerTitle": "Privacy Policy"

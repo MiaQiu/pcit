@@ -80,6 +80,7 @@ export interface ModuleSummary {
   key: string;
   title: string;
   shortName: string;
+  description: string;
   displayOrder: number;
   backgroundColor: string;
   lessonCount: number;
@@ -287,9 +288,23 @@ export async function uploadLessonImage(id: string, file: File): Promise<{ drago
 
 export async function updateLessonContentV2(
   id: string,
-  updates: { contentV2?: string; audioUrl?: string | null; wordTimings?: WordTiming[] | null; durationSeconds?: number | null },
+  updates: {
+    contentV2?: string;
+    audioUrl?: string | null;
+    wordTimings?: WordTiming[] | null;
+    durationSeconds?: number | null;
+    title?: string;
+    subtitle?: string | null;
+  },
   locale?: string
-): Promise<{ contentV2: string | null; audioUrl: string | null; wordTimings: WordTiming[] | null; durationSeconds: number | null }> {
+): Promise<{
+  title?: string;
+  subtitle?: string | null;
+  contentV2: string | null;
+  audioUrl: string | null;
+  wordTimings: WordTiming[] | null;
+  durationSeconds: number | null;
+}> {
   return apiFetch(`/api/admin/lessons/${id}/content-v2`, {
     method: 'PATCH',
     body: JSON.stringify(locale && locale !== 'en' ? { ...updates, locale } : updates),
@@ -580,8 +595,9 @@ export interface BrandingImages {
 
 export type BrandingImageSlot = 'learn-cover' | 'lesson-viewer';
 
-export async function getBrandingImages(): Promise<BrandingImages> {
-  return apiFetch<BrandingImages>('/api/admin/settings/branding-images');
+export async function getBrandingImages(locale?: string): Promise<BrandingImages> {
+  const params = locale && locale !== 'en' ? `?locale=${locale}` : '';
+  return apiFetch<BrandingImages>(`/api/admin/settings/branding-images${params}`);
 }
 
 export async function uploadBrandingImage(slot: BrandingImageSlot, file: File): Promise<BrandingImages> {
@@ -600,10 +616,10 @@ export async function uploadBrandingImage(slot: BrandingImageSlot, file: File): 
   return res.json();
 }
 
-export async function updateLearnHeader(title: string, subtitle: string): Promise<BrandingImages> {
+export async function updateLearnHeader(title: string, subtitle: string, locale?: string): Promise<BrandingImages> {
   return apiFetch<BrandingImages>('/api/admin/settings/learn-header', {
     method: 'PUT',
-    body: JSON.stringify({ title, subtitle }),
+    body: JSON.stringify({ title, subtitle, locale: locale || 'en' }),
   });
 }
 

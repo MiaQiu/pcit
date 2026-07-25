@@ -715,7 +715,20 @@
   "learnV3": {
     "title": "Professor Yi-Chuen Chen",
     "subtitle": "临床儿童心理学家",
-    "noLessonsFound": "找不到课程"
+    "noLessonsFound": "找不到课程",
+    "lastViewed": "上次学习",
+    "read": "阅读",
+    "completed": "已完成",
+    "continue": "继续",
+    "continueLabel": "继续：{{title}}",
+    "progressLine": "{{completed}} / {{total}} 课程 · 已学习 {{percent}}%",
+    "allModules": "所有模块",
+    "module": "模块",
+    "onlyUnfinished": "只看未完成",
+    "sectionHeader": "{{title}}（{{count}} 课程）",
+    "rowTitle": "第 {{day}} 天 · {{title}}",
+    "readMeta": "第 {{day}} 天 · {{duration}}",
+    "lessonFallback": "课程"
   },
   "privacyPolicy": {
     "headerTitle": "隐私权政策"

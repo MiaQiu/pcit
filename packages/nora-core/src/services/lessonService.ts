@@ -87,13 +87,16 @@ class LessonService {
   }
 
   /**
-   * Get the admin-configurable Learn tab / lesson viewer branding images.
-   * Either field is null when the admin hasn't set a custom one — callers
-   * fall back to the bundled default asset in that case.
+   * Get the admin-configurable Learn tab / lesson viewer branding images and
+   * the cover band's title/subtitle for `locale`. Fields are null when the
+   * admin hasn't set a custom one for this locale (and, for title/subtitle,
+   * English isn't set either) — callers fall back to the bundled default
+   * asset / i18n copy in that case.
    */
-  async getBrandingImages(): Promise<BrandingImagesResponse> {
+  async getBrandingImages(locale?: string): Promise<BrandingImagesResponse> {
+    const lang = locale && locale !== 'en' ? `?lang=${locale}` : '';
     const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/lessons/branding-images`,
+      `${this.apiUrl}/api/lessons/branding-images${lang}`,
       {
         method: 'GET',
       }

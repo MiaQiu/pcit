@@ -113,7 +113,7 @@ export const LearnScreen_v3: React.FC = () => {
   const player = useLessonPlayer();
 
   useEffect(() => {
-    lessonService.getBrandingImages()
+    lessonService.getBrandingImages(i18n.language)
       .then(({ learnCoverUrl, learnTitle, learnSubtitle }) => {
         setCoverImageUrl(learnCoverUrl);
         setCoverTitle(learnTitle);
@@ -122,7 +122,7 @@ export const LearnScreen_v3: React.FC = () => {
       .catch((err) => console.error('Failed to load branding images:', err))
       .finally(() => setBrandingLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [i18n.language]);
 
   const applyData = useCallback((modulesRes: ModuleListResponse, lessonsRes: LessonListResponse) => {
     handleApiSuccess();
@@ -359,7 +359,7 @@ export const LearnScreen_v3: React.FC = () => {
       <View key={lesson.id} style={styles.row}>
         {isLastLearnt && (
           <View style={styles.lastLearntBadge}>
-            <Text style={styles.lastLearntBadgeText}>Last viewed</Text>
+            <Text style={styles.lastLearntBadgeText}>{t('learnV3.lastViewed')}</Text>
           </View>
         )}
         <TouchableOpacity
@@ -375,37 +375,39 @@ export const LearnScreen_v3: React.FC = () => {
             ]}
             numberOfLines={2}
           >
-            Day {lesson.dayNumber} · {lesson.title}
+            {t('learnV3.rowTitle', { day: lesson.dayNumber, title: lesson.title })}
           </Text>
         </TouchableOpacity>
         <View style={styles.rowMetaRow}>
           <Text style={[styles.rowDuration, isCompleted && styles.rowDurationCompleted]}>
             {durationLabel}
-            {isCompleted ? ' | completed' : ''}
+            {isCompleted ? ` | ${t('learnV3.completed')}` : ''}
           </Text>
           <View style={styles.rowActions}>
             <TouchableOpacity style={styles.readButton} onPress={() => handleReadPress(lesson)}>
-              <Text style={styles.readButtonText}>Read</Text>
+              <Text style={styles.readButtonText}>{t('learnV3.read')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.playCircle}
-              onPress={() => handlePlayCirclePress(lesson)}
-            >
-              {isThisPlaying ? (
-                <Ionicons name={player.isPlaying ? 'pause' : 'play'} size={15} color={COLORS.mainPurple} />
-              ) : (
-                <Svg width={14} height={14} viewBox="0 0 14 14">
-                  <Polygon
-                    points="3,2 3,12 12,7"
-                    fill="none"
-                    stroke="#6B7280"
-                    strokeWidth={2}
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                </Svg>
-              )}
-            </TouchableOpacity>
+            {lesson.audioUrl && (
+              <TouchableOpacity
+                style={styles.playCircle}
+                onPress={() => handlePlayCirclePress(lesson)}
+              >
+                {isThisPlaying ? (
+                  <Ionicons name={player.isPlaying ? 'pause' : 'play'} size={15} color={COLORS.mainPurple} />
+                ) : (
+                  <Svg width={14} height={14} viewBox="0 0 14 14">
+                    <Polygon
+                      points="3,2 3,12 12,7"
+                      fill="none"
+                      stroke="#6B7280"
+                      strokeWidth={2}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                    />
+                  </Svg>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
@@ -470,7 +472,7 @@ export const LearnScreen_v3: React.FC = () => {
         <View style={styles.progressRow}>
           <View style={styles.progressTextColumn}>
             <Text style={styles.progressText}>
-              {completedCount} / {totalCount} lessons · {percent}% learned
+              {t('learnV3.progressLine', { completed: completedCount, total: totalCount, percent })}
             </Text>
             <View style={styles.progressBarTrack}>
               <View style={[styles.progressBarFill, { width: `${percent}%` }]} />
@@ -479,13 +481,13 @@ export const LearnScreen_v3: React.FC = () => {
           {displayContinueLesson && (
             <TouchableOpacity style={styles.continueButton} onPress={() => handlePlayCirclePress(displayContinueLesson)}>
               <Ionicons name="play" size={13} color="#FFFFFF" />
-              <Text style={styles.continueButtonText}>Continue</Text>
+              <Text style={styles.continueButtonText}>{t('learnV3.continue')}</Text>
             </TouchableOpacity>
           )}
         </View>
         {displayContinueLesson && (
           <Text style={styles.continueLine} numberOfLines={1}>
-            Continue: {displayContinueLesson.title}
+            {t('learnV3.continueLabel', { title: displayContinueLesson.title })}
           </Text>
         )}
       </View>
@@ -494,13 +496,13 @@ export const LearnScreen_v3: React.FC = () => {
         <View style={styles.filterRow}>
           <TouchableOpacity style={styles.filterChip} onPress={() => setShowModuleModal(true)}>
             <Text style={styles.filterChipText} numberOfLines={1}>
-              {moduleFilter ? moduleByKey.get(moduleFilter)?.title ?? 'Module' : 'All Modules'}
+              {moduleFilter ? moduleByKey.get(moduleFilter)?.title ?? t('learnV3.module') : t('learnV3.allModules')}
             </Text>
             <Ionicons name="chevron-down" size={14} color={COLORS.textDark} />
           </TouchableOpacity>
 
           <View style={styles.unfinishedToggle}>
-            <Text style={styles.unfinishedText}>Only unfinished</Text>
+            <Text style={styles.unfinishedText}>{t('learnV3.onlyUnfinished')}</Text>
             <Switch
               style={styles.unfinishedSwitch}
               value={onlyUnfinished}
@@ -526,7 +528,7 @@ export const LearnScreen_v3: React.FC = () => {
             {groupedForDisplay.map(group => (
               <View key={group.module.key}>
                 <Text style={styles.sectionHeader}>
-                  {group.module.title} ({group.module.lessonCount} lessons)
+                  {t('learnV3.sectionHeader', { title: group.module.title, count: group.module.lessonCount })}
                 </Text>
                 {group.lessons.map(lesson => renderLessonRow(lesson))}
               </View>
@@ -548,7 +550,7 @@ export const LearnScreen_v3: React.FC = () => {
                 style={styles.modalOption}
                 onPress={() => { setModuleFilter(null); setShowModuleModal(false); }}
               >
-                <Text style={styles.modalOptionText}>All Modules</Text>
+                <Text style={styles.modalOptionText}>{t('learnV3.allModules')}</Text>
                 {!moduleFilter && <Ionicons name="checkmark" size={18} color={COLORS.mainPurple} />}
               </TouchableOpacity>
               {orderedModules.map(mod => (
@@ -599,12 +601,12 @@ export const LearnScreen_v3: React.FC = () => {
                     ]}
                   >
                     <Text style={styles.scriptEyebrowText}>
-                      {moduleByKey.get(scriptLesson.module)?.title ?? 'Lesson'}
+                      {moduleByKey.get(scriptLesson.module)?.title ?? t('learnV3.lessonFallback')}
                     </Text>
                   </View>
                   <Text style={styles.scriptArticleTitle}>{scriptLesson.title}</Text>
                   <Text style={styles.scriptArticleMeta}>
-                    Day {scriptLesson.dayNumber} · {formatDuration(scriptLesson.durationSeconds)}
+                    {t('learnV3.readMeta', { day: scriptLesson.dayNumber, duration: formatDuration(scriptLesson.durationSeconds) })}
                   </Text>
                   <View style={styles.scriptDivider} />
                 </View>

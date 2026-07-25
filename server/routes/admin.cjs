@@ -921,7 +921,7 @@ router.post('/lessons/:id/audio', requireAdminAuth, lessonAudioUploadMiddleware.
 router.patch('/lessons/:id/content-v2', requireAdminAuth, async (req, res) => {
   try {
     const lessonId = req.params.id;
-    const { contentV2, audioUrl, wordTimings, durationSeconds, locale } = req.body;
+    const { contentV2, audioUrl, wordTimings, durationSeconds, title, subtitle, locale } = req.body;
 
     const existing = await prisma.lesson.findUnique({ where: { id: lessonId } });
     if (!existing) return res.status(404).json({ error: 'Lesson not found' });
@@ -952,6 +952,10 @@ router.patch('/lessons/:id/content-v2', requireAdminAuth, async (req, res) => {
     if (audioUrl !== undefined) updateFields.audioUrl = audioUrl;
     if (wordTimings !== undefined) updateFields.wordTimings = wordTimings;
     if (durationSeconds !== undefined) updateFields.durationSeconds = durationSeconds;
+    // Title/subtitle live here too (not just the classic PUT /lessons/:id)
+    // so this stays the one endpoint the Content V2 editor needs to save.
+    if (title !== undefined) updateFields.title = title;
+    if (subtitle !== undefined) updateFields.subtitle = subtitle;
 
     const updated = await prisma.lesson.update({
       where: { id: lessonId },
@@ -959,6 +963,8 @@ router.patch('/lessons/:id/content-v2', requireAdminAuth, async (req, res) => {
     });
 
     res.json({
+      title: updated.title,
+      subtitle: updated.subtitle,
       contentV2: updated.contentV2,
       audioUrl: await resolveLessonAudioUrl(updated.audioUrl),
       wordTimings: updated.wordTimings,
@@ -995,6 +1001,7 @@ router.get('/modules', requireAdminAuth, async (req, res) => {
       key: m.key,
       title: m.title,
       shortName: m.shortName,
+      description: m.description,
       displayOrder: m.displayOrder,
       backgroundColor: m.backgroundColor,
       lessonCount: countMap[m.key] || 0
@@ -1684,10 +1691,21 @@ const BRANDING_IMAGE_SLOTS = {
   'lesson-viewer': 'lessonViewerKey', // LessonViewerScreen_v2 identity-row image
 };
 
+// Title/subtitle used to be flat single-language fields (learnTitle/
+// learnSubtitle); reading them here as the 'en' entry means existing saved
+// copy survives untouched once a byLocale map is introduced, no migration
+// script needed. New writes always go through *ByLocale.
+function getLocalizedText(byLocale, legacyFlat, locale) {
+  const map = byLocale || (legacyFlat ? { en: legacyFlat } : {});
+  return map[locale] || null;
+}
+
 // Shared shape returned by all three branding-images endpoints below (and by
 // the mobile-facing GET /api/lessons/branding-images). null fields mean "use
 // the bundled default" (images) or "use the i18n default copy" (title/subtitle).
-async function buildBrandingResponse(value) {
+// `locale` is exact/raw (no English fallback) — used for admin editing, where
+// blank means "not translated yet", not "same as English".
+async function buildBrandingResponse(value, locale = 'en') {
   const [learnCoverUrl, lessonViewerUrl] = await Promise.all([
     resolveLessonAudioUrl(value.learnCoverKey || null),
     resolveLessonAudioUrl(value.lessonViewerKey || null),
@@ -1695,21 +1713,22 @@ async function buildBrandingResponse(value) {
   return {
     learnCoverUrl,
     lessonViewerUrl,
-    learnTitle: value.learnTitle || null,
-    learnSubtitle: value.learnSubtitle || null,
+    learnTitle: getLocalizedText(value.learnTitleByLocale, value.learnTitle, locale),
+    learnSubtitle: getLocalizedText(value.learnSubtitleByLocale, value.learnSubtitle, locale),
   };
 }
 
 /**
  * GET /api/admin/settings/branding-images
  * Get the current Learn tab / lesson viewer branding image URLs (resolved,
- * presigned) plus the Learn tab header title/subtitle. null means "use the
- * bundled/i18n default".
+ * presigned) plus the Learn tab header title/subtitle for ?locale= (default
+ * 'en'). null means "use the bundled/i18n default" (or, for a non-English
+ * locale, "not translated yet" — no fallback to English here, unlike mobile).
  */
 router.get('/settings/branding-images', requireAdminAuth, async (req, res) => {
   try {
     const config = await prisma.appConfig.findUnique({ where: { key: BRANDING_IMAGES_KEY } });
-    res.json(await buildBrandingResponse(config?.value || {}));
+    res.json(await buildBrandingResponse(config?.value || {}, req.query.locale || 'en'));
   } catch (error) {
     console.error('Admin get branding images error:', error);
     res.status(500).json({ error: 'Failed to fetch branding images' });
@@ -1750,19 +1769,23 @@ router.post('/settings/branding-images/:slot', requireAdminAuth, uploadMiddlewar
 
 /**
  * PUT /api/admin/settings/learn-header
- * Update the Learn tab cover band's title/subtitle text. Empty string clears
- * back to the i18n default (stored as null, not '').
+ * Update the Learn tab cover band's title/subtitle text for one locale
+ * (body.locale, default 'en'). Empty string clears that locale back to
+ * "not set" (falls back to English on mobile, or the i18n default if English
+ * isn't set either — see GET /api/lessons/branding-images).
  */
 router.put('/settings/learn-header', requireAdminAuth, async (req, res) => {
   try {
-    const { title, subtitle } = req.body;
+    const { title, subtitle, locale = 'en' } = req.body;
 
     const existing = await prisma.appConfig.findUnique({ where: { key: BRANDING_IMAGES_KEY } });
-    const value = {
-      ...(existing?.value || {}),
-      learnTitle: title?.trim() || null,
-      learnSubtitle: subtitle?.trim() || null,
-    };
+    const prev = existing?.value || {};
+    const learnTitleByLocale = { ...(prev.learnTitleByLocale || (prev.learnTitle ? { en: prev.learnTitle } : {})) };
+    const learnSubtitleByLocale = { ...(prev.learnSubtitleByLocale || (prev.learnSubtitle ? { en: prev.learnSubtitle } : {})) };
+    learnTitleByLocale[locale] = title?.trim() || null;
+    learnSubtitleByLocale[locale] = subtitle?.trim() || null;
+
+    const value = { ...prev, learnTitleByLocale, learnSubtitleByLocale };
 
     await prisma.appConfig.upsert({
       where: { key: BRANDING_IMAGES_KEY },
@@ -1770,7 +1793,7 @@ router.put('/settings/learn-header', requireAdminAuth, async (req, res) => {
       create: { key: BRANDING_IMAGES_KEY, value },
     });
 
-    res.json(await buildBrandingResponse(value));
+    res.json(await buildBrandingResponse(value, locale));
   } catch (error) {
     console.error('Admin update learn header error:', error);
     res.status(500).json({ error: error.message || 'Failed to update learn header' });

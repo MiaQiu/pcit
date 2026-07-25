@@ -129,8 +129,11 @@ async function formatLessonCard(lesson, userProgress) {
  * GET /api/lessons/branding-images
  * Admin-configurable images for LearnScreen_v3's cover band and
  * LessonViewerScreen_v2's identity row, plus the cover band's title/subtitle
- * text. null means "use the bundled/i18n default" — set via the admin
- * portal's Settings page (images) and Content V2 list page (title/subtitle).
+ * text for the caller's locale (?lang=, via localeMiddleware). Title/subtitle
+ * fall back to the English admin-set copy if this locale isn't translated
+ * yet, then to null (the mobile i18n default) if English isn't set either —
+ * set via the admin portal's Settings page (images) and Content V2 list page
+ * (title/subtitle, per-locale).
  */
 router.get('/branding-images', requireAuth, async (req, res) => {
   try {
@@ -142,11 +145,14 @@ router.get('/branding-images', requireAuth, async (req, res) => {
       resolveLessonAudioUrl(value.lessonViewerKey || null),
     ]);
 
+    const titleByLocale = value.learnTitleByLocale || (value.learnTitle ? { en: value.learnTitle } : {});
+    const subtitleByLocale = value.learnSubtitleByLocale || (value.learnSubtitle ? { en: value.learnSubtitle } : {});
+
     res.json({
       learnCoverUrl,
       lessonViewerUrl,
-      learnTitle: value.learnTitle || null,
-      learnSubtitle: value.learnSubtitle || null,
+      learnTitle: titleByLocale[req.locale] || titleByLocale.en || null,
+      learnSubtitle: subtitleByLocale[req.locale] || subtitleByLocale.en || null,
     });
   } catch (error) {
     console.error('Get branding images error:', error.message);
