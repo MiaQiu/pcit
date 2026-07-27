@@ -138,7 +138,7 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
   // restarting a second Sound instance for the same audio.
   useEffect(() => {
     if (!lesson) return;
-    player.loadLesson(lesson.id, lesson.audioUrl);
+    player.loadLesson(lesson.id, lesson.audioUrl, i18n.language);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson?.id, lesson?.audioUrl]);
 
@@ -148,7 +148,7 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
       const next = idx >= 0 && idx < dayOrdered.length - 1 ? dayOrdered[idx + 1] : undefined;
       if (next) {
         setCurrentLessonId(next.id);
-        player.loadLesson(next.id, next.audioUrl);
+        player.loadLesson(next.id, next.audioUrl, i18n.language);
       } else {
         player.clear();
       }

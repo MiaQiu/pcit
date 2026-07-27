@@ -212,7 +212,7 @@ export const LearnScreen_v3: React.FC = () => {
       // Skip ahead to the next lesson that actually has narration; close the
       // mini-player if nothing further along the list has audio yet.
       const next = orderedLessons.slice(idx + 1).find((l) => l.audioUrl);
-      if (next) player.loadLesson(next.id, next.audioUrl);
+      if (next) player.loadLesson(next.id, next.audioUrl, i18n.language);
       else player.clear();
       lessonService
         .completeLesson(finishedId)
@@ -312,7 +312,7 @@ export const LearnScreen_v3: React.FC = () => {
         moduleKey: lesson.module,
         source: 'learn_v3_inline',
       });
-      player.loadLesson(lesson.id, lesson.audioUrl);
+      player.loadLesson(lesson.id, lesson.audioUrl, i18n.language);
     }
   };
 

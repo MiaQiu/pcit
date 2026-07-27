@@ -12,6 +12,14 @@ import { Audio, AVPlaybackStatus } from 'expo-av';
 
 const RATE_STEPS = [1.0, 1.25, 1.5, 2.0];
 
+/** Default playback speed when a lesson loads, before any manual cycling.
+ * Chinese narration reads noticeably slower than English at 1.0x, so it
+ * defaults faster; English still gets a slight boost over "natural" pace. */
+function defaultRateForLocale(locale: string | null | undefined): number {
+  if (locale === 'zh-CN' || locale === 'zh-TW') return 1.25;
+  return 1.1;
+}
+
 interface LessonPlayerContextValue {
   activeLessonId: string | null;
   isLoading: boolean;
@@ -22,7 +30,7 @@ interface LessonPlayerContextValue {
   /** Switch the active track. No-ops if `lessonId` is already the active
    * track, so mounting a screen for the lesson that's already playing
    * elsewhere just attaches to the existing state instead of restarting it. */
-  loadLesson: (lessonId: string, audioUrl: string | null | undefined) => void;
+  loadLesson: (lessonId: string, audioUrl: string | null | undefined, locale?: string | null) => void;
   play: () => Promise<void>;
   pause: () => Promise<void>;
   seekTo: (millis: number) => Promise<void>;
@@ -68,18 +76,19 @@ export const LessonPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
-  const loadLesson = useCallback((lessonId: string, audioUrl: string | null | undefined) => {
+  const loadLesson = useCallback((lessonId: string, audioUrl: string | null | undefined, locale?: string | null) => {
     if (activeLessonIdRef.current === lessonId) return;
     activeLessonIdRef.current = lessonId;
     setActiveLessonId(lessonId);
 
     const token = ++loadTokenRef.current;
+    const initialRate = defaultRateForLocale(locale);
     setIsPlaying(false);
     positionRef.current = 0;
     setPositionMillis(0);
     durationRef.current = 0;
     setDurationMillis(0);
-    setRateState(1.0);
+    setRateState(initialRate);
 
     (async () => {
       const prevSound = soundRef.current;
@@ -100,7 +109,7 @@ export const LessonPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         });
         const { sound } = await Audio.Sound.createAsync(
           { uri: audioUrl },
-          { shouldPlay: true },
+          { shouldPlay: true, rate: initialRate, shouldCorrectPitch: true },
           onPlaybackStatusUpdate
         );
         if (token !== loadTokenRef.current) {
