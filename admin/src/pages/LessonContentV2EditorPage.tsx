@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getLessonWithTranslation, updateLessonContentV2, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo, deleteLesson } from '../api/adminApi';
+import { getLessonWithTranslation, updateLessonContentV2, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo, deleteLesson, getLessons, LessonSummary } from '../api/adminApi';
 import { handleBoldShortcut, insertTextareaMarker } from '../utils/textFormatting';
 import { LOCALES } from '../constants/locales';
+import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 
 export default function LessonContentV2EditorPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +23,7 @@ export default function LessonContentV2EditorPage() {
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
+  const [lessons, setLessons] = useState<LessonSummary[]>([]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,6 +51,15 @@ export default function LessonContentV2EditorPage() {
       })
       .finally(() => setLoading(false));
   }, [id, locale]);
+
+  useEffect(() => {
+    getLessons()
+      .then((data) => setLessons(data.filter((l) => CONTENT_V2_MODULES.includes(l.module))))
+      .catch((err) => console.error('Failed to fetch lessons for navigation:', err));
+  }, []);
+
+  const lessonIndex = lessons.findIndex((l) => l.id === id);
+  const nextLesson = lessonIndex >= 0 && lessonIndex < lessons.length - 1 ? lessons[lessonIndex + 1] : null;
 
   const handleSave = async () => {
     if (!id) return;
@@ -175,6 +186,14 @@ export default function LessonContentV2EditorPage() {
           <button className="btn-secondary" onClick={() => navigate('/content-v2')}>Cancel</button>
           <button className="btn-primary" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Save Content'}
+          </button>
+          <button
+            className="btn-secondary"
+            onClick={() => nextLesson && navigate(`/content-v2/${nextLesson.id}`)}
+            disabled={!nextLesson}
+            title={nextLesson ? `Go to "${nextLesson.title}"` : 'This is the last lesson'}
+          >
+            Next Lesson →
           </button>
           <button className="btn-danger-sm" onClick={handleDelete} disabled={deleting}>
             {deleting ? 'Deleting...' : 'Delete Lesson'}

@@ -536,12 +536,12 @@
   "learn": {
     "title": "探索课程",
     "filterAll": "全部",
-    "moduleLibrary": "模块库",
-    "completedModules": "已完成模块",
-    "foundationLockedNotice": "其他模块已锁定。请先完成「基础」模块。",
-    "completeFoundationFirst": "请先完成基础模块",
-    "couldntLoadModules": "无法加载模块",
-    "noModulesFound": "找不到模块",
+    "moduleLibrary": "章节库",
+    "completedModules": "已完成章节",
+    "foundationLockedNotice": "其他章节已锁定。请先完成「基础」章节。",
+    "completeFoundationFirst": "请先完成基础章节",
+    "couldntLoadModules": "无法加载章节",
+    "noModulesFound": "找不到章节",
     "tryDifferentSearch": "尝试不同的关键字或筛选条件"
   },
   "record": {
@@ -707,8 +707,8 @@
   "learnV2": {
     "title": "探索课程",
     "subtitle": "为您精选",
-    "lockedNotice": "先完成基础模块以解锁此模块。",
-    "completeFoundationFirst": "请先完成基础模块",
+    "lockedNotice": "先完成基础章节以解锁此章节。",
+    "completeFoundationFirst": "请先完成基础章节",
     "noLessonsFound": "找不到课程",
     "tryDifferentSearch": "尝试不同的关键字"
   },
@@ -722,13 +722,14 @@
     "continue": "继续",
     "continueLabel": "继续：{{title}}",
     "progressLine": "{{completed}} / {{total}} 课程 · 已学习 {{percent}}%",
-    "allModules": "所有模块",
-    "module": "模块",
+    "allModules": "所有章节",
+    "module": "章节",
     "onlyUnfinished": "只看未完成",
     "sectionHeader": "{{title}}（{{count}} 课程）",
     "rowTitle": "第 {{day}} 天 · {{title}}",
     "readMeta": "第 {{day}} 天 · {{duration}}",
-    "lessonFallback": "课程"
+    "lessonFallback": "课程",
+    "nextLessonLabel": "下一课：{{title}}"
   },
   "privacyPolicy": {
     "headerTitle": "隐私权政策"
@@ -836,12 +837,12 @@
     }
   },
   "moduleDetail": {
-    "moduleLocked": "模块已锁定",
-    "lockedMessage": "请先完成基础模块以解锁此模块。",
-    "goToFoundation": "前往基础模块",
-    "completeFoundationFirst": "请先完成基础模块",
+    "moduleLocked": "章节已锁定",
+    "lockedMessage": "请先完成基础章节以解锁此章节。",
+    "goToFoundation": "前往基础章节",
+    "completeFoundationFirst": "请先完成基础章节",
     "setAsDailyLesson": "设为每日课程",
-    "currentModule": "目前模块"
+    "currentModule": "目前章节"
   },
   "coachChat": {
     "headerTitle": "Nora 教练",
@@ -1247,13 +1248,13 @@
     "readReportLink": "阅读报告"
   },
   "modulePicker": {
-    "title": "选择下一个模块！",
+    "title": "选择下一个章节！",
     "congrats": "恭喜完成基础课程！",
-    "infoAutoSelected": "我们已根据您孩子的需求与目标设置了下一个模块",
-    "infoBrowse": "您可以随时在「探索」画面浏览可用模块并更改每日课程",
+    "infoAutoSelected": "我们已根据您孩子的需求与目标设置了下一个章节",
+    "infoBrowse": "您可以随时在「探索」画面浏览可用章节并更改每日课程",
     "recommended": "为您推荐",
-    "otherModules": "其他模块",
-    "availableModules": "可用模块",
+    "otherModules": "其他章节",
+    "availableModules": "可用章节",
     "current": "目前",
     "lesson": "课程",
     "lessons": "课程",
@@ -1329,7 +1330,7 @@
     "beforeYouBegin": "开始之前",
     "suggestionPrefix": "我们建议您先完成「",
     "notListeningLessons": "不听话与争执",
-    "suggestionMiddle": "」模块的课程——这些课程将为您提供架构，让您的管教练习发挥最大效果。\n\n同时，请继续进行特别时间的练习，持续为 {{childName}} 的情感银行帐户存款。",
+    "suggestionMiddle": "」章节的课程——这些课程将为您提供架构，让您的管教练习发挥最大效果。\n\n同时，请继续进行特别时间的练习，持续为 {{childName}} 的情感银行帐户存款。",
     "gotIt": "我知道了！"
   },
   "whatsNew": {

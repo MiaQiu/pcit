@@ -20,14 +20,14 @@ Added directly to the existing `Lesson` table (`prisma/schema.prisma`) — no ne
 
 | Field | Type | Purpose |
 |---|---|---|
-| `contentV2` | `String?` | Lightweight-markdown lesson text: `**bold**`, `* ` bullets, blank-line paragraph breaks. Same authoring convention as segment `bodyText`. |
+| `contentV2` | `String?` | Lightweight-markdown lesson text: `**bold**`, `*italic*`, `* ` bullets, `### ` headings, `---` dividers, blank-line paragraph breaks. Same authoring convention as segment `bodyText`. |
 | `audioUrl` | `String?` | S3 key/URL for the narration audio file. Bucket is **private** — always read through `resolveLessonAudioUrl()` (presigned GET), never the raw stored value. |
 | `wordTimings` | `Json?` | Array of `{ text, start, end }` (seconds) from ElevenLabs forced transcription. Drives word-by-word highlighting in the live script view. `null`/absent for most lessons — the player falls back to a coarser paragraph-level estimate. |
 | `durationSeconds` | `Int?` | Narration length, computed as `Math.floor(lastWordTiming.end)` when audio is uploaded/transcribed. `null` until a lesson has audio. Mobile UI shows a `2:00` placeholder when `null` rather than fabricating a number. |
 
 New `LessonModule` enum values: `WELCOME`, `POSITIVE_PLAY`, `CALM_DISCIPLINE`, `BIG_FEELINGS_TANTRUMS` (plus matching `Module` rows for admin dropdowns / mobile module browsing). Existing modules and lessons were not touched.
 
-**Content status as of this writing**: of the 23 lessons across the four V2 modules, only `WELCOME-1` has `audioUrl`/`wordTimings`/`durationSeconds` populated — the rest have `contentV2` text but no narration yet. Anything gated on "has audio" (inline mini-player playback, word-level highlighting, real duration) only applies to that one lesson today; everything else falls back to its no-audio behavior (see [Known gaps](#known-gaps--not-built)). `WELCOME-1` is also the first lesson authored with `**bold**` spans and an inline image, so it exercises the full formatting pipeline end to end.
+**Content status as of this writing**: a handful of English lessons (`WELCOME-1` through the early `POSITIVE_PLAY` days) have `audioUrl`/`wordTimings`/`durationSeconds` populated from manual admin uploads; most other lessons, and all `zh-CN`/`zh-TW` `LessonTranslation` rows, have `contentV2` text but no narration yet. An automated TTS backfill pipeline now exists to fill this in at scale (see [Auto-generating narration audio](#auto-generating-narration-audio-elevenlabs-tts) below) but has so far only been run against one lesson end-to-end as a smoke test, not the full remaining backlog. Anything gated on "has audio" (inline mini-player playback, word-level highlighting, real duration) only applies to lessons that actually have `audioUrl` set — everything else falls back to its no-audio behavior (see [Known gaps](#known-gaps--not-built)).
 
 ### Module routing
 
@@ -85,6 +85,48 @@ Transcription failure does **not** fail the upload — the audio is saved either
 | `PATCH /api/admin/lessons/:id/content-v2` | Update `contentV2` / `audioUrl` / `wordTimings` independently. Deliberately **not** routed through the classic `PUT /lessons/:id` handler, which replaces `segments`/`quiz` whenever those keys are present — this endpoint can never touch them. |
 
 `content-v2`/`audio`/`content-image` are scoped to `contentV2`/`audioUrl`/`wordTimings` only; segments and quiz continue to go through the original `POST/PUT /api/admin/lessons/:id`.
+
+---
+
+## Auto-generating narration audio (ElevenLabs TTS)
+
+The [audio upload flow](#audio-upload--auto-transcription) above is manual — an admin records/uploads narration, and ElevenLabs *transcribes* it back into `wordTimings`. A separate, newer pipeline runs the opposite direction: it takes a lesson's existing `contentV2` text and generates narration audio for it via ElevenLabs **text-to-speech**, so lessons (and `zh-CN`/`zh-TW` translations) that have text but no recording can get audio without anyone recording anything.
+
+### Why a shared tokenizer exists
+
+`LiveScriptCard.tsx`'s word-level highlighting (see [below](#live-script-highlighting--livescriptcard)) requires `wordTimings.length` to **exactly equal** the word count the mobile client computes from `contentV2` (via `formatLessonContentV2()` + `flattenBlocksToChunks()`). Any mismatch — even by one word, anywhere in the lesson — silently disables word-level sync for the *entire* lesson and falls back to a crude `position/duration` ratio estimate. Two subtleties make this easy to get wrong when generating `wordTimings` from a totally different pipeline (TTS instead of an audio transcript):
+
+- **Word splitting isn't just "split on whitespace."** The client tokenizes each bold/italic run *separately*, so a run boundary forces a word split even without surrounding whitespace (e.g. `**play**.` must split into `"play"` + `"."`), and CJK ideographs are tokenized one character at a time rather than by whitespace (Chinese has no spaces between words).
+- **Character offsets must be in Unicode codepoints, not JS string (UTF-16) units.** ElevenLabs' returned alignment counts one entry per codepoint (an emoji is 1 entry there but 2 JS string units) — mixing the two indexing schemes silently misaligns every timing after the first surrogate-pair character.
+
+`server/utils/lessonContentTokenizer.cjs` is a CommonJS port of `nora-mobile/src/utils/formatLessonContentV2.ts` that mirrors both of these exactly (same markup parsing — bold/italic/heading/bullet/divider/image/video — and the same word-tokenization rules, including the CJK per-character split). Its `buildNarrationPlan(contentV2, maxChunkChars)` builds the exact plain text to send to ElevenLabs, split into `maxChunkChars`-sized chunks at paragraph/bullet boundaries, with each chunk's word list given as `{start, end}` codepoint offsets into that chunk's text. **Keep the two files in sync** — a parsing change on one side without the other reintroduces the count-mismatch bug.
+
+### `server/services/ttsService.cjs`
+
+`generateLessonNarration(contentV2, voiceId)`:
+
+1. Calls `buildNarrationPlan()` to get the chunk(s) to synthesize.
+2. For each chunk, `POST /v1/text-to-speech/{voiceId}/with-timestamps` (model `eleven_v3`) using that **voice's own saved settings** (fetched once via `GET /v1/voices/{voiceId}/settings` and cached) rather than hardcoded generic values — different voices can have very different tuned `stability`/`similarity_boost`/`style`/`speed`, and using generic defaults instead of a voice's real settings produces noticeably different (worse) results than the ElevenLabs web Speech Synthesis studio for the same voice.
+3. Maps each chunk's word spans directly onto the returned `alignment.character_start_times_seconds`/`character_end_times_seconds` arrays (by codepoint index) to build `wordTimings` in the same `{ text, start, end }` shape the manual transcription flow already produces — no downstream code needs to know which path generated the audio.
+4. Retries transient failures (fixed `[0, 5000, 15000]`ms backoff, matching the retry convention in `processingService.cjs`) and throws (rather than silently producing wrong offsets) if the returned alignment length doesn't match the sent text's codepoint length.
+
+### `server/scripts/generateLessonNarration.cjs`
+
+The backfill script. Safe to re-run — only processes `Lesson`/`LessonTranslation` rows where `contentV2` is set and `audioUrl` is still `null`.
+
+```
+node server/scripts/generateLessonNarration.cjs --dry-run          # list what would be processed, no API calls
+node server/scripts/generateLessonNarration.cjs --lesson-id=<id>   # one lesson only (all locales), for spot-checking
+node server/scripts/generateLessonNarration.cjs                    # full backfill
+```
+
+Voice IDs are hardcoded per locale in the script (one voice for English, one shared for `zh-CN`, one for `zh-TW` — a Mandarin voice tuned differently from the Taiwanese Mandarin one). Uploads reuse the exact same `uploadLessonAudio()` (`storage-s3.cjs`) the manual admin flow uses, so generated audio lives at the same S3 key convention (`lessons/{id}/audio.mp3`, or `audio-{locale}.mp3` for translations) and is read back through the same `resolveLessonAudioUrl()`.
+
+### Known limitations
+
+- **No orphaned-audio cleanup** — re-running the script after clearing a lesson's `audioUrl` (to force regeneration) overwrites the S3 object at the same key, so no cleanup is needed there; but removing audio via the admin editor's "remove audio" button only clears the DB fields, same as the pre-existing gap noted for content images.
+- **Chunking is a safety net, not the common path.** Lesson text is expected to stay well under the ~4000-character chunk threshold (under `eleven_v3`'s 5,000-char per-request cap); multi-chunk stitching uses each chunk's last alignment timestamp as the time offset for the next, which is a close but not frame-perfect approximation of trailing silence.
+- **Playback speed is compensated client-side, not baked into the audio.** `eleven_v3` narration — especially Chinese — reads slower than a natural conversational pace, so `LessonPlayerContext.tsx` now defaults playback to 1.25× for `zh-CN`/`zh-TW` and 1.1× for English when a lesson loads (the manual 1×/1.25×/1.5×/2× speed-cycle button still works normally on top of that default).
 
 ---
 
@@ -206,6 +248,9 @@ A lesson's `UserLessonProgress.status` becomes `COMPLETED` through two independe
 | `server/routes/lessons.cjs` (mobile-facing) | `formatLessonCard()` resolves `audioUrl`/`durationSeconds` for the list endpoint; lesson-detail endpoint resolves `audioUrl` and inline image URLs in `contentV2` |
 | `server/services/storage-s3.cjs` | `uploadLessonAudio()`, `uploadLessonContentImage()`, `resolveLessonAudioUrl()`/`resolveContentImageUrls()` (presigned reads — bucket is private) |
 | `server/services/transcriptionService.cjs` | `transcribeLessonNarration()` — ElevenLabs speech-to-text, diarization off |
+| `server/services/ttsService.cjs` | `generateLessonNarration()` — ElevenLabs text-to-speech, the reverse direction of the above |
+| `server/utils/lessonContentTokenizer.cjs` | Server-side (CommonJS) port of `formatLessonContentV2.ts` — must stay in sync so generated `wordTimings` counts match the client |
+| `server/scripts/generateLessonNarration.cjs` | Bulk TTS backfill script for lessons/translations with text but no audio |
 | `packages/nora-core/src/types/index.ts` | `Lesson`/`LessonCardData` `contentV2`/`audioUrl`/`wordTimings`/`durationSeconds`, `WordTiming` type, extended `LessonModule` union |
 | `admin/src/pages/LessonContentV2ListPage.tsx` / `LessonContentV2EditorPage.tsx` | Admin authoring UI, incl. the "Insert Image" upload button |
 | `admin/src/api/adminApi.ts` | `updateLessonContentV2()`, `uploadLessonAudio()`, `uploadLessonContentImage()` |
@@ -226,9 +271,8 @@ A lesson's `UserLessonProgress.status` becomes `COMPLETED` through two independe
 
 ## Known gaps / not built
 
-- **No i18n for `contentV2`** — unlike `LessonTranslation`/`LessonSegmentTranslation`, there's no per-locale translation table for V2 content yet.
 - **No "% listened" / resume-position tracking** — `positionMillis` lives only in `LessonPlayerContext`'s in-memory state; it's lost on app restart or when a different lesson is loaded, and the playlist/list don't show partial-listen progress. Would need a position-persistence endpoint.
-- **Only one lesson has real narration today** (`WELCOME-1` — see [Content status](#data-model)). The mini-player, inline play circles, and word-level highlighting only actually engage for that lesson; every other row falls back to navigate-to-full-player, which then shows text-only with no audio controls.
+- **Most lessons/translations still have no narration** (see [Content status](#data-model)). The TTS backfill pipeline exists but hasn't been run against the full backlog yet — the mini-player, inline play circles, and word-level highlighting only engage for lessons that already have `audioUrl` set; everything else falls back to navigate-to-full-player, which then shows text-only with no audio controls.
 - **Content V2 lessons only get marked complete by listening to the end** — there's no "mark as read" path for the text-only case, unlike classic lessons which complete via the segment/quiz flow regardless of audio. Reading the full script via the Read page or the full player, without ever finishing the audio, doesn't count either.
 - **`wordTimings` only auto-populates on new audio uploads.** Lessons whose audio was uploaded before the ElevenLabs integration was wired in (or where transcription failed) simply have no word-level sync until the audio is re-uploaded — the player falls back gracefully in that case, it's not an error state.
 - **No admin-side image preview.** The "Insert Image" button uploads and drops a `![](key)` marker into the plain-text textarea, but the editor doesn't render a thumbnail — the admin has to save and check the mobile app (or the Read page) to see how it actually looks.

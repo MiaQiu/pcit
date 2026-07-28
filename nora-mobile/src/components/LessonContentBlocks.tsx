@@ -43,12 +43,14 @@ export const LessonContentBlocks: React.FC<LessonContentBlocksProps> = ({ blocks
           );
         }
         const dimmed = activeIndex !== undefined && i !== activeIndex;
+        const textStyle =
+          block.type === 'bullet' ? styles.bulletText : block.type === 'heading' ? styles.headingText : styles.bodyText;
         return (
           <View key={i} style={block.type === 'bullet' ? styles.bulletRow : styles.paragraph}>
             {block.type === 'bullet' && <Text style={[styles.bulletDot, dimmed && styles.dimmed]}>•</Text>}
-            <Text style={[block.type === 'bullet' ? styles.bulletText : styles.bodyText, dimmed && styles.dimmed]}>
+            <Text style={[textStyle, dimmed && styles.dimmed]}>
               {block.runs.map((run, j) => (
-                <Text key={j} style={run.bold ? styles.bold : undefined}>{run.text}</Text>
+                <Text key={j} style={[run.bold && styles.bold, run.italic && styles.italic]}>{run.text}</Text>
               ))}
             </Text>
           </View>
@@ -92,6 +94,16 @@ const styles = StyleSheet.create({
     // separate per-weight font families (see FONTS in constants/assets),
     // not weight variants of one family, so RN's fontWeight is a no-op on it.
     fontFamily: FONTS.bold,
+  },
+  italic: {
+    fontStyle: 'italic',
+  },
+  headingText: {
+    fontFamily: FONTS.bold,
+    fontSize: 17,
+    lineHeight: 26,
+    color: LESSON_TEXT_DARK,
+    marginBottom: 4,
   },
   dimmed: {
     color: LESSON_TEXT_GREY,

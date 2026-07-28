@@ -522,12 +522,12 @@
   "learn": {
     "title": "探索課程",
     "filterAll": "全部",
-    "moduleLibrary": "模組庫",
-    "completedModules": "已完成模組",
-    "foundationLockedNotice": "其他模組已鎖定。請先完成「基礎」模組。",
-    "completeFoundationFirst": "請先完成基礎模組",
-    "couldntLoadModules": "無法載入模組",
-    "noModulesFound": "找不到模組",
+    "moduleLibrary": "章節庫",
+    "completedModules": "已完成章節",
+    "foundationLockedNotice": "其他章節已鎖定。請先完成「基礎」章節。",
+    "completeFoundationFirst": "請先完成基礎章節",
+    "couldntLoadModules": "無法載入章節",
+    "noModulesFound": "找不到章節",
     "tryDifferentSearch": "嘗試不同的關鍵字或篩選條件"
   },
   "record": {
@@ -693,8 +693,8 @@
   "learnV2": {
     "title": "探索課程",
     "subtitle": "為您精選",
-    "lockedNotice": "先完成基礎模組以解鎖此模組。",
-    "completeFoundationFirst": "請先完成基礎模組",
+    "lockedNotice": "先完成基礎章節以解鎖此章節。",
+    "completeFoundationFirst": "請先完成基礎章節",
     "noLessonsFound": "找不到課程",
     "tryDifferentSearch": "嘗試不同的關鍵字"
   },
@@ -708,13 +708,14 @@
     "continue": "繼續",
     "continueLabel": "繼續：{{title}}",
     "progressLine": "{{completed}} / {{total}} 課程 · 已學習 {{percent}}%",
-    "allModules": "所有模組",
-    "module": "模組",
+    "allModules": "所有章節",
+    "module": "章節",
     "onlyUnfinished": "只看未完成",
     "sectionHeader": "{{title}}（{{count}} 課程）",
     "rowTitle": "第 {{day}} 天 · {{title}}",
     "readMeta": "第 {{day}} 天 · {{duration}}",
-    "lessonFallback": "課程"
+    "lessonFallback": "課程",
+    "nextLessonLabel": "下一課：{{title}}"
   },
   "privacyPolicy": {
     "headerTitle": "隱私權政策"
@@ -822,12 +823,12 @@
     }
   },
   "moduleDetail": {
-    "moduleLocked": "模組已鎖定",
-    "lockedMessage": "請先完成基礎模組以解鎖此模組。",
-    "goToFoundation": "前往基礎模組",
-    "completeFoundationFirst": "請先完成基礎模組",
+    "moduleLocked": "章節已鎖定",
+    "lockedMessage": "請先完成基礎章節以解鎖此章節。",
+    "goToFoundation": "前往基礎章節",
+    "completeFoundationFirst": "請先完成基礎章節",
     "setAsDailyLesson": "設為每日課程",
-    "currentModule": "目前模組"
+    "currentModule": "目前章節"
   },
   "coachChat": {
     "headerTitle": "Nora 教練",
@@ -1233,13 +1234,13 @@
     "readReportLink": "閱讀報告"
   },
   "modulePicker": {
-    "title": "選擇下一個模組！",
+    "title": "選擇下一個章節！",
     "congrats": "恭喜完成基礎課程！",
-    "infoAutoSelected": "我們已根據您孩子的需求與目標設定了下一個模組",
-    "infoBrowse": "您可以隨時在「探索」畫面瀏覽可用模組並更改每日課程",
+    "infoAutoSelected": "我們已根據您孩子的需求與目標設定了下一個章節",
+    "infoBrowse": "您可以隨時在「探索」畫面瀏覽可用章節並更改每日課程",
     "recommended": "為您推薦",
-    "otherModules": "其他模組",
-    "availableModules": "可用模組",
+    "otherModules": "其他章節",
+    "availableModules": "可用章節",
     "current": "目前",
     "lesson": "課程",
     "lessons": "課程",
@@ -1315,7 +1316,7 @@
     "beforeYouBegin": "開始之前",
     "suggestionPrefix": "我們建議您先完成「",
     "notListeningLessons": "不聽話與爭執",
-    "suggestionMiddle": "」模組的課程——這些課程將為您提供架構，讓您的管教練習發揮最大效果。\n\n同時，請繼續進行特別時間的練習，持續為 {{childName}} 的情感銀行帳戶存款。",
+    "suggestionMiddle": "」章節的課程——這些課程將為您提供架構，讓您的管教練習發揮最大效果。\n\n同時，請繼續進行特別時間的練習，持續為 {{childName}} 的情感銀行帳戶存款。",
     "gotIt": "我知道了！"
   },
   "whatsNew": {

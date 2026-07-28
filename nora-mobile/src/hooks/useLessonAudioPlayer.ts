@@ -59,7 +59,7 @@ export function useLessonAudioPlayer(audioUrl: string | undefined, options: UseL
       try {
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
+          staysActiveInBackground: true,
           shouldDuckAndroid: true,
         });
         const { sound } = await Audio.Sound.createAsync(

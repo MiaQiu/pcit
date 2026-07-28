@@ -104,12 +104,12 @@ export const LessonPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ 
       try {
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
+          staysActiveInBackground: true,
           shouldDuckAndroid: true,
         });
         const { sound } = await Audio.Sound.createAsync(
           { uri: audioUrl },
-          { shouldPlay: true, rate: initialRate, shouldCorrectPitch: true },
+          { shouldPlay: false },
           onPlaybackStatusUpdate
         );
         if (token !== loadTokenRef.current) {
@@ -117,6 +117,13 @@ export const LessonPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ 
           return;
         }
         soundRef.current = sound;
+        // Setting a non-1.0 rate in the initial createAsync status plays back
+        // garbled on iOS (pitch correction isn't wired up yet at creation
+        // time) — set it explicitly after load, then start playback.
+        if (initialRate !== 1.0) {
+          await sound.setRateAsync(initialRate, true);
+        }
+        await sound.playAsync();
         setIsPlaying(true);
       } catch (error) {
         console.error('LessonPlayerContext load error:', error);

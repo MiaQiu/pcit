@@ -350,6 +350,13 @@ export const LearnScreen_v3: React.FC = () => {
     [scriptContent, scriptFallbackParagraphs]
   );
 
+  const nextReadLesson = useMemo(() => {
+    if (!scriptLesson) return null;
+    const idx = orderedLessons.findIndex(l => l.id === scriptLesson.id);
+    if (idx === -1) return null;
+    return orderedLessons[idx + 1] ?? null;
+  }, [scriptLesson, orderedLessons]);
+
   const renderLessonRow = (lesson: LessonCardData) => {
     const isCompleted = lesson.progress?.status === 'COMPLETED';
     const isThisPlaying = player.activeLessonId === lesson.id;
@@ -620,6 +627,17 @@ export const LearnScreen_v3: React.FC = () => {
               ) : (
                 <LessonContentBlocks blocks={scriptBlocks} />
               )}
+              {nextReadLesson && (
+                <TouchableOpacity
+                  style={styles.nextLessonButton}
+                  onPress={() => handleReadPress(nextReadLesson)}
+                >
+                  <Text style={styles.nextLessonButtonText} numberOfLines={1}>
+                    {t('learnV3.nextLessonLabel', { title: nextReadLesson.title })}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={18} color={COLORS.mainPurple} />
+                </TouchableOpacity>
+              )}
             </ScrollView>
           )}
         </View>
@@ -627,13 +645,18 @@ export const LearnScreen_v3: React.FC = () => {
 
       {playingLesson && (
         <View style={styles.miniPlayer}>
-          <View style={styles.miniPlayerIcon}>
-            <Ionicons name="musical-notes" size={16} color="#FFFFFF" />
-          </View>
-          <View style={styles.miniPlayerTextColumn}>
-            <Text style={styles.miniPlayerTitle} numberOfLines={1}>{playingLesson.title}</Text>
-            <Text style={styles.miniPlayerDuration}>{formatDuration(playingLesson.durationSeconds)}</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.miniPlayerTapArea}
+            onPress={() => handleLessonPress(playingLesson)}
+          >
+            <View style={styles.miniPlayerIcon}>
+              <Ionicons name="musical-notes" size={16} color="#FFFFFF" />
+            </View>
+            <View style={styles.miniPlayerTextColumn}>
+              <Text style={styles.miniPlayerTitle} numberOfLines={1}>{playingLesson.title}</Text>
+              <Text style={styles.miniPlayerDuration}>{formatDuration(playingLesson.durationSeconds)}</Text>
+            </View>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.miniPlayerPlayButton}
             onPress={() => (player.isPlaying ? player.pause() : player.play())}
@@ -1007,6 +1030,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  miniPlayerTapArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   miniPlayerIcon: {
     width: 32,
     height: 32,
@@ -1111,5 +1139,22 @@ const styles = StyleSheet.create({
     lineHeight: 27,
     color: LESSON_TEXT_DARK,
     marginBottom: 20,
+  },
+  nextLessonButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    backgroundColor: COLORS.cardPurple,
+  },
+  nextLessonButtonText: {
+    flex: 1,
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: COLORS.mainPurple,
+    marginRight: 8,
   },
 });

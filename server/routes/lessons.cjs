@@ -53,21 +53,25 @@ async function getModuleDisplayOrderMap() {
 // TRANSLATION MERGE HELPERS
 // ============================================================================
 
-function applyLessonTx(lesson, tx) {
+function applyLessonTx(lesson, tx, locale) {
   if (!tx) return lesson;
+  // Audio is a recorded asset, not translatable text — falling back to the
+  // English narration for a non-English locale would play audio the user
+  // can't understand, so audio-related fields only use the translation row
+  // (defaulting to null/absent, never the English source) once locale !== 'en'.
+  const allowAudioFallback = !locale || locale === 'en';
   return {
     ...lesson,
     title: tx.title ?? lesson.title,
     subtitle: tx.subtitle ?? lesson.subtitle,
     shortDescription: tx.shortDescription ?? lesson.shortDescription,
     objectives: tx.objectives ?? lesson.objectives,
-    // Content V2 (audio-first) fields — each falls back to the English
-    // source independently, so a lesson can have e.g. translated text but
-    // still-English audio if narration hasn't been recorded for this locale yet.
+    // Content V2 text still falls back to English independently — still
+    // readable even if narration hasn't been recorded for this locale yet.
     contentV2: tx.contentV2 ?? lesson.contentV2,
-    audioUrl: tx.audioUrl ?? lesson.audioUrl,
-    wordTimings: tx.wordTimings ?? lesson.wordTimings,
-    durationSeconds: tx.durationSeconds ?? lesson.durationSeconds,
+    audioUrl: tx.audioUrl ?? (allowAudioFallback ? lesson.audioUrl : null),
+    wordTimings: tx.wordTimings ?? (allowAudioFallback ? lesson.wordTimings : null),
+    durationSeconds: tx.durationSeconds ?? (allowAudioFallback ? lesson.durationSeconds : null),
   };
 }
 
@@ -210,7 +214,7 @@ router.get('/', requireAuth, async (req, res) => {
     // Format lesson cards — all unlocked
     const lessonCards = await Promise.all(lessons.map(lesson => {
       const progress = progressMap[lesson.id] || null;
-      return formatLessonCard(applyLessonTx(lesson, lessonTxMap[lesson.id]), progress);
+      return formatLessonCard(applyLessonTx(lesson, lessonTxMap[lesson.id], locale), progress);
     }));
 
     // Generate content version hash
@@ -464,7 +468,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     }
 
     // Map Prisma field names to frontend expected names, applying translations
-    const translatedLesson = applyLessonTx(lesson, lessonTx);
+    const translatedLesson = applyLessonTx(lesson, lessonTx, locale);
     const quizWithOptions = lesson.Quiz
       ? { ...lesson.Quiz, options: lesson.Quiz.QuizOption }
       : null;

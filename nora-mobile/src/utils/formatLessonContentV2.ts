@@ -1,25 +1,48 @@
 /**
- * Lightweight parser for LessonViewerScreen_v2 content: **bold**, "* " bullets,
- * ![](url) images / ![video](url) videos on their own line, and blank-line
- * paragraph breaks. Mirrors the authoring convention already used for
- * LessonSegment.bodyText, kept intentionally separate from the segment-card
- * formatter in LessonViewerScreen.tsx (which is coupled to keyword
- * highlighting).
+ * Lightweight parser for LessonViewerScreen_v2 content: **bold**, *italic*,
+ * "* " bullets, "### " headings, "---" dividers, ![](url) images /
+ * ![video](url) videos on their own line, and blank-line paragraph breaks.
+ * Mirrors the authoring convention already used for LessonSegment.bodyText,
+ * kept intentionally separate from the segment-card formatter in
+ * LessonViewerScreen.tsx (which is coupled to keyword highlighting).
  */
 
 export type ContentBlock =
   | { type: 'paragraph'; runs: TextRun[] }
   | { type: 'bullet'; runs: TextRun[] }
+  | { type: 'heading'; runs: TextRun[] }
   | { type: 'image'; url: string }
   | { type: 'video'; url: string };
 
 export interface TextRun {
   text: string;
   bold: boolean;
+  italic: boolean;
 }
 
 const IMAGE_LINE = /^!\[\]\(([^)]+)\)$/;
 const VIDEO_LINE = /^!\[video\]\(([^)]+)\)$/;
+const HEADING_LINE = /^#{1,6}\s+(.+)$/;
+const DIVIDER_LINE = /^-{3,}$/;
+
+function parseItalicRuns(text: string, bold: boolean): TextRun[] {
+  const runs: TextRun[] = [];
+  const italicRegex = /\*(.+?)\*/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = italicRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      runs.push({ text: text.slice(lastIndex, match.index), bold, italic: false });
+    }
+    runs.push({ text: match[1], bold, italic: true });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    runs.push({ text: text.slice(lastIndex), bold, italic: false });
+  }
+  return runs.length > 0 ? runs : [{ text: '', bold, italic: false }];
+}
 
 function parseRuns(line: string): TextRun[] {
   const runs: TextRun[] = [];
@@ -29,15 +52,15 @@ function parseRuns(line: string): TextRun[] {
 
   while ((match = boldRegex.exec(line)) !== null) {
     if (match.index > lastIndex) {
-      runs.push({ text: line.slice(lastIndex, match.index), bold: false });
+      runs.push(...parseItalicRuns(line.slice(lastIndex, match.index), false));
     }
-    runs.push({ text: match[1], bold: true });
+    runs.push({ text: match[1], bold: true, italic: false });
     lastIndex = match.index + match[0].length;
   }
   if (lastIndex < line.length) {
-    runs.push({ text: line.slice(lastIndex), bold: false });
+    runs.push(...parseItalicRuns(line.slice(lastIndex), false));
   }
-  return runs.length > 0 ? runs : [{ text: '', bold: false }];
+  return runs.length > 0 ? runs : [{ text: '', bold: false, italic: false }];
 }
 
 export function formatLessonContentV2(content: string): ContentBlock[] {
@@ -69,6 +92,17 @@ export function formatLessonContentV2(content: string): ContentBlock[] {
       blocks.push({ type: 'image', url: imageMatch[1] });
       continue;
     }
+    if (DIVIDER_LINE.test(line)) {
+      // Purely decorative -- flush and drop, same as a blank line.
+      flushParagraph();
+      continue;
+    }
+    const headingMatch = line.match(HEADING_LINE);
+    if (headingMatch) {
+      flushParagraph();
+      blocks.push({ type: 'heading', runs: parseRuns(headingMatch[1]) });
+      continue;
+    }
     if (line.startsWith('* ')) {
       flushParagraph();
       blocks.push({ type: 'bullet', runs: parseRuns(line.slice(2)) });
@@ -96,6 +130,7 @@ export function formatLessonContentV2(content: string): ContentBlock[] {
 export interface DisplayWord {
   text: string;
   bold: boolean;
+  italic: boolean;
 }
 
 export type DisplayChunk =
@@ -103,7 +138,22 @@ export type DisplayChunk =
   | { type: 'image'; url: string }
   | { type: 'video'; url: string };
 
-const SENTENCE_END = /[.!?]["')\]]?$/;
+const SENTENCE_END = /[.!?。！？]["')\]]?$/;
+
+// CJK ideographs carry no whitespace between words, so a plain \s+ split
+// collapses an entire Chinese paragraph into a single "word" for highlighting
+// purposes. Tokenize each CJK character as its own unit while keeping
+// whitespace-delimited runs (English, numbers, etc.) grouped as before.
+// Must stay in sync with the server-side port in
+// server/utils/lessonContentTokenizer.cjs (used to generate wordTimings) --
+// LiveScriptCard falls back to a crude position/duration estimate for the
+// whole lesson if the word count here doesn't exactly match wordTimings.length.
+const CJK_CHAR = '\\u4E00-\\u9FFF\\u3400-\\u4DBF\\uF900-\\uFAFF';
+const TOKEN_REGEX = new RegExp(`[${CJK_CHAR}]|[^\\s${CJK_CHAR}]+`, 'g');
+
+export function tokenizeWords(text: string): string[] {
+  return text.match(TOKEN_REGEX) ?? [];
+}
 
 export function flattenBlocksToChunks(blocks: ContentBlock[]): DisplayChunk[] {
   const chunks: DisplayChunk[] = [];
@@ -120,8 +170,8 @@ export function flattenBlocksToChunks(blocks: ContentBlock[]): DisplayChunk[] {
 
     let current: DisplayWord[] = [];
     for (const run of block.runs) {
-      for (const text of run.text.split(/\s+/).filter(Boolean)) {
-        current.push({ text, bold: run.bold });
+      for (const text of tokenizeWords(run.text)) {
+        current.push({ text, bold: run.bold, italic: run.italic });
         if (SENTENCE_END.test(text)) {
           chunks.push({ type: 'sentence', words: current });
           current = [];
