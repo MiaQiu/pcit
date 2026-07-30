@@ -30,7 +30,7 @@ export default function SuccessScreen() {
 
           <div className="flex flex-row gap-3">
             <a
-              href="https://apps.apple.com"
+              href="https://apps.apple.com/sg/app/nora-parenting-coach/id6756343006"
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-[#1E2939] rounded-full px-3 py-3 shadow-sm hover:bg-gray-50 transition-colors"
@@ -46,7 +46,7 @@ export default function SuccessScreen() {
             </a>
 
             <a
-              href="https://play.google.com"
+              href="https://play.google.com/store/apps/details?id=com.chromamind.nora&hl=en"
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-[#1E2939] rounded-full px-3 py-3 shadow-sm hover:bg-gray-50 transition-colors"
