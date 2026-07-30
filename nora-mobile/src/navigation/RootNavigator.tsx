@@ -29,10 +29,14 @@ import { SkillExplanationScreen } from '../screens/SkillExplanationScreen';
 import { SkillUtterancesScreen } from '../screens/SkillUtterancesScreen';
 import { WeeklyReportScreen } from '../screens/WeeklyReportScreen';
 import { ModuleDetailScreen } from '../screens/ModuleDetailScreen';
+import { LearnScreen_v3 } from '../screens/LearnScreen_v3';
+import { DemoVideoDetailScreen } from '../screens/DemoVideoDetailScreen';
+import { LessonReadScreen } from '../screens/LessonReadScreen';
 import { CoachChatScreen } from '../screens/CoachChatScreen';
 import { PsychologistChatScreen } from '../screens/PsychologistChatScreen';
 import { ReferralScreen } from '../screens/ReferralScreen';
 import { ABCLogScreen } from '../screens/ABCLogScreen';
+import { HomeCardDetailScreen } from '../screens/HomeCardDetailScreen';
 import { RootStackParamList } from './types';
 import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
@@ -302,6 +306,27 @@ export const RootNavigator: React.FC = () => {
         }}
       />
       <Stack.Screen
+        name="LearnV3"
+        component={LearnScreen_v3}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="DemoVideoDetail"
+        component={DemoVideoDetailScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="LessonRead"
+        component={LessonReadScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
         name="LessonViewer"
         component={LessonViewerScreen}
         options={{
@@ -393,6 +418,13 @@ export const RootNavigator: React.FC = () => {
         options={{
           animation: 'slide_from_bottom',
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="HomeCardDetail"
+        component={HomeCardDetailScreen}
+        options={{
+          animation: 'none',
         }}
       />
     </Stack.Navigator>

@@ -2,6 +2,7 @@ const express = require('express');
 const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
 const { resolveReportAudioUrls } = require('../services/weeklyReportService.cjs');
+const { resolveDragonImageUrl } = require('../services/storage-s3.cjs');
 
 const router = express.Router();
 
@@ -37,6 +38,133 @@ router.get('/report-visibility', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Get report visibility error:', error);
     res.status(500).json({ error: 'Failed to fetch report visibility settings' });
+  }
+});
+
+/**
+ * GET /api/config/home-cards
+ * Returns admin-configured sub-action cards for the mobile Home screen,
+ * active only, in display order. CONTENT cards link to a detail page (fetch
+ * the full body via GET /api/config/home-cards/:id); QUOTE cards don't.
+ * isLiked reflects the requesting user's own heart-button state.
+ */
+router.get('/home-cards', requireAuth, async (req, res) => {
+  try {
+    const [homeCards, likes] = await Promise.all([
+      prisma.homeCard.findMany({
+        where: { isActive: true },
+        orderBy: { displayOrder: 'asc' },
+        select: { id: true, cardType: true, badgeText: true, badgeColor: true, message: true, messageFontSize: true, messageBold: true, messageItalic: true, attribution: true, image: true },
+      }),
+      prisma.homeCardLike.findMany({
+        where: { userId: req.userId },
+        select: { homeCardId: true },
+      }),
+    ]);
+
+    const likedIds = new Set(likes.map((l) => l.homeCardId));
+    const resolved = await Promise.all(homeCards.map(async ({ image, ...card }) => ({
+      ...card,
+      imageUrl: await resolveDragonImageUrl(image),
+      isLiked: likedIds.has(card.id),
+    })));
+    res.json({ homeCards: resolved });
+  } catch (error) {
+    console.error('Get home cards error:', error);
+    res.status(500).json({ error: 'Failed to fetch home cards' });
+  }
+});
+
+/**
+ * POST /api/config/home-cards/:id/like
+ * Toggles the requesting user's like on a home card. Body: { liked: boolean }
+ * — the desired end state, so retries/double-taps are idempotent rather than
+ * flipping back and forth.
+ */
+router.post('/home-cards/:id/like', requireAuth, async (req, res) => {
+  try {
+    const homeCard = await prisma.homeCard.findUnique({ where: { id: req.params.id } });
+    if (!homeCard || !homeCard.isActive) {
+      return res.status(404).json({ error: 'Home card not found' });
+    }
+
+    const liked = !!req.body.liked;
+    if (liked) {
+      await prisma.homeCardLike.upsert({
+        where: { homeCardId_userId: { homeCardId: req.params.id, userId: req.userId } },
+        update: {},
+        create: { homeCardId: req.params.id, userId: req.userId },
+      });
+    } else {
+      await prisma.homeCardLike.deleteMany({
+        where: { homeCardId: req.params.id, userId: req.userId },
+      });
+    }
+
+    res.json({ liked });
+  } catch (error) {
+    console.error('Toggle home card like error:', error);
+    res.status(500).json({ error: 'Failed to update like' });
+  }
+});
+
+/**
+ * GET /api/config/home-cards/:id
+ * Returns the full detail (title + body) for one CONTENT home card, for the
+ * screen opened by tapping its arrow. 404s for QUOTE cards, inactive cards,
+ * or unknown ids — there's nothing to view in any of those cases.
+ */
+router.get('/home-cards/:id', requireAuth, async (req, res) => {
+  try {
+    const homeCard = await prisma.homeCard.findUnique({ where: { id: req.params.id } });
+    if (!homeCard || !homeCard.isActive || homeCard.cardType !== 'CONTENT') {
+      return res.status(404).json({ error: 'Home card not found' });
+    }
+
+    res.json({
+      id: homeCard.id,
+      badgeText: homeCard.badgeText,
+      badgeColor: homeCard.badgeColor,
+      detailTitle: homeCard.detailTitle,
+      detailContent: homeCard.detailContent,
+      imageUrl: await resolveDragonImageUrl(homeCard.image),
+    });
+  } catch (error) {
+    console.error('Get home card detail error:', error);
+    res.status(500).json({ error: 'Failed to fetch home card' });
+  }
+});
+
+/**
+ * GET /api/config/home-cards/share/:id
+ * Public (no auth) — powers /share-home-card.html, the web landing page a
+ * non-user opens from a shared link. Returns everything either card layout
+ * (QUOTE or CONTENT) needs to render, so the page never has to guess.
+ */
+router.get('/home-cards/share/:id', async (req, res) => {
+  try {
+    const homeCard = await prisma.homeCard.findUnique({ where: { id: req.params.id } });
+    if (!homeCard || !homeCard.isActive) {
+      return res.status(404).json({ error: 'Card not found' });
+    }
+
+    res.json({
+      id: homeCard.id,
+      cardType: homeCard.cardType,
+      badgeText: homeCard.badgeText,
+      badgeColor: homeCard.badgeColor,
+      message: homeCard.message,
+      messageFontSize: homeCard.messageFontSize,
+      messageBold: homeCard.messageBold,
+      messageItalic: homeCard.messageItalic,
+      attribution: homeCard.attribution,
+      detailTitle: homeCard.detailTitle,
+      detailContent: homeCard.detailContent,
+      imageUrl: await resolveDragonImageUrl(homeCard.image),
+    });
+  } catch (error) {
+    console.error('Get shared home card error:', error);
+    res.status(500).json({ error: 'Failed to fetch card' });
   }
 });
 

@@ -18,6 +18,8 @@ import {
   Alert,
   Linking,
   Platform,
+  Share,
+  Image,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Notifications from 'expo-notifications';
@@ -61,6 +63,27 @@ interface TodayPlanItem {
   duration?: string;
   isCompleted: boolean;
 }
+
+interface HomeCardData {
+  id: string;
+  cardType: 'CONTENT' | 'QUOTE';
+  badgeText: string;
+  badgeColor: string;
+  message: string;
+  messageFontSize: 'SMALL' | 'MEDIUM' | 'LARGE';
+  messageBold: boolean;
+  messageItalic: boolean;
+  attribution: string | null;
+  imageUrl: string | null;
+  isLiked: boolean;
+}
+
+// Mirrors FONT_SIZE_OPTIONS in the admin portal's HomeCardsPage.tsx.
+const HOME_CARD_FONT_SIZE_MAP: Record<HomeCardData['messageFontSize'], number> = {
+  SMALL: 13,
+  MEDIUM: 15,
+  LARGE: 18,
+};
 
 // REMINDER_PRESETS moved inside component to use t()
 
@@ -159,6 +182,163 @@ const PlanItem: React.FC<PlanItemProps> = ({ item, onPress, locked }) => (
   </TouchableOpacity>
 );
 
+// ─── Sub Action Card ─────────────────────────────────────────────────────────
+// Admin-configurable card (badge + message) rendered below the Main Action
+// Card. Content comes from GET /api/config/home-cards — see admin portal's
+// Home Cards page.
+
+interface SubActionCardProps {
+  card: HomeCardData;
+  onPress?: () => void;
+  sharerName?: string;
+}
+
+const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName }) => {
+  const recordingService = useRecordingService();
+
+  // Local optimistic like state — resynced from the server value whenever it
+  // changes and there's no toggle in flight, so a background refetch (e.g.
+  // liked on another device) still wins once our own request settles.
+  const [liked, setLiked] = useState(card.isLiked);
+  const [likePending, setLikePending] = useState(false);
+
+  useEffect(() => {
+    if (!likePending) setLiked(card.isLiked);
+  }, [card.isLiked, likePending]);
+
+  const handleToggleLike = async () => {
+    const next = !liked;
+    setLiked(next);
+    setLikePending(true);
+    amplitudeService.trackEvent('Home Card Liked', { cardId: card.id, liked: next });
+    try {
+      await recordingService.toggleHomeCardLike(card.id, next);
+    } catch {
+      setLiked(!next);
+    } finally {
+      setLikePending(false);
+    }
+  };
+
+  const handleShare = () => {
+    amplitudeService.trackEvent('Home Card Shared', { cardId: card.id });
+    const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
+    const params = new URLSearchParams({ card_id: card.id });
+    const firstName = sharerName?.trim().split(/\s+/)[0];
+    if (firstName) params.set('shared_by', firstName);
+    const shareUrl = `${webUrl}/share-home-card.html?${params.toString()}`;
+
+    // iOS surfaces `url` in the share sheet separately from `message`; Android's
+    // Share module ignores `url` entirely, so the link has to live in the text.
+    Share.share({
+      message: Platform.OS === 'android' ? `${card.message}\n\n${shareUrl}` : card.message,
+      url: shareUrl,
+    }).catch(() => {});
+  };
+
+  // ── QUOTE style — big quote mark, italic centered quote, divider, attribution ──
+  if (card.cardType === 'QUOTE') {
+    return (
+      <View style={styles.subActionQuoteCard}>
+        <View style={styles.subActionQuoteActions}>
+          <TouchableOpacity
+            style={styles.subActionQuoteIconButton}
+            onPress={handleToggleLike}
+            activeOpacity={0.7}
+            accessibilityLabel={liked ? 'Unlike' : 'Like'}
+          >
+            <Ionicons name={liked ? 'heart' : 'heart-outline'} size={16} color={liked ? '#EF4444' : '#B99089'} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.subActionQuoteIconButton}
+            onPress={handleShare}
+            activeOpacity={0.7}
+            accessibilityLabel="Share"
+          >
+            <Ionicons name="share-outline" size={16} color="#B99089" />
+          </TouchableOpacity>
+        </View>
+
+        {card.imageUrl && (
+          <Image source={{ uri: card.imageUrl }} style={styles.subActionImage} resizeMode="cover" />
+        )}
+
+        {/* <Text style={styles.subActionQuoteMark}>“</Text> */}
+
+        <Text
+          style={[
+            styles.subActionQuoteText,
+            {
+              fontSize: HOME_CARD_FONT_SIZE_MAP[card.messageFontSize],
+              lineHeight: Math.round(HOME_CARD_FONT_SIZE_MAP[card.messageFontSize] * 1.6),
+              // PlusJakartaSans_400Regular has no italic sibling registered
+              // under that exact family name, so `fontStyle: 'italic'` alone
+              // renders as upright — swap in the actual italic font file.
+              fontFamily: card.messageBold
+                ? (card.messageItalic ? FONTS.boldItalic : FONTS.bold)
+                : (card.messageItalic ? FONTS.regularItalic : FONTS.regular),
+            },
+          ]}
+        >
+          {card.message}
+        </Text>
+
+        {!!card.attribution && (
+          <>
+            <View style={styles.subActionQuoteDivider} />
+            <Text style={styles.subActionQuoteAttribution}>{card.attribution}</Text>
+          </>
+        )}
+      </View>
+    );
+  }
+
+  // ── CONTENT style — badge + teaser + chevron, whole card opens the detail page ──
+  const inner = (
+    <>
+      {card.imageUrl && (
+        <Image source={{ uri: card.imageUrl }} style={styles.subActionImage} resizeMode="cover" />
+      )}
+      <View style={styles.subActionTopRow}>
+        <View style={[styles.subActionBadge, { backgroundColor: card.badgeColor }]}>
+          <Text style={styles.subActionBadgeText}>{card.badgeText}</Text>
+        </View>
+        <View style={styles.subActionTopRowActions}>
+          <TouchableOpacity
+            style={styles.subActionLikeButton}
+            onPress={handleToggleLike}
+            activeOpacity={0.7}
+            accessibilityLabel={liked ? 'Unlike' : 'Like'}
+          >
+            <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color={liked ? '#EF4444' : COLORS.mainPurple} />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.subActionMessageRow}>
+        <Text
+          style={[
+            styles.subActionMessage,
+            {
+              fontSize: HOME_CARD_FONT_SIZE_MAP[card.messageFontSize],
+              lineHeight: Math.round(HOME_CARD_FONT_SIZE_MAP[card.messageFontSize] * 1.45),
+            },
+            card.messageBold && styles.subActionMessageBold,
+          ]}
+        >
+          {card.message}
+        </Text>
+        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" style={styles.subActionChevron} />
+      </View>
+    </>
+  );
+
+  return (
+    <TouchableOpacity style={styles.subActionCard} onPress={onPress} activeOpacity={0.85}>
+      {inner}
+    </TouchableOpacity>
+  );
+};
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 // recordMessages moved inside component to use t()
@@ -222,6 +402,7 @@ export const HomeScreen_v2: React.FC = () => {
   const [abcLoggedToday, setAbcLoggedToday] = useState(false);
   const [abcCardSkipped, setAbcCardSkipped] = useState(false);
   const [freeLimitReached, setFreeLimitReached] = useState(false);
+  const [homeCards, setHomeCards] = useState<HomeCardData[]>([]);
 
   // ── Reminder presets (inside component to use t()) ──
   const REMINDER_PRESETS = [
@@ -270,12 +451,16 @@ export const HomeScreen_v2: React.FC = () => {
       if (mode === 'full') setLoading(true);
       else if (mode === 'refresh') setIsRefreshing(true);
 
-      const [dashboardData, lessonsResponse, weeklyReportsData, currentUser] = await Promise.all([
+      const [dashboardData, lessonsResponse, weeklyReportsData, currentUser, homeCardsData] = await Promise.all([
         recordingService.getDashboard(),
         lessonService.getLessons(undefined, i18n.language),
         recordingService.getVisibleWeeklyReports().catch(() => ({ reports: [] })),
         authService.getCurrentUser().catch(() => null),
+        // null (not []) on failure — a transient error on a background refetch
+        // shouldn't wipe cards that are already showing on screen.
+        recordingService.getHomeCards().catch(() => null),
       ]);
+      if (homeCardsData) setHomeCards(homeCardsData.homeCards ?? []);
 
       const resolvedChildName = currentUser?.childName || childName;
       if (currentUser?.childName) setChildName(currentUser.childName);
@@ -1011,6 +1196,19 @@ export const HomeScreen_v2: React.FC = () => {
           )}
         </View>
 
+        {/* ── Sub Action Cards — admin-configurable badge + message cards ── */}
+        {homeCards.map(card => (
+          <SubActionCard
+            key={card.id}
+            card={card}
+            sharerName={userName}
+            onPress={card.cardType === 'CONTENT' ? () => {
+              amplitudeService.trackEvent('Home Card Tapped', { cardId: card.id });
+              navigation.push('HomeCardDetail', { cardId: card.id });
+            } : undefined}
+          />
+        ))}
+
         {/* ── Today's plan ── */}
         {todayPlan.length > 0 && (
           <View style={styles.planSection}>
@@ -1322,6 +1520,152 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: 16,
     color: '#fff',
+  },
+
+  // Sub Action Card (admin-configurable, below the Main Action Card)
+  subActionCard: {
+    // marginHorizontal: 20,
+    // marginTop: 12,
+    // backgroundColor: '#fff',
+    // borderRadius: 20,
+    // padding: 20,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.08,
+    // shadowRadius: 12,
+    // elevation: 3,
+    // borderWidth: 1,
+    // borderColor: '#F3F4F6',
+
+    marginHorizontal: 20,
+    marginTop: 16,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  subActionTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  subActionBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  subActionBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: '#fff',
+  },
+  subActionTopRowActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  subActionLikeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#F3EEFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subActionShareButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#F3EEFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subActionMessageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  subActionMessage: {
+    flex: 1,
+    fontFamily: FONTS.regular,
+    color: COLORS.textDark,
+  },
+  subActionMessageBold: {
+    fontFamily: FONTS.bold,
+  },
+  subActionChevron: {
+    marginTop: 1,
+  },
+  subActionImage: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    marginBottom: 12,
+  },
+
+  // Quote-style card — big quote mark, italic centered quote, divider, attribution
+  subActionQuoteCard: {
+    marginHorizontal: 20,
+    marginTop: 12,
+    backgroundColor: '#F7F3EC',
+    borderRadius: 20,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  subActionQuoteActions: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    flexDirection: 'row',
+    gap: 8,
+    zIndex: 1,
+  },
+  subActionQuoteIconButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subActionQuoteMark: {
+    fontFamily: FONTS.bold,
+    fontSize: 48,
+    lineHeight: 48,
+    color: '#DDAEA5',
+    marginBottom: 4,
+  },
+  subActionQuoteText: {
+    alignSelf: 'stretch',
+    fontFamily: FONTS.regular,
+    color: COLORS.textDark,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  subActionQuoteDivider: {
+    width: 40,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: '#DDAEA5',
+    marginTop: 16,
+    marginBottom: 14,
+  },
+  subActionQuoteAttribution: {
+    alignSelf: 'stretch',
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: COLORS.textDark,
+    textAlign: 'center',
   },
 
   // Today's plan

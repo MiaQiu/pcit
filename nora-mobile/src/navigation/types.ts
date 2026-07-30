@@ -6,7 +6,7 @@
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NavigatorScreenParams } from '@react-navigation/native';
-import { Quiz, User } from '@nora/core';
+import { Quiz, User, DemoVideo } from '@nora/core';
 
 export type RootTabParamList = {
   Home: { showModulePicker?: boolean } | undefined;
@@ -70,6 +70,15 @@ export type RootStackParamList = {
   ModuleDetail: {
     moduleKey: string;
   };
+  LearnV3: undefined;
+  DemoVideoDetail: {
+    video: DemoVideo;
+  };
+  LessonRead: {
+    lessonId: string;
+    moduleKey?: string;
+    title?: string;
+  };
   LessonViewer: {
     lessonId: string;
     moduleKey?: string;
@@ -120,6 +129,9 @@ export type RootStackParamList = {
   ABCLog: {
     mode: 'challenging' | 'positive';
     source: 'quick' | 'log_tab' | 'home';
+  };
+  HomeCardDetail: {
+    cardId: string;
   };
 };
 

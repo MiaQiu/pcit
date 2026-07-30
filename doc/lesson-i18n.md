@@ -4,9 +4,9 @@ This document covers both **content translations** (lesson and module text store
 
 **Supported locales:** `en`, `zh-TW` (Traditional Chinese), `zh-CN` (Simplified Chinese).
 
-> **zh-CN status:** UI strings, AI coach replies, session-analysis language handling, and weekly reports are fully wired up. `ModuleTranslation` / `LessonTranslation` DB content is **not yet seeded for zh-CN** — paused while lesson content is being reworked audio-first. Run step 3–4 of [Adding a new language](#adding-a-new-language) for `zh-CN` once that lands.
+> **zh-CN status:** UI strings, AI coach replies, session-analysis language handling, and weekly reports are fully wired up. Classic lesson content (`ModuleTranslation` / segment+quiz `LessonTranslation` fields) is **not yet seeded for zh-CN** — paused while lesson content is being reworked audio-first. Run step 3–4 of [Adding a new language](#adding-a-new-language) for `zh-CN` once that lands.
 
-> **Audio-first (Content V2) lessons are not covered by anything in this document.** The new podcast-style lesson format (`Lesson.contentV2`/`audioUrl`/`wordTimings` — see `doc/learning/README.md`) has **no translation mechanism at all**, in any locale, including `zh-TW`. See [Audio-first (Content V2) lessons](#audio-first-content-v2-lessons) below.
+> **Audio-first (Content V2) lessons** now have per-locale schema + admin-editor + narration-backfill support (see [below](#audio-first-content-v2-lessons)) — but the `contentV2` script text itself is still translated **manually** per lesson (typed/pasted into the admin editor), there is no Claude batch-translate step for it the way `translateLessons.cjs` covers classic lessons.
 
 ---
 
@@ -17,31 +17,22 @@ This document covers both **content translations** (lesson and module text store
 | Lesson content (classic, segment/quiz) | Lesson titles, segments, quizzes | DB translation tables; returned by API on `?lang=` |
 | Module content | Module titles, descriptions | DB translation table (`ModuleTranslation`); returned by API on `?lang=` |
 | App UI strings | Buttons, labels, error messages | `react-i18next` JSON files in `nora-mobile/src/i18n/locales/` |
-| Lesson content (audio-first, Content V2) | Nothing | **Not built** — see [below](#audio-first-content-v2-lessons) |
+| Lesson content (audio-first, Content V2) | `contentV2` script text, narration audio, `wordTimings` | `LessonTranslation` (same table, extra nullable fields); text is hand-translated in the admin editor, audio is TTS-generated per locale — see [below](#audio-first-content-v2-lessons) |
 
 ---
 
 ## Audio-first (Content V2) lessons
 
-The podcast-style lesson format — `LearnScreen_v3`, `LessonViewerScreen_v2`, driven by `Lesson.contentV2`/`audioUrl`/`wordTimings` rather than `LessonSegment`/`Quiz` — is a separate content model from everything else in this document, and it currently has **zero i18n support**, in any locale. Full architecture: `doc/learning/README.md`.
+The podcast-style lesson format — `LearnScreen_v3`, `LessonViewerScreen_v2`, driven by `Lesson.contentV2`/`audioUrl`/`wordTimings` rather than `LessonSegment`/`Quiz` — is a separate content model from everything else in this document. Full architecture: `doc/learning/README.md`. It now has working per-locale translation plumbing for `zh-TW`/`zh-CN`, built directly on top of `LessonTranslation` rather than a separate table:
 
-**Current DB status** (checked live, this will drift as content is added): 9 lessons have `contentV2` populated (all in `WELCOME`/`POSITIVE_PLAY`), all 9 have narration audio, and **none have any `LessonTranslation` row at all** — not even English-to-`zh-TW` title/subtitle, which every classic lesson has.
+- **Schema**: `LessonTranslation` gained `contentV2`, `audioUrl`, `wordTimings`, `durationSeconds` — nullable and independent of the classic `title`/`subtitle`/`shortDescription`/`objectives` fields, so a row can have only Content V2 data, only classic fields, or both. A Content V2 translation is typically authored one lesson/one locale at a time via the admin editor, not the batch script.
+- **Admin editor**: `admin/src/pages/LessonContentV2EditorPage.tsx` has a locale dropdown (English / `zh-TW` / `zh-CN`). Switching locale loads that row's `contentV2`/`audioUrl` via `GET /api/admin/lessons/:id?locale=`; saving text or uploading audio writes to `LessonTranslation` instead of `Lesson` once a non-`en` locale is selected (`PATCH /api/admin/lessons/:id/content-v2`, `POST /api/admin/lessons/:id/audio`, both accept `?locale=`/body `locale`).
+- **Public API**: `applyLessonTx()` in `server/routes/lessons.cjs` merges the translation on `?lang=`. `contentV2` text falls back to the English source independently (still readable before narration exists for that locale), but `audioUrl`/`wordTimings`/`durationSeconds` do **not** fall back once `locale !== 'en'` — a user gets no audio rather than English narration they can't understand.
+- **Narration generation**: `server/scripts/generateLessonNarration.cjs` is an ElevenLabs TTS backfill script — for any `LessonTranslation` row that already has `contentV2` text but no `audioUrl`, it generates narration audio + `wordTimings` using a locale-specific voice ID (`VOICE_IDS` in that script) and uploads it the same way the manual admin upload flow does. Safe to re-run (only fills rows with `audioUrl IS NULL`). Depends on `server/services/ttsService.cjs` and the tokenizer in `server/utils/lessonContentTokenizer.cjs` (a CJS port of the mobile `formatLessonContentV2`/word-tokenization logic, kept in sync to preserve `wordTimings` alignment with the renderer).
 
-### Why the existing machinery doesn't help
+### What's still manual
 
-- **`LessonTranslation` only covers `title`/`subtitle`/`shortDescription`/`objectives`** — the lesson-card metadata shown in list views. It has no field for `contentV2`, `audioUrl`, or `wordTimings`. Even seeding `zh-TW` rows for a Content V2 lesson today would translate its title in the Learn tab list but leave the actual script/narration in whatever language it was authored in.
-- **There's no `LessonContentV2Translation` table or equivalent.** `contentV2` is a single free-text field (lightweight markdown: `**bold**`, `* bullets`, `![]()` images, `![video]()` videos — see `doc/learning/README.md`), not a set of structured fields like `LessonSegment`, so translating it isn't just "run the existing `translateLessons.cjs` pattern against a new table" — the text-splitting logic (`formatLessonContentV2.ts`) and the inline-media markers would need to survive translation, similar to how `customHtml` is translated as a full string today with tags/placeholders preserved (see [Translation notes](#translation-notes)).
-- **Audio can't be machine-translated the way text can.** A `zh-TW` version of a Content V2 lesson needs *narration re-recorded or re-generated in Traditional Chinese*, not just translated text — text translation alone would desync the (already-fragile, see `doc/learning/README.md`'s `LiveScriptCard` section) relationship between `contentV2` and `wordTimings`. `wordTimings` itself is per-audio-file (from ElevenLabs transcription of that specific recording) and would need to be regenerated per locale, not translated.
-
-### What adding a language would actually take
-
-Roughly, in order:
-1. Add a `contentV2` translation column or table (schema decision: reuse `LessonTranslation` with a new nullable field, since it's one field, vs. a dedicated table matching the `(lessonId, locale)` pattern used elsewhere).
-2. Decide the audio strategy — record/generate narration per locale, upload via the existing `POST /api/admin/lessons/:id/audio` flow (which already transcribes via ElevenLabs to get `wordTimings`), but scoped per-locale rather than overwriting the single `audioUrl`/`wordTimings` fields on `Lesson`.
-3. Extend `server/routes/lessons.cjs`'s lesson-detail response to apply the new translation on `?lang=`, same pattern as `applyLessonTx()`.
-4. Extend the admin Content V2 editor (`LessonContentV2EditorPage.tsx`) to author per-locale — today it edits one `contentV2`/`audioUrl` pair with no locale concept at all.
-
-None of this has started. This is a bigger lift than adding a new *language* to the existing system (the ["Adding a new language"](#adding-a-new-language) walkthrough below) — it's adding translation *capability* to a content type that doesn't have any yet.
+**The `contentV2` script text itself is not machine-translated.** Unlike classic lessons (`translateLessons.cjs` calls Claude per lesson), there is no batch/AI translation step for Content V2 — someone writes or pastes the translated script directly into the admin editor per lesson, per locale. `generateLessonNarration.cjs` only picks up from there: it needs the translated text to already exist before it can generate audio for it. If a wholesale AI-translate step is wanted later, the natural approach is the same pattern as classic lessons — a Claude call per lesson bundle with the `customHtml`-style tag/placeholder preservation described in [Translation notes](#translation-notes) — but scoped to the single `contentV2` field and writing to these same `LessonTranslation` rows rather than a new table.
 
 ---
 
@@ -52,7 +43,7 @@ Each row is keyed by `(entityId, locale)`. All tables have `autoTranslated`, `re
 | Table | Key | Translatable fields |
 |---|---|---|
 | `ModuleTranslation` | `(moduleId, locale)` | `title`, `description` |
-| `LessonTranslation` | `(lessonId, locale)` | `title`, `subtitle`, `shortDescription`, `objectives` |
+| `LessonTranslation` | `(lessonId, locale)` | Classic: `title`, `subtitle`, `shortDescription`, `objectives`. Content V2: `contentV2`, `audioUrl`, `wordTimings`, `durationSeconds` — all independently nullable, see [Audio-first (Content V2) lessons](#audio-first-content-v2-lessons) |
 | `LessonSegmentTranslation` | `(segmentId, locale)` | `sectionTitle`, `bodyText`, `idealAnswer`, `customHtml` |
 | `QuizTranslation` | `(quizId, locale)` | `question`, `options` (JSON), `explanation`, `wrongExplanation` |
 
@@ -82,12 +73,15 @@ Each row is keyed by `(entityId, locale)`. All tables have `autoTranslated`, `re
 | `nora-mobile/src/i18n/locales/zh-TW.json` | Traditional Chinese UI strings |
 | `nora-mobile/src/i18n/locales/zh-CN.json` | Simplified Chinese UI strings |
 | `nora-mobile/src/screens/ProfileScreen.tsx` | Language picker (Settings → Language) |
+| `nora-mobile/src/screens/LearnScreen_v3.tsx` | Also has its own language-switcher badge in the cover-band header (`handleLanguagePress`) — same picker options/persistence as `ProfileScreen.tsx`, duplicated rather than shared |
 | `server/routes/auth.cjs` | `PATCH /api/auth/locale` — persists `User.preferredLocale`; has its own locale whitelist |
 | `server/routes/coach.cjs` | AI coach chat — replies in the user's locale, has its own `LOCALE_NAMES` map |
 | `server/utils/languageUtils.cjs` | Maps ElevenLabs transcription language codes to prompt instructions for session analysis |
 | `server/services/pcitAnalysisService.cjs` | Honors `zh-TW`/`zh-CN` preference over the generic Mandarin ElevenLabs code (`zho`/`cmn`) |
 | `server/services/weeklyReportService.cjs` | Weekly report narrative language + hardcoded metric/skill labels |
 | `server/jobs/weeklyReportJob.cjs` | Weekly report push notification strings, keyed by locale |
+| `admin/src/pages/LessonContentV2EditorPage.tsx` | Admin editor for Content V2 lessons — locale dropdown to author `contentV2`/audio per locale |
+| `server/scripts/generateLessonNarration.cjs` | ElevenLabs TTS backfill — generates narration audio + `wordTimings` for translated `contentV2` text that has no audio yet |
 
 ---
 
@@ -99,7 +93,7 @@ App UI strings (buttons, tab labels, error messages, etc.) are managed via `reac
   - Device locale is `zh-TW` or `zh-Hant*` → app starts in Traditional Chinese
   - Device locale is `zh-CN`, `zh-Hans*`, or `zh-SG` → app starts in Simplified Chinese
   - Any other locale → app starts in English
-- The user can override in **Profile → Settings → Language** at any time
+- The user can override in **Profile → Settings → Language** at any time, or via the language badge in the Learn tab's (`LearnScreen_v3`) header
 - The choice is persisted in AsyncStorage; on subsequent launches the saved preference takes priority over device locale
 - All screens and components use `const { t } = useTranslation()` and `t('key')`
 - Keys are namespaced by screen/component: `home.*`, `report.*`, `profile.*`, `onboarding.*`, etc.
@@ -196,7 +190,7 @@ function detectDeviceLanguage(): string {
 
 Add a `languagePicker.<locale>` label key to **every** locale JSON file (`en.json`, `zh-TW.json`, `zh-CN.json`, ...) — the picker needs a label for the new option in each language, not just the new language's own file.
 
-Add the language option to the picker in `nora-mobile/src/screens/ProfileScreen.tsx` — both the iOS `ActionSheetIOS` branch and the Android `Alert` branch, plus the `currentLanguageLabel` lookup.
+Add the language option to the picker in `nora-mobile/src/screens/ProfileScreen.tsx` — both the iOS `ActionSheetIOS` branch and the Android `Alert` branch, plus the `currentLanguageLabel` lookup. **Repeat the same edit in `nora-mobile/src/screens/LearnScreen_v3.tsx`'s `handleLanguagePress`** — its header language badge duplicates this picker rather than sharing a component, so the two currently have to be kept in sync by hand.
 
 ### 2. Register the locale on the backend
 

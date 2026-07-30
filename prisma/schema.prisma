@@ -462,6 +462,7 @@ model User {
   CoachChatMessage      CoachChatMessage[]
   AbcLog                AbcLog[]
   AbcInsight            AbcInsight[]
+  HomeCardLike          HomeCardLike[]
   referralsGiven        Referral[]           @relation("ReferralsGiven")
   referralReceived      Referral?            @relation("ReferralReceived")
   partnerId             String?
@@ -758,6 +759,7 @@ model Partner {
                             // `discounts` — see server/utils/partnerDiscount.cjs normalizeDiscounts())
   expiresAt   DateTime?
   redemptions Int           @default(0)
+  qrCodeUrl   String?
   createdAt   DateTime      @default(now())
   users       User[]
 }
@@ -810,6 +812,93 @@ model AppConfig {
   key       String   @id
   value     Json
   updatedAt DateTime @updatedAt
+}
+
+// Admin-uploaded demo videos shown in the "Demo Videos" section of the
+// mobile Learn tab. videoUrl/thumbnailUrl store bare S3 keys (like
+// Lesson.dragonImageUrl) — resolved to presigned URLs at read time via
+// resolveDragonImageUrl. Ordered by displayOrder; only isActive videos are
+// served to mobile.
+model DemoVideo {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  // Longer-form text shown below the video (below description, above the
+  // "View the Lesson" link on mobile). Same **bold** / "* " bullet markdown
+  // convention as Lesson.contentV2 — parsed via formatLessonContentV2.
+  additionalText String?
+  videoUrl      String?
+  thumbnailUrl  String?
+  // Loose reference to Lesson.id (like Lesson.module — no formal relation),
+  // shown as a "View the Lesson" link on the mobile detail screen. Resolved
+  // to lessonTitle/moduleKey at read time via a lookup, not stored here.
+  lessonId      String?
+  isActive      Boolean  @default(true)
+  displayOrder  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive, displayOrder])
+}
+
+// Admin-configurable cards shown on the mobile Home screen, below the main
+// action card. Ordered by displayOrder; only isActive cards are served to
+// mobile via GET /api/config/home-cards.
+model HomeCard {
+  id            String       @id @default(uuid())
+  cardType      HomeCardType @default(CONTENT)
+  badgeText     String
+  badgeColor    String       @default("#8C49D5")
+  message       String
+  messageFontSize HomeCardFontSize @default(MEDIUM)
+  messageBold     Boolean          @default(false)
+  messageItalic   Boolean          @default(false)
+  // QUOTE cards only — author/source shown below the divider in the quote
+  // layout (see SubActionCard's QUOTE branch in HomeScreen_v2.tsx).
+  attribution   String?
+  // Bare S3 key (like Lesson.dragonImageUrl) — resolved to a presigned URL at
+  // read time via resolveDragonImageUrl. Optional banner image for the card.
+  image         String?
+  // CONTENT cards only — the linked page shown via GET /api/config/home-cards/:id.
+  detailTitle   String?
+  detailContent String?
+  isActive      Boolean      @default(true)
+  displayOrder  Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  likes         HomeCardLike[]
+
+  @@index([isActive, displayOrder])
+}
+
+// CONTENT cards open a detail page (arrow affordance) on mobile; QUOTE cards
+// have no further content and get a share button instead.
+enum HomeCardType {
+  CONTENT
+  QUOTE
+}
+
+// Admin-controlled size for the card's message text (mapped to point sizes
+// on mobile — see SubActionCard's FONT_SIZE_MAP in HomeScreen_v2.tsx).
+enum HomeCardFontSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+// A user's like on a Home Card (heart button). One row per user per card —
+// toggled via POST /api/config/home-cards/:id/like.
+model HomeCardLike {
+  id         String   @id @default(uuid())
+  homeCardId String
+  userId     String
+  createdAt  DateTime @default(now())
+  HomeCard   HomeCard @relation(fields: [homeCardId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([homeCardId, userId])
+  @@index([userId])
+  @@index([homeCardId])
 }
 
 enum InterventionStrategy {

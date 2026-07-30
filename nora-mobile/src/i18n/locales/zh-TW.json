@@ -312,13 +312,27 @@
       "title": "本週精彩時刻",
       "empty": "本週暫無精彩時刻",
       "dayNames": {
-        "Sun": "週日", "Mon": "週一", "Tue": "週二", "Wed": "週三",
-        "Thu": "週四", "Fri": "週五", "Sat": "週六"
+        "Sun": "週日",
+        "Mon": "週一",
+        "Tue": "週二",
+        "Wed": "週三",
+        "Thu": "週四",
+        "Fri": "週五",
+        "Sat": "週六"
       },
       "monthNames": {
-        "Jan": "1月", "Feb": "2月", "Mar": "3月", "Apr": "4月",
-        "May": "5月", "Jun": "6月", "Jul": "7月", "Aug": "8月",
-        "Sep": "9月", "Oct": "10月", "Nov": "11月", "Dec": "12月"
+        "Jan": "1月",
+        "Feb": "2月",
+        "Mar": "3月",
+        "Apr": "4月",
+        "May": "5月",
+        "Jun": "6月",
+        "Jul": "7月",
+        "Aug": "8月",
+        "Sep": "9月",
+        "Oct": "10月",
+        "Nov": "11月",
+        "Dec": "12月"
       }
     },
     "page5": {
@@ -690,13 +704,34 @@
       "4end": " 捕捉另一個超讚的遊戲時光吧！"
     }
   },
+  "lessonRead": {
+    "title": "課程",
+    "noContent": "該課程暫無文字版本。"
+  },
+  "demoVideoDetail": {
+    "viewLesson": "查看課程"
+  },
   "learnV2": {
     "title": "探索課程",
     "subtitle": "為您精選",
     "lockedNotice": "先完成基礎章節以解鎖此章節。",
     "completeFoundationFirst": "請先完成基礎章節",
     "noLessonsFound": "找不到課程",
-    "tryDifferentSearch": "嘗試不同的關鍵字"
+    "tryDifferentSearch": "嘗試不同的關鍵字",
+    "noraFoundationsDuration": "120 分鐘",
+    "demoVideosTitle": "示範影片",
+    "timeAgo": {
+      "years_other": "{{count}} 年前",
+      "months_other": "{{count}} 個月前",
+      "weeks_other": "{{count}} 週前",
+      "days_other": "{{count}} 天前",
+      "hours_other": "{{count}} 小時前",
+      "minutes_other": "{{count}} 分鐘前",
+      "justNow": "剛剛"
+    },
+    "noraFoundationsTitle": "Nora Foundations",
+    "noraFoundationsSubtitle": "Connection & Calm Discipline",
+    "gettingStartedTitle": "入門指南"
   },
   "learnV3": {
     "title": "Professor Yi-Chuen Chen",

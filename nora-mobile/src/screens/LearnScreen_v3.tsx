@@ -1,11 +1,12 @@
 /**
  * Learn Screen v3
- * Single-course-style redesign of the Learn tab (replaces LearnScreen_v2 as
- * the live "Learn" tab via screens/index.ts, which is kept unreferenced
- * rather than deleted): a cover band, a progress/continue summary card, a
- * module filter + unfinished toggle row, and a lesson list grouped by module
- * with "{Module} (N lessons)" section headers — instead of ~26 separate
- * horizontally-scrolling module sections.
+ * Single-course-style redesign of the Learn tab: a cover band, a
+ * progress/continue summary card, a module filter + unfinished toggle row,
+ * and a lesson list grouped by module with "{Module} (N lessons)" section
+ * headers — instead of ~26 separate horizontally-scrolling module sections.
+ * No longer the live "Learn" tab (see screens/index.ts, which exports
+ * LearnScreen_v2 as LearnScreen); reachable from LearnScreen_v2's top
+ * "Nora Foundations" card via the `LearnV3` stack route.
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -464,6 +465,9 @@ export const LearnScreen_v3: React.FC = () => {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.coverBand}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
+          <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
+        </TouchableOpacity>
         <Image source={coverImageUrl ? { uri: coverImageUrl } : DEFAULT_COVER_IMAGE} style={styles.coverImage} resizeMode="cover" />
         <View style={styles.coverTextColumn}>
           <Text style={styles.coverTitle} numberOfLines={2}>{coverTitle ?? t('learnV3.title')}</Text>
@@ -712,6 +716,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
+  },
+  backCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   coverImage: {
     width: 128,

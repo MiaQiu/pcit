@@ -15,6 +15,7 @@ import type {
   SubmitTextInputResponse,
   TextInputResponse,
   BrandingImagesResponse,
+  DemoVideosResponse,
 } from '../types';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 import type AuthService from './authService';
@@ -106,6 +107,31 @@ class LessonService {
       const error = await response.json().catch(() => ({}));
       throw new ApiError(
         error.error || 'Failed to fetch branding images',
+        response.status,
+        response.statusText,
+        error.code
+      );
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get admin-uploaded demo videos for the Learn tab's "Demo Videos"
+   * section (active only, in display order).
+   */
+  async getDemoVideos(): Promise<DemoVideosResponse> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/lessons/demo-videos`,
+      {
+        method: 'GET',
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new ApiError(
+        error.error || 'Failed to fetch demo videos',
         response.status,
         response.statusText,
         error.code

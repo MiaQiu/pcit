@@ -565,6 +565,162 @@ export async function deleteKeyword(id: string): Promise<void> {
   await apiFetch(`/api/admin/keywords/${id}`, { method: 'DELETE' });
 }
 
+// ---- Home Cards ----
+
+export type HomeCardType = 'CONTENT' | 'QUOTE';
+export type HomeCardFontSize = 'SMALL' | 'MEDIUM' | 'LARGE';
+
+export interface HomeCard {
+  id: string;
+  cardType: HomeCardType;
+  badgeText: string;
+  badgeColor: string;
+  message: string;
+  messageFontSize: HomeCardFontSize;
+  messageBold: boolean;
+  messageItalic: boolean;
+  attribution: string | null;
+  imageUrl: string | null;
+  detailTitle: string | null;
+  detailContent: string | null;
+  isActive: boolean;
+  displayOrder: number;
+  likeCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HomeCardInput {
+  cardType: HomeCardType;
+  badgeText: string;
+  badgeColor: string;
+  message: string;
+  messageFontSize?: HomeCardFontSize;
+  messageBold?: boolean;
+  messageItalic?: boolean;
+  attribution?: string;
+  detailTitle?: string;
+  detailContent?: string;
+  isActive?: boolean;
+  displayOrder?: number;
+}
+
+export async function getHomeCards(): Promise<HomeCard[]> {
+  const data = await apiFetch<{ homeCards: HomeCard[] }>('/api/admin/home-cards');
+  return data.homeCards;
+}
+
+export async function createHomeCard(input: HomeCardInput): Promise<HomeCard> {
+  const data = await apiFetch<{ homeCard: HomeCard }>('/api/admin/home-cards', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return data.homeCard;
+}
+
+export async function updateHomeCard(id: string, input: Partial<HomeCardInput>): Promise<HomeCard> {
+  const data = await apiFetch<{ homeCard: HomeCard }>(`/api/admin/home-cards/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+  return data.homeCard;
+}
+
+export async function deleteHomeCard(id: string): Promise<void> {
+  await apiFetch(`/api/admin/home-cards/${id}`, { method: 'DELETE' });
+}
+
+export async function uploadHomeCardImage(id: string, file: File): Promise<HomeCard> {
+  const token = (await import('./client')).getToken();
+  const form = new FormData();
+  form.append('image', file);
+  const res = await fetch(`/api/admin/home-cards/${id}/image`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Upload failed: ${res.status}`);
+  }
+  const data = await res.json();
+  return data.homeCard;
+}
+
+export async function removeHomeCardImage(id: string): Promise<HomeCard> {
+  const data = await apiFetch<{ homeCard: HomeCard }>(`/api/admin/home-cards/${id}/image`, {
+    method: 'DELETE',
+  });
+  return data.homeCard;
+}
+
+// ---- Demo Videos ----
+
+export interface DemoVideo {
+  id: string;
+  title: string;
+  description: string | null;
+  additionalText: string | null;
+  videoUrl: string | null;
+  thumbnailUrl: string | null;
+  lessonId: string | null;
+  isActive: boolean;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DemoVideoInput {
+  title: string;
+  description?: string;
+  additionalText?: string;
+  lessonId?: string | null;
+  isActive?: boolean;
+  displayOrder?: number;
+}
+
+export async function getDemoVideos(): Promise<DemoVideo[]> {
+  const data = await apiFetch<{ demoVideos: DemoVideo[] }>('/api/admin/demo-videos');
+  return data.demoVideos;
+}
+
+export async function createDemoVideo(input: DemoVideoInput): Promise<DemoVideo> {
+  const data = await apiFetch<{ demoVideo: DemoVideo }>('/api/admin/demo-videos', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return data.demoVideo;
+}
+
+export async function updateDemoVideo(id: string, input: Partial<DemoVideoInput>): Promise<DemoVideo> {
+  const data = await apiFetch<{ demoVideo: DemoVideo }>(`/api/admin/demo-videos/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+  return data.demoVideo;
+}
+
+export async function deleteDemoVideo(id: string): Promise<void> {
+  await apiFetch(`/api/admin/demo-videos/${id}`, { method: 'DELETE' });
+}
+
+export async function uploadDemoVideoFile(id: string, file: File): Promise<DemoVideo> {
+  const token = (await import('./client')).getToken();
+  const form = new FormData();
+  form.append('video', file);
+  const res = await fetch(`/api/admin/demo-videos/${id}/video`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Upload failed: ${res.status}`);
+  }
+  const data = await res.json();
+  return data.demoVideo;
+}
+
 // ---- Settings ----
 
 export interface ReportVisibility {
@@ -892,6 +1048,7 @@ export interface Partner {
   config: PartnerConfig;
   expiresAt: string | null;
   redemptions: number;
+  qrCodeUrl: string | null;
   userCount: number;
   discountLabels: { monthly: string | null; yearly: string | null };
   createdAt: string;
@@ -939,4 +1096,8 @@ export async function updatePartner(
 
 export async function deactivatePartner(id: string, opts?: ApiEnvOpts): Promise<void> {
   await apiFetchEnv(`/api/admin/partners/${id}`, { method: 'DELETE' }, opts);
+}
+
+export async function regeneratePartnerQrCode(id: string, opts?: ApiEnvOpts): Promise<Partner> {
+  return apiFetchEnv(`/api/admin/partners/${id}/qr-code`, { method: 'POST' }, opts);
 }

@@ -12,6 +12,8 @@ import SessionsPage from './pages/SessionsPage';
 import SettingsPage from './pages/SettingsPage';
 import UserWeeklyReportsPage from './pages/UserWeeklyReportsPage';
 import KeywordsPage from './pages/KeywordsPage';
+import HomeCardsPage from './pages/HomeCardsPage';
+import DemoVideosPage from './pages/DemoVideosPage';
 import UsersPage from './pages/UsersPage';
 import UserDetailPage from './pages/UserDetailPage';
 import SubscriptionsPage from './pages/SubscriptionsPage';
@@ -44,6 +46,8 @@ export default function App() {
           <Route path="content-v2/new" element={<LessonContentV2NewPage />} />
           <Route path="content-v2/:id" element={<LessonContentV2EditorPage />} />
           <Route path="keywords" element={<KeywordsPage />} />
+          <Route path="home-cards" element={<HomeCardsPage />} />
+          <Route path="demo-videos" element={<DemoVideosPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="sessions" element={<SessionsPage />} />
           <Route path="users" element={<UsersPage />} />

@@ -312,13 +312,27 @@
       "title": "Weekly Moments",
       "empty": "No top moments this week",
       "dayNames": {
-        "Sun": "Sun", "Mon": "Mon", "Tue": "Tue", "Wed": "Wed",
-        "Thu": "Thu", "Fri": "Fri", "Sat": "Sat"
+        "Sun": "Sun",
+        "Mon": "Mon",
+        "Tue": "Tue",
+        "Wed": "Wed",
+        "Thu": "Thu",
+        "Fri": "Fri",
+        "Sat": "Sat"
       },
       "monthNames": {
-        "Jan": "Jan", "Feb": "Feb", "Mar": "Mar", "Apr": "Apr",
-        "May": "May", "Jun": "Jun", "Jul": "Jul", "Aug": "Aug",
-        "Sep": "Sep", "Oct": "Oct", "Nov": "Nov", "Dec": "Dec"
+        "Jan": "Jan",
+        "Feb": "Feb",
+        "Mar": "Mar",
+        "Apr": "Apr",
+        "May": "May",
+        "Jun": "Jun",
+        "Jul": "Jul",
+        "Aug": "Aug",
+        "Sep": "Sep",
+        "Oct": "Oct",
+        "Nov": "Nov",
+        "Dec": "Dec"
       }
     },
     "page5": {
@@ -690,13 +704,40 @@
       "4end": "!"
     }
   },
+  "lessonRead": {
+    "title": "Lesson",
+    "noContent": "This lesson doesn't have a text version yet."
+  },
+  "demoVideoDetail": {
+    "viewLesson": "View the Lesson"
+  },
   "learnV2": {
     "title": "Explore lessons",
     "subtitle": "Handpicked for you",
     "lockedNotice": "Complete Foundation first to unlock this module.",
     "completeFoundationFirst": "Complete the Foundation module first",
     "noLessonsFound": "No lessons found",
-    "tryDifferentSearch": "Try a different search term"
+    "tryDifferentSearch": "Try a different search term",
+    "noraFoundationsDuration": "120 min",
+    "demoVideosTitle": "Demo Videos",
+    "timeAgo": {
+      "years_one": "{{count}} year ago",
+      "years_other": "{{count}} years ago",
+      "months_one": "{{count}} month ago",
+      "months_other": "{{count}} months ago",
+      "weeks_one": "{{count}} week ago",
+      "weeks_other": "{{count}} weeks ago",
+      "days_one": "{{count}} day ago",
+      "days_other": "{{count}} days ago",
+      "hours_one": "{{count}} hour ago",
+      "hours_other": "{{count}} hours ago",
+      "minutes_one": "{{count}} minute ago",
+      "minutes_other": "{{count}} minutes ago",
+      "justNow": "Just now"
+    },
+    "noraFoundationsTitle": "Nora Foundations",
+    "noraFoundationsSubtitle": "Connection & Calm Discipline",
+    "gettingStartedTitle": "Getting Started"
   },
   "learnV3": {
     "title": "Nora Foundations",

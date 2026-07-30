@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { Video, ResizeMode } from 'expo-av';
 import { SearchBar } from '../components/SearchBar';
 import { FONTS, COLORS } from '../constants/assets';
 import { RootStackNavigationProp } from '../navigation/types';
@@ -25,11 +26,12 @@ import { useLessonService } from '../contexts/AppContext';
 import { handleApiError, handleApiSuccess } from '../utils/NetworkMonitor';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
-import type { ModuleWithProgress, LessonCardData, ModuleListResponse, LessonListResponse } from '@nora/core';
+import type { ModuleWithProgress, LessonCardData, ModuleListResponse, LessonListResponse, DemoVideo } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
 import { resolveImageUris } from '../services/lessonImageCache';
 import { getCachedLessonData, saveLessonData, isCacheStale } from '../services/lessonDataCache';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import amplitudeService from '../services/amplitudeService';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 
@@ -119,6 +121,51 @@ const LessonCard: React.FC<LessonCardProps> = ({
   );
 };
 
+// ─── Nora Foundations (LearnScreen_v3) entry section ──────────────────────────
+
+const NORA_FOUNDATIONS_COVER = require('../../assets/images/emotional_message.png');
+
+interface NoraFoundationsSectionProps {
+  cardWidth: number;
+  onPress: () => void;
+}
+
+const NoraFoundationsSection: React.FC<NoraFoundationsSectionProps> = ({ cardWidth, onPress }) => {
+  const { t } = useTranslation();
+
+  return (
+    <View style={[styles.moduleSection, styles.noraSectionWrap]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={[styles.lessonRow, styles.noraCardRow]}
+        style={styles.lessonRowScroll}
+      >
+        <TouchableOpacity
+          style={[styles.noraCardShadow, { width: cardWidth }]}
+          onPress={onPress}
+          activeOpacity={0.75}
+        >
+          <View style={styles.noraCardInner}>
+            <View style={[styles.lessonImageWrap, { backgroundColor: COLORS.mainPurple }]}>
+              <Image source={NORA_FOUNDATIONS_COVER} style={styles.lessonIcon} resizeMode="cover" />
+            </View>
+            <View style={styles.lessonCardText}>
+              <Text style={[styles.lessonTitle, styles.noraCardTitle]} numberOfLines={2}>{t('learnV2.noraFoundationsTitle')}</Text>
+              <Text style={styles.noraCardSubtitle} numberOfLines={1}>{t('learnV2.noraFoundationsSubtitle')}</Text>
+              <View style={styles.lessonMetaRow}>
+                <Ionicons name="headset-outline" size={13} color="#9CA3AF" />
+                <Ionicons name="book-outline" size={13} color="#9CA3AF" style={styles.lessonMetaIconGap} />
+                <Text style={styles.lessonMetaText}>{t('learnV2.noraFoundationsDuration')}</Text>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
+  );
+};
+
 // ─── Module section ───────────────────────────────────────────────────────────
 
 interface ModuleSectionProps {
@@ -189,6 +236,97 @@ const ModuleSection: React.FC<ModuleSectionProps> = ({
   );
 };
 
+// ─── Demo Videos section ───────────────────────────────────────────────────────
+
+const formatVideoDuration = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+const formatRelativeTime = (isoDate: string, t: TFunction): string => {
+  const seconds = Math.max(0, (Date.now() - new Date(isoDate).getTime()) / 1000);
+  const units: [string, number][] = [
+    ['years', 60 * 60 * 24 * 365],
+    ['months', 60 * 60 * 24 * 30],
+    ['weeks', 60 * 60 * 24 * 7],
+    ['days', 60 * 60 * 24],
+    ['hours', 60 * 60],
+    ['minutes', 60],
+  ];
+  for (const [unit, unitSeconds] of units) {
+    const value = Math.floor(seconds / unitSeconds);
+    if (value >= 1) return t(`learnV2.timeAgo.${unit}`, { count: value });
+  }
+  return t('learnV2.timeAgo.justNow', {});
+};
+
+interface DemoVideoCardProps {
+  video: DemoVideo;
+  cardWidth: number;
+  onPress: () => void;
+}
+
+const DemoVideoCard: React.FC<DemoVideoCardProps> = ({ video, cardWidth, onPress }) => {
+  const { t } = useTranslation();
+  const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
+
+  return (
+    <TouchableOpacity
+      style={[styles.noraCardShadow, { width: cardWidth }]}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <View style={styles.noraCardInner}>
+        <View style={styles.demoVideoThumbWrap}>
+          {video.thumbnailUrl ? (
+            <Image source={{ uri: video.thumbnailUrl }} style={styles.demoVideoThumb} resizeMode="cover" />
+          ) : (
+            <Video
+              source={{ uri: video.videoUrl }}
+              style={styles.demoVideoThumb}
+              resizeMode={ResizeMode.COVER}
+              shouldPlay={false}
+              isMuted
+              useNativeControls={false}
+              onLoad={status => {
+                if (status.isLoaded && status.durationMillis) setDurationSeconds(status.durationMillis / 1000);
+              }}
+            />
+          )}
+          {durationSeconds !== null && (
+            <View style={styles.demoVideoDurationBadge}>
+              <Text style={styles.demoVideoDurationText}>{formatVideoDuration(durationSeconds)}</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.lessonCardText}>
+          <Text style={styles.lessonTitle} numberOfLines={2}>{video.title}</Text>
+          <Text style={styles.demoVideoMeta} numberOfLines={1}>{formatRelativeTime(video.createdAt, t)}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+interface DemoVideosSectionProps {
+  videos: DemoVideo[];
+  cardWidth: number;
+  onSelectVideo: (video: DemoVideo) => void;
+}
+
+const DemoVideosSection: React.FC<DemoVideosSectionProps> = ({ videos, cardWidth, onSelectVideo }) => {
+  if (videos.length === 0) return null;
+
+  return (
+    <View style={styles.demoVideoGrid}>
+      {videos.map(video => (
+        <DemoVideoCard key={video.id} video={video} cardWidth={cardWidth} onPress={() => onSelectVideo(video)} />
+      ))}
+    </View>
+  );
+};
+
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
 export const LearnScreen_v2: React.FC = () => {
@@ -200,6 +338,7 @@ export const LearnScreen_v2: React.FC = () => {
   const scrollViewRef = React.useRef<ScrollView>(null);
   const { width } = useWindowDimensions();
   const cardWidth = (width - H_PAD * 2) / 2.3;
+  const demoVideoCardWidth = (width - H_PAD * 2 - CARD_GAP) / 2;
 
   const [modules, setModules] = useState<ModuleWithProgress[]>([]);
   const [allLessons, setAllLessons] = useState<LessonCardData[]>([]);
@@ -210,6 +349,7 @@ export const LearnScreen_v2: React.FC = () => {
   const [isFoundationCompleted, setIsFoundationCompleted] = useState(false);
   const [recommendedModules, setRecommendedModules] = useState<string[]>([]);
   const [currentModuleKey, setCurrentModuleKey] = useState<string | null>(null);
+  const [demoVideos, setDemoVideos] = useState<DemoVideo[]>([]);
 
   useEffect(() => {
     loadData();
@@ -218,6 +358,13 @@ export const LearnScreen_v2: React.FC = () => {
   useEffect(() => {
     loadData(false);
   }, [i18n.language]);
+
+  useEffect(() => {
+    lessonService.getDemoVideos()
+      .then(({ demoVideos: videos }) => setDemoVideos(videos))
+      .catch(err => console.error('Failed to load demo videos:', err));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (allLessons.length === 0) return;
@@ -389,7 +536,12 @@ export const LearnScreen_v2: React.FC = () => {
     }
   };
 
-  const visibleModules = sortedModules.filter(m => filteredLessonsByModule.has(m.key));
+  // Nora Foundations (LearnScreen_v3) modules have their own entry section
+  // below the Getting Started module, so don't also list them as standalone
+  // module sections here.
+  const visibleModules = sortedModules.filter(
+    m => filteredLessonsByModule.has(m.key) && !CONTENT_V2_MODULES.includes(m.key)
+  );
 
   if (loading) {
     return (
@@ -418,40 +570,36 @@ export const LearnScreen_v2: React.FC = () => {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>{t('learnV2.title')}</Text>
-          <Text style={styles.subtitle}>{t('learnV2.subtitle')}</Text>
+          {/* <Text style={styles.subtitle}>{t('learnV2.subtitle')}</Text> */}
         </View>
+
+        {/* <Text style={styles.sectionTitle}>{t('learnV2.gettingStartedTitle')}</Text> */}
 
         {/* Search */}
         {/* <View style={styles.searchWrap}>
           <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
         </View> */}
 
-        {/* Module sections */}
+        {/* Module sections — all modules other than Nora Foundations are hidden for now */}
         <View style={styles.sections}>
-          {visibleModules.map((mod, idx) => {
-            const lessons = filteredLessonsByModule.get(mod.key) ?? [];
-            const showLockedNotice = !!mod.isLocked && !isFoundationCompleted && idx > 0;
-            return (
-              <ModuleSection
-                key={mod.key}
-                module={mod}
-                lessons={lessons}
-                onLessonPress={lessonId => handleLessonPress(lessonId, mod.key)}
-                onModulePress={() => { amplitudeService.trackEvent('Learn Module Tapped', { moduleKey: mod.key }); navigation.push('ModuleDetail', { moduleKey: mod.key }); }}
-                cardWidth={cardWidth}
-                showLockedNotice={showLockedNotice}
-                localImageUris={localImageUris}
-              />
-            );
-          })}
+          <Text style={styles.sectionTitle}>{t('learnV2.gettingStartedTitle')}</Text>
+          <NoraFoundationsSection
+            cardWidth={cardWidth * 1.2}
+            onPress={() => {
+              amplitudeService.trackEvent('Learn Module Tapped', { moduleKey: 'LEARN_V3' });
+              navigation.push('LearnV3');
+            }}
+          />
+          <Text style={[styles.sectionTitle, styles.sectionTitleBelow]}>{t('learnV2.demoVideosTitle')}</Text>
+          <DemoVideosSection
+            videos={demoVideos}
+            cardWidth={demoVideoCardWidth}
+            onSelectVideo={video => {
+              amplitudeService.trackEvent('Demo Video Tapped', { demoVideoId: video.id });
+              navigation.push('DemoVideoDetail', { video });
+            }}
+          />
         </View>
-
-        {visibleModules.length === 0 && modules.length > 0 && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>{t('learnV2.noLessonsFound')}</Text>
-            <Text style={styles.emptyMessage}>{t('learnV2.tryDifferentSearch')}</Text>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -473,6 +621,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     color: COLORS.textDark,
     marginTop: 8,
+    marginBottom:15
   },
   subtitle: {
     fontFamily: FONTS.regular,
@@ -484,10 +633,25 @@ const styles = StyleSheet.create({
   searchWrap: { paddingHorizontal: H_PAD, marginTop: 12 },
 
   sections: { marginTop: 8 },
+  sectionTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    color: COLORS.textDark,
+    lineHeight: 22,
+    letterSpacing: -0.3,
+    paddingHorizontal: H_PAD,
+    marginBottom: 8,
+  },
+  sectionTitleBelow: {
+    marginTop: 24,
+  },
 
   // ── Module section ──
   moduleSection: {
     marginTop: 24,
+  },
+  noraSectionWrap: {
+    marginTop: 0,
   },
   moduleHeader: {
     flexDirection: 'row',
@@ -535,6 +699,16 @@ const styles = StyleSheet.create({
     gap: CARD_GAP,
     paddingHorizontal: H_PAD,
   },
+  noraCardRow: {
+    paddingLeft: H_PAD,
+
+  },
+  demoVideoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: CARD_GAP,
+    paddingHorizontal: H_PAD,
+  },
 
   // ── Lesson card ──
   lessonCard: {
@@ -547,6 +721,23 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
     marginBottom: 4,
+  },
+  // Shadow and rounded-corner clipping are split across two views: iOS
+  // clips shadows into a hard border-like line when `overflow: hidden`
+  // and `shadow*` live on the same view.
+  noraCardShadow: {
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 3,
+    marginBottom: 4,
+  },
+  noraCardInner: {
+    borderRadius: 14,
+    overflow: 'hidden',
   },
   lessonImageWrap: {
     aspectRatio: 1,
@@ -607,6 +798,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 3,
   },
+  demoVideoThumbWrap: {
+    aspectRatio: 16 / 9,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#000',
+  },
+  demoVideoThumb: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  demoVideoDurationBadge: {
+    position: 'absolute',
+    bottom: 6,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  demoVideoDurationText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 11,
+    color: '#fff',
+  },
+  demoVideoMeta: {
+    fontFamily: FONTS.regular,
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 3,
+  },
   lessonCardText: {
     paddingHorizontal: 5,
     paddingTop: 8,
@@ -625,6 +847,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     color: COLORS.textDark,
+  },
+  noraCardTitle: {
+    fontSize: 16,
+    lineHeight: 21,
+  },
+  noraCardSubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  lessonMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 14,
+  },
+  lessonMetaIconGap: {
+    marginLeft: 6,
+  },
+  lessonMetaText: {
+    fontFamily: FONTS.regular,
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginLeft: 4,
   },
 
   // ── Empty ──

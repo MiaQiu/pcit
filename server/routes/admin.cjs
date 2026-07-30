@@ -6,7 +6,7 @@ const { generateAccessToken, verifyAccessToken } = require('../utils/jwt.cjs');
 const { requireAdminAuth } = require('../middleware/adminAuth.cjs');
 const { verifyPassword } = require('../utils/password.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
-const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo, uploadBrandingImage, resolveLessonAudioUrl } = require('../services/storage-s3.cjs');
+const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo, uploadDemoVideo, uploadHomeCardImage, uploadBrandingImage, uploadPartnerQrCode, resolveLessonAudioUrl, resolveDragonImageUrl } = require('../services/storage-s3.cjs');
 const { processRecordingWithRetry } = require('../services/processingService.cjs');
 const { transcribeLessonNarration } = require('../services/transcriptionService.cjs');
 
@@ -38,6 +38,15 @@ const lessonAudioUploadMiddleware = multer({
 });
 
 const lessonContentVideoUploadMiddleware = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('video/')) cb(null, true);
+    else cb(new Error('Only video files are allowed'));
+  },
+});
+
+const demoVideoUploadMiddleware = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB
   fileFilter: (_req, file, cb) => {
@@ -1901,6 +1910,368 @@ router.delete('/keywords/:id', requireAdminAuth, async (req, res) => {
 });
 
 // ============================================================================
+// HOME CARDS
+// ============================================================================
+
+/**
+ * GET /api/admin/home-cards
+ * List all home screen sub-action cards (active and inactive), ordered for
+ * display. Mobile only ever sees the active ones — see GET /api/config/home-cards.
+ */
+router.get('/home-cards', requireAdminAuth, async (req, res) => {
+  try {
+    const homeCards = await prisma.homeCard.findMany({
+      orderBy: { displayOrder: 'asc' },
+      include: { _count: { select: { likes: true } } },
+    });
+
+    const resolved = await Promise.all(homeCards.map(async ({ _count, image, ...card }) => ({
+      ...card,
+      likeCount: _count.likes,
+      imageUrl: await resolveDragonImageUrl(image),
+    })));
+
+    res.json({ homeCards: resolved });
+  } catch (error) {
+    console.error('Admin list home cards error:', error);
+    res.status(500).json({ error: 'Failed to list home cards' });
+  }
+});
+
+const HOME_CARD_TYPES = ['CONTENT', 'QUOTE'];
+const HOME_CARD_FONT_SIZES = ['SMALL', 'MEDIUM', 'LARGE'];
+
+/**
+ * POST /api/admin/home-cards
+ * Create a new home screen sub-action card. displayOrder defaults to the end
+ * of the list if not provided. CONTENT cards (open a detail page on mobile)
+ * require detailTitle/detailContent; QUOTE cards (get a share button instead)
+ * don't use them.
+ */
+router.post('/home-cards', requireAdminAuth, async (req, res) => {
+  try {
+    const { cardType, badgeText, badgeColor, message, messageFontSize, messageBold, messageItalic, attribution, detailTitle, detailContent, isActive, displayOrder } = req.body;
+    if (!badgeText || !badgeText.trim()) return res.status(400).json({ error: 'badgeText is required' });
+    if (!message || !message.trim()) return res.status(400).json({ error: 'message is required' });
+    if (messageFontSize !== undefined && !HOME_CARD_FONT_SIZES.includes(messageFontSize)) {
+      return res.status(400).json({ error: `messageFontSize must be one of ${HOME_CARD_FONT_SIZES.join(', ')}` });
+    }
+
+    const type = cardType && HOME_CARD_TYPES.includes(cardType) ? cardType : 'CONTENT';
+    if (type === 'CONTENT') {
+      if (!detailTitle || !detailTitle.trim()) return res.status(400).json({ error: 'detailTitle is required for CONTENT cards' });
+      if (!detailContent || !detailContent.trim()) return res.status(400).json({ error: 'detailContent is required for CONTENT cards' });
+    }
+
+    let order = displayOrder;
+    if (order === undefined || order === null) {
+      const last = await prisma.homeCard.findFirst({ orderBy: { displayOrder: 'desc' } });
+      order = last ? last.displayOrder + 1 : 0;
+    }
+
+    const homeCard = await prisma.homeCard.create({
+      data: {
+        cardType: type,
+        badgeText: badgeText.trim(),
+        badgeColor: badgeColor?.trim() || '#8C49D5',
+        message: message.trim(),
+        messageFontSize: messageFontSize || 'MEDIUM',
+        messageBold: !!messageBold,
+        messageItalic: !!messageItalic,
+        attribution: attribution?.trim() || null,
+        detailTitle: type === 'CONTENT' ? detailTitle.trim() : null,
+        detailContent: type === 'CONTENT' ? detailContent.trim() : null,
+        isActive: isActive === undefined ? true : !!isActive,
+        displayOrder: parseInt(order),
+      },
+    });
+
+    res.status(201).json({ homeCard });
+  } catch (error) {
+    console.error('Admin create home card error:', error);
+    res.status(500).json({ error: 'Failed to create home card' });
+  }
+});
+
+/**
+ * PUT /api/admin/home-cards/:id
+ * Update an existing home card. Any subset of fields may be sent.
+ */
+router.put('/home-cards/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const { cardType, badgeText, badgeColor, message, messageFontSize, messageBold, messageItalic, attribution, detailTitle, detailContent, isActive, displayOrder } = req.body;
+
+    const existing = await prisma.homeCard.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ error: 'Home card not found' });
+
+    if (cardType !== undefined && !HOME_CARD_TYPES.includes(cardType)) {
+      return res.status(400).json({ error: `cardType must be one of ${HOME_CARD_TYPES.join(', ')}` });
+    }
+    if (messageFontSize !== undefined && !HOME_CARD_FONT_SIZES.includes(messageFontSize)) {
+      return res.status(400).json({ error: `messageFontSize must be one of ${HOME_CARD_FONT_SIZES.join(', ')}` });
+    }
+    const resolvedType = cardType ?? existing.cardType;
+
+    const data = {};
+    if (cardType !== undefined) data.cardType = cardType;
+    if (badgeText !== undefined) {
+      if (!badgeText.trim()) return res.status(400).json({ error: 'badgeText cannot be empty' });
+      data.badgeText = badgeText.trim();
+    }
+    if (badgeColor !== undefined) data.badgeColor = badgeColor.trim() || '#8C49D5';
+    if (message !== undefined) {
+      if (!message.trim()) return res.status(400).json({ error: 'message cannot be empty' });
+      data.message = message.trim();
+    }
+    if (messageFontSize !== undefined) data.messageFontSize = messageFontSize;
+    if (messageBold !== undefined) data.messageBold = !!messageBold;
+    if (messageItalic !== undefined) data.messageItalic = !!messageItalic;
+    if (attribution !== undefined) data.attribution = attribution?.trim() || null;
+    if (isActive !== undefined) data.isActive = !!isActive;
+    if (displayOrder !== undefined) data.displayOrder = parseInt(displayOrder);
+
+    if (resolvedType === 'CONTENT') {
+      const nextTitle = detailTitle !== undefined ? detailTitle : existing.detailTitle;
+      const nextContent = detailContent !== undefined ? detailContent : existing.detailContent;
+      if (!nextTitle || !nextTitle.trim()) return res.status(400).json({ error: 'detailTitle is required for CONTENT cards' });
+      if (!nextContent || !nextContent.trim()) return res.status(400).json({ error: 'detailContent is required for CONTENT cards' });
+      if (detailTitle !== undefined) data.detailTitle = detailTitle.trim();
+      if (detailContent !== undefined) data.detailContent = detailContent.trim();
+    } else {
+      // Switching to QUOTE (or already QUOTE) clears any leftover detail copy.
+      data.detailTitle = null;
+      data.detailContent = null;
+    }
+
+    const homeCard = await prisma.homeCard.update({
+      where: { id: req.params.id },
+      data,
+    });
+
+    res.json({ homeCard });
+  } catch (error) {
+    console.error('Admin update home card error:', error);
+    res.status(500).json({ error: 'Failed to update home card' });
+  }
+});
+
+/**
+ * DELETE /api/admin/home-cards/:id
+ */
+router.delete('/home-cards/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const existing = await prisma.homeCard.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ error: 'Home card not found' });
+
+    await prisma.homeCard.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin delete home card error:', error);
+    res.status(500).json({ error: 'Failed to delete home card' });
+  }
+});
+
+/**
+ * POST /api/admin/home-cards/:id/image
+ * Upload (or replace) the banner image for a home card.
+ */
+router.post('/home-cards/:id/image', requireAdminAuth, uploadMiddleware.single('image'), async (req, res) => {
+  try {
+    const homeCardId = req.params.id;
+
+    const existing = await prisma.homeCard.findUnique({ where: { id: homeCardId } });
+    if (!existing) return res.status(404).json({ error: 'Home card not found' });
+
+    if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+
+    const ext = (req.file.originalname.split('.').pop() || 'jpg').toLowerCase();
+    const key = await uploadHomeCardImage(req.file.buffer, homeCardId, ext);
+
+    const { image, ...homeCard } = await prisma.homeCard.update({
+      where: { id: homeCardId },
+      data: { image: key },
+    });
+
+    res.json({ homeCard: { ...homeCard, imageUrl: await resolveDragonImageUrl(image) } });
+  } catch (error) {
+    console.error('Admin upload home card image error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload home card image' });
+  }
+});
+
+/**
+ * DELETE /api/admin/home-cards/:id/image
+ * Remove the banner image from a home card (card itself is untouched).
+ */
+router.delete('/home-cards/:id/image', requireAdminAuth, async (req, res) => {
+  try {
+    const existing = await prisma.homeCard.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ error: 'Home card not found' });
+
+    const { image, ...homeCard } = await prisma.homeCard.update({
+      where: { id: req.params.id },
+      data: { image: null },
+    });
+
+    res.json({ homeCard: { ...homeCard, imageUrl: null } });
+  } catch (error) {
+    console.error('Admin remove home card image error:', error);
+    res.status(500).json({ error: 'Failed to remove home card image' });
+  }
+});
+
+// ============================================================================
+// DEMO VIDEOS
+// ============================================================================
+
+/**
+ * GET /api/admin/demo-videos
+ * List all demo videos (active and inactive), ordered for display, with
+ * videoUrl/thumbnailUrl resolved to presigned, playable URLs.
+ */
+router.get('/demo-videos', requireAdminAuth, async (req, res) => {
+  try {
+    const demoVideos = await prisma.demoVideo.findMany({
+      orderBy: { displayOrder: 'asc' },
+    });
+
+    const resolved = await Promise.all(demoVideos.map(async (v) => ({
+      ...v,
+      videoUrl: await resolveDragonImageUrl(v.videoUrl),
+      thumbnailUrl: await resolveDragonImageUrl(v.thumbnailUrl),
+    })));
+
+    res.json({ demoVideos: resolved });
+  } catch (error) {
+    console.error('Admin list demo videos error:', error);
+    res.status(500).json({ error: 'Failed to list demo videos' });
+  }
+});
+
+/**
+ * POST /api/admin/demo-videos
+ * Create a demo video's metadata row (title). The video file itself is
+ * attached afterward via POST /:id/video. displayOrder defaults to the end
+ * of the list if not provided.
+ */
+router.post('/demo-videos', requireAdminAuth, async (req, res) => {
+  try {
+    const { title, description, additionalText, lessonId, isActive, displayOrder } = req.body;
+    if (!title || !title.trim()) return res.status(400).json({ error: 'title is required' });
+
+    if (lessonId) {
+      const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+      if (!lesson) return res.status(400).json({ error: 'lessonId does not match an existing lesson' });
+    }
+
+    let order = displayOrder;
+    if (order === undefined || order === null) {
+      const last = await prisma.demoVideo.findFirst({ orderBy: { displayOrder: 'desc' } });
+      order = last ? last.displayOrder + 1 : 0;
+    }
+
+    const demoVideo = await prisma.demoVideo.create({
+      data: {
+        title: title.trim(),
+        description: description?.trim() || null,
+        additionalText: additionalText?.trim() || null,
+        lessonId: lessonId || null,
+        isActive: isActive === undefined ? true : !!isActive,
+        displayOrder: parseInt(order),
+      },
+    });
+
+    res.status(201).json({ demoVideo });
+  } catch (error) {
+    console.error('Admin create demo video error:', error);
+    res.status(500).json({ error: 'Failed to create demo video' });
+  }
+});
+
+/**
+ * PUT /api/admin/demo-videos/:id
+ * Update an existing demo video's metadata. Any subset of fields may be sent.
+ */
+router.put('/demo-videos/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const { title, description, additionalText, lessonId, isActive, displayOrder } = req.body;
+
+    const existing = await prisma.demoVideo.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ error: 'Demo video not found' });
+
+    if (lessonId) {
+      const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+      if (!lesson) return res.status(400).json({ error: 'lessonId does not match an existing lesson' });
+    }
+
+    const data = {};
+    if (title !== undefined) {
+      if (!title.trim()) return res.status(400).json({ error: 'title cannot be empty' });
+      data.title = title.trim();
+    }
+    if (description !== undefined) data.description = description?.trim() || null;
+    if (additionalText !== undefined) data.additionalText = additionalText?.trim() || null;
+    if (lessonId !== undefined) data.lessonId = lessonId || null;
+    if (isActive !== undefined) data.isActive = !!isActive;
+    if (displayOrder !== undefined) data.displayOrder = parseInt(displayOrder);
+
+    const demoVideo = await prisma.demoVideo.update({
+      where: { id: req.params.id },
+      data,
+    });
+
+    res.json({ demoVideo });
+  } catch (error) {
+    console.error('Admin update demo video error:', error);
+    res.status(500).json({ error: 'Failed to update demo video' });
+  }
+});
+
+/**
+ * DELETE /api/admin/demo-videos/:id
+ */
+router.delete('/demo-videos/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const existing = await prisma.demoVideo.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ error: 'Demo video not found' });
+
+    await prisma.demoVideo.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin delete demo video error:', error);
+    res.status(500).json({ error: 'Failed to delete demo video' });
+  }
+});
+
+/**
+ * POST /api/admin/demo-videos/:id/video
+ * Upload (or replace) the video file for a demo video.
+ */
+router.post('/demo-videos/:id/video', requireAdminAuth, demoVideoUploadMiddleware.single('video'), async (req, res) => {
+  try {
+    const demoVideoId = req.params.id;
+
+    const existing = await prisma.demoVideo.findUnique({ where: { id: demoVideoId } });
+    if (!existing) return res.status(404).json({ error: 'Demo video not found' });
+
+    if (!req.file) return res.status(400).json({ error: 'No video file provided' });
+
+    const ext = (req.file.originalname.split('.').pop() || 'mp4').toLowerCase();
+    const key = await uploadDemoVideo(req.file.buffer, demoVideoId, ext);
+
+    const demoVideo = await prisma.demoVideo.update({
+      where: { id: demoVideoId },
+      data: { videoUrl: key },
+    });
+
+    res.json({ demoVideo: { ...demoVideo, videoUrl: await resolveDragonImageUrl(key) } });
+  } catch (error) {
+    console.error('Admin demo video upload error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload video' });
+  }
+});
+
+// ============================================================================
 // SYNC TO PROD
 // ============================================================================
 
@@ -3068,6 +3439,21 @@ function adminStripe() {
 }
 
 const { discountLabel, normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
+const { generatePartnerQrPng } = require('../utils/partnerQr.cjs');
+
+// Generates a QR PNG for the partner's signup link, uploads it, and persists the
+// resulting URL. Used both right after creation and for backfilling legacy partners.
+// Never throws — QR generation is best-effort and must not block partner CRUD.
+async function generateAndStorePartnerQr(partner) {
+  try {
+    const qrPng = await generatePartnerQrPng(partner.slug);
+    const qrCodeUrl = await uploadPartnerQrCode(qrPng, partner.slug);
+    return prisma.partner.update({ where: { id: partner.id }, data: { qrCodeUrl } });
+  } catch (err) {
+    console.error('[admin] partner QR generation error:', err);
+    return partner;
+  }
+}
 
 async function syncStripeCoupon(partnerName, slug, planLabel, discount, expiresAt, maxRedemptions, existingCouponId) {
   if (!discount || (!discount.percentOff && !discount.amountOff)) return null;
@@ -3120,18 +3506,19 @@ router.get('/partners', requireAdminAuth, async (req, res) => {
       orderBy: { createdAt: 'desc' },
       include: { _count: { select: { users: true } } },
     });
-    res.json(partners.map(p => {
+    res.json(await Promise.all(partners.map(async p => {
       const discounts = normalizeDiscounts(p.config);
       return {
         ...p,
         config: { ...p.config, discounts }, // always the resolved per-plan shape, regardless of storage format
+        qrCodeUrl: await resolveDragonImageUrl(p.qrCodeUrl),
         userCount: p._count.users,
         discountLabels: {
           monthly: discountLabel(discounts.monthly),
           yearly: discountLabel(discounts.yearly),
         },
       };
-    }));
+    })));
   } catch (err) {
     console.error('[admin] partners list error:', err);
     res.status(500).json({ error: 'Failed to fetch partners' });
@@ -3150,6 +3537,7 @@ router.get('/partners/:id', requireAdminAuth, async (req, res) => {
     res.json({
       ...partner,
       config: { ...partner.config, discounts },
+      qrCodeUrl: await resolveDragonImageUrl(partner.qrCodeUrl),
       userCount: partner._count.users,
       discountLabels: { monthly: discountLabel(discounts.monthly), yearly: discountLabel(discounts.yearly) },
     });
@@ -3182,7 +3570,7 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
       maxRedemptions: maxRedemptions ?? null,
     };
 
-    const partner = await prisma.partner.create({
+    let partner = await prisma.partner.create({
       data: {
         id: crypto.randomUUID(),
         slug,
@@ -3192,10 +3580,27 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
       },
     });
 
-    res.status(201).json(partner);
+    partner = await generateAndStorePartnerQr(partner);
+
+    res.status(201).json({ ...partner, qrCodeUrl: await resolveDragonImageUrl(partner.qrCodeUrl) });
   } catch (err) {
     console.error('[admin] partner create error:', err);
     res.status(500).json({ error: 'Failed to create partner' });
+  }
+});
+
+// POST /api/admin/partners/:id/qr-code — (re)generate the QR code, e.g. to backfill
+// partners created before this feature existed.
+router.post('/partners/:id/qr-code', requireAdminAuth, async (req, res) => {
+  try {
+    const partner = await prisma.partner.findUnique({ where: { id: req.params.id } });
+    if (!partner) return res.status(404).json({ error: 'Partner not found' });
+
+    const updated = await generateAndStorePartnerQr(partner);
+    res.json({ ...updated, qrCodeUrl: await resolveDragonImageUrl(updated.qrCodeUrl) });
+  } catch (err) {
+    console.error('[admin] partner QR regenerate error:', err);
+    res.status(500).json({ error: 'Failed to generate QR code' });
   }
 });
 
@@ -3239,7 +3644,7 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
       },
     });
 
-    res.json(updated);
+    res.json({ ...updated, qrCodeUrl: await resolveDragonImageUrl(updated.qrCodeUrl) });
   } catch (err) {
     console.error('[admin] partner update error:', err);
     res.status(500).json({ error: 'Failed to update partner' });

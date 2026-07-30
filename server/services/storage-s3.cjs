@@ -429,7 +429,7 @@ async function resolveDragonImageUrl(value) {
   if (value.startsWith('mock://')) return value;
 
   // Bare S3 key
-  if (value.startsWith('lessons/') || value.startsWith('branding/')) {
+  if (value.startsWith('lessons/') || value.startsWith('branding/') || value.startsWith('demo-videos/') || value.startsWith('home-cards/') || value.startsWith('partners/')) {
     console.log(`[lesson-image] resolving bare key: ${value}`);
     return getPresignedReadUrl(value);
   }
@@ -438,7 +438,7 @@ async function resolveDragonImageUrl(value) {
   if (value.startsWith('https://') && value.includes('.amazonaws.com/')) {
     const key = value.replace(/^https:\/\/[^/]+\//, '');
     console.log(`[lesson-image] resolving full S3 URL, extracted key: ${key}`);
-    if (key.startsWith('lessons/') || key.startsWith('branding/')) {
+    if (key.startsWith('lessons/') || key.startsWith('branding/') || key.startsWith('demo-videos/') || key.startsWith('home-cards/') || key.startsWith('partners/')) {
       // Always re-sign with current bucket regardless of source bucket (handles dev→prod syncs)
       return getPresignedReadUrl(key);
     }
@@ -534,6 +534,36 @@ async function uploadBrandingImage(fileBuffer, slot, extension = 'jpg') {
   await s3Client.send(command);
 
   console.log(`Branding image uploaded to S3: ${key}`);
+  return key;
+}
+
+/**
+ * Upload a partner signup QR code to AWS S3. Bucket is private (ACLs are disabled
+ * bucket-wide) — read via resolveDragonImageUrl, which presigns `partners/` keys.
+ * @param {Buffer} fileBuffer - PNG buffer
+ * @param {string} slug - Partner slug
+ * @returns {Promise<string>} - S3 key (not a full URL), or mock path
+ */
+async function uploadPartnerQrCode(fileBuffer, slug) {
+  const key = `partners/${slug}/qr.png`;
+
+  if (!S3_ENABLED || !s3Client) {
+    console.warn('S3 not configured, using mock storage path for partner QR code');
+    return `mock://${key}`;
+  }
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: 'image/png',
+    Metadata: { partnerSlug: slug, uploadedAt: new Date().toISOString() },
+    ServerSideEncryption: 'AES256',
+  });
+
+  await s3Client.send(command);
+
+  console.log(`Partner QR code uploaded to S3: ${key}`);
   return key;
 }
 
@@ -644,6 +674,76 @@ async function uploadLessonContentVideo(fileBuffer, lessonId, extension = 'mp4')
   return key;
 }
 
+/**
+ * Upload a demo video shown in the mobile Learn tab's "Demo Videos" section.
+ * Bucket is private — read via resolveDragonImageUrl (handles `demo-videos/` keys).
+ * @param {Buffer} fileBuffer
+ * @param {string} demoVideoId
+ * @param {string} extension - e.g. 'mp4', 'mov', 'webm'
+ * @returns {Promise<string>} - S3 key (not a full URL)
+ */
+async function uploadDemoVideo(fileBuffer, demoVideoId, extension = 'mp4') {
+  const key = `demo-videos/${demoVideoId}/${crypto.randomUUID()}.${extension}`;
+
+  if (!S3_ENABLED || !s3Client) {
+    console.warn('S3 not configured, using mock storage path for demo video');
+    return `mock://${key}`;
+  }
+
+  const contentTypeMap = { mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', m4v: 'video/x-m4v' };
+  const contentType = contentTypeMap[extension.toLowerCase()] || 'video/mp4';
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: contentType,
+    Metadata: { demoVideoId, uploadedAt: new Date().toISOString() },
+    ServerSideEncryption: 'AES256',
+  });
+
+  await s3Client.send(command);
+
+  console.log(`Demo video uploaded to S3: ${key}`);
+  return key;
+}
+
+/**
+ * Upload (or replace) the banner image for a Home Card. Each upload gets a
+ * fresh key under the card's folder — the caller overwrites HomeCard.image
+ * with the new key, so the old object is simply orphaned (matches
+ * uploadDemoVideo's approach; no cleanup job for orphaned keys yet).
+ * @param {Buffer} fileBuffer
+ * @param {string} homeCardId
+ * @param {string} extension - e.g. 'jpg', 'png', 'webp'
+ * @returns {Promise<string>} - S3 key (not a full URL — resolve via resolveDragonImageUrl)
+ */
+async function uploadHomeCardImage(fileBuffer, homeCardId, extension = 'jpg') {
+  const key = `home-cards/${homeCardId}/${crypto.randomUUID()}.${extension}`;
+
+  if (!S3_ENABLED || !s3Client) {
+    console.warn('S3 not configured, using mock storage path for home card image');
+    return `mock://${key}`;
+  }
+
+  const contentTypeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
+  const contentType = contentTypeMap[extension.toLowerCase()] || 'image/jpeg';
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: contentType,
+    Metadata: { homeCardId, uploadedAt: new Date().toISOString() },
+    ServerSideEncryption: 'AES256',
+  });
+
+  await s3Client.send(command);
+
+  console.log(`Home card image uploaded to S3: ${key}`);
+  return key;
+}
+
 // Matches markdown-style image/video markers embedded in contentV2, e.g.
 // ![](lessons/WELCOME-1/content-images/abc.jpg) or ![video](lessons/.../content-videos/abc.mp4)
 const CONTENT_MEDIA_MARKER = /!\[(video)?\]\(([^)]+)\)/g;
@@ -677,9 +777,12 @@ module.exports = {
   deleteProfileImage,
   uploadSupportAttachment,
   uploadLessonImage,
+  uploadPartnerQrCode,
   uploadLessonAudio,
   uploadLessonContentImage,
   uploadLessonContentVideo,
+  uploadDemoVideo,
+  uploadHomeCardImage,
   uploadBrandingImage,
   resolveDragonImageUrl,
   resolveLessonAudioUrl,

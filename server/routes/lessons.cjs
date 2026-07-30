@@ -165,6 +165,44 @@ router.get('/branding-images', requireAuth, async (req, res) => {
 });
 
 /**
+ * GET /api/lessons/demo-videos
+ * Admin-uploaded demo videos for the Learn tab's "Demo Videos" section
+ * (active only, in display order), with videoUrl/thumbnailUrl resolved to
+ * presigned, playable URLs.
+ */
+router.get('/demo-videos', requireAuth, async (req, res) => {
+  try {
+    const demoVideos = await prisma.demoVideo.findMany({
+      where: { isActive: true, videoUrl: { not: null } },
+      orderBy: { displayOrder: 'asc' },
+      select: { id: true, title: true, description: true, additionalText: true, videoUrl: true, thumbnailUrl: true, lessonId: true, createdAt: true },
+    });
+
+    const lessonIds = [...new Set(demoVideos.map(v => v.lessonId).filter(Boolean))];
+    const lessons = lessonIds.length
+      ? await prisma.lesson.findMany({ where: { id: { in: lessonIds } }, select: { id: true, title: true, module: true } })
+      : [];
+    const lessonById = new Map(lessons.map(l => [l.id, l]));
+
+    const resolved = await Promise.all(demoVideos.map(async (v) => {
+      const lesson = v.lessonId ? lessonById.get(v.lessonId) : null;
+      return {
+        ...v,
+        videoUrl: await resolveDragonImageUrl(v.videoUrl),
+        thumbnailUrl: await resolveDragonImageUrl(v.thumbnailUrl),
+        lessonTitle: lesson?.title ?? null,
+        moduleKey: lesson?.module ?? null,
+      };
+    }));
+
+    res.json({ demoVideos: resolved });
+  } catch (error) {
+    console.error('Get demo videos error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch demo videos' });
+  }
+});
+
+/**
  * GET /api/lessons
  * Get all lessons with user progress
  * Query params: ?module=FOUNDATION (filter by module)

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  getPartners, createPartner, updatePartner, deactivatePartner,
+  getPartners, createPartner, updatePartner, deactivatePartner, regeneratePartnerQrCode,
   Partner, PartnerCreatePayload,
 } from '../api/adminApi';
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
@@ -75,6 +75,11 @@ export default function PartnersPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
+
+  // QR code modal
+  const [qrPartner, setQrPartner] = useState<Partner | null>(null);
+  const [qrGenerating, setQrGenerating] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
 
   useEffect(() => {
     load();
@@ -185,6 +190,26 @@ export default function PartnersPage() {
 
   function copyUrl(slug: string) {
     navigator.clipboard.writeText(partnerUrl(slug)).catch(() => {});
+  }
+
+  function openQr(partner: Partner) {
+    setQrError(null);
+    setQrPartner(partner);
+  }
+
+  async function handleGenerateQr() {
+    if (!qrPartner) return;
+    setQrGenerating(true);
+    setQrError(null);
+    try {
+      const updated = await regeneratePartnerQrCode(qrPartner.id, callOpts);
+      setPartners(prev => prev.map(p => p.id === updated.id ? updated : p));
+      setQrPartner(updated);
+    } catch (e: unknown) {
+      setQrError(e instanceof Error ? e.message : 'Failed to generate QR code');
+    } finally {
+      setQrGenerating(false);
+    }
   }
 
   const fmt = (d: string) => new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -424,6 +449,14 @@ export default function PartnersPage() {
                       >
                         Copy
                       </button>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ fontSize: 11, padding: '2px 8px', height: 24 }}
+                        onClick={() => openQr(p)}
+                        title="QR code"
+                      >
+                        QR
+                      </button>
                     </div>
                   </td>
                   <td style={{ fontSize: 13 }}>
@@ -468,6 +501,53 @@ export default function PartnersPage() {
             </tbody>
           </table>
         )
+      )}
+
+      {qrPartner && (
+        <div className="modal-overlay" onClick={() => setQrPartner(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ width: 360, textAlign: 'center' }}>
+            <div className="modal-header">
+              <h2>{qrPartner.name}</h2>
+              <button className="btn-remove" onClick={() => setQrPartner(null)}>&times;</button>
+            </div>
+            <code style={{ fontSize: 12, background: '#f3f4f6', padding: '2px 6px', borderRadius: 4 }}>
+              {partnerUrl(qrPartner.slug)}
+            </code>
+            <div style={{ margin: '16px 0' }}>
+              {qrPartner.qrCodeUrl ? (
+                <img
+                  src={qrPartner.qrCodeUrl}
+                  alt={`QR code for ${qrPartner.name}`}
+                  style={{ width: 240, height: 240, border: '1px solid #e5e7eb', borderRadius: 8 }}
+                />
+              ) : (
+                <p style={{ fontSize: 13, color: '#6b7280' }}>No QR code yet for this partner.</p>
+              )}
+            </div>
+            {qrError && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 10 }}>{qrError}</p>}
+            <div className="modal-actions" style={{ justifyContent: 'center' }}>
+              {qrPartner.qrCodeUrl ? (
+                <>
+                  <a
+                    className="btn btn-secondary"
+                    href={qrPartner.qrCodeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open in new tab
+                  </a>
+                  <button className="btn btn-secondary" disabled={qrGenerating} onClick={handleGenerateQr}>
+                    {qrGenerating ? 'Regenerating…' : 'Regenerate'}
+                  </button>
+                </>
+              ) : (
+                <button className="btn btn-primary" disabled={qrGenerating} onClick={handleGenerateQr}>
+                  {qrGenerating ? 'Generating…' : 'Generate QR code'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

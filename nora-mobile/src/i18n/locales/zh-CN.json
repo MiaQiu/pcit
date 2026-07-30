@@ -704,13 +704,34 @@
       "4end": " 捕捉另一个超赞的游戏时光吧！"
     }
   },
+  "lessonRead": {
+    "title": "课程",
+    "noContent": "该课程暂无文字版本。"
+  },
+  "demoVideoDetail": {
+    "viewLesson": "查看课程"
+  },
   "learnV2": {
     "title": "探索课程",
     "subtitle": "为您精选",
     "lockedNotice": "先完成基础章节以解锁此章节。",
     "completeFoundationFirst": "请先完成基础章节",
     "noLessonsFound": "找不到课程",
-    "tryDifferentSearch": "尝试不同的关键字"
+    "tryDifferentSearch": "尝试不同的关键字",
+    "noraFoundationsDuration": "120 分钟",
+    "demoVideosTitle": "演示视频",
+    "timeAgo": {
+      "years_other": "{{count}} 年前",
+      "months_other": "{{count}} 个月前",
+      "weeks_other": "{{count}} 周前",
+      "days_other": "{{count}} 天前",
+      "hours_other": "{{count}} 小时前",
+      "minutes_other": "{{count}} 分钟前",
+      "justNow": "刚刚"
+    },
+    "noraFoundationsTitle": "Nora Foundations",
+    "noraFoundationsSubtitle": "Connection & Calm Discipline",
+    "gettingStartedTitle": "入门指南"
   },
   "learnV3": {
     "title": "Professor Yi-Chuen Chen",

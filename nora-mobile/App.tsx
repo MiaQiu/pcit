@@ -12,8 +12,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   useFonts,
   PlusJakartaSans_400Regular,
+  PlusJakartaSans_400Regular_Italic,
   PlusJakartaSans_600SemiBold,
   PlusJakartaSans_700Bold,
+  PlusJakartaSans_700Bold_Italic,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import crashlytics from '@react-native-firebase/crashlytics';
 import Purchases from 'react-native-purchases';
@@ -53,6 +55,11 @@ const linking = {
           Progress: 'progress',
         },
       },
+      // Tapped from share-home-card.html's "Open App" button (nora://card/:cardId
+      // or https://hinora.co/card/:cardId) — only resolves while the user is
+      // already logged in, since this screen only exists in the authenticated
+      // stack; a logged-out tap just opens the app normally.
+      HomeCardDetail: { path: 'card/:cardId', parse: { cardId: String } },
     },
   },
 };
@@ -179,8 +186,10 @@ const AppContent: React.FC = () => {
 export default function App() {
   const [fontsLoaded, fontError] = useFonts({
     PlusJakartaSans_400Regular,
+    PlusJakartaSans_400Regular_Italic,
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
+    PlusJakartaSans_700Bold_Italic,
   });
   const [langReady, setLangReady] = useState(false);
   const [rcReady, setRcReady] = useState(false);

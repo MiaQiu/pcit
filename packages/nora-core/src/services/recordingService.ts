@@ -476,6 +476,82 @@ class RecordingService {
   }
 
   /**
+   * Get admin-configured sub-action cards for the Home screen (active only,
+   * in display order). CONTENT cards open a detail page (fetch via
+   * getHomeCardDetail); QUOTE cards get a share button instead.
+   */
+  async getHomeCards(): Promise<{ homeCards: Array<{
+    id: string;
+    cardType: 'CONTENT' | 'QUOTE';
+    badgeText: string;
+    badgeColor: string;
+    message: string;
+    messageFontSize: 'SMALL' | 'MEDIUM' | 'LARGE';
+    messageBold: boolean;
+    messageItalic: boolean;
+    attribution: string | null;
+    imageUrl: string | null;
+    isLiked: boolean;
+  }> }> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/config/home-cards`
+    );
+
+    if (!response.ok) {
+      return { homeCards: [] };
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Set the requesting user's like state on a home card (the heart button).
+   * `liked` is the desired end state, not a flip, so a retried/duplicate tap
+   * is idempotent.
+   */
+  async toggleHomeCardLike(id: string, liked: boolean): Promise<{ liked: boolean }> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/config/home-cards/${id}/like`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ liked }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to update like');
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Get the full title + body for one CONTENT home card, to render on the
+   * detail page opened by tapping its arrow.
+   */
+  async getHomeCardDetail(id: string): Promise<{
+    id: string;
+    badgeText: string;
+    badgeColor: string;
+    detailTitle: string;
+    detailContent: string;
+    imageUrl: string | null;
+  }> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/config/home-cards/${id}`
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to fetch home card');
+    }
+
+    return await response.json();
+  }
+
+  /**
    * Get weekly reports that the admin has made visible for this user
    */
   async getVisibleWeeklyReports(): Promise<{ reports: Array<{

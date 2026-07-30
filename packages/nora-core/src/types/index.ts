@@ -430,6 +430,27 @@ export interface BrandingImagesResponse {
   learnSubtitle: string | null;
 }
 
+// Admin-uploaded videos for the Learn tab's "Demo Videos" section, active
+// only, in display order.
+export interface DemoVideo {
+  id: string;
+  title: string;
+  description: string | null;
+  additionalText: string | null;
+  videoUrl: string;
+  thumbnailUrl: string | null;
+  lessonId: string | null;
+  lessonTitle: string | null;
+  // string, not LessonModule — the backend enum has values (e.g.
+  // GETTING_STARTED) this union hasn't caught up to yet.
+  moduleKey: string | null;
+  createdAt: string;
+}
+
+export interface DemoVideosResponse {
+  demoVideos: DemoVideo[];
+}
+
 // ============================================================================
 // TEXT INPUT TYPES
 // Interactive text input segments with AI evaluation

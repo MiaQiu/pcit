@@ -21,8 +21,10 @@ export const COLORS = {
 // Typography
 export const FONTS = {
   regular: 'PlusJakartaSans_400Regular',
+  regularItalic: 'PlusJakartaSans_400Regular_Italic',
   semiBold: 'PlusJakartaSans_600SemiBold',
   bold: 'PlusJakartaSans_700Bold',
+  boldItalic: 'PlusJakartaSans_700Bold_Italic',
 };
 
 // Sound Effects
