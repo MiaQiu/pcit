@@ -37,6 +37,18 @@ const FONT_SIZE_OPTIONS: { label: string; value: HomeCardFontSize; px: number }[
   { label: 'Large', value: 'LARGE', px: 18 },
 ];
 
+// Mirrors SUB_ACTION_CARD_ICONS in HomeScreen_v2.tsx, keyed by exact badge
+// name — served from admin/public/subaction-icons (copies of the same files
+// under nora-mobile/assets/images/SubActionCard_icon). A badge with no
+// matching icon shows none, same as mobile.
+const SUB_ACTION_CARD_ICON_URLS: Record<string, string> = {
+  'Science Bite': '/subaction-icons/science_bite.png',
+  'Try This Today': '/subaction-icons/try_this_today.png',
+  'Quick Reflection': '/subaction-icons/quick_reflection.png',
+  "Today's Thought": '/subaction-icons/today_thought.png',
+  'Community Wisdom': '/subaction-icons/community_wisdom.png',
+};
+
 // Select text and click Bold (or Ctrl/Cmd+B) to wrap it in **...** — same
 // markdown-lite convention as the lesson/demo-video editors, parsed by
 // formatLessonContentV2 on mobile. `getTextarea` (rather than a single
@@ -703,55 +715,80 @@ function HomeCardModal({
               const previewColor = previewBadge?.color || BADGE_COLOR_PRESETS[0].value;
               const basePx = FONT_SIZE_OPTIONS.find((o) => o.value === messageFontSize)!.px;
               const { headline, description } = splitPreviewMessage(message);
+              const iconUrl = previewBadge ? SUB_ACTION_CARD_ICON_URLS[previewBadge.name] : undefined;
               return (
                 <div
                   style={{
+                    // Matches a phone card's actual rendered width (device
+                    // width minus SubActionCard's 20px marginHorizontal on
+                    // each side) — the modal itself is much wider, so
+                    // without this the preview stretches far past what the
+                    // card looks like in the app.
+                    maxWidth: 350,
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
                     marginTop: 10,
                     padding: 20,
                     borderRadius: 20,
                     backgroundColor: lightenHex(previewColor, 0.92),
                   }}
                 >
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      padding: '5px 12px',
-                      borderRadius: 999,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: 0.4,
-                      textTransform: 'uppercase',
-                      color: previewColor,
-                      backgroundColor: lightenHex(previewColor, 0.82),
-                      marginBottom: 12,
-                    }}
-                  >
-                    {previewBadge?.name || 'Badge'}
-                  </span>
-                  <p
-                    style={{
-                      margin: '0 0 6px',
-                      fontSize: basePx + 4,
-                      fontWeight: 700,
-                      fontStyle: messageItalic ? 'italic' : 'normal',
-                      color: '#1E2939',
-                    }}
-                  >
-                    {headline ? renderInlineFormatted(headline) : 'Preview of the headline text...'}
-                  </p>
-                  {description && (
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: basePx - 1,
-                        fontWeight: messageBold ? 700 : 400,
-                        fontStyle: messageItalic ? 'italic' : 'normal',
-                        color: '#6B7280',
-                      }}
-                    >
-                      {renderInlineFormatted(description)}
-                    </p>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          padding: '5px 12px',
+                          borderRadius: 999,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          letterSpacing: 0.4,
+                          textTransform: 'uppercase',
+                          color: previewColor,
+                          backgroundColor: lightenHex(previewColor, 0.82),
+                          marginBottom: 12,
+                        }}
+                      >
+                        {previewBadge?.name || 'Badge'}
+                      </span>
+                      <p
+                        style={{
+                          margin: '0 0 6px',
+                          fontSize: basePx + 4,
+                          fontWeight: 700,
+                          fontStyle: messageItalic ? 'italic' : 'normal',
+                          color: '#1E2939',
+                        }}
+                      >
+                        {headline ? renderInlineFormatted(headline) : 'Preview of the headline text...'}
+                      </p>
+                      {description && (
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: basePx - 1,
+                            fontWeight: messageBold ? 700 : 400,
+                            fontStyle: messageItalic ? 'italic' : 'normal',
+                            color: '#6B7280',
+                          }}
+                        >
+                          {renderInlineFormatted(description)}
+                        </p>
+                      )}
+                    </div>
+                    {(previewImageSrc || iconUrl) && (
+                      <img
+                        src={previewImageSrc || iconUrl}
+                        style={{
+                          width: 64,
+                          height: 64,
+                          borderRadius: 12,
+                          objectFit: previewImageSrc ? 'cover' : 'contain',
+                          background: previewImageSrc ? 'rgba(255,255,255,0.5)' : 'transparent',
+                        }}
+                      />
+                    )}
+                  </div>
                   <div style={{ height: 1, backgroundColor: 'rgba(30,41,57,0.08)', margin: '16px 0' }} />
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ color: '#8C49D5', fontWeight: 600, fontSize: 14 }}>Learn more &rarr;</span>
@@ -769,6 +806,11 @@ function HomeCardModal({
             <div
               style={{
                 position: 'relative',
+                // Matches a phone card's actual rendered width — see the
+                // comment on the CONTENT preview's maxWidth above.
+                maxWidth: 350,
+                marginLeft: 'auto',
+                marginRight: 'auto',
                 marginTop: 10,
                 padding: '28px 24px',
                 borderRadius: 20,

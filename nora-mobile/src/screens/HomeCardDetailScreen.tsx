@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Image, TextInput, Share, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Image, TextInput, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LessonContentBlocks } from '../components/LessonContentBlocks';
@@ -147,10 +147,12 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
     const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
     const shareUrl = `${webUrl}/share-home-card.html?card_id=${encodeURIComponent(cardId)}`;
 
-    // iOS surfaces `url` in the share sheet separately from `message`; Android's
-    // Share module ignores `url` entirely, so the link has to live in the text.
+    // `message` always carries the link as plain text: Android's Share module
+    // ignores `url` entirely, and on iOS, passing url+message as two separate
+    // items makes the sheet's "Copy" action write a serialized item instead
+    // of plain text unless the link is also embedded in the message itself.
     Share.share({
-      message: Platform.OS === 'android' ? `${detail.detailTitle}\n\n${shareUrl}` : detail.detailTitle,
+      message: `${detail.detailTitle}\n\n${shareUrl}`,
       url: shareUrl,
     }).catch(() => {});
   };

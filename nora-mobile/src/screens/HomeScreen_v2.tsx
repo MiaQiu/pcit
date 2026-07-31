@@ -33,10 +33,17 @@ import { ProfileCircle } from '../components/ProfileCircle';
 import { COLORS, FONTS } from '../constants/assets';
 
 const DRAGON_ANIMATION = require('../../assets/images/dragon_amine3.mov');
-// Default decorative graphic for a CONTENT home card's right-side icon slot,
-// shown when the admin hasn't uploaded a custom card image (see card.imageUrl
-// below).
-const BULB_ICON = require('../../assets/images/bulb_icon.png');
+// Decorative graphic for a CONTENT home card's right-side icon slot, keyed
+// by exact badge name — shown when the admin hasn't uploaded a custom card
+// image (see card.imageUrl below). A badge with no matching icon (e.g. one
+// the admin just added) simply shows no icon, rather than a mismatched one.
+const SUB_ACTION_CARD_ICONS: Record<string, ReturnType<typeof require>> = {
+  'Science Bite': require('../../assets/images/SubActionCard_icon/science_bite.png'),
+  'Try This Today': require('../../assets/images/SubActionCard_icon/try_this_today.png'),
+  'Quick Reflection': require('../../assets/images/SubActionCard_icon/quick_reflection.png'),
+  "Today's Thought": require('../../assets/images/SubActionCard_icon/today_thought.png'),
+  'Community Wisdom': require('../../assets/images/SubActionCard_icon/community_wisdom.png'),
+};
 import { RootStackNavigationProp, RootTabNavigationProp } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -331,10 +338,12 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
     if (firstName) params.set('shared_by', firstName);
     const shareUrl = `${webUrl}/share-home-card.html?${params.toString()}`;
 
-    // iOS surfaces `url` in the share sheet separately from `message`; Android's
-    // Share module ignores `url` entirely, so the link has to live in the text.
+    // `message` always carries the link as plain text: Android's Share module
+    // ignores `url` entirely, and on iOS, passing url+message as two separate
+    // items makes the sheet's "Copy" action write a serialized item instead
+    // of plain text unless the link is also embedded in the message itself.
     Share.share({
-      message: Platform.OS === 'android' ? `${card.message}\n\n${shareUrl}` : card.message,
+      message: `${card.message}\n\n${shareUrl}`,
       url: shareUrl,
     }).catch(() => {});
   };
@@ -401,6 +410,7 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
   const cardBg = lightenHexColor(card.badgeColor, 0.92);
   const badgePillBg = lightenHexColor(card.badgeColor, 0.82);
   const cardBorder = lightenHexColor(card.badgeColor, 0.75);
+  const badgeIcon = SUB_ACTION_CARD_ICONS[card.badgeText];
 
   const inner = (
     <>
@@ -418,11 +428,13 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
             </Text>
           )}
         </View>
-        <Image
-          source={card.imageUrl ? { uri: card.imageUrl } : BULB_ICON}
-          style={[styles.subActionContentIcon, !card.imageUrl && styles.subActionContentIconTransparent]}
-          resizeMode={card.imageUrl ? 'cover' : 'contain'}
-        />
+        {(card.imageUrl || badgeIcon) && (
+          <Image
+            source={card.imageUrl ? { uri: card.imageUrl } : badgeIcon}
+            style={[styles.subActionContentIcon, !card.imageUrl && styles.subActionContentIconTransparent]}
+            resizeMode={card.imageUrl ? 'cover' : 'contain'}
+          />
+        )}
       </View>
 
       <View style={styles.subActionDivider} />
