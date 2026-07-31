@@ -54,14 +54,14 @@ model Module {
 }
 
 model ModuleTranslation {
-  moduleId      String
-  locale        String
-  title         String
-  description   String
+  moduleId       String
+  locale         String
+  title          String
+  description    String
   autoTranslated Boolean  @default(true)
-  reviewed      Boolean   @default(false)
-  translatedAt  DateTime  @default(now())
-  module        Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  reviewed       Boolean  @default(false)
+  translatedAt   DateTime @default(now())
+  module         Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@id([moduleId, locale])
   @@index([locale])
@@ -87,10 +87,10 @@ model Lesson {
   ellipse78Color     String               @default("#A6E0CB")
   createdAt          DateTime             @default(now())
   updatedAt          DateTime
-  LessonSegment        LessonSegment[]
-  LessonTranslation    LessonTranslation[]
-  Quiz                 Quiz?
-  UserLessonProgress   UserLessonProgress[]
+  LessonSegment      LessonSegment[]
+  LessonTranslation  LessonTranslation[]
+  Quiz               Quiz?
+  UserLessonProgress UserLessonProgress[]
 
   @@unique([module, dayNumber])
   @@index([module])
@@ -200,16 +200,16 @@ model Phq2Survey {
 }
 
 model Quiz {
-  id               String           @id
-  lessonId         String           @unique
+  id               String            @id
+  lessonId         String            @unique
   question         String
   correctAnswer    String
   explanation      String
   wrongExplanation String?
   quizPosition     Int?
-  createdAt        DateTime         @default(now())
+  createdAt        DateTime          @default(now())
   updatedAt        DateTime
-  Lesson           Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  Lesson           Lesson            @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   QuizOption       QuizOption[]
   QuizResponse     QuizResponse[]
   QuizTranslation  QuizTranslation[]
@@ -287,7 +287,7 @@ model RiskAuditLog {
 }
 
 model Session {
-  id                     String          @id
+  id                     String           @id
   userId                 String
   mode                   SessionMode
   storagePath            String
@@ -296,12 +296,12 @@ model Session {
   aiFeedbackJSON         Json
   pcitCoding             Json
   tagCounts              Json
-  masteryAchieved        Boolean         @default(false)
-  riskScore              Int             @default(0)
-  flaggedForReview       Boolean         @default(false)
-  coachAlertSent         Boolean         @default(false)
+  masteryAchieved        Boolean          @default(false)
+  riskScore              Int              @default(0)
+  flaggedForReview       Boolean          @default(false)
+  coachAlertSent         Boolean          @default(false)
   coachAlertSentAt       DateTime?
-  createdAt              DateTime        @default(now())
+  createdAt              DateTime         @default(now())
   childMetrics           Json?
   competencyAnalysis     Json?
   overallScore           Int?
@@ -314,12 +314,12 @@ model Session {
   transcriptionService   String?
   analysisError          String?
   analysisFailedAt       DateTime?
-  analysisStatus         AnalysisStatus  @default(PENDING)
+  analysisStatus         AnalysisStatus   @default(PENDING)
   lastRetriedAt          DateTime?
-  permanentFailure       Boolean         @default(false)
-  retryCount             Int             @default(0)
-  roleIdDone             Boolean         @default(false)
-  pcitCodingDone         Boolean         @default(false)
+  permanentFailure       Boolean          @default(false)
+  retryCount             Int              @default(0)
+  roleIdDone             Boolean          @default(false)
+  pcitCodingDone         Boolean          @default(false)
   enrichmentStatus       EnrichmentStatus @default(PENDING)
   enrichmentError        String?
   coachingSummary        String?
@@ -327,7 +327,7 @@ model Session {
   milestoneCelebrations  Json?
   userFeedback           Json?
   codingReviewedAt       DateTime?
-  User                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User                   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   Utterance              Utterance[]
   ChildProfiling         ChildProfiling?
 
@@ -407,66 +407,67 @@ model ThirdPartyRequest {
 }
 
 model User {
-  id                    String               @id
-  email                 String               @unique
-  passwordHash          String
-  name                  String?
-  therapistId           String?
-  childName             String?
-  createdAt             DateTime             @default(now())
-  currentStreak         Int                  @default(0)
-  lastSessionDate       DateTime?
-  longestStreak         Int                  @default(0)
-  childBirthYear        Int
-  childConditions       String
-  emailHash             String?              @unique
-  childBirthday         DateTime?
-  issue                 String?
-  profileImageUrl       String?
-  subscriptionEndDate   DateTime?
-  subscriptionPlan      SubscriptionPlan     @default(FREE)
-  subscriptionStartDate DateTime?
-  subscriptionStatus    SubscriptionStatus   @default(INACTIVE)
-  trialEndDate          DateTime?
-  trialStartDate        DateTime?
-  relationshipToChild   RelationshipToChild  @default(MOTHER)
-  childGender           ChildGender?
-  pushToken                String?
-  pushTokenUpdatedAt       DateTime?
-  revenueCatCustomerId     String?              @unique
-  stripeCustomerId         String?              @unique
-  stripeSubscriptionId     String?              @unique
-  subscriptionSource       String?              // 'stripe' | 'revenuecat' | 'admin'
-  developmentalVisible     Boolean              @default(false)
-  isFreeAccount            Boolean              @default(false)
-  tag                      String               @default("user")
-  referralCode          String?              @unique
-  preferredLocale       String               @default("en")
-  LearningProgress      LearningProgress?
-  ModuleHistory         ModuleHistory[]
-  PasswordResetToken    PasswordResetToken[]
-  Phq2Survey            Phq2Survey[]
-  QuizResponse          QuizResponse[]
-  RiskAuditLog          RiskAuditLog[]
-  Session               Session[]
-  SubscriptionEvent     SubscriptionEvent[]
-  SupportRequest        SupportRequest[]
-  TextInputResponse     TextInputResponse[]
-  ThirdPartyRequest     ThirdPartyRequest[]
-  UserLessonProgress    UserLessonProgress[]
-  UserSkillProgress     UserSkillProgress[]
-  WacbSurvey            WacbSurvey[]
-  ChildProfiling        ChildProfiling[]
-  Child                 Child[]
-  WeeklyReport          WeeklyReport[]
-  CoachChatMessage      CoachChatMessage[]
-  AbcLog                AbcLog[]
-  AbcInsight            AbcInsight[]
-  HomeCardLike          HomeCardLike[]
-  referralsGiven        Referral[]           @relation("ReferralsGiven")
-  referralReceived      Referral?            @relation("ReferralReceived")
-  partnerId             String?
-  partner               Partner?             @relation(fields: [partnerId], references: [id])
+  id                        String                      @id
+  email                     String                      @unique
+  passwordHash              String
+  name                      String?
+  therapistId               String?
+  childName                 String?
+  createdAt                 DateTime                    @default(now())
+  currentStreak             Int                         @default(0)
+  lastSessionDate           DateTime?
+  longestStreak             Int                         @default(0)
+  childBirthYear            Int
+  childConditions           String
+  emailHash                 String?                     @unique
+  childBirthday             DateTime?
+  issue                     String?
+  profileImageUrl           String?
+  subscriptionEndDate       DateTime?
+  subscriptionPlan          SubscriptionPlan            @default(FREE)
+  subscriptionStartDate     DateTime?
+  subscriptionStatus        SubscriptionStatus          @default(INACTIVE)
+  trialEndDate              DateTime?
+  trialStartDate            DateTime?
+  relationshipToChild       RelationshipToChild         @default(MOTHER)
+  childGender               ChildGender?
+  pushToken                 String?
+  pushTokenUpdatedAt        DateTime?
+  revenueCatCustomerId      String?                     @unique
+  stripeCustomerId          String?                     @unique
+  stripeSubscriptionId      String?                     @unique
+  subscriptionSource        String? // 'stripe' | 'revenuecat' | 'admin'
+  developmentalVisible      Boolean                     @default(false)
+  isFreeAccount             Boolean                     @default(false)
+  tag                       String                      @default("user")
+  referralCode              String?                     @unique
+  preferredLocale           String                      @default("en")
+  LearningProgress          LearningProgress?
+  ModuleHistory             ModuleHistory[]
+  PasswordResetToken        PasswordResetToken[]
+  Phq2Survey                Phq2Survey[]
+  QuizResponse              QuizResponse[]
+  RiskAuditLog              RiskAuditLog[]
+  Session                   Session[]
+  SubscriptionEvent         SubscriptionEvent[]
+  SupportRequest            SupportRequest[]
+  TextInputResponse         TextInputResponse[]
+  ThirdPartyRequest         ThirdPartyRequest[]
+  UserLessonProgress        UserLessonProgress[]
+  UserSkillProgress         UserSkillProgress[]
+  WacbSurvey                WacbSurvey[]
+  ChildProfiling            ChildProfiling[]
+  Child                     Child[]
+  WeeklyReport              WeeklyReport[]
+  CoachChatMessage          CoachChatMessage[]
+  AbcLog                    AbcLog[]
+  AbcInsight                AbcInsight[]
+  HomeCardLike              HomeCardLike[]
+  HomeCardUserInputResponse HomeCardUserInputResponse[]
+  referralsGiven            Referral[]                  @relation("ReferralsGiven")
+  referralReceived          Referral?                   @relation("ReferralReceived")
+  partnerId                 String?
+  partner                   Partner?                    @relation(fields: [partnerId], references: [id])
 
   @@index([emailHash])
   @@index([pushToken])
@@ -540,9 +541,9 @@ model Utterance {
 }
 
 model WacbSurvey {
-  id                   String   @id
+  id                   String               @id
   userId               String
-  submittedAt          DateTime @default(now())
+  submittedAt          DateTime             @default(now())
   parentingStressLevel Int
   q1Dawdle             Int
   q2MealBehavior       Int
@@ -554,8 +555,8 @@ model WacbSurvey {
   q8Interrupt          Int
   q9Attention          Int
   totalScore           Int
-  User               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ChildIssuePriority ChildIssuePriority[]
+  User                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ChildIssuePriority   ChildIssuePriority[]
 
   @@index([submittedAt])
   @@index([userId])
@@ -581,18 +582,18 @@ model ChildProfiling {
 }
 
 model Child {
-  id                String                @id @default(uuid())
-  userId            String
-  name              String?
-  birthday          DateTime?
-  gender            ChildGender?
-  conditions        String?
-  primaryIssue      ClinicalLevel?
-  primaryStrategy   InterventionStrategy?
-  secondaryIssue    ClinicalLevel?
-  secondaryStrategy InterventionStrategy?
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
+  id                 String                @id @default(uuid())
+  userId             String
+  name               String?
+  birthday           DateTime?
+  gender             ChildGender?
+  conditions         String?
+  primaryIssue       ClinicalLevel?
+  primaryStrategy    InterventionStrategy?
+  secondaryIssue     ClinicalLevel?
+  secondaryStrategy  InterventionStrategy?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
   User               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   ChildMilestone     ChildMilestone[]
   ChildProfiling     ChildProfiling[]
@@ -754,9 +755,9 @@ model Partner {
   slug        String        @unique
   name        String
   status      PartnerStatus @default(ACTIVE)
-  config      Json          // PartnerConfig: { trialDays, plans, discounts: { monthly, yearly }, welcomeMessage, maxRedemptions }
-                            // (older rows may still have a single legacy `discount` field instead of
-                            // `discounts` — see server/utils/partnerDiscount.cjs normalizeDiscounts())
+  config      Json // PartnerConfig: { trialDays, plans, discounts: { monthly, yearly }, welcomeMessage, maxRedemptions }
+  // (older rows may still have a single legacy `discount` field instead of
+  // `discounts` — see server/utils/partnerDiscount.cjs normalizeDiscounts())
   expiresAt   DateTime?
   redemptions Int           @default(0)
   qrCodeUrl   String?
@@ -801,11 +802,11 @@ enum SupportRequestStatus {
 }
 
 enum ClinicalLevel {
-  STABILIZE       // Level I
-  DE_ESCALATE     // Level II
-  DIRECT          // Level III
-  SUPPORT         // Level IV
-  FLOURISH        // Level V
+  STABILIZE // Level I
+  DE_ESCALATE // Level II
+  DIRECT // Level III
+  SUPPORT // Level IV
+  FLOURISH // Level V
 }
 
 model AppConfig {
@@ -820,23 +821,23 @@ model AppConfig {
 // resolveDragonImageUrl. Ordered by displayOrder; only isActive videos are
 // served to mobile.
 model DemoVideo {
-  id            String   @id @default(uuid())
-  title         String
-  description   String?
+  id             String   @id @default(uuid())
+  title          String
+  description    String?
   // Longer-form text shown below the video (below description, above the
   // "View the Lesson" link on mobile). Same **bold** / "* " bullet markdown
   // convention as Lesson.contentV2 — parsed via formatLessonContentV2.
   additionalText String?
-  videoUrl      String?
-  thumbnailUrl  String?
+  videoUrl       String?
+  thumbnailUrl   String?
   // Loose reference to Lesson.id (like Lesson.module — no formal relation),
   // shown as a "View the Lesson" link on the mobile detail screen. Resolved
   // to lessonTitle/moduleKey at read time via a lookup, not stored here.
-  lessonId      String?
-  isActive      Boolean  @default(true)
-  displayOrder  Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  lessonId       String?
+  isActive       Boolean  @default(true)
+  displayOrder   Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([isActive, displayOrder])
 }
@@ -845,28 +846,29 @@ model DemoVideo {
 // action card. Ordered by displayOrder; only isActive cards are served to
 // mobile via GET /api/config/home-cards.
 model HomeCard {
-  id            String       @id @default(uuid())
-  cardType      HomeCardType @default(CONTENT)
-  badgeText     String
-  badgeColor    String       @default("#8C49D5")
-  message       String
-  messageFontSize HomeCardFontSize @default(MEDIUM)
-  messageBold     Boolean          @default(false)
-  messageItalic   Boolean          @default(false)
+  id                 String              @id @default(uuid())
+  cardType           HomeCardType        @default(CONTENT)
+  badgeId            String
+  badge              HomeCardBadge       @relation(fields: [badgeId], references: [id])
+  message            String
+  messageFontSize    HomeCardFontSize    @default(MEDIUM)
+  messageBold        Boolean             @default(false)
+  messageItalic      Boolean             @default(false)
   // QUOTE cards only — author/source shown below the divider in the quote
   // layout (see SubActionCard's QUOTE branch in HomeScreen_v2.tsx).
-  attribution   String?
+  attribution        String?
   // Bare S3 key (like Lesson.dragonImageUrl) — resolved to a presigned URL at
   // read time via resolveDragonImageUrl. Optional banner image for the card.
-  image         String?
+  image              String?
   // CONTENT cards only — the linked page shown via GET /api/config/home-cards/:id.
-  detailTitle   String?
-  detailContent String?
-  isActive      Boolean      @default(true)
-  displayOrder  Int          @default(0)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  likes         HomeCardLike[]
+  detailTitle        String?
+  isActive           Boolean             @default(true)
+  displayOrder       Int                 @default(0)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  likes              HomeCardLike[]
+  components         HomeCardComponent[] @relation("HomeCardComponents")
+  linkedByComponents HomeCardComponent[] @relation("HomeCardComponentLink")
 
   @@index([isActive, displayOrder])
 }
@@ -886,6 +888,17 @@ enum HomeCardFontSize {
   LARGE
 }
 
+// Shared, reusable badge list for Home Cards (e.g. "Science Bite", "Try This
+// Today") — picked from or added to inline in the admin "Add Card" flow's
+// badge step, rather than retyped per card.
+model HomeCardBadge {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  color     String     @default("#8C49D5")
+  createdAt DateTime   @default(now())
+  homeCards HomeCard[]
+}
+
 // A user's like on a Home Card (heart button). One row per user per card —
 // toggled via POST /api/config/home-cards/:id/like.
 model HomeCardLike {
@@ -901,6 +914,66 @@ model HomeCardLike {
   @@index([homeCardId])
 }
 
+// One typed block in a CONTENT home card's detail page, in admin-chosen
+// order (replaces the old single detailContent blob). Authored and reordered
+// entirely within the card's edit form in the admin portal — POST/PUT
+// /api/admin/home-cards upsert-by-id this whole list per save, so a
+// component's id (and any HomeCardUserInputResponses tied to it) survives
+// edits to other blocks in the same card.
+model HomeCardComponent {
+  id               String                      @id @default(uuid())
+  homeCardId       String
+  homeCard         HomeCard                    @relation("HomeCardComponents", fields: [homeCardId], references: [id], onDelete: Cascade)
+  type             HomeCardComponentType
+  order            Int                         @default(0)
+  // TEXT only — same **bold** / *italic* / "* " bullet / "### " heading
+  // markdown-lite convention as the old detailContent, parsed via
+  // formatLessonContentV2.
+  text             String?
+  // IMAGE only — bare S3 key (like HomeCard.image), resolved to a presigned
+  // URL at read time via resolveDragonImageUrl.
+  image            String?
+  // OPEN_DETAILS only — a CTA button linking to another Home Card's detail
+  // page. SetNull (not Cascade) so deleting the linked card just breaks the
+  // link instead of deleting this component.
+  linkedCardId     String?
+  linkedCard       HomeCard?                   @relation("HomeCardComponentLink", fields: [linkedCardId], references: [id], onDelete: SetNull)
+  ctaLabel         String?
+  // USER_INPUT only — prompt shown above a free-text box the mobile user
+  // fills in and saves (see HomeCardUserInputResponse), one answer per user.
+  inputLabel       String?
+  inputPlaceholder String?
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
+  responses        HomeCardUserInputResponse[]
+
+  @@index([homeCardId, order])
+}
+
+enum HomeCardComponentType {
+  TEXT
+  IMAGE
+  OPEN_DETAILS
+  USER_INPUT
+}
+
+// A user's saved answer to a USER_INPUT home card component — free text, no
+// AI evaluation. One row per user per component, upserted via
+// POST /api/config/home-cards/:cardId/components/:componentId/input.
+model HomeCardUserInputResponse {
+  id          String            @id @default(uuid())
+  componentId String
+  component   HomeCardComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answer      String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@unique([componentId, userId])
+  @@index([userId])
+}
+
 enum InterventionStrategy {
   AGGRESSIVE_DE_ESCALATION
   DIFFERENTIAL_ATTENTION
@@ -910,82 +983,82 @@ enum InterventionStrategy {
 }
 
 model WeeklyReport {
-  id        String   @id @default(uuid())
-  userId    String
-  childId   String?
+  id      String  @id @default(uuid())
+  userId  String
+  childId String?
 
   // Week boundaries (Monday 00:00 to Sunday 23:59)
   weekStartDate DateTime
   weekEndDate   DateTime
 
   // Visibility control — admin can toggle which reports users see
-  visibility    Boolean  @default(false)
+  visibility Boolean @default(false)
 
   // Page 1: Weekly Recap Headline
-  headline      String?  // e.g. "Zoey Showed Easier Transition this week"
+  headline String? // e.g. "Zoey Showed Easier Transition this week"
 
   // Page 2: Emotional Bank Account Deposits
-  totalDeposits       Int @default(0)
-  massageTimeMinutes  Int @default(0)
-  praiseCount         Int @default(0)
-  echoCount           Int @default(0)
-  narrateCount        Int @default(0)
+  totalDeposits      Int @default(0)
+  massageTimeMinutes Int @default(0)
+  praiseCount        Int @default(0)
+  echoCount          Int @default(0)
+  narrateCount       Int @default(0)
 
   // Page 3: You as a Parent This Week
-  skillCelebrationTitle String?   // legacy — kept for backward compat
-  scenarioCards         Json?     // legacy — kept for backward compat
-  parentGrowthNarrative String?   // AI: identity-level celebration connecting skill to child impact
-  growthMetrics         Json?     // JSON array: [{ icon, value, label }] — 2-3 data-driven micro-wins
-  noraObservation       String?   // AI: 2 sentences about what changed in the parent's approach
+  skillCelebrationTitle String? // legacy — kept for backward compat
+  scenarioCards         Json? // legacy — kept for backward compat
+  parentGrowthNarrative String? // AI: identity-level celebration connecting skill to child impact
+  growthMetrics         Json? // JSON array: [{ icon, value, label }] — 2-3 data-driven micro-wins
+  noraObservation       String? // AI: 2 sentences about what changed in the parent's approach
 
   // Page 4: Weekly Moments Highlight
   // JSON array: [{ date, dayLabel, dateLabel, tag, sessionTitle, quote, celebration, audioUrl, startTime, endTime }]
-  topMoments            Json?
+  topMoments Json?
 
   // Page 5: Child's Week — celebrate the child
-  milestones            Json?     // legacy — kept for backward compat
-  childSpotlight        String?   // AI: 2-3 sentence warm narrative about the child's week
-  growthSnapshots       Json?     // JSON array: [{ category, icon, childQuote, meaning }] — evidence cards
-  childProgressNote     String?   // AI: optional one-liner about progress since starting
+  milestones        Json? // legacy — kept for backward compat
+  childSpotlight    String? // AI: 2-3 sentence warm narrative about the child's week
+  growthSnapshots   Json? // JSON array: [{ category, icon, childQuote, meaning }] — evidence cards
+  childProgressNote String? // AI: optional one-liner about progress since starting
 
   // Page 6: Next Week's Focus
-  focusHeading          String?  // e.g. "Use narration during transitions"
-  focusSubtext          String?  // e.g. "You don't need to be perfect — just consistent."
-  whyExplanation        String?  // expandable "Why this matters" body text
+  focusHeading   String? // e.g. "Use narration during transitions"
+  focusSubtext   String? // e.g. "You don't need to be perfect — just consistent."
+  whyExplanation String? // expandable "Why this matters" body text
 
   // Page 7: Quick Check-in (user responses)
-  moodSelection         String?  // e.g. "Grounded", "Tired", "Stretched", "Hopeful"
-  issueRatings          Json?    // { "Tantrums": "Better", "Hitting": "Same" }
+  moodSelection String? // e.g. "Grounded", "Tired", "Stretched", "Hopeful"
+  issueRatings  Json? // { "Tantrums": "Better", "Hitting": "Same" }
 
   // Trend insights (enhances Page 2)
-  depositsTrend          String?   // "up" | "down" | "stable"
-  depositsChangePercent  Int?      // e.g. 40 means +40%
-  trendMessage           String?   // AI: "Your praise increased 40% this week!"
+  depositsTrend         String? // "up" | "down" | "stable"
+  depositsChangePercent Int? // e.g. 40 means +40%
+  trendMessage          String? // AI: "Your praise increased 40% this week!"
 
   // Consistency tracking (enhances Page 2)
-  sessionCount           Int       @default(0)
-  uniqueDays             Int       @default(0)
-  consistencyMessage     String?   // AI: "You showed up 4 out of 7 days!"
+  sessionCount       Int     @default(0)
+  uniqueDays         Int     @default(0)
+  consistencyMessage String? // AI: "You showed up 4 out of 7 days!"
 
   // Growth insights
-  strongestGrowthArea    String?   // "Praise", "Echo", "Narrate", etc.
-  avgNoraScore           Int?      // 0-100 weekly average
+  strongestGrowthArea String? // "Praise", "Echo", "Narrate", etc.
+  avgNoraScore        Int? // 0-100 weekly average
 
   // Child response patterns (enhances Page 4/5)
-  childResponseSummary   String?   // AI: synthesized child reaction patterns
+  childResponseSummary String? // AI: synthesized child reaction patterns
 
   // User read tracking
-  markedReadAt           DateTime?  // Set when user opens the report; survives local storage clears
+  markedReadAt DateTime? // Set when user opens the report; survives local storage clears
 
   // Generation metadata
-  generatedAt            DateTime?
-  generationVersion      Int       @default(1)
+  generatedAt       DateTime?
+  generationVersion Int       @default(1)
 
   // Session IDs included in this report
-  sessionIds            String[] @default([])
+  sessionIds String[] @default([])
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   User  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   Child Child? @relation(fields: [childId], references: [id], onDelete: SetNull)
@@ -999,7 +1072,7 @@ model WeeklyReport {
 model CoachChatMessage {
   id        String   @id @default(uuid())
   userId    String
-  role      String   // 'user' | 'model'
+  role      String // 'user' | 'model'
   text      String
   createdAt DateTime @default(now())
 
@@ -1017,8 +1090,8 @@ model Referral {
   rewardAt   DateTime?
   createdAt  DateTime       @default(now())
 
-  referrer User @relation("ReferralsGiven",   fields: [referrerId], references: [id], onDelete: Cascade)
-  referee  User @relation("ReferralReceived", fields: [refereeId],  references: [id], onDelete: Cascade)
+  referrer User @relation("ReferralsGiven", fields: [referrerId], references: [id], onDelete: Cascade)
+  referee  User @relation("ReferralReceived", fields: [refereeId], references: [id], onDelete: Cascade)
 
   @@index([referrerId])
   @@index([status])
@@ -1032,23 +1105,23 @@ enum ReferralStatus {
 }
 
 model AbcLog {
-  id             String     @id @default(uuid())
-  userId         String
-  childId        String
-  logType        AbcLogType @default(CHALLENGING)
-  antecedents    String[]
-  behaviors      String[]
-  situations     String[]
-  places         String[]
-  persons        String[]
-  consequences   String[]
+  id               String     @id @default(uuid())
+  userId           String
+  childId          String
+  logType          AbcLogType @default(CHALLENGING)
+  antecedents      String[]
+  behaviors        String[]
+  situations       String[]
+  places           String[]
+  persons          String[]
+  consequences     String[]
   intensity        Int?
   durationBucket   String?
   behaviorFunction String?
   recordedAt       DateTime   @default(now())
-  createdAt      DateTime   @default(now())
-  User           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Child          Child      @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdAt        DateTime   @default(now())
+  User             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Child            Child      @relation(fields: [childId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, recordedAt])

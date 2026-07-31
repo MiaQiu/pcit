@@ -1914,6 +1914,41 @@ router.delete('/keywords/:id', requireAdminAuth, async (req, res) => {
 // ============================================================================
 
 /**
+ * GET /api/admin/home-card-badges
+ * List the shared badge list cards pick from (see HomeCardBadge).
+ */
+router.get('/home-card-badges', requireAdminAuth, async (req, res) => {
+  try {
+    const badges = await prisma.homeCardBadge.findMany({ orderBy: { name: 'asc' } });
+    res.json({ badges });
+  } catch (error) {
+    console.error('Admin list home card badges error:', error);
+    res.status(500).json({ error: 'Failed to list home card badges' });
+  }
+});
+
+/**
+ * POST /api/admin/home-card-badges
+ * Add a new badge to the shared list (the "Add card" flow's badge step lets
+ * admins create one inline instead of only picking an existing one).
+ */
+router.post('/home-card-badges', requireAdminAuth, async (req, res) => {
+  try {
+    const { name, color } = req.body;
+    if (!name || !name.trim()) return res.status(400).json({ error: 'name is required' });
+
+    const badge = await prisma.homeCardBadge.create({
+      data: { name: name.trim(), color: color?.trim() || '#8C49D5' },
+    });
+    res.status(201).json({ badge });
+  } catch (error) {
+    if (error.code === 'P2002') return res.status(400).json({ error: 'A badge with that name already exists' });
+    console.error('Admin create home card badge error:', error);
+    res.status(500).json({ error: 'Failed to create home card badge' });
+  }
+});
+
+/**
  * GET /api/admin/home-cards
  * List all home screen sub-action cards (active and inactive), ordered for
  * display. Mobile only ever sees the active ones — see GET /api/config/home-cards.
@@ -1922,13 +1957,20 @@ router.get('/home-cards', requireAdminAuth, async (req, res) => {
   try {
     const homeCards = await prisma.homeCard.findMany({
       orderBy: { displayOrder: 'asc' },
-      include: { _count: { select: { likes: true } } },
+      include: { _count: { select: { likes: true } }, badge: true, components: { orderBy: { order: 'asc' } } },
     });
 
-    const resolved = await Promise.all(homeCards.map(async ({ _count, image, ...card }) => ({
+    const resolved = await Promise.all(homeCards.map(async ({ _count, image, badge, components, ...card }) => ({
       ...card,
+      badgeId: badge.id,
+      badgeText: badge.name,
+      badgeColor: badge.color,
       likeCount: _count.likes,
       imageUrl: await resolveDragonImageUrl(image),
+      components: await Promise.all(components.map(async ({ image: componentImage, ...component }) => ({
+        ...component,
+        imageUrl: await resolveDragonImageUrl(componentImage),
+      }))),
     })));
 
     res.json({ homeCards: resolved });
@@ -1940,27 +1982,102 @@ router.get('/home-cards', requireAdminAuth, async (req, res) => {
 
 const HOME_CARD_TYPES = ['CONTENT', 'QUOTE'];
 const HOME_CARD_FONT_SIZES = ['SMALL', 'MEDIUM', 'LARGE'];
+const HOME_CARD_COMPONENT_TYPES = ['TEXT', 'IMAGE', 'OPEN_DETAILS', 'USER_INPUT'];
+
+/**
+ * Validates a `components` array from the admin request body and returns it
+ * shaped for Prisma (order set from array index). Throws { status, message }
+ * on invalid input.
+ */
+function validateHomeCardComponents(components, homeCardId) {
+  if (components === undefined) return undefined;
+  if (!Array.isArray(components)) throw { status: 400, message: 'components must be an array' };
+
+  return components.map((c, index) => {
+    if (!HOME_CARD_COMPONENT_TYPES.includes(c.type)) {
+      throw { status: 400, message: `components[${index}].type must be one of ${HOME_CARD_COMPONENT_TYPES.join(', ')}` };
+    }
+    if (c.type === 'TEXT' && (!c.text || !c.text.trim())) {
+      throw { status: 400, message: `components[${index}]: text is required for TEXT components` };
+    }
+    if (c.type === 'OPEN_DETAILS') {
+      if (!c.linkedCardId) throw { status: 400, message: `components[${index}]: linkedCardId is required for OPEN_DETAILS components` };
+      if (c.linkedCardId === homeCardId) throw { status: 400, message: `components[${index}]: a card cannot link to itself` };
+    }
+    if (c.type === 'USER_INPUT' && (!c.inputLabel || !c.inputLabel.trim())) {
+      throw { status: 400, message: `components[${index}]: inputLabel is required for USER_INPUT components` };
+    }
+    return {
+      id: c.id || undefined,
+      type: c.type,
+      order: index,
+      text: c.type === 'TEXT' ? c.text.trim() : null,
+      linkedCardId: c.type === 'OPEN_DETAILS' ? c.linkedCardId : null,
+      ctaLabel: c.type === 'OPEN_DETAILS' ? (c.ctaLabel?.trim() || null) : null,
+      inputLabel: c.type === 'USER_INPUT' ? c.inputLabel.trim() : null,
+      inputPlaceholder: c.type === 'USER_INPUT' ? (c.inputPlaceholder?.trim() || null) : null,
+    };
+  });
+}
+
+/**
+ * Upsert-by-id merge of a card's components in a transaction: items with an
+ * id are updated in place (so any HomeCardUserInputResponses tied to them
+ * survive edits to other blocks), items without an id are created, and
+ * existing components not present in `components` are deleted. Must run
+ * inside a transaction alongside the HomeCard write.
+ */
+async function mergeHomeCardComponents(tx, homeCardId, components) {
+  if (components === undefined) return;
+
+  const existingIds = (await tx.homeCardComponent.findMany({ where: { homeCardId }, select: { id: true } })).map((c) => c.id);
+  const incomingIds = new Set(components.filter((c) => c.id).map((c) => c.id));
+
+  const toDelete = existingIds.filter((id) => !incomingIds.has(id));
+  if (toDelete.length > 0) {
+    await tx.homeCardComponent.deleteMany({ where: { id: { in: toDelete } } });
+  }
+
+  for (const c of components) {
+    const { id, ...data } = c;
+    if (id) {
+      await tx.homeCardComponent.update({ where: { id }, data });
+    } else {
+      await tx.homeCardComponent.create({ data: { ...data, homeCardId } });
+    }
+  }
+}
 
 /**
  * POST /api/admin/home-cards
  * Create a new home screen sub-action card. displayOrder defaults to the end
  * of the list if not provided. CONTENT cards (open a detail page on mobile)
- * require detailTitle/detailContent; QUOTE cards (get a share button instead)
- * don't use them.
+ * require detailTitle and take an ordered `components` array (Text/Image/
+ * Open-more-details/User-input blocks); QUOTE cards (get a share button
+ * instead) don't use either.
  */
 router.post('/home-cards', requireAdminAuth, async (req, res) => {
   try {
-    const { cardType, badgeText, badgeColor, message, messageFontSize, messageBold, messageItalic, attribution, detailTitle, detailContent, isActive, displayOrder } = req.body;
-    if (!badgeText || !badgeText.trim()) return res.status(400).json({ error: 'badgeText is required' });
+    const { cardType, badgeId, message, messageFontSize, messageBold, messageItalic, attribution, detailTitle, components, isActive, displayOrder } = req.body;
+    if (!badgeId) return res.status(400).json({ error: 'badgeId is required' });
     if (!message || !message.trim()) return res.status(400).json({ error: 'message is required' });
     if (messageFontSize !== undefined && !HOME_CARD_FONT_SIZES.includes(messageFontSize)) {
       return res.status(400).json({ error: `messageFontSize must be one of ${HOME_CARD_FONT_SIZES.join(', ')}` });
     }
 
+    const badge = await prisma.homeCardBadge.findUnique({ where: { id: badgeId } });
+    if (!badge) return res.status(400).json({ error: 'badgeId does not reference an existing badge' });
+
     const type = cardType && HOME_CARD_TYPES.includes(cardType) ? cardType : 'CONTENT';
-    if (type === 'CONTENT') {
-      if (!detailTitle || !detailTitle.trim()) return res.status(400).json({ error: 'detailTitle is required for CONTENT cards' });
-      if (!detailContent || !detailContent.trim()) return res.status(400).json({ error: 'detailContent is required for CONTENT cards' });
+    if (type === 'CONTENT' && (!detailTitle || !detailTitle.trim())) {
+      return res.status(400).json({ error: 'detailTitle is required for CONTENT cards' });
+    }
+
+    let validatedComponents;
+    try {
+      validatedComponents = type === 'CONTENT' ? (validateHomeCardComponents(components, null) || []) : [];
+    } catch (err) {
+      return res.status(err.status || 400).json({ error: err.message });
     }
 
     let order = displayOrder;
@@ -1972,21 +2089,21 @@ router.post('/home-cards', requireAdminAuth, async (req, res) => {
     const homeCard = await prisma.homeCard.create({
       data: {
         cardType: type,
-        badgeText: badgeText.trim(),
-        badgeColor: badgeColor?.trim() || '#8C49D5',
+        badgeId,
         message: message.trim(),
         messageFontSize: messageFontSize || 'MEDIUM',
         messageBold: !!messageBold,
         messageItalic: !!messageItalic,
         attribution: attribution?.trim() || null,
         detailTitle: type === 'CONTENT' ? detailTitle.trim() : null,
-        detailContent: type === 'CONTENT' ? detailContent.trim() : null,
         isActive: isActive === undefined ? true : !!isActive,
         displayOrder: parseInt(order),
+        components: { create: validatedComponents },
       },
+      include: { components: { orderBy: { order: 'asc' } } },
     });
 
-    res.status(201).json({ homeCard });
+    res.status(201).json({ homeCard: { ...homeCard, badgeText: badge.name, badgeColor: badge.color } });
   } catch (error) {
     console.error('Admin create home card error:', error);
     res.status(500).json({ error: 'Failed to create home card' });
@@ -1995,11 +2112,14 @@ router.post('/home-cards', requireAdminAuth, async (req, res) => {
 
 /**
  * PUT /api/admin/home-cards/:id
- * Update an existing home card. Any subset of fields may be sent.
+ * Update an existing home card. Any subset of fields may be sent. A
+ * `components` array, if sent, replaces the card's component list via an
+ * upsert-by-id merge (see mergeHomeCardComponents) — omit it to leave
+ * components untouched.
  */
 router.put('/home-cards/:id', requireAdminAuth, async (req, res) => {
   try {
-    const { cardType, badgeText, badgeColor, message, messageFontSize, messageBold, messageItalic, attribution, detailTitle, detailContent, isActive, displayOrder } = req.body;
+    const { cardType, badgeId, message, messageFontSize, messageBold, messageItalic, attribution, detailTitle, components, isActive, displayOrder } = req.body;
 
     const existing = await prisma.homeCard.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ error: 'Home card not found' });
@@ -2012,13 +2132,24 @@ router.put('/home-cards/:id', requireAdminAuth, async (req, res) => {
     }
     const resolvedType = cardType ?? existing.cardType;
 
+    if (badgeId !== undefined) {
+      const badge = await prisma.homeCardBadge.findUnique({ where: { id: badgeId } });
+      if (!badge) return res.status(400).json({ error: 'badgeId does not reference an existing badge' });
+    }
+
+    // QUOTE cards never have components — always clear them (a no-op if
+    // there were none already). CONTENT cards only replace components when
+    // the request actually sends a `components` array.
+    let validatedComponents;
+    try {
+      validatedComponents = resolvedType === 'CONTENT' ? validateHomeCardComponents(components, req.params.id) : [];
+    } catch (err) {
+      return res.status(err.status || 400).json({ error: err.message });
+    }
+
     const data = {};
     if (cardType !== undefined) data.cardType = cardType;
-    if (badgeText !== undefined) {
-      if (!badgeText.trim()) return res.status(400).json({ error: 'badgeText cannot be empty' });
-      data.badgeText = badgeText.trim();
-    }
-    if (badgeColor !== undefined) data.badgeColor = badgeColor.trim() || '#8C49D5';
+    if (badgeId !== undefined) data.badgeId = badgeId;
     if (message !== undefined) {
       if (!message.trim()) return res.status(400).json({ error: 'message cannot be empty' });
       data.message = message.trim();
@@ -2032,23 +2163,23 @@ router.put('/home-cards/:id', requireAdminAuth, async (req, res) => {
 
     if (resolvedType === 'CONTENT') {
       const nextTitle = detailTitle !== undefined ? detailTitle : existing.detailTitle;
-      const nextContent = detailContent !== undefined ? detailContent : existing.detailContent;
       if (!nextTitle || !nextTitle.trim()) return res.status(400).json({ error: 'detailTitle is required for CONTENT cards' });
-      if (!nextContent || !nextContent.trim()) return res.status(400).json({ error: 'detailContent is required for CONTENT cards' });
       if (detailTitle !== undefined) data.detailTitle = detailTitle.trim();
-      if (detailContent !== undefined) data.detailContent = detailContent.trim();
     } else {
       // Switching to QUOTE (or already QUOTE) clears any leftover detail copy.
       data.detailTitle = null;
-      data.detailContent = null;
     }
 
-    const homeCard = await prisma.homeCard.update({
-      where: { id: req.params.id },
-      data,
+    const homeCard = await prisma.$transaction(async (tx) => {
+      await mergeHomeCardComponents(tx, req.params.id, validatedComponents);
+      return tx.homeCard.update({
+        where: { id: req.params.id },
+        data,
+        include: { badge: true, components: { orderBy: { order: 'asc' } } },
+      });
     });
 
-    res.json({ homeCard });
+    res.json({ homeCard: { ...homeCard, badgeText: homeCard.badge.name, badgeColor: homeCard.badge.color } });
   } catch (error) {
     console.error('Admin update home card error:', error);
     res.status(500).json({ error: 'Failed to update home card' });
@@ -2117,6 +2248,37 @@ router.delete('/home-cards/:id/image', requireAdminAuth, async (req, res) => {
   } catch (error) {
     console.error('Admin remove home card image error:', error);
     res.status(500).json({ error: 'Failed to remove home card image' });
+  }
+});
+
+/**
+ * POST /api/admin/home-cards/:id/components/:componentId/image
+ * Upload (or replace) the image for an IMAGE-type component. Same two-phase
+ * flow as the card banner image: the component is created via the card
+ * POST/PUT first (so it has a real id), then its image is uploaded here.
+ */
+router.post('/home-cards/:id/components/:componentId/image', requireAdminAuth, uploadMiddleware.single('image'), async (req, res) => {
+  try {
+    const { id: homeCardId, componentId } = req.params;
+
+    const existing = await prisma.homeCardComponent.findUnique({ where: { id: componentId } });
+    if (!existing || existing.homeCardId !== homeCardId) return res.status(404).json({ error: 'Component not found' });
+    if (existing.type !== 'IMAGE') return res.status(400).json({ error: 'Component is not an IMAGE component' });
+
+    if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+
+    const ext = (req.file.originalname.split('.').pop() || 'jpg').toLowerCase();
+    const key = await uploadHomeCardImage(req.file.buffer, homeCardId, ext);
+
+    const { image, ...component } = await prisma.homeCardComponent.update({
+      where: { id: componentId },
+      data: { image: key },
+    });
+
+    res.json({ component: { ...component, imageUrl: await resolveDragonImageUrl(image) } });
+  } catch (error) {
+    console.error('Admin upload home card component image error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload component image' });
   }
 });
 

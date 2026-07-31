@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { handleBoldShortcut, insertTextareaMarker } from '../utils/textFormatting';
 import {
   getHomeCards,
   createHomeCard,
@@ -6,10 +7,17 @@ import {
   deleteHomeCard,
   uploadHomeCardImage,
   removeHomeCardImage,
+  getHomeCardBadges,
+  createHomeCardBadge,
+  uploadHomeCardComponentImage,
   HomeCard,
   HomeCardInput,
   HomeCardType,
   HomeCardFontSize,
+  HomeCardBadge,
+  HomeCardComponent,
+  HomeCardComponentType,
+  HomeCardComponentInput,
 } from '../api/adminApi';
 
 const BADGE_COLOR_PRESETS = [
@@ -29,8 +37,61 @@ const FONT_SIZE_OPTIONS: { label: string; value: HomeCardFontSize; px: number }[
   { label: 'Large', value: 'LARGE', px: 18 },
 ];
 
+// Select text and click Bold (or Ctrl/Cmd+B) to wrap it in **...** — same
+// markdown-lite convention as the lesson/demo-video editors, parsed by
+// formatLessonContentV2 on mobile. `getTextarea` (rather than a single
+// RefObject) lets one toolbar component serve a dynamic list of textareas
+// (the component builder's Text blocks), each keyed by its own ref.
+function FormattingToolbar({ getTextarea, onChange }: { getTextarea: () => HTMLTextAreaElement | null; onChange: (value: string) => void }) {
+  const applyBold = () => {
+    const ta = getTextarea();
+    if (!ta) return;
+    insertTextareaMarker(ta, onChange, { before: '**', after: '**' });
+  };
+  return (
+    <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+      <button type="button" className="btn-secondary-sm" onClick={applyBold}>Bold</button>
+    </div>
+  );
+}
+
+// Lightweight **bold**/*italic* preview for the single-line Message field —
+// mirrors InlineMessageText in HomeScreen_v2.tsx closely enough for a WYSIWYG
+// preview without pulling in the full block parser for one line of text.
+function renderInlineFormatted(text: string): React.ReactNode {
+  return text.split(/(\*\*.+?\*\*|\*.+?\*)/g).filter(Boolean).map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) return <strong key={i}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith('*') && part.endsWith('*')) return <em key={i}>{part.slice(1, -1)}</em>;
+    return part;
+  });
+}
+
+// Mixes a hex color toward white — mirrors lightenHexColor in
+// HomeScreen_v2.tsx so this preview's card/badge-pill tints match mobile.
+function lightenHex(hex: string, amount: number): string {
+  const clean = hex.replace('#', '');
+  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
+  const bigint = parseInt(full, 16);
+  if (Number.isNaN(bigint)) return hex;
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  const mix = (channel: number) => Math.round(channel + (255 - channel) * amount);
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
+
+// Mirrors splitMessageBlocks in HomeScreen_v2.tsx: the first line break
+// splits the CONTENT card's message into a bold headline and a lighter
+// description — one Enter press after the headline is enough.
+function splitPreviewMessage(message: string): { headline: string; description: string } {
+  const idx = message.indexOf('\n');
+  if (idx === -1) return { headline: message, description: '' };
+  return { headline: message.slice(0, idx).trim(), description: message.slice(idx + 1).trim() };
+}
+
 export default function HomeCardsPage() {
   const [homeCards, setHomeCards] = useState<HomeCard[]>([]);
+  const [badges, setBadges] = useState<HomeCardBadge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<{ mode: 'add' } | { mode: 'edit'; card: HomeCard } | null>(null);
@@ -39,8 +100,9 @@ export default function HomeCardsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getHomeCards();
-      setHomeCards(data);
+      const [cards, badgeList] = await Promise.all([getHomeCards(), getHomeCardBadges()]);
+      setHomeCards(cards);
+      setBadges(badgeList);
     } catch (err: any) {
       setError(err.message || 'Failed to load home cards');
     } finally {
@@ -51,6 +113,10 @@ export default function HomeCardsPage() {
   useEffect(() => {
     fetchHomeCards();
   }, [fetchHomeCards]);
+
+  const handleBadgeAdded = (badge: HomeCardBadge) => {
+    setBadges((prev) => [...prev, badge].sort((a, b) => a.name.localeCompare(b.name)));
+  };
 
   const handleDelete = async (id: string, badgeText: string) => {
     if (!window.confirm(`Delete card "${badgeText}"? This cannot be undone.`)) return;
@@ -234,6 +300,9 @@ export default function HomeCardsPage() {
         <HomeCardModal
           mode={modal.mode}
           card={modal.mode === 'edit' ? modal.card : undefined}
+          badges={badges}
+          onBadgeAdded={handleBadgeAdded}
+          allCards={homeCards}
           onClose={() => setModal(null)}
           onSaved={handleSaved}
         />
@@ -242,33 +311,91 @@ export default function HomeCardsPage() {
   );
 }
 
+// A component block being edited in the modal. `key` is a stable React key
+// (the real id once saved, a client-only temp id until then); `id` is only
+// set for a block that already exists on the server, so the save flow knows
+// which blocks to update in place vs. create.
+interface LocalComponent {
+  key: string;
+  id?: string;
+  type: HomeCardComponentType;
+  text: string;
+  imageUrl: string | null;
+  imageFile: File | null;
+  linkedCardId: string;
+  ctaLabel: string;
+  inputLabel: string;
+  inputPlaceholder: string;
+}
+
+let tempKeySeq = 0;
+const nextTempKey = () => `temp-${++tempKeySeq}`;
+
+function componentToLocal(c: HomeCardComponent): LocalComponent {
+  return {
+    key: c.id,
+    id: c.id,
+    type: c.type,
+    text: c.text || '',
+    imageUrl: c.imageUrl,
+    imageFile: null,
+    linkedCardId: c.linkedCardId || '',
+    ctaLabel: c.ctaLabel || '',
+    inputLabel: c.inputLabel || '',
+    inputPlaceholder: c.inputPlaceholder || '',
+  };
+}
+
+const COMPONENT_TYPE_LABELS: Record<HomeCardComponentType, string> = {
+  TEXT: 'Text',
+  IMAGE: 'Image',
+  OPEN_DETAILS: 'Open more details',
+  USER_INPUT: 'User input',
+};
+
 function HomeCardModal({
   mode,
   card,
+  badges,
+  onBadgeAdded,
+  allCards,
   onClose,
   onSaved,
 }: {
   mode: 'add' | 'edit';
   card?: HomeCard;
+  badges: HomeCardBadge[];
+  onBadgeAdded: (badge: HomeCardBadge) => void;
+  allCards: HomeCard[];
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [cardType, setCardType] = useState<HomeCardType>(card?.cardType || 'CONTENT');
-  const [badgeText, setBadgeText] = useState(card?.badgeText || '');
-  const [badgeColor, setBadgeColor] = useState(card?.badgeColor || BADGE_COLOR_PRESETS[0].value);
+  const [badgeId, setBadgeId] = useState(card?.badgeId || '');
+  const [addingBadge, setAddingBadge] = useState(false);
+  const [newBadgeName, setNewBadgeName] = useState('');
+  const [newBadgeColor, setNewBadgeColor] = useState(BADGE_COLOR_PRESETS[0].value);
+  const [savingBadge, setSavingBadge] = useState(false);
   const [message, setMessage] = useState(card?.message || '');
   const [messageFontSize, setMessageFontSize] = useState<HomeCardFontSize>(card?.messageFontSize || 'MEDIUM');
   const [messageBold, setMessageBold] = useState(card?.messageBold ?? false);
   const [messageItalic, setMessageItalic] = useState(card?.messageItalic ?? false);
   const [attribution, setAttribution] = useState(card?.attribution || '');
   const [detailTitle, setDetailTitle] = useState(card?.detailTitle || '');
-  const [detailContent, setDetailContent] = useState(card?.detailContent || '');
+  const [components, setComponents] = useState<LocalComponent[]>(
+    () => card?.components.map(componentToLocal) || []
+  );
   const [isActive, setIsActive] = useState(card?.isActive ?? true);
   const [imageUrl, setImageUrl] = useState(card?.imageUrl || null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [removingImage, setRemovingImage] = useState(false);
+
+  const messageRef = useRef<HTMLTextAreaElement>(null);
+  // Keyed by LocalComponent.key — one ref per Text block's textarea, so a
+  // single FormattingToolbar type can serve however many blocks are on screen.
+  const componentTextareaRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map());
 
   const isEdit = mode === 'edit';
   const isContent = cardType === 'CONTENT';
@@ -278,36 +405,111 @@ function HomeCardModal({
     [imageFile, imageUrl]
   );
 
+  const linkableCards = useMemo(
+    () => allCards.filter((c) => c.cardType === 'CONTENT' && c.id !== card?.id),
+    [allCards, card?.id]
+  );
+
+  const addComponent = (type: HomeCardComponentType) => {
+    setComponents((prev) => [
+      ...prev,
+      { key: nextTempKey(), type, text: '', imageUrl: null, imageFile: null, linkedCardId: '', ctaLabel: '', inputLabel: '', inputPlaceholder: '' },
+    ]);
+  };
+
+  const removeComponent = (key: string) => {
+    setComponents((prev) => prev.filter((c) => c.key !== key));
+  };
+
+  const moveComponent = (index: number, direction: -1 | 1) => {
+    setComponents((prev) => {
+      const target = index + direction;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
+  const updateComponent = (key: string, patch: Partial<LocalComponent>) => {
+    setComponents((prev) => prev.map((c) => (c.key === key ? { ...c, ...patch } : c)));
+  };
+
+  const handleAddBadge = async () => {
+    if (!newBadgeName.trim()) { alert('Badge name is required'); return; }
+    setSavingBadge(true);
+    try {
+      const badge = await createHomeCardBadge(newBadgeName.trim(), newBadgeColor);
+      onBadgeAdded(badge);
+      setBadgeId(badge.id);
+      setAddingBadge(false);
+      setNewBadgeName('');
+    } catch (err: any) {
+      alert('Failed to add badge: ' + err.message);
+    } finally {
+      setSavingBadge(false);
+    }
+  };
+
   const handleSubmit = async () => {
-    if (isContent && !badgeText.trim()) { alert('Badge text is required'); return; }
+    if (!badgeId) { alert('Please choose a badge'); return; }
     if (!message.trim()) { alert('Message is required'); return; }
     if (isContent && !detailTitle.trim()) { alert('Detail title is required for Content cards'); return; }
-    if (isContent && !detailContent.trim()) { alert('Detail content is required for Content cards'); return; }
+    for (const c of components) {
+      if (c.type === 'TEXT' && !c.text.trim()) { alert('Every Text component needs text'); return; }
+      if (c.type === 'OPEN_DETAILS' && !c.linkedCardId) { alert('Every "Open more details" component needs a linked card'); return; }
+      if (c.type === 'USER_INPUT' && !c.inputLabel.trim()) { alert('Every User input component needs a prompt/label'); return; }
+    }
 
     setSaving(true);
     try {
+      const componentsInput: HomeCardComponentInput[] | undefined = isContent
+        ? components.map((c) => ({
+            id: c.id,
+            type: c.type,
+            text: c.type === 'TEXT' ? c.text : undefined,
+            linkedCardId: c.type === 'OPEN_DETAILS' ? c.linkedCardId : undefined,
+            ctaLabel: c.type === 'OPEN_DETAILS' ? c.ctaLabel : undefined,
+            inputLabel: c.type === 'USER_INPUT' ? c.inputLabel : undefined,
+            inputPlaceholder: c.type === 'USER_INPUT' ? c.inputPlaceholder : undefined,
+          }))
+        : undefined;
+
       const input: HomeCardInput = {
         cardType,
-        badgeText: isContent ? badgeText : (badgeText.trim() || 'Quote'),
-        badgeColor,
+        badgeId,
         message,
         messageFontSize,
         messageBold,
         messageItalic,
         isActive,
-        ...(isContent ? { detailTitle, detailContent } : { attribution }),
+        ...(isContent ? { detailTitle, components: componentsInput } : { attribution }),
       };
       let id = card?.id;
+      let savedCard: HomeCard;
       if (isEdit && id) {
-        await updateHomeCard(id, input);
+        savedCard = await updateHomeCard(id, input);
       } else {
-        const created = await createHomeCard(input);
-        id = created.id;
+        savedCard = await createHomeCard(input);
+        id = savedCard.id;
       }
 
       if (imageFile && id) {
         setUploadingImage(true);
         await uploadHomeCardImage(id, imageFile);
+      }
+
+      // Components are sent/returned in the same order, so pair them up by
+      // index to find the real id assigned to any newly-created block, then
+      // upload its pending image (two-phase, same as the card banner above).
+      const pendingImageUploads = components
+        .map((c, index) => ({ c, saved: savedCard.components[index] }))
+        .filter(({ c }) => c.type === 'IMAGE' && c.imageFile);
+      if (pendingImageUploads.length > 0 && id) {
+        setUploadingImage(true);
+        await Promise.all(
+          pendingImageUploads.map(({ c, saved }) => uploadHomeCardComponentImage(id!, saved.id, c.imageFile!))
+        );
       }
 
       onSaved();
@@ -365,73 +567,83 @@ function HomeCardModal({
           </p>
         </div>
 
-        {isContent && (
-          <>
-            <div className="form-group">
-              <label>Badge text</label>
+        <div className="form-group">
+          <label>Badge</label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            {badges.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => setBadgeId(b.id)}
+                style={{
+                  padding: '4px 12px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: '#fff',
+                  backgroundColor: b.color,
+                  border: badgeId === b.id ? '2px solid #1E2939' : '2px solid transparent',
+                  cursor: 'pointer',
+                }}
+              >
+                {b.name}
+              </button>
+            ))}
+            <button type="button" className="btn-secondary-sm" onClick={() => setAddingBadge((v) => !v)}>
+              + Add new badge
+            </button>
+          </div>
+          {addingBadge && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10, flexWrap: 'wrap' }}>
               <input
                 type="text"
-                value={badgeText}
-                onChange={(e) => setBadgeText(e.target.value)}
-                placeholder="e.g. New, Tip, Reminder"
+                value={newBadgeName}
+                onChange={(e) => setNewBadgeName(e.target.value)}
+                placeholder="New badge name"
+                style={{ maxWidth: 180 }}
                 autoFocus
               />
-            </div>
-
-            <div className="form-group">
-              <label>Badge color</label>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 6 }}>
                 {BADGE_COLOR_PRESETS.map((preset) => (
                   <button
                     key={preset.value}
                     type="button"
-                    onClick={() => setBadgeColor(preset.value)}
+                    onClick={() => setNewBadgeColor(preset.value)}
                     title={preset.label}
                     style={{
-                      width: 28,
-                      height: 28,
+                      width: 24,
+                      height: 24,
                       borderRadius: '50%',
                       backgroundColor: preset.value,
-                      border: badgeColor === preset.value ? '2px solid #1E2939' : '2px solid transparent',
+                      border: newBadgeColor === preset.value ? '2px solid #1E2939' : '2px solid transparent',
                       cursor: 'pointer',
                     }}
                   />
                 ))}
-                <input
-                  type="color"
-                  value={badgeColor}
-                  onChange={(e) => setBadgeColor(e.target.value)}
-                  style={{ width: 36, height: 28, padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}
-                  title="Custom color"
-                />
-                <span
-                  style={{
-                    marginLeft: 4,
-                    padding: '3px 10px',
-                    borderRadius: 999,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: '#fff',
-                    backgroundColor: badgeColor,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {badgeText || 'Preview'}
-                </span>
               </div>
+              <button type="button" className="btn-primary" onClick={handleAddBadge} disabled={savingBadge}>
+                {savingBadge ? 'Adding...' : 'Add'}
+              </button>
             </div>
-          </>
-        )}
+          )}
+        </div>
 
         <div className="form-group">
           <label>{isContent ? 'Message (teaser shown on the card)' : 'Quote text'}</label>
+          <FormattingToolbar getTextarea={() => messageRef.current} onChange={setMessage} />
           <textarea
+            ref={messageRef}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder={isContent ? 'Short teaser — the full content is below...' : "Every action you take is a vote for the person you wish to become. (no surrounding quote marks — those are added automatically)"}
+            onKeyDown={(e) => handleBoldShortcut(e, setMessage)}
+            placeholder={isContent ? 'Headline\nOptional smaller description on the next line...' : "Every action you take is a vote for the person you wish to become. (no surrounding quote marks — those are added automatically)"}
             rows={4}
             autoFocus={!isContent}
           />
+          <p className="form-hint">
+            Select text and click Bold (or Ctrl/Cmd+B).
+            {isContent && ' Press Enter after the first line to add it as a smaller description below the bold headline.'}
+          </p>
         </div>
 
         {!isContent && (
@@ -482,20 +694,75 @@ function HomeCardModal({
             <span style={{ fontSize: 13, color: '#6B7280' }}>Italic</span>
           </div>
           {isContent ? (
-            <p
-              style={{
-                marginTop: 10,
-                padding: '10px 14px',
-                borderRadius: 10,
-                backgroundColor: '#F9FAFB',
-                fontSize: FONT_SIZE_OPTIONS.find((o) => o.value === messageFontSize)!.px,
-                fontWeight: messageBold ? 700 : 400,
-                fontStyle: messageItalic ? 'italic' : 'normal',
-                color: '#1E2939',
-              }}
-            >
-              {message || 'Preview of the message text...'}
-            </p>
+            // Mirrors SubActionCard's CONTENT branch in HomeScreen_v2.tsx —
+            // pastel card tinted from the badge color, bold headline +
+            // optional description, divider, Learn more + like/share — so
+            // this preview matches the app.
+            (() => {
+              const previewBadge = badges.find((b) => b.id === badgeId);
+              const previewColor = previewBadge?.color || BADGE_COLOR_PRESETS[0].value;
+              const basePx = FONT_SIZE_OPTIONS.find((o) => o.value === messageFontSize)!.px;
+              const { headline, description } = splitPreviewMessage(message);
+              return (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: 20,
+                    borderRadius: 20,
+                    backgroundColor: lightenHex(previewColor, 0.92),
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      padding: '5px 12px',
+                      borderRadius: 999,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: 0.4,
+                      textTransform: 'uppercase',
+                      color: previewColor,
+                      backgroundColor: lightenHex(previewColor, 0.82),
+                      marginBottom: 12,
+                    }}
+                  >
+                    {previewBadge?.name || 'Badge'}
+                  </span>
+                  <p
+                    style={{
+                      margin: '0 0 6px',
+                      fontSize: basePx + 4,
+                      fontWeight: 700,
+                      fontStyle: messageItalic ? 'italic' : 'normal',
+                      color: '#1E2939',
+                    }}
+                  >
+                    {headline ? renderInlineFormatted(headline) : 'Preview of the headline text...'}
+                  </p>
+                  {description && (
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: basePx - 1,
+                        fontWeight: messageBold ? 700 : 400,
+                        fontStyle: messageItalic ? 'italic' : 'normal',
+                        color: '#6B7280',
+                      }}
+                    >
+                      {renderInlineFormatted(description)}
+                    </p>
+                  )}
+                  <div style={{ height: 1, backgroundColor: 'rgba(30,41,57,0.08)', margin: '16px 0' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#8C49D5', fontWeight: 600, fontSize: 14 }}>Learn more &rarr;</span>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <span style={{ width: 30, height: 30, borderRadius: 15, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>♡</span>
+                      <span style={{ width: 30, height: 30, borderRadius: 15, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>⤴</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()
           ) : (
             // Mirrors SubActionCard's QUOTE branch in HomeScreen_v2.tsx exactly
             // (same colors/spacing/radius) so this preview matches the app.
@@ -531,7 +798,7 @@ function HomeCardModal({
                   color: '#1E2939',
                 }}
               >
-                {message || 'Every action you take is a vote for the person you wish to become.'}
+                {message ? renderInlineFormatted(message) : 'Every action you take is a vote for the person you wish to become.'}
               </p>
               {attribution && (
                 <>
@@ -585,15 +852,142 @@ function HomeCardModal({
                 placeholder="Title shown at the top of the detail page"
               />
             </div>
+
             <div className="form-group">
               <label>Detail page content</label>
-              <textarea
-                value={detailContent}
-                onChange={(e) => setDetailContent(e.target.value)}
-                placeholder="Full content shown when the card is tapped. Supports **bold**, *italic*, '* ' bullet lines, '### ' headings, and blank-line paragraph breaks, same as lesson content."
-                rows={10}
-              />
-              <p className="form-hint">{detailContent.length} chars</p>
+              <p className="form-hint" style={{ marginTop: 0, marginBottom: 10 }}>
+                Build the page from blocks, in the order they should appear.
+              </p>
+
+              {components.map((c, index) => (
+                <div
+                  key={c.key}
+                  style={{
+                    border: '1px solid #E5E7EB',
+                    borderRadius: 8,
+                    padding: 12,
+                    marginBottom: 10,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+                      {COMPONENT_TYPE_LABELS[c.type]}
+                    </span>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button
+                        type="button"
+                        className="btn-secondary-sm"
+                        disabled={index === 0}
+                        onClick={() => moveComponent(index, -1)}
+                        title="Move up"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary-sm"
+                        disabled={index === components.length - 1}
+                        onClick={() => moveComponent(index, 1)}
+                        title="Move down"
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-danger-sm"
+                        onClick={() => removeComponent(c.key)}
+                        title="Remove"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+
+                  {c.type === 'TEXT' && (
+                    <>
+                      <FormattingToolbar
+                        getTextarea={() => componentTextareaRefs.current.get(c.key) || null}
+                        onChange={(text) => updateComponent(c.key, { text })}
+                      />
+                      <textarea
+                        ref={(el) => {
+                          if (el) componentTextareaRefs.current.set(c.key, el);
+                          else componentTextareaRefs.current.delete(c.key);
+                        }}
+                        value={c.text}
+                        onChange={(e) => updateComponent(c.key, { text: e.target.value })}
+                        onKeyDown={(e) => handleBoldShortcut(e, (text) => updateComponent(c.key, { text }))}
+                        placeholder="Supports **bold**, *italic*, '* ' bullet lines, '### ' headings, and blank-line paragraph breaks, same as lesson content."
+                        rows={6}
+                      />
+                    </>
+                  )}
+
+                  {c.type === 'IMAGE' && (
+                    <>
+                      {(c.imageFile || c.imageUrl) && (
+                        <img
+                          src={c.imageFile ? URL.createObjectURL(c.imageFile) : c.imageUrl!}
+                          style={{ width: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 6, marginBottom: 8, background: '#F3F4F6' }}
+                        />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => updateComponent(c.key, { imageFile: e.target.files?.[0] || null })}
+                      />
+                    </>
+                  )}
+
+                  {c.type === 'OPEN_DETAILS' && (
+                    <>
+                      <select
+                        value={c.linkedCardId}
+                        onChange={(e) => updateComponent(c.key, { linkedCardId: e.target.value })}
+                      >
+                        <option value="">Select a card to link to...</option>
+                        {linkableCards.map((lc) => (
+                          <option key={lc.id} value={lc.id}>
+                            {lc.badgeText} — {lc.detailTitle || lc.message}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        value={c.ctaLabel}
+                        onChange={(e) => updateComponent(c.key, { ctaLabel: e.target.value })}
+                        placeholder="Button label (e.g. Learn more)"
+                        style={{ marginTop: 8 }}
+                      />
+                    </>
+                  )}
+
+                  {c.type === 'USER_INPUT' && (
+                    <>
+                      <input
+                        type="text"
+                        value={c.inputLabel}
+                        onChange={(e) => updateComponent(c.key, { inputLabel: e.target.value })}
+                        placeholder="Prompt shown above the input (e.g. What's one thing you'll try this week?)"
+                      />
+                      <input
+                        type="text"
+                        value={c.inputPlaceholder}
+                        onChange={(e) => updateComponent(c.key, { inputPlaceholder: e.target.value })}
+                        placeholder="Placeholder text (optional)"
+                        style={{ marginTop: 8 }}
+                      />
+                    </>
+                  )}
+                </div>
+              ))}
+
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button type="button" className="btn-secondary-sm" onClick={() => addComponent('TEXT')}>+ Text</button>
+                <button type="button" className="btn-secondary-sm" onClick={() => addComponent('IMAGE')}>+ Image</button>
+                <button type="button" className="btn-secondary-sm" onClick={() => addComponent('OPEN_DETAILS')}>+ Open more details</button>
+                <button type="button" className="btn-secondary-sm" onClick={() => addComponent('USER_INPUT')}>+ User input</button>
+              </div>
             </div>
           </>
         )}

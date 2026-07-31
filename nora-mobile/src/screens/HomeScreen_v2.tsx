@@ -33,6 +33,10 @@ import { ProfileCircle } from '../components/ProfileCircle';
 import { COLORS, FONTS } from '../constants/assets';
 
 const DRAGON_ANIMATION = require('../../assets/images/dragon_amine3.mov');
+// Default decorative graphic for a CONTENT home card's right-side icon slot,
+// shown when the admin hasn't uploaded a custom card image (see card.imageUrl
+// below).
+const BULB_ICON = require('../../assets/images/bulb_icon.png');
 import { RootStackNavigationProp, RootTabNavigationProp } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -44,6 +48,23 @@ import * as userStorage from '../lib/userStorage';
 import type { RelationshipToChild } from '@nora/core';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
+import type { TextRun } from '../utils/formatLessonContentV2';
+
+// Mixes a hex color toward white — used to derive a CONTENT card's pastel
+// background/badge-pill tints from its (fully-saturated) badgeColor.
+// amount: 0 = original color, 1 = white.
+function lightenHexColor(hex: string, amount: number): string {
+  const clean = hex.replace('#', '');
+  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
+  const bigint = parseInt(full, 16);
+  if (Number.isNaN(bigint)) return hex;
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  const mix = (channel: number) => Math.round(channel + (255 - channel) * amount);
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -187,6 +208,78 @@ const PlanItem: React.FC<PlanItemProps> = ({ item, onPress, locked }) => (
 // Card. Content comes from GET /api/config/home-cards — see admin portal's
 // Home Cards page.
 
+// The admin's message field supports inline **bold**/*italic* (see
+// HomeCardsPage.tsx's FormattingToolbar) on top of the whole-message
+// bold/italic toggle passed into InlineRuns below — flatten to a single run
+// sequence (ignoring paragraph/bullet/heading distinctions, which don't
+// apply to a short QUOTE-card teaser) so it renders as one flowing line.
+function messageToRuns(message: string): TextRun[] {
+  const blocks = formatLessonContentV2(message);
+  const runs: TextRun[] = [];
+  blocks.forEach((block, i) => {
+    if (block.type === 'image' || block.type === 'video') return;
+    if (i > 0 && runs.length > 0) runs.push({ text: ' ', bold: false, italic: false, folded: false });
+    runs.push(...block.runs);
+  });
+  return runs;
+}
+
+// CONTENT cards split the message into a bold headline (its first line) and
+// an optional regular-weight description (everything after that first line
+// break, flattened the same way messageToRuns does) — see the "Nora
+// Daily"-style card design in SubActionCard below. Splitting on a single
+// line break (not a blank-line paragraph break) means one Enter press after
+// the headline is enough — no need to know the blank-line convention.
+function splitMessageBlocks(message: string): { headline: TextRun[]; description: TextRun[] } {
+  const newlineIndex = message.indexOf('\n');
+  if (newlineIndex === -1) return { headline: messageToRuns(message), description: [] };
+  return {
+    headline: messageToRuns(message.slice(0, newlineIndex)),
+    description: messageToRuns(message.slice(newlineIndex + 1)),
+  };
+}
+
+// Renders a run sequence with inline bold/italic layered on top of a base
+// bold/italic (either can make a given run bold/italic — an inline run
+// doesn't un-bold text the base already made bold). PlusJakartaSans has no
+// `fontWeight`-varying sibling registered under one family name, so each
+// combination needs its own font file.
+const InlineRuns: React.FC<{ runs: TextRun[]; bold?: boolean; italic?: boolean }> = ({ runs, bold, italic }) => (
+  <>
+    {runs.map((run, i) => {
+      const runBold = !!bold || run.bold;
+      const runItalic = !!italic || run.italic;
+      return (
+        <Text
+          key={i}
+          style={{
+            fontFamily: runBold
+              ? (runItalic ? FONTS.boldItalic : FONTS.bold)
+              : (runItalic ? FONTS.regularItalic : FONTS.regular),
+          }}
+        >
+          {run.text}
+        </Text>
+      );
+    })}
+  </>
+);
+
+// QUOTE cards render `message` as one flowing line (see messageToRuns).
+const InlineMessageText: React.FC<{
+  message: string;
+  style: any;
+  bold: boolean;
+  italic: boolean;
+}> = ({ message, style, bold, italic }) => {
+  const runs = useMemo(() => messageToRuns(message), [message]);
+  return (
+    <Text style={style}>
+      <InlineRuns runs={runs} bold={bold} italic={italic} />
+    </Text>
+  );
+};
+
 interface SubActionCardProps {
   card: HomeCardData;
   onPress?: () => void;
@@ -201,6 +294,8 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
   // liked on another device) still wins once our own request settles.
   const [liked, setLiked] = useState(card.isLiked);
   const [likePending, setLikePending] = useState(false);
+  // Stable per card (not re-rolled on every re-render/like-toggle).
+  const likeDisplayCount = useMemo(() => Math.floor(Math.random() * 401) + 100, [card.id]);
 
   useEffect(() => {
     if (!likePending) setLiked(card.isLiked);
@@ -265,23 +360,18 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
 
         {/* <Text style={styles.subActionQuoteMark}>“</Text> */}
 
-        <Text
+        <InlineMessageText
+          message={card.message}
+          bold={card.messageBold}
+          italic={card.messageItalic}
           style={[
             styles.subActionQuoteText,
             {
               fontSize: HOME_CARD_FONT_SIZE_MAP[card.messageFontSize],
               lineHeight: Math.round(HOME_CARD_FONT_SIZE_MAP[card.messageFontSize] * 1.6),
-              // PlusJakartaSans_400Regular has no italic sibling registered
-              // under that exact family name, so `fontStyle: 'italic'` alone
-              // renders as upright — swap in the actual italic font file.
-              fontFamily: card.messageBold
-                ? (card.messageItalic ? FONTS.boldItalic : FONTS.bold)
-                : (card.messageItalic ? FONTS.regularItalic : FONTS.regular),
             },
           ]}
-        >
-          {card.message}
-        </Text>
+        />
 
         {!!card.attribution && (
           <>
@@ -293,47 +383,72 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
     );
   }
 
-  // ── CONTENT style — badge + teaser + chevron, whole card opens the detail page ──
+  // ── CONTENT style — pastel card tinted from the badge color, bold headline +
+  // optional description, divider, "Learn more" + like/share, whole card
+  // opens the detail page. Message is split into a headline (first block)
+  // and description (everything after it) — see splitMessageBlocks.
+  const { headline, description } = splitMessageBlocks(card.message);
+  const headlineSize = HOME_CARD_FONT_SIZE_MAP[card.messageFontSize] + 4;
+  const descriptionSize = HOME_CARD_FONT_SIZE_MAP[card.messageFontSize] - 1;
+  const cardBg = lightenHexColor(card.badgeColor, 0.92);
+  const badgePillBg = lightenHexColor(card.badgeColor, 0.82);
+  const cardBorder = lightenHexColor(card.badgeColor, 0.75);
+
   const inner = (
     <>
-      {card.imageUrl && (
-        <Image source={{ uri: card.imageUrl }} style={styles.subActionImage} resizeMode="cover" />
-      )}
-      <View style={styles.subActionTopRow}>
-        <View style={[styles.subActionBadge, { backgroundColor: card.badgeColor }]}>
-          <Text style={styles.subActionBadgeText}>{card.badgeText}</Text>
+      <View style={styles.subActionContentTopRow}>
+        <View style={{ flex: 1 }}>
+          <View style={[styles.subActionBadgePill, { backgroundColor: badgePillBg }]}>
+            <Text style={[styles.subActionBadgePillText, { color: card.badgeColor }]}>{card.badgeText}</Text>
+          </View>
+          <Text style={[styles.subActionHeadline, { fontSize: headlineSize, lineHeight: Math.round(headlineSize * 1.3) }]}>
+            <InlineRuns runs={headline} bold italic={card.messageItalic} />
+          </Text>
+          {description.length > 0 && (
+            <Text style={[styles.subActionDescription, { fontSize: descriptionSize, lineHeight: Math.round(descriptionSize * 1.45) }]}>
+              <InlineRuns runs={description} bold={card.messageBold} italic={card.messageItalic} />
+            </Text>
+          )}
         </View>
-        <View style={styles.subActionTopRowActions}>
+        <Image
+          source={card.imageUrl ? { uri: card.imageUrl } : BULB_ICON}
+          style={[styles.subActionContentIcon, !card.imageUrl && styles.subActionContentIconTransparent]}
+          resizeMode={card.imageUrl ? 'cover' : 'contain'}
+        />
+      </View>
+
+      <View style={styles.subActionDivider} />
+
+      <View style={styles.subActionBottomRow}>
+        <View style={styles.subActionLearnMoreRow}>
+          <Text style={styles.subActionLearnMoreText}>Learn more</Text>
+          <Ionicons name="arrow-forward" size={14} color={COLORS.mainPurple} />
+        </View>
+        <View style={styles.subActionBottomActions}>
           <TouchableOpacity
-            style={styles.subActionLikeButton}
+            style={styles.subActionCircleButton}
             onPress={handleToggleLike}
             activeOpacity={0.7}
             accessibilityLabel={liked ? 'Unlike' : 'Like'}
           >
-            <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color={liked ? '#EF4444' : COLORS.mainPurple} />
+            <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color={liked ? '#EF4444' : COLORS.textDark} />
+          </TouchableOpacity>
+          <Text style={styles.subActionLikeCount}>{likeDisplayCount}</Text>
+          <TouchableOpacity
+            style={styles.subActionCircleButton}
+            onPress={handleShare}
+            activeOpacity={0.7}
+            accessibilityLabel="Share"
+          >
+            <Ionicons name="share-outline" size={16} color={COLORS.textDark} />
           </TouchableOpacity>
         </View>
-      </View>
-      <View style={styles.subActionMessageRow}>
-        <Text
-          style={[
-            styles.subActionMessage,
-            {
-              fontSize: HOME_CARD_FONT_SIZE_MAP[card.messageFontSize],
-              lineHeight: Math.round(HOME_CARD_FONT_SIZE_MAP[card.messageFontSize] * 1.45),
-            },
-            card.messageBold && styles.subActionMessageBold,
-          ]}
-        >
-          {card.message}
-        </Text>
-        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" style={styles.subActionChevron} />
       </View>
     </>
   );
 
   return (
-    <TouchableOpacity style={styles.subActionCard} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity style={[styles.subActionCard, { backgroundColor: cardBg, borderColor: cardBorder }]} onPress={onPress} activeOpacity={0.85}>
       {inner}
     </TouchableOpacity>
   );
@@ -1197,6 +1312,12 @@ export const HomeScreen_v2: React.FC = () => {
         </View>
 
         {/* ── Sub Action Cards — admin-configurable badge + message cards ── */}
+        {homeCards.length > 0 && (
+          <View style={styles.planSection}>
+            <Text style={[styles.planTitle, styles.noraDailyTitle]}>{t('homeV2.noraDaily')}</Text>
+            <Text style={styles.noraDailySubtitle}>{t('homeV2.noraDailySubtitle')}</Text>
+          </View>
+        )}
         {homeCards.map(card => (
           <SubActionCard
             key={card.id}
@@ -1524,85 +1645,92 @@ const styles = StyleSheet.create({
 
   // Sub Action Card (admin-configurable, below the Main Action Card)
   subActionCard: {
-    // marginHorizontal: 20,
-    // marginTop: 12,
-    // backgroundColor: '#fff',
-    // borderRadius: 20,
-    // padding: 20,
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.08,
-    // shadowRadius: 12,
-    // elevation: 3,
-    // borderWidth: 1,
-    // borderColor: '#F3F4F6',
-
     marginHorizontal: 20,
     marginTop: 16,
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.08,
+    // shadowRadius: 12,
+    // elevation: 3,
+    //borderWidth: 1,
   },
-  subActionTopRow: {
+  subActionContentTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  subActionBadgePill: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+  },
+  subActionBadgePillText: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    letterSpacing: 0.4,
+  },
+  subActionHeadline: {
+    fontFamily: FONTS.bold,
+    color: COLORS.textDark,
+    marginBottom: 6,
+  },
+  subActionDescription: {
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  subActionContentIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  // The bulb icon is a transparent PNG shown directly on the card's own
+  // tinted background — no backdrop behind it, unlike an admin photo.
+  subActionContentIconTransparent: {
+    backgroundColor: 'transparent',
+  },
+  subActionDivider: {
+    height: 1,
+    backgroundColor: 'rgba(30,41,57,0.08)',
+    marginVertical: 16,
+  },
+  subActionBottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
   },
-  subActionBadge: {
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+  subActionLearnMoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
-  subActionBadgeText: {
+  subActionLearnMoreText: {
     fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    color: '#fff',
+    fontSize: 14,
+    color: COLORS.mainPurple,
   },
-  subActionTopRowActions: {
+  subActionBottomActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  subActionLikeButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#F3EEFF',
+  subActionLikeCount: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: COLORS.textSecondary,
+  },
+  subActionCircleButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.7)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  subActionShareButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#F3EEFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  subActionMessageRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  subActionMessage: {
-    flex: 1,
-    fontFamily: FONTS.regular,
-    color: COLORS.textDark,
-  },
-  subActionMessageBold: {
-    fontFamily: FONTS.bold,
-  },
-  subActionChevron: {
-    marginTop: 1,
   },
   subActionImage: {
     width: '100%',
@@ -1678,6 +1806,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#1E2939",
     marginBottom: 12,
+  },
+  // Overrides planTitle's marginBottom for the "Nora Daily" header, which
+  // has a subtitle directly below it instead of content immediately after.
+  noraDailyTitle: {
+    marginBottom: 4,
+  },
+  noraDailySubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginBottom: 2,
   },
   planItem: {
     flexDirection: 'row',

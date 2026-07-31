@@ -3,19 +3,35 @@
  * Detail page for a CONTENT-type Home Card (see HomeScreen_v2's
  * SubActionCard) — styled like LessonViewerScreen_v2's chrome (close chevron
  * + identity row) but without the audio/playlist machinery, since this is
- * just admin-authored text, not a lesson.
+ * just admin-authored content, not a lesson. The body is an admin-ordered
+ * sequence of typed blocks (see HomeCardComponentData) rather than one big
+ * blob of text.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Image, TextInput, Share, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LessonContentBlocks } from '../components/LessonContentBlocks';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import { COLORS, FONTS } from '../constants/assets';
-import { LESSON_TEXT_DARK } from '../constants/lessonViewerColors';
+import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import { useRecordingService } from '../contexts/AppContext';
 import amplitudeService from '../services/amplitudeService';
+
+type HomeCardComponentType = 'TEXT' | 'IMAGE' | 'OPEN_DETAILS' | 'USER_INPUT';
+
+interface HomeCardComponentData {
+  id: string;
+  type: HomeCardComponentType;
+  text: string | null;
+  imageUrl: string | null;
+  linkedCardId: string | null;
+  ctaLabel: string | null;
+  inputLabel: string | null;
+  inputPlaceholder: string | null;
+  userAnswer?: string | null;
+}
 
 interface HomeCardDetailScreenProps {
   route: {
@@ -26,6 +42,67 @@ interface HomeCardDetailScreenProps {
   navigation: any;
 }
 
+const TextComponent: React.FC<{ text: string }> = ({ text }) => {
+  const blocks = useMemo(() => formatLessonContentV2(text), [text]);
+  return <LessonContentBlocks blocks={blocks} />;
+};
+
+const OpenDetailsComponent: React.FC<{ component: HomeCardComponentData; navigation: any }> = ({ component, navigation }) => (
+  <TouchableOpacity
+    style={styles.ctaRow}
+    onPress={() => navigation.push('HomeCardDetail', { cardId: component.linkedCardId })}
+    activeOpacity={0.7}
+  >
+    <Text style={styles.ctaLabel}>{component.ctaLabel || 'Learn more'}</Text>
+    <Ionicons name="chevron-forward" size={18} color={COLORS.mainPurple} />
+  </TouchableOpacity>
+);
+
+const UserInputComponent: React.FC<{ cardId: string; component: HomeCardComponentData }> = ({ cardId, component }) => {
+  const recordingService = useRecordingService();
+  const [answer, setAnswer] = useState(component.userAnswer || '');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(!!component.userAnswer);
+
+  const handleSave = async () => {
+    if (!answer.trim() || saving) return;
+    setSaving(true);
+    try {
+      await recordingService.submitHomeCardInput(cardId, component.id, answer.trim());
+      setSaved(true);
+      amplitudeService.trackEvent('Home Card Input Saved', { cardId, componentId: component.id });
+    } catch (err) {
+      console.error('Failed to save home card input:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <View style={styles.inputBlock}>
+      {!!component.inputLabel && <Text style={styles.inputLabel}>{component.inputLabel}</Text>}
+      <TextInput
+        style={styles.inputBox}
+        value={answer}
+        onChangeText={(text) => {
+          setAnswer(text);
+          setSaved(false);
+        }}
+        placeholder={component.inputPlaceholder || 'Type your answer...'}
+        placeholderTextColor={LESSON_TEXT_GREY}
+        multiline
+      />
+      <TouchableOpacity
+        style={[styles.saveButton, (!answer.trim() || saving) && styles.saveButtonDisabled]}
+        onPress={handleSave}
+        disabled={!answer.trim() || saving}
+      >
+        <Text style={styles.saveButtonText}>{saving ? 'Saving...' : saved ? 'Saved' : 'Save'}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ route, navigation }) => {
   const { cardId } = route.params;
   const recordingService = useRecordingService();
@@ -33,11 +110,12 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<{
+    id: string;
     badgeText: string;
     badgeColor: string;
     detailTitle: string;
-    detailContent: string;
     imageUrl: string | null;
+    components: HomeCardComponentData[];
   } | null>(null);
 
   useEffect(() => {
@@ -63,7 +141,19 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
     };
   }, [cardId]);
 
-  const blocks = useMemo(() => formatLessonContentV2(detail?.detailContent || ''), [detail?.detailContent]);
+  const handleShare = () => {
+    if (!detail) return;
+    amplitudeService.trackEvent('Home Card Shared', { cardId });
+    const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
+    const shareUrl = `${webUrl}/share-home-card.html?card_id=${encodeURIComponent(cardId)}`;
+
+    // iOS surfaces `url` in the share sheet separately from `message`; Android's
+    // Share module ignores `url` entirely, so the link has to live in the text.
+    Share.share({
+      message: Platform.OS === 'android' ? `${detail.detailTitle}\n\n${shareUrl}` : detail.detailTitle,
+      url: shareUrl,
+    }).catch(() => {});
+  };
 
   if (loading) {
     return (
@@ -104,6 +194,14 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
         >
           <Ionicons name="chevron-down" size={24} color={COLORS.textDark} />
         </TouchableOpacity>
+        <View style={{ flex: 1 }} />
+        <TouchableOpacity
+          style={styles.shareButton}
+          onPress={handleShare}
+          accessibilityLabel="Share"
+        >
+          <Ionicons name="share-outline" size={20} color={COLORS.textDark} />
+        </TouchableOpacity>
       </View>
 
       {detail.imageUrl && (
@@ -118,7 +216,24 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <LessonContentBlocks blocks={blocks} />
+        {detail.components.map((component) => {
+          switch (component.type) {
+            case 'TEXT':
+              return <TextComponent key={component.id} text={component.text || ''} />;
+            case 'IMAGE':
+              return component.imageUrl ? (
+                <View key={component.id} style={styles.imageRow}>
+                  <Image source={{ uri: component.imageUrl }} style={styles.contentImage} resizeMode="cover" />
+                </View>
+              ) : null;
+            case 'OPEN_DETAILS':
+              return <OpenDetailsComponent key={component.id} component={component} navigation={navigation} />;
+            case 'USER_INPUT':
+              return <UserInputComponent key={component.id} cardId={cardId} component={component} />;
+            default:
+              return null;
+          }
+        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -146,6 +261,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   closeButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shareButton: {
     width: 32,
     height: 32,
     justifyContent: 'center',
@@ -182,5 +303,66 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingBottom: 40,
+  },
+  imageRow: {
+    marginBottom: 16,
+  },
+  contentImage: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: 12,
+    backgroundColor: '#E5E6EA',
+  },
+  ctaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: COLORS.mainPurple,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  ctaLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: COLORS.mainPurple,
+  },
+  inputBlock: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: LESSON_TEXT_DARK,
+    marginBottom: 8,
+  },
+  inputBox: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: LESSON_TEXT_DARK,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: 12,
+    minHeight: 90,
+    textAlignVertical: 'top',
+  },
+  saveButton: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+  },
+  saveButtonDisabled: {
+    opacity: 0.4,
+  },
+  saveButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: '#fff',
   },
 });

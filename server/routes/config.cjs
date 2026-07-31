@@ -54,7 +54,7 @@ router.get('/home-cards', requireAuth, async (req, res) => {
       prisma.homeCard.findMany({
         where: { isActive: true },
         orderBy: { displayOrder: 'asc' },
-        select: { id: true, cardType: true, badgeText: true, badgeColor: true, message: true, messageFontSize: true, messageBold: true, messageItalic: true, attribution: true, image: true },
+        select: { id: true, cardType: true, message: true, messageFontSize: true, messageBold: true, messageItalic: true, attribution: true, image: true, badge: { select: { name: true, color: true } } },
       }),
       prisma.homeCardLike.findMany({
         where: { userId: req.userId },
@@ -63,8 +63,10 @@ router.get('/home-cards', requireAuth, async (req, res) => {
     ]);
 
     const likedIds = new Set(likes.map((l) => l.homeCardId));
-    const resolved = await Promise.all(homeCards.map(async ({ image, ...card }) => ({
+    const resolved = await Promise.all(homeCards.map(async ({ image, badge, ...card }) => ({
       ...card,
+      badgeText: badge.name,
+      badgeColor: badge.color,
       imageUrl: await resolveDragonImageUrl(image),
       isLiked: likedIds.has(card.id),
     })));
@@ -110,28 +112,92 @@ router.post('/home-cards/:id/like', requireAuth, async (req, res) => {
 
 /**
  * GET /api/config/home-cards/:id
- * Returns the full detail (title + body) for one CONTENT home card, for the
- * screen opened by tapping its arrow. 404s for QUOTE cards, inactive cards,
- * or unknown ids — there's nothing to view in any of those cases.
+ * Returns the full detail (title + ordered components) for one CONTENT home
+ * card, for the screen opened by tapping its arrow. 404s for QUOTE cards,
+ * inactive cards, or unknown ids — there's nothing to view in any of those
+ * cases. USER_INPUT components include the requesting user's own saved
+ * answer, if any.
  */
 router.get('/home-cards/:id', requireAuth, async (req, res) => {
   try {
-    const homeCard = await prisma.homeCard.findUnique({ where: { id: req.params.id } });
+    const homeCard = await prisma.homeCard.findUnique({
+      where: { id: req.params.id },
+      include: { badge: true, components: { orderBy: { order: 'asc' } } },
+    });
     if (!homeCard || !homeCard.isActive || homeCard.cardType !== 'CONTENT') {
       return res.status(404).json({ error: 'Home card not found' });
     }
 
+    const inputComponentIds = homeCard.components.filter((c) => c.type === 'USER_INPUT').map((c) => c.id);
+    const responses = inputComponentIds.length > 0
+      ? await prisma.homeCardUserInputResponse.findMany({
+          where: { componentId: { in: inputComponentIds }, userId: req.userId },
+          select: { componentId: true, answer: true },
+        })
+      : [];
+    const answersByComponentId = new Map(responses.map((r) => [r.componentId, r.answer]));
+
+    const components = await Promise.all(homeCard.components.map(async ({ image, ...c }) => ({
+      id: c.id,
+      type: c.type,
+      text: c.text,
+      imageUrl: await resolveDragonImageUrl(image),
+      linkedCardId: c.linkedCardId,
+      ctaLabel: c.ctaLabel,
+      inputLabel: c.inputLabel,
+      inputPlaceholder: c.inputPlaceholder,
+      userAnswer: c.type === 'USER_INPUT' ? (answersByComponentId.get(c.id) ?? null) : undefined,
+    })));
+
     res.json({
       id: homeCard.id,
-      badgeText: homeCard.badgeText,
-      badgeColor: homeCard.badgeColor,
+      badgeText: homeCard.badge.name,
+      badgeColor: homeCard.badge.color,
       detailTitle: homeCard.detailTitle,
-      detailContent: homeCard.detailContent,
       imageUrl: await resolveDragonImageUrl(homeCard.image),
+      components,
     });
   } catch (error) {
     console.error('Get home card detail error:', error);
     res.status(500).json({ error: 'Failed to fetch home card' });
+  }
+});
+
+/**
+ * POST /api/config/home-cards/:cardId/components/:componentId/input
+ * Saves (upserts) the requesting user's free-text answer to a USER_INPUT
+ * component. Body: { answer: string }. Same idempotent upsert shape as the
+ * like endpoint above — one row per user per component.
+ */
+router.post('/home-cards/:cardId/components/:componentId/input', requireAuth, async (req, res) => {
+  try {
+    const { cardId, componentId } = req.params;
+    const answer = typeof req.body.answer === 'string' ? req.body.answer.trim() : '';
+    if (!answer) return res.status(400).json({ error: 'answer is required' });
+
+    const component = await prisma.homeCardComponent.findUnique({
+      where: { id: componentId },
+      include: { homeCard: true },
+    });
+    if (
+      !component ||
+      component.homeCardId !== cardId ||
+      component.type !== 'USER_INPUT' ||
+      !component.homeCard.isActive
+    ) {
+      return res.status(404).json({ error: 'Component not found' });
+    }
+
+    const response = await prisma.homeCardUserInputResponse.upsert({
+      where: { componentId_userId: { componentId, userId: req.userId } },
+      update: { answer },
+      create: { componentId, userId: req.userId, answer },
+    });
+
+    res.json({ answer: response.answer });
+  } catch (error) {
+    console.error('Save home card input error:', error);
+    res.status(500).json({ error: 'Failed to save answer' });
   }
 });
 
@@ -143,24 +209,40 @@ router.get('/home-cards/:id', requireAuth, async (req, res) => {
  */
 router.get('/home-cards/share/:id', async (req, res) => {
   try {
-    const homeCard = await prisma.homeCard.findUnique({ where: { id: req.params.id } });
+    const homeCard = await prisma.homeCard.findUnique({
+      where: { id: req.params.id },
+      include: { badge: true, components: { orderBy: { order: 'asc' } } },
+    });
     if (!homeCard || !homeCard.isActive) {
       return res.status(404).json({ error: 'Card not found' });
     }
 
+    // USER_INPUT is skipped — there's no user session on this public page.
+    const components = await Promise.all(
+      homeCard.components
+        .filter((c) => c.type !== 'USER_INPUT')
+        .map(async ({ image, ...c }) => ({
+          type: c.type,
+          text: c.text,
+          imageUrl: await resolveDragonImageUrl(image),
+          linkedCardId: c.linkedCardId,
+          ctaLabel: c.ctaLabel,
+        }))
+    );
+
     res.json({
       id: homeCard.id,
       cardType: homeCard.cardType,
-      badgeText: homeCard.badgeText,
-      badgeColor: homeCard.badgeColor,
+      badgeText: homeCard.badge.name,
+      badgeColor: homeCard.badge.color,
       message: homeCard.message,
       messageFontSize: homeCard.messageFontSize,
       messageBold: homeCard.messageBold,
       messageItalic: homeCard.messageItalic,
       attribution: homeCard.attribution,
       detailTitle: homeCard.detailTitle,
-      detailContent: homeCard.detailContent,
       imageUrl: await resolveDragonImageUrl(homeCard.image),
+      components,
     });
   } catch (error) {
     console.error('Get shared home card error:', error);

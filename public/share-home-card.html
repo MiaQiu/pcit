@@ -243,6 +243,20 @@
       display: block;
     }
 
+    .component-cta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #8C49D5;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #8C49D5;
+      text-decoration: none;
+    }
+
     /* Bottom CTA */
     .cta {
       margin-top: 32px;
@@ -409,9 +423,26 @@
       html += '<span class="content-badge" style="background-color:' + escapeAttr(card.badgeColor) + '">'
         + escapeHtml(card.badgeText) + '</span>';
       html += '<h1 class="content-title">' + escapeHtml(card.detailTitle || '') + '</h1>';
-      html += '<div class="content-body">' + formatContent(card.detailContent || '') + '</div>';
+      html += '<div class="content-body">' + (card.components || []).map(renderComponent).join('') + '</div>';
       html += '</div>';
       return html;
+    }
+
+    // USER_INPUT is never included by the API here — no user session on
+    // this public page, so there's nothing to render or save.
+    function renderComponent(component) {
+      if (component.type === 'TEXT') {
+        return formatContent(component.text || '');
+      }
+      if (component.type === 'IMAGE') {
+        return component.imageUrl ? '<img src="' + escapeAttr(component.imageUrl) + '" alt="" />' : '';
+      }
+      if (component.type === 'OPEN_DETAILS') {
+        if (!component.linkedCardId) return '';
+        return '<a class="component-cta" href="share-home-card.html?id=' + encodeURIComponent(component.linkedCardId) + '">'
+          + escapeHtml(component.ctaLabel || 'Learn more') + ' &rarr;</a>';
+      }
+      return '';
     }
 
     // Lightweight port of formatLessonContentV2 (nora-mobile/src/utils/formatLessonContentV2.ts):

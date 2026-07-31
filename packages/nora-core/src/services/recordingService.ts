@@ -1,4 +1,5 @@
 import type AuthService from './authService';
+import type { HomeCardDetail } from '../types';
 
 /**
  * Recording analysis response from API
@@ -528,17 +529,10 @@ class RecordingService {
   }
 
   /**
-   * Get the full title + body for one CONTENT home card, to render on the
-   * detail page opened by tapping its arrow.
+   * Get the full title + ordered components for one CONTENT home card, to
+   * render on the detail page opened by tapping its arrow.
    */
-  async getHomeCardDetail(id: string): Promise<{
-    id: string;
-    badgeText: string;
-    badgeColor: string;
-    detailTitle: string;
-    detailContent: string;
-    imageUrl: string | null;
-  }> {
+  async getHomeCardDetail(id: string): Promise<HomeCardDetail> {
     const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/config/home-cards/${id}`
     );
@@ -546,6 +540,28 @@ class RecordingService {
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to fetch home card');
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Save (upsert) the requesting user's free-text answer to a USER_INPUT
+   * home card component — one answer per user, no AI evaluation.
+   */
+  async submitHomeCardInput(cardId: string, componentId: string, answer: string): Promise<{ answer: string }> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/config/home-cards/${cardId}/components/${componentId}/input`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answer }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to save answer');
     }
 
     return await response.json();

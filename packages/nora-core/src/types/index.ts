@@ -452,6 +452,36 @@ export interface DemoVideosResponse {
 }
 
 // ============================================================================
+// HOME CARD TYPES
+// One typed, admin-ordered block in a CONTENT home card's detail page (see
+// HomeCardDetailScreen). userAnswer is only ever present on USER_INPUT
+// blocks — the requesting user's own saved answer, if any.
+// ============================================================================
+
+export type HomeCardComponentType = 'TEXT' | 'IMAGE' | 'OPEN_DETAILS' | 'USER_INPUT';
+
+export interface HomeCardComponent {
+  id: string;
+  type: HomeCardComponentType;
+  text: string | null;
+  imageUrl: string | null;
+  linkedCardId: string | null;
+  ctaLabel: string | null;
+  inputLabel: string | null;
+  inputPlaceholder: string | null;
+  userAnswer?: string | null;
+}
+
+export interface HomeCardDetail {
+  id: string;
+  badgeText: string;
+  badgeColor: string;
+  detailTitle: string;
+  imageUrl: string | null;
+  components: HomeCardComponent[];
+}
+
+// ============================================================================
 // TEXT INPUT TYPES
 // Interactive text input segments with AI evaluation
 // ============================================================================

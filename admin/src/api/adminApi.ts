@@ -569,10 +569,43 @@ export async function deleteKeyword(id: string): Promise<void> {
 
 export type HomeCardType = 'CONTENT' | 'QUOTE';
 export type HomeCardFontSize = 'SMALL' | 'MEDIUM' | 'LARGE';
+export type HomeCardComponentType = 'TEXT' | 'IMAGE' | 'OPEN_DETAILS' | 'USER_INPUT';
+
+export interface HomeCardBadge {
+  id: string;
+  name: string;
+  color: string;
+  createdAt: string;
+}
+
+export interface HomeCardComponent {
+  id: string;
+  type: HomeCardComponentType;
+  order: number;
+  text: string | null;
+  imageUrl: string | null;
+  linkedCardId: string | null;
+  ctaLabel: string | null;
+  inputLabel: string | null;
+  inputPlaceholder: string | null;
+}
+
+// Sent to POST/PUT /api/admin/home-cards as part of `components` — `id`
+// omitted for a new block, present to update an existing one in place.
+export interface HomeCardComponentInput {
+  id?: string;
+  type: HomeCardComponentType;
+  text?: string;
+  linkedCardId?: string;
+  ctaLabel?: string;
+  inputLabel?: string;
+  inputPlaceholder?: string;
+}
 
 export interface HomeCard {
   id: string;
   cardType: HomeCardType;
+  badgeId: string;
   badgeText: string;
   badgeColor: string;
   message: string;
@@ -582,7 +615,7 @@ export interface HomeCard {
   attribution: string | null;
   imageUrl: string | null;
   detailTitle: string | null;
-  detailContent: string | null;
+  components: HomeCardComponent[];
   isActive: boolean;
   displayOrder: number;
   likeCount: number;
@@ -592,17 +625,29 @@ export interface HomeCard {
 
 export interface HomeCardInput {
   cardType: HomeCardType;
-  badgeText: string;
-  badgeColor: string;
+  badgeId: string;
   message: string;
   messageFontSize?: HomeCardFontSize;
   messageBold?: boolean;
   messageItalic?: boolean;
   attribution?: string;
   detailTitle?: string;
-  detailContent?: string;
+  components?: HomeCardComponentInput[];
   isActive?: boolean;
   displayOrder?: number;
+}
+
+export async function getHomeCardBadges(): Promise<HomeCardBadge[]> {
+  const data = await apiFetch<{ badges: HomeCardBadge[] }>('/api/admin/home-card-badges');
+  return data.badges;
+}
+
+export async function createHomeCardBadge(name: string, color: string): Promise<HomeCardBadge> {
+  const data = await apiFetch<{ badge: HomeCardBadge }>('/api/admin/home-card-badges', {
+    method: 'POST',
+    body: JSON.stringify({ name, color }),
+  });
+  return data.badge;
 }
 
 export async function getHomeCards(): Promise<HomeCard[]> {
@@ -652,6 +697,23 @@ export async function removeHomeCardImage(id: string): Promise<HomeCard> {
     method: 'DELETE',
   });
   return data.homeCard;
+}
+
+export async function uploadHomeCardComponentImage(cardId: string, componentId: string, file: File): Promise<HomeCardComponent> {
+  const token = (await import('./client')).getToken();
+  const form = new FormData();
+  form.append('image', file);
+  const res = await fetch(`/api/admin/home-cards/${cardId}/components/${componentId}/image`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Upload failed: ${res.status}`);
+  }
+  const data = await res.json();
+  return data.component;
 }
 
 // ---- Demo Videos ----
