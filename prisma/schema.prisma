@@ -864,6 +864,10 @@ model HomeCard {
   detailTitle        String?
   isActive           Boolean             @default(true)
   displayOrder       Int                 @default(0)
+  // Random per-card offset (100-500), rolled once at creation (see
+  // POST /api/admin/home-cards) so the like count mobile users see never
+  // starts at zero. Displayed count = likeCountBase + likes.count.
+  likeCountBase      Int                 @default(0)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   likes              HomeCardLike[]

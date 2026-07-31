@@ -97,6 +97,7 @@ interface HomeCardData {
   attribution: string | null;
   imageUrl: string | null;
   isLiked: boolean;
+  likeCount: number;
 }
 
 // Mirrors FONT_SIZE_OPTIONS in the admin portal's HomeCardsPage.tsx.
@@ -292,24 +293,31 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
   // Local optimistic like state — resynced from the server value whenever it
   // changes and there's no toggle in flight, so a background refetch (e.g.
   // liked on another device) still wins once our own request settles.
+  // likeCount already includes the server's random per-card base offset
+  // (see schema.prisma's HomeCard.likeCountBase) — this just moves it by 1
+  // on tap, same as any real like counter.
   const [liked, setLiked] = useState(card.isLiked);
   const [likePending, setLikePending] = useState(false);
-  // Stable per card (not re-rolled on every re-render/like-toggle).
-  const likeDisplayCount = useMemo(() => Math.floor(Math.random() * 401) + 100, [card.id]);
+  const [displayLikeCount, setDisplayLikeCount] = useState(card.likeCount);
 
   useEffect(() => {
-    if (!likePending) setLiked(card.isLiked);
-  }, [card.isLiked, likePending]);
+    if (!likePending) {
+      setLiked(card.isLiked);
+      setDisplayLikeCount(card.likeCount);
+    }
+  }, [card.isLiked, card.likeCount, likePending]);
 
   const handleToggleLike = async () => {
     const next = !liked;
     setLiked(next);
+    setDisplayLikeCount((count) => count + (next ? 1 : -1));
     setLikePending(true);
     amplitudeService.trackEvent('Home Card Liked', { cardId: card.id, liked: next });
     try {
       await recordingService.toggleHomeCardLike(card.id, next);
     } catch {
       setLiked(!next);
+      setDisplayLikeCount((count) => count - (next ? 1 : -1));
     } finally {
       setLikePending(false);
     }
@@ -433,7 +441,7 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
           >
             <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color={liked ? '#EF4444' : COLORS.textDark} />
           </TouchableOpacity>
-          <Text style={styles.subActionLikeCount}>{likeDisplayCount}</Text>
+          <Text style={styles.subActionLikeCount}>{displayLikeCount}</Text>
           <TouchableOpacity
             style={styles.subActionCircleButton}
             onPress={handleShare}

@@ -28,29 +28,52 @@ import { LessonContentBlocks } from '../components/LessonContentBlocks';
 
 type DemoVideoDetailRouteProp = RouteProp<RootStackParamList, 'DemoVideoDetail'>;
 
-// A line authored as "Question||Answer||" in the admin's Additional Text
-// field (via its Fold toolbar button) becomes one FAQ-style accordion row:
-// everything before the ||...|| span is the always-visible header, the
-// folded span (and anything after it on the same line) is the answer,
-// hidden until tapped. A line with no fold marker is just a static header
-// row with no +/- toggle.
-interface FaqEntry {
-  header: TextRun[];
-  answer: TextRun[] | null;
-}
+// The admin's Additional Text field mixes two kinds of lines:
+//  - a plain line (no "* " prefix), e.g. "**Strategic Goals of Labelled
+//    Praise**" — rendered as plain bold/italic text, no card.
+//  - a "* " bullet line, e.g. "* **To Enforce and Direct Positive
+//    Behavior**" — rendered as an FAQ question card with a +/- toggle.
+//    Its answer is a ||folded|| span, authored either inline on the same
+//    bullet line, or as its own very next line fully wrapped in ||...||
+//    (the common case, since answers are usually a full sentence/paragraph,
+//    sometimes with its own bulleted sub-list — the fold's contents are
+//    parsed recursively into full ContentBlocks, not just flat text, so
+//    that works).
+type AdditionalTextItem =
+  | { kind: 'plain'; runs: TextRun[] }
+  | { kind: 'faq'; header: TextRun[]; answer: ContentBlock[] | null };
 
-function toFaqEntries(blocks: ContentBlock[]): FaqEntry[] {
-  const entries: FaqEntry[] = [];
-  for (const block of blocks) {
+function toAdditionalTextItems(blocks: ContentBlock[]): AdditionalTextItem[] {
+  const items: AdditionalTextItem[] = [];
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
     if (block.type === 'image' || block.type === 'video') continue;
-    const foldIndex = block.runs.findIndex((run) => run.folded);
-    entries.push(
-      foldIndex === -1
-        ? { header: block.runs, answer: null }
-        : { header: block.runs.slice(0, foldIndex), answer: block.runs.slice(foldIndex) }
-    );
+
+    if (block.type !== 'bullet') {
+      items.push({ kind: 'plain', runs: block.runs });
+      continue;
+    }
+
+    const inlineFoldIndex = block.runs.findIndex((run) => run.folded);
+    if (inlineFoldIndex !== -1) {
+      const answer = block.runs.slice(inlineFoldIndex).flatMap((run) => run.foldedBlocks ?? []);
+      items.push({ kind: 'faq', header: block.runs.slice(0, inlineFoldIndex), answer });
+      continue;
+    }
+
+    const next = blocks[i + 1];
+    const nextIsFullyFolded =
+      next && next.type !== 'image' && next.type !== 'video' && next.runs.length > 0 && next.runs.every((run) => run.folded);
+    if (nextIsFullyFolded) {
+      const answer = (next as { runs: TextRun[] }).runs.flatMap((run) => run.foldedBlocks ?? []);
+      items.push({ kind: 'faq', header: block.runs, answer });
+      i++;
+      continue;
+    }
+
+    items.push({ kind: 'faq', header: block.runs, answer: null });
   }
-  return entries;
+  return items;
 }
 
 function FaqRunText({ runs }: { runs: TextRun[] }) {
@@ -64,7 +87,7 @@ function FaqRunText({ runs }: { runs: TextRun[] }) {
 }
 
 const FaqAccordion: React.FC<{ blocks: ContentBlock[] }> = ({ blocks }) => {
-  const entries = useMemo(() => toFaqEntries(blocks), [blocks]);
+  const items = useMemo(() => toAdditionalTextItems(blocks), [blocks]);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
   const toggle = (index: number) => {
@@ -78,8 +101,16 @@ const FaqAccordion: React.FC<{ blocks: ContentBlock[] }> = ({ blocks }) => {
 
   return (
     <View style={faqStyles.list}>
-      {entries.map((entry, i) => {
-        const canToggle = entry.answer !== null;
+      {items.map((item, i) => {
+        if (item.kind === 'plain') {
+          return (
+            <Text key={i} style={faqStyles.plainText}>
+              <FaqRunText runs={item.runs} />
+            </Text>
+          );
+        }
+
+        const canToggle = !!item.answer && item.answer.length > 0;
         const isOpen = canToggle && expanded.has(i);
         return (
           <TouchableOpacity
@@ -91,16 +122,16 @@ const FaqAccordion: React.FC<{ blocks: ContentBlock[] }> = ({ blocks }) => {
           >
             <View style={faqStyles.headerRow}>
               <Text style={[faqStyles.headerText, isOpen && faqStyles.headerTextOpen]}>
-                <FaqRunText runs={entry.header} />
+                <FaqRunText runs={item.header} />
               </Text>
               {canToggle && (
                 <Ionicons name={isOpen ? 'remove' : 'add'} size={20} color={isOpen ? COLORS.mainPurple : COLORS.textDark} />
               )}
             </View>
-            {isOpen && entry.answer && (
-              <Text style={faqStyles.answerText}>
-                <FaqRunText runs={entry.answer} />
-              </Text>
+            {isOpen && item.answer && (
+              <View style={faqStyles.answerWrap}>
+                <LessonContentBlocks blocks={item.answer} />
+              </View>
             )}
           </TouchableOpacity>
         );
@@ -255,6 +286,12 @@ const faqStyles = StyleSheet.create({
   list: {
     gap: 12,
   },
+  plainText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    lineHeight: 22,
+    color: COLORS.textDark,
+  },
   card: {
     backgroundColor: '#F7F7F9',
     borderRadius: 16,
@@ -269,18 +306,14 @@ const faqStyles = StyleSheet.create({
   headerText: {
     flex: 1,
     fontFamily: FONTS.bold,
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
     color: COLORS.textDark,
   },
   headerTextOpen: {
     color: COLORS.mainPurple,
   },
-  answerText: {
-    fontFamily: FONTS.regular,
-    fontSize: 14,
-    lineHeight: 21,
-    color: '#6B7280',
+  answerWrap: {
     marginTop: 10,
   },
   bold: {

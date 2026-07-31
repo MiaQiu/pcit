@@ -46,7 +46,10 @@ router.get('/report-visibility', requireAuth, async (req, res) => {
  * Returns admin-configured sub-action cards for the mobile Home screen,
  * active only, in display order. CONTENT cards link to a detail page (fetch
  * the full body via GET /api/config/home-cards/:id); QUOTE cards don't.
- * isLiked reflects the requesting user's own heart-button state.
+ * isLiked reflects the requesting user's own heart-button state. likeCount
+ * is likeCountBase (a random per-card offset rolled once at creation — see
+ * schema.prisma) plus the real HomeCardLike row count, so the number shown
+ * never starts at zero but still goes up 1-for-1 with real likes.
  */
 router.get('/home-cards', requireAuth, async (req, res) => {
   try {
@@ -54,7 +57,7 @@ router.get('/home-cards', requireAuth, async (req, res) => {
       prisma.homeCard.findMany({
         where: { isActive: true },
         orderBy: { displayOrder: 'asc' },
-        select: { id: true, cardType: true, message: true, messageFontSize: true, messageBold: true, messageItalic: true, attribution: true, image: true, badge: { select: { name: true, color: true } } },
+        select: { id: true, cardType: true, message: true, messageFontSize: true, messageBold: true, messageItalic: true, attribution: true, image: true, likeCountBase: true, badge: { select: { name: true, color: true } }, _count: { select: { likes: true } } },
       }),
       prisma.homeCardLike.findMany({
         where: { userId: req.userId },
@@ -63,12 +66,13 @@ router.get('/home-cards', requireAuth, async (req, res) => {
     ]);
 
     const likedIds = new Set(likes.map((l) => l.homeCardId));
-    const resolved = await Promise.all(homeCards.map(async ({ image, badge, ...card }) => ({
+    const resolved = await Promise.all(homeCards.map(async ({ image, badge, likeCountBase, _count, ...card }) => ({
       ...card,
       badgeText: badge.name,
       badgeColor: badge.color,
       imageUrl: await resolveDragonImageUrl(image),
       isLiked: likedIds.has(card.id),
+      likeCount: likeCountBase + _count.likes,
     })));
     res.json({ homeCards: resolved });
   } catch (error) {

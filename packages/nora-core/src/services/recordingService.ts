@@ -493,6 +493,7 @@ class RecordingService {
     attribution: string | null;
     imageUrl: string | null;
     isLiked: boolean;
+    likeCount: number;
   }> }> {
     const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/config/home-cards`

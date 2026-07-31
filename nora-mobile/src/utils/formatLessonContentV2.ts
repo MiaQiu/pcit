@@ -1,11 +1,12 @@
 /**
  * Lightweight parser for LessonViewerScreen_v2 content: **bold**, *italic*,
- * ||folded|| (hidden behind a tap-to-reveal toggle — see LessonContentBlocks),
- * "* " bullets, "### " headings, "---" dividers, ![](url) images /
- * ![video](url) videos on their own line, and blank-line paragraph breaks.
- * Mirrors the authoring convention already used for LessonSegment.bodyText,
- * kept intentionally separate from the segment-card formatter in
- * LessonViewerScreen.tsx (which is coupled to keyword highlighting).
+ * ||folded|| (hidden behind a tap-to-reveal toggle — see
+ * DemoVideoDetailScreen's FaqAccordion), "* " bullets, "### " headings,
+ * "---" dividers, ![](url) images / ![video](url) videos on their own
+ * line, and blank-line paragraph breaks. Mirrors the authoring convention
+ * already used for LessonSegment.bodyText, kept intentionally separate
+ * from the segment-card formatter in LessonViewerScreen.tsx (which is
+ * coupled to keyword highlighting).
  */
 
 export type ContentBlock =
@@ -19,17 +20,47 @@ export interface TextRun {
   text: string;
   bold: boolean;
   italic: boolean;
-  // Wrapped in ||...|| by the author — rendered collapsed behind a
-  // tap-to-reveal toggle by LessonContentBlocks. Ignored (always shown) by
-  // flattenBlocksToChunks/LiveScriptCard's word-highlighting mode below,
-  // since hiding words mid-narration wouldn't make sense there.
+  // Wrapped in ||...|| by the author -- hidden behind a tap-to-reveal
+  // toggle (see DemoVideoDetailScreen's FaqAccordion). When true, this
+  // run's own text is always empty and the real content lives in
+  // foldedBlocks instead, recursively parsed so a fold can itself contain
+  // bullets/paragraphs/bold/italic, not just plain text. Ignored (always
+  // shown, never hidden) by flattenBlocksToChunks/LiveScriptCard's
+  // word-highlighting mode below, since hiding words mid-narration
+  // wouldn't make sense there.
   folded: boolean;
+  foldedBlocks?: ContentBlock[];
 }
 
 const IMAGE_LINE = /^!\[\]\(([^)]+)\)$/;
 const VIDEO_LINE = /^!\[video\]\(([^)]+)\)$/;
 const HEADING_LINE = /^#{1,6}\s+(.+)$/;
 const DIVIDER_LINE = /^-{3,}$/;
+
+// ||...|| can span multiple lines and contain its own bullets/paragraphs
+// (e.g. an FAQ answer that itself has a bulleted list), so it can't be
+// matched per-line like bold/italic -- a bullet line inside it would get
+// mistaken for a new top-level block. Instead it's extracted from the raw
+// content up front, before line splitting: each match is replaced by a
+// single-line placeholder token wrapping the fold's index in double
+// square brackets (a sequence an author won't otherwise type), so the
+// line-based block parser below sees one ordinary short line in its
+// place. The captured inner text is parsed recursively -- via this same
+// function -- once a run reaches the placeholder
+// (parseRunsWithPlaceholders).
+const FOLD_PLACEHOLDER_OPEN = '[[FOLD:';
+const FOLD_PLACEHOLDER_CLOSE = ']]';
+const FOLD_PLACEHOLDER_REGEX = /\[\[FOLD:(\d+)\]\]/g;
+
+function extractFolds(content: string): { text: string; folds: string[] } {
+  const folds: string[] = [];
+  const text = content.replace(/\|\|([\s\S]+?)\|\|/g, (_match, inner: string) => {
+    const index = folds.length;
+    folds.push(inner);
+    return FOLD_PLACEHOLDER_OPEN + index + FOLD_PLACEHOLDER_CLOSE;
+  });
+  return { text, folds };
+}
 
 function parseItalicRuns(text: string, bold: boolean): TextRun[] {
   const runs: TextRun[] = [];
@@ -69,20 +100,29 @@ function parseRuns(line: string): TextRun[] {
   return runs.length > 0 ? runs : [{ text: '', bold: false, italic: false, folded: false }];
 }
 
-// ||text|| marks a span as folded (collapsed behind a tap-to-reveal toggle).
-// Split on fold boundaries first, then run the bold/italic parser on each
-// segment so **bold**/*italic* still work inside or outside a folded span.
-function parseRunsWithFold(line: string): TextRun[] {
+// Splits on fold placeholder tokens first (highest priority, like image/video
+// markers get their own line), delegating everything else to the bold/italic
+// parser. A placeholder always becomes its own isolated run -- regardless of
+// adjacent whitespace/text -- carrying the fold's recursively parsed content
+// in foldedBlocks instead of a literal text value.
+function parseRunsWithPlaceholders(line: string, folds: string[]): TextRun[] {
   const runs: TextRun[] = [];
-  const foldRegex = /\|\|(.+?)\|\|/g;
+  const regex = new RegExp(FOLD_PLACEHOLDER_REGEX.source, 'g');
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  while ((match = foldRegex.exec(line)) !== null) {
+  while ((match = regex.exec(line)) !== null) {
     if (match.index > lastIndex) {
       runs.push(...parseRuns(line.slice(lastIndex, match.index)));
     }
-    runs.push(...parseRuns(match[1]).map((r) => ({ ...r, folded: true })));
+    const foldIndex = Number(match[1]);
+    runs.push({
+      text: '',
+      bold: false,
+      italic: false,
+      folded: true,
+      foldedBlocks: formatLessonContentV2(folds[foldIndex] ?? ''),
+    });
     lastIndex = match.index + match[0].length;
   }
   if (lastIndex < line.length) {
@@ -92,13 +132,14 @@ function parseRunsWithFold(line: string): TextRun[] {
 }
 
 export function formatLessonContentV2(content: string): ContentBlock[] {
-  const lines = content.replace(/\r\n/g, '\n').split('\n');
+  const { text: extracted, folds } = extractFolds(content);
+  const lines = extracted.replace(/\r\n/g, '\n').split('\n');
   const blocks: ContentBlock[] = [];
   let paragraphLines: string[] = [];
 
   const flushParagraph = () => {
     if (paragraphLines.length === 0) return;
-    blocks.push({ type: 'paragraph', runs: parseRunsWithFold(paragraphLines.join(' ')) });
+    blocks.push({ type: 'paragraph', runs: parseRunsWithPlaceholders(paragraphLines.join(' '), folds) });
     paragraphLines = [];
   };
 
@@ -128,12 +169,12 @@ export function formatLessonContentV2(content: string): ContentBlock[] {
     const headingMatch = line.match(HEADING_LINE);
     if (headingMatch) {
       flushParagraph();
-      blocks.push({ type: 'heading', runs: parseRunsWithFold(headingMatch[1]) });
+      blocks.push({ type: 'heading', runs: parseRunsWithPlaceholders(headingMatch[1], folds) });
       continue;
     }
     if (line.startsWith('* ')) {
       flushParagraph();
-      blocks.push({ type: 'bullet', runs: parseRunsWithFold(line.slice(2)) });
+      blocks.push({ type: 'bullet', runs: parseRunsWithPlaceholders(line.slice(2), folds) });
       continue;
     }
     paragraphLines.push(line);
@@ -144,15 +185,15 @@ export function formatLessonContentV2(content: string): ContentBlock[] {
 }
 
 // ---------------------------------------------------------------------------
-// Chunk-level flattening — used by LiveScriptCard's live-highlighting mode so
-// it can show **bold**/bullets/images/videos from contentV2 (the admin-edited
-// source of truth) while still advancing word-by-word during playback. Kept
-// separate from wordTimings, whose word list comes straight from the original
-// audio transcription and can drift from contentV2 once an admin edits the
-// text (removing filler words, changing punctuation, adding media, etc).
-// Image/video blocks always become their own chunk (no words) so they render
-// in place — and stay visible — instead of being silently dropped by a
-// text-only flatten.
+// Chunk-level flattening -- used by LiveScriptCard's live-highlighting mode
+// so it can show **bold**/bullets/images/videos from contentV2 (the
+// admin-edited source of truth) while still advancing word-by-word during
+// playback. Kept separate from wordTimings, whose word list comes straight
+// from the original audio transcription and can drift from contentV2 once
+// an admin edits the text (removing filler words, changing punctuation,
+// adding media, etc). Image/video blocks always become their own chunk (no
+// words) so they render in place -- and stay visible -- instead of being
+// silently dropped by a text-only flatten.
 // ---------------------------------------------------------------------------
 
 export interface DisplayWord {

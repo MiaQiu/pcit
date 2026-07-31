@@ -24,6 +24,10 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Security middleware - allow inline scripts for share page
+const s3ImageOrigin = process.env.AWS_S3_BUCKET
+  ? `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com`
+  : null;
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -31,7 +35,11 @@ app.use(helmet({
       "script-src": ["'self'", "'unsafe-inline'"],
       "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       "font-src": ["'self'", "https://fonts.gstatic.com"],
-      "connect-src": ["'self'"]
+      "connect-src": ["'self'"],
+      // Home-card banner images on the public share page (share-home-card.html)
+      // are presigned S3 URLs, not same-origin — the default 'self' + data:
+      // directive would silently block them from loading.
+      "img-src": ["'self'", "data:", ...(s3ImageOrigin ? [s3ImageOrigin] : [])]
     }
   }
 }));

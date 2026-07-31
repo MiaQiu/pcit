@@ -39,10 +39,23 @@
       border-bottom: 1px solid #F3F4F6;
     }
 
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: block;
+    }
+
     .wordmark {
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 800;
-      color: #8C49D5;
+      color: #1E2939;
       letter-spacing: -0.3px;
     }
 
@@ -56,7 +69,7 @@
       border-radius: 999px;
       padding: 9px 18px;
       font-family: inherit;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 700;
       text-decoration: none;
       cursor: pointer;
@@ -71,41 +84,6 @@
       margin: 0 auto;
       padding: 20px 20px 40px;
     }
-
-    /* Shared-by banner */
-    .shared-by {
-      display: none;
-      align-items: center;
-      gap: 12px;
-      background: #F3EEFF;
-      border-radius: 16px;
-      padding: 14px 16px;
-      margin-bottom: 20px;
-    }
-
-    .shared-by.show { display: flex; }
-
-    .shared-by-avatar {
-      flex-shrink: 0;
-      width: 40px;
-      height: 40px;
-      border-radius: 20px;
-      background: #8C49D5;
-      color: #fff;
-      font-weight: 700;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .shared-by-text {
-      font-size: 14px;
-      line-height: 20px;
-      color: #1E2939;
-    }
-
-    .shared-by-name { font-weight: 700; }
 
     /* Loading & error */
     .loading, .error {
@@ -262,29 +240,27 @@
       margin-top: 32px;
       background: #FAF7FF;
       border: 1px solid #EDE4FA;
-      border-radius: 20px;
-      padding: 24px 20px;
-      text-align: center;
+      border-radius: 24px;
+      padding: 20px 20px 0;
     }
 
-    .cta h3 {
-      font-size: 17px;
-      font-weight: 700;
-      color: #1E2939;
-      margin-bottom: 6px;
+    .cta-hero-image {
+      display: block;
+      width: 90%;
+      height: auto;
+      margin: 0 auto;
+      border-radius: 16px;
     }
 
-    .cta p {
-      font-size: 14px;
-      line-height: 20px;
-      color: #6B7280;
-      margin-bottom: 18px;
+    .cta-actions {
+      padding: 20px;
     }
 
     .cta-button {
-      display: inline-flex;
+      display: flex;
       align-items: center;
       justify-content: center;
+      gap: 10px;
       width: 100%;
       background: #8C49D5;
       color: #fff;
@@ -299,22 +275,40 @@
     }
 
     .cta-button:active { opacity: 0.9; }
+
+    .cta-footnote {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 14px;
+      font-size: 13px;
+      color: #6B7280;
+    }
+
+    .cta-footnote-badge {
+      width: 20px;
+      height: 20px;
+      border-radius: 10px;
+      background: #EDE0FB;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
   </style>
 </head>
 <body>
   <div class="topnav">
-    <span class="wordmark">Nora</span>
-    <button class="open-app-btn" onclick="openApp()">Open App</button>
+    <div class="brand">
+      <img class="brand-icon" src="/images/nora-icon.png" alt="" width="28" height="28" />
+      <span class="wordmark">Nora AI - Parenting Coach</span>
+    </div>
+    <button class="open-app-btn" id="topnav-open-app">Open App</button>
   </div>
 
   <div class="page">
-    <div class="shared-by" id="shared-by">
-      <div class="shared-by-avatar" id="shared-by-avatar"></div>
-      <div class="shared-by-text">
-        <span class="shared-by-name" id="shared-by-name"></span> shared this with you from Nora
-      </div>
-    </div>
-
     <div id="loading" class="loading">
       <div class="loading-spinner"></div>
       <p>Loading&hellip;</p>
@@ -328,40 +322,50 @@
     <div id="card-container"></div>
 
     <div id="cta" class="cta" style="display: none;">
-      <h3>Get the full Nora experience</h3>
-      <p>Guided play, real-time coaching, and daily support for your parenting journey — just 5 minutes a day.</p>
-      <button class="cta-button" onclick="openApp()">Download Nora</button>
+      <img class="cta-hero-image" src="/images/share-cta.jpg" alt="Want help putting this into practice? Learn simple play techniques with step-by-step coaching from Nora." />
+
+      <div class="cta-actions">
+        <button class="cta-button" id="cta-open-app">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
+          Download Nora
+        </button>
+
+        <div class="cta-footnote">
+          <span class="cta-footnote-badge" aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8C49D5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </span>
+          Just 5 minutes a day
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
     const APP_STORE_URL = 'https://apps.apple.com/sg/app/nora-parenting-coach/id6756343006';
+    const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.chromamind.nora&hl=en';
+    const STORE_URL = /android/i.test(navigator.userAgent) ? PLAY_STORE_URL : APP_STORE_URL;
 
     const params = new URLSearchParams(window.location.search);
     const cardId = params.get('card_id');
-    const sharedBy = params.get('shared_by');
 
     const FONT_SIZE_MAP = { SMALL: 13, MEDIUM: 15, LARGE: 18 };
 
     function openApp() {
       if (!cardId) {
-        window.location.href = APP_STORE_URL;
+        window.location.href = STORE_URL;
         return;
       }
       const openedAt = Date.now();
       window.location.href = 'nora://card/' + encodeURIComponent(cardId);
       setTimeout(function () {
         if (Date.now() - openedAt < 2200 && !document.hidden) {
-          window.location.href = APP_STORE_URL;
+          window.location.href = STORE_URL;
         }
       }, 1500);
     }
 
-    if (sharedBy) {
-      document.getElementById('shared-by-name').textContent = sharedBy;
-      document.getElementById('shared-by-avatar').textContent = sharedBy.trim().charAt(0).toUpperCase();
-      document.getElementById('shared-by').classList.add('show');
-    }
+    document.getElementById('topnav-open-app').addEventListener('click', openApp);
+    document.getElementById('cta-open-app').addEventListener('click', openApp);
 
     if (!cardId) {
       showError();

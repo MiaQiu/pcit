@@ -2098,6 +2098,9 @@ router.post('/home-cards', requireAdminAuth, async (req, res) => {
         detailTitle: type === 'CONTENT' ? detailTitle.trim() : null,
         isActive: isActive === undefined ? true : !!isActive,
         displayOrder: parseInt(order),
+        // Rolled once here, not regenerated on edit — see the field comment
+        // in schema.prisma.
+        likeCountBase: Math.floor(Math.random() * 401) + 100,
         components: { create: validatedComponents },
       },
       include: { components: { orderBy: { order: 'asc' } } },

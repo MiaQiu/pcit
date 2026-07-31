@@ -200,7 +200,7 @@
         Download Nora to complete setup and start your 1-month free trial.
       </div>
       <a href="https://apps.apple.com/sg/app/nora-parenting-coach/id6756343006" class="appstore-btn" id="appstore-link">
-        Download on the App Store
+        <span id="appstore-link-text">Download on the App Store</span>
       </a>
     </div>
   </div>
@@ -211,6 +211,13 @@
         ? 'https://wpwpawhz29.ap-southeast-1.awsapprunner.com'
         : '';
       const code = window.location.pathname.split('/').pop();
+
+      // Point the download button at the right store per platform.
+      if (/android/i.test(navigator.userAgent)) {
+        const link = document.getElementById('appstore-link');
+        link.href = 'https://play.google.com/store/apps/details?id=com.chromamind.nora&hl=en';
+        document.getElementById('appstore-link-text').textContent = 'Get it on Google Play';
+      }
 
       // Attempt to open the installed app silently — no timeout, no blank page
       if (code) {
