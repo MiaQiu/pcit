@@ -29,16 +29,21 @@ import { LessonContentBlocks } from '../components/LessonContentBlocks';
 type DemoVideoDetailRouteProp = RouteProp<RootStackParamList, 'DemoVideoDetail'>;
 
 // The admin's Additional Text field mixes two kinds of lines:
-//  - a plain line (no "* " prefix), e.g. "**Strategic Goals of Labelled
-//    Praise**" — rendered as plain bold/italic text, no card.
-//  - a "* " bullet line, e.g. "* **To Enforce and Direct Positive
-//    Behavior**" — rendered as an FAQ question card with a +/- toggle.
-//    Its answer is a ||folded|| span, authored either inline on the same
-//    bullet line, or as its own very next line fully wrapped in ||...||
+//  - a line with no ||fold|| in it and no folded line right after it, e.g.
+//    "**Strategic Goals of Labelled Praise**" — rendered as plain
+//    bold/italic text, no card.
+//  - any other line (bullet, heading, or plain paragraph), e.g.
+//    "* **To Enforce and Direct Positive Behavior**" or plain
+//    "**Science Behind**" — rendered as an FAQ question card with a +/-
+//    toggle. Its answer is a ||folded|| span, authored either inline on
+//    the same line, or as its own very next line fully wrapped in ||...||
 //    (the common case, since answers are usually a full sentence/paragraph,
 //    sometimes with its own bulleted sub-list — the fold's contents are
 //    parsed recursively into full ContentBlocks, not just flat text, so
-//    that works).
+//    that works). Note a header line immediately followed by a ||fold||
+//    line (no blank line between) merges into one paragraph block in
+//    formatLessonContentV2, so it hits the inline-fold branch below rather
+//    than the next-block one — both are handled the same way here.
 type AdditionalTextItem =
   | { kind: 'plain'; runs: TextRun[] }
   | { kind: 'faq'; header: TextRun[]; answer: ContentBlock[] | null };
@@ -48,11 +53,6 @@ function toAdditionalTextItems(blocks: ContentBlock[]): AdditionalTextItem[] {
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
     if (block.type === 'image' || block.type === 'video') continue;
-
-    if (block.type !== 'bullet') {
-      items.push({ kind: 'plain', runs: block.runs });
-      continue;
-    }
 
     const inlineFoldIndex = block.runs.findIndex((run) => run.folded);
     if (inlineFoldIndex !== -1) {
@@ -71,7 +71,12 @@ function toAdditionalTextItems(blocks: ContentBlock[]): AdditionalTextItem[] {
       continue;
     }
 
-    items.push({ kind: 'faq', header: block.runs, answer: null });
+    if (block.type === 'bullet') {
+      items.push({ kind: 'faq', header: block.runs, answer: null });
+      continue;
+    }
+
+    items.push({ kind: 'plain', runs: block.runs });
   }
   return items;
 }
