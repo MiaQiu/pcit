@@ -783,6 +783,23 @@ export async function uploadDemoVideoFile(id: string, file: File): Promise<DemoV
   return data.demoVideo;
 }
 
+export async function uploadDemoVideoThumbnailFile(id: string, file: File): Promise<DemoVideo> {
+  const token = (await import('./client')).getToken();
+  const form = new FormData();
+  form.append('image', file);
+  const res = await fetch(`/api/admin/demo-videos/${id}/thumbnail`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Upload failed: ${res.status}`);
+  }
+  const data = await res.json();
+  return data.demoVideo;
+}
+
 // ---- Settings ----
 
 export interface ReportVisibility {

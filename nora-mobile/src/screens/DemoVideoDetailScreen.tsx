@@ -191,6 +191,11 @@ export const DemoVideoDetailScreen: React.FC = () => {
             shouldPlay
             isMuted={false}
             volume={1.0}
+            // Shows the admin-uploaded preview image while the video itself
+            // is still buffering, instead of a blank black box.
+            usePoster={!!video.thumbnailUrl}
+            posterSource={video.thumbnailUrl ? { uri: video.thumbnailUrl } : undefined}
+            posterStyle={styles.video}
           />
         </View>
 

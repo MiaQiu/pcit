@@ -6,7 +6,7 @@ const { generateAccessToken, verifyAccessToken } = require('../utils/jwt.cjs');
 const { requireAdminAuth } = require('../middleware/adminAuth.cjs');
 const { verifyPassword } = require('../utils/password.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
-const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo, uploadDemoVideo, uploadHomeCardImage, uploadBrandingImage, uploadPartnerQrCode, resolveLessonAudioUrl, resolveDragonImageUrl } = require('../services/storage-s3.cjs');
+const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo, uploadDemoVideo, uploadDemoVideoThumbnail, uploadHomeCardImage, uploadBrandingImage, uploadPartnerQrCode, resolveLessonAudioUrl, resolveDragonImageUrl } = require('../services/storage-s3.cjs');
 const { processRecordingWithRetry } = require('../services/processingService.cjs');
 const { transcribeLessonNarration } = require('../services/transcriptionService.cjs');
 
@@ -2433,6 +2433,35 @@ router.post('/demo-videos/:id/video', requireAdminAuth, demoVideoUploadMiddlewar
   } catch (error) {
     console.error('Admin demo video upload error:', error);
     res.status(500).json({ error: error.message || 'Failed to upload video' });
+  }
+});
+
+/**
+ * POST /api/admin/demo-videos/:id/thumbnail
+ * Upload (or replace) the preview/poster image for a demo video, shown on
+ * mobile while the video itself is still loading.
+ */
+router.post('/demo-videos/:id/thumbnail', requireAdminAuth, uploadMiddleware.single('image'), async (req, res) => {
+  try {
+    const demoVideoId = req.params.id;
+
+    const existing = await prisma.demoVideo.findUnique({ where: { id: demoVideoId } });
+    if (!existing) return res.status(404).json({ error: 'Demo video not found' });
+
+    if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+
+    const ext = (req.file.originalname.split('.').pop() || 'jpg').toLowerCase();
+    const key = await uploadDemoVideoThumbnail(req.file.buffer, demoVideoId, ext);
+
+    const demoVideo = await prisma.demoVideo.update({
+      where: { id: demoVideoId },
+      data: { thumbnailUrl: key },
+    });
+
+    res.json({ demoVideo: { ...demoVideo, thumbnailUrl: await resolveDragonImageUrl(key) } });
+  } catch (error) {
+    console.error('Admin demo video thumbnail upload error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload thumbnail' });
   }
 });
 

@@ -5,6 +5,7 @@ import {
   updateDemoVideo,
   deleteDemoVideo,
   uploadDemoVideoFile,
+  uploadDemoVideoThumbnailFile,
   getLessons,
   DemoVideo,
   DemoVideoInput,
@@ -137,7 +138,9 @@ export default function DemoVideosPage() {
                   </button>
                 </td>
                 <td>
-                  {video.videoUrl ? (
+                  {video.thumbnailUrl ? (
+                    <img src={video.thumbnailUrl} style={{ width: 80, height: 45, objectFit: 'cover', borderRadius: 4, background: '#000' }} />
+                  ) : video.videoUrl ? (
                     <video src={video.videoUrl} style={{ width: 80, height: 45, objectFit: 'cover', borderRadius: 4, background: '#000' }} muted />
                   ) : (
                     <div style={{ width: 80, height: 45, borderRadius: 4, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#9CA3AF' }}>
@@ -212,8 +215,10 @@ function DemoVideoModal({
   const [lessonId, setLessonId] = useState(video?.lessonId || '');
   const [isActive, setIsActive] = useState(video?.isActive ?? true);
   const [file, setFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [lessons, setLessons] = useState<LessonSummary[]>([]);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const additionalTextRef = useRef<HTMLTextAreaElement>(null);
@@ -241,6 +246,13 @@ function DemoVideoModal({
       if (file && id) {
         setUploading(true);
         await uploadDemoVideoFile(id, file);
+        setUploading(false);
+      }
+
+      if (thumbnailFile && id) {
+        setUploadingThumbnail(true);
+        await uploadDemoVideoThumbnailFile(id, thumbnailFile);
+        setUploadingThumbnail(false);
       }
 
       onSaved();
@@ -249,6 +261,7 @@ function DemoVideoModal({
     } finally {
       setSaving(false);
       setUploading(false);
+      setUploadingThumbnail(false);
     }
   };
 
@@ -330,6 +343,22 @@ function DemoVideoModal({
         </div>
 
         <div className="form-group">
+          <label>Preview image{isEdit && video?.thumbnailUrl ? ' (uploading a new file replaces the current one)' : ''}</label>
+          {isEdit && video?.thumbnailUrl && !thumbnailFile && (
+            <img src={video.thumbnailUrl} style={{ width: '100%', maxHeight: 160, objectFit: 'contain', borderRadius: 6, marginBottom: 8, background: '#000' }} />
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)}
+          />
+          <p className="form-hint">
+            Shown while the video is loading on mobile, so the card/screen doesn't have to wait on the video
+            itself to render something. JPG, PNG, or WebP.
+          </p>
+        </div>
+
+        <div className="form-group">
           <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
               type="button"
@@ -345,7 +374,15 @@ function DemoVideoModal({
         <div className="modal-actions">
           <button className="btn-secondary" onClick={onClose}>Cancel</button>
           <button className="btn-primary" onClick={handleSubmit} disabled={saving}>
-            {uploading ? 'Uploading video...' : saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Video'}
+            {uploading
+              ? 'Uploading video...'
+              : uploadingThumbnail
+              ? 'Uploading preview image...'
+              : saving
+              ? 'Saving...'
+              : isEdit
+              ? 'Save Changes'
+              : 'Add Video'}
           </button>
         </div>
       </div>

@@ -445,6 +445,10 @@ export interface DemoVideo {
   // GETTING_STARTED) this union hasn't caught up to yet.
   moduleKey: string | null;
   createdAt: string;
+  // Bumped whenever the admin edits the row, including replacing
+  // thumbnailUrl/videoUrl — used by demoVideoThumbnailCache to detect a
+  // stale cached thumbnail without re-downloading on every check.
+  updatedAt: string;
 }
 
 export interface DemoVideosResponse {

@@ -744,6 +744,42 @@ async function uploadHomeCardImage(fileBuffer, homeCardId, extension = 'jpg') {
   return key;
 }
 
+/**
+ * Upload (or replace) the preview/poster image for a Demo Video, shown while
+ * the video itself is still loading (see DemoVideoCard/DemoVideoDetailScreen
+ * on mobile). Same fresh-key-per-upload shape as uploadDemoVideo/
+ * uploadHomeCardImage — the old object is simply orphaned on re-upload.
+ * @param {Buffer} fileBuffer
+ * @param {string} demoVideoId
+ * @param {string} extension - e.g. 'jpg', 'png', 'webp'
+ * @returns {Promise<string>} - S3 key (not a full URL — resolve via resolveDragonImageUrl)
+ */
+async function uploadDemoVideoThumbnail(fileBuffer, demoVideoId, extension = 'jpg') {
+  const key = `demo-videos/${demoVideoId}/thumbnail-${crypto.randomUUID()}.${extension}`;
+
+  if (!S3_ENABLED || !s3Client) {
+    console.warn('S3 not configured, using mock storage path for demo video thumbnail');
+    return `mock://${key}`;
+  }
+
+  const contentTypeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
+  const contentType = contentTypeMap[extension.toLowerCase()] || 'image/jpeg';
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: contentType,
+    Metadata: { demoVideoId, uploadedAt: new Date().toISOString() },
+    ServerSideEncryption: 'AES256',
+  });
+
+  await s3Client.send(command);
+
+  console.log(`Demo video thumbnail uploaded to S3: ${key}`);
+  return key;
+}
+
 // Matches markdown-style image/video markers embedded in contentV2, e.g.
 // ![](lessons/WELCOME-1/content-images/abc.jpg) or ![video](lessons/.../content-videos/abc.mp4)
 const CONTENT_MEDIA_MARKER = /!\[(video)?\]\(([^)]+)\)/g;
@@ -782,6 +818,7 @@ module.exports = {
   uploadLessonContentImage,
   uploadLessonContentVideo,
   uploadDemoVideo,
+  uploadDemoVideoThumbnail,
   uploadHomeCardImage,
   uploadBrandingImage,
   resolveDragonImageUrl,

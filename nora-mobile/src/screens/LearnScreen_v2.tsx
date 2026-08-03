@@ -29,6 +29,7 @@ import { useToast } from '../components/ToastManager';
 import type { ModuleWithProgress, LessonCardData, ModuleListResponse, LessonListResponse, DemoVideo } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
 import { resolveImageUris } from '../services/lessonImageCache';
+import { resolveDemoVideoThumbnailUris } from '../services/demoVideoThumbnailCache';
 import { getCachedLessonData, saveLessonData, isCacheStale } from '../services/lessonDataCache';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -263,13 +264,18 @@ const formatRelativeTime = (isoDate: string, t: TFunction): string => {
 
 interface DemoVideoCardProps {
   video: DemoVideo;
+  // Locally cached copy of video.thumbnailUrl (see demoVideoThumbnailCache) —
+  // preferred over the remote URL so the card renders instantly from disk
+  // instead of waiting on a network fetch of the image.
+  localThumbnailUri?: string | null;
   cardWidth: number;
   onPress: () => void;
 }
 
-const DemoVideoCard: React.FC<DemoVideoCardProps> = ({ video, cardWidth, onPress }) => {
+const DemoVideoCard: React.FC<DemoVideoCardProps> = ({ video, localThumbnailUri, cardWidth, onPress }) => {
   const { t } = useTranslation();
   const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
+  const thumbnailUri = localThumbnailUri ?? video.thumbnailUrl;
 
   return (
     <TouchableOpacity
@@ -279,8 +285,8 @@ const DemoVideoCard: React.FC<DemoVideoCardProps> = ({ video, cardWidth, onPress
     >
       <View style={styles.noraCardInner}>
         <View style={styles.demoVideoThumbWrap}>
-          {video.thumbnailUrl ? (
-            <Image source={{ uri: video.thumbnailUrl }} style={styles.demoVideoThumb} resizeMode="cover" />
+          {thumbnailUri ? (
+            <Image source={{ uri: thumbnailUri }} style={styles.demoVideoThumb} resizeMode="cover" />
           ) : (
             <Video
               source={{ uri: video.videoUrl }}
@@ -311,17 +317,24 @@ const DemoVideoCard: React.FC<DemoVideoCardProps> = ({ video, cardWidth, onPress
 
 interface DemoVideosSectionProps {
   videos: DemoVideo[];
+  localThumbnailUris: Record<string, string>;
   cardWidth: number;
   onSelectVideo: (video: DemoVideo) => void;
 }
 
-const DemoVideosSection: React.FC<DemoVideosSectionProps> = ({ videos, cardWidth, onSelectVideo }) => {
+const DemoVideosSection: React.FC<DemoVideosSectionProps> = ({ videos, localThumbnailUris, cardWidth, onSelectVideo }) => {
   if (videos.length === 0) return null;
 
   return (
     <View style={styles.demoVideoGrid}>
       {videos.map(video => (
-        <DemoVideoCard key={video.id} video={video} cardWidth={cardWidth} onPress={() => onSelectVideo(video)} />
+        <DemoVideoCard
+          key={video.id}
+          video={video}
+          localThumbnailUri={localThumbnailUris[video.id]}
+          cardWidth={cardWidth}
+          onPress={() => onSelectVideo(video)}
+        />
       ))}
     </View>
   );
@@ -350,6 +363,7 @@ export const LearnScreen_v2: React.FC = () => {
   const [recommendedModules, setRecommendedModules] = useState<string[]>([]);
   const [currentModuleKey, setCurrentModuleKey] = useState<string | null>(null);
   const [demoVideos, setDemoVideos] = useState<DemoVideo[]>([]);
+  const [localDemoVideoThumbnailUris, setLocalDemoVideoThumbnailUris] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadData();
@@ -359,12 +373,27 @@ export const LearnScreen_v2: React.FC = () => {
     loadData(false);
   }, [i18n.language]);
 
-  useEffect(() => {
+  // Fetches the current demo videos list, then resolves each thumbnail from
+  // disk cache immediately and re-downloads in the background any that are
+  // missing or whose updatedAt no longer matches what's cached (admin
+  // replaced the file, or this is a brand-new video) — so the section shows
+  // the current version right away and swaps in the update once it lands.
+  const loadDemoVideos = useCallback(() => {
     lessonService.getDemoVideos()
-      .then(({ demoVideos: videos }) => setDemoVideos(videos))
+      .then(({ demoVideos: videos }) => {
+        setDemoVideos(videos);
+        resolveDemoVideoThumbnailUris(videos, (id, uri) => {
+          setLocalDemoVideoThumbnailUris(prev => ({ ...prev, [id]: uri }));
+        }).then(({ uris }) => {
+          if (Object.keys(uris).length > 0) setLocalDemoVideoThumbnailUris(prev => ({ ...prev, ...uris }));
+        });
+      })
       .catch(err => console.error('Failed to load demo videos:', err));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [lessonService]);
+
+  useEffect(() => {
+    loadDemoVideos();
+  }, [loadDemoVideos]);
 
   useEffect(() => {
     if (allLessons.length === 0) return;
@@ -381,8 +410,11 @@ export const LearnScreen_v2: React.FC = () => {
       scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
       loadCurrentModuleKey();
       if (modules.length > 0) fetchAndSave(i18n.language);
+      // Current thumbnails already rendered from cache/state — this just
+      // checks the server for a newer version in the background.
+      if (demoVideos.length > 0) loadDemoVideos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [modules.length, i18n.language])
+    }, [modules.length, demoVideos.length, i18n.language, loadDemoVideos])
   );
 
   const loadCurrentModuleKey = async () => {
@@ -593,10 +625,16 @@ export const LearnScreen_v2: React.FC = () => {
           <Text style={[styles.sectionTitle, styles.sectionTitleBelow]}>{t('learnV2.demoVideosTitle')}</Text>
           <DemoVideosSection
             videos={demoVideos}
+            localThumbnailUris={localDemoVideoThumbnailUris}
             cardWidth={demoVideoCardWidth}
             onSelectVideo={video => {
               amplitudeService.trackEvent('Demo Video Tapped', { demoVideoId: video.id });
-              navigation.push('DemoVideoDetail', { video });
+              // Pass the locally cached thumbnail through as the poster the
+              // detail screen shows while its video buffers, same as here.
+              const localThumbnailUri = localDemoVideoThumbnailUris[video.id];
+              navigation.push('DemoVideoDetail', {
+                video: localThumbnailUri ? { ...video, thumbnailUrl: localThumbnailUri } : video,
+              });
             }}
           />
         </View>

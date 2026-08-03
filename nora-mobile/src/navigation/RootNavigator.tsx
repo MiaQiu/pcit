@@ -38,12 +38,13 @@ import { ReferralScreen } from '../screens/ReferralScreen';
 import { ABCLogScreen } from '../screens/ABCLogScreen';
 import { HomeCardDetailScreen } from '../screens/HomeCardDetailScreen';
 import { RootStackParamList } from './types';
-import { useAuthService } from '../contexts/AppContext';
+import { useAuthService, useLessonService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { User } from '@nora/core';
 import amplitudeService from '../services/amplitudeService';
 import { checkOnboardingStep } from '../utils/onboardingCheck';
+import { prefetchDemoVideoThumbnails } from '../services/demoVideoThumbnailCache';
 import i18n from '../i18n';
 
 const APP_VERSION: string = require('../../app.json').expo.version;
@@ -62,6 +63,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
   const authService = useAuthService();
+  const lessonService = useLessonService();
   const { reinitialize: reinitializeUnread } = useCoachUnread();
   const { reinitialize: reinitializeUpload } = useUploadProcessing();
   const [isLoading, setIsLoading] = useState(true);
@@ -188,6 +190,13 @@ export const RootNavigator: React.FC = () => {
             childAge: user.childBirthYear ? new Date().getFullYear() - user.childBirthYear : undefined,
             relationshipToChild: user.relationshipToChild,
           });
+
+          // Fire-and-forget: warm the on-disk demo video thumbnail cache on
+          // app open, so Learn's Demo Videos section can render straight
+          // from disk instead of waiting on the network the first time it's
+          // opened this session (LearnScreen_v2 re-checks for updates on
+          // every focus).
+          prefetchDemoVideoThumbnails(lessonService);
         } catch (error) {
           console.error('[Auth] Onboarding check failed, falling back to login:', error);
           setIsAuthenticated(false);

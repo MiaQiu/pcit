@@ -175,7 +175,7 @@ router.get('/demo-videos', requireAuth, async (req, res) => {
     const demoVideos = await prisma.demoVideo.findMany({
       where: { isActive: true, videoUrl: { not: null } },
       orderBy: { displayOrder: 'asc' },
-      select: { id: true, title: true, description: true, additionalText: true, videoUrl: true, thumbnailUrl: true, lessonId: true, createdAt: true },
+      select: { id: true, title: true, description: true, additionalText: true, videoUrl: true, thumbnailUrl: true, lessonId: true, createdAt: true, updatedAt: true },
     });
 
     const lessonIds = [...new Set(demoVideos.map(v => v.lessonId).filter(Boolean))];
