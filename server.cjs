@@ -3,7 +3,10 @@ const cors = require('cors');
 const helmet = require('helmet');
 const nodemailer = require('nodemailer');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
+
+const prisma = require('./server/services/db.cjs');
 
 // Custom error classes
 const {
@@ -96,6 +99,98 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Server-rendered meta tags for share-home-card.html — must be registered
+// BEFORE express.static below, since static middleware always wins for a
+// literal file that exists on disk (it only calls next() when the file is
+// missing). Client-side JS in the file already sets og:title/description
+// after fetching the card, but social-media crawlers (WhatsApp, LinkedIn,
+// Facebook, WeChat) don't execute JS — they only ever saw the generic
+// static fallback. This injects the real per-card title/description/image
+// into the raw HTML before those crawlers read it. Bare visits (no card_id)
+// and missing/inactive cards just fall through to the static file, same as
+// today's behavior.
+app.get('/share-home-card.html', async (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'share-home-card.html');
+  const cardId = req.query.card_id;
+  if (!cardId) return res.sendFile(filePath);
+
+  try {
+    const homeCard = await prisma.homeCard.findUnique({
+      where: { id: String(cardId) },
+      include: { badge: true },
+    });
+    if (!homeCard || !homeCard.isActive) return res.sendFile(filePath);
+
+    // Mirrors share-home-card.html's own displayCard() title/description logic.
+    const title = homeCard.cardType === 'QUOTE' ? 'A quote shared from Nora' : (homeCard.detailTitle || 'Shared from Nora');
+    const description = homeCard.cardType === 'QUOTE' ? homeCard.message : (homeCard.detailTitle || '');
+    const imageUrl = `${req.protocol}://${req.get('host')}/api/config/home-cards/${encodeURIComponent(String(cardId))}/share-image.png`;
+
+    let html = fs.readFileSync(filePath, 'utf8');
+    html = html.replace(
+      /<meta property="og:title" content="[^"]*" \/>/,
+      `<meta property="og:title" content="${escapeMetaAttr(title)}" />`
+    );
+    html = html.replace(
+      /<meta property="og:description" content="[^"]*" \/>/,
+      `<meta property="og:description" content="${escapeMetaAttr(description)}" />`
+    );
+    // og:image doesn't exist in the static file — inject it after og:type.
+    html = html.replace(
+      /<meta property="og:type" content="article" \/>/,
+      `<meta property="og:type" content="article" />\n  <meta property="og:image" content="${escapeMetaAttr(imageUrl)}" />`
+    );
+
+    res.send(html);
+  } catch (error) {
+    console.error('Meta-inject share-home-card.html error:', error);
+    res.sendFile(filePath); // never hard-fail a page load over meta tags
+  }
+});
+
+// Same meta-injection pattern as share-home-card.html above, for
+// share-lesson.html — must also be registered before express.static.
+app.get('/share-lesson.html', async (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'share-lesson.html');
+  const lessonId = req.query.lesson_id;
+  if (!lessonId) return res.sendFile(filePath);
+
+  try {
+    const lesson = await prisma.lesson.findUnique({ where: { id: String(lessonId) } });
+    if (!lesson || !lesson.contentV2) return res.sendFile(filePath);
+
+    // Same title/subtitle pairing as the share-image itself (module name /
+    // lesson title) — see GET /api/lessons/:id/share-image.png.
+    const moduleInfo = await prisma.module.findUnique({ where: { key: lesson.module } });
+    const title = moduleInfo?.title || lesson.module;
+    const description = lesson.title;
+    const imageUrl = `${req.protocol}://${req.get('host')}/api/lessons/${encodeURIComponent(String(lessonId))}/share-image.png`;
+
+    let html = fs.readFileSync(filePath, 'utf8');
+    html = html.replace(
+      /<meta property="og:title" content="[^"]*" \/>/,
+      `<meta property="og:title" content="${escapeMetaAttr(title)}" />`
+    );
+    html = html.replace(
+      /<meta property="og:description" content="[^"]*" \/>/,
+      `<meta property="og:description" content="${escapeMetaAttr(description)}" />`
+    );
+    html = html.replace(
+      /<meta property="og:type" content="article" \/>/,
+      `<meta property="og:type" content="article" />\n  <meta property="og:image" content="${escapeMetaAttr(imageUrl)}" />`
+    );
+
+    res.send(html);
+  } catch (error) {
+    console.error('Meta-inject share-lesson.html error:', error);
+    res.sendFile(filePath);
+  }
+});
+
+function escapeMetaAttr(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 // Serve static files from public directory (dotfiles: allow serves .well-known/apple-app-site-association)
 app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'allow' }));
@@ -217,6 +312,23 @@ app.use('/api/referral', referralRoutes);
 // Serve referral landing page
 app.get('/join/:code', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'join.html'));
+});
+
+// Mount share-link routes (POST /api/share-links creates/reuses a short code)
+const shortlinkRoutes = require('./server/routes/shortlinks.cjs');
+app.use('/api/share-links', shortlinkRoutes);
+
+// Short share-link redirect: /s/:code → the long share-home-card.html /
+// share-lesson.html URL it was created for.
+app.get('/s/:code', async (req, res) => {
+  try {
+    const link = await prisma.shortLink.findUnique({ where: { code: req.params.code } });
+    if (!link) return res.status(404).send('Link not found');
+    res.redirect(302, link.targetUrl);
+  } catch (error) {
+    console.error('Short link redirect error:', error);
+    res.status(500).send('Something went wrong');
+  }
 });
 
 // Mount config routes (authenticated user endpoints)

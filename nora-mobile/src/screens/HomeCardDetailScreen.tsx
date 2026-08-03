@@ -9,10 +9,12 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Image, TextInput, Share } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LessonContentBlocks } from '../components/LessonContentBlocks';
+import { ShareSheet } from '../components/ShareSheet';
+import { getHomeCardShareText } from '../utils/shareCardText';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import { COLORS, FONTS } from '../constants/assets';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
@@ -114,6 +116,7 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
     badgeText: string;
     badgeColor: string;
     detailTitle: string;
+    message: string;
     imageUrl: string | null;
     components: HomeCardComponentData[];
   } | null>(null);
@@ -141,20 +144,14 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
     };
   }, [cardId]);
 
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
+  const shareUrl = `${webUrl}/share-home-card.html?card_id=${encodeURIComponent(cardId)}`;
+
   const handleShare = () => {
     if (!detail) return;
     amplitudeService.trackEvent('Home Card Shared', { cardId });
-    const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
-    const shareUrl = `${webUrl}/share-home-card.html?card_id=${encodeURIComponent(cardId)}`;
-
-    // `message` always carries the link as plain text: Android's Share module
-    // ignores `url` entirely, and on iOS, passing url+message as two separate
-    // items makes the sheet's "Copy" action write a serialized item instead
-    // of plain text unless the link is also embedded in the message itself.
-    Share.share({
-      message: `${detail.detailTitle}\n\n${shareUrl}`,
-      url: shareUrl,
-    }).catch(() => {});
+    setShareSheetVisible(true);
   };
 
   if (loading) {
@@ -185,6 +182,8 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
       </SafeAreaView>
     );
   }
+
+  const detailShareText = getHomeCardShareText({ cardType: 'CONTENT', message: detail.message });
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -237,6 +236,15 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
           }
         })}
       </ScrollView>
+
+      <ShareSheet
+        visible={shareSheetVisible}
+        onClose={() => setShareSheetVisible(false)}
+        targetUrl={shareUrl}
+        title={detailShareText.title}
+        subtitle={detailShareText.subtitle}
+        previewImageUrl={`${webUrl}/api/config/home-cards/${encodeURIComponent(cardId)}/share-image.png`}
+      />
     </SafeAreaView>
   );
 };

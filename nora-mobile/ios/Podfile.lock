@@ -213,6 +213,8 @@ PODS:
     - ExpoModulesCore
   - ExpoAsset (12.0.10):
     - ExpoModulesCore
+  - ExpoClipboard (8.0.8):
+    - ExpoModulesCore
   - ExpoCrypto (15.0.8):
     - ExpoModulesCore
   - ExpoDocumentPicker (14.0.8):
@@ -2170,6 +2172,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNShare (12.3.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNSVG (15.12.1):
     - hermes-engine
     - RCTRequired
@@ -2232,6 +2256,7 @@ DEPENDENCIES:
   - expo-dev-menu-interface (from `../../node_modules/expo-dev-menu-interface/ios`)
   - ExpoAppleAuthentication (from `../../node_modules/expo-apple-authentication/ios`)
   - ExpoAsset (from `../../node_modules/expo-asset/ios`)
+  - ExpoClipboard (from `../../node_modules/expo-clipboard/ios`)
   - ExpoCrypto (from `../../node_modules/expo-crypto/ios`)
   - ExpoDocumentPicker (from `../../node_modules/expo-document-picker/ios`)
   - ExpoFileSystem (from `../../node_modules/expo-file-system/ios`)
@@ -2321,6 +2346,7 @@ DEPENDENCIES:
   - "RNFBCrashlytics (from `../../node_modules/@react-native-firebase/crashlytics`)"
   - RNPurchases (from `../../node_modules/react-native-purchases`)
   - RNScreens (from `../../node_modules/react-native-screens`)
+  - RNShare (from `../../node_modules/react-native-share`)
   - RNSVG (from `../../node_modules/react-native-svg`)
   - Yoga (from `../../node_modules/react-native/ReactCommon/yoga`)
 
@@ -2371,6 +2397,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/expo-apple-authentication/ios"
   ExpoAsset:
     :path: "../../node_modules/expo-asset/ios"
+  ExpoClipboard:
+    :path: "../../node_modules/expo-clipboard/ios"
   ExpoCrypto:
     :path: "../../node_modules/expo-crypto/ios"
   ExpoDocumentPicker:
@@ -2548,6 +2576,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/react-native-purchases"
   RNScreens:
     :path: "../../node_modules/react-native-screens"
+  RNShare:
+    :path: "../../node_modules/react-native-share"
   RNSVG:
     :path: "../../node_modules/react-native-svg"
   Yoga:
@@ -2568,6 +2598,7 @@ SPEC CHECKSUMS:
   expo-dev-menu-interface: 600df12ea01efecdd822daaf13cc0ac091775533
   ExpoAppleAuthentication: 9413ae9a5e631a424cc04c1b13b0694dbab7d594
   ExpoAsset: d839c8eae8124470332408427327e8f88beb2dfd
+  ExpoClipboard: b36b287d8356887844bb08ed5c84b5979bb4dd1e
   ExpoCrypto: b6105ebaa15d6b38a811e71e43b52cd934945322
   ExpoDocumentPicker: 7cd9e71a0f66fb19eb0a586d6f26eee1284692e0
   ExpoFileSystem: ad991457efaa14253723f1dda997eac6024c700d
@@ -2671,6 +2702,7 @@ SPEC CHECKSUMS:
   RNFBCrashlytics: 70521bbf68b69c16273ab01f901e2439f231993a
   RNPurchases: 049c027cded681054a37b4aea87d904626174c76
   RNScreens: d8d6f1792f6e7ac12b0190d33d8d390efc0c1845
+  RNShare: bedb237f4fc22851d14d4d30dee152950b289274
   RNSVG: 31d6639663c249b7d5abc9728dde2041eb2a3c34
   Yoga: 5934998fbeaef7845dbf698f698518695ab4cd1a
 

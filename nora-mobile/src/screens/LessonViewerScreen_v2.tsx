@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { AudioPlayBar } from '../components/AudioPlayBar';
 import { LiveScriptCard } from '../components/LiveScriptCard';
 import { LessonPlaylistSheet, PlaylistModule } from '../components/LessonPlaylistSheet';
+import { ShareSheet } from '../components/ShareSheet';
 import { COLORS, FONTS } from '../constants/assets';
 import type { LessonDetailResponse, LessonCardData } from '@nora/core';
 import { useLessonService } from '../contexts/AppContext';
@@ -177,6 +178,12 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
 
   const resolvedModuleTitle = initialModuleTitle || (moduleKey ? humanizeModuleKey(moduleKey) : '');
 
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
+  const shareUrl = lesson ? `${webUrl}/share-lesson.html?lesson_id=${lesson.id}` : '';
+  const shareImageUrl = lesson ? `${webUrl}/api/lessons/${lesson.id}/share-image.png` : undefined;
+  const handleShare = () => setShareSheetVisible(true);
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -208,6 +215,17 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
           >
             <Ionicons name="chevron-down" size={24} color={COLORS.textDark} />
           </TouchableOpacity>
+          <View style={styles.shareGroup}>
+            {!!lesson.shareCount && <Text style={styles.shareCount}>{lesson.shareCount}</Text>}
+            <TouchableOpacity
+              style={styles.shareButton}
+              onPress={handleShare}
+              activeOpacity={0.7}
+              accessibilityLabel="Share"
+            >
+              <Ionicons name="share-outline" size={18} color={COLORS.textDark} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.identityRow}>
@@ -255,6 +273,15 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
         onSelectLesson={setCurrentLessonId}
         collapsedTop={contentHeight}
       />
+
+      <ShareSheet
+        visible={shareSheetVisible}
+        onClose={() => setShareSheetVisible(false)}
+        targetUrl={shareUrl}
+        title={lesson.moduleTitle || resolvedModuleTitle}
+        subtitle={lesson.title}
+        previewImageUrl={shareImageUrl}
+      />
     </SafeAreaView>
   );
 };
@@ -277,10 +304,27 @@ const styles = StyleSheet.create({
   navRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   closeButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shareGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  shareCount: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: LESSON_TEXT_DARK,
+  },
+  shareButton: {
     width: 32,
     height: 32,
     justifyContent: 'center',

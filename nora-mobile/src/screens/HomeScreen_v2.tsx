@@ -18,7 +18,6 @@ import {
   Alert,
   Linking,
   Platform,
-  Share,
   Image,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -30,6 +29,8 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { Video, ResizeMode } from 'expo-av';
 import { ProfileCircle } from '../components/ProfileCircle';
+import { ShareSheet } from '../components/ShareSheet';
+import { getHomeCardShareText } from '../utils/shareCardText';
 import { COLORS, FONTS } from '../constants/assets';
 
 const DRAGON_ANIMATION = require('../../assets/images/dragon_amine3.mov');
@@ -330,23 +331,30 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
     }
   };
 
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
+  const shareParams = new URLSearchParams({ card_id: card.id });
+  const sharerFirstName = sharerName?.trim().split(/\s+/)[0];
+  if (sharerFirstName) shareParams.set('shared_by', sharerFirstName);
+  const shareUrl = `${webUrl}/share-home-card.html?${shareParams.toString()}`;
+  const shareImageUrl = `${webUrl}/api/config/home-cards/${card.id}/share-image.png`;
+
   const handleShare = () => {
     amplitudeService.trackEvent('Home Card Shared', { cardId: card.id });
-    const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
-    const params = new URLSearchParams({ card_id: card.id });
-    const firstName = sharerName?.trim().split(/\s+/)[0];
-    if (firstName) params.set('shared_by', firstName);
-    const shareUrl = `${webUrl}/share-home-card.html?${params.toString()}`;
-
-    // `message` always carries the link as plain text: Android's Share module
-    // ignores `url` entirely, and on iOS, passing url+message as two separate
-    // items makes the sheet's "Copy" action write a serialized item instead
-    // of plain text unless the link is also embedded in the message itself.
-    Share.share({
-      message: `${card.message}\n\n${shareUrl}`,
-      url: shareUrl,
-    }).catch(() => {});
+    setShareSheetVisible(true);
   };
+
+  const shareText = getHomeCardShareText(card);
+  const shareSheet = (
+    <ShareSheet
+      visible={shareSheetVisible}
+      onClose={() => setShareSheetVisible(false)}
+      targetUrl={shareUrl}
+      title={shareText.title}
+      subtitle={shareText.subtitle}
+      previewImageUrl={shareImageUrl}
+    />
+  );
 
   // ── QUOTE style — big quote mark, italic centered quote, divider, attribution ──
   if (card.cardType === 'QUOTE') {
@@ -396,6 +404,7 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
             <Text style={styles.subActionQuoteAttribution}>{card.attribution}</Text>
           </>
         )}
+        {shareSheet}
       </View>
     );
   }
@@ -470,6 +479,7 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
   return (
     <TouchableOpacity style={[styles.subActionCard, { backgroundColor: cardBg, borderColor: cardBorder }]} onPress={onPress} activeOpacity={0.85}>
       {inner}
+      {shareSheet}
     </TouchableOpacity>
   );
 };

@@ -42,6 +42,12 @@
     </array>
     <key>CFBundleVersion</key>
     <string>86</string>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+      <string>whatsapp</string>
+      <string>linkedin</string>
+      <string>fb</string>
+    </array>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>

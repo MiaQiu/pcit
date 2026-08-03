@@ -85,6 +85,17 @@ model Lesson {
   backgroundColor    String               @default("#E4E4FF")
   ellipse77Color     String               @default("#9BD4DF")
   ellipse78Color     String               @default("#A6E0CB")
+  // Random per-lesson offset (100-500), rolled once at creation (see
+  // POST /api/admin/lessons), same pattern as HomeCard.likeCountBase — so
+  // the share count mobile users see never starts at zero.
+  shareCountBase     Int                  @default(0)
+  // Admin-authored title/subtitle for the generated share card image (see
+  // GET /api/lessons/:id/share-image.png) — separate from `title`/`subtitle`
+  // above since the share card is written for an outside reader, not a
+  // logged-in learner mid-lesson. Falls back to `title` (no subtitle
+  // fallback) when blank.
+  shareTitle         String?
+  shareSubtitle      String?
   createdAt          DateTime             @default(now())
   updatedAt          DateTime
   LessonSegment      LessonSegment[]
@@ -1148,4 +1159,15 @@ model AbcInsight {
   User           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+// A short redirect code for a long share URL (share-home-card.html?card_id=...
+// or share-lesson.html?lesson_id=...) — created on demand the first time a
+// user opens the ShareSheet for that target (POST /api/share-links).
+// Unique on targetUrl so repeat shares of the same card/lesson reuse the
+// same code instead of accumulating duplicate rows.
+model ShortLink {
+  code      String   @id
+  targetUrl String   @unique
+  createdAt DateTime @default(now())
 }

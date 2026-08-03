@@ -64,7 +64,10 @@ export const ReferralScreen: React.FC = () => {
     amplitudeService.trackEvent('Referral Share Tapped', { referralCode: data.code });
     try {
       const result = await Share.share({
-        message: t('referral.shareMessage'),
+        // Link must live in `message` too, not just `url`: on iOS, passing
+        // both as separate items makes the share sheet's "Copy" action
+        // write a serialized item instead of plain text.
+        message: `${t('referral.shareMessage')}\n\n${data.shareUrl}`,
         url: data.shareUrl,
       });
       if (result.action === Share.sharedAction) {

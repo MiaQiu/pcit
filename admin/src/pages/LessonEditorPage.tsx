@@ -19,6 +19,8 @@ interface LessonFormData {
   backgroundColor: string;
   ellipse77Color: string;
   ellipse78Color: string;
+  shareTitle: string;
+  shareSubtitle: string;
 }
 
 const DEFAULT_LESSON: LessonFormData = {
@@ -34,6 +36,8 @@ const DEFAULT_LESSON: LessonFormData = {
   backgroundColor: '#E4E4FF',
   ellipse77Color: '#9BD4DF',
   ellipse78Color: '#A6E0CB',
+  shareTitle: '',
+  shareSubtitle: '',
 };
 
 const DEFAULT_SEGMENT: Segment = {
@@ -109,6 +113,8 @@ export default function LessonEditorPage() {
             backgroundColor: data.backgroundColor,
             ellipse77Color: data.ellipse77Color,
             ellipse78Color: data.ellipse78Color,
+            shareTitle: data.shareTitle || '',
+            shareSubtitle: data.shareSubtitle || '',
           });
           setSegments(
             data.segments.length > 0

@@ -503,6 +503,11 @@ router.post('/lessons', requireAdminAuth, async (req, res) => {
           backgroundColor: lessonData.backgroundColor || '#E4E4FF',
           ellipse77Color: lessonData.ellipse77Color || '#9BD4DF',
           ellipse78Color: lessonData.ellipse78Color || '#A6E0CB',
+          shareTitle: lessonData.shareTitle || null,
+          shareSubtitle: lessonData.shareSubtitle || null,
+          // Rolled once here, not regenerated on edit — see the field
+          // comment in schema.prisma.
+          shareCountBase: Math.floor(Math.random() * 401) + 100,
           updatedAt: new Date()
         }
       });
@@ -616,6 +621,8 @@ router.put('/lessons/:id', requireAdminAuth, async (req, res) => {
         if (lessonData.backgroundColor !== undefined) updateFields.backgroundColor = lessonData.backgroundColor;
         if (lessonData.ellipse77Color !== undefined) updateFields.ellipse77Color = lessonData.ellipse77Color;
         if (lessonData.ellipse78Color !== undefined) updateFields.ellipse78Color = lessonData.ellipse78Color;
+        if (lessonData.shareTitle !== undefined) updateFields.shareTitle = lessonData.shareTitle || null;
+        if (lessonData.shareSubtitle !== undefined) updateFields.shareSubtitle = lessonData.shareSubtitle || null;
         updateFields.updatedAt = new Date();
 
         await tx.lesson.update({

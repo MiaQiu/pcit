@@ -1,6 +1,14 @@
 {
   "rewrites": [
     { "source": "/api/:path*", "destination": "https://wpwpawhz29.ap-southeast-1.awsapprunner.com/api/:path*" },
+    { "source": "/share-home-card.html", "destination": "https://wpwpawhz29.ap-southeast-1.awsapprunner.com/share-home-card.html" },
+    { "source": "/share-lesson.html", "destination": "https://wpwpawhz29.ap-southeast-1.awsapprunner.com/share-lesson.html" },
+    { "source": "/images/:path*", "destination": "https://wpwpawhz29.ap-southeast-1.awsapprunner.com/images/:path*" },
+    { "source": "/reset-password", "destination": "https://wpwpawhz29.ap-southeast-1.awsapprunner.com/reset-password" },
+    { "source": "/p/:slug", "destination": "https://wpwpawhz29.ap-southeast-1.awsapprunner.com/p/:slug" },
+    { "source": "/join/:code", "destination": "https://wpwpawhz29.ap-southeast-1.awsapprunner.com/join/:code" },
+    { "source": "/s/:code", "destination": "https://wpwpawhz29.ap-southeast-1.awsapprunner.com/s/:code" },
+    { "source": "/.well-known/apple-app-site-association", "destination": "https://wpwpawhz29.ap-southeast-1.awsapprunner.com/.well-known/apple-app-site-association" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

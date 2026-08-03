@@ -43,6 +43,7 @@ import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 import { useLessonPlayer } from '../contexts/LessonPlayerContext';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import { LessonContentBlocks } from '../components/LessonContentBlocks';
+import { ShareSheet } from '../components/ShareSheet';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 
 // Admin-configurable via Settings → Branding in the admin portal; falls back
@@ -104,6 +105,7 @@ export const LearnScreen_v3: React.FC = () => {
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [scriptLesson, setScriptLesson] = useState<LessonCardData | null>(null);
   const [scriptContent, setScriptContent] = useState<string>('');
+  const [scriptShareCount, setScriptShareCount] = useState(0);
   const [scriptLoading, setScriptLoading] = useState(false);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [coverTitle, setCoverTitle] = useState<string | null>(null);
@@ -320,6 +322,7 @@ export const LearnScreen_v3: React.FC = () => {
   const handleReadPress = async (lesson: LessonCardData) => {
     setScriptLesson(lesson);
     setScriptContent('');
+    setScriptShareCount(0);
     setScriptLoading(true);
 
     // Reading counts as viewing it — touch lastViewedAt so the "Last viewed"
@@ -335,11 +338,22 @@ export const LearnScreen_v3: React.FC = () => {
     try {
       const detail = await lessonService.getLessonDetail(lesson.id, i18n.language);
       setScriptContent(detail.lesson.contentV2 || '');
+      setScriptShareCount(detail.lesson.shareCount ?? 0);
     } catch (err) {
       console.error('Failed to load lesson script:', err);
     } finally {
       setScriptLoading(false);
     }
+  };
+
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
+  const scriptShareUrl = scriptLesson ? `${webUrl}/share-lesson.html?lesson_id=${scriptLesson.id}` : '';
+  const scriptShareImageUrl = scriptLesson ? `${webUrl}/api/lessons/${scriptLesson.id}/share-image.png` : undefined;
+
+  const handleShareLesson = () => {
+    if (!scriptLesson) return;
+    setShareSheetVisible(true);
   };
 
   const scriptFallbackParagraphs = useMemo(
@@ -596,6 +610,18 @@ export const LearnScreen_v3: React.FC = () => {
             >
               <Ionicons name="chevron-back" size={24} color={COLORS.textDark} />
             </TouchableOpacity>
+            <View style={{ flex: 1 }} />
+            <View style={styles.scriptModalShareGroup}>
+              {scriptShareCount > 0 && <Text style={styles.scriptModalShareCount}>{scriptShareCount}</Text>}
+              <TouchableOpacity
+                onPress={handleShareLesson}
+                style={styles.scriptModalClose}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityLabel="Share"
+              >
+                <Ionicons name="share-outline" size={20} color={COLORS.textDark} />
+              </TouchableOpacity>
+            </View>
           </View>
           {scriptLoading ? (
             <View style={styles.scriptModalLoading}>
@@ -616,10 +642,6 @@ export const LearnScreen_v3: React.FC = () => {
                     </Text>
                   </View>
                   <Text style={styles.scriptArticleTitle}>{scriptLesson.title}</Text>
-                  <Text style={styles.scriptArticleMeta}>
-                    {t('learnV3.readMeta', { day: scriptLesson.dayNumber, duration: formatDuration(scriptLesson.durationSeconds) })}
-                  </Text>
-                  <View style={styles.scriptDivider} />
                 </View>
               )}
               {scriptFallbackParagraphs ? (
@@ -629,7 +651,7 @@ export const LearnScreen_v3: React.FC = () => {
                   </Text>
                 ))
               ) : (
-                <LessonContentBlocks blocks={scriptBlocks} />
+                <LessonContentBlocks blocks={scriptBlocks} fontScale={1.2} />
               )}
               {nextReadLesson && (
                 <TouchableOpacity
@@ -644,6 +666,15 @@ export const LearnScreen_v3: React.FC = () => {
               )}
             </ScrollView>
           )}
+
+          <ShareSheet
+            visible={shareSheetVisible}
+            onClose={() => setShareSheetVisible(false)}
+            targetUrl={scriptShareUrl}
+            title={scriptLesson ? (moduleByKey.get(scriptLesson.module)?.title ?? t('learnV3.lessonFallback')) : ''}
+            subtitle={scriptLesson?.title}
+            previewImageUrl={scriptShareImageUrl}
+          />
         </View>
       </Modal>
 
@@ -1103,6 +1134,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  scriptModalShareGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginRight: 5,
+  },
+  scriptModalShareCount: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: COLORS.textDark,
+  },
   scriptModalLoading: {
     flex: 1,
     alignItems: 'center',
@@ -1133,23 +1175,12 @@ const styles = StyleSheet.create({
     fontSize: 25,
     lineHeight: 33,
     color: LESSON_TEXT_DARK,
-    marginBottom: 10,
-  },
-  scriptArticleMeta: {
-    fontFamily: FONTS.regular,
-    fontSize: 13,
-    color: LESSON_TEXT_GREY,
-    marginBottom: 22,
-  },
-  scriptDivider: {
-    height: 1,
-    backgroundColor: '#F0F0F0',
-    marginBottom: 22,
+    marginBottom: 20,
   },
   scriptParagraph: {
     fontFamily: FONTS.regular,
-    fontSize: 16,
-    lineHeight: 27,
+    fontSize: 19,
+    lineHeight: 32,
     color: LESSON_TEXT_DARK,
     marginBottom: 20,
   },

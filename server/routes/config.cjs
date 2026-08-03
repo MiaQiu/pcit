@@ -3,6 +3,7 @@ const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
 const { resolveReportAudioUrls } = require('../services/weeklyReportService.cjs');
 const { resolveDragonImageUrl } = require('../services/storage-s3.cjs');
+const { buildShareCardImage, lightenHexColor } = require('../services/shareImage.cjs');
 
 const router = express.Router();
 
@@ -158,6 +159,11 @@ router.get('/home-cards/:id', requireAuth, async (req, res) => {
       badgeText: homeCard.badge.name,
       badgeColor: homeCard.badge.color,
       detailTitle: homeCard.detailTitle,
+      // Included so the share sheet can derive the same title/subtitle split
+      // used everywhere else this card is shared from (see
+      // getHomeCardShareText in nora-mobile) — detailTitle itself is never
+      // shown on the card, only as this page's own heading.
+      message: homeCard.message,
       imageUrl: await resolveDragonImageUrl(homeCard.image),
       components,
     });
@@ -251,6 +257,66 @@ router.get('/home-cards/share/:id', async (req, res) => {
   } catch (error) {
     console.error('Get shared home card error:', error);
     res.status(500).json({ error: 'Failed to fetch card' });
+  }
+});
+
+/**
+ * GET /api/config/home-cards/:id/share-image.png
+ * Public (no auth) — the shared title/subtitle/thumbnail card (see
+ * server/services/shareImage.cjs) built from the card's own fields, no new
+ * admin-authored copy needed. Used BOTH as the mobile ShareSheet's in-app
+ * preview AND as the og:image injected into share-home-card.html (see
+ * server.cjs).
+ *
+ * Title/subtitle mapping mirrors what's actually visible on the card in the
+ * app, not just any field that happens to be named "title":
+ *   QUOTE   — title = message (the quote itself), subtitle = attribution
+ *   CONTENT — title/subtitle = message split on its first newline (the same
+ *             headline/description split SubActionCard renders on the card
+ *             itself — see splitMessageBlocks in HomeScreen_v2.tsx).
+ *             detailTitle is deliberately NOT used here: it's never shown on
+ *             the card, only as the detail page's own heading.
+ */
+router.get('/home-cards/:id/share-image.png', async (req, res) => {
+  try {
+    const homeCard = await prisma.homeCard.findUnique({
+      where: { id: req.params.id },
+      include: { badge: true },
+    });
+    if (!homeCard || !homeCard.isActive) return res.status(404).end();
+
+    let title = homeCard.message;
+    let subtitle = homeCard.cardType === 'QUOTE' ? homeCard.attribution : null;
+    let badgeText = null;
+    let cardBackgroundColor = null;
+    if (homeCard.cardType === 'CONTENT') {
+      const newlineIndex = homeCard.message.indexOf('\n');
+      title = newlineIndex === -1 ? homeCard.message : homeCard.message.slice(0, newlineIndex);
+      subtitle = newlineIndex === -1 ? null : homeCard.message.slice(newlineIndex + 1);
+      // Same tint SubActionCard uses for the card background — see cardBg
+      // in HomeScreen_v2.tsx.
+      badgeText = homeCard.badge.name;
+      cardBackgroundColor = lightenHexColor(homeCard.badge.color, 0.92);
+    }
+    const thumbnailUrl = await resolveDragonImageUrl(homeCard.image);
+
+    const png = await buildShareCardImage({
+      title,
+      subtitle,
+      thumbnailUrl,
+      badgeText,
+      badgeColor: homeCard.cardType === 'CONTENT' ? homeCard.badge.color : null,
+      backgroundColor: cardBackgroundColor,
+    });
+    res.set('Content-Type', 'image/png');
+    // TODO: restore to a real max-age (e.g. 3600) once the share-card visual
+    // design has settled — no-cache while we're actively tuning it so RN's
+    // Image cache doesn't keep serving a stale render from before an edit.
+    res.set('Cache-Control', 'no-cache');
+    res.send(png);
+  } catch (error) {
+    console.error('Generate share image error:', error);
+    res.status(500).end();
   }
 });
 

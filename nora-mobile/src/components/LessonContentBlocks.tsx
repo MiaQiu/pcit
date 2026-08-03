@@ -6,7 +6,7 @@
  * bold/bullet rendering rules live in exactly one place.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { FONTS } from '../constants/assets';
@@ -16,9 +16,20 @@ import type { ContentBlock } from '../utils/formatLessonContentV2';
 interface LessonContentBlocksProps {
   blocks: ContentBlock[];
   activeIndex?: number;
+  // Scales body/bullet/heading text size+lineHeight uniformly, leaving every
+  // other consumer (LiveScriptCard, LessonReadScreen, etc.) pixel-identical
+  // at the default of 1.
+  fontScale?: number;
 }
 
-export const LessonContentBlocks: React.FC<LessonContentBlocksProps> = ({ blocks, activeIndex }) => {
+export const LessonContentBlocks: React.FC<LessonContentBlocksProps> = ({ blocks, activeIndex, fontScale = 1 }) => {
+  const scaledStyles = useMemo(() => ({
+    bodyText: { ...styles.bodyText, fontSize: 15 * fontScale, lineHeight: 24 * fontScale },
+    bulletText: { ...styles.bulletText, fontSize: 15 * fontScale, lineHeight: 24 * fontScale },
+    bulletDot: { ...styles.bulletDot, fontSize: 15 * fontScale, lineHeight: 24 * fontScale },
+    headingText: { ...styles.headingText, fontSize: 17 * fontScale, lineHeight: 26 * fontScale },
+  }), [fontScale]);
+
   return (
     <>
       {blocks.map((block, i) => {
@@ -44,10 +55,10 @@ export const LessonContentBlocks: React.FC<LessonContentBlocksProps> = ({ blocks
         }
         const dimmed = activeIndex !== undefined && i !== activeIndex;
         const textStyle =
-          block.type === 'bullet' ? styles.bulletText : block.type === 'heading' ? styles.headingText : styles.bodyText;
+          block.type === 'bullet' ? scaledStyles.bulletText : block.type === 'heading' ? scaledStyles.headingText : scaledStyles.bodyText;
         return (
           <View key={i} style={block.type === 'bullet' ? styles.bulletRow : styles.paragraph}>
-            {block.type === 'bullet' && <Text style={[styles.bulletDot, dimmed && styles.dimmed]}>•</Text>}
+            {block.type === 'bullet' && <Text style={[scaledStyles.bulletDot, dimmed && styles.dimmed]}>•</Text>}
             <Text style={[textStyle, dimmed && styles.dimmed]}>
               {block.runs.map((run, j) => (
                 <Text key={j} style={[run.bold && styles.bold, run.italic && styles.italic]}>{run.text}</Text>

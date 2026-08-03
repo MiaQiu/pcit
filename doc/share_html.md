@@ -24,10 +24,17 @@ follows the identical pattern.
 ```
 Mobile app (SubActionCard.handleShare / HomeCardDetailScreen.handleShare)
   │
-  │  builds:  {EXPO_PUBLIC_WEB_URL}/share-home-card.html?card_id=<id>
+  │  opens <ShareSheet targetUrl="{EXPO_PUBLIC_WEB_URL}/share-home-card.html?card_id=<id>">
+  ▼
+ShareSheet (nora-mobile/src/components/ShareSheet.tsx)
+  │  POST /api/share-links { targetUrl }  →  creates/reuses a short /s/:code
+  │  "Share to": WhatsApp / LinkedIn / Facebook (Linking.openURL)
+  │  "Share link": short URL + Copy button
+  ▼
+Recipient taps the short link
   │
   ▼
-RN Share sheet  (Share.share({ message, url }))
+GET /s/:code  (server.cjs)  →  302 redirect to the long share-home-card.html?card_id=... URL
   │
   ▼
 Recipient's phone browser
@@ -43,6 +50,13 @@ server/routes/config.cjs                (no auth)
 Prisma → PostgreSQL (HomeCard, HomeCardBadge, HomeCardComponent)
 ```
 
+`ShareSheet` is **not** Home-Card-specific — it's shared UI also used by every
+lesson share button (see [Also Used By Lessons](#also-used-by-lessons-sharesheet--short-links)
+below). RN's native `Share.share()` (the OS share sheet) is no longer used for
+either flow; `ReferralScreen.tsx`'s invite-code share is the one remaining
+caller of native `Share.share()`, and it points at `public/join.html`, an
+unrelated page not covered by this doc.
+
 The page fetches via a **relative** path (`/api/config/...`), not an
 absolute URL. `public/`, the API, and (in production) the built `web/`
 signup app are all served by the same Express process — a relative fetch
@@ -53,28 +67,35 @@ resolves correctly whether the page is opened via `hinora.co` or
 
 ## Building the Share Link (Mobile)
 
-Two entry points build the same URL shape:
+Every caller builds a `targetUrl` + `message` (and, for Home Cards, a
+`previewImageUrl`) and hands them to `<ShareSheet>` — none of them call
+`Share.share()` directly anymore:
 
-| Caller | File | Trigger |
-|---|---|---|
-| QUOTE card share button | `nora-mobile/src/screens/HomeScreen_v2.tsx` (`SubActionCard.handleShare`) | Tapping the share icon on a QUOTE-type Home Card |
-| CONTENT card detail screen | `nora-mobile/src/screens/HomeCardDetailScreen.tsx` (`handleShare`) | Tapping the share icon on a CONTENT card's detail page |
+| Caller | File | `targetUrl` | `previewImageUrl` |
+|---|---|---|---|
+| QUOTE card share button | `HomeScreen_v2.tsx` (`SubActionCard`) | `share-home-card.html?card_id=<id>&shared_by=<first name>` | `share-image.png` |
+| CONTENT card detail screen | `HomeCardDetailScreen.tsx` | `share-home-card.html?card_id=<id>` | `share-image.png` |
+| Lesson Read screen | `LessonReadScreen.tsx` | `share-lesson.html?lesson_id=<id>` | *(omitted)* |
+| Learn tab's Read modal | `LearnScreen_v3.tsx` | `share-lesson.html?lesson_id=<id>` | *(omitted)* |
+| Audio-first lesson player | `LessonViewerScreen_v2.tsx` | `share-lesson.html?lesson_id=<id>` | *(omitted)* |
 
 ```js
 const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
 const shareUrl = `${webUrl}/share-home-card.html?card_id=${cardId}`;
 
-Share.share({
-  message: Platform.OS === 'android' ? `${text}\n\n${shareUrl}` : text,
-  url: shareUrl,
-});
+<ShareSheet
+  visible={shareSheetVisible}
+  onClose={() => setShareSheetVisible(false)}
+  targetUrl={shareUrl}
+  message={card.message}
+  previewImageUrl={`${webUrl}/api/config/home-cards/${cardId}/share-image.png`}
+/>
 ```
 
-**Why the message text branches on platform:** iOS's `Share.share` surfaces
-`url` as its own field in the share sheet, separate from `message`. React
-Native's Android implementation ignores `url` entirely — the only way the
-link reaches the recipient on Android is if it's embedded in `message`
-itself. Omitting this branch means Android shares silently drop the link.
+**Why lessons never pass `previewImageUrl`:** there's no share-image
+generator for lessons — only Home Cards have
+`GET /api/config/home-cards/:id/share-image.png` (see below). `ShareSheet`
+simply skips rendering the preview box when the prop is omitted.
 
 `HomeScreen_v2.tsx`'s version also appends `&shared_by=<first name>` (the
 sharer's first name, from the logged-in user's profile). The page itself no
@@ -82,6 +103,44 @@ longer reads this param — an earlier version rendered a "X shared this with
 you" banner that was later removed — so it's currently inert. Harmless to
 leave (unknown query params are ignored), worth stripping if the mobile
 code gets touched again for another reason.
+
+---
+
+## Also Used By Lessons: ShareSheet + Short Links
+
+`nora-mobile/src/components/ShareSheet.tsx` is a custom in-app bottom sheet
+that replaced RN's native `Share.share()` for both Home Card and Lesson
+shares. It renders:
+
+- An optional preview image (`previewImageUrl` — Home Cards only, see table
+  above).
+- A **"Share to"** row: WhatsApp / LinkedIn / Facebook, each via
+  `Linking.openURL` with a platform share-intent URL. No Instagram/WeChat —
+  both require native SDKs, out of scope.
+- A **"Share link"** row: a short `{webUrl}/s/:code` URL with a Copy button
+  (`expo-clipboard`).
+
+The short link itself comes from `recordingService.createShareLink(targetUrl)`
+→ `POST /api/share-links` (`server/routes/shortlinks.cjs`, `requireAuth`):
+
+```js
+// Upsert by targetUrl — repeat shares of the same card/lesson reuse the
+// same code instead of accumulating duplicate ShortLink rows.
+const existing = await prisma.shortLink.findUnique({ where: { targetUrl } });
+// ...else generate an 8-char nanoid, retrying on a rare code collision
+// (nanoid is ESM-only, hence the dynamic `await import('nanoid')` inside
+// this .cjs file).
+```
+
+`GET /s/:code` (registered directly in `server.cjs`, no auth) 404s on an
+unknown code, otherwise issues a `302` redirect to the stored `targetUrl`.
+
+`ShareSheet` also keeps an in-memory `shortUrlCache` (module-level `Map`,
+keyed by `targetUrl`) so reopening the sheet for the same card/lesson later
+in the same app session skips the network round-trip. If `createShareLink`
+fails for any reason, `ShareSheet` silently falls back to the long
+`targetUrl` — a broken short-link service should never block sharing
+entirely.
 
 ---
 
@@ -120,6 +179,51 @@ router.get('/home-cards/share/:id', async (req, res) => {
 Image URLs (`imageUrl` on the card and on `IMAGE`-type components) are
 resolved from S3 keys to presigned URLs via `resolveDragonImageUrl` before
 the response goes out — the page never talks to S3 directly.
+
+---
+
+## Share Image + Rich Link Previews (Home Cards Only)
+
+`GET /api/config/home-cards/:id/share-image.png` (no auth) renders a
+1200×630 PNG reproducing the card's visual style — a hand-built SVG
+(`buildShareImageSvg` in `server/routes/config.cjs`) piped through `sharp`.
+It's the **single source of truth** for two different consumers:
+
+1. `ShareSheet`'s in-app preview image (`previewImageUrl`, see above).
+2. The `og:image` injected into `share-home-card.html` for link-preview
+   crawlers (below) — avoiding a *third* hand-maintained visual template on
+   top of the two `formatContent()`/`formatLessonContentV2.ts` copies this
+   doc already flags as a sync risk.
+
+`sharp` renders text via its bundled librsvg/pango, which resolves
+`font-family` through the container's fontconfig. The deploy target likely
+has no fonts installed, so the SVG deliberately uses a generic sans-serif
+stack rather than `'Plus Jakarta Sans'` — fine for a thumbnail, not
+pixel-perfect brand matching.
+
+**Server-rendered OG meta tags** (`server.cjs`, registered *before*
+`express.static` so it wins over the literal file on disk): a
+`GET /share-home-card.html` request that includes `?card_id=` fetches the
+card, then rewrites `og:title` / `og:description` / (newly inserted)
+`og:image` directly into the raw HTML before sending it. This exists
+because link-preview crawlers (WhatsApp, LinkedIn, Facebook, WeChat) don't
+execute JS — they'd otherwise only ever see the page's generic static
+fallback meta tags, even though the client-side script already updates
+`document.title`/`og:title` correctly for real browser visits. Bare visits
+(no `card_id`) and missing/inactive cards fall through to `res.sendFile`,
+i.e. today's un-injected behavior, and any error mid-lookup does the same
+(`sendFile` in the `catch` — a meta-tag failure must never hard-fail the
+page load).
+
+**Lessons have no equivalent of any of this.** `GET /share-lesson.html` is
+served purely statically by `express.static`; its `og:title`/`og:description`
+are the same generic strings for every lesson, and only the client-side
+script (which crawlers don't run) sets the real per-lesson title. There is
+no `share-image.png` route for lessons either, which is why every lesson
+`ShareSheet` call omits `previewImageUrl` (see above). `Lesson.shareTitle` /
+`Lesson.shareSubtitle` (added to `schema.prisma` alongside `shareCountBase`)
+are admin-authored fields intended for a future lesson share-image
+generator — as of writing, no route reads them yet.
 
 ---
 
@@ -277,6 +381,19 @@ by the *authenticated* `GET /api/config/home-cards` list route. The public
 `/share/:id` route this page calls does **not** include `likeCount` in its
 response at all, and the share page has no like-count UI — this field only
 exists on the in-app card, not the shared web page.
+
+**Lessons have an analogous `shareCountBase`**, added to `schema.prisma`'s
+`Lesson` model — a random integer in `[100, 500]` rolled once in
+`POST /api/admin/lessons` (not regenerated on edit). Unlike the Home Card
+number, this isn't `base + <real count>`: there's no real "share" event
+tracking for lessons (sharing isn't a toggle like a like), so the
+authenticated `GET /api/lessons/:id` route just returns the base directly as
+`shareCount`. It's shown next to the share icon whenever it's `> 0` on
+`LessonReadScreen.tsx`, `LearnScreen_v3.tsx`'s Read modal, and
+`LessonViewerScreen_v2.tsx` (the audio-first player). Same asymmetry as
+`likeCount` above: the public `/api/lessons/share/:id` route (what
+`share-lesson.html` calls) does not include `shareCount`, and the share page
+itself has no share-count UI.
 
 ---
 

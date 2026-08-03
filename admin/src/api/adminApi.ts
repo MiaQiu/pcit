@@ -71,6 +71,8 @@ export interface LessonDetail {
   backgroundColor: string;
   ellipse77Color: string;
   ellipse78Color: string;
+  shareTitle: string | null;
+  shareSubtitle: string | null;
   segments: Segment[];
   quiz: Quiz | null;
 }

@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { FONTS, COLORS } from '../constants/assets';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import { LessonContentBlocks } from '../components/LessonContentBlocks';
+import { ShareSheet } from '../components/ShareSheet';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import { useLessonService } from '../contexts/AppContext';
 import { RootStackParamList, RootStackNavigationProp } from '../navigation/types';
@@ -45,6 +46,9 @@ export const LessonReadScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState(initialTitle ?? '');
   const [content, setContent] = useState('');
+  const [shareCount, setShareCount] = useState(0);
+  const [moduleTitle, setModuleTitle] = useState('');
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,6 +57,8 @@ export const LessonReadScreen: React.FC = () => {
         if (cancelled) return;
         setTitle(detail.lesson.title);
         setContent(detail.lesson.contentV2 || '');
+        setShareCount(detail.lesson.shareCount ?? 0);
+        setModuleTitle(detail.lesson.moduleTitle || '');
       })
       .catch(err => console.error('Failed to load lesson script:', err))
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -69,6 +75,11 @@ export const LessonReadScreen: React.FC = () => {
     [content, fallbackParagraphs]
   );
 
+  const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
+  const shareUrl = `${webUrl}/share-lesson.html?lesson_id=${lessonId}`;
+  const shareImageUrl = `${webUrl}/api/lessons/${lessonId}/share-image.png`;
+  const handleShare = () => setShareSheetVisible(true);
+
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
@@ -76,7 +87,12 @@ export const LessonReadScreen: React.FC = () => {
           <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{t('lessonRead.title')}</Text>
-        <View style={styles.backCircle} />
+        <View style={styles.shareGroup}>
+          {shareCount > 0 && <Text style={styles.shareCount}>{shareCount}</Text>}
+          <TouchableOpacity onPress={handleShare} style={styles.backCircle} activeOpacity={0.7} accessibilityLabel="Share">
+            <Ionicons name="share-outline" size={18} color={COLORS.textDark} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {loading ? (
@@ -97,6 +113,15 @@ export const LessonReadScreen: React.FC = () => {
           )}
         </ScrollView>
       )}
+
+      <ShareSheet
+        visible={shareSheetVisible}
+        onClose={() => setShareSheetVisible(false)}
+        targetUrl={shareUrl}
+        title={moduleTitle || 'Nora'}
+        subtitle={title}
+        previewImageUrl={shareImageUrl}
+      />
     </SafeAreaView>
   );
 };
@@ -117,6 +142,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  shareGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginRight: 5,
+  },
+  shareCount: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: COLORS.textDark,
   },
   headerTitle: {
     flex: 1,

@@ -277,6 +277,16 @@ export interface Lesson {
   // when audio is uploaded/transcribed. Absent for lessons with no audio yet.
   durationSeconds?: number | null;
 
+  // Random per-lesson offset, rolled once at creation (see schema.prisma's
+  // Lesson.shareCountBase) — only present on the detail endpoint's response,
+  // same as HomeCard's likeCount.
+  shareCount?: number;
+  // Display name of `module` (e.g. "Positive Play") — only present on the
+  // detail endpoint's response. Used as the share card's title everywhere
+  // this lesson is shared from, so all three lesson screens read from one
+  // source instead of each re-deriving it differently.
+  moduleTitle?: string;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -481,6 +491,7 @@ export interface HomeCardDetail {
   badgeText: string;
   badgeColor: string;
   detailTitle: string;
+  message: string;
   imageUrl: string | null;
   components: HomeCardComponent[];
 }

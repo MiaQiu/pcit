@@ -530,6 +530,29 @@ class RecordingService {
   }
 
   /**
+   * Create (or reuse) a short /s/:code redirect for a share target URL —
+   * powers ShareSheet's "SHARE LINK" row. Idempotent server-side (upsert by
+   * targetUrl), safe to call repeatedly for the same card/lesson.
+   */
+  async createShareLink(targetUrl: string): Promise<{ shortUrl: string }> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/share-links`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUrl }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to create share link');
+    }
+
+    return await response.json();
+  }
+
+  /**
    * Get the full title + ordered components for one CONTENT home card, to
    * render on the detail page opened by tapping its arrow.
    */

@@ -22,7 +22,12 @@
         "UIBackgroundModes": [
           "audio"
         ],
-        "NSUserNotificationsUsageDescription": "Nora sends you helpful reminders to practice and learn, and notifies you when your session reports are ready."
+        "NSUserNotificationsUsageDescription": "Nora sends you helpful reminders to practice and learn, and notifies you when your session reports are ready.",
+        "LSApplicationQueriesSchemes": [
+          "whatsapp",
+          "linkedin",
+          "fb"
+        ]
       },
       "buildNumber": "86"
     },
@@ -55,7 +60,13 @@
       "./plugins/withModularHeaders.js",
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics",
-      "expo-localization"
+      "expo-localization",
+      [
+        "react-native-share",
+        {
+          "android": ["com.whatsapp", "com.linkedin.android", "com.facebook.katana"]
+        }
+      ]
     ],
     "extra": {
       "eas": {

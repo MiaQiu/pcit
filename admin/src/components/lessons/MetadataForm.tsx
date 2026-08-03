@@ -22,6 +22,8 @@ interface Props {
     backgroundColor: string;
     ellipse77Color: string;
     ellipse78Color: string;
+    shareTitle: string;
+    shareSubtitle: string;
   };
   lessonId?: string;
   modules: ModuleSummary[];
@@ -255,6 +257,32 @@ export default function MetadataForm({ lesson, lessonId, modules, isEditing, onC
             />
           </div>
         </div>
+      </div>
+
+      <h2 style={{ marginTop: 24 }}>Share Card</h2>
+      <p style={{ fontSize: 13, color: '#6b7280', marginTop: -8 }}>
+        Title/subtitle shown on the card image generated when this lesson is shared (link previews and the
+        in-app share sheet). Falls back to the lesson title above when left blank, with no subtitle fallback.
+      </p>
+
+      <div className="form-group">
+        <label>Share Title</label>
+        <input
+          type="text"
+          value={lesson.shareTitle}
+          onChange={(e) => onChange({ shareTitle: e.target.value })}
+          placeholder={lesson.title || 'Falls back to the lesson title'}
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Share Subtitle</label>
+        <input
+          type="text"
+          value={lesson.shareSubtitle}
+          onChange={(e) => onChange({ shareSubtitle: e.target.value })}
+          placeholder="Optional — shown below the share title"
+        />
       </div>
     </div>
   );

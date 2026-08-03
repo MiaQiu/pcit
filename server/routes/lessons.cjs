@@ -10,6 +10,7 @@ const { requireAuth } = require('../middleware/auth.cjs');
 
 const { evaluateTextInput } = require('../services/textInputEvaluationService.cjs');
 const { resolveDragonImageUrl, resolveLessonAudioUrl, resolveContentMediaUrls } = require('../services/storage-s3.cjs');
+const { buildShareCardImage } = require('../services/shareImage.cjs');
 const { localeMiddleware } = require('../middleware/locale.cjs');
 
 const router = express.Router();
@@ -335,49 +336,65 @@ router.get('/learning-stats', requireAuth, async (req, res) => {
 
 /**
  * GET /api/lessons/share/:id
- * Public endpoint to get lesson detail for sharing (no auth required)
+ * Public (no auth) — powers /share-lesson.html, the web landing page a
+ * non-user opens from a shared "Read" link. Mirrors the mobile Read
+ * experience (LessonReadScreen / LearnScreen_v3's Read modal), which only
+ * renders contentV2 — lessons still on the legacy LessonSegment model have
+ * nothing to show there either, so they 404 here the same way a
+ * missing/inactive card 404s on /api/config/home-cards/share/:id.
  */
 router.get('/share/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const lesson = await prisma.lesson.findUnique({
-      where: { id },
-      include: {
-        LessonSegment: {
-          orderBy: { order: 'asc' }
-        }
-      }
-    });
-
-    if (!lesson) {
+    const lesson = await prisma.lesson.findUnique({ where: { id: req.params.id } });
+    if (!lesson || !lesson.contentV2) {
       return res.status(404).json({ error: 'Lesson not found' });
     }
 
-    res.json({
-      lesson: {
-        id: lesson.id,
-        title: lesson.title,
-        subtitle: lesson.subtitle,
-        shortDescription: lesson.shortDescription,
-        module: lesson.module,
-        backgroundColor: lesson.backgroundColor,
-        ellipse77Color: lesson.ellipse77Color,
-        ellipse78Color: lesson.ellipse78Color,
-        segments: lesson.LessonSegment.map(s => ({
-          sectionTitle: s.sectionTitle,
-          bodyText: s.bodyText,
-          order: s.order
-        }))
-      }
-    });
+    const moduleInfo = await prisma.module.findUnique({ where: { key: lesson.module } });
 
+    res.json({
+      id: lesson.id,
+      title: lesson.title,
+      moduleTitle: moduleInfo?.title || lesson.module,
+      moduleColor: moduleInfo?.backgroundColor || '#E4E4FF',
+      contentV2: await resolveContentMediaUrls(lesson.contentV2),
+    });
   } catch (error) {
     console.error('Get shared lesson error:', error.message, error.stack);
-    res.status(500).json({
-      error: 'Failed to fetch lesson',
-      details: error.message
-    });
+    res.status(500).json({ error: 'Failed to fetch lesson' });
+  }
+});
+
+/**
+ * GET /api/lessons/:id/share-image.png
+ * Public (no auth) — the shared title/subtitle/thumbnail card (see
+ * server/services/shareImage.cjs). Title = the lesson's module name,
+ * subtitle = the lesson's own title (e.g. "Positive Play" / "Introduction")
+ * — mirrors the module-badge + lesson-title pairing already shown in
+ * LearnScreen_v3's Read modal header.
+ */
+router.get('/:id/share-image.png', async (req, res) => {
+  try {
+    const lesson = await prisma.lesson.findUnique({ where: { id: req.params.id } });
+    if (!lesson || !lesson.contentV2) return res.status(404).end();
+
+    const moduleInfo = await prisma.module.findUnique({ where: { key: lesson.module } });
+    const title = moduleInfo?.title || lesson.module;
+    const thumbnailUrl = await resolveDragonImageUrl(lesson.dragonImageUrl);
+
+    // Light purple (COLORS.cardPurple in nora-mobile) — lessons have no
+    // badge color to derive a tint from like Home Cards do, so this is a
+    // fixed brand tint instead.
+    const png = await buildShareCardImage({ title, subtitle: lesson.title, thumbnailUrl, backgroundColor: '#E4E4FF' });
+    res.set('Content-Type', 'image/png');
+    // TODO: restore to a real max-age (e.g. 3600) once the share-card visual
+    // design has settled — no-cache while we're actively tuning it so RN's
+    // Image cache doesn't keep serving a stale render from before an edit.
+    res.set('Cache-Control', 'no-cache');
+    res.send(png);
+  } catch (error) {
+    console.error('Generate lesson share image error:', error);
+    res.status(500).end();
   }
 });
 
@@ -510,12 +527,20 @@ router.get('/:id', requireAuth, async (req, res) => {
     const quizWithOptions = lesson.Quiz
       ? { ...lesson.Quiz, options: lesson.Quiz.QuizOption }
       : null;
+    const moduleInfo = await prisma.module.findUnique({ where: { key: lesson.module } });
     const lessonResponse = {
       ...translatedLesson,
       audioUrl: await resolveLessonAudioUrl(translatedLesson.audioUrl),
       contentV2: await resolveContentMediaUrls(translatedLesson.contentV2),
       segments: lesson.LessonSegment.map(seg => applySegmentTx(seg, segmentTxMap[seg.id])),
       quiz: quizWithOptions ? applyQuizTx(quizWithOptions, quizTx) : null,
+      // No real "share" tracking (sharing isn't a toggle like a like) — the
+      // displayed count is just the random per-lesson base. See schema.prisma.
+      shareCount: lesson.shareCountBase,
+      shareCountBase: undefined,
+      // Same module-title lookup used by the public /share/:id route and
+      // the share-image endpoint — one source for the share card's title.
+      moduleTitle: moduleInfo?.title || lesson.module,
       LessonSegment: undefined,
       Quiz: undefined
     };
