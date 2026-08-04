@@ -38,7 +38,7 @@ export const NameInputScreen: React.FC = () => {
 
   return (
     <OnboardingLayout useKeyboardAvoid>
-      <OnboardingProgressHeader phase={1} step={1} totalSteps={6} />
+      <OnboardingProgressHeader phase={1} step={1} totalSteps={7} />
 
       <OnboardingTextInput
         title={t('onboarding.nameInput.title')}
@@ -50,7 +50,7 @@ export const NameInputScreen: React.FC = () => {
       <View style={styles.spacer} />
 
       <OnboardingButtonRow
-        onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('ParentingIntro')}
+        onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('OB3')}
         onContinue={handleContinue}
         continueDisabled={!isValid}
       />

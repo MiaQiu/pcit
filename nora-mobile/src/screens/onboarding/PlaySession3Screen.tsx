@@ -26,7 +26,7 @@ export const PlaySession3Screen: React.FC = () => {
   const { data } = useOnboarding();
   const childName = data.childName || 'K';
 
-  useEffect(() => { amplitudeService.trackOnboardingScreen('play_session3', 32); }, []);
+  useEffect(() => { amplitudeService.trackOnboardingScreen('play_session3', 41); }, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -60,7 +60,7 @@ export const PlaySession3Screen: React.FC = () => {
         <OnboardingBackButton onPress={() => navigation.goBack()} />
         <TouchableOpacity
           style={styles.button}
-          onPress={() => { amplitudeService.trackOnboardingStepCompleted('play_session3', 32); navigation.navigate('PlaySession4'); }}
+          onPress={() => { amplitudeService.trackOnboardingStepCompleted('play_session3', 41); navigation.navigate('PlaySession4'); }}
           activeOpacity={0.85}
         >
           <Text style={styles.buttonText}>{t('onboarding.continue')}</Text>

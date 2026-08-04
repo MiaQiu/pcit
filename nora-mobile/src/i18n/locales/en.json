@@ -487,6 +487,59 @@
       "criticism": "Criticism"
     }
   },
+  "reportV2": {
+    "headlineAmazing": "Amazing session!",
+    "headlineGood": "Good progress!",
+    "headlineSubtext": "Keep it up — you're doing great!",
+    "emotionalDeposit": "Emotional Deposit",
+    "addedToBank": "Added to {{childName}}'s Emotional Bank Account",
+    "fromLastSession": "from last session",
+    "todaysGoal": "Today's Goal",
+    "reduceSkill": "Reduce {{skill}}",
+    "youDidIt": "You did it!",
+    "almostThere": "Almost there!",
+    "onlyCountToday": "Only {{count}} {{skill}} today",
+    "countToday": "{{count}} {{skill}} today",
+    "lastTime": "(last time: {{count}})",
+    "lastSession": "(last session: {{count}})",
+    "goalEncouragement": "You've already improved. Keep going!",
+    "parentingLevel": "Parenting Level",
+    "parentingLevelTitle": "Calm Play Partner",
+    "levelFooter": "You're {{percent}}% toward Level {{nextLevel}}!",
+    "continueToCoaching": "Continue to Coaching",
+    "shareMyProgress": "Share my progress",
+    "shareMessage": "I just had a {{score}}/100 session with {{childName}} using Nora!"
+  },
+  "profileReport": {
+    "primaryFocusLabel": "Primary Focus",
+    "focusHeadingCDI": "Building Cooperation & Strengthening Focus",
+    "focusHeadingPDI": "Practicing Calm, Consistent Limits",
+    "ageLabel": "(Age {{age}})",
+    "coreFocusAreasTitle": "{{childName}}'s Core Focus Areas",
+    "fromYourIntake": "From your intake",
+    "focusAreas": {
+      "transitions": { "label": "Transitions & Cooperation", "level": "Moderate", "focus": "Focus: Q1, Q2" },
+      "energy": { "label": "Focus & Energy", "level": "High", "focus": "Focus: Q5-Q7" },
+      "boundaries": { "label": "Boundaries", "level": "Mild", "focus": "Focus: Q8" }
+    },
+    "journeyTitle": "Personalized Learning Journey",
+    "journeySubtitle": "Your next steps in Nora",
+    "phase1Badge": "PHASE 1",
+    "phase1Title": "Child-Directed Interaction (CDI)",
+    "phase1Subtitle": "Build connection & reduce power struggles.",
+    "phase2Badge": "PHASE 2",
+    "phase2Title": "Parent-Directed Interaction (PDI)",
+    "phase2Subtitle": "Practice calm, consistent limits.",
+    "steps": {
+      "attentionAnchor": { "title": "The Attention Anchor", "focus": "Focus: Behavioral Descriptions", "description": "Helps {{childName}} stay engaged by reflecting their actions instead of asking questions." },
+      "praiseEngine": { "title": "The Praise Engine", "focus": "Focus: Specific Labeled Praise", "description": "Reinforces positive behaviors before friction starts." },
+      "connectionBuilder": { "title": "The Connection Builder", "focus": "Focus: Reflections", "description": "Shows {{childName}} you're with them and builds trust through play." },
+      "clearCommand": { "title": "The Clear Command", "focus": "Focus: Direct Commands", "description": "Gives {{childName}} one clear, specific instruction they can actually follow." },
+      "patientPause": { "title": "The Patient Pause", "focus": "Focus: Wait Time", "description": "Gives {{childName}} space to comply before you step in." },
+      "followThrough": { "title": "The Follow-Through", "focus": "Focus: Consequences", "description": "Shows {{childName}} that your commands are consistent and reliable." }
+    },
+    "unlockMessage": "More steps unlock as you progress"
+  },
   "lessonViewer": {
     "contentUpdatedTitle": "Content Updated",
     "contentUpdatedMessage": "This lesson has been updated. Please select it again to view the latest version.",
@@ -965,19 +1018,64 @@
     },
     "childIssue": {
       "headerText": "There are no right or wrong answers. Select all that applies.",
-      "title": "How can Nora help?",
-      "behaviorChallenges": "Behavior Challenges (Tantrums, Arguing)",
-      "bigEmotions": "Handling big emotions",
-      "frustrationTolerance": "Low frustration tolerance",
-      "newBaby": "New Baby in the Home",
-      "movingHouse": "Moving House & School Changes",
-      "parentalDivorce": "Navigating Parental Divorces",
-      "social": "Building Social-Emotional Skills",
-      "attentionFocus": "Attention and Focus Issues",
-      "adhd": "ADHD / Attention & Hyperactivity",
-      "parentingStrategies": "Learning More Effective Parenting Strategies",
-      "other": "Others",
+      "title": "What Brings You Here?",
+      "bigFeelingsTantrums": "Big Feelings & Tantrums",
+      "listeningCooperation": "Listening & Cooperation",
+      "attentionFocus": "Attention & Focus",
+      "social": "Social & Emotional Skills",
+      "anxietyConfidence": "Anxiety & Confidence",
+      "adhd": "ADHD Support",
+      "developmentalConcerns": "Developmental Concerns",
+      "parentingStrategies": "Become a More Confident Parent",
+      "other": "Other",
       "otherPlaceholder": "Please describe the issue..."
+    },
+    "parentGoal": {
+      "headerText": "Pick the ones that resonate most.",
+      "title": "What would feel most helpful to you as a parent?",
+      "trulyUnderstanding": "Truly understanding my kid",
+      "boostDevelopment": "Boost my kid's development",
+      "feelingConnected": "Feeling more connected with my kid",
+      "feelingLessOverwhelmed": "Feeling less overwhelmed",
+      "lessChaos": "Experiencing less chaos day-to-day",
+      "respondCalmly": "Respond calmly in difficult moments",
+      "confidentParenting": "Feeling more confident in my parenting"
+    },
+    "parentGoalIntro": {
+      "hi": "Hi ",
+      "comma": ",",
+      "youreInThe": "You're in the ",
+      "rightPlace": "right place.",
+      "paragraph1": "Many parents come to Nora with similar challenges.",
+      "paragraph2Pre": "What surprises most parents is that many of these challenges improve through ",
+      "paragraph2Highlight": "one simple daily habit.",
+      "discoverButton": "Discover  →"
+    },
+    "obLetterContent": {
+      "hi": "Hi ",
+      "comma": ",",
+      "thankYou": "Thank you for choosing Nora. We're excited to support both you and ",
+      "period": ".",
+      "continueButton": "Continue  →"
+    },
+    "obIntro1": {
+      "helping": "Helping",
+      "startsHere": "starts here",
+      "continueButton": "Continue  →"
+    },
+    "obIntro2": {
+      "sentence1Pre": "Most of parents with similar goals ",
+      "sentence1Highlight": "reported meaningful changes",
+      "sentence1Mid": " in less than ",
+      "sentence1HighlightWeeks": "3 weeks.",
+      "sentence2": "I'm so glad you're here. 💜",
+      "continueButton": "I'm In  →"
+    },
+    "reminderTime": {
+      "title": "Hi {{name}}, When is your 5 mins?",
+      "description": "Many parents find the \"After-School Reconnect\" or \"Pre-Dinner Play\" or \"Weekend day morning\" works best.",
+      "enableButton": "Enable Notification  →",
+      "skip": "Skip"
     },
     "childSnapshotIntro": {
       "description": "Hi {{userName}}, Thanks for sharing what brought you here. You are in the right place. We'll ask a few quick questions to better understand {{childName}}'s recent behavior and tailor support to you"

@@ -621,10 +621,10 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
 // Update user profile with onboarding data
 router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAuth, async (req, res) => {
   try {
-    const { name, relationshipToChild, childName, childGender, childBirthday, issue } = req.body;
+    const { name, relationshipToChild, childName, childGender, childBirthday, issue, parentGoal } = req.body;
 
     // Validate at least one field is provided
-    if (!name && !relationshipToChild && !childName && !childGender && !childBirthday && !issue) {
+    if (!name && !relationshipToChild && !childName && !childGender && !childBirthday && !issue && !parentGoal) {
       return res.status(400).json({ error: 'At least one field required' });
     }
 
@@ -683,6 +683,22 @@ router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAu
       }
     }
 
+    if (parentGoal) {
+      // Handle both string and array of goals (same shape as issue above)
+      if (Array.isArray(parentGoal)) {
+        const invalidGoals = parentGoal.filter(g => typeof g !== 'string' || g.trim() === '');
+        if (invalidGoals.length > 0) {
+          return res.status(400).json({ error: 'All parentGoal values must be non-empty strings' });
+        }
+        updateData.parentGoal = JSON.stringify(parentGoal);
+      } else {
+        if (typeof parentGoal !== 'string' || parentGoal.trim() === '') {
+          return res.status(400).json({ error: 'parentGoal value must be a non-empty string' });
+        }
+        updateData.parentGoal = parentGoal;
+      }
+    }
+
     // Update user
     const user = await prisma.user.update({
       where: { id: req.userId },
@@ -698,6 +714,7 @@ router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAu
         childBirthday: true,
         childConditions: true,
         issue: true,
+        parentGoal: true,
         therapistId: true,
         createdAt: true
       }

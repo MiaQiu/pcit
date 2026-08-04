@@ -77,7 +77,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
   const locked = route.params?.locked ?? false;
   const { data } = useOnboarding();
 
-  useEffect(() => { amplitudeService.trackOnboardingScreen('child_behavior_profile', 28); }, []);
+  useEffect(() => { amplitudeService.trackOnboardingScreen('child_behavior_profile', 38); }, []);
 
   const childName = data.childName || 'Your child';
   const totalScore = useMemo(() => computeTotalScore(data.wacb), [data.wacb]);
@@ -256,7 +256,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => { amplitudeService.trackOnboardingStepCompleted('child_behavior_profile', 28); navigation.navigate('Intro3'); }}
+          onPress={() => { amplitudeService.trackOnboardingStepCompleted('child_behavior_profile', 38); navigation.navigate('Intro3'); }}
           activeOpacity={0.85}
         >
           <Text style={styles.buttonText}>{t('onboarding.childBehaviorProfile.continueButton')}</Text>

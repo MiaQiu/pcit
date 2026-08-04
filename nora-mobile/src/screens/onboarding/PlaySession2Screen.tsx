@@ -44,7 +44,7 @@ export const PlaySession2Screen: React.FC = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  useEffect(() => { amplitudeService.trackOnboardingScreen('play_session2', 31); }, []);
+  useEffect(() => { amplitudeService.trackOnboardingScreen('play_session2', 40); }, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -75,7 +75,7 @@ export const PlaySession2Screen: React.FC = () => {
         <OnboardingBackButton onPress={() => navigation.goBack()} />
         <TouchableOpacity
           style={styles.button}
-          onPress={() => { amplitudeService.trackOnboardingStepCompleted('play_session2', 31); navigation.navigate('PlaySession3'); }}
+          onPress={() => { amplitudeService.trackOnboardingStepCompleted('play_session2', 40); navigation.navigate('PlaySession3'); }}
           activeOpacity={0.85}
         >
           <Text style={styles.buttonText}>{t('onboarding.continue')}</Text>

@@ -43,7 +43,7 @@ export const NotificationPermissionScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    amplitudeService.trackOnboardingScreen('notification_permission', 36);
+    amplitudeService.trackOnboardingScreen('notification_permission', 45);
   }, []);
 
   const handleNotNow = async () => {

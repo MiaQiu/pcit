@@ -28,17 +28,24 @@ const LEVEL_TO_STRATEGY = {
 
 // Maps ChildIssueScreen values to clinical levels
 const ISSUE_TO_LEVEL = {
-  behavior_challenges: 'DE_ESCALATE',
-  big_emotions: 'DE_ESCALATE',
-  new_baby_in_the_house: 'SUPPORT',
-  moving_house: 'SUPPORT',
-  parental_divorce: 'SUPPORT',
+  // Current picker options (see nora-mobile ChildIssueScreen.tsx)
+  big_feelings_tantrums: 'DE_ESCALATE',
+  listening_cooperation: 'DE_ESCALATE',
   social: 'FLOURISH',
-  frustration_tolerance: 'FLOURISH',
   attention_focus: 'FLOURISH',
   parenting_strategies: 'FLOURISH',
   adhd: 'DE_ESCALATE',
-  // "other" is intentionally omitted (no clinical mapping)
+  // "anxiety_confidence", "developmental_concerns", and "other" are
+  // intentionally omitted — no clinical mapping yet (pending clinical review)
+
+  // Legacy values kept for users who selected them before the picker was
+  // updated; no longer offered in the UI
+  behavior_challenges: 'DE_ESCALATE',
+  big_emotions: 'DE_ESCALATE',
+  frustration_tolerance: 'FLOURISH',
+  new_baby_in_the_house: 'SUPPORT',
+  moving_house: 'SUPPORT',
+  parental_divorce: 'SUPPORT',
 };
 
 // Maps WACB questions to clinical levels

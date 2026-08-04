@@ -20,20 +20,18 @@ export const ChildIssueScreen: React.FC = () => {
       headerText={t('onboarding.childIssue.headerText')}
       title={t('onboarding.childIssue.title')}
       options={[
-        { value: 'behavior_challenges', label: t('onboarding.childIssue.behaviorChallenges') },
-        { value: 'big_emotions', label: t('onboarding.childIssue.bigEmotions') },
-        { value: 'frustration_tolerance', label: t('onboarding.childIssue.frustrationTolerance') },
-        { value: 'new_baby_in_the_house', label: t('onboarding.childIssue.newBaby') },
-        { value: 'moving_house', label: t('onboarding.childIssue.movingHouse') },
-        { value: 'parental_divorce', label: t('onboarding.childIssue.parentalDivorce') },
-        { value: 'social', label: t('onboarding.childIssue.social') },
+        { value: 'big_feelings_tantrums', label: t('onboarding.childIssue.bigFeelingsTantrums') },
+        { value: 'listening_cooperation', label: t('onboarding.childIssue.listeningCooperation') },
         { value: 'attention_focus', label: t('onboarding.childIssue.attentionFocus') },
+        { value: 'social', label: t('onboarding.childIssue.social') },
+        { value: 'anxiety_confidence', label: t('onboarding.childIssue.anxietyConfidence') },
         { value: 'adhd', label: t('onboarding.childIssue.adhd') },
+        { value: 'developmental_concerns', label: t('onboarding.childIssue.developmentalConcerns') },
         { value: 'parenting_strategies', label: t('onboarding.childIssue.parentingStrategies') },
         { value: 'other', label: t('onboarding.childIssue.other') },
       ]}
       dataField="issue"
-      nextScreen="ChildSnapshotIntro"
+      nextScreen="ParentGoal"
       prevScreen="ChildBirthday"
       multiSelect={true}
       allowOtherOption={true}
@@ -41,7 +39,7 @@ export const ChildIssueScreen: React.FC = () => {
       otherOptionPlaceholder={t('onboarding.childIssue.otherPlaceholder')}
       phase={1}
       stepInPhase={6}
-      totalStepsInPhase={6}
+      totalStepsInPhase={7}
       screenName="child_issue"
       screenStep={17}
       onBeforeNavigate={handleBeforeNavigate}

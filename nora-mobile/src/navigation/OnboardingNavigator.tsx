@@ -9,17 +9,25 @@ import { OnboardingStackParamList, RootStackParamList } from './types';
 import { RouteProp } from '@react-navigation/native';
 import { useOnboarding } from '../contexts/OnboardingContext';
 
-// Flow: Welcome → Start → (Login | CreateAccount) → Demo1–5 → ParentingIntro →
+// Flow: Welcome → Start → (Login | CreateAccount) → OB1–3 →
 //   NameInput → Relationship → ChildName → ChildGender → ChildBirthday →
-//   ChildIssue → ChildSnapshotIntro → WacbQuestion1–9 → ChildBehaviorProfile →
-//   Intro3 → PlaySession1–5 → NotificationPermission → MainTabs
+//   ChildIssue → ParentGoal → ParentGoalIntro → OBLetter → OBLetterContent →
+//   OBPlay1 → OBPlay2 → OBDiscipline → OBIntro1 → ReminderTime → OBIntro2 →
+//   MainTabs (OBIntro2 completes onboarding directly)
 // Subscription is a standalone screen entered from RecordScreen / ProfileScreen.
+// Demo1–5/Demo1B/Demo2B/ParentingIntro/ChildSnapshotIntro/WacbQuestion1–9/
+// ChildBehaviorProfile/Intro3/PlaySession1–5/NotificationPermission remain
+// registered (unreachable from the linear flow) so deep links / old resume
+// state referencing them don't crash.
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { StartScreen } from '../screens/onboarding/StartScreen';
 import { LoginScreen } from '../screens/onboarding/LoginScreen';
 import { ForgotPasswordScreen } from '../screens/onboarding/ForgotPasswordScreen';
 import { ResetPasswordScreen } from '../screens/onboarding/ResetPasswordScreen';
 import { CreateAccountScreen } from '../screens/onboarding/CreateAccountScreen';
+import { OB1Screen } from '../screens/onboarding/OB1Screen';
+import { OB2Screen } from '../screens/onboarding/OB2Screen';
+import { OB3Screen } from '../screens/onboarding/OB3Screen';
 import { Demo1Screen } from '../screens/onboarding/Demo1Screen';
 import { Demo1BScreen } from '../screens/onboarding/Demo1BScreen';
 import { Demo2Screen } from '../screens/onboarding/Demo2Screen';
@@ -34,6 +42,16 @@ import { ChildNameScreen } from '../screens/onboarding/ChildNameScreen';
 import { ChildGenderScreen } from '../screens/onboarding/ChildGenderScreen';
 import { ChildBirthdayScreen } from '../screens/onboarding/ChildBirthdayScreen';
 import { ChildIssueScreen } from '../screens/onboarding/ChildIssueScreen';
+import { ParentGoalScreen } from '../screens/onboarding/ParentGoalScreen';
+import { ParentGoalIntroScreen } from '../screens/onboarding/ParentGoalIntroScreen';
+import { OBLetterScreen } from '../screens/onboarding/OBLetterScreen';
+import { OBLetterContentScreen } from '../screens/onboarding/OBLetterContentScreen';
+import { OBPlay1Screen } from '../screens/onboarding/OBPlay1Screen';
+import { OBPlay2Screen } from '../screens/onboarding/OBPlay2Screen';
+import { OBDisciplineScreen } from '../screens/onboarding/OBDisciplineScreen';
+import { OBIntro1Screen } from '../screens/onboarding/OBIntro1Screen';
+import { ReminderTimeScreen } from '../screens/onboarding/ReminderTimeScreen';
+import { OBIntro2Screen } from '../screens/onboarding/OBIntro2Screen';
 import { ChildSnapshotIntroScreen } from '../screens/onboarding/ChildSnapshotIntroScreen';
 import { WacbQuestion1Screen } from '../screens/onboarding/WacbQuestion1Screen';
 import { WacbQuestion2Screen } from '../screens/onboarding/WacbQuestion2Screen';
@@ -109,6 +127,9 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
+      <Stack.Screen name="OB1" component={OB1Screen} />
+      <Stack.Screen name="OB2" component={OB2Screen} />
+      <Stack.Screen name="OB3" component={OB3Screen} />
       <Stack.Screen name="Demo1" component={Demo1Screen} />
       <Stack.Screen name="Demo1B" component={Demo1BScreen} />
       <Stack.Screen name="Demo2" component={Demo2Screen} />
@@ -123,6 +144,16 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="ChildGender" component={ChildGenderScreen} />
       <Stack.Screen name="ChildBirthday" component={ChildBirthdayScreen} />
       <Stack.Screen name="ChildIssue" component={ChildIssueScreen} />
+      <Stack.Screen name="ParentGoal" component={ParentGoalScreen} />
+      <Stack.Screen name="ParentGoalIntro" component={ParentGoalIntroScreen} />
+      <Stack.Screen name="OBLetter" component={OBLetterScreen} />
+      <Stack.Screen name="OBLetterContent" component={OBLetterContentScreen} />
+      <Stack.Screen name="OBPlay1" component={OBPlay1Screen} />
+      <Stack.Screen name="OBPlay2" component={OBPlay2Screen} />
+      <Stack.Screen name="OBDiscipline" component={OBDisciplineScreen} />
+      <Stack.Screen name="OBIntro1" component={OBIntro1Screen} />
+      <Stack.Screen name="ReminderTime" component={ReminderTimeScreen} />
+      <Stack.Screen name="OBIntro2" component={OBIntro2Screen} />
       <Stack.Screen name="ChildSnapshotIntro" component={ChildSnapshotIntroScreen} />
       <Stack.Screen name="WacbQuestion1" component={WacbQuestion1Screen} />
       <Stack.Screen name="WacbQuestion2" component={WacbQuestion2Screen} />

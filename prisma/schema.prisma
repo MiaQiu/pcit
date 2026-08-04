@@ -433,6 +433,7 @@ model User {
   emailHash                 String?                     @unique
   childBirthday             DateTime?
   issue                     String?
+  parentGoal                String?
   profileImageUrl           String?
   subscriptionEndDate       DateTime?
   subscriptionPlan          SubscriptionPlan            @default(FREE)

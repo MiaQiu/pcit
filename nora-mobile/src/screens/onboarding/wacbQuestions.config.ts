@@ -31,7 +31,7 @@ export const getWacbQuestions = (childName: string = 'your child', t: TFunction)
       stepInPhase: 1,
       totalStepsInPhase: 9,
       screenName: 'wacb_q1',
-      screenStep: 19,
+      screenStep: 29,
     },
     {
       headerText: HEADER_TEXT,
@@ -44,7 +44,7 @@ export const getWacbQuestions = (childName: string = 'your child', t: TFunction)
       stepInPhase: 2,
       totalStepsInPhase: 9,
       screenName: 'wacb_q2',
-      screenStep: 20,
+      screenStep: 30,
     },
     {
       headerText: HEADER_TEXT,
@@ -57,7 +57,7 @@ export const getWacbQuestions = (childName: string = 'your child', t: TFunction)
       stepInPhase: 3,
       totalStepsInPhase: 9,
       screenName: 'wacb_q3',
-      screenStep: 21,
+      screenStep: 31,
     },
     {
       headerText: HEADER_TEXT,
@@ -70,7 +70,7 @@ export const getWacbQuestions = (childName: string = 'your child', t: TFunction)
       stepInPhase: 4,
       totalStepsInPhase: 9,
       screenName: 'wacb_q4',
-      screenStep: 22,
+      screenStep: 32,
     },
     {
       headerText: HEADER_TEXT,
@@ -83,7 +83,7 @@ export const getWacbQuestions = (childName: string = 'your child', t: TFunction)
       stepInPhase: 5,
       totalStepsInPhase: 9,
       screenName: 'wacb_q5',
-      screenStep: 23,
+      screenStep: 33,
     },
     {
       headerText: HEADER_TEXT,
@@ -96,7 +96,7 @@ export const getWacbQuestions = (childName: string = 'your child', t: TFunction)
       stepInPhase: 6,
       totalStepsInPhase: 9,
       screenName: 'wacb_q6',
-      screenStep: 24,
+      screenStep: 34,
     },
     {
       headerText: HEADER_TEXT,
@@ -109,7 +109,7 @@ export const getWacbQuestions = (childName: string = 'your child', t: TFunction)
       stepInPhase: 7,
       totalStepsInPhase: 9,
       screenName: 'wacb_q7',
-      screenStep: 25,
+      screenStep: 35,
     },
     {
       headerText: HEADER_TEXT,
@@ -122,7 +122,7 @@ export const getWacbQuestions = (childName: string = 'your child', t: TFunction)
       stepInPhase: 8,
       totalStepsInPhase: 9,
       screenName: 'wacb_q8',
-      screenStep: 26,
+      screenStep: 36,
     },
     {
       headerText: HEADER_TEXT,
@@ -136,7 +136,7 @@ export const getWacbQuestions = (childName: string = 'your child', t: TFunction)
       stepInPhase: 9,
       totalStepsInPhase: 9,
       screenName: 'wacb_q9',
-      screenStep: 27,
+      screenStep: 37,
     },
   ];
 };

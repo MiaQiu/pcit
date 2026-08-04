@@ -468,6 +468,7 @@ class AuthService {
     childGender?: 'BOY' | 'GIRL' | 'OTHER';
     childBirthday?: Date;
     issue?: string | string[];
+    parentGoal?: string | string[];
   }): Promise<User> {
     const response = await this.authenticatedRequest(
       `${this.apiUrl}/api/auth/complete-onboarding`,

@@ -24,6 +24,7 @@ import { LessonViewerScreenV2 } from '../screens/LessonViewerScreen_v2';
 import { QuizScreen } from '../screens/QuizScreen';
 import { LessonCompleteScreen } from '../screens/LessonCompleteScreen';
 import { ReportScreen } from '../screens/ReportScreen';
+import { ReportScreen_v2 } from '../screens/ReportScreen_v2';
 import { TranscriptScreen } from '../screens/TranscriptScreen';
 import { SkillExplanationScreen } from '../screens/SkillExplanationScreen';
 import { SkillUtterancesScreen } from '../screens/SkillUtterancesScreen';
@@ -37,7 +38,7 @@ import { PsychologistChatScreen } from '../screens/PsychologistChatScreen';
 import { ReferralScreen } from '../screens/ReferralScreen';
 import { ABCLogScreen } from '../screens/ABCLogScreen';
 import { HomeCardDetailScreen } from '../screens/HomeCardDetailScreen';
-import { RootStackParamList } from './types';
+import { RootStackParamList, OnboardingStackParamList } from './types';
 import { useAuthService, useLessonService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
@@ -49,6 +50,11 @@ import i18n from '../i18n';
 
 const APP_VERSION: string = require('../../app.json').expo.version;
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+
+// DEV ONLY: set to an OnboardingStackParamList screen name (e.g. 'OBIntro1') to
+// force-land there past a Fast Refresh full reload, skipping auth/onboarding
+// status checks. Has no effect in production builds. Revert to null before committing.
+const DEV_FORCE_ONBOARDING_SCREEN: keyof OnboardingStackParamList | null = null;
 
 function isVersionBelow(current: string, minimum: string): boolean {
   const parse = (v: string) => v.split('.').map(Number);
@@ -248,7 +254,8 @@ export const RootNavigator: React.FC = () => {
     return <ForceUpdateScreen />;
   }
 
-  const shouldShowOnboarding = !isAuthenticated || onboardingStep !== null;
+  const devForceOnboardingScreen = __DEV__ ? DEV_FORCE_ONBOARDING_SCREEN : null;
+  const shouldShowOnboarding = devForceOnboardingScreen ? true : (!isAuthenticated || onboardingStep !== null);
 
   return (
     <>
@@ -262,7 +269,13 @@ export const RootNavigator: React.FC = () => {
           <Stack.Screen
             name="Onboarding"
             component={OnboardingNavigator}
-            initialParams={onboardingStep ? { initialStep: onboardingStep, resumeUserData: resumeUserData ?? undefined } : undefined}
+            initialParams={
+              devForceOnboardingScreen
+                ? { initialStep: devForceOnboardingScreen }
+                : onboardingStep
+                  ? { initialStep: onboardingStep, resumeUserData: resumeUserData ?? undefined }
+                  : undefined
+            }
           />
           <Stack.Screen name="MainTabs" component={TabNavigator} />
         </>
@@ -368,6 +381,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="Report"
         component={ReportScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ReportV2"
+        component={ReportScreen_v2}
         options={{
           animation: 'slide_from_right',
         }}

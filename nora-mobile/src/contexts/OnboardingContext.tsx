@@ -18,6 +18,7 @@ export interface OnboardingData {
   childGender: 'BOY' | 'GIRL' | 'OTHER' | null;
   childBirthday: Date | null;
   issue: string | string[];
+  parentGoal: string | string[];
 
   // WACB Survey data
   wacb?: {
@@ -62,6 +63,7 @@ const defaultOnboardingData: OnboardingData = {
   childGender: null,
   childBirthday: null,
   issue: '',
+  parentGoal: '',
   reminderTime: '19:30',
   hasCompletedOnboarding: false,
 };

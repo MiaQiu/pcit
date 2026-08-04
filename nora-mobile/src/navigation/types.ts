@@ -24,6 +24,9 @@ export type OnboardingStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { token?: string };
   CreateAccount: undefined;
+  OB1: undefined;
+  OB2: undefined;
+  OB3: undefined;
   ParentingIntro: undefined;
   NameInput: undefined;
   Relationship: undefined;
@@ -31,6 +34,16 @@ export type OnboardingStackParamList = {
   ChildGender: undefined;
   ChildBirthday: undefined;
   ChildIssue: undefined;
+  ParentGoal: undefined;
+  ParentGoalIntro: undefined;
+  OBLetter: undefined;
+  OBLetterContent: undefined;
+  OBPlay1: undefined;
+  OBPlay2: undefined;
+  OBDiscipline: undefined;
+  OBIntro1: undefined;
+  ReminderTime: undefined;
+  OBIntro2: undefined;
   ChildSnapshotIntro: undefined;
   WacbQuestion1: undefined;
   WacbQuestion2: undefined;
@@ -101,6 +114,9 @@ export type RootStackParamList = {
     lessonId: string;
   };
   Report: {
+    recordingId: string;
+  };
+  ReportV2: {
     recordingId: string;
   };
   Transcript: {

@@ -26,7 +26,7 @@ export const ChildGenderScreen: React.FC = () => {
       prevScreen="ChildName"
       phase={1}
       stepInPhase={4}
-      totalStepsInPhase={6}
+      totalStepsInPhase={7}
       screenName="child_gender"
       screenStep={15}
     />

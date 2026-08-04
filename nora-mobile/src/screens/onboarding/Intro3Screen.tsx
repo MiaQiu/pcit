@@ -33,7 +33,7 @@ export const Intro3Screen: React.FC = () => {
   const authService = useAuthService();
   const lessonService = useLessonService();
 
-  useEffect(() => { amplitudeService.trackOnboardingScreen('intro3', 29); }, []);
+  useEffect(() => { amplitudeService.trackOnboardingScreen('intro3', 39); }, []);
 
   const handleSkip = async () => {
     try {
@@ -81,7 +81,7 @@ export const Intro3Screen: React.FC = () => {
           <OnboardingBackButton onPress={() => navigation.goBack()} />
           <TouchableOpacity
             style={styles.button}
-            onPress={() => { amplitudeService.trackOnboardingStepCompleted('intro3', 29); navigation.navigate('PlaySession1'); }}
+            onPress={() => { amplitudeService.trackOnboardingStepCompleted('intro3', 39); navigation.navigate('PlaySession1'); }}
             activeOpacity={0.85}
           >
             <Text style={styles.buttonText}>{t('onboarding.letsBegin')}</Text>

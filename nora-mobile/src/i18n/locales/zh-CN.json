@@ -487,6 +487,59 @@
       "criticism": "批评"
     }
   },
+  "reportV2": {
+    "headlineAmazing": "太棒了！",
+    "headlineGood": "进步不错！",
+    "headlineSubtext": "继续保持，你做得很好！",
+    "emotionalDeposit": "情感存款",
+    "addedToBank": "已存入{{childName}}的情感银行账户",
+    "fromLastSession": "较上次练习",
+    "todaysGoal": "今日目标",
+    "reduceSkill": "减少{{skill}}",
+    "youDidIt": "做到了！",
+    "almostThere": "就快达成！",
+    "onlyCountToday": "今天只有 {{count}} 次{{skill}}",
+    "countToday": "今天有 {{count}} 次{{skill}}",
+    "lastTime": "（上次：{{count}}）",
+    "lastSession": "（上次练习：{{count}}）",
+    "goalEncouragement": "你已经进步了，继续加油！",
+    "parentingLevel": "育儿等级",
+    "parentingLevelTitle": "平静玩伴",
+    "levelFooter": "距离第 {{nextLevel}} 级还差 {{percent}}%！",
+    "continueToCoaching": "继续查看指导",
+    "shareMyProgress": "分享我的进度",
+    "shareMessage": "我刚和{{childName}}完成了一次 {{score}}/100 的 Nora 练习！"
+  },
+  "profileReport": {
+    "primaryFocusLabel": "首要重点",
+    "focusHeadingCDI": "建立配合，加强专注力",
+    "focusHeadingPDI": "练习平静而一致的界限",
+    "ageLabel": "(年龄 {{age}})",
+    "coreFocusAreasTitle": "{{childName}}的核心关注领域",
+    "fromYourIntake": "来自您的入档信息",
+    "focusAreas": {
+      "transitions": { "label": "转换与配合", "level": "中等", "focus": "关注：Q1、Q2" },
+      "energy": { "label": "专注力与精力", "level": "较高", "focus": "关注：Q5-Q7" },
+      "boundaries": { "label": "界限", "level": "轻微", "focus": "关注：Q8" }
+    },
+    "journeyTitle": "个性化学习之旅",
+    "journeySubtitle": "您在 Nora 的下一步",
+    "phase1Badge": "第一阶段",
+    "phase1Title": "儿童主导互动 (CDI)",
+    "phase1Subtitle": "建立联结，减少权力冲突。",
+    "phase2Badge": "第二阶段",
+    "phase2Title": "家长主导互动 (PDI)",
+    "phase2Subtitle": "练习平静而一致的界限。",
+    "steps": {
+      "attentionAnchor": { "title": "专注锚点", "focus": "关注：行为描述", "description": "通过描述{{childName}}的行为而非提问，帮助他们保持投入。" },
+      "praiseEngine": { "title": "赞美引擎", "focus": "关注：具体的赞美", "description": "在摩擦发生前强化积极行为。" },
+      "connectionBuilder": { "title": "联结建造者", "focus": "关注：回应", "description": "让{{childName}}感受到你的陪伴，并通过玩耍建立信任。" },
+      "clearCommand": { "title": "清晰指令", "focus": "关注：直接指令", "description": "给{{childName}}一个清晰、具体、可以做到的指令。" },
+      "patientPause": { "title": "耐心等待", "focus": "关注：等待时间", "description": "给{{childName}}空间去配合，然后再介入。" },
+      "followThrough": { "title": "贯彻执行", "focus": "关注：后果", "description": "让{{childName}}知道你的指令始终如一、值得信赖。" }
+    },
+    "unlockMessage": "随着进度推进，更多步骤将解锁"
+  },
   "lessonViewer": {
     "contentUpdatedTitle": "内容已更新",
     "contentUpdatedMessage": "本课程已更新。请重新选取以查看最新版本。",
@@ -959,19 +1012,64 @@
     },
     "childIssue": {
       "headerText": "答案没有对错。请选择所有适用的选项。",
-      "title": "Nora 能如何帮助您？",
-      "behaviorChallenges": "行为挑战 (闹脾气、争执)",
-      "bigEmotions": "处理大情绪",
-      "frustrationTolerance": "挫折忍受度低",
-      "newBaby": "家有新生儿",
-      "movingHouse": "搬家或转学",
-      "parentalDivorce": "应对父母离异",
-      "social": "培养社交情绪技能",
-      "attentionFocus": "注意力与集中力问题",
-      "adhd": "ADHD / 注意力不足过动症",
-      "parentingStrategies": "学习更有效的教养策略",
+      "title": "是什么带您来到这里？",
+      "bigFeelingsTantrums": "强烈情绪与发脾气",
+      "listeningCooperation": "聆听与配合",
+      "attentionFocus": "注意力与专注力",
+      "social": "社交与情绪技能",
+      "anxietyConfidence": "焦虑与自信",
+      "adhd": "ADHD 支持",
+      "developmentalConcerns": "发展相关担忧",
+      "parentingStrategies": "成为更自信的家长",
       "other": "其他",
       "otherPlaceholder": "请描述该问题..."
+    },
+    "parentGoal": {
+      "headerText": "请选择最能引起您共鸣的选项。",
+      "title": "作为家长，什么对您最有帮助？",
+      "trulyUnderstanding": "真正理解我的孩子",
+      "boostDevelopment": "促进孩子的发展",
+      "feelingConnected": "与孩子建立更深的联系",
+      "feelingLessOverwhelmed": "减少不知所措的感觉",
+      "lessChaos": "减少日常生活中的混乱",
+      "respondCalmly": "在困难时刻冷静应对",
+      "confidentParenting": "在育儿上更有信心"
+    },
+    "parentGoalIntro": {
+      "hi": "嗨 ",
+      "comma": "，",
+      "youreInThe": "您来到了",
+      "rightPlace": "对的地方。",
+      "paragraph1": "许多家长来到 Nora 时都面临相似的挑战。",
+      "paragraph2Pre": "让大多数家长感到惊讶的是，许多这些挑战都可以通过",
+      "paragraph2Highlight": "一个简单的每日习惯得到改善。",
+      "discoverButton": "探索  →"
+    },
+    "obLetterContent": {
+      "hi": "嗨 ",
+      "comma": "，",
+      "thankYou": "感谢您选择 Nora。我们很高兴能同时支持您和",
+      "period": "。",
+      "continueButton": "继续  →"
+    },
+    "obIntro1": {
+      "helping": "帮助",
+      "startsHere": "从这里开始",
+      "continueButton": "继续  →"
+    },
+    "obIntro2": {
+      "sentence1Pre": "许多有相似目标的家长",
+      "sentence1Highlight": "都反馈有明显改善，",
+      "sentence1Mid": "而且不到",
+      "sentence1HighlightWeeks": "3 周就见效。",
+      "sentence2": "很高兴您能来到这里。💜",
+      "continueButton": "我准备好了  →"
+    },
+    "reminderTime": {
+      "title": "嗨 {{name}}，您想在什么时候进行这 5 分钟？",
+      "description": "许多家长发现「放学后重聚」「晚餐前游戏」或「周末早晨」最合适。",
+      "enableButton": "开启通知  →",
+      "skip": "跳过"
     },
     "childSnapshotIntro": {
       "description": "嗨 {{userName}}，感谢您分享来这里的原因。您找对地方了。我们将询问几个快速问题，以进一步了解 {{childName}} 最近的表现，并为您量身打造支持。"

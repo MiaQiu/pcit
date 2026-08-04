@@ -144,7 +144,7 @@ export const ChildBirthdayScreen: React.FC = () => {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.content}>
-        <OnboardingProgressHeader phase={1} step={5} totalSteps={6} />
+        <OnboardingProgressHeader phase={1} step={5} totalSteps={7} />
 
         <View style={styles.header}>
           <Text style={styles.title}>{t('onboarding.childBirthday.title', { name: data.childName })}</Text>

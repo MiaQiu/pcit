@@ -27,6 +27,7 @@ export interface User {
   childBirthday?: Date;
   childConditions?: string;
   issue?: string | string[];
+  parentGoal?: string | string[];
   profileImageUrl?: string;
   relationshipToChild?: RelationshipToChild;
   therapistId?: string | null;

@@ -15,16 +15,24 @@ router.use(localeMiddleware);
 
 // Maps user-selected issues to module keys
 const ISSUE_TO_MODULE = {
+  // Current picker options (see nora-mobile ChildIssueScreen.tsx)
+  big_feelings_tantrums: 'EMOTIONS',
+  listening_cooperation: 'COOPERATION',
+  social: 'DEVELOPMENT',
+  attention_focus: 'FOCUS',
+  adhd: 'FOCUS',
+  parenting_strategies: 'FOUNDATION',
+  // "anxiety_confidence" and "developmental_concerns" are intentionally
+  // omitted — no module mapping yet (pending clinical review)
+
+  // Legacy values kept for users who selected them before the picker was
+  // updated; no longer offered in the UI
   behavior_challenges: 'COOPERATION',
   big_emotions: 'EMOTIONS',
   frustration_tolerance: 'EMOTIONS',
   new_baby_in_the_house: 'SIBLINGS',
   moving_house: 'RELOCATION',
   parental_divorce: 'DIVORCE',
-  social: 'DEVELOPMENT',
-  attention_focus: 'FOCUS',
-  adhd: 'FOCUS',
-  parenting_strategies: 'FOUNDATION',
 };
 
 // Maps WACB survey questions to module keys

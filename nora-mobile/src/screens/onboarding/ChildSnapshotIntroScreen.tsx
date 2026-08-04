@@ -30,7 +30,7 @@ export const ChildSnapshotIntroScreen: React.FC = () => {
   const userName = data.name || 'there';
   const childName = data.childName || 'your child';
 
-  useEffect(() => { amplitudeService.trackOnboardingScreen('child_snapshot_intro', 18); }, []);
+  useEffect(() => { amplitudeService.trackOnboardingScreen('child_snapshot_intro', 28); }, []);
   const insets = useSafeAreaInsets();
 
   return (
@@ -61,7 +61,7 @@ export const ChildSnapshotIntroScreen: React.FC = () => {
           <OnboardingBackButton onPress={() => navigation.goBack()} />
           <TouchableOpacity
             style={styles.button}
-            onPress={() => { amplitudeService.trackOnboardingStepCompleted('child_snapshot_intro', 18); navigation.navigate('WacbQuestion1'); }}
+            onPress={() => { amplitudeService.trackOnboardingStepCompleted('child_snapshot_intro', 28); navigation.navigate('WacbQuestion1'); }}
             activeOpacity={0.85}
           >
             <Text style={styles.buttonText}>{t('onboarding.letsGo')}</Text>

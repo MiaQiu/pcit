@@ -28,7 +28,7 @@ export const RelationshipScreen: React.FC = () => {
       prevScreen="NameInput"
       phase={1}
       stepInPhase={2}
-      totalStepsInPhase={6}
+      totalStepsInPhase={7}
       screenName="relationship"
       screenStep={13}
     />

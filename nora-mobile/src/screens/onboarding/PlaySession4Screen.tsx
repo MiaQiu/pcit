@@ -133,7 +133,7 @@ export const PlaySession4Screen: React.FC = () => {
   const c = (key: string) => t(`onboarding.playSession4.cards.${key}`);
   const d = (key: string) => t(`onboarding.demo2B.${key}`);
 
-  useEffect(() => { amplitudeService.trackOnboardingScreen('play_session4', 33); }, []);
+  useEffect(() => { amplitudeService.trackOnboardingScreen('play_session4', 42); }, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -196,7 +196,7 @@ export const PlaySession4Screen: React.FC = () => {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         <OnboardingBackButton onPress={() => navigation.goBack()} />
-        <TouchableOpacity style={styles.button} onPress={() => { amplitudeService.trackOnboardingStepCompleted('play_session4', 33); navigation.navigate('PlaySession5'); }} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.button} onPress={() => { amplitudeService.trackOnboardingStepCompleted('play_session4', 42); navigation.navigate('PlaySession5'); }} activeOpacity={0.85}>
           <Text style={styles.buttonText}>{t('onboarding.continue')}</Text>
         </TouchableOpacity>
       </View>
