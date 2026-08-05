@@ -752,7 +752,7 @@ export const ProgressScreen: React.FC = () => {
         }
       );
 
-      navigation.navigate('Report', { recordingId: latestRecordingId });
+      navigation.navigate('ReportV2', { recordingId: latestRecordingId });
     }
   };
 
@@ -808,7 +808,7 @@ export const ProgressScreen: React.FC = () => {
                   <View style={[styles.progressFill, { width: `${percentage}%` }]} />
                 </View>
                 <TouchableOpacity
-                  onPress={() => { amplitudeService.trackReportViewed(lastSessionScore.recordingId, lastSessionScore.score, { source: 'progress_last_session' }); navigation.navigate('Report', { recordingId: lastSessionScore.recordingId }); }}
+                  onPress={() => { amplitudeService.trackReportViewed(lastSessionScore.recordingId, lastSessionScore.score, { source: 'progress_last_session' }); navigation.navigate('ReportV2', { recordingId: lastSessionScore.recordingId }); }}
                   style={styles.linkContainer}
                 >
                   <Text style={styles.linkText}>{t('progress.readReport')}</Text>
@@ -826,7 +826,7 @@ export const ProgressScreen: React.FC = () => {
           weeklyReports={weeklyReports}
           onReportPress={(recordingId) => {
             amplitudeService.trackReportViewed(recordingId, undefined, { source: 'progress_calendar' });
-            navigation.navigate('Report', { recordingId });
+            navigation.navigate('ReportV2', { recordingId });
           }}
           onWeeklyReportPress={(reportId) => {
             navigation.navigate('WeeklyReport', { reportId });

@@ -109,7 +109,7 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
             <TouchableOpacity
               key={recording.id}
               style={styles.sessionCard}
-              onPress={() => navigation.navigate('Report', { recordingId: recording.id })}
+              onPress={() => navigation.navigate('ReportV2', { recordingId: recording.id })}
               activeOpacity={0.7}
             >
               <View style={styles.sessionInfo}>
