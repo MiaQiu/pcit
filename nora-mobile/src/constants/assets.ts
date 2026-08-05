@@ -9,6 +9,7 @@ export const DRAGON_PURPLE = require('../../assets/images/dragon_image.png');
 // Report screen hero dragons — pose 1 (waving, "good progress"), pose 2 (celebrating, "amazing session")
 export const REPORT_DRAGON_GOOD = require('../../assets/images/report-dragon1.png');
 export const REPORT_DRAGON_AMAZING = require('../../assets/images/report-dragon2.png');
+export const REPORT_DETAIL_DRAGON = require('../../assets/images/reportdetail-dragon.png');
 export const REPORT_TARGET = require('../../assets/images/report-target.png');
 export const REPORT_TARGET_SMALL = require('../../assets/images/target-small.png');
 export const REPORT_STAR_SMALL = require('../../assets/images/star-small.png');
