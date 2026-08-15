@@ -1,0 +1,7 @@
+boto3
+huggingface_hub
+torch~=2.6.0
+torchaudio~=2.7.0
+transformers~=4.52.3
+peft~=0.15.2
+soundfile~=0.13.1
