@@ -21,6 +21,7 @@ import { Video, ResizeMode } from 'expo-av';
 import { useTranslation } from 'react-i18next';
 import { FONTS, COLORS } from '../constants/assets';
 import { RootStackParamList, RootStackNavigationProp } from '../navigation/types';
+import { useLessonService } from '../contexts/AppContext';
 import amplitudeService from '../services/amplitudeService';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import type { ContentBlock, TextRun } from '../utils/formatLessonContentV2';
@@ -150,9 +151,14 @@ export const DemoVideoDetailScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const { video } = route.params;
   const { t } = useTranslation();
+  const lessonService = useLessonService();
 
   useEffect(() => {
     amplitudeService.trackScreenView('DemoVideoDetail');
+    lessonService.markDemoVideoViewed(video.id).catch((error) => {
+      console.error('Failed to mark demo video viewed:', error.message);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const descriptionBlocks = useMemo(

@@ -468,6 +468,7 @@ model User {
   TextInputResponse         TextInputResponse[]
   ThirdPartyRequest         ThirdPartyRequest[]
   UserLessonProgress        UserLessonProgress[]
+  UserDemoVideoProgress     UserDemoVideoProgress[]
   UserSkillProgress         UserSkillProgress[]
   WacbSurvey                WacbSurvey[]
   ChildProfiling            ChildProfiling[]
@@ -853,7 +854,29 @@ model DemoVideo {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  UserDemoVideoProgress UserDemoVideoProgress[]
+
   @@index([isActive, displayOrder])
+}
+
+// Per-user viewing progress for DemoVideo, mirroring UserLessonProgress.
+// Created/updated on GET /api/lessons/demo-videos/:id (opening the detail
+// screen), same trigger point as lesson progress on lesson GET /:id.
+model UserDemoVideoProgress {
+  id               String         @id
+  userId           String
+  demoVideoId      String
+  status           ProgressStatus @default(IN_PROGRESS)
+  completedAt      DateTime?
+  startedAt        DateTime       @default(now())
+  lastViewedAt     DateTime       @default(now())
+  timeSpentSeconds Int            @default(0)
+  User             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  DemoVideo        DemoVideo      @relation(fields: [demoVideoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, demoVideoId])
+  @@index([demoVideoId])
+  @@index([userId, status])
 }
 
 // Admin-configurable cards shown on the mobile Home screen, below the main

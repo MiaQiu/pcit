@@ -468,6 +468,19 @@ export interface DemoVideosResponse {
   demoVideos: DemoVideo[];
 }
 
+// Per-user viewing progress for a DemoVideo, mirroring UserLessonProgress.
+// Returned by POST /api/lessons/demo-videos/:id/view.
+export interface UserDemoVideoProgress {
+  id: string;
+  userId: string;
+  demoVideoId: string;
+  status: ProgressStatus;
+  completedAt?: Date;
+  startedAt: Date;
+  lastViewedAt: Date;
+  timeSpentSeconds: number;
+}
+
 // ============================================================================
 // HOME CARD TYPES
 // One typed, admin-ordered block in a CONTENT home card's detail page (see

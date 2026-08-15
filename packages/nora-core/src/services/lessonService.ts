@@ -16,6 +16,7 @@ import type {
   TextInputResponse,
   BrandingImagesResponse,
   DemoVideosResponse,
+  UserDemoVideoProgress,
 } from '../types';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 import type AuthService from './authService';
@@ -139,6 +140,32 @@ class LessonService {
     }
 
     return response.json();
+  }
+
+  /**
+   * Mark a demo video as viewed by the current user. Called when the demo
+   * video's detail screen is opened.
+   */
+  async markDemoVideoViewed(demoVideoId: string): Promise<UserDemoVideoProgress> {
+    const response = await this.authService.authenticatedRequest(
+      `${this.apiUrl}/api/lessons/demo-videos/${demoVideoId}/view`,
+      {
+        method: 'POST',
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new ApiError(
+        error.error || 'Failed to mark demo video viewed',
+        response.status,
+        response.statusText,
+        error.code
+      );
+    }
+
+    const data = await response.json();
+    return data.progress;
   }
 
   /**

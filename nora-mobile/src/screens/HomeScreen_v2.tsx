@@ -59,6 +59,12 @@ import amplitudeService from '../services/amplitudeService';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import type { TextRun } from '../utils/formatLessonContentV2';
 
+// TEMP TESTING FLAG — forces the Main Action Card to always show the "Get
+// Ready to Play" state (ignoring hasAnySession/dismissed) so it can be
+// reviewed repeatedly without resetting app state. Flip back to false (or
+// delete) once the Get Ready to Play screen is signed off.
+const FORCE_SHOW_GET_READY_CARD = true;
+
 // Mixes a hex color toward white — used to derive a CONTENT card's pastel
 // background/badge-pill tints from its (fully-saturated) badgeColor.
 // amount: 0 = original color, 1 = white.
@@ -532,6 +538,7 @@ export const HomeScreen_v2: React.FC = () => {
   const [latestRecordingId, setLatestRecordingId] = useState<string | null>(null);
   const [nextLessonId, setNextLessonId] = useState<string | null>(null);
   const [hasAnySession, setHasAnySession] = useState(false);
+  const [getReadyDismissed, setGetReadyDismissed] = useState(false);
   const recordMessage = useMemo(() => {
     const idx = Math.floor(Math.random() * 5);
     return {
@@ -696,6 +703,10 @@ export const HomeScreen_v2: React.FC = () => {
       // ── Chat intro dismissed ──
       const chatIntroDismissedVal = await userStorage.getItem('chat_intro_dismissed');
       setChatIntroDismissed(!!chatIntroDismissedVal);
+
+      // ── Get Ready to Play dismissed ──
+      const getReadyDismissedVal = await userStorage.getItem('get_ready_to_play_dismissed');
+      setGetReadyDismissed(!!getReadyDismissedVal);
 
       // ── Record lock (free trial exhausted) ──
       const freeLimitCached = await userStorage.getItem('@nora_free_limit_reached');
@@ -880,6 +891,15 @@ export const HomeScreen_v2: React.FC = () => {
   const handleRecordAgain = () => {
     amplitudeService.trackEvent('Home Record Again Pressed');
     tabNavigation.navigate('Record', { autoStart: true });
+  };
+
+  const handleGetReadyPress = async () => {
+    amplitudeService.trackEvent('Home Get Ready Pressed', { source: 'main_card' });
+    if (!FORCE_SHOW_GET_READY_CARD) {
+      await userStorage.setItem('get_ready_to_play_dismissed', 'true');
+      setGetReadyDismissed(true);
+    }
+    navigation.push('GetReadyToPlay');
   };
 
   const handleChatIntroChat = async () => {
@@ -1263,6 +1283,21 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.massageChildName}>{childName}</Text>
                 {t('homeV2.analyzingSessionSuffix')}
               </Text>
+            </>
+          ) : FORCE_SHOW_GET_READY_CARD || (!hasAnySession && !getReadyDismissed) ? (
+            <>
+              <View style={styles.massageHeader}>
+                <View style={styles.greenDot} />
+                <Text style={styles.massageLabel}>{t('homeV2.getReadyLabel')}</Text>
+              </View>
+              <Text style={styles.massageBody}>{t('homeV2.getReadyBody')}</Text>
+              <TouchableOpacity
+                style={styles.recordButton}
+                onPress={handleGetReadyPress}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.recordButtonText}>{t('homeV2.getReadyButton')}</Text>
+              </TouchableOpacity>
             </>
           ) : !hasRecordedSession ? (
             <>

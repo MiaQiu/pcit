@@ -162,6 +162,10 @@ export type RootStackParamList = {
   HomeCardDetail: {
     cardId: string;
   };
+  GetReadyToPlay: undefined;
+  GetReadySection: {
+    sectionKey: string;
+  };
 };
 
 export type RootTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;

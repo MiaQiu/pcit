@@ -82,6 +82,33 @@ export default function UserDetailPage() {
             )}
           </div>
 
+          {/* Demo videos viewed */}
+          <div style={{ flex: 1 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>
+              Demo Videos Viewed ({profile.demoVideos.length})
+            </h2>
+            {profile.demoVideos.length === 0 ? (
+              <div className="empty-state">No demo videos viewed.</div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Video</th>
+                    <th>Viewed At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {profile.demoVideos.map((v) => (
+                    <tr key={v.demoVideoId}>
+                      <td>{v.title}</td>
+                      <td>{fmt(v.viewedAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
           {/* Sessions */}
           <div style={{ flex: 1 }}>
             <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>

@@ -204,6 +204,43 @@ router.get('/demo-videos', requireAuth, async (req, res) => {
 });
 
 /**
+ * POST /api/lessons/demo-videos/:id/view
+ * Mark a demo video as viewed by the current user — called when the mobile
+ * app opens DemoVideoDetailScreen. Upserts UserDemoVideoProgress, mirroring
+ * how UserLessonProgress is created/touched on lesson GET /:id.
+ */
+router.post('/demo-videos/:id/view', requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { id: demoVideoId } = req.params;
+
+    const demoVideo = await prisma.demoVideo.findUnique({ where: { id: demoVideoId }, select: { id: true } });
+    if (!demoVideo) {
+      return res.status(404).json({ error: 'Demo video not found' });
+    }
+
+    const progress = await prisma.userDemoVideoProgress.upsert({
+      where: { userId_demoVideoId: { userId, demoVideoId } },
+      create: {
+        id: crypto.randomUUID(),
+        userId,
+        demoVideoId,
+        status: 'COMPLETED',
+        completedAt: new Date(),
+      },
+      update: {
+        lastViewedAt: new Date(),
+      },
+    });
+
+    res.json({ progress });
+  } catch (error) {
+    console.error('Mark demo video viewed error:', error.message);
+    res.status(500).json({ error: 'Failed to mark demo video viewed' });
+  }
+});
+
+/**
  * GET /api/lessons
  * Get all lessons with user progress
  * Query params: ?module=FOUNDATION (filter by module)

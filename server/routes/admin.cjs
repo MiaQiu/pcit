@@ -1268,13 +1268,22 @@ router.put('/users/:id/tag', requireAdminAuth, async (req, res) => {
 router.get('/users/:id/profile', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
   try {
-    const [lessonProgress, sessions] = await Promise.all([
+    const [lessonProgress, demoVideoProgress, sessions] = await Promise.all([
       prisma.userLessonProgress.findMany({
         where: { userId: id, status: 'COMPLETED' },
         select: {
           lessonId: true,
           completedAt: true,
           Lesson: { select: { title: true, module: true } },
+        },
+        orderBy: { completedAt: 'desc' },
+      }),
+      prisma.userDemoVideoProgress.findMany({
+        where: { userId: id, status: 'COMPLETED' },
+        select: {
+          demoVideoId: true,
+          completedAt: true,
+          DemoVideo: { select: { title: true } },
         },
         orderBy: { completedAt: 'desc' },
       }),
@@ -1297,6 +1306,11 @@ router.get('/users/:id/profile', requireAdminAuth, async (req, res) => {
         title: p.Lesson?.title ?? p.lessonId,
         module: p.Lesson?.module ?? null,
         completedAt: p.completedAt,
+      })),
+      demoVideos: demoVideoProgress.map(p => ({
+        demoVideoId: p.demoVideoId,
+        title: p.DemoVideo?.title ?? p.demoVideoId,
+        viewedAt: p.completedAt,
       })),
       sessions: sessions.map(s => ({
         id: s.id,

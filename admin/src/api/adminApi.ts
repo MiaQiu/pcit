@@ -140,6 +140,11 @@ export interface UserProfile {
     module: string | null;
     completedAt: string | null;
   }>;
+  demoVideos: Array<{
+    demoVideoId: string;
+    title: string;
+    viewedAt: string | null;
+  }>;
   sessions: Array<{
     id: string;
     mode: string;
