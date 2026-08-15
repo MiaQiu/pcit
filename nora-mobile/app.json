@@ -25,7 +25,6 @@
         "NSUserNotificationsUsageDescription": "Nora sends you helpful reminders to practice and learn, and notifies you when your session reports are ready.",
         "LSApplicationQueriesSchemes": [
           "whatsapp",
-          "linkedin",
           "fb"
         ]
       },
@@ -64,7 +63,7 @@
       [
         "react-native-share",
         {
-          "android": ["com.whatsapp", "com.linkedin.android", "com.facebook.katana"]
+          "android": ["com.whatsapp", "com.facebook.katana", "com.tencent.mm"]
         }
       ]
     ],

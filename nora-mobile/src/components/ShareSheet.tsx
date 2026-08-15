@@ -2,13 +2,15 @@
  * ShareSheet
  * Custom in-app "Share" bottom sheet replacing RN's native Share.share() —
  * a preview image (optional), a "SHARE TO" row (WhatsApp via Linking.openURL;
- * Facebook (both platforms) and LinkedIn (Android only — react-native-share's
- * iOS native module has no LinkedIn branch at all, see openLinkedIn's
- * comment) via react-native-share's shareSingle, which invokes that app's
+ * Facebook via react-native-share's shareSingle, which invokes the app's
  * share extension/intent-target directly — an already-logged-in native post
  * composer, not a web dialog — falling back to clipboard-copy + app-launch
- * everywhere shareSingle isn't available or wired up. No Instagram/WeChat —
- * both need native SDKs, out of scope), and a "SHARE LINK" row with a short
+ * if shareSingle isn't available; WeChat via plain clipboard-copy + weixin://
+ * app-launch, same shape as WhatsApp — WeChat has no public URL-based text
+ * prefill (unlike WhatsApp's whatsapp://send?text=) and no shareSingle
+ * target either; real rich sharing (jumping straight to WeChat's contact
+ * picker) needs the Tencent SDK + a registered AppID, deferred for now. No
+ * LinkedIn/Instagram — out of scope), and a "SHARE LINK" row with a short
  * /s/:code URL + Copy button.
  * Used by SubActionCard (HomeScreen_v2), HomeCardDetailScreen,
  * LessonReadScreen, LearnScreen_v3's Read modal, and LessonViewerScreen_v2
@@ -16,7 +18,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Image, Linking, ActivityIndicator, Platform } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, Image, Linking, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import Share, { Social } from 'react-native-share';
@@ -105,47 +107,6 @@ export const ShareSheet: React.FC<ShareSheetProps> = ({ visible, onClose, target
     Linking.openURL(url).catch(() => showToast('Could not open WhatsApp', 'error'));
   };
 
-  // react-native-share's iOS native module (RNShare.mm) has NO branch for
-  // "linkedin" at all — its Facebook/Twitter support piggybacks on Apple's
-  // old Social.framework (SLServiceTypeFacebook/Twitter), which never had a
-  // LinkedIn equivalent, so the maintainers never wired one up. Calling
-  // shareSingle({social: Social.Linkedin}) on iOS falls through every
-  // if/else with no resolve() or reject() ever called — the promise hangs
-  // forever (not an error, just silently does nothing). Android's
-  // implementation (LinkedinShare, targeting com.linkedin.android via a real
-  // ACTION_SEND intent) is genuinely wired up, so only skip this on iOS.
-  const openLinkedIn = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        await Share.shareSingle({
-          social: Social.Linkedin,
-          url: effectiveUrl,
-          message: shareText,
-        });
-        return;
-      } catch (err) {
-        // No LinkedIn app installed — fall through to the shared fallback below.
-      }
-    }
-
-    // LinkedIn's public web endpoint (share-offsite) only ever accepts a
-    // `url` param — no body text, by design — so this fallback still can't
-    // prefill the post.
-    await Clipboard.setStringAsync(shareText);
-    showToast('Copied! Paste it into your LinkedIn post', 'success');
-
-    const appUrl = 'linkedin://';
-    const canOpenApp = await Linking.canOpenURL(appUrl).catch(() => false);
-    if (canOpenApp) {
-      Linking.openURL(appUrl).catch(() => showToast('Could not open LinkedIn', 'error'));
-      return;
-    }
-
-    Linking.openURL(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(effectiveUrl)}`).catch(() =>
-      showToast('Could not open LinkedIn', 'error')
-    );
-  };
-
   const openFacebook = async () => {
     try {
       await Share.shareSingle({
@@ -154,10 +115,10 @@ export const ShareSheet: React.FC<ShareSheetProps> = ({ visible, onClose, target
         message: shareText,
       });
     } catch (err) {
-      // Same fallback shape as LinkedIn, but more locked-down: Meta removed
-      // the ability to pre-fill a share's message text platform-wide back
-      // in 2018 (a policy change, not a technical gap) — `sharer.php` below
-      // only ever accepts `u` (the link), regardless of extension availability.
+      // No shareSingle extension available — fall back to clipboard-copy +
+      // app-launch/web. Meta removed the ability to pre-fill a share's
+      // message text platform-wide back in 2018 (a policy change, not a
+      // technical gap) — `sharer.php` below only ever accepts `u` (the link).
       await Clipboard.setStringAsync(shareText);
       showToast('Copied! Paste it into your Facebook post', 'success');
 
@@ -172,6 +133,23 @@ export const ShareSheet: React.FC<ShareSheetProps> = ({ visible, onClose, target
         showToast('Could not open Facebook', 'error')
       );
     }
+  };
+
+  // Same shape as openWhatsApp: WeChat has no public URL-based text prefill
+  // (unlike whatsapp://send?text=), so the closest equivalent is copy-then-open.
+  // canOpenURL('weixin://') needs com.tencent.mm declared for Android 11+
+  // package visibility — added to app.json's react-native-share plugin
+  // config (reused purely as a generic "add these packages to <queries>"
+  // mechanism; WeChat doesn't go through that library at all).
+  const openWeChat = async () => {
+    const canOpen = await Linking.canOpenURL('weixin://').catch(() => false);
+    if (!canOpen) {
+      showToast('WeChat is not installed', 'error');
+      return;
+    }
+    await Clipboard.setStringAsync(shareText);
+    showToast('Copied! Paste it into WeChat', 'success');
+    Linking.openURL('weixin://').catch(() => showToast('Could not open WeChat', 'error'));
   };
 
   return (
@@ -193,11 +171,11 @@ export const ShareSheet: React.FC<ShareSheetProps> = ({ visible, onClose, target
             <TouchableOpacity style={styles.iconButton} onPress={openWhatsApp} activeOpacity={0.7} accessibilityLabel="WhatsApp">
               <Ionicons name="logo-whatsapp" size={24} color="#25D366" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} onPress={openLinkedIn} activeOpacity={0.7} accessibilityLabel="LinkedIn">
-              <Ionicons name="logo-linkedin" size={24} color="#0A66C2" />
-            </TouchableOpacity>
             <TouchableOpacity style={styles.iconButton} onPress={openFacebook} activeOpacity={0.7} accessibilityLabel="Facebook">
               <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconButton} onPress={openWeChat} activeOpacity={0.7} accessibilityLabel="WeChat">
+              <Ionicons name="logo-wechat" size={24} color="#07C160" />
             </TouchableOpacity>
           </View>
 
