@@ -115,6 +115,7 @@
     "errorFailedMessage": "Failed to reset password. The link may have expired."
   },
   "subscription": {
+    "earlyUserBenefits": "Early User Benefits",
     "unlockPremium": "Unlock Premium",
     "priceMonthly": "{{price}}/month",
     "featureUnlimitedSessions": "Unlimited recording sessions",
@@ -505,11 +506,56 @@
     "goalEncouragement": "You've already improved. Keep going!",
     "parentingLevel": "Parenting Level",
     "levelHeading": "Level {{level}}",
-    "parentingLevelTitle": "Calm Play Partner",
-    "levelFooter": "You're {{percent}}% toward Level {{nextLevel}}!",
+    "levelFooterSessions": "You're {{count}}/2 sessions toward Level {{nextLevel}}!",
     "continueToCoaching": "Continue to Coaching",
     "shareMyProgress": "Share my progress",
     "shareMessage": "I just had a {{score}}/100 session with {{childName}} using Nora!"
+  },
+  "reportDetail": {
+    "headerTitle": "Today's Coaching",
+    "heroIntro": "Big feelings are hard",
+    "heroIntroDefault": "Another great play session",
+    "heroFallback": "Great job today — {{childName}} enjoyed the time with you.",
+    "crisis": {
+      "title": "Crisis Moment Detected",
+      "whatHelpedTitle": "What helped"
+    },
+    "topMoment": {
+      "title": "Top Moment",
+      "afterMoment": "After the moment, {{childName}} re-engaged and enjoyed the play again."
+    },
+    "interactionStyle": {
+      "title": "Today's Interaction Style",
+      "viewTips": "View tips",
+      "tip": "Great job using fewer questions and commands during the tough moment. This helps {{childName}} feel safe and supported."
+    },
+    "tomorrowGoal": {
+      "title": "Tomorrow's Goal",
+      "todayLabel": "Today",
+      "tomorrowLabel": "Tomorrow",
+      "aimFor": "Aim for {{count}} time"
+    },
+    "childInsight": {
+      "title": "What we learned about {{childName}}",
+      "shareMessage": "Here's something we learned about {{childName}} today with Nora: {{insight}}"
+    },
+    "developmental": {
+      "shareMessage": "Tracking {{childName}}'s developmental milestones with Nora — check out the progress!"
+    },
+    "transcript": {
+      "title": "Full Transcript",
+      "subtitle": "Read the full conversation from today's play session."
+    },
+    "unlock": {
+      "title": "Ready for more personalized coaching?",
+      "subtitle": "Answer 9 quick questions (about 2 minutes) to unlock:",
+      "featureGrowthPlan": "Personalized Growth Plan",
+      "featureSnapshot": "Child Snapshot",
+      "featureTracking": "Progress Tracking",
+      "cta": "Unlock My Child's Plan",
+      "time": "Takes about 2 minutes"
+    },
+    "footer": "You're showing up in the moments that matter most. Keep going!"
   },
   "profileReport": {
     "primaryFocusLabel": "Primary Focus",
@@ -522,7 +568,11 @@
       "transitions": { "label": "Transitions & Cooperation", "level": "Moderate", "focus": "Focus: Q1, Q2" },
       "energy": { "label": "Focus & Energy", "level": "High", "focus": "Focus: Q5-Q7" },
       "boundaries": { "label": "Boundaries", "level": "Mild", "focus": "Focus: Q8" }
-    },
+    ,
+      "attention": { "label": "Focus & Cooperation", "focus": "Focus: Attention & Following Directions" },
+      "emotional": { "label": "Emotional Balance", "focus": "Focus: Meltdowns & Aggression" },
+      "routines": { "label": "Transitions & Routines", "focus": "Focus: Bedtime, Meals & Delays" },
+      "social": { "label": "Social Boundaries", "focus": "Focus: Peer & Sibling Interactions" }},
     "journeyTitle": "Personalized Learning Journey",
     "journeySubtitle": "Your next steps in Nora",
     "phase1Badge": "PHASE 1",
@@ -540,7 +590,19 @@
       "followThrough": { "title": "The Follow-Through", "focus": "Focus: Consequences", "description": "Shows {{childName}} that your commands are consistent and reliable." }
     },
     "unlockMessage": "More steps unlock as you progress"
-  },
+  ,
+    "severity": { "high": "High", "moderate": "Moderate", "mild": "Mild" },
+    "journeyLevelBadge": "LEVEL {{level}}",
+    "journeyGoalLabel": "Goal: ",
+    "levels": {
+      "playBuilder": { "title": "Play Builder", "skill": "Follow Your Child's Lead", "goal": "Build a safe and enjoyable play experience.", "learn": "Let the child lead the play • Reduce commands • Reduce questions • Avoid criticism" },
+      "confidenceBuilder": { "title": "Confidence Builder", "skill": "Specific Praise", "goal": "Help your child feel capable.", "learn": "Labeled praise • Praise effort instead of outcome • Build confidence through positive attention" },
+      "attentionBuilder": { "title": "Attention Builder", "skill": "Narration", "goal": "Increase focus and engagement.", "learn": "Describe what the child is doing • Keep the child engaged • Extend attention span" },
+      "communicationBuilder": { "title": "Communication Builder", "skill": "Reflection (Echo)", "goal": "Help your child feel understood.", "learn": "Repeat and expand what the child says • Encourage language • Show active listening" },
+      "cooperationBuilder": { "title": "Cooperation Builder", "skill": "Clear Instructions", "goal": "Increase everyday cooperation.", "learn": "Give effective commands • One instruction at a time • Wait before repeating" },
+      "boundaryBuilder": { "title": "Boundary Builder", "skill": "Calm Follow-Through", "goal": "Build respectful boundaries.", "learn": "Stay calm • Be consistent • Follow through on limits • Reduce power struggles" },
+      "confidentParent": { "title": "Confident Parent", "skill": "Putting It All Together", "goal": "Use the right parenting skill at the right moment.", "learn": "Follow Child's Lead • Praise • Narration • Reflection • Clear Instructions • Calm Follow-Through" }
+    }},
   "lessonViewer": {
     "contentUpdatedTitle": "Content Updated",
     "contentUpdatedMessage": "This lesson has been updated. Please select it again to view the latest version.",
@@ -759,7 +821,10 @@
       "4start": "Ready for more fun? Capture another awesome play session with ",
       "4end": "!"
     }
-  },
+  ,
+    "getReadyLabel": "Play Guide",
+    "getReadyBody": "Everything you need before you begin.",
+    "getReadyButton": "Prepare for your first play"},
   "lessonRead": {
     "title": "Lesson",
     "noContent": "This lesson doesn't have a text version yet."
@@ -1051,19 +1116,46 @@
       "paragraph2Pre": "What surprises most parents is that many of these challenges improve through ",
       "paragraph2Highlight": "one simple daily habit.",
       "discoverButton": "Discover  →"
-    },
+    ,
+      "youreInAlt": "You're in ",
+      "goodHandsAlt": "good hands.",
+      "paragraph1AltPre": "Nora is designed with clinical child psychologists and adapts evidence-based coaching to ",
+      "paragraph1AltHighlight": "your child's unique needs.",
+      "paragraph1AltPost": "",
+      "paragraph2AltPre": "Whether your child has a diagnosis or you're simply looking for ",
+      "paragraph2AltHighlight": "more support,",
+      "paragraph3AltPre": "we'll build a ",
+      "paragraph3AltHighlight": "personalized plan",
+      "paragraph3AltPost": " together."},
     "obLetterContent": {
       "hi": "Hi ",
       "comma": ",",
       "thankYou": "Thank you for choosing Nora. We're excited to support both you and ",
       "period": ".",
       "continueButton": "Continue  →"
-    },
+    ,
+      "thankYouAlt": "Thank you for choosing Nora.",
+      "subtitleAltPre": "Every child learns differently, and Nora adapts coaching to ",
+      "subtitleAltHighlight": "'s unique",
+      "subtitleAltPost": " strengths and needs."},
     "obIntro1": {
       "helping": "Helping",
       "startsHere": "starts here",
       "continueButton": "Continue  →"
-    },
+    ,
+      "threeStepsPre": "Just 3 simple steps, powered by ",
+      "threeStepsHighlight1": "AI",
+      "threeStepsMid": "\nand backed by ",
+      "threeStepsHighlight2": "child psychology.",
+      "card1TitleLine1": "Record",
+      "card1TitleLine2": "5 minutes",
+      "card1Body": "Capture real\nplaytime moments.",
+      "card2TitleLine1": "Nora",
+      "card2TitleLine2": "listens",
+      "card2Body": "Our AI listens to your\nplaytime recording.",
+      "card3TitleLine1": "Personalized",
+      "card3TitleLine2": "coaching",
+      "card3Body": "Get tailored feedback\nand tips for your child."},
     "obIntro2": {
       "sentence1Pre": "Most of parents with similar goals ",
       "sentence1Highlight": "reported meaningful changes",
@@ -1071,7 +1163,16 @@
       "sentence1HighlightWeeks": "3 weeks.",
       "sentence2": "I'm so glad you're here. 💜",
       "continueButton": "I'm In  →"
-    },
+    ,
+      "altPara1Pre": "Every child grows at their ",
+      "altPara1Highlight": "own pace.",
+      "altPara2Pre": "Many families notice ",
+      "altPara2Highlight": "meaningful changes",
+      "altPara2Post": " within the first few weeks.",
+      "altPara3Pre": "We'll celebrate ",
+      "altPara3Highlight": "every step",
+      "altPara3Post": " with you. 💜",
+      "bubbleText": "We can do it."},
     "reminderTime": {
       "title": "Hi {{name}}, When is your 5 mins?",
       "description": "Many parents find the \"After-School Reconnect\" or \"Pre-Dinner Play\" or \"Weekend day morning\" works best.",
@@ -1285,7 +1386,111 @@
       "subtitle": "Your data is always protected and never shared without your permission."
     },
     "next": "Next  →"
-  },
+  ,
+    "diagnosisStatus": {
+      "title": "Has {{childName}} received a diagnosis?",
+      "yes": "Yes",
+      "assessmentInProgress": "Assessment in progress",
+      "concernsNoDiagnosis": "Not yet, but I have concerns",
+      "preferNotToSay": "I'd rather not say"
+    },
+    "ob1": {
+      "heading": "Parenting is hard",
+      "subtitlePre": "But you don't have to do it ",
+      "subtitleHighlight": "alone.",
+      "iconSpeechTherapy": "Speech Therapy",
+      "iconPlayTherapy": "Play Therapy",
+      "iconAuthoritativeParenting": "Authoritative Parenting",
+      "iconChildDevelopment": "Child Development",
+      "iconAttachmentScience": "Attachment Science",
+      "iconSocialLearningScience": "Social Learning Science",
+      "iconBehaviorManagement": "Behavior Management",
+      "meetPre": "Meet ",
+      "meetHighlight": "Nora",
+      "paragraphPre": "Your guide to raising ",
+      "paragraphHighlight": "confident,happy",
+      "paragraphPost": " kids.\nScience-backed\nPersonalized for your child (ages 1–7)."
+    },
+    "ob2": {
+      "profName": "Prof. Yi-Chuen Chen, PhD",
+      "profTitle1": "Clinical Child Psychologist.",
+      "profTitle2": "Nora Clinical Guidance",
+      "headingPre": "Nora will make you\na ",
+      "headingHighlight": "parenting expert",
+      "headingPost": "\nyour child needs."
+    },
+    "ob3": {
+      "titlePre": "Your data",
+      "titleHighlight": "stay private",
+      "paragraphPre": "We follow strict data protection\nstandards and ",
+      "paragraphHighlight": "never sell",
+      "paragraphPost": " your information"
+    },
+    "obDiscipline": {
+      "headingLine1": "CALM",
+      "headingLine2": "DISCIPLINE",
+      "subtitle": "Great parenting is more than play.",
+      "subtitleHighlight": "Children need both.",
+      "card1Title": "Connection",
+      "card1Body": "Build a strong\nemotional bond",
+      "card2Title": "Calm Boundaries",
+      "card2Body": "Guide with clarity\nand consistency"
+    },
+    "obDisciplineAlt": {
+      "headingLine1": "CALM",
+      "headingLine2": "DISCIPLINE",
+      "subtitle": "Children thrive with calm,\npredictable support.",
+      "paragraphPre": "Learn simple techniques that help your child understand expectations and build confidence—",
+      "paragraphHighlight": "one moment at a time.",
+      "card1Title": "Connection first",
+      "card1Body": "Help your child feel safe,\nseen, and understood.",
+      "card2Title": "Clear guidance",
+      "card2Body": "Use simple, calm instructions\nyour child can follow.",
+      "card3Title": "Consistent boundaries",
+      "card3Body": "Calm follow-through builds\ntrust and cooperation."
+    },
+    "obLetter": {
+      "tapToOpen": "Tap to open",
+      "secretLine1": "A little Secret",
+      "secretLine2": "from Nora"
+    },
+    "obPlay1": {
+      "heading": "PLAY",
+      "subtitle1Pre": "One of child psychology's ",
+      "subtitle1Highlight": "most powerful tools.",
+      "subtitle2Line1": "For young children,",
+      "subtitle2Line2": "play is how they",
+      "subtitle2Highlight": "connect,learn,and grow.",
+      "tipLabel": "The secret?",
+      "tipLine1": "It's not what you play.",
+      "tipLine2Pre": "It's ",
+      "tipLine2Highlight": "how",
+      "tipLine2Post": " you play."
+    },
+    "obPlay2": {
+      "headingLine1": "HOW TO",
+      "headingLine2": "PLAY",
+      "subtitlePre": "Child psychologists use\n",
+      "subtitleHighlight": "simple interaction techniques",
+      "subtitlePost": "\nthat help children feel:",
+      "iconSeen": "Seen",
+      "iconUnderstood": "Understood",
+      "iconConfident": "Confident",
+      "tipPre": "",
+      "tipHighlight": "parents",
+      "tipPost": " can learn them too."
+    },
+    "professionalSupport": {
+      "title": "Is {{childName}} currently receiving professional support?",
+      "occupationalTherapy": "Occupational Therapy",
+      "speechTherapy": "Speech Therapy",
+      "earlyIntervention": "Early Intervention",
+      "abaBehavioralTherapy": "ABA / Behavioral Therapy",
+      "schoolSupport": "School Support",
+      "other": "Other",
+      "none": "None",
+      "preferNotToSay": "I'd rather not say"
+    }},
   "quizFeedback": {
     "correct": "Correct!",
     "notQuite": "Not quite!"
@@ -1488,4 +1693,53 @@
     "lessonCount_other": "{{count}} lessons",
     "current": "Current"
   }
-}
+,
+  "getReadyToPlay": {
+    "title1": "Get Ready",
+    "title2": "to Play?",
+    "subtitle": "Everything you need\nbefore you begin.",
+    "pillTitle": "Just 5 minutes",
+    "pillSubtitle": "We'll guide you step by step.",
+    "sections": {
+      "toysToUse": {
+        "title": "Toys to Use",
+        "subtitle": "What to pick, what to skip.",
+        "body": "### ✅ YES: Open-Ended & Creative Toys\n*Choose toys that allow your child to build, create, and imagine freely without fixed rules.*\n\n* **Building Blocks & Construction:** LEGOs/Duplo, Mega Bloks, magnetic tiles.\n![](placeholder:building-blocks)\n* **Pretend Play & Figures:** Action figures, dolls, toy animals, play food, cars, or trains.\n![](placeholder:pretend-play)\n* **Creative Materials:** Play-Doh, coloring pages, stickers, drawing pads.\n![](placeholder:creative-materials)\n\n💡 **Why these work:** They give you plenty of opportunities to describe what your child is doing, reflect their words, and praise their creativity (**PEN** skills).\n\n### ❌ NO: Toys to Avoid During Special Time\n*Skip items that limit conversation, invite conflict, or take away control from the child.*\n\n* **Rules or Turn-Taking:** Board games, card games, or sports (these encourage competition or adult guidance).\n* **Messy or High-Frustration Activities:** Paints, glitter, intricate puzzles, or toys requiring adult assembly.\n* **Screens & Electronics:** Tablets, video games, loud battery-operated toys, or watching videos.\n* **Aggressive Play Toys:** Toy guns, swords, or rough-and-tumble games."
+      },
+      "howToStart": {
+        "title": "How to Start",
+        "subtitle": "Clear a zone, pick toys, and press record.",
+        "body": "### 1. Clear a Calm Zone\nFind a distraction-free spot (no TV, screens, or siblings) and make it comfortable for you both (e.g., a rug or table).\n\n### 2. Pick 2-3 Toys\nKeep it simple. Pre-select just a few toys (like building blocks or creative supplies) and place them in your zone.\n\n### 3. Scripts to Start\nTo begin, use this simple script:\n\n*\"Time for our Special Time! For the next 5 minutes, you decide what we play with. Pick any of these.\"*\n\n### 4. Start Recording\nRemember to tap **Start Recording** in the Nora app. You can lock the screen and place it somewhere nearby — it will automatically stop after 5 minutes."
+      },
+      "howToEnd": {
+        "title": "How to End",
+        "subtitle": "Wrapping up without a struggle.",
+        "body": "When the 5-minute timer concludes, Nora automatically ends recording and analyzing your session.\n\n### ⏳ Step 1: Give Transition Warnings\nIf your child struggles with stopping, give them a head start to prepare:\n\n* Say: **\"Special Time will be over in two minutes.\"**\n* Then: **\"One minute left.\"**\n\n### 📢 Step 2: Use the Ending Script\nEven if you plan to keep playing, officially declaring the end releases you from the high-intensity coaching pressure.\n\n*\"Special Time is over now. I wanted to tell you that I really liked how you [insert specific praise] during our play.\"*\n\n### 🎯 Step 3: Choose Your Next Steps\n* **Option A: Keep Playing** — Relax and play purely for fun—no coaching or PRIDE skills required!\n* **Option B: Move to Next Activity** — Clean up together, move to mealtime, or start your bedtime routine.\n\n### Step 4: What if My Kid Does Not Want to Stop?\nKids often resist because they love your full attention, want to delay the next task (like bedtime), or feel uncertain about when Special Time will happen again.\n\n**Quick Solutions:**\n\n* **Use a Visual Timer:** A visual clock lets kids see the time winding down so the end isn't a surprise.\n* **Pair Warnings with Next Steps:** \"1 minute left! After this, you can keep playing alone or help me get dinner ready.\"\n* **Keep a Daily Routine:** Practicing at the same time every day builds predictability.\n* **Co-Regulate Meltdowns:** If tears happen, offer a hug, validate their feelings, and take deep breaths together.\n* **Praise Solo Play:** Offer praise whenever you see them transition to playing independently."
+      },
+      "howToPlay": {
+        "title": "How to Play",
+        "subtitle": "Just play — it's not about getting it perfect.",
+        "body": "Just play as you normally do.\n\nDon't worry if it isn't perfect.\n\nYour first session isn't about getting a high score.\n\nIt's about getting to know your family."
+      },
+      "whatToExpect": {
+        "title": "What to Expect",
+        "subtitle": "What your report will show you.",
+        "body": "After every 5-minute session, Nora will help you understand what happened—and what to try next.\n\n### 🎨 Your Family's Interaction Style\nFrom this first session, Nora learns your unique play dynamic to customize your upcoming coaching plan.\n\n### 🌟 What's Going Well\nSee what went well and the moments that made a positive impact.\n\n### 🎯 Opportunity Areas\nDiscover gentle, targeted insights on key skills (like play techniques) to focus on in your next session."
+      },
+      "siblings": {
+        "title": "Siblings",
+        "subtitle": "Playing when you have more than one kid.",
+        "body": "**Keep Them Occupied:** Set siblings up with an engaging task (a snack, educational TV, or a special \"waiting\" toy) and praise them afterwards for being patient.\n\n**Tag-Team & Switch:** If you have two parents/caregivers at home, run back-to-back sessions:\n\n* **Round 1 (5 mins):** Parent A plays with Child 1; Parent B plays with Child 2.\n* **Round 2 (5 mins):** Switch! Parent A plays with Child 2; Parent B plays with Child 1.\n\n**Use Nap Times:** Schedule Special Time with your older child while a baby or toddler is napping for zero interruptions."
+      },
+      "findingTime": {
+        "title": "Finding Time to Play",
+        "subtitle": "Fitting 5 minutes into a busy day.",
+        "body": "Consistency matters, but flexibility keeps it doable! Here is how to fit 5 minutes into a busy day:\n\n### 📅 Option 1: Pick a Fixed Daily Slot\nRoutine builds consistency. Choosing a set daily window makes Special Time an easy habit.\n\n### 🔀 Option 2: Set 2–3 Flexible Windows\nIf your schedule changes, pick a few potential backup times each day.\n\n**💡 Popular Times That Work for Parents**\n\n* **First Thing in the Morning:** Fills your child's \"emotional bank account\" and sets a positive tone for the whole day.\n* **Right After Work/School:** Helps you transition out of work mode and reconnects you with your child.\n* **Before Bath or Bedtime Routine:** Calms your child down and makes evening transitions smoother."
+      },
+      "dataPrivacy": {
+        "title": "Data Privacy",
+        "subtitle": "Your family's recordings, kept safe.",
+        "body": "Your family's private moments are completely safe with Nora.\n\n* **5-Minute or 10-Minute Audio Limit:** Recording automatically stops as soon as your timer ends.\n* **Coaching Use Only:** Audio is analyzed strictly to give you insights.\n* **Encrypted & Secure:** All session data is encrypted and stored securely.\n* **Never Sold:** Your recordings and data are never sold to third parties.\n* **Full Control:** You can delete your data/account at any time in your settings."
+      }
+    }
+  }}

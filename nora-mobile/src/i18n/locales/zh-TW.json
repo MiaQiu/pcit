@@ -114,7 +114,8 @@
     "successMessage": "您的密碼已成功重設。請使用新密碼登入。",
     "errorFailedMessage": "重設密碼失敗，連結可能已過期。"
   },
-  "subscription": {
+  "subscription": {    "earlyUserBenefits": "早期使用者福利",
+
     "unlockPremium": "解鎖進階版",
     "priceMonthly": "每月 {{price}}",
     "featureUnlimitedSessions": "無限錄音次數",
@@ -505,11 +506,56 @@
     "goalEncouragement": "你已經進步了，繼續加油！",
     "parentingLevel": "育兒等級",
     "levelHeading": "第 {{level}} 級",
-    "parentingLevelTitle": "平靜玩伴",
-    "levelFooter": "距離第 {{nextLevel}} 級還差 {{percent}}%！",
+    "levelFooterSessions": "距離第 {{nextLevel}} 級還差 {{count}}/2 次練習！",
     "continueToCoaching": "繼續查看指導",
     "shareMyProgress": "分享我的進度",
     "shareMessage": "我剛和{{childName}}完成了一次 {{score}}/100 的 Nora 練習！"
+  },
+  "reportDetail": {
+    "headerTitle": "今日指導",
+    "heroIntro": "情緒波動不容易",
+    "heroIntroDefault": "又一次愉快的遊戲時光",
+    "heroFallback": "今天做得很好——{{childName}}很享受和你在一起的時光。",
+    "crisis": {
+      "title": "檢測到崩潰時刻",
+      "whatHelpedTitle": "有幫助的做法"
+    },
+    "topMoment": {
+      "title": "高光時刻",
+      "afterMoment": "這一刻過後，{{childName}}重新投入，又開心地玩了起來。"
+    },
+    "interactionStyle": {
+      "title": "今日互動風格",
+      "viewTips": "檢視建議",
+      "tip": "在艱難時刻減少了提問和命令，做得很好。這能幫助{{childName}}感到安全和被支援。"
+    },
+    "tomorrowGoal": {
+      "title": "明日目標",
+      "todayLabel": "今天",
+      "tomorrowLabel": "明天",
+      "aimFor": "目標 {{count}} 次"
+    },
+    "childInsight": {
+      "title": "我們對{{childName}}的瞭解",
+      "shareMessage": "今天用 Nora 我們瞭解到關於{{childName}}的一件事：{{insight}}"
+    },
+    "developmental": {
+      "shareMessage": "用 Nora 追蹤{{childName}}的發展里程碑——來看看進展吧！"
+    },
+    "transcript": {
+      "title": "完整對話記錄",
+      "subtitle": "閱讀今天遊戲時光的完整對話。"
+    },
+    "unlock": {
+      "title": "想要更個性化的指導嗎？",
+      "subtitle": "回答 9 個簡單問題（約 2 分鐘），即可解鎖：",
+      "featureGrowthPlan": "個性化成長計劃",
+      "featureSnapshot": "孩子概覽",
+      "featureTracking": "進度追蹤",
+      "cta": "解鎖我孩子的計劃",
+      "time": "大約需要 2 分鐘"
+    },
+    "footer": "你正在最重要的時刻陪伴著孩子，繼續加油！"
   },
   "profileReport": {
     "primaryFocusLabel": "首要重點",
@@ -522,7 +568,23 @@
       "transitions": { "label": "轉換與配合", "level": "中等", "focus": "關注：Q1、Q2" },
       "energy": { "label": "專注力與精力", "level": "較高", "focus": "關注：Q5-Q7" },
       "boundaries": { "label": "界線", "level": "輕微", "focus": "關注：Q8" }
-    },
+    ,
+      "attention": {
+        "label": "專注力與配合",
+        "focus": "關注：專注力與遵循指令"
+      },
+      "emotional": {
+        "label": "情緒平衡",
+        "focus": "關注：情緒崩潰與攻擊行為"
+      },
+      "routines": {
+        "label": "轉換與日常",
+        "focus": "關注：睡前、用餐與拖延"
+      },
+      "social": {
+        "label": "社交界限",
+        "focus": "關注：同伴與手足互動"
+      }},
     "journeyTitle": "個人化學習之旅",
     "journeySubtitle": "您在 Nora 的下一步",
     "phase1Badge": "第一階段",
@@ -540,6 +602,106 @@
       "followThrough": { "title": "貫徹執行", "focus": "關注：後果", "description": "讓{{childName}}知道你的指令始終如一、值得信賴。" }
     },
     "unlockMessage": "隨著進度推進，更多步驟將解鎖"
+  ,
+    "severity": {
+      "high": "較高",
+      "moderate": "中等",
+      "mild": "輕微"
+    },
+    "journeyLevelBadge": "第 {{level}} 級",
+    "journeyGoalLabel": "目標：",
+    "levels": {
+      "playBuilder": {
+        "title": "遊戲建立者",
+        "skill": "跟隨孩子的引導",
+        "goal": "建立一個安全、愉快的遊戲體驗。",
+        "learn": "讓孩子主導遊戲 • 減少命令 • 減少提問 • 避免批評"
+      },
+      "confidenceBuilder": {
+        "title": "自信建立者",
+        "skill": "具體的讚美",
+        "goal": "幫助孩子感到自己有能力。",
+        "learn": "貼標籤式讚美 • 讚美努力而非結果 • 透過積極關注建立自信"
+      },
+      "attentionBuilder": {
+        "title": "專注力建立者",
+        "skill": "描述行為",
+        "goal": "提升專注力與投入感。",
+        "learn": "描述孩子正在做的事 • 讓孩子保持投入 • 延長專注時長"
+      },
+      "communicationBuilder": {
+        "title": "溝通建立者",
+        "skill": "回應（複述）",
+        "goal": "幫助孩子感到被理解。",
+        "learn": "重複並延伸孩子說的話 • 鼓勵語言表達 • 展現積極傾聽"
+      },
+      "cooperationBuilder": {
+        "title": "配合建立者",
+        "skill": "清晰指令",
+        "goal": "提升日常配合度。",
+        "learn": "給出有效的指令 • 一次一個指令 • 重複前先等待"
+      },
+      "boundaryBuilder": {
+        "title": "界限建立者",
+        "skill": "平靜地貫徹執行",
+        "goal": "建立相互尊重的界限。",
+        "learn": "保持平靜 • 保持一致 • 貫徹執行界限 • 減少權力鬥爭"
+      },
+      "confidentParent": {
+        "title": "自信的家長",
+        "skill": "融會貫通",
+        "goal": "在合適的時機運用正確的育兒技巧。",
+        "learn": "跟隨孩子引導 • 讚美 • 描述行為 • 回應 • 清晰指令 • 平靜地貫徹執行"
+      }
+    }},
+  "getReadyToPlay": {
+    "title1": "準備好",
+    "title2": "開始遊戲了嗎？",
+    "subtitle": "開始之前，\n你需要知道的一切。",
+    "pillTitle": "只需 5 分鐘",
+    "pillSubtitle": "我們會一步步引導你。",
+    "sections": {
+      "toysToUse": {
+        "title": "該用什麼玩具",
+        "subtitle": "該選什麼，該避開什麼。",
+        "body": "### ✅ 推薦：開放式創意玩具\n*選擇能讓孩子自由搭建、創造和想象、沒有固定規則的玩具。*\n\n* **積木與建構類：** 樂高/得寶、美高積木、磁力片。\n![](placeholder:building-blocks)\n* **角色扮演與人偶：** 動作人偶、玩偶、玩具動物、過家家食物、汽車或火車。\n![](placeholder:pretend-play)\n* **創意材料：** 培樂多彩泥、塗色頁、貼紙、畫本。\n![](placeholder:creative-materials)\n\n💡 **為什麼有效：** 這些玩具能給你很多機會去描述孩子在做什麼、回應孩子說的話，並讚美孩子的創造力（**PEN** 技巧）。\n\n### ❌ 不推薦：特別時光要避開的玩具\n*避開會限制交流、容易引發衝突、或讓孩子失去主導權的物品。*\n\n* **有規則或需輪流的玩具：** 桌遊、卡牌遊戲或運動類玩具（這些容易引發競爭或需要大人主導）。\n* **容易弄亂或讓人受挫的活動：** 顏料、亮片、複雜拼圖，或需要大人組裝的玩具。\n* **螢幕與電子產品：** 平板電腦、電子遊戲、吵鬧的電池玩具，或看影片。\n* **帶攻擊性的玩具：** 玩具槍、劍，或打鬧類遊戲。"
+      },
+      "howToStart": {
+        "title": "如何開始",
+        "subtitle": "清出一片區域，選好玩具，然後按下錄音。",
+        "body": "### 1. 清出一片安靜的區域\n找一個沒有干擾的地方（沒有電視、螢幕或兄弟姐妹），讓你們倆都感到舒適（比如地毯或桌子旁）。\n\n### 2. 選 2-3 件玩具\n保持簡單。提前選好幾件玩具（比如積木或創意用品），放在這片區域裡。\n\n### 3. 開場話術\n可以用這個簡單的開場白：\n\n*\"我們的特別時光到了！接下來的 5 分鐘，你來決定我們玩什麼。從這些裡面挑一個吧。\"*\n\n### 4. 開始錄音\n記得在 Nora App 裡點選**開始錄音**。你可以鎖屏，把手機放在附近——它會在 5 分鐘後自動停止。"
+      },
+      "howToEnd": {
+        "title": "如何結束",
+        "subtitle": "不引發抗拒地收尾。",
+        "body": "5 分鐘計時結束後，Nora 會自動停止錄音並開始分析這次的遊戲時光。\n\n### ⏳ 第一步：提前預告\n如果孩子不容易接受結束，提前給他們一點準備時間：\n\n* 說：**\"再過兩分鐘，特別時光就要結束啦。\"**\n* 然後：**\"還剩最後一分鐘。\"**\n\n### 📢 第二步：使用結束語\n即使你打算繼續玩，正式宣佈結束能幫你從高強度的指導狀態中放鬆下來。\n\n*\"特別時光結束啦。我想告訴你，我很喜歡你剛才[插入具體的讚美]的樣子。\"*\n\n### 🎯 第三步：選擇接下來做什麼\n* **選項 A：繼續玩** —— 放鬆下來，純粹為了好玩而玩——不用再想指導或 PRIDE 技巧！\n* **選項 B：進入下一個活動** —— 一起收拾玩具，去吃飯，或開始睡前流程。\n\n### 第四步：如果孩子不想停下來怎麼辦？\n孩子抗拒往往是因為他們很享受你全心的陪伴、不想面對接下來的事情（比如睡覺），或者不確定下次特別時光是什麼時候。\n\n**快速解決辦法：**\n\n* **使用視覺化計時器：** 視覺化的時鐘能讓孩子看到時間在流逝，這樣結束就不會太突然。\n* **把預告和下一步結合起來：** \"還剩 1 分鐘！之後你可以自己繼續玩，也可以來幫我準備晚飯。\"\n* **保持每日固定流程：** 每天在同一時間進行，能建立可預期性。\n* **共同應對情緒崩潰：** 如果孩子哭了，給他一個擁抱，認可他的感受，一起做深呼吸。\n* **讚美獨立玩耍：** 當孩子過渡到獨立玩耍時，給予讚美。"
+      },
+      "howToPlay": {
+        "title": "如何玩",
+        "subtitle": "儘管玩就好——不必追求完美。",
+        "body": "像平時一樣玩就好。\n\n不完美也沒關係。\n\n你的第一次練習不是為了拿高分。\n\n而是為了更瞭解你的家庭。"
+      },
+      "whatToExpect": {
+        "title": "會看到什麼",
+        "subtitle": "你的報告會告訴你什麼。",
+        "body": "每次 5 分鐘的練習結束後，Nora 都會幫你理解發生了什麼——以及接下來可以嘗試什麼。\n\n### 🎨 你家的互動風格\n從這第一次練習開始，Nora 就會學習你獨特的遊戲方式，為你後續的指導計劃做定製。\n\n### 🌟 做得好的地方\n看看哪些做得不錯，以及帶來積極影響的那些瞬間。\n\n### 🎯 可以提升的地方\n獲得關於關鍵技巧（比如遊戲方法）的溫和、有針對性的建議，作為下次練習的重點。"
+      },
+      "siblings": {
+        "title": "有多個孩子時",
+        "subtitle": "家裡不止一個孩子時該怎麼玩。",
+        "body": "**讓其他孩子先忙起來：** 給兄弟姐妹安排一個能吸引他們的事情（點心、教育類節目，或一個特別的\"等待\"玩具），結束後誇獎他們的耐心。\n\n**輪流上場：** 如果家裡有兩位家長/照顧者，可以連續進行兩輪：\n\n* **第一輪（5 分鐘）：** 家長 A 陪孩子 1 玩，家長 B 陪孩子 2 玩。\n* **第二輪（5 分鐘）：** 交換！家長 A 陪孩子 2 玩，家長 B 陪孩子 1 玩。\n\n**利用午睡時間：** 趁著小寶寶或幼兒午睡時，和大孩子安排特別時光，就不會被打斷。"
+      },
+      "findingTime": {
+        "title": "找出時間來玩",
+        "subtitle": "在忙碌的一天裡擠出 5 分鐘。",
+        "body": "堅持很重要，但靈活也能讓它更容易做到！以下是在忙碌的一天裡擠出 5 分鐘的方法：\n\n### 📅 選項一：固定一個每日時段\n固定的流程有助於堅持。選一個固定的每日時間段，能讓特別時光更容易變成習慣。\n\n### 🔀 選項二：設定 2-3 個靈活時段\n如果你的日程會變化，每天準備幾個備選時間。\n\n**💡 家長常用的時段**\n\n* **一早起床後：** 為孩子的\"情感存款\"充值，為一整天定下積極的基調。\n* **下班/放學後：** 幫你從工作模式切換過來，重新和孩子建立聯結。\n* **洗澡或睡前流程之前：** 讓孩子平靜下來，讓晚間的過渡更順暢。"
+      },
+      "dataPrivacy": {
+        "title": "資料隱私",
+        "subtitle": "你家的錄音，我們會好好保管。",
+        "body": "你家庭的私密時刻在 Nora 完全安全。\n\n* **5 分鐘或 10 分鐘音訊上限：** 計時結束後錄音會自動停止。\n* **僅用於指導：** 音訊只會被用來分析，為你提供建議。\n* **加密與安全：** 所有練習資料都經過加密並安全儲存。\n* **絕不出售：** 你的錄音和資料絕不會出售給第三方。\n* **完全掌控：** 你隨時可以在設定中刪除你的資料/賬戶。"
+      }
+    }
   },
   "lessonViewer": {
     "contentUpdatedTitle": "內容已更新",
@@ -759,7 +921,10 @@
       "4start": "準備好迎接更多樂趣了嗎？與 ",
       "4end": " 捕捉另一個超讚的遊戲時光吧！"
     }
-  },
+  ,
+    "getReadyLabel": "遊戲指南",
+    "getReadyBody": "開始之前，你需要知道的一切。",
+    "getReadyButton": "為你的第一次遊戲做準備"},
   "lessonRead": {
     "title": "課程",
     "noContent": "該課程暫無文字版本。"
@@ -1045,19 +1210,46 @@
       "paragraph2Pre": "讓大多數家長感到驚訝的是，許多這些挑戰都可以透過",
       "paragraph2Highlight": "一個簡單的每日習慣得到改善。",
       "discoverButton": "探索  →"
-    },
+    ,
+      "youreInAlt": "你正在被",
+      "goodHandsAlt": "妥善照顧。",
+      "paragraph1AltPre": "Nora 由臨床兒童心理學家共同設計，能根據",
+      "paragraph1AltHighlight": "你孩子獨特的需求",
+      "paragraph1AltPost": "調整循證指導內容。",
+      "paragraph2AltPre": "無論你的孩子是否已獲得診斷，或者你只是想獲得",
+      "paragraph2AltHighlight": "更多支援，",
+      "paragraph3AltPre": "我們都會一起為你",
+      "paragraph3AltHighlight": "制定個性化計劃",
+      "paragraph3AltPost": "。"},
     "obLetterContent": {
       "hi": "嗨 ",
       "comma": "，",
       "thankYou": "感謝您選擇 Nora。我們很高興能同時支持您和",
       "period": "。",
       "continueButton": "繼續  →"
-    },
+    ,
+      "thankYouAlt": "感謝你選擇 Nora。",
+      "subtitleAltPre": "每個孩子的學習方式都不同，Nora 會根據",
+      "subtitleAltHighlight": "獨特的",
+      "subtitleAltPost": "優勢和需求來調整指導內容。"},
     "obIntro1": {
       "helping": "幫助",
       "startsHere": "從這裡開始",
       "continueButton": "繼續  →"
-    },
+    ,
+      "threeStepsPre": "只需 3 個簡單步驟，由 ",
+      "threeStepsHighlight1": "AI",
+      "threeStepsMid": "\n驅動，並有",
+      "threeStepsHighlight2": "兒童心理學作為依據。",
+      "card1TitleLine1": "錄製",
+      "card1TitleLine2": "5 分鐘",
+      "card1Body": "記錄真實的\n遊戲時光。",
+      "card2TitleLine1": "Nora",
+      "card2TitleLine2": "聆聽",
+      "card2Body": "我們的 AI 會聆聽\n你的遊戲錄音。",
+      "card3TitleLine1": "個性化",
+      "card3TitleLine2": "指導",
+      "card3Body": "獲得為你孩子\n量身定製的反饋和建議。"},
     "obIntro2": {
       "sentence1Pre": "許多有相似目標的家長",
       "sentence1Highlight": "都反饋有明顯改善，",
@@ -1065,7 +1257,16 @@
       "sentence1HighlightWeeks": "3 週就見效。",
       "sentence2": "很高興您能來到這裡。💜",
       "continueButton": "我準備好了  →"
-    },
+    ,
+      "altPara1Pre": "每個孩子都有",
+      "altPara1Highlight": "自己的成長節奏。",
+      "altPara2Pre": "許多家庭在最初幾周內\n就注意到了",
+      "altPara2Highlight": "有意義的變化",
+      "altPara2Post": "。",
+      "altPara3Pre": "我們會陪你一起",
+      "altPara3Highlight": "慶祝每一步",
+      "altPara3Post": "的進步。💜",
+      "bubbleText": "我們可以做到。"},
     "reminderTime": {
       "title": "嗨 {{name}}，您想在什麼時候進行這 5 分鐘？",
       "description": "許多家長發現「放學後重聚」「晚餐前遊戲」或「週末早晨」最合適。",
@@ -1279,7 +1480,109 @@
       "subtitle": "您的數據始終受到保護，未經您的許可絕不分享。"
     },
     "next": "下一步  →"
-  },
+  ,
+    "diagnosisStatus": {
+      "title": "{{childName}}是否已獲得診斷？",
+      "yes": "是的",
+      "assessmentInProgress": "評估正在進行中",
+      "concernsNoDiagnosis": "還沒有，但我有些擔憂",
+      "preferNotToSay": "我不想說"
+    },
+    "ob1": {
+      "heading": "為人父母不容易",
+      "subtitlePre": "但你不必",
+      "subtitleHighlight": "獨自面對。",
+      "iconSpeechTherapy": "語言治療",
+      "iconPlayTherapy": "遊戲治療",
+      "iconAuthoritativeParenting": "權威型教養",
+      "iconChildDevelopment": "兒童發展",
+      "iconAttachmentScience": "依戀科學",
+      "iconSocialLearningScience": "社會學習科學",
+      "iconBehaviorManagement": "行為管理",
+      "meetPre": "認識一下",
+      "meetHighlight": "Nora",
+      "paragraphPre": "你的育兒嚮導，幫你養出",
+      "paragraphHighlight": "自信、快樂",
+      "paragraphPost": "的孩子。\n有科學依據支援\n為你的孩子量身定製（1-7 歲）。"
+    },
+    "ob2": {
+      "profName": "Yi-Chuen Chen 博士",
+      "profTitle1": "臨床兒童心理學家。",
+      "profTitle2": "Nora 臨床指導",
+      "headingPre": "Nora 會幫你成為\n",
+      "headingHighlight": "育兒專家",
+      "headingPost": "\n孩子所需要的那種。"
+    },
+    "ob3": {
+      "titlePre": "你的資料",
+      "titleHighlight": "嚴格保密",
+      "paragraphPre": "我們遵循嚴格的資料保護\n標準，",
+      "paragraphHighlight": "絕不出售",
+      "paragraphPost": "你的資訊"
+    },
+    "obDiscipline": {
+      "headingLine1": "平靜的",
+      "headingLine2": "教養方式",
+      "subtitle": "好的教養不只是玩耍。",
+      "subtitleHighlight": "孩子兩者都需要。",
+      "card1Title": "聯結",
+      "card1Body": "建立深厚的\n情感紐帶",
+      "card2Title": "平靜的界限",
+      "card2Body": "以清晰和一致\n來引導孩子"
+    },
+    "obDisciplineAlt": {
+      "headingLine1": "平靜的",
+      "headingLine2": "教養方式",
+      "subtitle": "平靜、可預期的支援，\n能讓孩子更好地成長。",
+      "paragraphPre": "學習一些簡單的方法，幫助孩子理解期待、建立信心——",
+      "paragraphHighlight": "一步一步來。",
+      "card1Title": "先建立聯結",
+      "card1Body": "讓孩子感到安全、\n被看見、被理解。",
+      "card2Title": "清晰的引導",
+      "card2Body": "用簡單、平靜的指令，\n讓孩子能夠遵循。",
+      "card3Title": "一致的界限",
+      "card3Body": "平靜地貫徹執行，能\n建立信任與配合。"
+    },
+    "obLetter": {
+      "tapToOpen": "點選開啟"
+    },
+    "obPlay1": {
+      "heading": "遊戲",
+      "subtitle1Pre": "兒童心理學中\n",
+      "subtitle1Highlight": "最強大的工具之一。",
+      "subtitle2Line1": "對小小孩來說，",
+      "subtitle2Line2": "遊戲是他們",
+      "subtitle2Highlight": "聯結、學習和成長的方式。",
+      "tipLabel": "秘訣是？",
+      "tipLine1": "重要的不是玩什麼。",
+      "tipLine2Pre": "而是",
+      "tipLine2Highlight": "怎麼",
+      "tipLine2Post": "玩。"
+    },
+    "obPlay2": {
+      "headingLine1": "如何",
+      "headingLine2": "玩",
+      "subtitlePre": "兒童心理學家使用\n",
+      "subtitleHighlight": "簡單的互動技巧",
+      "subtitlePost": "\n幫助孩子感受到：",
+      "iconSeen": "被看見",
+      "iconUnderstood": "被理解",
+      "iconConfident": "有自信",
+      "tipPre": "",
+      "tipHighlight": "家長",
+      "tipPost": "也能學會這些技巧。"
+    },
+    "professionalSupport": {
+      "title": "{{childName}}目前是否正在接受專業支援？",
+      "occupationalTherapy": "職能治療",
+      "speechTherapy": "語言治療",
+      "earlyIntervention": "早期干預",
+      "abaBehavioralTherapy": "ABA / 行為治療",
+      "schoolSupport": "學校支援",
+      "other": "其他",
+      "none": "沒有",
+      "preferNotToSay": "我不想說"
+    }},
   "quizFeedback": {
     "correct": "正確！",
     "notQuite": "不完全正確！"
