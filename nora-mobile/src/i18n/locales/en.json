@@ -595,14 +595,24 @@
     "journeyLevelBadge": "LEVEL {{level}}",
     "journeyGoalLabel": "Goal: ",
     "levels": {
-      "playBuilder": { "title": "Play Builder", "skill": "Follow Your Child's Lead", "goal": "Build a safe and enjoyable play experience.", "learn": "Let the child lead the play • Reduce commands • Reduce questions • Avoid criticism" },
-      "confidenceBuilder": { "title": "Confidence Builder", "skill": "Specific Praise", "goal": "Help your child feel capable.", "learn": "Labeled praise • Praise effort instead of outcome • Build confidence through positive attention" },
-      "attentionBuilder": { "title": "Attention Builder", "skill": "Narration", "goal": "Increase focus and engagement.", "learn": "Describe what the child is doing • Keep the child engaged • Extend attention span" },
-      "communicationBuilder": { "title": "Communication Builder", "skill": "Reflection (Echo)", "goal": "Help your child feel understood.", "learn": "Repeat and expand what the child says • Encourage language • Show active listening" },
-      "cooperationBuilder": { "title": "Cooperation Builder", "skill": "Clear Instructions", "goal": "Increase everyday cooperation.", "learn": "Give effective commands • One instruction at a time • Wait before repeating" },
-      "boundaryBuilder": { "title": "Boundary Builder", "skill": "Calm Follow-Through", "goal": "Build respectful boundaries.", "learn": "Stay calm • Be consistent • Follow through on limits • Reduce power struggles" },
-      "confidentParent": { "title": "Confident Parent", "skill": "Putting It All Together", "goal": "Use the right parenting skill at the right moment.", "learn": "Follow Child's Lead • Praise • Narration • Reflection • Clear Instructions • Calm Follow-Through" }
-    }},
+      "playBuilder": { "title": "Play Builder", "skill": "Follow Your Child's Lead", "goal": "Build a safe and enjoyable play experience.", "learn": "Let the child lead the play • Reduce commands • Reduce questions • Avoid criticism", "clearGoal": "Keep commands, questions, and criticism to 6 or fewer combined in a single session." },
+      "confidenceBuilder": { "title": "Confidence Builder", "skill": "Specific Praise", "goal": "Help your child feel capable.", "learn": "Labeled praise • Praise effort instead of outcome • Build confidence through positive attention", "clearGoal": "Give 5 or more labeled praises in a single session." },
+      "attentionBuilder": { "title": "Attention Builder", "skill": "Narration", "goal": "Increase focus and engagement.", "learn": "Describe what the child is doing • Keep the child engaged • Extend attention span", "clearGoal": "Narrate what your child is doing 5 or more times in a single session." },
+      "communicationBuilder": { "title": "Communication Builder", "skill": "Reflection (Echo)", "goal": "Help your child feel understood.", "learn": "Repeat and expand what the child says • Encourage language • Show active listening", "clearGoal": "Echo what your child says 5 or more times in a single." },
+      "cooperationBuilder": { "title": "Cooperation Builder", "skill": "Clear Instructions", "goal": "Increase everyday cooperation.", "learn": "Give effective commands • One instruction at a time • Wait before repeating", "clearGoal": "Give at least 1 clear command in a Discipline session, for 2 qualifying sessions." },
+      "boundaryBuilder": { "title": "Boundary Builder", "skill": "Calm Follow-Through", "goal": "Build respectful boundaries.", "learn": "Stay calm • Be consistent • Follow through on limits • Reduce power struggles", "clearGoal": "Give a clear command with zero criticism in a Discipline session, for 2 qualifying sessions." },
+      "confidentParent": { "title": "Confident Parent", "skill": "Putting It All Together", "goal": "Use the right parenting skill at the right moment.", "learn": "Follow Child's Lead • Praise • Narration • Reflection • Clear Instructions • Calm Follow-Through", "clearGoal": "Bring every skill together with zero criticism, for 2 qualifying sessions." }
+    }
+  },
+  "parentLevelDetail": {
+    "title": "Your Parenting Journey",
+    "subtitle": "Explore every level of your parenting skill path, from Play Builder to Confident Parent.",
+    "currentBadge": "Current Level",
+    "doneBadge": "Completed",
+    "lockedBadge": "Reach the level before this one to unlock",
+    "learnLabel": "What You'll Learn",
+    "clearGoalLabel": "Level Clear Goal"
+  },
   "lessonViewer": {
     "contentUpdatedTitle": "Content Updated",
     "contentUpdatedMessage": "This lesson has been updated. Please select it again to view the latest version.",

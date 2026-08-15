@@ -329,6 +329,14 @@ export const ReportScreen_v2: React.FC = () => {
               {t('reportV2.levelFooterSessions', { count: level5QualifyingCount, nextLevel: parentLevel + 1 })}
             </Text>
           )}
+
+          <View style={styles.levelClearGoalBox}>
+            <View style={styles.levelClearGoalHeaderRow}>
+              <Ionicons name="flag" size={14} color="#B45309" />
+              <Text style={styles.levelClearGoalLabel}>{t('parentLevelDetail.clearGoalLabel')}</Text>
+            </View>
+            <Text style={styles.levelClearGoalText}>{t(`profileReport.levels.${PARENT_SKILL_LEVEL_KEYS[parentLevel]}.clearGoal`)}</Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.continueButton} onPress={handleContinueToCoaching} activeOpacity={0.85}>
@@ -674,6 +682,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     marginTop: 12,
+  },
+  levelClearGoalBox: {
+    marginTop: 14,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 14,
+    padding: 12,
+  },
+  levelClearGoalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  levelClearGoalLabel: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    color: '#B45309',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  levelClearGoalText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: '#92400E',
+    lineHeight: 18,
   },
 
   // ── CTA ──

@@ -19,15 +19,15 @@ import amplitudeService from '../services/amplitudeService';
 type ParentLevelDetailRouteProp = RouteProp<RootStackParamList, 'ParentLevelDetail'>;
 
 // Same 7-level ladder shown in ReportScreen_v2 and ProfileReportScreen's
-// Personalized Learning Journey — icon per level is display-only metadata.
-const PARENT_SKILL_LEVELS: Array<{ level: ParentSkillLevel; key: string; icon: string }> = [
-  { level: 1, key: 'playBuilder', icon: 'happy-outline' },
-  { level: 2, key: 'confidenceBuilder', icon: 'star-outline' },
-  { level: 3, key: 'attentionBuilder', icon: 'locate-outline' },
-  { level: 4, key: 'communicationBuilder', icon: 'chatbubble-outline' },
-  { level: 5, key: 'cooperationBuilder', icon: 'flag-outline' },
-  { level: 6, key: 'boundaryBuilder', icon: 'shield-checkmark-outline' },
-  { level: 7, key: 'confidentParent', icon: 'trophy-outline' },
+// Personalized Learning Journey.
+const PARENT_SKILL_LEVELS: Array<{ level: ParentSkillLevel; key: string }> = [
+  { level: 1, key: 'playBuilder' },
+  { level: 2, key: 'confidenceBuilder' },
+  { level: 3, key: 'attentionBuilder' },
+  { level: 4, key: 'communicationBuilder' },
+  { level: 5, key: 'cooperationBuilder' },
+  { level: 6, key: 'boundaryBuilder' },
+  { level: 7, key: 'confidentParent' },
 ];
 
 export const ParentLevelDetailScreen: React.FC = () => {
@@ -88,12 +88,6 @@ export const ParentLevelDetailScreen: React.FC = () => {
                     <Text style={styles.levelNumberText}>{step.level}</Text>
                   )}
                 </View>
-                <Ionicons
-                  name={step.icon as any}
-                  size={18}
-                  color={status === 'locked' ? '#9CA3AF' : COLORS.mainPurple}
-                  style={styles.levelHeaderIcon}
-                />
                 {status === 'active' && (
                   <View style={styles.currentBadge}>
                     <Text style={styles.currentBadgeText}>{t('parentLevelDetail.currentBadge')}</Text>
@@ -107,6 +101,9 @@ export const ParentLevelDetailScreen: React.FC = () => {
               </View>
 
               <Text style={[styles.levelTitle, status === 'locked' && styles.levelTitleLocked]}>
+                {t('profileReport.journeyLevelBadge', { level: step.level })}
+              </Text>
+              <Text style={[styles.levelName, status === 'locked' && styles.levelTextLocked]}>
                 {t(`profileReport.levels.${step.key}.title`)}
               </Text>
               <Text style={[styles.levelSkill, status === 'locked' && styles.levelTextLocked]}>
@@ -127,6 +124,16 @@ export const ParentLevelDetailScreen: React.FC = () => {
                       <Text style={styles.learnItemText}>{item}</Text>
                     </View>
                   ))}
+                </View>
+              )}
+
+              {status === 'active' && (
+                <View style={styles.clearGoalBox}>
+                  <View style={styles.clearGoalHeaderRow}>
+                    <Ionicons name="flag" size={14} color="#B45309" />
+                    <Text style={styles.clearGoalLabel}>{t('parentLevelDetail.clearGoalLabel')}</Text>
+                  </View>
+                  <Text style={styles.clearGoalText}>{t(`profileReport.levels.${step.key}.clearGoal`)}</Text>
                 </View>
               )}
 
@@ -221,9 +228,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#FFFFFF',
   },
-  levelHeaderIcon: {
-    marginRight: 2,
-  },
   currentBadge: {
     marginLeft: 'auto',
     backgroundColor: COLORS.mainPurple,
@@ -252,12 +256,18 @@ const styles = StyleSheet.create({
   },
   levelTitle: {
     fontFamily: FONTS.bold,
-    fontSize: 17,
+    fontSize: 19,
     color: COLORS.textDark,
     marginBottom: 2,
   },
   levelTitleLocked: {
     color: '#9CA3AF',
+  },
+  levelName: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.textDark,
+    marginBottom: 4,
   },
   levelSkill: {
     fontFamily: FONTS.semiBold,
@@ -316,5 +326,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
     marginTop: 10,
+  },
+
+  clearGoalBox: {
+    marginTop: 12,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 14,
+    padding: 12,
+  },
+  clearGoalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  clearGoalLabel: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    color: '#B45309',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  clearGoalText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: '#92400E',
+    lineHeight: 18,
   },
 });
