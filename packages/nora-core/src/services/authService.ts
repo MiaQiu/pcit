@@ -469,6 +469,8 @@ class AuthService {
     childBirthday?: Date;
     issue?: string | string[];
     parentGoal?: string | string[];
+    diagnosisStatus?: string;
+    professionalSupport?: string | string[];
   }): Promise<User> {
     const response = await this.authenticatedRequest(
       `${this.apiUrl}/api/auth/complete-onboarding`,

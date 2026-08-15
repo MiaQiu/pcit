@@ -19,6 +19,8 @@ export interface OnboardingData {
   childBirthday: Date | null;
   issue: string | string[];
   parentGoal: string | string[];
+  diagnosisStatus: string;
+  professionalSupport: string | string[];
 
   // WACB Survey data
   wacb?: {
@@ -64,6 +66,8 @@ const defaultOnboardingData: OnboardingData = {
   childBirthday: null,
   issue: '',
   parentGoal: '',
+  diagnosisStatus: '',
+  professionalSupport: '',
   reminderTime: '19:30',
   hasCompletedOnboarding: false,
 };

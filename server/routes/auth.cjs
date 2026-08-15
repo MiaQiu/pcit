@@ -621,10 +621,10 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
 // Update user profile with onboarding data
 router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAuth, async (req, res) => {
   try {
-    const { name, relationshipToChild, childName, childGender, childBirthday, issue, parentGoal } = req.body;
+    const { name, relationshipToChild, childName, childGender, childBirthday, issue, parentGoal, diagnosisStatus, professionalSupport } = req.body;
 
     // Validate at least one field is provided
-    if (!name && !relationshipToChild && !childName && !childGender && !childBirthday && !issue && !parentGoal) {
+    if (!name && !relationshipToChild && !childName && !childGender && !childBirthday && !issue && !parentGoal && !diagnosisStatus && !professionalSupport) {
       return res.status(400).json({ error: 'At least one field required' });
     }
 
@@ -699,6 +699,30 @@ router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAu
       }
     }
 
+    if (diagnosisStatus) {
+      // Single-select value (ADHD/developmental-concern branch, DiagnosisStatus screen)
+      if (typeof diagnosisStatus !== 'string' || diagnosisStatus.trim() === '') {
+        return res.status(400).json({ error: 'diagnosisStatus value must be a non-empty string' });
+      }
+      updateData.diagnosisStatus = diagnosisStatus;
+    }
+
+    if (professionalSupport) {
+      // Handle both string and array of supports (same shape as issue above)
+      if (Array.isArray(professionalSupport)) {
+        const invalidSupports = professionalSupport.filter(s => typeof s !== 'string' || s.trim() === '');
+        if (invalidSupports.length > 0) {
+          return res.status(400).json({ error: 'All professionalSupport values must be non-empty strings' });
+        }
+        updateData.professionalSupport = JSON.stringify(professionalSupport);
+      } else {
+        if (typeof professionalSupport !== 'string' || professionalSupport.trim() === '') {
+          return res.status(400).json({ error: 'professionalSupport value must be a non-empty string' });
+        }
+        updateData.professionalSupport = professionalSupport;
+      }
+    }
+
     // Update user
     const user = await prisma.user.update({
       where: { id: req.userId },
@@ -715,6 +739,8 @@ router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAu
         childConditions: true,
         issue: true,
         parentGoal: true,
+        diagnosisStatus: true,
+        professionalSupport: true,
         therapistId: true,
         createdAt: true
       }

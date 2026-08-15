@@ -50,7 +50,16 @@ export const NameInputScreen: React.FC = () => {
       <View style={styles.spacer} />
 
       <OnboardingButtonRow
-        onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('OB3')}
+        onBack={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.reset({
+              index: 2,
+              routes: [{ name: 'OB1V2' }, { name: 'OB2V2' }, { name: 'OB3V2' }],
+            });
+          }
+        }}
         onContinue={handleContinue}
         continueDisabled={!isValid}
       />

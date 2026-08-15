@@ -1,6 +1,9 @@
 /**
  * Parent Goal Intro Screen
- * Shown after ParentGoal, before ChildSnapshotIntro.
+ * Shown after ParentGoal (or ProfessionalSupport on the ADHD/developmental-
+ * concern branch), before OBLetter.
+ * TEMP: navigates to OBLetterV2 (not OBLetter) to preview the v2 onboarding
+ * chain end-to-end. Revert to 'OBLetter' once the v2 review is done.
  */
 
 import React, { useEffect } from 'react';
@@ -15,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { hasAdhdOrDevelopmentalConcern } from '../../utils/onboardingBranch';
 import amplitudeService from '../../services/amplitudeService';
 
 export const ParentGoalIntroScreen: React.FC = () => {
@@ -22,27 +26,60 @@ export const ParentGoalIntroScreen: React.FC = () => {
   const { data } = useOnboarding();
   const { t } = useTranslation();
   const userName = data.name || 'there';
+  const isAltBranch = hasAdhdOrDevelopmentalConcern(data.issue);
 
   useEffect(() => { amplitudeService.trackOnboardingScreen('parent_goal_intro', 19); }, []);
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>
-          {t('onboarding.parentGoalIntro.hi')}
-          <Text style={styles.highlight}>{userName}</Text>
-          {t('onboarding.parentGoalIntro.comma')}
-          {'\n'}
-          {t('onboarding.parentGoalIntro.youreInThe')}
-          <Text style={styles.highlight}>{t('onboarding.parentGoalIntro.rightPlace')}</Text>
-        </Text>
+        {isAltBranch ? (
+          <>
+            <Text style={styles.title}>
+              {t('onboarding.parentGoalIntro.hi')}
+              <Text style={styles.highlight}>{userName}</Text>
+              {t('onboarding.parentGoalIntro.comma')}
+              {'\n'}
+              {t('onboarding.parentGoalIntro.youreInAlt')}
+              <Text style={styles.highlight}>{t('onboarding.parentGoalIntro.goodHandsAlt')}</Text>
+            </Text>
 
-        <Text style={styles.paragraph}>{t('onboarding.parentGoalIntro.paragraph1')}</Text>
+            <Text style={styles.paragraph}>
+              {t('onboarding.parentGoalIntro.paragraph1AltPre')}
+              <Text style={styles.highlightRegular}>{t('onboarding.parentGoalIntro.paragraph1AltHighlight')}</Text>
+              {t('onboarding.parentGoalIntro.paragraph1AltPost')}
+            </Text>
 
-        <Text style={styles.paragraph}>
-          {t('onboarding.parentGoalIntro.paragraph2Pre')}
-          <Text style={styles.highlightRegular}>{t('onboarding.parentGoalIntro.paragraph2Highlight')}</Text>
-        </Text>
+            <Text style={styles.paragraph}>
+              {t('onboarding.parentGoalIntro.paragraph2AltPre')}
+              <Text style={styles.highlightRegular}>{t('onboarding.parentGoalIntro.paragraph2AltHighlight')}</Text>
+            </Text>
+
+            <Text style={styles.paragraph}>
+              {t('onboarding.parentGoalIntro.paragraph3AltPre')}
+              <Text style={styles.highlightRegular}>{t('onboarding.parentGoalIntro.paragraph3AltHighlight')}</Text>
+              {t('onboarding.parentGoalIntro.paragraph3AltPost')}
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.title}>
+              {t('onboarding.parentGoalIntro.hi')}
+              <Text style={styles.highlight}>{userName}</Text>
+              {t('onboarding.parentGoalIntro.comma')}
+              {'\n'}
+              {t('onboarding.parentGoalIntro.youreInThe')}
+              <Text style={styles.highlight}>{t('onboarding.parentGoalIntro.rightPlace')}</Text>
+            </Text>
+
+            <Text style={styles.paragraph}>{t('onboarding.parentGoalIntro.paragraph1')}</Text>
+
+            <Text style={styles.paragraph}>
+              {t('onboarding.parentGoalIntro.paragraph2Pre')}
+              <Text style={styles.highlightRegular}>{t('onboarding.parentGoalIntro.paragraph2Highlight')}</Text>
+            </Text>
+          </>
+        )}
       </View>
 
       <View style={[styles.footer, { paddingBottom: useSafeAreaInsets().bottom + 12 }]}>
@@ -50,7 +87,7 @@ export const ParentGoalIntroScreen: React.FC = () => {
           style={styles.button}
           onPress={() => {
             amplitudeService.trackOnboardingStepCompleted('parent_goal_intro', 19);
-            navigation.navigate('OBLetter');
+            navigation.navigate('OBLetterV2');
           }}
           activeOpacity={0.85}
         >
@@ -83,9 +120,9 @@ const styles = StyleSheet.create({
   },
   paragraph: {
     fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 16,
+    fontSize: 20,
     color: '#1F2937',
-    lineHeight: 24,
+    lineHeight: 28,
     marginBottom: 16,
   },
   highlightRegular: {

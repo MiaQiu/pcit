@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { hasAdhdOrDevelopmentalConcern } from '../../utils/onboardingBranch';
 import amplitudeService from '../../services/amplitudeService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -29,21 +30,43 @@ const IMAGE_HEIGHT = IMAGE_WIDTH / IMAGE_ASPECT_RATIO;
 
 export const OBIntro2Screen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
-  const { completeOnboarding } = useOnboarding();
+  const { data, completeOnboarding } = useOnboarding();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const isAltBranch = hasAdhdOrDevelopmentalConcern(data.issue);
 
   useEffect(() => { amplitudeService.trackOnboardingScreen('ob_intro2', 27); }, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Text style={styles.title}>
-        {t('onboarding.obIntro2.sentence1Pre')}
-        <Text style={styles.highlight}>{t('onboarding.obIntro2.sentence1Highlight')}</Text>
-        {t('onboarding.obIntro2.sentence1Mid')}
-        <Text style={styles.highlight}>{t('onboarding.obIntro2.sentence1HighlightWeeks')}</Text>
-      </Text>
-      <Text style={styles.subtitle}>{t('onboarding.obIntro2.sentence2')}</Text>
+      {isAltBranch ? (
+        <>
+          <Text style={styles.title}>
+            {t('onboarding.obIntro2.altPara1Pre')}
+            <Text style={styles.highlight}>{t('onboarding.obIntro2.altPara1Highlight')}</Text>
+          </Text>
+          <Text style={styles.titleAlt}>
+            {t('onboarding.obIntro2.altPara2Pre')}
+            <Text style={styles.highlight}>{t('onboarding.obIntro2.altPara2Highlight')}</Text>
+            {t('onboarding.obIntro2.altPara2Post')}
+          </Text>
+          <Text style={styles.titleAlt}>
+            {t('onboarding.obIntro2.altPara3Pre')}
+            <Text style={styles.highlight}>{t('onboarding.obIntro2.altPara3Highlight')}</Text>
+            {t('onboarding.obIntro2.altPara3Post')}
+          </Text>
+        </>
+      ) : (
+        <>
+          <Text style={styles.title}>
+            {t('onboarding.obIntro2.sentence1Pre')}
+            <Text style={styles.highlight}>{t('onboarding.obIntro2.sentence1Highlight')}</Text>
+            {t('onboarding.obIntro2.sentence1Mid')}
+            <Text style={styles.highlight}>{t('onboarding.obIntro2.sentence1HighlightWeeks')}</Text>
+          </Text>
+          <Text style={styles.subtitle}>{t('onboarding.obIntro2.sentence2')}</Text>
+        </>
+      )}
 
       <View style={styles.imageWrapper}>
         <Image
@@ -82,6 +105,14 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     paddingHorizontal: 50,
     paddingTop: 120,
+  },
+  titleAlt: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 20,
+    color: '#1F2937',
+    lineHeight: 28,
+    paddingHorizontal: 50,
+    marginTop: 16,
   },
   highlight: {
     color: '#8C49D5',

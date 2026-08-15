@@ -27,6 +27,11 @@ export type OnboardingStackParamList = {
   OB1: undefined;
   OB2: undefined;
   OB3: undefined;
+  // _v2 variants: background image (kept as-is for now) + real text overlay,
+  // for previewing before the background art gets its text-free treatment.
+  OB1V2: undefined;
+  OB2V2: undefined;
+  OB3V2: undefined;
   ParentingIntro: undefined;
   NameInput: undefined;
   Relationship: undefined;
@@ -34,16 +39,24 @@ export type OnboardingStackParamList = {
   ChildGender: undefined;
   ChildBirthday: undefined;
   ChildIssue: undefined;
+  DiagnosisStatus: undefined;
+  ProfessionalSupport: undefined;
   ParentGoal: undefined;
   ParentGoalIntro: undefined;
   OBLetter: undefined;
+  OBLetterV2: undefined;
   OBLetterContent: undefined;
   OBPlay1: undefined;
   OBPlay2: undefined;
+  OBPlay1V2: undefined;
+  OBPlay2V2: undefined;
   OBDiscipline: undefined;
+  OBDisciplineV2: undefined;
   OBIntro1: undefined;
+  OBIntro1V2: undefined;
   ReminderTime: undefined;
   OBIntro2: undefined;
+  OBIntro2V2: undefined;
   ChildSnapshotIntro: undefined;
   WacbQuestion1: undefined;
   WacbQuestion2: undefined;

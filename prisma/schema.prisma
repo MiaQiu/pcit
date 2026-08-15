@@ -434,6 +434,8 @@ model User {
   childBirthday             DateTime?
   issue                     String?
   parentGoal                String?
+  diagnosisStatus           String?
+  professionalSupport       String?
   profileImageUrl           String?
   subscriptionEndDate       DateTime?
   subscriptionPlan          SubscriptionPlan            @default(FREE)

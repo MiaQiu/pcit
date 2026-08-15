@@ -1,6 +1,8 @@
 /**
  * OB Letter Content Screen
  * Shown after OBLetter (the "tap to open" envelope), before ChildSnapshotIntro.
+ * TEMP: navigates to OBPlay1V2 (not OBPlay1) to preview the v2 onboarding
+ * chain end-to-end. Revert to 'OBPlay1' once the v2 review is done.
  */
 
 import React, { useEffect } from 'react';
@@ -16,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { hasAdhdOrDevelopmentalConcern } from '../../utils/onboardingBranch';
 import amplitudeService from '../../services/amplitudeService';
 
 export const OBLetterContentScreen: React.FC = () => {
@@ -24,21 +27,42 @@ export const OBLetterContentScreen: React.FC = () => {
   const { t } = useTranslation();
   const userName = data.name || 'there';
   const childName = data.childName || 'your child';
+  const isAltBranch = hasAdhdOrDevelopmentalConcern(data.issue);
 
   useEffect(() => { amplitudeService.trackOnboardingScreen('ob_letter_content', 21); }, []);
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>
-          {t('onboarding.obLetterContent.hi')}
-          <Text style={styles.highlight}>{userName}</Text>
-          {t('onboarding.obLetterContent.comma')}
-          {'\n'}
-          {t('onboarding.obLetterContent.thankYou')}
-          <Text style={styles.highlight}>{childName}</Text>
-          {t('onboarding.obLetterContent.period')}
-        </Text>
+        {isAltBranch ? (
+          <>
+            <Text style={styles.title}>
+              {t('onboarding.obLetterContent.hi')}
+              <Text style={styles.highlight}>{userName}</Text>
+              {t('onboarding.obLetterContent.comma')}
+              {'\n'}
+              {t('onboarding.obLetterContent.thankYouAlt')}
+            </Text>
+            <Text style={styles.subtitle}>
+              {t('onboarding.obLetterContent.subtitleAltPre')}
+              <Text style={styles.highlightRegular}>
+                {childName}
+                {t('onboarding.obLetterContent.subtitleAltHighlight')}
+              </Text>
+              {t('onboarding.obLetterContent.subtitleAltPost')}
+            </Text>
+          </>
+        ) : (
+          <Text style={styles.title}>
+            {t('onboarding.obLetterContent.hi')}
+            <Text style={styles.highlight}>{userName}</Text>
+            {t('onboarding.obLetterContent.comma')}
+            {'\n'}
+            {t('onboarding.obLetterContent.thankYou')}
+            <Text style={styles.highlight}>{childName}</Text>
+            {t('onboarding.obLetterContent.period')}
+          </Text>
+        )}
 
         <Image
           source={require('../../../assets/images/new onboarding/heart.png')}
@@ -52,7 +76,7 @@ export const OBLetterContentScreen: React.FC = () => {
           style={styles.button}
           onPress={() => {
             amplitudeService.trackOnboardingStepCompleted('ob_letter_content', 21);
-            navigation.navigate('OBPlay1');
+            navigation.navigate('OBPlay1V2');
           }}
           activeOpacity={0.85}
         >
@@ -81,6 +105,17 @@ const styles = StyleSheet.create({
     lineHeight: 32,
   },
   highlight: {
+    color: '#8C49D5',
+  },
+  subtitle: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 20,
+    color: '#6B7280',
+    lineHeight: 26,
+    marginTop: 8,
+  },
+  highlightRegular: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
     color: '#8C49D5',
   },
   heart: {

@@ -128,7 +128,7 @@ export const CreateAccountScreen: React.FC = () => {
       updateData({ email: email.toLowerCase().trim() });
 
       // Navigate to next step
-      navigation.navigate('OB1');
+      navigation.navigate('OB1V2');
     } catch (error: any) {
       console.error('Signup error:', error);
       const errorMessage = getErrorMessage(error, ErrorMessages.AUTH.SIGNUP_FAILED);

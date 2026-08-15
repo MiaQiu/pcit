@@ -35,10 +35,16 @@ export interface MultipleChoiceScreenProps {
   title: string;
   options: MultipleChoiceOption[];
   dataField: string; // e.g., "childGender", "wacb.q1Dawdle", "issue"
-  nextScreen: keyof import('../navigation/types').OnboardingStackParamList;
+  // Static screen name, or a resolver fn for branching off the selected value
+  nextScreen:
+    | keyof import('../navigation/types').OnboardingStackParamList
+    | ((selectedValue: any) => keyof import('../navigation/types').OnboardingStackParamList);
   multiSelect?: boolean;
   continueText?: string;
-  onBeforeNavigate?: (selectedValue: any, updateData: any, navigation: any) => Promise<void>;
+  // Return `false` to signal that onBeforeNavigate already handled navigation
+  // itself (e.g. navigating out to a screen outside this stack) — skips the
+  // default navigate() to `nextScreen` that would otherwise follow.
+  onBeforeNavigate?: (selectedValue: any, updateData: any, navigation: any) => Promise<void | boolean>;
   phase?: number;
   stepInPhase?: number;
   totalStepsInPhase?: number;
@@ -49,6 +55,7 @@ export interface MultipleChoiceScreenProps {
   otherOptionPlaceholder?: string; // Placeholder text for the "Others" input
   screenName?: string; // For amplitude tracking
   screenStep?: number; // Onboarding step number for amplitude funnel
+  headerOverride?: React.ReactNode; // Replaces the default OnboardingProgressHeader when provided
 }
 
 export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
@@ -70,6 +77,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   otherOptionPlaceholder = 'Please specify...',
   screenName,
   screenStep,
+  headerOverride,
 }) => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
@@ -169,7 +177,12 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
     if (onBeforeNavigate) {
       setIsLoading(true);
       try {
-        await onBeforeNavigate(valueToUse, updateData, navigation);
+        const result = await onBeforeNavigate(valueToUse, updateData, navigation);
+        if (result === false) {
+          // onBeforeNavigate already navigated itself — don't also navigate to nextScreen
+          setIsLoading(false);
+          return;
+        }
       } catch (error) {
         // If onBeforeNavigate throws, we don't navigate
         setIsLoading(false);
@@ -181,7 +194,8 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
     if (screenName && screenStep !== undefined) {
       amplitudeService.trackOnboardingStepCompleted(screenName, screenStep);
     }
-    navigation.navigate(nextScreen as any);
+    const resolvedNextScreen = typeof nextScreen === 'function' ? nextScreen(valueToUse) : nextScreen;
+    navigation.navigate(resolvedNextScreen as any);
   };
 
   const handleBack = () => {
@@ -215,7 +229,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
       >
         <View style={styles.content}>
           {/* Progress Header */}
-          <OnboardingProgressHeader phase={phase} step={stepInPhase} totalSteps={totalStepsInPhase} />
+          {headerOverride ?? <OnboardingProgressHeader phase={phase} step={stepInPhase} totalSteps={totalStepsInPhase} />}
 
           {/* Title */}
           <View style={styles.header}>

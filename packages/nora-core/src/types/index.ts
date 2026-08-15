@@ -28,6 +28,8 @@ export interface User {
   childConditions?: string;
   issue?: string | string[];
   parentGoal?: string | string[];
+  diagnosisStatus?: string;
+  professionalSupport?: string | string[];
   profileImageUrl?: string;
   relationshipToChild?: RelationshipToChild;
   therapistId?: string | null;

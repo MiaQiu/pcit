@@ -11,14 +11,23 @@ import { useOnboarding } from '../contexts/OnboardingContext';
 
 // Flow: Welcome → Start → (Login | CreateAccount) → OB1–3 →
 //   NameInput → Relationship → ChildName → ChildGender → ChildBirthday →
-//   ChildIssue → ParentGoal → ParentGoalIntro → OBLetter → OBLetterContent →
+//   ChildIssue → [branch] → ParentGoalIntro → OBLetter → OBLetterContent →
 //   OBPlay1 → OBPlay2 → OBDiscipline → OBIntro1 → ReminderTime → OBIntro2 →
 //   MainTabs (OBIntro2 completes onboarding directly)
+// Branch at ChildIssue: selecting ADHD Support or Developmental Concerns routes
+// through DiagnosisStatus → ProfessionalSupport instead of ParentGoal (see
+// ChildIssueScreen's nextScreen resolver / hasAdhdOrDevelopmentalConcern()).
+// Both paths rejoin at ParentGoalIntro.
 // Subscription is a standalone screen entered from RecordScreen / ProfileScreen.
 // Demo1–5/Demo1B/Demo2B/ParentingIntro/ChildSnapshotIntro/WacbQuestion1–9/
 // ChildBehaviorProfile/Intro3/PlaySession1–5/NotificationPermission remain
 // registered (unreachable from the linear flow) so deep links / old resume
 // state referencing them don't crash.
+// OB1V2/OB2V2/OB3V2/OBLetterV2/OBPlay1V2/OBPlay2V2/OBDisciplineV2 are preview
+// variants of the OBTemplate image screens: same (still text-baked-in)
+// background art with real text overlaid on top, ready to line up once a
+// text-free version of the art lands. Not wired into the linear flow yet —
+// preview one via RootNavigator's DEV_FORCE_ONBOARDING_SCREEN.
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { StartScreen } from '../screens/onboarding/StartScreen';
 import { LoginScreen } from '../screens/onboarding/LoginScreen';
@@ -28,6 +37,9 @@ import { CreateAccountScreen } from '../screens/onboarding/CreateAccountScreen';
 import { OB1Screen } from '../screens/onboarding/OB1Screen';
 import { OB2Screen } from '../screens/onboarding/OB2Screen';
 import { OB3Screen } from '../screens/onboarding/OB3Screen';
+import { OB1Screen_v2 } from '../screens/onboarding/OB1Screen_v2';
+import { OB2Screen_v2 } from '../screens/onboarding/OB2Screen_v2';
+import { OB3Screen_v2 } from '../screens/onboarding/OB3Screen_v2';
 import { Demo1Screen } from '../screens/onboarding/Demo1Screen';
 import { Demo1BScreen } from '../screens/onboarding/Demo1BScreen';
 import { Demo2Screen } from '../screens/onboarding/Demo2Screen';
@@ -42,16 +54,24 @@ import { ChildNameScreen } from '../screens/onboarding/ChildNameScreen';
 import { ChildGenderScreen } from '../screens/onboarding/ChildGenderScreen';
 import { ChildBirthdayScreen } from '../screens/onboarding/ChildBirthdayScreen';
 import { ChildIssueScreen } from '../screens/onboarding/ChildIssueScreen';
+import { DiagnosisStatusScreen } from '../screens/onboarding/DiagnosisStatusScreen';
+import { ProfessionalSupportScreen } from '../screens/onboarding/ProfessionalSupportScreen';
 import { ParentGoalScreen } from '../screens/onboarding/ParentGoalScreen';
 import { ParentGoalIntroScreen } from '../screens/onboarding/ParentGoalIntroScreen';
 import { OBLetterScreen } from '../screens/onboarding/OBLetterScreen';
+import { OBLetterScreen_v2 } from '../screens/onboarding/OBLetterScreen_v2';
 import { OBLetterContentScreen } from '../screens/onboarding/OBLetterContentScreen';
 import { OBPlay1Screen } from '../screens/onboarding/OBPlay1Screen';
 import { OBPlay2Screen } from '../screens/onboarding/OBPlay2Screen';
+import { OBPlay1Screen_v2 } from '../screens/onboarding/OBPlay1Screen_v2';
+import { OBPlay2Screen_v2 } from '../screens/onboarding/OBPlay2Screen_v2';
 import { OBDisciplineScreen } from '../screens/onboarding/OBDisciplineScreen';
+import { OBDisciplineScreen_v2 } from '../screens/onboarding/OBDisciplineScreen_v2';
 import { OBIntro1Screen } from '../screens/onboarding/OBIntro1Screen';
+import { OBIntro1Screen_v2 } from '../screens/onboarding/OBIntro1Screen_v2';
 import { ReminderTimeScreen } from '../screens/onboarding/ReminderTimeScreen';
 import { OBIntro2Screen } from '../screens/onboarding/OBIntro2Screen';
+import { OBIntro2Screen_v2 } from '../screens/onboarding/OBIntro2Screen_v2';
 import { ChildSnapshotIntroScreen } from '../screens/onboarding/ChildSnapshotIntroScreen';
 import { WacbQuestion1Screen } from '../screens/onboarding/WacbQuestion1Screen';
 import { WacbQuestion2Screen } from '../screens/onboarding/WacbQuestion2Screen';
@@ -130,6 +150,9 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="OB1" component={OB1Screen} />
       <Stack.Screen name="OB2" component={OB2Screen} />
       <Stack.Screen name="OB3" component={OB3Screen} />
+      <Stack.Screen name="OB1V2" component={OB1Screen_v2} />
+      <Stack.Screen name="OB2V2" component={OB2Screen_v2} />
+      <Stack.Screen name="OB3V2" component={OB3Screen_v2} />
       <Stack.Screen name="Demo1" component={Demo1Screen} />
       <Stack.Screen name="Demo1B" component={Demo1BScreen} />
       <Stack.Screen name="Demo2" component={Demo2Screen} />
@@ -144,16 +167,24 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="ChildGender" component={ChildGenderScreen} />
       <Stack.Screen name="ChildBirthday" component={ChildBirthdayScreen} />
       <Stack.Screen name="ChildIssue" component={ChildIssueScreen} />
+      <Stack.Screen name="DiagnosisStatus" component={DiagnosisStatusScreen} />
+      <Stack.Screen name="ProfessionalSupport" component={ProfessionalSupportScreen} />
       <Stack.Screen name="ParentGoal" component={ParentGoalScreen} />
       <Stack.Screen name="ParentGoalIntro" component={ParentGoalIntroScreen} />
       <Stack.Screen name="OBLetter" component={OBLetterScreen} />
+      <Stack.Screen name="OBLetterV2" component={OBLetterScreen_v2} />
       <Stack.Screen name="OBLetterContent" component={OBLetterContentScreen} />
       <Stack.Screen name="OBPlay1" component={OBPlay1Screen} />
       <Stack.Screen name="OBPlay2" component={OBPlay2Screen} />
+      <Stack.Screen name="OBPlay1V2" component={OBPlay1Screen_v2} />
+      <Stack.Screen name="OBPlay2V2" component={OBPlay2Screen_v2} />
       <Stack.Screen name="OBDiscipline" component={OBDisciplineScreen} />
+      <Stack.Screen name="OBDisciplineV2" component={OBDisciplineScreen_v2} />
       <Stack.Screen name="OBIntro1" component={OBIntro1Screen} />
+      <Stack.Screen name="OBIntro1V2" component={OBIntro1Screen_v2} />
       <Stack.Screen name="ReminderTime" component={ReminderTimeScreen} />
       <Stack.Screen name="OBIntro2" component={OBIntro2Screen} />
+      <Stack.Screen name="OBIntro2V2" component={OBIntro2Screen_v2} />
       <Stack.Screen name="ChildSnapshotIntro" component={ChildSnapshotIntroScreen} />
       <Stack.Screen name="WacbQuestion1" component={WacbQuestion1Screen} />
       <Stack.Screen name="WacbQuestion2" component={WacbQuestion2Screen} />

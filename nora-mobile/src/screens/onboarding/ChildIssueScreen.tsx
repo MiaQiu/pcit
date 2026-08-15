@@ -6,6 +6,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { useAuthService } from '../../contexts/AppContext';
+import { hasAdhdOrDevelopmentalConcern } from '../../utils/onboardingBranch';
 
 export const ChildIssueScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -31,7 +32,7 @@ export const ChildIssueScreen: React.FC = () => {
         { value: 'other', label: t('onboarding.childIssue.other') },
       ]}
       dataField="issue"
-      nextScreen="ParentGoal"
+      nextScreen={(selectedValue) => hasAdhdOrDevelopmentalConcern(selectedValue) ? 'DiagnosisStatus' : 'ParentGoal'}
       prevScreen="ChildBirthday"
       multiSelect={true}
       allowOtherOption={true}

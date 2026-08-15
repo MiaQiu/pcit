@@ -2,6 +2,8 @@
  * Reminder Time Screen
  * "When is your 5 mins?" - Time picker for play session scheduling.
  * Shown between OBIntro1 and OBIntro2.
+ * TEMP: navigates to OBIntro2V2 (not OBIntro2) to preview the v2 onboarding
+ * chain end-to-end. Revert to 'OBIntro2' once the v2 review is done.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -46,7 +48,7 @@ export const ReminderTimeScreen: React.FC = () => {
 
   const handleSkip = () => {
     amplitudeService.trackOnboardingStepCompleted('reminder_time_skipped', 26);
-    navigation.navigate('OBIntro2');
+    navigation.navigate('OBIntro2V2');
   };
 
   const handleEnable = async () => {
@@ -78,7 +80,7 @@ export const ReminderTimeScreen: React.FC = () => {
       console.error('Error requesting notification permissions:', error);
     } finally {
       setIsRequesting(false);
-      navigation.navigate('OBIntro2');
+      navigation.navigate('OBIntro2V2');
     }
   };
 
@@ -136,23 +138,24 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 26,
+    fontSize: 28,
     color: '#1F2937',
     textAlign: 'center',
   },
   description: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 18,
+    color: '#1F2937',
     textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 22,
+    marginTop: 28,
+    lineHeight: 28,
   },
   pickerContainer: {
     alignItems: 'center',
     marginVertical: 16,
     height: 100,
     overflow: 'hidden',
+    marginTop:30
   },
   timePicker: {
     height: 100,
