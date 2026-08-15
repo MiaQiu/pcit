@@ -41,6 +41,10 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode; rcReady
   // the race condition where getCustomerInfo() fires before configure() completes
   useEffect(() => {
     if (!rcReady) return;
+    if (!authService.isAuthenticated()) {
+      setIsLoading(false);
+      return;
+    }
 
     // Force-refresh user so isFreeAccount/isSubscribed are always current (not stale cache).
     // isSubscribed is computed server-side and covers both Stripe (web) and RevenueCat (mobile)
@@ -97,6 +101,10 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode; rcReady
   };
 
   const checkSubscriptionStatus = async () => {
+    if (!authService.isAuthenticated()) {
+      setIsLoading(false);
+      return;
+    }
     try {
       // Server is the source of truth — covers both Stripe (web) and RevenueCat (mobile)
       const user = await authService.getCurrentUser(true);

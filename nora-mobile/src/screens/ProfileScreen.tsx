@@ -118,6 +118,7 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const loadProfile = async () => {
+    if (!authService.isAuthenticated()) return;
     try {
       setLoading(true);
       const user = await authService.getCurrentUser();
