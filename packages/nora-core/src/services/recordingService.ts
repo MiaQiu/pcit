@@ -37,6 +37,7 @@ export interface AboutChildItem {
   Title: string;
   Description: string;
   Details: string;
+  tags?: string[];
 }
 
 export interface DevelopmentalObservationDetail {
@@ -172,6 +173,15 @@ export interface RecordingAnalysis {
     duration: string;
   };
   topMomentUtteranceNumber?: number | null;  // Utterance index for top moment
+  topMomentCelebration?: string | null;  // Short celebratory sentence about the top moment
+  heroText?: string | null;  // Dynamic hero banner sentence, reflecting what happened this session
+  interactionTip?: string | null;  // Dynamic tip for the Today's Interaction Style card
+  crisisMoment?: {
+    detected: boolean;
+    title: string;
+    description: string;
+    whatHelped: string[];
+  } | null;
   topMomentStartTime?: number | null;  // Start time in seconds
   topMomentEndTime?: number | null;  // End time in seconds
   audioUrl?: string | null;  // Presigned URL for audio playback
@@ -184,6 +194,14 @@ export interface RecordingAnalysis {
   tips?: string | StructuredTips;  // KEEP for backward compatibility
   reminder?: string | null;
   tomorrowGoal: string;
+  tomorrowGoalDirective?: {
+    focusSkill: string;
+    currentNumber: number | null;
+    targetNumber: number | string;
+    goalType?: string;
+    actionPrompt?: string;
+    coachingTip?: string;
+  } | null;
   stats: {
     totalPlayTime: string;
     [key: string]: any;
@@ -220,6 +238,14 @@ export interface RecordingAnalysis {
     coachTip?: string;
   }> | null;
   pdiTomorrowGoal?: string | null;
+  pdiTomorrowGoalDirective?: {
+    focusSkill: string;
+    currentNumber: number | null;
+    targetNumber: number | string;
+    goalType?: string;
+    actionPrompt?: string;
+    coachingTip?: string;
+  } | null;
   pdiEncouragement?: string | null;
   pdiSummary?: string | null;
   milestoneCelebrations?: MilestoneCelebration[] | null;

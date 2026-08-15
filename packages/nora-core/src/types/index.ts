@@ -52,6 +52,40 @@ export interface User {
   isFreeAccount?: boolean;
 }
 
+// WACB-N survey — 9-item behavior questionnaire + parenting stress rating.
+// Each qN field is a raw 1-5 Likert value (Never..Very Often) as submitted
+// by the client; totalScore is the clinically-weighted point total computed
+// server-side (see server/routes/wacb-survey.cjs's VALUE_TO_POINTS mapping).
+export interface WacbSurvey {
+  id: string;
+  userId: string;
+  submittedAt: string;
+  parentingStressLevel: number;
+  q1Dawdle: number;
+  q2MealBehavior: number;
+  q3Disobey: number;
+  q4Angry: number;
+  q5Scream: number;
+  q6Destroy: number;
+  q7ProvokeFights: number;
+  q8Interrupt: number;
+  q9Attention: number;
+  totalScore: number;
+}
+
+// Parent Skill Level — 1-7 rung on the "Personalized Learning Journey"
+// ladder, gated server-side by session skill counts (see
+// server/services/parentSkillLevelService.cjs). Levels 6-7 are defined but
+// not yet advanced into automatically — currentLevel caps at 6 for now.
+export type ParentSkillLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+export interface ParentSkillLevelInfo {
+  currentLevel: ParentSkillLevel;
+  // Qualifying PDI sessions seen so far toward clearing Level 5 (needs 2).
+  // Only meaningful while currentLevel === 5.
+  level5QualifyingCount: number;
+}
+
 // Auth types
 export interface AuthTokens {
   accessToken: string;

@@ -470,6 +470,7 @@ model User {
   UserLessonProgress        UserLessonProgress[]
   UserDemoVideoProgress     UserDemoVideoProgress[]
   UserSkillProgress         UserSkillProgress[]
+  ParentSkillProgress       ParentSkillProgress?
   WacbSurvey                WacbSurvey[]
   ChildProfiling            ChildProfiling[]
   Child                     Child[]
@@ -507,6 +508,28 @@ model UserLessonProgress {
   @@unique([userId, lessonId])
   @@index([lessonId])
   @@index([userId, status])
+}
+
+model ParentSkillProgress {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  // 1-7, see server/services/parentSkillLevelService.cjs for the level ladder.
+  // Levels 5->6 and 6->7 each require 2 qualifying sessions (not necessarily
+  // consecutive) using DPICS-tag proxies, since no compliance/timeout coding
+  // exists to measure command effectiveness or calm follow-through directly.
+  currentLevel          Int      @default(1)
+  // Level 5 needs "1 effective command" met across 2 PDI sessions, not
+  // necessarily consecutive — this counts qualifying sessions seen so far.
+  level5QualifyingCount Int      @default(0)
+  // Level 6 ("Calm Follow-Through") proxy: PDI session with >=1 direct
+  // command and 0 criticism. Counts qualifying sessions seen so far.
+  level6QualifyingCount Int      @default(0)
+  // Level 7 ("Confident Parent") proxy: either mode's "everything clicking"
+  // session. Counts qualifying sessions seen so far (caps at 2).
+  level7QualifyingCount Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  User                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserSkillProgress {

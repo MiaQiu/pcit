@@ -32,6 +32,7 @@
  * @typedef {Object} GoalDirective
  * @property {string} focus_skill
  * @property {number|string} target_number
+ * @property {number|null} current_number - Today's count for the focus_skill metric, for a today→target display
  * @property {string} strategy
  */
 
@@ -106,12 +107,14 @@ function getGoalDirective(session, profile) {
       return {
         focus_skill: 'Gentle Reset: Corrections',
         target_number: 0,
+        current_number: criticism,
         strategy: "The 'Grace' Reset. Remind them of their great permanent progress and ask for 0 criticism tomorrow.",
       };
     }
     return {
       focus_skill: 'Corrections',
       target_number: 0,
+      current_number: criticism,
       strategy: "Self-awareness of the urge to correct (criticise), direct (command/question) their children. stay silent, only narrate when they talk",
     };
   }
@@ -121,12 +124,14 @@ function getGoalDirective(session, profile) {
       return {
         focus_skill: 'Gentle Reset: Following the Lead',
         target_number: 0,
+        current_number: direct_command + indirect_command,
         strategy: "The 'Grace' Reset. Acknowledge a rough session with leading the play, ask them to try the Two-Tool Diet tomorrow.",
       };
     }
     return {
       focus_skill: 'Directing the Play',
       target_number: 0,
+      current_number: direct_command + indirect_command,
       strategy: "The 'Two-Tool Diet'. Their reflexes to direct the play are taking over. Tomorrow, they can only repeat words or praise actions. Otherwise, stay silent.",
     };
   }
@@ -140,12 +145,14 @@ function getGoalDirective(session, profile) {
       return {
         focus_skill: 'Gentle Reset: Praise',
         target_number: 3,
+        current_number: total_praise,
         strategy: "The 'Grace' Reset. They already have their Praise Badge, but today was quiet. Ask them to jump back into their normal rhythm tomorrow.",
       };
     }
     return {
       focus_skill: 'Specific Praise',
       target_number: 3,
+      current_number: total_praise,
       strategy: "The 'Praise Hunt'. Their mission is to hunt for 3 specific things the child does well and praise them out loud. Watch the child's face light up.",
     };
   }
@@ -155,12 +162,14 @@ function getGoalDirective(session, profile) {
       return {
         focus_skill: 'Gentle Reset: Echo',
         target_number: 3,
+        current_number: echo,
         strategy: "The 'Grace' Reset. They already have their Echo Badge! Remind them they know how to do this, and ask them to turn their listening ears back on tomorrow.",
       };
     }
     return {
       focus_skill: 'Repeating Words',
       target_number: 3,
+      current_number: echo,
       strategy: "'Parrot Mode'. Act like a parrot and repeat what the child says 3 times with enthusiasm.",
     };
   }
@@ -173,6 +182,7 @@ function getGoalDirective(session, profile) {
     return {
       focus_skill: 'Letting the Child Lead',
       target_number: 0,
+      current_number: direct_command + indirect_command,
       strategy: "The 'Passenger Seat'. They are doing great with praise, but still making a few too many suggestions. Tell them to sit back and let the child drive the play 100%.",
     };
   }
@@ -181,6 +191,7 @@ function getGoalDirective(session, profile) {
     return {
       focus_skill: 'Describing the Play',
       target_number: Math.min(narration + 3, 10),
+      current_number: narration,
       strategy: "The 'Broadcaster'. Fill the quiet moments by describing the child's actions like a sports commentator.",
     };
   }
@@ -196,6 +207,7 @@ function getGoalDirective(session, profile) {
       return {
         focus_skill: 'Praising the Action',
         target_number: 3,
+        current_number: advanced_praises,
         strategy: "The 'Behavior Shift'. The parent is praising the toys perfectly, but we need them praising behavior. Ask them to shift from 'Great tower!' to 'I love how you are stacking those blocks!'",
       };
     }
@@ -204,6 +216,7 @@ function getGoalDirective(session, profile) {
       return {
         focus_skill: 'Praising the Effort (If the opportunity arises)',
         target_number: 1,
+        current_number: growth_praise,
         strategy: "The 'Invisible Effort' Mission. Ask the parent to look for just 1 moment tomorrow where the child tries hard, focuses, or shows patience. Emphasize they shouldn't force it — just keep an eye out for it.",
       };
     }
@@ -212,6 +225,7 @@ function getGoalDirective(session, profile) {
       return {
         focus_skill: 'Praising Emotional Control (If the opportunity arises)',
         target_number: 1,
+        current_number: regulatory_praise,
         strategy: "The 'Calm Catch' Mission. Ask the parent to look for 1 moment where the child regulates themselves — like using a gentle voice or accepting a boundary. Tell them not to force it, just be ready to catch it.",
       };
     }
@@ -227,6 +241,7 @@ function getGoalDirective(session, profile) {
     return {
       focus_skill: focus,
       target_number: Math.min(current + 3, 10),
+      current_number: current,
       strategy: "The 'High Score'. Time to maximize emotional deposits. Push this specific positive skill even higher.",
     };
   }
@@ -238,6 +253,7 @@ function getGoalDirective(session, profile) {
   return {
     focus_skill: 'Maintaining the Magic',
     target_number: 'Maintain targets',
+    current_number: null,
     strategy: 'Mastery Mode. They are hitting all targets and have unlocked all advanced skills! Maintain this balance and enjoy the play.',
   };
 }

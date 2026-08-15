@@ -90,6 +90,14 @@ const PROFILES = {
     output:      'array',
   },
 
+  'report-highlights': {
+    model:       'gemini',
+    temperature: 0.4,
+    maxTokens:   3072,
+    timeout:     60_000,
+    output:      'json',
+  },
+
   'pdi-two-choices': {
     model:       'gemini',
     temperature: 0.4,

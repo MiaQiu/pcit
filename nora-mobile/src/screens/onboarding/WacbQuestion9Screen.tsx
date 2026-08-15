@@ -16,7 +16,7 @@ export const WacbQuestion9Screen: React.FC = () => {
   const { t } = useTranslation();
   const childName = data.childName || 'your child';
 
-  const handleSubmitSurvey = async (selectedValue: number) => {
+  const handleSubmitSurvey = async (selectedValue: number, _updateData: any, navigation: any) => {
     // Submit all WACB data to the backend
     try {
       const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -58,6 +58,14 @@ export const WacbQuestion9Screen: React.FC = () => {
       // Re-throw to prevent navigation
       throw err;
     }
+
+    // Skip the onboarding-era ChildBehaviorProfile/Intro3 continuation and
+    // go straight to the account Profile screen instead — this flow is now
+    // also reached standalone from ReportDetailScreen's "unlock" card, not
+    // just during first-time onboarding. Profile lives on the root stack,
+    // outside this nested Onboarding navigator, so use the parent navigator.
+    navigation.getParent()?.navigate('Profile');
+    return false;
   };
 
   return (

@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Share } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +13,7 @@ import { Button } from '../components/Button';
 import { COLORS, FONTS, REPORT_DRAGON_GOOD, REPORT_DRAGON_AMAZING, REPORT_TARGET, REPORT_TARGET_SMALL, REPORT_STAR_SMALL } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import type { RecordingAnalysis } from '@nora/core';
+import type { RecordingAnalysis, ParentSkillLevel } from '@nora/core';
 import * as userStorage from '../lib/userStorage';
 import { useTranslation, Trans } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
@@ -36,10 +36,16 @@ const getSkillDisplayLabel = (apiLabel: string, t: Function): string => {
   return translated || apiLabel;
 };
 
-// Parenting Level — static/mock pending a real leveling system.
-const PARENTING_LEVEL = {
-  level: 3,
-  percent: 82,
+// Parenting Level — level number -> i18n key on the shared 7-level ladder
+// (same keys/copy as ProfileReportScreen's Personalized Learning Journey).
+const PARENT_SKILL_LEVEL_KEYS: Record<ParentSkillLevel, string> = {
+  1: 'playBuilder',
+  2: 'confidenceBuilder',
+  3: 'attentionBuilder',
+  4: 'communicationBuilder',
+  5: 'cooperationBuilder',
+  6: 'boundaryBuilder',
+  7: 'confidentParent',
 };
 
 export const ReportScreen_v2: React.FC = () => {
@@ -54,23 +60,26 @@ export const ReportScreen_v2: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [reportData, setReportData] = useState<RecordingAnalysis | null>(null);
   const [pollingCount, setPollingCount] = useState(0);
-  const [childName, setChildName] = useState<string>('Your Child');
 
   const [prevScore, setPrevScore] = useState<number | null>(null);
   const [prevAreaCounts, setPrevAreaCounts] = useState<Record<string, number> | null>(null);
 
+  const [parentLevel, setParentLevel] = useState<ParentSkillLevel>(1);
+  const [level5QualifyingCount, setLevel5QualifyingCount] = useState(0);
+
   useEffect(() => {
     amplitudeService.trackScreenView('Report', { recordingId, version: 'v2' });
     loadReportData();
-    loadChildName();
+    loadParentSkillLevel();
   }, [recordingId]);
 
-  const loadChildName = async () => {
+  const loadParentSkillLevel = async () => {
     try {
-      const user = await authService.getCurrentUser();
-      if (user?.childName) setChildName(user.childName);
+      const info = await authService.getParentSkillLevel();
+      setParentLevel(info.currentLevel);
+      setLevel5QualifyingCount(info.level5QualifyingCount);
     } catch (err) {
-      // Keep default "Your Child" if fetch fails
+      // Keep default level 1 if fetch fails
     }
   };
 
@@ -130,16 +139,9 @@ export const ReportScreen_v2: React.FC = () => {
     navigation.navigate('ReportDetail', { recordingId });
   };
 
-  const handleShareProgress = async () => {
-    amplitudeService.trackEvent('Report V2 Share Progress Tapped', { recordingId });
-    try {
-      const score = reportData?.noraScore ?? 0;
-      await Share.share({
-        message: t('reportV2.shareMessage', { childName, score }),
-      });
-    } catch (err) {
-      // User cancelled or share failed — nothing to recover from
-    }
+  const handleLevelCardPress = () => {
+    amplitudeService.trackEvent('Report Parenting Level Tapped', { level: parentLevel, recordingId });
+    navigation.navigate('ParentLevelDetail', { level: parentLevel });
   };
 
   if (loading) {
@@ -297,41 +299,41 @@ export const ReportScreen_v2: React.FC = () => {
         )}
 
         {/* Parenting Level */}
-        <View style={styles.levelCard}>
+        <TouchableOpacity style={styles.levelCard} activeOpacity={0.85} onPress={handleLevelCardPress}>
           <View style={styles.levelHeaderRow}>
             <View style={styles.levelStarBadge}>
               <Ionicons name="star" size={13} color={COLORS.mainPurple} />
             </View>
             <Text style={styles.levelHeaderLabel}>{t('reportV2.parentingLevel')}</Text>
+            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" style={styles.levelHeaderChevron} />
           </View>
           <View style={styles.levelBodyRow}>
             <View style={styles.levelNumberBadge}>
-              <Text style={styles.levelNumberText}>{PARENTING_LEVEL.level}</Text>
+              <Text style={styles.levelNumberText}>{parentLevel}</Text>
             </View>
             <View style={styles.levelProgressCol}>
-              <Text style={styles.levelTitle}>{t('reportV2.levelHeading', { level: PARENTING_LEVEL.level })}</Text>
-              <Text style={styles.levelSubtitle}>{t('reportV2.parentingLevelTitle')}</Text>
-              <View style={styles.levelProgressRow}>
-                <View style={styles.levelProgressTrack}>
-                  <View style={[styles.levelProgressFill, { width: `${PARENTING_LEVEL.percent}%` }]} />
+              <Text style={styles.levelTitle}>{t('reportV2.levelHeading', { level: parentLevel })}</Text>
+              <Text style={styles.levelSubtitle}>{t(`profileReport.levels.${PARENT_SKILL_LEVEL_KEYS[parentLevel]}.title`)}</Text>
+              {parentLevel === 5 && (
+                <View style={styles.levelProgressRow}>
+                  <View style={styles.levelProgressTrack}>
+                    <View style={[styles.levelProgressFill, { width: `${(level5QualifyingCount / 2) * 100}%` }]} />
+                  </View>
+                  <Text style={styles.levelPercentText}>{level5QualifyingCount}/2</Text>
                 </View>
-                <Text style={styles.levelPercentText}>{PARENTING_LEVEL.percent}%</Text>
-              </View>
+              )}
             </View>
           </View>
-          <Text style={styles.levelFooterText}>
-            {t('reportV2.levelFooter', { percent: PARENTING_LEVEL.percent, nextLevel: PARENTING_LEVEL.level + 1 })}
-          </Text>
-        </View>
+          {parentLevel === 5 && (
+            <Text style={styles.levelFooterText}>
+              {t('reportV2.levelFooterSessions', { count: level5QualifyingCount, nextLevel: parentLevel + 1 })}
+            </Text>
+          )}
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.continueButton} onPress={handleContinueToCoaching} activeOpacity={0.85}>
           <Text style={styles.continueButtonText}>{t('reportV2.continueToCoaching')}</Text>
           <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.shareRow} onPress={handleShareProgress} activeOpacity={0.7}>
-          <Ionicons name="share-outline" size={16} color={COLORS.mainPurple} />
-          <Text style={styles.shareText}>{t('reportV2.shareMyProgress')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -609,6 +611,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  levelHeaderChevron: {
+    marginLeft: 'auto',
+  },
   levelBodyRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -685,17 +690,5 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     fontSize: 16,
     color: '#FFFFFF',
-  },
-  shareRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 18,
-  },
-  shareText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 14,
-    color: COLORS.mainPurple,
   },
 });

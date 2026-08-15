@@ -4,6 +4,8 @@ import type {
   LoginResponse,
   SignupResponse,
   SignupRequest,
+  WacbSurvey,
+  ParentSkillLevelInfo,
 } from '../types';
 
 async function parseErrorResponse(response: Response, fallback: string): Promise<string> {
@@ -528,6 +530,45 @@ class AuthService {
     if (!response.ok) {
       throw new Error(await parseErrorResponse(response, 'Failed to update locale'));
     }
+  }
+
+  /**
+   * The user's most recent WACB-N survey submission, or null if they haven't
+   * completed one yet (GET /latest 404s in that case).
+   */
+  async getLatestWacbSurvey(): Promise<WacbSurvey | null> {
+    const response = await this.authenticatedRequest(
+      `${this.apiUrl}/api/wacb-survey/latest`
+    );
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      throw new Error(await parseErrorResponse(response, 'Failed to fetch WACB survey'));
+    }
+    const { survey } = await response.json();
+    return survey;
+  }
+
+  /**
+   * Whether the user has ever submitted a WACB-N survey — used to gate the
+   * "unlock my child's plan" upsell.
+   */
+  async hasCompletedWacbSurvey(): Promise<boolean> {
+    return (await this.getLatestWacbSurvey()) !== null;
+  }
+
+  /**
+   * The user's current rung on the parent-skill-level ladder (1-7) that
+   * drives the "Personalized Learning Journey" section, plus Level 5's
+   * qualifying-session counter (only meaningful while on Level 5).
+   */
+  async getParentSkillLevel(): Promise<ParentSkillLevelInfo> {
+    const response = await this.authenticatedRequest(
+      `${this.apiUrl}/api/auth/parent-skill-level`
+    );
+    if (!response.ok) {
+      throw new Error(await parseErrorResponse(response, 'Failed to fetch parent skill level'));
+    }
+    return response.json();
   }
 
   async getChildIssues(): Promise<{ issues: Array<{ strategy: string; priorityRank: number; userIssues: string | null; wacbQuestions: string | null; clinicalLevel: string }> }> {

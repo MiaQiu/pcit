@@ -19,7 +19,9 @@ const {
   generateAboutChild,
   generatePDITwoChoicesAnalysis,
   generateCDIFeedback,
+  getParentSkillProgress,
 } = require('./pcitAnalysisService.cjs');
+const { generateGoalForLevel, formatGoalHeadline } = require('../utils/levelGoalEngine.cjs');
 const { getUtterances } = require('../utils/utteranceUtils.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { calculateNoraScore } = require('../utils/scoreConstants.cjs');
@@ -129,6 +131,8 @@ async function repairSession(session) {
     durationSeconds: session.durationSeconds || null,
     historicalCdiSessions,
     yesterdayGoal,
+    childId: child?.id || null,
+    userId,
   };
 
   // Step 9 — child profiling (parallel)
@@ -152,6 +156,8 @@ async function repairSession(session) {
         coachingSummary: coachingResult?.coachingSummary || null,
         coachingCards: coachingResult?.coachingCards || null,
         tomorrowGoal: coachingResult?.tomorrowGoal || null,
+        notifications: coachingResult?.notifications || null,
+        goalDirective: coachingResult?.goalDirective || null,
         aboutChild: aboutChildResult || null
       };
     }
@@ -166,10 +172,16 @@ async function repairSession(session) {
     if (!isCDI) {
       pdiResult = await generatePDITwoChoicesAnalysis(utterances, childName, sessionId).catch(e => { console.warn(`  ⚠️  PDI analysis error: ${e.message}`); return null; });
     }
-    const feedbackResult = await generateCDIFeedback(tagCounts, utterances, childName, isCDI, pdiResult, sessionId);
+    const coachingNarrativeText = childProfilingResult?.coachingSummary || pdiResult?.summary || null;
+
+    const feedbackResult = await generateCDIFeedback(tagCounts, utterances, childName, isCDI, pdiResult, sessionId, null, coachingNarrativeText);
     competencyAnalysis = {
       topMoment: feedbackResult.topMoment,
       topMomentUtteranceNumber: typeof feedbackResult.topMomentUtteranceNumber === 'number' ? feedbackResult.topMomentUtteranceNumber : null,
+      topMomentCelebration: feedbackResult.topMomentCelebration || null,
+      heroText: feedbackResult.heroText || null,
+      interactionTip: feedbackResult.interactionTip || null,
+      crisisMoment: feedbackResult.crisisMoment || null,
       feedback: feedbackResult.feedback || null,
       example: typeof feedbackResult.example === 'number' ? feedbackResult.example : null,
       childReaction: feedbackResult.childReaction || null,
@@ -182,7 +194,18 @@ async function repairSession(session) {
     if (pdiResult) {
       competencyAnalysis.pdiSkills = pdiResult.pdiSkills;
       competencyAnalysis.pdiCommandSequences = pdiResult.commandSequences;
-      competencyAnalysis.pdiTomorrowGoal = pdiResult.tomorrowGoal;
+      // Deterministic goal engine overrides the LLM's tomorrowGoal field.
+      const pdiProgress = await getParentSkillProgress(userId);
+      const pdiGoalPayload = generateGoalForLevel(pdiProgress.currentLevel, tagCounts, 'PDI', pdiProgress);
+      competencyAnalysis.pdiTomorrowGoal = formatGoalHeadline(pdiGoalPayload);
+      competencyAnalysis.pdiTomorrowGoalDirective = {
+        focusSkill: pdiGoalPayload.title,
+        currentNumber: pdiGoalPayload.baselineCount,
+        targetNumber: pdiGoalPayload.targetCount,
+        goalType: pdiGoalPayload.goalType,
+        actionPrompt: pdiGoalPayload.actionPrompt,
+        coachingTip: pdiGoalPayload.coachingTip,
+      };
       competencyAnalysis.pdiEncouragement = pdiResult.encouragement;
       competencyAnalysis.pdiSummary = pdiResult.summary;
     }
@@ -207,8 +230,13 @@ async function repairSession(session) {
     data: {
       competencyAnalysis,
       coachingSummary: childProfilingResult?.coachingSummary || null,
-      coachingCards: childProfilingResult?.coachingCards
-        ? { sections: childProfilingResult.coachingCards, tomorrowGoal: childProfilingResult.tomorrowGoal || null }
+      coachingCards: (childProfilingResult?.coachingCards || childProfilingResult?.goalDirective)
+        ? {
+            sections: childProfilingResult.coachingCards || null,
+            tomorrowGoal: childProfilingResult.tomorrowGoal || null,
+            notifications: childProfilingResult.notifications || null,
+            goalDirective: childProfilingResult.goalDirective || null
+          }
         : null,
       aboutChild: childProfilingResult?.aboutChild || null,
       enrichmentStatus: newEnrichmentStatus,

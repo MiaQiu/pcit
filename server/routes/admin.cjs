@@ -2820,13 +2820,15 @@ router.post('/sessions/:id/rerun-cdi-coaching', requireAdminAuth, async (req, re
       clinicalPriority,
       isFirstSession: priorCompletedCount === 0,
       durationSeconds: session.durationSeconds || null,
+      childId: child?.id || null,
+      userId: session.userId,
     };
 
     const result = await generateCdiCoaching(utterances, childInfo, tagCounts, childSpeaker);
     if (!result) return res.status(500).json({ error: 'generateCdiCoaching returned null' });
 
-    const coachingCards = result.coachingCards
-      ? { sections: result.coachingCards, tomorrowGoal: result.tomorrowGoal || null }
+    const coachingCards = (result.coachingCards || result.goalDirective)
+      ? { sections: result.coachingCards || null, tomorrowGoal: result.tomorrowGoal || null, notifications: result.notifications || null, goalDirective: result.goalDirective || null }
       : null;
 
     await prisma.session.update({
@@ -2842,6 +2844,7 @@ router.post('/sessions/:id/rerun-cdi-coaching', requireAdminAuth, async (req, re
       coachingSummary: result.coachingSummary,
       coachingCards: result.coachingCards,
       tomorrowGoal: result.tomorrowGoal,
+      goalDirective: result.goalDirective,
     });
   } catch (error) {
     console.error(`POST /admin/sessions/${sessionId}/rerun-cdi-coaching error:`, error);

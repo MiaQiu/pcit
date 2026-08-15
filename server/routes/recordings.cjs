@@ -722,6 +722,10 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       areasToAvoid,
       topMoment: topMomentQuote || "Great session!",
       topMomentUtteranceNumber: typeof topMomentIdx === 'number' ? topMomentIdx : null,
+      topMomentCelebration: session.competencyAnalysis?.topMomentCelebration || null,
+      heroText: session.competencyAnalysis?.heroText || null,
+      interactionTip: session.competencyAnalysis?.interactionTip || null,
+      crisisMoment: session.competencyAnalysis?.crisisMoment || null,
       topMomentStartTime,
       topMomentEndTime,
       audioUrl,
@@ -752,6 +756,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
         : null,
       coachingSummary: session.coachingSummary || null,
       coachingCards: coachingData?.sections || (Array.isArray(coachingData) ? coachingData : null),
+      tomorrowGoalDirective: coachingData?.goalDirective || null,
       // Backward compat (old mobile app versions)
       childPortfolioInsights: transformCoachingCardsToPortfolioInsights(Array.isArray(coachingData) ? coachingData : null) || session.childPortfolioInsights || null,
       aboutChild: session.aboutChild || null,

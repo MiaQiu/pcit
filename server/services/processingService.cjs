@@ -8,6 +8,7 @@ const { analyzePCITCoding, SessionQualityError, PermanentFailureError } = requir
 const { transcribeRecording } = require('./transcriptionService.cjs');
 const { sendReportReadyNotification, sendPushNotificationToUser, sendMilestonesUnlockedNotification } = require('./pushNotifications.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
+const { updateParentSkillLevel } = require('./parentSkillLevelService.cjs');
 
 // ============================================================================
 // Failure Notification Helper
@@ -229,6 +230,11 @@ async function processRecordingWithRetry(sessionId, userId, storagePath, duratio
     await prisma.session.update({
       where: { id: sessionId },
       data: { analysisStatus: 'COMPLETED' }
+    });
+
+    // Re-evaluate parent skill level progress (non-blocking)
+    updateParentSkillLevel(userId, sessionId).catch(err => {
+      console.error(`❌ [PARENT-SKILL-LEVEL] Error updating progress for session ${sessionId.substring(0, 8)}:`, err.message);
     });
 
     // Log enrichment outcome (non-blocking)

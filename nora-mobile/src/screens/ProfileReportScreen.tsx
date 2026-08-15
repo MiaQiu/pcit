@@ -14,7 +14,7 @@ import { Button } from '../components/Button';
 import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling } from '@nora/core';
+import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, WacbSurvey, ParentSkillLevel } from '@nora/core';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
 import { MarkdownText } from '../utils/MarkdownText';
@@ -127,35 +127,74 @@ const calculateAge = (birthday?: Date | string | null): number | null => {
   return Math.max(age, 0);
 };
 
-// ─── Core Focus Areas (mocked — pending intake-driven backend data) ──────────
+// ─── Core Focus Areas — derived from the WACB-N questionnaire ────────────────
+// The 9 WACB items group into 4 clinical domains; each domain's severity is
+// computed from its items' answers rather than hardcoded per domain.
 
-const LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
+type FocusSeverity = 'high' | 'moderate' | 'mild';
+
+const LEVEL_COLORS: Record<FocusSeverity, { bg: string; text: string }> = {
   moderate: { bg: '#FDECC8', text: '#B45309' },
   high: { bg: '#FCE0E0', text: '#DC2626' },
   mild: { bg: '#D8F3E9', text: '#0F9D6C' },
 };
 
-const CORE_FOCUS_AREAS = [
-  { key: 'transitions', icon: 'people-outline', iconBg: '#FDECC8', iconColor: '#C2790C', level: 'moderate' },
-  { key: 'energy', icon: 'flash', iconBg: '#FCE0E0', iconColor: '#DC2626', level: 'high' },
-  { key: 'boundaries', icon: 'shield-checkmark-outline', iconBg: '#D8F3E9', iconColor: '#0F9D6C', level: 'mild' },
+// Raw 1-5 Likert (Never..Very Often) → clinical point weight, same mapping
+// the server uses to score submissions (see server/routes/wacb-survey.cjs).
+const VALUE_TO_POINTS: Record<number, number> = { 1: 1, 2: 2, 3: 4, 4: 6, 5: 7 };
+const toPoints = (raw: number | null | undefined): number | null =>
+  raw != null ? (VALUE_TO_POINTS[raw] ?? raw) : null;
+
+// A domain is "high" if any item scored 6-7 pts (raw Often/Very Often),
+// "moderate" if any item scored 3-5 pts (raw Sometimes), else "mild".
+const severityForPoints = (points: Array<number | null>): FocusSeverity => {
+  const values = points.filter((p): p is number => p != null);
+  if (values.some(p => p >= 6)) return 'high';
+  if (values.some(p => p >= 3)) return 'moderate';
+  return 'mild';
+};
+
+const FOCUS_AREA_GROUPS = [
+  { key: 'routines', icon: 'time-outline', iconBg: '#FDECC8', iconColor: '#C2790C', fields: ['q1Dawdle', 'q2MealBehavior'] as const },
+  { key: 'emotional', icon: 'flash', iconBg: '#FCE0E0', iconColor: '#DC2626', fields: ['q4Angry', 'q5Scream', 'q6Destroy'] as const },
+  { key: 'attention', icon: 'locate-outline', iconBg: '#DBEAFE', iconColor: '#2563EB', fields: ['q3Disobey', 'q8Interrupt', 'q9Attention'] as const },
+  { key: 'social', icon: 'people-outline', iconBg: '#D8F3E9', iconColor: '#0F9D6C', fields: ['q7ProvokeFights'] as const },
 ] as const;
+
+interface FocusAreaData {
+  key: string;
+  icon: string;
+  iconBg: string;
+  iconColor: string;
+  severity: FocusSeverity;
+}
+
+const computeFocusAreas = (survey: WacbSurvey): FocusAreaData[] =>
+  FOCUS_AREA_GROUPS.map(group => ({
+    key: group.key,
+    icon: group.icon,
+    iconBg: group.iconBg,
+    iconColor: group.iconColor,
+    severity: severityForPoints(group.fields.map(field => toPoints(survey[field]))),
+  }));
 
 const FOCUS_CARD_WIDTH = 156;
 const FOCUS_CARD_GAP = 12;
 
-// ─── Personalized Learning Journey (mocked steps; CDI steps link to real skill data) ──
+// ─── Personalized Learning Journey — the 7-level parent-skill ladder ──────────
+// currentLevel comes from the server (authService.getParentSkillLevel(),
+// gated by real session counts — see parentSkillLevelService.cjs). Levels
+// 6-7 are defined here for display but aren't advanced into automatically
+// yet, so a parent can be shown "at" level 6 indefinitely.
 
-const CDI_JOURNEY_STEPS = [
-  { key: 'attentionAnchor', icon: 'locate-outline', skillKey: 'Narrate' },
-  { key: 'praiseEngine', icon: 'trophy-outline', skillKey: 'Praise (Labeled)' },
-  { key: 'connectionBuilder', icon: 'megaphone-outline', skillKey: 'Echo' },
-] as const;
-
-const PDI_JOURNEY_STEPS = [
-  { key: 'clearCommand', icon: 'flag-outline', skillKey: undefined },
-  { key: 'patientPause', icon: 'hourglass-outline', skillKey: undefined },
-  { key: 'followThrough', icon: 'checkmark-done-outline', skillKey: undefined },
+const PARENT_SKILL_LEVELS = [
+  { level: 1, key: 'playBuilder', icon: 'happy-outline', skillKey: undefined },
+  { level: 2, key: 'confidenceBuilder', icon: 'star-outline', skillKey: 'Praise (Labeled)' },
+  { level: 3, key: 'attentionBuilder', icon: 'locate-outline', skillKey: 'Narrate' },
+  { level: 4, key: 'communicationBuilder', icon: 'chatbubble-outline', skillKey: 'Echo' },
+  { level: 5, key: 'cooperationBuilder', icon: 'flag-outline', skillKey: undefined },
+  { level: 6, key: 'boundaryBuilder', icon: 'shield-checkmark-outline', skillKey: undefined },
+  { level: 7, key: 'confidentParent', icon: 'trophy-outline', skillKey: undefined },
 ] as const;
 
 /** PDI Coach's Corner — Two Choices Flow skills */
@@ -246,6 +285,7 @@ export const ProfileReportScreen: React.FC = () => {
   const [pollingCount, setPollingCount] = useState(0);
   const [childName, setChildName] = useState<string>('Your Child');
   const [childAge, setChildAge] = useState<number | null>(null);
+  const [parentSkillLevel, setParentSkillLevel] = useState<ParentSkillLevel>(1);
   const [developmentalVisible, setDevelopmentalVisible] = useState(false);
   const [developmentalProgress, setDevelopmentalProgress] = useState<DevelopmentalProgress | null>(null);
   const [selectedDomain, setSelectedDomain] = useState<DomainType | null>(null);
@@ -257,6 +297,9 @@ export const ProfileReportScreen: React.FC = () => {
 
   // Focus areas carousel pagination
   const [activeFocusIndex, setActiveFocusIndex] = useState(0);
+  // null until the WACB survey fetch resolves — an empty array (not null)
+  // means "checked, no survey yet", so the section renders as hidden.
+  const [focusAreas, setFocusAreas] = useState<FocusAreaData[] | null>(null);
 
   // Feedback state
   const [feedbackSentiment, setFeedbackSentiment] = useState<'positive' | 'negative' | null>(null);
@@ -314,6 +357,8 @@ export const ProfileReportScreen: React.FC = () => {
     loadReportData();
     loadChildProfile();
     loadDevelopmentalVisibility();
+    loadFocusAreas();
+    loadParentSkillLevel();
   }, [recordingId]);
 
   useEffect(() => {
@@ -356,6 +401,24 @@ export const ProfileReportScreen: React.FC = () => {
       setDevelopmentalVisible(result.visible);
     } catch (err) {
       // Keep default false
+    }
+  };
+
+  const loadFocusAreas = async () => {
+    try {
+      const survey: WacbSurvey | null = await authService.getLatestWacbSurvey();
+      setFocusAreas(survey ? computeFocusAreas(survey) : []);
+    } catch (err) {
+      setFocusAreas([]);
+    }
+  };
+
+  const loadParentSkillLevel = async () => {
+    try {
+      const info = await authService.getParentSkillLevel();
+      setParentSkillLevel(info.currentLevel);
+    } catch (err) {
+      // Keep default level 1 if fetch fails
     }
   };
 
@@ -409,14 +472,13 @@ export const ProfileReportScreen: React.FC = () => {
   const handleFocusScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
     const idx = Math.round(x / (FOCUS_CARD_WIDTH + FOCUS_CARD_GAP));
-    setActiveFocusIndex(Math.max(0, Math.min(CORE_FOCUS_AREAS.length - 1, idx)));
+    setActiveFocusIndex(Math.max(0, Math.min((focusAreas?.length ?? 1) - 1, idx)));
   };
 
   const isPDI = reportData?.mode === 'PDI';
-  const journeySteps = isPDI ? PDI_JOURNEY_STEPS : CDI_JOURNEY_STEPS;
 
-  const handleJourneyStepPress = (step: { key: string; skillKey?: string }) => {
-    amplitudeService.trackEvent('Report Journey Step Tapped', { step: step.key, recordingId });
+  const handleLevelPress = (step: { level: number; key: string; skillKey?: string }) => {
+    amplitudeService.trackEvent('Report Journey Level Tapped', { level: step.level, recordingId });
     if (step.skillKey && reportData) {
       const skill = reportData.skills.find(s => s.label === step.skillKey);
       if (skill) {
@@ -519,90 +581,108 @@ export const ProfileReportScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Core Focus Areas */}
-        <View style={styles.focusAreasSection}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>{t('profileReport.coreFocusAreasTitle', { childName })}</Text>
-            <View style={styles.fromIntakeRow}>
-              <Text style={styles.fromIntakeText}>{t('profileReport.fromYourIntake')}</Text>
-              <Ionicons name="information-circle-outline" size={15} color="#9CA3AF" />
+        {/* Core Focus Areas — derived from the WACB questionnaire; hidden until completed */}
+        {!!focusAreas?.length && (
+          <View style={styles.focusAreasSection}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>{t('profileReport.coreFocusAreasTitle', { childName })}</Text>
+              <View style={styles.fromIntakeRow}>
+                <Text style={styles.fromIntakeText}>{t('profileReport.fromYourIntake')}</Text>
+                <Ionicons name="information-circle-outline" size={15} color="#9CA3AF" />
+              </View>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={handleFocusScrollEnd}
+              snapToInterval={FOCUS_CARD_WIDTH + FOCUS_CARD_GAP}
+              decelerationRate="fast"
+              contentContainerStyle={styles.focusAreasScrollContent}
+            >
+              {focusAreas.map(area => {
+                const levelColors = LEVEL_COLORS[area.severity];
+                return (
+                  <View key={area.key} style={styles.focusAreaCard}>
+                    <View style={[styles.focusAreaIconCircle, { backgroundColor: area.iconBg }]}>
+                      <Ionicons name={area.icon as any} size={20} color={area.iconColor} />
+                    </View>
+                    <Text style={styles.focusAreaLabel}>{t(`profileReport.focusAreas.${area.key}.label`)}</Text>
+                    <View style={[styles.focusAreaLevelBadge, { backgroundColor: levelColors.bg }]}>
+                      <Text style={[styles.focusAreaLevelText, { color: levelColors.text }]}>{t(`profileReport.severity.${area.severity}`)}</Text>
+                    </View>
+                    <Text style={styles.focusAreaFocusText}>{t(`profileReport.focusAreas.${area.key}.focus`)}</Text>
+                  </View>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.focusAreasDots}>
+              {focusAreas.map((area, i) => (
+                <View key={area.key} style={[styles.focusAreaDot, i === activeFocusIndex && styles.focusAreaDotActive]} />
+              ))}
             </View>
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={handleFocusScrollEnd}
-            snapToInterval={FOCUS_CARD_WIDTH + FOCUS_CARD_GAP}
-            decelerationRate="fast"
-            contentContainerStyle={styles.focusAreasScrollContent}
-          >
-            {CORE_FOCUS_AREAS.map(area => {
-              const levelColors = LEVEL_COLORS[area.level];
-              return (
-                <View key={area.key} style={styles.focusAreaCard}>
-                  <View style={[styles.focusAreaIconCircle, { backgroundColor: area.iconBg }]}>
-                    <Ionicons name={area.icon as any} size={20} color={area.iconColor} />
-                  </View>
-                  <Text style={styles.focusAreaLabel}>{t(`profileReport.focusAreas.${area.key}.label`)}</Text>
-                  <View style={[styles.focusAreaLevelBadge, { backgroundColor: levelColors.bg }]}>
-                    <Text style={[styles.focusAreaLevelText, { color: levelColors.text }]}>{t(`profileReport.focusAreas.${area.key}.level`)}</Text>
-                  </View>
-                  <Text style={styles.focusAreaFocusText}>{t(`profileReport.focusAreas.${area.key}.focus`)}</Text>
-                </View>
-              );
-            })}
-          </ScrollView>
-          <View style={styles.focusAreasDots}>
-            {CORE_FOCUS_AREAS.map((area, i) => (
-              <View key={area.key} style={[styles.focusAreaDot, i === activeFocusIndex && styles.focusAreaDotActive]} />
-            ))}
-          </View>
-        </View>
+        )}
 
-        {/* Personalized Learning Journey */}
+        {/* Personalized Learning Journey — 7-level parent skill ladder */}
         <View style={styles.journeySection}>
           <Text style={styles.cardTitle}>{t('profileReport.journeyTitle')}</Text>
           <Text style={styles.sectionSubtitle}>{t('profileReport.journeySubtitle')}</Text>
           <View style={styles.journeyCard}>
-            <View style={styles.journeyPhaseHeader}>
-              <View style={styles.journeyPhaseBadge}>
-                <Text style={styles.journeyPhaseBadgeText}>{t(isPDI ? 'profileReport.phase2Badge' : 'profileReport.phase1Badge')}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.journeyPhaseTitle}>{t(isPDI ? 'profileReport.phase2Title' : 'profileReport.phase1Title')}</Text>
-                <Text style={styles.journeyPhaseSubtitle}>{t(isPDI ? 'profileReport.phase2Subtitle' : 'profileReport.phase1Subtitle')}</Text>
-              </View>
-            </View>
-
-            {journeySteps.map((step, index) => (
-              <View key={step.key} style={styles.journeyStepRow}>
-                <View style={styles.journeyStepIndicatorCol}>
-                  <View style={styles.journeyStepNumberCircle}>
-                    <Text style={styles.journeyStepNumberText}>{index + 1}</Text>
-                  </View>
-                  {index < journeySteps.length - 1 && <View style={styles.journeyStepLine} />}
-                </View>
+            {(() => {
+              const activeStep = PARENT_SKILL_LEVELS.find(s => s.level === parentSkillLevel) ?? PARENT_SKILL_LEVELS[0];
+              return (
                 <TouchableOpacity
-                  style={styles.journeyStepCard}
-                  activeOpacity={0.8}
-                  onPress={() => handleJourneyStepPress(step)}
+                  style={styles.journeyActiveCard}
+                  activeOpacity={0.85}
+                  onPress={() => handleLevelPress(activeStep)}
                 >
-                  <View style={styles.journeyStepIconCircle}>
-                    <Ionicons name={step.icon as any} size={18} color={COLORS.mainPurple} />
+                  <View style={styles.journeyActiveHeaderRow}>
+                    <View style={styles.journeyLevelBadge}>
+                      <Text style={styles.journeyLevelBadgeText}>{t('profileReport.journeyLevelBadge', { level: activeStep.level })}</Text>
+                    </View>
+                    <Ionicons name={activeStep.icon as any} size={20} color={COLORS.mainPurple} />
                   </View>
-                  <View style={styles.journeyStepTextCol}>
-                    <Text style={styles.journeyStepTitle}>{t(`profileReport.steps.${step.key}.title`)}</Text>
-                    <Text style={styles.journeyStepFocus}>{t(`profileReport.steps.${step.key}.focus`)}</Text>
-                    <Text style={styles.journeyStepDescription}>{t(`profileReport.steps.${step.key}.description`, { childName })}</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+                  <Text style={styles.journeyActiveTitle}>{t(`profileReport.levels.${activeStep.key}.title`)}</Text>
+                  <Text style={styles.journeyActiveSkill}>{t(`profileReport.levels.${activeStep.key}.skill`)}</Text>
+                  <Text style={styles.journeyActiveGoal}>
+                    <Text style={styles.journeyActiveGoalLabel}>{t('profileReport.journeyGoalLabel')}</Text>
+                    {t(`profileReport.levels.${activeStep.key}.goal`)}
+                  </Text>
+                  <Text style={styles.journeyActiveLearn}>{t(`profileReport.levels.${activeStep.key}.learn`)}</Text>
                 </TouchableOpacity>
-              </View>
-            ))}
+              );
+            })()}
 
-            <View style={styles.journeyLockRow}>
-              <Ionicons name="lock-closed" size={14} color={COLORS.mainPurple} />
-              <Text style={styles.journeyLockText}>{t('profileReport.unlockMessage')}</Text>
+            <View style={styles.journeyRoadmap}>
+              {PARENT_SKILL_LEVELS.map((step, index) => {
+                const status = step.level < parentSkillLevel ? 'done' : step.level === parentSkillLevel ? 'active' : 'locked';
+                return (
+                  <View key={step.key} style={styles.journeyRoadmapRow}>
+                    <View style={styles.journeyStepIndicatorCol}>
+                      <View style={[
+                        styles.journeyStepNumberCircle,
+                        status === 'done' && styles.journeyStepNumberCircleDone,
+                        status === 'locked' && styles.journeyStepNumberCircleLocked,
+                      ]}>
+                        {status === 'done' ? (
+                          <Ionicons name="checkmark" size={13} color="#FFFFFF" />
+                        ) : status === 'locked' ? (
+                          <Ionicons name="lock-closed" size={11} color="#9CA3AF" />
+                        ) : (
+                          <Text style={styles.journeyStepNumberText}>{step.level}</Text>
+                        )}
+                      </View>
+                      {index < PARENT_SKILL_LEVELS.length - 1 && <View style={styles.journeyStepLine} />}
+                    </View>
+                    <View style={styles.journeyRoadmapTextCol}>
+                      <Text style={[styles.journeyRoadmapTitle, status === 'locked' && styles.journeyRoadmapTitleLocked]}>
+                        {t(`profileReport.levels.${step.key}.title`)}
+                      </Text>
+                      <Text style={styles.journeyRoadmapSkill}>{t(`profileReport.levels.${step.key}.skill`)}</Text>
+                    </View>
+                  </View>
+                );
+              })}
             </View>
           </View>
         </View>
@@ -1274,56 +1354,90 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     overflow: 'hidden',
   },
-  journeyPhaseHeader: {
+  // Active (current) level hero card
+  journeyActiveCard: {
+    backgroundColor: '#F5F0FF',
+    borderRadius: 20,
+    padding: 16,
+    margin: 12,
+    marginBottom: 8,
+  },
+  journeyActiveHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#F5F0FF',
-    padding: 16,
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
-  journeyPhaseBadge: {
+  journeyLevelBadge: {
     backgroundColor: COLORS.mainPurple,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
   },
-  journeyPhaseBadgeText: {
+  journeyLevelBadgeText: {
     fontFamily: FONTS.bold,
     fontSize: 11,
     color: '#FFFFFF',
     letterSpacing: 0.4,
   },
-  journeyPhaseTitle: {
+  journeyActiveTitle: {
     fontFamily: FONTS.bold,
-    fontSize: 15,
+    fontSize: 17,
     color: COLORS.textDark,
     marginBottom: 2,
   },
-  journeyPhaseSubtitle: {
+  journeyActiveSkill: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: COLORS.mainPurple,
+    marginBottom: 10,
+  },
+  journeyActiveGoal: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: COLORS.textDark,
+    lineHeight: 18,
+    marginBottom: 6,
+  },
+  journeyActiveGoalLabel: {
+    fontFamily: FONTS.bold,
+  },
+  journeyActiveLearn: {
     fontFamily: FONTS.regular,
     fontSize: 12,
     color: '#6B7280',
+    lineHeight: 17,
   },
-  journeyStepRow: {
-    flexDirection: 'row',
+  // Roadmap — compact list of all 7 levels
+  journeyRoadmap: {
     paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  journeyRoadmapRow: {
+    flexDirection: 'row',
   },
   journeyStepIndicatorCol: {
     width: 32,
     alignItems: 'center',
   },
   journeyStepNumberCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: COLORS.mainPurple,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 4,
+  },
+  journeyStepNumberCircleDone: {
+    backgroundColor: '#10B981',
+  },
+  journeyStepNumberCircleLocked: {
+    backgroundColor: '#F3F4F6',
   },
   journeyStepNumberText: {
     fontFamily: FONTS.bold,
-    fontSize: 12,
+    fontSize: 11,
     color: '#FFFFFF',
   },
   journeyStepLine: {
@@ -1331,61 +1445,26 @@ const styles = StyleSheet.create({
     width: 2,
     backgroundColor: '#E5E7EB',
     marginVertical: 4,
+    minHeight: 16,
   },
-  journeyStepCard: {
+  journeyRoadmapTextCol: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    marginVertical: 6,
-    marginLeft: 8,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 16,
+    paddingLeft: 8,
+    paddingBottom: 16,
   },
-  journeyStepIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#EDE9FE',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  journeyStepTextCol: {
-    flex: 1,
-  },
-  journeyStepTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 14,
+  journeyRoadmapTitle: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
     color: COLORS.textDark,
-    marginBottom: 2,
+    marginBottom: 1,
   },
-  journeyStepFocus: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 11,
-    color: COLORS.mainPurple,
-    marginBottom: 4,
+  journeyRoadmapTitleLocked: {
+    color: '#9CA3AF',
   },
-  journeyStepDescription: {
+  journeyRoadmapSkill: {
     fontFamily: FONTS.regular,
-    fontSize: 12,
-    color: '#6B7280',
-    lineHeight: 17,
-  },
-  journeyLockRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#F5F0FF',
-    paddingVertical: 12,
-    marginTop: 4,
-  },
-  journeyLockText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    color: COLORS.mainPurple,
+    fontSize: 11,
+    color: '#9CA3AF',
   },
 
   card: {

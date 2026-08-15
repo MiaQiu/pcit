@@ -1016,4 +1016,29 @@ router.get('/child-issues', require('../middleware/auth.cjs').requireAuth, async
   }
 });
 
+/**
+ * GET /api/auth/parent-skill-level
+ * Get the authenticated user's current parent-skill-level progress
+ * (1-7 — see server/services/parentSkillLevelService.cjs). Defaults to
+ * level 1 when no progress row exists yet (no completed sessions).
+ */
+router.get('/parent-skill-level', require('../middleware/auth.cjs').requireAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const progress = await prisma.parentSkillProgress.findUnique({
+      where: { userId },
+      select: { currentLevel: true, level5QualifyingCount: true }
+    });
+
+    res.json({
+      currentLevel: progress?.currentLevel ?? 1,
+      level5QualifyingCount: progress?.level5QualifyingCount ?? 0,
+    });
+  } catch (error) {
+    console.error('Get parent skill level error:', error);
+    res.status(500).json({ error: 'Failed to get parent skill level' });
+  }
+});
+
 module.exports = router;

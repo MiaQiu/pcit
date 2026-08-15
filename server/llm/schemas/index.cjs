@@ -63,6 +63,30 @@ const COMBINED_FEEDBACK = {
   required: ['topMoment', 'Feedback', 'reminder', 'ChildReaction', 'activity'],
 };
 
+// ── report-highlights ─────────────────────────────────────────────────────────
+// Hero banner text, top-moment celebration, interaction-style tip, and optional
+// crisis-moment extraction — all derived from the already-generated coaching
+// narrative + the identified top-moment quote (not the raw transcript)
+const REPORT_HIGHLIGHTS = {
+  type: 'object',
+  properties: {
+    heroText:            { type: 'string' },
+    topMomentCelebration: { type: 'string' },
+    interactionTip:       { type: 'string' },
+    crisisMoment: {
+      type: 'object',
+      properties: {
+        detected:    { type: 'boolean' },
+        title:       { type: 'string' },
+        description: { type: 'string' },
+        whatHelped:  { type: 'array', items: { type: 'string' } },
+      },
+      required: ['detected', 'title', 'description', 'whatHelped'],
+    },
+  },
+  required: ['heroText', 'topMomentCelebration', 'interactionTip', 'crisisMoment'],
+};
+
 // ── pdi-two-choices ───────────────────────────────────────────────────────────
 // PDI discipline sequence analysis
 const PDI_TWO_CHOICES = {
@@ -232,6 +256,7 @@ module.exports = {
   PCIT_CODING,
   REVIEW_FEEDBACK,
   COMBINED_FEEDBACK,
+  REPORT_HIGHLIGHTS,
   PDI_TWO_CHOICES,
   DEV_PROFILING,
   COACHING_FORMAT,
