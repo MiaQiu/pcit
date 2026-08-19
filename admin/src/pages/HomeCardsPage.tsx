@@ -101,6 +101,36 @@ function splitPreviewMessage(message: string): { headline: string; description: 
   return { headline: message.slice(0, idx).trim(), description: message.slice(idx + 1).trim() };
 }
 
+// Simplified mirror of formatLessonContentV2 (mobile) for a Text block
+// preview: consecutive non-blank lines join into one paragraph (blank line
+// = paragraph break), "* " lines become bullets, "#" heading lines become
+// headings, "---" becomes a divider. Folds (||...||) and image/video lines
+// aren't supported here (not used in Home Card text blocks).
+type DetailPreviewBlock =
+  | { type: 'paragraph' | 'heading' | 'bullet'; text: string }
+  | { type: 'divider' };
+
+function parseDetailPreviewBlocks(content: string): DetailPreviewBlock[] {
+  const blocks: DetailPreviewBlock[] = [];
+  let paragraphLines: string[] = [];
+  const flush = () => {
+    if (paragraphLines.length === 0) return;
+    blocks.push({ type: 'paragraph', text: paragraphLines.join(' ') });
+    paragraphLines = [];
+  };
+  for (const rawLine of content.replace(/\r\n/g, '\n').split('\n')) {
+    const line = rawLine.trim();
+    if (line === '') { flush(); continue; }
+    if (/^-{3,}$/.test(line)) { flush(); blocks.push({ type: 'divider' }); continue; }
+    const heading = line.match(/^#{1,6}\s+(.+)$/);
+    if (heading) { flush(); blocks.push({ type: 'heading', text: heading[1] }); continue; }
+    if (line.startsWith('* ')) { flush(); blocks.push({ type: 'bullet', text: line.slice(2) }); continue; }
+    paragraphLines.push(line);
+  }
+  flush();
+  return blocks;
+}
+
 export default function HomeCardsPage() {
   const [homeCards, setHomeCards] = useState<HomeCard[]>([]);
   const [badges, setBadges] = useState<HomeCardBadge[]>([]);
@@ -246,24 +276,20 @@ export default function HomeCardsPage() {
                   {card.cardType === 'CONTENT' ? '→ Content' : '⤴ Quote'}
                 </td>
                 <td>
-                  {card.cardType === 'CONTENT' ? (
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        padding: '3px 10px',
-                        borderRadius: 999,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: '#fff',
-                        backgroundColor: card.badgeColor,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {card.badgeText}
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: 12, color: '#D1D5DB' }}>—</span>
-                  )}
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      padding: '3px 10px',
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: '#fff',
+                      backgroundColor: card.badgeColor,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {card.badgeText}
+                  </span>
                 </td>
                 <td className="cell-definition">
                   {card.message}
@@ -1030,6 +1056,131 @@ function HomeCardModal({
                 <button type="button" className="btn-secondary-sm" onClick={() => addComponent('OPEN_DETAILS')}>+ Open more details</button>
                 <button type="button" className="btn-secondary-sm" onClick={() => addComponent('USER_INPUT')}>+ User input</button>
               </div>
+            </div>
+
+            <div className="form-group">
+              <label>Detail page preview</label>
+              <p className="form-hint" style={{ marginTop: 0, marginBottom: 10 }}>
+                Mirrors what tapping "Learn more" opens on mobile (HomeCardDetailScreen).
+              </p>
+              {(() => {
+                const previewBadge = badges.find((b) => b.id === badgeId);
+                const previewColor = previewBadge?.color || BADGE_COLOR_PRESETS[0].value;
+                const linkedTitle = (linkedCardId: string) =>
+                  linkableCards.find((lc) => lc.id === linkedCardId)?.detailTitle
+                  || linkableCards.find((lc) => lc.id === linkedCardId)?.message
+                  || 'Select a card to link to...';
+                return (
+                  <div
+                    style={{
+                      maxWidth: 350,
+                      marginLeft: 'auto',
+                      marginRight: 'auto',
+                      marginTop: 10,
+                      border: '1px solid #E5E7EB',
+                      borderRadius: 20,
+                      overflow: 'hidden',
+                      background: '#fff',
+                    }}
+                  >
+                    {previewImageSrc && (
+                      <img
+                        src={previewImageSrc}
+                        style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', display: 'block', background: '#F3F4F6' }}
+                      />
+                    )}
+                    <div style={{ padding: '16px 18px 20px' }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          borderRadius: 999,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: '#fff',
+                          backgroundColor: previewColor,
+                          marginBottom: 8,
+                        }}
+                      >
+                        {previewBadge?.name || 'Badge'}
+                      </span>
+                      <p style={{ margin: '0 0 16px', fontSize: 19, fontWeight: 700, lineHeight: 1.3, color: '#1E2939' }}>
+                        {detailTitle || 'Detail page title...'}
+                      </p>
+
+                      {components.length === 0 && (
+                        <p style={{ fontSize: 13, color: '#9CA3AF', fontStyle: 'italic' }}>No content blocks yet.</p>
+                      )}
+
+                      {components.map((c) => {
+                        if (c.type === 'TEXT') {
+                          const blocks = parseDetailPreviewBlocks(c.text);
+                          return (
+                            <div key={c.key} style={{ marginBottom: 14 }}>
+                              {blocks.length === 0 && <p style={{ fontSize: 13, color: '#9CA3AF', fontStyle: 'italic', margin: 0 }}>Empty text block</p>}
+                              {blocks.map((b, i) => {
+                                if (b.type === 'divider') return <div key={i} style={{ height: 1, background: '#E5E7EB', margin: '10px 0' }} />;
+                                if (b.type === 'heading') return <p key={i} style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700, color: '#1E2939' }}>{renderInlineFormatted(b.text)}</p>;
+                                if (b.type === 'bullet') return (
+                                  <div key={i} style={{ display: 'flex', gap: 6, margin: '0 0 6px' }}>
+                                    <span style={{ color: '#6B7280' }}>•</span>
+                                    <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: '#374151' }}>{renderInlineFormatted(b.text)}</p>
+                                  </div>
+                                );
+                                return <p key={i} style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6, color: '#374151' }}>{renderInlineFormatted(b.text)}</p>;
+                              })}
+                            </div>
+                          );
+                        }
+                        if (c.type === 'IMAGE') {
+                          const src = c.imageFile ? URL.createObjectURL(c.imageFile) : c.imageUrl;
+                          return src ? (
+                            <img key={c.key} src={src} style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: 12, marginBottom: 14, background: '#F3F4F6' }} />
+                          ) : (
+                            <div key={c.key} style={{ width: '100%', aspectRatio: '16 / 9', borderRadius: 12, marginBottom: 14, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#9CA3AF' }}>
+                              No image selected
+                            </div>
+                          );
+                        }
+                        if (c.type === 'OPEN_DETAILS') {
+                          return (
+                            <div key={c.key} style={{ marginBottom: 14 }}>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  border: '1px solid #8C49D5',
+                                  borderRadius: 14,
+                                  padding: '12px 14px',
+                                }}
+                              >
+                                <span style={{ fontSize: 14, fontWeight: 600, color: '#8C49D5' }}>{c.ctaLabel || 'Learn more'}</span>
+                                <span style={{ color: '#8C49D5' }}>&rarr;</span>
+                              </div>
+                              <p style={{ margin: '4px 2px 0', fontSize: 11, color: '#9CA3AF' }}>
+                                Links to: {c.linkedCardId ? linkedTitle(c.linkedCardId) : 'Select a card to link to...'}
+                              </p>
+                            </div>
+                          );
+                        }
+                        // USER_INPUT
+                        return (
+                          <div key={c.key} style={{ marginBottom: 14 }}>
+                            {c.inputLabel && <p style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 600, color: '#1E2939' }}>{c.inputLabel}</p>}
+                            <div style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 10, minHeight: 60, fontSize: 13, color: '#9CA3AF' }}>
+                              {c.inputPlaceholder || 'Type your answer...'}
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+                              <span style={{ background: '#8C49D5', color: '#fff', borderRadius: 999, padding: '4px 14px', fontSize: 12, fontWeight: 600 }}>Save</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </>
         )}
