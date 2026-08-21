@@ -12,7 +12,8 @@ const { requireAuth } = require('../middleware/auth.cjs');
 // Import from new service modules
 const { transcribeRecording } = require('../services/transcriptionService.cjs');
 const { processRecordingWithRetry, notifyProcessingFailure, notifyQualityRejection } = require('../services/processingService.cjs');
-const { SessionQualityError, PermanentFailureError } = require('../services/pcitAnalysisService.cjs');
+const { SessionQualityError, PermanentFailureError, getParentSkillProgress } = require('../services/pcitAnalysisService.cjs');
+const { generateGoalForLevel, formatGoalHeadline } = require('../utils/levelGoalEngine.cjs');
 const { getUtterances } = require('../utils/utteranceUtils.cjs');
 
 const router = express.Router();
@@ -684,12 +685,26 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
 
     const reminder = session.competencyAnalysis?.reminder || null;
 
-    // Use AI-generated tomorrowGoal from coaching if available, otherwise fallback to formula
+    // Use AI-generated tomorrowGoal from coaching if available, otherwise fall
+    // back to the same deterministic level-goal engine generateCdiCoaching()
+    // would have used — keyed on the parent's actual current level, not a
+    // level-blind formula — for sessions where coaching generation failed.
     const coachingData = session.coachingCards;
-    const aiTomorrowGoal = coachingData?.tomorrowGoal || null;
-    const tomorrowGoal = aiTomorrowGoal || (isCDI
-      ? `Use ${Math.max(10, (session.tagCounts?.praise || 0) + 2)} Praises`
-      : `Give ${Math.max(10, (session.tagCounts?.direct_command || 0) + 2)} Direct Commands`);
+    let tomorrowGoal = coachingData?.tomorrowGoal || null;
+    let fallbackGoalDirective = null;
+    if (!tomorrowGoal) {
+      const parentProgress = await getParentSkillProgress(userId);
+      const goalPayload = generateGoalForLevel(parentProgress.currentLevel, session.tagCounts || {}, isCDI ? 'CDI' : 'PDI', parentProgress);
+      tomorrowGoal = formatGoalHeadline(goalPayload);
+      fallbackGoalDirective = {
+        focusSkill: goalPayload.title,
+        currentNumber: goalPayload.baselineCount,
+        targetNumber: goalPayload.targetCount,
+        goalType: goalPayload.goalType,
+        actionPrompt: goalPayload.actionPrompt,
+        coachingTip: goalPayload.coachingTip,
+      };
+    }
 
     // Generate audio URL for playback
     let audioUrl = null;
@@ -726,6 +741,8 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       heroText: session.competencyAnalysis?.heroText || null,
       interactionTip: session.competencyAnalysis?.interactionTip || null,
       crisisMoment: session.competencyAnalysis?.crisisMoment || null,
+      skillCoaching: session.competencyAnalysis?.skillCoaching || null,
+      bondingMoment: session.competencyAnalysis?.bondingMoment || null,
       topMomentStartTime,
       topMomentEndTime,
       audioUrl,
@@ -747,7 +764,8 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       // PDI Two Choices Flow (only present for PDI sessions)
       pdiSkills: session.competencyAnalysis?.pdiSkills || null,
       pdiCommandSequences: session.competencyAnalysis?.pdiCommandSequences || null,
-      pdiTomorrowGoal: session.competencyAnalysis?.pdiTomorrowGoal || null,
+      pdiTomorrowGoal: session.competencyAnalysis?.pdiTomorrowGoal || (!isCDI ? tomorrowGoal : null),
+      pdiTomorrowGoalDirective: session.competencyAnalysis?.pdiTomorrowGoalDirective || (!isCDI ? fallbackGoalDirective : null),
       pdiEncouragement: session.competencyAnalysis?.pdiEncouragement || null,
       pdiSummary: session.competencyAnalysis?.pdiSummary || null,
       // New fields from child profiling
@@ -756,7 +774,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
         : null,
       coachingSummary: session.coachingSummary || null,
       coachingCards: coachingData?.sections || (Array.isArray(coachingData) ? coachingData : null),
-      tomorrowGoalDirective: coachingData?.goalDirective || null,
+      tomorrowGoalDirective: coachingData?.goalDirective || fallbackGoalDirective || null,
       // Backward compat (old mobile app versions)
       childPortfolioInsights: transformCoachingCardsToPortfolioInsights(Array.isArray(coachingData) ? coachingData : null) || session.childPortfolioInsights || null,
       aboutChild: session.aboutChild || null,

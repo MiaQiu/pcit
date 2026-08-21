@@ -518,14 +518,22 @@
     "heroFallback": "Great job today — {{childName}} enjoyed the time with you.",
     "crisis": {
       "title": "Crisis Moment Detected",
-      "whatHelpedTitle": "What helped"
+      "readMore": "Read more",
+      "showLess": "Show less"
+    },
+    "skillCoaching": {
+      "title": "Skill Coaching for Tomorrow"
     },
     "topMoment": {
       "title": "Top Moment",
-      "afterMoment": "After the moment, {{childName}} re-engaged and enjoyed the play again."
+      "afterMoment": "After the moment, {{childName}} re-engaged and enjoyed the play again.",
+      "you": "You"
+    },
+    "bondingMoment": {
+      "title": "Bonding Moment"
     },
     "interactionStyle": {
-      "title": "Today's Interaction Style",
+      "title": "Today's Interaction",
       "viewTips": "View tips",
       "tip": "Great job using fewer questions and commands during the tough moment. This helps {{childName}} feel safe and supported."
     },

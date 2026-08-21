@@ -1,25 +1,33 @@
 /**
  * ReportDetailScreen
  * Redesigned full session report ("Today's Coaching") — same underlying
- * RecordingAnalysis data as ReportScreen.tsx, restyled to match
- * ReportScreen_v2.tsx's pastel-card visual language. Reached from
- * ReportScreen_v2's "Continue to Coaching" button (not yet rewired here —
- * this file only adds the new screen + route).
+ * RecordingAnalysis data as ReportScreen.tsx, restyled to the "Warm
+ * Elevation" visual direction (cream page background, shadowed cards,
+ * warm terracotta accents) via the shared ReportCard component. Reached
+ * from ReportScreen_v2's "Continue to Coaching" button.
  *
- * Every section now maps to real data from RecordingAnalysis. The hero text,
- * topMomentCelebration, the interaction-style tip banner, and the Crisis
- * Moment card (hidden when no distress moment was detected) all come from
- * pcitAnalysisService's single consolidated "report-highlights" call
- * (generateReportHighlights), which reads the coaching narrative + the
- * already-identified top-moment quote rather than the raw transcript. The
- * hero/celebration/tip fields fall back to generic static copy only for
- * sessions analyzed before this call existed. Everything else — Top Moment
- * + audio, Today's Interaction Style values, tomorrowGoal text, the
- * today→target goal counts, aboutChild + its tags (hidden when absent), and
- * the transcript link — is likewise real. The Tomorrow's Goal card's tip
- * line is backed by goalDirective.coachingTip from the deterministic
- * level-based goal engine (server/utils/levelGoalEngine.cjs), populated for
- * both CDI and PDI sessions.
+ * Every card except the hero and "Unlock My Child's Plan" (both bespoke —
+ * neither fits the title/subtitle/content/tip shape) is a <ReportCard>.
+ * The hero text, topMomentCelebration, the interaction-style tip banner,
+ * and the Crisis Moment card (hidden when no distress moment was detected)
+ * all come from pcitAnalysisService's single consolidated
+ * "report-highlights" call (generateReportHighlights), which reads the
+ * coaching narrative + the already-identified top-moment quote rather than
+ * the raw transcript. The hero/celebration/tip fields fall back to generic
+ * static copy only for sessions analyzed before this call existed.
+ * Everything else — Top Moment + audio, Today's Interaction values,
+ * aboutChild + its tags (hidden when absent), and the transcript link — is
+ * likewise real.
+ *
+ * The Tomorrow's Goal card prefers the deterministic level-based goal engine
+ * (server/utils/levelGoalEngine.cjs, via tomorrowGoalDirective /
+ * pdiTomorrowGoalDirective). For sessions where that structured directive is
+ * absent — or where the plain tomorrowGoal/pdiTomorrowGoal string predates
+ * the level engine and can't be trusted — deriveGoalFromLevel() below
+ * reconstructs an equivalent goal client-side from the parent's current
+ * level + this session's raw tag counts, mirroring
+ * parentSkillLevelService.cjs's level-up thresholds. Same pattern as
+ * ReportScreen_v2.tsx.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -28,13 +36,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
+import { SkillProgressBar } from '../components/SkillProgressBar';
+import { ReportCard, REPORT_CARD_COLORS } from '../components/ReportCard';
 import { COLORS, FONTS, REPORT_DRAGON_GOOD, REPORT_DETAIL_DRAGON } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import type { RecordingAnalysis, User, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling } from '@nora/core';
+import type { RecordingAnalysis, User, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ParentSkillLevel } from '@nora/core';
 import { MomentPlayer } from '../components/MomentPlayer';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
+import { MarkdownText } from '../utils/MarkdownText';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 
@@ -67,25 +78,82 @@ const stripPcitTags = (text: string): string => {
     .trim();
 };
 
-// Icon + color per "Today's Interaction Style" row — skills (praise/echo/
-// narrate) read as purple "the more the better"; avoid-areas (questions/
-// commands/criticism) read as orange/red "the fewer the better".
-const INTERACTION_ROW_META: Record<string, { icon: keyof typeof Ionicons.glyphMap; badgeColor: string; iconColor: string; barColor: string; goodDirection: 'up' | 'down' }> = {
-  'Praise (Labeled)': { icon: 'star', badgeColor: '#FEE2E2', iconColor: '#DC2626', barColor: COLORS.mainPurple, goodDirection: 'up' },
-  'Echo': { icon: 'chatbubble-ellipses', badgeColor: '#EDE9FE', iconColor: COLORS.mainPurple, barColor: COLORS.mainPurple, goodDirection: 'up' },
-  'Narrate': { icon: 'book', badgeColor: '#DBEAFE', iconColor: '#2563EB', barColor: COLORS.mainPurple, goodDirection: 'up' },
-  'Questions': { icon: 'help-circle', badgeColor: '#FFEDD5', iconColor: '#EA580C', barColor: '#F97316', goodDirection: 'down' },
-  'Commands': { icon: 'hand-left', badgeColor: '#FEF3C7', iconColor: '#D97706', barColor: '#F97316', goodDirection: 'down' },
-  'Criticism': { icon: 'close-circle', badgeColor: '#FEE2E2', iconColor: '#DC2626', barColor: '#DC2626', goodDirection: 'down' },
+// Warm-palette equivalents of ReportScreen.tsx's getSkillRating — purple for
+// good/excellent, terracotta (instead of a clinical red) for pay-attention.
+const getSkillRating = (progress: number, t: Function, maxValue: number = 10): { barColor: string; textColor: string; suffix: string } => {
+  if (progress <= maxValue * 0.5) {
+    return { barColor: '#C2694B', textColor: '#C2694B', suffix: t('report.skillRating.payAttention') };
+  } else if (progress <= maxValue * 0.8) {
+    return { barColor: '#8C49D5', textColor: '#8C49D5', suffix: t('report.skillRating.good') };
+  } else {
+    return { barColor: '#8C49D5', textColor: '#8C49D5', suffix: t('report.skillRating.excellent') };
+  }
 };
-const DEFAULT_ROW_META = { icon: 'ellipse' as keyof typeof Ionicons.glyphMap, badgeColor: '#F3F4F6', iconColor: '#6B7280', barColor: '#9CA3AF', goodDirection: 'up' as const };
 
-interface InteractionRow {
-  label: string;
-  value: number; // capped 0-10, for the bar fill width only
-  rawValue: number; // true count, shown in the numeric label
-  prev?: number; // true previous count, for the delta
-}
+// Parenting Level — level number -> i18n key on the shared 7-level ladder
+// (same keys/copy as ReportScreen_v2 / ParentLevelDetailScreen).
+const PARENT_SKILL_LEVEL_KEYS: Record<ParentSkillLevel, string> = {
+  1: 'playBuilder',
+  2: 'confidenceBuilder',
+  3: 'attentionBuilder',
+  4: 'communicationBuilder',
+  5: 'cooperationBuilder',
+  6: 'boundaryBuilder',
+  7: 'confidentParent',
+};
+
+// Flat count target for the levels whose ladder goal (see
+// parentSkillLevelService.cjs computeLevelUpdate) is "hit N of this skill
+// in a session" rather than a session-count gate.
+const LEVEL_FLAT_TARGET: Partial<Record<ParentSkillLevel, number>> = {
+  2: 5, // totalPraise >= 5
+  3: 5, // narration >= 5
+  4: 5, // echo >= 5
+};
+
+type DerivedGoal = { focusSkill: string; currentNumber: number | null; targetNumber: number | string | null; description: string };
+
+// Same client-side fallback as ReportScreen_v2.tsx: reconstructs a
+// same-shape goal from the parent's current level and this session's raw
+// tag counts (reportData.stats), using the same metrics/thresholds as
+// parentSkillLevelService.cjs's level-up gate. Needed because
+// tomorrowGoalDirective/pdiTomorrowGoalDirective is absent — or, for
+// sessions analyzed before the level engine existed, may hold stale
+// pre-level-engine copy — so a truthy tomorrowGoal string alone can't be
+// trusted; only the structured directive object is.
+const deriveGoalFromLevel = (
+  level: ParentSkillLevel,
+  stats: Record<string, any> | undefined,
+  mode: 'CDI' | 'PDI',
+  t: (key: string) => string
+): DerivedGoal => {
+  const key = PARENT_SKILL_LEVEL_KEYS[level];
+  const focusSkill = t(`profileReport.levels.${key}.skill`);
+  const description = t(`profileReport.levels.${key}.clearGoal`);
+  const s = stats || {};
+
+  if (level === 1 && mode === 'CDI') {
+    const commands = s.command != null ? s.command : (s.direct_command || 0) + (s.indirect_command || 0);
+    const currentNumber = commands + (s.question || 0) + (s.criticism || 0);
+    return { focusSkill, currentNumber, targetNumber: null, description };
+  }
+  if (level === 2 && mode === 'CDI') {
+    const currentNumber = (s.product_praise || 0) + (s.action_praise || 0) + (s.growth_praise || 0) + (s.regulatory_praise || 0);
+    return { focusSkill, currentNumber, targetNumber: LEVEL_FLAT_TARGET[2]!, description };
+  }
+  if (level === 3 && mode === 'CDI') {
+    return { focusSkill, currentNumber: s.narration || 0, targetNumber: LEVEL_FLAT_TARGET[3]!, description };
+  }
+  if (level === 4 && mode === 'CDI') {
+    return { focusSkill, currentNumber: s.echo || 0, targetNumber: LEVEL_FLAT_TARGET[4]!, description };
+  }
+  if (level >= 5 && mode === 'PDI') {
+    return { focusSkill, currentNumber: s.direct_command || 0, targetNumber: null, description };
+  }
+  // Session mode doesn't match this level's own track (e.g. a level 5+
+  // parent doing a CDI session) — no live count to show, just the goal copy.
+  return { focusSkill, currentNumber: null, targetNumber: null, description };
+};
 
 export const ReportDetailScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -100,9 +168,10 @@ export const ReportDetailScreen: React.FC = () => {
   const [reportData, setReportData] = useState<RecordingAnalysis | null>(null);
   const [pollingCount, setPollingCount] = useState(0);
   const [childName, setChildName] = useState('Your Child');
-  const [prevSkills, setPrevSkills] = useState<Record<string, number> | null>(null);
-  const [prevAreas, setPrevAreas] = useState<Record<string, number> | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [parentLevel, setParentLevel] = useState<ParentSkillLevel>(1);
+  const [crisisExpanded, setCrisisExpanded] = useState(false);
+  const [skillCoachingExpanded, setSkillCoachingExpanded] = useState(false);
   // null while unknown — the unlock card only renders once we know for sure,
   // so it never flashes on screen for a user who's already completed it.
   const [wacbCompleted, setWacbCompleted] = useState<boolean | null>(null);
@@ -119,7 +188,17 @@ export const ReportDetailScreen: React.FC = () => {
     loadReportData();
     loadChildName();
     loadWacbStatus();
+    loadParentSkillLevel();
   }, [recordingId]);
+
+  const loadParentSkillLevel = async () => {
+    try {
+      const info = await authService.getParentSkillLevel();
+      setParentLevel(info.currentLevel);
+    } catch (err) {
+      // Keep default level 1 if fetch fails
+    }
+  };
 
   // Fetched once reportData is available, same pattern as ReportScreen.tsx.
   useEffect(() => {
@@ -184,29 +263,6 @@ export const ReportDetailScreen: React.FC = () => {
     });
   };
 
-  // Non-critical: same pattern as ReportScreen_v2's loadPreviousComparison,
-  // extended to capture every skill/area value (not just the score and one
-  // goal area) so each "Today's Interaction Style" row can show a real delta.
-  const loadPreviousComparison = async (current: RecordingAnalysis) => {
-    try {
-      const { recordings } = await recordingService.getRecordings();
-      const currentTime = new Date(current.createdAt).getTime();
-      const previous = (recordings || [])
-        .filter((r: any) => r.analysisStatus === 'COMPLETED' && r.id !== recordingId && new Date(r.createdAt).getTime() < currentTime)
-        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-      if (!previous) return;
-      const prevAnalysis = await recordingService.getAnalysis(previous.id);
-      const skillMap: Record<string, number> = {};
-      (prevAnalysis.skills || []).forEach(s => { skillMap[s.label] = s.progress; });
-      setPrevSkills(skillMap);
-      const areaMap: Record<string, number> = {};
-      (prevAnalysis.areasToAvoid || []).forEach(a => { areaMap[a.label] = a.count; });
-      setPrevAreas(areaMap);
-    } catch (err) {
-      // No previous session to compare against — rows just skip the delta.
-    }
-  };
-
   const loadReportData = async () => {
     try {
       setLoading(true);
@@ -214,7 +270,6 @@ export const ReportDetailScreen: React.FC = () => {
       const data = await recordingService.getAnalysis(recordingId);
       setReportData(data);
       setLoading(false);
-      loadPreviousComparison(data);
     } catch (err: any) {
       console.log('Report error:', err.message);
       if (err.message.includes('processing') && pollingCount < 20) {
@@ -289,15 +344,21 @@ export const ReportDetailScreen: React.FC = () => {
   const filteredAreas = (reportData.areasToAvoid || []).filter(
     a => !(reportData.mode === 'PDI' && a.label === 'Commands')
   );
+  const avoidTotal = filteredAreas.reduce((s, a) => s + (a.count || 0), 0);
 
-  const interactionRows: InteractionRow[] = [
-    ...skills.map(s => ({ label: s.label, value: Math.min(s.progress, 10), rawValue: s.progress, prev: prevSkills?.[s.label] })),
-    ...filteredAreas.map(a => ({ label: a.label, value: Math.min(a.count, 10), rawValue: a.count, prev: prevAreas?.[a.label] })),
-  ];
+  // Same dynamic Echo target as ReportScreen.tsx — sessions with fewer than
+  // 10 child utterances scale the goal down instead of judging against 10.
+  const childUtteranceCount = (reportData.transcript || []).filter(u => u.role === 'child').length;
+  const echoTarget = childUtteranceCount < 10 ? Math.round(childUtteranceCount * 0.75) : 10;
 
   // Crisis moment is extracted from the coaching narrative — only present
   // (and only rendered) when the session actually had a distress moment.
   const crisisMoment = reportData.crisisMoment?.detected ? reportData.crisisMoment : null;
+
+  // Independent second "top moment" finder (generateCrisis) — a 2-3
+  // consecutive-utterance bonding exchange, separate from the
+  // combined-feedback topMoment used above. Absent for older sessions.
+  const bondingMoment = reportData.bondingMoment || null;
 
   // Top Moment: reuse the same "preceding utterance + main utterance" shape
   // as ReportScreen.tsx's getUtterancesForSkill so both lines of dialogue
@@ -307,15 +368,45 @@ export const ReportDetailScreen: React.FC = () => {
   const precedingLine = topIdx != null && topIdx > 0 ? transcript[topIdx - 1] : null;
   const mainLine = topIdx != null ? transcript[topIdx] : null;
   const fallbackQuote = typeof reportData.topMoment === 'string' ? reportData.topMoment : reportData.topMoment?.quote;
-  // Falls back to a generic line for sessions analyzed before topMomentCelebration existed.
-  const celebration = reportData.topMomentCelebration
+  // Prefers the bonding-moment's own context line; falls back to
+  // topMomentCelebration, then to a generic line for sessions analyzed
+  // before either of those existed.
+  const celebration = bondingMoment?.context
+    || reportData.topMomentCelebration
     || t('reportDetail.topMoment.afterMoment', { childName });
 
-  const tomorrowGoalText = (reportData.mode === 'PDI' ? reportData.pdiTomorrowGoal : reportData.tomorrowGoal) || null;
-  // Deterministic today→target counts for the focus skill — populated for both CDI and PDI.
+  // The Top Moment card's quote + audio now prefer the independent bonding
+  // exchange (generateCrisis) over the older combined-feedback topMoment —
+  // falls back to the old fields for sessions analyzed before bondingMoment
+  // existed. Audio start/end are derived from the transcript's own per-
+  // utterance timing, spanning every line of the quoted exchange.
+  // The LLM writes generic "Child:"/"Parent:" speaker labels — swap in the
+  // real child's name and address the parent directly as "You".
+  const bondingLines = bondingMoment
+    ? bondingMoment.quote.split('\n').filter(Boolean).map(line => line
+        .replace(/^Child:/i, `${childName}:`)
+        .replace(/^Parent:/i, `${t('reportDetail.topMoment.you')}:`))
+    : [];
+  const bondingStartUtt = bondingMoment ? transcript[bondingMoment.utteranceNumber] : null;
+  const bondingEndUtt = bondingMoment ? transcript[bondingMoment.utteranceNumber + Math.max(bondingLines.length - 1, 0)] : null;
+  const momentStartTime = bondingMoment ? (bondingStartUtt?.start ?? null) : (reportData.topMomentStartTime ?? null);
+  const momentEndTime = bondingMoment ? (bondingEndUtt?.end ?? null) : (reportData.topMomentEndTime ?? null);
+
+  // Prefers the deterministic, level-gated directive; falls back to a
+  // client-derived version keyed off parentLevel + this session's raw counts
+  // (same pattern as ReportScreen_v2.tsx) for sessions where that field is
+  // absent or stale.
   const goalDirective = reportData.mode === 'PDI'
-    ? (reportData.pdiTomorrowGoalDirective || null)
-    : (reportData.tomorrowGoalDirective || null);
+    ? reportData.pdiTomorrowGoalDirective ?? null
+    : reportData.tomorrowGoalDirective ?? null;
+  const goal: DerivedGoal = goalDirective
+    ? {
+        focusSkill: goalDirective.focusSkill,
+        currentNumber: goalDirective.currentNumber,
+        targetNumber: goalDirective.targetNumber ?? null,
+        description: goalDirective.actionPrompt || '',
+      }
+    : deriveGoalFromLevel(parentLevel, reportData.stats, reportData.mode, t);
 
   const aboutChildItem = reportData.aboutChild?.[0];
   // Real tags from the about-child extraction — hidden entirely for older
@@ -323,6 +414,8 @@ export const ReportDetailScreen: React.FC = () => {
   const childTags = aboutChildItem?.tags || [];
   const childInsightBody = aboutChildItem?.Description || reportData.childReaction || null;
 
+  // Not currently wired to a ReportCard headerRight — share buttons on these
+  // two cards are temporarily hidden, kept here (not deleted) to restore later.
   const handleShareChildInsight = async () => {
     amplitudeService.trackEvent('Report Detail Share Tapped', { recordingId, section: 'childInsight' });
     try {
@@ -346,6 +439,9 @@ export const ReportDetailScreen: React.FC = () => {
     }
   };
 
+  const avoidRatingSuffix = avoidTotal > 3 ? t('report.skillRating.payAttention') : avoidTotal === 0 ? t('report.skillRating.excellent') : t('report.skillRating.good');
+  const avoidRatingIsGood = avoidTotal <= 3;
+
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
@@ -359,7 +455,7 @@ export const ReportDetailScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Hero */}
+        {/* Hero — bespoke, doesn't fit the card shape */}
         <View style={styles.heroCard}>
           <Image source={REPORT_DETAIL_DRAGON} style={styles.heroDragon} resizeMode="contain" />
           <View style={styles.heroTextCol}>
@@ -372,45 +468,52 @@ export const ReportDetailScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Crisis Moment Detected — only rendered when the session actually had one */}
+        {/* Crisis Moment — only rendered when the session actually had one */}
         {crisisMoment && (
-          <View style={styles.crisisCard}>
-            <View style={styles.crisisCol}>
-              <View style={styles.crisisTitleRow}>
-                <Ionicons name="alert-circle" size={16} color="#DC2626" />
-                <Text style={styles.crisisTitle}>{t('reportDetail.crisis.title')}</Text>
+          <ReportCard
+            // icon="alert-circle"
+            // iconColor="#C2694B"
+            // iconBackgroundColor="#FBE3CE"
+            eyebrow={
+              <View style={styles.crisisBadge}>
+                <Text style={styles.crisisBadgeText}>{t('reportDetail.crisis.title')}</Text>
               </View>
-              <Text style={styles.crisisBody}>{crisisMoment.description}</Text>
-            </View>
-            <View style={styles.crisisDivider} />
-            <View style={styles.crisisCol}>
-              <Text style={styles.crisisHelpedTitle}>{t('reportDetail.crisis.whatHelpedTitle')}</Text>
-              {crisisMoment.whatHelped.map((item, i) => (
-                <View key={i} style={styles.crisisHelpedRow}>
-                  <Ionicons name="checkmark-circle" size={15} color="#DC2626" />
-                  <Text style={styles.crisisHelpedText}>{item}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
+            }
+            title={crisisMoment.title || t('reportDetail.crisis.title')}
+          >
+            <MarkdownText style={styles.crisisBody} numberOfLines={crisisExpanded ? undefined : 4}>
+              {crisisMoment.coaching || crisisMoment.description || ''}
+            </MarkdownText>
+            <TouchableOpacity
+              style={styles.crisisReadMoreRow}
+              activeOpacity={0.7}
+              onPress={() => setCrisisExpanded(prev => !prev)}
+            >
+              <Text style={styles.crisisReadMoreText}>
+                {crisisExpanded ? t('reportDetail.crisis.showLess') : t('reportDetail.crisis.readMore')}
+              </Text>
+              <Ionicons name={crisisExpanded ? 'chevron-up' : 'chevron-down'} size={14} color="#C2694B" />
+            </TouchableOpacity>
+          </ReportCard>
         )}
 
         {/* Top Moment */}
-        <View style={styles.card}>
-          <View style={styles.cardTitleRow}>
-            <Ionicons name="star" size={16} color={COLORS.mainPurple} />
-            <Text style={styles.cardTitle}>{t('reportDetail.topMoment.title')}</Text>
-          </View>
-
-          {reportData.audioUrl && reportData.topMomentStartTime != null && reportData.topMomentEndTime != null && (
+        <ReportCard icon="star" title={t('reportDetail.topMoment.title')} tip={celebration || undefined}>
+          {reportData.audioUrl && momentStartTime != null && momentEndTime != null && (
             <MomentPlayer
               audioUrl={reportData.audioUrl}
-              startTime={reportData.topMomentStartTime}
-              endTime={reportData.topMomentEndTime}
+              startTime={momentStartTime}
+              endTime={momentEndTime}
             />
           )}
 
-          {precedingLine || mainLine ? (
+          {bondingMoment ? (
+            <View style={styles.quoteLines}>
+              {bondingLines.map((line, i) => (
+                <Text key={i} style={styles.quoteLine}>{line}</Text>
+              ))}
+            </View>
+          ) : precedingLine || mainLine ? (
             <View style={styles.quoteLines}>
               {precedingLine && (
                 <Text style={styles.quoteLine}>
@@ -428,110 +531,36 @@ export const ReportDetailScreen: React.FC = () => {
           ) : (
             fallbackQuote && <Text style={styles.quoteLine}>"{stripPcitTags(fallbackQuote)}"</Text>
           )}
+        </ReportCard>
 
-          {celebration && (
-            <View style={styles.momentCelebration}>
-              <Ionicons name="heart" size={14} color={COLORS.mainPurple} />
-              <Text style={styles.momentCelebrationText}>{celebration}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Today's Interaction Style */}
-        <View style={styles.card}>
-          <View style={styles.interactionHeaderRow}>
-            <View style={styles.cardTitleRow}>
-              <Text style={styles.cardTitle}>{t('reportDetail.interactionStyle.title')}</Text>
-              <Ionicons name="information-circle-outline" size={15} color="#9CA3AF" style={{ marginLeft: 4 }} />
-            </View>
-          </View>
-
-          {interactionRows.map((row, i) => {
-            const meta = INTERACTION_ROW_META[row.label] || DEFAULT_ROW_META;
-            const delta = row.prev != null ? row.rawValue - row.prev : null;
-            const improved = delta == null ? null : (meta.goodDirection === 'up' ? delta > 0 : delta < 0);
-            const deltaColor = delta == null || delta === 0 ? '#9CA3AF' : (improved ? '#10B981' : '#DC2626');
-            const arrowName = delta == null || delta === 0 ? 'remove' : (delta > 0 ? 'arrow-up' : 'arrow-down');
-            return (
-              <React.Fragment key={i}>
-                {i === skills.length && <View style={styles.interactionDivider} />}
-                <View style={styles.interactionRow}>
-                  <View style={[styles.interactionBadge, { backgroundColor: meta.badgeColor }]}>
-                    <Ionicons name={meta.icon} size={13} color={meta.iconColor} />
-                  </View>
-                  <View style={styles.interactionBarTrack}>
-                    <View style={[styles.interactionBarFill, { width: `${(row.value / 10) * 100}%`, backgroundColor: meta.barColor }]} />
-                  </View>
-                  <Text style={styles.interactionValue}>{row.rawValue}/10</Text>
-                  <View style={styles.interactionDeltaCol}>
-                    <Ionicons name={arrowName as any} size={12} color={deltaColor} />
-                    <Text style={[styles.interactionDeltaText, { color: deltaColor }]}>
-                      {delta == null || delta === 0 ? '—' : `${delta > 0 ? '+' : ''}${delta}`}
-                    </Text>
-                  </View>
-                </View>
-              </React.Fragment>
-            );
-          })}
-
-          <View style={styles.tipBanner}>
-            <Ionicons name="bulb" size={14} color={COLORS.mainPurple} />
-            <Text style={styles.tipBannerText}>{reportData.interactionTip || t('reportDetail.interactionStyle.tip', { childName })}</Text>
-          </View>
-        </View>
+        {/* Skill Coaching — coaching note for tomorrow's goal skill, grounded in this session */}
+        {reportData.skillCoaching && (
+          <ReportCard title={t('reportDetail.skillCoaching.title')}>
+            <MarkdownText style={styles.crisisBody} numberOfLines={skillCoachingExpanded ? undefined : 4}>
+              {reportData.skillCoaching}
+            </MarkdownText>
+            <TouchableOpacity
+              style={styles.crisisReadMoreRow}
+              activeOpacity={0.7}
+              onPress={() => setSkillCoachingExpanded(prev => !prev)}
+            >
+              <Text style={styles.crisisReadMoreText}>
+                {skillCoachingExpanded ? t('reportDetail.crisis.showLess') : t('reportDetail.crisis.readMore')}
+              </Text>
+              <Ionicons name={skillCoachingExpanded ? 'chevron-up' : 'chevron-down'} size={14} color="#C2694B" />
+            </TouchableOpacity>
+          </ReportCard>
+        )}
 
         {/* Tomorrow's Goal */}
-        {tomorrowGoalText && (
-          <View style={styles.goalCard}>
-            <View style={styles.goalLeftCol}>
-              <View style={styles.goalTopRow}>
-                <Text style={styles.goalLabel}>{t('reportDetail.tomorrowGoal.title')}</Text>
-              </View>
-              <Text style={styles.goalTitle}>{tomorrowGoalText}</Text>
-
-              <View style={styles.goalTodayTomorrowRow}>
-                <View style={styles.goalTodayCol}>
-                  <Text style={styles.goalMutedLabel}>{t('reportDetail.tomorrowGoal.todayLabel')}</Text>
-                  <View style={styles.goalTodayPill}>
-                    {goalDirective?.currentNumber != null && (
-                      <Text style={styles.goalTodayPillText}>{goalDirective.currentNumber}</Text>
-                    )}
-                  </View>
-                </View>
-                <Ionicons name="arrow-forward" size={16} color="#9CA3AF" />
-                <View style={styles.goalTomorrowCol}>
-                  <Text style={styles.goalMutedLabel}>{t('reportDetail.tomorrowGoal.tomorrowLabel')}</Text>
-                  <View style={styles.goalTomorrowPill}>
-                    <Text style={styles.goalTomorrowPillText}>
-                      {typeof goalDirective?.targetNumber === 'number'
-                        ? t('reportDetail.tomorrowGoal.aimFor', { count: goalDirective.targetNumber })
-                        : (goalDirective?.targetNumber || t('reportDetail.tomorrowGoal.aimFor', { count: 1 }))}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              {goalDirective?.coachingTip && (
-                <View style={styles.goalTipBanner}>
-                  <Ionicons name="bulb" size={14} color={COLORS.mainPurple} />
-                  <Text style={styles.goalTipBannerText}>{goalDirective.coachingTip}</Text>
-                </View>
-              )}
-            </View>
-          </View>
+        {goal.focusSkill && (
+          <ReportCard title={t('reportDetail.tomorrowGoal.title')} tip={goal.description || undefined}>
+            <Text style={styles.goalFocusSkill}>{goal.focusSkill}</Text>
+          </ReportCard>
         )}
 
         {/* What we learned about {childName} */}
-        <TouchableOpacity style={styles.card} activeOpacity={aboutChildItem ? 0.7 : 1}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.cardTitleRowFlush}>
-              <Ionicons name="heart" size={16} color={COLORS.mainPurple} />
-              <Text style={styles.cardTitle}>{t('reportDetail.childInsight.title', { childName })}</Text>
-            </View>
-            <TouchableOpacity onPress={handleShareChildInsight} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel="Share">
-              <Ionicons name="share-outline" size={18} color={COLORS.mainPurple} />
-            </TouchableOpacity>
-          </View>
+        <ReportCard icon="heart" title={t('reportDetail.childInsight.title', { childName })}>
           <View style={styles.childInsightRow}>
             <Image source={REPORT_DRAGON_GOOD} style={styles.childInsightImage} resizeMode="contain" />
             <View style={styles.childInsightTextCol}>
@@ -547,25 +576,17 @@ export const ReportDetailScreen: React.FC = () => {
                 </View>
               )}
             </View>
-            <Ionicons name="chevron-forward" size={16} color="#C4B5FD" />
+            <Ionicons name="chevron-forward" size={16} color="#E9A688" />
           </View>
-        </TouchableOpacity>
+        </ReportCard>
 
-        {/* Developmental Milestones */}
-        <View style={styles.developmentalSection}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.cardTitleRowFlush}>
-              <Ionicons name="analytics" size={16} color={COLORS.mainPurple} />
-              <Text style={styles.cardTitle}>
-                {developmentalProgress?.childName
-                  ? t('report.section.developmentalMilestonesWithName', { childName: developmentalProgress.childName })
-                  : t('report.section.developmentalMilestones')}
-              </Text>
-            </View>
-            <TouchableOpacity onPress={handleShareDevelopmental} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel="Share">
-              <Ionicons name="share-outline" size={18} color={COLORS.mainPurple} />
-            </TouchableOpacity>
-          </View>
+        {/* Developmental Milestones — expandable */}
+        <ReportCard
+          title={developmentalProgress?.childName
+            ? t('report.section.developmentalMilestonesWithName', { childName: developmentalProgress.childName })
+            : t('report.section.developmentalMilestones')}
+          expandable
+        >
           {developmentalProgress && developmentalProgress.completedSessionCount >= 5 ? (
             <RadarChart
               data={developmentalProgress}
@@ -574,34 +595,80 @@ export const ReportDetailScreen: React.FC = () => {
               showTitle={false}
             />
           ) : (
-            <View style={styles.milestoneLockedCard}>
+            <>
               <View style={styles.milestoneLockedBadge}>
                 <Text style={styles.milestoneLockedBadgeText}>
                   {t('report.milestone.lockedBadge', { count: developmentalProgress?.completedSessionCount ?? 0 })}
                 </Text>
               </View>
               <Text style={styles.milestoneLockedDesc}>{t('report.milestone.lockedDescription')}</Text>
-            </View>
+            </>
           )}
-        </View>
+        </ReportCard>
+
+        {/* Today's Interaction — expandable */}
+        <ReportCard
+          title={t('reportDetail.interactionStyle.title')}
+          expandable
+          tip={reportData.interactionTip || t('reportDetail.interactionStyle.tip', { childName })}
+        >
+          <Text style={styles.interactionSubheading}>{t('report.section.penSkills')}</Text>
+          {skills.map((skill, index) => {
+            const maxValue = skill.label === 'Echo' ? echoTarget : 10;
+            const rating = getSkillRating(skill.progress, t, maxValue);
+            const isDynamicEcho = skill.label === 'Echo' && childUtteranceCount < 10;
+            return (
+              <SkillProgressBar
+                key={index}
+                label={getSkillDisplayLabel(skill.label, t)}
+                progress={skill.progress}
+                maxValue={maxValue}
+                color={rating.barColor}
+                textColor={rating.textColor}
+                suffix={isDynamicEcho ? `${rating.suffix}*` : rating.suffix}
+              />
+            );
+          })}
+          {childUtteranceCount < 10 && skills.some(s => s.label === 'Echo') && (
+            <Text style={styles.echoFootnote}>
+              {`* ${t('skillInfo.echoGoalDynamic' as any, { count: childUtteranceCount, target: echoTarget })}`}
+            </Text>
+          )}
+
+          <View style={styles.interactionDivider} />
+
+          <View style={styles.avoidSubheadingRow}>
+            <Text style={styles.interactionSubheading}>{t('report.section.areasToAvoid')}</Text>
+            <View style={[styles.avoidTotalBadge, { backgroundColor: avoidRatingIsGood ? '#EAF8EE' : '#FBE3CE' }]}>
+              <Text style={[styles.avoidTotalBadgeText, { color: avoidRatingIsGood ? '#16A34A' : '#C2694B' }]}>
+                {avoidTotal} {avoidRatingSuffix}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.avoidContainer}>
+            {filteredAreas.map((area, index) => (
+              <View key={index} style={styles.avoidItem}>
+                <Text style={styles.avoidLabel}>{getSkillDisplayLabel(area.label, t)}</Text>
+                <View style={styles.circlesContainer}>
+                  {Array.from({ length: area.count }).map((_, i) => (
+                    <View key={i} style={styles.circle} />
+                  ))}
+                </View>
+              </View>
+            ))}
+          </View>
+        </ReportCard>
 
         {/* Full Transcript */}
-        <TouchableOpacity
-          style={styles.transcriptCard}
-          activeOpacity={0.7}
+        <ReportCard
+          icon="document-text"
+          title={t('reportDetail.transcript.title')}
+          subtitle={t('reportDetail.transcript.subtitle')}
           onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
-        >
-          <View style={styles.transcriptIconCircle}>
-            <Ionicons name="document-text" size={18} color={COLORS.mainPurple} />
-          </View>
-          <View style={styles.transcriptTextCol}>
-            <Text style={styles.transcriptTitle}>{t('reportDetail.transcript.title')}</Text>
-            <Text style={styles.transcriptSubtitle}>{t('reportDetail.transcript.subtitle')}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={COLORS.mainPurple} />
-        </TouchableOpacity>
+          headerRight={<Ionicons name="chevron-forward" size={17} color={REPORT_CARD_COLORS.iconColor} />}
+        />
 
-        {/* Unlock My Child's Plan — hidden once the user has completed the WACB survey */}
+        {/* Unlock My Child's Plan — bespoke, hidden once the user has completed the WACB survey */}
         {wacbCompleted === false && (
           <View style={styles.unlockCard}>
             <View style={styles.unlockIconBadge}>
@@ -635,16 +702,11 @@ export const ReportDetailScreen: React.FC = () => {
               <Text style={styles.unlockButtonText}>{t('reportDetail.unlock.cta')}</Text>
             </TouchableOpacity>
             <View style={styles.unlockTimeRow}>
-              <Ionicons name="time-outline" size={12} color="#9CA3AF" />
+              <Ionicons name="time-outline" size={12} color="#9A8672" />
               <Text style={styles.unlockTimeText}>{t('reportDetail.unlock.time')}</Text>
             </View>
           </View>
         )}
-
-        <View style={styles.footerBanner}>
-          <Ionicons name="heart" size={13} color={COLORS.mainPurple} />
-          <Text style={styles.footerBannerText}>{t('reportDetail.footer')}</Text>
-        </View>
       </ScrollView>
 
       <DomainMilestoneModal
@@ -661,7 +723,7 @@ export const ReportDetailScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFFFFF' },
+  screen: { flex: 1, backgroundColor: '#FFF8F0' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -673,248 +735,156 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F3E8FF',
+    backgroundColor: '#F5EAFB',
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontFamily: FONTS.bold,
-    fontSize: 17,
-    color: COLORS.textDark,
+    fontSize: 19,
+    color: REPORT_CARD_COLORS.title,
   },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  loadingText: { fontFamily: FONTS.regular, fontSize: 16, color: COLORS.textDark, marginTop: 16 },
+  loadingText: { fontFamily: FONTS.regular, fontSize: 18, color: COLORS.textDark, marginTop: 16 },
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  errorText: { fontFamily: FONTS.regular, fontSize: 16, color: '#E74C3C', textAlign: 'center', marginTop: 16, marginBottom: 24 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40 },
+  errorText: { fontFamily: FONTS.regular, fontSize: 18, color: '#E74C3C', textAlign: 'center', marginTop: 16, marginBottom: 24 },
+  scrollContent: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 40 },
 
-  // ── Hero ──
+  // ── Hero (bespoke) ──
   heroCard: {
     position: 'relative',
-    backgroundColor: '#FAF7FE',
-    borderRadius: 20,
-    paddingVertical: 20,
-    paddingRight: 16,
-    paddingLeft: 150,
+    backgroundColor: '#FCEFE0',
+    borderRadius: 28,
+    paddingVertical: 26,
+    paddingRight: 18,
+    paddingLeft: 168,
     marginTop: 0,
-    marginBottom: 14,
+    marginBottom: 18,
     justifyContent: 'center',
-    minHeight: 120,
+    minHeight: 150,
+    shadowColor: '#8C49D5',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.10,
+    shadowRadius: 28,
+    elevation: 3,
   },
   heroDragon: {
     position: 'absolute',
-    left: -10,
-    bottom: -25,
-    width: 160,
-    height: 160,
+    left: -16,
+    bottom: -18,
+    width: 184,
+    height: 184,
     zIndex: 2,
   },
   heroTextCol: {},
   heroIntro: {
     fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    color: COLORS.textDark,
-    marginBottom: 4,
+    fontSize: 14,
+    color: '#7A4A22',
+    marginBottom: 6,
   },
   heroBold: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 12,
+    fontFamily: FONTS.bold,
+    fontSize: 17,
     color: COLORS.mainPurple,
-    lineHeight: 18,
+    lineHeight: 23,
   },
 
-  // ── Crisis Moment card ──
-  crisisCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFF7F8',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 14,
-    gap: 12,
-  },
-  crisisCol: { flex: 1 },
-  crisisDivider: { width: 1, backgroundColor: '#FCD3D3', marginHorizontal: 2 },
-  crisisTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  crisisTitle: { fontFamily: FONTS.bold, fontSize: 13, color: '#DC2626' },
-  crisisBody: { fontFamily: FONTS.regular, fontSize: 12, color: COLORS.textDark, lineHeight: 18 },
-  crisisHelpedTitle: { fontFamily: FONTS.bold, fontSize: 13, color: '#DC2626', marginBottom: 8 },
-  crisisHelpedRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 6 },
-  crisisHelpedText: { flex: 1, fontFamily: FONTS.regular, fontSize: 12, color: COLORS.textDark, lineHeight: 17 },
+  // ── Crisis Moment content ──
+  crisisBadge: { backgroundColor: '#FBE3CE', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  crisisBadgeText: { fontFamily: FONTS.bold, fontSize: 11, color: '#C2694B'  },
+  // Font formatting matches ReportScreen.tsx's coachDescription (Coach's Corner content).
+  crisisBody: { fontFamily: FONTS.regular, fontSize: 16, color: '#4B5563', lineHeight: 24, marginBottom: 4, marginTop: 3 },
+  crisisReadMoreRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start' },
+  crisisReadMoreText: { fontFamily: FONTS.semiBold, fontSize: 13, color: '#C2694B' },
 
-  // ── Generic card ──
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#F0EBFB',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 14,
-  },
-  cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
-  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  cardTitleRowFlush: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
-  cardTitle: { fontFamily: FONTS.bold, fontSize: 15, color: COLORS.textDark },
+  // ── Top Moment content ──
+  quoteLines: { marginTop: 4, gap: 6, alignItems: 'center' },
+  quoteLine: { fontFamily: FONTS.regular, fontSize: 15, color: REPORT_CARD_COLORS.title, lineHeight: 22, textAlign: 'center' },
+  quoteSpeaker: { fontFamily: FONTS.bold, color: REPORT_CARD_COLORS.title },
 
-  // ── Top Moment ──
-  quoteLines: { marginTop: 10, gap: 6 },
-  quoteLine: { fontFamily: FONTS.regular, fontSize: 13, color: COLORS.textDark, lineHeight: 19 },
-  quoteSpeaker: { fontFamily: FONTS.bold, color: COLORS.textDark },
-  momentCelebration: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FAF6FE',
-    borderRadius: 12,
-    padding: 10,
-    marginTop: 12,
-  },
-  momentCelebrationText: { flex: 1, fontFamily: FONTS.semiBold, fontSize: 12, color: COLORS.mainPurple, lineHeight: 17 },
+  // ── Tomorrow's Goal content ──
+  goalFocusSkill: { fontFamily: FONTS.bold, fontSize: 16, color: REPORT_CARD_COLORS.title },
 
-  // ── Today's Interaction Style ──
-  interactionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  interactionDivider: { height: 1, backgroundColor: '#F0F0F3', marginBottom: 12 },
-  interactionRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  interactionBadge: { width: 26, height: 26, borderRadius: 13, justifyContent: 'center', alignItems: 'center' },
-  interactionBarTrack: { flex: 1, height: 7, borderRadius: 4, backgroundColor: '#F0F0F3', overflow: 'hidden' },
-  interactionBarFill: { height: '100%', borderRadius: 4 },
-  interactionValue: { fontFamily: FONTS.semiBold, fontSize: 12, color: COLORS.textDark, width: 34, textAlign: 'right' },
-  interactionDeltaCol: { flexDirection: 'row', alignItems: 'center', gap: 2, width: 34, justifyContent: 'flex-end' },
-  interactionDeltaText: { fontFamily: FONTS.semiBold, fontSize: 11 },
-  tipBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    backgroundColor: '#FAF6FE',
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 4,
-  },
-  tipBannerText: { flex: 1, fontFamily: FONTS.semiBold, fontSize: 12, color: COLORS.mainPurple, lineHeight: 17 },
+  // ── Today's Interaction content ──
+  interactionSubheading: { fontFamily: FONTS.bold, fontSize: 14, letterSpacing: 0.4, color: '#B08A5A', textTransform: 'uppercase', marginBottom: 14 },
+  interactionDivider: { height: 1, backgroundColor: '#F3E9DD', marginTop: 6, marginBottom: 20 },
+  echoFootnote: { fontFamily: FONTS.regular, fontSize: 13, color: '#B08A5A', lineHeight: 16, marginTop: -6, marginBottom: 6 },
+  avoidSubheadingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  avoidTotalBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  avoidTotalBadgeText: { fontFamily: FONTS.bold, fontSize: 12 },
+  avoidContainer: { gap: 16 },
+  avoidItem: { gap: 9 },
+  avoidLabel: { fontFamily: FONTS.semiBold, fontSize: 15, color: REPORT_CARD_COLORS.title },
+  circlesContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  circle: { width: 18, height: 18, borderRadius: 18, backgroundColor: '#E9A688' },
 
-  // ── Tomorrow's Goal ──
-  goalCard: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#F0EBFB',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 14,
-  },
-  goalLeftCol: {},
-  goalTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  goalLabel: { fontFamily: FONTS.bold, fontSize: 13, color: '#16A34A' },
-  goalTitle: { fontFamily: FONTS.bold, fontSize: 13, color: COLORS.textDark, marginBottom: 10 },
-  goalTodayTomorrowRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  goalTodayCol: { alignItems: 'center', flexShrink: 1 },
-  goalTomorrowCol: { alignItems: 'center', flexShrink: 1 },
-  goalMutedLabel: { fontFamily: FONTS.regular, fontSize: 11, color: '#9CA3AF', marginBottom: 6 },
-  goalTodayPill: { width: 44, height: 20, borderRadius: 999, backgroundColor: '#FDE7D2', justifyContent: 'center', alignItems: 'center' },
-  goalTodayPillText: { fontFamily: FONTS.semiBold, fontSize: 9, color: '#D97706' },
-  goalTomorrowPill: { width: 70, borderRadius: 12, backgroundColor: '#BBF7D0', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 3 },
-  goalTomorrowPillText: { fontFamily: FONTS.semiBold, fontSize: 9, color: '#16A34A', textAlign: 'center', lineHeight: 11 },
-  goalTipBanner: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F0EEFB' },
-  goalTipBannerText: { flex: 1, fontFamily: FONTS.regular, fontSize: 11.5, color: COLORS.mainPurple, lineHeight: 16 },
-
-  // ── What we learned about {childName} ──
-  childInsightRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  childInsightImage: { width: 56, height: 56 },
+  // ── What we learned about {childName} content ──
+  childInsightRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  childInsightImage: { width: 62, height: 62 },
   childInsightTextCol: { flex: 1 },
-  childInsightHeading: { fontFamily: FONTS.bold, fontSize: 14, color: COLORS.textDark, marginBottom: 4 },
-  childInsightBody: { fontFamily: FONTS.regular, fontSize: 12, color: '#6B7280', lineHeight: 17, marginBottom: 8 },
+  childInsightHeading: { fontFamily: FONTS.bold, fontSize: 16, color: REPORT_CARD_COLORS.title, marginBottom: 4 },
+  childInsightBody: { fontFamily: FONTS.regular, fontSize: 14, color: REPORT_CARD_COLORS.subtitle, lineHeight: 19, marginBottom: 10 },
   childTagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  childTagChip: { backgroundColor: '#F3E8FF', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  childTagText: { fontFamily: FONTS.semiBold, fontSize: 10, color: COLORS.mainPurple },
+  childTagChip: { backgroundColor: '#FDF2E9', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
+  childTagText: { fontFamily: FONTS.semiBold, fontSize: 12, color: '#C2694B' },
 
-  // ── Developmental Milestones ──
-  developmentalSection: { marginBottom: 14 },
-  milestoneLockedCard: {
-    backgroundColor: '#FAF7FE',
-    borderWidth: 1,
-    borderColor: '#F0EBFB',
-    borderRadius: 20,
-    padding: 16,
-  },
+  // ── Developmental Milestones content ──
   milestoneLockedBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#F3E8FF',
+    backgroundColor: '#FDF2E9',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 5,
     marginBottom: 10,
   },
-  milestoneLockedBadgeText: { fontFamily: FONTS.semiBold, fontSize: 12, color: COLORS.mainPurple },
-  milestoneLockedDesc: { fontFamily: FONTS.regular, fontSize: 12, color: '#6B7280', lineHeight: 18 },
+  milestoneLockedBadgeText: { fontFamily: FONTS.semiBold, fontSize: 14, color: '#C2694B' },
+  milestoneLockedDesc: { fontFamily: FONTS.regular, fontSize: 14, color: REPORT_CARD_COLORS.subtitle, lineHeight: 18 },
 
-  // ── Full Transcript ──
-  transcriptCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#F0EBFB',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 14,
-  },
-  transcriptIconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3E8FF', justifyContent: 'center', alignItems: 'center' },
-  transcriptTextCol: { flex: 1 },
-  transcriptTitle: { fontFamily: FONTS.bold, fontSize: 14, color: COLORS.mainPurple, marginBottom: 2 },
-  transcriptSubtitle: { fontFamily: FONTS.regular, fontSize: 11, color: '#9CA3AF' },
-
-  // ── Unlock My Child's Plan ──
+  // ── Unlock My Child's Plan (bespoke) ──
   unlockCard: {
     alignItems: 'center',
-    backgroundColor: '#FAF7FE',
-    borderWidth: 1,
-    borderColor: '#F0EBFB',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 14,
+    backgroundColor: '#FCEFE0',
+    borderRadius: 28,
+    padding: 26,
+    marginBottom: 18,
+    shadowColor: '#8C49D5',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.10,
+    shadowRadius: 28,
+    elevation: 3,
   },
   unlockIconBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F3E8FF',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  unlockTitle: { fontFamily: FONTS.bold, fontSize: 16, color: COLORS.textDark, textAlign: 'center', marginBottom: 6 },
-  unlockSubtitle: { fontFamily: FONTS.regular, fontSize: 12, color: '#6B7280', textAlign: 'center', marginBottom: 16 },
-  unlockFeatureRow: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginBottom: 20 },
-  unlockFeature: { alignItems: 'center', width: 78 },
+  unlockTitle: { fontFamily: FONTS.bold, fontSize: 18, color: REPORT_CARD_COLORS.title, textAlign: 'center', marginBottom: 8 },
+  unlockSubtitle: { fontFamily: FONTS.regular, fontSize: 14, color: REPORT_CARD_COLORS.subtitle, textAlign: 'center', marginBottom: 18 },
+  unlockFeatureRow: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginBottom: 22 },
+  unlockFeature: { alignItems: 'center', width: 82 },
   unlockFeatureBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F3E8FF',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 7,
   },
-  unlockFeatureText: { fontFamily: FONTS.semiBold, fontSize: 10, color: COLORS.textDark, textAlign: 'center', lineHeight: 13 },
+  unlockFeatureText: { fontFamily: FONTS.semiBold, fontSize: 12, color: REPORT_CARD_COLORS.title, textAlign: 'center', lineHeight: 14 },
   unlockButton: {
     width: '100%',
     backgroundColor: COLORS.mainPurple,
     borderRadius: 999,
-    paddingVertical: 14,
+    paddingVertical: 15,
     alignItems: 'center',
   },
   unlockButtonText: { fontFamily: FONTS.bold, fontSize: 14, color: '#FFFFFF' },
-  unlockTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 10 },
-  unlockTimeText: { fontFamily: FONTS.regular, fontSize: 11, color: '#9CA3AF' },
-
-  // ── Footer ──
-  footerBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 0,
-    backgroundColor: '#FAF7FE',
-    borderRadius: 16,
-    padding: 14,
-  },
-  footerBannerText: { fontFamily: FONTS.semiBold, fontSize: 12, color: COLORS.mainPurple, textAlign: 'center' },
+  unlockTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 12 },
+  unlockTimeText: { fontFamily: FONTS.regular, fontSize: 13, color: '#9A8672' },
 });

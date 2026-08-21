@@ -98,6 +98,14 @@ const PROFILES = {
     output:      'json',
   },
 
+  'crisis-coaching': {
+    model:       'gemini',
+    temperature: 0.5,
+    maxTokens:   4096,
+    timeout:     120_000,
+    output:      'json',
+  },
+
   'pdi-two-choices': {
     model:       'gemini',
     temperature: 0.4,

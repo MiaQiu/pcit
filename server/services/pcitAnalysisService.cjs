@@ -867,9 +867,12 @@ No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` :
  * @param {Array} utterances - Utterances with tags
  * @param {string} childName - Child's name for personalized feedback
  * @param {boolean} isCDI - true for CDI sessions, false for PDI
+ * @param {Object|null} [goalDirective] - Tomorrow's deterministic goal (see levelGoalEngine.cjs)
+ *   — { focusSkill, currentNumber, targetNumber, goalType, actionPrompt, coachingTip }. CDI only
+ *   (computed before this call in generateCdiCoaching); null for PDI sessions.
  * @returns {Promise<Object>} Assembled feedback result
  */
-async function generateCDIFeedback(counts, utterances, childName, isCDI = true, pdiResult = null, sessionId = null, language = null, coachingNarrativeText = null) {
+async function generateCDIFeedback(counts, utterances, childName, isCDI = true, pdiResult = null, sessionId = null, language = null, coachingNarrativeText = null, goalDirective = null) {
   console.log(`🚀 [CDI-FEEDBACK] Starting feedback generation (mode: ${isCDI ? 'CDI' : 'PDI'})...`);
 
   // Call 1: Combined feedback prompt (analysis + improvement + example in one)
@@ -881,10 +884,9 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true, 
 
   console.log('✅ [CDI-FEEDBACK] Combined feedback result:', JSON.stringify(feedbackData).substring(0, 300));
 
-  // Call 2 (review-feedback) and Call 3 (report-highlights) are both independent
-  // of each other — only report-highlights needs Call 1's topMoment quote — so
-  // run them in parallel rather than serializing.
-  console.log('📝 [CDI-FEEDBACK] Running review-feedback + report-highlights in parallel...');
+  // Call 2 (review-feedback) and Call 3 (crisis-coaching) are independent of
+  // each other, so run them in parallel rather than serializing.
+  console.log('📝 [CDI-FEEDBACK] Running review-feedback + crisis-coaching in parallel...');
 
   const reviewFeedbackPromise = (async () => {
     try {
@@ -916,18 +918,18 @@ All other feedback rules remain the same.` : '');
     }
   })();
 
-  const highlightsPromise = generateReportHighlights(coachingNarrativeText, feedbackData.topMoment?.quote || null, counts, childName, sessionId, language);
+  const crisisPromise = generateCrisis(utterances, coachingNarrativeText, childName, goalDirective, sessionId, language);
 
-  const [revisedFeedback, highlightsResult] = await Promise.all([reviewFeedbackPromise, highlightsPromise]);
+  const [revisedFeedback, crisisResult] = await Promise.all([reviewFeedbackPromise, crisisPromise]);
 
   // Assemble final result
   const result = {
     topMoment: feedbackData.topMoment?.quote,
     topMomentUtteranceNumber: feedbackData.topMoment?.utteranceNumber,
-    topMomentCelebration: highlightsResult?.topMomentCelebration || null,
-    heroText: highlightsResult?.heroText || null,
-    interactionTip: highlightsResult?.interactionTip || null,
-    crisisMoment: highlightsResult?.crisisMoment || null,
+    heroText: crisisResult?.heroText || null,
+    crisisMoment: crisisResult?.crisisMoment || null,
+    skillCoaching: crisisResult?.skillCoaching || null,
+    bondingMoment: crisisResult?.topMoment || null,
     feedback: feedbackData.Feedback,
     example: feedbackData.exampleUtteranceNumber,
     childReaction: feedbackData.ChildReaction,
@@ -1025,6 +1027,116 @@ async function generateReportHighlights(coachingText, topMomentQuote, counts, ch
     };
   } catch (error) {
     console.error('❌ [REPORT-HIGHLIGHTS] Error:', error.message);
+    return null;
+  }
+}
+
+// ============================================================================
+// Crisis Coaching — Hero Text + a free-form coaching report for a detected
+// distress moment, grounded in the raw transcript (not just the coaching
+// narrative) so the "what helped" / "what to try" guidance can cite specifics.
+// ============================================================================
+
+/**
+ * Build the crisis-coaching prompt. Reads the raw transcript AND the
+ * already-generated coaching narrative — unlike generateReportHighlights,
+ * which only reads the narrative — so the crisis writeup can ground its
+ * advice in the actual moment-by-moment exchange, not just its summary.
+ * @param {Object|null} goalDirective - Tomorrow's deterministic goal (see
+ *   levelGoalEngine.cjs) — { focusSkill, currentNumber, targetNumber,
+ *   actionPrompt, coachingTip }. currentNumber is this session's actual
+ *   count for that goal's skill/avoid-item. May be null (e.g. PDI, or a
+ *   session-count-gated goal with no single-session number) — the skill
+ *   coaching task degrades gracefully without a number in that case.
+ */
+function generateCrisisPrompt(utterances, coachingText, childName, goalDirective, language = null) {
+  const goalSection = goalDirective
+    ? `**Tomorrow's Goal:** ${goalDirective.focusSkill}${goalDirective.currentNumber != null ? `\n**This session's count for that goal:** ${goalDirective.currentNumber}` : ''}
+**Goal action:** ${goalDirective.actionPrompt || ''}`
+    : '**Tomorrow\'s Goal:** not available for this session.';
+
+  return `You are reviewing a parent coaching summary written after a parent-child play session with ${childName}.
+
+**Session Transcript:**
+${formatUtterancesForPrompt(utterances)}
+
+**Coaching Summary:**
+${coachingText}
+
+${goalSection}
+
+**Task:**
+1. **Hero Text**: Write one short, warm encouragement sentence (under 10 words) for the top of the report, reflecting what actually happened this session.
+
+2. **Crisis Moment**: Determine whether the transcript/summary describes a real distress moment (crying, tantrum, meltdown, dysregulation, refusal, big emotions).
+   - If YES: set detected=true, write a short title (2-4 words), and a coaching report for the tensed parent — think about what the parent needs at this exact moment. Cover, as short labeled paragraphs separated by blank lines: what happened, why it happened (optional), and if what the parent did helped the child, highlight that specifically; if the parent seemed helpless in the situation, tell them what would have helped instead. End with a short "Try this next time" section as 2-4 bullet points of alternative actionable tips.
+     Format the "coaching" text for easy mobile reading:
+     - Use **bold** on the 2-5 most important phrases (what worked, key techniques, the core cause).
+     - Separate each paragraph/section with a blank line (\n\n).
+     - Write the closing tips as • bullet points, one per line.
+   - If NO: set detected=false, and leave title and coaching as empty strings.
+
+3. **Skill Coaching**: Write a short coaching section (3-5 sentences) about tomorrow's goal skill above, grounded in what actually happened this session (the count given, and specific moments from the transcript). Focus on insights about how ${childName} responded — in the transcript — around that skill or behavior, not on judging the parent's performance. Keep the tone soft and child-focused; do not trigger the parent's defensiveness (avoid phrases like "you didn't" or "you should have"). If no goal is available, skip this gently — return an empty string.
+
+4. **Top Moment**: Find 2-3 CONSECUTIVE utterances from the transcript (by utterance index) that best capture a bonding moment, or that highlight ${childName}'s personality or development — the kind of exchange that melts a parent's heart. Quote the exchange exactly as it appears in the transcript, and write a 1-2 sentence description of the context (what was happening right before/around it).
+
+Return ONLY valid JSON:
+{
+  "heroText": "one short warm sentence",
+  "crisisMoment": {
+    "detected": true or false,
+    "title": "short title or empty string",
+    "coaching": "formatted coaching report with **bold**, blank-line paragraphs, and • bullet tips — or empty string"
+  },
+  "skillCoaching": "3-5 sentences about tomorrow's goal skill, grounded in this session — or empty string",
+  "topMoment": {
+    "quote": "the exact 2-3 consecutive utterances, quoted verbatim",
+    "utteranceNumber": index of the first utterance in the quoted exchange,
+    "context": "1-2 sentences describing what was happening"
+  }
+}
+
+No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` : ''}`;
+}
+
+/**
+ * Generate hero banner text, a free-form crisis coaching report, a skill
+ * coaching note for tomorrow's goal, and a "top moment" bonding exchange —
+ * all grounded in the raw transcript plus the session's already-generated
+ * coaching narrative. Uses Gemini (streaming under the hood via the
+ * gateway, same as every other 'gemini'-model call — see
+ * llm/gateway.cjs's _geminiStreamCall routing).
+ * @param {Array} utterances - Utterances with roles (role/text at minimum)
+ * @param {string|null} coachingText - coachingSummary (CDI) or pdiResult.summary (PDI)
+ * @param {string} childName
+ * @param {Object|null} [goalDirective] - see generateCrisisPrompt's jsdoc
+ * @param {string|null} [sessionId]
+ * @param {string|null} [language]
+ * @returns {Promise<{heroText, crisisMoment, skillCoaching, topMoment}|null>}
+ */
+async function generateCrisis(utterances, coachingText, childName, goalDirective = null, sessionId = null, language = null) {
+  if (!coachingText || !utterances || utterances.length === 0) {
+    console.log('⚠️ [CRISIS-COACHING] No coaching narrative or transcript available, skipping');
+    return null;
+  }
+
+  console.log('📊 [CRISIS-COACHING] Generating hero text, crisis coaching, skill coaching, top moment...');
+  try {
+    const result = await llmCall(generateCrisisPrompt(utterances, coachingText, childName, goalDirective, language), {
+      profile: 'crisis-coaching',
+      schema:  SCHEMAS.CRISIS_COACHING,
+      label:   'crisis-coaching',
+      sessionId,
+    });
+    console.log(`✅ [CRISIS-COACHING] crisisMoment.detected=${result?.crisisMoment?.detected}`);
+    return {
+      heroText: result?.heroText || null,
+      crisisMoment: result?.crisisMoment || null,
+      skillCoaching: result?.skillCoaching || null,
+      topMoment: result?.topMoment || null,
+    };
+  } catch (error) {
+    console.error('❌ [CRISIS-COACHING] Error:', error.message);
     return null;
   }
 }
@@ -1715,7 +1827,7 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
 
     // Run multi-prompt feedback flow for both CDI and PDI (mode-aware)
     console.log(`🎯 [COMPETENCY-ANALYSIS] Using multi-prompt feedback generation for ${session.mode} session...`);
-    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName, isCDI, pdiResult, sessionId, primaryLanguage, coachingNarrativeText);
+    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName, isCDI, pdiResult, sessionId, primaryLanguage, coachingNarrativeText, childProfilingResult?.goalDirective || null);
 
     // Save revised feedback to database
     if (feedbackResult.revisedFeedback && feedbackResult.revisedFeedback.length > 0) {
@@ -1725,10 +1837,10 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
     competencyAnalysis = {
       topMoment: feedbackResult.topMoment,
       topMomentUtteranceNumber: typeof feedbackResult.topMomentUtteranceNumber === 'number' ? feedbackResult.topMomentUtteranceNumber : null,
-      topMomentCelebration: feedbackResult.topMomentCelebration || null,
       heroText: feedbackResult.heroText || null,
-      interactionTip: feedbackResult.interactionTip || null,
       crisisMoment: feedbackResult.crisisMoment || null,
+      skillCoaching: feedbackResult.skillCoaching || null,
+      bondingMoment: feedbackResult.bondingMoment || null,
       feedback: feedbackResult.feedback || null,
       example: typeof feedbackResult.example === 'number' ? feedbackResult.example : null,
       childReaction: feedbackResult.childReaction || null,
@@ -1873,6 +1985,7 @@ module.exports = {
   identifyRolesWithVoting,
   generateCDIFeedback,
   generateReportHighlights,
+  generateCrisis,
   generatePDITwoChoicesAnalysis,
   generateDevelopmentalProfiling,
   generateCdiCoaching,

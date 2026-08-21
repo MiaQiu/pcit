@@ -87,6 +87,37 @@ const REPORT_HIGHLIGHTS = {
   required: ['heroText', 'topMomentCelebration', 'interactionTip', 'crisisMoment'],
 };
 
+// ── generate-crisis ───────────────────────────────────────────────────────────
+// Hero banner text, a free-form crisis coaching report, a skill-coaching note
+// for tomorrow's goal, and a "top moment" bonding exchange — all derived from
+// the raw session transcript plus the already-generated coaching narrative.
+const CRISIS_COACHING = {
+  type: 'object',
+  properties: {
+    heroText: { type: 'string' },
+    crisisMoment: {
+      type: 'object',
+      properties: {
+        detected: { type: 'boolean' },
+        title:    { type: 'string' },
+        coaching: { type: 'string' },
+      },
+      required: ['detected', 'title', 'coaching'],
+    },
+    skillCoaching: { type: 'string' },
+    topMoment: {
+      type: 'object',
+      properties: {
+        quote:           { type: 'string' },
+        utteranceNumber: { type: 'integer' },
+        context:         { type: 'string' },
+      },
+      required: ['quote', 'utteranceNumber', 'context'],
+    },
+  },
+  required: ['heroText', 'crisisMoment', 'skillCoaching', 'topMoment'],
+};
+
 // ── pdi-two-choices ───────────────────────────────────────────────────────────
 // PDI discipline sequence analysis
 const PDI_TWO_CHOICES = {
@@ -257,6 +288,7 @@ module.exports = {
   REVIEW_FEEDBACK,
   COMBINED_FEEDBACK,
   REPORT_HIGHLIGHTS,
+  CRISIS_COACHING,
   PDI_TWO_CHOICES,
   DEV_PROFILING,
   COACHING_FORMAT,

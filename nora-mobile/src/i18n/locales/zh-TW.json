@@ -518,14 +518,22 @@
     "heroFallback": "今天做得很好——{{childName}}很享受和你在一起的時光。",
     "crisis": {
       "title": "檢測到崩潰時刻",
-      "whatHelpedTitle": "有幫助的做法"
+      "readMore": "閱讀更多",
+      "showLess": "收起"
+    },
+    "skillCoaching": {
+      "title": "明日技能指導"
     },
     "topMoment": {
       "title": "高光時刻",
-      "afterMoment": "這一刻過後，{{childName}}重新投入，又開心地玩了起來。"
+      "afterMoment": "這一刻過後，{{childName}}重新投入，又開心地玩了起來。",
+      "you": "你"
+    },
+    "bondingMoment": {
+      "title": "親子時刻"
     },
     "interactionStyle": {
-      "title": "今日互動風格",
+      "title": "今日互動",
       "viewTips": "檢視建議",
       "tip": "在艱難時刻減少了提問和命令，做得很好。這能幫助{{childName}}感到安全和被支援。"
     },

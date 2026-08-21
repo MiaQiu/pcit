@@ -179,8 +179,15 @@ export interface RecordingAnalysis {
   crisisMoment?: {
     detected: boolean;
     title: string;
-    description: string;
-    whatHelped: string[];
+    coaching?: string;  // Free-form coaching report (generateCrisis) — the current source
+    description?: string;  // Legacy shape (generateReportHighlights) — older sessions only
+    whatHelped?: string[];  // Legacy shape (generateReportHighlights) — older sessions only
+  } | null;
+  skillCoaching?: string | null;  // Coaching note for tomorrow's goal skill, grounded in this session (generateCrisis)
+  bondingMoment?: {
+    quote: string;             // 2-3 consecutive utterances, quoted verbatim (generateCrisis)
+    utteranceNumber: number;   // Index of the first utterance in the quoted exchange
+    context: string;           // 1-2 sentences describing what was happening
   } | null;
   topMomentStartTime?: number | null;  // Start time in seconds
   topMomentEndTime?: number | null;  // End time in seconds

@@ -178,9 +178,7 @@ async function repairSession(session) {
     competencyAnalysis = {
       topMoment: feedbackResult.topMoment,
       topMomentUtteranceNumber: typeof feedbackResult.topMomentUtteranceNumber === 'number' ? feedbackResult.topMomentUtteranceNumber : null,
-      topMomentCelebration: feedbackResult.topMomentCelebration || null,
       heroText: feedbackResult.heroText || null,
-      interactionTip: feedbackResult.interactionTip || null,
       crisisMoment: feedbackResult.crisisMoment || null,
       feedback: feedbackResult.feedback || null,
       example: typeof feedbackResult.example === 'number' ? feedbackResult.example : null,

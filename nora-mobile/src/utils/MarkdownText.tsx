@@ -12,6 +12,7 @@ interface MarkdownTextProps {
   children: string;
   style?: TextStyle;
   boldFontFamily?: string;
+  numberOfLines?: number;
 }
 
 /**
@@ -21,7 +22,8 @@ interface MarkdownTextProps {
 export const MarkdownText: React.FC<MarkdownTextProps> = ({
   children,
   style,
-  boldFontFamily = FONTS.semiBold
+  boldFontFamily = FONTS.semiBold,
+  numberOfLines
 }) => {
   if (!children) return null;
 
@@ -52,7 +54,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
   }
 
   if (parts.length === 0) {
-    return <Text style={style}>{children}</Text>;
+    return <Text style={style} numberOfLines={numberOfLines}>{children}</Text>;
   }
 
   // Wrap in a View so the layout engine constrains the width properly.
@@ -70,7 +72,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
                    marginHorizontal, marginVertical,
                    padding, paddingTop, paddingBottom, paddingLeft, paddingRight,
                    paddingHorizontal, paddingVertical }}>
-      <Text style={style}>{parts}</Text>
+      <Text style={style} numberOfLines={numberOfLines}>{parts}</Text>
     </View>
   );
 };
