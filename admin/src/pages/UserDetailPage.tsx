@@ -51,14 +51,18 @@ export default function UserDetailPage() {
       {loading && <div className="loading-state">Loading…</div>}
       {error && <div className="error-state">{error}</div>}
 
-      {!loading && !error && profile && (
+      {!loading && !error && profile && (() => {
+        const lessons = profile.lessons ?? [];
+        const demoVideos = profile.demoVideos ?? [];
+        const sessions = profile.sessions ?? [];
+        return (
         <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
           {/* Lessons completed */}
           <div style={{ flex: 1 }}>
             <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>
-              Lessons Completed ({profile.lessons.length})
+              Lessons Completed ({lessons.length})
             </h2>
-            {profile.lessons.length === 0 ? (
+            {lessons.length === 0 ? (
               <div className="empty-state">No lessons completed.</div>
             ) : (
               <table className="data-table">
@@ -70,7 +74,7 @@ export default function UserDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {profile.lessons.map((l) => (
+                  {lessons.map((l) => (
                     <tr key={l.lessonId}>
                       <td>{l.module ?? '—'}</td>
                       <td>{l.title}</td>
@@ -85,9 +89,9 @@ export default function UserDetailPage() {
           {/* Demo videos viewed */}
           <div style={{ flex: 1 }}>
             <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>
-              Demo Videos Viewed ({profile.demoVideos.length})
+              Demo Videos Viewed ({demoVideos.length})
             </h2>
-            {profile.demoVideos.length === 0 ? (
+            {demoVideos.length === 0 ? (
               <div className="empty-state">No demo videos viewed.</div>
             ) : (
               <table className="data-table">
@@ -98,7 +102,7 @@ export default function UserDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {profile.demoVideos.map((v) => (
+                  {demoVideos.map((v) => (
                     <tr key={v.demoVideoId}>
                       <td>{v.title}</td>
                       <td>{fmt(v.viewedAt)}</td>
@@ -112,9 +116,9 @@ export default function UserDetailPage() {
           {/* Sessions */}
           <div style={{ flex: 1 }}>
             <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>
-              Sessions ({profile.sessions.length})
+              Sessions ({sessions.length})
             </h2>
-            {profile.sessions.length === 0 ? (
+            {sessions.length === 0 ? (
               <div className="empty-state">No sessions found.</div>
             ) : (
               <table className="data-table">
@@ -128,7 +132,7 @@ export default function UserDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {profile.sessions.map((s) => (
+                  {sessions.map((s) => (
                     <tr key={s.id}>
                       <td className="monospace" style={{ fontSize: 12 }}>{s.id}</td>
                       <td>{s.mode}</td>
@@ -146,7 +150,8 @@ export default function UserDetailPage() {
             )}
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
