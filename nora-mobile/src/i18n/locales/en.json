@@ -283,7 +283,12 @@
     "speakerChild": "Child",
     "speakerAdultN": "Adult {{n}}",
     "speakerChildN": "Child {{n}}",
+    "filterHint": "Select a skill or avoid item",
+    "next": "Next",
+    "matchCounter": "{{current}} of {{total}}",
+    "noMatches": "No moments found",
     "pcitTags": {
+      "Praise": "Praise",
       "Echo": "Echo",
       "Labeled Praise": "Labeled Praise",
       "Unlabeled Praise": "Unlabeled Praise",
@@ -492,21 +497,13 @@
     "headlineAmazing": "Amazing session!",
     "headlineGood": "Good progress!",
     "headlineSubtext": "Keep it up\nyou're doing great!",
-    "emotionalDeposit": "Emotional Deposit",
-    "deltaFrom": "from",
-    "deltaLastSession": "last session",
+    "depositLabel": "Deposit",
+    "deltaToday": "{{count}} today",
     "todaysGoal": "Today's Goal",
-    "reduceSkill": "Reduce {{skill}}",
-    "youDidIt": "You did it!",
-    "almostThere": "Almost there!",
-    "onlyCountToday": "Only <0>{{count}}</0> {{skill}} today",
-    "countToday": "<0>{{count}}</0> {{skill}} today",
-    "lastTime": "(last time: {{count}})",
-    "lastSession": "(last session: {{count}})",
-    "goalEncouragement": "You've already improved. Keep going!",
-    "parentingLevel": "Parenting Level",
-    "levelHeading": "Level {{level}}",
-    "levelFooterSessions": "You're {{count}}/2 sessions toward Level {{nextLevel}}!",
+    "levelLabel": "Level",
+    "aimForLabel": "Aim for",
+    "goalRemaining": "You're <0>{{count}}</0> away from your goal!",
+    "goalAchievedShort": "You hit your goal!",
     "continueToCoaching": "Continue to Coaching",
     "shareMyProgress": "Share my progress",
     "shareMessage": "I just had a {{score}}/100 session with {{childName}} using Nora!"
@@ -522,7 +519,10 @@
       "showLess": "Show less"
     },
     "skillCoaching": {
-      "title": "Skill Coaching for Tomorrow"
+      "title": "Coach's Corner",
+      "learnMoreTitle": "Learn more about {{skill}}",
+      "lessonBadge": "Lesson",
+      "demoBadge": "Demo"
     },
     "topMoment": {
       "title": "Top Moment",
@@ -534,8 +534,7 @@
     },
     "interactionStyle": {
       "title": "Today's Interaction",
-      "viewTips": "View tips",
-      "tip": "Great job using fewer questions and commands during the tough moment. This helps {{childName}} feel safe and supported."
+      "viewTips": "View tips"
     },
     "tomorrowGoal": {
       "title": "Tomorrow's Goal",
@@ -545,7 +544,8 @@
     },
     "childInsight": {
       "title": "What we learned about {{childName}}",
-      "shareMessage": "Here's something we learned about {{childName}} today with Nora: {{insight}}"
+      "shareMessage": "Here's something we learned about {{childName}} today with Nora: {{insight}}",
+      "advancedLanguageTag": "Advanced Language Skill"
     },
     "developmental": {
       "shareMessage": "Tracking {{childName}}'s developmental milestones with Nora — check out the progress!"
@@ -573,14 +573,38 @@
     "coreFocusAreasTitle": "{{childName}}'s Core Focus Areas",
     "fromYourIntake": "From your intake",
     "focusAreas": {
-      "transitions": { "label": "Transitions & Cooperation", "level": "Moderate", "focus": "Focus: Q1, Q2" },
-      "energy": { "label": "Focus & Energy", "level": "High", "focus": "Focus: Q5-Q7" },
-      "boundaries": { "label": "Boundaries", "level": "Mild", "focus": "Focus: Q8" }
-    ,
-      "attention": { "label": "Focus & Cooperation", "focus": "Focus: Attention & Following Directions" },
-      "emotional": { "label": "Emotional Balance", "focus": "Focus: Meltdowns & Aggression" },
-      "routines": { "label": "Transitions & Routines", "focus": "Focus: Bedtime, Meals & Delays" },
-      "social": { "label": "Social Boundaries", "focus": "Focus: Peer & Sibling Interactions" }},
+      "transitions": {
+        "label": "Transitions & Cooperation",
+        "level": "Moderate",
+        "focus": "Focus: Q1, Q2"
+      },
+      "energy": {
+        "label": "Focus & Energy",
+        "level": "High",
+        "focus": "Focus: Q5-Q7"
+      },
+      "boundaries": {
+        "label": "Boundaries",
+        "level": "Mild",
+        "focus": "Focus: Q8"
+      },
+      "attention": {
+        "label": "Focus & Cooperation",
+        "focus": "Focus: Attention & Following Directions"
+      },
+      "emotional": {
+        "label": "Emotional Balance",
+        "focus": "Focus: Meltdowns & Aggression"
+      },
+      "routines": {
+        "label": "Transitions & Routines",
+        "focus": "Focus: Bedtime, Meals & Delays"
+      },
+      "social": {
+        "label": "Social Boundaries",
+        "focus": "Focus: Peer & Sibling Interactions"
+      }
+    },
     "journeyTitle": "Personalized Learning Journey",
     "journeySubtitle": "Your next steps in Nora",
     "phase1Badge": "PHASE 1",
@@ -590,26 +614,95 @@
     "phase2Title": "Parent-Directed Interaction (PDI)",
     "phase2Subtitle": "Practice calm, consistent limits.",
     "steps": {
-      "attentionAnchor": { "title": "The Attention Anchor", "focus": "Focus: Behavioral Descriptions", "description": "Helps {{childName}} stay engaged by reflecting their actions instead of asking questions." },
-      "praiseEngine": { "title": "The Praise Engine", "focus": "Focus: Specific Labeled Praise", "description": "Reinforces positive behaviors before friction starts." },
-      "connectionBuilder": { "title": "The Connection Builder", "focus": "Focus: Reflections", "description": "Shows {{childName}} you're with them and builds trust through play." },
-      "clearCommand": { "title": "The Clear Command", "focus": "Focus: Direct Commands", "description": "Gives {{childName}} one clear, specific instruction they can actually follow." },
-      "patientPause": { "title": "The Patient Pause", "focus": "Focus: Wait Time", "description": "Gives {{childName}} space to comply before you step in." },
-      "followThrough": { "title": "The Follow-Through", "focus": "Focus: Consequences", "description": "Shows {{childName}} that your commands are consistent and reliable." }
+      "attentionAnchor": {
+        "title": "The Attention Anchor",
+        "focus": "Focus: Behavioral Descriptions",
+        "description": "Helps {{childName}} stay engaged by reflecting their actions instead of asking questions."
+      },
+      "praiseEngine": {
+        "title": "The Praise Engine",
+        "focus": "Focus: Specific Labeled Praise",
+        "description": "Reinforces positive behaviors before friction starts."
+      },
+      "connectionBuilder": {
+        "title": "The Connection Builder",
+        "focus": "Focus: Reflections",
+        "description": "Shows {{childName}} you're with them and builds trust through play."
+      },
+      "clearCommand": {
+        "title": "The Clear Command",
+        "focus": "Focus: Direct Commands",
+        "description": "Gives {{childName}} one clear, specific instruction they can actually follow."
+      },
+      "patientPause": {
+        "title": "The Patient Pause",
+        "focus": "Focus: Wait Time",
+        "description": "Gives {{childName}} space to comply before you step in."
+      },
+      "followThrough": {
+        "title": "The Follow-Through",
+        "focus": "Focus: Consequences",
+        "description": "Shows {{childName}} that your commands are consistent and reliable."
+      }
     },
-    "unlockMessage": "More steps unlock as you progress"
-  ,
-    "severity": { "high": "High", "moderate": "Moderate", "mild": "Mild" },
+    "unlockMessage": "More steps unlock as you progress",
+    "severity": {
+      "high": "High",
+      "moderate": "Moderate",
+      "mild": "Mild"
+    },
     "journeyLevelBadge": "LEVEL {{level}}",
     "journeyGoalLabel": "Goal: ",
     "levels": {
-      "playBuilder": { "title": "Play Builder", "skill": "Follow Your Child's Lead", "goal": "Build a safe and enjoyable play experience.", "learn": "Let the child lead the play • Reduce commands • Reduce questions • Avoid criticism", "clearGoal": "Keep commands, questions, and criticism to 6 or fewer combined in a single session." },
-      "confidenceBuilder": { "title": "Confidence Builder", "skill": "Specific Praise", "goal": "Help your child feel capable.", "learn": "Labeled praise • Praise effort instead of outcome • Build confidence through positive attention", "clearGoal": "Give 5 or more labeled praises in a single session." },
-      "attentionBuilder": { "title": "Attention Builder", "skill": "Narration", "goal": "Increase focus and engagement.", "learn": "Describe what the child is doing • Keep the child engaged • Extend attention span", "clearGoal": "Narrate what your child is doing 5 or more times in a single session." },
-      "communicationBuilder": { "title": "Communication Builder", "skill": "Reflection (Echo)", "goal": "Help your child feel understood.", "learn": "Repeat and expand what the child says • Encourage language • Show active listening", "clearGoal": "Echo what your child says 5 or more times in a single." },
-      "cooperationBuilder": { "title": "Cooperation Builder", "skill": "Clear Instructions", "goal": "Increase everyday cooperation.", "learn": "Give effective commands • One instruction at a time • Wait before repeating", "clearGoal": "Give at least 1 clear command in a Discipline session, for 2 qualifying sessions." },
-      "boundaryBuilder": { "title": "Boundary Builder", "skill": "Calm Follow-Through", "goal": "Build respectful boundaries.", "learn": "Stay calm • Be consistent • Follow through on limits • Reduce power struggles", "clearGoal": "Give a clear command with zero criticism in a Discipline session, for 2 qualifying sessions." },
-      "confidentParent": { "title": "Confident Parent", "skill": "Putting It All Together", "goal": "Use the right parenting skill at the right moment.", "learn": "Follow Child's Lead • Praise • Narration • Reflection • Clear Instructions • Calm Follow-Through", "clearGoal": "Bring every skill together with zero criticism, for 2 qualifying sessions." }
+      "playBuilder": {
+        "title": "Play Builder",
+        "skill": "Follow Your Child's Lead",
+        "goal": "Build a safe and enjoyable play experience.",
+        "learn": "Let the child lead the play • Reduce commands • Reduce questions • Avoid criticism",
+        "clearGoal": "Keep commands, questions, and criticism to 6 or fewer combined in a single session."
+      },
+      "confidenceBuilder": {
+        "title": "Confidence Builder",
+        "skill": "Specific Praise",
+        "goal": "Help your child feel capable.",
+        "learn": "Labeled praise • Praise effort instead of outcome • Build confidence through positive attention",
+        "clearGoal": "Give 5 or more labeled praises in a single session."
+      },
+      "attentionBuilder": {
+        "title": "Attention Builder",
+        "skill": "Narration",
+        "goal": "Increase focus and engagement.",
+        "learn": "Describe what the child is doing • Keep the child engaged • Extend attention span",
+        "clearGoal": "Narrate what your child is doing 5 or more times in a single session."
+      },
+      "communicationBuilder": {
+        "title": "Communication Builder",
+        "skill": "Reflection (Echo)",
+        "goal": "Help your child feel understood.",
+        "learn": "Repeat and expand what the child says • Encourage language • Show active listening",
+        "clearGoal": "Echo what your child says 5 or more times in a single."
+      },
+      "cooperationBuilder": {
+        "title": "Cooperation Builder",
+        "skill": "Clear Instructions",
+        "goal": "Increase everyday cooperation.",
+        "learn": "Give effective commands • One instruction at a time • Wait before repeating",
+        "clearGoal": "Give at least 1 clear command in a Discipline session, for 2 qualifying sessions."
+      },
+      "boundaryBuilder": {
+        "title": "Boundary Builder",
+        "skill": "Calm Follow-Through",
+        "goal": "Build respectful boundaries.",
+        "learn": "Stay calm • Be consistent • Follow through on limits • Reduce power struggles",
+        "clearGoal": "Give a clear command with zero criticism in a Discipline session, for 2 qualifying sessions."
+      },
+      "confidentParent": {
+        "title": "Confident Parent",
+        "skill": "Putting It All Together",
+        "goal": "Use the right parenting skill at the right moment.",
+        "learn": "Follow Child's Lead • Praise • Narration • Reflection • Clear Instructions • Calm Follow-Through",
+        "clearGoal": "Bring every skill together with zero criticism, for 2 qualifying sessions."
+      }
     }
   },
   "parentLevelDetail": {
@@ -838,11 +931,11 @@
       "3end": " and celebrate your amazing progress!",
       "4start": "Ready for more fun? Capture another awesome play session with ",
       "4end": "!"
-    }
-  ,
+    },
     "getReadyLabel": "Play Guide",
     "getReadyBody": "Everything you need before you begin.",
-    "getReadyButton": "Prepare for your first play"},
+    "getReadyButton": "Prepare for your first play"
+  },
   "lessonRead": {
     "title": "Lesson",
     "noContent": "This lesson doesn't have a text version yet."
@@ -919,6 +1012,7 @@
     "learnAbout": "Learn about {{name}}",
     "noUtterances": "No {{name}} utterances recorded in this session.",
     "readFullConversation": "Read Full Conversation",
+    "transcriptFoundLabel": "{{count}} {{skill}} found in today's session",
     "sessionGoal": "Goal",
     "goalDisplay": "Goal: {{target}} times / 5 min",
     "echoGoalDynamic": "When your child speaks fewer than 10 times, the target adjusts to 75% of their utterances. Your child spoke {{count}} times this session, so the goal is {{target}}.",
@@ -1133,8 +1227,7 @@
       "paragraph1": "Many parents come to Nora with similar challenges.",
       "paragraph2Pre": "What surprises most parents is that many of these challenges improve through ",
       "paragraph2Highlight": "one simple daily habit.",
-      "discoverButton": "Discover  →"
-    ,
+      "discoverButton": "Discover  →",
       "youreInAlt": "You're in ",
       "goodHandsAlt": "good hands.",
       "paragraph1AltPre": "Nora is designed with clinical child psychologists and adapts evidence-based coaching to ",
@@ -1144,23 +1237,23 @@
       "paragraph2AltHighlight": "more support,",
       "paragraph3AltPre": "we'll build a ",
       "paragraph3AltHighlight": "personalized plan",
-      "paragraph3AltPost": " together."},
+      "paragraph3AltPost": " together."
+    },
     "obLetterContent": {
       "hi": "Hi ",
       "comma": ",",
       "thankYou": "Thank you for choosing Nora. We're excited to support both you and ",
       "period": ".",
-      "continueButton": "Continue  →"
-    ,
+      "continueButton": "Continue  →",
       "thankYouAlt": "Thank you for choosing Nora.",
       "subtitleAltPre": "Every child learns differently, and Nora adapts coaching to ",
       "subtitleAltHighlight": "'s unique",
-      "subtitleAltPost": " strengths and needs."},
+      "subtitleAltPost": " strengths and needs."
+    },
     "obIntro1": {
       "helping": "Helping",
       "startsHere": "starts here",
-      "continueButton": "Continue  →"
-    ,
+      "continueButton": "Continue  →",
       "threeStepsPre": "Just 3 simple steps, powered by ",
       "threeStepsHighlight1": "AI",
       "threeStepsMid": "\nand backed by ",
@@ -1173,15 +1266,15 @@
       "card2Body": "Our AI listens to your\nplaytime recording.",
       "card3TitleLine1": "Personalized",
       "card3TitleLine2": "coaching",
-      "card3Body": "Get tailored feedback\nand tips for your child."},
+      "card3Body": "Get tailored feedback\nand tips for your child."
+    },
     "obIntro2": {
       "sentence1Pre": "Most of parents with similar goals ",
       "sentence1Highlight": "reported meaningful changes",
       "sentence1Mid": " in less than ",
       "sentence1HighlightWeeks": "3 weeks.",
       "sentence2": "I'm so glad you're here. 💜",
-      "continueButton": "I'm In  →"
-    ,
+      "continueButton": "I'm In  →",
       "altPara1Pre": "Every child grows at their ",
       "altPara1Highlight": "own pace.",
       "altPara2Pre": "Many families notice ",
@@ -1190,7 +1283,8 @@
       "altPara3Pre": "We'll celebrate ",
       "altPara3Highlight": "every step",
       "altPara3Post": " with you. 💜",
-      "bubbleText": "We can do it."},
+      "bubbleText": "We can do it."
+    },
     "reminderTime": {
       "title": "Hi {{name}}, When is your 5 mins?",
       "description": "Many parents find the \"After-School Reconnect\" or \"Pre-Dinner Play\" or \"Weekend day morning\" works best.",
@@ -1403,8 +1497,7 @@
       "title": "Your data stays private",
       "subtitle": "Your data is always protected and never shared without your permission."
     },
-    "next": "Next  →"
-  ,
+    "next": "Next  →",
     "diagnosisStatus": {
       "title": "Has {{childName}} received a diagnosis?",
       "yes": "Yes",
@@ -1508,7 +1601,8 @@
       "other": "Other",
       "none": "None",
       "preferNotToSay": "I'd rather not say"
-    }},
+    }
+  },
   "quizFeedback": {
     "correct": "Correct!",
     "notQuite": "Not quite!"
@@ -1710,8 +1804,7 @@
     "lessonCount_one": "{{count}} lesson",
     "lessonCount_other": "{{count}} lessons",
     "current": "Current"
-  }
-,
+  },
   "getReadyToPlay": {
     "title1": "Get Ready",
     "title2": "to Play?",
@@ -1760,4 +1853,5 @@
         "body": "Your family's private moments are completely safe with Nora.\n\n* **5-Minute or 10-Minute Audio Limit:** Recording automatically stops as soon as your timer ends.\n* **Coaching Use Only:** Audio is analyzed strictly to give you insights.\n* **Encrypted & Secure:** All session data is encrypted and stored securely.\n* **Never Sold:** Your recordings and data are never sold to third parties.\n* **Full Control:** You can delete your data/account at any time in your settings."
       }
     }
-  }}
+  }
+}

@@ -140,6 +140,7 @@ export type RootStackParamList = {
   };
   Transcript: {
     recordingId: string;
+    initialCategory?: string; // Pre-selects a skill/avoid-item filter chip on load (e.g. from SkillUtterancesScreen)
   };
   SkillExplanation: {
     skillKey: string;

@@ -114,8 +114,8 @@
     "successMessage": "您的密碼已成功重設。請使用新密碼登入。",
     "errorFailedMessage": "重設密碼失敗，連結可能已過期。"
   },
-  "subscription": {    "earlyUserBenefits": "早期使用者福利",
-
+  "subscription": {
+    "earlyUserBenefits": "早期使用者福利",
     "unlockPremium": "解鎖進階版",
     "priceMonthly": "每月 {{price}}",
     "featureUnlimitedSessions": "無限錄音次數",
@@ -283,7 +283,12 @@
     "speakerChild": "孩子",
     "speakerAdultN": "大人 {{n}}",
     "speakerChildN": "孩子 {{n}}",
+    "filterHint": "選擇一項技巧或待改進項",
+    "next": "下一個",
+    "matchCounter": "第 {{current}} 個，共 {{total}} 個",
+    "noMatches": "未找到相關時刻",
     "pcitTags": {
+      "Praise": "讚美",
       "Echo": "回應",
       "Labeled Praise": "具體讚美",
       "Unlabeled Praise": "概括讚美",
@@ -492,21 +497,13 @@
     "headlineAmazing": "太棒了！",
     "headlineGood": "進步不錯！",
     "headlineSubtext": "繼續保持\n你做得很好！",
-    "emotionalDeposit": "情感存款",
-    "deltaFrom": "較",
-    "deltaLastSession": "上次練習",
+    "depositLabel": "存款",
+    "deltaToday": "今日 {{count}}",
     "todaysGoal": "今日目標",
-    "reduceSkill": "減少{{skill}}",
-    "youDidIt": "做到了！",
-    "almostThere": "就快達成！",
-    "onlyCountToday": "今天只有 <0>{{count}}</0> 次{{skill}}",
-    "countToday": "今天有 <0>{{count}}</0> 次{{skill}}",
-    "lastTime": "（上次：{{count}}）",
-    "lastSession": "（上次練習：{{count}}）",
-    "goalEncouragement": "你已經進步了，繼續加油！",
-    "parentingLevel": "育兒等級",
-    "levelHeading": "第 {{level}} 級",
-    "levelFooterSessions": "距離第 {{nextLevel}} 級還差 {{count}}/2 次練習！",
+    "levelLabel": "等級",
+    "aimForLabel": "目標",
+    "goalRemaining": "還差 <0>{{count}}</0> 次就達成目標！",
+    "goalAchievedShort": "你達成目標了！",
     "continueToCoaching": "繼續查看指導",
     "shareMyProgress": "分享我的進度",
     "shareMessage": "我剛和{{childName}}完成了一次 {{score}}/100 的 Nora 練習！"
@@ -522,7 +519,10 @@
       "showLess": "收起"
     },
     "skillCoaching": {
-      "title": "明日技能指導"
+      "title": "教練角",
+      "learnMoreTitle": "了解更多關於{{skill}}的內容",
+      "lessonBadge": "課程",
+      "demoBadge": "示範"
     },
     "topMoment": {
       "title": "高光時刻",
@@ -534,8 +534,7 @@
     },
     "interactionStyle": {
       "title": "今日互動",
-      "viewTips": "檢視建議",
-      "tip": "在艱難時刻減少了提問和命令，做得很好。這能幫助{{childName}}感到安全和被支援。"
+      "viewTips": "檢視建議"
     },
     "tomorrowGoal": {
       "title": "明日目標",
@@ -545,7 +544,8 @@
     },
     "childInsight": {
       "title": "我們對{{childName}}的瞭解",
-      "shareMessage": "今天用 Nora 我們瞭解到關於{{childName}}的一件事：{{insight}}"
+      "shareMessage": "今天用 Nora 我們瞭解到關於{{childName}}的一件事：{{insight}}",
+      "advancedLanguageTag": "語言能力進階"
     },
     "developmental": {
       "shareMessage": "用 Nora 追蹤{{childName}}的發展里程碑——來看看進展吧！"
@@ -573,10 +573,21 @@
     "coreFocusAreasTitle": "{{childName}}的核心關注領域",
     "fromYourIntake": "來自您的入檔資訊",
     "focusAreas": {
-      "transitions": { "label": "轉換與配合", "level": "中等", "focus": "關注：Q1、Q2" },
-      "energy": { "label": "專注力與精力", "level": "較高", "focus": "關注：Q5-Q7" },
-      "boundaries": { "label": "界線", "level": "輕微", "focus": "關注：Q8" }
-    ,
+      "transitions": {
+        "label": "轉換與配合",
+        "level": "中等",
+        "focus": "關注：Q1、Q2"
+      },
+      "energy": {
+        "label": "專注力與精力",
+        "level": "較高",
+        "focus": "關注：Q5-Q7"
+      },
+      "boundaries": {
+        "label": "界線",
+        "level": "輕微",
+        "focus": "關注：Q8"
+      },
       "attention": {
         "label": "專注力與配合",
         "focus": "關注：專注力與遵循指令"
@@ -592,7 +603,8 @@
       "social": {
         "label": "社交界限",
         "focus": "關注：同伴與手足互動"
-      }},
+      }
+    },
     "journeyTitle": "個人化學習之旅",
     "journeySubtitle": "您在 Nora 的下一步",
     "phase1Badge": "第一階段",
@@ -602,15 +614,38 @@
     "phase2Title": "家長主導互動 (PDI)",
     "phase2Subtitle": "練習平靜而一致的界線。",
     "steps": {
-      "attentionAnchor": { "title": "專注錨點", "focus": "關注：行為描述", "description": "透過描述{{childName}}的行為而非提問，幫助他們保持投入。" },
-      "praiseEngine": { "title": "讚美引擎", "focus": "關注：具體的讚美", "description": "在摩擦發生前強化積極行為。" },
-      "connectionBuilder": { "title": "連結建造者", "focus": "關注：回應", "description": "讓{{childName}}感受到你的陪伴，並透過玩耍建立信任。" },
-      "clearCommand": { "title": "清晰指令", "focus": "關注：直接指令", "description": "給{{childName}}一個清晰、具體、可以做到的指令。" },
-      "patientPause": { "title": "耐心等待", "focus": "關注：等待時間", "description": "給{{childName}}空間去配合，然後再介入。" },
-      "followThrough": { "title": "貫徹執行", "focus": "關注：後果", "description": "讓{{childName}}知道你的指令始終如一、值得信賴。" }
+      "attentionAnchor": {
+        "title": "專注錨點",
+        "focus": "關注：行為描述",
+        "description": "透過描述{{childName}}的行為而非提問，幫助他們保持投入。"
+      },
+      "praiseEngine": {
+        "title": "讚美引擎",
+        "focus": "關注：具體的讚美",
+        "description": "在摩擦發生前強化積極行為。"
+      },
+      "connectionBuilder": {
+        "title": "連結建造者",
+        "focus": "關注：回應",
+        "description": "讓{{childName}}感受到你的陪伴，並透過玩耍建立信任。"
+      },
+      "clearCommand": {
+        "title": "清晰指令",
+        "focus": "關注：直接指令",
+        "description": "給{{childName}}一個清晰、具體、可以做到的指令。"
+      },
+      "patientPause": {
+        "title": "耐心等待",
+        "focus": "關注：等待時間",
+        "description": "給{{childName}}空間去配合，然後再介入。"
+      },
+      "followThrough": {
+        "title": "貫徹執行",
+        "focus": "關注：後果",
+        "description": "讓{{childName}}知道你的指令始終如一、值得信賴。"
+      }
     },
-    "unlockMessage": "隨著進度推進，更多步驟將解鎖"
-  ,
+    "unlockMessage": "隨著進度推進，更多步驟將解鎖",
     "severity": {
       "high": "較高",
       "moderate": "中等",
@@ -945,11 +980,11 @@
       "3end": " 再錄製一次快速愉快的練習，慶祝您的進步！",
       "4start": "準備好迎接更多樂趣了嗎？與 ",
       "4end": " 捕捉另一個超讚的遊戲時光吧！"
-    }
-  ,
+    },
     "getReadyLabel": "遊戲指南",
     "getReadyBody": "開始之前，你需要知道的一切。",
-    "getReadyButton": "為你的第一次遊戲做準備"},
+    "getReadyButton": "為你的第一次遊戲做準備"
+  },
   "lessonRead": {
     "title": "課程",
     "noContent": "該課程暫無文字版本。"
@@ -1020,6 +1055,7 @@
     "learnAbout": "了解 {{name}}",
     "noUtterances": "本次練習未記錄到 {{name}} 的語句。",
     "readFullConversation": "閱讀完整對話",
+    "transcriptFoundLabel": "今天的練習中共發現 {{count}} 次{{skill}}",
     "sessionGoal": "目標",
     "goalDisplay": "目標：{{target}}次/5分鐘",
     "echoGoalDynamic": "當孩子的發話次數少於 10 次時，目標會調整為發話次數的 75%。本次孩子說了 {{count}} 次，目標為 {{target}} 次。",
@@ -1234,8 +1270,7 @@
       "paragraph1": "許多家長來到 Nora 時都面臨相似的挑戰。",
       "paragraph2Pre": "讓大多數家長感到驚訝的是，許多這些挑戰都可以透過",
       "paragraph2Highlight": "一個簡單的每日習慣得到改善。",
-      "discoverButton": "探索  →"
-    ,
+      "discoverButton": "探索  →",
       "youreInAlt": "你正在被",
       "goodHandsAlt": "妥善照顧。",
       "paragraph1AltPre": "Nora 由臨床兒童心理學家共同設計，能根據",
@@ -1245,23 +1280,23 @@
       "paragraph2AltHighlight": "更多支援，",
       "paragraph3AltPre": "我們都會一起為你",
       "paragraph3AltHighlight": "制定個性化計劃",
-      "paragraph3AltPost": "。"},
+      "paragraph3AltPost": "。"
+    },
     "obLetterContent": {
       "hi": "嗨 ",
       "comma": "，",
       "thankYou": "感謝您選擇 Nora。我們很高興能同時支持您和",
       "period": "。",
-      "continueButton": "繼續  →"
-    ,
+      "continueButton": "繼續  →",
       "thankYouAlt": "感謝你選擇 Nora。",
       "subtitleAltPre": "每個孩子的學習方式都不同，Nora 會根據",
       "subtitleAltHighlight": "獨特的",
-      "subtitleAltPost": "優勢和需求來調整指導內容。"},
+      "subtitleAltPost": "優勢和需求來調整指導內容。"
+    },
     "obIntro1": {
       "helping": "幫助",
       "startsHere": "從這裡開始",
-      "continueButton": "繼續  →"
-    ,
+      "continueButton": "繼續  →",
       "threeStepsPre": "只需 3 個簡單步驟，由 ",
       "threeStepsHighlight1": "AI",
       "threeStepsMid": "\n驅動，並有",
@@ -1274,15 +1309,15 @@
       "card2Body": "我們的 AI 會聆聽\n你的遊戲錄音。",
       "card3TitleLine1": "個性化",
       "card3TitleLine2": "指導",
-      "card3Body": "獲得為你孩子\n量身定製的反饋和建議。"},
+      "card3Body": "獲得為你孩子\n量身定製的反饋和建議。"
+    },
     "obIntro2": {
       "sentence1Pre": "許多有相似目標的家長",
       "sentence1Highlight": "都反饋有明顯改善，",
       "sentence1Mid": "而且不到",
       "sentence1HighlightWeeks": "3 週就見效。",
       "sentence2": "很高興您能來到這裡。💜",
-      "continueButton": "我準備好了  →"
-    ,
+      "continueButton": "我準備好了  →",
       "altPara1Pre": "每個孩子都有",
       "altPara1Highlight": "自己的成長節奏。",
       "altPara2Pre": "許多家庭在最初幾周內\n就注意到了",
@@ -1291,7 +1326,8 @@
       "altPara3Pre": "我們會陪你一起",
       "altPara3Highlight": "慶祝每一步",
       "altPara3Post": "的進步。💜",
-      "bubbleText": "我們可以做到。"},
+      "bubbleText": "我們可以做到。"
+    },
     "reminderTime": {
       "title": "嗨 {{name}}，您想在什麼時候進行這 5 分鐘？",
       "description": "許多家長發現「放學後重聚」「晚餐前遊戲」或「週末早晨」最合適。",
@@ -1504,8 +1540,7 @@
       "title": "您的數據保持私密",
       "subtitle": "您的數據始終受到保護，未經您的許可絕不分享。"
     },
-    "next": "下一步  →"
-  ,
+    "next": "下一步  →",
     "diagnosisStatus": {
       "title": "{{childName}}是否已獲得診斷？",
       "yes": "是的",
@@ -1607,7 +1642,8 @@
       "other": "其他",
       "none": "沒有",
       "preferNotToSay": "我不想說"
-    }},
+    }
+  },
   "quizFeedback": {
     "correct": "正確！",
     "notQuite": "不完全正確！"
