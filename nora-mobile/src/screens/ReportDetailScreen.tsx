@@ -38,10 +38,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
 import { SkillProgressBar } from '../components/SkillProgressBar';
 import { ReportCard, REPORT_CARD_COLORS } from '../components/ReportCard';
-import { COLORS, FONTS, REPORT_DRAGON_GOOD, REPORT_DETAIL_DRAGON } from '../constants/assets';
+import { COLORS, FONTS, REPORT_DETAIL_DRAGON } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
-import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import type { RecordingAnalysis, User, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ParentSkillLevel } from '@nora/core';
+import { useRecordingService, useAuthService, useLessonService } from '../contexts/AppContext';
+import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
+import type { RecordingAnalysis, User, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ParentSkillLevel, DemoVideo } from '@nora/core';
 import { MomentPlayer } from '../components/MomentPlayer';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
@@ -66,6 +67,44 @@ const getSkillDisplayLabel = (apiLabel: string, t: Function): string => {
   if (!key) return apiLabel;
   const translated = t(`report.skillLabel.${key}`);
   return translated || apiLabel;
+};
+
+const SKILL_TAG_MAP: Record<string, string> = {
+  'Praise (Labeled)': 'Labeled Praise',
+  'Echo': 'Echo',
+  'Narrate': 'Narration',
+  'Questions': 'Question',
+  'Commands': 'Command',
+  'Criticism': 'Criticism',
+};
+
+// Same shape as ReportScreen.tsx's getUtterancesForSkill — lets tapping a
+// PEN skill or an avoid item open SkillUtterances with the matching lines.
+const getUtterancesForSkill = (
+  transcript: any[] | undefined,
+  skillLabel: string,
+): Array<{
+  preceding?: { role?: string; text: string };
+  main: { role?: string; text: string; tag?: string; feedback?: string };
+}> => {
+  if (!transcript?.length) return [];
+  const tag = (SKILL_TAG_MAP[skillLabel] || skillLabel).toLowerCase();
+  const results: Array<{
+    preceding?: { role?: string; text: string };
+    main: { role?: string; text: string; tag?: string; feedback?: string };
+  }> = [];
+  transcript.forEach((u, index) => {
+    if (u.tag && u.tag.toLowerCase() === tag) {
+      const prev = index > 0 ? transcript[index - 1] : null;
+      results.push({
+        preceding: prev && prev.speaker !== '__SILENT__'
+          ? { role: prev.role, text: prev.text }
+          : undefined,
+        main: { role: u.role, text: u.text, tag: u.tag, feedback: u.feedback },
+      });
+    }
+  });
+  return results;
 };
 
 // Strip trailing PCIT coding tags (e.g. "Great job! LP" -> "Great job!").
@@ -111,7 +150,61 @@ const LEVEL_FLAT_TARGET: Partial<Record<ParentSkillLevel, number>> = {
   4: 5, // echo >= 5
 };
 
-type DerivedGoal = { focusSkill: string; currentNumber: number | null; targetNumber: number | string | null; description: string };
+type DerivedGoal = { focusSkill: string; currentNumber: number | null; targetNumber: number | string | null; description: string; skillTag?: string };
+
+// Maps the deterministic goal engine's goalType (server/utils/levelGoalEngine.cjs)
+// to one of the plain skill/avoid-item labels already used by
+// SKILL_LABEL_I18N_KEY above — shown as a badge next to the Skill Coaching
+// card's title. Goal types with no single countable skill
+// (SKILL_FOLLOW_LEAD, CALM_FOLLOWTHROUGH, INTEGRATE_SKILLS, MAINTAIN_SKILLS)
+// are intentionally omitted — the badge is simply hidden for those.
+const GOAL_TYPE_SKILL_TAG: Record<string, string> = {
+  BUILD_PRAISE: 'Praise (Labeled)',
+  BUILD_NARRATION: 'Narrate',
+  BUILD_ECHO: 'Echo',
+  BUILD_COMMANDS: 'Commands',
+  AVOID_COMMANDS: 'Commands',
+  AVOID_QUESTIONS: 'Questions',
+  AVOID_CRITICISM: 'Criticism',
+};
+
+// Maps the same skill labels to the `teachesCategories` values lessons are
+// tagged with server-side (server/routes/lessons.cjs's by-category lookup),
+// used to find a lesson to recommend from the Skill Coaching card's
+// "Learn more" button.
+const SKILL_TAG_TO_CATEGORY: Record<string, string> = {
+  'Praise (Labeled)': 'PRAISE',
+  'Narrate': 'NARRATION',
+  'Echo': 'ECHO',
+  'Commands': 'COMMANDS',
+  'Questions': 'QUESTIONS',
+  'Criticism': 'CRITICISM',
+};
+
+// The general P.E.N. + active-ignoring walkthrough — used as the demo link
+// for skills that don't have their own dedicated clip active yet.
+const FULL_DEMO_VIDEO_TITLE = 'Full Demo of P.E.N skills and active ignoring';
+
+// Maps the same skill labels to the admin-curated DemoVideo titles (each
+// skill/avoid-item has its own short demo clip, matched by name since
+// DemoVideo has no formal skill/category field). Commands/Questions/
+// Criticism don't have an active dedicated clip, so they point at the full
+// demo instead.
+const SKILL_TAG_TO_DEMO_VIDEO_TITLE: Record<string, string> = {
+  'Praise (Labeled)': 'Labelled Praise',
+  'Narrate': 'Narrate',
+  'Echo': 'Echo',
+  'Commands': FULL_DEMO_VIDEO_TITLE,
+  'Questions': FULL_DEMO_VIDEO_TITLE,
+  'Criticism': FULL_DEMO_VIDEO_TITLE,
+};
+
+// Overrides the demo video's own title on the button for skills where the
+// actual DemoVideo title (e.g. the shared full-demo clip's name) doesn't
+// describe what this skill's goal is about.
+const SKILL_TAG_TO_DEMO_VIDEO_DISPLAY_TITLE: Record<string, string> = {
+  'Criticism': 'Replace criticism with active ignoring',
+};
 
 // Same client-side fallback as ReportScreen_v2.tsx: reconstructs a
 // same-shape goal from the parent's current level and this session's raw
@@ -139,16 +232,16 @@ const deriveGoalFromLevel = (
   }
   if (level === 2 && mode === 'CDI') {
     const currentNumber = (s.product_praise || 0) + (s.action_praise || 0) + (s.growth_praise || 0) + (s.regulatory_praise || 0);
-    return { focusSkill, currentNumber, targetNumber: LEVEL_FLAT_TARGET[2]!, description };
+    return { focusSkill, currentNumber, targetNumber: LEVEL_FLAT_TARGET[2]!, description, skillTag: 'Praise (Labeled)' };
   }
   if (level === 3 && mode === 'CDI') {
-    return { focusSkill, currentNumber: s.narration || 0, targetNumber: LEVEL_FLAT_TARGET[3]!, description };
+    return { focusSkill, currentNumber: s.narration || 0, targetNumber: LEVEL_FLAT_TARGET[3]!, description, skillTag: 'Narrate' };
   }
   if (level === 4 && mode === 'CDI') {
-    return { focusSkill, currentNumber: s.echo || 0, targetNumber: LEVEL_FLAT_TARGET[4]!, description };
+    return { focusSkill, currentNumber: s.echo || 0, targetNumber: LEVEL_FLAT_TARGET[4]!, description, skillTag: 'Echo' };
   }
   if (level >= 5 && mode === 'PDI') {
-    return { focusSkill, currentNumber: s.direct_command || 0, targetNumber: null, description };
+    return { focusSkill, currentNumber: s.direct_command || 0, targetNumber: null, description, skillTag: 'Commands' };
   }
   // Session mode doesn't match this level's own track (e.g. a level 5+
   // parent doing a CDI session) — no live count to show, just the goal copy.
@@ -158,9 +251,10 @@ const deriveGoalFromLevel = (
 export const ReportDetailScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<ReportDetailRouteProp>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const recordingService = useRecordingService();
   const authService = useAuthService();
+  const lessonService = useLessonService();
   const { recordingId } = route.params;
 
   const [loading, setLoading] = useState(true);
@@ -170,8 +264,8 @@ export const ReportDetailScreen: React.FC = () => {
   const [childName, setChildName] = useState('Your Child');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [parentLevel, setParentLevel] = useState<ParentSkillLevel>(1);
-  const [crisisExpanded, setCrisisExpanded] = useState(false);
-  const [skillCoachingExpanded, setSkillCoachingExpanded] = useState(false);
+  const [crisisExpanded, setCrisisExpanded] = useState(true);
+  const [skillCoachingExpanded, setSkillCoachingExpanded] = useState(true);
   // null while unknown — the unlock card only renders once we know for sure,
   // so it never flashes on screen for a user who's already completed it.
   const [wacbCompleted, setWacbCompleted] = useState<boolean | null>(null);
@@ -182,6 +276,9 @@ export const ReportDetailScreen: React.FC = () => {
   const [domainChildName, setDomainChildName] = useState<string | null>(null);
   const [showDomainModal, setShowDomainModal] = useState(false);
   const [loadingDomainMilestones, setLoadingDomainMilestones] = useState(false);
+  const [goalSkillTag, setGoalSkillTag] = useState<string | undefined>(undefined);
+  const [learnMoreLesson, setLearnMoreLesson] = useState<{ id: string; module: string; title: string } | null>(null);
+  const [learnMoreDemoVideo, setLearnMoreDemoVideo] = useState<DemoVideo | null>(null);
 
   useEffect(() => {
     amplitudeService.trackScreenView('ReportDetail', { recordingId });
@@ -207,6 +304,62 @@ export const ReportDetailScreen: React.FC = () => {
       if (data) setDevelopmentalProgress(data);
     }).catch(() => {});
   }, [reportData?.createdAt]);
+
+  // Resolves the same skill the tomorrow's-goal engine is targeting
+  // (goalDirective when present, else the client-side level fallback) —
+  // drives both the lesson and demo-video "learn more" links below.
+  useEffect(() => {
+    if (!reportData) {
+      setGoalSkillTag(undefined);
+      return;
+    }
+    const directive = reportData.mode === 'PDI'
+      ? reportData.pdiTomorrowGoalDirective ?? null
+      : reportData.tomorrowGoalDirective ?? null;
+    const skillTag = directive
+      ? (directive.goalType ? GOAL_TYPE_SKILL_TAG[directive.goalType] : undefined)
+      : deriveGoalFromLevel(parentLevel, reportData.stats, reportData.mode, t).skillTag;
+    setGoalSkillTag(skillTag);
+  }, [reportData, parentLevel]);
+
+  // Recommend a lesson for the Skill Coaching card's "Learn more" button.
+  useEffect(() => {
+    const category = goalSkillTag ? SKILL_TAG_TO_CATEGORY[goalSkillTag] : undefined;
+    if (!category) {
+      setLearnMoreLesson(null);
+      return;
+    }
+    let cancelled = false;
+    lessonService.getLessonsByCategory(category, i18n.language)
+      .then(lessons => {
+        if (cancelled) return;
+        const lesson = lessons?.[0];
+        setLearnMoreLesson(lesson ? { id: lesson.id, module: lesson.module, title: lesson.title } : null);
+      })
+      .catch(() => { if (!cancelled) setLearnMoreLesson(null); });
+    return () => { cancelled = true; };
+  }, [goalSkillTag]);
+
+  // Demo video for the same skill — admin curates one demo per PEN
+  // skill/avoid-item (titled e.g. "Labelled Praise", "Narrate", "Echo"),
+  // matched by name rather than a formal relation. Independent of whether a
+  // lesson was found above (e.g. Echo currently has a demo but no lesson).
+  useEffect(() => {
+    const demoTitle = goalSkillTag ? SKILL_TAG_TO_DEMO_VIDEO_TITLE[goalSkillTag] : undefined;
+    if (!demoTitle) {
+      setLearnMoreDemoVideo(null);
+      return;
+    }
+    let cancelled = false;
+    lessonService.getDemoVideos()
+      .then(({ demoVideos }) => {
+        if (cancelled) return;
+        const match = demoVideos.find(v => v.title.trim().toLowerCase() === demoTitle.toLowerCase()) || null;
+        setLearnMoreDemoVideo(match);
+      })
+      .catch(() => { if (!cancelled) setLearnMoreDemoVideo(null); });
+    return () => { cancelled = true; };
+  }, [goalSkillTag]);
 
   const handleDomainPress = async (domain: DomainType) => {
     setSelectedDomain(domain);
@@ -344,7 +497,6 @@ export const ReportDetailScreen: React.FC = () => {
   const filteredAreas = (reportData.areasToAvoid || []).filter(
     a => !(reportData.mode === 'PDI' && a.label === 'Commands')
   );
-  const avoidTotal = filteredAreas.reduce((s, a) => s + (a.count || 0), 0);
 
   // Same dynamic Echo target as ReportScreen.tsx — sessions with fewer than
   // 10 child utterances scale the goal down instead of judging against 10.
@@ -405,6 +557,7 @@ export const ReportDetailScreen: React.FC = () => {
         currentNumber: goalDirective.currentNumber,
         targetNumber: goalDirective.targetNumber ?? null,
         description: goalDirective.actionPrompt || '',
+        skillTag: goalDirective.goalType ? GOAL_TYPE_SKILL_TAG[goalDirective.goalType] : undefined,
       }
     : deriveGoalFromLevel(parentLevel, reportData.stats, reportData.mode, t);
 
@@ -438,9 +591,6 @@ export const ReportDetailScreen: React.FC = () => {
       // User cancelled or share failed — nothing to recover from
     }
   };
-
-  const avoidRatingSuffix = avoidTotal > 3 ? t('report.skillRating.payAttention') : avoidTotal === 0 ? t('report.skillRating.excellent') : t('report.skillRating.good');
-  const avoidRatingIsGood = avoidTotal <= 3;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
@@ -535,10 +685,76 @@ export const ReportDetailScreen: React.FC = () => {
 
         {/* Skill Coaching — coaching note for tomorrow's goal skill, grounded in this session */}
         {reportData.skillCoaching && (
-          <ReportCard title={t('reportDetail.skillCoaching.title')}>
+          <ReportCard
+            title={t('reportDetail.skillCoaching.title')}
+            headerRight={
+              goal.skillTag ? (
+                <View style={styles.skillTagBadge}>
+                  <Text style={styles.skillTagBadgeText}>{getSkillDisplayLabel(goal.skillTag, t)}</Text>
+                </View>
+              ) : undefined
+            }
+          >
             <MarkdownText style={styles.crisisBody} numberOfLines={skillCoachingExpanded ? undefined : 4}>
               {reportData.skillCoaching}
             </MarkdownText>
+            {skillCoachingExpanded && (
+              <>
+                {learnMoreLesson && (
+                  <>
+                    <Text style={styles.learnMoreTitle}>
+                      {t('reportDetail.skillCoaching.learnMoreTitle', { skill: getSkillDisplayLabel(goalSkillTag!, t) })}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.learnMoreButton}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        amplitudeService.trackEvent('Report Detail Learn More Tapped', {
+                          recordingId,
+                          skillTag: goalSkillTag,
+                          lessonId: learnMoreLesson.id,
+                        });
+                        if (CONTENT_V2_MODULES.includes(learnMoreLesson.module)) {
+                          navigation.navigate('LessonViewerV2', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
+                        } else {
+                          navigation.navigate('LessonViewer', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
+                        }
+                      }}
+                    >
+                      <View style={styles.lessonBadge}>
+                        <Text style={styles.lessonBadgeText}>{t('reportDetail.skillCoaching.lessonBadge')}</Text>
+                      </View>
+                      <Text style={styles.learnMoreButtonText} numberOfLines={1}>
+                        {learnMoreLesson.title}
+                      </Text>
+                      <Ionicons name="arrow-forward" size={15} color="#8C49D5" />
+                    </TouchableOpacity>
+                  </>
+                )}
+                {learnMoreDemoVideo && (
+                  <TouchableOpacity
+                    style={styles.learnMoreButton}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      amplitudeService.trackEvent('Report Detail Demo Video Tapped', {
+                        recordingId,
+                        skillTag: goalSkillTag,
+                        demoVideoId: learnMoreDemoVideo.id,
+                      });
+                      navigation.navigate('DemoVideoDetail', { video: learnMoreDemoVideo });
+                    }}
+                  >
+                    <View style={styles.demoBadge}>
+                      <Text style={styles.demoBadgeText}>{t('reportDetail.skillCoaching.demoBadge')}</Text>
+                    </View>
+                    <Text style={styles.demoButtonText} numberOfLines={1}>
+                      {(goalSkillTag && SKILL_TAG_TO_DEMO_VIDEO_DISPLAY_TITLE[goalSkillTag]) || learnMoreDemoVideo.title}
+                    </Text>
+                    <Ionicons name="arrow-forward" size={15} color="#C2694B" />
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
             <TouchableOpacity
               style={styles.crisisReadMoreRow}
               activeOpacity={0.7}
@@ -552,32 +768,33 @@ export const ReportDetailScreen: React.FC = () => {
           </ReportCard>
         )}
 
-        {/* Tomorrow's Goal */}
+        {/* Tomorrow's Goal — temporarily hidden, may use it later
         {goal.focusSkill && (
           <ReportCard title={t('reportDetail.tomorrowGoal.title')} tip={goal.description || undefined}>
             <Text style={styles.goalFocusSkill}>{goal.focusSkill}</Text>
           </ReportCard>
         )}
+        */}
 
         {/* What we learned about {childName} */}
         <ReportCard icon="heart" title={t('reportDetail.childInsight.title', { childName })}>
-          <View style={styles.childInsightRow}>
-            <Image source={REPORT_DRAGON_GOOD} style={styles.childInsightImage} resizeMode="contain" />
-            <View style={styles.childInsightTextCol}>
-              {aboutChildItem?.Title && <Text style={styles.childInsightHeading}>{aboutChildItem.Title}</Text>}
-              {childInsightBody && <Text style={styles.childInsightBody}>{childInsightBody}</Text>}
-              {childTags.length > 0 && (
-                <View style={styles.childTagsRow}>
-                  {childTags.map((tag, i) => (
-                    <View key={i} style={styles.childTagChip}>
-                      <Text style={styles.childTagText}>{tag}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+          {aboutChildItem?.Title && (
+            <View style={styles.childInsightTitleBadge}>
+              <Text style={styles.childInsightTitleBadgeText}>{aboutChildItem.Title}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color="#E9A688" />
-          </View>
+          )}
+          {childInsightBody && <Text style={styles.childInsightBody}>{childInsightBody}</Text>}
+          {/* Dynamic tags — temporarily hidden, may restore later
+          {childTags.length > 0 && (
+            <View style={styles.childTagsRow}>
+              {childTags.map((tag, i) => (
+                <View key={i} style={styles.childTagChip}>
+                  <Text style={styles.childTagText}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+          */}
         </ReportCard>
 
         {/* Developmental Milestones — expandable */}
@@ -610,7 +827,6 @@ export const ReportDetailScreen: React.FC = () => {
         <ReportCard
           title={t('reportDetail.interactionStyle.title')}
           expandable
-          tip={reportData.interactionTip || t('reportDetail.interactionStyle.tip', { childName })}
         >
           <Text style={styles.interactionSubheading}>{t('report.section.penSkills')}</Text>
           {skills.map((skill, index) => {
@@ -626,6 +842,10 @@ export const ReportDetailScreen: React.FC = () => {
                 color={rating.barColor}
                 textColor={rating.textColor}
                 suffix={isDynamicEcho ? `${rating.suffix}*` : rating.suffix}
+                onPress={() => {
+                  amplitudeService.trackEvent('Report Skill Tapped', { skillKey: skill.label, progress: skill.progress });
+                  navigation.navigate('SkillUtterances', { skillKey: skill.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, skill.label), target: maxValue, childUtteranceCount });
+                }}
               />
             );
           })}
@@ -637,24 +857,30 @@ export const ReportDetailScreen: React.FC = () => {
 
           <View style={styles.interactionDivider} />
 
-          <View style={styles.avoidSubheadingRow}>
-            <Text style={styles.interactionSubheading}>{t('report.section.areasToAvoid')}</Text>
-            <View style={[styles.avoidTotalBadge, { backgroundColor: avoidRatingIsGood ? '#EAF8EE' : '#FBE3CE' }]}>
-              <Text style={[styles.avoidTotalBadgeText, { color: avoidRatingIsGood ? '#16A34A' : '#C2694B' }]}>
-                {avoidTotal} {avoidRatingSuffix}
-              </Text>
-            </View>
-          </View>
+          <Text style={styles.interactionSubheading}>{t('report.section.areasToAvoid')}</Text>
           <View style={styles.avoidContainer}>
             {filteredAreas.map((area, index) => (
-              <View key={index} style={styles.avoidItem}>
-                <Text style={styles.avoidLabel}>{getSkillDisplayLabel(area.label, t)}</Text>
+              <TouchableOpacity
+                key={index}
+                style={styles.avoidItem}
+                activeOpacity={0.7}
+                onPress={() => {
+                  amplitudeService.trackEvent('Report Area Avoided Tapped', { skillKey: area.label, count: area.count });
+                  navigation.navigate('SkillUtterances', { skillKey: area.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, area.label) });
+                }}
+              >
+                <View style={styles.avoidLabelRow}>
+                  <Text style={styles.avoidLabel}>{getSkillDisplayLabel(area.label, t)}</Text>
+                  <Text style={[styles.avoidCount, { color: area.count >= 3 ? '#C2694B' : '#8C49D5' }]}>
+                    {area.count}{area.count >= 3 ? ` ${t('report.skillRating.payAttention')}` : ''}
+                  </Text>
+                </View>
                 <View style={styles.circlesContainer}>
                   {Array.from({ length: area.count }).map((_, i) => (
                     <View key={i} style={styles.circle} />
                   ))}
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         </ReportCard>
@@ -793,6 +1019,16 @@ const styles = StyleSheet.create({
   // ── Crisis Moment content ──
   crisisBadge: { backgroundColor: '#FBE3CE', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   crisisBadgeText: { fontFamily: FONTS.bold, fontSize: 11, color: '#C2694B'  },
+  skillTagBadge: { backgroundColor: '#F5EAFB', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  skillTagBadgeText: { fontFamily: FONTS.bold, fontSize: 11, color: '#8C49D5' },
+  learnMoreTitle: { fontFamily: FONTS.semiBold, fontSize: 13, color: '#7A6252', marginTop: 14 },
+  learnMoreButton: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, alignSelf: 'stretch' },
+  learnMoreButtonText: { flexShrink: 1, fontFamily: FONTS.semiBold, fontSize: 14, color: '#8C49D5' },
+  demoButtonText: { flexShrink: 1, fontFamily: FONTS.semiBold, fontSize: 14, color: '#C2694B' },
+  lessonBadge: { backgroundColor: '#F5EAFB', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  lessonBadgeText: { fontFamily: FONTS.bold, fontSize: 10, color: '#8C49D5' },
+  demoBadge: { backgroundColor: '#FBE3CE', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  demoBadgeText: { fontFamily: FONTS.bold, fontSize: 10, color: '#C2694B' },
   // Font formatting matches ReportScreen.tsx's coachDescription (Coach's Corner content).
   crisisBody: { fontFamily: FONTS.regular, fontSize: 16, color: '#4B5563', lineHeight: 24, marginBottom: 4, marginTop: 3 },
   crisisReadMoreRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start' },
@@ -810,20 +1046,17 @@ const styles = StyleSheet.create({
   interactionSubheading: { fontFamily: FONTS.bold, fontSize: 14, letterSpacing: 0.4, color: '#B08A5A', textTransform: 'uppercase', marginBottom: 14 },
   interactionDivider: { height: 1, backgroundColor: '#F3E9DD', marginTop: 6, marginBottom: 20 },
   echoFootnote: { fontFamily: FONTS.regular, fontSize: 13, color: '#B08A5A', lineHeight: 16, marginTop: -6, marginBottom: 6 },
-  avoidSubheadingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-  avoidTotalBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  avoidTotalBadgeText: { fontFamily: FONTS.bold, fontSize: 12 },
   avoidContainer: { gap: 16 },
   avoidItem: { gap: 9 },
+  avoidLabelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   avoidLabel: { fontFamily: FONTS.semiBold, fontSize: 15, color: REPORT_CARD_COLORS.title },
+  avoidCount: { fontFamily: FONTS.regular, fontSize: 12 },
   circlesContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   circle: { width: 18, height: 18, borderRadius: 18, backgroundColor: '#E9A688' },
 
   // ── What we learned about {childName} content ──
-  childInsightRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  childInsightImage: { width: 62, height: 62 },
-  childInsightTextCol: { flex: 1 },
-  childInsightHeading: { fontFamily: FONTS.bold, fontSize: 16, color: REPORT_CARD_COLORS.title, marginBottom: 4 },
+  childInsightTitleBadge: { alignSelf: 'flex-start', backgroundColor: '#FDF2E9', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, marginBottom: 8 },
+  childInsightTitleBadgeText: { fontFamily: FONTS.bold, fontSize: 13, color: '#C2694B' },
   childInsightBody: { fontFamily: FONTS.regular, fontSize: 14, color: REPORT_CARD_COLORS.subtitle, lineHeight: 19, marginBottom: 10 },
   childTagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   childTagChip: { backgroundColor: '#FDF2E9', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
