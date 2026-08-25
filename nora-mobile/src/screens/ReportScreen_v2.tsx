@@ -8,33 +8,16 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
-import { COLORS, FONTS, REPORT_DRAGON_GOOD, REPORT_DRAGON_AMAZING, REPORT_TARGET, REPORT_TARGET_SMALL, REPORT_STAR_SMALL } from '../constants/assets';
+import { COLORS, FONTS, REPORT_DRAGON_GOOD, REPORT_DRAGON_AMAZING } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import type { RecordingAnalysis, ParentSkillLevel } from '@nora/core';
-import * as userStorage from '../lib/userStorage';
 import { useTranslation, Trans } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 
 type ReportScreenV2RouteProp = RouteProp<RootStackParamList, 'ReportV2'>;
-
-const SKILL_LABEL_I18N_KEY: Record<string, string> = {
-  'Praise (Labeled)': 'praiseLabeleld',
-  'Echo': 'echo',
-  'Narrate': 'narrate',
-  'Questions': 'questions',
-  'Commands': 'commands',
-  'Criticism': 'criticism',
-};
-
-const getSkillDisplayLabel = (apiLabel: string, t: Function): string => {
-  const key = SKILL_LABEL_I18N_KEY[apiLabel];
-  if (!key) return apiLabel;
-  const translated = t(`report.skillLabel.${key}`);
-  return translated || apiLabel;
-};
 
 // Parenting Level — level number -> i18n key on the shared 7-level ladder
 // (same keys/copy as ProfileReportScreen's Personalized Learning Journey).
@@ -46,6 +29,82 @@ const PARENT_SKILL_LEVEL_KEYS: Record<ParentSkillLevel, string> = {
   5: 'cooperationBuilder',
   6: 'boundaryBuilder',
   7: 'confidentParent',
+};
+
+// Flat count target for the levels whose ladder goal (see
+// parentSkillLevelService.cjs computeLevelUpdate) is "hit N of this skill
+// in a session" rather than a session-count gate.
+const LEVEL_FLAT_TARGET: Partial<Record<ParentSkillLevel, number>> = {
+  2: 5, // totalPraise >= 5
+  3: 5, // narration >= 5
+  4: 5, // echo >= 5
+};
+
+type GoalDirection = 'build' | 'reduce';
+
+type DerivedGoal = {
+  focusSkill: string;
+  currentNumber: number | null;
+  targetNumber: number | string | null;
+  description: string;
+  direction: GoalDirection;
+};
+
+// goalType values from server/utils/levelGoalEngine.cjs whose baseline/target
+// are a REDUCTION (get under the target), not a build-up (climb to it).
+const REDUCE_GOAL_TYPES = new Set(['AVOID_CRITICISM', 'AVOID_COMMANDS', 'AVOID_QUESTIONS', 'SKILL_FOLLOW_LEAD']);
+
+// goalType -> report.skillLabel.* key, for goalTypes that track exactly one
+// PCIT skill/avoid item. Used instead of the server's flavor title (e.g.
+// "The Calm Acceptance") so the card names the actual thing to work on.
+// goalTypes with no single backing item (SKILL_FOLLOW_LEAD, CALM_FOLLOWTHROUGH,
+// INTEGRATE_SKILLS, MAINTAIN_SKILLS) fall back to the level's own skill name.
+const GOAL_TYPE_SKILL_LABEL_KEY: Record<string, string> = {
+  AVOID_CRITICISM: 'criticism',
+  AVOID_COMMANDS: 'commands',
+  AVOID_QUESTIONS: 'questions',
+  BUILD_PRAISE: 'praiseLabeleld',
+  BUILD_NARRATION: 'narrate',
+  BUILD_ECHO: 'echo',
+};
+
+// Fallback for sessions analyzed before goalDirective existed on the
+// coaching payload (see server/utils/levelGoalEngine.cjs) — reconstructs a
+// same-shape goal from the parent's current level and this session's raw
+// tag counts (reportData.stats), using the same metrics/thresholds as
+// parentSkillLevelService.cjs's level-up gate.
+const deriveGoalFromLevel = (
+  level: ParentSkillLevel,
+  stats: Record<string, any> | undefined,
+  mode: 'CDI' | 'PDI',
+  t: (key: string) => string
+): DerivedGoal => {
+  const key = PARENT_SKILL_LEVEL_KEYS[level];
+  const focusSkill = t(`profileReport.levels.${key}.skill`);
+  const description = t(`profileReport.levels.${key}.clearGoal`);
+  const s = stats || {};
+
+  if (level === 1 && mode === 'CDI') {
+    const commands = s.command != null ? s.command : (s.direct_command || 0) + (s.indirect_command || 0);
+    const currentNumber = commands + (s.question || 0) + (s.criticism || 0);
+    return { focusSkill, currentNumber, targetNumber: null, description, direction: 'reduce' };
+  }
+  if (level === 2 && mode === 'CDI') {
+    const currentNumber = (s.product_praise || 0) + (s.action_praise || 0) + (s.growth_praise || 0) + (s.regulatory_praise || 0);
+    return { focusSkill, currentNumber, targetNumber: LEVEL_FLAT_TARGET[2]!, description, direction: 'build' };
+  }
+  if (level === 3 && mode === 'CDI') {
+    return { focusSkill, currentNumber: s.narration || 0, targetNumber: LEVEL_FLAT_TARGET[3]!, description, direction: 'build' };
+  }
+  if (level === 4 && mode === 'CDI') {
+    return { focusSkill, currentNumber: s.echo || 0, targetNumber: LEVEL_FLAT_TARGET[4]!, description, direction: 'build' };
+  }
+  if (level >= 5 && mode === 'PDI') {
+    return { focusSkill, currentNumber: s.direct_command || 0, targetNumber: null, description, direction: 'build' };
+  }
+  // Session mode doesn't match this level's own track (e.g. a level 5+
+  // parent doing a CDI session) — no live count to show, just the goal copy.
+  return { focusSkill, currentNumber: null, targetNumber: null, description, direction: 'build' };
 };
 
 export const ReportScreen_v2: React.FC = () => {
@@ -62,7 +121,6 @@ export const ReportScreen_v2: React.FC = () => {
   const [pollingCount, setPollingCount] = useState(0);
 
   const [prevScore, setPrevScore] = useState<number | null>(null);
-  const [prevAreaCounts, setPrevAreaCounts] = useState<Record<string, number> | null>(null);
 
   const [parentLevel, setParentLevel] = useState<ParentSkillLevel>(1);
   const [level5QualifyingCount, setLevel5QualifyingCount] = useState(0);
@@ -83,9 +141,9 @@ export const ReportScreen_v2: React.FC = () => {
     }
   };
 
-  // Non-critical: finds the previous completed session to diff score/areas
+  // Non-critical: finds the previous completed session to diff the score
   // against. Failing silently (no previous session, offline, etc.) just
-  // means the delta and today's-goal comparisons fall back gracefully.
+  // means the delta falls back gracefully.
   const loadPreviousComparison = async (current: RecordingAnalysis) => {
     try {
       const { recordings } = await recordingService.getRecordings();
@@ -96,9 +154,6 @@ export const ReportScreen_v2: React.FC = () => {
       if (!previous) return;
       const prevAnalysis = await recordingService.getAnalysis(previous.id);
       setPrevScore(prevAnalysis.noraScore ?? null);
-      const counts: Record<string, number> = {};
-      (prevAnalysis.areasToAvoid || []).forEach((a: any) => { counts[a.label] = a.count || 0; });
-      setPrevAreaCounts(counts);
     } catch (err) {
       // No previous session to compare against — fine, sections adapt.
     }
@@ -185,24 +240,25 @@ export const ReportScreen_v2: React.FC = () => {
   const isAmazing = score >= 90;
   const scoreDelta = prevScore != null ? score - prevScore : null;
 
-  // Today's Goal — the areasToAvoid entry (excluding PDI Commands) with the
-  // highest count this session; skipped when nothing needs reducing.
-  const filteredAreas = reportData.areasToAvoid.filter(
-    a => !(reportData.mode === 'PDI' && a.label === 'Commands')
-  );
-  const goalArea = filteredAreas.reduce<{ label: string; count: number } | null>(
-    (max, a) => (a.count > (max?.count ?? 0) ? a : max),
-    null
-  );
-  const goalPreviousCount = goalArea && prevAreaCounts ? prevAreaCounts[goalArea.label] ?? null : null;
-  const goalAchieved = goalArea
-    ? (goalPreviousCount != null ? goalArea.count < goalPreviousCount : goalArea.count === 0)
-    : false;
-  const goalSkillLabel = goalArea ? getSkillDisplayLabel(goalArea.label, t) : null;
-  const goalSkillForCount = (count: number) => {
-    const plural = goalSkillLabel?.toLowerCase() ?? '';
-    return count === 1 && plural.endsWith('s') ? plural.slice(0, -1) : plural;
-  };
+  // Today's Goal — prefers the same deterministic, level-gated goal shown
+  // on ReportDetailScreen's "Tomorrow's Goal" card (see levelGoalEngine.cjs).
+  // Falls back to a client-derived version, keyed off parentLevel + this
+  // session's raw counts, for sessions analyzed before that field existed.
+  const goalDirective = reportData.mode === 'PDI'
+    ? reportData.pdiTomorrowGoalDirective ?? null
+    : reportData.tomorrowGoalDirective ?? null;
+  const skillLabelKey = goalDirective ? GOAL_TYPE_SKILL_LABEL_KEY[goalDirective.goalType || ''] : undefined;
+  const goal: DerivedGoal = goalDirective
+    ? {
+        focusSkill: skillLabelKey
+          ? t(`report.skillLabel.${skillLabelKey}`)
+          : t(`profileReport.levels.${PARENT_SKILL_LEVEL_KEYS[parentLevel]}.skill`),
+        currentNumber: goalDirective.currentNumber,
+        targetNumber: goalDirective.targetNumber ?? null,
+        description: goalDirective.actionPrompt || '',
+        direction: REDUCE_GOAL_TYPES.has(goalDirective.goalType || '') ? 'reduce' : 'build',
+      }
+    : deriveGoalFromLevel(parentLevel, reportData.stats, reportData.mode, t);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
@@ -227,119 +283,122 @@ export const ReportScreen_v2: React.FC = () => {
           </View>
         </View>
 
-        {/* Emotional Deposit */}
-        <View style={styles.depositCard}>
-          <View style={styles.depositIconCircle}>
-            <Ionicons name="heart" size={28} color={'#6837EA'} />
-          </View>
-          <View style={styles.depositScoreCol}>
-            <Text style={styles.depositScoreText}>+{score}</Text>
-            <Text style={styles.depositLabel}>{t('reportV2.emotionalDeposit')}</Text>
-          </View>
-          {scoreDelta != null && (
-            <View style={styles.depositDeltaGroup}>
-              <View style={styles.depositDivider} />
-              <View style={styles.depositDeltaCol}>
-                <View style={styles.depositDeltaRow}>
-                  <Ionicons name={scoreDelta >= 0 ? 'arrow-up' : 'arrow-down'} size={13} color={scoreDelta >= 0 ? '#10B981' : '#DC2626'} />
-                  <Text style={[styles.depositDeltaText, { color: scoreDelta >= 0 ? '#10B981' : '#DC2626' }]}>
-                    {scoreDelta >= 0 ? '+' : ''}{scoreDelta}
-                  </Text>
-                  <Text style={styles.depositDeltaFrom}>{t('reportV2.deltaFrom')}</Text>
-                </View>
-                <Text style={styles.depositDeltaSuffix}>{t('reportV2.deltaLastSession')}</Text>
-              </View>
+        {/* Glance strip: Emotional Deposit + Parenting Level */}
+        <View style={styles.statsRow}>
+          <View style={[styles.statCard, styles.depositCard]}>
+            <View style={styles.depositBars} pointerEvents="none">
+              <View style={[styles.depositBar, { height: 14 }]} />
+              <View style={[styles.depositBar, { height: 22 }]} />
+              <View style={[styles.depositBar, { height: 32 }]} />
             </View>
-          )}
+            <View style={styles.statHeaderRow}>
+              <View style={styles.statIconCircle}>
+                <MaterialCommunityIcons name="currency-usd" size={16} color={COLORS.mainPurple} />
+              </View>
+              <Text style={styles.statLabel}>{t('reportV2.depositLabel')}</Text>
+            </View>
+            <Text style={styles.depositValue}>+{score}</Text>
+            {scoreDelta != null && (
+              <View style={styles.statDeltaRow}>
+                <Ionicons name={scoreDelta >= 0 ? 'arrow-up' : 'arrow-down'} size={14} color={scoreDelta >= 0 ? '#10B981' : '#DC2626'} />
+                <Text style={[styles.statDeltaText, { color: scoreDelta >= 0 ? '#10B981' : '#DC2626' }]}>
+                  {t('reportV2.deltaToday', { count: Math.abs(scoreDelta) })}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <TouchableOpacity style={[styles.statCard, styles.levelChip]} activeOpacity={0.85} onPress={handleLevelCardPress}>
+            <MaterialCommunityIcons name="medal-outline" size={40} color="#CBA76A" style={styles.levelChipMedal} />
+            <View style={styles.statHeaderRow}>
+              <View style={styles.statIconCircle}>
+                <Ionicons name="star-outline" size={15} color="#9A805D" />
+              </View>
+              <Text style={[styles.statLabel, styles.levelChipLabel]}>{t('reportV2.levelLabel')}</Text>
+            </View>
+            <Text style={styles.levelChipValue}>{parentLevel}</Text>
+            <Text style={styles.levelChipName}>{t(`profileReport.levels.${PARENT_SKILL_LEVEL_KEYS[parentLevel]}.title`)}</Text>
+            {parentLevel === 5 && (
+              <View style={styles.levelChipProgressRow}>
+                <View style={styles.levelChipProgressTrack}>
+                  <View style={[styles.levelChipProgressFill, { width: `${(level5QualifyingCount / 2) * 100}%` }]} />
+                </View>
+                <Text style={styles.levelChipProgressText}>{level5QualifyingCount}/2</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
-        {/* Today's Goal */}
-        {goalArea && goalSkillLabel && (
+        {/* Today's Goal — spotlight card */}
+        {goal.focusSkill && (
           <View style={styles.goalCard}>
-            <View style={styles.goalTopRow}>
-              <View style={styles.goalHeaderCol}>
-                <View style={styles.goalHeaderRow}>
-                  <Image source={REPORT_TARGET_SMALL} style={styles.goalIconImage} resizeMode="contain" />
-                  <Text style={styles.goalLabel}>{t('reportV2.todaysGoal')}</Text>
+            <View style={styles.goalRings} pointerEvents="none">
+              <View style={styles.goalRingOuter}>
+                <View style={styles.goalRingMiddle}>
+                  <View style={styles.goalRingInner} />
                 </View>
-                <Text style={styles.goalTitle}>{t('reportV2.reduceSkill', { skill: goalSkillLabel })}</Text>
-                <View style={styles.goalTitleDivider} />
-
-                <View style={styles.goalStatusRow}>
-                  {goalAchieved ? (
-                    <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-                  ) : (
-                    <Image source={REPORT_STAR_SMALL} style={styles.goalStatusImage} resizeMode="contain" />
-                  )}
-                  <Text style={[styles.goalStatusText, { color: goalAchieved ? '#10B981' : '#D97706' }]}>
-                    {goalAchieved ? t('reportV2.youDidIt') : t('reportV2.almostThere')}
-                  </Text>
-                </View>
-
-                <Text style={styles.goalCountText}>
-                  <Trans
-                    i18nKey={goalAchieved ? 'reportV2.onlyCountToday' : 'reportV2.countToday'}
-                    values={{ count: goalArea.count, skill: goalSkillForCount(goalArea.count) }}
-                    components={[<Text style={styles.goalCountBold} />]}
-                  />
-                </Text>
-                {goalPreviousCount != null && (
-                  <Text style={styles.goalCountMuted}>
-                    {t(goalAchieved ? 'reportV2.lastTime' : 'reportV2.lastSession', { count: goalPreviousCount })}
-                  </Text>
-                )}
-
-                {!goalAchieved && (
-                  <Text style={styles.goalEncouragement}>{t('reportV2.goalEncouragement')}</Text>
-                )}
               </View>
-              <Image source={REPORT_TARGET} style={styles.goalTargetImage} resizeMode="contain" />
             </View>
+
+            <View style={styles.goalHeaderRow}>
+              <View style={styles.goalIconCircle}>
+                <MaterialCommunityIcons name="bullseye-arrow" size={16} color={COLORS.tealAccent} />
+              </View>
+              <Text style={styles.goalLabel}>{t('reportV2.todaysGoal')}</Text>
+            </View>
+
+            <Text style={styles.goalTitle}>{goal.focusSkill}</Text>
+            {goal.description && <Text style={styles.goalDescription}>{goal.description}</Text>}
+
+            {goal.currentNumber != null && (
+              <>
+                <View style={styles.goalNumbersRow}>
+                  <View style={styles.goalNumberBox}>
+                    <Text style={styles.goalNumberValue}>{goal.currentNumber}</Text>
+                    <Text style={styles.goalNumberLabel}>{t('reportDetail.tomorrowGoal.todayLabel')}</Text>
+                  </View>
+                  {goal.targetNumber != null && (
+                    <>
+                      <Ionicons name="arrow-forward" size={20} color={COLORS.tealAccent} style={styles.goalArrow} />
+                      <View style={[styles.goalNumberBox, styles.goalTargetBox]}>
+                        <Text style={[styles.goalNumberValue, styles.goalTargetValue]}>{goal.targetNumber}</Text>
+                        <Text style={[styles.goalNumberLabel, styles.goalTargetLabel]}>{t('reportV2.aimForLabel')}</Text>
+                      </View>
+                    </>
+                  )}
+                </View>
+
+                {typeof goal.targetNumber === 'number' && (() => {
+                  const achieved = goal.direction === 'build'
+                    ? goal.currentNumber >= goal.targetNumber
+                    : goal.currentNumber <= goal.targetNumber;
+                  const remaining = Math.abs(goal.targetNumber - goal.currentNumber);
+                  return (
+                    <View style={styles.goalStatusRow}>
+                      <View style={styles.goalCheckCircle}>
+                        <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                      </View>
+                      <Text style={styles.goalStatusText}>
+                        {achieved ? (
+                          t('reportV2.goalAchievedShort')
+                        ) : (
+                          <Trans
+                            i18nKey="reportV2.goalRemaining"
+                            values={{ count: remaining }}
+                            components={[<Text style={styles.goalStatusBold} />]}
+                          />
+                        )}
+                      </Text>
+                    </View>
+                  );
+                })()}
+              </>
+            )}
           </View>
         )}
 
-        {/* Parenting Level */}
-        <TouchableOpacity style={styles.levelCard} activeOpacity={0.85} onPress={handleLevelCardPress}>
-          <View style={styles.levelHeaderRow}>
-            <View style={styles.levelStarBadge}>
-              <Ionicons name="star" size={13} color={COLORS.mainPurple} />
-            </View>
-            <Text style={styles.levelHeaderLabel}>{t('reportV2.parentingLevel')}</Text>
-            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" style={styles.levelHeaderChevron} />
-          </View>
-          <View style={styles.levelBodyRow}>
-            <View style={styles.levelNumberBadge}>
-              <Text style={styles.levelNumberText}>{parentLevel}</Text>
-            </View>
-            <View style={styles.levelProgressCol}>
-              <Text style={styles.levelTitle}>{t('reportV2.levelHeading', { level: parentLevel })}</Text>
-              <Text style={styles.levelSubtitle}>{t(`profileReport.levels.${PARENT_SKILL_LEVEL_KEYS[parentLevel]}.title`)}</Text>
-              {parentLevel === 5 && (
-                <View style={styles.levelProgressRow}>
-                  <View style={styles.levelProgressTrack}>
-                    <View style={[styles.levelProgressFill, { width: `${(level5QualifyingCount / 2) * 100}%` }]} />
-                  </View>
-                  <Text style={styles.levelPercentText}>{level5QualifyingCount}/2</Text>
-                </View>
-              )}
-            </View>
-          </View>
-          {parentLevel === 5 && (
-            <Text style={styles.levelFooterText}>
-              {t('reportV2.levelFooterSessions', { count: level5QualifyingCount, nextLevel: parentLevel + 1 })}
-            </Text>
-          )}
-
-          <View style={styles.levelClearGoalBox}>
-            <View style={styles.levelClearGoalHeaderRow}>
-              <Ionicons name="flag" size={14} color="#B45309" />
-              <Text style={styles.levelClearGoalLabel}>{t('parentLevelDetail.clearGoalLabel')}</Text>
-            </View>
-            <Text style={styles.levelClearGoalText}>{t(`profileReport.levels.${PARENT_SKILL_LEVEL_KEYS[parentLevel]}.clearGoal`)}</Text>
-          </View>
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.continueButton} onPress={handleContinueToCoaching} activeOpacity={0.85}>
+          <MaterialCommunityIcons name="trophy-outline" size={20} color="#FFFFFF" />
           <Text style={styles.continueButtonText}>{t('reportV2.continueToCoaching')}</Text>
           <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
         </TouchableOpacity>
@@ -428,285 +487,251 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
 
-  // ── Emotional Deposit card ──
+  // ── Glance strip: Deposit + Level ──
+  statsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 14,
+  },
+  statCard: {
+    flex: 1,
+    minHeight: 150,
+    borderRadius: 22,
+    padding: 16,
+    overflow: 'hidden',
+  },
   depositCard: {
+    backgroundColor: COLORS.cardPurple,
+  },
+  depositBars: {
+    position: 'absolute',
+    right: 14,
+    bottom: 14,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 5,
+    opacity: 0.5,
+  },
+  depositBar: {
+    width: 9,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    backgroundColor: '#C7C4F9',
+  },
+  statHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FAF7FE',
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 10,
-    gap: 12,
+    gap: 8,
   },
-  depositIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#EDE9FE',
+  statIconCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  depositScoreCol: {
-    flex: 1,
-  },
-  depositScoreText: {
+  statLabel: {
     fontFamily: FONTS.bold,
-    fontSize: 32,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
     color: COLORS.mainPurple,
   },
-  depositLabel: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 13,
-    color: COLORS.textDark,
+  depositValue: {
+    fontFamily: FONTS.bold,
+    fontSize: 28,
+    color: COLORS.mainPurple,
+    marginTop: 10,
   },
-  depositDeltaGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    transform: [{ translateX: -20 }],
-  },
-  depositDivider: {
-    width: 1,
-    alignSelf: 'stretch',
-    backgroundColor: '#E9DFFC',
-  },
-  depositDeltaCol: {
-    alignItems: 'flex-end',
-    paddingLeft: 8,
-    flexShrink: 0,
-  },
-  depositDeltaRow: {
+  statDeltaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-  },
-  depositDeltaText: {
-    fontFamily: FONTS.bold,
-    fontSize: 14,
-  },
-  depositDeltaFrom: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 13,
-    color: COLORS.textDark,
-    marginLeft: 2,
-  },
-  depositDeltaSuffix: {
-    fontFamily: FONTS.regular,
-    fontSize: 12,
-    color: '#6B7280',
     marginTop: 2,
   },
-
-  // ── Today's Goal card ──
-  goalCard: {
-    backgroundColor: '#FAFBF6',
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 10,
+  statDeltaText: {
+    fontFamily: FONTS.bold,
+    fontSize: 13,
   },
-  goalTopRow: {
+  levelChip: {
+    backgroundColor: COLORS.neutralTint,
+  },
+  levelChipMedal: {
+    position: 'absolute',
+    right: 10,
+    bottom: 10,
+    opacity: 0.6,
+  },
+  levelChipLabel: {
+    color: '#8A7F6E',
+  },
+  levelChipValue: {
+    fontFamily: FONTS.bold,
+    fontSize: 28,
+    color: COLORS.textDark,
+    marginTop: 10,
+  },
+  levelChipName: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  levelChipProgressRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
   },
-  goalHeaderCol: {
+  levelChipProgressTrack: {
     flex: 1,
+    height: 5,
+    backgroundColor: '#E5D9FA',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  levelChipProgressFill: {
+    height: '100%',
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 3,
+  },
+  levelChipProgressText: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    color: COLORS.mainPurple,
+  },
+
+  // ── Today's Goal — spotlight card ──
+  goalCard: {
+    backgroundColor: COLORS.tealTint,
+    borderRadius: 28,
+    padding: 22,
+    marginBottom: 24,
+    overflow: 'hidden',
+  },
+  goalRings: {
+    position: 'absolute',
+    right: -40,
+    top: -40,
+  },
+  goalRingOuter: {
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    borderWidth: 14,
+    borderColor: '#C7EBE6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  goalRingMiddle: {
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    borderWidth: 14,
+    borderColor: '#C7EBE6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  goalRingInner: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#D9F2EE',
   },
   goalHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 8,
   },
-  goalIconImage: {
-    width: 26,
-    height: 26,
-  },
-  goalStatusImage: {
-    width: 20,
-    height: 20,
+  goalIconCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   goalLabel: {
     fontFamily: FONTS.bold,
-    fontSize: 10,
-    color: '#15803D',
-    textTransform: 'uppercase',
+    fontSize: 12,
     letterSpacing: 0.5,
-    textAlign: 'left',
+    textTransform: 'uppercase',
+    color: COLORS.tealAccent,
   },
   goalTitle: {
     fontFamily: FONTS.bold,
-    fontSize: 12,
+    fontSize: 22,
     color: COLORS.textDark,
-    marginBottom: 10,
-    textAlign: 'left',
-    marginLeft:33,
+    marginTop: 12,
   },
-  goalTitleDivider: {
-    height: 1,
-    backgroundColor: '#DCE7DF',
-    marginBottom: 10,
+  goalDescription: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#4B5563',
+    marginTop: 8,
+    lineHeight: 21,
+  },
+  goalNumbersRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 18,
+  },
+  goalNumberBox: {
+    minWidth: 64,
+  },
+  goalNumberValue: {
+    fontFamily: FONTS.bold,
+    fontSize: 34,
+    color: COLORS.textDark,
+    lineHeight: 38,
+  },
+  goalNumberLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 11,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: COLORS.textSecondary,
+    marginTop: 3,
+  },
+  goalArrow: {
+    marginHorizontal: 14,
+  },
+  goalTargetBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+  },
+  goalTargetValue: {
+    color: COLORS.tealAccent,
+  },
+  goalTargetLabel: {
+    color: COLORS.tealAccent,
+    textAlign: 'center',
   },
   goalStatusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
+    gap: 8,
+    marginTop: 18,
+  },
+  goalCheckCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: COLORS.tealAccent,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   goalStatusText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    textAlign: 'left',
-    marginLeft:7,
-  },
-  goalCountText: {
     fontFamily: FONTS.regular,
-    fontSize: 10,
-    color: COLORS.textDark,
-    textAlign: 'left',
-    marginLeft:33,
-  },
-  goalCountBold: {
-    fontFamily: FONTS.bold,
-    color: '#D97706',
-  },
-  goalCountMuted: {
-    fontFamily: FONTS.regular,
-    fontSize: 10,
-    color: '#9CA3AF',
-    textAlign: 'left',
-    marginLeft: 33,
-  },
-  goalEncouragement: {
-    fontFamily: FONTS.regular,
-    fontSize: 10,
-    color: COLORS.textDark,
-    marginTop: 6,
-    lineHeight: 17,
-    textAlign: 'left',
-    marginLeft:33,
-  },
-  goalTargetImage: {
-    width: 108,
-    height: 108,
-    marginLeft: 4,
-  },
-
-  // ── Parenting Level card ──
-  levelCard: {
-    backgroundColor: '#FAF7FE',
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 24,
-  },
-  levelHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 14,
-  },
-  levelStarBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#EDE9FE',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  levelHeaderLabel: {
-    fontFamily: FONTS.bold,
-    fontSize: 12,
-    color: COLORS.mainPurple,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  levelHeaderChevron: {
-    marginLeft: 'auto',
-  },
-  levelBodyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  levelNumberBadge: {
-    width: 40,
-    height: 44,
-    borderRadius: 10,
-    backgroundColor: COLORS.mainPurple,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  levelNumberText: {
-    fontFamily: FONTS.bold,
-    fontSize: 18,
-    color: '#FFFFFF',
-  },
-  levelProgressCol: {
-    flex: 1,
-  },
-  levelTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 16,
+    fontSize: 14,
     color: COLORS.textDark,
   },
-  levelSubtitle: {
-    fontFamily: FONTS.regular,
-    fontSize: 13,
-    color: '#6B7280',
-    marginTop: 2,
-    marginBottom: 8,
-  },
-  levelProgressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  levelProgressTrack: {
-    flex: 1,
-    height: 6,
-    backgroundColor: '#E5D9FA',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  levelProgressFill: {
-    height: '100%',
-    backgroundColor: COLORS.mainPurple,
-    borderRadius: 3,
-  },
-  levelPercentText: {
+  goalStatusBold: {
     fontFamily: FONTS.bold,
-    fontSize: 13,
-    color: COLORS.mainPurple,
-  },
-  levelFooterText: {
-    fontFamily: FONTS.regular,
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 12,
-  },
-  levelClearGoalBox: {
-    marginTop: 14,
-    backgroundColor: '#FEF3C7',
-    borderRadius: 14,
-    padding: 12,
-  },
-  levelClearGoalHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  levelClearGoalLabel: {
-    fontFamily: FONTS.bold,
-    fontSize: 11,
-    color: '#B45309',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  levelClearGoalText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 13,
-    color: '#92400E',
-    lineHeight: 18,
+    color: COLORS.tealAccent,
   },
 
   // ── CTA ──

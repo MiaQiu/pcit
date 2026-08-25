@@ -12,7 +12,6 @@ export const REPORT_DRAGON_AMAZING = require('../../assets/images/report-dragon2
 export const REPORT_DETAIL_DRAGON = require('../../assets/images/reportdetail-dragon.png');
 export const REPORT_TARGET = require('../../assets/images/report-target.png');
 export const REPORT_TARGET_SMALL = require('../../assets/images/target-small.png');
-export const REPORT_STAR_SMALL = require('../../assets/images/star-small.png');
 
 // Design Tokens from Figma
 export const COLORS = {
@@ -24,6 +23,10 @@ export const COLORS = {
   ellipseCyan: '#9BD4DF',
   ellipseOrange: '#FFB380',
   textSecondary: '#6B7280',
+  // Report V2 "Today's Goal" spotlight card
+  tealAccent: '#0D9488',
+  tealTint: '#E3F4F2',
+  neutralTint: '#F4F1EC',
 };
 
 // Typography

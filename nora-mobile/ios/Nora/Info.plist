@@ -46,9 +46,6 @@
     <array>
       <string>whatsapp</string>
       <string>fb</string>
-      <string>weixin</string>
-      <string>weixinULAPI</string>
-      <string>weixinURSAPI</string>
     </array>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>

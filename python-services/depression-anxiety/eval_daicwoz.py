@@ -205,7 +205,11 @@ def main():
         waveform, duration = extracted
 
         t = time.time()
-        result = pipeline.run_on_audio(waveform, quantize=True)
+        # See the matching comment in classifier.py: Pipeline.run_on_audio()
+        # batches every 30s chunk into one forward pass without no_grad(),
+        # so this avoids retaining a full autograd graph for nothing.
+        with torch.no_grad():
+            result = pipeline.run_on_audio(waveform, quantize=True)
         elapsed = time.time() - t
 
         dam_depression = result.get('depression')

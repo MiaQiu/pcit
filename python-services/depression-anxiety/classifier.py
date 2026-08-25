@@ -97,7 +97,12 @@ def run_dam(s3_bucket: str, s3_key: str, quantize: bool = True) -> dict:
                 f'>= {MIN_RECOMMENDED_SECONDS}s post-VAD for reliable scores.'
             )
         waveform = _load_waveform(wav_path)
-        result = pipeline.run_on_audio(waveform, quantize=quantize)
+        # Pipeline.run_on_audio() batches every 30s chunk of the clip into one
+        # forward pass and never wraps it in no_grad(), so without this the
+        # autograd graph retains every intermediate activation for a backward
+        # pass that never happens — roughly doubling peak memory for nothing.
+        with torch.no_grad():
+            result = pipeline.run_on_audio(waveform, quantize=quantize)
     finally:
         os.unlink(wav_path)
 
