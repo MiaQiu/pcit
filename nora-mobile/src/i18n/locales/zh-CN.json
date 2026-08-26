@@ -506,7 +506,13 @@
     "goalAchievedShort": "你达成目标了！",
     "continueToCoaching": "继续查看指导",
     "shareMyProgress": "分享我的进度",
-    "shareMessage": "我刚和{{childName}}完成了一次 {{score}}/100 的 Nora 练习！"
+    "shareMessage": "我刚和{{childName}}完成了一次 {{score}}/100 的 Nora 练习！",
+    "levelUp": {
+      "title": "升级了！",
+      "subtitle": "你已达到等级 {{level}}",
+      "skillUnlocked": "解锁新技能",
+      "continueButton": "太棒了！"
+    }
   },
   "reportDetail": {
     "headerTitle": "今日指导",

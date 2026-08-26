@@ -16,20 +16,11 @@ import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import type { RecordingAnalysis, ParentSkillLevel } from '@nora/core';
 import { useTranslation, Trans } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import * as userStorage from '../lib/userStorage';
+import { LevelUpModal } from '../components/LevelUpModal';
+import { PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
 
 type ReportScreenV2RouteProp = RouteProp<RootStackParamList, 'ReportV2'>;
-
-// Parenting Level — level number -> i18n key on the shared 7-level ladder
-// (same keys/copy as ProfileReportScreen's Personalized Learning Journey).
-const PARENT_SKILL_LEVEL_KEYS: Record<ParentSkillLevel, string> = {
-  1: 'playBuilder',
-  2: 'confidenceBuilder',
-  3: 'attentionBuilder',
-  4: 'communicationBuilder',
-  5: 'cooperationBuilder',
-  6: 'boundaryBuilder',
-  7: 'confidentParent',
-};
 
 // Flat count target for the levels whose ladder goal (see
 // parentSkillLevelService.cjs computeLevelUpdate) is "hit N of this skill
@@ -124,6 +115,7 @@ export const ReportScreen_v2: React.FC = () => {
 
   const [parentLevel, setParentLevel] = useState<ParentSkillLevel>(1);
   const [level5QualifyingCount, setLevel5QualifyingCount] = useState(0);
+  const [levelUpInfo, setLevelUpInfo] = useState<{ from: ParentSkillLevel; to: ParentSkillLevel } | null>(null);
 
   useEffect(() => {
     amplitudeService.trackScreenView('Report', { recordingId, version: 'v2' });
@@ -131,11 +123,26 @@ export const ReportScreen_v2: React.FC = () => {
     loadParentSkillLevel();
   }, [recordingId]);
 
+  // No server signal exists for "did this session level you up" (the level
+  // update runs fire-and-forget, decoupled from this analysis fetch) — so we
+  // detect it by diffing against the last level we saw this user at,
+  // cached locally. Same one-time-celebration shape as
+  // ReportScreen's `@discipline_phase_celebrated`, but a number so it works
+  // across every level transition, not just once.
   const loadParentSkillLevel = async () => {
     try {
       const info = await authService.getParentSkillLevel();
       setParentLevel(info.currentLevel);
       setLevel5QualifyingCount(info.level5QualifyingCount);
+
+      const seenRaw = await userStorage.getItem('@parent_skill_level_seen');
+      const seenLevel = seenRaw ? parseInt(seenRaw, 10) : null;
+      if (seenLevel != null && info.currentLevel > seenLevel) {
+        setLevelUpInfo({ from: seenLevel as ParentSkillLevel, to: info.currentLevel });
+      }
+      if (seenLevel == null || info.currentLevel > seenLevel) {
+        await userStorage.setItem('@parent_skill_level_seen', String(info.currentLevel));
+      }
     } catch (err) {
       // Keep default level 1 if fetch fails
     }
@@ -403,6 +410,15 @@ export const ReportScreen_v2: React.FC = () => {
           <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
         </TouchableOpacity>
       </ScrollView>
+
+      {levelUpInfo && (
+        <LevelUpModal
+          visible
+          fromLevel={levelUpInfo.from}
+          toLevel={levelUpInfo.to}
+          onDismiss={() => setLevelUpInfo(null)}
+        />
+      )}
     </SafeAreaView>
   );
 };

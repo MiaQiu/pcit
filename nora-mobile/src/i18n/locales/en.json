@@ -506,7 +506,13 @@
     "goalAchievedShort": "You hit your goal!",
     "continueToCoaching": "Continue to Coaching",
     "shareMyProgress": "Share my progress",
-    "shareMessage": "I just had a {{score}}/100 session with {{childName}} using Nora!"
+    "shareMessage": "I just had a {{score}}/100 session with {{childName}} using Nora!",
+    "levelUp": {
+      "title": "LEVEL UP!",
+      "subtitle": "You've reached Level {{level}}",
+      "skillUnlocked": "New skill unlocked",
+      "continueButton": "Nice!"
+    }
   },
   "reportDetail": {
     "headerTitle": "Today's Coaching",
