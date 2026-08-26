@@ -1377,24 +1377,27 @@ export const HomeScreen_v2: React.FC = () => {
           )}
         </View>
 
-        {/* ── Sub Action Cards — admin-configurable badge + message cards ── */}
+        {/* ── Sub Action Card — admin-configurable badge + message card.
+             The server already ranks homeCards by relevance to this user
+             (see homeCardScore in config.cjs), so only the top one is shown —
+             one "Nora Daily" card at a time, not the whole feed. ── */}
         {homeCards.length > 0 && (
           <View style={styles.planSection}>
             <Text style={[styles.planTitle, styles.noraDailyTitle]}>{t('homeV2.noraDaily')}</Text>
             <Text style={styles.noraDailySubtitle}>{t('homeV2.noraDailySubtitle')}</Text>
           </View>
         )}
-        {homeCards.map(card => (
+        {homeCards.length > 0 && (
           <SubActionCard
-            key={card.id}
-            card={card}
+            key={homeCards[0].id}
+            card={homeCards[0]}
             sharerName={userName}
-            onPress={card.cardType === 'CONTENT' ? () => {
-              amplitudeService.trackEvent('Home Card Tapped', { cardId: card.id });
-              navigation.push('HomeCardDetail', { cardId: card.id });
+            onPress={homeCards[0].cardType === 'CONTENT' ? () => {
+              amplitudeService.trackEvent('Home Card Tapped', { cardId: homeCards[0].id });
+              navigation.push('HomeCardDetail', { cardId: homeCards[0].id });
             } : undefined}
           />
-        ))}
+        )}
 
         {/* ── Today's plan ── */}
         {todayPlan.length > 0 && (
