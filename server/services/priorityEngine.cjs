@@ -309,11 +309,83 @@ async function runPriorityEngine(userId, { wacbSurveyId } = {}) {
   return updatedChild;
 }
 
+// Same logic as the copy in server/routes/admin.cjs (calculateChildAgeInMonths)
+// — duplicated locally per this codebase's existing convention rather than
+// centralized. Prefers an exact birthday when available; falls back to a
+// year-only estimate (assumes a January birth month) otherwise.
+function calculateChildAgeInMonths(birthday, birthYear) {
+  const today = new Date();
+  if (birthday) {
+    const birthDate = new Date(birthday);
+    return (today.getFullYear() - birthDate.getFullYear()) * 12 + (today.getMonth() - birthDate.getMonth());
+  }
+  return birthYear ? (today.getFullYear() - birthYear) * 12 : null;
+}
+
+/**
+ * Builds the matching context used to rank Home Cards for a user (see
+ * GET /api/config/home-cards in config.cjs): a weighted tag set for topic
+ * matching, plus every one of the user's children's ages/genders for
+ * age-range/gender matching.
+ *
+ * tagWeights combines:
+ *   - User.issue / User.parentGoal values (weight 2 — explicit, first-party
+ *     signal), parsed via parseUserIssues (same JSON-or-string shape both
+ *     fields are written in).
+ *   - Child.primaryIssue / secondaryIssue ClinicalLevel values across all of
+ *     the user's children (weight 1 — derived/coarser signal; this is how
+ *     WACB survey signal folds in, since runPriorityEngine already computes
+ *     these from WACB + issue, without re-deriving that math here).
+ *
+ * childAges/childGenders resolve per Child row, falling back to the legacy
+ * single-child User fields (User.childBirthday/childBirthYear/childGender)
+ * when a Child row is missing that data — and synthesize one entry straight
+ * from the User fields if the user has no Child row at all yet (Child rows
+ * are created lazily by runPriorityEngine/pcitAnalysisService, not at signup).
+ *
+ * @param {string} userId
+ * @returns {Promise<{ tagWeights: Map<string, number>, childAges: number[], childGenders: string[] }>}
+ */
+async function getUserMatchContext(userId) {
+  const [user, children] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { issue: true, parentGoal: true, childBirthday: true, childBirthYear: true, childGender: true },
+    }),
+    prisma.child.findMany({
+      where: { userId },
+      select: { birthday: true, gender: true, primaryIssue: true, secondaryIssue: true },
+    }),
+  ]);
+
+  const tagWeights = new Map();
+  for (const tag of parseUserIssues(user?.issue)) tagWeights.set(tag, 2);
+  for (const tag of parseUserIssues(user?.parentGoal)) tagWeights.set(tag, 2);
+
+  const childRows = children.length > 0 ? children : [{ birthday: null, gender: null, primaryIssue: null, secondaryIssue: null }];
+  const childAges = [];
+  const childGenders = [];
+
+  for (const child of childRows) {
+    if (child.primaryIssue && !tagWeights.has(child.primaryIssue)) tagWeights.set(child.primaryIssue, 1);
+    if (child.secondaryIssue && !tagWeights.has(child.secondaryIssue)) tagWeights.set(child.secondaryIssue, 1);
+
+    const ageMonths = calculateChildAgeInMonths(child.birthday || user?.childBirthday, user?.childBirthYear);
+    if (ageMonths != null) childAges.push(ageMonths);
+
+    const gender = child.gender || user?.childGender;
+    if (gender) childGenders.push(gender);
+  }
+
+  return { tagWeights, childAges, childGenders };
+}
+
 module.exports = {
   parseUserIssues,
   calculateWacbLevelScores,
   evaluatePriorities,
   runPriorityEngine,
+  getUserMatchContext,
   // Export constants for testing
   CLINICAL_LEVELS_BY_PRIORITY,
   LEVEL_TO_STRATEGY,

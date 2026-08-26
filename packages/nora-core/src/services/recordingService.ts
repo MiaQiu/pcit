@@ -563,6 +563,38 @@ class RecordingService {
   }
 
   /**
+   * Record that the requesting user opened a CONTENT home card's detail page
+   * (upserts HomeCardView server-side). Fire-and-forget — swallows errors
+   * rather than throwing, since this is telemetry, not a user-facing action;
+   * callers should not block rendering on it.
+   */
+  async recordHomeCardView(id: string): Promise<void> {
+    try {
+      await this.authService.authenticatedRequest(
+        `${this.apiUrl}/api/config/home-cards/${id}/view`,
+        { method: 'POST' }
+      );
+    } catch {
+      // telemetry only — ignore failures
+    }
+  }
+
+  /**
+   * Record a share event for a home card (any type) — appends a
+   * HomeCardShare row. Fire-and-forget, same as recordHomeCardView.
+   */
+  async recordHomeCardShare(id: string): Promise<void> {
+    try {
+      await this.authService.authenticatedRequest(
+        `${this.apiUrl}/api/config/home-cards/${id}/share`,
+        { method: 'POST' }
+      );
+    } catch {
+      // telemetry only — ignore failures
+    }
+  }
+
+  /**
    * Create (or reuse) a short /s/:code redirect for a share target URL —
    * powers ShareSheet's "SHARE LINK" row. Idempotent server-side (upsert by
    * targetUrl), safe to call repeatedly for the same card/lesson.

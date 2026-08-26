@@ -347,6 +347,7 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
 
   const handleShare = () => {
     amplitudeService.trackEvent('Home Card Shared', { cardId: card.id });
+    recordingService.recordHomeCardShare(card.id);
     setShareSheetVisible(true);
   };
 

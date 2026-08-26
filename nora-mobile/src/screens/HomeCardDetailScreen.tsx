@@ -131,6 +131,7 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
         if (cancelled) return;
         setDetail(data);
         amplitudeService.trackEvent('Home Card Detail Viewed', { cardId });
+        recordingService.recordHomeCardView(cardId);
       })
       .catch((err) => {
         console.error('Failed to load home card detail:', err);
@@ -151,6 +152,7 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
   const handleShare = () => {
     if (!detail) return;
     amplitudeService.trackEvent('Home Card Shared', { cardId });
+    recordingService.recordHomeCardShare(cardId);
     setShareSheetVisible(true);
   };
 

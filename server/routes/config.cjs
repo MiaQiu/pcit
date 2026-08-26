@@ -4,10 +4,53 @@ const { requireAuth } = require('../middleware/auth.cjs');
 const { resolveReportAudioUrls } = require('../services/weeklyReportService.cjs');
 const { resolveDragonImageUrl } = require('../services/storage-s3.cjs');
 const { buildShareCardImage, lightenHexColor } = require('../services/shareImage.cjs');
+const { getUserMatchContext } = require('../services/priorityEngine.cjs');
 
 const router = express.Router();
 
 const DEFAULT_REPORT_VISIBILITY = { daily: false, weekly: false, monthly: false };
+
+// Home Card ranking weights (see getUserMatchContext in priorityEngine.cjs
+// for how a user's tagWeights/childAges/childGenders are resolved).
+const HOME_CARD_NEUTRAL_SCORE = 1;
+const HOME_CARD_AGE_MATCH_WEIGHT = 2;
+const HOME_CARD_GENDER_MATCH_WEIGHT = 1;
+
+/**
+ * A card is a match only if every targeting dimension it sets is satisfied
+ * (AND across dimension-types — a "boys, age 2-4" card shouldn't rank as a
+ * match for a girl just because her age fits). Multiple values within
+ * targetTags itself still OR together (alternative relevant concerns).
+ */
+function homeCardIsMatch(card, ctx) {
+  if (card.targetTags.length > 0 && !card.targetTags.some((t) => ctx.tagWeights.has(t))) return false;
+  if ((card.minAgeMonths != null || card.maxAgeMonths != null) &&
+      !ctx.childAges.some((age) => age >= (card.minAgeMonths ?? 0) && age <= (card.maxAgeMonths ?? Infinity))) {
+    return false;
+  }
+  if (card.targetGender != null && !ctx.childGenders.includes(card.targetGender)) return false;
+  return true;
+}
+
+/**
+ * Scores a card for ranking: NEUTRAL for a general (untargeted) card, 0 for
+ * a targeted card that fails ≥1 of its dimensions, or NEUTRAL + weight for a
+ * genuine match — weight grades how much/how strongly it matched, so
+ * multi-dimension or higher-weight matches rank above a single weak one.
+ */
+function homeCardScore(card, ctx) {
+  const tagsSet = card.targetTags.length > 0;
+  const ageSet = card.minAgeMonths != null || card.maxAgeMonths != null;
+  const genderSet = card.targetGender != null;
+  if (!tagsSet && !ageSet && !genderSet) return HOME_CARD_NEUTRAL_SCORE;
+  if (!homeCardIsMatch(card, ctx)) return 0;
+
+  let weight = 0;
+  for (const tag of card.targetTags) weight += ctx.tagWeights.get(tag) || 0;
+  if (ageSet) weight += HOME_CARD_AGE_MATCH_WEIGHT;
+  if (genderSet) weight += HOME_CARD_GENDER_MATCH_WEIGHT;
+  return HOME_CARD_NEUTRAL_SCORE + weight;
+}
 
 /**
  * GET /api/config/app-version
@@ -45,29 +88,39 @@ router.get('/report-visibility', requireAuth, async (req, res) => {
 /**
  * GET /api/config/home-cards
  * Returns admin-configured sub-action cards for the mobile Home screen,
- * active only, in display order. CONTENT cards link to a detail page (fetch
- * the full body via GET /api/config/home-cards/:id); QUOTE cards don't.
- * isLiked reflects the requesting user's own heart-button state. likeCount
- * is likeCountBase (a random per-card offset rolled once at creation — see
- * schema.prisma) plus the real HomeCardLike row count, so the number shown
- * never starts at zero but still goes up 1-for-1 with real likes.
+ * active only, ranked for the requesting user then broken by display order.
+ * CONTENT cards link to a detail page (fetch the full body via GET
+ * /api/config/home-cards/:id); QUOTE cards don't. isLiked reflects the
+ * requesting user's own heart-button state. likeCount is likeCountBase (a
+ * random per-card offset rolled once at creation — see schema.prisma) plus
+ * the real HomeCardLike row count, so the number shown never starts at zero
+ * but still goes up 1-for-1 with real likes.
+ *
+ * Ranking: cards may optionally target topic tags / an age range / a gender
+ * (see homeCardScore above and getUserMatchContext in priorityEngine.cjs).
+ * Untargeted cards are "general" and always rank above a card targeted at
+ * someone else, but below a real match. Array.prototype.sort is stable, so
+ * displayOrder still breaks ties within each score tier.
  */
 router.get('/home-cards', requireAuth, async (req, res) => {
   try {
-    const [homeCards, likes] = await Promise.all([
+    const [homeCards, likes, matchContext] = await Promise.all([
       prisma.homeCard.findMany({
         where: { isActive: true },
         orderBy: { displayOrder: 'asc' },
-        select: { id: true, cardType: true, message: true, messageFontSize: true, messageBold: true, messageItalic: true, attribution: true, image: true, likeCountBase: true, badge: { select: { name: true, color: true } }, _count: { select: { likes: true } } },
+        select: { id: true, cardType: true, message: true, messageFontSize: true, messageBold: true, messageItalic: true, attribution: true, image: true, likeCountBase: true, targetTags: true, minAgeMonths: true, maxAgeMonths: true, targetGender: true, badge: { select: { name: true, color: true } }, _count: { select: { likes: true } } },
       }),
       prisma.homeCardLike.findMany({
         where: { userId: req.userId },
         select: { homeCardId: true },
       }),
+      getUserMatchContext(req.userId),
     ]);
 
+    homeCards.sort((a, b) => homeCardScore(b, matchContext) - homeCardScore(a, matchContext));
+
     const likedIds = new Set(likes.map((l) => l.homeCardId));
-    const resolved = await Promise.all(homeCards.map(async ({ image, badge, likeCountBase, _count, ...card }) => ({
+    const resolved = await Promise.all(homeCards.map(async ({ image, badge, likeCountBase, _count, targetTags, minAgeMonths, maxAgeMonths, targetGender, ...card }) => ({
       ...card,
       badgeText: badge.name,
       badgeColor: badge.color,
@@ -112,6 +165,58 @@ router.post('/home-cards/:id/like', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Toggle home card like error:', error);
     res.status(500).json({ error: 'Failed to update like' });
+  }
+});
+
+/**
+ * POST /api/config/home-cards/:id/view
+ * Upserts a HomeCardView row for the requesting user — "displayed" is
+ * defined as opening a CONTENT card's detail page (fired from
+ * HomeCardDetailScreen's load effect). QUOTE cards have no detail page and
+ * are never "opened" in the current UI (no tap target at all) — this
+ * returns 400 rather than silently no-op-ing, so a client bug calling this
+ * for a QUOTE card stays visible.
+ */
+router.post('/home-cards/:id/view', requireAuth, async (req, res) => {
+  try {
+    const homeCard = await prisma.homeCard.findUnique({ where: { id: req.params.id } });
+    if (!homeCard || !homeCard.isActive) return res.status(404).json({ error: 'Home card not found' });
+    if (homeCard.cardType !== 'CONTENT') return res.status(400).json({ error: 'Only CONTENT cards support view tracking' });
+
+    const existing = await prisma.homeCardView.findUnique({
+      where: { homeCardId_userId: { homeCardId: req.params.id, userId: req.userId } },
+    });
+    if (existing) {
+      await prisma.homeCardView.update({
+        where: { id: existing.id },
+        data: { lastViewedAt: new Date(), viewCount: { increment: 1 } },
+      });
+    } else {
+      await prisma.homeCardView.create({ data: { homeCardId: req.params.id, userId: req.userId } });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Record home card view error:', error);
+    res.status(500).json({ error: 'Failed to record view' });
+  }
+});
+
+/**
+ * POST /api/config/home-cards/:id/share
+ * Appends a HomeCardShare row — any card type, one row per share action (not
+ * deduped), fired alongside the existing 'Home Card Shared' Amplitude event
+ * from both the feed card and the detail page's share button.
+ */
+router.post('/home-cards/:id/share', requireAuth, async (req, res) => {
+  try {
+    const homeCard = await prisma.homeCard.findUnique({ where: { id: req.params.id } });
+    if (!homeCard || !homeCard.isActive) return res.status(404).json({ error: 'Home card not found' });
+
+    await prisma.homeCardShare.create({ data: { homeCardId: req.params.id, userId: req.userId } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Record home card share error:', error);
+    res.status(500).json({ error: 'Failed to record share' });
   }
 });
 

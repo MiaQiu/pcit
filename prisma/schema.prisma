@@ -480,6 +480,8 @@ model User {
   AbcInsight                AbcInsight[]
   HomeCardLike              HomeCardLike[]
   HomeCardUserInputResponse HomeCardUserInputResponse[]
+  HomeCardView              HomeCardView[]
+  HomeCardShare             HomeCardShare[]
   referralsGiven            Referral[]                  @relation("ReferralsGiven")
   referralReceived          Referral?                   @relation("ReferralReceived")
   partnerId                 String?
@@ -928,9 +930,27 @@ model HomeCard {
   // POST /api/admin/home-cards) so the like count mobile users see never
   // starts at zero. Displayed count = likeCountBase + likes.count.
   likeCountBase      Int                 @default(0)
+  // Matching/ranking targeting (all optional — an untargeted card is
+  // "general" and always shown). When more than one of targetTags/
+  // minAgeMonths/maxAgeMonths/targetGender is set, GET /api/config/home-cards
+  // requires ALL of them to match the requesting user (AND across dimension
+  // types); multiple values within targetTags itself still OR together. See
+  // getUserMatchContext in priorityEngine.cjs for how a user's tags/age/
+  // gender are resolved. Values are a free-form mix of User.issue values,
+  // User.parentGoal values, and ClinicalLevel enum strings (Child.
+  // primaryIssue/secondaryIssue) — same convention as Lesson.teachesCategories.
+  targetTags         String[]            @default([])
+  // Optional age-range targeting, in months (matches MilestoneLibrary's
+  // medianAgeMonths convention). Null on either side is unbounded on that side.
+  minAgeMonths       Int?
+  maxAgeMonths       Int?
+  // Optional gender targeting; null = no gender restriction.
+  targetGender       ChildGender?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   likes              HomeCardLike[]
+  views              HomeCardView[]
+  shares             HomeCardShare[]
   components         HomeCardComponent[] @relation("HomeCardComponents")
   linkedByComponents HomeCardComponent[] @relation("HomeCardComponentLink")
 
@@ -974,6 +994,41 @@ model HomeCardLike {
   User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([homeCardId, userId])
+  @@index([userId])
+  @@index([homeCardId])
+}
+
+// Per-user "opened" state for a CONTENT home card's detail page — upserted
+// via POST /api/config/home-cards/:id/view, fired from HomeCardDetailScreen's
+// load effect. QUOTE cards have no detail page and never get rows here (see
+// the scope note on that route).
+model HomeCardView {
+  id            String   @id @default(uuid())
+  homeCardId    String
+  userId        String
+  viewCount     Int      @default(1)
+  firstViewedAt DateTime @default(now())
+  lastViewedAt  DateTime @default(now())
+  HomeCard      HomeCard @relation(fields: [homeCardId], references: [id], onDelete: Cascade)
+  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([homeCardId, userId])
+  @@index([userId])
+  @@index([homeCardId])
+}
+
+// Append-only share event log — one row per share action (not deduped/
+// collapsed like HomeCardLike/HomeCardView), since shares are a lower-
+// frequency, high-signal event worth full history. Inserted via
+// POST /api/config/home-cards/:id/share for either card type.
+model HomeCardShare {
+  id         String   @id @default(uuid())
+  homeCardId String
+  userId     String
+  sharedAt   DateTime @default(now())
+  HomeCard   HomeCard @relation(fields: [homeCardId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([homeCardId])
 }

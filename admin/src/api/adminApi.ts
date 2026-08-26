@@ -577,6 +577,7 @@ export async function deleteKeyword(id: string): Promise<void> {
 export type HomeCardType = 'CONTENT' | 'QUOTE';
 export type HomeCardFontSize = 'SMALL' | 'MEDIUM' | 'LARGE';
 export type HomeCardComponentType = 'TEXT' | 'IMAGE' | 'OPEN_DETAILS' | 'USER_INPUT';
+export type HomeCardGender = 'BOY' | 'GIRL' | 'OTHER';
 
 export interface HomeCardBadge {
   id: string;
@@ -626,6 +627,12 @@ export interface HomeCard {
   isActive: boolean;
   displayOrder: number;
   likeCount: number;
+  viewCount: number;
+  shareCount: number;
+  targetTags: string[];
+  minAgeMonths: number | null;
+  maxAgeMonths: number | null;
+  targetGender: HomeCardGender | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -642,6 +649,10 @@ export interface HomeCardInput {
   components?: HomeCardComponentInput[];
   isActive?: boolean;
   displayOrder?: number;
+  targetTags?: string[];
+  minAgeMonths?: number | null;
+  maxAgeMonths?: number | null;
+  targetGender?: HomeCardGender | null;
 }
 
 export async function getHomeCardBadges(): Promise<HomeCardBadge[]> {

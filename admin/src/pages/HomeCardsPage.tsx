@@ -14,6 +14,7 @@ import {
   HomeCardInput,
   HomeCardType,
   HomeCardFontSize,
+  HomeCardGender,
   HomeCardBadge,
   HomeCardComponent,
   HomeCardComponentType,
@@ -27,6 +28,48 @@ const BADGE_COLOR_PRESETS = [
   { label: 'Amber', value: '#F59E0B' },
   { label: 'Red', value: '#EF4444' },
   { label: 'Pink', value: '#EC4899' },
+];
+
+// Target-tag pickers for HomeCard.targetTags — the exact vocabularies
+// User.issue/User.parentGoal are written in (see the onboarding pickers in
+// nora-mobile's ChildIssueScreen.tsx/ParentGoalScreen.tsx) plus the derived
+// ClinicalLevel enum (Child.primaryIssue/secondaryIssue). Legacy issue values
+// (behavior_challenges, big_emotions, etc.) are intentionally left off this
+// picker — still valid to match against for existing users, just not offered
+// for new tagging. See homeCardScore in server/routes/config.cjs for how
+// these drive ranking.
+const ISSUE_TAG_OPTIONS = [
+  { value: 'big_feelings_tantrums', label: 'Big feelings / tantrums' },
+  { value: 'listening_cooperation', label: 'Listening & cooperation' },
+  { value: 'social', label: 'Social' },
+  { value: 'attention_focus', label: 'Attention & focus' },
+  { value: 'parenting_strategies', label: 'Parenting strategies' },
+  { value: 'adhd', label: 'ADHD' },
+  { value: 'anxiety_confidence', label: 'Anxiety / confidence' },
+  { value: 'developmental_concerns', label: 'Developmental concerns' },
+  { value: 'other', label: 'Other' },
+];
+const PARENT_GOAL_TAG_OPTIONS = [
+  { value: 'truly_understanding_kid', label: 'Truly understanding kid' },
+  { value: 'boost_kid_development', label: 'Boost kid development' },
+  { value: 'feeling_more_connected', label: 'Feeling more connected' },
+  { value: 'feeling_less_overwhelmed', label: 'Feeling less overwhelmed' },
+  { value: 'less_chaos_day_to_day', label: 'Less chaos day-to-day' },
+  { value: 'respond_calmly', label: 'Respond calmly' },
+  { value: 'confident_in_parenting', label: 'Confident in parenting' },
+];
+const CLINICAL_LEVEL_TAG_OPTIONS = [
+  { value: 'STABILIZE', label: 'Stabilize' },
+  { value: 'DE_ESCALATE', label: 'De-escalate' },
+  { value: 'DIRECT', label: 'Direct' },
+  { value: 'SUPPORT', label: 'Support' },
+  { value: 'FLOURISH', label: 'Flourish' },
+];
+const GENDER_TAG_OPTIONS: { value: HomeCardGender | ''; label: string }[] = [
+  { value: '', label: 'Any' },
+  { value: 'BOY', label: 'Boy' },
+  { value: 'GIRL', label: 'Girl' },
+  { value: 'OTHER', label: 'Other' },
 ];
 
 // Mirrors SubActionCard's FONT_SIZE_MAP in HomeScreen_v2.tsx — keep in sync
@@ -237,6 +280,8 @@ export default function HomeCardsPage() {
               <th>Badge</th>
               <th>Message</th>
               <th>Likes</th>
+              <th>Views</th>
+              <th>Shares</th>
               <th>Active</th>
               <th></th>
             </tr>
@@ -300,6 +345,8 @@ export default function HomeCardsPage() {
                   )}
                 </td>
                 <td style={{ whiteSpace: 'nowrap' }}>♥ {card.likeCount}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>{card.cardType === 'CONTENT' ? card.viewCount : '—'}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>{card.shareCount}</td>
                 <td>
                   <button
                     className={`settings-toggle ${card.isActive ? 'active' : ''}`}
@@ -325,7 +372,7 @@ export default function HomeCardsPage() {
             ))}
             {homeCards.length === 0 && (
               <tr>
-                <td colSpan={8} className="empty-state">
+                <td colSpan={10} className="empty-state">
                   No home cards yet.
                 </td>
               </tr>
@@ -424,6 +471,10 @@ function HomeCardModal({
     () => card?.components.map(componentToLocal) || []
   );
   const [isActive, setIsActive] = useState(card?.isActive ?? true);
+  const [targetTags, setTargetTags] = useState<string[]>(card?.targetTags || []);
+  const [minAgeYears, setMinAgeYears] = useState(card?.minAgeMonths != null ? String(card.minAgeMonths / 12) : '');
+  const [maxAgeYears, setMaxAgeYears] = useState(card?.maxAgeMonths != null ? String(card.maxAgeMonths / 12) : '');
+  const [targetGender, setTargetGender] = useState<HomeCardGender | ''>(card?.targetGender || '');
   const [imageUrl, setImageUrl] = useState(card?.imageUrl || null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -473,6 +524,10 @@ function HomeCardModal({
     setComponents((prev) => prev.map((c) => (c.key === key ? { ...c, ...patch } : c)));
   };
 
+  const toggleTag = (value: string) => {
+    setTargetTags((prev) => (prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]));
+  };
+
   const handleAddBadge = async () => {
     if (!newBadgeName.trim()) { alert('Badge name is required'); return; }
     setSavingBadge(true);
@@ -499,6 +554,15 @@ function HomeCardModal({
       if (c.type === 'USER_INPUT' && !c.inputLabel.trim()) { alert('Every User input component needs a prompt/label'); return; }
     }
 
+    const minAgeMonths = minAgeYears.trim() ? Math.round(parseFloat(minAgeYears) * 12) : null;
+    const maxAgeMonths = maxAgeYears.trim() ? Math.round(parseFloat(maxAgeYears) * 12) : null;
+    if (minAgeYears.trim() && Number.isNaN(minAgeMonths as number)) { alert('Min age must be a number'); return; }
+    if (maxAgeYears.trim() && Number.isNaN(maxAgeMonths as number)) { alert('Max age must be a number'); return; }
+    if (minAgeMonths != null && maxAgeMonths != null && minAgeMonths > maxAgeMonths) {
+      alert('Min age cannot be greater than max age');
+      return;
+    }
+
     setSaving(true);
     try {
       const componentsInput: HomeCardComponentInput[] | undefined = isContent
@@ -521,6 +585,10 @@ function HomeCardModal({
         messageBold,
         messageItalic,
         isActive,
+        targetTags,
+        minAgeMonths,
+        maxAgeMonths,
+        targetGender: targetGender || null,
         ...(isContent ? { detailTitle, components: componentsInput } : { attribution }),
       };
       let id = card?.id;
@@ -907,6 +975,79 @@ function HomeCardModal({
             )}
           </div>
           <p className="form-hint">JPG, PNG, WebP, or GIF. Up to 10 MB. Shown as a banner at the top of the card.</p>
+        </div>
+
+        <div className="form-group">
+          <label>Target tags (optional — leave empty to show to everyone)</label>
+          <p className="form-hint" style={{ marginTop: 0, marginBottom: 8 }}>
+            When this card sets a tag, age range, and/or gender below, a parent must match ALL of the ones set
+            (not just one) for it to rank as relevant — it still shows to everyone either way, just lower.
+          </p>
+          {[
+            { title: 'Issue', options: ISSUE_TAG_OPTIONS },
+            { title: 'Parent goal', options: PARENT_GOAL_TAG_OPTIONS },
+            { title: 'Clinical level', options: CLINICAL_LEVEL_TAG_OPTIONS },
+          ].map(({ title, options }) => (
+            <div key={title} style={{ marginBottom: 10 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', margin: '0 0 6px' }}>{title}</p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {options.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => toggleTag(opt.value)}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: targetTags.includes(opt.value) ? '#fff' : '#374151',
+                      backgroundColor: targetTags.includes(opt.value) ? '#8C49D5' : '#F3F4F6',
+                      border: '2px solid transparent',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap', marginTop: 6 }}>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', margin: '0 0 6px' }}>Target age range (years, optional)</p>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  value={minAgeYears}
+                  onChange={(e) => setMinAgeYears(e.target.value)}
+                  placeholder="Min"
+                  style={{ width: 80 }}
+                />
+                <span>–</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  value={maxAgeYears}
+                  onChange={(e) => setMaxAgeYears(e.target.value)}
+                  placeholder="Max"
+                  style={{ width: 80 }}
+                />
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', margin: '0 0 6px' }}>Target gender (optional)</p>
+              <select value={targetGender} onChange={(e) => setTargetGender(e.target.value as HomeCardGender | '')}>
+                {GENDER_TAG_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
         {isContent && (

@@ -1978,7 +1978,7 @@ router.get('/home-cards', requireAdminAuth, async (req, res) => {
   try {
     const homeCards = await prisma.homeCard.findMany({
       orderBy: { displayOrder: 'asc' },
-      include: { _count: { select: { likes: true } }, badge: true, components: { orderBy: { order: 'asc' } } },
+      include: { _count: { select: { likes: true, views: true, shares: true } }, badge: true, components: { orderBy: { order: 'asc' } } },
     });
 
     const resolved = await Promise.all(homeCards.map(async ({ _count, image, badge, components, ...card }) => ({
@@ -1987,6 +1987,8 @@ router.get('/home-cards', requireAdminAuth, async (req, res) => {
       badgeText: badge.name,
       badgeColor: badge.color,
       likeCount: _count.likes,
+      viewCount: _count.views,
+      shareCount: _count.shares,
       imageUrl: await resolveDragonImageUrl(image),
       components: await Promise.all(components.map(async ({ image: componentImage, ...component }) => ({
         ...component,
@@ -2004,6 +2006,55 @@ router.get('/home-cards', requireAdminAuth, async (req, res) => {
 const HOME_CARD_TYPES = ['CONTENT', 'QUOTE'];
 const HOME_CARD_FONT_SIZES = ['SMALL', 'MEDIUM', 'LARGE'];
 const HOME_CARD_COMPONENT_TYPES = ['TEXT', 'IMAGE', 'OPEN_DETAILS', 'USER_INPUT'];
+const HOME_CARD_GENDERS = ['BOY', 'GIRL', 'OTHER'];
+
+/**
+ * Validates the optional targeting fields (targetTags/minAgeMonths/
+ * maxAgeMonths/targetGender) from an admin request body — see
+ * homeCardScore in config.cjs for how these drive ranking. Returns only the
+ * keys actually present in `body` (suitable for spreading into a Prisma
+ * `data` object on both create and update), or throws { status, message }.
+ * `existing` (the current HomeCard row, for PUT) lets the min<=max check
+ * account for a request that only updates one of the two bounds.
+ */
+function validateHomeCardTargeting(body, existing = {}) {
+  const { targetTags, minAgeMonths, maxAgeMonths, targetGender } = body;
+  const data = {};
+
+  if (targetTags !== undefined) {
+    if (!Array.isArray(targetTags) || targetTags.some((t) => typeof t !== 'string' || !t.trim())) {
+      throw { status: 400, message: 'targetTags must be an array of non-empty strings' };
+    }
+    data.targetTags = targetTags;
+  }
+
+  if (minAgeMonths !== undefined) {
+    if (minAgeMonths !== null && (!Number.isInteger(minAgeMonths) || minAgeMonths < 0)) {
+      throw { status: 400, message: 'minAgeMonths must be a non-negative integer or null' };
+    }
+    data.minAgeMonths = minAgeMonths;
+  }
+  if (maxAgeMonths !== undefined) {
+    if (maxAgeMonths !== null && (!Number.isInteger(maxAgeMonths) || maxAgeMonths < 0)) {
+      throw { status: 400, message: 'maxAgeMonths must be a non-negative integer or null' };
+    }
+    data.maxAgeMonths = maxAgeMonths;
+  }
+  const nextMin = data.minAgeMonths !== undefined ? data.minAgeMonths : (existing.minAgeMonths ?? null);
+  const nextMax = data.maxAgeMonths !== undefined ? data.maxAgeMonths : (existing.maxAgeMonths ?? null);
+  if (nextMin != null && nextMax != null && nextMin > nextMax) {
+    throw { status: 400, message: 'minAgeMonths cannot be greater than maxAgeMonths' };
+  }
+
+  if (targetGender !== undefined) {
+    if (targetGender !== null && !HOME_CARD_GENDERS.includes(targetGender)) {
+      throw { status: 400, message: `targetGender must be one of ${HOME_CARD_GENDERS.join(', ')} or null` };
+    }
+    data.targetGender = targetGender;
+  }
+
+  return data;
+}
 
 /**
  * Validates a `components` array from the admin request body and returns it
@@ -2095,8 +2146,10 @@ router.post('/home-cards', requireAdminAuth, async (req, res) => {
     }
 
     let validatedComponents;
+    let targetingData;
     try {
       validatedComponents = type === 'CONTENT' ? (validateHomeCardComponents(components, null) || []) : [];
+      targetingData = validateHomeCardTargeting(req.body);
     } catch (err) {
       return res.status(err.status || 400).json({ error: err.message });
     }
@@ -2122,6 +2175,10 @@ router.post('/home-cards', requireAdminAuth, async (req, res) => {
         // Rolled once here, not regenerated on edit — see the field comment
         // in schema.prisma.
         likeCountBase: Math.floor(Math.random() * 401) + 100,
+        targetTags: targetingData.targetTags || [],
+        minAgeMonths: targetingData.minAgeMonths ?? null,
+        maxAgeMonths: targetingData.maxAgeMonths ?? null,
+        targetGender: targetingData.targetGender ?? null,
         components: { create: validatedComponents },
       },
       include: { components: { orderBy: { order: 'asc' } } },
@@ -2165,13 +2222,15 @@ router.put('/home-cards/:id', requireAdminAuth, async (req, res) => {
     // there were none already). CONTENT cards only replace components when
     // the request actually sends a `components` array.
     let validatedComponents;
+    let targetingData;
     try {
       validatedComponents = resolvedType === 'CONTENT' ? validateHomeCardComponents(components, req.params.id) : [];
+      targetingData = validateHomeCardTargeting(req.body, existing);
     } catch (err) {
       return res.status(err.status || 400).json({ error: err.message });
     }
 
-    const data = {};
+    const data = { ...targetingData };
     if (cardType !== undefined) data.cardType = cardType;
     if (badgeId !== undefined) data.badgeId = badgeId;
     if (message !== undefined) {
