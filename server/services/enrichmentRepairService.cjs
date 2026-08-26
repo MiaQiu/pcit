@@ -255,6 +255,20 @@ async function repairSession(session) {
     }
   }
 
+  // About Child card selection — same as STEP 11 in pcitAnalysisService.cjs,
+  // so a re-enriched session also gets a persisted card choice.
+  if (childProfilingResult?.aboutChild?.length && child) {
+    try {
+      const { selectAboutChildCard } = require('./aboutChildSelectionService.cjs');
+      const selected = await selectAboutChildCard(child.id, sessionId, childProfilingResult.aboutChild);
+      if (selected) {
+        await prisma.session.update({ where: { id: sessionId }, data: { selectedAboutChild: selected } });
+      }
+    } catch (err) {
+      console.warn(`  ⚠️  About-child selection failed: ${err.message}`);
+    }
+  }
+
   console.log(`  ✅ Done — enrichmentStatus: ${session.enrichmentStatus} → ${newEnrichmentStatus}`);
   return newEnrichmentStatus === 'COMPLETED';
 }

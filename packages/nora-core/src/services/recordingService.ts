@@ -34,6 +34,7 @@ export type ChildPortfolioInsights = CoachInsight[];
 
 export interface AboutChildItem {
   id: number;
+  valence?: 'STRENGTH' | 'GROWTH_AREA';
   Title: string;
   Description: string;
   Details: string;
@@ -228,6 +229,10 @@ export interface RecordingAnalysis {
   } | null;
   childPortfolioInsights?: ChildPortfolioInsights | null;
   aboutChild?: AboutChildItem[] | null;
+  // Server-selected card from `aboutChild` — dedup'd against recently shown
+  // titles and balanced ~5:1 STRENGTH:GROWTH_AREA (see aboutChildSelectionService.cjs).
+  // Falls back to aboutChild?.[0] client-side for older sessions where this is null.
+  selectedAboutChild?: AboutChildItem | null;
   developmentalObservation?: DevelopmentalObservation | null;
   coachingSummary?: string | null;
   coachingCards?: CoachingSection[] | CoachingCard[] | null;

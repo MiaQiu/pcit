@@ -561,7 +561,10 @@ export const ReportDetailScreen: React.FC = () => {
       }
     : deriveGoalFromLevel(parentLevel, reportData.stats, reportData.mode, t);
 
-  const aboutChildItem = reportData.aboutChild?.[0];
+  // Prefers the server-persisted selection (dedup'd + ratio-balanced across
+  // sessions — see aboutChildSelectionService.cjs); falls back to the array's
+  // first (most-positive-ranked) item for older sessions predating selection.
+  const aboutChildItem = reportData.selectedAboutChild || reportData.aboutChild?.[0];
   // Real tags from the about-child extraction — hidden entirely for older
   // sessions analyzed before this field existed, rather than faking chips.
   const childTags = aboutChildItem?.tags || [];

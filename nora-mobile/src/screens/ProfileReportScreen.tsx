@@ -939,7 +939,12 @@ export const ProfileReportScreen: React.FC = () => {
 
         {/* What we learnt about Child */}
         {((reportData.aboutChild && reportData.aboutChild.length > 0) || (reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations) && reportData.milestoneCelebrations.length > 0)) && (() => {
-          const item = reportData.aboutChild && reportData.aboutChild.length > 0 ? reportData.aboutChild![Math.floor(Math.random() * reportData.aboutChild.length)] : null;
+          // Server-persisted selection (dedup'd + ratio-balanced — see
+          // aboutChildSelectionService.cjs); falls back to a random pick only
+          // for older sessions predating selection, so the card stays stable
+          // across re-renders instead of re-randomizing on every one.
+          const item = reportData.selectedAboutChild
+            || (reportData.aboutChild && reportData.aboutChild.length > 0 ? reportData.aboutChild![Math.floor(Math.random() * reportData.aboutChild.length)] : null);
           const milestones = reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations)
             ? (reportData.milestoneCelebrations as MilestoneCelebration[]).slice(0, 1)
             : [];

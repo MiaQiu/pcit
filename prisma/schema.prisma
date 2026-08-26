@@ -321,6 +321,7 @@ model Session {
   psychologistFeedback   Json?
   childPortfolioInsights Json?
   aboutChild             Json?
+  selectedAboutChild     Json?
   transcribedAt          DateTime?
   transcriptionService   String?
   analysisError          String?
@@ -341,6 +342,7 @@ model Session {
   User                   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   Utterance              Utterance[]
   ChildProfiling         ChildProfiling?
+  ChildInsightHistory    ChildInsightHistory[]
 
   @@index([analysisStatus])
   @@index([createdAt])
@@ -641,6 +643,7 @@ model Child {
   UserSkillProgress  UserSkillProgress[]
   WeeklyReport       WeeklyReport[]
   AbcLog             AbcLog[]
+  ChildInsightHistory ChildInsightHistory[]
 
   @@index([userId])
 }
@@ -708,6 +711,26 @@ model MilestoneLibrary {
 enum MilestoneStatus {
   EMERGING
   ACHIEVED
+}
+
+// One row per "About Child" insight card actually shown to a child —
+// written by aboutChildSelectionService.cjs right after selection.
+// insightKey is a normalized (lowercased, punctuation-stripped) form of the
+// card's Title, used for cheap dedup against recently-shown cards; valence
+// mirrors AboutChildItem.valence and drives the 5:1 strength/growth ratio.
+model ChildInsightHistory {
+  id         String   @id @default(uuid())
+  childId    String
+  sessionId  String
+  insightKey String
+  title      String
+  valence    String
+  shownAt    DateTime @default(now())
+  Child      Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  Session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([childId, shownAt])
+  @@index([childId, insightKey])
 }
 
 enum AnalysisStatus {

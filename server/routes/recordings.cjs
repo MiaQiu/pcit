@@ -778,6 +778,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       // Backward compat (old mobile app versions)
       childPortfolioInsights: transformCoachingCardsToPortfolioInsights(Array.isArray(coachingData) ? coachingData : null) || session.childPortfolioInsights || null,
       aboutChild: session.aboutChild || null,
+      selectedAboutChild: session.selectedAboutChild || null,
       // Milestone celebrations triggered during this session
       milestoneCelebrations: session.milestoneCelebrations || null,
       // Enrichment status — lets the mobile app show partial-loading states

@@ -547,6 +547,7 @@ The child's name is "${childDisplayName}". Use this name (not any other name fro
 
 Format the observations as a JSON array, ranked by positivity follow by significance. Each observation should have:
 - id: sequential number starting from 1
+- valence: "STRENGTH" or "GROWTH_AREA". Most observations should be STRENGTH — a positive trait or behavior, framed as-is. Where the transcript genuinely supports it, include ONE GROWTH_AREA observation — something the child is still developing (e.g. sharing, waiting, handling frustration) — but keep the tone warm and encouraging, never clinical or alarming, and always pair it with a concrete, doable tip in Details. If nothing in the transcript honestly supports a GROWTH_AREA observation, omit it entirely rather than inventing one — every item should still be STRENGTH in that case.
 - Title: A short catchy title (2-4 words) describing the trait or behavior
 - Description: A brief 1-sentence summary for parents
 - Details: A longer explanation with developmental context, why this matters, and actionable tips about how to improve.
@@ -561,6 +562,7 @@ Example format:
 [
   {
     "id": 1,
+    "valence": "STRENGTH",
     "Title": "Little Scientist",
     "Description": "Bobby was exploring physics (gravity/pouring). He wasn't trying to be messy.",
     "Details": "His persistent desire to 'pour' and 'take out' reflects a 3-year-old's natural curiosity about cause and effect. At this age, repetitive pouring is a way of testing physical boundaries and understanding how objects occupy space.",
@@ -568,10 +570,19 @@ Example format:
   },
   {
     "id": 2,
+    "valence": "STRENGTH",
     "Title": "Sensory Seeker",
     "Description": "Bobby loves the 'squishy' texture today!",
     "Details": "He is very focused on the tactile nature of the vitamins—calling them 'squishy, squishy'. This is a hallmark of the sensorimotor stage of development, where kids learn through touch and texture.",
     "tags": ["Tactile", "Sensory Seeker"]
+  },
+  {
+    "id": 3,
+    "valence": "GROWTH_AREA",
+    "Title": "Learning to Wait",
+    "Description": "Bobby got frustrated waiting his turn to pour, and needed help calming down.",
+    "Details": "Waiting is a skill that develops gradually through preschool — it's normal for a 3-year-old to still find it hard. Try narrating the wait out loud next time ('I see you waiting, that's tricky!') so he has words for the feeling while he practices.",
+    "tags": ["Building Patience"]
   }
 ]`;
 
@@ -1970,6 +1981,25 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
       }
     } catch (profilingDbError) {
       console.error('⚠️ [DATABASE-UPDATE] Failed to upsert ChildProfiling:', profilingDbError.message);
+    }
+  }
+
+  // STEP 11: About Child Card Selection (non-blocking) — picks which of this
+  // session's aboutChild observations to actually show, honoring the 5:1
+  // strength/growth-area ratio and skipping recently-shown titles.
+  if (childProfilingResult?.aboutChild?.length && child) {
+    try {
+      const { selectAboutChildCard } = require('./aboutChildSelectionService.cjs');
+      const selected = await selectAboutChildCard(child.id, sessionId, childProfilingResult.aboutChild);
+      if (selected) {
+        await prisma.session.update({
+          where: { id: sessionId },
+          data: { selectedAboutChild: selected }
+        });
+        console.log(`✅ [ANALYSIS-STEP-11] Selected about-child card: "${selected.Title}"`);
+      }
+    } catch (selectionError) {
+      console.error('⚠️ [ANALYSIS-STEP-11] About-child selection error (non-blocking):', selectionError.message);
     }
   }
 
