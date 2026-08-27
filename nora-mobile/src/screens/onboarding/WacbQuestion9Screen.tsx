@@ -59,12 +59,18 @@ export const WacbQuestion9Screen: React.FC = () => {
       throw err;
     }
 
-    // Skip the onboarding-era ChildBehaviorProfile/Intro3 continuation and
-    // go straight to the account Profile screen instead — this flow is now
-    // also reached standalone from ReportDetailScreen's "unlock" card, not
-    // just during first-time onboarding. Profile lives on the root stack,
-    // outside this nested Onboarding navigator, so use the parent navigator.
-    navigation.getParent()?.navigate('Profile');
+    // Skip the onboarding-era ChildBehaviorProfile/Intro3 continuation. This
+    // flow is now reached standalone from ReportDetailScreen's "unlock" card,
+    // not just during first-time onboarding — when it carries the originating
+    // session's recordingId, return to that session's ProfileReportScreen;
+    // otherwise fall back to the account Profile screen. Both live on the root
+    // stack, outside this nested Onboarding navigator, so use the parent.
+    const parent = navigation.getParent();
+    if (data.wacbReturnRecordingId) {
+      parent?.navigate('ProfileReport', { recordingId: data.wacbReturnRecordingId, justCompletedWacb: true });
+    } else {
+      parent?.navigate('Profile');
+    }
     return false;
   };
 

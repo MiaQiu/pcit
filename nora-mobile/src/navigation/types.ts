@@ -86,9 +86,10 @@ export type OnboardingStackParamList = {
 };
 
 export type RootStackParamList = {
-  Onboarding: { initialStep?: string; resumeUserData?: User } | undefined;
+  Onboarding: { initialStep?: string; resumeUserData?: User; wacbReturnRecordingId?: string } | undefined;
   MainTabs: NavigatorScreenParams<RootTabParamList> | undefined;
   Profile: undefined;
+  ProfileReport: { recordingId: string; justCompletedWacb?: boolean };
   NotificationSettings: undefined;
   Support: undefined;
   TermsAndConditions: undefined;

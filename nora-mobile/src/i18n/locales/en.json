@@ -572,11 +572,21 @@
     "footer": "You're showing up in the moments that matter most. Keep going!"
   },
   "profileReport": {
+    "headerTitle": "{{childName}}'s Snapshot",
+    "headerSubtitle": "Your starting point",
+    "thanksBannerTitle": "Thanks for answering! 🎉",
+    "thanksBannerBody": "These answers help Nora understand {{childName}} better so we can create a coaching plan that fits your family's unique needs.",
+    "thanksBannerBadge": "Questions complete",
+    "whyHereTitle": "Why we're starting here",
+    "whyHereBody1Prefix": "Based on your answers, ",
+    "whyHereBody1Suffix": " will have the biggest impact on your family's daily life.",
+    "whyHereBody2": "The good news? Building stronger connection through play often improves attention, emotional regulation, and cooperation together.",
     "primaryFocusLabel": "Primary Focus",
     "focusHeadingCDI": "Building Cooperation & Strengthening Focus",
     "focusHeadingPDI": "Practicing Calm, Consistent Limits",
     "ageLabel": "(Age {{age}})",
-    "coreFocusAreasTitle": "{{childName}}'s Core Focus Areas",
+    "coreFocusAreasTitle": "{{childName}}'s Snapshot",
+    "coreFocusAreasSubtitle": "A quick picture of where {{childName}} is today. We'll use this to personalise your coaching journey.",
     "fromYourIntake": "From your intake",
     "focusAreas": {
       "transitions": {
@@ -596,23 +606,60 @@
       },
       "attention": {
         "label": "Focus & Cooperation",
-        "focus": "Focus: Attention & Following Directions"
+        "focus": "Focus: Attention & Following Directions",
+        "heroDescription": "Following directions and staying focused is where {{childName}} needs the most support right now. Nora's plan builds cooperation through clear, consistent follow-through."
       },
       "emotional": {
         "label": "Emotional Balance",
-        "focus": "Focus: Meltdowns & Aggression"
+        "focus": "Focus: Meltdowns & Aggression",
+        "heroDescription": "Big feelings are {{childName}}'s biggest challenge right now — meltdowns and frustration when emotions run high. Nora's plan helps you stay calm and steady so these moments pass sooner."
       },
       "routines": {
         "label": "Transitions & Routines",
-        "focus": "Focus: Bedtime, Meals & Delays"
+        "focus": "Focus: Bedtime, Meals & Delays",
+        "heroDescription": "Everyday transitions — bedtime, meals, and getting out the door — are the hardest part of the day for {{childName}} right now. Nora's plan makes these moments calmer and more predictable."
       },
       "social": {
         "label": "Social Boundaries",
-        "focus": "Focus: Peer & Sibling Interactions"
+        "focus": "Focus: Peer & Sibling Interactions",
+        "heroDescription": "Getting along with peers and siblings is {{childName}}'s main focus area right now. Nora's plan works on sharing, turn-taking, and handling conflict without escalation."
       }
     },
     "journeyTitle": "Personalized Learning Journey",
-    "journeySubtitle": "Your next steps in Nora",
+    "journeySubtitle": "This 4-step plan tackles it first, ordered by what matters most for {{childName}}.",
+    "journeyStartBadge": "Start here",
+    "journeySteps": {
+      "fillBank": {
+        "title": "Fill the Emotional Bank Account",
+        "body": "Spend 5 minutes a day in child-led play — follow {{childName}}'s lead with praise, reflection, and description. Every warm moment is a deposit that makes every step after this one easier."
+      },
+      "coachFeelings": {
+        "title": "Coach Big Feelings",
+        "body": "Name what {{childName}} is feeling as it happens and stay calm alongside it, so {{childName}} slowly learns to recognise and ride out strong emotions before they boil over."
+      },
+      "buildFocus": {
+        "title": "Build Focus & Follow-Through",
+        "body": "Use praise and reflection to stretch {{childName}}'s attention span and reward cooperation, so following directions gradually stops being a battle."
+      },
+      "smoothTransitions": {
+        "title": "Smooth the Transitions",
+        "body": "Add predictable warnings and playful routines around the hard moments — meals, bedtime, leaving the house — so {{childName}} moves between activities with less resistance."
+      },
+      "practiceSharing": {
+        "title": "Practice Sharing & Turn-Taking",
+        "body": "Model and praise taking turns during play, giving {{childName}} the skills to carry calmer, kinder interactions into time with peers and siblings."
+      },
+      "calmDiscipline": {
+        "title": "Calm Discipline",
+        "body": "With connection in place, add clear, consistent limits and calm follow-through for the behaviours that can't be ignored."
+      }
+    },
+    "journeyDisciplineWhy": {
+      "emotional": "This is what finally shrinks the meltdowns — {{childName}} gets steady, predictable boundaries instead of a fight, which is exactly the outside structure a child needs to manage big feelings.",
+      "attention": "Consistent follow-through is what makes directions stick — {{childName}} learns that limits are real, so cooperation stops being an endless negotiation.",
+      "routines": "Calm, consistent limits take the power struggle out of transitions — {{childName}} learns the routine holds firm, and the daily battles fade.",
+      "social": "{{childName}} learns that hurting others always meets the same calm, certain response — the consistency that carries straight into playing well with peers and siblings."
+    },
     "phase1Badge": "PHASE 1",
     "phase1Title": "Child-Directed Interaction (CDI)",
     "phase1Subtitle": "Build connection & reduce power struggles.",

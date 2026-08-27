@@ -42,6 +42,11 @@ export interface OnboardingData {
     q2Depressed?: number;
   };
 
+  // Set when the WACB survey is launched standalone from a session report
+  // (ReportDetailScreen's "Unlock My Child's Plan"). WacbQuestion9Screen reads
+  // it to return to that session's ProfileReportScreen after submitting.
+  wacbReturnRecordingId?: string;
+
   // Reminder time selected in Intro2 (HH:mm format)
   reminderTime: string;
 

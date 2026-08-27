@@ -370,6 +370,7 @@ export const ReportDetailScreen: React.FC = () => {
     navigation.navigate('Onboarding', {
       initialStep: 'WacbQuestion1',
       resumeUserData: currentUser ?? undefined,
+      wacbReturnRecordingId: recordingId,
     });
   };
 

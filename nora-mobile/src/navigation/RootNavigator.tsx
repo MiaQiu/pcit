@@ -25,6 +25,7 @@ import { QuizScreen } from '../screens/QuizScreen';
 import { LessonCompleteScreen } from '../screens/LessonCompleteScreen';
 import { ReportScreen } from '../screens/ReportScreen';
 import { ReportScreen_v2 } from '../screens/ReportScreen_v2';
+import { ProfileReportScreen } from '../screens/ProfileReportScreen';
 import { ParentLevelDetailScreen } from '../screens/ParentLevelDetailScreen';
 import { ReportDetailScreen } from '../screens/ReportDetailScreen';
 import { TranscriptScreen } from '../screens/TranscriptScreen';
@@ -392,6 +393,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="ReportV2"
         component={ReportScreen_v2}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ProfileReport"
+        component={ProfileReportScreen}
         options={{
           animation: 'slide_from_right',
         }}

@@ -572,11 +572,21 @@
     "footer": "你正在最重要的時刻陪伴著孩子，繼續加油！"
   },
   "profileReport": {
+    "headerTitle": "{{childName}}的快照",
+    "headerSubtitle": "你的起點",
+    "thanksBannerTitle": "感謝你的回答！🎉",
+    "thanksBannerBody": "這些回答能幫助 Nora 更了解 {{childName}}，從而為你的家庭量身打造輔導計畫。",
+    "thanksBannerBadge": "問卷已完成",
+    "whyHereTitle": "我們為什麼從這裡開始",
+    "whyHereBody1Prefix": "根據你的回答，",
+    "whyHereBody1Suffix": "對你家庭的日常生活影響最大。",
+    "whyHereBody2": "好消息是？透過遊戲建立更緊密的連結，往往能同時改善專注力、情緒調節和配合度。",
     "primaryFocusLabel": "首要重點",
     "focusHeadingCDI": "建立配合，加強專注力",
     "focusHeadingPDI": "練習平靜而一致的界線",
     "ageLabel": "(年齡 {{age}})",
-    "coreFocusAreasTitle": "{{childName}}的核心關注領域",
+    "coreFocusAreasTitle": "{{childName}}的快照",
+    "coreFocusAreasSubtitle": "快速了解 {{childName}} 目前的狀態。我們會用它來為你打造專屬的輔導計畫。",
     "fromYourIntake": "來自您的入檔資訊",
     "focusAreas": {
       "transitions": {
@@ -596,23 +606,60 @@
       },
       "attention": {
         "label": "專注力與配合",
-        "focus": "關注：專注力與遵循指令"
+        "focus": "關注：專注力與遵循指令",
+        "heroDescription": "目前 {{childName}} 最需要支持的是遵循指令和保持專注。Nora 的計畫將透過清晰、一致的貫徹執行來培養配合。"
       },
       "emotional": {
         "label": "情緒平衡",
-        "focus": "關注：情緒崩潰與攻擊行為"
+        "focus": "關注：情緒崩潰與攻擊行為",
+        "heroDescription": "情緒激動時的崩潰和挫折感是 {{childName}} 目前最大的挑戰。Nora 的計畫會幫助你保持冷靜和穩定，讓這些時刻更快過去。"
       },
       "routines": {
         "label": "轉換與日常",
-        "focus": "關注：睡前、用餐與拖延"
+        "focus": "關注：睡前、用餐與拖延",
+        "heroDescription": "睡前、用餐和出門等日常過渡，是 {{childName}} 目前一天中最難的時刻。Nora 的計畫會讓這些時刻更平靜、更可預期。"
       },
       "social": {
         "label": "社交界限",
-        "focus": "關注：同伴與手足互動"
+        "focus": "關注：同伴與手足互動",
+        "heroDescription": "與同伴和手足相處是 {{childName}} 目前的主要關注領域。Nora 的計畫會練習分享、輪流以及在不升級衝突的情況下處理矛盾。"
       }
     },
     "journeyTitle": "個人化學習之旅",
-    "journeySubtitle": "您在 Nora 的下一步",
+    "journeySubtitle": "這份四步計畫會先從這裡著手，並按對 {{childName}} 最重要的順序排列。",
+    "journeyStartBadge": "從這裡開始",
+    "journeySteps": {
+      "fillBank": {
+        "title": "充實情感銀行帳戶",
+        "body": "每天花 5 分鐘進行由孩子主導的遊戲——跟隨 {{childName}} 的節奏，多用讚美、複述和描述。每一個溫暖的瞬間都是一筆存款，會讓之後的每一步都更輕鬆。"
+      },
+      "coachFeelings": {
+        "title": "引導強烈情緒",
+        "body": "在 {{childName}} 情緒發生的當下幫他說出感受，並保持冷靜地陪伴，讓 {{childName}} 慢慢學會在情緒失控之前辨識並平復它。"
+      },
+      "buildFocus": {
+        "title": "建立專注力與執行力",
+        "body": "用讚美和複述延長 {{childName}} 的專注時間並獎勵配合行為，讓遵循指令逐漸不再是一場對抗。"
+      },
+      "smoothTransitions": {
+        "title": "讓過渡更順暢",
+        "body": "在用餐、睡前、出門等困難時刻加入可預期的提醒和有趣的固定流程，讓 {{childName}} 在活動之間的切換減少抗拒。"
+      },
+      "practiceSharing": {
+        "title": "練習分享與輪流",
+        "body": "在遊戲中示範並讚美輪流，讓 {{childName}} 把更平靜、更友善的相處方式帶到與同儕和手足的互動中。"
+      },
+      "calmDiscipline": {
+        "title": "平靜的管教",
+        "body": "在連結建立之後，為那些不能忽視的行為加入清晰、一致的界線和平靜的貫徹執行。"
+      }
+    },
+    "journeyDisciplineWhy": {
+      "emotional": "這正是最終能減少情緒崩潰的關鍵——{{childName}} 得到的是穩定、可預期的界線，而不是一場爭鬥，這恰恰是孩子管理強烈情緒所需要的外部結構。",
+      "attention": "一致的貫徹執行才能讓指令真正生效——{{childName}} 會明白界線是真實的，配合也就不再是沒完沒了的討價還價。",
+      "routines": "平靜、一致的界線能把過渡中的權力鬥爭化解掉——{{childName}} 會知道流程是穩固的，日常的拉鋸也隨之淡去。",
+      "social": "{{childName}} 會明白傷害他人始終會得到同樣平靜而確定的回應——這份一致性會直接延續到與同儕和手足的融洽相處中。"
+    },
     "phase1Badge": "第一階段",
     "phase1Title": "兒童主導互動 (CDI)",
     "phase1Subtitle": "建立連結，減少權力衝突。",

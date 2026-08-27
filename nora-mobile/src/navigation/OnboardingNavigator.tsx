@@ -101,6 +101,7 @@ interface OnboardingNavigatorProps {
 export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route }) => {
   const initialStep = route?.params?.initialStep;
   const resumeUserData = route?.params?.resumeUserData;
+  const wacbReturnRecordingId = route?.params?.wacbReturnRecordingId;
   const { updateData } = useOnboarding();
 
   // Pre-populate context with existing server data when resuming mid-onboarding.
@@ -116,6 +117,9 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
         issue: resumeUserData.issue || '',
         relationshipToChild: resumeUserData.relationshipToChild || null,
       });
+    }
+    if (wacbReturnRecordingId) {
+      updateData({ wacbReturnRecordingId });
     }
   }, []);
 
