@@ -8,6 +8,8 @@ echo "==> Switching .env.production to ap-southeast-1 (prod)"
 sed -i '' \
   -e 's|^EXPO_PUBLIC_API_URL=https://p2tgddmyxt\.us-east-1\.awsapprunner\.com|#EXPO_PUBLIC_API_URL=https://p2tgddmyxt.us-east-1.awsapprunner.com|' \
   -e 's|^#EXPO_PUBLIC_API_URL=https://wpwpawhz29\.ap-southeast-1\.awsapprunner\.com|EXPO_PUBLIC_API_URL=https://wpwpawhz29.ap-southeast-1.awsapprunner.com|' \
+  -e 's|^EXPO_PUBLIC_WEB_URL=https://p2tgddmyxt\.us-east-1\.awsapprunner\.com|#EXPO_PUBLIC_WEB_URL=https://p2tgddmyxt.us-east-1.awsapprunner.com|' \
+  -e 's|^#EXPO_PUBLIC_WEB_URL=https://signup\.hinora\.co|EXPO_PUBLIC_WEB_URL=https://signup.hinora.co|' \
   "$ENV_FILE"
 
 echo "==> 1. Build nora-core"

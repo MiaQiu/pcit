@@ -96,6 +96,7 @@ Both environments share the same 9 secret names (different values per env):
 | `AWS_S3_SUPPORT_REGION` | `ap-southeast-1` | `ap-southeast-1` | Support bucket is always sg |
 | `APP_RUNNER_URL` | `https://p2tgddmyxt.us-east-1.awsapprunner.com` | `https://wpwpawhz29.ap-southeast-1.awsapprunner.com` | Added to CORS allowed origins |
 | `WEB_APP_URL` | `https://p2tgddmyxt.us-east-1.awsapprunner.com` | `https://wpwpawhz29.ap-southeast-1.awsapprunner.com` | Base URL for reset-password email link |
+| `EXPO_PUBLIC_WEB_URL` | `https://p2tgddmyxt.us-east-1.awsapprunner.com` | `https://signup.hinora.co` | Public host for share links — `shortlinks.cjs` builds `/s/<code>` from it. Must match `nora-mobile/.env.production`. Falls back to `WEB_APP_URL` if unset. |
 | `FRONTEND_URL` | `https://your-frontend-domain.com` | `https://hinora.co` | CORS allowed origin for web frontend |
 | `PROD_API_URL` | `https://wpwpawhz29.ap-southeast-1.awsapprunner.com` | *(dev-only — admin sync routes call prod from dev)* | |
 | `SMTP_HOST` | `smtp.gmail.com` | `smtp.gmail.com` | |
