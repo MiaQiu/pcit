@@ -11,14 +11,42 @@ import { View, Text, Modal, StyleSheet, Pressable, Animated, Easing, Dimensions 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
+import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { FONTS, COLORS, SOUNDS } from '../constants/assets';
 import { PARENT_SKILL_LEVEL_ICONS } from '../constants/parentSkillLevels';
+import { useAnticipationBuzz } from '../hooks/useAnticipationBuzz';
 import type { ParentSkillLevel } from '@nora/core';
 
 const CONFETTI_COLORS = [COLORS.mainPurple, COLORS.tealAccent, '#CBA76A', COLORS.ellipseOrange, COLORS.ellipseCyan, COLORS.cardOrange];
 const CONFETTI_COUNT = 16;
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// How long the coin spins for.
+const SPIN_DURATION_MS = 2600;
+
+// Buzz starts a beat after the spin begins (avoids a jarring simultaneous
+// snap at t=0) but is timed to stop exactly when the coin stops spinning.
+const BUZZ_START_DELAY_MS = 140;
+const BUZZ_DURATION_MS = SPIN_DURATION_MS - BUZZ_START_DELAY_MS;
+
+// The coin "spins" via scaleX oscillation (1 -> 0 -> -1 -> 0 -> 1 per flip),
+// not a real 3D rotateY+perspective transform — that combination rendered
+// with a hard flat clipped edge instead of a smooth foreshortened ellipse on
+// device (a known-flaky pairing under the native driver), and looked like
+// content sliding rather than spinning. scaleX is a plain 2D transform with
+// no perspective math, so it renders predictably everywhere; the same
+// left-right squash-through-zero read as a coin flip long before 3D CSS
+// transforms existed. Precomputed as a dense cosine-sampled curve (not just
+// [1,-1,1] per flip) so `interpolate` has enough points to stay smooth
+// through each zero-crossing rather than linearly cutting corners across it.
+const FLIP_COUNT = 4;
+const FLIP_SAMPLES_PER_TURN = 24;
+const FLIP_INPUT_RANGE = Array.from(
+  { length: FLIP_COUNT * FLIP_SAMPLES_PER_TURN + 1 },
+  (_, i) => i / (FLIP_COUNT * FLIP_SAMPLES_PER_TURN)
+);
+const FLIP_OUTPUT_RANGE = FLIP_INPUT_RANGE.map((t) => Math.cos(2 * Math.PI * FLIP_COUNT * t));
 
 // Fixed spots around the badge for the twinkle sparkles that flash when the
 // new level lands.
@@ -63,6 +91,16 @@ interface LevelUpModalProps {
 
 export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, toLevel, onDismiss }) => {
   const { t } = useTranslation();
+  const { startBuzz, stopBuzz } = useAnticipationBuzz();
+
+  // Callers (e.g. ReportScreen_v2) pass an inline, unmemoized onDismiss —
+  // read it via a ref inside the animation effect below instead of listing
+  // it as a dependency, so a parent re-render while the modal is visible
+  // can't restart the whole animation sequence mid-flight.
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const badgeScale = useRef(new Animated.Value(0)).current;
@@ -80,6 +118,14 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
   ).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const titleTranslateY = useRef(new Animated.Value(14)).current;
+
+  // Landing flourish — fires once the coin's flip actually finishes and
+  // settles, not at the start of the pop like everything else above.
+  const landingBounce = useRef(new Animated.Value(1)).current;
+  const landingFlashScale = useRef(new Animated.Value(0)).current;
+  const landingFlashOpacity = useRef(new Animated.Value(0)).current;
+  const landingRingScale = useRef(new Animated.Value(0)).current;
+  const landingRingOpacity = useRef(new Animated.Value(0)).current;
 
   const confetti = useRef<ConfettiPiece[]>(makeConfetti()).current;
 
@@ -104,6 +150,11 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
     });
     titleOpacity.setValue(0);
     titleTranslateY.setValue(14);
+    landingBounce.setValue(1);
+    landingFlashScale.setValue(0);
+    landingFlashOpacity.setValue(0);
+    landingRingScale.setValue(0);
+    landingRingOpacity.setValue(0);
     confetti.forEach((piece) => {
       piece.fall.setValue(0);
       piece.opacity.setValue(1);
@@ -122,21 +173,33 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
       }
     };
 
-    Animated.sequence([
+    // Intro (backdrop fade + badge pop-in + a beat to let it register) runs
+    // first; sound/haptics/burst-visuals all fire together off its
+    // completion callback, so they land exactly on the pop instead of at
+    // t=0 (a `playPopSound()` fired alongside `.start()` on the whole
+    // sequence would play ~900ms before anything visually happens).
+    const introSequence = Animated.sequence([
       Animated.timing(backdropOpacity, { toValue: 1, duration: 220, useNativeDriver: true }),
       Animated.spring(badgeScale, { toValue: 1, tension: 55, friction: 7, useNativeDriver: true }),
       Animated.delay(450),
-      Animated.parallel([
-        // Coin spins through a few full turns at a CONSTANT angular speed —
-        // lands right as the new level's content has finished popping in.
-        // Deliberately linear, not eased: rotateY's visual width already
-        // follows cos(angle), which is naturally near-flat approaching a
-        // face-on stop (0/360/720/1080deg) and changes fastest edge-on
-        // (90/270deg) — that alone reads as "spin fast, settle at the end."
-        // Layering a decelerating easing on top of that double-applies the
-        // slowdown right where the geometry is already slowing down, which
-        // is what produced the stall-then-snap.
-        Animated.timing(badgeSpin, { toValue: 1, duration: 650, easing: Easing.linear, useNativeDriver: true }),
+    ]);
+
+    // Drives the coin's scaleX flip (FLIP_INPUT_RANGE/FLIP_OUTPUT_RANGE
+    // above) through FLIP_COUNT flips at a CONSTANT rate. Kept OUTSIDE
+    // popParallel (with its own .start() below) so its completion callback
+    // fires exactly when the coin actually settles, independent of
+    // popParallel's other members — that's the "landing" flourish trigger.
+    // Linear, not eased: the flip's own cosine shape already provides all the
+    // "fast in the middle, slow at the ends" character a real coin has, so an
+    // additional easing curve on top would double up and distort the pacing.
+    const spinAnimation = Animated.timing(badgeSpin, {
+      toValue: 1,
+      duration: SPIN_DURATION_MS,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    });
+
+    const popParallel = Animated.parallel([
         // Shockwave ring burst at the moment the level flips.
         Animated.timing(ringScale, { toValue: 1.7, duration: 550, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
         Animated.sequence([
@@ -203,15 +266,71 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
             Animated.spring(titleTranslateY, { toValue: 0, tension: 60, friction: 8, useNativeDriver: true }),
           ]),
         ]),
-      ]),
-    ]).start();
+    ]);
 
-    playPopSound();
+    let buzzStartTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let autoDismissTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    introSequence.start(() => {
+      playPopSound();
+      buzzStartTimeoutId = setTimeout(() => {
+        startBuzz({
+          duration: BUZZ_DURATION_MS,
+          minDelay: 90,
+          maxDelay: 25,
+          // Core Haptics has no literal Hz control — `sharpness` is the closest
+          // analog to "frequency" (low = dull rumble, high = crisp/buzzy).
+          // Pushed higher throughout for a buzzier feel, not just at the end.
+          startSharpness: 0.55,
+          endSharpness: 1,
+        });
+      }, BUZZ_START_DELAY_MS);
+      popParallel.start();
+
+      spinAnimation.start(() => {
+        // Landing flourish — the coin has actually settled on its final
+        // face now, so this is the real "confirmed" reveal moment: a firm
+        // haptic thunk, a bigger bounce than the earlier pulse, a second
+        // (stronger) shockwave ring, and a quick white flash behind the badge.
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+
+        Animated.parallel([
+          Animated.sequence([
+            Animated.spring(landingBounce, { toValue: 1.35, tension: 220, friction: 6, useNativeDriver: true }),
+            Animated.spring(landingBounce, { toValue: 1, tension: 180, friction: 9, useNativeDriver: true }),
+          ]),
+          Animated.parallel([
+            Animated.timing(landingFlashScale, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+            Animated.sequence([
+              Animated.timing(landingFlashOpacity, { toValue: 0.9, duration: 60, useNativeDriver: true }),
+              Animated.timing(landingFlashOpacity, { toValue: 0, duration: 320, useNativeDriver: true }),
+            ]),
+          ]),
+          Animated.parallel([
+            Animated.timing(landingRingScale, { toValue: 2.1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+            Animated.sequence([
+              Animated.timing(landingRingOpacity, { toValue: 0.8, duration: 60, useNativeDriver: true }),
+              Animated.timing(landingRingOpacity, { toValue: 0, duration: 440, useNativeDriver: true }),
+            ]),
+          ]),
+        ]).start();
+
+        // Auto-dismiss back to the screen underneath once the landing
+        // flourish (longest piece: the ring burst, 500ms) has had time to
+        // read, plus a short beat to actually see the final result.
+        autoDismissTimeoutId = setTimeout(() => {
+          onDismissRef.current();
+        }, 900);
+      });
+    });
 
     return () => {
       soundRef?.unloadAsync();
+      if (buzzStartTimeoutId) clearTimeout(buzzStartTimeoutId);
+      if (autoDismissTimeoutId) clearTimeout(autoDismissTimeoutId);
+      stopBuzz();
     };
-  }, [visible, fromLevel, toLevel]);
+  }, [visible, fromLevel, toLevel, startBuzz, stopBuzz]);
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onDismiss}>
@@ -256,8 +375,21 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
           <View style={styles.badgeWrap}>
             <Animated.View
               style={[
+                styles.landingFlash,
+                { opacity: landingFlashOpacity, transform: [{ scale: landingFlashScale }] },
+              ]}
+              pointerEvents="none"
+            />
+            <Animated.View
+              style={[
                 styles.ring,
                 { opacity: ringOpacity, transform: [{ scale: ringScale }] },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.ring,
+                { opacity: landingRingOpacity, transform: [{ scale: landingRingScale }] },
               ]}
             />
             <Animated.View
@@ -265,15 +397,15 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
                 styles.badgeShadow,
                 {
                   transform: [
-                    { perspective: 800 },
                     {
-                      rotateY: badgeSpin.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['0deg', '1080deg'],
+                      scaleX: badgeSpin.interpolate({
+                        inputRange: FLIP_INPUT_RANGE,
+                        outputRange: FLIP_OUTPUT_RANGE,
                       }),
                     },
                     { scale: badgeScale },
                     { scale: badgePulse },
+                    { scale: landingBounce },
                   ],
                 },
               ]}
@@ -305,7 +437,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
                     {
                       opacity: newContentOpacity,
                       transform: [
-                        { rotate: '25deg' },
+                        { rotate: '10deg' },
                         {
                           translateX: shineTranslate.interpolate({
                             inputRange: [0, 1],
@@ -378,6 +510,13 @@ const styles = StyleSheet.create({
     borderRadius: 65,
     borderWidth: 4,
     borderColor: '#FFFFFF',
+  },
+  landingFlash: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: '#FFFFFF',
   },
   badgeShadow: {
     shadowColor: '#000',

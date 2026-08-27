@@ -223,6 +223,8 @@ PODS:
     - ExpoModulesCore
   - ExpoFont (14.0.9):
     - ExpoModulesCore
+  - ExpoHaptics (15.0.8):
+    - ExpoModulesCore
   - ExpoKeepAwake (15.0.7):
     - ExpoModulesCore
   - ExpoLinearGradient (15.0.8):
@@ -312,6 +314,8 @@ PODS:
   - GoogleUtilities/UserDefaults (8.1.0):
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
+  - HapticEngine (1.0.0):
+    - ExpoModulesCore
   - hermes-engine (0.81.5):
     - hermes-engine/Pre-built (= 0.81.5)
   - hermes-engine/Pre-built (0.81.5)
@@ -2261,6 +2265,7 @@ DEPENDENCIES:
   - ExpoDocumentPicker (from `../../node_modules/expo-document-picker/ios`)
   - ExpoFileSystem (from `../../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../../node_modules/expo-font/ios`)
+  - ExpoHaptics (from `../../node_modules/expo-haptics/ios`)
   - ExpoKeepAwake (from `../../node_modules/expo-keep-awake/ios`)
   - ExpoLinearGradient (from `../../node_modules/expo-linear-gradient/ios`)
   - ExpoLinking (from `../../node_modules/expo-linking/ios`)
@@ -2270,6 +2275,7 @@ DEPENDENCIES:
   - ExpoWebBrowser (from `../../node_modules/expo-web-browser/ios`)
   - EXUpdatesInterface (from `../../node_modules/expo-updates-interface/ios`)
   - FBLazyVector (from `../../node_modules/react-native/Libraries/FBLazyVector`)
+  - HapticEngine (from `../modules/haptic-engine/ios`)
   - hermes-engine (from `../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - RCTDeprecation (from `../../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
   - RCTRequired (from `../../node_modules/react-native/Libraries/Required`)
@@ -2407,6 +2413,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/expo-file-system/ios"
   ExpoFont:
     :path: "../../node_modules/expo-font/ios"
+  ExpoHaptics:
+    :path: "../../node_modules/expo-haptics/ios"
   ExpoKeepAwake:
     :path: "../../node_modules/expo-keep-awake/ios"
   ExpoLinearGradient:
@@ -2425,6 +2433,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/expo-updates-interface/ios"
   FBLazyVector:
     :path: "../../node_modules/react-native/Libraries/FBLazyVector"
+  HapticEngine:
+    :path: "../modules/haptic-engine/ios"
   hermes-engine:
     :podspec: "../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-2025-07-07-RNv0.81.0-e0fc67142ec0763c6b6153ca2bf96df815539782
@@ -2603,6 +2613,7 @@ SPEC CHECKSUMS:
   ExpoDocumentPicker: 7cd9e71a0f66fb19eb0a586d6f26eee1284692e0
   ExpoFileSystem: ad991457efaa14253723f1dda997eac6024c700d
   ExpoFont: cf9d90ec1d3b97c4f513211905724c8171f82961
+  ExpoHaptics: d3a6375d8dcc3a1083d003bc2298ff654fafb536
   ExpoKeepAwake: 1a2e820692e933c94a565ec3fbbe38ac31658ffe
   ExpoLinearGradient: 809102bdb979f590083af49f7fa4805cd931bd58
   ExpoLinking: f4c4a351523da72a6bfa7e1f4ca92aee1043a3ca
@@ -2622,6 +2633,7 @@ SPEC CHECKSUMS:
   FirebaseSessions: 2e8f808347e665dff3e5843f275715f07045297d
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
+  HapticEngine: bd4bd8d02cce011fcb0d7e49cda242f378d49172
   hermes-engine: 9f4dfe93326146a1c99eb535b1cb0b857a3cd172
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47

@@ -365,7 +365,7 @@ export const ReportScreen_v2: React.FC = () => {
             setLevelUpInfo({ from: parentLevel, to });
           }}
         >
-          <Text style={{ color: '#FFFFFF', fontFamily: FONTS.bold }}>Preview Level Up</Text>
+          <Text style={{ color: '#FFFFFF', fontFamily: FONTS.bold }}>Preview Level Up (testing)</Text>
         </TouchableOpacity>
       </ScrollView>
 

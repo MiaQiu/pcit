@@ -1,0 +1,7 @@
+{
+  "name": "haptic-engine",
+  "version": "1.0.0",
+  "description": "Local Expo module: iOS Core Haptics continuous ramp buzz (amplitude/sharpness modulated over a duration), unavailable via expo-haptics' discrete generators.",
+  "main": "index.ts",
+  "license": "UNLICENSED"
+}
