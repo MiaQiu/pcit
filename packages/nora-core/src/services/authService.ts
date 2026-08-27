@@ -557,9 +557,9 @@ class AuthService {
   }
 
   /**
-   * The user's current rung on the parent-skill-level ladder (1-7) that
-   * drives the "Personalized Learning Journey" section, plus Level 5's
-   * qualifying-session counter (only meaningful while on Level 5).
+   * The user's current rung on the parent-skill-level ladder (1-9) that
+   * drives the "Personalized Learning Journey" section, plus Level 7's
+   * qualifying-session counter (only meaningful while on Level 7).
    */
   async getParentSkillLevel(): Promise<ParentSkillLevelInfo> {
     const response = await this.authenticatedRequest(

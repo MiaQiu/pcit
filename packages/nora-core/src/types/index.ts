@@ -73,16 +73,17 @@ export interface WacbSurvey {
   totalScore: number;
 }
 
-// Parent Skill Level — 1-7 rung on the "Personalized Learning Journey"
+// Parent Skill Level — 1-9 rung on the "Personalized Learning Journey"
 // ladder, gated server-side by session skill counts (see
-// server/services/parentSkillLevelService.cjs). Levels 6-7 are defined but
-// not yet advanced into automatically — currentLevel caps at 6 for now.
-export type ParentSkillLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+// server/services/parentSkillLevelService.cjs).
+export type ParentSkillLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 export interface ParentSkillLevelInfo {
   currentLevel: ParentSkillLevel;
-  // Qualifying PDI sessions seen so far toward clearing Level 5 (needs 2).
-  // Only meaningful while currentLevel === 5.
+  // Qualifying PDI sessions seen so far toward clearing Level 7 (needs 2).
+  // Only meaningful while currentLevel === 7. Legacy field name — this
+  // column predates the ladder's expansion from 7 to 9 levels (see
+  // doc/goal.md and server/services/parentSkillLevelService.cjs).
   level5QualifyingCount: number;
 }
 

@@ -7,31 +7,26 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Modal, StyleSheet, TouchableOpacity, Animated, Easing, Dimensions } from 'react-native';
+import { View, Text, Modal, StyleSheet, Pressable, Animated, Easing, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { useTranslation } from 'react-i18next';
 import { FONTS, COLORS, SOUNDS } from '../constants/assets';
-import { PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
+import { PARENT_SKILL_LEVEL_ICONS } from '../constants/parentSkillLevels';
 import type { ParentSkillLevel } from '@nora/core';
-
-// Mirrors PARENT_SKILL_LEVELS' icon choices in ProfileReportScreen.tsx, kept
-// local here since this modal only needs the icon (not the rest of that
-// screen's ladder metadata).
-const LEVEL_ICONS: Record<ParentSkillLevel, keyof typeof Ionicons.glyphMap> = {
-  1: 'happy-outline',
-  2: 'star-outline',
-  3: 'locate-outline',
-  4: 'chatbubble-outline',
-  5: 'flag-outline',
-  6: 'shield-checkmark-outline',
-  7: 'trophy-outline',
-};
 
 const CONFETTI_COLORS = [COLORS.mainPurple, COLORS.tealAccent, '#CBA76A', COLORS.ellipseOrange, COLORS.ellipseCyan, COLORS.cardOrange];
 const CONFETTI_COUNT = 16;
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Fixed spots around the badge for the twinkle sparkles that flash when the
+// new level lands.
+const SPARKLE_POSITIONS = [
+  { top: -4, right: 6 },
+  { bottom: 2, left: -8 },
+  { top: 30, left: -14 },
+];
 
 interface ConfettiPiece {
   left: number;
@@ -72,17 +67,19 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const badgeScale = useRef(new Animated.Value(0)).current;
   const badgePulse = useRef(new Animated.Value(1)).current;
+  const badgeSpin = useRef(new Animated.Value(0)).current;
   const ringScale = useRef(new Animated.Value(0)).current;
   const ringOpacity = useRef(new Animated.Value(0)).current;
   const oldContentOpacity = useRef(new Animated.Value(1)).current;
   const oldContentScale = useRef(new Animated.Value(1)).current;
   const newContentOpacity = useRef(new Animated.Value(0)).current;
   const newContentScale = useRef(new Animated.Value(0.4)).current;
+  const shineTranslate = useRef(new Animated.Value(0)).current;
+  const sparkles = useRef(
+    [0, 1, 2].map(() => ({ scale: new Animated.Value(0), opacity: new Animated.Value(0) }))
+  ).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const titleTranslateY = useRef(new Animated.Value(14)).current;
-  const cardOpacity = useRef(new Animated.Value(0)).current;
-  const cardTranslateY = useRef(new Animated.Value(14)).current;
-  const buttonOpacity = useRef(new Animated.Value(0)).current;
 
   const confetti = useRef<ConfettiPiece[]>(makeConfetti()).current;
 
@@ -93,17 +90,20 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
     backdropOpacity.setValue(0);
     badgeScale.setValue(0);
     badgePulse.setValue(1);
+    badgeSpin.setValue(0);
     ringScale.setValue(0);
     ringOpacity.setValue(0);
     oldContentOpacity.setValue(1);
     oldContentScale.setValue(1);
     newContentOpacity.setValue(0);
     newContentScale.setValue(0.4);
+    shineTranslate.setValue(0);
+    sparkles.forEach((s) => {
+      s.scale.setValue(0);
+      s.opacity.setValue(0);
+    });
     titleOpacity.setValue(0);
     titleTranslateY.setValue(14);
-    cardOpacity.setValue(0);
-    cardTranslateY.setValue(14);
-    buttonOpacity.setValue(0);
     confetti.forEach((piece) => {
       piece.fall.setValue(0);
       piece.opacity.setValue(1);
@@ -127,6 +127,16 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
       Animated.spring(badgeScale, { toValue: 1, tension: 55, friction: 7, useNativeDriver: true }),
       Animated.delay(450),
       Animated.parallel([
+        // Coin spins through a few full turns at a CONSTANT angular speed —
+        // lands right as the new level's content has finished popping in.
+        // Deliberately linear, not eased: rotateY's visual width already
+        // follows cos(angle), which is naturally near-flat approaching a
+        // face-on stop (0/360/720/1080deg) and changes fastest edge-on
+        // (90/270deg) — that alone reads as "spin fast, settle at the end."
+        // Layering a decelerating easing on top of that double-applies the
+        // slowdown right where the geometry is already slowing down, which
+        // is what produced the stall-then-snap.
+        Animated.timing(badgeSpin, { toValue: 1, duration: 650, easing: Easing.linear, useNativeDriver: true }),
         // Shockwave ring burst at the moment the level flips.
         Animated.timing(ringScale, { toValue: 1.7, duration: 550, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
         Animated.sequence([
@@ -146,6 +156,27 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
             Animated.spring(newContentScale, { toValue: 1, tension: 80, friction: 6, useNativeDriver: true }),
           ]),
         ]),
+        // Shine sweeps across the coin right as the new number lands.
+        Animated.sequence([
+          Animated.delay(160),
+          Animated.timing(shineTranslate, { toValue: 1, duration: 480, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        ]),
+        // A few sparkles twinkle around the coin at the same moment.
+        ...sparkles.map((s, i) =>
+          Animated.sequence([
+            Animated.delay(160 + i * 90),
+            Animated.parallel([
+              Animated.sequence([
+                Animated.timing(s.opacity, { toValue: 1, duration: 120, useNativeDriver: true }),
+                Animated.timing(s.opacity, { toValue: 0, duration: 340, useNativeDriver: true }),
+              ]),
+              Animated.sequence([
+                Animated.spring(s.scale, { toValue: 1, tension: 120, friction: 6, useNativeDriver: true }),
+                Animated.timing(s.scale, { toValue: 0, duration: 260, useNativeDriver: true }),
+              ]),
+            ]),
+          ])
+        ),
         // Badge itself pulses to sell the impact.
         Animated.sequence([
           Animated.delay(100),
@@ -172,17 +203,6 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
             Animated.spring(titleTranslateY, { toValue: 0, tension: 60, friction: 8, useNativeDriver: true }),
           ]),
         ]),
-        Animated.sequence([
-          Animated.delay(320),
-          Animated.parallel([
-            Animated.timing(cardOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
-            Animated.spring(cardTranslateY, { toValue: 0, tension: 60, friction: 8, useNativeDriver: true }),
-          ]),
-        ]),
-        Animated.sequence([
-          Animated.delay(500),
-          Animated.timing(buttonOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
-        ]),
       ]),
     ]).start();
 
@@ -193,11 +213,9 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
     };
   }, [visible, fromLevel, toLevel]);
 
-  const fromKey = PARENT_SKILL_LEVEL_KEYS[fromLevel];
-  const toKey = PARENT_SKILL_LEVEL_KEYS[toLevel];
-
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onDismiss}>
+      <Pressable style={styles.overlayPressable} onPress={onDismiss}>
       <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
         <LinearGradient colors={['#7C3AED', '#5B21B6']} style={StyleSheet.absoluteFill} />
 
@@ -242,7 +260,24 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
                 { opacity: ringOpacity, transform: [{ scale: ringScale }] },
               ]}
             />
-            <Animated.View style={{ transform: [{ scale: badgeScale }, { scale: badgePulse }] }}>
+            <Animated.View
+              style={[
+                styles.badgeShadow,
+                {
+                  transform: [
+                    { perspective: 800 },
+                    {
+                      rotateY: badgeSpin.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '1080deg'],
+                      }),
+                    },
+                    { scale: badgeScale },
+                    { scale: badgePulse },
+                  ],
+                },
+              ]}
+            >
               <LinearGradient colors={['#F5D890', '#CBA76A']} style={styles.badgeCircle}>
                 <Animated.View
                   style={[
@@ -250,7 +285,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
                     { opacity: oldContentOpacity, transform: [{ scale: oldContentScale }] },
                   ]}
                 >
-                  <Ionicons name={LEVEL_ICONS[fromLevel]} size={26} color="#FFFFFF" />
+                  <Ionicons name={PARENT_SKILL_LEVEL_ICONS[fromLevel]} size={26} color="#FFFFFF" />
                   <Text style={styles.badgeNumber}>{fromLevel}</Text>
                 </Animated.View>
                 <Animated.View
@@ -260,36 +295,59 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
                     { opacity: newContentOpacity, transform: [{ scale: newContentScale }] },
                   ]}
                 >
-                  <Ionicons name={LEVEL_ICONS[toLevel]} size={26} color="#FFFFFF" />
+                  <Ionicons name={PARENT_SKILL_LEVEL_ICONS[toLevel]} size={26} color="#FFFFFF" />
                   <Text style={styles.badgeNumber}>{toLevel}</Text>
                 </Animated.View>
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    styles.shine,
+                    {
+                      opacity: newContentOpacity,
+                      transform: [
+                        { rotate: '25deg' },
+                        {
+                          translateX: shineTranslate.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [-140, 140],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                />
               </LinearGradient>
             </Animated.View>
+            {sparkles.map((s, i) => (
+              <Animated.View
+                key={i}
+                pointerEvents="none"
+                style={[
+                  styles.sparkle,
+                  SPARKLE_POSITIONS[i],
+                  { opacity: s.opacity, transform: [{ scale: s.scale }] },
+                ]}
+              >
+                <Ionicons name="sparkles" size={18} color="#FFFFFF" />
+              </Animated.View>
+            ))}
           </View>
 
           <Animated.View style={{ opacity: titleOpacity, transform: [{ translateY: titleTranslateY }] }}>
             <Text style={styles.title}>{t('reportV2.levelUp.title')}</Text>
             <Text style={styles.subtitle}>{t('reportV2.levelUp.subtitle', { level: toLevel })}</Text>
           </Animated.View>
-
-          <Animated.View style={[styles.card, { opacity: cardOpacity, transform: [{ translateY: cardTranslateY }] }]}>
-            <Text style={styles.cardLabel}>{t('reportV2.levelUp.skillUnlocked')}</Text>
-            <Text style={styles.cardTitle}>{t(`profileReport.levels.${toKey}.title`)}</Text>
-            <Text style={styles.cardSkill}>{t(`profileReport.levels.${toKey}.skill`)}</Text>
-          </Animated.View>
-
-          <Animated.View style={{ opacity: buttonOpacity, width: '100%' }}>
-            <TouchableOpacity style={styles.continueButton} onPress={onDismiss} activeOpacity={0.85}>
-              <Text style={styles.continueButtonText}>{t('reportV2.levelUp.continueButton')}</Text>
-            </TouchableOpacity>
-          </Animated.View>
         </View>
       </Animated.View>
+      </Pressable>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  overlayPressable: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
   },
@@ -321,17 +379,20 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: '#FFFFFF',
   },
+  badgeShadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
   badgeCircle: {
     width: 116,
     height: 116,
     borderRadius: 58,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    overflow: 'hidden',
   },
   badgeContent: {
     justifyContent: 'center',
@@ -346,6 +407,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginTop: 2,
   },
+  shine: {
+    position: 'absolute',
+    top: -60,
+    left: '50%',
+    width: 36,
+    height: 240,
+    marginLeft: -18,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+  },
+  sparkle: {
+    position: 'absolute',
+  },
   title: {
     fontFamily: FONTS.bold,
     fontSize: 30,
@@ -359,46 +432,5 @@ const styles = StyleSheet.create({
     color: '#E9D5FF',
     textAlign: 'center',
     marginTop: 6,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 18,
-    paddingHorizontal: 22,
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 28,
-  },
-  cardLabel: {
-    fontFamily: FONTS.bold,
-    fontSize: 11,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: COLORS.tealAccent,
-  },
-  cardTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 20,
-    color: COLORS.textDark,
-    marginTop: 8,
-  },
-  cardSkill: {
-    fontFamily: FONTS.regular,
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginTop: 4,
-  },
-  continueButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 100,
-    paddingVertical: 16,
-    alignItems: 'center',
-    width: '100%',
-  },
-  continueButtonText: {
-    fontFamily: FONTS.bold,
-    fontSize: 16,
-    color: COLORS.mainPurple,
   },
 });

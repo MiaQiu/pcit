@@ -18,37 +18,19 @@ import { useTranslation, Trans } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import * as userStorage from '../lib/userStorage';
 import { LevelUpModal } from '../components/LevelUpModal';
-import { PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
+import { PARENT_SKILL_LEVEL_KEYS, PARENT_SKILL_LEVEL_ORDER } from '../constants/parentSkillLevels';
+import { deriveGoalFromLevel, DerivedGoal } from '../utils/goalFallback';
 
 type ReportScreenV2RouteProp = RouteProp<RootStackParamList, 'ReportV2'>;
 
-// Flat count target for the levels whose ladder goal (see
-// parentSkillLevelService.cjs computeLevelUpdate) is "hit N of this skill
-// in a session" rather than a session-count gate.
-const LEVEL_FLAT_TARGET: Partial<Record<ParentSkillLevel, number>> = {
-  2: 5, // totalPraise >= 5
-  3: 5, // narration >= 5
-  4: 5, // echo >= 5
-};
-
-type GoalDirection = 'build' | 'reduce';
-
-type DerivedGoal = {
-  focusSkill: string;
-  currentNumber: number | null;
-  targetNumber: number | string | null;
-  description: string;
-  direction: GoalDirection;
-};
-
 // goalType values from server/utils/levelGoalEngine.cjs whose baseline/target
 // are a REDUCTION (get under the target), not a build-up (climb to it).
-const REDUCE_GOAL_TYPES = new Set(['AVOID_CRITICISM', 'AVOID_COMMANDS', 'AVOID_QUESTIONS', 'SKILL_FOLLOW_LEAD']);
+const REDUCE_GOAL_TYPES = new Set(['AVOID_CRITICISM', 'AVOID_COMMANDS', 'AVOID_QUESTIONS']);
 
 // goalType -> report.skillLabel.* key, for goalTypes that track exactly one
 // PCIT skill/avoid item. Used instead of the server's flavor title (e.g.
 // "The Calm Acceptance") so the card names the actual thing to work on.
-// goalTypes with no single backing item (SKILL_FOLLOW_LEAD, CALM_FOLLOWTHROUGH,
+// goalTypes with no single backing item (CALM_FOLLOWTHROUGH,
 // INTEGRATE_SKILLS, MAINTAIN_SKILLS) fall back to the level's own skill name.
 const GOAL_TYPE_SKILL_LABEL_KEY: Record<string, string> = {
   AVOID_CRITICISM: 'criticism',
@@ -57,45 +39,6 @@ const GOAL_TYPE_SKILL_LABEL_KEY: Record<string, string> = {
   BUILD_PRAISE: 'praiseLabeleld',
   BUILD_NARRATION: 'narrate',
   BUILD_ECHO: 'echo',
-};
-
-// Fallback for sessions analyzed before goalDirective existed on the
-// coaching payload (see server/utils/levelGoalEngine.cjs) — reconstructs a
-// same-shape goal from the parent's current level and this session's raw
-// tag counts (reportData.stats), using the same metrics/thresholds as
-// parentSkillLevelService.cjs's level-up gate.
-const deriveGoalFromLevel = (
-  level: ParentSkillLevel,
-  stats: Record<string, any> | undefined,
-  mode: 'CDI' | 'PDI',
-  t: (key: string) => string
-): DerivedGoal => {
-  const key = PARENT_SKILL_LEVEL_KEYS[level];
-  const focusSkill = t(`profileReport.levels.${key}.skill`);
-  const description = t(`profileReport.levels.${key}.clearGoal`);
-  const s = stats || {};
-
-  if (level === 1 && mode === 'CDI') {
-    const commands = s.command != null ? s.command : (s.direct_command || 0) + (s.indirect_command || 0);
-    const currentNumber = commands + (s.question || 0) + (s.criticism || 0);
-    return { focusSkill, currentNumber, targetNumber: null, description, direction: 'reduce' };
-  }
-  if (level === 2 && mode === 'CDI') {
-    const currentNumber = (s.product_praise || 0) + (s.action_praise || 0) + (s.growth_praise || 0) + (s.regulatory_praise || 0);
-    return { focusSkill, currentNumber, targetNumber: LEVEL_FLAT_TARGET[2]!, description, direction: 'build' };
-  }
-  if (level === 3 && mode === 'CDI') {
-    return { focusSkill, currentNumber: s.narration || 0, targetNumber: LEVEL_FLAT_TARGET[3]!, description, direction: 'build' };
-  }
-  if (level === 4 && mode === 'CDI') {
-    return { focusSkill, currentNumber: s.echo || 0, targetNumber: LEVEL_FLAT_TARGET[4]!, description, direction: 'build' };
-  }
-  if (level >= 5 && mode === 'PDI') {
-    return { focusSkill, currentNumber: s.direct_command || 0, targetNumber: null, description, direction: 'build' };
-  }
-  // Session mode doesn't match this level's own track (e.g. a level 5+
-  // parent doing a CDI session) — no live count to show, just the goal copy.
-  return { focusSkill, currentNumber: null, targetNumber: null, description, direction: 'build' };
 };
 
 export const ReportScreen_v2: React.FC = () => {
@@ -114,7 +57,9 @@ export const ReportScreen_v2: React.FC = () => {
   const [prevScore, setPrevScore] = useState<number | null>(null);
 
   const [parentLevel, setParentLevel] = useState<ParentSkillLevel>(1);
-  const [level5QualifyingCount, setLevel5QualifyingCount] = useState(0);
+  // API field is named level5QualifyingCount for legacy reasons (see
+  // ParentSkillLevelInfo) but now tracks new level 7's qualifying count.
+  const [qualifyingCount, setQualifyingCount] = useState(0);
   const [levelUpInfo, setLevelUpInfo] = useState<{ from: ParentSkillLevel; to: ParentSkillLevel } | null>(null);
 
   useEffect(() => {
@@ -133,7 +78,7 @@ export const ReportScreen_v2: React.FC = () => {
     try {
       const info = await authService.getParentSkillLevel();
       setParentLevel(info.currentLevel);
-      setLevel5QualifyingCount(info.level5QualifyingCount);
+      setQualifyingCount(info.level5QualifyingCount);
 
       const seenRaw = await userStorage.getItem('@parent_skill_level_seen');
       const seenLevel = seenRaw ? parseInt(seenRaw, 10) : null;
@@ -264,6 +209,7 @@ export const ReportScreen_v2: React.FC = () => {
         targetNumber: goalDirective.targetNumber ?? null,
         description: goalDirective.actionPrompt || '',
         direction: REDUCE_GOAL_TYPES.has(goalDirective.goalType || '') ? 'reduce' : 'build',
+        goalType: goalDirective.goalType || null,
       }
     : deriveGoalFromLevel(parentLevel, reportData.stats, reportData.mode, t);
 
@@ -325,12 +271,12 @@ export const ReportScreen_v2: React.FC = () => {
             </View>
             <Text style={styles.levelChipValue}>{parentLevel}</Text>
             <Text style={styles.levelChipName}>{t(`profileReport.levels.${PARENT_SKILL_LEVEL_KEYS[parentLevel]}.title`)}</Text>
-            {parentLevel === 5 && (
+            {parentLevel === 7 && (
               <View style={styles.levelChipProgressRow}>
                 <View style={styles.levelChipProgressTrack}>
-                  <View style={[styles.levelChipProgressFill, { width: `${(level5QualifyingCount / 2) * 100}%` }]} />
+                  <View style={[styles.levelChipProgressFill, { width: `${(qualifyingCount / 2) * 100}%` }]} />
                 </View>
-                <Text style={styles.levelChipProgressText}>{level5QualifyingCount}/2</Text>
+                <Text style={styles.levelChipProgressText}>{qualifyingCount}/2</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -408,6 +354,18 @@ export const ReportScreen_v2: React.FC = () => {
           <MaterialCommunityIcons name="trophy-outline" size={20} color="#FFFFFF" />
           <Text style={styles.continueButtonText}>{t('reportV2.continueToCoaching')}</Text>
           <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+        </TouchableOpacity>
+
+        {/* TEMP DEBUG — preview the level-up animation on demand. Remove before merging. */}
+        <TouchableOpacity
+          style={{ marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: '#333', alignItems: 'center' }}
+          onPress={() => {
+            const maxLevel = PARENT_SKILL_LEVEL_ORDER[PARENT_SKILL_LEVEL_ORDER.length - 1];
+            const to = Math.min(parentLevel + 1, maxLevel) as ParentSkillLevel;
+            setLevelUpInfo({ from: parentLevel, to });
+          }}
+        >
+          <Text style={{ color: '#FFFFFF', fontFamily: FONTS.bold }}>Preview Level Up</Text>
         </TouchableOpacity>
       </ScrollView>
 

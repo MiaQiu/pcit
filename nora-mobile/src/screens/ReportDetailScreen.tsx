@@ -49,6 +49,7 @@ import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
 import { MarkdownText } from '../utils/MarkdownText';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { deriveGoalFromLevel as deriveGoalNumbersFromLevel } from '../utils/goalFallback';
 
 type ReportDetailRouteProp = RouteProp<RootStackParamList, 'ReportDetail'>;
 
@@ -129,35 +130,14 @@ const getSkillRating = (progress: number, t: Function, maxValue: number = 10): {
   }
 };
 
-// Parenting Level — level number -> i18n key on the shared 7-level ladder
-// (same keys/copy as ReportScreen_v2 / ParentLevelDetailScreen).
-const PARENT_SKILL_LEVEL_KEYS: Record<ParentSkillLevel, string> = {
-  1: 'playBuilder',
-  2: 'confidenceBuilder',
-  3: 'attentionBuilder',
-  4: 'communicationBuilder',
-  5: 'cooperationBuilder',
-  6: 'boundaryBuilder',
-  7: 'confidentParent',
-};
-
-// Flat count target for the levels whose ladder goal (see
-// parentSkillLevelService.cjs computeLevelUpdate) is "hit N of this skill
-// in a session" rather than a session-count gate.
-const LEVEL_FLAT_TARGET: Partial<Record<ParentSkillLevel, number>> = {
-  2: 5, // totalPraise >= 5
-  3: 5, // narration >= 5
-  4: 5, // echo >= 5
-};
-
 type DerivedGoal = { focusSkill: string; currentNumber: number | null; targetNumber: number | string | null; description: string; skillTag?: string };
 
 // Maps the deterministic goal engine's goalType (server/utils/levelGoalEngine.cjs)
 // to one of the plain skill/avoid-item labels already used by
 // SKILL_LABEL_I18N_KEY above — shown as a badge next to the Skill Coaching
 // card's title. Goal types with no single countable skill
-// (SKILL_FOLLOW_LEAD, CALM_FOLLOWTHROUGH, INTEGRATE_SKILLS, MAINTAIN_SKILLS)
-// are intentionally omitted — the badge is simply hidden for those.
+// (CALM_FOLLOWTHROUGH, INTEGRATE_SKILLS, MAINTAIN_SKILLS) are intentionally
+// omitted — the badge is simply hidden for those.
 const GOAL_TYPE_SKILL_TAG: Record<string, string> = {
   BUILD_PRAISE: 'Praise (Labeled)',
   BUILD_NARRATION: 'Narrate',
@@ -206,46 +186,23 @@ const SKILL_TAG_TO_DEMO_VIDEO_DISPLAY_TITLE: Record<string, string> = {
   'Criticism': 'Replace criticism with active ignoring',
 };
 
-// Same client-side fallback as ReportScreen_v2.tsx: reconstructs a
-// same-shape goal from the parent's current level and this session's raw
-// tag counts (reportData.stats), using the same metrics/thresholds as
-// parentSkillLevelService.cjs's level-up gate. Needed because
+// Same client-side fallback as ReportScreen_v2.tsx (deriveGoalFromLevel in
+// utils/goalFallback.ts) — reconstructs a same-shape goal from the parent's
+// current level and this session's raw tag counts. Needed because
 // tomorrowGoalDirective/pdiTomorrowGoalDirective is absent — or, for
 // sessions analyzed before the level engine existed, may hold stale
 // pre-level-engine copy — so a truthy tomorrowGoal string alone can't be
-// trusted; only the structured directive object is.
+// trusted; only the structured directive object is. This wrapper just
+// adds this screen's own skillTag presentation on top of the shared
+// numeric derivation's goalType.
 const deriveGoalFromLevel = (
   level: ParentSkillLevel,
   stats: Record<string, any> | undefined,
   mode: 'CDI' | 'PDI',
   t: (key: string) => string
 ): DerivedGoal => {
-  const key = PARENT_SKILL_LEVEL_KEYS[level];
-  const focusSkill = t(`profileReport.levels.${key}.skill`);
-  const description = t(`profileReport.levels.${key}.clearGoal`);
-  const s = stats || {};
-
-  if (level === 1 && mode === 'CDI') {
-    const commands = s.command != null ? s.command : (s.direct_command || 0) + (s.indirect_command || 0);
-    const currentNumber = commands + (s.question || 0) + (s.criticism || 0);
-    return { focusSkill, currentNumber, targetNumber: null, description };
-  }
-  if (level === 2 && mode === 'CDI') {
-    const currentNumber = (s.product_praise || 0) + (s.action_praise || 0) + (s.growth_praise || 0) + (s.regulatory_praise || 0);
-    return { focusSkill, currentNumber, targetNumber: LEVEL_FLAT_TARGET[2]!, description, skillTag: 'Praise (Labeled)' };
-  }
-  if (level === 3 && mode === 'CDI') {
-    return { focusSkill, currentNumber: s.narration || 0, targetNumber: LEVEL_FLAT_TARGET[3]!, description, skillTag: 'Narrate' };
-  }
-  if (level === 4 && mode === 'CDI') {
-    return { focusSkill, currentNumber: s.echo || 0, targetNumber: LEVEL_FLAT_TARGET[4]!, description, skillTag: 'Echo' };
-  }
-  if (level >= 5 && mode === 'PDI') {
-    return { focusSkill, currentNumber: s.direct_command || 0, targetNumber: null, description, skillTag: 'Commands' };
-  }
-  // Session mode doesn't match this level's own track (e.g. a level 5+
-  // parent doing a CDI session) — no live count to show, just the goal copy.
-  return { focusSkill, currentNumber: null, targetNumber: null, description };
+  const { focusSkill, currentNumber, targetNumber, description, goalType } = deriveGoalNumbersFromLevel(level, stats, mode, t);
+  return { focusSkill, currentNumber, targetNumber, description, skillTag: goalType ? GOAL_TYPE_SKILL_TAG[goalType] : undefined };
 };
 
 export const ReportDetailScreen: React.FC = () => {

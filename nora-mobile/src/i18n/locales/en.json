@@ -660,12 +660,26 @@
     "journeyLevelBadge": "LEVEL {{level}}",
     "journeyGoalLabel": "Goal: ",
     "levels": {
-      "playBuilder": {
-        "title": "Play Builder",
-        "skill": "Follow Your Child's Lead",
-        "goal": "Build a safe and enjoyable play experience.",
-        "learn": "Let the child lead the play • Reduce commands • Reduce questions • Avoid criticism",
-        "clearGoal": "Keep commands, questions, and criticism to 6 or fewer combined in a single session."
+      "calmBuilder": {
+        "title": "Calm Builder",
+        "skill": "Reduce Criticism",
+        "goal": "Build a safe, judgment-free play space.",
+        "learn": "Notice the urge to correct • Let mistakes be mistakes • Replace critical words with calm acceptance",
+        "clearGoal": "Keep criticism to 3 or fewer in a single session."
+      },
+      "patienceBuilder": {
+        "title": "Patience Builder",
+        "skill": "Reduce Commands",
+        "goal": "Let your child lead without direction.",
+        "learn": "Sit on your hands • Resist giving instructions • Let your child choose the play",
+        "clearGoal": "Keep commands to 3 or fewer in a single session."
+      },
+      "presenceBuilder": {
+        "title": "Presence Builder",
+        "skill": "Reduce Questions",
+        "goal": "Stay present without quizzing.",
+        "learn": "Swap questions for statements • Describe instead of ask • Let curiosity come from your child",
+        "clearGoal": "Keep questions to 3 or fewer in a single session."
       },
       "confidenceBuilder": {
         "title": "Confidence Builder",

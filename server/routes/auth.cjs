@@ -1019,8 +1019,10 @@ router.get('/child-issues', require('../middleware/auth.cjs').requireAuth, async
 /**
  * GET /api/auth/parent-skill-level
  * Get the authenticated user's current parent-skill-level progress
- * (1-7 — see server/services/parentSkillLevelService.cjs). Defaults to
+ * (1-9 — see server/services/parentSkillLevelService.cjs). Defaults to
  * level 1 when no progress row exists yet (no completed sessions).
+ * NOTE: `level5QualifyingCount` is a legacy field name — it now tracks
+ * new level 7's qualifying count (see parentSkillLevelService.cjs).
  */
 router.get('/parent-skill-level', require('../middleware/auth.cjs').requireAuth, async (req, res) => {
   try {

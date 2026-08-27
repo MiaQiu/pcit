@@ -551,7 +551,6 @@ function HomeCardModal({
     for (const c of components) {
       if (c.type === 'TEXT' && !c.text.trim()) { alert('Every Text component needs text'); return; }
       if (c.type === 'OPEN_DETAILS' && !c.linkedCardId) { alert('Every "Open more details" component needs a linked card'); return; }
-      if (c.type === 'USER_INPUT' && !c.inputLabel.trim()) { alert('Every User input component needs a prompt/label'); return; }
     }
 
     const minAgeMonths = minAgeYears.trim() ? Math.round(parseFloat(minAgeYears) * 12) : null;
@@ -1177,7 +1176,7 @@ function HomeCardModal({
                         type="text"
                         value={c.inputLabel}
                         onChange={(e) => updateComponent(c.key, { inputLabel: e.target.value })}
-                        placeholder="Prompt shown above the input (e.g. What's one thing you'll try this week?)"
+                        placeholder="Prompt shown above the input (optional — e.g. What's one thing you'll try this week?)"
                       />
                       <input
                         type="text"

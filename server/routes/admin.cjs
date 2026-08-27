@@ -2076,9 +2076,6 @@ function validateHomeCardComponents(components, homeCardId) {
       if (!c.linkedCardId) throw { status: 400, message: `components[${index}]: linkedCardId is required for OPEN_DETAILS components` };
       if (c.linkedCardId === homeCardId) throw { status: 400, message: `components[${index}]: a card cannot link to itself` };
     }
-    if (c.type === 'USER_INPUT' && (!c.inputLabel || !c.inputLabel.trim())) {
-      throw { status: 400, message: `components[${index}]: inputLabel is required for USER_INPUT components` };
-    }
     return {
       id: c.id || undefined,
       type: c.type,
@@ -2086,7 +2083,7 @@ function validateHomeCardComponents(components, homeCardId) {
       text: c.type === 'TEXT' ? c.text.trim() : null,
       linkedCardId: c.type === 'OPEN_DETAILS' ? c.linkedCardId : null,
       ctaLabel: c.type === 'OPEN_DETAILS' ? (c.ctaLabel?.trim() || null) : null,
-      inputLabel: c.type === 'USER_INPUT' ? c.inputLabel.trim() : null,
+      inputLabel: c.type === 'USER_INPUT' ? (c.inputLabel?.trim() || null) : null,
       inputPlaceholder: c.type === 'USER_INPUT' ? (c.inputPlaceholder?.trim() || null) : null,
     };
   });

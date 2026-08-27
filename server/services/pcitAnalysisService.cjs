@@ -606,7 +606,7 @@ Example format:
 }
 
 /**
- * Fetch the parent's current level (1-7) and qualifying-instance counters
+ * Fetch the parent's current level (1-9) and qualifying-instance counters
  * from ParentSkillProgress. Defaults to level 1 / 0 counters when no
  * record exists yet — this read path doesn't create the row (that happens
  * later in parentSkillLevelService.cjs, after this session's own results

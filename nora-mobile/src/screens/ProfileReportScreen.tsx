@@ -23,6 +23,12 @@ import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
 import * as userStorage from '../lib/userStorage';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import {
+  PARENT_SKILL_LEVEL_ORDER,
+  PARENT_SKILL_LEVEL_KEYS,
+  PARENT_SKILL_LEVEL_ICONS,
+  PARENT_SKILL_LEVEL_SKILL_LABEL,
+} from '../constants/parentSkillLevels';
 
 type ProfileReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
 
@@ -181,21 +187,18 @@ const computeFocusAreas = (survey: WacbSurvey): FocusAreaData[] =>
 const FOCUS_CARD_WIDTH = 156;
 const FOCUS_CARD_GAP = 12;
 
-// ─── Personalized Learning Journey — the 7-level parent-skill ladder ──────────
+// ─── Personalized Learning Journey — the 9-level parent-skill ladder ──────────
 // currentLevel comes from the server (authService.getParentSkillLevel(),
-// gated by real session counts — see parentSkillLevelService.cjs). Levels
-// 6-7 are defined here for display but aren't advanced into automatically
-// yet, so a parent can be shown "at" level 6 indefinitely.
-
-const PARENT_SKILL_LEVELS = [
-  { level: 1, key: 'playBuilder', icon: 'happy-outline', skillKey: undefined },
-  { level: 2, key: 'confidenceBuilder', icon: 'star-outline', skillKey: 'Praise (Labeled)' },
-  { level: 3, key: 'attentionBuilder', icon: 'locate-outline', skillKey: 'Narrate' },
-  { level: 4, key: 'communicationBuilder', icon: 'chatbubble-outline', skillKey: 'Echo' },
-  { level: 5, key: 'cooperationBuilder', icon: 'flag-outline', skillKey: undefined },
-  { level: 6, key: 'boundaryBuilder', icon: 'shield-checkmark-outline', skillKey: undefined },
-  { level: 7, key: 'confidentParent', icon: 'trophy-outline', skillKey: undefined },
-] as const;
+// gated by real session counts — see parentSkillLevelService.cjs). Level
+// ordering/keys/icons/skill-tap-through are the shared single source of
+// truth in constants/parentSkillLevels.ts (also used by ParentLevelDetailScreen
+// and LevelUpModal), rather than a duplicated array local to this screen.
+const PARENT_SKILL_LEVELS = PARENT_SKILL_LEVEL_ORDER.map(level => ({
+  level,
+  key: PARENT_SKILL_LEVEL_KEYS[level],
+  icon: PARENT_SKILL_LEVEL_ICONS[level],
+  skillKey: PARENT_SKILL_LEVEL_SKILL_LABEL[level],
+}));
 
 /** PDI Coach's Corner — Two Choices Flow skills */
 const PDICoachCorner: React.FC<{
@@ -623,7 +626,7 @@ export const ProfileReportScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Personalized Learning Journey — 7-level parent skill ladder */}
+        {/* Personalized Learning Journey — 9-level parent skill ladder */}
         <View style={styles.journeySection}>
           <Text style={styles.cardTitle}>{t('profileReport.journeyTitle')}</Text>
           <Text style={styles.sectionSubtitle}>{t('profileReport.journeySubtitle')}</Text>

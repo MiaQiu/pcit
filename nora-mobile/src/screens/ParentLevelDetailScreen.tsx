@@ -1,6 +1,6 @@
 /**
  * ParentLevelDetailScreen
- * Explains every level of the 7-level Personalized Learning Journey ladder,
+ * Explains every level of the 9-level Personalized Learning Journey ladder,
  * highlighting the parent's current level. Opened from the Parenting Level
  * card on ReportScreen_v2.
  */
@@ -15,20 +15,14 @@ import { RootStackNavigationProp, RootStackParamList } from '../navigation/types
 import type { ParentSkillLevel } from '@nora/core';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { PARENT_SKILL_LEVEL_ORDER, PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
 
 type ParentLevelDetailRouteProp = RouteProp<RootStackParamList, 'ParentLevelDetail'>;
 
-// Same 7-level ladder shown in ReportScreen_v2 and ProfileReportScreen's
-// Personalized Learning Journey.
-const PARENT_SKILL_LEVELS: Array<{ level: ParentSkillLevel; key: string }> = [
-  { level: 1, key: 'playBuilder' },
-  { level: 2, key: 'confidenceBuilder' },
-  { level: 3, key: 'attentionBuilder' },
-  { level: 4, key: 'communicationBuilder' },
-  { level: 5, key: 'cooperationBuilder' },
-  { level: 6, key: 'boundaryBuilder' },
-  { level: 7, key: 'confidentParent' },
-];
+// Same ladder shown in ReportScreen_v2 and ProfileReportScreen's Personalized
+// Learning Journey — single source of truth in constants/parentSkillLevels.ts.
+const PARENT_SKILL_LEVELS: Array<{ level: ParentSkillLevel; key: string }> =
+  PARENT_SKILL_LEVEL_ORDER.map(level => ({ level, key: PARENT_SKILL_LEVEL_KEYS[level] }));
 
 export const ParentLevelDetailScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();

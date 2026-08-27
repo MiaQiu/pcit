@@ -660,12 +660,26 @@
     "journeyLevelBadge": "第 {{level}} 级",
     "journeyGoalLabel": "目标：",
     "levels": {
-      "playBuilder": {
-        "title": "游戏建立者",
-        "skill": "跟随孩子的引导",
-        "goal": "建立一个安全、愉快的游戏体验。",
-        "learn": "让孩子主导游戏 • 减少命令 • 减少提问 • 避免批评",
-        "clearGoal": "在一次游戏时光中，把命令、提问和批评的总次数控制在 6 次或以下。"
+      "calmBuilder": {
+        "title": "平静建立者",
+        "skill": "减少批评",
+        "goal": "建立一个安全、不带评判的游戏空间。",
+        "learn": "留意想要纠正的冲动 • 让小错误只是小错误 • 用平静的接纳代替批评的话语",
+        "clearGoal": "在一次游戏时光中，把批评控制在 3 次或以下。"
+      },
+      "patienceBuilder": {
+        "title": "耐心建立者",
+        "skill": "减少命令",
+        "goal": "让孩子在没有指令的情况下主导游戏。",
+        "learn": "把手放在身下按捺住 • 克制发出指令 • 让孩子选择怎么玩",
+        "clearGoal": "在一次游戏时光中，把命令控制在 3 次或以下。"
+      },
+      "presenceBuilder": {
+        "title": "专注建立者",
+        "skill": "减少提问",
+        "goal": "在不追问的情况下保持专注陪伴。",
+        "learn": "用陈述代替提问 • 描述而不是询问 • 让好奇心来自孩子自己",
+        "clearGoal": "在一次游戏时光中，把提问控制在 3 次或以下。"
       },
       "confidenceBuilder": {
         "title": "自信建立者",
