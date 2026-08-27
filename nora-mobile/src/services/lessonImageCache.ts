@@ -1,4 +1,7 @@
-import * as FileSystem from 'expo-file-system';
+// SDK 54's `expo-file-system` default entry is the new File/Directory API —
+// `documentDirectory`, `downloadAsync`, `getInfoAsync`, `makeDirectoryAsync`
+// were moved to `/legacy` and now throw at runtime from the main entry.
+import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CACHE_DIR = `${FileSystem.documentDirectory}lesson-images/`;
