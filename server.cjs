@@ -122,19 +122,16 @@ app.get('/share-home-card.html', async (req, res) => {
     });
     if (!homeCard || !homeCard.isActive) return res.sendFile(filePath);
 
-    // Mirrors share-home-card.html's own displayCard() title/description logic.
+    // Mirrors share-home-card.html's own displayCard() title logic. No
+    // og:description on purpose — the og:image already shows title + body,
+    // so a description line under it just duplicates the image.
     const title = homeCard.cardType === 'QUOTE' ? 'A quote shared from Nora' : (homeCard.detailTitle || 'Shared from Nora');
-    const description = homeCard.cardType === 'QUOTE' ? homeCard.message : (homeCard.detailTitle || '');
     const imageUrl = `${req.protocol}://${req.get('host')}/api/config/home-cards/${encodeURIComponent(String(cardId))}/share-image.png`;
 
     let html = fs.readFileSync(filePath, 'utf8');
     html = html.replace(
       /<meta property="og:title" content="[^"]*" \/>/,
       `<meta property="og:title" content="${escapeMetaAttr(title)}" />`
-    );
-    html = html.replace(
-      /<meta property="og:description" content="[^"]*" \/>/,
-      `<meta property="og:description" content="${escapeMetaAttr(description)}" />`
     );
     // og:image doesn't exist in the static file — inject it after og:type.
     html = html.replace(
