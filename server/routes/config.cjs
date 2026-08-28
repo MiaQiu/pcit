@@ -5,10 +5,41 @@ const { resolveReportAudioUrls } = require('../services/weeklyReportService.cjs'
 const { resolveDragonImageUrl } = require('../services/storage-s3.cjs');
 const { buildShareCardImage, lightenHexColor } = require('../services/shareImage.cjs');
 const { getUserMatchContext } = require('../services/priorityEngine.cjs');
+const { localeMiddleware } = require('../middleware/locale.cjs');
 
 const router = express.Router();
+router.use(localeMiddleware);
 
 const DEFAULT_REPORT_VISIBILITY = { daily: false, weekly: false, monthly: false };
+
+/**
+ * Merges a HomeCardTranslation row onto its base (English) HomeCard —
+ * per-field fallback, same convention as applyLessonTx in lessons.cjs. `tx`
+ * is null for locale 'en' or when no translation row exists yet.
+ */
+function applyHomeCardTx(card, tx) {
+  if (!tx) return card;
+  return {
+    ...card,
+    message: tx.message ?? card.message,
+    attribution: tx.attribution ?? card.attribution,
+    detailTitle: tx.detailTitle ?? card.detailTitle,
+  };
+}
+
+/**
+ * Merges a HomeCardComponentTranslation row onto its base component.
+ */
+function applyHomeCardComponentTx(component, tx) {
+  if (!tx) return component;
+  return {
+    ...component,
+    text: tx.text ?? component.text,
+    ctaLabel: tx.ctaLabel ?? component.ctaLabel,
+    inputLabel: tx.inputLabel ?? component.inputLabel,
+    inputPlaceholder: tx.inputPlaceholder ?? component.inputPlaceholder,
+  };
+}
 
 // Home Card ranking weights (see getUserMatchContext in priorityEngine.cjs
 // for how a user's tagWeights/childAges/childGenders are resolved).
@@ -101,9 +132,15 @@ router.get('/report-visibility', requireAuth, async (req, res) => {
  * Untargeted cards are "general" and always rank above a card targeted at
  * someone else, but below a real match. Array.prototype.sort is stable, so
  * displayOrder still breaks ties within each score tier.
+ *
+ * Localized via ?lang= / Accept-Language (localeMiddleware sets req.locale,
+ * same as GET /api/lessons). message/attribution fall back to the English
+ * base row per-field when a HomeCardTranslation exists but is incomplete —
+ * see applyHomeCardTx.
  */
 router.get('/home-cards', requireAuth, async (req, res) => {
   try {
+    const locale = req.locale;
     const [homeCards, likes, matchContext] = await Promise.all([
       prisma.homeCard.findMany({
         where: { isActive: true },
@@ -117,11 +154,21 @@ router.get('/home-cards', requireAuth, async (req, res) => {
       getUserMatchContext(req.userId),
     ]);
 
+    // Fetch this locale's translations for the fetched cards (English never
+    // needs a lookup — the base row already is English).
+    const translationsById = new Map();
+    if (locale !== 'en' && homeCards.length > 0) {
+      const txs = await prisma.homeCardTranslation.findMany({
+        where: { locale, homeCardId: { in: homeCards.map((c) => c.id) } },
+      });
+      for (const tx of txs) translationsById.set(tx.homeCardId, tx);
+    }
+
     homeCards.sort((a, b) => homeCardScore(b, matchContext) - homeCardScore(a, matchContext));
 
     const likedIds = new Set(likes.map((l) => l.homeCardId));
     const resolved = await Promise.all(homeCards.map(async ({ image, badge, likeCountBase, _count, targetTags, minAgeMonths, maxAgeMonths, targetGender, ...card }) => ({
-      ...card,
+      ...applyHomeCardTx(card, translationsById.get(card.id)),
       badgeText: badge.name,
       badgeColor: badge.color,
       imageUrl: await resolveDragonImageUrl(image),
@@ -226,10 +273,12 @@ router.post('/home-cards/:id/share', requireAuth, async (req, res) => {
  * card, for the screen opened by tapping its arrow. 404s for QUOTE cards,
  * inactive cards, or unknown ids — there's nothing to view in any of those
  * cases. USER_INPUT components include the requesting user's own saved
- * answer, if any.
+ * answer, if any. Localized via ?lang= / Accept-Language, same as GET
+ * /api/config/home-cards.
  */
 router.get('/home-cards/:id', requireAuth, async (req, res) => {
   try {
+    const locale = req.locale;
     const homeCard = await prisma.homeCard.findUnique({
       where: { id: req.params.id },
       include: { badge: true, components: { orderBy: { order: 'asc' } } },
@@ -239,37 +288,52 @@ router.get('/home-cards/:id', requireAuth, async (req, res) => {
     }
 
     const inputComponentIds = homeCard.components.filter((c) => c.type === 'USER_INPUT').map((c) => c.id);
-    const responses = inputComponentIds.length > 0
-      ? await prisma.homeCardUserInputResponse.findMany({
-          where: { componentId: { in: inputComponentIds }, userId: req.userId },
-          select: { componentId: true, answer: true },
-        })
-      : [];
+    const [responses, cardTx, componentTxs] = await Promise.all([
+      inputComponentIds.length > 0
+        ? prisma.homeCardUserInputResponse.findMany({
+            where: { componentId: { in: inputComponentIds }, userId: req.userId },
+            select: { componentId: true, answer: true },
+          })
+        : [],
+      locale !== 'en'
+        ? prisma.homeCardTranslation.findUnique({ where: { homeCardId_locale: { homeCardId: homeCard.id, locale } } })
+        : null,
+      locale !== 'en' && homeCard.components.length > 0
+        ? prisma.homeCardComponentTranslation.findMany({
+            where: { locale, componentId: { in: homeCard.components.map((c) => c.id) } },
+          })
+        : [],
+    ]);
     const answersByComponentId = new Map(responses.map((r) => [r.componentId, r.answer]));
+    const componentTxById = new Map(componentTxs.map((tx) => [tx.componentId, tx]));
+    const card = applyHomeCardTx(homeCard, cardTx);
 
-    const components = await Promise.all(homeCard.components.map(async ({ image, ...c }) => ({
-      id: c.id,
-      type: c.type,
-      text: c.text,
-      imageUrl: await resolveDragonImageUrl(image),
-      linkedCardId: c.linkedCardId,
-      ctaLabel: c.ctaLabel,
-      inputLabel: c.inputLabel,
-      inputPlaceholder: c.inputPlaceholder,
-      userAnswer: c.type === 'USER_INPUT' ? (answersByComponentId.get(c.id) ?? null) : undefined,
-    })));
+    const components = await Promise.all(homeCard.components.map(async (rawComponent) => {
+      const { image, ...c } = applyHomeCardComponentTx(rawComponent, componentTxById.get(rawComponent.id));
+      return {
+        id: c.id,
+        type: c.type,
+        text: c.text,
+        imageUrl: await resolveDragonImageUrl(image),
+        linkedCardId: c.linkedCardId,
+        ctaLabel: c.ctaLabel,
+        inputLabel: c.inputLabel,
+        inputPlaceholder: c.inputPlaceholder,
+        userAnswer: c.type === 'USER_INPUT' ? (answersByComponentId.get(c.id) ?? null) : undefined,
+      };
+    }));
 
     res.json({
-      id: homeCard.id,
-      badgeText: homeCard.badge.name,
-      badgeColor: homeCard.badge.color,
-      detailTitle: homeCard.detailTitle,
+      id: card.id,
+      badgeText: card.badge.name,
+      badgeColor: card.badge.color,
+      detailTitle: card.detailTitle,
       // Included so the share sheet can derive the same title/subtitle split
       // used everywhere else this card is shared from (see
       // getHomeCardShareText in nora-mobile) — detailTitle itself is never
       // shown on the card, only as this page's own heading.
-      message: homeCard.message,
-      imageUrl: await resolveDragonImageUrl(homeCard.image),
+      message: card.message,
+      imageUrl: await resolveDragonImageUrl(card.image),
       components,
     });
   } catch (error) {

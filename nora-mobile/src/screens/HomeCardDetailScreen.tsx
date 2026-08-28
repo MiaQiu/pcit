@@ -12,6 +12,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { LessonContentBlocks } from '../components/LessonContentBlocks';
 import { ShareSheet } from '../components/ShareSheet';
 import { getHomeCardShareText } from '../utils/shareCardText';
@@ -108,6 +109,7 @@ const UserInputComponent: React.FC<{ cardId: string; component: HomeCardComponen
 export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ route, navigation }) => {
   const { cardId } = route.params;
   const recordingService = useRecordingService();
+  const { i18n } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,7 +128,7 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
     setLoading(true);
     setError(null);
     recordingService
-      .getHomeCardDetail(cardId)
+      .getHomeCardDetail(cardId, i18n.language)
       .then((data) => {
         if (cancelled) return;
         setDetail(data);
@@ -143,7 +145,8 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
     return () => {
       cancelled = true;
     };
-  }, [cardId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardId, i18n.language]);
 
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
   const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';

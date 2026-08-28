@@ -624,7 +624,7 @@ export const HomeScreen_v2: React.FC = () => {
         authService.getCurrentUser().catch(() => null),
         // null (not []) on failure — a transient error on a background refetch
         // shouldn't wipe cards that are already showing on screen.
-        recordingService.getHomeCards().catch(() => null),
+        recordingService.getHomeCards(i18n.language).catch(() => null),
       ]);
       if (homeCardsData) setHomeCards(homeCardsData.homeCards ?? []);
 

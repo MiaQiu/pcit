@@ -517,9 +517,12 @@ class RecordingService {
   /**
    * Get admin-configured sub-action cards for the Home screen (active only,
    * in display order). CONTENT cards open a detail page (fetch via
-   * getHomeCardDetail); QUOTE cards get a share button instead.
+   * getHomeCardDetail); QUOTE cards get a share button instead. `locale`
+   * (e.g. i18n.language) returns message/attribution translated into that
+   * locale, falling back to English per-field where untranslated — same
+   * convention as lessonService.getModules.
    */
-  async getHomeCards(): Promise<{ homeCards: Array<{
+  async getHomeCards(locale?: string): Promise<{ homeCards: Array<{
     id: string;
     cardType: 'CONTENT' | 'QUOTE';
     badgeText: string;
@@ -533,8 +536,9 @@ class RecordingService {
     isLiked: boolean;
     likeCount: number;
   }> }> {
+    const lang = locale && locale !== 'en' ? `?lang=${locale}` : '';
     const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/config/home-cards`
+      `${this.apiUrl}/api/config/home-cards${lang}`
     );
 
     if (!response.ok) {
@@ -624,11 +628,13 @@ class RecordingService {
 
   /**
    * Get the full title + ordered components for one CONTENT home card, to
-   * render on the detail page opened by tapping its arrow.
+   * render on the detail page opened by tapping its arrow. `locale` works
+   * the same as in getHomeCards.
    */
-  async getHomeCardDetail(id: string): Promise<HomeCardDetail> {
+  async getHomeCardDetail(id: string, locale?: string): Promise<HomeCardDetail> {
+    const lang = locale && locale !== 'en' ? `?lang=${locale}` : '';
     const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/config/home-cards/${id}`
+      `${this.apiUrl}/api/config/home-cards/${id}${lang}`
     );
 
     if (!response.ok) {

@@ -982,6 +982,7 @@ model HomeCard {
   shares             HomeCardShare[]
   components         HomeCardComponent[] @relation("HomeCardComponents")
   linkedByComponents HomeCardComponent[] @relation("HomeCardComponentLink")
+  translations       HomeCardTranslation[]
 
   @@index([isActive, displayOrder])
 }
@@ -1062,6 +1063,27 @@ model HomeCardShare {
   @@index([homeCardId])
 }
 
+// Per-locale translation of a HomeCard's text fields, following the same
+// shape/conventions as LessonTranslation: auto-translated in bulk via
+// server/scripts/translateHomeCards.cjs (Claude, see translateHomeCardBundle
+// in translationService.cjs), individually re-editable/reviewable after.
+// Null fields fall back to the base (English) HomeCard row at read time
+// (see applyHomeCardTx in config.cjs) — a row doesn't need every field set.
+model HomeCardTranslation {
+  homeCardId     String
+  locale         String
+  message        String?
+  attribution    String?
+  detailTitle    String?
+  autoTranslated Boolean  @default(true)
+  reviewed       Boolean  @default(false)
+  translatedAt   DateTime @default(now())
+  homeCard       HomeCard @relation(fields: [homeCardId], references: [id], onDelete: Cascade)
+
+  @@id([homeCardId, locale])
+  @@index([locale])
+}
+
 // One typed block in a CONTENT home card's detail page, in admin-chosen
 // order (replaces the old single detailContent blob). Authored and reordered
 // entirely within the card's edit form in the admin portal — POST/PUT
@@ -1094,8 +1116,28 @@ model HomeCardComponent {
   createdAt        DateTime                    @default(now())
   updatedAt        DateTime                    @updatedAt
   responses        HomeCardUserInputResponse[]
+  translations     HomeCardComponentTranslation[]
 
   @@index([homeCardId, order])
+}
+
+// Per-locale translation of one HomeCardComponent's text fields — same
+// fallback-to-English convention as HomeCardTranslation. image/linkedCardId
+// aren't translatable so they're not duplicated here.
+model HomeCardComponentTranslation {
+  componentId      String
+  locale           String
+  text             String?
+  ctaLabel         String?
+  inputLabel       String?
+  inputPlaceholder String?
+  autoTranslated   Boolean           @default(true)
+  reviewed         Boolean           @default(false)
+  translatedAt     DateTime          @default(now())
+  component        HomeCardComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
+
+  @@id([componentId, locale])
+  @@index([locale])
 }
 
 enum HomeCardComponentType {
