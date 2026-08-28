@@ -131,6 +131,21 @@ node server.cjs           # starts the server
 
 `prisma migrate deploy` is idempotent — it only applies migrations that haven't been applied yet. Schema changes are automatically applied to prod DB on the next deploy.
 
+> **Known gap:** `.dockerignore` excludes `prisma/migrations`, so the image ships no migration files and `migrate deploy` is a no-op on deploy. Migrations only reach a DB when run manually over a tunnel. Prod is behind as a result — see the migration-drift notes below before removing that `.dockerignore` line.
+
+---
+
+## Local Development in the Container Image
+
+`npm run server` runs Node on the macOS host, which diverges from the Alpine container App Runner runs (fonts, native libs, musl). To run the *actual* image locally against the dev DB:
+
+```sh
+./scripts/start-db-tunnel.sh    # dev DB on localhost:5432 (keep running)
+npm run server:docker           # = docker compose up --build
+```
+
+Server on `http://localhost:3001` (same port as `npm run server` — stop that first, or set `API_PORT`). Reads the root `.env`, mounts `~/.aws` read-only for S3/Secrets, and bind-mounts `server/` `public/` `prisma/` so `docker compose restart api` picks up edits without a rebuild. See `docker-compose.yml` for details.
+
 ---
 
 ## Deployment
