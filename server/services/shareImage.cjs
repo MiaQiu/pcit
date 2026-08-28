@@ -40,22 +40,32 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
+// CJK (Chinese/Japanese/Korean) text has no spaces between words, so the
+// Latin word-wrap below would treat a whole zh-TW/zh-CN title as one
+// unbreakable "word" and run it off the edge of the canvas uncut. Detect it
+// and wrap per-character instead (no separator needed — CJK reads fine
+// broken anywhere); glyphs are also roughly full-width/square rather than
+// ~0.55×fontSize like Latin ones, so maxChars needs a wider estimate too.
+const CJK_RE = /[\u3400-\u9FFF\uF900-\uFAFF\u3040-\u30FF\uAC00-\uD7AF]/;
+
 // Rough word-wrap for SVG <text> (which doesn't wrap on its own): estimates
 // average glyph width as a fraction of font size rather than measuring real
 // metrics, since the actual rendering font isn't known ahead of time (see
 // the font-note above) — good enough for a preview thumbnail, not exact.
 function wrapText(text, maxWidth, fontSize, maxLines) {
-  const avgCharWidth = fontSize * 0.55;
+  const isCJK = CJK_RE.test(text);
+  const avgCharWidth = fontSize * (isCJK ? 1.0 : 0.55);
   const maxChars = Math.max(1, Math.floor(maxWidth / avgCharWidth));
-  const words = text.trim().split(/\s+/).filter(Boolean);
+  const units = isCJK ? Array.from(text.trim()) : text.trim().split(/\s+/).filter(Boolean);
+  const sep = isCJK ? '' : ' ';
   const lines = [];
   let current = '';
 
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word;
+  for (const unit of units) {
+    const candidate = current ? `${current}${sep}${unit}` : unit;
     if (candidate.length > maxChars && current) {
       lines.push(current);
-      current = word;
+      current = unit;
     } else {
       current = candidate;
     }
@@ -69,8 +79,10 @@ function wrapText(text, maxWidth, fontSize, maxLines) {
     lines.length = maxLines;
   }
   const last = lines[lines.length - 1];
-  if (last && lines.length === maxLines && words.join(' ').length > lines.join(' ').length) {
-    lines[lines.length - 1] = last.replace(/\s*\S*$/, '').trim() + '…';
+  if (last && lines.length === maxLines && units.join(sep).length > lines.join(sep).length) {
+    lines[lines.length - 1] = isCJK
+      ? last.slice(0, -1) + '…'
+      : last.replace(/\s*\S*$/, '').trim() + '…';
   }
   return lines;
 }

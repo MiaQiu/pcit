@@ -151,6 +151,9 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
   const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
   const shareUrl = `${webUrl}/share-home-card.html?card_id=${encodeURIComponent(cardId)}`;
+  // ?lang= so the in-app preview image matches the (already-localized)
+  // detail.message shown on this screen — see applyHomeCardTx in config.cjs.
+  const shareImageLang = i18n.language && i18n.language !== 'en' ? `?lang=${i18n.language}` : '';
 
   const handleShare = () => {
     if (!detail) return;
@@ -248,7 +251,7 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
         targetUrl={shareUrl}
         title={detailShareText.title}
         subtitle={detailShareText.subtitle}
-        previewImageUrl={`${webUrl}/api/config/home-cards/${encodeURIComponent(cardId)}/share-image.png`}
+        previewImageUrl={`${webUrl}/api/config/home-cards/${encodeURIComponent(cardId)}/share-image.png${shareImageLang}`}
       />
     </SafeAreaView>
   );

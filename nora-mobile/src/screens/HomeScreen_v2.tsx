@@ -305,6 +305,7 @@ interface SubActionCardProps {
 
 const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName }) => {
   const recordingService = useRecordingService();
+  const { i18n } = useTranslation();
 
   // Local optimistic like state — resynced from the server value only when the
   // card prop itself actually changes (e.g. a background refetch picked up a
@@ -355,7 +356,12 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
   const sharerFirstName = sharerName?.trim().split(/\s+/)[0];
   if (sharerFirstName) shareParams.set('shared_by', sharerFirstName);
   const shareUrl = `${webUrl}/share-home-card.html?${shareParams.toString()}`;
-  const shareImageUrl = `${webUrl}/api/config/home-cards/${card.id}/share-image.png`;
+  // ?lang= so the in-app preview image matches the (already-localized)
+  // card.message/attribution shown everywhere else — see applyHomeCardTx in
+  // config.cjs. The public share-home-card.html link itself stays English
+  // (no per-viewer locale to go on there), only this in-app preview image.
+  const shareImageLang = i18n.language && i18n.language !== 'en' ? `?lang=${i18n.language}` : '';
+  const shareImageUrl = `${webUrl}/api/config/home-cards/${card.id}/share-image.png${shareImageLang}`;
 
   const handleShare = () => {
     amplitudeService.trackEvent('Home Card Shared', { cardId: card.id });

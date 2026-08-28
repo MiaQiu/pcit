@@ -445,14 +445,25 @@ router.get('/home-cards/share/:id', async (req, res) => {
  *             itself — see splitMessageBlocks in HomeScreen_v2.tsx).
  *             detailTitle is deliberately NOT used here: it's never shown on
  *             the card, only as the detail page's own heading.
+ *
+ * Localized via ?lang= (the mobile ShareSheet's in-app preview passes the
+ * viewer's i18n.language; the public og:image URL injected by server.cjs
+ * omits it and stays English, since that page has no per-user locale to go
+ * on). badgeText is intentionally not translated — same scope as elsewhere.
  */
 router.get('/home-cards/:id/share-image.png', async (req, res) => {
   try {
-    const homeCard = await prisma.homeCard.findUnique({
+    const locale = req.locale;
+    const rawCard = await prisma.homeCard.findUnique({
       where: { id: req.params.id },
       include: { badge: true },
     });
-    if (!homeCard || !homeCard.isActive) return res.status(404).end();
+    if (!rawCard || !rawCard.isActive) return res.status(404).end();
+
+    const cardTx = locale !== 'en'
+      ? await prisma.homeCardTranslation.findUnique({ where: { homeCardId_locale: { homeCardId: rawCard.id, locale } } })
+      : null;
+    const homeCard = applyHomeCardTx(rawCard, cardTx);
 
     let title = homeCard.message;
     let subtitle = homeCard.cardType === 'QUOTE' ? homeCard.attribution : null;
