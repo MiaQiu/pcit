@@ -64,11 +64,10 @@ export const ReferralScreen: React.FC = () => {
     amplitudeService.trackEvent('Referral Share Tapped', { referralCode: data.code });
     try {
       const result = await Share.share({
-        // Link must live in `message` too, not just `url`: on iOS, passing
-        // both as separate items makes the share sheet's "Copy" action
-        // write a serialized item instead of plain text.
+        // Pass the link only inside `message`. Also passing it as `url` makes
+        // iOS hand the share target two separate items, and targets that
+        // render both (Messages, Mail, Notes) end up showing the URL twice.
         message: `${t('referral.shareMessage')}\n\n${data.shareUrl}`,
-        url: data.shareUrl,
       });
       if (result.action === Share.sharedAction) {
         amplitudeService.trackEvent('Referral Shared', { referralCode: data.code });

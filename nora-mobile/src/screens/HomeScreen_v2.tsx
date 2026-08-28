@@ -306,9 +306,14 @@ interface SubActionCardProps {
 const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName }) => {
   const recordingService = useRecordingService();
 
-  // Local optimistic like state — resynced from the server value whenever it
-  // changes and there's no toggle in flight, so a background refetch (e.g.
-  // liked on another device) still wins once our own request settles.
+  // Local optimistic like state — resynced from the server value only when the
+  // card prop itself actually changes (e.g. a background refetch picked up a
+  // like made on another device), and never while our own toggle is in flight.
+  // We key the resync off the *previous* prop value rather than just
+  // `likePending` because the Home feed doesn't refetch on tap: if we resynced
+  // on every `likePending` transition, our own optimistic like would be reset
+  // to the stale prop the instant our request settled (heart snaps back to
+  // empty, count drops again).
   // likeCount already includes the server's random per-card base offset
   // (see schema.prisma's HomeCard.likeCountBase) — this just moves it by 1
   // on tap, same as any real like counter.
@@ -316,8 +321,13 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
   const [likePending, setLikePending] = useState(false);
   const [displayLikeCount, setDisplayLikeCount] = useState(card.likeCount);
 
+  const prevCardLike = useRef({ isLiked: card.isLiked, likeCount: card.likeCount });
   useEffect(() => {
-    if (!likePending) {
+    const changed =
+      prevCardLike.current.isLiked !== card.isLiked ||
+      prevCardLike.current.likeCount !== card.likeCount;
+    prevCardLike.current = { isLiked: card.isLiked, likeCount: card.likeCount };
+    if (changed && !likePending) {
       setLiked(card.isLiked);
       setDisplayLikeCount(card.likeCount);
     }
@@ -378,6 +388,7 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
           >
             <Ionicons name={liked ? 'heart' : 'heart-outline'} size={16} color={liked ? '#EF4444' : '#B99089'} />
           </TouchableOpacity>
+          <Text style={styles.subActionQuoteLikeCount}>{displayLikeCount}</Text>
           <TouchableOpacity
             style={styles.subActionQuoteIconButton}
             onPress={handleShare}
@@ -770,9 +781,20 @@ export const HomeScreen_v2: React.FC = () => {
       }
 
       // ── Setup daily reminder item (shown for first 3 days after account creation) ──
+      // Skip entirely if the user already picked a reminder time during
+      // onboarding (ReminderTimeScreen / NotificationPermissionScreen write
+      // dailyLessonReminder + dailyLessonTime into @notification_preferences).
+      // Only surface this item for users who skipped that step.
+      let hasOnboardingReminder = false;
+      try {
+        const prefsStr = await userStorage.getItem('@notification_preferences');
+        const prefs = prefsStr ? JSON.parse(prefsStr) : {};
+        hasOnboardingReminder = !!prefs.dailyLessonReminder && !!prefs.dailyLessonTime;
+      } catch {}
+
       const reminderDoneDate = await userStorage.getItem('reminder_setup_completed');
       const completedToday = reminderDoneDate === getTodaySingapore();
-      if (!reminderDoneDate || completedToday) {
+      if (!hasOnboardingReminder && (!reminderDoneDate || completedToday)) {
         try {
           const user = await authService.getCurrentUser();
           if (user.createdAt) {
@@ -1837,8 +1859,15 @@ const styles = StyleSheet.create({
     top: 14,
     right: 14,
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
     zIndex: 1,
+  },
+  subActionQuoteLikeCount: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: '#B99089',
+    marginLeft: -2,
   },
   subActionQuoteIconButton: {
     width: 28,

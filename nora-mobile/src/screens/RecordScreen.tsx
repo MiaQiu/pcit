@@ -69,7 +69,7 @@ export const RecordScreen: React.FC = () => {
   const [sessionMode, setSessionMode] = useState<'specialTime' | 'discipline'>('specialTime');
   const [isDisciplineLocked, setIsDisciplineLocked] = useState(false);
 
-  const FREE_SESSIONS_LIMIT = 3;
+  const FREE_SESSIONS_LIMIT = 10;
 
   // Gate: redirect to subscription when free completed sessions are exhausted
   useFocusEffect(
