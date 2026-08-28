@@ -8,10 +8,11 @@
  * path for both Home Cards and Lessons instead of per-surface duplicates.
  *
  * Font note: rendered via sharp's bundled librsvg/pango, which resolves
- * font-family through the container's fontconfig — the deploy target likely
- * has no fonts installed, so this deliberately uses a generic sans-serif
- * stack rather than 'Plus Jakarta Sans'. Fine for a preview thumbnail;
- * pixel-perfect brand font matching is a possible fast-follow, not a v1 goal.
+ * font-family through the container's fontconfig. Alpine ships no fonts, so
+ * the Dockerfile installs fontconfig + ttf-dejavu and copies the bundled
+ * Plus Jakarta Sans faces (server/assets/fonts/) into /usr/share/fonts —
+ * without that, SVG <text> renders as tofu boxes. Locally (macOS) any of
+ * the fallbacks below resolve, so it looks right there regardless.
  */
 
 const fs = require('fs');
@@ -27,7 +28,7 @@ const MIN_HEIGHT = 400;
 const PADDING = 64;
 const THUMB_SIZE = 340;
 const THUMB_RADIUS = 20;
-const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+const FONT = "'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, 'DejaVu Sans', sans-serif";
 const NORA_ICON_PATH = path.join(__dirname, '..', '..', 'public', 'images', 'nora-icon.png');
 
 function escapeXml(str) {
