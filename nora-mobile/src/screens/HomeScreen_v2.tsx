@@ -58,6 +58,7 @@ import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import type { TextRun } from '../utils/formatLessonContentV2';
+import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 
 // TEMP TESTING FLAG — forces the Main Action Card to always show the "Get
 // Ready to Play" state (ignoring hasAnySession/dismissed) so it can be
@@ -97,6 +98,7 @@ interface TodayPlanItem {
   title: string;
   duration?: string;
   isCompleted: boolean;
+  moduleKey?: string;
 }
 
 interface HomeCardData {
@@ -619,7 +621,13 @@ export const HomeScreen_v2: React.FC = () => {
       if (currentUser?.childName) setChildName(currentUser.childName);
 
       const { todayRecordings, thisWeekRecordings, latestWithReport } = dashboardData;
-      const { lessons } = lessonsResponse;
+      // Home mirrors the Learn tab (LearnScreen_v3): the active curriculum is the
+      // new audio-first "Content V2" modules only. Legacy modules
+      // (GETTING_STARTED, EMOTIONS, DISCIPLINE, …) still exist in the API response
+      // but are hidden here, so "Daily Learning" always points at a real audio lesson.
+      const lessons = (lessonsResponse.lessons ?? []).filter((l: any) =>
+        CONTENT_V2_MODULES.includes(l.module)
+      );
 
       // ── Weekly stats ──
       const today = getTodaySingapore();
@@ -733,6 +741,7 @@ export const HomeScreen_v2: React.FC = () => {
           title: lessonForPlan.title,
           duration: t('homeV2.planLessonDuration'),
           isCompleted: !!todayCompletedLesson,
+          moduleKey: lessonForPlan.module,
         });
       }
 
@@ -931,7 +940,11 @@ export const HomeScreen_v2: React.FC = () => {
     amplitudeService.trackEvent('Home Plan Item Tapped', { type: item.type, id: item.id });
     if (item.type === 'lesson') {
       amplitudeService.trackLessonStarted(item.id, item.title, { source: 'home_today_plan' });
-      navigation.push('LessonViewer', { lessonId: item.id });
+      if (item.moduleKey && CONTENT_V2_MODULES.includes(item.moduleKey)) {
+        navigation.push('LessonViewerV2', { lessonId: item.id, moduleKey: item.moduleKey });
+      } else {
+        navigation.push('LessonViewer', { lessonId: item.id });
+      }
     } else if (item.type === 'weekly-report') {
       amplitudeService.trackWeeklyReportTapped(item.id, { source: 'home_today_plan' });
       await userStorage.setItem(`weekly_report_read_date_${item.id}`, getTodaySingapore());
