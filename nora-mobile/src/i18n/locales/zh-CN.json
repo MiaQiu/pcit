@@ -1011,6 +1011,14 @@
     "recordAgain": "再次录制",
     "noraDaily": "Nora Daily",
     "noraDailySubtitle": "每日为您带来科学育儿贴士与灵感。",
+    "subActionLearnMore": "了解更多",
+    "subActionBadges": {
+      "scienceBite": "科学小知识",
+      "tryThisToday": "今天试试看",
+      "quickReflection": "简短反思",
+      "todaysThought": "今日思考",
+      "communityWisdom": "社区智慧"
+    },
     "todaysPlan": "今日计划",
     "planLessonLabel": "每日学习：",
     "planLessonDuration": "5 分钟阅读",

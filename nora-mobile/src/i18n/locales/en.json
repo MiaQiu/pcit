@@ -962,6 +962,14 @@
     "recordAgain": "Record Again",
     "noraDaily": "Nora Daily",
     "noraDailySubtitle": "Your daily dose of science-backed tips & inspiration.",
+    "subActionLearnMore": "Learn more",
+    "subActionBadges": {
+      "scienceBite": "Science Bite",
+      "tryThisToday": "Try This Today",
+      "quickReflection": "Quick Reflection",
+      "todaysThought": "Today's Thought",
+      "communityWisdom": "Community Wisdom"
+    },
     "todaysPlan": "Today's plan",
     "planLessonLabel": "Daily Learning:",
     "planLessonDuration": "5 min read",

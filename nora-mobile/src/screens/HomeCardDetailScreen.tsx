@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { LessonContentBlocks } from '../components/LessonContentBlocks';
 import { ShareSheet } from '../components/ShareSheet';
 import { getHomeCardShareText } from '../utils/shareCardText';
+import { getHomeCardBadgeLabel } from '../utils/homeCardBadgeLabel';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import { COLORS, FONTS } from '../constants/assets';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
@@ -50,16 +51,19 @@ const TextComponent: React.FC<{ text: string }> = ({ text }) => {
   return <LessonContentBlocks blocks={blocks} />;
 };
 
-const OpenDetailsComponent: React.FC<{ component: HomeCardComponentData; navigation: any }> = ({ component, navigation }) => (
-  <TouchableOpacity
-    style={styles.ctaRow}
-    onPress={() => navigation.push('HomeCardDetail', { cardId: component.linkedCardId })}
-    activeOpacity={0.7}
-  >
-    <Text style={styles.ctaLabel}>{component.ctaLabel || 'Learn more'}</Text>
-    <Ionicons name="chevron-forward" size={18} color={COLORS.mainPurple} />
-  </TouchableOpacity>
-);
+const OpenDetailsComponent: React.FC<{ component: HomeCardComponentData; navigation: any }> = ({ component, navigation }) => {
+  const { t } = useTranslation();
+  return (
+    <TouchableOpacity
+      style={styles.ctaRow}
+      onPress={() => navigation.push('HomeCardDetail', { cardId: component.linkedCardId })}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.ctaLabel}>{component.ctaLabel || t('homeV2.subActionLearnMore')}</Text>
+      <Ionicons name="chevron-forward" size={18} color={COLORS.mainPurple} />
+    </TouchableOpacity>
+  );
+};
 
 const UserInputComponent: React.FC<{ cardId: string; component: HomeCardComponentData }> = ({ cardId, component }) => {
   const recordingService = useRecordingService();
@@ -109,7 +113,7 @@ const UserInputComponent: React.FC<{ cardId: string; component: HomeCardComponen
 export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ route, navigation }) => {
   const { cardId } = route.params;
   const recordingService = useRecordingService();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -219,7 +223,7 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
 
       <View style={styles.identityRow}>
         <View style={[styles.badge, { backgroundColor: detail.badgeColor }]}>
-          <Text style={styles.badgeText}>{detail.badgeText}</Text>
+          <Text style={styles.badgeText}>{getHomeCardBadgeLabel(t, detail.badgeText)}</Text>
         </View>
         <Text style={styles.title}>{detail.detailTitle}</Text>
       </View>

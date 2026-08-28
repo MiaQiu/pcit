@@ -31,6 +31,7 @@ import { Video, ResizeMode } from 'expo-av';
 import { ProfileCircle } from '../components/ProfileCircle';
 import { ShareSheet } from '../components/ShareSheet';
 import { getHomeCardShareText } from '../utils/shareCardText';
+import { getHomeCardBadgeLabel } from '../utils/homeCardBadgeLabel';
 import { COLORS, FONTS } from '../constants/assets';
 
 const DRAGON_ANIMATION = require('../../assets/images/dragon_amine3.mov');
@@ -305,7 +306,7 @@ interface SubActionCardProps {
 
 const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName }) => {
   const recordingService = useRecordingService();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Local optimistic like state — resynced from the server value only when the
   // card prop itself actually changes (e.g. a background refetch picked up a
@@ -446,13 +447,14 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
   const badgePillBg = lightenHexColor(card.badgeColor, 0.82);
   const cardBorder = lightenHexColor(card.badgeColor, 0.75);
   const badgeIcon = SUB_ACTION_CARD_ICONS[card.badgeText];
+  const badgeLabel = getHomeCardBadgeLabel(t, card.badgeText);
 
   const inner = (
     <>
       <View style={styles.subActionContentTopRow}>
         <View style={{ flex: 1 }}>
           <View style={[styles.subActionBadgePill, { backgroundColor: badgePillBg }]}>
-            <Text style={[styles.subActionBadgePillText, { color: card.badgeColor }]}>{card.badgeText}</Text>
+            <Text style={[styles.subActionBadgePillText, { color: card.badgeColor }]}>{badgeLabel}</Text>
           </View>
           <Text style={[styles.subActionHeadline, { fontSize: headlineSize, lineHeight: Math.round(headlineSize * 1.3) }]}>
             <InlineRuns runs={headline} bold italic={card.messageItalic} />
@@ -476,7 +478,7 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
 
       <View style={styles.subActionBottomRow}>
         <View style={styles.subActionLearnMoreRow}>
-          <Text style={styles.subActionLearnMoreText}>Learn more</Text>
+          <Text style={styles.subActionLearnMoreText}>{t('homeV2.subActionLearnMore')}</Text>
           <Ionicons name="arrow-forward" size={14} color={COLORS.mainPurple} />
         </View>
         <View style={styles.subActionBottomActions}>
