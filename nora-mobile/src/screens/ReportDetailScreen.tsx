@@ -451,16 +451,6 @@ export const ReportDetailScreen: React.FC = () => {
 
   const handleBack = () => navigation.goBack();
 
-  const handleShare = async () => {
-    amplitudeService.trackEvent('Report Detail Share Tapped', { recordingId });
-    try {
-      const score = reportData?.noraScore ?? 0;
-      await Share.share({ message: t('reportV2.shareMessage', { childName, score }) });
-    } catch (err) {
-      // User cancelled or share failed — nothing to recover from
-    }
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
@@ -841,9 +831,6 @@ export const ReportDetailScreen: React.FC = () => {
           <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
-        <TouchableOpacity onPress={handleShare} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="share-outline" size={20} color={COLORS.mainPurple} />
-        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -1078,7 +1065,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
