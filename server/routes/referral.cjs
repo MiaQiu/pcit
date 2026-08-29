@@ -9,6 +9,7 @@ const { hashPassword } = require('../utils/password.cjs');
 const { encryptUserData, decryptSensitiveData } = require('../utils/encryption.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
 const { ValidationError, ConflictError, NotFoundError } = require('../utils/errors.cjs');
+const { getReferralPartner } = require('../services/referralAttribution.cjs');
 
 const router = express.Router();
 
@@ -69,7 +70,12 @@ router.get('/referrer-name/:code', codeEnumerationLimiter, async (req, res, next
 });
 
 // POST /api/referral/register
-// Public — web landing page creates a minimal account and records the referral
+// DEPRECATED — the referral flow now goes through the web SPA + POST /api/auth/signup
+// (with a `referralCode`), so the referee completes web onboarding and Stripe
+// checkout and actually receives the 30-day trial. This endpoint creates a
+// minimal account that finishes onboarding in the app and therefore never hits
+// web checkout — kept only so an old cached `join.html` doesn't hard-fail during
+// rollout. Remove once traffic here is zero. See doc/implementation/unified-referral-partner.md.
 router.post('/register', registrationLimiter, async (req, res, next) => {
   try {
     const { error, value } = registerSchema.validate(req.body);
@@ -109,6 +115,10 @@ router.post('/register', registrationLimiter, async (req, res, next) => {
       childName: null,
     });
 
+    // Attach to the reserved "referral" partner so a later web checkout still
+    // grants the trial (best-effort — signup must not fail if it's unseeded).
+    const referralPartner = await getReferralPartner().catch(() => null);
+
     const newUser = await prisma.user.create({
       data: {
         id: crypto.randomUUID(),
@@ -119,10 +129,19 @@ router.post('/register', registrationLimiter, async (req, res, next) => {
         childName: null,
         childBirthYear: new Date().getFullYear() - 3,
         childConditions: '[]',
+        partnerId: referralPartner?.status === 'ACTIVE' ? referralPartner.id : null,
+        subscriptionSource: 'referral',
         subscriptionPlan: 'FREE',
         subscriptionStatus: 'INACTIVE',
       },
     });
+
+    if (referralPartner?.status === 'ACTIVE') {
+      await prisma.partner.update({
+        where: { id: referralPartner.id },
+        data: { redemptions: { increment: 1 } },
+      });
+    }
 
     await prisma.referral.create({
       data: {
@@ -134,7 +153,7 @@ router.post('/register', registrationLimiter, async (req, res, next) => {
       },
     });
 
-    res.status(201).json({ message: 'Account created! Download Nora to start your free trial.' });
+    res.status(201).json({ message: 'Account created! Download Nora and log in to finish setting up.' });
   } catch (err) {
     next(err);
   }

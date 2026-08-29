@@ -42,7 +42,8 @@ export default function CreateAccountScreen() {
         childBirthday: data.childBirthday ? new Date(data.childBirthday).toISOString() : undefined,
         childConditions,
         issue: data.issue.join(', ') || undefined,
-        partnerSlug: data.partnerInfo?.slug ?? undefined,
+        partnerSlug: data.referralCode ? undefined : (data.partnerInfo?.slug ?? undefined),
+        referralCode: data.referralCode ?? undefined,
       });
       setEmail(emailVal);
       setPassword(passwordVal);
@@ -63,9 +64,17 @@ export default function CreateAccountScreen() {
 
       <div className="flex-1 flex flex-col px-6 pt-4 pb-8">
         <h1 className="text-[#1E2939] text-2xl font-bold mb-2">Create your account</h1>
-        <p className="text-[#6B7280] text-sm mb-8">
-          Join thousands of parents raising happier, more confident kids.
-        </p>
+        {data.referralCode ? (
+          <p className="text-[#6B7280] text-sm mb-8">
+            {data.referrerName ? `${data.referrerName} invited you to Nora. ` : ''}
+            Create your account to start your{' '}
+            {data.partnerInfo?.trialDays ?? 30}-day free trial.
+          </p>
+        ) : (
+          <p className="text-[#6B7280] text-sm mb-8">
+            Join thousands of parents raising happier, more confident kids.
+          </p>
+        )}
 
         <div className="flex flex-col gap-4">
           <div>

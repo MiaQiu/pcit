@@ -41,6 +41,7 @@ import PlaySession5Screen from './screens/play/PlaySession5Screen';
 import SubscriptionScreen from './screens/SubscriptionScreen';
 import SuccessScreen from './screens/SuccessScreen';
 import PartnerLandingScreen from './screens/PartnerLandingScreen';
+import ReferralLandingScreen from './screens/ReferralLandingScreen';
 
 export default function App() {
   return (
@@ -49,6 +50,9 @@ export default function App() {
         <Routes>
           {/* Partner landing — QR code destination */}
           <Route path="/p/:slug" element={<PartnerLandingScreen />} />
+
+          {/* Referral landing — hinora.co/join/:code destination */}
+          <Route path="/join/:code" element={<ReferralLandingScreen />} />
 
           {/* Landing & Auth */}
           <Route path="/" element={<LandingScreen />} />

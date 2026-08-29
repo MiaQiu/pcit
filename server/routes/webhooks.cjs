@@ -2,7 +2,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const prisma = require('../services/db.cjs');
-const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
+const { grantReferralReward } = require('../services/referralReward.cjs');
 
 const router = express.Router();
 
@@ -97,66 +97,9 @@ async function handleSubscriptionExpiration(userId, event) {
   // Optional: Send email notification
 }
 
-/**
- * Grant a 1-month promotional entitlement to the referrer via RevenueCat REST API
- * Called when the referee makes their first real payment
- */
-async function handleReferralReward(refereeId) {
-  const referral = await prisma.referral.findUnique({ where: { refereeId } });
-  if (!referral || referral.status !== 'PENDING') return;
-
-  // Fraud cap: max 3 rewards per referrer in the last 12 months
-  const recentRewards = await prisma.referral.count({
-    where: {
-      referrerId: referral.referrerId,
-      status: 'COMPLETED',
-      rewardAt: { gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) },
-    },
-  });
-  if (recentRewards >= 3) {
-    console.warn(`[Referral] Reward cap reached for referrer ${referral.referrerId}`);
-    return;
-  }
-
-  const secretKey = process.env.REVENUECAT_SECRET_KEY;
-  if (!secretKey) {
-    console.error('[Referral] REVENUECAT_SECRET_KEY not set — cannot grant promotional entitlement');
-    return;
-  }
-
-  // Grant 1-month promotional entitlement via RevenueCat REST API
-  // This is the only mechanism that grants actual app access — subscriptionEndDate alone is not sufficient
-  // because SubscriptionContext checks RevenueCat SDK exclusively for entitlements
-  const rcResponse = await fetch(
-    `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(referral.referrerId)}/entitlements/Nora%20Premium/promotional`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ duration: 'monthly' }),
-    }
-  );
-
-  if (!rcResponse.ok) {
-    const body = await rcResponse.text();
-    console.error(`[Referral] RevenueCat promotional entitlement failed for ${referral.referrerId}: ${rcResponse.status} ${body}`);
-    return;
-  }
-
-  await prisma.referral.update({
-    where: { id: referral.id },
-    data: { status: 'COMPLETED', rewardAt: new Date() },
-  });
-
-  await sendPushNotificationToUser(referral.referrerId, {
-    title: 'You earned 1 free month!',
-    body: 'Your friend just subscribed to Nora. You have 1 extra month of access.',
-  });
-
-  console.log(`[Referral] Reward granted: referrer=${referral.referrerId} referee=${refereeId}`);
-}
+// Referrer reward now lives in ../services/referralReward.cjs (grantReferralReward),
+// shared with the Stripe webhook so it fires whether the referee pays via
+// RevenueCat (mobile IAP) or Stripe (web checkout).
 
 /**
  * Handle billing issues
@@ -258,7 +201,7 @@ router.post('/revenuecat', async (req, res) => {
           (eventType === 'INITIAL_PURCHASE' && !isTrialPeriod);
         await handleSubscriptionActivation(user.id, event);
         if (isFirstPayment) {
-          await handleReferralReward(user.id);
+          await grantReferralReward(user.id);
         }
         break;
       }

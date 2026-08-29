@@ -7,6 +7,30 @@
 
 ---
 
+## ⚠️ Update 2026-08-28 — superseded by the unified plan; two facts below are stale
+
+**The referee-reward design is now `doc/implementation/unified-referral-partner.md`**
+(route referred users through the partner pipeline for a Stripe-billed 30-day
+trial). Read that for anything about how the referee gets their free month and
+how the referrer is paid. The rest of *this* document (code format, deep-link
+handling, `Referral` schema, referrer-reward trigger points) is still accurate.
+
+Two things this plan assumed are no longer true:
+
+1. **The App Store / Play offering no longer includes a free trial.** New users
+   get a fixed number of free recordings, gated client-side in `RecordScreen.tsx`
+   (`FREE_SESSIONS_LIMIT`). Old step 5 in the Overview ("B's 1-month free trial
+   runs via RevenueCat / Apple") is obsolete.
+2. **The mobile app now trusts the server for subscription state.**
+   `SubscriptionContext` short-circuits on the server's `isSubscribed` (computed
+   in `GET /api/auth/me` from `subscriptionStatus` + `subscriptionEndDate`)
+   *before* consulting RevenueCat. The "⚠️ Critical: why `subscriptionEndDate`
+   alone is not enough" section below is therefore **no longer correct** — a
+   server-set `subscriptionEndDate` in the future *does* grant app access now.
+   (The unified plan doesn't rely on this, but don't cite that section as fact.)
+
+---
+
 ## Overview
 
 When User A refers User B:

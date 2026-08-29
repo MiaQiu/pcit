@@ -4,6 +4,7 @@ const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
+const { grantReferralReward } = require('../services/referralReward.cjs');
 
 let _stripe = null;
 function stripe() {
@@ -349,6 +350,17 @@ async function handleInvoicePaid(invoice) {
   });
 
   console.log(`[STRIPE] Invoice paid for user ${user.id}, period end: ${new Date(getCurrentPeriodEnd(subscription) * 1000).toISOString()}`);
+
+  // Referral: reward the referrer on the referee's first real (post-trial)
+  // charge. No-ops unless this user has a PENDING Referral row; idempotent, so
+  // calling it on later renewals is harmless.
+  if (invoice.amount_paid > 0) {
+    try {
+      await grantReferralReward(user.id);
+    } catch (err) {
+      console.error(`[STRIPE] referral reward check failed for user ${user.id}: ${err.message}`);
+    }
+  }
 }
 
 async function handlePaymentFailed(invoice) {

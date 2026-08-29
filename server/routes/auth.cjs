@@ -17,6 +17,7 @@ const {
   NotFoundError,
   AppError
 } = require('../utils/errors.cjs');
+const { getReferralPartner, linkReferral } = require('../services/referralAttribution.cjs');
 
 const router = express.Router();
 
@@ -61,6 +62,7 @@ const signupSchema = Joi.object({
   issue: Joi.string().min(1).optional(),
   therapistId: Joi.string().uuid().optional(),
   partnerSlug: Joi.string().max(100).optional(),
+  referralCode: Joi.string().max(40).optional(),
 });
 
 const loginSchema = Joi.object({
@@ -78,10 +80,15 @@ router.post('/signup', async (req, res, next) => {
       return next(new ValidationError(errors[0], errors));
     }
 
-    const { email, password, name, childName, childBirthYear, childBirthday, childConditions, issue, therapistId, partnerSlug } = value;
+    const { email, password, name, childName, childBirthYear, childBirthday, childConditions, issue, therapistId, partnerSlug, referralCode } = value;
 
-    // Resolve partner before creating user so we can fail early
+    // Resolve partner before creating user so we can fail early.
+    // A referral link resolves to the reserved "referral" partner, so referred
+    // users flow through the same partner -> Stripe-checkout trial pipeline.
+    // The referrer link itself is recorded separately in the Referral table below.
     let partner = null;
+    const isReferral = !partnerSlug && !!referralCode;
+
     if (partnerSlug) {
       partner = await prisma.partner.findUnique({ where: { slug: partnerSlug } });
       if (!partner || partner.status !== 'ACTIVE') {
@@ -94,6 +101,11 @@ router.post('/signup', async (req, res, next) => {
       if (cfg.maxRedemptions != null && partner.redemptions >= cfg.maxRedemptions) {
         return next(new ValidationError('This partner link has reached its limit'));
       }
+    } else if (isReferral) {
+      // Best-effort: a missing/paused "referral" partner just means the referee
+      // signs up without the trial — never block a referred signup over it.
+      const refPartner = await getReferralPartner();
+      if (refPartner && refPartner.status === 'ACTIVE') partner = refPartner;
     }
 
     // Create email hash for querying (since email will be encrypted)
@@ -137,7 +149,7 @@ router.post('/signup', async (req, res, next) => {
         issue,
         therapistId,
         partnerId: partner?.id ?? null,
-        subscriptionSource: partner ? 'partner' : null,
+        subscriptionSource: isReferral ? 'referral' : (partner ? 'partner' : null),
         subscriptionPlan: 'FREE',
         subscriptionStatus: 'INACTIVE',
       }
@@ -149,6 +161,16 @@ router.post('/signup', async (req, res, next) => {
         where: { id: partner.id },
         data: { redemptions: { increment: 1 } },
       });
+    }
+
+    // Record referral attribution (best-effort — never blocks signup).
+    if (referralCode) {
+      try {
+        const result = await linkReferral({ refereeId: user.id, refereeEmailHash: emailHash, code: referralCode });
+        if (!result.created) console.log(`[Referral] not linked for ${user.id}: ${result.reason}`);
+      } catch (err) {
+        console.error(`[Referral] linkReferral failed for ${user.id}: ${err.message}`);
+      }
     }
 
     // Auto-grant free account if email is whitelisted

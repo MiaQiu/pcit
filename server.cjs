@@ -306,9 +306,12 @@ app.get('/p/:slug', (req, res) => {
 const referralRoutes = require('./server/routes/referral.cjs');
 app.use('/api/referral', referralRoutes);
 
-// Serve referral landing page
+// Referral link → web SPA (ReferralLandingScreen), same pattern as /p/:slug.
+// The SPA saves the referral trial config + code, then runs the normal web
+// onboarding + Stripe checkout so the referee actually receives the 30-day trial.
 app.get('/join/:code', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'join.html'));
+  const signupAppUrl = process.env.SIGNUP_APP_URL || 'https://signup.hinora.co';
+  res.redirect(302, `${signupAppUrl}/join/${encodeURIComponent(req.params.code)}`);
 });
 
 // Mount share-link routes (POST /api/share-links creates/reuses a short code)

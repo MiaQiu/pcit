@@ -54,6 +54,7 @@ export function signup(
     childConditions?: string[];
     issue?: string;
     partnerSlug?: string;
+    referralCode?: string;
   } = {}
 ) {
   return request<AuthResponse>('/api/auth/signup', {
@@ -81,6 +82,10 @@ export interface PartnerInfo {
 
 export function validatePartner(slug: string) {
   return request<PartnerInfo>(`/api/partner/validate/${encodeURIComponent(slug)}`);
+}
+
+export function referrerName(code: string) {
+  return request<{ firstName: string }>(`/api/referral/referrer-name/${encodeURIComponent(code)}`);
 }
 
 export function login(email: string, password: string) {
