@@ -61,12 +61,6 @@ import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import type { TextRun } from '../utils/formatLessonContentV2';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 
-// TEMP TESTING FLAG — forces the Main Action Card to always show the "Get
-// Ready to Play" state (ignoring hasAnySession/dismissed) so it can be
-// reviewed repeatedly without resetting app state. Flip back to false (or
-// delete) once the Get Ready to Play screen is signed off.
-const FORCE_SHOW_GET_READY_CARD = true;
-
 // Mixes a hex color toward white — used to derive a CONTENT card's pastel
 // background/badge-pill tints from its (fully-saturated) badgeColor.
 // amount: 0 = original color, 1 = white.
@@ -935,10 +929,8 @@ export const HomeScreen_v2: React.FC = () => {
 
   const handleGetReadyPress = async () => {
     amplitudeService.trackEvent('Home Get Ready Pressed', { source: 'main_card' });
-    if (!FORCE_SHOW_GET_READY_CARD) {
-      await userStorage.setItem('get_ready_to_play_dismissed', 'true');
-      setGetReadyDismissed(true);
-    }
+    await userStorage.setItem('get_ready_to_play_dismissed', 'true');
+    setGetReadyDismissed(true);
     navigation.push('GetReadyToPlay');
   };
 
@@ -1328,7 +1320,7 @@ export const HomeScreen_v2: React.FC = () => {
                 {t('homeV2.analyzingSessionSuffix')}
               </Text>
             </>
-          ) : FORCE_SHOW_GET_READY_CARD || (!hasAnySession && !getReadyDismissed) ? (
+          ) : !hasAnySession && !getReadyDismissed ? (
             <>
               <View style={styles.massageHeader}>
                 <View style={styles.greenDot} />
