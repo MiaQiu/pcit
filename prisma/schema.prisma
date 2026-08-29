@@ -910,8 +910,33 @@ model DemoVideo {
   updatedAt      DateTime @updatedAt
 
   UserDemoVideoProgress UserDemoVideoProgress[]
+  translations          DemoVideoTranslation[]
 
   @@index([isActive, displayOrder])
+}
+
+// Per-locale variant of a DemoVideo. Unlike a pure text translation table,
+// this also carries videoUrl — the video file itself is localized (subtitles
+// burned in), since the mobile player (expo-av) has no caption-track API.
+// Every field is nullable and falls back to the base DemoVideo row at read
+// time (see applyDemoVideoTx in routes/lessons.cjs): text can be
+// auto-translated in bulk, videoUrl is always a manual upload, so a row may
+// have text but no localized video (plays the English file) or vice versa.
+model DemoVideoTranslation {
+  demoVideoId    String
+  locale         String // 'zh-CN' | 'zh-TW' (SUPPORTED_LOCALES, middleware/locale.cjs)
+  title          String?
+  description    String?
+  additionalText String?
+  // Bare S3 key like DemoVideo.videoUrl, under demo-videos/<id>/<locale>/.
+  videoUrl       String?
+  autoTranslated Boolean   @default(true)
+  reviewed       Boolean   @default(false)
+  translatedAt   DateTime  @default(now())
+  DemoVideo      DemoVideo @relation(fields: [demoVideoId], references: [id], onDelete: Cascade)
+
+  @@id([demoVideoId, locale])
+  @@index([locale])
 }
 
 // Per-user viewing progress for DemoVideo, mirroring UserLessonProgress.

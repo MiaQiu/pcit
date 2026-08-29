@@ -379,7 +379,7 @@ export const LearnScreen_v2: React.FC = () => {
   // replaced the file, or this is a brand-new video) — so the section shows
   // the current version right away and swaps in the update once it lands.
   const loadDemoVideos = useCallback(() => {
-    lessonService.getDemoVideos()
+    lessonService.getDemoVideos(i18n.language)
       .then(({ demoVideos: videos }) => {
         setDemoVideos(videos);
         resolveDemoVideoThumbnailUris(videos, (id, uri) => {
@@ -389,7 +389,7 @@ export const LearnScreen_v2: React.FC = () => {
         });
       })
       .catch(err => console.error('Failed to load demo videos:', err));
-  }, [lessonService]);
+  }, [lessonService, i18n.language]);
 
   useEffect(() => {
     loadDemoVideos();

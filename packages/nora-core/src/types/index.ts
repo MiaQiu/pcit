@@ -482,7 +482,12 @@ export interface BrandingImagesResponse {
 // only, in display order.
 export interface DemoVideo {
   id: string;
+  // Localized to the requested locale where the admin has set an override,
+  // else the English value (see LessonService.getDemoVideos).
   title: string;
+  // Always the English title, regardless of locale — use for matching a
+  // specific demo by name (e.g. a skill-tag → demo-title map).
+  baseTitle: string;
   description: string | null;
   additionalText: string | null;
   videoUrl: string;

@@ -68,4 +68,15 @@ async function translateHomeCardBundle(bundle, targetLocale) {
   return translateBundle(bundle, targetLocale);
 }
 
-module.exports = { translateLessonBundle, translateHomeCardBundle, LOCALE_NAMES };
+/**
+ * Translate a demo video's text fields ({ title, description, additionalText })
+ * in one API call. The video file itself is localized by a separate manual
+ * upload, not here.
+ * @param {Object} bundle - { title, description, additionalText }
+ * @param {string} targetLocale - BCP 47 locale, e.g. 'zh-TW'
+ */
+async function translateDemoVideoBundle(bundle, targetLocale) {
+  return translateBundle(bundle, targetLocale);
+}
+
+module.exports = { translateLessonBundle, translateHomeCardBundle, translateDemoVideoBundle, LOCALE_NAMES };

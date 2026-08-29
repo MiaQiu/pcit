@@ -119,11 +119,15 @@ class LessonService {
 
   /**
    * Get admin-uploaded demo videos for the Learn tab's "Demo Videos"
-   * section (active only, in display order).
+   * section (active only, in display order). When `locale` is a non-English
+   * locale, `title`/`description`/`additionalText`/`videoUrl` are the
+   * localized variant where the admin has set one, each falling back to the
+   * English base value otherwise; `baseTitle` is always the English title.
    */
-  async getDemoVideos(): Promise<DemoVideosResponse> {
+  async getDemoVideos(locale?: string): Promise<DemoVideosResponse> {
+    const lang = locale && locale !== 'en' ? `?lang=${locale}` : '';
     const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/lessons/demo-videos`,
+      `${this.apiUrl}/api/lessons/demo-videos${lang}`,
       {
         method: 'GET',
       }

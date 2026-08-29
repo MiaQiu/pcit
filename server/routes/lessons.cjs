@@ -76,6 +76,23 @@ function applyLessonTx(lesson, tx, locale) {
   };
 }
 
+/**
+ * Merge a DemoVideoTranslation row over the base demo video. Every field
+ * falls back to the base row independently — text may be translated while
+ * the video file isn't (plays the English file), or vice versa. videoUrl
+ * here is still a bare S3 key; resolve to a presigned URL after this pick.
+ */
+function applyDemoVideoTx(video, tx) {
+  if (!tx) return video;
+  return {
+    ...video,
+    title: tx.title ?? video.title,
+    description: tx.description ?? video.description,
+    additionalText: tx.additionalText ?? video.additionalText,
+    videoUrl: tx.videoUrl ?? video.videoUrl,
+  };
+}
+
 function applySegmentTx(segment, tx) {
   if (!tx) return segment;
   return {
@@ -185,11 +202,27 @@ router.get('/demo-videos', requireAuth, async (req, res) => {
       : [];
     const lessonById = new Map(lessons.map(l => [l.id, l]));
 
+    // Per-locale title/text/video overrides (see applyDemoVideoTx). Each
+    // field independently falls back to the English base row.
+    const locale = req.locale;
+    let txByVideoId = {};
+    if (locale !== 'en' && demoVideos.length > 0) {
+      const txs = await prisma.demoVideoTranslation.findMany({
+        where: { locale, demoVideoId: { in: demoVideos.map(v => v.id) } },
+      });
+      txs.forEach(tx => { txByVideoId[tx.demoVideoId] = tx; });
+    }
+
     const resolved = await Promise.all(demoVideos.map(async (v) => {
       const lesson = v.lessonId ? lessonById.get(v.lessonId) : null;
+      const merged = applyDemoVideoTx(v, txByVideoId[v.id]);
       return {
-        ...v,
-        videoUrl: await resolveDragonImageUrl(v.videoUrl),
+        ...merged,
+        // Always the English title, regardless of locale — lets callers
+        // that match a specific demo by name (e.g. ReportDetailScreen's
+        // skill-tag → demo map) keep working when `title` is localized.
+        baseTitle: v.title,
+        videoUrl: await resolveDragonImageUrl(merged.videoUrl),
         thumbnailUrl: await resolveDragonImageUrl(v.thumbnailUrl),
         lessonTitle: lesson?.title ?? null,
         moduleKey: lesson?.module ?? null,

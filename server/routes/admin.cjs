@@ -9,6 +9,8 @@ const { sendPushNotificationToUser } = require('../services/pushNotifications.cj
 const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo, uploadDemoVideo, uploadDemoVideoThumbnail, uploadHomeCardImage, uploadBrandingImage, uploadPartnerQrCode, resolveLessonAudioUrl, resolveDragonImageUrl } = require('../services/storage-s3.cjs');
 const { processRecordingWithRetry } = require('../services/processingService.cjs');
 const { transcribeLessonNarration } = require('../services/transcriptionService.cjs');
+const { translateDemoVideoBundle } = require('../services/translationService.cjs');
+const { SUPPORTED_LOCALES } = require('../middleware/locale.cjs');
 
 const uploadMiddleware = multer({
   storage: multer.memoryStorage(),
@@ -2375,12 +2377,19 @@ router.get('/demo-videos', requireAdminAuth, async (req, res) => {
   try {
     const demoVideos = await prisma.demoVideo.findMany({
       orderBy: { displayOrder: 'asc' },
+      include: { translations: true },
     });
 
     const resolved = await Promise.all(demoVideos.map(async (v) => ({
       ...v,
       videoUrl: await resolveDragonImageUrl(v.videoUrl),
       thumbnailUrl: await resolveDragonImageUrl(v.thumbnailUrl),
+      translations: await Promise.all(
+        v.translations.map(async (tx) => ({
+          ...tx,
+          videoUrl: await resolveDragonImageUrl(tx.videoUrl),
+        }))
+      ),
     })));
 
     res.json({ demoVideos: resolved });
@@ -2539,6 +2548,160 @@ router.post('/demo-videos/:id/thumbnail', requireAdminAuth, uploadMiddleware.sin
   } catch (error) {
     console.error('Admin demo video thumbnail upload error:', error);
     res.status(500).json({ error: error.message || 'Failed to upload thumbnail' });
+  }
+});
+
+// ---- Demo video translations (per-locale title/text + localized video file) ----
+
+// Non-English locales that a demo video can be localized into.
+const DEMO_VIDEO_LOCALES = [...SUPPORTED_LOCALES].filter((l) => l !== 'en');
+
+/**
+ * PUT /api/admin/demo-videos/:id/translations/:locale
+ * Upsert the per-locale text fields (title/description/additionalText) of a
+ * demo video. Any subset may be sent; a field sent as '' or null clears that
+ * override (mobile falls back to the English base row). The localized video
+ * file is uploaded separately via POST .../video.
+ */
+router.put('/demo-videos/:id/translations/:locale', requireAdminAuth, async (req, res) => {
+  try {
+    const { id: demoVideoId, locale } = req.params;
+    if (!DEMO_VIDEO_LOCALES.includes(locale)) {
+      return res.status(400).json({ error: `Unsupported locale: ${locale}` });
+    }
+
+    const existing = await prisma.demoVideo.findUnique({ where: { id: demoVideoId } });
+    if (!existing) return res.status(404).json({ error: 'Demo video not found' });
+
+    const { title, description, additionalText, reviewed } = req.body;
+    const data = {};
+    if (title !== undefined) data.title = title?.trim() || null;
+    if (description !== undefined) data.description = description?.trim() || null;
+    if (additionalText !== undefined) data.additionalText = additionalText?.trim() || null;
+    if (reviewed !== undefined) data.reviewed = !!reviewed;
+    if ('title' in data || 'description' in data || 'additionalText' in data) {
+      data.autoTranslated = false;
+      data.translatedAt = new Date();
+    }
+
+    const tx = await prisma.demoVideoTranslation.upsert({
+      where: { demoVideoId_locale: { demoVideoId, locale } },
+      update: data,
+      create: { demoVideoId, locale, autoTranslated: false, ...data },
+    });
+    // Bump the parent so mobile clients re-fetch (and re-cache) on next check.
+    await prisma.demoVideo.update({ where: { id: demoVideoId }, data: { updatedAt: new Date() } });
+
+    res.json({ translation: { ...tx, videoUrl: await resolveDragonImageUrl(tx.videoUrl) } });
+  } catch (error) {
+    console.error('Admin upsert demo video translation error:', error);
+    res.status(500).json({ error: 'Failed to save translation' });
+  }
+});
+
+/**
+ * POST /api/admin/demo-videos/:id/translations/:locale/auto
+ * Machine-translate the base (English) title/description/additionalText into
+ * :locale and store the result (autoTranslated: true, reviewed: false).
+ * Does not touch the video file.
+ */
+router.post('/demo-videos/:id/translations/:locale/auto', requireAdminAuth, async (req, res) => {
+  try {
+    const { id: demoVideoId, locale } = req.params;
+    if (!DEMO_VIDEO_LOCALES.includes(locale)) {
+      return res.status(400).json({ error: `Unsupported locale: ${locale}` });
+    }
+
+    const video = await prisma.demoVideo.findUnique({ where: { id: demoVideoId } });
+    if (!video) return res.status(404).json({ error: 'Demo video not found' });
+
+    const bundle = {
+      title: video.title,
+      description: video.description || '',
+      additionalText: video.additionalText || '',
+    };
+    const translated = await translateDemoVideoBundle(bundle, locale);
+
+    const tx = await prisma.demoVideoTranslation.upsert({
+      where: { demoVideoId_locale: { demoVideoId, locale } },
+      update: {
+        title: translated.title || null,
+        description: translated.description || null,
+        additionalText: translated.additionalText || null,
+        autoTranslated: true,
+        reviewed: false,
+        translatedAt: new Date(),
+      },
+      create: {
+        demoVideoId,
+        locale,
+        title: translated.title || null,
+        description: translated.description || null,
+        additionalText: translated.additionalText || null,
+        autoTranslated: true,
+        reviewed: false,
+      },
+    });
+    await prisma.demoVideo.update({ where: { id: demoVideoId }, data: { updatedAt: new Date() } });
+
+    res.json({ translation: { ...tx, videoUrl: await resolveDragonImageUrl(tx.videoUrl) } });
+  } catch (error) {
+    console.error('Admin auto-translate demo video error:', error);
+    res.status(500).json({ error: error.message || 'Failed to auto-translate' });
+  }
+});
+
+/**
+ * POST /api/admin/demo-videos/:id/translations/:locale/video
+ * Upload (or replace) the localized video file (subtitles burned in) for
+ * :locale. Stored under demo-videos/<id>/<locale>/.
+ */
+router.post(
+  '/demo-videos/:id/translations/:locale/video',
+  requireAdminAuth,
+  demoVideoUploadMiddleware.single('video'),
+  async (req, res) => {
+    try {
+      const { id: demoVideoId, locale } = req.params;
+      if (!DEMO_VIDEO_LOCALES.includes(locale)) {
+        return res.status(400).json({ error: `Unsupported locale: ${locale}` });
+      }
+
+      const existing = await prisma.demoVideo.findUnique({ where: { id: demoVideoId } });
+      if (!existing) return res.status(404).json({ error: 'Demo video not found' });
+      if (!req.file) return res.status(400).json({ error: 'No video file provided' });
+
+      const ext = (req.file.originalname.split('.').pop() || 'mp4').toLowerCase();
+      const key = await uploadDemoVideo(req.file.buffer, demoVideoId, ext, locale);
+
+      const tx = await prisma.demoVideoTranslation.upsert({
+        where: { demoVideoId_locale: { demoVideoId, locale } },
+        update: { videoUrl: key },
+        create: { demoVideoId, locale, videoUrl: key, autoTranslated: false },
+      });
+      await prisma.demoVideo.update({ where: { id: demoVideoId }, data: { updatedAt: new Date() } });
+
+      res.json({ translation: { ...tx, videoUrl: await resolveDragonImageUrl(key) } });
+    } catch (error) {
+      console.error('Admin localized demo video upload error:', error);
+      res.status(500).json({ error: error.message || 'Failed to upload localized video' });
+    }
+  }
+);
+
+/**
+ * DELETE /api/admin/demo-videos/:id/translations/:locale
+ * Remove a locale variant entirely (text + localized video reference).
+ */
+router.delete('/demo-videos/:id/translations/:locale', requireAdminAuth, async (req, res) => {
+  try {
+    const { id: demoVideoId, locale } = req.params;
+    await prisma.demoVideoTranslation.deleteMany({ where: { demoVideoId, locale } });
+    await prisma.demoVideo.update({ where: { id: demoVideoId }, data: { updatedAt: new Date() } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin delete demo video translation error:', error);
+    res.status(500).json({ error: 'Failed to delete translation' });
   }
 });
 

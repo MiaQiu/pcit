@@ -32,6 +32,7 @@ interface GetReadySectionScreenProps {
 // about one.
 const DemoVideoPlayer: React.FC = () => {
   const lessonService = useLessonService();
+  const { i18n } = useTranslation();
   const videoRef = useRef<Video>(null);
   const [video, setVideo] = useState<DemoVideo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,7 +47,7 @@ const DemoVideoPlayer: React.FC = () => {
   useEffect(() => {
     let cancelled = false;
     lessonService
-      .getDemoVideos()
+      .getDemoVideos(i18n.language)
       .then(({ demoVideos }) => {
         if (!cancelled) setVideo(demoVideos[0] ?? null);
       })
@@ -60,7 +61,7 @@ const DemoVideoPlayer: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [lessonService]);
+  }, [lessonService, i18n.language]);
 
   if (loading) {
     return (
