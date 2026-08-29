@@ -9,11 +9,16 @@ export const DRAGON_PURPLE = require('../../assets/images/dragon_image.png');
 // Report screen hero dragons — pose 1 (waving, "good progress"), pose 2 (celebrating, "amazing session")
 export const REPORT_DRAGON_GOOD = require('../../assets/images/report-dragon1.png');
 export const REPORT_DRAGON_AMAZING = require('../../assets/images/report-dragon2.png');
+// ReportScreen v3 hero — outcome-specific poses
+export const REPORT_DRAGON_LEVELUP = require('../../assets/images/dashboard-levelup.png');
+export const REPORT_DRAGON_REGRESSED = require('../../assets/images/dashboard-regressed.jpg');
 export const REPORT_DETAIL_DRAGON = require('../../assets/images/reportdetail-dragon.png');
 export const PROFILE_REPORT_CHILD = require('../../assets/images/dino_baby.webp');
 export const PROFILE_REPORT_THANKS_DRAGON = require('../../assets/images/profilereportscreen.png');
 export const REPORT_TARGET = require('../../assets/images/report-target.png');
+export const REPORT_TARGET_ORANGE = require('../../assets/images/new onboarding/target_orange.png');
 export const REPORT_TARGET_SMALL = require('../../assets/images/target-small.png');
+export const REPORT_STAR_SMALL = require('../../assets/images/star-small.png');
 
 // Design Tokens from Figma
 export const COLORS = {

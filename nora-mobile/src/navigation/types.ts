@@ -133,6 +133,9 @@ export type RootStackParamList = {
   ReportV2: {
     recordingId: string;
   };
+  ReportV3: {
+    recordingId: string;
+  };
   ParentLevelDetail: {
     level: ParentSkillLevel;
   };
