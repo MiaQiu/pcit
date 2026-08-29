@@ -83,6 +83,66 @@ function homeCardScore(card, ctx) {
   return HOME_CARD_NEUTRAL_SCORE + weight;
 }
 
+// 'YYYY-MM-DD' in Singapore time — same SGT_OFFSET_MS convention already
+// used for day-boundary math in recordings.cjs/the daily jobs, just wrapped
+// as a calendar-label string here instead of a Date.
+function getSingaporeDateString(date = new Date()) {
+  const SGT_OFFSET_MS = 8 * 60 * 60 * 1000;
+  return new Date(date.getTime() + SGT_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+/**
+ * Picks (and durably records) this user's single "Nora Daily" card for
+ * today — mobile only ever renders the top of the ranked list
+ * (HomeScreen_v2.tsx shows homeCards[0]), so without this the same
+ * highest-scoring card would freeze in that slot forever once ranking
+ * inputs (issue/parentGoal/child age etc.) stop changing.
+ *
+ * The returned HomeCardImpression row IS the "this was displayed" record —
+ * created the first time this runs on a given Singapore-calendar day,
+ * regardless of whether the user goes on to tap/like/share the card, then
+ * reused for the rest of that day (a pull-to-refresh mid-day shouldn't
+ * change the pick out from under them).
+ *
+ * Rotation: prefers the highest-scoring ELIGIBLE card (score > 0 — general
+ * or a genuine match; never one explicitly targeted at someone else) that
+ * this user hasn't been shown before, so the pick actually varies day to
+ * day. Once every eligible card has been shown at least once, history stops
+ * excluding anything and the cycle restarts from the top score again.
+ */
+async function pickTodaysCard(userId, sortedHomeCards, matchContext) {
+  const today = getSingaporeDateString();
+
+  const existing = await prisma.homeCardImpression.findUnique({
+    where: { userId_shownDate: { userId, shownDate: today } },
+  });
+  // Honor an already-decided pick for today, unless that card has since
+  // gone inactive/been deleted (fall through and pick a fresh one).
+  if (existing && sortedHomeCards.some((c) => c.id === existing.homeCardId)) {
+    return existing.homeCardId;
+  }
+
+  const eligible = sortedHomeCards.filter((c) => homeCardScore(c, matchContext) > 0);
+  const pool = eligible.length > 0 ? eligible : sortedHomeCards;
+
+  const shown = await prisma.homeCardImpression.findMany({
+    where: { userId, homeCardId: { in: pool.map((c) => c.id) } },
+    select: { homeCardId: true },
+    distinct: ['homeCardId'],
+  });
+  const shownIds = new Set(shown.map((s) => s.homeCardId));
+
+  const unseen = pool.filter((c) => !shownIds.has(c.id));
+  const chosen = (unseen.length > 0 ? unseen : pool)[0];
+
+  await prisma.homeCardImpression.upsert({
+    where: { userId_shownDate: { userId, shownDate: today } },
+    create: { userId, shownDate: today, homeCardId: chosen.id },
+    update: {}, // first writer wins for the day — race-safe against a double fetch
+  });
+  return chosen.id;
+}
+
 /**
  * GET /api/config/app-version
  * Returns the minimum required app version. No auth required.
@@ -137,6 +197,12 @@ router.get('/report-visibility', requireAuth, async (req, res) => {
  * same as GET /api/lessons). message/attribution fall back to the English
  * base row per-field when a HomeCardTranslation exists but is incomplete —
  * see applyHomeCardTx.
+ *
+ * "Nora Daily" rotation: mobile only renders homeCards[0] (see
+ * HomeScreen_v2.tsx), so pickTodaysCard forces that slot to a durably-
+ * recorded, per-user-per-day pick — the top-scoring card the user hasn't
+ * already been shown — instead of always freezing on the single highest
+ * scorer. See pickTodaysCard above for the rotation/reset rules.
  */
 router.get('/home-cards', requireAuth, async (req, res) => {
   try {
@@ -165,6 +231,16 @@ router.get('/home-cards', requireAuth, async (req, res) => {
     }
 
     homeCards.sort((a, b) => homeCardScore(b, matchContext) - homeCardScore(a, matchContext));
+
+    // Force today's rotated pick to the front — mobile only renders
+    // homeCards[0], so this is what actually determines "today's card"
+    // (everything else stays in its existing score/displayOrder position).
+    const todaysCardId = await pickTodaysCard(req.userId, homeCards, matchContext);
+    const todaysIdx = homeCards.findIndex((c) => c.id === todaysCardId);
+    if (todaysIdx > 0) {
+      const [todaysCard] = homeCards.splice(todaysIdx, 1);
+      homeCards.unshift(todaysCard);
+    }
 
     const likedIds = new Set(likes.map((l) => l.homeCardId));
     const resolved = await Promise.all(homeCards.map(async ({ image, badge, likeCountBase, _count, targetTags, minAgeMonths, maxAgeMonths, targetGender, ...card }) => ({

@@ -484,6 +484,7 @@ model User {
   HomeCardUserInputResponse HomeCardUserInputResponse[]
   HomeCardView              HomeCardView[]
   HomeCardShare             HomeCardShare[]
+  HomeCardImpression        HomeCardImpression[]
   referralsGiven            Referral[]                  @relation("ReferralsGiven")
   referralReceived          Referral?                   @relation("ReferralReceived")
   partnerId                 String?
@@ -980,6 +981,7 @@ model HomeCard {
   likes              HomeCardLike[]
   views              HomeCardView[]
   shares             HomeCardShare[]
+  impressions        HomeCardImpression[]
   components         HomeCardComponent[] @relation("HomeCardComponents")
   linkedByComponents HomeCardComponent[] @relation("HomeCardComponentLink")
   translations       HomeCardTranslation[]
@@ -1059,6 +1061,35 @@ model HomeCardShare {
   HomeCard   HomeCard @relation(fields: [homeCardId], references: [id], onDelete: Cascade)
   User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([homeCardId])
+}
+
+// Records which card was chosen as a user's single "Nora Daily" pick for a
+// given Singapore-calendar day (see pickTodaysCard in config.cjs) — mobile
+// only ever renders the top card in the ranked list (HomeScreen_v2.tsx), so
+// without this record the same highest-scoring card would freeze in that
+// slot forever once ranking inputs stop changing. Created the first time
+// GET /api/config/home-cards is called on a given day, regardless of
+// whether the user goes on to tap/like/share it — this IS the "displayed"
+// record, independent of HomeCardView (which only fires for an opened
+// CONTENT detail page). One row per user per day; `homeCardId` is then
+// reused for the rest of that day so a pull-to-refresh mid-day doesn't
+// change the pick out from under them, and consulted on later days so the
+// rotation doesn't repeat a card until every eligible one has been shown.
+model HomeCardImpression {
+  id         String   @id @default(uuid())
+  homeCardId String
+  userId     String
+  // 'YYYY-MM-DD' in Singapore time (SGT_OFFSET_MS convention, see
+  // getSingaporeDateString in config.cjs) — a calendar label, not an
+  // instant, so it's a plain string rather than DateTime.
+  shownDate  String
+  createdAt  DateTime @default(now())
+  HomeCard   HomeCard @relation(fields: [homeCardId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, shownDate])
   @@index([userId])
   @@index([homeCardId])
 }
