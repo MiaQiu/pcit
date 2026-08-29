@@ -23,21 +23,49 @@ const {
   isFlatLevelCleared,
 } = require('../utils/parentLevelLadder.cjs');
 
-// A brand-new parent is never auto-placed into PDI (level 7+) from a single
-// session — PDI stays gated behind completing CDI over multiple sessions.
-const FIRST_SESSION_MAX_LEVEL = 6;
+// Levels 1-6 are the flat CDI ladder; 7+ is PDI territory.
+const CDI_FLAT_LEVEL_MAX = 6;
+
+/**
+ * Walk the flat CDI ladder upward from `fromLevel` using one session's
+ * metrics — clearing level N's single metric promotes past it, so one strong
+ * session can advance several levels at once instead of being throttled to
+ * +1. Purely forward: the result is always >= `fromLevel`, never below it.
+ *
+ * A multi-level jump that starts below level 6 is capped at 6, so the
+ * 6 -> 7 (CDI -> PDI) hand-off only ever happens as its own deliberate step
+ * from level 6 — a parent can't be flung straight into PDI mode.
+ *
+ * @param {number} fromLevel - the parent's current level
+ * @param {ReturnType<typeof tagCountsToMetrics>} metrics
+ * @returns {number} the resulting level (=== fromLevel if nothing cleared)
+ */
+function walkFlatCdiLevels(fromLevel, metrics) {
+  let level = Math.max(fromLevel, 1);
+  while (
+    level <= CDI_FLAT_LEVEL_MAX &&
+    CDI_FLAT_LEVELS[level] &&
+    isFlatLevelCleared(CDI_FLAT_LEVELS[level], metrics)
+  ) {
+    level += 1;
+  }
+  // Only a parent already at level 6 may step to 7 here; a jump that began
+  // lower stops at 6.
+  if (fromLevel < CDI_FLAT_LEVEL_MAX) level = Math.min(level, CDI_FLAT_LEVEL_MAX);
+  return Math.max(level, fromLevel);
+}
 
 /**
  * Place a brand-new parent on the ladder from their FIRST CDI session's own
  * skill counts, instead of leaving them at the default level 1 while the
  * coaching report is generated (see the ordering note in
- * pcitAnalysisService.cjs STEP 9). Walks the flat CDI levels from the bottom,
- * advancing past each level whose single metric this session already clears,
- * and stops at the first it doesn't — capped at FIRST_SESSION_MAX_LEVEL.
+ * pcitAnalysisService.cjs STEP 9). Uses the same walkFlatCdiLevels() logic as
+ * the post-session promotion — so it caps at level 6, never PDI.
  *
  * Persisted forward-only to ParentSkillProgress so the parent genuinely
  * starts where they demonstrated. Safe to call repeatedly (only ever raises
- * the level). MUST run before generateCdiCoaching() reads the level.
+ * the level, never lowers it). MUST run before generateCdiCoaching() reads
+ * the level.
  *
  * @param {string} userId
  * @param {Object} tagCounts - This session's DPICS tag counts (DB shape)
@@ -45,12 +73,7 @@ const FIRST_SESSION_MAX_LEVEL = 6;
  */
 async function placeFirstSessionLevel(userId, tagCounts) {
   const metrics = tagCountsToMetrics(tagCounts || {});
-
-  let placed = 1;
-  for (let level = 1; level <= FIRST_SESSION_MAX_LEVEL; level++) {
-    if (!isFlatLevelCleared(CDI_FLAT_LEVELS[level], metrics)) break;
-    placed = Math.min(level + 1, FIRST_SESSION_MAX_LEVEL);
-  }
+  const placed = walkFlatCdiLevels(1, metrics);
 
   let progress = await prisma.parentSkillProgress.findUnique({ where: { userId } });
   if (!progress) {
@@ -87,7 +110,10 @@ function computeLevelUpdate(progress, session) {
 
   if (flatDef && session.mode === 'CDI') {
     const metrics = tagCountsToMetrics(session.tagCounts || {});
-    if (isFlatLevelCleared(flatDef, metrics)) return { currentLevel: currentLevel + 1 };
+    // One strong session can clear several flat levels at once — advance to
+    // the highest reached rather than a single step. Never moves backward.
+    const target = walkFlatCdiLevels(currentLevel, metrics);
+    if (target > currentLevel) return { currentLevel: target };
     return null;
   }
 
