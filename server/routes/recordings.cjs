@@ -445,7 +445,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
     weekStart.setUTCHours(0, 0, 0, 0);
     weekStart.setTime(weekStart.getTime() - SGT_OFFSET_MS);
 
-    const [todayRecordings, thisWeekRecordings, latestWithReport] = await Promise.all([
+    const [todayRecordings, thisWeekRecordings, latestWithReport, allCompleted] = await Promise.all([
       prisma.session.findMany({
         where: {
           userId: userId,
@@ -498,13 +498,55 @@ router.get('/dashboard', requireAuth, async (req, res) => {
           analysisStatus: true,
           coachingCards: true
         }
+      }),
+
+      // All completed sessions ever — powers the all-time "times played" count
+      // and the weekly-streak metric on the Home stats row.
+      prisma.session.findMany({
+        where: {
+          userId: userId,
+          analysisStatus: 'COMPLETED'
+        },
+        select: { createdAt: true }
       })
     ]);
+
+    // ── Weekly streak: consecutive Mon–Sun weeks (Singapore time) with ≥4
+    // completed sessions. The in-progress current week never breaks the
+    // streak — it only extends it once it already has 4 sessions. ──
+    const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    const sgtWeekStartMs = (date) => {
+      const sgt = new Date(date.getTime() + SGT_OFFSET_MS);
+      const dow = sgt.getUTCDay();
+      const monday = new Date(Date.UTC(
+        sgt.getUTCFullYear(), sgt.getUTCMonth(), sgt.getUTCDate(), 0, 0, 0, 0
+      ));
+      monday.setUTCDate(monday.getUTCDate() + (dow === 0 ? -6 : 1 - dow));
+      return monday.getTime() - SGT_OFFSET_MS;
+    };
+
+    const weekCounts = new Map();
+    for (const s of allCompleted) {
+      const key = sgtWeekStartMs(new Date(s.createdAt));
+      weekCounts.set(key, (weekCounts.get(key) || 0) + 1);
+    }
+
+    const currentWeekKey = sgtWeekStartMs(now);
+    let weeklyStreak = 0;
+    let cursor = currentWeekKey;
+    if ((weekCounts.get(cursor) || 0) >= 4) weeklyStreak += 1;
+    cursor -= WEEK_MS;
+    while ((weekCounts.get(cursor) || 0) >= 4) {
+      weeklyStreak += 1;
+      cursor -= WEEK_MS;
+    }
 
     res.json({
       todayRecordings: todayRecordings || [],
       thisWeekRecordings: thisWeekRecordings || [],
-      latestWithReport: latestWithReport || null
+      latestWithReport: latestWithReport || null,
+      totalCompletedSessions: allCompleted.length,
+      weeklyStreak
     });
 
   } catch (error) {

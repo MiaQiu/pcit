@@ -201,7 +201,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = ({
       <TouchableOpacity style={styles.moduleHeader} onPress={onModulePress} activeOpacity={0.7}>
         <Text style={styles.moduleName}>{module.title}</Text>
         {module.isLocked
-          ? <Ionicons name="lock-closed" size={18} color="#BBBBBB" />
+          ? <Ionicons name="lock-closed" size={20} color="#BBBBBB" />
           : <Ionicons name="chevron-forward" size={28} color={COLORS.textDark} />
         }
       </TouchableOpacity>

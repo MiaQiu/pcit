@@ -377,6 +377,8 @@ class RecordingService {
     todayRecordings: any[];
     thisWeekRecordings: any[];
     latestWithReport: any | null;
+    totalCompletedSessions: number;
+    weeklyStreak: number;
   }> {
     const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/recordings/dashboard`

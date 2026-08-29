@@ -54,7 +54,7 @@ import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { getTodaySingapore, toSingaporeDateString, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
 import * as userStorage from '../lib/userStorage';
-import type { RelationshipToChild } from '@nora/core';
+import type { RelationshipToChild, ParentSkillLevel } from '@nora/core';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
@@ -84,6 +84,9 @@ interface WeeklyStats {
   logsThisWeek: number;       // ABC behavior logs submitted this week
   timesRecorded: number;      // number of recordings this week
   lessonsCompleted: number;   // lessons completed this week
+  weeklyStreak: number;       // consecutive weeks with ≥4 completed sessions
+  totalSessions: number;      // all-time completed play sessions
+  parentLevel: number;        // current rung on the 9-level parent-skill ladder
 }
 
 interface TodayPlanItem {
@@ -131,52 +134,60 @@ interface StatPillProps {
   iconName: keyof typeof Ionicons.glyphMap;
   iconColor: string;
   value: string;
-  total: string;
+  // Omit for metrics with no natural target (e.g. streak, all-time count) —
+  // the "/total" suffix is hidden and the ring shows filled.
+  total?: string;
   unit: string;
   onPress?: () => void;
 }
 
 const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, unit, onPress }) => {
-  const progress = Math.min(Number(value) / Number(total), 1);
+  const progress = total ? Math.min(Number(value) / Number(total), 1) : 1;
   const dashOffset = RING_CIRCUMFERENCE * (1 - progress);
 
   return (
     <TouchableOpacity style={styles.statPill} onPress={onPress} activeOpacity={onPress ? 0.7 : 1} disabled={!onPress}>
-      {/* Circular progress ring with icon centered */}
+      {/* Progress ring + centered icon — for targetless metrics (streak,
+          all-time count) the ring is dropped and just the icon is shown. */}
       <View style={styles.statRingWrap}>
-        <Svg width={RING_SIZE} height={RING_SIZE} viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}>
-          {/* Track */}
-          <Circle
-            cx={RING_SIZE / 2}
-            cy={RING_SIZE / 2}
-            r={RING_RADIUS}
-            stroke="#E5E7EB"
-            strokeWidth={RING_STROKE}
-            fill="none"
-          />
-          {/* Progress arc */}
-          <Circle
-            cx={RING_SIZE / 2}
-            cy={RING_SIZE / 2}
-            r={RING_RADIUS}
-            stroke={iconColor}
-            strokeWidth={RING_STROKE}
-            fill="none"
-            strokeDasharray={[RING_CIRCUMFERENCE, RING_CIRCUMFERENCE]}
-            strokeDashoffset={dashOffset}
-            strokeLinecap="round"
-            transform={`rotate(-90, ${RING_SIZE / 2}, ${RING_SIZE / 2})`}
-          />
-        </Svg>
-        {/* Icon overlaid in center */}
+        {total ? (
+          <Svg width={RING_SIZE} height={RING_SIZE} viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}>
+            {/* Track */}
+            <Circle
+              cx={RING_SIZE / 2}
+              cy={RING_SIZE / 2}
+              r={RING_RADIUS}
+              stroke="#E5E7EB"
+              strokeWidth={RING_STROKE}
+              fill="none"
+            />
+            {/* Progress arc */}
+            <Circle
+              cx={RING_SIZE / 2}
+              cy={RING_SIZE / 2}
+              r={RING_RADIUS}
+              stroke={iconColor}
+              strokeWidth={RING_STROKE}
+              fill="none"
+              strokeDasharray={[RING_CIRCUMFERENCE, RING_CIRCUMFERENCE]}
+              strokeDashoffset={dashOffset}
+              strokeLinecap="round"
+              transform={`rotate(-90, ${RING_SIZE / 2}, ${RING_SIZE / 2})`}
+            />
+          </Svg>
+        ) : null}
+        {/* Icon overlaid in center — ringless metrics (streak, all-time count)
+            get a larger, colored icon; ringed ones keep the muted glyph. */}
         <View style={styles.statRingIcon}>
-          <Ionicons name={iconName} size={18} color="#9CA3AF" />
+          {total
+            ? <Ionicons name={iconName} size={18} color="#9CA3AF" />
+            : <Ionicons name={iconName} size={26} color={iconColor} />}
         </View>
       </View>
 
       <Text style={styles.statValue}>
         <Text style={styles.statValueBold}>{value}</Text>
-        <Text style={styles.statValueMuted}>/{total}</Text>
+        {total ? <Text style={styles.statValueMuted}>/{total}</Text> : null}
       </Text>
       <Text style={styles.statUnit}>{unit}</Text>
     </TouchableOpacity>
@@ -545,6 +556,9 @@ export const HomeScreen_v2: React.FC = () => {
     logsThisWeek: 0,
     timesRecorded: 0,
     lessonsCompleted: 0,
+    weeklyStreak: 0,
+    totalSessions: 0,
+    parentLevel: 1,
   });
   const [weeklyScore, setWeeklyScore] = useState<{ score: number; maxScore: number }>({ score: 0, maxScore: 300 });
   const [todayPlan, setTodayPlan] = useState<TodayPlanItem[]>([]);
@@ -619,7 +633,7 @@ export const HomeScreen_v2: React.FC = () => {
       if (mode === 'full') setLoading(true);
       else if (mode === 'refresh') setIsRefreshing(true);
 
-      const [dashboardData, lessonsResponse, weeklyReportsData, currentUser, homeCardsData] = await Promise.all([
+      const [dashboardData, lessonsResponse, weeklyReportsData, currentUser, homeCardsData, parentSkillLevel] = await Promise.all([
         recordingService.getDashboard(),
         lessonService.getLessons(undefined, i18n.language),
         recordingService.getVisibleWeeklyReports().catch(() => ({ reports: [] })),
@@ -627,6 +641,7 @@ export const HomeScreen_v2: React.FC = () => {
         // null (not []) on failure — a transient error on a background refetch
         // shouldn't wipe cards that are already showing on screen.
         recordingService.getHomeCards(i18n.language).catch(() => null),
+        authService.getParentSkillLevel().catch(() => null),
       ]);
       if (homeCardsData) setHomeCards(homeCardsData.homeCards ?? []);
 
@@ -675,6 +690,9 @@ export const HomeScreen_v2: React.FC = () => {
         logsThisWeek: 0,
         timesRecorded: thisWeekRecordings.length,
         lessonsCompleted: lessonsThisWeek.length,
+        weeklyStreak: dashboardData.weeklyStreak ?? 0,
+        totalSessions: dashboardData.totalCompletedSessions ?? 0,
+        parentLevel: parentSkillLevel?.currentLevel ?? 1,
       });
 
       // ── Lesson completed today ──
@@ -1236,35 +1254,33 @@ export const HomeScreen_v2: React.FC = () => {
         <View style={styles.statsRow}>
           <StatPill
             iconName="flame"
+            iconColor="#F97316"
+            value={String(weeklyStats.weeklyStreak)}
+            unit={t('homeV2.statWeeks')}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'weekly_streak' }); tabNavigation.navigate('Record'); }}
+          />
+          <StatPill
+            iconName="sparkles"
             iconColor={COLORS.mainPurple}
+            value={String(weeklyStats.totalSessions)}
+            unit={t('homeV2.statTimes')}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'total_sessions' }); tabNavigation.navigate('Record'); }}
+          />
+          <StatPill
+            iconName="calendar-outline"
+            iconColor="#10B981"
             value={String(weeklyStats.daysCompleted)}
             total="7"
             unit={t('homeV2.statDays')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'sessions' }); tabNavigation.navigate('Record'); }}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'days_this_week' }); tabNavigation.navigate('Record'); }}
           />
           <StatPill
-            iconName="flash"
-            iconColor="#10B981"
-            value={String(weeklyStats.minutesPlayed)}
-            total="35"
-            unit={t('homeV2.statMins')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'mins' }); tabNavigation.navigate('Record'); }}
-          />
-          <StatPill
-            iconName="happy-outline"
+            iconName="ribbon-outline"
             iconColor={COLORS.mainPurple}
-            value={String(weeklyStats.timesRecorded)}
-            total="7"
-            unit={t('homeV2.statTimes')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'times' }); tabNavigation.navigate('Record'); }}
-          />
-          <StatPill
-            iconName="book-outline"
-            iconColor="#10B981"
-            value={String(weeklyStats.lessonsCompleted)}
-            total="7"
-            unit={t('homeV2.statLessons')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'lessons' }); tabNavigation.navigate('Learn'); }}
+            value={String(weeklyStats.parentLevel)}
+            total="9"
+            unit={t('homeV2.statLevel')}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'parent_level' }); navigation.push('ParentLevelDetail', { level: weeklyStats.parentLevel as ParentSkillLevel }); }}
           />
         </View>
 

@@ -1005,6 +1005,8 @@
     "statLogs": "logs",
     "statTimes": "times",
     "statLessons": "lessons",
+    "statWeeks": "weeks",
+    "statLevel": "level",
     "tipPerfect": "Perfect 7/7! 👑\nYou're legendary!",
     "tipDaysDown": "{{count}} days down! 🌟\nCan we hit a full 7?",
     "tipAimFor4": "Aim for 4 days a week\nfor faster progress",

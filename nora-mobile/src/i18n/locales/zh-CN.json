@@ -1054,6 +1054,8 @@
     "statLogs": "记录",
     "statTimes": "次数",
     "statLessons": "课程",
+    "statWeeks": "周",
+    "statLevel": "级别",
     "tipPerfect": "完美的 7/7！👑\n您太传奇了！",
     "tipDaysDown": "已达成 {{count}} 天！🌟\n我们能挑战满 7 天吗？",
     "tipAimFor4": "目标每周 4 天\n进度会更快喔",
