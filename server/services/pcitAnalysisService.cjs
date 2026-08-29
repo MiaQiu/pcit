@@ -10,6 +10,7 @@ const { getUtterances, updateUtteranceRoles, updateUtteranceTags, updateRevisedF
 const { DPICS_TO_TAG_MAP, calculateNoraScore } = require('../utils/scoreConstants.cjs');
 const { loadPrompt, loadPromptWithVariables } = require('../prompts/index.cjs');
 const { generateGoalForLevel, formatNotifications, formatGoalHeadline } = require('../utils/levelGoalEngine.cjs');
+const { placeFirstSessionLevel } = require('./parentSkillLevelService.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { getLanguageInstruction } = require('../utils/languageUtils.cjs');
 const { classifySpeakersML } = require('./mlDiarizationService.cjs');
@@ -1751,6 +1752,22 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
       .filter(m => m.status === 'ACHIEVED')
       .map(m => m.MilestoneLibrary.key);
     const isFirstSession = priorCompletedCount === 0;
+
+    // Ordering fix: on the parent's FIRST CDI session, place them on the
+    // skill ladder from this session's own counts BEFORE coaching is
+    // generated, so the report + tomorrow's goal reflect their real level
+    // instead of the default level 1 (generateCdiCoaching → getParentSkillProgress
+    // reads currentLevel a few lines below). Later sessions are promoted
+    // incrementally by updateParentSkillLevel() after analysis.
+    if (isFirstSession && isCDI) {
+      try {
+        const placedLevel = await placeFirstSessionLevel(userId, tagCounts);
+        console.log(`✅ [ANALYSIS-STEP-9] First-session ladder placement → level ${placedLevel}`);
+      } catch (err) {
+        console.error('⚠️ [ANALYSIS-STEP-9] First-session placement failed, coaching will use existing level:', err.message);
+      }
+    }
+
     const childInfoForProfiling = {
       name: childName,
       ageMonths: childAgeMonths,

@@ -23,6 +23,48 @@ const {
   isFlatLevelCleared,
 } = require('../utils/parentLevelLadder.cjs');
 
+// A brand-new parent is never auto-placed into PDI (level 7+) from a single
+// session — PDI stays gated behind completing CDI over multiple sessions.
+const FIRST_SESSION_MAX_LEVEL = 6;
+
+/**
+ * Place a brand-new parent on the ladder from their FIRST CDI session's own
+ * skill counts, instead of leaving them at the default level 1 while the
+ * coaching report is generated (see the ordering note in
+ * pcitAnalysisService.cjs STEP 9). Walks the flat CDI levels from the bottom,
+ * advancing past each level whose single metric this session already clears,
+ * and stops at the first it doesn't — capped at FIRST_SESSION_MAX_LEVEL.
+ *
+ * Persisted forward-only to ParentSkillProgress so the parent genuinely
+ * starts where they demonstrated. Safe to call repeatedly (only ever raises
+ * the level). MUST run before generateCdiCoaching() reads the level.
+ *
+ * @param {string} userId
+ * @param {Object} tagCounts - This session's DPICS tag counts (DB shape)
+ * @returns {Promise<number>} the level the parent is at after placement
+ */
+async function placeFirstSessionLevel(userId, tagCounts) {
+  const metrics = tagCountsToMetrics(tagCounts || {});
+
+  let placed = 1;
+  for (let level = 1; level <= FIRST_SESSION_MAX_LEVEL; level++) {
+    if (!isFlatLevelCleared(CDI_FLAT_LEVELS[level], metrics)) break;
+    placed = Math.min(level + 1, FIRST_SESSION_MAX_LEVEL);
+  }
+
+  let progress = await prisma.parentSkillProgress.findUnique({ where: { userId } });
+  if (!progress) {
+    progress = await prisma.parentSkillProgress.create({ data: { userId } });
+  }
+
+  if (placed > progress.currentLevel) {
+    await prisma.parentSkillProgress.update({ where: { userId }, data: { currentLevel: placed } });
+    console.log(`[PARENT-SKILL-LEVEL] First-session placement for user ${userId.substring(0, 8)}: level ${progress.currentLevel} → ${placed}`);
+    return placed;
+  }
+  return progress.currentLevel;
+}
+
 /**
  * Pure function: given the parent's current progress and one newly-completed
  * session's mode/tagCounts, decide what (if anything) should change.
@@ -98,6 +140,14 @@ async function updateParentSkillLevel(userId, sessionId) {
   });
   if (!session) return;
 
+  // The parent's first completed session is folded in by
+  // placeFirstSessionLevel() during analysis (which walks the whole ladder
+  // and caps at level 6). Running the incremental +1 gate here too would let
+  // a flawless first session jump straight to PDI. This runs after the
+  // session is marked COMPLETED, so count === 1 means "this is the first".
+  const completedCount = await prisma.session.count({ where: { userId, analysisStatus: 'COMPLETED' } });
+  if (completedCount <= 1) return;
+
   let progress = await prisma.parentSkillProgress.findUnique({ where: { userId } });
   if (!progress) {
     progress = await prisma.parentSkillProgress.create({ data: { userId } });
@@ -122,4 +172,4 @@ async function updateParentSkillLevel(userId, sessionId) {
   console.log(`[PARENT-SKILL-LEVEL] Updated progress for user ${userId.substring(0, 8)}:`, update);
 }
 
-module.exports = { updateParentSkillLevel, computeLevelUpdate };
+module.exports = { updateParentSkillLevel, computeLevelUpdate, placeFirstSessionLevel };
