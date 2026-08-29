@@ -13,7 +13,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, ScrollView, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -152,6 +152,9 @@ export const DemoVideoDetailScreen: React.FC = () => {
   const { video } = route.params;
   const { t } = useTranslation();
   const lessonService = useLessonService();
+  // The video stays paused on a poster until the parent taps play, so
+  // opening the screen doesn't start audio/buffering unprompted.
+  const [playbackStarted, setPlaybackStarted] = useState(false);
 
   useEffect(() => {
     amplitudeService.trackScreenView('DemoVideoDetail');
@@ -194,20 +197,40 @@ export const DemoVideoDetailScreen: React.FC = () => {
         )}
 
         <View style={styles.videoWrap}>
-          <Video
-            source={{ uri: video.videoUrl }}
-            style={styles.video}
-            resizeMode={ResizeMode.CONTAIN}
-            useNativeControls
-            shouldPlay
-            isMuted={false}
-            volume={1.0}
-            // Shows the admin-uploaded preview image while the video itself
-            // is still buffering, instead of a blank black box.
-            usePoster={!!video.thumbnailUrl}
-            posterSource={video.thumbnailUrl ? { uri: video.thumbnailUrl } : undefined}
-            posterStyle={styles.video}
-          />
+          {playbackStarted ? (
+            <Video
+              source={{ uri: video.videoUrl }}
+              style={styles.video}
+              resizeMode={ResizeMode.CONTAIN}
+              useNativeControls
+              shouldPlay
+              isMuted={false}
+              volume={1.0}
+              // Shows the admin-uploaded preview image while the video itself
+              // is still buffering, instead of a blank black box.
+              usePoster={!!video.thumbnailUrl}
+              posterSource={video.thumbnailUrl ? { uri: video.thumbnailUrl } : undefined}
+              posterStyle={styles.video}
+            />
+          ) : (
+            <TouchableOpacity
+              style={styles.video}
+              activeOpacity={0.85}
+              onPress={() => {
+                amplitudeService.trackEvent('Demo Video Play Pressed', { demoVideoId: video.id });
+                setPlaybackStarted(true);
+              }}
+            >
+              {video.thumbnailUrl && (
+                <Image source={{ uri: video.thumbnailUrl }} style={styles.video} resizeMode="cover" />
+              )}
+              <View style={styles.playOverlay}>
+                <View style={styles.playButton}>
+                  <Ionicons name="play" size={30} color="#FFFFFF" style={styles.playIcon} />
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
 
         {additionalTextBlocks.length > 0 && (
@@ -274,6 +297,23 @@ const styles = StyleSheet.create({
   video: {
     width: '100%',
     height: '100%',
+  },
+  playOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  playButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playIcon: {
+    marginLeft: 4,
   },
   lessonLink: {
     flexDirection: 'row',
