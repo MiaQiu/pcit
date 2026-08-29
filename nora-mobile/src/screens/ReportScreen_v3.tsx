@@ -5,9 +5,10 @@
  * progress, and parenting level — shown before the full Report screen.
  */
 
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Animated, Easing } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
@@ -64,6 +65,331 @@ const LevelHexagon: React.FC<{ level: number; filled?: boolean; size?: number }>
   </View>
 );
 
+// Sparkle burst directions (radians) for the "deposit landed" moment.
+const DEPOSIT_SPARKLES = [-1.9, -1.3, -0.6, -2.6, 0.1, -3.3];
+
+// Hermes' Intl is inconsistent across builds — group thousands by hand.
+const formatDeposit = (n: number): string =>
+  String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+/**
+ * Emotional Deposit card — shows the running TOTAL emotional deposit. On
+ * mount it counts the number up from the previous total to the new one while
+ * the heart pulses and a sparkle burst fires; the big centre-screen "+N"
+ * celebration (see DepositCelebrationOverlay) plays in parallel and the
+ * right-hand "today" panel reveals as the count lands.
+ */
+const EmotionalDepositCard: React.FC<{
+  todayScore: number;
+  totalBefore: number | null;
+  scoreDelta: number | null;
+  t: Function;
+  // Reports the window-space centre of the running-total number so the
+  // centre-screen "+N" celebration can fly precisely into it.
+  onMeasureTarget?: (centre: { x: number; y: number }) => void;
+}> = ({ todayScore, totalBefore, scoreDelta, t, onMeasureTarget }) => {
+  const base = totalBefore ?? 0;
+  const total = base + todayScore;
+
+  const [display, setDisplay] = useState(totalBefore == null ? todayScore : base);
+
+  const numberRef = useRef<any>(null);
+  // Report the number's position once — re-measuring on every count-up tick
+  // would thrash the parent with setState during the animation.
+  const measuredRef = useRef(false);
+  const countAnim = useRef(new Animated.Value(0)).current;
+  const numberPop = useRef(new Animated.Value(0)).current;
+  const heartPulse = useRef(new Animated.Value(0)).current;
+  const burst = useRef(new Animated.Value(0)).current;
+  // Right-hand "today's deposit" panel: hidden until the add-animation lands,
+  // then reveals (stays at 1 on the no-animation path).
+  const reveal = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (totalBefore == null) {
+      setDisplay(todayScore);
+      return;
+    }
+    setDisplay(base);
+    countAnim.setValue(0);
+    numberPop.setValue(0);
+    heartPulse.setValue(0);
+    burst.setValue(0);
+    reveal.setValue(0);
+
+    const listenerId = countAnim.addListener(({ value }) => {
+      setDisplay(Math.round(base + (total - base) * value));
+    });
+
+    // Success buzz as the count-up reaches the new total, timed to the
+    // centre-screen "+N" flying into the card.
+    const h2 = setTimeout(
+      () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}),
+      1650
+    );
+
+    const seq = Animated.sequence([
+      // Hold while the centre-screen "+N" pops in and *starts* flying toward
+      // the card (~1s in), then run the count-up as it travels in.
+      Animated.delay(1050),
+      Animated.parallel([
+        Animated.timing(countAnim, {
+          toValue: 1,
+          duration: 640,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: false,
+        }),
+        Animated.sequence([
+          Animated.delay(240),
+          Animated.spring(numberPop, { toValue: 1, friction: 4, tension: 160, useNativeDriver: true }),
+          Animated.spring(numberPop, { toValue: 0, friction: 6, tension: 120, useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.delay(240),
+          Animated.spring(heartPulse, { toValue: 1, friction: 3, tension: 160, useNativeDriver: true }),
+          Animated.spring(heartPulse, { toValue: 0, friction: 5, tension: 120, useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.delay(260),
+          Animated.timing(burst, {
+            toValue: 1,
+            duration: 720,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.sequence([
+          Animated.delay(520),
+          Animated.timing(reveal, {
+            toValue: 1,
+            duration: 420,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]),
+      ]),
+    ]);
+    seq.start();
+
+    return () => {
+      countAnim.removeListener(listenerId);
+      seq.stop();
+      clearTimeout(h2);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalBefore, todayScore]);
+
+  const heartScale = heartPulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.32] });
+  const numberScale = numberPop.interpolate({ inputRange: [0, 1], outputRange: [1, 1.16] });
+  const burstOpacity = burst.interpolate({ inputRange: [0, 0.15, 0.7, 1], outputRange: [0, 1, 1, 0] });
+
+  return (
+    <View style={styles.depositCard}>
+      <Animated.View style={[styles.depositIconCircle, { transform: [{ scale: heartScale }] }]}>
+        <Ionicons name="heart" size={28} color={'#6837EA'} />
+      </Animated.View>
+
+      <View style={styles.depositScoreCol}>
+        <View style={styles.depositNumberWrap}>
+          <Animated.Text
+            ref={numberRef}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            onLayout={() => {
+              if (measuredRef.current) return;
+              numberRef.current?.measureInWindow?.((x: number, y: number, w: number, h: number) => {
+                if (w && h) {
+                  measuredRef.current = true;
+                  onMeasureTarget?.({ x: x + w / 2, y: y + h / 2 });
+                }
+              });
+            }}
+            style={[styles.depositScoreText, { transform: [{ scale: numberScale }] }]}
+          >
+            {formatDeposit(display)}
+          </Animated.Text>
+
+          {/* Sparkle burst — fires as the deposit lands in the total. */}
+          <View style={styles.depositSparkleLayer} pointerEvents="none">
+            {DEPOSIT_SPARKLES.map((angle, i) => {
+              const dist = 34 + (i % 3) * 8;
+              return (
+                <Animated.View
+                  key={i}
+                  style={{
+                    position: 'absolute',
+                    opacity: burstOpacity,
+                    transform: [
+                      { translateX: Animated.multiply(burst, Math.cos(angle) * dist) },
+                      { translateY: Animated.multiply(burst, Math.sin(angle) * dist) },
+                      { scale: burst.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1.1] }) },
+                    ],
+                  }}
+                >
+                  <Ionicons name={i % 2 === 0 ? 'sparkles' : 'star'} size={i % 2 === 0 ? 14 : 10} color="#F5B301" />
+                </Animated.View>
+              );
+            })}
+          </View>
+
+        </View>
+
+        <Text style={styles.depositLabel}>{t('reportV2.depositTotalLabel')}</Text>
+      </View>
+
+      {/* Right: today's deposit + how it compares to last session */}
+      <Animated.View
+        style={[
+          styles.depositRightCol,
+          {
+            opacity: reveal,
+            transform: [{ translateX: reveal.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+          },
+        ]}
+      >
+        <View style={styles.depositDivider} />
+        <View style={styles.depositRightInner}>
+          <Text style={styles.depositTodayValue}>+{todayScore}</Text>
+          <Text style={styles.depositTodayLabel}>{t('reportV2.depositToday')}</Text>
+          {scoreDelta != null && (
+            <View style={styles.depositDeltaRow}>
+              <Ionicons
+                name={scoreDelta >= 0 ? 'arrow-up' : 'arrow-down'}
+                size={11}
+                color={scoreDelta >= 0 ? '#10B981' : '#DC2626'}
+              />
+              <Text style={[styles.depositDeltaText, { color: scoreDelta >= 0 ? '#10B981' : '#DC2626' }]}>
+                {scoreDelta >= 0 ? '+' : ''}{scoreDelta}
+              </Text>
+              <Text style={styles.depositDeltaSuffix}>{t('reportV2.depositVsLast')}</Text>
+            </View>
+          )}
+        </View>
+      </Animated.View>
+    </View>
+  );
+};
+
+// Radial directions for the big centre-screen sparkle burst.
+const DEPOSIT_CELEBRATION_RAYS = Array.from({ length: 12 }, (_, i) => (i / 12) * Math.PI * 2);
+
+/**
+ * Full-screen, one-shot "+N" celebration that plays when a session's
+ * emotional deposit is added to the running total: a big heart + "+N"
+ * springs in dead centre with a sparkle burst, holds, then shrinks and
+ * flies into the Emotional Deposit card's total (measured position, see
+ * `target`), vanishing as it lands. Purely decorative
+ * (pointerEvents="none"); calls onDone when the sequence finishes.
+ */
+const DepositCelebrationOverlay: React.FC<{
+  amount: number;
+  // Window-space centre of the running-total number to fly into; null until
+  // the card has measured itself (falls back to a straight upward flight).
+  target: { x: number; y: number } | null;
+  onDone: () => void;
+}> = ({ amount, target, onDone }) => {
+  const pop = useRef(new Animated.Value(0)).current;
+  const fly = useRef(new Animated.Value(0)).current;
+  const burst = useRef(new Animated.Value(0)).current;
+
+  const containerRef = useRef<View>(null);
+  const [origin, setOrigin] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    const hit = setTimeout(
+      () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}),
+      180
+    );
+    const seq = Animated.sequence([
+      // Pop in + burst, then start flying toward the card at ~1s.
+      Animated.delay(100),
+      Animated.parallel([
+        Animated.spring(pop, { toValue: 1, friction: 7, tension: 120, useNativeDriver: true }),
+        Animated.timing(burst, { toValue: 1, duration: 650, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]),
+      Animated.delay(150),
+      Animated.timing(fly, { toValue: 1, duration: 560, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
+    ]);
+    seq.start(({ finished }) => {
+      if (finished) onDone();
+    });
+    return () => {
+      clearTimeout(hit);
+      seq.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fly from the overlay's own centre to the card's total. Scale is applied
+  // after the translations (transform list order = CSS order) so the deltas
+  // stay in screen pixels.
+  const canAim = !!(target && origin);
+  const deltaX = canAim ? target!.x - origin!.x : 0;
+  const deltaY = canAim ? target!.y - origin!.y : -240;
+
+  const popScale = pop.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] });
+  const flyScale = fly.interpolate({ inputRange: [0, 1], outputRange: [1, 0.18] });
+  const scale = Animated.multiply(popScale, flyScale);
+  const translateX = fly.interpolate({ inputRange: [0, 1], outputRange: [0, deltaX] });
+  const translateY = fly.interpolate({ inputRange: [0, 1], outputRange: [0, deltaY] });
+  const opacity = Animated.multiply(
+    pop,
+    fly.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 1, 0] })
+  );
+  const burstOpacity = burst.interpolate({ inputRange: [0, 0.12, 0.75, 1], outputRange: [0, 1, 1, 0] });
+
+  return (
+    <View
+      ref={containerRef}
+      style={styles.depositOverlay}
+      pointerEvents="none"
+      onLayout={() =>
+        containerRef.current?.measureInWindow((x, y, w, h) => {
+          if (w && h) setOrigin({ x: x + w / 2, y: y + h / 2 });
+        })
+      }
+    >
+      <Animated.View
+        style={[
+          styles.depositOverlayInner,
+          { opacity, transform: [{ translateX }, { translateY }, { scale }] },
+        ]}
+      >
+        <View style={styles.depositOverlaySparkleLayer}>
+          {DEPOSIT_CELEBRATION_RAYS.map((angle, i) => {
+            const dist = 96 + (i % 4) * 24;
+            return (
+              <Animated.View
+                key={i}
+                style={{
+                  position: 'absolute',
+                  opacity: burstOpacity,
+                  transform: [
+                    { translateX: Animated.multiply(burst, Math.cos(angle) * dist) },
+                    { translateY: Animated.multiply(burst, Math.sin(angle) * dist) },
+                    { scale: burst.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1.2] }) },
+                  ],
+                }}
+              >
+                <Ionicons
+                  name={i % 3 === 0 ? 'sparkles' : 'star'}
+                  size={i % 2 === 0 ? 22 : 14}
+                  color={i % 2 === 0 ? COLORS.mainPurple : '#F5B301'}
+                />
+              </Animated.View>
+            );
+          })}
+        </View>
+
+        <View style={styles.depositOverlayPill}>
+          <Ionicons name="heart" size={44} color="#FFFFFF" />
+          <Text style={styles.depositOverlayAmount}>+{amount}</Text>
+        </View>
+      </Animated.View>
+    </View>
+  );
+};
+
 export const ReportScreen_v3: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<ReportScreenV3RouteProp>();
@@ -79,6 +405,17 @@ export const ReportScreen_v3: React.FC = () => {
 
   const [prevScore, setPrevScore] = useState<number | null>(null);
   const [prevAreaCounts, setPrevAreaCounts] = useState<Record<string, number> | null>(null);
+  // Sum of every prior completed session's score — the running "Total
+  // Emotional Deposit" this session's score animates on top of. null until
+  // the recordings list resolves (offline / first session → card just shows
+  // today's score, no add-animation).
+  const [depositTotalBefore, setDepositTotalBefore] = useState<number | null>(null);
+  // Big centre-screen "+N" celebration — shown once, when this session's
+  // deposit is added onto the running total.
+  const [showDepositCelebration, setShowDepositCelebration] = useState(false);
+  // Window-space centre of the running-total number, so the "+N" can fly
+  // straight into it.
+  const [depositTarget, setDepositTarget] = useState<{ x: number; y: number } | null>(null);
 
   const [parentLevel, setParentLevel] = useState<ParentSkillLevel>(1);
   // API field is level5QualifyingCount for legacy reasons (see
@@ -127,6 +464,15 @@ export const ReportScreen_v3: React.FC = () => {
   const loadPreviousComparison = async (current: RecordingAnalysis) => {
     try {
       const { recordings } = await recordingService.getRecordings();
+
+      // Running total of all *other* completed sessions; today's score is
+      // added on top by the card's animation.
+      const totalBefore = (recordings || [])
+        .filter((r: any) => r.analysisStatus === 'COMPLETED' && r.id !== recordingId)
+        .reduce((sum: number, r: any) => sum + (r.overallScore || 0), 0);
+      setDepositTotalBefore(totalBefore);
+      if ((current.noraScore ?? 0) > 0) setShowDepositCelebration(true);
+
       const currentTime = new Date(current.createdAt).getTime();
       const previous = (recordings || [])
         .filter((r: any) => r.analysisStatus === 'COMPLETED' && r.id !== recordingId && new Date(r.createdAt).getTime() < currentTime)
@@ -334,31 +680,17 @@ export const ReportScreen_v3: React.FC = () => {
           )}
         </View>
 
-        {/* Emotional Deposit */}
-        <View style={styles.depositCard}>
-          <View style={styles.depositIconCircle}>
-            <Ionicons name="heart" size={28} color={'#6837EA'} />
-          </View>
-          <View style={styles.depositScoreCol}>
-            <Text style={styles.depositScoreText}>+{score}</Text>
-            <Text style={styles.depositLabel}>{t('reportV2.emotionalDeposit')}</Text>
-          </View>
-          {scoreDelta != null && (
-            <View style={styles.depositDeltaGroup}>
-              <View style={styles.depositDivider} />
-              <View style={styles.depositDeltaCol}>
-                <View style={styles.depositDeltaRow}>
-                  <Ionicons name={scoreDelta >= 0 ? 'arrow-up' : 'arrow-down'} size={13} color={scoreDelta >= 0 ? '#10B981' : '#DC2626'} />
-                  <Text style={[styles.depositDeltaText, { color: scoreDelta >= 0 ? '#10B981' : '#DC2626' }]}>
-                    {scoreDelta >= 0 ? '+' : ''}{scoreDelta}
-                  </Text>
-                  <Text style={styles.depositDeltaFrom}>{t('reportV2.deltaFrom')}</Text>
-                </View>
-                <Text style={styles.depositDeltaSuffix}>{t('reportV2.deltaLastSession')}</Text>
-              </View>
-            </View>
-          )}
-        </View>
+        {/* Emotional Deposit — running total + "add today's deposit" animation */}
+        <EmotionalDepositCard
+          key={__DEV__ && devScenario !== 'live' ? `dev-${devScenario}` : 'live'}
+          todayScore={score}
+          totalBefore={
+            __DEV__ && devScenario !== 'live' ? 1240 : depositTotalBefore
+          }
+          scoreDelta={scoreDelta}
+          t={t}
+          onMeasureTarget={setDepositTarget}
+        />
 
         {/* Today's Goal */}
         {goalArea && goalSkillLabel && (
@@ -492,7 +824,7 @@ export const ReportScreen_v3: React.FC = () => {
               {(['live', 'inProgress', 'achieved', 'regressed', 'levelup'] as const).map(s => (
                 <TouchableOpacity
                   key={s}
-                  onPress={() => setDevScenario(s)}
+                  onPress={() => { setDevScenario(s); setShowDepositCelebration(true); }}
                   style={[styles.devChip, devScenario === s && styles.devChipActive]}
                 >
                   <Text style={[styles.devChipText, devScenario === s && styles.devChipTextActive]}>{s}</Text>
@@ -502,6 +834,15 @@ export const ReportScreen_v3: React.FC = () => {
           </View>
         )}
       </ScrollView>
+
+      {showDepositCelebration && score > 0 && (
+        <DepositCelebrationOverlay
+          key={__DEV__ ? devScenario : 'live'}
+          amount={score}
+          target={depositTarget}
+          onDone={() => setShowDepositCelebration(false)}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -673,53 +1014,108 @@ const styles = StyleSheet.create({
   depositScoreCol: {
     flex: 1,
   },
+  depositNumberWrap: {
+    alignSelf: 'stretch',
+  },
   depositScoreText: {
     fontFamily: FONTS.bold,
     fontSize: 34,
     color: COLORS.mainPurple,
+  },
+  depositSparkleLayer: {
+    position: 'absolute',
+    left: 26,
+    top: 20,
+    width: 1,
+    height: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   depositLabel: {
     fontFamily: FONTS.semiBold,
     fontSize: 15,
     color: COLORS.textDark,
   },
-  depositDeltaGroup: {
+  depositRightCol: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    transform: [{ translateX: -20 }],
+    flexShrink: 0,
   },
   depositDivider: {
     width: 1,
-    alignSelf: 'stretch',
+    height: 46,
     backgroundColor: '#E9DFFC',
-    marginLeft: 5,
   },
-  depositDeltaCol: {
+  depositRightInner: {
     alignItems: 'flex-end',
-    paddingLeft: 12,
-    flexShrink: 0,
+  },
+  depositTodayValue: {
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    color: '#10B981',
+  },
+  depositTodayLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 1,
   },
   depositDeltaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 2,
+    marginTop: 4,
   },
   depositDeltaText: {
     fontFamily: FONTS.bold,
-    fontSize: 16,
-  },
-  depositDeltaFrom: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 15,
-    color: COLORS.textDark,
-    marginLeft: 2,
+    fontSize: 13,
   },
   depositDeltaSuffix: {
     fontFamily: FONTS.regular,
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 2,
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginLeft: 2,
+  },
+
+  // ── Deposit celebration overlay (big centre-screen "+N") ──
+  depositOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 50,
+  },
+  depositOverlayInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  depositOverlaySparkleLayer: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: 1,
+    height: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  depositOverlayPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#047857',
+    paddingHorizontal: 32,
+    paddingVertical: 18,
+    borderRadius: 999,
+    shadowColor: '#047857',
+    shadowOpacity: 0.45,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
+  },
+  depositOverlayAmount: {
+    fontFamily: FONTS.bold,
+    fontSize: 64,
+    color: '#FFFFFF',
   },
 
   // ── Today's Goal card ──

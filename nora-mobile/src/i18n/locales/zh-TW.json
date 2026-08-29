@@ -520,6 +520,10 @@
       "continueButton": "太棒了！"
     },
     "emotionalDeposit": "情感存款",
+    "depositTotalLabel": "情感存款總額",
+    "depositTodayAdd": "今天 +{{count}}",
+    "depositToday": "今天",
+    "depositVsLast": "對比上次練習",
     "deltaFrom": "較",
     "deltaLastSession": "上次練習",
     "reduceSkill": "減少{{skill}}",

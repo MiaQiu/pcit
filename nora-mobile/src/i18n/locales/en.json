@@ -520,6 +520,10 @@
       "continueButton": "Nice!"
     },
     "emotionalDeposit": "Emotional Deposit",
+    "depositTotalLabel": "Total Emotional Deposit",
+    "depositTodayAdd": "+{{count}} today",
+    "depositToday": "Today",
+    "depositVsLast": "vs last session",
     "deltaFrom": "from",
     "deltaLastSession": "last session",
     "reduceSkill": "Reduce {{skill}}",
