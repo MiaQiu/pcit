@@ -118,6 +118,23 @@ const stripPcitTags = (text: string): string => {
     .trim();
 };
 
+// Child's age in whole years — same logic as ProfileReportScreen's
+// calculateAge. Used to personalise the first-session "why this matters".
+const calculateChildAge = (birthday?: Date | string | null, birthYear?: number | null): number | null => {
+  if (birthday) {
+    const dob = new Date(birthday);
+    if (!Number.isNaN(dob.getTime())) {
+      const now = new Date();
+      let age = now.getFullYear() - dob.getFullYear();
+      const monthDiff = now.getMonth() - dob.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) age--;
+      return Math.max(age, 0);
+    }
+  }
+  if (birthYear) return Math.max(new Date().getFullYear() - birthYear, 0);
+  return null;
+};
+
 // Warm-palette equivalents of ReportScreen.tsx's getSkillRating — purple for
 // good/excellent, terracotta (instead of a clinical red) for pay-attention.
 const getSkillRating = (progress: number, t: Function, maxValue: number = 10): { barColor: string; textColor: string; suffix: string } => {
@@ -146,6 +163,18 @@ const GOAL_TYPE_SKILL_TAG: Record<string, string> = {
   AVOID_COMMANDS: 'Commands',
   AVOID_QUESTIONS: 'Questions',
   AVOID_CRITICISM: 'Criticism',
+};
+
+// Maps the tomorrow's-goal skill to a static "why this matters" i18n key
+// (reportDetail.tomorrowGoal.why.*), shown only on the first-session
+// template. `generic` covers goals with no single countable skill.
+const GOAL_WHY_I18N_KEY: Record<string, string> = {
+  'Praise (Labeled)': 'praise',
+  'Narrate': 'narrate',
+  'Echo': 'echo',
+  'Commands': 'commands',
+  'Questions': 'questions',
+  'Criticism': 'criticism',
 };
 
 // Maps the same skill labels to the `teachesCategories` values lessons are
@@ -236,6 +265,12 @@ export const ReportDetailScreen: React.FC = () => {
   const [goalSkillTag, setGoalSkillTag] = useState<string | undefined>(undefined);
   const [learnMoreLesson, setLearnMoreLesson] = useState<{ id: string; module: string; title: string } | null>(null);
   const [learnMoreDemoVideo, setLearnMoreDemoVideo] = useState<DemoVideo | null>(null);
+  // null while unknown — true once we've confirmed this is the parent's only
+  // completed session, which swaps in the welcome-oriented first-session
+  // template (see showFirstSession). The __DEV__ chip at the bottom of the
+  // screen forces it on regardless, for preview.
+  const [isFirstSession, setIsFirstSession] = useState<boolean | null>(null);
+  const [devForceFirstSession, setDevForceFirstSession] = useState(false);
 
   useEffect(() => {
     amplitudeService.trackScreenView('ReportDetail', { recordingId });
@@ -243,7 +278,23 @@ export const ReportDetailScreen: React.FC = () => {
     loadChildName();
     loadWacbStatus();
     loadParentSkillLevel();
+    loadSessionCount();
   }, [recordingId]);
+
+  // Decides the first-session template: true when this recording is the only
+  // COMPLETED session in the parent's history. Fails closed to the standard
+  // template.
+  const loadSessionCount = async () => {
+    try {
+      const { recordings } = await recordingService.getRecordings();
+      const completedCount = (recordings || []).filter(
+        (r: any) => r.analysisStatus === 'COMPLETED'
+      ).length;
+      setIsFirstSession(completedCount <= 1);
+    } catch (err) {
+      setIsFirstSession(false);
+    }
+  };
 
   const loadParentSkillLevel = async () => {
     try {
@@ -308,15 +359,17 @@ export const ReportDetailScreen: React.FC = () => {
       return;
     }
     let cancelled = false;
-    lessonService.getDemoVideos()
+    lessonService.getDemoVideos(i18n.language)
       .then(({ demoVideos }) => {
         if (cancelled) return;
-        const match = demoVideos.find(v => v.title.trim().toLowerCase() === demoTitle.toLowerCase()) || null;
+        // Match on baseTitle (always English) — demoTitle comes from the
+        // English SKILL_TAG_TO_DEMO_VIDEO_TITLE map, while `title` may be localized.
+        const match = demoVideos.find(v => v.baseTitle.trim().toLowerCase() === demoTitle.toLowerCase()) || null;
         setLearnMoreDemoVideo(match);
       })
       .catch(() => { if (!cancelled) setLearnMoreDemoVideo(null); });
     return () => { cancelled = true; };
-  }, [goalSkillTag]);
+  }, [goalSkillTag, i18n.language]);
 
   const handleDomainPress = async (domain: DomainType) => {
     setSelectedDomain(domain);
@@ -553,6 +606,234 @@ export const ReportDetailScreen: React.FC = () => {
     }
   };
 
+  // ── First-session template ──
+  // The parent's very first completed session gets a distinct,
+  // welcome-oriented report: hero image + message, then "what we learned",
+  // top moment, today's interaction style, tomorrow's goal (+ why it
+  // matters) and the personalised-coaching survey. Coach's Corner, the
+  // developmental radar and the transcript link are all withheld until
+  // session 2. The Crisis Moment card is still kept on top when a distress
+  // moment was detected.
+  const showFirstSession = devForceFirstSession || isFirstSession === true;
+
+  // "Why this matters" for the first session is deliberately personalised —
+  // it's the retention hook. It weaves in the parent's stated concern
+  // (currentUser.issue) and the child's age band on top of the skill-specific
+  // reason, so the goal feels chosen for this family rather than generic.
+  const whyKey = goal.skillTag ? GOAL_WHY_I18N_KEY[goal.skillTag] : undefined;
+  const skillReason = t(`reportDetail.tomorrowGoal.why.${whyKey || 'generic'}` as any, { childName });
+
+  const primaryIssue = Array.isArray(currentUser?.issue) ? currentUser?.issue[0] : currentUser?.issue;
+  const concernKey = primaryIssue ? `reportDetail.tomorrowGoal.concern.${primaryIssue}` : null;
+  const concern = concernKey && i18n.exists(concernKey)
+    ? t(concernKey, { childName })
+    : t('reportDetail.tomorrowGoal.concern.generic', { childName });
+
+  const childAge = calculateChildAge(currentUser?.childBirthday, currentUser?.childBirthYear);
+  const ageBandKey = childAge == null
+    ? 'unknownAge'
+    : childAge <= 3
+      ? 'toddler'
+      : childAge <= 5
+        ? 'preschool'
+        : 'schoolAge';
+
+  const whyThisMatters = t(
+    `reportDetail.tomorrowGoal.whyPersonalised.${ageBandKey}` as any,
+    { childName, age: childAge ?? undefined, concern, skillReason },
+  );
+
+  // ── Shared card bodies (used by both the standard and first-session layouts) ──
+
+  const crisisCardJsx = crisisMoment ? (
+    <ReportCard
+      eyebrow={
+        <View style={styles.crisisBadge}>
+          <Text style={styles.crisisBadgeText}>{t('reportDetail.crisis.title')}</Text>
+        </View>
+      }
+      title={crisisMoment.title || t('reportDetail.crisis.title')}
+    >
+      <MarkdownText style={styles.crisisBody} numberOfLines={crisisExpanded ? undefined : 4}>
+        {crisisMoment.coaching || crisisMoment.description || ''}
+      </MarkdownText>
+      <TouchableOpacity
+        style={styles.crisisReadMoreRow}
+        activeOpacity={0.7}
+        onPress={() => setCrisisExpanded(prev => !prev)}
+      >
+        <Text style={styles.crisisReadMoreText}>
+          {crisisExpanded ? t('reportDetail.crisis.showLess') : t('reportDetail.crisis.readMore')}
+        </Text>
+        <Ionicons name={crisisExpanded ? 'chevron-up' : 'chevron-down'} size={14} color="#C2694B" />
+      </TouchableOpacity>
+    </ReportCard>
+  ) : null;
+
+  const topMomentBody = (
+    <>
+      {reportData.audioUrl && momentStartTime != null && momentEndTime != null && (
+        <MomentPlayer
+          audioUrl={reportData.audioUrl}
+          startTime={momentStartTime}
+          endTime={momentEndTime}
+        />
+      )}
+
+      {bondingMoment ? (
+        <View style={styles.quoteLines}>
+          {bondingLines.map((line, i) => (
+            <Text key={i} style={styles.quoteLine}>{line}</Text>
+          ))}
+        </View>
+      ) : precedingLine || mainLine ? (
+        <View style={styles.quoteLines}>
+          {precedingLine && (
+            <Text style={styles.quoteLine}>
+              <Text style={styles.quoteSpeaker}>{precedingLine.role === 'child' ? childName : t('report.speakerAdult')}: </Text>
+              "{stripPcitTags(precedingLine.text)}"
+            </Text>
+          )}
+          {mainLine && (
+            <Text style={styles.quoteLine}>
+              <Text style={styles.quoteSpeaker}>{mainLine.role === 'child' ? childName : t('report.speakerAdult')}: </Text>
+              "{stripPcitTags(mainLine.text)}"
+            </Text>
+          )}
+        </View>
+      ) : (
+        fallbackQuote && <Text style={styles.quoteLine}>"{stripPcitTags(fallbackQuote)}"</Text>
+      )}
+    </>
+  );
+
+  const childInsightBodyJsx = (
+    <>
+      {aboutChildItem?.Title && (
+        <View style={styles.childInsightTitleBadge}>
+          <Text style={styles.childInsightTitleBadgeText}>{aboutChildItem.Title}</Text>
+        </View>
+      )}
+      {childInsightBody && <Text style={styles.childInsightBody}>{childInsightBody}</Text>}
+    </>
+  );
+
+  const interactionBody = (
+    <>
+      <Text style={styles.interactionSubheading}>{t('report.section.penSkills')}</Text>
+      {skills.map((skill, index) => {
+        const maxValue = skill.label === 'Echo' ? echoTarget : 10;
+        const rating = getSkillRating(skill.progress, t, maxValue);
+        const isDynamicEcho = skill.label === 'Echo' && childUtteranceCount < 10;
+        return (
+          <SkillProgressBar
+            key={index}
+            label={getSkillDisplayLabel(skill.label, t)}
+            progress={skill.progress}
+            maxValue={maxValue}
+            color={rating.barColor}
+            textColor={rating.textColor}
+            suffix={isDynamicEcho ? `${rating.suffix}*` : rating.suffix}
+            onPress={() => {
+              amplitudeService.trackEvent('Report Skill Tapped', { skillKey: skill.label, progress: skill.progress });
+              navigation.navigate('SkillUtterances', { skillKey: skill.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, skill.label), target: maxValue, childUtteranceCount });
+            }}
+          />
+        );
+      })}
+      {childUtteranceCount < 10 && skills.some(s => s.label === 'Echo') && (
+        <Text style={styles.echoFootnote}>
+          {`* ${t('skillInfo.echoGoalDynamic' as any, { count: childUtteranceCount, target: echoTarget })}`}
+        </Text>
+      )}
+
+      <View style={styles.interactionDivider} />
+
+      <Text style={styles.interactionSubheading}>{t('report.section.areasToAvoid')}</Text>
+      <View style={styles.avoidContainer}>
+        {filteredAreas.map((area, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.avoidItem}
+            activeOpacity={0.7}
+            onPress={() => {
+              amplitudeService.trackEvent('Report Area Avoided Tapped', { skillKey: area.label, count: area.count });
+              navigation.navigate('SkillUtterances', { skillKey: area.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, area.label) });
+            }}
+          >
+            <View style={styles.avoidLabelRow}>
+              <Text style={styles.avoidLabel}>{getSkillDisplayLabel(area.label, t)}</Text>
+              <Text style={[styles.avoidCount, { color: area.count >= 3 ? '#C2694B' : '#8C49D5' }]}>
+                {area.count}{area.count >= 3 ? ` ${t('report.skillRating.payAttention')}` : ''}
+              </Text>
+            </View>
+            <View style={styles.circlesContainer}>
+              {Array.from({ length: area.count }).map((_, i) => (
+                <View key={i} style={styles.circle} />
+              ))}
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </>
+  );
+
+  // Real first-session parents almost never have the WACB survey done yet;
+  // the __DEV__ force-toggle also shows it regardless so it can be previewed.
+  const surveyCardJsx = (wacbCompleted === false || devForceFirstSession) ? (
+    <View style={styles.unlockCard}>
+      <View style={styles.unlockIconBadge}>
+        <Ionicons name="lock-closed" size={22} color={COLORS.mainPurple} />
+      </View>
+      <Text style={styles.unlockTitle}>{t('reportDetail.unlock.title')}</Text>
+      <Text style={styles.unlockSubtitle}>{t('reportDetail.unlock.subtitle')}</Text>
+
+      <View style={styles.unlockFeatureRow}>
+        <View style={styles.unlockFeature}>
+          <View style={styles.unlockFeatureBadge}>
+            <Ionicons name="trending-up" size={16} color={COLORS.mainPurple} />
+          </View>
+          <Text style={styles.unlockFeatureText}>{t('reportDetail.unlock.featureGrowthPlan')}</Text>
+        </View>
+        <View style={styles.unlockFeature}>
+          <View style={styles.unlockFeatureBadge}>
+            <Ionicons name="person-circle-outline" size={16} color={COLORS.mainPurple} />
+          </View>
+          <Text style={styles.unlockFeatureText}>{t('reportDetail.unlock.featureSnapshot')}</Text>
+        </View>
+        <View style={styles.unlockFeature}>
+          <View style={styles.unlockFeatureBadge}>
+            <Ionicons name="analytics-outline" size={16} color={COLORS.mainPurple} />
+          </View>
+          <Text style={styles.unlockFeatureText}>{t('reportDetail.unlock.featureTracking')}</Text>
+        </View>
+      </View>
+
+      <TouchableOpacity style={styles.unlockButton} activeOpacity={0.85} onPress={handleUnlockPlan}>
+        <Text style={styles.unlockButtonText}>{t('reportDetail.unlock.cta')}</Text>
+      </TouchableOpacity>
+      <View style={styles.unlockTimeRow}>
+        <Ionicons name="time-outline" size={12} color="#9A8672" />
+        <Text style={styles.unlockTimeText}>{t('reportDetail.unlock.time')}</Text>
+      </View>
+    </View>
+  ) : null;
+
+  const devPreviewBar = __DEV__ ? (
+    <View style={styles.devBar}>
+      <Text style={styles.devBarLabel}>PREVIEW (dev only)</Text>
+      <TouchableOpacity
+        onPress={() => setDevForceFirstSession(v => !v)}
+        style={[styles.devChip, devForceFirstSession && styles.devChipActive]}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.devChipText, devForceFirstSession && styles.devChipTextActive]}>
+          {devForceFirstSession ? 'First time template: ON' : 'First time template: OFF'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  ) : null;
+
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
@@ -566,6 +847,49 @@ export const ReportDetailScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {showFirstSession ? (
+          <>
+            {/* Crisis Moment — kept on top for the first-session template */}
+            {crisisCardJsx}
+
+            {/* 1. Hero — first-session welcome (image + message) */}
+            <View style={styles.fsHeroCard}>
+              <Image source={REPORT_DETAIL_DRAGON} style={styles.fsHeroImage} resizeMode="contain" />
+              <Text style={styles.fsHeroIntro}>{t('reportDetail.firstSession.heroIntro', { childName })}</Text>
+              <Text style={styles.fsHeroMessage}>
+                {t('reportDetail.firstSession.heroMessage', { childName })}
+              </Text>
+            </View>
+
+            {/* 2. What we learned about {childName} */}
+            <ReportCard icon="heart" title={t('reportDetail.childInsight.title', { childName })}>
+              {childInsightBodyJsx}
+            </ReportCard>
+
+            {/* 3. Top Moment */}
+            <ReportCard icon="star" title={t('reportDetail.topMoment.title')} tip={celebration || undefined}>
+              {topMomentBody}
+            </ReportCard>
+
+            {/* 4. Today's Interaction Style */}
+            <ReportCard title={t('reportDetail.interactionStyle.title')}>
+              {interactionBody}
+            </ReportCard>
+
+            {/* 5. Tomorrow's Goal + why this matters */}
+            {goal.focusSkill && (
+              <ReportCard title={t('reportDetail.tomorrowGoal.title')} tip={goal.description || undefined}>
+                <Text style={styles.goalFocusSkill}>{goal.focusSkill}</Text>
+                <Text style={styles.fsWhyTitle}>{t('reportDetail.tomorrowGoal.whyTitle')}</Text>
+                <Text style={styles.fsWhyBody}>{whyThisMatters}</Text>
+              </ReportCard>
+            )}
+
+            {/* 6. Survey for personalised coaching */}
+            {surveyCardJsx}
+          </>
+        ) : (
+          <>
         {/* Hero — bespoke, doesn't fit the card shape */}
         <View style={styles.heroCard}>
           <Image source={REPORT_DETAIL_DRAGON} style={styles.heroDragon} resizeMode="contain" />
@@ -580,68 +904,11 @@ export const ReportDetailScreen: React.FC = () => {
         </View>
 
         {/* Crisis Moment — only rendered when the session actually had one */}
-        {crisisMoment && (
-          <ReportCard
-            // icon="alert-circle"
-            // iconColor="#C2694B"
-            // iconBackgroundColor="#FBE3CE"
-            eyebrow={
-              <View style={styles.crisisBadge}>
-                <Text style={styles.crisisBadgeText}>{t('reportDetail.crisis.title')}</Text>
-              </View>
-            }
-            title={crisisMoment.title || t('reportDetail.crisis.title')}
-          >
-            <MarkdownText style={styles.crisisBody} numberOfLines={crisisExpanded ? undefined : 4}>
-              {crisisMoment.coaching || crisisMoment.description || ''}
-            </MarkdownText>
-            <TouchableOpacity
-              style={styles.crisisReadMoreRow}
-              activeOpacity={0.7}
-              onPress={() => setCrisisExpanded(prev => !prev)}
-            >
-              <Text style={styles.crisisReadMoreText}>
-                {crisisExpanded ? t('reportDetail.crisis.showLess') : t('reportDetail.crisis.readMore')}
-              </Text>
-              <Ionicons name={crisisExpanded ? 'chevron-up' : 'chevron-down'} size={14} color="#C2694B" />
-            </TouchableOpacity>
-          </ReportCard>
-        )}
+        {crisisCardJsx}
 
         {/* Top Moment */}
         <ReportCard icon="star" title={t('reportDetail.topMoment.title')} tip={celebration || undefined}>
-          {reportData.audioUrl && momentStartTime != null && momentEndTime != null && (
-            <MomentPlayer
-              audioUrl={reportData.audioUrl}
-              startTime={momentStartTime}
-              endTime={momentEndTime}
-            />
-          )}
-
-          {bondingMoment ? (
-            <View style={styles.quoteLines}>
-              {bondingLines.map((line, i) => (
-                <Text key={i} style={styles.quoteLine}>{line}</Text>
-              ))}
-            </View>
-          ) : precedingLine || mainLine ? (
-            <View style={styles.quoteLines}>
-              {precedingLine && (
-                <Text style={styles.quoteLine}>
-                  <Text style={styles.quoteSpeaker}>{precedingLine.role === 'child' ? childName : t('report.speakerAdult')}: </Text>
-                  "{stripPcitTags(precedingLine.text)}"
-                </Text>
-              )}
-              {mainLine && (
-                <Text style={styles.quoteLine}>
-                  <Text style={styles.quoteSpeaker}>{mainLine.role === 'child' ? childName : t('report.speakerAdult')}: </Text>
-                  "{stripPcitTags(mainLine.text)}"
-                </Text>
-              )}
-            </View>
-          ) : (
-            fallbackQuote && <Text style={styles.quoteLine}>"{stripPcitTags(fallbackQuote)}"</Text>
-          )}
+          {topMomentBody}
         </ReportCard>
 
         {/* Skill Coaching — coaching note for tomorrow's goal skill, grounded in this session */}
@@ -739,23 +1006,7 @@ export const ReportDetailScreen: React.FC = () => {
 
         {/* What we learned about {childName} */}
         <ReportCard icon="heart" title={t('reportDetail.childInsight.title', { childName })}>
-          {aboutChildItem?.Title && (
-            <View style={styles.childInsightTitleBadge}>
-              <Text style={styles.childInsightTitleBadgeText}>{aboutChildItem.Title}</Text>
-            </View>
-          )}
-          {childInsightBody && <Text style={styles.childInsightBody}>{childInsightBody}</Text>}
-          {/* Dynamic tags — temporarily hidden, may restore later
-          {childTags.length > 0 && (
-            <View style={styles.childTagsRow}>
-              {childTags.map((tag, i) => (
-                <View key={i} style={styles.childTagChip}>
-                  <Text style={styles.childTagText}>{tag}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-          */}
+          {childInsightBodyJsx}
         </ReportCard>
 
         {/* Developmental Milestones — expandable */}
@@ -789,61 +1040,7 @@ export const ReportDetailScreen: React.FC = () => {
           title={t('reportDetail.interactionStyle.title')}
           expandable
         >
-          <Text style={styles.interactionSubheading}>{t('report.section.penSkills')}</Text>
-          {skills.map((skill, index) => {
-            const maxValue = skill.label === 'Echo' ? echoTarget : 10;
-            const rating = getSkillRating(skill.progress, t, maxValue);
-            const isDynamicEcho = skill.label === 'Echo' && childUtteranceCount < 10;
-            return (
-              <SkillProgressBar
-                key={index}
-                label={getSkillDisplayLabel(skill.label, t)}
-                progress={skill.progress}
-                maxValue={maxValue}
-                color={rating.barColor}
-                textColor={rating.textColor}
-                suffix={isDynamicEcho ? `${rating.suffix}*` : rating.suffix}
-                onPress={() => {
-                  amplitudeService.trackEvent('Report Skill Tapped', { skillKey: skill.label, progress: skill.progress });
-                  navigation.navigate('SkillUtterances', { skillKey: skill.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, skill.label), target: maxValue, childUtteranceCount });
-                }}
-              />
-            );
-          })}
-          {childUtteranceCount < 10 && skills.some(s => s.label === 'Echo') && (
-            <Text style={styles.echoFootnote}>
-              {`* ${t('skillInfo.echoGoalDynamic' as any, { count: childUtteranceCount, target: echoTarget })}`}
-            </Text>
-          )}
-
-          <View style={styles.interactionDivider} />
-
-          <Text style={styles.interactionSubheading}>{t('report.section.areasToAvoid')}</Text>
-          <View style={styles.avoidContainer}>
-            {filteredAreas.map((area, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.avoidItem}
-                activeOpacity={0.7}
-                onPress={() => {
-                  amplitudeService.trackEvent('Report Area Avoided Tapped', { skillKey: area.label, count: area.count });
-                  navigation.navigate('SkillUtterances', { skillKey: area.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, area.label) });
-                }}
-              >
-                <View style={styles.avoidLabelRow}>
-                  <Text style={styles.avoidLabel}>{getSkillDisplayLabel(area.label, t)}</Text>
-                  <Text style={[styles.avoidCount, { color: area.count >= 3 ? '#C2694B' : '#8C49D5' }]}>
-                    {area.count}{area.count >= 3 ? ` ${t('report.skillRating.payAttention')}` : ''}
-                  </Text>
-                </View>
-                <View style={styles.circlesContainer}>
-                  {Array.from({ length: area.count }).map((_, i) => (
-                    <View key={i} style={styles.circle} />
-                  ))}
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {interactionBody}
         </ReportCard>
 
         {/* Full Transcript */}
@@ -856,44 +1053,11 @@ export const ReportDetailScreen: React.FC = () => {
         />
 
         {/* Unlock My Child's Plan — bespoke, hidden once the user has completed the WACB survey */}
-        {wacbCompleted === false && (
-          <View style={styles.unlockCard}>
-            <View style={styles.unlockIconBadge}>
-              <Ionicons name="lock-closed" size={22} color={COLORS.mainPurple} />
-            </View>
-            <Text style={styles.unlockTitle}>{t('reportDetail.unlock.title')}</Text>
-            <Text style={styles.unlockSubtitle}>{t('reportDetail.unlock.subtitle')}</Text>
-
-            <View style={styles.unlockFeatureRow}>
-              <View style={styles.unlockFeature}>
-                <View style={styles.unlockFeatureBadge}>
-                  <Ionicons name="trending-up" size={16} color={COLORS.mainPurple} />
-                </View>
-                <Text style={styles.unlockFeatureText}>{t('reportDetail.unlock.featureGrowthPlan')}</Text>
-              </View>
-              <View style={styles.unlockFeature}>
-                <View style={styles.unlockFeatureBadge}>
-                  <Ionicons name="person-circle-outline" size={16} color={COLORS.mainPurple} />
-                </View>
-                <Text style={styles.unlockFeatureText}>{t('reportDetail.unlock.featureSnapshot')}</Text>
-              </View>
-              <View style={styles.unlockFeature}>
-                <View style={styles.unlockFeatureBadge}>
-                  <Ionicons name="analytics-outline" size={16} color={COLORS.mainPurple} />
-                </View>
-                <Text style={styles.unlockFeatureText}>{t('reportDetail.unlock.featureTracking')}</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity style={styles.unlockButton} activeOpacity={0.85} onPress={handleUnlockPlan}>
-              <Text style={styles.unlockButtonText}>{t('reportDetail.unlock.cta')}</Text>
-            </TouchableOpacity>
-            <View style={styles.unlockTimeRow}>
-              <Ionicons name="time-outline" size={12} color="#9A8672" />
-              <Text style={styles.unlockTimeText}>{t('reportDetail.unlock.time')}</Text>
-            </View>
-          </View>
+        {surveyCardJsx}
+          </>
         )}
+
+        {devPreviewBar}
       </ScrollView>
 
       <DomainMilestoneModal
@@ -936,6 +1100,93 @@ const styles = StyleSheet.create({
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   errorText: { fontFamily: FONTS.regular, fontSize: 18, color: '#E74C3C', textAlign: 'center', marginTop: 16, marginBottom: 24 },
   scrollContent: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 40 },
+
+  // ── First-session hero (bespoke) — placeholder styling until the final
+  //    hero image + copy from design land. ──
+  fsHeroCard: {
+    backgroundColor: '#FCEFE0',
+    borderRadius: 28,
+    paddingVertical: 24,
+    paddingHorizontal: 22,
+    marginBottom: 18,
+    alignItems: 'center',
+    shadowColor: '#8C49D5',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.10,
+    shadowRadius: 28,
+    elevation: 3,
+  },
+  fsHeroImage: {
+    width: 168,
+    height: 168,
+    marginBottom: 8,
+  },
+  fsHeroIntro: {
+    fontFamily: FONTS.bold,
+    fontSize: 19,
+    color: COLORS.mainPurple,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  fsHeroMessage: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#7A4A22',
+    textAlign: 'center',
+  },
+
+  // ── First-session "why this matters" (inside the Tomorrow's Goal card) ──
+  fsWhyTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    letterSpacing: 0.4,
+    color: '#B08A5A',
+    textTransform: 'uppercase',
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  fsWhyBody: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#4B5563',
+  },
+
+  // ── Dev preview bar (__DEV__ only) ──
+  devBar: {
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+  },
+  devBarLabel: {
+    fontFamily: FONTS.bold,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    color: '#9CA3AF',
+    marginBottom: 8,
+  },
+  devChip: {
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: '#F3F4F6',
+  },
+  devChipActive: {
+    backgroundColor: COLORS.mainPurple,
+  },
+  devChipText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: '#4B5563',
+  },
+  devChipTextActive: {
+    color: '#FFFFFF',
+  },
 
   // ── Hero (bespoke) ──
   heroCard: {

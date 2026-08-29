@@ -575,7 +575,49 @@
       "title": "明日目標",
       "todayLabel": "今天",
       "tomorrowLabel": "明天",
-      "aimFor": "目標 {{count}} 次"
+      "aimFor": "目標 {{count}} 次",
+      "whyTitle": "為什麼這很重要",
+      "why": {
+        "generic": "這方面的改變是一個個小片刻累積出來的，不是靠一次長談。",
+        "praise": "具體的稱讚——明確說出你欣賞的是什麼——是讓期望行為增加的最快方式之一，因為{{childName}}會重複被關注到的行為。",
+        "narrate": "不帶提問、不帶糾正地描述{{childName}}的遊戲，能培養專注力，也讓{{childName}}感到和你在一起是平靜、安全的。",
+        "echo": "把{{childName}}的話重複回去，能發展語言，同樣重要的是讓{{childName}}真切地感到被你聽見。",
+        "commands": "一次給出一個清晰、直接的指令，能讓{{childName}}有機會做到並完成，也能避免這一刻變成拉鋸戰。",
+        "questions": "少問一些問題，能把主導權交回給{{childName}}，讓遊戲保持輕鬆，而不像在考試。",
+        "criticism": "用平靜的引導代替批評，能降低{{childName}}的戒備，配合度因此提高，你們之間的連結也保持完好。"
+      },
+      "concern": {
+        "generic": "最近和{{childName}}相處中最難的部分",
+        "big_feelings_tantrums": "{{childName}}的強烈情緒和發脾氣",
+        "listening_cooperation": "讓{{childName}}聽話和配合",
+        "attention_focus": "{{childName}}很難專注",
+        "social": "幫{{childName}}發展社交和情緒能力",
+        "anxiety_confidence": "{{childName}}的焦慮和自信",
+        "adhd": "{{childName}}的注意力和過動",
+        "developmental_concerns": "{{childName}}的發展情況",
+        "parenting_strategies": "找到真正有效的教養方法",
+        "behavior_challenges": "{{childName}}的發脾氣和對抗",
+        "big_emotions": "應對{{childName}}的強烈情緒",
+        "frustration_tolerance": "{{childName}}很容易感到挫敗",
+        "defiance": "{{childName}}的對抗行為",
+        "aggression": "{{childName}}的攻擊行為",
+        "emotional": "{{childName}}的情緒起伏",
+        "routine": "為{{childName}}建立規律和結構",
+        "general": "{{childName}}在家的行為",
+        "new_baby_in_the_house": "幫{{childName}}適應家裡的新寶寶",
+        "moving_house": "幫{{childName}}度過搬家和轉學",
+        "parental_divorce": "幫{{childName}}面對家庭的變化"
+      },
+      "whyPersonalised": {
+        "toddler": "你來 Nora，是想解決{{concern}}。才{{age}}歲，{{childName}}大腦裡負責自控的連結才剛開始搭建，它是在和你的一個個小片刻中長出來的，而不是靠長篇大論。{{skillReason}}所以明天的目標只是一個很小、很具體的動作——做一次，就已經開始了。",
+        "preschool": "你來 Nora，是想解決{{concern}}。{{age}}歲正是這些能力發展最快的階段，而它們是在和你的日常互動中長出來的。{{skillReason}}所以明天的目標只是一個很小、很具體的動作——做一次，就已經開始了。",
+        "schoolAge": "你來 Nora，是想解決{{concern}}。{{age}}歲的{{childName}}其實已經懂得不少，接下來靠的是穩定、持續的練習。{{skillReason}}所以明天的目標只是一個很小、很具體的動作——做一次，就已經開始了。",
+        "unknownAge": "你來 Nora，是想解決{{concern}}。你想要的改變，是在和{{childName}}相處的一個個小片刻中累積出來的，而不是靠一次長談。{{skillReason}}所以明天的目標只是一個很小、很具體的動作——做一次，就已經開始了。"
+      }
+    },
+    "firstSession": {
+      "heroIntro": "你做到了——這是你和{{childName}}的第一次練習！",
+      "heroMessage": "每一次遊戲時光都是你與{{childName}}關係中的一筆存款。以下是我們今天注意到的。"
     },
     "childInsight": {
       "title": "我們對{{childName}}的瞭解",

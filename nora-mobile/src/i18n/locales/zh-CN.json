@@ -575,7 +575,49 @@
       "title": "明日目标",
       "todayLabel": "今天",
       "tomorrowLabel": "明天",
-      "aimFor": "目标 {{count}} 次"
+      "aimFor": "目标 {{count}} 次",
+      "whyTitle": "为什么这很重要",
+      "why": {
+        "generic": "这方面的改变是一个个小片刻累积出来的，不是靠一次长谈。",
+        "praise": "具体的表扬——明确说出你欣赏的是什么——是让期望行为增加的最快方式之一，因为{{childName}}会重复被关注到的行为。",
+        "narrate": "不带提问、不带纠正地描述{{childName}}的游戏，能培养专注力，也让{{childName}}感到和你在一起是平静、安全的。",
+        "echo": "把{{childName}}的话重复回去，能发展语言，同样重要的是让{{childName}}真切地感到被你听见。",
+        "commands": "一次给出一个清晰、直接的指令，能让{{childName}}有机会做到并完成，也能避免这一刻变成拉锯战。",
+        "questions": "少问一些问题，能把主导权交回给{{childName}}，让游戏保持轻松，而不像在考试。",
+        "criticism": "用平静的引导代替批评，能降低{{childName}}的戒备，配合度因此提高，你们之间的联系也保持完好。"
+      },
+      "concern": {
+        "generic": "最近和{{childName}}相处中最难的部分",
+        "big_feelings_tantrums": "{{childName}}的强烈情绪和发脾气",
+        "listening_cooperation": "让{{childName}}听话和配合",
+        "attention_focus": "{{childName}}很难专注",
+        "social": "帮{{childName}}发展社交和情绪能力",
+        "anxiety_confidence": "{{childName}}的焦虑和自信",
+        "adhd": "{{childName}}的注意力和过动",
+        "developmental_concerns": "{{childName}}的发展情况",
+        "parenting_strategies": "找到真正有效的教养方法",
+        "behavior_challenges": "{{childName}}的发脾气和对抗",
+        "big_emotions": "应对{{childName}}的强烈情绪",
+        "frustration_tolerance": "{{childName}}很容易感到挫败",
+        "defiance": "{{childName}}的对抗行为",
+        "aggression": "{{childName}}的攻击行为",
+        "emotional": "{{childName}}的情绪起伏",
+        "routine": "为{{childName}}建立规律和结构",
+        "general": "{{childName}}在家的行为",
+        "new_baby_in_the_house": "帮{{childName}}适应家里的新宝宝",
+        "moving_house": "帮{{childName}}度过搬家和转学",
+        "parental_divorce": "帮{{childName}}面对家庭的变化"
+      },
+      "whyPersonalised": {
+        "toddler": "你来 Nora，是想解决{{concern}}。才{{age}}岁，{{childName}}大脑里负责自控的连接才刚开始搭建，它是在和你的一个个小片刻中长出来的，而不是靠长篇大论。{{skillReason}}所以明天的目标只是一个很小、很具体的动作——做一次，就已经开始了。",
+        "preschool": "你来 Nora，是想解决{{concern}}。{{age}}岁正是这些能力发展最快的阶段，而它们是在和你的日常互动中长出来的。{{skillReason}}所以明天的目标只是一个很小、很具体的动作——做一次，就已经开始了。",
+        "schoolAge": "你来 Nora，是想解决{{concern}}。{{age}}岁的{{childName}}其实已经懂得不少，接下来靠的是稳定、持续的练习。{{skillReason}}所以明天的目标只是一个很小、很具体的动作——做一次，就已经开始了。",
+        "unknownAge": "你来 Nora，是想解决{{concern}}。你想要的改变，是在和{{childName}}相处的一个个小片刻中累积出来的，而不是靠一次长谈。{{skillReason}}所以明天的目标只是一个很小、很具体的动作——做一次，就已经开始了。"
+      }
+    },
+    "firstSession": {
+      "heroIntro": "你做到了——这是你和{{childName}}的第一次练习！",
+      "heroMessage": "每一次游戏时光都是你与{{childName}}关系中的一笔存款。以下是我们今天注意到的。"
     },
     "childInsight": {
       "title": "我们对{{childName}}的了解",

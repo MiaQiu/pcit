@@ -575,7 +575,49 @@
       "title": "Tomorrow's Goal",
       "todayLabel": "Today",
       "tomorrowLabel": "Tomorrow",
-      "aimFor": "Aim for {{count}} time"
+      "aimFor": "Aim for {{count}} time",
+      "whyTitle": "Why this matters",
+      "why": {
+        "generic": "The habits that help here are built one small moment at a time, not in a single conversation.",
+        "praise": "Labeled praise — naming exactly what you liked — is one of the fastest ways to see more of the behavior you want, because {{childName}} repeats what gets noticed.",
+        "narrate": "Describing {{childName}}'s play, without questions or corrections, builds focus and tells {{childName}} that being with you is calm and safe.",
+        "echo": "Repeating {{childName}}'s words back grows language and, just as importantly, makes {{childName}} feel genuinely heard by you.",
+        "commands": "Giving one clear, direct instruction at a time makes it possible for {{childName}} to succeed and follow through — and keeps the moment from turning into a standoff.",
+        "questions": "Easing off questions hands the lead back to {{childName}} and keeps the play relaxed instead of feeling like a test.",
+        "criticism": "Replacing criticism with calm redirection lowers {{childName}}'s defenses, so cooperation goes up and the connection between you stays intact."
+      },
+      "concern": {
+        "generic": "what's felt hardest with {{childName}} lately",
+        "big_feelings_tantrums": "{{childName}}'s big feelings and tantrums",
+        "listening_cooperation": "getting {{childName}} to listen and cooperate",
+        "attention_focus": "how hard it is for {{childName}} to focus",
+        "social": "helping {{childName}} build social and emotional skills",
+        "anxiety_confidence": "{{childName}}'s worries and confidence",
+        "adhd": "{{childName}}'s attention and hyperactivity",
+        "developmental_concerns": "{{childName}}'s development",
+        "parenting_strategies": "finding parenting approaches that actually work",
+        "behavior_challenges": "{{childName}}'s tantrums and pushback",
+        "big_emotions": "handling {{childName}}'s big emotions",
+        "frustration_tolerance": "how quickly {{childName}} gets frustrated",
+        "defiance": "{{childName}}'s defiance",
+        "aggression": "{{childName}}'s aggression",
+        "emotional": "{{childName}}'s emotional ups and downs",
+        "routine": "building routine and structure for {{childName}}",
+        "general": "{{childName}}'s behavior at home",
+        "new_baby_in_the_house": "helping {{childName}} adjust to the new baby",
+        "moving_house": "helping {{childName}} through the move and school change",
+        "parental_divorce": "helping {{childName}} through the family changes"
+      },
+      "whyPersonalised": {
+        "toddler": "You came to Nora for help with {{concern}}. At just {{age}}, {{childName}}'s brain is only beginning to build the wiring for self-control, and it develops through small, repeated moments with you rather than big conversations. {{skillReason}} That's why tomorrow's goal is one small, specific action — do it once and you've started.",
+        "preschool": "You came to Nora for help with {{concern}}. At {{age}}, {{childName}} is right in the window where these skills grow fastest, and they grow through everyday moments with you. {{skillReason}} That's why tomorrow's goal is one small, specific action — do it once and you've started.",
+        "schoolAge": "You came to Nora for help with {{concern}}. At {{age}}, {{childName}} already understands a lot — what's left is steady, consistent practice. {{skillReason}} That's why tomorrow's goal is one small, specific action — do it once and you've started.",
+        "unknownAge": "You came to Nora for help with {{concern}}. The change you're looking for is built through small, repeated moments with {{childName}}, not big conversations. {{skillReason}} That's why tomorrow's goal is one small, specific action — do it once and you've started."
+      }
+    },
+    "firstSession": {
+      "heroIntro": "You did it — your first session with {{childName}}!",
+      "heroMessage": "Every play session is a deposit in your relationship with {{childName}}. Here's what we noticed today."
     },
     "childInsight": {
       "title": "What we learned about {{childName}}",
