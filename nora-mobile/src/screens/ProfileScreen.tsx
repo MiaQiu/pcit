@@ -30,6 +30,11 @@ import { FONTS, COLORS } from '../constants/assets';
 import type { SubscriptionPlan, SubscriptionStatus, RelationshipToChild } from '@nora/core';
 import amplitudeService from '../services/amplitudeService';
 import { changeLanguage } from '../i18n';
+import {
+  computeFocusAreas,
+  ISSUE_TO_FOCUS_AREA,
+  type FocusAreaData,
+} from '../utils/snapshotFocusAreas';
 
 interface UserProfile {
   name: string;
@@ -56,6 +61,8 @@ export const ProfileScreen: React.FC = () => {
   const { checkSubscriptionStatus } = useSubscription();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  // null = not loaded yet; [] = survey checked, none completed
+  const [focusAreas, setFocusAreas] = useState<FocusAreaData[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -77,8 +84,20 @@ export const ProfileScreen: React.FC = () => {
     React.useCallback(() => {
       loadProfile();
       loadRevenueCatStatus();
+      loadFocusAreas();
     }, [])
   );
+
+  // Latest Child Snapshot survey → the 4 focus-area categories (severity-sorted).
+  // Merged with the pre-selected User.issue list in the "Primary Focus Area" row.
+  const loadFocusAreas = async () => {
+    try {
+      const survey = await authService.getLatestSnapshotSurvey();
+      setFocusAreas(survey ? computeFocusAreas(survey) : []);
+    } catch {
+      setFocusAreas([]);
+    }
+  };
 
   // Load real-time subscription status directly from RevenueCat SDK
   const loadRevenueCatStatus = async () => {
@@ -286,16 +305,34 @@ export const ProfileScreen: React.FC = () => {
     return null;
   };
 
-  const getIssueLabel = (issue?: string | string[]) => {
-    const getLabel = (key: string) => t(`profile.issueTags.${key}`, { defaultValue: key });
+  const issueLabel = (key: string) => t(`profile.issueTags.${key}`, { defaultValue: key });
 
-    if (!issue) return t('profile.issueNotSpecified');
+  const asIssueArray = (issue?: string | string[]): string[] =>
+    Array.isArray(issue) ? issue : issue ? [issue] : [];
 
-    if (Array.isArray(issue)) {
-      return issue.map(i => getLabel(i)).join(', ');
+  // The "Primary Focus Area" row merges two sources:
+  //   1. Child Snapshot survey categories that show a signal (high/moderate),
+  //      severity-sorted — these lead.
+  //   2. Any pre-selected User.issue values that don't map into one of those
+  //      categories (anxiety, developmental concerns, parenting strategies,
+  //      life changes, other) — appended as-is.
+  // When the survey isn't completed (or every category is mild) it falls back
+  // to the raw pre-selected issue list.
+  const getPrimaryFocusText = (): string | null => {
+    const issues = asIssueArray(profile?.issue);
+
+    const signalAreas = (focusAreas ?? []).filter(a => a.severity !== 'mild');
+
+    if (signalAreas.length === 0) {
+      return issues.length ? issues.map(issueLabel).join(', ') : null;
     }
 
-    return getLabel(issue);
+    const categoryLabels = signalAreas.map(a => t(`profileReport.focusAreas.${a.key}.label`));
+    const leftoverIssueLabels = issues
+      .filter(i => !ISSUE_TO_FOCUS_AREA[i])
+      .map(issueLabel);
+
+    return [...categoryLabels, ...leftoverIssueLabels].join(', ');
   };
 
   const formatLocalDate = (date: Date): string => {
@@ -514,20 +551,23 @@ export const ProfileScreen: React.FC = () => {
               </>
             )}
 
-            {profile?.issue && (
-              <>
-                <View style={styles.divider} />
-                <View style={styles.infoRow}>
-                  <View style={styles.infoIcon}>
-                    <Ionicons name="heart-outline" size={20} color="#8C49D5" />
+            {(() => {
+              const primaryFocusText = getPrimaryFocusText();
+              return primaryFocusText ? (
+                <>
+                  <View style={styles.divider} />
+                  <View style={styles.infoRow}>
+                    <View style={styles.infoIcon}>
+                      <Ionicons name="heart-outline" size={20} color="#8C49D5" />
+                    </View>
+                    <View style={styles.infoContent}>
+                      <Text style={styles.infoLabel}>{t('profile.primaryFocusLabel')}</Text>
+                      <Text style={styles.infoValue}>{primaryFocusText}</Text>
+                    </View>
                   </View>
-                  <View style={styles.infoContent}>
-                    <Text style={styles.infoLabel}>{t('profile.primaryFocusLabel')}</Text>
-                    <Text style={styles.infoValue}>{getIssueLabel(profile.issue)}</Text>
-                  </View>
-                </View>
-              </>
-            )}
+                </>
+              ) : null;
+            })()}
           </View>
         </View>
 

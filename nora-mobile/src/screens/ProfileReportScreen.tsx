@@ -15,6 +15,7 @@ import { COLORS, FONTS, PROFILE_REPORT_CHILD, PROFILE_REPORT_THANKS_DRAGON, REPO
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ChildSnapshotSurvey, ParentSkillLevel } from '@nora/core';
+import { computeFocusAreas, type FocusAreaData, type FocusSeverity } from '../utils/snapshotFocusAreas';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
 import { MarkdownText } from '../utils/MarkdownText';
@@ -134,59 +135,14 @@ const calculateAge = (birthday?: Date | string | null): number | null => {
 };
 
 // ─── Core Focus Areas — derived from the Child Snapshot questionnaire ────────
-// The 10 Snapshot items group into 4 categories; each category's severity is
-// computed from its items' answers rather than hardcoded per category.
-
-type FocusSeverity = 'high' | 'moderate' | 'mild';
+// The derivation (FOCUS_AREA_GROUPS / severity / computeFocusAreas) is shared
+// with ProfileScreen — see utils/snapshotFocusAreas.ts.
 
 const LEVEL_COLORS: Record<FocusSeverity, { bg: string; text: string }> = {
   moderate: { bg: '#FDECC8', text: '#B45309' },
   high: { bg: '#FCE0E0', text: '#DC2626' },
   mild: { bg: '#D8F3E9', text: '#0F9D6C' },
 };
-
-// Raw 1-5 Likert (Never..Very Often) → clinical point weight, same mapping
-// the server uses to score submissions (see server/routes/wacb-survey.cjs).
-const VALUE_TO_POINTS: Record<number, number> = { 1: 1, 2: 2, 3: 4, 4: 6, 5: 7 };
-const toPoints = (raw: number | null | undefined): number | null =>
-  raw != null ? (VALUE_TO_POINTS[raw] ?? raw) : null;
-
-// A domain is "high" if any item scored 6-7 pts (raw Often/Very Often),
-// "moderate" if any item scored 3-5 pts (raw Sometimes), else "mild".
-const severityForPoints = (points: Array<number | null>): FocusSeverity => {
-  const values = points.filter((p): p is number => p != null);
-  if (values.some(p => p >= 6)) return 'high';
-  if (values.some(p => p >= 3)) return 'moderate';
-  return 'mild';
-};
-
-const FOCUS_AREA_GROUPS = [
-  { key: 'routines', icon: 'time-outline', iconBg: '#FDECC8', iconColor: '#C2790C', fields: ['q1Dawdle'] as const },
-  { key: 'cooperation', icon: 'chatbubbles-outline', iconBg: '#E0E7FF', iconColor: '#4F46E5', fields: ['q2Disobey', 'q3Tantrum', 'q4Defiance'] as const },
-  { key: 'selfControl', icon: 'locate-outline', iconBg: '#DBEAFE', iconColor: '#2563EB', fields: ['q5FocusDemand', 'q6Restless', 'q7TaskCompletion'] as const },
-  { key: 'boundaries', icon: 'flash', iconBg: '#FCE0E0', iconColor: '#DC2626', fields: ['q8Destroy', 'q9Aggression', 'q10LieSteal'] as const },
-] as const;
-
-interface FocusAreaData {
-  key: string;
-  icon: string;
-  iconBg: string;
-  iconColor: string;
-  severity: FocusSeverity;
-}
-
-// Carousel order: most severe first (high → moderate → mild). Ties keep the
-// clinical group order defined in FOCUS_AREA_GROUPS.
-const SEVERITY_RANK: Record<FocusSeverity, number> = { high: 0, moderate: 1, mild: 2 };
-
-const computeFocusAreas = (survey: ChildSnapshotSurvey): FocusAreaData[] =>
-  FOCUS_AREA_GROUPS.map(group => ({
-    key: group.key,
-    icon: group.icon,
-    iconBg: group.iconBg,
-    iconColor: group.iconColor,
-    severity: severityForPoints(group.fields.map(field => toPoints(survey[field]))),
-  })).sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);
 
 // ─── Personalized Learning Journey — the 9-level parent-skill ladder ──────────
 // currentLevel comes from the server (authService.getParentSkillLevel(),
