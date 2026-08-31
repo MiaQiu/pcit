@@ -937,7 +937,7 @@ export const HomeScreen_v2: React.FC = () => {
     await userStorage.setItem(reportReadKey, latestRecordingId);
     setIsReportRead(true);
     amplitudeService.trackReportViewed(latestRecordingId, undefined, { source: 'home' });
-    navigation.push('ReportV2', { recordingId: latestRecordingId });
+    navigation.push('ReportV3', { recordingId: latestRecordingId });
   };
 
   const handleRecordAgain = () => {
