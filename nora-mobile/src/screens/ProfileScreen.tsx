@@ -32,6 +32,7 @@ import amplitudeService from '../services/amplitudeService';
 import { changeLanguage } from '../i18n';
 import {
   computeFocusAreas,
+  primaryFocusAreas,
   ISSUE_TO_FOCUS_AREA,
   type FocusAreaData,
 } from '../utils/snapshotFocusAreas';
@@ -321,7 +322,7 @@ export const ProfileScreen: React.FC = () => {
   const getPrimaryFocusText = (): string | null => {
     const issues = asIssueArray(profile?.issue);
 
-    const signalAreas = (focusAreas ?? []).filter(a => a.severity !== 'mild');
+    const signalAreas = primaryFocusAreas(focusAreas);
 
     if (signalAreas.length === 0) {
       return issues.length ? issues.map(issueLabel).join(', ') : null;

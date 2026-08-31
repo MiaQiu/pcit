@@ -15,7 +15,7 @@ import { COLORS, FONTS, PROFILE_REPORT_CHILD, PROFILE_REPORT_THANKS_DRAGON, REPO
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ChildSnapshotSurvey, ParentSkillLevel } from '@nora/core';
-import { computeFocusAreas, type FocusAreaData, type FocusSeverity } from '../utils/snapshotFocusAreas';
+import { computeFocusAreas, primaryFocusAreas, type FocusAreaData, type FocusSeverity } from '../utils/snapshotFocusAreas';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
 import { MarkdownText } from '../utils/MarkdownText';
@@ -520,13 +520,22 @@ export const ProfileReportScreen: React.FC = () => {
       ? reportData.pdiEncouragement
       : (reportData.feedback || reportData.encouragement || '');
 
+  // The journey mirrors Profile's "Primary Focus Area" row: it's built from the
+  // categories that carry a signal (high/moderate), severity-sorted — not every
+  // category. Falls back to the top overall category for the heading when the
+  // survey is done but every category is mild.
+  const primaryAreas = primaryFocusAreas(focusAreas);
+  const journeyHeading = primaryAreas.length > 0
+    ? t(`profileReport.focusAreas.${primaryAreas[0].key}.label`)
+    : focusHeading;
+
   // 4-step journey: Fill the Emotional Bank Account → top-2 focus-area steps → Calm Discipline.
-  const journeyMiddleStepKeys = (focusAreas ?? [])
+  const journeyMiddleStepKeys = primaryAreas
     .map(a => FOCUS_AREA_JOURNEY_STEP[a.key])
     .filter((k, i, arr): k is string => !!k && arr.indexOf(k) === i)
     .slice(0, 2);
   const journeyStepKeys = ['fillBank', ...journeyMiddleStepKeys, 'calmDiscipline'];
-  const journeyDisciplineWhyKey = focusAreas && focusAreas.length > 0 ? focusAreas[0].key : null;
+  const journeyDisciplineWhyKey = primaryAreas.length > 0 ? primaryAreas[0].key : null;
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
@@ -645,7 +654,7 @@ export const ProfileReportScreen: React.FC = () => {
             <Text style={styles.cardTitle}>{t('profileReport.journeyTitle')}</Text>
             <Text style={styles.sectionSubtitle}>
               {t('profileReport.whyHereBody1Prefix')}
-              <Text style={styles.sectionSubtitleBold}>{focusHeading}</Text>
+              <Text style={styles.sectionSubtitleBold}>{journeyHeading}</Text>
               {t('profileReport.whyHereBody1Suffix')}{' '}
               {t('profileReport.journeySubtitle', { childName })}
             </Text>

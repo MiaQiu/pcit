@@ -57,6 +57,13 @@ export const computeFocusAreas = (survey: ChildSnapshotSurvey): FocusAreaData[] 
     severity: severityForPoints(group.fields.map(field => toPoints(survey[field]))),
   })).sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);
 
+// The focus-area categories that carry a signal — severity high or moderate,
+// still severity-sorted. This is the "primary" set: it drives the Profile
+// "Primary Focus Area" row and the ProfileReport learning-journey middle steps,
+// so the two stay in sync. Returns [] when every category is mild.
+export const primaryFocusAreas = (areas: FocusAreaData[] | null | undefined): FocusAreaData[] =>
+  (areas ?? []).filter(a => a.severity !== 'mild');
+
 // Maps a pre-selected User.issue key (ChildIssueScreen values + legacy values)
 // onto one of the 4 Snapshot categories, so the Profile "Primary Focus Area"
 // row can fold the two lists together. Issues with no clean category home
