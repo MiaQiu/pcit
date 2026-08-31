@@ -118,6 +118,26 @@ const CRISIS_COACHING = {
   required: ['heroText', 'crisisMoment', 'skillCoaching', 'topMoment'],
 };
 
+// ── about-child-extract ───────────────────────────────────────────────────────
+// Array of "About Child" observations extracted from the psychologist narrative,
+// ranked by positivity then significance. Mostly STRENGTH, at most one
+// GROWTH_AREA (see generateAboutChild's step-2 prompt / aboutChildSelectionService).
+const ABOUT_CHILD = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      id:          { type: 'integer' },
+      valence:     { type: 'string', enum: ['STRENGTH', 'GROWTH_AREA'] },
+      Title:       { type: 'string' },
+      Description: { type: 'string' },
+      Details:     { type: 'string' },
+      tags:        { type: 'array', items: { type: 'string' } },
+    },
+    required: ['id', 'valence', 'Title', 'Description', 'Details', 'tags'],
+  },
+};
+
 // ── pdi-two-choices ───────────────────────────────────────────────────────────
 // PDI discipline sequence analysis
 const PDI_TWO_CHOICES = {
@@ -289,6 +309,7 @@ module.exports = {
   COMBINED_FEEDBACK,
   REPORT_HIGHLIGHTS,
   CRISIS_COACHING,
+  ABOUT_CHILD,
   PDI_TWO_CHOICES,
   DEV_PROFILING,
   COACHING_FORMAT,

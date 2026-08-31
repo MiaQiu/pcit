@@ -85,7 +85,7 @@ const PROFILES = {
   'about-child-extract': {
     model:       'gemini',
     temperature: 0.3,
-    maxTokens:   2048,
+    maxTokens:   4096,
     timeout:     60_000,
     output:      'array',
   },

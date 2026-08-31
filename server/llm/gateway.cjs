@@ -44,6 +44,11 @@ const { sendLLMFailureAlert } = require('./alertEmail.cjs');
  *                                            Enforces valid JSON at the token level.
  *                                            Has no effect for Claude calls.
  * @param {Object}  [options._geminiConfig] - Escape hatch: merged into generationConfig for Gemini
+ * @param {boolean} [options.alertOnFailure=true] - Send a permanent-failure alert email if the
+ *                                            call throws. Set false for best-effort calls whose
+ *                                            caller already handles null/throw (escalation paths,
+ *                                            optional enrichment) so they don't page on a
+ *                                            gracefully-degraded failure.
  * @returns {Promise<Object|Array|string>}
  */
 async function llmCall(prompt, options = {}) {
@@ -70,6 +75,7 @@ async function llmCall(prompt, options = {}) {
     schema           = null,
     _geminiConfig    = {},
     sessionId        = null,
+    alertOnFailure   = true,
   } = merged;
 
   const modelDef  = resolveModel(modelKey);
@@ -155,7 +161,9 @@ async function llmCall(prompt, options = {}) {
   } catch (err) {
     track.ok    = false;
     track.error = err.message;
-    sendLLMFailureAlert({ label, model: track.model, error: err.message, type: 'gateway', sessionId });
+    if (alertOnFailure) {
+      sendLLMFailureAlert({ label, model: track.model, error: err.message, type: 'gateway', sessionId });
+    }
     throw err;
   } finally {
     logLLMCall({

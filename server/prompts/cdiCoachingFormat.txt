@@ -15,6 +15,10 @@ Your job:
 - Separate paragraphs with \n\n.
 - Do not bold entire sentences — only the key 2–5 word phrase within a sentence.
 
+**JSON string safety:**
+- Every string value must be valid JSON. Do NOT put a raw double quote (") inside a value — if you need to quote a word or phrase, use the language's own quotation marks (e.g. 「」 or 『』 for Chinese, or single quotes) instead, or escape it as \".
+- Keep real line breaks out of values — write \n\n between paragraphs, not an actual newline.
+
 Return ONLY valid JSON, no markdown fences, no extra text.
 
 {

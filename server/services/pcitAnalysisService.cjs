@@ -559,6 +559,8 @@ ${narrativeText}
 
 Return ONLY a valid JSON array. No markdown code blocks or explanations.
 
+Every string value must be valid JSON: do NOT put a raw double quote (") inside a value — if you need to quote a word or phrase, use the language's own quotation marks (e.g. 「」 or 『』 for Chinese, or single quotes) instead, or escape it as \\". Keep real line breaks out of values.
+
 Example format:
 [
   {
@@ -594,8 +596,12 @@ Example format:
   try {
     const aboutChild = await llmCall(step3PromptFinal, {
       profile:  'about-child-extract',
+      schema:   SCHEMAS.ABOUT_CHILD,
       label:    'about-child-step3',
       sessionId,
+      // Best-effort: a failure here just drops the "About Child" card for the
+      // session (STEP 9 swallows it), so don't page on it.
+      alertOnFailure: false,
     });
     if (!Array.isArray(aboutChild)) throw new Error('Expected array response');
     console.log(`✅ [ABOUT-CHILD] Extracted ${aboutChild.length} child observations`);
@@ -699,7 +705,12 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
       formatted = await withQualityRetry(
         () => llmCall(formatPrompt, { profile: 'coaching-format', schema: SCHEMAS.COACHING_FORMAT, label: 'coaching-format', sessionId }),
         checkComplete,
-        () => llmCall(formatPrompt, { profile: 'coaching-format', model: 'claude', schema: SCHEMAS.COACHING_FORMAT, label: 'coaching-format-escalated', sessionId })
+        // Escalate to Gemini Pro (not Claude) so the responseSchema still
+        // applies — schema is Gemini-only, and Claude free-texting JSON in
+        // Chinese was emitting unescaped quotes that jsonrepair can't fix.
+        // Best-effort: withQualityRetry catches a throw here and we fall back
+        // to the raw (unsectioned) coaching report, so don't page on it.
+        () => llmCall(formatPrompt, { profile: 'coaching-format', model: 'gemini-3.1-pro-preview', schema: SCHEMAS.COACHING_FORMAT, label: 'coaching-format-escalated', sessionId, alertOnFailure: false })
       );
     } catch (formatError) {
       console.error('❌ [CDI-COACHING] Format call failed:', formatError.message);
