@@ -38,15 +38,15 @@ const CATEGORY_COLORS: Record<BehaviorCategory, string> = {
   high: '#EF4444',
 };
 
-// Scale constants (0–63, matching server scoring)
+// Scale constants (0–70, matching server scoring: 10 items × max 7 pts)
 const SCALE_MIN = 0;
-const SCALE_MAX = 63;
+const SCALE_MAX = 70;
 const SCALE_RANGE = SCALE_MAX - SCALE_MIN;
 
 function getCategory(score: number): BehaviorCategory {
-  if (score <= 25) return 'stable';
-  if (score <= 35) return 'mild';
-  if (score <= 45) return 'medium';
+  if (score <= 28) return 'stable';
+  if (score <= 39) return 'mild';
+  if (score <= 50) return 'medium';
   return 'high';
 }
 
@@ -58,15 +58,16 @@ function toPoints(val?: number): number {
 }
 
 function computeTotalScore(wacb?: {
-  q1Dawdle?: number; q2MealBehavior?: number; q3Disobey?: number; q4Angry?: number;
-  q5Scream?: number; q6Destroy?: number; q7ProvokeFights?: number;
-  q8Interrupt?: number; q9Attention?: number;
+  q1Dawdle?: number; q2Disobey?: number; q3Tantrum?: number; q4Defiance?: number;
+  q5FocusDemand?: number; q6Restless?: number; q7TaskCompletion?: number;
+  q8Destroy?: number; q9Aggression?: number; q10LieSteal?: number;
 }): number {
   if (!wacb) return SCALE_MIN;
   return (
-    toPoints(wacb.q1Dawdle) + toPoints(wacb.q2MealBehavior) + toPoints(wacb.q3Disobey) +
-    toPoints(wacb.q4Angry) + toPoints(wacb.q5Scream) + toPoints(wacb.q6Destroy) +
-    toPoints(wacb.q7ProvokeFights) + toPoints(wacb.q8Interrupt) + toPoints(wacb.q9Attention)
+    toPoints(wacb.q1Dawdle) + toPoints(wacb.q2Disobey) + toPoints(wacb.q3Tantrum) +
+    toPoints(wacb.q4Defiance) + toPoints(wacb.q5FocusDemand) + toPoints(wacb.q6Restless) +
+    toPoints(wacb.q7TaskCompletion) + toPoints(wacb.q8Destroy) + toPoints(wacb.q9Aggression) +
+    toPoints(wacb.q10LieSteal)
   );
 }
 
@@ -77,7 +78,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
   const locked = route.params?.locked ?? false;
   const { data } = useOnboarding();
 
-  useEffect(() => { amplitudeService.trackOnboardingScreen('child_behavior_profile', 38); }, []);
+  useEffect(() => { amplitudeService.trackOnboardingScreen('child_behavior_profile', 39); }, []);
 
   const childName = data.childName || 'Your child';
   const totalScore = useMemo(() => computeTotalScore(data.wacb), [data.wacb]);
@@ -91,10 +92,10 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
     whatToExpect: t(`onboarding.childBehaviorProfile.categories.${category}.whatToExpect`),
   };
   const BAR_SEGMENTS: { key: BehaviorCategory; label: string; mid: number }[] = [
-    { key: 'stable', label: t('onboarding.childBehaviorProfile.barSegments.stable'), mid: 12.5 },
-    { key: 'mild',   label: t('onboarding.childBehaviorProfile.barSegments.mild'),   mid: 30   },
-    { key: 'medium', label: t('onboarding.childBehaviorProfile.barSegments.medium'), mid: 40   },
-    { key: 'high',   label: t('onboarding.childBehaviorProfile.barSegments.high'),   mid: 54   },
+    { key: 'stable', label: t('onboarding.childBehaviorProfile.barSegments.stable'), mid: 14   },
+    { key: 'mild',   label: t('onboarding.childBehaviorProfile.barSegments.mild'),   mid: 33.5 },
+    { key: 'medium', label: t('onboarding.childBehaviorProfile.barSegments.medium'), mid: 44.5 },
+    { key: 'high',   label: t('onboarding.childBehaviorProfile.barSegments.high'),   mid: 60   },
   ];
 
   const markerPosition = Math.max(0, Math.min(1, (totalScore - SCALE_MIN) / SCALE_RANGE));
@@ -169,7 +170,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
             </View>
 
             <View style={styles.scaleNumbers}>
-              {([0, 25, 35, 45, 63] as const).map((val) => (
+              {([0, 28, 39, 50, 70] as const).map((val) => (
                 <Text
                   key={val}
                   style={[
@@ -177,7 +178,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
                     {
                       position: 'absolute',
                       left: `${(val / SCALE_MAX) * 100}%`,
-                      transform: [{ translateX: val === 0 ? 0 : val === 63 ? -14 : -7 }],
+                      transform: [{ translateX: val === 0 ? 0 : val === 70 ? -14 : -7 }],
                     },
                   ]}
                 >
@@ -188,14 +189,14 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
 
             <View style={styles.barWrapper}>
               <View style={styles.segmentedBar}>
-                {/* stable: 0–25 = 25/63 ≈ 39.68% */}
-                <View style={[styles.barSegment, { flex: 25, backgroundColor: '#22C55E', borderTopLeftRadius: 6, borderBottomLeftRadius: 6 }]} />
-                {/* mild: 25–35 = 10/63 ≈ 15.87% */}
-                <View style={[styles.barSegment, { flex: 10, backgroundColor: '#EAB308' }]} />
-                {/* medium: 35–45 = 10/63 ≈ 15.87% */}
-                <View style={[styles.barSegment, { flex: 10, backgroundColor: '#F97316' }]} />
-                {/* high: 45–63 = 18/63 ≈ 28.57% */}
-                <View style={[styles.barSegment, { flex: 18, backgroundColor: '#EF4444', borderTopRightRadius: 6, borderBottomRightRadius: 6 }]} />
+                {/* stable: 0–28 = 28/70 = 40% */}
+                <View style={[styles.barSegment, { flex: 28, backgroundColor: '#22C55E', borderTopLeftRadius: 6, borderBottomLeftRadius: 6 }]} />
+                {/* mild: 28–39 = 11/70 ≈ 15.71% */}
+                <View style={[styles.barSegment, { flex: 11, backgroundColor: '#EAB308' }]} />
+                {/* medium: 39–50 = 11/70 ≈ 15.71% */}
+                <View style={[styles.barSegment, { flex: 11, backgroundColor: '#F97316' }]} />
+                {/* high: 50–70 = 20/70 ≈ 28.57% */}
+                <View style={[styles.barSegment, { flex: 20, backgroundColor: '#EF4444', borderTopRightRadius: 6, borderBottomRightRadius: 6 }]} />
               </View>
               <View style={[styles.markerCircle, { left: `${markerPosition * 100}%` }]} />
             </View>
@@ -256,7 +257,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => { amplitudeService.trackOnboardingStepCompleted('child_behavior_profile', 38); navigation.navigate('Intro3'); }}
+          onPress={() => { amplitudeService.trackOnboardingStepCompleted('child_behavior_profile', 39); navigation.navigate('Intro3'); }}
           activeOpacity={0.85}
         >
           <Text style={styles.buttonText}>{t('onboarding.childBehaviorProfile.continueButton')}</Text>

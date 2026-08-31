@@ -15,10 +15,10 @@ export const PlaySession5Screen: React.FC = () => {
   const authService = useAuthService();
   const lessonService = useLessonService();
 
-  useEffect(() => { amplitudeService.trackOnboardingScreen('play_session5', 43); }, []);
+  useEffect(() => { amplitudeService.trackOnboardingScreen('play_session5', 44); }, []);
 
   const handleContinue = async () => {
-    amplitudeService.trackOnboardingStepCompleted('play_session5', 43);
+    amplitudeService.trackOnboardingStepCompleted('play_session5', 44);
     try {
       await authService.completeOnboarding({
         name: data.name,

@@ -1139,7 +1139,7 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         childBirthday: true,
         issue: true,
         _count: { select: { Session: true } },
-        WacbSurvey: {
+        ChildSnapshotSurvey: {
           select: { totalScore: true },
           orderBy: { submittedAt: 'desc' },
           take: 1,
@@ -1185,7 +1185,7 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         trialEndDate: u.trialEndDate,
         childBirthday: u.childBirthday,
         issue: u.issue,
-        wacbTotalScore: u.WacbSurvey[0]?.totalScore ?? null,
+        wacbTotalScore: u.ChildSnapshotSurvey[0]?.totalScore ?? null,
       };
     });
 

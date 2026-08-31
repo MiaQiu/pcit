@@ -410,7 +410,7 @@ export const ReportDetailScreen: React.FC = () => {
 
   const loadWacbStatus = async () => {
     try {
-      setWacbCompleted(await authService.hasCompletedWacbSurvey());
+      setWacbCompleted(await authService.hasCompletedSnapshotSurvey());
     } catch (err) {
       // Unknown — leave the card hidden rather than risk showing it to
       // someone who's already completed the survey.

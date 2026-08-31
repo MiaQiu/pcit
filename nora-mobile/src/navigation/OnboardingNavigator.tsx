@@ -19,7 +19,7 @@ import { useOnboarding } from '../contexts/OnboardingContext';
 // ChildIssueScreen's nextScreen resolver / hasAdhdOrDevelopmentalConcern()).
 // Both paths rejoin at ParentGoalIntro.
 // Subscription is a standalone screen entered from RecordScreen / ProfileScreen.
-// Demo1–5/Demo1B/Demo2B/ParentingIntro/ChildSnapshotIntro/WacbQuestion1–9/
+// Demo1–5/Demo1B/Demo2B/ParentingIntro/ChildSnapshotIntro/WacbQuestion1–10/
 // ChildBehaviorProfile/Intro3/PlaySession1–5/NotificationPermission remain
 // registered (unreachable from the linear flow) so deep links / old resume
 // state referencing them don't crash.
@@ -82,6 +82,7 @@ import { WacbQuestion6Screen } from '../screens/onboarding/WacbQuestion6Screen';
 import { WacbQuestion7Screen } from '../screens/onboarding/WacbQuestion7Screen';
 import { WacbQuestion8Screen } from '../screens/onboarding/WacbQuestion8Screen';
 import { WacbQuestion9Screen } from '../screens/onboarding/WacbQuestion9Screen';
+import { WacbQuestion10Screen } from '../screens/onboarding/WacbQuestion10Screen';
 import { ChildBehaviorProfileScreen } from '../screens/onboarding/ChildBehaviorProfileScreen';
 import { Intro3Screen } from '../screens/onboarding/Intro3Screen';
 import { PlaySession1Screen } from '../screens/onboarding/PlaySession1Screen';
@@ -199,6 +200,7 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({ route 
       <Stack.Screen name="WacbQuestion7" component={WacbQuestion7Screen} />
       <Stack.Screen name="WacbQuestion8" component={WacbQuestion8Screen} />
       <Stack.Screen name="WacbQuestion9" component={WacbQuestion9Screen} />
+      <Stack.Screen name="WacbQuestion10" component={WacbQuestion10Screen} />
       <Stack.Screen name="ChildBehaviorProfile" component={ChildBehaviorProfileScreen} />
       <Stack.Screen name="Intro3" component={Intro3Screen} />
       <Stack.Screen name="PlaySession1" component={PlaySession1Screen} />

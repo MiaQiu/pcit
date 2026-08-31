@@ -52,24 +52,26 @@ export interface User {
   isFreeAccount?: boolean;
 }
 
-// WACB-N survey — 9-item behavior questionnaire + parenting stress rating.
-// Each qN field is a raw 1-5 Likert value (Never..Very Often) as submitted
-// by the client; totalScore is the clinically-weighted point total computed
-// server-side (see server/routes/wacb-survey.cjs's VALUE_TO_POINTS mapping).
-export interface WacbSurvey {
+// Child Snapshot survey — 10-item behavior questionnaire + parenting stress
+// rating (formerly "WACB-N", 9 items). Each qN field is a raw 1-5 Likert value
+// (Never..Very Often) as submitted by the client; totalScore is the
+// clinically-weighted point total computed server-side (see
+// server/routes/wacb-survey.cjs's VALUE_TO_POINTS mapping).
+export interface ChildSnapshotSurvey {
   id: string;
   userId: string;
   submittedAt: string;
   parentingStressLevel: number;
   q1Dawdle: number;
-  q2MealBehavior: number;
-  q3Disobey: number;
-  q4Angry: number;
-  q5Scream: number;
-  q6Destroy: number;
-  q7ProvokeFights: number;
-  q8Interrupt: number;
-  q9Attention: number;
+  q2Disobey: number;
+  q3Tantrum: number;
+  q4Defiance: number;
+  q5FocusDemand: number;
+  q6Restless: number;
+  q7TaskCompletion: number;
+  q8Destroy: number;
+  q9Aggression: number;
+  q10LieSteal: number;
   totalScore: number;
 }
 

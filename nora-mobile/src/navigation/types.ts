@@ -67,6 +67,7 @@ export type OnboardingStackParamList = {
   WacbQuestion7: undefined;
   WacbQuestion8: undefined;
   WacbQuestion9: undefined;
+  WacbQuestion10: undefined;
   Demo1: undefined;
   Demo1B: undefined;
   Demo2: undefined;

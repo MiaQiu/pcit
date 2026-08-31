@@ -3,14 +3,15 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 export interface WacbAnswers {
   parentingStressLevel?: number;
   q1Dawdle?: number;
-  q2MealBehavior?: number;
-  q3Disobey?: number;
-  q4Angry?: number;
-  q5Scream?: number;
-  q6Destroy?: number;
-  q7ProvokeFights?: number;
-  q8Interrupt?: number;
-  q9Attention?: number;
+  q2Disobey?: number;
+  q3Tantrum?: number;
+  q4Defiance?: number;
+  q5FocusDemand?: number;
+  q6Restless?: number;
+  q7TaskCompletion?: number;
+  q8Destroy?: number;
+  q9Aggression?: number;
+  q10LieSteal?: number;
 }
 
 export interface PlanDiscountInfo {
@@ -183,9 +184,9 @@ export function computeWacbScore(wacb: WacbAnswers): number {
 export type BehaviorCategory = 'stable' | 'mild' | 'medium' | 'high';
 
 export function getBehaviorCategory(score: number): BehaviorCategory {
-  if (score <= 25) return 'stable';
-  if (score <= 35) return 'mild';
-  if (score <= 45) return 'medium';
+  if (score <= 28) return 'stable';
+  if (score <= 39) return 'mild';
+  if (score <= 50) return 'medium';
   return 'high';
 }
 

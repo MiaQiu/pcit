@@ -365,15 +365,16 @@
     },
     "page7": {
       "wacbQuestions": {
-        "q1Dawdle": "Dawdling or dragging feet",
-        "q2MealBehavior": "Misbehaving at mealtime",
-        "q3Disobey": "Refusing to listen or follow rules",
-        "q4Angry": "Losing temper or physical aggression",
-        "q5Scream": "Screaming fits or tantrums",
-        "q6Destroy": "Breaking things or rough play",
-        "q7ProvokeFights": "Starting arguments or teasing",
-        "q8Interrupt": "Interrupting or demanding attention",
-        "q9Attention": "Struggling to focus or sit still"
+        "q1Dawdle": "Dawdling in daily routines",
+        "q2Disobey": "Refusing to listen or follow rules",
+        "q3Tantrum": "Tantrums that are hard to stop",
+        "q4Defiance": "Arguing or talking back to adults",
+        "q5FocusDemand": "Trouble focusing or demanding attention",
+        "q6Restless": "Interrupting or can't sit still",
+        "q7TaskCompletion": "Trouble finishing tasks on time",
+        "q8Destroy": "Breaking things or rough handling",
+        "q9Aggression": "Physical aggression or fights",
+        "q10LieSteal": "Lying or taking things"
       }
     },
     "page2": {
@@ -633,7 +634,7 @@
     },
     "unlock": {
       "title": "Ready for more personalized coaching?",
-      "subtitle": "Answer 9 quick questions (about 2 minutes) to unlock:",
+      "subtitle": "Answer 10 quick questions (about 2 minutes) to unlock:",
       "featureGrowthPlan": "Personalized Growth Plan",
       "featureSnapshot": "Child Snapshot",
       "featureTracking": "Progress Tracking",
@@ -660,40 +661,25 @@
     "coreFocusAreasSubtitle": "A quick picture of where {{childName}} is today. We'll use this to personalise your coaching journey.",
     "fromYourIntake": "From your intake",
     "focusAreas": {
-      "transitions": {
-        "label": "Transitions & Cooperation",
-        "level": "Moderate",
-        "focus": "Focus: Q1, Q2"
-      },
-      "energy": {
-        "label": "Focus & Energy",
-        "level": "High",
-        "focus": "Focus: Q5-Q7"
-      },
-      "boundaries": {
-        "label": "Boundaries",
-        "level": "Mild",
-        "focus": "Focus: Q8"
-      },
-      "attention": {
-        "label": "Focus & Cooperation",
-        "focus": "Focus: Attention & Following Directions",
-        "heroDescription": "Following directions and staying focused is where {{childName}} needs the most support right now. Nora's plan builds cooperation through clear, consistent follow-through."
-      },
-      "emotional": {
-        "label": "Emotional Balance",
-        "focus": "Focus: Meltdowns & Aggression",
-        "heroDescription": "Big feelings are {{childName}}'s biggest challenge right now — meltdowns and frustration when emotions run high. Nora's plan helps you stay calm and steady so these moments pass sooner."
-      },
       "routines": {
         "label": "Transitions & Routines",
         "focus": "Focus: Bedtime, Meals & Delays",
         "heroDescription": "Everyday transitions — bedtime, meals, and getting out the door — are the hardest part of the day for {{childName}} right now. Nora's plan makes these moments calmer and more predictable."
       },
-      "social": {
-        "label": "Social Boundaries",
-        "focus": "Focus: Peer & Sibling Interactions",
-        "heroDescription": "Getting along with peers and siblings is {{childName}}'s main focus area right now. Nora's plan works on sharing, turn-taking, and handling conflict without escalation."
+      "cooperation": {
+        "label": "Listening & Cooperation",
+        "focus": "Focus: Following Rules, Tantrums & Talking Back",
+        "heroDescription": "Listening the first time is a struggle for {{childName}} right now — \"no\", talking back, and tantrums when things don't go their way. Nora's plan builds cooperation with calm, consistent follow-through."
+      },
+      "selfControl": {
+        "label": "Focus & Self-Control",
+        "focus": "Focus: Attention, Sitting Still & Finishing Tasks",
+        "heroDescription": "Staying focused and seeing things through is where {{childName}} needs the most support right now — drifting off task, fidgeting, and struggling to finish. Nora's plan stretches attention and rewards follow-through."
+      },
+      "boundaries": {
+        "label": "Big Behaviors & Boundaries",
+        "focus": "Focus: Aggression, Property & Honesty",
+        "heroDescription": "Bigger behaviors are {{childName}}'s main focus area right now — physical aggression, rough handling of things, or bending the truth. Nora's plan pairs connection with firm, calm limits for the behaviors that can't be ignored."
       }
     },
     "journeyTitle": "Personalized Learning Journey",
@@ -720,16 +706,20 @@
         "title": "Practice Sharing & Turn-Taking",
         "body": "Model and praise taking turns during play, giving {{childName}} the skills to carry calmer, kinder interactions into time with peers and siblings."
       },
+      "curbBigBehaviors": {
+        "title": "Curb the Big Behaviors",
+        "body": "Stay calm and consistent when {{childName}} lashes out, breaks things, or bends the truth — a predictable, matter-of-fact response every single time is what teaches these behaviours don't work."
+      },
       "calmDiscipline": {
         "title": "Calm Discipline",
         "body": "With connection in place, add clear, consistent limits and calm follow-through for the behaviours that can't be ignored."
       }
     },
     "journeyDisciplineWhy": {
-      "emotional": "This is what finally shrinks the meltdowns — {{childName}} gets steady, predictable boundaries instead of a fight, which is exactly the outside structure a child needs to manage big feelings.",
-      "attention": "Consistent follow-through is what makes directions stick — {{childName}} learns that limits are real, so cooperation stops being an endless negotiation.",
       "routines": "Calm, consistent limits take the power struggle out of transitions — {{childName}} learns the routine holds firm, and the daily battles fade.",
-      "social": "{{childName}} learns that hurting others always meets the same calm, certain response — the consistency that carries straight into playing well with peers and siblings."
+      "cooperation": "Consistent follow-through is what makes directions stick — {{childName}} learns that limits are real, so listening stops being an endless negotiation.",
+      "selfControl": "Predictable limits give {{childName}} the outside structure to slow down, stay with a task, and manage the impulse to jump to the next thing.",
+      "boundaries": "{{childName}} learns that aggression, breaking things, and dishonesty always meet the same calm, certain response — and that consistency is what makes the big behaviours fade."
     },
     "phase1Badge": "PHASE 1",
     "phase1Title": "Child-Directed Interaction (CDI)",
@@ -1503,15 +1493,16 @@
       "scaleOften": "Often (5–6 times a week)",
       "scaleVeryOften": "Very often (more than 6 times a week)",
       "submitSurvey": "Submit Survey",
-      "q1": "In the past two weeks, how often has {{name}} taken too long to do things or dragged their feet on purpose?",
-      "q2": "In the past two weeks, how often has {{name}} acted up or misbehaved while eating?",
-      "q3": "In the past two weeks, how often has {{name}} refused to listen or said \"no\" to rules?",
-      "q4": "In the past two weeks, how often has {{name}} lost their temper or acted physically rough?",
-      "q5": "In the past two weeks, how often has {{name}} had a screaming fit or tantrum that was hard to stop?",
-      "q6": "In the past two weeks, how often has {{name}} broken things or been too rough with other people's toys?",
-      "q7": "In the past two weeks, how often has {{name}} started arguments or teased others on purpose?",
-      "q8": "In the past two weeks, how often has {{name}} interrupted conversations or demanded constant attention?",
-      "q9": "In the past two weeks, how often has {{name}} struggled to focus or been unable to sit still?",
+      "q1": "In the past two weeks, how often has {{name}} purposely dragged their feet during daily routine activities (e.g., mealtime or bedtime)?",
+      "q2": "In the past two weeks, how often has {{name}} refused to listen or said \"no\" when given rules or requests?",
+      "q3": "In the past two weeks, how often has {{name}} had a temper tantrum that was hard to stop (e.g., crying, whining, yelling, screaming, or throwing themselves on the floor)?",
+      "q4": "In the past two weeks, how often has {{name}} deliberately argued with, talked back to, or provoked adults?",
+      "q5": "In the past two weeks, how often has {{name}} had difficulty focusing on one activity or frequently demanded attention?",
+      "q6": "In the past two weeks, how often has {{name}} interrupted others or been unable to sit still?",
+      "q7": "In the past two weeks, how often has {{name}} had difficulty completing daily tasks or schoolwork on time?",
+      "q8": "In the past two weeks, how often has {{name}} broken things or handled other people's toys or belongings roughly?",
+      "q9": "In the past two weeks, how often has {{name}} acted physically aggressively or gotten into physical fights with others (e.g., parents, siblings, or peers)?",
+      "q10": "In the past two weeks, how often has {{name}} lied or stolen other people's belongings?",
       "submissionError": "Submission Error",
       "submissionFailed": "Failed to submit survey. Please try again."
     },

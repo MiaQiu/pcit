@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 async function checkSurveys() {
   try {
-    const surveys = await prisma.wacbSurvey.findMany({
+    const surveys = await prisma.childSnapshotSurvey.findMany({
       orderBy: { submittedAt: 'desc' },
       take: 5,
       select: {
@@ -12,7 +12,6 @@ async function checkSurveys() {
         submittedAt: true,
         parentingStressLevel: true,
         totalScore: true,
-        totalChangesNeeded: true,
         User: {
           select: {
             email: true,
@@ -22,7 +21,7 @@ async function checkSurveys() {
       }
     });
 
-    console.log('\n=== Recent WACB Survey Submissions ===\n');
+    console.log('\n=== Recent Child Snapshot Survey Submissions ===\n');
 
     if (surveys.length === 0) {
       console.log('No surveys found in database.');
@@ -33,14 +32,13 @@ async function checkSurveys() {
         console.log(`   User: ${survey.User.name} (${survey.User.email})`);
         console.log(`   Submitted: ${survey.submittedAt}`);
         console.log(`   Parenting Stress Level: ${survey.parentingStressLevel}/7`);
-        console.log(`   Total Score: ${survey.totalScore}/63`);
-        console.log(`   Changes Needed: ${survey.totalChangesNeeded}/9`);
+        console.log(`   Total Score: ${survey.totalScore}/70`);
         console.log('');
       });
     }
 
     // Get total count
-    const total = await prisma.wacbSurvey.count();
+    const total = await prisma.childSnapshotSurvey.count();
     console.log(`Total surveys in database: ${total}`);
 
   } catch (error) {

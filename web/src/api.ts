@@ -121,14 +121,15 @@ export function completeOnboarding(payload: CompleteOnboardingPayload, token: st
 export interface WacbPayload {
   parentingStressLevel?: number;
   q1Dawdle?: number;
-  q2MealBehavior?: number;
-  q3Disobey?: number;
-  q4Angry?: number;
-  q5Scream?: number;
-  q6Destroy?: number;
-  q7ProvokeFights?: number;
-  q8Interrupt?: number;
-  q9Attention?: number;
+  q2Disobey?: number;
+  q3Tantrum?: number;
+  q4Defiance?: number;
+  q5FocusDemand?: number;
+  q6Restless?: number;
+  q7TaskCompletion?: number;
+  q8Destroy?: number;
+  q9Aggression?: number;
+  q10LieSteal?: number;
 }
 
 export function submitWacbSurvey(payload: WacbPayload, token: string) {

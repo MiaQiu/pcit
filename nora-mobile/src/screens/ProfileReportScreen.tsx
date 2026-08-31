@@ -14,7 +14,7 @@ import { Button } from '../components/Button';
 import { COLORS, FONTS, PROFILE_REPORT_CHILD, PROFILE_REPORT_THANKS_DRAGON, REPORT_DETAIL_DRAGON } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, WacbSurvey, ParentSkillLevel } from '@nora/core';
+import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ChildSnapshotSurvey, ParentSkillLevel } from '@nora/core';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
 import { MarkdownText } from '../utils/MarkdownText';
@@ -133,9 +133,9 @@ const calculateAge = (birthday?: Date | string | null): number | null => {
   return Math.max(age, 0);
 };
 
-// ─── Core Focus Areas — derived from the WACB-N questionnaire ────────────────
-// The 9 WACB items group into 4 clinical domains; each domain's severity is
-// computed from its items' answers rather than hardcoded per domain.
+// ─── Core Focus Areas — derived from the Child Snapshot questionnaire ────────
+// The 10 Snapshot items group into 4 categories; each category's severity is
+// computed from its items' answers rather than hardcoded per category.
 
 type FocusSeverity = 'high' | 'moderate' | 'mild';
 
@@ -161,10 +161,10 @@ const severityForPoints = (points: Array<number | null>): FocusSeverity => {
 };
 
 const FOCUS_AREA_GROUPS = [
-  { key: 'routines', icon: 'time-outline', iconBg: '#FDECC8', iconColor: '#C2790C', fields: ['q1Dawdle', 'q2MealBehavior'] as const },
-  { key: 'emotional', icon: 'flash', iconBg: '#FCE0E0', iconColor: '#DC2626', fields: ['q4Angry', 'q5Scream', 'q6Destroy'] as const },
-  { key: 'attention', icon: 'locate-outline', iconBg: '#DBEAFE', iconColor: '#2563EB', fields: ['q3Disobey', 'q8Interrupt', 'q9Attention'] as const },
-  { key: 'social', icon: 'people-outline', iconBg: '#D8F3E9', iconColor: '#0F9D6C', fields: ['q7ProvokeFights'] as const },
+  { key: 'routines', icon: 'time-outline', iconBg: '#FDECC8', iconColor: '#C2790C', fields: ['q1Dawdle'] as const },
+  { key: 'cooperation', icon: 'chatbubbles-outline', iconBg: '#E0E7FF', iconColor: '#4F46E5', fields: ['q2Disobey', 'q3Tantrum', 'q4Defiance'] as const },
+  { key: 'selfControl', icon: 'locate-outline', iconBg: '#DBEAFE', iconColor: '#2563EB', fields: ['q5FocusDemand', 'q6Restless', 'q7TaskCompletion'] as const },
+  { key: 'boundaries', icon: 'flash', iconBg: '#FCE0E0', iconColor: '#DC2626', fields: ['q8Destroy', 'q9Aggression', 'q10LieSteal'] as const },
 ] as const;
 
 interface FocusAreaData {
@@ -179,7 +179,7 @@ interface FocusAreaData {
 // clinical group order defined in FOCUS_AREA_GROUPS.
 const SEVERITY_RANK: Record<FocusSeverity, number> = { high: 0, moderate: 1, mild: 2 };
 
-const computeFocusAreas = (survey: WacbSurvey): FocusAreaData[] =>
+const computeFocusAreas = (survey: ChildSnapshotSurvey): FocusAreaData[] =>
   FOCUS_AREA_GROUPS.map(group => ({
     key: group.key,
     icon: group.icon,
@@ -203,13 +203,13 @@ const PARENT_SKILL_LEVELS = PARENT_SKILL_LEVEL_ORDER.map(level => ({
 
 // The journey is a fixed 4-step arc: always start by filling the emotional
 // bank account and always end with calm discipline. The middle two steps are
-// picked from the parent's top-2 WACB focus areas (already severity-sorted),
+// picked from the parent's top-2 Snapshot focus areas (already severity-sorted),
 // so the plan reads as built around this child's specific priorities.
 const FOCUS_AREA_JOURNEY_STEP: Record<string, string> = {
-  emotional: 'coachFeelings',
-  attention: 'buildFocus',
   routines: 'smoothTransitions',
-  social: 'practiceSharing',
+  cooperation: 'coachFeelings',
+  selfControl: 'buildFocus',
+  boundaries: 'curbBigBehaviors',
 };
 
 /** PDI Coach's Corner — Two Choices Flow skills */
@@ -419,7 +419,7 @@ export const ProfileReportScreen: React.FC = () => {
 
   const loadFocusAreas = async () => {
     try {
-      const survey: WacbSurvey | null = await authService.getLatestWacbSurvey();
+      const survey: ChildSnapshotSurvey | null = await authService.getLatestSnapshotSurvey();
       setFocusAreas(survey ? computeFocusAreas(survey) : []);
     } catch (err) {
       setFocusAreas([]);

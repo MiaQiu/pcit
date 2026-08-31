@@ -474,6 +474,7 @@ model User {
   UserSkillProgress         UserSkillProgress[]
   ParentSkillProgress       ParentSkillProgress?
   WacbSurvey                WacbSurvey[]
+  ChildSnapshotSurvey       ChildSnapshotSurvey[]
   ChildProfiling            ChildProfiling[]
   Child                     Child[]
   WeeklyReport              WeeklyReport[]
@@ -611,6 +612,34 @@ model WacbSurvey {
   @@index([userId])
 }
 
+// Child Snapshot survey — 10-item behavior questionnaire + parenting stress
+// rating. Supersedes WacbSurvey (kept for historical rows only). Each qN field
+// is a raw 1-5 Likert value (Never..Very Often) as submitted by the client;
+// totalScore is the clinically-weighted point total computed server-side
+// (see server/routes/wacb-survey.cjs's VALUE_TO_POINTS mapping).
+model ChildSnapshotSurvey {
+  id                   String               @id
+  userId               String
+  submittedAt          DateTime             @default(now())
+  parentingStressLevel Int
+  q1Dawdle             Int
+  q2Disobey            Int
+  q3Tantrum            Int
+  q4Defiance           Int
+  q5FocusDemand        Int
+  q6Restless           Int
+  q7TaskCompletion     Int
+  q8Destroy            Int
+  q9Aggression         Int
+  q10LieSteal          Int
+  totalScore           Int
+  User                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ChildIssuePriority   ChildIssuePriority[]
+
+  @@index([submittedAt])
+  @@index([userId])
+}
+
 model ChildProfiling {
   id        String   @id @default(uuid())
   userId    String
@@ -668,8 +697,10 @@ model ChildIssuePriority {
   wacbScore     Int?
   computedAt    DateTime             @default(now())
   wacbSurveyId  String?
+  snapshotSurveyId String?
   Child         Child                @relation(fields: [childId], references: [id], onDelete: Cascade)
   WacbSurvey    WacbSurvey?          @relation(fields: [wacbSurveyId], references: [id], onDelete: SetNull)
+  ChildSnapshotSurvey ChildSnapshotSurvey? @relation(fields: [snapshotSurveyId], references: [id], onDelete: SetNull)
 
   @@index([childId])
   @@index([childId, computedAt])

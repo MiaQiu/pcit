@@ -1,10 +1,13 @@
 /**
- * WACB Questions Configuration
- * Defines all 9 WACB question screens
+ * Child Snapshot Questions Configuration
+ * Defines all 10 Child Snapshot question screens (formerly "WACB", 9 items).
  */
 
 import { TFunction } from 'i18next';
 import { MultipleChoiceScreenProps } from '../../components/MultipleChoiceScreen';
+import { OnboardingStackParamList } from '../../navigation/types';
+
+type ScreenName = keyof OnboardingStackParamList;
 
 const getScaleOptions = (t: TFunction) => [
   { value: 1, label: t('onboarding.wacb.scaleNever') },
@@ -14,138 +17,44 @@ const getScaleOptions = (t: TFunction) => [
   { value: 5, label: t('onboarding.wacb.scaleVeryOften') },
 ];
 
+// question key (i18n suffix under onboarding.wacb.*) → survey dataField, in screen order.
+const QUESTIONS: { i18nKey: string; field: string }[] = [
+  { i18nKey: 'q1', field: 'q1Dawdle' },
+  { i18nKey: 'q2', field: 'q2Disobey' },
+  { i18nKey: 'q3', field: 'q3Tantrum' },
+  { i18nKey: 'q4', field: 'q4Defiance' },
+  { i18nKey: 'q5', field: 'q5FocusDemand' },
+  { i18nKey: 'q6', field: 'q6Restless' },
+  { i18nKey: 'q7', field: 'q7TaskCompletion' },
+  { i18nKey: 'q8', field: 'q8Destroy' },
+  { i18nKey: 'q9', field: 'q9Aggression' },
+  { i18nKey: 'q10', field: 'q10LieSteal' },
+];
+
+const TOTAL = QUESTIONS.length;
+
 export const getWacbQuestions = (childName: string = 'your child', t: TFunction): Omit<MultipleChoiceScreenProps, 'navigation'>[] => {
   const SCALE_OPTIONS = getScaleOptions(t);
   const HEADER_TEXT = t('onboarding.wacb.headerText');
   const name = childName;
 
-  return [
-    {
+  return QUESTIONS.map((q, i) => {
+    const step = i + 1;
+    const isLast = step === TOTAL;
+    return {
       headerText: HEADER_TEXT,
-      title: t('onboarding.wacb.q1', { name }),
+      title: t(`onboarding.wacb.${q.i18nKey}`, { name }),
       options: SCALE_OPTIONS,
-      dataField: 'wacb.q1Dawdle',
-      nextScreen: 'WacbQuestion2',
-      prevScreen: 'ChildSnapshotIntro',
+      dataField: `wacb.${q.field}`,
+      nextScreen: (isLast ? 'ChildBehaviorProfile' : `WacbQuestion${step + 1}`) as ScreenName,
+      prevScreen: (step === 1 ? 'ChildSnapshotIntro' : `WacbQuestion${step - 1}`) as ScreenName,
+      ...(isLast ? { continueText: t('onboarding.wacb.submitSurvey') } : {}),
       phase: 2,
       singlePhaseHeader: true,
-      stepInPhase: 1,
-      totalStepsInPhase: 9,
-      screenName: 'wacb_q1',
-      screenStep: 29,
-    },
-    {
-      headerText: HEADER_TEXT,
-      title: t('onboarding.wacb.q2', { name }),
-      options: SCALE_OPTIONS,
-      dataField: 'wacb.q2MealBehavior',
-      nextScreen: 'WacbQuestion3',
-      prevScreen: 'WacbQuestion1',
-      phase: 2,
-      singlePhaseHeader: true,
-      stepInPhase: 2,
-      totalStepsInPhase: 9,
-      screenName: 'wacb_q2',
-      screenStep: 30,
-    },
-    {
-      headerText: HEADER_TEXT,
-      title: t('onboarding.wacb.q3', { name }),
-      options: SCALE_OPTIONS,
-      dataField: 'wacb.q3Disobey',
-      nextScreen: 'WacbQuestion4',
-      prevScreen: 'WacbQuestion2',
-      phase: 2,
-      singlePhaseHeader: true,
-      stepInPhase: 3,
-      totalStepsInPhase: 9,
-      screenName: 'wacb_q3',
-      screenStep: 31,
-    },
-    {
-      headerText: HEADER_TEXT,
-      title: t('onboarding.wacb.q4', { name }),
-      options: SCALE_OPTIONS,
-      dataField: 'wacb.q4Angry',
-      nextScreen: 'WacbQuestion5',
-      prevScreen: 'WacbQuestion3',
-      phase: 2,
-      singlePhaseHeader: true,
-      stepInPhase: 4,
-      totalStepsInPhase: 9,
-      screenName: 'wacb_q4',
-      screenStep: 32,
-    },
-    {
-      headerText: HEADER_TEXT,
-      title: t('onboarding.wacb.q5', { name }),
-      options: SCALE_OPTIONS,
-      dataField: 'wacb.q5Scream',
-      nextScreen: 'WacbQuestion6',
-      prevScreen: 'WacbQuestion4',
-      phase: 2,
-      singlePhaseHeader: true,
-      stepInPhase: 5,
-      totalStepsInPhase: 9,
-      screenName: 'wacb_q5',
-      screenStep: 33,
-    },
-    {
-      headerText: HEADER_TEXT,
-      title: t('onboarding.wacb.q6', { name }),
-      options: SCALE_OPTIONS,
-      dataField: 'wacb.q6Destroy',
-      nextScreen: 'WacbQuestion7',
-      prevScreen: 'WacbQuestion5',
-      phase: 2,
-      singlePhaseHeader: true,
-      stepInPhase: 6,
-      totalStepsInPhase: 9,
-      screenName: 'wacb_q6',
-      screenStep: 34,
-    },
-    {
-      headerText: HEADER_TEXT,
-      title: t('onboarding.wacb.q7', { name }),
-      options: SCALE_OPTIONS,
-      dataField: 'wacb.q7ProvokeFights',
-      nextScreen: 'WacbQuestion8',
-      prevScreen: 'WacbQuestion6',
-      phase: 2,
-      singlePhaseHeader: true,
-      stepInPhase: 7,
-      totalStepsInPhase: 9,
-      screenName: 'wacb_q7',
-      screenStep: 35,
-    },
-    {
-      headerText: HEADER_TEXT,
-      title: t('onboarding.wacb.q8', { name }),
-      options: SCALE_OPTIONS,
-      dataField: 'wacb.q8Interrupt',
-      nextScreen: 'WacbQuestion9',
-      prevScreen: 'WacbQuestion7',
-      phase: 2,
-      singlePhaseHeader: true,
-      stepInPhase: 8,
-      totalStepsInPhase: 9,
-      screenName: 'wacb_q8',
-      screenStep: 36,
-    },
-    {
-      headerText: HEADER_TEXT,
-      title: t('onboarding.wacb.q9', { name }),
-      options: SCALE_OPTIONS,
-      dataField: 'wacb.q9Attention',
-      nextScreen: 'ChildBehaviorProfile',
-      prevScreen: 'WacbQuestion8',
-      continueText: t('onboarding.wacb.submitSurvey'),
-      phase: 2,
-      singlePhaseHeader: true,
-      stepInPhase: 9,
-      totalStepsInPhase: 9,
-      screenName: 'wacb_q9',
-      screenStep: 37,
-    },
-  ];
+      stepInPhase: step,
+      totalStepsInPhase: TOTAL,
+      screenName: `wacb_q${step}`,
+      screenStep: 28 + step,
+    };
+  });
 };

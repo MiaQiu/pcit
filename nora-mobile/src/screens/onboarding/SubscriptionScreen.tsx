@@ -104,7 +104,7 @@ export const SubscriptionScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!checkingFreeAccount) amplitudeService.trackOnboardingScreen('subscription', 44);
+    if (!checkingFreeAccount) amplitudeService.trackOnboardingScreen('subscription', 45);
   }, [checkingFreeAccount]);
 
   // Save all onboarding data to backend as soon as the subscription screen loads.

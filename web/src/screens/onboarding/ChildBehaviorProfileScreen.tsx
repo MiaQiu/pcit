@@ -43,7 +43,7 @@ export default function ChildBehaviorProfileScreen() {
   ];
 
   return (
-    <OnboardingLayout progress={81} backTo="/onboarding/wacb/9">
+    <OnboardingLayout progress={81} backTo="/onboarding/wacb/10">
 
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
         <h1 className="text-[#1E2939] text-xl font-bold leading-tight mb-1 text-center">
@@ -78,11 +78,11 @@ export default function ChildBehaviorProfileScreen() {
             <div className="w-full h-2.5 bg-white/60 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${Math.min((score / 63) * 100, 100)}%`, backgroundColor: profile.color }}
+                style={{ width: `${Math.min((score / 70) * 100, 100)}%`, backgroundColor: profile.color }}
               />
             </div>
             <div className="flex justify-between text-xs mt-1" style={{ color: profile.color }}>
-              <span>0</span><span>63</span>
+              <span>0</span><span>70</span>
             </div>
           </div>
         </div>

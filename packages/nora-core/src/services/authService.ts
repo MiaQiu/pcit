@@ -4,7 +4,7 @@ import type {
   LoginResponse,
   SignupResponse,
   SignupRequest,
-  WacbSurvey,
+  ChildSnapshotSurvey,
   ParentSkillLevelInfo,
 } from '../types';
 
@@ -533,27 +533,27 @@ class AuthService {
   }
 
   /**
-   * The user's most recent WACB-N survey submission, or null if they haven't
-   * completed one yet (GET /latest 404s in that case).
+   * The user's most recent Child Snapshot survey submission, or null if they
+   * haven't completed one yet (GET /latest 404s in that case).
    */
-  async getLatestWacbSurvey(): Promise<WacbSurvey | null> {
+  async getLatestSnapshotSurvey(): Promise<ChildSnapshotSurvey | null> {
     const response = await this.authenticatedRequest(
       `${this.apiUrl}/api/wacb-survey/latest`
     );
     if (response.status === 404) return null;
     if (!response.ok) {
-      throw new Error(await parseErrorResponse(response, 'Failed to fetch WACB survey'));
+      throw new Error(await parseErrorResponse(response, 'Failed to fetch Child Snapshot survey'));
     }
     const { survey } = await response.json();
     return survey;
   }
 
   /**
-   * Whether the user has ever submitted a WACB-N survey — used to gate the
-   * "unlock my child's plan" upsell.
+   * Whether the user has ever submitted a Child Snapshot survey — used to gate
+   * the "unlock my child's plan" upsell.
    */
-  async hasCompletedWacbSurvey(): Promise<boolean> {
-    return (await this.getLatestWacbSurvey()) !== null;
+  async hasCompletedSnapshotSurvey(): Promise<boolean> {
+    return (await this.getLatestSnapshotSurvey()) !== null;
   }
 
   /**
