@@ -181,6 +181,9 @@ export type RootStackParamList = {
   GetReadySection: {
     sectionKey: string;
   };
+  QuickGuide: {
+    guide: 'why5mins' | 'whyRecord';
+  };
 };
 
 export type RootTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;

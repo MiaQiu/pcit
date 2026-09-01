@@ -1210,7 +1210,28 @@
     "playGuideTitle": "Play Guide",
     "playGuideSubtitle": "Get set for your first play",
     "playGuideMeta": "8 quick topics",
-    "gettingStartedTitle": "Getting Started"
+    "gettingStartedTitle": "Getting Started",
+    "quickGuidesTitle": "Quick Guides",
+    "quickGuides": {
+      "why5mins": {
+        "cardTitle": "Why only 5 minutes?",
+        "titleLine1": "Why only",
+        "titleLine2": "5 minutes?",
+        "card1": "Because this isn't just play.\nIt's ~~focused practice.~~",
+        "card2": "Think of it as an **Emotional Massage** — a short, concentrated dose of positive attention.",
+        "card3": "Like a **gym for your parenting muscles,** focused practice helps these skills become more natural over time, even during stress time.",
+        "card4": "5 focused minutes\n> ~~a long distracted hour.~~"
+      },
+      "whyRecord": {
+        "cardTitle": "Why do I need to record?",
+        "titleLine1": "Why do I",
+        "titleLine2": "need to record?",
+        "card1": "Because pressing Record puts you in ~~practice mode.~~",
+        "card1Body": "Parents tell us they feel more present and intentional once they hit Record — putting the skills they're learning into practice.",
+        "card2": "Nora then helps you spot **what you might miss** and what to try next.",
+        "card3": "It's not a test.\n~~It's your mirror.~~"
+      }
+    }
   },
   "learnV3": {
     "title": "Nora Foundations",

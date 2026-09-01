@@ -1252,7 +1252,28 @@
     "playGuideTitle": "游戏指南",
     "playGuideSubtitle": "为第一次亲子游戏做好准备",
     "playGuideMeta": "8 个要点",
-    "gettingStartedTitle": "入门指南"
+    "gettingStartedTitle": "入门指南",
+    "quickGuidesTitle": "快速指南",
+    "quickGuides": {
+      "why5mins": {
+        "cardTitle": "为什么只有 5 分钟？",
+        "titleLine1": "为什么只有",
+        "titleLine2": "5 分钟？",
+        "card1": "因为这不只是玩耍，\n而是 ~~专注的练习。~~",
+        "card2": "把它想成一次**情绪按摩**——短暂而集中的积极关注。",
+        "card3": "就像**锻炼你的育儿肌肉，**专注练习能让这些技巧随时间变得更自然，哪怕在压力时刻。",
+        "card4": "5 分钟的专注\n> ~~胜过一小时的心不在焉。~~"
+      },
+      "whyRecord": {
+        "cardTitle": "为什么需要录制？",
+        "titleLine1": "为什么",
+        "titleLine2": "需要录制？",
+        "card1": "因为按下录制，会让你进入~~练习模式。~~",
+        "card1Body": "家长告诉我们，一旦按下录制，他们会更专注、更用心——把正在学习的技巧真正付诸练习。",
+        "card2": "然后 Nora 会帮你发现**你可能忽略的地方**，以及下一步可以尝试什么。",
+        "card3": "这不是考试，\n~~而是你的镜子。~~"
+      }
+    }
   },
   "learnV3": {
     "title": "Professor Yi-Chuen Chen",

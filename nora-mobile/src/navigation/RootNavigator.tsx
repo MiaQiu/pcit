@@ -43,6 +43,7 @@ import { ReferralScreen } from '../screens/ReferralScreen';
 import { ABCLogScreen } from '../screens/ABCLogScreen';
 import { HomeCardDetailScreen } from '../screens/HomeCardDetailScreen';
 import { GetReadyToPlayScreen } from '../screens/GetReadyToPlayScreen';
+import { QuickGuideScreen } from '../screens/QuickGuideScreen';
 import { GetReadySectionScreen } from '../screens/GetReadySectionScreen';
 import { RootStackParamList, OnboardingStackParamList } from './types';
 import { useAuthService, useLessonService } from '../contexts/AppContext';
@@ -500,6 +501,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="GetReadySection"
         component={GetReadySectionScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="QuickGuide"
+        component={QuickGuideScreen}
         options={{
           animation: 'slide_from_right',
         }}

@@ -188,6 +188,55 @@ const NoraFoundationsSection: React.FC<NoraFoundationsSectionProps> = ({ cardWid
   );
 };
 
+// ─── Quick Guides section ────────────────────────────────────────────────────
+
+const QUICK_GUIDE_IMAGES = {
+  why5mins: require('../../assets/images/new onboarding/why5mins.png'),
+  whyRecord: require('../../assets/images/new onboarding/whyrecord.png'),
+} as const;
+
+const QUICK_GUIDES: { guide: 'why5mins' | 'whyRecord' }[] = [
+  { guide: 'why5mins' },
+  { guide: 'whyRecord' },
+];
+
+interface QuickGuidesSectionProps {
+  cardWidth: number;
+  onGuidePress: (guide: 'why5mins' | 'whyRecord') => void;
+}
+
+const QuickGuidesSection: React.FC<QuickGuidesSectionProps> = ({ cardWidth, onGuidePress }) => {
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.demoVideoGrid}>
+      {QUICK_GUIDES.map(({ guide }) => (
+        <TouchableOpacity
+          key={guide}
+          style={[styles.noraCardShadow, { width: cardWidth }]}
+          onPress={() => onGuidePress(guide)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.noraCardInner}>
+            <View style={[styles.lessonImageWrap, styles.quickGuideImageWrap]}>
+              <Image
+                source={QUICK_GUIDE_IMAGES[guide]}
+                style={styles.quickGuideImage}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.lessonCardText}>
+              <Text style={styles.lessonTitle} numberOfLines={2}>
+                {t(`learnV2.quickGuides.${guide}.cardTitle`)}
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+};
+
 // ─── Module section ───────────────────────────────────────────────────────────
 
 interface ModuleSectionProps {
@@ -643,6 +692,14 @@ export const LearnScreen_v2: React.FC = () => {
               navigation.push('GetReadyToPlay');
             }}
           />
+          <Text style={[styles.sectionTitle, styles.sectionTitleBelow]}>{t('learnV2.quickGuidesTitle')}</Text>
+          <QuickGuidesSection
+            cardWidth={demoVideoCardWidth}
+            onGuidePress={guide => {
+              amplitudeService.trackEvent('Learn Quick Guide Tapped', { guide });
+              navigation.push('QuickGuide', { guide });
+            }}
+          />
           <Text style={[styles.sectionTitle, styles.sectionTitleBelow]}>{t('learnV2.demoVideosTitle')}</Text>
           <DemoVideosSection
             videos={demoVideos}
@@ -809,6 +866,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
+    zIndex: 1,
+  },
+  quickGuideImageWrap: {
+    backgroundColor: '#F1E9FB',
+  },
+  quickGuideImage: {
+    width: '82%',
+    height: '82%',
     zIndex: 1,
   },
   decoCircleLg: {
