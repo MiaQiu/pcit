@@ -791,36 +791,37 @@ export const ProfileReportScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Your level + tomorrow's goal — the standing plan, ended with a soft exit */}
+        {/* Your current level & target — one section (Snapshot / journey
+            format), ended with a soft exit */}
         {(() => {
           const levelKey = PARENT_SKILL_LEVEL_KEYS[parentSkillLevel];
           return (
-            <View style={styles.standingPlanSection}>
-              <TouchableOpacity style={styles.levelCard} activeOpacity={0.85} onPress={handleLevelCardPress}>
-                <View style={styles.levelHeaderRow}>
-                  <View style={styles.levelStarBadge}>
-                    <Ionicons name="star" size={13} color={COLORS.mainPurple} />
-                  </View>
-                  <Text style={styles.levelHeaderLabel}>{t('reportV2.parentingLevel')}</Text>
-                  <Ionicons name="chevron-forward" size={16} color="#9CA3AF" style={styles.levelHeaderChevron} />
-                </View>
-                <View style={styles.levelBodyRow}>
+            <View style={styles.journeySection}>
+              <Text style={styles.cardTitle}>{t('profileReport.currentLevelTitle')}</Text>
+              <Text style={styles.sectionSubtitle}>{t('profileReport.currentLevelSubtitle', { childName })}</Text>
+
+              <View style={styles.journeyCard}>
+                <TouchableOpacity style={styles.currentLevelRow} activeOpacity={0.85} onPress={handleLevelCardPress}>
                   <View style={styles.levelNumberBadge}>
                     <Text style={styles.levelNumberText}>{parentSkillLevel}</Text>
                   </View>
                   <View style={styles.levelBodyTextCol}>
+                    <Text style={styles.currentLevelEyebrow}>{t('reportV2.levelHeading', { level: parentSkillLevel })}</Text>
                     <Text style={styles.levelTitle}>{t(`profileReport.levels.${levelKey}.title`)}</Text>
                     <Text style={styles.levelSubtitle}>{t(`profileReport.levels.${levelKey}.goal`)}</Text>
                   </View>
-                </View>
-              </TouchableOpacity>
+                  <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                </TouchableOpacity>
 
-              <View style={styles.tomorrowGoalCard}>
-                <View style={styles.tomorrowGoalHeader}>
-                  <Ionicons name="flag" size={15} color={COLORS.mainPurple} />
-                  <Text style={styles.tomorrowGoalTitle}>{t('reportDetail.tomorrowGoal.title')}</Text>
+                <View style={styles.currentTargetRow}>
+                  <View style={styles.currentTargetIcon}>
+                    <Ionicons name="flag" size={14} color={COLORS.mainPurple} />
+                  </View>
+                  <View style={styles.levelBodyTextCol}>
+                    <Text style={styles.currentTargetLabel}>{t('reportDetail.tomorrowGoal.title')}</Text>
+                    <Text style={styles.currentTargetValue}>{t(`profileReport.levels.${levelKey}.shortGoal`)}</Text>
+                  </View>
                 </View>
-                <Text style={styles.tomorrowGoalValue}>{t(`profileReport.levels.${levelKey}.clearGoal`)}</Text>
               </View>
 
               <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
@@ -1269,47 +1270,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // ── Your level + tomorrow's goal + exit ──
-  standingPlanSection: {
-    marginBottom: 24,
-  },
-  levelCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    borderWidth: 1.5,
-    borderColor: '#E5E7EB',
-    padding: 18,
-    marginBottom: 12,
-  },
-  levelHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 14,
-  },
-  levelStarBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#EDE7F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  levelHeaderLabel: {
-    flex: 1,
-    fontFamily: FONTS.semiBold,
-    fontSize: 13,
-    color: COLORS.mainPurple,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  levelHeaderChevron: {
-    marginLeft: 'auto',
-  },
-  levelBodyRow: {
+  // ── Your current level & target + exit ──
+  currentLevelRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
+    padding: 18,
+  },
+  currentLevelEyebrow: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: COLORS.mainPurple,
+    marginBottom: 3,
   },
   levelNumberBadge: {
     width: 44,
@@ -1339,29 +1313,36 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: '#6B7280',
   },
-  tomorrowGoalCard: {
-    backgroundColor: '#F5F0FF',
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 16,
-  },
-  tomorrowGoalHeader: {
+  currentTargetRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
+    gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#EFEAF7',
+    backgroundColor: '#F9F6FF',
   },
-  tomorrowGoalTitle: {
+  currentTargetIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#EDE7F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  currentTargetLabel: {
     fontFamily: FONTS.bold,
-    fontSize: 14,
-    color: COLORS.mainPurple,
-    textTransform: 'uppercase',
+    fontSize: 11,
     letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: COLORS.mainPurple,
+    marginBottom: 2,
   },
-  tomorrowGoalValue: {
+  currentTargetValue: {
     fontFamily: FONTS.semiBold,
-    fontSize: 16,
-    lineHeight: 23,
+    fontSize: 15,
+    lineHeight: 21,
     color: COLORS.textDark,
   },
   seeYouTomorrowButton: {
@@ -1369,6 +1350,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 16,
     alignItems: 'center',
+    marginTop: 14,
   },
   seeYouTomorrowButtonText: {
     fontFamily: FONTS.bold,

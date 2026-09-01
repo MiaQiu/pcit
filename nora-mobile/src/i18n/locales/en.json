@@ -722,6 +722,8 @@
     },
     "journeyTitle": "Personalized Learning Journey",
     "journeySubtitle": "This plan tackles it first, ordered by what matters most for {{childName}}.",
+    "currentLevelTitle": "Your Current Level & Target",
+    "currentLevelSubtitle": "Where you are on the skill ladder, and the goal to aim for in your next session with {{childName}}.",
     "journeyPlan": {
       "phase1": "Child-Led Play",
       "phase2": "Calm Discipline",
@@ -868,63 +870,72 @@
         "skill": "Reduce Criticism",
         "goal": "Build a safe, judgment-free play space.",
         "learn": "Notice the urge to correct • Let mistakes be mistakes • Replace critical words with calm acceptance",
-        "clearGoal": "Keep criticism to 3 or fewer in a single session."
+        "clearGoal": "Keep criticism to 3 or fewer in a single session.",
+        "shortGoal": "3 or fewer criticisms"
       },
       "patienceBuilder": {
         "title": "Patience Builder",
         "skill": "Reduce Commands",
         "goal": "Let your child lead without direction.",
         "learn": "Sit on your hands • Resist giving instructions • Let your child choose the play",
-        "clearGoal": "Keep commands to 3 or fewer in a single session."
+        "clearGoal": "Keep commands to 3 or fewer in a single session.",
+        "shortGoal": "3 or fewer commands"
       },
       "presenceBuilder": {
         "title": "Presence Builder",
         "skill": "Reduce Questions",
         "goal": "Stay present without quizzing.",
         "learn": "Swap questions for statements • Describe instead of ask • Let curiosity come from your child",
-        "clearGoal": "Keep questions to 3 or fewer in a single session."
+        "clearGoal": "Keep questions to 3 or fewer in a single session.",
+        "shortGoal": "3 or fewer questions"
       },
       "confidenceBuilder": {
         "title": "Confidence Builder",
         "skill": "Specific Praise",
         "goal": "Help your child feel capable.",
         "learn": "Labeled praise • Praise effort instead of outcome • Build confidence through positive attention",
-        "clearGoal": "Give 5 or more labeled praises in a single session."
+        "clearGoal": "Give 10 or more labeled praises in a single session.",
+        "shortGoal": "10 labeled praises"
       },
       "attentionBuilder": {
         "title": "Attention Builder",
         "skill": "Narration",
         "goal": "Increase focus and engagement.",
         "learn": "Describe what the child is doing • Keep the child engaged • Extend attention span",
-        "clearGoal": "Narrate what your child is doing 5 or more times in a single session."
+        "clearGoal": "Narrate what your child is doing 10 or more times in a single session.",
+        "shortGoal": "10 narrations"
       },
       "communicationBuilder": {
         "title": "Communication Builder",
         "skill": "Reflection (Echo)",
         "goal": "Help your child feel understood.",
         "learn": "Repeat and expand what the child says • Encourage language • Show active listening",
-        "clearGoal": "Echo what your child says 5 or more times in a single."
+        "clearGoal": "Echo what your child says 10 or more times in a single session.",
+        "shortGoal": "10 echoes"
       },
       "cooperationBuilder": {
         "title": "Cooperation Builder",
         "skill": "Clear Instructions",
         "goal": "Increase everyday cooperation.",
         "learn": "Give effective commands • One instruction at a time • Wait before repeating",
-        "clearGoal": "Give at least 1 clear command in a Discipline session, for 2 qualifying sessions."
+        "clearGoal": "Give at least 1 clear command in a Discipline session, for 2 qualifying sessions.",
+        "shortGoal": "1+ clear command, 2 sessions"
       },
       "boundaryBuilder": {
         "title": "Boundary Builder",
         "skill": "Calm Follow-Through",
         "goal": "Build respectful boundaries.",
         "learn": "Stay calm • Be consistent • Follow through on limits • Reduce power struggles",
-        "clearGoal": "Give a clear command with zero criticism in a Discipline session, for 2 qualifying sessions."
+        "clearGoal": "Give a clear command with zero criticism in a Discipline session, for 2 qualifying sessions.",
+        "shortGoal": "Clear command, zero criticism, 2 sessions"
       },
       "confidentParent": {
         "title": "Confident Parent",
         "skill": "Putting It All Together",
         "goal": "Use the right parenting skill at the right moment.",
         "learn": "Follow Child's Lead • Praise • Narration • Reflection • Clear Instructions • Calm Follow-Through",
-        "clearGoal": "Bring every skill together with zero criticism, for 2 qualifying sessions."
+        "clearGoal": "Bring every skill together with zero criticism, for 2 qualifying sessions.",
+        "shortGoal": "Every skill, zero criticism, 2 sessions"
       }
     }
   },
