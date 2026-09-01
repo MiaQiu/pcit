@@ -742,9 +742,75 @@
         "cooperation": "Reflecting {{childName}}'s words back is what makes them feel heard, so they dig in less.",
         "selfControl": "A running description of {{childName}}'s play is what holds their attention and slowly stretches it.",
         "boundaries": "Naming {{childName}}'s gentle and honest moments out loud is what makes those the moments they repeat."
+      },
+      "levelHelp": {
+        "calmBuilder": {
+          "generic": "Cutting corrections and \"not like that\" clears the tension out of play, so {{childName}} isn't braced for a telling-off.",
+          "routines": "When transitions stop coming with corrections, {{childName}} isn't already on edge before the next request.",
+          "cooperation": "Less criticism means fewer things for {{childName}} to argue back against, so requests stop escalating.",
+          "selfControl": "A steady stream of corrections keeps pulling {{childName}} out of what they're doing — dropping them protects focus.",
+          "boundaries": "Big behaviours often follow feeling attacked; calm acceptance lowers {{childName}}'s defences before a limit is even needed."
+        },
+        "patienceBuilder": {
+          "generic": "Fewer instructions during play hand the lead back to {{childName}}, so time with you feels less like being managed.",
+          "routines": "Bedtime and meals are already full of instructions — easing off in play keeps {{childName}} from tuning them all out.",
+          "cooperation": "Every extra command is another chance for a standoff; fewer of them means {{childName}} pushes back less.",
+          "selfControl": "Constant direction interrupts {{childName}}'s train of thought — stepping back lets them stay with a task.",
+          "boundaries": "When play isn't a series of orders, {{childName}} has less to defy, and the limits that matter stand out."
+        },
+        "presenceBuilder": {
+          "generic": "Swapping questions for statements takes the quiz out of play, so {{childName}} can just relax into it.",
+          "routines": "A run of questions stalls a transition — describing what you see instead keeps things moving for {{childName}}.",
+          "cooperation": "Questions can land like demands; fewer of them keeps the mood cooperative rather than confrontational.",
+          "selfControl": "Each question makes {{childName}} stop and switch to answering — cutting them protects a fragile attention span.",
+          "boundaries": "Rapid-fire questions can feel like an interrogation; easing off keeps {{childName}} from getting defensive."
+        },
+        "confidenceBuilder": {
+          "generic": "Naming exactly what {{childName}} did well makes them want to do it again — you grow the behaviour you want to see.",
+          "routines": "Praising each small cooperative step through a transition makes {{childName}} more likely to repeat it next time.",
+          "cooperation": "Labeled praise for listening the first time gives {{childName}} a reason to cooperate that isn't a battle.",
+          "selfControl": "Calling out the moments {{childName}} sticks with something builds the persistence to finish tasks.",
+          "boundaries": "Praising {{childName}}'s gentle, honest, careful moments out loud makes those the behaviours that get repeated."
+        },
+        "attentionBuilder": {
+          "generic": "A running description of {{childName}}'s play holds their attention on you and stretches how long they stay engaged.",
+          "routines": "Narrating the steps out loud gives {{childName}} a calm, predictable script to move through the routine.",
+          "cooperation": "Describing what {{childName}} is doing keeps you connected without adding demands, so cooperation comes easier.",
+          "selfControl": "Describing {{childName}}'s actions as they work anchors their attention and slowly builds focus.",
+          "boundaries": "Steady, calm narration keeps {{childName}} regulated and engaged, heading off the build-up to big behaviours."
+        },
+        "communicationBuilder": {
+          "generic": "Repeating {{childName}}'s words back grows their language and makes them feel genuinely heard by you.",
+          "routines": "Reflecting {{childName}}'s protests (\"you don't want to stop yet\") helps them feel understood, so the transition goes smoother.",
+          "cooperation": "When {{childName}} feels heard, they dig in less — reflection defuses the talking-back before it starts.",
+          "selfControl": "Echoing {{childName}}'s ideas back keeps them talking and thinking with you, extending engaged attention.",
+          "boundaries": "Feeling understood lowers the frustration that often tips {{childName}} into aggression."
+        },
+        "cooperationBuilder": {
+          "generic": "One clear, direct instruction at a time makes it possible for {{childName}} to actually succeed and follow through.",
+          "routines": "Clear one-step instructions give {{childName}} something doable at each point in the routine.",
+          "cooperation": "Direct, single instructions remove the wiggle room {{childName}} uses to negotiate or ignore.",
+          "selfControl": "Short, specific instructions match {{childName}}'s attention span, so they can follow without getting lost.",
+          "boundaries": "A calm, clear instruction states the boundary plainly, so {{childName}} knows what's expected before things escalate."
+        },
+        "boundaryBuilder": {
+          "generic": "Following through calmly and consistently teaches {{childName}} that limits are real — without a power struggle.",
+          "routines": "When the routine holds firm every time, {{childName}} stops testing it and the daily battles fade.",
+          "cooperation": "Consistent follow-through is what makes instructions stick — {{childName}} learns that \"no\" means no.",
+          "selfControl": "Predictable limits give {{childName}} the outside structure to slow down and manage impulses.",
+          "boundaries": "Meeting aggression or dishonesty with the same calm, certain response every time is what makes big behaviours fade."
+        },
+        "confidentParent": {
+          "generic": "With every skill in hand, you reach for the right one in the moment — connection and limits working together.",
+          "routines": "Blending praise, narration, and calm limits lets you handle whatever a transition throws at you.",
+          "cooperation": "Using the whole toolkit fluidly keeps everyday cooperation steady, not dependent on one trick.",
+          "selfControl": "Moving between engagement and structure as needed gives {{childName}} consistent support for focus.",
+          "boundaries": "Pairing warmth with firm, calm limits is what keeps the big behaviours shrinking for good."
+        }
       }
     },
     "journeyDisciplineWhy": {
+      "generic": "Calm, consistent limits teach {{childName}} that boundaries are real — so cooperation stops being a daily negotiation.",
       "routines": "Calm, consistent limits take the power struggle out of transitions — {{childName}} learns the routine holds firm, and the daily battles fade.",
       "cooperation": "Consistent follow-through is what makes directions stick — {{childName}} learns that limits are real, so listening stops being an endless negotiation.",
       "selfControl": "Predictable limits give {{childName}} the outside structure to slow down, stay with a task, and manage the impulse to jump to the next thing.",
@@ -1122,7 +1188,7 @@
     "completeFoundationFirst": "Complete the Foundation module first",
     "noLessonsFound": "No lessons found",
     "tryDifferentSearch": "Try a different search term",
-    "noraFoundationsDuration": "120 min",
+    "noraFoundationsDuration": "60 min",
     "demoVideosTitle": "Demo Videos",
     "timeAgo": {
       "years_one": "{{count}} year ago",

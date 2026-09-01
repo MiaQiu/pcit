@@ -741,9 +741,75 @@
         "cooperation": "把 {{childName}} 的话复述回去，才能让他感到被理解，也就少一些对抗。",
         "selfControl": "对 {{childName}} 的游戏持续地描述，才能抓住他的注意力并慢慢延长。",
         "boundaries": "把 {{childName}} 温和、诚实的时刻大声说出来，才能让这些正是他会重复的行为。"
+      },
+      "levelHelp": {
+        "calmBuilder": {
+          "generic": "少一些纠正和「不是这样」，能把游戏里的紧张感清掉，{{childName}} 不用一直提防被数落。",
+          "routines": "当过渡时不再伴随纠正，{{childName}} 在面对下一个要求前就不会已经紧绷。",
+          "cooperation": "少一些批评，{{childName}} 能拿来顶嘴的点也就少了，要求不会越演越烈。",
+          "selfControl": "接连不断的纠正会一再把 {{childName}} 从手上的事里拉出来，去掉它就能保护专注。",
+          "boundaries": "重大行为常常源于觉得被攻击；平静的接纳能在还没立规矩前就降低 {{childName}} 的戒备。"
+        },
+        "patienceBuilder": {
+          "generic": "游戏中少给指令，把主导权交回给 {{childName}}，和你相处就不那么像被管着。",
+          "routines": "睡前和吃饭本来就充满指令——游戏里少一些，{{childName}} 才不会把它们全当耳边风。",
+          "cooperation": "每多一个命令就多一次僵持的机会；少一些，{{childName}} 的对抗也就少一些。",
+          "selfControl": "不停的指挥会打断 {{childName}} 的思路——退一步，他才能专注在一件事上。",
+          "boundaries": "当游戏不再是一连串命令，{{childName}} 能违抗的东西就少了，真正重要的界限也更清楚。"
+        },
+        "presenceBuilder": {
+          "generic": "把提问换成陈述，能把游戏里的「考试感」去掉，{{childName}} 才能放松地投入。",
+          "routines": "过渡时一连串问题会让它卡住——改成描述你看到的，能让 {{childName}} 保持往前走。",
+          "cooperation": "提问有时听起来像要求；少一些，气氛才会是合作而不是对峙。",
+          "selfControl": "每个问题都让 {{childName}} 停下来切换去回答——去掉它能保护脆弱的注意力。",
+          "boundaries": "连珠炮式的提问会像审问；缓一缓能让 {{childName}} 不那么防备。"
+        },
+        "confidenceBuilder": {
+          "generic": "明确说出 {{childName}} 哪里做得好，会让他想再做一次——你在培养你想看到的行为。",
+          "routines": "为过渡中每一个小小的配合动作表扬，{{childName}} 下次更可能重复。",
+          "cooperation": "为「第一次就听」而具体表扬，给了 {{childName}} 一个不靠对抗的合作理由。",
+          "selfControl": "点出 {{childName}} 坚持做一件事的时刻，能培养把任务做完的毅力。",
+          "boundaries": "把 {{childName}} 温和、诚实、小心的时刻大声说出来，会让这些成为他重复的行为。"
+        },
+        "attentionBuilder": {
+          "generic": "持续描述 {{childName}} 的游戏，能把他的注意力留在你身上，并延长他投入的时间。",
+          "routines": "把步骤说出来，给 {{childName}} 一个平静、可预期的脚本来走完这段流程。",
+          "cooperation": "描述 {{childName}} 在做什么，能在不加要求的情况下保持连接，合作也就更容易。",
+          "selfControl": "边做边描述 {{childName}} 的动作，能锚住他的注意力，慢慢建立专注。",
+          "boundaries": "平稳、平静的描述能让 {{childName}} 保持稳定和投入，化解走向重大行为的累积。"
+        },
+        "communicationBuilder": {
+          "generic": "把 {{childName}} 的话复述回去，能发展语言，也让他真切地感到被你听见。",
+          "routines": "复述 {{childName}} 的抗议（「你还不想停」），让他感到被理解，过渡会更顺。",
+          "cooperation": "当 {{childName}} 感到被听见，他就没那么固执——复述能在顶嘴开始前就化解它。",
+          "selfControl": "把 {{childName}} 的想法回应回去，能让他和你一起持续地说和想，延长投入的注意力。",
+          "boundaries": "被理解的感觉能降低那份常常让 {{childName}} 转为攻击的挫败感。"
+        },
+        "cooperationBuilder": {
+          "generic": "一次一个清晰、直接的指令，才让 {{childName}} 真的有可能做到并完成。",
+          "routines": "清晰的单步指令，在流程的每个环节都给 {{childName}} 一件做得到的事。",
+          "cooperation": "直接、单一的指令，去掉了 {{childName}} 用来讨价还价或装没听到的空间。",
+          "selfControl": "简短、具体的指令贴合 {{childName}} 的注意力长度，他才能不迷失地跟上。",
+          "boundaries": "一个平静、清晰的指令把界限说明白，{{childName}} 在事情升级前就知道该做什么。"
+        },
+        "boundaryBuilder": {
+          "generic": "平静而一致地贯彻执行，能让 {{childName}} 明白界限是真实的——而且不用权力斗争。",
+          "routines": "当流程每一次都稳固，{{childName}} 就不再试探它，日常的拉锯也随之淡去。",
+          "cooperation": "一致的贯彻执行才能让指令生效——{{childName}} 会明白「不行」就是不行。",
+          "selfControl": "可预期的界限为 {{childName}} 提供外部结构，帮他慢下来、管住冲动。",
+          "boundaries": "每一次都用同样平静而确定的回应面对攻击或不诚实，正是这份一致让重大行为消退。"
+        },
+        "confidentParent": {
+          "generic": "掌握了每一项技能，你就能在当下取用对的那一个——连接和界限一起运作。",
+          "routines": "把表扬、描述和平静的界限融合起来，你就能应对过渡中出现的任何情况。",
+          "cooperation": "流畅地运用整套工具，能让日常的合作保持稳定，而不是靠某一招。",
+          "selfControl": "按需要在投入和结构之间切换，能给 {{childName}} 稳定的专注支持。",
+          "boundaries": "把温暖和坚定、平静的界限配在一起，正是让重大行为持续减少的关键。"
+        }
       }
     },
     "journeyDisciplineWhy": {
+      "generic": "平静、一致的界限能让 {{childName}} 明白界限是真实的——合作也就不再是每天的谈判。",
       "routines": "平静、一致的界限能把过渡中的权力斗争化解掉——{{childName}} 会知道流程是稳固的，日常的拉锯也随之淡去。",
       "cooperation": "一致的贯彻执行才能让指令真正生效——{{childName}} 会明白界限是真实的，听从也就不再是没完没了的讨价还价。",
       "selfControl": "可预期的界限为 {{childName}} 提供了外部结构，帮助他慢下来、专注在一件事上，并克制立刻跳到下一件事的冲动。",
@@ -1170,7 +1236,7 @@
     "completeFoundationFirst": "请先完成基础章节",
     "noLessonsFound": "找不到课程",
     "tryDifferentSearch": "尝试不同的关键字",
-    "noraFoundationsDuration": "120 分钟",
+    "noraFoundationsDuration": "60 分钟",
     "demoVideosTitle": "演示视频",
     "timeAgo": {
       "years_other": "{{count}} 年前",
