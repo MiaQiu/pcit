@@ -499,6 +499,19 @@
     }
   },
   "reportV2": {
+    "firstSession": {
+      "headline": "你做到了！",
+      "subtitle": "你完成了第一次练习。",
+      "subtext": "你在育儿旅程中迈出了重要的一步。",
+      "depositLabel": "情感存款",
+      "depositFirst": "你的第一笔存款",
+      "depositNote": "每一个专注的陪玩时刻，都给孩子练习重要技能的机会。",
+      "stepTitle": "很棒的第一步",
+      "stepBody": "你今天给了孩子 {{count}} 分钟的专注陪伴。",
+      "startingTitle": "你的起点已确定",
+      "startingBody": "Nora 已记录你的第一次练习，我们将据此为你个性化指导，并追踪你的长期进步。",
+      "cta": "查看我的指导"
+    },
     "headlineAmazing": "太棒了！",
     "headlineGood": "进步不错！",
     "headlineSubtext": "继续保持\n你做得很好！",
@@ -569,20 +582,35 @@
       "title": "亲子时刻"
     },
     "interactionStyle": {
-      "title": "今日互动风格",
+      "title": "你的互动风格",
       "viewTips": "查看建议",
       "detailedBreakdown": "详细分析",
       "confidenceBuilders": "自信建立",
       "confidenceBuildersSubtitle": "提升自信与专注",
       "playInterruptions": "游戏干扰",
       "playInterruptionsSubtitle": "可以一起改进的地方",
-      "moments_other": "{{count}} 次"
+      "moments_other": "{{count}} 次",
+      "whyPersonalised": {
+        "toddler": "你来到 Nora 是为了解决{{concern}}。{{childName}}才{{age}}岁，大脑刚开始建立自我控制的神经连接，而这靠的是与你一次次的小互动，而不是长篇大论。我们记为**“自信建立”**的时刻——表扬、描述{{childName}}在玩什么、让他/她主导——是滋养亲子关系和孩子自信的存款；而**“游戏干扰”**——提问、命令、纠正——则在悄悄抵消它。所以我们会一次只练一项技能，把每一项单独拿出来练熟，再加入下一项。",
+        "preschool": "你来到 Nora 是为了解决{{concern}}。{{childName}}{{age}}岁，正处在这些能力发展最快的阶段，而它们是在与你的日常互动中成长的。我们记为**“自信建立”**的时刻——表扬、描述{{childName}}在玩什么、让他/她主导——是滋养亲子关系和孩子自信的存款；而**“游戏干扰”**——提问、命令、纠正——则在悄悄抵消它。所以我们会一次只练一项技能，把每一项单独拿出来练熟，再加入下一项。",
+        "schoolAge": "你来到 Nora 是为了解决{{concern}}。{{childName}}{{age}}岁，已经懂得很多，剩下的是稳定、持续的练习。我们记为**“自信建立”**的时刻——表扬、描述{{childName}}在玩什么、让他/她主导——是滋养亲子关系和孩子自信的存款；而**“游戏干扰”**——提问、命令、纠正——则在悄悄抵消它。所以我们会一次只练一项技能，把每一项单独拿出来练熟，再加入下一项。",
+        "unknownAge": "你来到 Nora 是为了解决{{concern}}。你想要的改变，是通过与{{childName}}一次次的小互动建立起来的，而不是长篇大论。我们记为**“自信建立”**的时刻——表扬、描述{{childName}}在玩什么、让他/她主导——是滋养亲子关系和孩子自信的存款；而**“游戏干扰”**——提问、命令、纠正——则在悄悄抵消它。所以我们会一次只练一项技能，把每一项单独拿出来练熟，再加入下一项。"
+      }
     },
     "tomorrowGoal": {
       "title": "明日目标",
       "todayLabel": "今天",
       "tomorrowLabel": "明天",
       "aimFor": "目标 {{count}} 次",
+      "short": {
+        "BUILD_PRAISE": "{{count}} 次具体赞美",
+        "BUILD_NARRATION": "{{count}} 次行为描述",
+        "BUILD_ECHO": "{{count}} 次回应",
+        "BUILD_COMMANDS": "{{count}} 个清晰指令",
+        "AVOID_COMMANDS": "指令少于 {{count}} 次",
+        "AVOID_QUESTIONS": "问句少于 {{count}} 次",
+        "AVOID_CRITICISM": "批评少于 {{count}} 次"
+      },
       "whyTitle": "为什么这很重要",
       "why": {
         "generic": "这方面的改变是一个个小片刻累积出来的，不是靠一次长谈。",
@@ -639,14 +667,14 @@
       "subtitle": "阅读今天游戏时光的完整对话。"
     },
     "unlock": {
-      "title": "想要更个性化的指导吗？",
-      "subtitle": "回答 10 个简单问题（约 2 分钟），即可解锁：",
-      "featureGrowthPlan": "个性化成长计划",
-      "featureSnapshot": "孩子概览",
-      "featureTracking": "进度追踪",
-      "cta": "解锁我孩子的计划",
+      "title": "回答 10 个简单问题，帮助 Nora 了解{{childName}}并为你定制学习旅程：",
+      "featureGrowthPlan": "个性化学习计划",
+      "featureSnapshot": "孩子行为概览",
+      "featureTracking": "追踪进度",
+      "cta": "继续",
       "time": "大约需要 2 分钟"
     },
+    "seeYouTomorrow": "明天见",
     "footer": "你正在最重要的时刻陪伴着孩子，继续加油！"
   },
   "profileReport": {
@@ -693,7 +721,6 @@
     },
     "journeyTitle": "个性化学习之旅",
     "journeySubtitle": "这份计划会先从这里入手，并按对 {{childName}} 最重要的顺序排列。",
-    "journeyStartBadge": "从这里开始",
     "journeyPlan": {
       "phase1": "由孩子主导的游戏",
       "phase2": "平静的管教",
@@ -701,27 +728,19 @@
       "step2Title": "增加自信建立行为",
       "step3Title": "清晰的界限，平静的贯彻执行",
       "cta": "完成儿童快照，获得为 {{childName}} 量身打造的计划 →",
-      "chips": {
-        "commands": "命令",
-        "questions": "提问",
-        "criticism": "批评",
-        "praise": "表扬",
-        "narration": "描述",
-        "reflection": "复述"
-      },
       "interruptionBody": {
         "generic": "游戏中少一些提问、命令和纠正——这些都会悄悄削弱你与 {{childName}} 的连接。",
-        "routines": "先从命令入手——别再反复催促 {{childName}}。然后再减少提问和纠正。",
-        "cooperation": "先从命令入手——它们会把每一个要求都变成与 {{childName}} 的权力斗争。然后再减少提问和批评。",
-        "selfControl": "先从提问入手——接连不断的问题会一再打断 {{childName}} 的专注。然后再减少命令和批评。",
-        "boundaries": "先从批评入手——纠正会让 {{childName}} 很快变得抵触。然后再减少命令和提问。"
+        "routines": "少一些命令、别再反复催促，才能让 {{childName}} 的睡前、吃饭和出门不再变成拉锯战。",
+        "cooperation": "少一些命令，才能把每个要求里的权力斗争化解掉——{{childName}} 也就没那么多可对抗的。",
+        "selfControl": "减少接连不断的提问，才能让 {{childName}} 的专注不再每隔几秒就被打断。",
+        "boundaries": "用平静的接纳代替纠正，才能让 {{childName}} 不会一下子就变得抵触。"
       },
       "builderBody": {
         "generic": "每天花 5 分钟做 {{childName}} 最忠实的粉丝——表扬、描述并复述他的游戏。",
-        "routines": "先从描述入手——说出 {{childName}} 朝任务迈出的每一小步。然后再加入表扬和复述。",
-        "cooperation": "先从复述入手——把 {{childName}} 的话说回给他，让他感到被理解、少一些对抗。然后再加入表扬和描述。",
-        "selfControl": "先从描述入手——对 {{childName}} 的游戏进行持续的描述，能抓住他的注意力并逐步延长。然后再加入表扬和复述。",
-        "boundaries": "先从具体表扬入手——把 {{childName}} 温和、诚实的时刻大声说出来。然后再加入描述和复述。"
+        "routines": "描述 {{childName}} 朝任务迈出的每一小步，才能培养出把事情做完的专注力。",
+        "cooperation": "把 {{childName}} 的话复述回去，才能让他感到被理解，也就少一些对抗。",
+        "selfControl": "对 {{childName}} 的游戏持续地描述，才能抓住他的注意力并慢慢延长。",
+        "boundaries": "把 {{childName}} 温和、诚实的时刻大声说出来，才能让这些正是他会重复的行为。"
       }
     },
     "journeyDisciplineWhy": {

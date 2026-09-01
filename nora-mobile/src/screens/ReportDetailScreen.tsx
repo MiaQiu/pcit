@@ -31,7 +31,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Share } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Share, LayoutAnimation } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -252,6 +252,9 @@ export const ReportDetailScreen: React.FC = () => {
   const [parentLevel, setParentLevel] = useState<ParentSkillLevel>(1);
   const [crisisExpanded, setCrisisExpanded] = useState(true);
   const [skillCoachingExpanded, setSkillCoachingExpanded] = useState(true);
+  // "Today's Interaction Style" shows a rolled-up summary first; the full
+  // PEN-skill + areas-to-avoid breakdown is revealed by "Detailed Breakdown".
+  const [interactionExpanded, setInteractionExpanded] = useState(false);
   // null while unknown — the unlock card only renders once we know for sure,
   // so it never flashes on screen for a user who's already completed it.
   const [wacbCompleted, setWacbCompleted] = useState<boolean | null>(null);
@@ -451,6 +454,13 @@ export const ReportDetailScreen: React.FC = () => {
 
   const handleBack = () => navigation.goBack();
 
+  // The report is otherwise a dead end — the back arrow returns to the
+  // progress-celebration screen, not out. "See you tomorrow" is the clean exit.
+  const handleSeeYouTomorrow = () => {
+    amplitudeService.trackEvent('Report Detail See You Tomorrow Tapped', { recordingId });
+    navigation.navigate('MainTabs', { screen: 'Home' });
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
@@ -533,15 +543,24 @@ export const ReportDetailScreen: React.FC = () => {
   // falls back to the old fields for sessions analyzed before bondingMoment
   // existed. Audio start/end are derived from the transcript's own per-
   // utterance timing, spanning every line of the quoted exchange.
-  // The LLM writes generic "Child:"/"Parent:" speaker labels — swap in the
-  // real child's name and address the parent directly as "You".
+  // quote is rebuilt server-side from the transcript as "Parent: …\nChild: …"
+  // (server/services/pcitAnalysisService.cjs quoteFromUtteranceRange). Swap the
+  // generic labels for the real child's name / "You". The [NN] and [TAG] strips
+  // only matter for sessions analyzed before that server change.
   const bondingLines = bondingMoment
     ? bondingMoment.quote.split('\n').filter(Boolean).map(line => line
-        .replace(/^Child:/i, `${childName}:`)
-        .replace(/^Parent:/i, `${t('reportDetail.topMoment.you')}:`))
+        .replace(/^\s*\[\d+\]\s*/, '')
+        .replace(/\s*\[[A-Z]{2,3}\]\s*$/, '')
+        .replace(/^Child:\s*/i, `${childName}: `)
+        .replace(/^Parent:\s*/i, `${t('reportDetail.topMoment.you')}: `)
+        .trim())
     : [];
   const bondingStartUtt = bondingMoment ? transcript[bondingMoment.utteranceNumber] : null;
-  const bondingEndUtt = bondingMoment ? transcript[bondingMoment.utteranceNumber + Math.max(bondingLines.length - 1, 0)] : null;
+  // Prefer the server-provided end index; older sessions fall back to counting
+  // the rendered lines forward from the start.
+  const bondingEndUtt = bondingMoment
+    ? transcript[bondingMoment.endUtteranceNumber ?? (bondingMoment.utteranceNumber + Math.max(bondingLines.length - 1, 0))]
+    : null;
   const momentStartTime = bondingMoment ? (bondingStartUtt?.start ?? null) : (reportData.topMomentStartTime ?? null);
   const momentEndTime = bondingMoment ? (bondingEndUtt?.end ?? null) : (reportData.topMomentEndTime ?? null);
 
@@ -561,6 +580,19 @@ export const ReportDetailScreen: React.FC = () => {
         skillTag: goalDirective.goalType ? GOAL_TYPE_SKILL_TAG[goalDirective.goalType] : undefined,
       }
     : deriveGoalFromLevel(parentLevel, reportData.stats, reportData.mode, t);
+
+  // Very short, no-explanation form of tomorrow's goal (e.g. "10 Labeled
+  // Praise") for the commit-to-tomorrow card at the end of the report.
+  // Keyed off goalType; falls back to the goal's own title for goal types
+  // with no single countable skill (CALM_FOLLOWTHROUGH / INTEGRATE_SKILLS /
+  // MAINTAIN_SKILLS).
+  const goalType: string | null = goalDirective
+    ? goalDirective.goalType ?? null
+    : deriveGoalNumbersFromLevel(parentLevel, reportData.stats, reportData.mode, t).goalType;
+  const shortGoalKey = goalType ? `reportDetail.tomorrowGoal.short.${goalType}` : null;
+  const tomorrowGoalText = shortGoalKey && i18n.exists(shortGoalKey) && typeof goal.targetNumber === 'number'
+    ? t(shortGoalKey as any, { count: goal.targetNumber })
+    : goal.focusSkill;
 
   // Prefers the server-persisted selection (dedup'd + ratio-balanced across
   // sessions — see aboutChildSelectionService.cjs); falls back to the array's
@@ -710,11 +742,16 @@ export const ReportDetailScreen: React.FC = () => {
 
   const interactionBody = (
     <>
-      <Text style={styles.interactionSubheading}>{t('report.section.penSkills')}</Text>
+      <View style={styles.interactionSectionHeader}>
+        <View style={[styles.interactionSectionIconBadge, { backgroundColor: '#DDF3E4' }]}>
+          <Ionicons name="heart" size={16} color="#3BA55D" />
+        </View>
+        <Text style={styles.interactionSectionTitle}>{t('reportDetail.interactionStyle.confidenceBuilders')}</Text>
+      </View>
       {skills.map((skill, index) => {
         const maxValue = skill.label === 'Echo' ? echoTarget : 10;
         const rating = getSkillRating(skill.progress, t, maxValue);
-        const isDynamicEcho = skill.label === 'Echo' && childUtteranceCount < 10;
+        const isDynamicEcho = skill.label === 'Echo' && childUtteranceCount < 10 && !showFirstSession;
         return (
           <SkillProgressBar
             key={index}
@@ -731,7 +768,7 @@ export const ReportDetailScreen: React.FC = () => {
           />
         );
       })}
-      {childUtteranceCount < 10 && skills.some(s => s.label === 'Echo') && (
+      {childUtteranceCount < 10 && !showFirstSession && skills.some(s => s.label === 'Echo') && (
         <Text style={styles.echoFootnote}>
           {`* ${t('skillInfo.echoGoalDynamic' as any, { count: childUtteranceCount, target: echoTarget })}`}
         </Text>
@@ -739,7 +776,12 @@ export const ReportDetailScreen: React.FC = () => {
 
       <View style={styles.interactionDivider} />
 
-      <Text style={styles.interactionSubheading}>{t('report.section.areasToAvoid')}</Text>
+      <View style={styles.interactionSectionHeader}>
+        <View style={[styles.interactionSectionIconBadge, { backgroundColor: '#FBE7D2' }]}>
+          <Ionicons name="help" size={16} color="#E08A3C" />
+        </View>
+        <Text style={styles.interactionSectionTitle}>{t('reportDetail.interactionStyle.playInterruptions')}</Text>
+      </View>
       <View style={styles.avoidContainer}>
         {filteredAreas.map((area, index) => (
           <TouchableOpacity
@@ -768,6 +810,92 @@ export const ReportDetailScreen: React.FC = () => {
     </>
   );
 
+  // "Today's Interaction Style" card — a rolled-up summary (Confidence
+  // Builders = every positive PEN-skill moment; Play Interruptions = every
+  // command/question/criticism moment) shown up front, with the full
+  // per-skill breakdown (interactionBody) tucked behind "Detailed Breakdown".
+  const confidenceMoments = skills.reduce((sum, s) => sum + (s.progress || 0), 0);
+  const interruptionMoments = filteredAreas.reduce((sum, a) => sum + (a.count || 0), 0);
+  const interactionTotalMoments = confidenceMoments + interruptionMoments;
+  const confidenceBarPct = interactionTotalMoments > 0
+    ? Math.round((confidenceMoments / interactionTotalMoments) * 100)
+    : 0;
+  const interruptionBarPct = interactionTotalMoments > 0
+    ? Math.round((interruptionMoments / interactionTotalMoments) * 100)
+    : 0;
+
+  const interactionCardJsx = (
+    <ReportCard title={t('reportDetail.interactionStyle.title')}>
+      {/* "Why this matters" — first session only; sits right under the title,
+          no box, no heading */}
+      {showFirstSession && (
+        <MarkdownText style={styles.interactionWhyBody}>
+          {t(`reportDetail.interactionStyle.whyPersonalised.${ageBandKey}` as any, { childName, age: childAge ?? undefined, concern })}
+        </MarkdownText>
+      )}
+
+      {/* Collapsed: rolled-up summary. Expanded: full breakdown replaces it
+          (the summary is hidden, not stacked above). */}
+      <View style={styles.interactionCardBody}>
+      {interactionExpanded ? (
+        interactionBody
+      ) : (
+        <View style={styles.interactionSummary}>
+          <View style={styles.interactionSummaryRow}>
+            <View style={[styles.interactionSummaryIconBadge, { backgroundColor: '#DDF3E4' }]}>
+              <Ionicons name="heart" size={18} color="#3BA55D" />
+            </View>
+            <View style={styles.interactionSummaryContent}>
+              <View style={styles.interactionSummaryTopRow}>
+                <Text style={styles.interactionSummaryLabel}>{t('reportDetail.interactionStyle.confidenceBuilders')}</Text>
+                <Text style={[styles.interactionSummaryCount, { color: '#3BA55D' }]}>
+                  {t('reportDetail.interactionStyle.moments', { count: confidenceMoments })}
+                </Text>
+              </View>
+              <Text style={styles.interactionSummarySubtitle}>{t('reportDetail.interactionStyle.confidenceBuildersSubtitle')}</Text>
+              <View style={styles.interactionSummaryTrack}>
+                <View style={[styles.interactionSummaryFill, { width: `${confidenceBarPct}%`, backgroundColor: '#3BA55D' }]} />
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.interactionSummaryRow}>
+            <View style={[styles.interactionSummaryIconBadge, { backgroundColor: '#FBE7D2' }]}>
+              <Ionicons name="help" size={18} color="#E08A3C" />
+            </View>
+            <View style={styles.interactionSummaryContent}>
+              <View style={styles.interactionSummaryTopRow}>
+                <Text style={styles.interactionSummaryLabel}>{t('reportDetail.interactionStyle.playInterruptions')}</Text>
+                <Text style={[styles.interactionSummaryCount, { color: '#E08A3C' }]}>
+                  {t('reportDetail.interactionStyle.moments', { count: interruptionMoments })}
+                </Text>
+              </View>
+              <Text style={styles.interactionSummarySubtitle}>{t('reportDetail.interactionStyle.playInterruptionsSubtitle')}</Text>
+              <View style={styles.interactionSummaryTrack}>
+                <View style={[styles.interactionSummaryFill, { width: `${interruptionBarPct}%`, backgroundColor: '#E08A3C' }]} />
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+      </View>
+
+      <TouchableOpacity
+        style={styles.interactionBreakdownLink}
+        activeOpacity={0.7}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        onPress={() => {
+          amplitudeService.trackEvent('Report Detail Interaction Breakdown Toggled', { recordingId, expanded: !interactionExpanded });
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setInteractionExpanded(prev => !prev);
+        }}
+      >
+        <Text style={styles.interactionBreakdownLinkText}>{t('reportDetail.interactionStyle.detailedBreakdown')}</Text>
+        <Ionicons name={interactionExpanded ? 'chevron-up' : 'chevron-down'} size={15} color="#8C49D5" />
+      </TouchableOpacity>
+    </ReportCard>
+  );
+
   // Real first-session parents almost never have the WACB survey done yet;
   // the __DEV__ force-toggle also shows it regardless so it can be previewed.
   const surveyCardJsx = (wacbCompleted === false || devForceFirstSession) ? (
@@ -775,8 +903,7 @@ export const ReportDetailScreen: React.FC = () => {
       <View style={styles.unlockIconBadge}>
         <Ionicons name="lock-closed" size={22} color={COLORS.mainPurple} />
       </View>
-      <Text style={styles.unlockTitle}>{t('reportDetail.unlock.title')}</Text>
-      <Text style={styles.unlockSubtitle}>{t('reportDetail.unlock.subtitle')}</Text>
+      <Text style={styles.unlockTitle}>{t('reportDetail.unlock.title', { childName })}</Text>
 
       <View style={styles.unlockFeatureRow}>
         <View style={styles.unlockFeature}>
@@ -859,11 +986,9 @@ export const ReportDetailScreen: React.FC = () => {
             </ReportCard>
 
             {/* 4. Today's Interaction Style */}
-            <ReportCard title={t('reportDetail.interactionStyle.title')}>
-              {interactionBody}
-            </ReportCard>
+            {interactionCardJsx}
 
-            {/* 5. Tomorrow's Goal + why this matters */}
+            {/* Tomorrow's Goal — hidden for now
             {goal.focusSkill && (
               <ReportCard title={t('reportDetail.tomorrowGoal.title')} tip={goal.description || undefined}>
                 <Text style={styles.goalFocusSkill}>{goal.focusSkill}</Text>
@@ -871,8 +996,9 @@ export const ReportDetailScreen: React.FC = () => {
                 <Text style={styles.fsWhyBody}>{whyThisMatters}</Text>
               </ReportCard>
             )}
+            */}
 
-            {/* 6. Survey for personalised coaching */}
+            {/* Survey for personalised coaching */}
             {surveyCardJsx}
           </>
         ) : (
@@ -897,6 +1023,9 @@ export const ReportDetailScreen: React.FC = () => {
         <ReportCard icon="star" title={t('reportDetail.topMoment.title')} tip={celebration || undefined}>
           {topMomentBody}
         </ReportCard>
+
+        {/* Interaction Style — summary first, full breakdown behind "Detailed Breakdown" */}
+        {interactionCardJsx}
 
         {/* Skill Coaching — coaching note for tomorrow's goal skill, grounded in this session */}
         {reportData.skillCoaching && (
@@ -1022,14 +1151,6 @@ export const ReportDetailScreen: React.FC = () => {
           )}
         </ReportCard>
 
-        {/* Today's Interaction — expandable */}
-        <ReportCard
-          title={t('reportDetail.interactionStyle.title')}
-          expandable
-        >
-          {interactionBody}
-        </ReportCard>
-
         {/* Full Transcript */}
         <ReportCard
           icon="document-text"
@@ -1039,8 +1160,22 @@ export const ReportDetailScreen: React.FC = () => {
           headerRight={<Ionicons name="chevron-forward" size={17} color={REPORT_CARD_COLORS.iconColor} />}
         />
 
+        {/* Tomorrow's Goal — the exact goal, no explanation; a commitment to
+            carry out of the report and remember. */}
+        {goal.focusSkill && (
+          <ReportCard icon="flag" title={t('reportDetail.tomorrowGoal.title')}>
+            <Text style={styles.tomorrowGoalValue}>{tomorrowGoalText}</Text>
+          </ReportCard>
+        )}
+
         {/* Unlock My Child's Plan — bespoke, hidden once the user has completed the WACB survey */}
         {surveyCardJsx}
+
+        {/* SEE YOU TOMORROW — the report's only easy exit (the back arrow
+            returns to the progress-celebration screen, not out). */}
+        <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
+          <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
+        </TouchableOpacity>
           </>
         )}
 
@@ -1240,10 +1375,57 @@ const styles = StyleSheet.create({
 
   // ── Tomorrow's Goal content ──
   goalFocusSkill: { fontFamily: FONTS.bold, fontSize: 16, color: REPORT_CARD_COLORS.title },
+  tomorrowGoalValue: { fontFamily: FONTS.bold, fontSize: 22, color: COLORS.mainPurple, textAlign: 'center', paddingVertical: 6 },
+
+  // ── See you tomorrow (report exit) ──
+  seeYouTomorrowButton: {
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 999,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  seeYouTomorrowButtonText: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    color: '#FFFFFF',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
 
   // ── Today's Interaction content ──
-  interactionSubheading: { fontFamily: FONTS.bold, fontSize: 14, letterSpacing: 0.4, color: '#B08A5A', textTransform: 'uppercase', marginBottom: 14 },
+  interactionSectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
+  interactionSectionIconBadge: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  interactionSectionTitle: { fontFamily: FONTS.bold, fontSize: 15, color: REPORT_CARD_COLORS.title },
   interactionDivider: { height: 1, backgroundColor: '#F3E9DD', marginTop: 6, marginBottom: 20 },
+  interactionWhyBody: { fontFamily: FONTS.regular, fontSize: 16, lineHeight: 24, color: '#4B5563', marginTop: 6 },
+
+  // ── Today's Interaction Style — rolled-up summary ──
+  interactionBreakdownLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    marginTop: 18,
+    marginHorizontal: -22,
+    paddingTop: 16,
+    paddingHorizontal: 22,
+    borderTopWidth: 1,
+    borderTopColor: '#F3E9DD',
+  },
+  interactionBreakdownLinkText: { fontFamily: FONTS.semiBold, fontSize: 14, color: '#8C49D5' },
+  interactionCardBody: { marginTop: 16 },
+  interactionSummary: { gap: 18 },
+  interactionSummaryRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  interactionSummaryIconBadge: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
+  interactionSummaryContent: { flex: 1 },
+  interactionSummaryTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  interactionSummaryLabel: { flexShrink: 1, fontFamily: FONTS.bold, fontSize: 15, color: REPORT_CARD_COLORS.title },
+  interactionSummaryCount: { fontFamily: FONTS.semiBold, fontSize: 14 },
+  interactionSummarySubtitle: { fontFamily: FONTS.regular, fontSize: 13, color: REPORT_CARD_COLORS.subtitle, marginTop: 1, marginBottom: 8 },
+  interactionSummaryTrack: { height: 8, borderRadius: 999, backgroundColor: '#EFE7DE', overflow: 'hidden' },
+  interactionSummaryFill: { height: 8, borderRadius: 999 },
   echoFootnote: { fontFamily: FONTS.regular, fontSize: 13, color: '#B08A5A', lineHeight: 16, marginTop: -6, marginBottom: 6 },
   avoidContainer: { gap: 16 },
   avoidItem: { gap: 9 },

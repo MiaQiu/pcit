@@ -499,6 +499,19 @@
     }
   },
   "reportV2": {
+    "firstSession": {
+      "headline": "You did it!",
+      "subtitle": "Your first practice session is complete!",
+      "subtext": "You just took an important step in your parenting journey.",
+      "depositLabel": "Emotional Deposit",
+      "depositFirst": "Your first deposit",
+      "depositNote": "Every focused play moment gives your child opportunities to practice important skills.",
+      "stepTitle": "A great first step",
+      "stepBody": "You gave your child {{count}} minutes of focused attention today.",
+      "startingTitle": "Your starting point is set",
+      "startingBody": "Nora has captured your first session. We'll use it to personalize your coaching and track your progress over time.",
+      "cta": "See My Coaching"
+    },
     "headlineAmazing": "Amazing session!",
     "headlineGood": "Good progress!",
     "headlineSubtext": "Keep it up\nyou're doing great!",
@@ -569,7 +582,7 @@
       "title": "Bonding Moment"
     },
     "interactionStyle": {
-      "title": "Today's Interaction Style",
+      "title": "Your Interaction Style",
       "viewTips": "View tips",
       "detailedBreakdown": "Detailed Breakdown",
       "confidenceBuilders": "Confidence Builders",
@@ -577,13 +590,28 @@
       "playInterruptions": "Play Interruptions",
       "playInterruptionsSubtitle": "Opportunities to improve together",
       "moments_one": "{{count}} moment",
-      "moments_other": "{{count}} moments"
+      "moments_other": "{{count}} moments",
+      "whyPersonalised": {
+        "toddler": "You came to Nora for help with {{concern}}. At just {{age}}, {{childName}}'s brain is only beginning to build the wiring for self-control, and it develops through small, repeated moments with you rather than big conversations. The moments we counted as **Confidence Builders** — praising, describing {{childName}}'s play, letting them lead — are the deposits that grow your bond and their confidence, while the **Play Interruptions** — questions, commands, corrections — quietly pull against it. That's why we'll work on one skill at a time, isolating each one so you can practice it on its own before adding the next.",
+        "preschool": "You came to Nora for help with {{concern}}. At {{age}}, {{childName}} is right in the window where these skills grow fastest, and they grow through everyday moments with you. The moments we counted as **Confidence Builders** — praising, describing {{childName}}'s play, letting them lead — are the deposits that grow your bond and their confidence, while the **Play Interruptions** — questions, commands, corrections — quietly pull against it. That's why we'll work on one skill at a time, isolating each one so you can practice it on its own before adding the next.",
+        "schoolAge": "You came to Nora for help with {{concern}}. At {{age}}, {{childName}} already understands a lot — what's left is steady, consistent practice. The moments we counted as **Confidence Builders** — praising, describing {{childName}}'s play, letting them lead — are the deposits that grow your bond and their confidence, while the **Play Interruptions** — questions, commands, corrections — quietly pull against it. That's why we'll work on one skill at a time, isolating each one so you can practice it on its own before adding the next.",
+        "unknownAge": "You came to Nora for help with {{concern}}. The change you're looking for is built through small, repeated moments with {{childName}}, not big conversations. The moments we counted as **Confidence Builders** — praising, describing {{childName}}'s play, letting them lead — are the deposits that grow your bond and their confidence, while the **Play Interruptions** — questions, commands, corrections — quietly pull against it. That's why we'll work on one skill at a time, isolating each one so you can practice it on its own before adding the next."
+      }
     },
     "tomorrowGoal": {
       "title": "Tomorrow's Goal",
       "todayLabel": "Today",
       "tomorrowLabel": "Tomorrow",
       "aimFor": "Aim for {{count}} time",
+      "short": {
+        "BUILD_PRAISE": "{{count}} Labeled Praise",
+        "BUILD_NARRATION": "{{count}} Narrations",
+        "BUILD_ECHO": "{{count}} Echoes",
+        "BUILD_COMMANDS": "{{count}} Clear Instructions",
+        "AVOID_COMMANDS": "Fewer than {{count}} Commands",
+        "AVOID_QUESTIONS": "Fewer than {{count}} Questions",
+        "AVOID_CRITICISM": "Fewer than {{count}} Criticisms"
+      },
       "whyTitle": "Why this matters",
       "why": {
         "generic": "The habits that help here are built one small moment at a time, not in a single conversation.",
@@ -640,14 +668,14 @@
       "subtitle": "Read the full conversation from today's play session."
     },
     "unlock": {
-      "title": "Ready for more personalized coaching?",
-      "subtitle": "Answer 10 quick questions (about 2 minutes) to unlock:",
-      "featureGrowthPlan": "Personalized Growth Plan",
-      "featureSnapshot": "Child Snapshot",
-      "featureTracking": "Progress Tracking",
-      "cta": "Unlock My Child's Plan",
+      "title": "Answer 10 quick questions to help Nora understand {{childName}} and personalize your learning journey:",
+      "featureGrowthPlan": "Personalized Learning Plan",
+      "featureSnapshot": "Child Behavior Snapshot",
+      "featureTracking": "Track Progress",
+      "cta": "Continue",
       "time": "Takes about 2 minutes"
     },
+    "seeYouTomorrow": "See you tomorrow",
     "footer": "You're showing up in the moments that matter most. Keep going!"
   },
   "profileReport": {
@@ -694,7 +722,6 @@
     },
     "journeyTitle": "Personalized Learning Journey",
     "journeySubtitle": "This plan tackles it first, ordered by what matters most for {{childName}}.",
-    "journeyStartBadge": "Start here",
     "journeyPlan": {
       "phase1": "Child-Led Play",
       "phase2": "Calm Discipline",
@@ -702,27 +729,19 @@
       "step2Title": "More Confidence Builders",
       "step3Title": "Clear Limits, Calm Follow-Through",
       "cta": "Take the Child Snapshot for a plan built around {{childName}} →",
-      "chips": {
-        "commands": "Commands",
-        "questions": "Questions",
-        "criticism": "Criticism",
-        "praise": "Praise",
-        "narration": "Narration",
-        "reflection": "Reflection"
-      },
       "interruptionBody": {
         "generic": "Ease off questions, commands, and corrections during play — the moves that quietly pull against your connection with {{childName}}.",
-        "routines": "Start with commands — stop repeating instructions to {{childName}}. Then ease off questions and corrections too.",
-        "cooperation": "Start with commands — they turn every request into a power struggle with {{childName}}. Then ease off questions and criticism.",
-        "selfControl": "Start with questions — a stream of them keeps breaking {{childName}}'s concentration. Then ease off commands and criticism.",
-        "boundaries": "Start with criticism — corrections put {{childName}} on the defensive fast. Then ease off commands and questions."
+        "routines": "Fewer commands and less repeating is what keeps bedtime, meals, and getting out the door from turning into a standoff with {{childName}}.",
+        "cooperation": "Fewer commands is what takes the power struggle out of each request — {{childName}} has less to push back against.",
+        "selfControl": "Easing off the steady stream of questions is what stops {{childName}}'s concentration from breaking every few seconds.",
+        "boundaries": "Trading corrections for calm acceptance is what keeps {{childName}} from going straight onto the defensive."
       },
       "builderBody": {
         "generic": "Spend 5 minutes a day being {{childName}}'s biggest fan — praise, describe, and reflect their play.",
-        "routines": "Lead with narration — describe each small step {{childName}} takes toward the task. Then layer in praise and reflection.",
-        "cooperation": "Lead with reflection — say {{childName}}'s words back so they feel heard and dig in less. Then layer in praise and narration.",
-        "selfControl": "Lead with narration — a running description of {{childName}}'s play holds their attention and stretches it. Then layer in praise and reflection.",
-        "boundaries": "Lead with labeled praise — name {{childName}}'s gentle and honest moments out loud. Then layer in narration and reflection."
+        "routines": "Narrating each small step {{childName}} takes toward the task is what builds the focus to see it through.",
+        "cooperation": "Reflecting {{childName}}'s words back is what makes them feel heard, so they dig in less.",
+        "selfControl": "A running description of {{childName}}'s play is what holds their attention and slowly stretches it.",
+        "boundaries": "Naming {{childName}}'s gentle and honest moments out loud is what makes those the moments they repeat."
       }
     },
     "journeyDisciplineWhy": {
