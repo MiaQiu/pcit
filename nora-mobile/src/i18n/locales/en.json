@@ -693,36 +693,36 @@
       }
     },
     "journeyTitle": "Personalized Learning Journey",
-    "journeySubtitle": "This 4-step plan tackles it first, ordered by what matters most for {{childName}}.",
+    "journeySubtitle": "This plan tackles it first, ordered by what matters most for {{childName}}.",
     "journeyStartBadge": "Start here",
-    "journeySteps": {
-      "fillBank": {
-        "title": "Fill the Emotional Bank Account",
-        "body": "Spend 5 minutes a day in child-led play — follow {{childName}}'s lead with praise, reflection, and description. Every warm moment is a deposit that makes every step after this one easier."
+    "journeyPlan": {
+      "phase1": "Child-Led Play",
+      "phase2": "Calm Discipline",
+      "step1Title": "Fewer Play Interruptions",
+      "step2Title": "More Confidence Builders",
+      "step3Title": "Clear Limits, Calm Follow-Through",
+      "cta": "Take the Child Snapshot for a plan built around {{childName}} →",
+      "chips": {
+        "commands": "Commands",
+        "questions": "Questions",
+        "criticism": "Criticism",
+        "praise": "Praise",
+        "narration": "Narration",
+        "reflection": "Reflection"
       },
-      "coachFeelings": {
-        "title": "Coach Big Feelings",
-        "body": "Name what {{childName}} is feeling as it happens and stay calm alongside it, so {{childName}} slowly learns to recognise and ride out strong emotions before they boil over."
+      "interruptionBody": {
+        "generic": "Ease off questions, commands, and corrections during play — the moves that quietly pull against your connection with {{childName}}.",
+        "routines": "Start with commands — stop repeating instructions to {{childName}}. Then ease off questions and corrections too.",
+        "cooperation": "Start with commands — they turn every request into a power struggle with {{childName}}. Then ease off questions and criticism.",
+        "selfControl": "Start with questions — a stream of them keeps breaking {{childName}}'s concentration. Then ease off commands and criticism.",
+        "boundaries": "Start with criticism — corrections put {{childName}} on the defensive fast. Then ease off commands and questions."
       },
-      "buildFocus": {
-        "title": "Build Focus & Follow-Through",
-        "body": "Use praise and reflection to stretch {{childName}}'s attention span and reward cooperation, so following directions gradually stops being a battle."
-      },
-      "smoothTransitions": {
-        "title": "Smooth the Transitions",
-        "body": "Add predictable warnings and playful routines around the hard moments — meals, bedtime, leaving the house — so {{childName}} moves between activities with less resistance."
-      },
-      "practiceSharing": {
-        "title": "Practice Sharing & Turn-Taking",
-        "body": "Model and praise taking turns during play, giving {{childName}} the skills to carry calmer, kinder interactions into time with peers and siblings."
-      },
-      "curbBigBehaviors": {
-        "title": "Curb the Big Behaviors",
-        "body": "Stay calm and consistent when {{childName}} lashes out, breaks things, or bends the truth — a predictable, matter-of-fact response every single time is what teaches these behaviours don't work."
-      },
-      "calmDiscipline": {
-        "title": "Calm Discipline",
-        "body": "With connection in place, add clear, consistent limits and calm follow-through for the behaviours that can't be ignored."
+      "builderBody": {
+        "generic": "Spend 5 minutes a day being {{childName}}'s biggest fan — praise, describe, and reflect their play.",
+        "routines": "Lead with narration — describe each small step {{childName}} takes toward the task. Then layer in praise and reflection.",
+        "cooperation": "Lead with reflection — say {{childName}}'s words back so they feel heard and dig in less. Then layer in praise and narration.",
+        "selfControl": "Lead with narration — a running description of {{childName}}'s play holds their attention and stretches it. Then layer in praise and reflection.",
+        "boundaries": "Lead with labeled praise — name {{childName}}'s gentle and honest moments out loud. Then layer in narration and reflection."
       }
     },
     "journeyDisciplineWhy": {

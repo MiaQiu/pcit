@@ -692,36 +692,36 @@
       }
     },
     "journeyTitle": "個人化學習之旅",
-    "journeySubtitle": "這份四步計畫會先從這裡著手，並按對 {{childName}} 最重要的順序排列。",
+    "journeySubtitle": "這份計畫會先從這裡著手，並按對 {{childName}} 最重要的順序排列。",
     "journeyStartBadge": "從這裡開始",
-    "journeySteps": {
-      "fillBank": {
-        "title": "充實情感銀行帳戶",
-        "body": "每天花 5 分鐘進行由孩子主導的遊戲——跟隨 {{childName}} 的節奏，多用讚美、複述和描述。每一個溫暖的瞬間都是一筆存款，會讓之後的每一步都更輕鬆。"
+    "journeyPlan": {
+      "phase1": "由孩子主導的遊戲",
+      "phase2": "平靜的管教",
+      "step1Title": "減少遊戲干擾",
+      "step2Title": "增加自信建立行為",
+      "step3Title": "清晰的界線，平靜的貫徹執行",
+      "cta": "完成兒童快照，取得為 {{childName}} 量身打造的計畫 →",
+      "chips": {
+        "commands": "命令",
+        "questions": "提問",
+        "criticism": "批評",
+        "praise": "讚美",
+        "narration": "描述",
+        "reflection": "複述"
       },
-      "coachFeelings": {
-        "title": "引導強烈情緒",
-        "body": "在 {{childName}} 情緒發生的當下幫他說出感受，並保持冷靜地陪伴，讓 {{childName}} 慢慢學會在情緒失控之前辨識並平復它。"
+      "interruptionBody": {
+        "generic": "遊戲中少一些提問、命令和糾正——這些都會悄悄削弱你與 {{childName}} 的連結。",
+        "routines": "先從命令入手——別再反覆催促 {{childName}}。然後再減少提問和糾正。",
+        "cooperation": "先從命令入手——它們會把每一個要求都變成與 {{childName}} 的權力鬥爭。然後再減少提問和批評。",
+        "selfControl": "先從提問入手——接連不斷的問題會一再打斷 {{childName}} 的專注。然後再減少命令和批評。",
+        "boundaries": "先從批評入手——糾正會讓 {{childName}} 很快變得抵觸。然後再減少命令和提問。"
       },
-      "buildFocus": {
-        "title": "建立專注力與執行力",
-        "body": "用讚美和複述延長 {{childName}} 的專注時間並獎勵配合行為，讓遵循指令逐漸不再是一場對抗。"
-      },
-      "smoothTransitions": {
-        "title": "讓過渡更順暢",
-        "body": "在用餐、睡前、出門等困難時刻加入可預期的提醒和有趣的固定流程，讓 {{childName}} 在活動之間的切換減少抗拒。"
-      },
-      "practiceSharing": {
-        "title": "練習分享與輪流",
-        "body": "在遊戲中示範並讚美輪流，讓 {{childName}} 把更平靜、更友善的相處方式帶到與同儕和手足的互動中。"
-      },
-      "curbBigBehaviors": {
-        "title": "遏制重大行為",
-        "body": "當 {{childName}} 發作、弄壞東西或說謊時，保持冷靜與一致——每一次都用可預期、就事論事的回應，才能讓孩子明白這些行為行不通。"
-      },
-      "calmDiscipline": {
-        "title": "平靜的管教",
-        "body": "在連結建立之後，為那些不能忽視的行為加入清晰、一致的界線和平靜的貫徹執行。"
+      "builderBody": {
+        "generic": "每天花 5 分鐘做 {{childName}} 最忠實的粉絲——讚美、描述並複述他的遊戲。",
+        "routines": "先從描述入手——說出 {{childName}} 朝任務邁出的每一小步。然後再加入讚美和複述。",
+        "cooperation": "先從複述入手——把 {{childName}} 的話說回給他，讓他感到被理解、少一些對抗。然後再加入讚美和描述。",
+        "selfControl": "先從描述入手——對 {{childName}} 的遊戲進行持續的描述，能抓住他的注意力並逐步延長。然後再加入讚美和複述。",
+        "boundaries": "先從具體讚美入手——把 {{childName}} 溫和、誠實的時刻大聲說出來。然後再加入描述和複述。"
       }
     },
     "journeyDisciplineWhy": {

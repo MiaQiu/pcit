@@ -157,16 +157,25 @@ const PARENT_SKILL_LEVELS = PARENT_SKILL_LEVEL_ORDER.map(level => ({
   skillKey: PARENT_SKILL_LEVEL_SKILL_LABEL[level],
 }));
 
-// The journey is a fixed 4-step arc: always start by filling the emotional
-// bank account and always end with calm discipline. The middle two steps are
-// picked from the parent's top-2 Snapshot focus areas (already severity-sorted),
-// so the plan reads as built around this child's specific priorities.
-const FOCUS_AREA_JOURNEY_STEP: Record<string, string> = {
-  routines: 'smoothTransitions',
-  cooperation: 'coachFeelings',
-  selfControl: 'buildFocus',
-  boundaries: 'curbBigBehaviors',
+// The Personalized Learning Journey teaches Child-Led Play first — Phase 1 step
+// 1 drops the "Play Interruptions", step 2 builds the "Confidence Builders" —
+// then Phase 2 adds Calm Discipline. Within each Phase-1 step one skill is
+// highlighted based on the top Snapshot focus category; the other two still
+// show as chips. Order matches the parent-skill ladder (interruptions = L1–3,
+// builders = L4–6, discipline = L7–8).
+const PLAY_INTERRUPTIONS = ['commands', 'questions', 'criticism'] as const;
+const CONFIDENCE_BUILDERS = ['praise', 'narration', 'reflection'] as const;
+
+const FOCUS_EMPHASIS: Record<FocusAreaData['key'], { interruption: string; builder: string }> = {
+  routines: { interruption: 'commands', builder: 'narration' },
+  cooperation: { interruption: 'commands', builder: 'reflection' },
+  selfControl: { interruption: 'questions', builder: 'narration' },
+  boundaries: { interruption: 'criticism', builder: 'praise' },
 };
+
+// Highlighted chip first, then the rest in their declared order.
+const orderChips = (all: readonly string[], emphasis: string | null): string[] =>
+  emphasis ? [emphasis, ...all.filter(c => c !== emphasis)] : [...all];
 
 /** PDI Coach's Corner — Two Choices Flow skills */
 const PDICoachCorner: React.FC<{
@@ -545,20 +554,17 @@ export const ProfileReportScreen: React.FC = () => {
       ? reportData.pdiEncouragement
       : (reportData?.feedback || reportData?.encouragement || '');
 
-  // The journey mirrors Profile's "Primary Focus Area" row: same merged list
-  // (signal categories + leftover pre-selected issues) shown in the subtitle,
-  // and the middle steps come from the signal categories, severity-sorted.
-  // Falls back to the top overall category label when there's nothing merged.
+  // The journey subtitle mirrors Profile's "Primary Focus Area" row (same merged
+  // list). The journey itself is tailored to the single top Snapshot category
+  // (severity-sorted); with no signal it shows a generic Child-Led Play arc.
   const primaryAreas = primaryFocusAreas(focusAreas);
   const journeyHeading = primaryFocusLabels(focusAreas, issues, t).join(', ') || focusHeading;
 
-  // 4-step journey: Fill the Emotional Bank Account → top-2 focus-area steps → Calm Discipline.
-  const journeyMiddleStepKeys = primaryAreas
-    .map(a => FOCUS_AREA_JOURNEY_STEP[a.key])
-    .filter((k, i, arr): k is string => !!k && arr.indexOf(k) === i)
-    .slice(0, 2);
-  const journeyStepKeys = ['fillBank', ...journeyMiddleStepKeys, 'calmDiscipline'];
-  const journeyDisciplineWhyKey = primaryAreas.length > 0 ? primaryAreas[0].key : null;
+  const topFocusKey = primaryAreas[0]?.key ?? null;
+  const emphasis = topFocusKey ? FOCUS_EMPHASIS[topFocusKey] : null;
+  const journeyFocusSlug = topFocusKey ?? 'generic';
+  const showDiscipline = topFocusKey !== null; // "all four" categories → whenever there's a signal
+  const showJourneyCta = focusAreas?.length === 0; // survey not done at all
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
@@ -677,9 +683,6 @@ export const ProfileReportScreen: React.FC = () => {
                 </View>
               ))}
             </View>
-            <TouchableOpacity style={styles.issuesFallbackCta} onPress={handleTakeSnapshot} activeOpacity={0.7}>
-              <Text style={styles.cardLinkText}>{t('profileReport.issuesFallbackCta')}</Text>
-            </TouchableOpacity>
           </View>
         )}
 
@@ -702,8 +705,11 @@ export const ProfileReportScreen: React.FC = () => {
           </View>
         )} */}
 
-        {/* Personalized Learning Journey — fixed 4-step arc, middle steps driven by focus-area priority */}
-        {focusAreas && focusAreas.length > 0 && (
+        {/* Personalized Learning Journey — Child-Led Play (drop the Play
+            Interruptions, then build the Confidence Builders), then Calm
+            Discipline. Phase-1 steps highlight the skill/avoid-item tied to
+            the top Snapshot focus category. */}
+        {focusAreas !== null && (
           <View style={styles.journeySection}>
             <Text style={styles.cardTitle}>{t('profileReport.journeyTitle')}</Text>
             <Text style={styles.sectionSubtitle}>
@@ -714,38 +720,88 @@ export const ProfileReportScreen: React.FC = () => {
             </Text>
             <View style={styles.journeyCard}>
               <View style={styles.journeyRoadmap}>
-                {journeyStepKeys.map((stepKey, index) => {
-                  const isFirst = index === 0;
-                  const isLast = index === journeyStepKeys.length - 1;
-                  return (
-                    <View key={stepKey} style={styles.journeyRoadmapRow}>
-                      <View style={styles.journeyStepIndicatorCol}>
-                        <View style={styles.journeyStepNumberCircle}>
-                          <Text style={styles.journeyStepNumberText}>{index + 1}</Text>
-                        </View>
-                        {!isLast && <View style={styles.journeyStepLine} />}
-                      </View>
-                      <View style={styles.journeyRoadmapTextCol}>
-                        <View style={styles.journeyStepTitleRow}>
-                          <Text style={styles.journeyStepTitle}>{t(`profileReport.journeySteps.${stepKey}.title`)}</Text>
-                          {isFirst && (
-                            <View style={styles.journeyStartBadge}>
-                              <Text style={styles.journeyStartBadgeText}>{t('profileReport.journeyStartBadge')}</Text>
-                            </View>
-                          )}
-                        </View>
-                        <Text style={styles.journeyStepBody}>{t(`profileReport.journeySteps.${stepKey}.body`, { childName })}</Text>
-                        {isLast && journeyDisciplineWhyKey && (
-                          <View style={styles.journeyWhyBox}>
-                            <Ionicons name="sparkles" size={13} color={COLORS.mainPurple} />
-                            <Text style={styles.journeyWhyText}>{t(`profileReport.journeyDisciplineWhy.${journeyDisciplineWhyKey}`, { childName })}</Text>
-                          </View>
+                {(() => {
+                  const steps: Array<{
+                    phase?: string;
+                    title: string;
+                    body: string;
+                    chips?: readonly string[];
+                    highlight?: string | null;
+                  }> = [
+                    {
+                      phase: t('profileReport.journeyPlan.phase1'),
+                      title: t('profileReport.journeyPlan.step1Title'),
+                      body: t(`profileReport.journeyPlan.interruptionBody.${journeyFocusSlug}`, { childName }),
+                      chips: orderChips(PLAY_INTERRUPTIONS, emphasis?.interruption ?? null),
+                      highlight: emphasis?.interruption ?? null,
+                    },
+                    {
+                      title: t('profileReport.journeyPlan.step2Title'),
+                      body: t(`profileReport.journeyPlan.builderBody.${journeyFocusSlug}`, { childName }),
+                      chips: orderChips(CONFIDENCE_BUILDERS, emphasis?.builder ?? null),
+                      highlight: emphasis?.builder ?? null,
+                    },
+                    ...(showDiscipline && topFocusKey
+                      ? [{
+                          phase: t('profileReport.journeyPlan.phase2'),
+                          title: t('profileReport.journeyPlan.step3Title'),
+                          body: t(`profileReport.journeyDisciplineWhy.${topFocusKey}`, { childName }),
+                        }]
+                      : []),
+                  ];
+                  return steps.map((step, index) => {
+                    const isFirst = index === 0;
+                    const isLast = index === steps.length - 1;
+                    return (
+                      <React.Fragment key={step.title}>
+                        {!!step.phase && (
+                          <Text style={[styles.journeyPhaseLabel, index > 0 && styles.journeyPhaseLabelGap]}>
+                            {step.phase}
+                          </Text>
                         )}
-                      </View>
-                    </View>
-                  );
-                })}
+                        <View style={styles.journeyRoadmapRow}>
+                          <View style={styles.journeyStepIndicatorCol}>
+                            <View style={styles.journeyStepNumberCircle}>
+                              <Text style={styles.journeyStepNumberText}>{index + 1}</Text>
+                            </View>
+                            {!isLast && <View style={styles.journeyStepLine} />}
+                          </View>
+                          <View style={styles.journeyRoadmapTextCol}>
+                            <View style={styles.journeyStepTitleRow}>
+                              <Text style={styles.journeyStepTitle}>{step.title}</Text>
+                              {isFirst && (
+                                <View style={styles.journeyStartBadge}>
+                                  <Text style={styles.journeyStartBadgeText}>{t('profileReport.journeyStartBadge')}</Text>
+                                </View>
+                              )}
+                            </View>
+                            {!!step.chips && (
+                              <View style={styles.journeyChipRow}>
+                                {step.chips.map(chip => {
+                                  const active = chip === step.highlight;
+                                  return (
+                                    <View key={chip} style={[styles.journeyChip, active && styles.journeyChipActive]}>
+                                      <Text style={[styles.journeyChipText, active && styles.journeyChipTextActive]}>
+                                        {t(`profileReport.journeyPlan.chips.${chip}`)}
+                                      </Text>
+                                    </View>
+                                  );
+                                })}
+                              </View>
+                            )}
+                            <Text style={styles.journeyStepBody}>{step.body}</Text>
+                          </View>
+                        </View>
+                      </React.Fragment>
+                    );
+                  });
+                })()}
               </View>
+              {showJourneyCta && (
+                <TouchableOpacity style={styles.journeyCta} onPress={handleTakeSnapshot} activeOpacity={0.7}>
+                  <Text style={styles.cardLinkText}>{t('profileReport.journeyPlan.cta', { childName })}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         )}
@@ -1159,6 +1215,52 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     color: COLORS.textDark,
+  },
+  journeyPhaseLabel: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: '#9CA3AF',
+    marginBottom: 10,
+    marginLeft: 2,
+  },
+  journeyPhaseLabelGap: {
+    marginTop: 6,
+  },
+  journeyChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 2,
+    marginBottom: 8,
+  },
+  journeyChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F9FAFB',
+  },
+  journeyChipActive: {
+    borderColor: COLORS.mainPurple,
+    backgroundColor: '#EDE7F6',
+  },
+  journeyChipText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  journeyChipTextActive: {
+    color: COLORS.mainPurple,
+  },
+  journeyCta: {
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    marginTop: 4,
+    paddingVertical: 14,
+    alignItems: 'center',
   },
 
   card: {

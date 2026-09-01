@@ -692,36 +692,36 @@
       }
     },
     "journeyTitle": "个性化学习之旅",
-    "journeySubtitle": "这份四步计划会先从这里入手，并按对 {{childName}} 最重要的顺序排列。",
+    "journeySubtitle": "这份计划会先从这里入手，并按对 {{childName}} 最重要的顺序排列。",
     "journeyStartBadge": "从这里开始",
-    "journeySteps": {
-      "fillBank": {
-        "title": "充实情感银行账户",
-        "body": "每天花 5 分钟进行由孩子主导的游戏——跟随 {{childName}} 的节奏，多用表扬、复述和描述。每一个温暖的瞬间都是一笔存款，会让之后的每一步都更轻松。"
+    "journeyPlan": {
+      "phase1": "由孩子主导的游戏",
+      "phase2": "平静的管教",
+      "step1Title": "减少游戏干扰",
+      "step2Title": "增加自信建立行为",
+      "step3Title": "清晰的界限，平静的贯彻执行",
+      "cta": "完成儿童快照，获得为 {{childName}} 量身打造的计划 →",
+      "chips": {
+        "commands": "命令",
+        "questions": "提问",
+        "criticism": "批评",
+        "praise": "表扬",
+        "narration": "描述",
+        "reflection": "复述"
       },
-      "coachFeelings": {
-        "title": "引导强烈情绪",
-        "body": "在 {{childName}} 情绪发生的当下帮他说出感受，并保持冷静地陪伴，让 {{childName}} 慢慢学会在情绪失控之前识别并平复它。"
+      "interruptionBody": {
+        "generic": "游戏中少一些提问、命令和纠正——这些都会悄悄削弱你与 {{childName}} 的连接。",
+        "routines": "先从命令入手——别再反复催促 {{childName}}。然后再减少提问和纠正。",
+        "cooperation": "先从命令入手——它们会把每一个要求都变成与 {{childName}} 的权力斗争。然后再减少提问和批评。",
+        "selfControl": "先从提问入手——接连不断的问题会一再打断 {{childName}} 的专注。然后再减少命令和批评。",
+        "boundaries": "先从批评入手——纠正会让 {{childName}} 很快变得抵触。然后再减少命令和提问。"
       },
-      "buildFocus": {
-        "title": "建立专注力与执行力",
-        "body": "用表扬和复述延长 {{childName}} 的专注时间并奖励配合行为，让遵循指令逐渐不再是一场对抗。"
-      },
-      "smoothTransitions": {
-        "title": "让过渡更顺畅",
-        "body": "在用餐、睡前、出门等困难时刻加入可预期的提醒和有趣的固定流程，让 {{childName}} 在活动之间的切换减少抗拒。"
-      },
-      "practiceSharing": {
-        "title": "练习分享与轮流",
-        "body": "在游戏中示范并表扬轮流，让 {{childName}} 把更平静、更友善的相处方式带到与同伴和手足的互动中。"
-      },
-      "curbBigBehaviors": {
-        "title": "遏制重大行为",
-        "body": "当 {{childName}} 发作、弄坏东西或说谎时，保持冷静与一致——每一次都用可预期、就事论事的回应，才能让孩子明白这些行为行不通。"
-      },
-      "calmDiscipline": {
-        "title": "平静的管教",
-        "body": "在连接建立之后，为那些不能忽视的行为加入清晰、一致的界限和平静的贯彻执行。"
+      "builderBody": {
+        "generic": "每天花 5 分钟做 {{childName}} 最忠实的粉丝——表扬、描述并复述他的游戏。",
+        "routines": "先从描述入手——说出 {{childName}} 朝任务迈出的每一小步。然后再加入表扬和复述。",
+        "cooperation": "先从复述入手——把 {{childName}} 的话说回给他，让他感到被理解、少一些对抗。然后再加入表扬和描述。",
+        "selfControl": "先从描述入手——对 {{childName}} 的游戏进行持续的描述，能抓住他的注意力并逐步延长。然后再加入表扬和复述。",
+        "boundaries": "先从具体表扬入手——把 {{childName}} 温和、诚实的时刻大声说出来。然后再加入描述和复述。"
       }
     },
     "journeyDisciplineWhy": {
