@@ -957,6 +957,11 @@
     "noModulesFound": "找不到章節",
     "tryDifferentSearch": "嘗試不同的關鍵字或篩選條件"
   },
+  "lessonPlayer": {
+    "nowPlaying": "正在播放",
+    "narrationPlaying": "課程語音講解",
+    "stop": "停止"
+  },
   "record": {
     "uploadingRecording": "正在上傳錄音...",
     "analyzingTitle": "正在分析遊戲時間...\n這需要幾分鐘。",

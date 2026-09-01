@@ -215,7 +215,7 @@ export const LearnScreen_v3: React.FC = () => {
       // Skip ahead to the next lesson that actually has narration; close the
       // mini-player if nothing further along the list has audio yet.
       const next = orderedLessons.slice(idx + 1).find((l) => l.audioUrl);
-      if (next) player.loadLesson(next.id, next.audioUrl, i18n.language);
+      if (next) player.loadLesson(next.id, next.audioUrl, i18n.language, next.title);
       else player.clear();
       lessonService
         .completeLesson(finishedId)
@@ -232,6 +232,15 @@ export const LearnScreen_v3: React.FC = () => {
       player.setOnFinish(handlePlayerFinish);
       return () => player.setOnFinish(null);
     }, [handlePlayerFinish, player])
+  );
+
+  // This screen has its own mini-player — suppress the app-wide bar while focused.
+  const { setScreenOwnsPlayer } = player;
+  useFocusEffect(
+    useCallback(() => {
+      setScreenOwnsPlayer(true);
+      return () => setScreenOwnsPlayer(false);
+    }, [setScreenOwnsPlayer])
   );
 
   const playProgress = player.durationMillis > 0
@@ -315,7 +324,7 @@ export const LearnScreen_v3: React.FC = () => {
         moduleKey: lesson.module,
         source: 'learn_v3_inline',
       });
-      player.loadLesson(lesson.id, lesson.audioUrl, i18n.language);
+      player.loadLesson(lesson.id, lesson.audioUrl, i18n.language, lesson.title);
     }
   };
 

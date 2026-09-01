@@ -957,6 +957,11 @@
     "noModulesFound": "找不到章节",
     "tryDifferentSearch": "尝试不同的关键字或筛选条件"
   },
+  "lessonPlayer": {
+    "nowPlaying": "正在播放",
+    "narrationPlaying": "课程语音讲解",
+    "stop": "停止"
+  },
   "record": {
     "uploadingRecording": "正在上传录音...",
     "analyzingTitle": "正在分析游戏时间...\n这需要几分钟。",

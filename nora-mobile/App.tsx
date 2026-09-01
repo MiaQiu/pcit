@@ -29,6 +29,7 @@ import { SubscriptionProvider } from './src/contexts/SubscriptionContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { RootStackNavigationProp } from './src/navigation/types';
 import { NetworkStatusBar } from './src/components/NetworkStatusBar';
+import { GlobalLessonAudioBar } from './src/components/GlobalLessonAudioBar';
 import { ToastProvider, useToast } from './src/components/ToastManager';
 import { clearBadge, setupAndroidNotificationChannels } from './src/utils/notifications';
 import * as userStorage from './src/lib/userStorage';
@@ -177,6 +178,7 @@ const AppContent: React.FC = () => {
   return (
     <UploadProcessingProvider onNavigateToHome={handleNavigateToHome} onNavigateToReport={handleNavigateToReport} onReportReady={handleReportReady}>
       <RootNavigator />
+      <GlobalLessonAudioBar />
       <StatusBar style="dark" />
       <NetworkStatusBar />
     </UploadProcessingProvider>

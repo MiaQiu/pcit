@@ -909,6 +909,11 @@
     "noModulesFound": "No modules found",
     "tryDifferentSearch": "Try a different search term or filter"
   },
+  "lessonPlayer": {
+    "nowPlaying": "Now playing",
+    "narrationPlaying": "Lesson narration",
+    "stop": "Stop"
+  },
   "record": {
     "uploadingRecording": "Uploading recording...",
     "analyzingTitle": "Analyzing your play time…\nThis takes a few minutes.",
