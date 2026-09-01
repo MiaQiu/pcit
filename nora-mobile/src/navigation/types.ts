@@ -90,7 +90,10 @@ export type RootStackParamList = {
   Onboarding: { initialStep?: string; resumeUserData?: User; wacbReturnRecordingId?: string } | undefined;
   MainTabs: NavigatorScreenParams<RootTabParamList> | undefined;
   Profile: undefined;
-  ProfileReport: { recordingId: string; justCompletedWacb?: boolean };
+  // recordingId is optional — the Child Snapshot + learning-journey view is
+  // user-scoped, so it opens without a session (e.g. from Profile). When
+  // present, the screen also loads that session's analysis for fallback copy.
+  ProfileReport: { recordingId?: string; justCompletedWacb?: boolean } | undefined;
   NotificationSettings: undefined;
   Support: undefined;
   TermsAndConditions: undefined;

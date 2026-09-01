@@ -336,6 +336,13 @@ export const ProfileScreen: React.FC = () => {
     return [...categoryLabels, ...leftoverIssueLabels].join(', ');
   };
 
+  // Tapping the "Primary Focus Area" row opens the fuller Child Snapshot +
+  // learning-journey view. It's user-scoped (no session needed).
+  const handlePrimaryFocusPress = () => {
+    amplitudeService.trackEvent('Profile Primary Focus Tapped');
+    navigation.navigate('ProfileReport', {});
+  };
+
   const formatLocalDate = (date: Date): string => {
     const month = t(`months.${date.getMonth()}`);
     return `${month} ${date.getDate()}, ${date.getFullYear()}`;
@@ -557,7 +564,11 @@ export const ProfileScreen: React.FC = () => {
               return primaryFocusText ? (
                 <>
                   <View style={styles.divider} />
-                  <View style={styles.infoRow}>
+                  <TouchableOpacity
+                    style={styles.infoRow}
+                    activeOpacity={0.7}
+                    onPress={handlePrimaryFocusPress}
+                  >
                     <View style={styles.infoIcon}>
                       <Ionicons name="heart-outline" size={20} color="#8C49D5" />
                     </View>
@@ -565,7 +576,8 @@ export const ProfileScreen: React.FC = () => {
                       <Text style={styles.infoLabel}>{t('profile.primaryFocusLabel')}</Text>
                       <Text style={styles.infoValue}>{primaryFocusText}</Text>
                     </View>
-                  </View>
+                    <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                  </TouchableOpacity>
                 </>
               ) : null;
             })()}

@@ -569,8 +569,15 @@
       "title": "Bonding Moment"
     },
     "interactionStyle": {
-      "title": "Today's Interaction",
-      "viewTips": "View tips"
+      "title": "Today's Interaction Style",
+      "viewTips": "View tips",
+      "detailedBreakdown": "Detailed Breakdown",
+      "confidenceBuilders": "Confidence Builders",
+      "confidenceBuildersSubtitle": "Boost confidence & attention",
+      "playInterruptions": "Play Interruptions",
+      "playInterruptionsSubtitle": "Opportunities to improve together",
+      "moments_one": "{{count}} moment",
+      "moments_other": "{{count}} moments"
     },
     "tomorrowGoal": {
       "title": "Tomorrow's Goal",
@@ -660,6 +667,9 @@
     "coreFocusAreasTitle": "{{childName}}'s Snapshot",
     "coreFocusAreasSubtitle": "A quick picture of where {{childName}} is today. We'll use this to personalise your coaching journey.",
     "fromYourIntake": "From your intake",
+    "issuesFallbackTitle": "{{childName}}'s Focus Areas",
+    "issuesFallbackSubtitle": "Based on what you told us during setup.",
+    "issuesFallbackCta": "Take the Child Snapshot for a fuller picture →",
     "focusAreas": {
       "routines": {
         "label": "Transitions & Routines",

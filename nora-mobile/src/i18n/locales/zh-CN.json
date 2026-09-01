@@ -569,8 +569,14 @@
       "title": "亲子时刻"
     },
     "interactionStyle": {
-      "title": "今日互动",
-      "viewTips": "查看建议"
+      "title": "今日互动风格",
+      "viewTips": "查看建议",
+      "detailedBreakdown": "详细分析",
+      "confidenceBuilders": "自信建立",
+      "confidenceBuildersSubtitle": "提升自信与专注",
+      "playInterruptions": "游戏干扰",
+      "playInterruptionsSubtitle": "可以一起改进的地方",
+      "moments_other": "{{count}} 次"
     },
     "tomorrowGoal": {
       "title": "明日目标",
@@ -660,6 +666,9 @@
     "coreFocusAreasTitle": "{{childName}}的快照",
     "coreFocusAreasSubtitle": "快速了解 {{childName}} 目前的状态。我们会用它来为你定制专属的辅导计划。",
     "fromYourIntake": "来自您的入档信息",
+    "issuesFallbackTitle": "{{childName}}的关注领域",
+    "issuesFallbackSubtitle": "根据你在设置时告诉我们的内容。",
+    "issuesFallbackCta": "完成儿童快照，了解更全面的情况 →",
     "focusAreas": {
       "routines": {
         "label": "转换与日常",

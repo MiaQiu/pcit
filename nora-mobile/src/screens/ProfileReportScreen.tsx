@@ -248,9 +248,10 @@ export const ProfileReportScreen: React.FC = () => {
   const { t } = useTranslation();
   const recordingService = useRecordingService();
   const authService = useAuthService();
-  const { recordingId, justCompletedWacb } = route.params;
+  const { recordingId, justCompletedWacb } = route.params ?? {};
 
-  const [loading, setLoading] = useState(true);
+  // Only block on a report load when we were actually given a session.
+  const [loading, setLoading] = useState(Boolean(recordingId));
   const [error, setError] = useState<string | null>(null);
   const [reportData, setReportData] = useState<RecordingAnalysis | null>(null);
   const [pollingCount, setPollingCount] = useState(0);
@@ -266,9 +267,12 @@ export const ProfileReportScreen: React.FC = () => {
   const [showDomainModal, setShowDomainModal] = useState(false);
   const [loadingDomainMilestones, setLoadingDomainMilestones] = useState(false);
 
-  // null until the WACB survey fetch resolves — an empty array (not null)
-  // means "checked, no survey yet", so the section renders as hidden.
+  // null until the Child Snapshot survey fetch resolves — an empty array (not
+  // null) means "checked, no survey yet", so the section falls back to the
+  // pre-selected issues below.
   const [focusAreas, setFocusAreas] = useState<FocusAreaData[] | null>(null);
+  // Pre-selected User.issue values — the fallback shown when there's no survey.
+  const [issues, setIssues] = useState<string[]>([]);
 
   // Feedback state
   const [feedbackSentiment, setFeedbackSentiment] = useState<'positive' | 'negative' | null>(null);
@@ -279,6 +283,7 @@ export const ProfileReportScreen: React.FC = () => {
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const handleSentimentPress = useCallback((sentiment: 'positive' | 'negative') => {
+    if (!recordingId) return;
     amplitudeService.trackEvent('Report Feedback Sentiment Selected', { sentiment, recordingId });
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setFeedbackSentiment(sentiment);
@@ -306,7 +311,7 @@ export const ProfileReportScreen: React.FC = () => {
   }, []);
 
   const handleSubmitFeedback = useCallback(async () => {
-    if (!feedbackSentiment) return;
+    if (!feedbackSentiment || !recordingId) return;
     amplitudeService.trackEvent('Report Feedback Submitted', { sentiment: feedbackSentiment, reasons: feedbackReasons, recordingId });
     try {
       await recordingService.submitReportFeedback(recordingId, {
@@ -322,7 +327,7 @@ export const ProfileReportScreen: React.FC = () => {
   }, [feedbackSentiment, feedbackReasons, feedbackText, recordingId, recordingService]);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Report', { recordingId, version: 'v2' });
+    amplitudeService.trackScreenView('Report', { recordingId: recordingId ?? null, version: 'v2' });
     loadReportData();
     loadChildProfile();
     loadDevelopmentalVisibility();
@@ -396,12 +401,20 @@ export const ProfileReportScreen: React.FC = () => {
       const user = await authService.getCurrentUser();
       if (user?.childName) setChildName(user.childName);
       setChildAge(calculateAge(user?.childBirthday));
+      const rawIssue = user?.issue;
+      setIssues(Array.isArray(rawIssue) ? rawIssue : rawIssue ? [rawIssue] : []);
     } catch (err) {
       // Keep defaults if fetch fails
     }
   };
 
   const loadReportData = async () => {
+    // No session in scope (opened from Profile) — the Snapshot + journey below
+    // are user-scoped and don't need one.
+    if (!recordingId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -438,9 +451,20 @@ export const ProfileReportScreen: React.FC = () => {
     navigation.goBack();
   };
 
+  // Jump into the standalone Child Snapshot survey. On submit it returns to this
+  // session's ProfileReport (when we have one) or to Profile.
+  const handleTakeSnapshot = () => {
+    amplitudeService.trackEvent('Profile Report Take Snapshot Tapped', { recordingId: recordingId ?? null });
+    navigation.navigate('Onboarding', {
+      initialStep: 'WacbQuestion1',
+      wacbReturnRecordingId: recordingId,
+    });
+  };
+
   const isPDI = reportData?.mode === 'PDI';
 
   const handleLevelPress = (step: { level: number; key: string; skillKey?: string }) => {
+    if (!recordingId) return;
     amplitudeService.trackEvent('Report Journey Level Tapped', { level: step.level, recordingId });
     if (step.skillKey && reportData) {
       const skill = reportData.skills.find(s => s.label === step.skillKey);
@@ -481,8 +505,9 @@ export const ProfileReportScreen: React.FC = () => {
     );
   }
 
-  // Error state
-  if (error || !reportData) {
+  // Error state — only when a session was requested but couldn't load. Without
+  // a recordingId the screen still renders (Snapshot + journey are user-scoped).
+  if (recordingId && (error || !reportData)) {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
@@ -516,9 +541,9 @@ export const ProfileReportScreen: React.FC = () => {
   // back to the session's own feedback/encouragement copy when there's no WACB.
   const focusDescription = focusAreas && focusAreas.length > 0
     ? t(`profileReport.focusAreas.${focusAreas[0].key}.heroDescription`, { childName })
-    : (isPDI && reportData.pdiEncouragement)
+    : (isPDI && reportData?.pdiEncouragement)
       ? reportData.pdiEncouragement
-      : (reportData.feedback || reportData.encouragement || '');
+      : (reportData?.feedback || reportData?.encouragement || '');
 
   // The journey mirrors Profile's "Primary Focus Area" row: it's built from the
   // categories that carry a signal (high/moderate), severity-sorted — not every
@@ -626,6 +651,37 @@ export const ProfileReportScreen: React.FC = () => {
                 );
               })}
             </View>
+          </View>
+        )}
+
+        {/* Fallback when the Child Snapshot survey isn't done yet — the
+            pre-selected issues from onboarding (User.issue), plus a nudge to
+            take the survey for the full severity-scored picture. */}
+        {focusAreas?.length === 0 && issues.length > 0 && (
+          <View style={styles.focusAreasSection}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>{t('profileReport.issuesFallbackTitle', { childName })}</Text>
+              <View style={styles.fromIntakeRow}>
+                <Text style={styles.fromIntakeText}>{t('profileReport.fromYourIntake')}</Text>
+                <Ionicons name="information-circle-outline" size={15} color="#9CA3AF" />
+              </View>
+            </View>
+            <Text style={styles.sectionSubtitleTight}>{t('profileReport.issuesFallbackSubtitle')}</Text>
+            <View style={styles.focusAreaList}>
+              {issues.map(issue => (
+                <View key={issue} style={styles.focusAreaRow}>
+                  <View style={[styles.focusAreaIconCircle, { backgroundColor: '#F3E8FF' }]}>
+                    <Ionicons name="heart-outline" size={20} color={COLORS.mainPurple} />
+                  </View>
+                  <View style={styles.focusAreaRowText}>
+                    <Text style={styles.focusAreaLabel}>{t(`profile.issueTags.${issue}`, { defaultValue: issue })}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+            <TouchableOpacity style={styles.issuesFallbackCta} onPress={handleTakeSnapshot} activeOpacity={0.7}>
+              <Text style={styles.cardLinkText}>{t('profileReport.issuesFallbackCta')}</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -910,6 +966,11 @@ const styles = StyleSheet.create({
   },
   focusAreaList: {
     gap: 10,
+  },
+  issuesFallbackCta: {
+    marginTop: 14,
+    alignItems: 'center',
+    paddingVertical: 8,
   },
   focusAreaRow: {
     flexDirection: 'row',

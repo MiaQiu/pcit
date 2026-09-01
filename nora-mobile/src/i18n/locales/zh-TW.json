@@ -569,8 +569,14 @@
       "title": "親子時刻"
     },
     "interactionStyle": {
-      "title": "今日互動",
-      "viewTips": "檢視建議"
+      "title": "今日互動風格",
+      "viewTips": "檢視建議",
+      "detailedBreakdown": "詳細分析",
+      "confidenceBuilders": "自信建立",
+      "confidenceBuildersSubtitle": "提升自信與專注",
+      "playInterruptions": "遊戲干擾",
+      "playInterruptionsSubtitle": "可以一起改進的地方",
+      "moments_other": "{{count}} 次"
     },
     "tomorrowGoal": {
       "title": "明日目標",
@@ -660,6 +666,9 @@
     "coreFocusAreasTitle": "{{childName}}的快照",
     "coreFocusAreasSubtitle": "快速了解 {{childName}} 目前的狀態。我們會用它來為你打造專屬的輔導計畫。",
     "fromYourIntake": "來自您的入檔資訊",
+    "issuesFallbackTitle": "{{childName}}的關注領域",
+    "issuesFallbackSubtitle": "根據你在設定時告訴我們的內容。",
+    "issuesFallbackCta": "完成兒童快照，了解更全面的狀況 →",
     "focusAreas": {
       "routines": {
         "label": "轉換與日常",
