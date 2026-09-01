@@ -157,11 +157,12 @@ const PARENT_SKILL_LEVELS = PARENT_SKILL_LEVEL_ORDER.map(level => ({
   skillKey: PARENT_SKILL_LEVEL_SKILL_LABEL[level],
 }));
 
-// The Personalized Learning Journey teaches Child-Led Play first — Phase 1 step
-// 1 drops the "Play Interruptions", step 2 builds the "Confidence Builders" —
-// then Phase 2 adds Calm Discipline. Each Phase-1 step's body copy is keyed off
-// the top Snapshot focus category (interruptionBody/builderBody.<slug>), tying
-// the one skill that matters most straight back to that focus.
+// The Personalized Learning Journey walks the full 9-level ladder in three
+// steps: Fewer Play Interruptions (levels 1–3), More Confidence Builders
+// (levels 4–6), then Calm Discipline (levels 7–9). Each step lists its levels
+// with a one-line note — profileReport.journeyPlan.levelHelp.<levelKey>.<slug>
+// — explaining how that level's skill addresses the top Snapshot focus.
+const JOURNEY_PHASE_LEVELS: ParentSkillLevel[][] = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
 
 /** PDI Coach's Corner — Two Choices Flow skills */
 const PDICoachCorner: React.FC<{
@@ -456,6 +457,16 @@ export const ProfileReportScreen: React.FC = () => {
     });
   };
 
+  const handleLevelCardPress = () => {
+    amplitudeService.trackEvent('Profile Report Level Card Tapped', { level: parentSkillLevel });
+    navigation.navigate('ParentLevelDetail', { level: parentSkillLevel });
+  };
+
+  const handleSeeYouTomorrow = () => {
+    amplitudeService.trackEvent('Profile Report See You Tomorrow Tapped', { recordingId: recordingId ?? null });
+    navigation.navigate('MainTabs', { screen: 'Home' });
+  };
+
   const isPDI = reportData?.mode === 'PDI';
 
   const handleLevelPress = (step: { level: number; key: string; skillKey?: string }) => {
@@ -548,7 +559,6 @@ export const ProfileReportScreen: React.FC = () => {
 
   const topFocusKey = primaryAreas[0]?.key ?? null;
   const journeyFocusSlug = topFocusKey ?? 'generic';
-  const showDiscipline = topFocusKey !== null; // "all four" categories → whenever there's a signal
   const showJourneyCta = focusAreas?.length === 0; // survey not done at all
 
   return (
@@ -710,23 +720,25 @@ export const ProfileReportScreen: React.FC = () => {
                     phase?: string;
                     title: string;
                     body: string;
+                    levels: ParentSkillLevel[];
                   }> = [
                     {
                       phase: t('profileReport.journeyPlan.phase1'),
                       title: t('profileReport.journeyPlan.step1Title'),
                       body: t(`profileReport.journeyPlan.interruptionBody.${journeyFocusSlug}`, { childName }),
+                      levels: JOURNEY_PHASE_LEVELS[0],
                     },
                     {
                       title: t('profileReport.journeyPlan.step2Title'),
                       body: t(`profileReport.journeyPlan.builderBody.${journeyFocusSlug}`, { childName }),
+                      levels: JOURNEY_PHASE_LEVELS[1],
                     },
-                    ...(showDiscipline && topFocusKey
-                      ? [{
-                          phase: t('profileReport.journeyPlan.phase2'),
-                          title: t('profileReport.journeyPlan.step3Title'),
-                          body: t(`profileReport.journeyDisciplineWhy.${topFocusKey}`, { childName }),
-                        }]
-                      : []),
+                    {
+                      phase: t('profileReport.journeyPlan.phase2'),
+                      title: t('profileReport.journeyPlan.step3Title'),
+                      body: t(`profileReport.journeyDisciplineWhy.${journeyFocusSlug}`, { childName }),
+                      levels: JOURNEY_PHASE_LEVELS[2],
+                    },
                   ];
                   return steps.map((step, index) => {
                     const isLast = index === steps.length - 1;
@@ -747,6 +759,22 @@ export const ProfileReportScreen: React.FC = () => {
                           <View style={styles.journeyRoadmapTextCol}>
                             <Text style={styles.journeyStepTitle}>{step.title}</Text>
                             <Text style={styles.journeyStepBody}>{step.body}</Text>
+                            <View style={styles.journeyLevelList}>
+                              {step.levels.map(lvl => {
+                                const levelKey = PARENT_SKILL_LEVEL_KEYS[lvl];
+                                return (
+                                  <View key={lvl} style={styles.journeyLevelItem}>
+                                    <Text style={styles.journeyLevelHead}>
+                                      <Text style={styles.journeyLevelNum}>{t('profileReport.journeyLevelBadge', { level: lvl })}</Text>
+                                      {`  ${t(`profileReport.levels.${levelKey}.skill`)}`}
+                                    </Text>
+                                    <Text style={styles.journeyLevelHelp}>
+                                      {t(`profileReport.journeyPlan.levelHelp.${levelKey}.${journeyFocusSlug}`, { childName })}
+                                    </Text>
+                                  </View>
+                                );
+                              })}
+                            </View>
                           </View>
                         </View>
                       </React.Fragment>
@@ -762,6 +790,45 @@ export const ProfileReportScreen: React.FC = () => {
             </View>
           </View>
         )}
+
+        {/* Your level + tomorrow's goal — the standing plan, ended with a soft exit */}
+        {(() => {
+          const levelKey = PARENT_SKILL_LEVEL_KEYS[parentSkillLevel];
+          return (
+            <View style={styles.standingPlanSection}>
+              <TouchableOpacity style={styles.levelCard} activeOpacity={0.85} onPress={handleLevelCardPress}>
+                <View style={styles.levelHeaderRow}>
+                  <View style={styles.levelStarBadge}>
+                    <Ionicons name="star" size={13} color={COLORS.mainPurple} />
+                  </View>
+                  <Text style={styles.levelHeaderLabel}>{t('reportV2.parentingLevel')}</Text>
+                  <Ionicons name="chevron-forward" size={16} color="#9CA3AF" style={styles.levelHeaderChevron} />
+                </View>
+                <View style={styles.levelBodyRow}>
+                  <View style={styles.levelNumberBadge}>
+                    <Text style={styles.levelNumberText}>{parentSkillLevel}</Text>
+                  </View>
+                  <View style={styles.levelBodyTextCol}>
+                    <Text style={styles.levelTitle}>{t(`profileReport.levels.${levelKey}.title`)}</Text>
+                    <Text style={styles.levelSubtitle}>{t(`profileReport.levels.${levelKey}.goal`)}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.tomorrowGoalCard}>
+                <View style={styles.tomorrowGoalHeader}>
+                  <Ionicons name="flag" size={15} color={COLORS.mainPurple} />
+                  <Text style={styles.tomorrowGoalTitle}>{t('reportDetail.tomorrowGoal.title')}</Text>
+                </View>
+                <Text style={styles.tomorrowGoalValue}>{t(`profileReport.levels.${levelKey}.clearGoal`)}</Text>
+              </View>
+
+              <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
+                <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })()}
 
       </ScrollView>
     </SafeAreaView>
@@ -1140,6 +1207,33 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: '#6B7280',
   },
+  journeyLevelList: {
+    marginTop: 12,
+    gap: 12,
+  },
+  journeyLevelItem: {
+    borderLeftWidth: 2,
+    borderLeftColor: '#EDE7F6',
+    paddingLeft: 10,
+  },
+  journeyLevelHead: {
+    fontFamily: FONTS.bold,
+    fontSize: 13,
+    color: COLORS.textDark,
+    marginBottom: 2,
+  },
+  journeyLevelNum: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    letterSpacing: 0.4,
+    color: COLORS.mainPurple,
+  },
+  journeyLevelHelp: {
+    fontFamily: FONTS.regular,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: '#6B7280',
+  },
   journeyWhyBox: {
     flexDirection: 'row',
     gap: 6,
@@ -1173,6 +1267,115 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingVertical: 14,
     alignItems: 'center',
+  },
+
+  // ── Your level + tomorrow's goal + exit ──
+  standingPlanSection: {
+    marginBottom: 24,
+  },
+  levelCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    padding: 18,
+    marginBottom: 12,
+  },
+  levelHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
+  },
+  levelStarBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#EDE7F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  levelHeaderLabel: {
+    flex: 1,
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: COLORS.mainPurple,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  levelHeaderChevron: {
+    marginLeft: 'auto',
+  },
+  levelBodyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  levelNumberBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.mainPurple,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  levelNumberText: {
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    color: '#FFFFFF',
+  },
+  levelBodyTextCol: {
+    flex: 1,
+  },
+  levelTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 2,
+  },
+  levelSubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#6B7280',
+  },
+  tomorrowGoalCard: {
+    backgroundColor: '#F5F0FF',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 16,
+  },
+  tomorrowGoalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  tomorrowGoalTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    color: COLORS.mainPurple,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  tomorrowGoalValue: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    lineHeight: 23,
+    color: COLORS.textDark,
+  },
+  seeYouTomorrowButton: {
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 999,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  seeYouTomorrowButtonText: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    color: '#FFFFFF',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 
   card: {
