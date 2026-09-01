@@ -32,8 +32,7 @@ import amplitudeService from '../services/amplitudeService';
 import { changeLanguage } from '../i18n';
 import {
   computeFocusAreas,
-  primaryFocusAreas,
-  ISSUE_TO_FOCUS_AREA,
+  primaryFocusLabels,
   type FocusAreaData,
 } from '../utils/snapshotFocusAreas';
 
@@ -306,34 +305,14 @@ export const ProfileScreen: React.FC = () => {
     return null;
   };
 
-  const issueLabel = (key: string) => t(`profile.issueTags.${key}`, { defaultValue: key });
-
   const asIssueArray = (issue?: string | string[]): string[] =>
     Array.isArray(issue) ? issue : issue ? [issue] : [];
 
-  // The "Primary Focus Area" row merges two sources:
-  //   1. Child Snapshot survey categories that show a signal (high/moderate),
-  //      severity-sorted — these lead.
-  //   2. Any pre-selected User.issue values that don't map into one of those
-  //      categories (anxiety, developmental concerns, parenting strategies,
-  //      life changes, other) — appended as-is.
-  // When the survey isn't completed (or every category is mild) it falls back
-  // to the raw pre-selected issue list.
+  // The merged "Primary Focus Area" list — same derivation as the ProfileReport
+  // learning-journey subtitle (see utils/snapshotFocusAreas.ts).
   const getPrimaryFocusText = (): string | null => {
-    const issues = asIssueArray(profile?.issue);
-
-    const signalAreas = primaryFocusAreas(focusAreas);
-
-    if (signalAreas.length === 0) {
-      return issues.length ? issues.map(issueLabel).join(', ') : null;
-    }
-
-    const categoryLabels = signalAreas.map(a => t(`profileReport.focusAreas.${a.key}.label`));
-    const leftoverIssueLabels = issues
-      .filter(i => !ISSUE_TO_FOCUS_AREA[i])
-      .map(issueLabel);
-
-    return [...categoryLabels, ...leftoverIssueLabels].join(', ');
+    const labels = primaryFocusLabels(focusAreas, asIssueArray(profile?.issue), t);
+    return labels.length ? labels.join(', ') : null;
   };
 
   // Tapping the "Primary Focus Area" row opens the fuller Child Snapshot +

@@ -15,7 +15,7 @@ import { COLORS, FONTS, PROFILE_REPORT_CHILD, PROFILE_REPORT_THANKS_DRAGON, REPO
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ChildSnapshotSurvey, ParentSkillLevel } from '@nora/core';
-import { computeFocusAreas, primaryFocusAreas, type FocusAreaData, type FocusSeverity } from '../utils/snapshotFocusAreas';
+import { computeFocusAreas, primaryFocusAreas, primaryFocusLabels, type FocusAreaData, type FocusSeverity } from '../utils/snapshotFocusAreas';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
 import { MarkdownText } from '../utils/MarkdownText';
@@ -545,14 +545,12 @@ export const ProfileReportScreen: React.FC = () => {
       ? reportData.pdiEncouragement
       : (reportData?.feedback || reportData?.encouragement || '');
 
-  // The journey mirrors Profile's "Primary Focus Area" row: it's built from the
-  // categories that carry a signal (high/moderate), severity-sorted — not every
-  // category. Falls back to the top overall category for the heading when the
-  // survey is done but every category is mild.
+  // The journey mirrors Profile's "Primary Focus Area" row: same merged list
+  // (signal categories + leftover pre-selected issues) shown in the subtitle,
+  // and the middle steps come from the signal categories, severity-sorted.
+  // Falls back to the top overall category label when there's nothing merged.
   const primaryAreas = primaryFocusAreas(focusAreas);
-  const journeyHeading = primaryAreas.length > 0
-    ? t(`profileReport.focusAreas.${primaryAreas[0].key}.label`)
-    : focusHeading;
+  const journeyHeading = primaryFocusLabels(focusAreas, issues, t).join(', ') || focusHeading;
 
   // 4-step journey: Fill the Emotional Bank Account → top-2 focus-area steps → Calm Discipline.
   const journeyMiddleStepKeys = primaryAreas

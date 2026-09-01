@@ -8,6 +8,7 @@
  * the worst single item in the group rather than anything hardcoded.
  */
 
+import type { TFunction } from 'i18next';
 import type { ChildSnapshotSurvey } from '@nora/core';
 
 export type FocusSeverity = 'high' | 'moderate' | 'mild';
@@ -68,8 +69,7 @@ export const primaryFocusAreas = (areas: FocusAreaData[] | null | undefined): Fo
 // onto one of the 4 Snapshot categories, so the Profile "Primary Focus Area"
 // row can fold the two lists together. Issues with no clean category home
 // (anxiety, developmental concerns, parenting strategies, life changes, other)
-// are intentionally absent — the Profile screen shows those as-is alongside
-// the categories.
+// are intentionally absent — they're shown as-is alongside the categories.
 export const ISSUE_TO_FOCUS_AREA: Record<string, FocusAreaKey> = {
   // current ChildIssueScreen options
   big_feelings_tantrums: 'cooperation',
@@ -84,4 +84,25 @@ export const ISSUE_TO_FOCUS_AREA: Record<string, FocusAreaKey> = {
   aggression: 'boundaries',
   emotional: 'cooperation',
   routine: 'routines',
+};
+
+// The merged "Primary Focus Area" list, shown identically in Profile's account
+// row and the ProfileReport learning-journey subtitle:
+//   1. signal focus-area categories (severity-sorted), then
+//   2. any pre-selected User.issue values that don't map into a category.
+// When there's no survey signal it falls back to the raw pre-selected issues.
+export const primaryFocusLabels = (
+  focusAreas: FocusAreaData[] | null | undefined,
+  issues: string[],
+  t: TFunction,
+): string[] => {
+  const issueLabel = (key: string) => t(`profile.issueTags.${key}`, { defaultValue: key });
+  const signal = primaryFocusAreas(focusAreas);
+  if (signal.length === 0) {
+    return issues.map(issueLabel);
+  }
+  return [
+    ...signal.map(a => t(`profileReport.focusAreas.${a.key}.label`)),
+    ...issues.filter(i => !ISSUE_TO_FOCUS_AREA[i]).map(issueLabel),
+  ];
 };
