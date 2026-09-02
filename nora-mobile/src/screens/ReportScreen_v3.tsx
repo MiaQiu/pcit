@@ -891,14 +891,14 @@ export const ReportScreen_v3: React.FC = () => {
                   </Text>
                 </View>
 
-                <Text style={styles.goalCountText}>
+                <Text style={[styles.goalCountText, levelUp && styles.goalCountTextWide]}>
                   <Trans
                     i18nKey={goalState === 'achieved' && goal.direction === 'reduce' ? 'reportV2.onlyCountToday' : 'reportV2.countToday'}
                     values={{ count: goal.currentNumber, skill: goalSkillForCount(goal.currentNumber) }}
                     components={[<Text style={styles.goalCountBold} />]}
                   />
                 </Text>
-                {goalPreviousCount != null && (
+                {!levelUp && goalPreviousCount != null && (
                   <Text style={styles.goalCountMuted}>
                     {t(goalState === 'achieved' ? 'reportV2.lastTime' : 'reportV2.lastSession', { count: goalPreviousCount })}
                   </Text>
@@ -1342,6 +1342,9 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
     textAlign: 'left',
     marginLeft:33,
+  },
+  goalCountTextWide: {
+    marginRight: -56,
   },
   goalCountBold: {
     fontFamily: FONTS.bold,
