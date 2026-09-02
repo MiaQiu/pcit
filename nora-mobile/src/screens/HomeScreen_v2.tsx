@@ -139,14 +139,23 @@ interface StatPillProps {
   total?: string;
   unit: string;
   onPress?: () => void;
+  // Greys out the pill and blocks the tap — used for metrics that aren't
+  // meaningful yet (e.g. parenting level before the first report is ready).
+  dimmed?: boolean;
 }
 
-const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, unit, onPress }) => {
+const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, unit, onPress, dimmed }) => {
   const progress = total ? Math.min(Number(value) / Number(total), 1) : 1;
   const dashOffset = RING_CIRCUMFERENCE * (1 - progress);
+  const effectiveIconColor = dimmed ? '#D1D5DB' : iconColor;
 
   return (
-    <TouchableOpacity style={styles.statPill} onPress={onPress} activeOpacity={onPress ? 0.7 : 1} disabled={!onPress}>
+    <TouchableOpacity
+      style={[styles.statPill, dimmed && styles.statPillDimmed]}
+      onPress={onPress}
+      activeOpacity={onPress && !dimmed ? 0.7 : 1}
+      disabled={!onPress || dimmed}
+    >
       {/* Progress ring + centered icon — for targetless metrics (streak,
           all-time count) the ring is dropped and just the icon is shown. */}
       <View style={styles.statRingWrap}>
@@ -166,7 +175,7 @@ const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, 
               cx={RING_SIZE / 2}
               cy={RING_SIZE / 2}
               r={RING_RADIUS}
-              stroke={iconColor}
+              stroke={effectiveIconColor}
               strokeWidth={RING_STROKE}
               fill="none"
               strokeDasharray={[RING_CIRCUMFERENCE, RING_CIRCUMFERENCE]}
@@ -180,8 +189,8 @@ const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, 
             get a larger, colored icon; ringed ones keep the muted glyph. */}
         <View style={styles.statRingIcon}>
           {total
-            ? <Ionicons name={iconName} size={18} color="#9CA3AF" />
-            : <Ionicons name={iconName} size={26} color={iconColor} />}
+            ? <Ionicons name={iconName} size={18} color={dimmed ? '#D1D5DB' : '#9CA3AF'} />
+            : <Ionicons name={iconName} size={26} color={effectiveIconColor} />}
         </View>
       </View>
 
@@ -1280,6 +1289,9 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.parentLevel)}
             total="9"
             unit={t('homeV2.statLevel')}
+            // Parenting level isn't meaningful until the first session's report
+            // is ready — grey it out and block the tap until then.
+            dimmed={weeklyStats.totalSessions === 0}
             onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'parent_level' }); navigation.push('ParentLevelDetail', { level: weeklyStats.parentLevel as ParentSkillLevel }); }}
           />
         </View>
@@ -1660,6 +1672,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     minWidth: 72,
+  },
+  statPillDimmed: {
+    opacity: 0.5,
   },
   statRingWrap: {
     width: RING_SIZE,
