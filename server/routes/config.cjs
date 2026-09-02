@@ -104,12 +104,35 @@ function getSingaporeDateString(date = new Date()) {
  * reused for the rest of that day (a pull-to-refresh mid-day shouldn't
  * change the pick out from under them).
  *
- * Rotation: prefers the highest-scoring ELIGIBLE card (score > 0 — general
- * or a genuine match; never one explicitly targeted at someone else) that
- * this user hasn't been shown before, so the pick actually varies day to
- * day. Once every eligible card has been shown at least once, history stops
- * excluding anything and the cycle restarts from the top score again.
+ * Rotation: prefers the least-recently-shown ELIGIBLE card (score > 0 —
+ * general or a genuine match; never one explicitly targeted at someone
+ * else) — never-shown cards first, then whichever eligible card has gone
+ * longest without being shown, so the pick keeps moving through the whole
+ * catalog indefinitely instead of freezing once ranking inputs stop
+ * changing, or (an earlier version of this function's bug) degenerating
+ * into long same-card/same-badge streaks once every card had been shown at
+ * least once — a plain "already seen?" boolean can't tell a card shown
+ * yesterday from one shown two months ago, so once every card had a mark
+ * against it, ties broke back onto displayOrder and a badge that happens to
+ * sort first (e.g. "Today's Thought", 30+ consecutive cards) would win
+ * night after night.
+ *
+ * Badge-type diversity: cards are heavily clustered by badge in
+ * displayOrder (e.g. that same 30+ card run), so even LRU-by-card alone
+ * could still hand back the same badge on consecutive days. Among the
+ * LRU-ordered candidates, prefer one whose badge differs from the last few
+ * days actually shown; only fall back to ignoring badge if that empties
+ * the set (e.g. only one badge type remains eligible at all).
  */
+const HOME_CARD_RECENT_TYPE_LOOKBACK = 3;
+// Generous window over this user's impression history — enough to cover a
+// last-shown-date lookup for every card in a ~50-card catalog with room to
+// spare, while keeping the query bounded for long-tenured users. A card
+// whose last showing falls outside this window is treated as "never shown"
+// (ranks first), which is the desired behavior anyway — that long ago is
+// effectively as fresh as never.
+const HOME_CARD_HISTORY_WINDOW = 90;
+
 async function pickTodaysCard(userId, sortedHomeCards, matchContext) {
   const today = getSingaporeDateString();
 
@@ -125,15 +148,32 @@ async function pickTodaysCard(userId, sortedHomeCards, matchContext) {
   const eligible = sortedHomeCards.filter((c) => homeCardScore(c, matchContext) > 0);
   const pool = eligible.length > 0 ? eligible : sortedHomeCards;
 
-  const shown = await prisma.homeCardImpression.findMany({
-    where: { userId, homeCardId: { in: pool.map((c) => c.id) } },
-    select: { homeCardId: true },
-    distinct: ['homeCardId'],
+  const history = await prisma.homeCardImpression.findMany({
+    where: { userId },
+    orderBy: { shownDate: 'desc' },
+    take: HOME_CARD_HISTORY_WINDOW,
+    select: { homeCardId: true, shownDate: true, HomeCard: { select: { badge: { select: { name: true } } } } },
   });
-  const shownIds = new Set(shown.map((s) => s.homeCardId));
+  // Most-recent-first, so the first entry per homeCardId is that card's
+  // last-shown date.
+  const lastShownDate = new Map();
+  for (const h of history) {
+    if (!lastShownDate.has(h.homeCardId)) lastShownDate.set(h.homeCardId, h.shownDate);
+  }
+  const recentBadgeNames = new Set(history.slice(0, HOME_CARD_RECENT_TYPE_LOOKBACK).map((h) => h.HomeCard.badge.name));
 
-  const unseen = pool.filter((c) => !shownIds.has(c.id));
-  const chosen = (unseen.length > 0 ? unseen : pool)[0];
+  // Never-shown first, then oldest-shown-first; ties (both never shown)
+  // preserve pool's existing score/displayOrder order via a stable sort.
+  const byRecency = [...pool].sort((a, b) => {
+    const aShown = lastShownDate.get(a.id);
+    const bShown = lastShownDate.get(b.id);
+    if (!aShown && !bShown) return 0;
+    if (!aShown) return -1;
+    if (!bShown) return 1;
+    return aShown < bShown ? -1 : aShown > bShown ? 1 : 0;
+  });
+  const diversified = byRecency.filter((c) => !recentBadgeNames.has(c.badge.name));
+  const chosen = (diversified.length > 0 ? diversified : byRecency)[0];
 
   await prisma.homeCardImpression.upsert({
     where: { userId_shownDate: { userId, shownDate: today } },
