@@ -186,9 +186,10 @@ export interface RecordingAnalysis {
   } | null;
   skillCoaching?: string | null;  // Coaching note for tomorrow's goal skill, grounded in this session (generateCrisis)
   bondingMoment?: {
-    quote: string;             // 2-3 consecutive utterances, quoted verbatim (generateCrisis)
-    utteranceNumber: number;   // Index of the first utterance in the quoted exchange
-    context: string;           // 1-2 sentences describing what was happening
+    quote: string;                 // 2-3 consecutive utterances, rebuilt from the transcript (generateCrisis)
+    utteranceNumber: number;       // Index of the first utterance in the exchange
+    endUtteranceNumber?: number;   // Index of the last utterance in the exchange (absent on pre-range sessions)
+    context: string;               // 1-2 sentences describing what was happening
   } | null;
   topMomentStartTime?: number | null;  // Start time in seconds
   topMomentEndTime?: number | null;  // End time in seconds

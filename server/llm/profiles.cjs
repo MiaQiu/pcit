@@ -4,7 +4,8 @@
  * LLM Call Profiles
  *
  * Named presets for every LLM call in the system.
- * All calls use the 'gemini' model (gemini-3.5-flash → gemini-3.1-pro-preview fallback).
+ * All calls use the 'gemini' model ($GEMINI_FLASH_MODEL, default gemini-3.7-flash →
+ * gemini-3.1-pro-preview fallback).
  * Explicit options at the call site override profile defaults.
  */
 const PROFILES = {
@@ -117,7 +118,7 @@ const PROFILES = {
   'role-identification': {
     model:       'gemini',
     temperature: 0.3,
-    maxTokens:   2048,
+    maxTokens:   8192,
     timeout:     60_000,
     output:      'json',
   },
@@ -125,7 +126,7 @@ const PROFILES = {
   'role-id-tiebreaker': {
     model:       'gemini',
     temperature: 0.3,
-    maxTokens:   2048,
+    maxTokens:   8192,
     timeout:     60_000,
     output:      'json',
   },

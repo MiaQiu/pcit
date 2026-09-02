@@ -49,10 +49,10 @@ const COMBINED_FEEDBACK = {
     topMoment: {
       type: 'object',
       properties: {
-        quote:           { type: 'string' },
-        utteranceNumber: { type: 'integer' },
+        startUtteranceNumber: { type: 'integer' },
+        endUtteranceNumber:   { type: 'integer' },
       },
-      required: ['quote', 'utteranceNumber'],
+      required: ['startUtteranceNumber', 'endUtteranceNumber'],
     },
     Feedback:              { type: 'string' },
     exampleUtteranceNumber: { type: 'integer' },
@@ -108,11 +108,11 @@ const CRISIS_COACHING = {
     topMoment: {
       type: 'object',
       properties: {
-        quote:           { type: 'string' },
-        utteranceNumber: { type: 'integer' },
-        context:         { type: 'string' },
+        startUtteranceNumber: { type: 'integer' },
+        endUtteranceNumber:   { type: 'integer' },
+        context:              { type: 'string' },
       },
-      required: ['quote', 'utteranceNumber', 'context'],
+      required: ['startUtteranceNumber', 'endUtteranceNumber', 'context'],
     },
   },
   required: ['heroText', 'crisisMoment', 'skillCoaching', 'topMoment'],

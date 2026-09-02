@@ -4,14 +4,17 @@
  * LLM Model Registry
  * Two models: gemini (primary path) and claude (fallback / explicit calls).
  *
- * gemini: gemini-3.5-flash → gemini-3.1-pro-preview on failure
+ * gemini: $GEMINI_FLASH_MODEL (default gemini-3.7-flash) → gemini-3.1-pro-preview on failure
  * claude: claude-sonnet-4-6 → claude-haiku-4-5-20251001 on failure
  */
+
+// Flash-tier model for the primary `gemini` path — overridable per environment.
+const GEMINI_FLASH_MODEL = process.env.GEMINI_FLASH_MODEL || 'gemini-3.7-flash';
 
 const MODELS = {
   gemini: {
     provider:      'gemini',
-    primary:       'gemini-3.5-flash',
+    primary:       GEMINI_FLASH_MODEL,
     fallback:      'gemini-3.1-pro-preview',
     streaming:     true,
     supportsCache: true,
@@ -47,7 +50,7 @@ const MODELS = {
  * Resolve a model key or full model ID to a model definition.
  * Accepts:
  *  - Named keys: 'gemini' | 'claude'
- *  - Full model IDs: 'gemini-3.5-flash', 'claude-sonnet-4-6', etc.
+ *  - Full model IDs: 'gemini-3.7-flash', 'claude-sonnet-4-6', etc.
  */
 function resolveModel(key) {
   if (MODELS[key]) return MODELS[key];

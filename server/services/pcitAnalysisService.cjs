@@ -187,6 +187,47 @@ function formatUtterancesForPrompt(utterances) {
   }).join('\n');
 }
 
+/**
+ * Rebuild a verbatim quote from a range of utterance indices the LLM selected,
+ * instead of trusting free text it typed back. The models routinely echo the
+ * "[NN] Parent: … [TAG]" prompt formatting into the quote, and paraphrase or
+ * re-segment the words — so we ask only for the index range and reconstruct
+ * the text here from the same array that was numbered in the prompt.
+ *
+ * @param {Array} utterances - the exact array passed to formatUtterancesForPrompt
+ * @param {number} start - first utterance index (inclusive)
+ * @param {number} [end] - last utterance index (inclusive); defaults to `start`
+ * @param {{ withRoleLabels?: boolean, maxSpan?: number }} [opts]
+ *   withRoleLabels: prefix each line with "Parent:"/"Child:" (default true)
+ *   maxSpan: hard cap on how many utterances the range may cover (default 3)
+ * @returns {{ quote: string, utteranceNumber: number, endUtteranceNumber: number } | null}
+ */
+function quoteFromUtteranceRange(utterances, start, end, opts = {}) {
+  const { withRoleLabels = true, maxSpan = 3 } = opts;
+  if (!Array.isArray(utterances) || !utterances.length || !Number.isInteger(start)) return null;
+
+  let lo = start;
+  let hi = Number.isInteger(end) ? end : start;
+  if (hi < lo) [lo, hi] = [hi, lo];
+  lo = Math.max(0, lo);
+  hi = Math.min(hi, utterances.length - 1, lo + maxSpan - 1);
+  if (lo > utterances.length - 1) return null;
+
+  const lines = [];
+  for (let i = lo; i <= hi; i++) {
+    const u = utterances[i];
+    if (!u || u.speaker === SILENT_SPEAKER_ID || !u.text) continue;
+    if (withRoleLabels) {
+      const roleLabel = u.role === 'adult' ? 'Parent' : u.role === 'child' ? 'Child' : u.speaker;
+      lines.push(`${roleLabel}: ${u.text}`);
+    } else {
+      lines.push(u.text);
+    }
+  }
+  if (!lines.length) return null;
+  return { quote: lines.join('\n'), utteranceNumber: lo, endUtteranceNumber: hi };
+}
+
 // ============================================================================
 // Performance vs Goal Section Builder
 // ============================================================================
@@ -761,7 +802,7 @@ function generateCombinedFeedbackPrompt(counts, utterances, childName = 'the chi
 ${formatUtterancesForPrompt(utterances)}
 
 **Task:**
-1. **Top Moment**: Find the ONE moment that shows the strongest parent-child connection, joy, or positive interaction. Child's utterance is prefered over parent's.
+1. **Top Moment**: Find the ONE moment that shows the strongest parent-child connection, joy, or positive interaction. Child's utterance is prefered over parent's. Report it as the utterance index RANGE (from the [NN] markers in the transcript) — 1 utterance, or 2-3 consecutive ones if the moment needs the surrounding lines to make sense. Do NOT quote the text yourself; just give the indices.
 
 2. **Feedback**: Be warm and encouraging. within 20 words. Give a opening messages to the session report. Do not mention PCIT, therapy, or clinical terms.
 Example opening messages for feedback:
@@ -779,8 +820,8 @@ Example opening messages for feedback:
 Return ONLY valid JSON:
 {
   "topMoment": {
-    "quote": "exact quote from the transcript",
-    "utteranceNumber": index of utterance
+    "startUtteranceNumber": index of the first utterance of the moment,
+    "endUtteranceNumber": index of the last utterance of the moment (same as start for a single line)
   },
   "Feedback": "2 sentences of opening message",
   "exampleUtteranceNumber": index of the utterance used as example,
@@ -945,10 +986,21 @@ All other feedback rules remain the same.` : '');
 
   const [revisedFeedback, crisisResult] = await Promise.all([reviewFeedbackPromise, crisisPromise]);
 
+  // Rebuild the top-moment quote from the transcript rather than the LLM's
+  // typed-back text (see quoteFromUtteranceRange). `topMoment` stays a plain
+  // string — downstream (weeklyReportService, recordings route, mobile
+  // fallback) reads it as one.
+  const fbTop = quoteFromUtteranceRange(
+    utterances,
+    feedbackData.topMoment?.startUtteranceNumber,
+    feedbackData.topMoment?.endUtteranceNumber,
+    { withRoleLabels: false, maxSpan: 3 },
+  );
+
   // Assemble final result
   const result = {
-    topMoment: feedbackData.topMoment?.quote,
-    topMomentUtteranceNumber: feedbackData.topMoment?.utteranceNumber,
+    topMoment: fbTop?.quote ?? null,
+    topMomentUtteranceNumber: fbTop?.utteranceNumber ?? null,
     heroText: crisisResult?.heroText || null,
     crisisMoment: crisisResult?.crisisMoment || null,
     skillCoaching: crisisResult?.skillCoaching || null,
@@ -1101,7 +1153,7 @@ ${goalSection}
 
 3. **Skill Coaching**: Write a short coaching section (3-5 sentences) about tomorrow's goal skill above, grounded in what actually happened this session (the count given, and specific moments from the transcript). Focus on insights about how ${childName} responded — in the transcript — around that skill or behavior, not on judging the parent's performance. Keep the tone soft and child-focused; do not trigger the parent's defensiveness (avoid phrases like "you didn't" or "you should have"). If no goal is available, skip this gently — return an empty string.
 
-4. **Top Moment**: Find 2-3 CONSECUTIVE utterances from the transcript (by utterance index) that best capture a bonding moment, or that highlight ${childName}'s personality or development — the kind of exchange that melts a parent's heart. Quote the exchange exactly as it appears in the transcript, and write a 1-2 sentence description of the context (what was happening right before/around it).
+4. **Top Moment**: Find 2-3 CONSECUTIVE utterances from the transcript that best capture a bonding moment, or that highlight ${childName}'s personality or development — the kind of exchange that melts a parent's heart. Report ONLY the utterance index range (the [NN] markers) — the first and last index of the run. Do NOT quote or retype the text; it is reconstructed from the transcript. Also write a 1-2 sentence description of the context (what was happening right before/around it).
 
 Return ONLY valid JSON:
 {
@@ -1113,8 +1165,8 @@ Return ONLY valid JSON:
   },
   "skillCoaching": "3-5 sentences about tomorrow's goal skill, grounded in this session — or empty string",
   "topMoment": {
-    "quote": "the exact 2-3 consecutive utterances, quoted verbatim",
-    "utteranceNumber": index of the first utterance in the quoted exchange,
+    "startUtteranceNumber": index of the first utterance in the run,
+    "endUtteranceNumber": index of the last utterance in the run,
     "context": "1-2 sentences describing what was happening"
   }
 }
@@ -1152,11 +1204,28 @@ async function generateCrisis(utterances, coachingText, childName, goalDirective
       sessionId,
     });
     console.log(`✅ [CRISIS-COACHING] crisisMoment.detected=${result?.crisisMoment?.detected}`);
+
+    // Reconstruct the bonding-exchange quote from the transcript rather than
+    // the LLM's typed-back text (see quoteFromUtteranceRange). Keeps the
+    // { quote, utteranceNumber, context } shape the mobile Top Moment card
+    // expects, plus endUtteranceNumber for its audio-range timing.
+    let topMoment = null;
+    const rawTop = result?.topMoment;
+    if (rawTop) {
+      const rebuilt = quoteFromUtteranceRange(
+        utterances,
+        rawTop.startUtteranceNumber,
+        rawTop.endUtteranceNumber,
+        { withRoleLabels: true, maxSpan: 3 },
+      );
+      if (rebuilt) topMoment = { ...rebuilt, context: rawTop.context || '' };
+    }
+
     return {
       heroText: result?.heroText || null,
       crisisMoment: result?.crisisMoment || null,
       skillCoaching: result?.skillCoaching || null,
-      topMoment: result?.topMoment || null,
+      topMoment,
     };
   } catch (error) {
     console.error('❌ [CRISIS-COACHING] Error:', error.message);
@@ -2040,6 +2109,7 @@ module.exports = {
   SessionQualityError,
   PermanentFailureError,
   analyzePCITCoding,
+  validateSessionQuality,
   identifyRolesWithVoting,
   generateCDIFeedback,
   generateReportHighlights,
