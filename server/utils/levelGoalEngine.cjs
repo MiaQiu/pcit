@@ -175,7 +175,10 @@ function formatNotifications(payload, childName) {
   const name = childName || 'your child';
   return {
     postSession: `Nice work with ${name} today! You're working on: ${payload.title}.`,
-    tomorrow: `Tomorrow's goal: ${payload.actionPrompt}`,
+    // Shown on the Home hero card the next time the parent returns to record
+    // (not a scheduled push) — so it must read as the goal for that day, not
+    // "tomorrow". The card supplies its own label above this body.
+    tomorrow: payload.actionPrompt,
   };
 }
 

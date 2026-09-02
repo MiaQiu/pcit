@@ -33,9 +33,9 @@ every screen that needs them.
 | 1 | CDI | `AVOID_CRITICISM` | criticism count | 3 | reduce | `calmBuilder` |
 | 2 | CDI | `AVOID_COMMANDS` | command count | 3 | reduce | `patienceBuilder` |
 | 3 | CDI | `AVOID_QUESTIONS` | question count | 3 | reduce | `presenceBuilder` |
-| 4 | CDI | `BUILD_PRAISE` | praise count | 5 | build | `confidenceBuilder` |
-| 5 | CDI | `BUILD_NARRATION` | narration count | 5 | build | `attentionBuilder` |
-| 6 | CDI | `BUILD_ECHO` | echo count | 5 | build | `communicationBuilder` |
+| 4 | CDI | `BUILD_PRAISE` | praise count | 10 | build | `confidenceBuilder` |
+| 5 | CDI | `BUILD_NARRATION` | narration count | 10 | build | `attentionBuilder` |
+| 6 | CDI | `BUILD_ECHO` | echo count | 10 | build | `communicationBuilder` |
 | 7 | PDI | `BUILD_COMMANDS` | direct commands | ratio, or flat 5 | build | `cooperationBuilder` |
 | 8 | PDI | `CALM_FOLLOWTHROUGH` | qualifying sessions | 2 | build | `boundaryBuilder` |
 | 9 | either | `INTEGRATE_SKILLS` | qualifying sessions | 2 | build | `confidentParent` |
@@ -187,7 +187,7 @@ each uses a tag-based proxy, gated by 2 non-consecutive qualifying sessions
 |---|---|
 | 7 Cooperation Builder | `direct_command >= 1`, for 2 qualifying PDI sessions → 8 |
 | 8 Boundary Builder | `direct_command >= 1 && criticism === 0`, for 2 qualifying PDI sessions → 9 |
-| 9 Confident Parent | "everything clicking" session (CDI: `criticism === 0 && praise >= 5 && narration >= 5 && echo >= 5`; or PDI: `criticism === 0 && direct_command >= 1`), for 2 qualifying sessions — caps there, no level 10 |
+| 9 Confident Parent | "everything clicking" session (CDI: `criticism === 0 && praise >= 10 && narration >= 10 && echo >= 10`, reusing levels 4-6's own targets; or PDI: `criticism === 0 && direct_command >= 1`), for 2 qualifying sessions — caps there, no level 10 |
 
 Other details:
 

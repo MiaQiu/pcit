@@ -5,7 +5,7 @@
  * card on ReportScreen_v2.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -16,6 +16,7 @@ import type { ParentSkillLevel } from '@nora/core';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import { PARENT_SKILL_LEVEL_ORDER, PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
+import { criteriaForLevel } from '../utils/goalFallback';
 
 type ParentLevelDetailRouteProp = RouteProp<RootStackParamList, 'ParentLevelDetail'>;
 
@@ -30,12 +31,26 @@ export const ParentLevelDetailScreen: React.FC = () => {
   const { t } = useTranslation();
   const { level: currentLevel } = route.params;
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  // Only auto-scroll once per mount — the active card's onLayout can fire
+  // more than once (e.g. font/image load reflow), and re-scrolling after the
+  // user has started reading elsewhere would be jarring.
+  const hasAutoScrolledRef = useRef(false);
+
   useEffect(() => {
     amplitudeService.trackScreenView('Parent Level Detail', { currentLevel });
   }, [currentLevel]);
 
   const handleBack = () => {
     navigation.goBack();
+  };
+
+  // Scroll straight to the parent's current level so they don't have to hunt
+  // for it in the 9-step list.
+  const handleActiveCardLayout = (y: number) => {
+    if (hasAutoScrolledRef.current) return;
+    hasAutoScrolledRef.current = true;
+    scrollViewRef.current?.scrollTo({ y: Math.max(y - 16, 0), animated: true });
   };
 
   return (
@@ -49,6 +64,7 @@ export const ParentLevelDetailScreen: React.FC = () => {
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -62,6 +78,7 @@ export const ParentLevelDetailScreen: React.FC = () => {
           return (
             <View
               key={step.key}
+              onLayout={status === 'active' ? (e) => handleActiveCardLayout(e.nativeEvent.layout.y) : undefined}
               style={[
                 styles.levelCard,
                 status === 'active' && styles.levelCardActive,
@@ -100,13 +117,13 @@ export const ParentLevelDetailScreen: React.FC = () => {
               <Text style={[styles.levelName, status === 'locked' && styles.levelTextLocked]}>
                 {t(`profileReport.levels.${step.key}.title`)}
               </Text>
-              <Text style={[styles.levelSkill, status === 'locked' && styles.levelTextLocked]}>
-                {t(`profileReport.levels.${step.key}.skill`)}
+              <Text style={[styles.levelGoal, status === 'locked' && styles.levelTextLocked]}>
+                {t(`profileReport.levels.${step.key}.goal`)}
               </Text>
 
               <Text style={[styles.levelGoal, status === 'locked' && styles.levelTextLocked]}>
                 <Text style={styles.levelGoalLabel}>{t('profileReport.journeyGoalLabel')}</Text>
-                {t(`profileReport.levels.${step.key}.goal`)}
+                <Text style={[styles.levelSkill, status === 'locked' && styles.levelTextLocked]}>{criteriaForLevel(step.level, t)}</Text>
               </Text>
 
               {status !== 'locked' && (

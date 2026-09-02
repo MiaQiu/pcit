@@ -140,9 +140,13 @@ function computeLevelUpdate(progress, session) {
       return { level6QualifyingCount: newCount };
     }
   } else if (currentLevel === 9) {
-    // Integration proxy: either mode's "everything clicking" session.
+    // Integration proxy: either mode's "everything clicking" session. Reuses
+    // levels 4-6's own targets so this can't drift below what those levels
+    // already required to clear.
     const cdiQualifies = session.mode === 'CDI' && counts.criticisms === 0
-      && counts.praise >= 5 && counts.narration >= 5 && counts.reflection >= 5;
+      && counts.praise >= CDI_FLAT_LEVELS[4].target
+      && counts.narration >= CDI_FLAT_LEVELS[5].target
+      && counts.reflection >= CDI_FLAT_LEVELS[6].target;
     const pdiQualifies = session.mode === 'PDI' && counts.criticisms === 0 && directCommand >= 1;
     if (cdiQualifies || pdiQualifies) {
       const newCount = Math.min((progress.level7QualifyingCount || 0) + 1, QUALIFYING_SESSIONS_REQUIRED);

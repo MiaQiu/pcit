@@ -19,27 +19,9 @@ import amplitudeService from '../services/amplitudeService';
 import * as userStorage from '../lib/userStorage';
 import { LevelUpModal } from '../components/LevelUpModal';
 import { PARENT_SKILL_LEVEL_KEYS, PARENT_SKILL_LEVEL_ORDER } from '../constants/parentSkillLevels';
-import { deriveGoalFromLevel, DerivedGoal } from '../utils/goalFallback';
+import { deriveGoalFromLevel, DerivedGoal, REDUCE_GOAL_TYPES, GOAL_TYPE_SKILL_LABEL_KEY } from '../utils/goalFallback';
 
 type ReportScreenV2RouteProp = RouteProp<RootStackParamList, 'ReportV2'>;
-
-// goalType values from server/utils/levelGoalEngine.cjs whose baseline/target
-// are a REDUCTION (get under the target), not a build-up (climb to it).
-const REDUCE_GOAL_TYPES = new Set(['AVOID_CRITICISM', 'AVOID_COMMANDS', 'AVOID_QUESTIONS']);
-
-// goalType -> report.skillLabel.* key, for goalTypes that track exactly one
-// PCIT skill/avoid item. Used instead of the server's flavor title (e.g.
-// "The Calm Acceptance") so the card names the actual thing to work on.
-// goalTypes with no single backing item (CALM_FOLLOWTHROUGH,
-// INTEGRATE_SKILLS, MAINTAIN_SKILLS) fall back to the level's own skill name.
-const GOAL_TYPE_SKILL_LABEL_KEY: Record<string, string> = {
-  AVOID_CRITICISM: 'criticism',
-  AVOID_COMMANDS: 'commands',
-  AVOID_QUESTIONS: 'questions',
-  BUILD_PRAISE: 'praiseLabeleld',
-  BUILD_NARRATION: 'narrate',
-  BUILD_ECHO: 'echo',
-};
 
 export const ReportScreen_v2: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();

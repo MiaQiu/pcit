@@ -12,7 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
-import { COLORS, FONTS, REPORT_DRAGON_GOOD, REPORT_DRAGON_AMAZING, REPORT_DRAGON_LEVELUP, REPORT_DRAGON_REGRESSED, REPORT_TARGET, REPORT_TARGET_ORANGE, REPORT_TARGET_SMALL, REPORT_STAR_SMALL } from '../constants/assets';
+import { COLORS, FONTS, REPORT_DRAGON_GOOD, REPORT_DRAGON_AMAZING, REPORT_DRAGON_LEVELUP, REPORT_DRAGON_REGRESSED, REPORT_TARGET, REPORT_TARGET_ORANGE, REPORT_TARGET_SMALL, REPORT_STAR_SMALL, REPORT_FIRST_SESSION_DRAGON } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import type { RecordingAnalysis, ParentSkillLevel } from '@nora/core';
@@ -20,25 +20,9 @@ import { useTranslation, Trans } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import * as userStorage from '../lib/userStorage';
 import { PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
-import { deriveGoalFromLevel } from '../utils/goalFallback';
+import { deriveGoalFromLevel, DerivedGoal, REDUCE_GOAL_TYPES, GOAL_TYPE_SKILL_LABEL_KEY, extractMetricForGoalType, criteriaForGoalType } from '../utils/goalFallback';
 
 type ReportScreenV3RouteProp = RouteProp<RootStackParamList, 'ReportV3'>;
-
-const SKILL_LABEL_I18N_KEY: Record<string, string> = {
-  'Praise (Labeled)': 'praiseLabeleld',
-  'Echo': 'echo',
-  'Narrate': 'narrate',
-  'Questions': 'questions',
-  'Commands': 'commands',
-  'Criticism': 'criticism',
-};
-
-const getSkillDisplayLabel = (apiLabel: string, t: Function): string => {
-  const key = SKILL_LABEL_I18N_KEY[apiLabel];
-  if (!key) return apiLabel;
-  const translated = t(`report.skillLabel.${key}`);
-  return translated || apiLabel;
-};
 
 // Level 7 is the pre-final gate: it needs 2 qualifying sessions to clear.
 const LEVEL_7_QUALIFYING_TARGET = 2;
@@ -390,6 +374,98 @@ const DepositCelebrationOverlay: React.FC<{
   );
 };
 
+/**
+ * First-session variant — shown instead of the deposit/goal/level cards when
+ * this is the user's very first completed session (nothing to compare against
+ * yet). A gentler "you did it" celebration: first emotional deposit, the
+ * minutes of focused play, and "your starting point is set".
+ */
+const FirstSessionReport: React.FC<{
+  score: number;
+  minutes: number;
+  t: Function;
+  onBack: () => void;
+  onContinue: () => void;
+  devBar?: React.ReactNode;
+}> = ({ score, minutes, t, onBack, onContinue, devBar }) => (
+  <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <ScrollView
+      className="flex-1"
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Hero */}
+      <View style={styles.fsHeroSection}>
+        <TouchableOpacity
+          onPress={onBack}
+          style={styles.heroBackButton}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
+        </TouchableOpacity>
+        <View style={styles.fsHeroRow}>
+          <View style={styles.fsHeroTextCol}>
+            <Text style={styles.fsHeadline}>{t('reportV2.firstSession.headline')}</Text>
+            <Text style={styles.fsSubtitle}>{t('reportV2.firstSession.subtitle')}</Text>
+            {/* <Text style={styles.fsSubtext}>{t('reportV2.firstSession.subtext')}</Text> */}
+          </View>
+          <Image source={REPORT_FIRST_SESSION_DRAGON} style={styles.fsDragon} resizeMode="contain" />
+        </View>
+      </View>
+
+      {/* Emotional Deposit — first deposit */}
+      <View style={styles.fsDepositCard}>
+        <View style={styles.fsDepositTopRow}>
+          <View style={styles.depositIconCircle}>
+            <Ionicons name="heart" size={26} color={'#6837EA'} />
+          </View>
+          <View style={styles.fsDepositScoreCol}>
+            <Text style={styles.fsDepositScore}>+{score}</Text>
+            <Text style={styles.fsDepositLabel}>{t('reportV2.firstSession.depositLabel')}</Text>
+            <Text style={styles.fsDepositFirst}>{t('reportV2.firstSession.depositFirst')}</Text>
+          </View>
+          <View style={styles.fsDepositDivider} />
+          <MaterialCommunityIcons name="bank" size={40} color={COLORS.mainPurple} />
+        </View>
+        <View style={styles.fsNoteDivider} />
+        {/* <View style={styles.fsNoteRow}>
+          <Ionicons name="heart" size={15} color={COLORS.mainPurple} />
+          <Text style={styles.fsNoteText}>{t('reportV2.firstSession.depositNote')}</Text>
+        </View> */}
+      </View>
+
+      {/* A great first step — minutes of focused play */}
+      <View style={styles.fsStepCard}>
+        <View style={styles.fsStepIconCircle}>
+          <MaterialCommunityIcons name="timer-outline" size={24} color={'#44A135'} />
+        </View>
+        <View style={styles.fsCardTextCol}>
+          <Text style={styles.fsStepTitle}>{t('reportV2.firstSession.stepTitle')}</Text>
+          <Text style={styles.fsCardBody}>{t('reportV2.firstSession.stepBody', { count: minutes })}</Text>
+        </View>
+      </View>
+
+      {/* Your starting point is set */}
+      <View style={styles.fsStartCard}>
+        <View style={styles.fsStartIconCircle}>
+          <Ionicons name="trending-up" size={22} color={'#D97706'} />
+        </View>
+        <View style={styles.fsCardTextCol}>
+          <Text style={styles.fsStartTitle}>{t('reportV2.firstSession.startingTitle')}</Text>
+          <Text style={styles.fsCardBody}>{t('reportV2.firstSession.startingBody')}</Text>
+        </View>
+      </View>
+
+      <TouchableOpacity style={styles.continueButton} onPress={onContinue} activeOpacity={0.85}>
+        <Text style={styles.continueButtonText}>{t('reportV2.firstSession.cta')}</Text>
+        <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      {devBar}
+    </ScrollView>
+  </SafeAreaView>
+);
+
 export const ReportScreen_v3: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<ReportScreenV3RouteProp>();
@@ -404,12 +480,20 @@ export const ReportScreen_v3: React.FC = () => {
   const [pollingCount, setPollingCount] = useState(0);
 
   const [prevScore, setPrevScore] = useState<number | null>(null);
-  const [prevAreaCounts, setPrevAreaCounts] = useState<Record<string, number> | null>(null);
+  // Raw tagCounts (RecordingAnalysis.stats shape) from the previous completed
+  // session — used to compare THIS session's goal metric (whatever the
+  // parent-level goal is tracking) against its own count last time, via
+  // extractMetricForGoalType. Not restricted to areasToAvoid, since the goal
+  // can now be a build-direction metric (levels 4-6).
+  const [prevStats, setPrevStats] = useState<Record<string, any> | null>(null);
   // Sum of every prior completed session's score — the running "Total
   // Emotional Deposit" this session's score animates on top of. null until
   // the recordings list resolves (offline / first session → card just shows
   // today's score, no add-animation).
   const [depositTotalBefore, setDepositTotalBefore] = useState<number | null>(null);
+  // True when this is the user's first completed session (no other completed
+  // recordings) — swaps the whole screen for the gentler FirstSessionReport.
+  const [isFirstSession, setIsFirstSession] = useState(false);
   // Big centre-screen "+N" celebration — shown once, when this session's
   // deposit is added onto the running total.
   const [showDepositCelebration, setShowDepositCelebration] = useState(false);
@@ -428,7 +512,7 @@ export const ReportScreen_v3: React.FC = () => {
 
   // DEV-only: force a goal-card / level-up scenario for on-device preview.
   // 'live' = real data. The picker is rendered at the bottom only when __DEV__.
-  const [devScenario, setDevScenario] = useState<'live' | 'inProgress' | 'achieved' | 'regressed' | 'levelup'>('live');
+  const [devScenario, setDevScenario] = useState<'live' | 'first' | 'inProgress' | 'achieved' | 'regressed' | 'levelup'>('live');
 
   useEffect(() => {
     amplitudeService.trackScreenView('Report', { recordingId, version: 'v3' });
@@ -459,33 +543,47 @@ export const ReportScreen_v3: React.FC = () => {
   };
 
   // Non-critical: finds the previous completed session to diff score/areas
-  // against. Failing silently (no previous session, offline, etc.) just
-  // means the delta and today's-goal comparisons fall back gracefully.
+  // against, and decides whether this is the user's first session. Failing
+  // silently (offline, etc.) just means the delta / today's-goal comparisons
+  // fall back gracefully and the first-session view is skipped.
+  //
+  // The recordings-list fetch is awaited so the caller can hold the spinner
+  // until we know first-session vs. returning (avoids a flash of the normal
+  // report). The deeper previous-analysis fetch is fire-and-forget.
   const loadPreviousComparison = async (current: RecordingAnalysis) => {
+    let recordings: any[] = [];
     try {
-      const { recordings } = await recordingService.getRecordings();
-
-      // Running total of all *other* completed sessions; today's score is
-      // added on top by the card's animation.
-      const totalBefore = (recordings || [])
-        .filter((r: any) => r.analysisStatus === 'COMPLETED' && r.id !== recordingId)
-        .reduce((sum: number, r: any) => sum + (r.overallScore || 0), 0);
-      setDepositTotalBefore(totalBefore);
-      if ((current.noraScore ?? 0) > 0) setShowDepositCelebration(true);
-
-      const currentTime = new Date(current.createdAt).getTime();
-      const previous = (recordings || [])
-        .filter((r: any) => r.analysisStatus === 'COMPLETED' && r.id !== recordingId && new Date(r.createdAt).getTime() < currentTime)
-        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-      if (!previous) return;
-      const prevAnalysis = await recordingService.getAnalysis(previous.id);
-      setPrevScore(prevAnalysis.noraScore ?? null);
-      const counts: Record<string, number> = {};
-      (prevAnalysis.areasToAvoid || []).forEach((a: any) => { counts[a.label] = a.count || 0; });
-      setPrevAreaCounts(counts);
+      recordings = (await recordingService.getRecordings()).recordings || [];
     } catch (err) {
-      // No previous session to compare against — fine, sections adapt.
+      return; // Offline / no list — sections adapt, first-session view skipped.
     }
+
+    const otherCompleted = recordings.filter(
+      (r: any) => r.analysisStatus === 'COMPLETED' && r.id !== recordingId
+    );
+    setIsFirstSession(otherCompleted.length === 0);
+
+    // Running total of all *other* completed sessions; today's score is
+    // added on top by the card's animation.
+    const totalBefore = otherCompleted.reduce((sum: number, r: any) => sum + (r.overallScore || 0), 0);
+    setDepositTotalBefore(totalBefore);
+    if ((current.noraScore ?? 0) > 0) setShowDepositCelebration(true);
+
+    const currentTime = new Date(current.createdAt).getTime();
+    const previous = otherCompleted
+      .filter((r: any) => new Date(r.createdAt).getTime() < currentTime)
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+    if (!previous) return;
+
+    void (async () => {
+      try {
+        const prevAnalysis = await recordingService.getAnalysis(previous.id);
+        setPrevScore(prevAnalysis.noraScore ?? null);
+        setPrevStats(prevAnalysis.stats || null);
+      } catch (err) {
+        // No previous-session diff — fine, sections fall back.
+      }
+    })();
   };
 
   const loadReportData = async () => {
@@ -494,8 +592,11 @@ export const ReportScreen_v3: React.FC = () => {
       setError(null);
       const data = await recordingService.getAnalysis(recordingId);
       setReportData(data);
+      // Hold the spinner until we know first-session vs. returning so the
+      // right screen paints first (loadPreviousComparison swallows its own
+      // errors, so this can't reject).
+      await loadPreviousComparison(data);
       setLoading(false);
-      loadPreviousComparison(data);
     } catch (err: any) {
       console.log('Report error:', err.message);
 
@@ -569,43 +670,78 @@ export const ReportScreen_v3: React.FC = () => {
   const isAmazing = score >= 90;
   const scoreDelta = prevScore != null ? score - prevScore : null;
 
-  // Today's Goal — the areasToAvoid entry (excluding PDI Commands) with the
-  // highest count this session; skipped when nothing needs reducing.
-  const filteredAreas = reportData.areasToAvoid.filter(
-    a => !(reportData.mode === 'PDI' && a.label === 'Commands')
-  );
-  const goalArea = filteredAreas.reduce<{ label: string; count: number } | null>(
-    (max, a) => (a.count > (max?.count ?? 0) ? a : max),
-    null
-  );
-  const goalPreviousCount = goalArea && prevAreaCounts ? prevAreaCounts[goalArea.label] ?? null : null;
+  // First-session view — replaces the whole report when there's no prior
+  // session to build the deposit/goal/level cards from. DEV picker can force
+  // it via the 'first' scenario.
+  const isFirstSessionView = __DEV__ && devScenario !== 'live'
+    ? devScenario === 'first'
+    : isFirstSession;
+  const firstSessionMinutes = Math.max(1, Math.round((reportData.durationSeconds ?? 0) / 60));
+
+  // Today's Goal — the parent-skill-level goal as of BEFORE this session
+  // (the server computes goalDirective from ParentSkillProgress.currentLevel
+  // prior to folding this session's own results in — see
+  // pcitAnalysisService.cjs's generateCdiCoaching). Same source ReportScreen_v2
+  // uses; falls back to a client-derived version for sessions analyzed
+  // before goalDirective existed on the payload.
+  const goalDirective = reportData.mode === 'PDI'
+    ? reportData.pdiTomorrowGoalDirective ?? null
+    : reportData.tomorrowGoalDirective ?? null;
+  const goalSkillLabelKey = goalDirective ? GOAL_TYPE_SKILL_LABEL_KEY[goalDirective.goalType || ''] : undefined;
+  const goal: DerivedGoal = goalDirective
+    ? {
+        focusSkill: goalSkillLabelKey
+          ? t(`report.skillLabel.${goalSkillLabelKey}`)
+          : t(`profileReport.levels.${PARENT_SKILL_LEVEL_KEYS[parentLevel]}.skill`),
+        currentNumber: goalDirective.currentNumber,
+        targetNumber: goalDirective.targetNumber ?? null,
+        description: goalDirective.actionPrompt || '',
+        direction: REDUCE_GOAL_TYPES.has(goalDirective.goalType || '') ? 'reduce' : 'build',
+        goalType: goalDirective.goalType || null,
+      }
+    : deriveGoalFromLevel(parentLevel, reportData.stats, reportData.mode, t);
+  // Same metric the goal is tracking, but from the PREVIOUS session's raw
+  // counts — used for the "last session" comparison / regressed detection
+  // below. Only resolves for the flat levels 1-6 goalTypes; null otherwise
+  // (levels 7-9 have no single-session metric to compare).
+  const goalPreviousCount = extractMetricForGoalType(goal.goalType, prevStats ?? undefined);
   // Three states for the goal card:
-  //  - 'achieved'  : count reached zero → "You did it!"
-  //  - 'regressed' : count went UP vs last session → "Not yet today.", with a
-  //                  softer "we'll practice together" message
-  //  - 'inProgress': everything else (improved but not zero, or no prior data)
-  //                  → "Almost there!" + "You've already improved. Keep going!"
+  //  - 'achieved'  : goal's target reached this session → "You did it!"
+  //  - 'regressed' : moved further from the target vs last session →
+  //                  "Not yet today.", with a softer "we'll practice
+  //                  together" message
+  //  - 'inProgress': everything else (improved but not yet at target, or no
+  //                  prior data) → "Almost there!" + "You've already
+  //                  improved. Keep going!"
   // 'regressed' needs the previous-session count, so until loadPreviousComparison
   // resolves the card sits in 'inProgress'.
-  const goalStateReal: 'achieved' | 'regressed' | 'inProgress' = !goalArea
-    ? 'inProgress'
-    : goalArea.count === 0
-      ? 'achieved'
-      : goalPreviousCount != null && goalArea.count > goalPreviousCount
-        ? 'regressed'
-        : 'inProgress';
+  const goalAchieved = goal.currentNumber != null && typeof goal.targetNumber === 'number'
+    ? (goal.direction === 'build' ? goal.currentNumber >= goal.targetNumber : goal.currentNumber <= goal.targetNumber)
+    : false;
+  const goalRegressed = !goalAchieved && goal.currentNumber != null && goalPreviousCount != null
+    ? (goal.direction === 'build' ? goal.currentNumber < goalPreviousCount : goal.currentNumber > goalPreviousCount)
+    : false;
+  const goalStateReal: 'achieved' | 'regressed' | 'inProgress' =
+    goal.currentNumber == null
+      ? 'inProgress'
+      : goalAchieved
+        ? 'achieved'
+        : goalRegressed
+          ? 'regressed'
+          : 'inProgress';
   // DEV override (see devScenario). 'levelup' also puts the goal card in its
   // achieved state to match the celebration mock.
+  // 'first' is handled by the early FirstSessionReport return, so it never
+  // reaches this override — treated like 'live' for the type's sake.
   const goalState: 'achieved' | 'regressed' | 'inProgress' =
-    __DEV__ && devScenario !== 'live'
+    __DEV__ && devScenario !== 'live' && devScenario !== 'first'
       ? (devScenario === 'levelup' ? 'achieved' : devScenario)
       : goalStateReal;
   const levelUp = __DEV__ && devScenario === 'levelup'
     ? { from: 3 as ParentSkillLevel, to: 4 as ParentSkillLevel }
     : levelUpInfo;
-  const goalSkillLabel = goalArea ? getSkillDisplayLabel(goalArea.label, t) : null;
   const goalSkillForCount = (count: number) => {
-    const plural = goalSkillLabel?.toLowerCase() ?? '';
+    const plural = goal.focusSkill?.toLowerCase() ?? '';
     return count === 1 && plural.endsWith('s') ? plural.slice(0, -1) : plural;
   };
 
@@ -644,6 +780,36 @@ export const ReportScreen_v3: React.FC = () => {
     levelProgress = Math.min(qualifyingCount / LEVEL_7_QUALIFYING_TARGET, 1);
   }
   const levelPercent = levelProgress != null ? Math.round(levelProgress * 100) : null;
+
+  const devBar = __DEV__ ? (
+    <View style={styles.devBar}>
+      <Text style={styles.devBarLabel}>PREVIEW (dev only)</Text>
+      <View style={styles.devBarRow}>
+        {(['live', 'first', 'inProgress', 'achieved', 'regressed', 'levelup'] as const).map(s => (
+          <TouchableOpacity
+            key={s}
+            onPress={() => { setDevScenario(s); setShowDepositCelebration(true); }}
+            style={[styles.devChip, devScenario === s && styles.devChipActive]}
+          >
+            <Text style={[styles.devChipText, devScenario === s && styles.devChipTextActive]}>{s}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  ) : null;
+
+  if (isFirstSessionView) {
+    return (
+      <FirstSessionReport
+        score={score}
+        minutes={firstSessionMinutes}
+        t={t}
+        onBack={handleBack}
+        onContinue={handleContinueToCoaching}
+        devBar={devBar}
+      />
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
@@ -693,7 +859,7 @@ export const ReportScreen_v3: React.FC = () => {
         />
 
         {/* Today's Goal */}
-        {goalArea && goalSkillLabel && (
+        {goal.focusSkill && goal.currentNumber != null && (
           <View style={[styles.goalCard, goalState === 'regressed' && styles.goalCardRegressed]}>
             <View style={styles.goalTopRow}>
               <View style={styles.goalHeaderCol}>
@@ -703,7 +869,9 @@ export const ReportScreen_v3: React.FC = () => {
                     {t('reportV2.todaysGoal')}
                   </Text>
                 </View>
-                <Text style={styles.goalTitle}>{t('reportV2.reduceSkill', { skill: goalSkillLabel })}</Text>
+                <Text style={styles.goalTitle}>
+                  {criteriaForGoalType(goal.goalType, t) || goal.focusSkill}
+                </Text>
                 <View style={styles.goalTitleDivider} />
 
                 <View style={styles.goalStatusRow}>
@@ -725,8 +893,8 @@ export const ReportScreen_v3: React.FC = () => {
 
                 <Text style={styles.goalCountText}>
                   <Trans
-                    i18nKey={goalState === 'achieved' ? 'reportV2.onlyCountToday' : 'reportV2.countToday'}
-                    values={{ count: goalArea.count, skill: goalSkillForCount(goalArea.count) }}
+                    i18nKey={goalState === 'achieved' && goal.direction === 'reduce' ? 'reportV2.onlyCountToday' : 'reportV2.countToday'}
+                    values={{ count: goal.currentNumber, skill: goalSkillForCount(goal.currentNumber) }}
                     components={[<Text style={styles.goalCountBold} />]}
                   />
                 </Text>
@@ -817,22 +985,7 @@ export const ReportScreen_v3: React.FC = () => {
           <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
         </TouchableOpacity>
 
-        {__DEV__ && (
-          <View style={styles.devBar}>
-            <Text style={styles.devBarLabel}>PREVIEW (dev only)</Text>
-            <View style={styles.devBarRow}>
-              {(['live', 'inProgress', 'achieved', 'regressed', 'levelup'] as const).map(s => (
-                <TouchableOpacity
-                  key={s}
-                  onPress={() => { setDevScenario(s); setShowDepositCelebration(true); }}
-                  style={[styles.devChip, devScenario === s && styles.devChipActive]}
-                >
-                  <Text style={[styles.devChipText, devScenario === s && styles.devChipTextActive]}>{s}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
+        {devBar}
       </ScrollView>
 
       {showDepositCelebration && score > 0 && (
@@ -1033,7 +1186,7 @@ const styles = StyleSheet.create({
   },
   depositLabel: {
     fontFamily: FONTS.semiBold,
-    fontSize: 15,
+    fontSize: 18,
     color: COLORS.textDark,
   },
   depositRightCol: {
@@ -1346,6 +1499,151 @@ const styles = StyleSheet.create({
   },
   levelUpTrophy: {
     marginLeft: 'auto',
+  },
+
+  // ── First-session variant ──
+  fsHeroSection: {
+    marginBottom: 18,
+  },
+  fsHeroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fsHeroTextCol: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  fsHeadline: {
+    fontFamily: FONTS.bold,
+    fontSize: 30,
+    color: COLORS.mainPurple,
+  },
+  fsSubtitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 17,
+    color: COLORS.textDark,
+    marginTop: 10,
+    lineHeight: 23,
+  },
+  fsSubtext: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 8,
+    lineHeight: 20,
+  },
+  fsDragon: {
+    width: 180,
+    height: 180,
+  },
+  fsDepositCard: {
+    backgroundColor: '#FAF7FE',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 12,
+  },
+  fsDepositTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  fsDepositScoreCol: {
+    flex: 1,
+  },
+  fsDepositScore: {
+    fontFamily: FONTS.bold,
+    fontSize: 32,
+    color: COLORS.mainPurple,
+  },
+  fsDepositLabel: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: COLORS.textDark,
+    marginTop: 2,
+  },
+  fsDepositFirst: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: COLORS.mainPurple,
+    marginTop: 2,
+  },
+  fsDepositDivider: {
+    width: 1,
+    height: 52,
+    backgroundColor: '#E9DFFC',
+  },
+  fsNoteDivider: {
+    height: 1,
+    backgroundColor: '#E9DFFC',
+    marginTop: 14,
+    marginBottom: 12,
+  },
+  fsNoteRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  fsNoteText: {
+    flex: 1,
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#4B5563',
+    lineHeight: 19,
+  },
+  fsStepCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: '#FAFBF6',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 12,
+  },
+  fsStepIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#E7F3E4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fsStepTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: '#44A135',
+    marginBottom: 3,
+  },
+  fsStartCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: '#FEF9F3',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 24,
+  },
+  fsStartIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FBEBD8',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fsStartTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: '#D97706',
+    marginBottom: 3,
+  },
+  fsCardTextCol: {
+    flex: 1,
+  },
+  fsCardBody: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: COLORS.textDark,
+    lineHeight: 20,
   },
 
   // ── CTA ──
