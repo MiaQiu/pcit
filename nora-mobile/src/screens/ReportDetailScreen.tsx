@@ -208,13 +208,6 @@ const SKILL_TAG_TO_DEMO_VIDEO_TITLE: Record<string, string> = {
   'Criticism': FULL_DEMO_VIDEO_TITLE,
 };
 
-// Overrides the demo video's own title on the button for skills where the
-// actual DemoVideo title (e.g. the shared full-demo clip's name) doesn't
-// describe what this skill's goal is about.
-const SKILL_TAG_TO_DEMO_VIDEO_DISPLAY_TITLE: Record<string, string> = {
-  'Criticism': 'Replace criticism with active ignoring',
-};
-
 // Same client-side fallback as ReportScreen_v2.tsx (deriveGoalFromLevel in
 // utils/goalFallback.ts) — reconstructs a same-shape goal from the parent's
 // current level and this session's raw tag counts. Needed because
@@ -1052,85 +1045,69 @@ export const ReportDetailScreen: React.FC = () => {
                     {t('reportDetail.skillCoaching.learnMoreTitle', { skill: getSkillDisplayLabel(goalSkillTag!, t) })}
                   </Text>
                 )}
-                {reportData.skillImprove && (
-                  <TouchableOpacity
-                    style={styles.learnMoreButton}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      const direction = goalType?.startsWith('AVOID_') ? 'AVOID' : 'BUILD';
-                      amplitudeService.trackEvent('Report Detail Skill Improve Tapped', {
-                        recordingId,
-                        skillTag: goalSkillTag,
-                        direction,
-                      });
-                      navigation.navigate('SkillImprove', {
-                        recordingId,
-                        skillTag: goalSkillTag!,
-                        direction,
-                        skillImprove: reportData.skillImprove!,
-                      });
-                    }}
-                  >
-                    <View style={styles.improveBadge}>
-                      <Text style={styles.improveBadgeText}>{t('reportDetail.skillCoaching.insightsBadge')}</Text>
-                    </View>
-                    <Text style={styles.improveButtonText} numberOfLines={1}>
-                      {t(
-                        goalType?.startsWith('AVOID_') ? 'reportDetail.skillCoaching.removeLinkText' : 'reportDetail.skillCoaching.improveLinkText',
-                        { skill: getSkillDisplayLabel(goalSkillTag!, t) }
-                      )}
-                    </Text>
-                    <Ionicons name="arrow-forward" size={15} color="#0E7C66" />
-                  </TouchableOpacity>
-                )}
-                {learnMoreLesson && (
-                  <TouchableOpacity
-                    style={styles.learnMoreButton}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      amplitudeService.trackEvent('Report Detail Learn More Tapped', {
-                        recordingId,
-                        skillTag: goalSkillTag,
-                        lessonId: learnMoreLesson.id,
-                      });
-                      if (CONTENT_V2_MODULES.includes(learnMoreLesson.module)) {
-                        navigation.navigate('LessonViewerV2', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
-                      } else {
-                        navigation.navigate('LessonViewer', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
-                      }
-                    }}
-                  >
-                    <View style={styles.lessonBadge}>
-                      <Text style={styles.lessonBadgeText}>{t('reportDetail.skillCoaching.lessonBadge')}</Text>
-                    </View>
-                    <Text style={styles.learnMoreButtonText} numberOfLines={1}>
-                      {learnMoreLesson.title}
-                    </Text>
-                    <Ionicons name="arrow-forward" size={15} color="#8C49D5" />
-                  </TouchableOpacity>
-                )}
-                {learnMoreDemoVideo && (
-                  <TouchableOpacity
-                    style={styles.learnMoreButton}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      amplitudeService.trackEvent('Report Detail Demo Video Tapped', {
-                        recordingId,
-                        skillTag: goalSkillTag,
-                        demoVideoId: learnMoreDemoVideo.id,
-                      });
-                      navigation.navigate('DemoVideoDetail', { video: learnMoreDemoVideo });
-                    }}
-                  >
-                    <View style={styles.demoBadge}>
-                      <Text style={styles.demoBadgeText}>{t('reportDetail.skillCoaching.demoBadge')}</Text>
-                    </View>
-                    <Text style={styles.demoButtonText} numberOfLines={1}>
-                      {(goalSkillTag && SKILL_TAG_TO_DEMO_VIDEO_DISPLAY_TITLE[goalSkillTag]) || learnMoreDemoVideo.title}
-                    </Text>
-                    <Ionicons name="arrow-forward" size={15} color="#C2694B" />
-                  </TouchableOpacity>
-                )}
+                <View style={styles.badgeRow}>
+                  {reportData.skillImprove && (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        const direction = goalType?.startsWith('AVOID_') ? 'AVOID' : 'BUILD';
+                        amplitudeService.trackEvent('Report Detail Skill Improve Tapped', {
+                          recordingId,
+                          skillTag: goalSkillTag,
+                          direction,
+                        });
+                        navigation.navigate('SkillImprove', {
+                          recordingId,
+                          skillTag: goalSkillTag!,
+                          direction,
+                          skillImprove: reportData.skillImprove!,
+                        });
+                      }}
+                    >
+                      <View style={styles.improveBadge}>
+                        <Text style={styles.improveBadgeText}>{t('reportDetail.skillCoaching.insightsBadge')}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  {learnMoreLesson && (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        amplitudeService.trackEvent('Report Detail Learn More Tapped', {
+                          recordingId,
+                          skillTag: goalSkillTag,
+                          lessonId: learnMoreLesson.id,
+                        });
+                        if (CONTENT_V2_MODULES.includes(learnMoreLesson.module)) {
+                          navigation.navigate('LessonViewerV2', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
+                        } else {
+                          navigation.navigate('LessonViewer', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
+                        }
+                      }}
+                    >
+                      <View style={styles.lessonBadge}>
+                        <Text style={styles.lessonBadgeText}>{t('reportDetail.skillCoaching.lessonBadge')}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  {learnMoreDemoVideo && (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        amplitudeService.trackEvent('Report Detail Demo Video Tapped', {
+                          recordingId,
+                          skillTag: goalSkillTag,
+                          demoVideoId: learnMoreDemoVideo.id,
+                        });
+                        navigation.navigate('DemoVideoDetail', { video: learnMoreDemoVideo });
+                      }}
+                    >
+                      <View style={styles.demoBadge}>
+                        <Text style={styles.demoBadgeText}>{t('reportDetail.skillCoaching.demoBadge')}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </>
             )}
             <TouchableOpacity
@@ -1390,16 +1367,13 @@ const styles = StyleSheet.create({
   skillTagBadge: { backgroundColor: '#F5EAFB', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   skillTagBadgeText: { fontFamily: FONTS.bold, fontSize: 11, color: '#8C49D5' },
   learnMoreTitle: { fontFamily: FONTS.semiBold, fontSize: 13, color: '#7A6252', marginTop: 14 },
-  learnMoreButton: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, alignSelf: 'stretch' },
-  learnMoreButtonText: { flexShrink: 1, fontFamily: FONTS.semiBold, fontSize: 14, color: '#8C49D5' },
-  demoButtonText: { flexShrink: 1, fontFamily: FONTS.semiBold, fontSize: 14, color: '#C2694B' },
-  lessonBadge: { backgroundColor: '#F5EAFB', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  lessonBadgeText: { fontFamily: FONTS.bold, fontSize: 10, color: '#8C49D5' },
-  demoBadge: { backgroundColor: '#FBE3CE', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  demoBadgeText: { fontFamily: FONTS.bold, fontSize: 10, color: '#C2694B' },
-  improveBadge: { backgroundColor: '#DFF3EE', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  improveBadgeText: { fontFamily: FONTS.bold, fontSize: 10, color: '#0E7C66' },
-  improveButtonText: { flexShrink: 1, fontFamily: FONTS.semiBold, fontSize: 14, color: '#0E7C66' },
+  badgeRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 8, alignSelf: 'stretch' },
+  lessonBadge: { backgroundColor: '#F5EAFB', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
+  lessonBadgeText: { fontFamily: FONTS.bold, fontSize: 13, color: '#8C49D5' },
+  demoBadge: { backgroundColor: '#FBE3CE', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
+  demoBadgeText: { fontFamily: FONTS.bold, fontSize: 13, color: '#C2694B' },
+  improveBadge: { backgroundColor: '#DFF3EE', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
+  improveBadgeText: { fontFamily: FONTS.bold, fontSize: 13, color: '#0E7C66' },
   // Font formatting matches ReportScreen.tsx's coachDescription (Coach's Corner content).
   crisisBody: { fontFamily: FONTS.regular, fontSize: 16, color: '#4B5563', lineHeight: 24, marginBottom: 4, marginTop: 3 },
   crisisReadMoreRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start' },

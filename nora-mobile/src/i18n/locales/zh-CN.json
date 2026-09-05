@@ -577,7 +577,7 @@
       "learnMoreTitle": "了解更多关于{{skill}}的内容",
       "lessonBadge": "课程",
       "demoBadge": "示范",
-      "insightsBadge": "洞察",
+      "insightsBadge": "今日洞察",
       "improveLinkText": "在本次练习中提升{{skill}}",
       "removeLinkText": "在本次练习中减少{{skill}}"
     },
@@ -688,6 +688,7 @@
   "skillImprove": {
     "titleBuild": "提升{{skill}}",
     "titleAvoid": "减少{{skill}}",
+    "opportunityLabel": "时刻 {{number}}",
     "tryInstead": "可以试着这样说：",
     "emptyState": "这次没有特别的建议——继续保持吧！"
   },

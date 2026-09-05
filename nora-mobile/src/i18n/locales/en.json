@@ -577,7 +577,7 @@
       "learnMoreTitle": "Learn more about {{skill}}",
       "lessonBadge": "Lesson",
       "demoBadge": "Demo",
-      "insightsBadge": "Insights",
+      "insightsBadge": "Today's Insight",
       "improveLinkText": "Improve {{skill}} in this session",
       "removeLinkText": "Remove {{skill}} in this session"
     },
@@ -689,6 +689,7 @@
   "skillImprove": {
     "titleBuild": "Improve {{skill}}",
     "titleAvoid": "Reduce {{skill}}",
+    "opportunityLabel": "Moment {{number}}",
     "tryInstead": "Try saying instead:",
     "emptyState": "No specific suggestions this time — keep up the great work!"
   },
