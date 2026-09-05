@@ -291,6 +291,7 @@
     "next": "下一个",
     "matchCounter": "第 {{current}} 个，共 {{total}} 个",
     "noMatches": "未找到相关时刻",
+    "subFilterAll": "全部",
     "pcitTags": {
       "Praise": "赞美",
       "Echo": "回应",
@@ -1307,7 +1308,9 @@
     "rowTitle": "第 {{day}} 天 · {{title}}",
     "readMeta": "第 {{day}} 天 · {{duration}}",
     "lessonFallback": "课程",
-    "nextLessonLabel": "下一课：{{title}}"
+    "nextLessonLabel": "下一课：{{title}}",
+    "scriptLoadError": "无法加载本课程，请检查网络连接后重试。",
+    "scriptNoContent": "本课程暂无文字版。"
   },
   "privacyPolicy": {
     "headerTitle": "隐私权政策"

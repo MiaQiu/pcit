@@ -535,21 +535,18 @@ router.get('/:id', requireAuth, async (req, res) => {
       }
     });
 
-    // Get or create user progress
-    let userProgress = await prisma.userLessonProgress.findUnique({
-      where: {
-        userId_lessonId: { userId, lessonId: id }
-      }
-    });
-
-    if (!userProgress) {
-      const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
-      if (!userExists) {
-        return res.status(401).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
-      }
-
-      userProgress = await prisma.userLessonProgress.create({
-        data: {
+    // Get or create user progress. Must be a single atomic upsert, not
+    // findUnique-then-create: the mobile Read flow fires this GET and
+    // PUT /:id/progress concurrently, and on a real (non-localhost) network
+    // both can race past a "no row yet" check and both INSERT, blowing up
+    // one request with a unique-constraint 500 (userId,lessonId). Prisma's
+    // upsert on a compound-unique `where` compiles to INSERT ... ON CONFLICT
+    // DO UPDATE, so concurrent callers converge instead of colliding.
+    let userProgress;
+    try {
+      userProgress = await prisma.userLessonProgress.upsert({
+        where: { userId_lessonId: { userId, lessonId: id } },
+        create: {
           id: crypto.randomUUID(),
           userId,
           lessonId: id,
@@ -559,14 +556,17 @@ router.get('/:id', requireAuth, async (req, res) => {
           startedAt: new Date(),
           lastViewedAt: new Date(),
           timeSpentSeconds: 0
-        }
+        },
+        update: { lastViewedAt: new Date() }
       });
-    } else {
-      // Update last viewed time
-      userProgress = await prisma.userLessonProgress.update({
-        where: { id: userProgress.id },
-        data: { lastViewedAt: new Date() }
-      });
+    } catch (err) {
+      // FK violation on the insert branch = the user row is gone (deleted
+      // account / stale token). Preserve the old USER_NOT_FOUND signal the
+      // client uses to force a re-login.
+      if (err.code === 'P2003') {
+        return res.status(401).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
+      }
+      throw err;
     }
 
     // Fetch translations for the requested locale
@@ -659,17 +659,33 @@ router.put('/:id/progress', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Lesson not found' });
     }
 
-    // Get existing progress
-    let progress = await prisma.userLessonProgress.findUnique({
-      where: {
-        userId_lessonId: { userId, lessonId: id }
-      }
-    });
+    // Build the "update" side of the upsert. timeSpentSeconds accumulates, so
+    // it has to be an atomic increment rather than read-then-add.
+    const updateData = {
+      currentSegment,
+      lastViewedAt: new Date()
+    };
 
-    // Create progress record if it doesn't exist
-    if (!progress) {
-      progress = await prisma.userLessonProgress.create({
-        data: {
+    if (timeSpentSeconds !== undefined) {
+      updateData.timeSpentSeconds = { increment: timeSpentSeconds };
+    }
+
+    if (status) {
+      updateData.status = status;
+      if (status === 'COMPLETED') {
+        updateData.completedAt = new Date();
+      }
+    }
+
+    // Single atomic upsert — see the matching note in GET /:id. This PUT and
+    // that GET fire concurrently from the Read flow, so a findUnique-then-create
+    // here races the one there and one of them 500s on the (userId,lessonId)
+    // unique constraint.
+    let progress;
+    try {
+      progress = await prisma.userLessonProgress.upsert({
+        where: { userId_lessonId: { userId, lessonId: id } },
+        create: {
           id: crypto.randomUUID(),
           userId,
           lessonId: id,
@@ -680,31 +696,14 @@ router.put('/:id/progress', requireAuth, async (req, res) => {
           lastViewedAt: new Date(),
           timeSpentSeconds: timeSpentSeconds || 0,
           completedAt: status === 'COMPLETED' ? new Date() : null
-        }
+        },
+        update: updateData
       });
-    } else {
-      // Build update data
-      const updateData = {
-        currentSegment,
-        lastViewedAt: new Date()
-      };
-
-      if (timeSpentSeconds !== undefined) {
-        updateData.timeSpentSeconds = progress.timeSpentSeconds + timeSpentSeconds;
+    } catch (err) {
+      if (err.code === 'P2003') {
+        return res.status(401).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
       }
-
-      if (status) {
-        updateData.status = status;
-        if (status === 'COMPLETED') {
-          updateData.completedAt = new Date();
-        }
-      }
-
-      // Update progress
-      progress = await prisma.userLessonProgress.update({
-        where: { id: progress.id },
-        data: updateData
-      });
+      throw err;
     }
 
     res.json(progress);

@@ -291,6 +291,7 @@
     "next": "Next",
     "matchCounter": "{{current}} of {{total}}",
     "noMatches": "No moments found",
+    "subFilterAll": "All",
     "pcitTags": {
       "Praise": "Praise",
       "Echo": "Echo",
@@ -1265,7 +1266,9 @@
     "rowTitle": "Day {{day}} · {{title}}",
     "readMeta": "Day {{day}} · {{duration}}",
     "lessonFallback": "Lesson",
-    "nextLessonLabel": "Next: {{title}}"
+    "nextLessonLabel": "Next: {{title}}",
+    "scriptLoadError": "We couldn't load this lesson. Check your connection and try again.",
+    "scriptNoContent": "This lesson doesn't have a text version yet."
   },
   "privacyPolicy": {
     "headerTitle": "Privacy Policy"

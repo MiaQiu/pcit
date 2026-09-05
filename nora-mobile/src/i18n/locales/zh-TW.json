@@ -291,6 +291,7 @@
     "next": "下一個",
     "matchCounter": "第 {{current}} 個，共 {{total}} 個",
     "noMatches": "未找到相關時刻",
+    "subFilterAll": "全部",
     "pcitTags": {
       "Praise": "讚美",
       "Echo": "回應",
@@ -1307,7 +1308,9 @@
     "rowTitle": "第 {{day}} 天 · {{title}}",
     "readMeta": "第 {{day}} 天 · {{duration}}",
     "lessonFallback": "課程",
-    "nextLessonLabel": "下一課：{{title}}"
+    "nextLessonLabel": "下一課：{{title}}",
+    "scriptLoadError": "無法載入本課程，請檢查網路連線後重試。",
+    "scriptNoContent": "本課程尚無文字版。"
   },
   "privacyPolicy": {
     "headerTitle": "隱私權政策"

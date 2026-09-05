@@ -601,7 +601,10 @@ export const ReportDetailScreen: React.FC = () => {
   // Real tags from the about-child extraction — hidden entirely for older
   // sessions analyzed before this field existed, rather than faking chips.
   const childTags = aboutChildItem?.tags || [];
-  const childInsightBody = aboutChildItem?.Description || reportData.childReaction || null;
+  // Show the longer Details (developmental context + why it matters + a tip),
+  // not the one-line Description. Older sessions predating the about-child
+  // extraction fall back to childReaction.
+  const childInsightBody = aboutChildItem?.Details || aboutChildItem?.Description || reportData.childReaction || null;
 
   // Not currently wired to a ReportCard headerRight — share buttons on these
   // two cards are temporarily hidden, kept here (not deleted) to restore later.
