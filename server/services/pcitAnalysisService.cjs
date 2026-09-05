@@ -1704,11 +1704,17 @@ Return a minified JSON array for adult utterances only:
       systemPrompt: dpicsSystemPrompt,
     };
 
+    // DPICS coding runs on its own model knob ($GEMINI_STREAMING_MODEL), independent of
+    // the shared 'gemini' gateway default the other profiles use. Unset → the profile's
+    // default ('gemini' key). A full 'gemini-*' id keeps Gemini fallback + cache support.
+    const codingModel = process.env.GEMINI_STREAMING_MODEL || undefined;
+
     console.log(`📊 [ANALYSIS-STEP-8] Calling reasoning model for PCIT coding...`);
     console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
 
     codingResults = await llmCall(userPrompt, {
       profile: 'pcit-coding',
+      ...(codingModel ? { model: codingModel } : {}),
       cache:   dpicsCacheConfig,
       label:   'pcit-coding',
       sessionId,
@@ -1738,6 +1744,7 @@ Return a minified JSON array for adult utterances only:
 ${JSON.stringify(missedAdultUtts, null, 2)}`;
         const supplementalResults = await llmCall(supplementalPrompt, {
           profile: 'pcit-coding-supplemental',
+          ...(codingModel ? { model: codingModel } : {}),
           cache:   dpicsCacheConfig,
           label:   'pcit-coding-supplemental',
           sessionId,
