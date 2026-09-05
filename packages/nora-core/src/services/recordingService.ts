@@ -151,6 +151,18 @@ export interface MilestoneHistoryResponse {
   };
 }
 
+export interface SkillImproveResult {
+  skillLabel: string;
+  direction: 'BUILD' | 'AVOID';
+  summary: string;
+  opportunities: Array<{
+    title: string;
+    explanation: string;
+    quote?: string | null;
+    suggestedRewrite?: string | null;
+  }>;
+}
+
 export interface RecordingAnalysis {
   id: string;
   mode: 'CDI' | 'PDI';
@@ -185,6 +197,7 @@ export interface RecordingAnalysis {
     whatHelped?: string[];  // Legacy shape (generateReportHighlights) — older sessions only
   } | null;
   skillCoaching?: string | null;  // Coaching note for tomorrow's goal skill, grounded in this session (generateCrisis)
+  skillImprove?: SkillImproveResult | null;  // Session-grounded opportunities to build/reduce the goal skill (generateSkillImprove)
   bondingMoment?: {
     quote: string;                 // 2-3 consecutive utterances, rebuilt from the transcript (generateCrisis)
     utteranceNumber: number;       // Index of the first utterance in the exchange

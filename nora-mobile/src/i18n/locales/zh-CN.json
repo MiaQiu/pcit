@@ -576,7 +576,10 @@
       "title": "教练角",
       "learnMoreTitle": "了解更多关于{{skill}}的内容",
       "lessonBadge": "课程",
-      "demoBadge": "示范"
+      "demoBadge": "示范",
+      "insightsBadge": "洞察",
+      "improveLinkText": "在本次练习中提升{{skill}}",
+      "removeLinkText": "在本次练习中减少{{skill}}"
     },
     "topMoment": {
       "title": "高光时刻",
@@ -681,6 +684,12 @@
     },
     "seeYouTomorrow": "明天见",
     "footer": "你正在最重要的时刻陪伴着孩子，继续加油！"
+  },
+  "skillImprove": {
+    "titleBuild": "提升{{skill}}",
+    "titleAvoid": "减少{{skill}}",
+    "tryInstead": "可以试着这样说：",
+    "emptyState": "这次没有特别的建议——继续保持吧！"
   },
   "profileReport": {
     "headerTitle": "{{childName}}的快照",

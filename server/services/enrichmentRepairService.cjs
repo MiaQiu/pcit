@@ -180,6 +180,7 @@ async function repairSession(session) {
       topMomentUtteranceNumber: typeof feedbackResult.topMomentUtteranceNumber === 'number' ? feedbackResult.topMomentUtteranceNumber : null,
       heroText: feedbackResult.heroText || null,
       crisisMoment: feedbackResult.crisisMoment || null,
+      skillImprove: feedbackResult.skillImprove || null,
       feedback: feedbackResult.feedback || null,
       example: typeof feedbackResult.example === 'number' ? feedbackResult.example : null,
       childReaction: feedbackResult.childReaction || null,

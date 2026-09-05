@@ -948,9 +948,10 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true, 
 
   console.log('✅ [CDI-FEEDBACK] Combined feedback result:', JSON.stringify(feedbackData).substring(0, 300));
 
-  // Call 2 (review-feedback) and Call 3 (crisis-coaching) are independent of
-  // each other, so run them in parallel rather than serializing.
-  console.log('📝 [CDI-FEEDBACK] Running review-feedback + crisis-coaching in parallel...');
+  // Call 2 (review-feedback), Call 3 (crisis-coaching), and Call 4
+  // (skill-improve) are independent of each other, so run them in parallel
+  // rather than serializing.
+  console.log('📝 [CDI-FEEDBACK] Running review-feedback + crisis-coaching + skill-improve in parallel...');
 
   const reviewFeedbackPromise = (async () => {
     try {
@@ -983,8 +984,9 @@ All other feedback rules remain the same.` : '');
   })();
 
   const crisisPromise = generateCrisis(utterances, coachingNarrativeText, childName, goalDirective, sessionId, language);
+  const skillImprovePromise = generateSkillImprove(utterances, goalDirective, childName, sessionId, language);
 
-  const [revisedFeedback, crisisResult] = await Promise.all([reviewFeedbackPromise, crisisPromise]);
+  const [revisedFeedback, crisisResult, skillImproveResult] = await Promise.all([reviewFeedbackPromise, crisisPromise, skillImprovePromise]);
 
   // Rebuild the top-moment quote from the transcript rather than the LLM's
   // typed-back text (see quoteFromUtteranceRange). `topMoment` stays a plain
@@ -1005,6 +1007,7 @@ All other feedback rules remain the same.` : '');
     crisisMoment: crisisResult?.crisisMoment || null,
     skillCoaching: crisisResult?.skillCoaching || null,
     bondingMoment: crisisResult?.topMoment || null,
+    skillImprove: skillImproveResult || null,
     feedback: feedbackData.Feedback,
     example: feedbackData.exampleUtteranceNumber,
     childReaction: feedbackData.ChildReaction,
@@ -1229,6 +1232,139 @@ async function generateCrisis(utterances, coachingText, childName, goalDirective
     };
   } catch (error) {
     console.error('❌ [CRISIS-COACHING] Error:', error.message);
+    return null;
+  }
+}
+
+// ============================================================================
+// Skill Improve — session-grounded opportunities to build/reduce the
+// session's target skill, for the "Improve/Remove {skill} in this session"
+// link on the mobile report.
+// ============================================================================
+
+const GOAL_TYPE_IMPROVE_GUIDANCE = {
+  BUILD_PRAISE: `Look for unlabeled praise (UP) utterances and show how adding a specific label
+(what exactly was good — the action, effort, or product) turns them into labeled praise (LP).
+Also look for behavioral descriptions (BD) or neutral talk about something the child did well
+that could have been labeled praise instead.`,
+  BUILD_NARRATION: `Look for silence slots, or moments where the parent asked a question (Q) or
+gave a command (IC/DC) instead of describing what the child was doing — show how a behavioral
+description (BD) could have fit there instead.`,
+  BUILD_ECHO: `Look for child talk that went without a reflection — show how the parent could
+have echoed/reflected (RF) the child's words instead of moving on or asking a new question.`,
+  BUILD_COMMANDS: `(PDI) Look for indirect commands (IC) phrased as questions or vague requests —
+show how to rephrase as a direct, specific, positively-stated command (DC).`,
+  AVOID_COMMANDS: `Look for commands (DC/IC) and show a labeled praise, reflection, or behavioral
+description that could have replaced it in the moment.`,
+  AVOID_QUESTIONS: `Look for questions (Q) used instead of a behavioral description or reflection
+— show the non-question alternative.`,
+  AVOID_CRITICISM: `Look for criticism (NTA) and show a neutral or positive reframe instead.`,
+};
+const DEFAULT_IMPROVE_GUIDANCE = `Look at the overall balance of skills used this session and
+suggest 2-3 specific moments that could be sharpened.`;
+
+/**
+ * Build the skill-improve prompt. Reuses the same transcript formatting as
+ * generateCrisisPrompt and the same "cite the index range, don't retype the
+ * quote" convention so quoteFromUtteranceRange can rebuild it verbatim.
+ * @param {Array} utterances - Utterances with roles/pcitTag (same array passed to generateCrisis)
+ * @param {Object} goalDirective - { focusSkill, goalType, ... } — see generateCrisisPrompt's jsdoc
+ * @param {string} childName
+ * @param {string|null} [language]
+ */
+function generateSkillImprovePrompt(utterances, goalDirective, childName, language = null) {
+  const guidance = GOAL_TYPE_IMPROVE_GUIDANCE[goalDirective.goalType] || DEFAULT_IMPROVE_GUIDANCE;
+  const direction = goalDirective.goalType?.startsWith('AVOID_') ? 'AVOID' : 'BUILD';
+
+  return `You are a PCIT coach reviewing a parent-child play session transcript with ${childName},
+looking specifically for moments related to this session's target skill: **${goalDirective.focusSkill}**.
+
+**Session Transcript:**
+${formatUtterancesForPrompt(utterances)}
+
+**What to look for:**
+${guidance}
+
+**Task:**
+Find 2-4 concrete opportunities in the transcript above where the parent could have done this
+better (if direction is BUILD) or done less of this (if direction is AVOID). For each one:
+- Give a short, specific title (e.g. "Turn this into labeled praise").
+- Explain in 1-2 sentences why it's an opportunity, grounded in what actually happened.
+- If a specific utterance or short exchange demonstrates it, report ONLY the utterance index
+  range (the [NN] markers) — the first and last index of the run (max 3 consecutive utterances).
+  Do NOT quote or retype the text; it will be reconstructed from the transcript. If no single
+  utterance captures it (e.g. a general pattern across the session), leave the range as null.
+- Where it helps, write a short suggestedRewrite: what the parent could say instead, in a warm,
+  natural voice — grounded in the same moment, not generic advice.
+
+Also write a 1-2 sentence summary of the overall opportunity this session presents for
+**${goalDirective.focusSkill}**.
+
+Return ONLY valid JSON:
+{
+  "direction": "${direction}",
+  "summary": "1-2 sentence overview",
+  "opportunities": [
+    {
+      "title": "short title",
+      "explanation": "1-2 sentences",
+      "startUtteranceNumber": index or null,
+      "endUtteranceNumber": index or null,
+      "suggestedRewrite": "what the parent could say instead, or null"
+    }
+  ]
+}
+
+No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` : ''}`;
+}
+
+/**
+ * Generate session-grounded opportunities to build or reduce the session's
+ * target skill. Skips (returns null) when no goal directive is available —
+ * mirrors generateCrisis's guard.
+ * @param {Array} utterances
+ * @param {Object|null} goalDirective
+ * @param {string} childName
+ * @param {string|null} [sessionId]
+ * @param {string|null} [language]
+ * @returns {Promise<{skillLabel, direction, summary, opportunities}|null>}
+ */
+async function generateSkillImprove(utterances, goalDirective, childName, sessionId = null, language = null) {
+  if (!goalDirective || !utterances || utterances.length === 0) {
+    console.log('⚠️ [SKILL-IMPROVE] No goal directive or transcript available, skipping');
+    return null;
+  }
+
+  console.log(`📊 [SKILL-IMPROVE] Generating opportunities for ${goalDirective.focusSkill}...`);
+  try {
+    const result = await llmCall(generateSkillImprovePrompt(utterances, goalDirective, childName, language), {
+      profile: 'skill-improve',
+      schema:  SCHEMAS.SKILL_IMPROVE,
+      label:   'skill-improve',
+      sessionId,
+    });
+
+    const opportunities = (result?.opportunities || []).map(o => ({
+      title: o.title,
+      explanation: o.explanation,
+      quote: quoteFromUtteranceRange(
+        utterances,
+        o.startUtteranceNumber,
+        o.endUtteranceNumber,
+        { withRoleLabels: false, maxSpan: 3 },
+      )?.quote ?? null,
+      suggestedRewrite: o.suggestedRewrite || null,
+    }));
+
+    console.log(`✅ [SKILL-IMPROVE] direction=${result?.direction}, opportunities=${opportunities.length}`);
+    return {
+      skillLabel: goalDirective.focusSkill,
+      direction: result?.direction || 'BUILD',
+      summary: result?.summary || '',
+      opportunities,
+    };
+  } catch (error) {
+    console.error('❌ [SKILL-IMPROVE] Error:', error.message);
     return null;
   }
 }
@@ -1956,6 +2092,7 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
       crisisMoment: feedbackResult.crisisMoment || null,
       skillCoaching: feedbackResult.skillCoaching || null,
       bondingMoment: feedbackResult.bondingMoment || null,
+      skillImprove: feedbackResult.skillImprove || null,
       feedback: feedbackResult.feedback || null,
       example: typeof feedbackResult.example === 'number' ? feedbackResult.example : null,
       childReaction: feedbackResult.childReaction || null,
@@ -2121,6 +2258,7 @@ module.exports = {
   generateCDIFeedback,
   generateReportHighlights,
   generateCrisis,
+  generateSkillImprove,
   generatePDITwoChoicesAnalysis,
   generateDevelopmentalProfiling,
   generateCdiCoaching,

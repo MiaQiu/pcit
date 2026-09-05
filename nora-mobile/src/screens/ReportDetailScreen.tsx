@@ -1047,36 +1047,67 @@ export const ReportDetailScreen: React.FC = () => {
             </MarkdownText>
             {skillCoachingExpanded && (
               <>
-                {learnMoreLesson && (
-                  <>
-                    <Text style={styles.learnMoreTitle}>
-                      {t('reportDetail.skillCoaching.learnMoreTitle', { skill: getSkillDisplayLabel(goalSkillTag!, t) })}
+                {(reportData.skillImprove || learnMoreLesson || learnMoreDemoVideo) && (
+                  <Text style={styles.learnMoreTitle}>
+                    {t('reportDetail.skillCoaching.learnMoreTitle', { skill: getSkillDisplayLabel(goalSkillTag!, t) })}
+                  </Text>
+                )}
+                {reportData.skillImprove && (
+                  <TouchableOpacity
+                    style={styles.learnMoreButton}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      const direction = goalType?.startsWith('AVOID_') ? 'AVOID' : 'BUILD';
+                      amplitudeService.trackEvent('Report Detail Skill Improve Tapped', {
+                        recordingId,
+                        skillTag: goalSkillTag,
+                        direction,
+                      });
+                      navigation.navigate('SkillImprove', {
+                        recordingId,
+                        skillTag: goalSkillTag!,
+                        direction,
+                        skillImprove: reportData.skillImprove!,
+                      });
+                    }}
+                  >
+                    <View style={styles.improveBadge}>
+                      <Text style={styles.improveBadgeText}>{t('reportDetail.skillCoaching.insightsBadge')}</Text>
+                    </View>
+                    <Text style={styles.improveButtonText} numberOfLines={1}>
+                      {t(
+                        goalType?.startsWith('AVOID_') ? 'reportDetail.skillCoaching.removeLinkText' : 'reportDetail.skillCoaching.improveLinkText',
+                        { skill: getSkillDisplayLabel(goalSkillTag!, t) }
+                      )}
                     </Text>
-                    <TouchableOpacity
-                      style={styles.learnMoreButton}
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        amplitudeService.trackEvent('Report Detail Learn More Tapped', {
-                          recordingId,
-                          skillTag: goalSkillTag,
-                          lessonId: learnMoreLesson.id,
-                        });
-                        if (CONTENT_V2_MODULES.includes(learnMoreLesson.module)) {
-                          navigation.navigate('LessonViewerV2', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
-                        } else {
-                          navigation.navigate('LessonViewer', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
-                        }
-                      }}
-                    >
-                      <View style={styles.lessonBadge}>
-                        <Text style={styles.lessonBadgeText}>{t('reportDetail.skillCoaching.lessonBadge')}</Text>
-                      </View>
-                      <Text style={styles.learnMoreButtonText} numberOfLines={1}>
-                        {learnMoreLesson.title}
-                      </Text>
-                      <Ionicons name="arrow-forward" size={15} color="#8C49D5" />
-                    </TouchableOpacity>
-                  </>
+                    <Ionicons name="arrow-forward" size={15} color="#0E7C66" />
+                  </TouchableOpacity>
+                )}
+                {learnMoreLesson && (
+                  <TouchableOpacity
+                    style={styles.learnMoreButton}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      amplitudeService.trackEvent('Report Detail Learn More Tapped', {
+                        recordingId,
+                        skillTag: goalSkillTag,
+                        lessonId: learnMoreLesson.id,
+                      });
+                      if (CONTENT_V2_MODULES.includes(learnMoreLesson.module)) {
+                        navigation.navigate('LessonViewerV2', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
+                      } else {
+                        navigation.navigate('LessonViewer', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
+                      }
+                    }}
+                  >
+                    <View style={styles.lessonBadge}>
+                      <Text style={styles.lessonBadgeText}>{t('reportDetail.skillCoaching.lessonBadge')}</Text>
+                    </View>
+                    <Text style={styles.learnMoreButtonText} numberOfLines={1}>
+                      {learnMoreLesson.title}
+                    </Text>
+                    <Ionicons name="arrow-forward" size={15} color="#8C49D5" />
+                  </TouchableOpacity>
                 )}
                 {learnMoreDemoVideo && (
                   <TouchableOpacity
@@ -1366,6 +1397,9 @@ const styles = StyleSheet.create({
   lessonBadgeText: { fontFamily: FONTS.bold, fontSize: 10, color: '#8C49D5' },
   demoBadge: { backgroundColor: '#FBE3CE', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
   demoBadgeText: { fontFamily: FONTS.bold, fontSize: 10, color: '#C2694B' },
+  improveBadge: { backgroundColor: '#DFF3EE', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  improveBadgeText: { fontFamily: FONTS.bold, fontSize: 10, color: '#0E7C66' },
+  improveButtonText: { flexShrink: 1, fontFamily: FONTS.semiBold, fontSize: 14, color: '#0E7C66' },
   // Font formatting matches ReportScreen.tsx's coachDescription (Coach's Corner content).
   crisisBody: { fontFamily: FONTS.regular, fontSize: 16, color: '#4B5563', lineHeight: 24, marginBottom: 4, marginTop: 3 },
   crisisReadMoreRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start' },

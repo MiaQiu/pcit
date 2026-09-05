@@ -785,6 +785,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       crisisMoment: session.competencyAnalysis?.crisisMoment || null,
       skillCoaching: session.competencyAnalysis?.skillCoaching || null,
       bondingMoment: session.competencyAnalysis?.bondingMoment || null,
+      skillImprove: session.competencyAnalysis?.skillImprove || null,
       topMomentStartTime,
       topMomentEndTime,
       audioUrl,

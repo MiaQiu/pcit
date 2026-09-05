@@ -576,7 +576,10 @@
       "title": "Coach's Corner",
       "learnMoreTitle": "Learn more about {{skill}}",
       "lessonBadge": "Lesson",
-      "demoBadge": "Demo"
+      "demoBadge": "Demo",
+      "insightsBadge": "Insights",
+      "improveLinkText": "Improve {{skill}} in this session",
+      "removeLinkText": "Remove {{skill}} in this session"
     },
     "topMoment": {
       "title": "Top Moment",
@@ -682,6 +685,12 @@
     },
     "seeYouTomorrow": "See you tomorrow",
     "footer": "You're showing up in the moments that matter most. Keep going!"
+  },
+  "skillImprove": {
+    "titleBuild": "Improve {{skill}}",
+    "titleAvoid": "Reduce {{skill}}",
+    "tryInstead": "Try saying instead:",
+    "emptyState": "No specific suggestions this time — keep up the great work!"
   },
   "profileReport": {
     "headerTitle": "{{childName}}'s Snapshot",

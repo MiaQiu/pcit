@@ -271,6 +271,31 @@ const COACHING_FORMAT = {
   required: ['sections'],
 };
 
+// ── skill-improve ─────────────────────────────────────────────────────────────
+// Session-grounded opportunities to build or reduce this session's target skill
+const SKILL_IMPROVE = {
+  type: 'object',
+  properties: {
+    direction: { type: 'string', enum: ['BUILD', 'AVOID'] },
+    summary:   { type: 'string' },
+    opportunities: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          title:                { type: 'string' },
+          explanation:          { type: 'string' },
+          startUtteranceNumber: { type: 'integer', nullable: true },
+          endUtteranceNumber:   { type: 'integer', nullable: true },
+          suggestedRewrite:     { type: 'string', nullable: true },
+        },
+        required: ['title', 'explanation'],
+      },
+    },
+  },
+  required: ['direction', 'summary', 'opportunities'],
+};
+
 // ── milestone-detection ───────────────────────────────────────────────────────
 // Maps developmental observations to milestone library entries
 const MILESTONE_DETECTION = {
@@ -314,4 +339,5 @@ module.exports = {
   DEV_PROFILING,
   COACHING_FORMAT,
   MILESTONE_DETECTION,
+  SKILL_IMPROVE,
 };

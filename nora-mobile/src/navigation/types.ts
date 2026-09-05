@@ -6,7 +6,7 @@
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NavigatorScreenParams } from '@react-navigation/native';
-import { Quiz, User, DemoVideo, ParentSkillLevel } from '@nora/core';
+import { Quiz, User, DemoVideo, ParentSkillLevel, SkillImproveResult } from '@nora/core';
 
 export type RootTabParamList = {
   Home: { showModulePicker?: boolean } | undefined;
@@ -145,6 +145,12 @@ export type RootStackParamList = {
   };
   ReportDetail: {
     recordingId: string;
+  };
+  SkillImprove: {
+    recordingId: string;
+    skillTag: string;
+    direction: 'BUILD' | 'AVOID';
+    skillImprove: SkillImproveResult | null;
   };
   Transcript: {
     recordingId: string;
