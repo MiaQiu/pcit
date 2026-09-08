@@ -3,7 +3,7 @@
  * Allow users to request a password reset email
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
