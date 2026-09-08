@@ -964,8 +964,14 @@ This is a PDI (Parent-Directed Interaction) session. The rules above apply for c
 All other feedback rules remain the same.` : '');
 
       const reviewPrompt = generateReviewFeedbackPrompt(counts, utterances, isCDI, pdiResult, language);
+      // review-feedback shares the DPICS context cache ('dpics-cdi'/'dpics-pdi') with the
+      // pcit-coding step. Gemini requires the generateContent model and the CachedContent
+      // model to match, and the cache registry key isn't model-qualified — so this call must
+      // run on the same model as coding ($GEMINI_STREAMING_MODEL), not the 'gemini' default.
+      const reviewModel = process.env.GEMINI_STREAMING_MODEL || undefined;
       const reviewData = await llmCall(reviewPrompt, {
         profile: 'review-feedback',
+        ...(reviewModel ? { model: reviewModel } : {}),
         cache: {
           key:         isCDI ? 'dpics-cdi' : 'dpics-pdi',
           primaryFile: DPICS_PDF_PATH,
