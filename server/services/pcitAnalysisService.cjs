@@ -1614,6 +1614,31 @@ async function identifyRolesWithVoting(utterancesForPrompt, utterances, storageP
   const baseSpeakers = baseFull?.speaker_identification || {};
 
   const mlVote = votes.find(v => v.source === 'ml');
+
+  // ── Fallback: every speaker labeled ADULT ────────────────────────────────
+  // A PCIT play session always contains a child. If role-ID came back with no
+  // CHILD at all, demote the speaker whose ADULT call is weakest — lowest LLM
+  // confidence, falling back to ML confidence — to CHILD.
+  const allSpeakerIds = Object.keys(roleMap);
+  if (allSpeakerIds.length >= 2 && allSpeakerIds.every(id => roleMap[id] === 'adult')) {
+    const confidenceOf = (id) => {
+      const llmConf = baseSpeakers[id]?.confidence;
+      if (typeof llmConf === 'number') return llmConf;
+      const mlConf = mlVote?.conf?.[id];
+      if (typeof mlConf === 'number') return mlConf;
+      return 1;  // no confidence signal → treat as certain so it isn't picked
+    };
+    const leastConfident = allSpeakerIds.reduce((lo, id) =>
+      confidenceOf(id) < confidenceOf(lo) ? id : lo
+    );
+    console.warn(`⚠️ [ROLE-ID-VOTE] All ${allSpeakerIds.length} speakers labeled ADULT — demoting least-confident speaker ${leastConfident} (confidence ${confidenceOf(leastConfident)}) to CHILD`);
+    roleMap[leastConfident] = 'child';
+    if (voteDetail[leastConfident]) {
+      voteDetail[leastConfident].winner = 'child';
+      voteDetail[leastConfident].all_adult_fallback = true;
+    }
+  }
+
   const speaker_identification = {};
   for (const [speakerId, role] of Object.entries(roleMap)) {
     const existing = baseSpeakers[speakerId] || {};
