@@ -26,6 +26,13 @@ logger.setLevel(logging.INFO)
 
 SAMPLE_RATE = 16000
 WINDOW_SECONDS = 10
+
+# A single utterance rarely runs longer than this; longer "segments" are almost
+# always diarizer merges that bundle in the other speaker. We don't trust them to
+# anchor the window, and we cap how much any one segment can pull the window
+# toward itself so a merged block can't dominate the coverage score.
+MAX_TRUSTED_SEGMENT_SECONDS = 5.0
+MAX_SEGMENT_COVERAGE_SECONDS = 3.0
 MODEL_PATH = os.path.join(
     os.environ.get('LAMBDA_TASK_ROOT', os.path.dirname(__file__)),
     'whisper-base_rank8_pretrained_50k.pt'
@@ -87,11 +94,25 @@ def _load_waveform(wav_path: str) -> torch.Tensor:
 
 
 def _best_window_start(segments: list, audio_duration: float) -> float:
-    """Return start of 10s window with maximum speech coverage for these segments."""
-    best_start = max(0.0, segments[0]['start'] - 0.5) if segments else 0.0
+    """Return start of 10s window with maximum speech coverage for these segments.
+
+    Guards against diarizer merges: over-long segments don't anchor the window,
+    and each segment's coverage contribution is capped so one merged block (which
+    typically also contains the other speaker) can't dominate the score.
+    """
+    if not segments:
+        return 0.0
+
+    # Prefer short, trustworthy segments as window anchors; fall back to all
+    # segments only if every one looks like a merge.
+    anchors = [s for s in segments if s['end'] - s['start'] <= MAX_TRUSTED_SEGMENT_SECONDS]
+    if not anchors:
+        anchors = segments
+
+    best_start = max(0.0, anchors[0]['start'] - 0.5)
     best_coverage = 0.0
 
-    for seg in segments:
+    for seg in anchors:
         w_start = max(0.0, seg['start'] - 0.5)
         w_end = w_start + WINDOW_SECONDS
         if w_end > audio_duration:
@@ -102,7 +123,7 @@ def _best_window_start(segments: list, audio_duration: float) -> float:
         for s in segments:
             ov = min(s['end'], w_end) - max(s['start'], w_start)
             if ov > 0:
-                coverage += ov
+                coverage += min(ov, MAX_SEGMENT_COVERAGE_SECONDS)
 
         if coverage > best_coverage:
             best_coverage = coverage
