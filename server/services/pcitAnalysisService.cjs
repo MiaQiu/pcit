@@ -48,26 +48,66 @@ class PermanentFailureError extends Error {
 }
 
 /**
+ * User-facing messages for the heuristic quality checks. These run before any
+ * LLM call, so they are translated in code rather than by a prompt. Generic
+ * Mandarin codes from ElevenLabs ('cmn' / 'zho') fall back to Simplified.
+ */
+const QUALITY_MESSAGES = {
+  lowData: {
+    eng: 'Your recording didn\'t capture enough speech to generate a report. This can happen if the recording started too late or the audio was too quiet. Try starting the recording before your play session begins and ensure the device is nearby.',
+    'zh-CN': '录音没有采集到足够的对话内容，无法生成报告。这可能是因为录音开始得太晚，或者声音太小。请在亲子游戏开始前就开始录音，并确保设备放在旁边。',
+    'zh-TW': '錄音沒有擷取到足夠的對話內容，無法產生報告。這可能是因為錄音開始得太晚，或者聲音太小。請在親子遊戲開始前就開始錄音，並確保裝置放在旁邊。',
+  },
+  tooShort: {
+    eng: 'Your recording was too short to generate a report. A play session needs to be at least a few minutes long for a meaningful analysis. Try recording a longer session next time.',
+    'zh-CN': '录音时间太短，无法生成报告。有意义的分析需要至少几分钟的亲子游戏时间。下次请录制更长的时段。',
+    'zh-TW': '錄音時間太短，無法產生報告。有意義的分析需要至少幾分鐘的親子遊戲時間。下次請錄製更長的時段。',
+  },
+  singleSpeaker: {
+    eng: 'We could only make out one voice in your recording, so there wasn\'t an interaction to analyze. This can happen if only one person was speaking or the voices were too hard to tell apart. Try recording again in a quieter space with both you and your child close to the device.',
+    'zh-CN': '录音中只能辨识出一个人的声音，因此没有可供分析的亲子互动。这可能是因为只有一个人在说话，或者两个人的声音太难区分。请换到更安静的环境重新录音，并让您和孩子都靠近设备。',
+    'zh-TW': '錄音中只能辨識出一個人的聲音，因此沒有可供分析的親子互動。這可能是因為只有一個人在說話，或者兩個人的聲音太難區分。請換到更安靜的環境重新錄音，並讓您和孩子都靠近裝置。',
+  },
+  analysisFailed: {
+    eng: 'Your recording could not be analyzed. Please try recording a play session with your child again.',
+    'zh-CN': '您的录音无法分析。请重新录制一段您和孩子的亲子游戏。',
+    'zh-TW': '您的錄音無法分析。請重新錄製一段您和孩子的親子遊戲。',
+  },
+};
+
+/**
+ * Resolve a heuristic quality message for the given language.
+ * @param {keyof QUALITY_MESSAGES} key
+ * @param {string|null} language - ElevenLabs / preferred language code
+ */
+function qualityMessage(key, language) {
+  const variants = QUALITY_MESSAGES[key];
+  if (variants[language]) return variants[language];
+  if (language === 'cmn' || language === 'zho') return variants['zh-CN'];
+  return variants.eng;
+}
+
+/**
  * Validate that a session is suitable for PCIT analysis.
  * Runs cheap heuristics first, then one LLM call for everything else.
  * Throws SessionQualityError if the session should not be processed.
  */
-async function validateSessionQuality(utterances, durationSeconds, roleIdentificationJson, sessionId = null) {
+async function validateSessionQuality(utterances, durationSeconds, roleIdentificationJson, sessionId = null, language = null) {
   const SILENT_ID = SILENT_SPEAKER_ID;
   const nonSilent = utterances.filter(u => u.speaker !== SILENT_ID);
   const speakerIds = new Set(nonSilent.map(u => u.speaker));
 
   // --- Heuristic pre-filters (no LLM cost) ---
   if (nonSilent.length < 10) {
-    throw new SessionQualityError(
-      'Your recording didn\'t capture enough speech to generate a report. This can happen if the recording started too late or the audio was too quiet. Try starting the recording before your play session begins and ensure the device is nearby.'
-    );
+    throw new SessionQualityError(qualityMessage('lowData', language));
   }
 
   if (durationSeconds < 60) {
-    throw new SessionQualityError(
-      'Your recording was too short to generate a report. A play session needs to be at least a few minutes long for a meaningful analysis. Try recording a longer session next time.'
-    );
+    throw new SessionQualityError(qualityMessage('tooShort', language));
+  }
+
+  if (speakerIds.size < 2) {
+    throw new SessionQualityError(qualityMessage('singleSpeaker', language));
   }
 
   // --- LLM quality check ---
@@ -78,12 +118,16 @@ async function validateSessionQuality(utterances, durationSeconds, roleIdentific
     end: u.endTime
   }));
 
+  const languageInstruction = getLanguageInstruction(language);
   const prompt = loadPromptWithVariables('sessionQualityCheck', {
     DURATION_SECONDS: String(durationSeconds),
     UTTERANCE_COUNT: String(nonSilent.length),
     SPEAKER_COUNT: String(speakerIds.size),
     UTTERANCES_SAMPLE: JSON.stringify(sample, null, 2),
-    ROLE_IDENTIFICATION: roleIdentificationJson ? JSON.stringify(roleIdentificationJson, null, 2) : 'Not available'
+    ROLE_IDENTIFICATION: roleIdentificationJson ? JSON.stringify(roleIdentificationJson, null, 2) : 'Not available',
+    LANGUAGE_INSTRUCTION: languageInstruction
+      ? `${languageInstruction} This applies to the "userMessage" text only — keep the JSON keys and boolean values exactly as specified.`
+      : ''
   });
 
   const result = await llmCall(prompt, {
@@ -94,7 +138,7 @@ async function validateSessionQuality(utterances, durationSeconds, roleIdentific
 
   if (result.valid === false) {
     throw new SessionQualityError(
-      result.userMessage || 'Your recording could not be analyzed. Please try recording a play session with your child again.'
+      result.userMessage || qualityMessage('analysisFailed', language)
     );
   }
 }
@@ -1780,7 +1824,7 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
 
   // Quality gate — one fast LLM call; throws SessionQualityError if invalid
   console.log(`📊 [ANALYSIS-QUALITY-GATE] Validating session quality...`);
-  await validateSessionQuality(utterances, session.durationSeconds, roleIdentificationJson, sessionId);
+  await validateSessionQuality(utterances, session.durationSeconds, roleIdentificationJson, sessionId, primaryLanguage);
   console.log(`✅ [ANALYSIS-QUALITY-GATE] Session passed quality check`);
 
   // STEP 2: Apply PCIT coding to adult utterances (skip if already done on a previous attempt)
