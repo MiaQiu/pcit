@@ -17,6 +17,9 @@ const { classifySpeakersML } = require('./mlDiarizationService.cjs');
 
 // DPICS asset paths — referenced by gateway cache config for coding and review feedback
 const DPICS_PDF_PATH      = process.env.DPICS_PDF_PATH      || require('path').join(__dirname, '../assets/DPICS-Manual.2.18.pdf');
+// CDI coaching reference manual — baked into the 'cdi-coaching' Gemini context cache
+// alongside the static coaching instructions, same pattern as DPICS coding.
+const CDI_COACHING_PDF_PATH = process.env.CDI_COACHING_PDF_PATH || require('path').join(__dirname, '../prompts/Parent-Child Interaction Therapy_CDI.pdf');
 
 // ============================================================================
 // Session Quality Gate
@@ -382,6 +385,25 @@ function formatUtterancesForPsychologist(utterances) {
     }).join('\n');
 }
 
+// Human-readable labels for the 10 Child Snapshot ("WACB") behavior items.
+// Mirrors nora-mobile en.json onboarding.page7.wacbQuestions — keep in sync.
+// Used so issuePriority rows sourced from the snapshot survey render as plain
+// language in profiling/coaching prompts instead of leaking raw keys
+// (e.g. "q8Destroy") into parent-facing output.
+const SNAPSHOT_ITEM_LABELS = {
+  q1Dawdle:         'dawdling in daily routines',
+  q2Disobey:        'refusing to listen or follow rules',
+  q3Tantrum:        'tantrums that are hard to stop',
+  q4Defiance:       'arguing or talking back to adults',
+  q5FocusDemand:    'trouble focusing or demanding attention',
+  q6Restless:       'interrupting or trouble sitting still',
+  q7TaskCompletion: 'trouble finishing tasks on time',
+  q8Destroy:        'breaking things or rough handling',
+  q9Aggression:     'physical aggression or fights',
+  q10LieSteal:      'lying or taking things',
+};
+const snapshotItemLabel = (key) => SNAPSHOT_ITEM_LABELS[key] || String(key).replace(/^q\d+/, '').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().trim() || key;
+
 /**
  * Build shared template variables for child profiling prompts
  * @param {Object} childInfo - Child's info (name, ageMonths, gender, clinicalPriority)
@@ -403,7 +425,7 @@ function buildProfilingVariables(childInfo, tagCounts, utterances) {
       parts.push(`User-reported: ${issues.join(', ')}`);
     }
     if (row.fromWacb && row.wacbQuestions) {
-      const qs = JSON.parse(row.wacbQuestions);
+      const qs = JSON.parse(row.wacbQuestions).map(snapshotItemLabel);
       parts.push(`WACB signals: ${qs.join(', ')}${row.wacbScore ? ` (score: ${row.wacbScore})` : ''}`);
     }
     return parts.length > 0 ? parts.join('. ') : 'none';
@@ -421,7 +443,7 @@ function buildProfilingVariables(childInfo, tagCounts, utterances) {
     }
     if (row?.fromWacb && row.wacbQuestions) {
       try {
-        return JSON.parse(row.wacbQuestions).join(', ');
+        return JSON.parse(row.wacbQuestions).map(snapshotItemLabel).join(', ');
       } catch (_) {}
     }
     return formatLevel(row?.clinicalLevel);
@@ -575,124 +597,68 @@ async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts =
 }
 
 // ============================================================================
-// About Child — Psychologist Narrative + Observation Extraction
+// About Child — Age-Referenced Observations (single pass)
 // ============================================================================
 
+// New `label` (child vs. their age) → legacy `valence` (STRENGTH/GROWTH_AREA).
+// The model only emits `label`; generateAboutChild adds `valence` so older
+// readers keep working: mobile ReportScreen/ReportDetailScreen and the
+// deficit-based ratio in aboutChildSelectionService.cjs both key on `valence`.
+const ABOUT_CHILD_LABEL_TO_VALENCE = {
+  advanced:        'STRENGTH',
+  age_appropriate: 'STRENGTH',
+  needs_help:      'GROWTH_AREA',
+};
+
 /**
- * Generate "About Child" observations via two sequential LLM calls.
+ * Generate "About Child" observations in one LLM call.
  *
- * Step 1 — Free-form psychologist narrative (prose output)
- * Step 2 — Extract structured observations from the narrative (JSON array)
+ * A single pass over the transcript asks an assessment-informed persona (TPBA /
+ * KOI / Renzulli) for 10 observations, each tagged advanced / age_appropriate /
+ * needs_help for the child's age and ranked by how valuable it is to the parent
+ * (id 1 = the biggest "aha"). Output is parent-facing prose — no jargon.
  *
  * @param {Array}  utterances - Utterances with roles
  * @param {Object} childInfo  - { name, ageMonths, gender }
- * @param {Object} tagCounts  - Session metrics from PCIT coding
+ * @param {Object} [tagCounts] - Unused; kept for call-site compatibility
  * @returns {Promise<Array|null>} Array of AboutChildItem or null on failure
  */
 async function generateAboutChild(utterances, childInfo, tagCounts = {}, sessionId = null, language = null) {
   const { name, ageMonths, gender } = childInfo;
   const transcript = formatUtterancesForPsychologist(utterances);
-  const ageDisplay = ageMonths ? `${ageMonths} months old` : 'unknown age';
   const languageInstruction = getLanguageInstruction(language);
 
-  // ── Step 1: Free-form psychologist narrative ──────────────────────────────
-  const step1Prompt = loadPromptWithVariables('aboutChildStep1', {
-    CHILD_NAME: name || 'Child',
-    AGE_DISPLAY: ageDisplay,
+  const prompt = loadPromptWithVariables('aboutChild', {
+    CHILD_NAME: name || 'the child',
+    AGE_MONTHS: String(ageMonths || 'unknown'),
     GENDER: gender || 'child',
-    PRAISE: String(tagCounts.praise || 0),
-    ECHO: String(tagCounts.echo || 0),
-    NARRATION: String(tagCounts.narration || 0),
-    QUESTION: String(tagCounts.question || 0),
-    COMMAND: String(tagCounts.command || 0),
-    CRITICISM: String(tagCounts.criticism || 0),
     TRANSCRIPT: transcript,
   });
-  const step1PromptFinal = languageInstruction ? `${step1Prompt}\n\n${languageInstruction}` : step1Prompt;
+  const promptFinal = languageInstruction ? `${prompt}\n\n${languageInstruction}` : prompt;
 
-  console.log(`📊 [ABOUT-CHILD] Step 1: Generating psychologist narrative...`);
-
-  let narrativeText;
-  try {
-    narrativeText = await llmCall(step1PromptFinal, {
-      profile:  'about-child-narrative',
-      label:    'about-child-step1',
-      sessionId,
-    });
-    console.log(`✅ [ABOUT-CHILD] Step 1 complete (${narrativeText.length} chars)`);
-  } catch (error) {
-    console.error('❌ [ABOUT-CHILD] Step 1 failed:', error.message);
-    return null;
-  }
-
-  // ── Step 2: Extract structured child observations ─────────────────────────
-  const childDisplayName = name || 'the child';
-  const step3Prompt = `Extract ONLY the "Observations of the Child" section - the insights about the child's behavior, development, and characteristics observed during the session. DO not mention PCIT or clinical terms.
-
-The child's name is "${childDisplayName}". Use this name (not any other name from the text) when referring to the child in your response.
-
-Format the observations as a JSON array, ranked by positivity follow by significance. Each observation should have:
-- id: sequential number starting from 1
-- valence: "STRENGTH" or "GROWTH_AREA". Most observations should be STRENGTH — a positive trait or behavior, framed as-is. Where the transcript genuinely supports it, include ONE GROWTH_AREA observation — something the child is still developing (e.g. sharing, waiting, handling frustration) — but keep the tone warm and encouraging, never clinical or alarming, and always pair it with a concrete, doable tip in Details. If nothing in the transcript honestly supports a GROWTH_AREA observation, omit it entirely rather than inventing one — every item should still be STRENGTH in that case.
-- Title: A short catchy title (2-4 words) describing the trait or behavior
-- Description: A brief 1-sentence summary for parents
-- Details: A longer explanation with developmental context, why this matters, and actionable tips about how to improve.
-- tags: 2-3 short trait labels (1-3 words each, title case, e.g. "Sensitive", "Recovers Well", "Curious Explorer") that could be shown as chips under the observation. Distinct from the Title — pull additional traits from Details, not just a restatement of Title.
-
-Here is the psychologist feedback to analyze:
-${narrativeText}
-
-Return ONLY a valid JSON array. No markdown code blocks or explanations.
-
-Every string value must be valid JSON: do NOT put a raw double quote (") inside a value — if you need to quote a word or phrase, use the language's own quotation marks (e.g. 「」 or 『』 for Chinese, or single quotes) instead, or escape it as \\". Keep real line breaks out of values.
-
-Example format:
-[
-  {
-    "id": 1,
-    "valence": "STRENGTH",
-    "Title": "Little Scientist",
-    "Description": "Bobby was exploring physics (gravity/pouring). He wasn't trying to be messy.",
-    "Details": "His persistent desire to 'pour' and 'take out' reflects a 3-year-old's natural curiosity about cause and effect. At this age, repetitive pouring is a way of testing physical boundaries and understanding how objects occupy space.",
-    "tags": ["Curious Explorer", "Hands-On Learner"]
-  },
-  {
-    "id": 2,
-    "valence": "STRENGTH",
-    "Title": "Sensory Seeker",
-    "Description": "Bobby loves the 'squishy' texture today!",
-    "Details": "He is very focused on the tactile nature of the vitamins—calling them 'squishy, squishy'. This is a hallmark of the sensorimotor stage of development, where kids learn through touch and texture.",
-    "tags": ["Tactile", "Sensory Seeker"]
-  },
-  {
-    "id": 3,
-    "valence": "GROWTH_AREA",
-    "Title": "Learning to Wait",
-    "Description": "Bobby got frustrated waiting his turn to pour, and needed help calming down.",
-    "Details": "Waiting is a skill that develops gradually through preschool — it's normal for a 3-year-old to still find it hard. Try narrating the wait out loud next time ('I see you waiting, that's tricky!') so he has words for the feeling while he practices.",
-    "tags": ["Building Patience"]
-  }
-]`;
-
-  const step3PromptFinal = languageInstruction ? `${step3Prompt}\n\n${languageInstruction}` : step3Prompt;
-
-  console.log(`📊 [ABOUT-CHILD] Step 2: Extracting child observations...`);
+  console.log(`📊 [ABOUT-CHILD] Generating child observations...`);
 
   try {
-    const aboutChild = await llmCall(step3PromptFinal, {
-      profile:  'about-child-extract',
+    const raw = await llmCall(promptFinal, {
+      profile:  'about-child',
       schema:   SCHEMAS.ABOUT_CHILD,
-      label:    'about-child-step3',
+      label:    'about-child',
       sessionId,
       // Best-effort: a failure here just drops the "About Child" card for the
       // session (STEP 9 swallows it), so don't page on it.
       alertOnFailure: false,
     });
-    if (!Array.isArray(aboutChild)) throw new Error('Expected array response');
-    console.log(`✅ [ABOUT-CHILD] Extracted ${aboutChild.length} child observations`);
+    if (!Array.isArray(raw)) throw new Error('Expected array response');
+
+    const aboutChild = raw.map(item => ({
+      ...item,
+      valence: ABOUT_CHILD_LABEL_TO_VALENCE[item.label] || 'STRENGTH',
+    }));
+
+    console.log(`✅ [ABOUT-CHILD] Generated ${aboutChild.length} child observations`);
     return aboutChild;
   } catch (error) {
-    console.error('❌ [ABOUT-CHILD] Step 2 failed:', error.message);
+    console.error('❌ [ABOUT-CHILD] Failed:', error.message);
     return null;
   }
 }
@@ -721,12 +687,13 @@ async function getParentSkillProgress(userId) {
 }
 
 /**
- * Generate CDI coaching cards
- * Produces actionable coaching summary and cards for parents
+ * Generate CDI coaching report
+ * Runs the cdiCoaching prompt (which carries its own output format) and returns
+ * the report as-is for the Coach's Corner card.
  * @param {Array} utterances - Utterances with roles
  * @param {Object} childInfo - Child's info (name, ageMonths, gender, clinicalPriority)
  * @param {Object} tagCounts - Session metrics from PCIT coding
- * @returns {Promise<Object|null>} { coachingSummary, coachingCards } or null on failure
+ * @returns {Promise<Object|null>} { coachingSummary, coachingPart1, coachingPart2, ... } or null on failure
  */
 async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childSpeaker = null, sessionId = null, language = null) {
   const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
@@ -754,68 +721,99 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
 
   // Step 2: Coaching report — tomorrow goal injected so narrative reinforces the decided goal
   variables.TOMORROW_GOAL = tomorrowGoal || 'Continue building connection through play.';
-  const prompt = loadPromptWithVariables('cdiCoaching', variables);
 
-  console.log(`📊 [CDI-COACHING] Step 2: Generating coaching report...`);
+  // Level-clearing benchmark for the coaching prompt: levels 1-3 clear at
+  // <=3 of a skill to reduce, levels 4-6 clear at >=10 of a skill to build
+  // (parentLevelLadder.cjs — same number is the goal-card target and the gate).
+  if (typeof goalPayload.targetCount === 'number') {
+    const reduce = String(goalPayload.goalType || '').startsWith('AVOID_');
+    const current = goalPayload.baselineCount != null ? goalPayload.baselineCount : 0;
+    variables.MASTERY_BENCHMARK = reduce
+      ? `Mastery = ${goalPayload.targetCount} or fewer per 5-minute session (this session: ${current}).`
+      : `Mastery = ${goalPayload.targetCount} or more per 5-minute session (this session: ${current}).`;
+  } else {
+    variables.MASTERY_BENCHMARK = `Mastery = keep this skill natural and consistent (this session: ${goalPayload.baselineCount != null ? goalPayload.baselineCount : 'n/a'}).`;
+  }
+
+  // CDI skill labels for the coaching prompt, keyed on the deterministic ladder
+  // (parentLevelLadder.cjs): levels 1-6 each train one skill, 7+ is integration.
+  // currentLevel is the level the parent is *working on* now, so levels
+  // 1..currentLevel-1 are the ones already cleared.
+  const CDI_SKILL_BY_LEVEL = {
+    1: 'Avoiding Criticism',
+    2: 'Avoiding Commands',
+    3: 'Avoiding Questions',
+    4: 'Labeled Praise',
+    5: 'Narrate (Behavioral Description)',
+    6: 'Echo (Reflection)',
+  };
+  const cdiSkillForLevel = (lvl) =>
+    CDI_SKILL_BY_LEVEL[lvl <= 1 ? 1 : lvl] || 'Integrating all CDI skills (Labeled Praise, Narrate, Echo)';
+
+  variables.skillname = cdiSkillForLevel(parentProgress.currentLevel);
+  variables.passed_levels_skillnames = parentProgress.currentLevel > 1
+    ? Array.from({ length: Math.min(parentProgress.currentLevel - 1, 6) }, (_, i) => CDI_SKILL_BY_LEVEL[i + 1]).join(', ')
+    : 'none yet';
+  variables.primary_issue = variables.PRIMARY_ISSUE;
+
+  // Split the prompt like DPICS coding: the static instructions (role, response
+  // structure, tone) + the CDI reference manual PDF go in the Gemini context
+  // cache; only the per-session data (child, skill level, metrics, transcript)
+  // is sent as the per-call prompt.
+  const coachingSystemPrompt = loadPrompt('cdiCoaching');
+  const coachingUserPrompt = `Here is the session to coach.
+
+- Child Name: ${variables.CHILD_NAME}
+- Child's Primary Goal(s): ${variables.primary_issue}
+- Parent's Current Skill Focus/Level: ${variables.skillname}
+- Skills the parent has already mastered: ${variables.passed_levels_skillnames}
+- Parent's Current Skill Focus/Level Mastery (this session's counts):
+${variables.SESSION_METRICS}
+- Level-clearing benchmark for the current skill focus: ${variables.MASTERY_BENCHMARK}
+- Focus goal for next session: ${variables.TOMORROW_GOAL}
+- Session Transcript:
+${variables.TRANSCRIPT}
+
+Produce the coaching feedback now, following the required response structure exactly.
+
+${variables.LANGUAGE_INSTRUCTION}`;
+
+  // CDI coaching runs on the same model knob as DPICS coding
+  // ($GEMINI_STREAMING_MODEL, e.g. gemini-3.1-pro-preview), not the 'gemini'
+  // (flash) profile default. Unset → falls back to the profile default.
+  const coachingModel = process.env.GEMINI_STREAMING_MODEL || undefined;
+
+  console.log(`📊 [CDI-COACHING] Step 2: Generating coaching report${coachingModel ? ` (${coachingModel})` : ''}...`);
 
   try {
-    const coachingReport = await llmCall(prompt, {
+    const coachingReport = await llmCall(coachingUserPrompt, {
       profile:  'coaching-narrative',
+      ...(coachingModel ? { model: coachingModel } : {}),
+      // Context cache: static instructions + CDI manual PDF. Key is model-qualified
+      // because Gemini requires the CachedContent model and the generateContent
+      // model to match, and the registry key is not model-aware on its own.
+      cache: {
+        key:          `cdi-coaching-${(coachingModel || 'default').replace(/[^a-z0-9.-]/gi, '_')}`,
+        primaryFile:  CDI_COACHING_PDF_PATH,
+        systemPrompt: coachingSystemPrompt,
+      },
       label:    'coaching-narrative',
       sessionId,
     });
 
     console.log(`✅ [CDI-COACHING] Coaching report received (${coachingReport.length} chars)`);
 
-    // Step 3: Format coaching report for mobile
-    console.log(`📊 [CDI-COACHING] Step 3: Formatting coaching sections...`);
-
-    const formatPrompt = loadPromptWithVariables('cdiCoachingFormat', {
-      COACHING_REPORT: coachingReport,
-      LANGUAGE_INSTRUCTION: variables.LANGUAGE_INSTRUCTION || '',
-      CHILD_GENDER: variables.CHILD_GENDER || 'child'
-    });
-
-    const checkComplete = (result) => {
-      const sections = result?.sections;
-      const totalContentLen = sections?.reduce((sum, s) => sum + (s.content?.length || 0), 0) || 0;
-      return Array.isArray(sections)
-        && sections.length >= 3
-        && sections.every(s => s.title?.trim() && s.content?.trim())
-        && totalContentLen >= coachingReport.length * 0.6;
-    };
-
-    let formatted = null;
-    try {
-      formatted = await withQualityRetry(
-        () => llmCall(formatPrompt, { profile: 'coaching-format', schema: SCHEMAS.COACHING_FORMAT, label: 'coaching-format', sessionId }),
-        checkComplete,
-        // Escalate to Gemini Pro (not Claude) so the responseSchema still
-        // applies — schema is Gemini-only, and Claude free-texting JSON in
-        // Chinese was emitting unescaped quotes that jsonrepair can't fix.
-        // Best-effort: withQualityRetry catches a throw here and we fall back
-        // to the raw (unsectioned) coaching report, so don't page on it.
-        () => llmCall(formatPrompt, { profile: 'coaching-format', model: 'gemini-3.1-pro-preview', schema: SCHEMAS.COACHING_FORMAT, label: 'coaching-format-escalated', sessionId, alertOnFailure: false })
-      );
-    } catch (formatError) {
-      console.error('❌ [CDI-COACHING] Format call failed:', formatError.message);
-    }
-
-    if (!formatted) {
-      console.warn(`⚠️ [CDI-COACHING] Format incomplete after all attempts, returning raw report`);
-      return { coachingSummary: coachingReport, coachingCards: null, tomorrowGoal, notifications, goalDirective };
-    }
-
-    const result = {
-      coachingSummary: coachingReport,
-      coachingCards: formatted.sections || null,
-      tomorrowGoal, // always the deterministic value — formatted.tomorrowGoal (LLM echo-back) is ignored
+    // The cdiCoaching prompt carries its own output format — the report goes
+    // straight to Coach's Corner, no separate formatting/curation pass.
+    return {
+      coachingSummary: coachingReport, // raw report — still consumed by generateCDIFeedback / weekly report
+      coachingCards: null,             // legacy sectioning shape retired
+      coachingPart1: coachingReport.trim(), // → Coach's Corner
+      coachingPart2: null,             // Learning Moment card retired with the format pass
+      tomorrowGoal, // always the deterministic value
       notifications,
       goalDirective
     };
-
-    console.log(`✅ [CDI-COACHING] Formatted — ${result.coachingCards?.length || 0} sections`);
-    return result;
   } catch (error) {
     console.error('❌ [CDI-COACHING] Error:', error.message);
     return null;
@@ -2106,6 +2104,8 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
         baselineAchieved: profilingResult?.baselineAchieved || [],
         coachingSummary: coachingResult?.coachingSummary || null,
         coachingCards: coachingResult?.coachingCards || null,
+        coachingPart1: coachingResult?.coachingPart1 || null,
+        coachingPart2: coachingResult?.coachingPart2 || null,
         tomorrowGoal: coachingResult?.tomorrowGoal || null,
         notifications: coachingResult?.notifications || null,
         goalDirective: coachingResult?.goalDirective || null,
@@ -2230,9 +2230,11 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
       competencyAnalysis,
       overallScore,
       coachingSummary: childProfilingResult?.coachingSummary || null,
-      coachingCards: (childProfilingResult?.coachingCards || childProfilingResult?.goalDirective)
+      coachingCards: (childProfilingResult?.coachingCards || childProfilingResult?.coachingPart1 || childProfilingResult?.goalDirective)
         ? {
             sections: childProfilingResult.coachingCards || null,
+            part1: childProfilingResult.coachingPart1 || null,
+            part2: childProfilingResult.coachingPart2 || null,
             tomorrowGoal: childProfilingResult.tomorrowGoal || null,
             notifications: childProfilingResult.notifications || null,
             goalDirective: childProfilingResult.goalDirective || null
