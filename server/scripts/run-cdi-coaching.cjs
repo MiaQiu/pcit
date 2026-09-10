@@ -146,7 +146,11 @@ async function main() {
 
   fs.writeFileSync(path.join(OUT_DIR, `coaching-result.${MODEL_TAG}.json`), JSON.stringify(result, null, 2));
 
-  console.log('\n=== PART 1 (→ Coach\'s Corner) ===\n' + (result.coachingPart1 || '(null)'));
+  console.log('\n=== PART 1 (→ Coach\'s Corner) ===\n' + (
+    result.coachingPart1
+      ? (typeof result.coachingPart1 === 'string' ? result.coachingPart1 : JSON.stringify(result.coachingPart1, null, 2))
+      : '(null)'
+  ));
   console.log('\n=== PART 2 (→ Learning Moment card) ===\n' + (result.coachingPart2 ? JSON.stringify(result.coachingPart2, null, 2) : '(null — not shown to parent)'));
   console.log('\n=== tomorrowGoal ===\n' + (result.tomorrowGoal || '(null)'));
 

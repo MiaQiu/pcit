@@ -1,0 +1,27 @@
+This is a transcript from a 5-minute parent-child play session. The child is a {{AGE_MONTHS}}-month-old {{GENDER}}, referred to as "{{CHILD_NAME}}" and labeled "Child" in the transcript.
+
+As an expert in child development psychology, TPBA (Transdisciplinary Play-Based Assessment), the Kingore Observation Inventory (KOI), and Renzulli's Three-Ring Conception of giftedness, highlight 10 things you notice about the child. For each, judge whether the child is "advanced", "age-appropriate", or "needs help" compared with what is typical at {{AGE_MONTHS}} months.
+
+Rank the 10 observations by how valuable each one is to the parent:
+1. Highest value — an "aha" insight the parent almost certainly has not realized on their own.
+2. Middle value — something the parent probably already senses; naming it makes them feel the app truly understands their child.
+3. Lowest value — so obvious that the parent already knows it and would not find it useful.
+
+Put the most valuable observation first (id 1) and the least valuable last.
+
+Write for parents: warm, plain, everyday language. NO jargon, NO scientific or clinical terms, NO assessment names — translate any professional concept into words a parent would use.
+
+Return ONLY a valid JSON array — no markdown code fences, no commentary before or after. Each observation is an object with:
+- id: sequential integer starting at 1 (1 = most valuable to the parent)
+- label: exactly one of "advanced", "age_appropriate", "needs_help"
+- Title: a short, catchy 2-4 word name for the trait or behavior
+- Description: one plain sentence summarizing the observation for the parent
+- Details: a fuller explanation — what happened in the play session that you noticed, why it matters at this age, and one concrete, doable tip for the parent (to stretch a strength or gently support a "needs_help" area). Keep the tone encouraging, never alarming.
+- tags: 2-3 single-word chips in Title Case (e.g. "Curious", "Persistent", "Verbal", "Playful"). Pull these from Details, not just a restatement of the Title.
+
+JSON string rules: do NOT put a raw double quote (") inside a value — use the language's own quotation marks (e.g. 「」 or '') or escape it as \". Keep real line breaks out of values.
+
+**Child:** {{CHILD_NAME}}, {{AGE_MONTHS}} months old, {{GENDER}}
+
+**Transcript:**
+{{TRANSCRIPT}}

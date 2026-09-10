@@ -235,7 +235,7 @@ Return a minified JSON array for adult utterances only:
   await stage('dev-profiling', () =>
     generateDevelopmentalProfiling(utterances, childInfo, tagCounts, childSpeaker, SESSION_ID, language));
 
-  // 5. about-child (2 calls: narrative + extract)
+  // 5. about-child (single pass: age-referenced observations)
   await stage('about-child', () =>
     generateAboutChild(utterances, childInfo, tagCounts, SESSION_ID, language));
 

@@ -411,6 +411,7 @@ interface LocalComponent {
   ctaLabel: string;
   inputLabel: string;
   inputPlaceholder: string;
+  showOnCard: boolean;
 }
 
 let tempKeySeq = 0;
@@ -428,6 +429,7 @@ function componentToLocal(c: HomeCardComponent): LocalComponent {
     ctaLabel: c.ctaLabel || '',
     inputLabel: c.inputLabel || '',
     inputPlaceholder: c.inputPlaceholder || '',
+    showOnCard: !!c.showOnCard,
   };
 }
 
@@ -502,7 +504,7 @@ function HomeCardModal({
   const addComponent = (type: HomeCardComponentType) => {
     setComponents((prev) => [
       ...prev,
-      { key: nextTempKey(), type, text: '', imageUrl: null, imageFile: null, linkedCardId: '', ctaLabel: '', inputLabel: '', inputPlaceholder: '' },
+      { key: nextTempKey(), type, text: '', imageUrl: null, imageFile: null, linkedCardId: '', ctaLabel: '', inputLabel: '', inputPlaceholder: '', showOnCard: false },
     ]);
   };
 
@@ -573,6 +575,7 @@ function HomeCardModal({
             ctaLabel: c.type === 'OPEN_DETAILS' ? c.ctaLabel : undefined,
             inputLabel: c.type === 'USER_INPUT' ? c.inputLabel : undefined,
             inputPlaceholder: c.type === 'USER_INPUT' ? c.inputPlaceholder : undefined,
+            showOnCard: c.type === 'USER_INPUT' ? c.showOnCard : undefined,
           }))
         : undefined;
 
@@ -882,6 +885,25 @@ function HomeCardModal({
                       />
                     )}
                   </div>
+
+                  {/* USER_INPUT blocks flagged "show on card" also render
+                      inline on the home card (see InlineReflection in
+                      HomeScreen_v2.tsx) — shown expanded here so the
+                      label/placeholder can be previewed. */}
+                  {components.filter((c) => c.type === 'USER_INPUT' && c.showOnCard).map((c) => (
+                    <div key={c.key} style={{ marginTop: 14 }}>
+                      {c.inputLabel && (
+                        <p style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 600, color: '#1E2939' }}>{c.inputLabel}</p>
+                      )}
+                      <div style={{ border: '1px solid rgba(30,41,57,0.12)', borderRadius: 12, padding: 10, minHeight: 60, fontSize: 13, color: '#9CA3AF', background: 'rgba(255,255,255,0.7)' }}>
+                        {c.inputPlaceholder || 'Write your thoughts…'}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+                        <span style={{ background: '#8C49D5', color: '#fff', borderRadius: 999, padding: '4px 14px', fontSize: 12, fontWeight: 600 }}>Save</span>
+                      </div>
+                    </div>
+                  ))}
+
                   <div style={{ height: 1, backgroundColor: 'rgba(30,41,57,0.08)', margin: '16px 0' }} />
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ color: '#8C49D5', fontWeight: 600, fontSize: 14 }}>Learn more &rarr;</span>
@@ -1185,6 +1207,18 @@ function HomeCardModal({
                         placeholder="Placeholder text (optional)"
                         style={{ marginTop: 8 }}
                       />
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, fontSize: 13 }}>
+                        <input
+                          type="checkbox"
+                          checked={c.showOnCard}
+                          onChange={(e) => updateComponent(c.key, { showOnCard: e.target.checked })}
+                        />
+                        Also show inline on the home card
+                      </label>
+                      <p className="form-hint" style={{ marginTop: 4, marginBottom: 0 }}>
+                        When on, this input appears on the main home card (a collapsed "+ {'{label}'}" row that
+                        expands on tap) as well as the detail page. The answer is the same in both places.
+                      </p>
                     </>
                   )}
                 </div>

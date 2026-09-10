@@ -426,16 +426,21 @@ router.get('/home-cards/:id', requireAuth, async (req, res) => {
 
     const components = await Promise.all(homeCard.components.map(async (rawComponent) => {
       const { image, ...c } = applyHomeCardComponentTx(rawComponent, componentTxById.get(rawComponent.id));
+      const isUserInput = c.type === 'USER_INPUT';
       return {
         id: c.id,
         type: c.type,
-        text: c.text,
+        // USER_INPUT reuses `text` as the "also show inline on the home card"
+        // flag (marker 'HOME_CARD', no schema change) — surface it as a
+        // boolean and never leak the raw marker as body text.
+        text: isUserInput ? null : c.text,
+        showOnCard: isUserInput ? rawComponent.text === 'HOME_CARD' : undefined,
         imageUrl: await resolveDragonImageUrl(image),
         linkedCardId: c.linkedCardId,
         ctaLabel: c.ctaLabel,
         inputLabel: c.inputLabel,
         inputPlaceholder: c.inputPlaceholder,
-        userAnswer: c.type === 'USER_INPUT' ? (answersByComponentId.get(c.id) ?? null) : undefined,
+        userAnswer: isUserInput ? (answersByComponentId.get(c.id) ?? null) : undefined,
       };
     }));
 

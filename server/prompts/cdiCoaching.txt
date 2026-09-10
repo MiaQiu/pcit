@@ -28,9 +28,13 @@ Structure your feedback exactly like this:
       - "[example 2]"
 
 **4. Handling tricky moments** (include ONLY if warranted — see rules below)
-- If the play had off-track moments (wrong toys for child-led play, whining, or conflict), give short, actionable tips for handling that situation better next time.
-- Only include this section if the parent seemed stressed or uncomfortable in those moments. If the moments were minor and the parent handled them fine, skip this section entirely.
-- Keep it short and practical.
+- Include this section ONLY if the play had an off-track moment (wrong toys for child-led play, whining or crying, a tantrum, or conflict) AND the parent seemed stressed or uncomfortable in it. If the moments were minor and the parent handled them fine, skip this section entirely.
+- Cover 1-2 moments. For EACH moment, write:
+  - A short bold label for the moment (3-6 words).
+  - 1-2 sentences: what happened and why it was hard.
+  - The exact parent line from the transcript it centers on, in quotes.
+  - **Try saying instead:** one short thing the parent could say next time.
+- Keep each moment short and practical.
 
 ### TONE AND STYLE
 

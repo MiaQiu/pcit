@@ -572,8 +572,17 @@
       "readMore": "Read more",
       "showLess": "Show less"
     },
+    "learningMoments": {
+      "title": "Crisis Moment",
+      "tryInstead": "Try saying instead:"
+    },
     "skillCoaching": {
       "title": "Coach's Corner",
+      "didWellLabel": "What you did well",
+      "wordBankLabel": "Try saying next time",
+      "tabWentWell": "Went well",
+      "tabGrowNext": "Grow next",
+      "benchmarkLabel": "Benchmark",
       "learnMoreTitle": "Learn more about {{skill}}",
       "lessonBadge": "Lesson",
       "demoBadge": "Demo",
@@ -1148,6 +1157,12 @@
     "noraDaily": "Nora Daily",
     "noraDailySubtitle": "Your daily dose of science-backed tips & inspiration.",
     "subActionLearnMore": "Learn more",
+    "reflectionPrompt": "Add your reflection",
+    "reflectionPlaceholder": "Write your thoughts…",
+    "reflectionSave": "Save",
+    "reflectionSaving": "Saving…",
+    "reflectionSaved": "Saved",
+    "reflectionEdit": "Edit reflection",
     "subActionBadges": {
       "scienceBite": "Science Bite",
       "tryThisToday": "Try This Today",

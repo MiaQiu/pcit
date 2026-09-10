@@ -54,7 +54,7 @@ const PROFILES = {
   'coaching-format': {
     model:       'gemini',
     temperature: 0,
-    maxTokens:   4096,
+    maxTokens:   8192,
     timeout:     120_000,
     output:      'json',
   },
@@ -75,19 +75,11 @@ const PROFILES = {
     output:      'json',
   },
 
-  'about-child-narrative': {
+  'about-child': {
     model:       'gemini',
-    temperature: 0.7,
-    maxTokens:   4096,
+    temperature: 0.6,
+    maxTokens:   8192,
     timeout:     120_000,
-    output:      'text',
-  },
-
-  'about-child-extract': {
-    model:       'gemini',
-    temperature: 0.3,
-    maxTokens:   4096,
-    timeout:     60_000,
     output:      'array',
   },
 

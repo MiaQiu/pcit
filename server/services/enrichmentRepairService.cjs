@@ -155,6 +155,8 @@ async function repairSession(session) {
         metadata: profilingResult?.metadata || null,
         coachingSummary: coachingResult?.coachingSummary || null,
         coachingCards: coachingResult?.coachingCards || null,
+        coachingPart1: coachingResult?.coachingPart1 || null,
+        coachingPart2: coachingResult?.coachingPart2 || null,
         tomorrowGoal: coachingResult?.tomorrowGoal || null,
         notifications: coachingResult?.notifications || null,
         goalDirective: coachingResult?.goalDirective || null,
@@ -229,9 +231,11 @@ async function repairSession(session) {
     data: {
       competencyAnalysis,
       coachingSummary: childProfilingResult?.coachingSummary || null,
-      coachingCards: (childProfilingResult?.coachingCards || childProfilingResult?.goalDirective)
+      coachingCards: (childProfilingResult?.coachingCards || childProfilingResult?.coachingPart1 || childProfilingResult?.goalDirective)
         ? {
             sections: childProfilingResult.coachingCards || null,
+            part1: childProfilingResult.coachingPart1 || null,
+            part2: childProfilingResult.coachingPart2 || null,
             tomorrowGoal: childProfilingResult.tomorrowGoal || null,
             notifications: childProfilingResult.notifications || null,
             goalDirective: childProfilingResult.goalDirective || null

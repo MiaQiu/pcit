@@ -596,6 +596,10 @@ export interface HomeCardComponent {
   ctaLabel: string | null;
   inputLabel: string | null;
   inputPlaceholder: string | null;
+  // USER_INPUT only: also surface this input inline on the home card, not
+  // just the detail page. Stored server-side in the reused `text` column (no
+  // schema change) — see validateHomeCardComponents.
+  showOnCard?: boolean;
 }
 
 // Sent to POST/PUT /api/admin/home-cards as part of `components` — `id`
@@ -608,6 +612,7 @@ export interface HomeCardComponentInput {
   ctaLabel?: string;
   inputLabel?: string;
   inputPlaceholder?: string;
+  showOnCard?: boolean;
 }
 
 export interface HomeCard {

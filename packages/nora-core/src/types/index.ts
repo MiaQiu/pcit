@@ -542,6 +542,9 @@ export interface HomeCardComponent {
   inputLabel: string | null;
   inputPlaceholder: string | null;
   userAnswer?: string | null;
+  // USER_INPUT only: also render this input inline on the Home card (see
+  // HomeScreen_v2's SubActionCard), not just this detail page.
+  showOnCard?: boolean;
 }
 
 export interface HomeCardDetail {

@@ -572,8 +572,17 @@
       "readMore": "阅读更多",
       "showLess": "收起"
     },
+    "learningMoments": {
+      "title": "危机时刻",
+      "tryInstead": "可以试着这样说："
+    },
     "skillCoaching": {
       "title": "教练角",
+      "didWellLabel": "你做得好的地方",
+      "wordBankLabel": "下次可以这样说",
+      "tabWentWell": "做得好",
+      "tabGrowNext": "下一步",
+      "benchmarkLabel": "目标",
       "learnMoreTitle": "了解更多关于{{skill}}的内容",
       "lessonBadge": "课程",
       "demoBadge": "示范",
@@ -1196,6 +1205,12 @@
     "noraDaily": "Nora Daily",
     "noraDailySubtitle": "每日为您带来科学育儿贴士与灵感。",
     "subActionLearnMore": "了解更多",
+    "reflectionPrompt": "写下你的感想",
+    "reflectionPlaceholder": "写下你的想法……",
+    "reflectionSave": "保存",
+    "reflectionSaving": "保存中……",
+    "reflectionSaved": "已保存",
+    "reflectionEdit": "编辑感想",
     "subActionBadges": {
       "scienceBite": "科学小知识",
       "tryThisToday": "今天试试看",

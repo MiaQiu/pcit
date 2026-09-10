@@ -803,13 +803,83 @@ ${variables.LANGUAGE_INSTRUCTION}`;
 
     console.log(`✅ [CDI-COACHING] Coaching report received (${coachingReport.length} chars)`);
 
-    // The cdiCoaching prompt carries its own output format — the report goes
-    // straight to Coach's Corner, no separate formatting/curation pass.
+    // Step 3: split the narrative for mobile — sections "1. What you did well" +
+    // "3. Next Growth Focus" → coachingPart1 (Coach's Corner), a structured
+    // breakdown { didWell, growthFocus, wordBank }; section "4. Handling tricky
+    // moments" → coachingPart2 ({ summary, points[] }, Crisis Moment slot).
+    // Best-effort: if the format pass fails, coachingPart1 stays the raw report
+    // string (older render path) and no tricky-moments card is shown.
+    let coachingPart1 = coachingReport.trim();
+    let coachingPart2 = null;
+    try {
+      const formatPrompt = loadPromptWithVariables('cdiCoachingFormat', {
+        COACHING_REPORT:      coachingReport,
+        TRANSCRIPT:           variables.TRANSCRIPT || '',
+        CHILD_NAME:           variables.CHILD_NAME || 'the child',
+        CHILD_GENDER:         variables.CHILD_GENDER || 'child',
+        LANGUAGE_INSTRUCTION: variables.LANGUAGE_INSTRUCTION || '',
+      });
+      console.log(`📊 [CDI-COACHING] Step 3: Formatting for Coach's Corner + Crisis Moment...`);
+      const formatted = await llmCall(formatPrompt, {
+        profile:        'coaching-format',
+        schema:         SCHEMAS.COACHING_FORMAT,
+        label:          'coaching-format',
+        sessionId,
+        alertOnFailure: false,
+      });
+      const cc = formatted?.coach_corner;
+      if (cc && typeof cc === 'object' && cc.did_well) {
+        coachingPart1 = {
+          didWell: {
+            theme:      cc.did_well.theme || '',
+            howItHelps: cc.did_well.how_it_helps || '',
+            examples: Array.isArray(cc.did_well.examples)
+              ? cc.did_well.examples.map(e => ({ quote: e.quote || '', benefit: e.benefit || '' }))
+              : [],
+          },
+          growthFocus: {
+            heading:   cc.growth_focus?.heading || '',
+            gap:       cc.growth_focus?.gap || '',
+            benchmark: cc.growth_focus?.benchmark || '',
+            strategy:  cc.growth_focus?.strategy || '',
+          },
+          wordBank: Array.isArray(cc.word_bank)
+            ? cc.word_bank.map(g => ({
+                goal: g.goal || '',
+                categories: Array.isArray(g.categories)
+                  ? g.categories.map(c => ({
+                      name:     c.name || '',
+                      examples: Array.isArray(c.examples) ? c.examples.filter(Boolean) : [],
+                    }))
+                  : [],
+              }))
+            : [],
+        };
+      }
+
+      const tm = formatted?.tricky_moments;
+      if (tm && Array.isArray(tm.points) && tm.points.length > 0) {
+        coachingPart2 = {
+          summary: tm.summary || '',
+          points: tm.points.map(p => ({
+            title:            p.title,
+            explanation:      p.explanation,
+            quote:            p.quote || null,
+            suggestedRewrite: p.suggested_rewrite || null,
+          })),
+        };
+      }
+      const ccShape = typeof coachingPart1 === 'string' ? `${coachingPart1.length} chars (raw fallback)` : 'structured breakdown';
+      console.log(`✅ [CDI-COACHING] Formatted — Coach's Corner ${ccShape}, tricky moments: ${coachingPart2 ? coachingPart2.points.length : 0}`);
+    } catch (formatError) {
+      console.warn(`⚠️ [CDI-COACHING] Format pass failed, using raw report for Coach's Corner: ${formatError.message}`);
+    }
+
     return {
       coachingSummary: coachingReport, // raw report — still consumed by generateCDIFeedback / weekly report
       coachingCards: null,             // legacy sectioning shape retired
-      coachingPart1: coachingReport.trim(), // → Coach's Corner
-      coachingPart2: null,             // Learning Moment card retired with the format pass
+      coachingPart1,                   // → Coach's Corner — structured { didWell, growthFocus, wordBank } (or raw string if the format pass failed)
+      coachingPart2,                   // → Crisis Moment slot ({ summary, points[] }) or null
       tomorrowGoal, // always the deterministic value
       notifications,
       goalDirective

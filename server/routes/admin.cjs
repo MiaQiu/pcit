@@ -1993,7 +1993,9 @@ router.get('/home-cards', requireAdminAuth, async (req, res) => {
       shareCount: _count.shares,
       imageUrl: await resolveDragonImageUrl(image),
       components: await Promise.all(components.map(async ({ image: componentImage, ...component }) => ({
-        ...component,
+        // USER_INPUT reuses `text` as the "show on home card" flag — expose
+        // it as a boolean and blank the raw marker so the form never shows it.
+        ...serializeHomeCardComponentForAdmin(component),
         imageUrl: await resolveDragonImageUrl(componentImage),
       }))),
     })));
@@ -2082,13 +2084,30 @@ function validateHomeCardComponents(components, homeCardId) {
       id: c.id || undefined,
       type: c.type,
       order: index,
-      text: c.type === 'TEXT' ? c.text.trim() : null,
+      // TEXT stores its body here; USER_INPUT reuses this column as a flag
+      // for "also show inline on the home card" (no schema change) — the
+      // marker is stripped back out in every read path (see the admin list
+      // GET below and config.cjs's detail endpoint).
+      text: c.type === 'TEXT'
+        ? c.text.trim()
+        : (c.type === 'USER_INPUT' && c.showOnCard ? 'HOME_CARD' : null),
       linkedCardId: c.type === 'OPEN_DETAILS' ? c.linkedCardId : null,
       ctaLabel: c.type === 'OPEN_DETAILS' ? (c.ctaLabel?.trim() || null) : null,
       inputLabel: c.type === 'USER_INPUT' ? (c.inputLabel?.trim() || null) : null,
       inputPlaceholder: c.type === 'USER_INPUT' ? (c.inputPlaceholder?.trim() || null) : null,
     };
   });
+}
+
+/**
+ * Normalizes a stored HomeCardComponent for an admin API response: turns the
+ * USER_INPUT `text` marker back into a `showOnCard` boolean and blanks the
+ * raw marker. Mirrors the map in GET /home-cards.
+ */
+function serializeHomeCardComponentForAdmin(component) {
+  if (component.type !== 'USER_INPUT') return component;
+  const { text, ...rest } = component;
+  return { ...rest, text: null, showOnCard: text === 'HOME_CARD' };
 }
 
 /**
@@ -2183,7 +2202,7 @@ router.post('/home-cards', requireAdminAuth, async (req, res) => {
       include: { components: { orderBy: { order: 'asc' } } },
     });
 
-    res.status(201).json({ homeCard: { ...homeCard, badgeText: badge.name, badgeColor: badge.color } });
+    res.status(201).json({ homeCard: { ...homeCard, components: homeCard.components.map(serializeHomeCardComponentForAdmin), badgeText: badge.name, badgeColor: badge.color } });
   } catch (error) {
     console.error('Admin create home card error:', error);
     res.status(500).json({ error: 'Failed to create home card' });
@@ -2261,7 +2280,7 @@ router.put('/home-cards/:id', requireAdminAuth, async (req, res) => {
       });
     });
 
-    res.json({ homeCard: { ...homeCard, badgeText: homeCard.badge.name, badgeColor: homeCard.badge.color } });
+    res.json({ homeCard: { ...homeCard, components: homeCard.components.map(serializeHomeCardComponentForAdmin), badgeText: homeCard.badge.name, badgeColor: homeCard.badge.color } });
   } catch (error) {
     console.error('Admin update home card error:', error);
     res.status(500).json({ error: 'Failed to update home card' });
@@ -3046,8 +3065,15 @@ router.post('/sessions/:id/rerun-cdi-coaching', requireAdminAuth, async (req, re
     const result = await generateCdiCoaching(utterances, childInfo, tagCounts, childSpeaker);
     if (!result) return res.status(500).json({ error: 'generateCdiCoaching returned null' });
 
-    const coachingCards = (result.coachingCards || result.goalDirective)
-      ? { sections: result.coachingCards || null, tomorrowGoal: result.tomorrowGoal || null, notifications: result.notifications || null, goalDirective: result.goalDirective || null }
+    const coachingCards = (result.coachingCards || result.coachingPart1 || result.goalDirective)
+      ? {
+          sections: result.coachingCards || null,
+          part1: result.coachingPart1 || null,
+          part2: result.coachingPart2 || null,
+          tomorrowGoal: result.tomorrowGoal || null,
+          notifications: result.notifications || null,
+          goalDirective: result.goalDirective || null,
+        }
       : null;
 
     await prisma.session.update({

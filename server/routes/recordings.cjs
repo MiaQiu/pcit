@@ -783,7 +783,24 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       heroText: session.competencyAnalysis?.heroText || null,
       interactionTip: session.competencyAnalysis?.interactionTip || null,
       crisisMoment: session.competencyAnalysis?.crisisMoment || null,
-      skillCoaching: session.competencyAnalysis?.skillCoaching || null,
+      // Coach's Corner: Part 1 of the CDI coaching report. Newer sessions carry a
+      // structured breakdown ({ didWell, growthFocus, wordBank }) → `coachCorner`;
+      // the mobile card renders that when present. `skillCoaching` stays the
+      // string path: the raw-report fallback (format pass failed) or, for
+      // sessions analyzed before the split, the generateCrisis note.
+      coachCorner: (coachingData?.part1 && typeof coachingData.part1 === 'object' && coachingData.part1.didWell)
+        ? coachingData.part1
+        : null,
+      skillCoaching: (typeof coachingData?.part1 === 'string' && coachingData.part1)
+        ? coachingData.part1
+        : (session.competencyAnalysis?.skillCoaching || null),
+      // Learning Moment card: curated + structured Part 2 of the CDI coaching
+      // report ({ summary, points[] }), shown in place of the crisis card. Null
+      // → the crisis card falls back to competencyAnalysis.crisisMoment. The
+      // shape guard skips the retired string form written by earlier builds.
+      learningMoments: (coachingData?.part2 && typeof coachingData.part2 === 'object' && Array.isArray(coachingData.part2.points))
+        ? coachingData.part2
+        : null,
       bondingMoment: session.competencyAnalysis?.bondingMoment || null,
       skillImprove: session.competencyAnalysis?.skillImprove || null,
       topMomentStartTime,

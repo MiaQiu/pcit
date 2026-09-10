@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * One-off script: run generateAboutChild (steps 1 & 3) for a single session.
+ * One-off script: run generateAboutChild (single LLM pass) for a single session.
  * Usage: DATABASE_URL="..." node server/scripts/run-about-child.cjs <sessionId>
  */
 

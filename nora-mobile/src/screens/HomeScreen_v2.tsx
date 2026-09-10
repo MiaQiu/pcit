@@ -19,6 +19,7 @@ import {
   Linking,
   Platform,
   Image,
+  TextInput,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Notifications from 'expo-notifications';
@@ -312,6 +313,87 @@ const InlineMessageText: React.FC<{
   );
 };
 
+// One USER_INPUT block on a CONTENT card's detail page (see
+// HomeCardDetailScreen / getHomeCardDetail). We surface these inline on the
+// Home card too, so a parent can jot a reflection without opening the detail
+// page. `userAnswer` is the requesting user's own saved answer, if any.
+interface HomeCardInputComponent {
+  id: string;
+  type: string;
+  inputLabel: string | null;
+  inputPlaceholder: string | null;
+  userAnswer?: string | null;
+  // Set by the admin per USER_INPUT block — only these render inline on the
+  // Home card; the rest stay detail-page-only.
+  showOnCard?: boolean;
+}
+
+// Collapsible free-text reflection attached to a CONTENT home card. Starts
+// collapsed (just a "＋ Add your reflection" row) unless the user already
+// saved an answer. Saves through the same endpoint the detail page uses
+// (recordingService.submitHomeCardInput) — one answer per user per block.
+const InlineReflection: React.FC<{ cardId: string; component: HomeCardInputComponent }> = ({ cardId, component }) => {
+  const recordingService = useRecordingService();
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(!!component.userAnswer);
+  const [answer, setAnswer] = useState(component.userAnswer || '');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(!!component.userAnswer);
+
+  const handleSave = async () => {
+    if (!answer.trim() || saving) return;
+    setSaving(true);
+    try {
+      await recordingService.submitHomeCardInput(cardId, component.id, answer.trim());
+      setSaved(true);
+      amplitudeService.trackEvent('Home Card Input Saved', { cardId, componentId: component.id, source: 'home_card' });
+    } catch (err) {
+      console.log('[HomeScreen_v2] Failed to save reflection:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!expanded) {
+    return (
+      <TouchableOpacity
+        style={styles.reflectionToggle}
+        onPress={() => setExpanded(true)}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="add-circle-outline" size={18} color={COLORS.mainPurple} />
+        <Text style={styles.reflectionToggleText}>{component.inputLabel || t('homeV2.reflectionPrompt')}</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    // Claims taps that the TextInput / Save button don't, so interacting with
+    // the reflection never triggers the card's "open detail page" onPress.
+    <View style={styles.reflectionBlock} onStartShouldSetResponder={() => true}>
+      {!!component.inputLabel && <Text style={styles.reflectionLabel}>{component.inputLabel}</Text>}
+      <TextInput
+        style={styles.reflectionInput}
+        value={answer}
+        onChangeText={(text) => { setAnswer(text); setSaved(false); }}
+        placeholder={component.inputPlaceholder || t('homeV2.reflectionPlaceholder')}
+        placeholderTextColor="#9CA3AF"
+        multiline
+      />
+      <TouchableOpacity
+        style={[styles.reflectionSaveBtn, (!answer.trim() || saving) && styles.reflectionSaveBtnDisabled]}
+        onPress={handleSave}
+        disabled={!answer.trim() || saving}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.reflectionSaveBtnText}>
+          {saving ? t('homeV2.reflectionSaving') : saved ? t('homeV2.reflectionSaved') : t('homeV2.reflectionSave')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 interface SubActionCardProps {
   card: HomeCardData;
   onPress?: () => void;
@@ -321,6 +403,23 @@ interface SubActionCardProps {
 const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName }) => {
   const recordingService = useRecordingService();
   const { t, i18n } = useTranslation();
+
+  // USER_INPUT blocks for this card, pulled from the detail payload so a
+  // parent can add a reflection right on the Home card (CONTENT cards only —
+  // QUOTE cards have no detail page).
+  const [userInputs, setUserInputs] = useState<HomeCardInputComponent[]>([]);
+  useEffect(() => {
+    if (card.cardType !== 'CONTENT') return;
+    let cancelled = false;
+    recordingService
+      .getHomeCardDetail(card.id, i18n.language)
+      .then((detail) => {
+        if (cancelled) return;
+        setUserInputs(((detail.components ?? []) as HomeCardInputComponent[]).filter((c) => c.type === 'USER_INPUT' && c.showOnCard));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [card.id, card.cardType, i18n.language, recordingService]);
 
   // Local optimistic like state — resynced from the server value only when the
   // card prop itself actually changes (e.g. a background refetch picked up a
@@ -487,6 +586,10 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
           />
         )}
       </View>
+
+      {userInputs.map((component) => (
+        <InlineReflection key={component.id} cardId={card.id} component={component} />
+      ))}
 
       <View style={styles.subActionDivider} />
 
@@ -1833,6 +1936,56 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'rgba(30,41,57,0.08)',
     marginVertical: 16,
+  },
+
+  // Inline reflection (USER_INPUT block surfaced on the Home card)
+  reflectionToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 14,
+  },
+  reflectionToggleText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.mainPurple,
+  },
+  reflectionBlock: {
+    marginTop: 14,
+  },
+  reflectionLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.textDark,
+    marginBottom: 8,
+  },
+  reflectionInput: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: COLORS.textDark,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(30,41,57,0.12)',
+    borderRadius: 12,
+    padding: 12,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  reflectionSaveBtn: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+  },
+  reflectionSaveBtnDisabled: {
+    opacity: 0.4,
+  },
+  reflectionSaveBtnText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: '#fff',
   },
   subActionBottomRow: {
     flexDirection: 'row',

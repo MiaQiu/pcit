@@ -47,6 +47,7 @@ import { MomentPlayer } from '../components/MomentPlayer';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
 import { MarkdownText } from '../utils/MarkdownText';
+import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import { deriveGoalFromLevel as deriveGoalNumbersFromLevel } from '../utils/goalFallback';
@@ -245,6 +246,10 @@ export const ReportDetailScreen: React.FC = () => {
   const [parentLevel, setParentLevel] = useState<ParentSkillLevel>(1);
   const [crisisExpanded, setCrisisExpanded] = useState(true);
   const [skillCoachingExpanded, setSkillCoachingExpanded] = useState(true);
+  // Coach's Corner (structured) — a segmented card: "Went well" (what the parent
+  // did) vs "Grow next" (the benchmark, strategy and phrasebook).
+  const [coachTab, setCoachTab] = useState<'wentWell' | 'growNext'>('wentWell');
+  const [copiedScript, setCopiedScript] = useState<string | null>(null);
   // "Today's Interaction Style" shows a rolled-up summary first; the full
   // PEN-skill + areas-to-avoid breakdown is revealed by "Detailed Breakdown".
   const [interactionExpanded, setInteractionExpanded] = useState(false);
@@ -462,7 +467,6 @@ export const ReportDetailScreen: React.FC = () => {
             <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
-          <View style={styles.headerButton} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.mainPurple} />
@@ -482,7 +486,6 @@ export const ReportDetailScreen: React.FC = () => {
             <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
-          <View style={styles.headerButton} />
         </View>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color="#E74C3C" />
@@ -507,9 +510,18 @@ export const ReportDetailScreen: React.FC = () => {
   const childUtteranceCount = (reportData.transcript || []).filter(u => u.role === 'child').length;
   const echoTarget = childUtteranceCount < 10 ? Math.round(childUtteranceCount * 0.75) : 10;
 
-  // Crisis moment is extracted from the coaching narrative — only present
-  // (and only rendered) when the session actually had a distress moment.
+  // Crisis moment (generateCrisis) — still drives the hero intro line and the
+  // first-session card ordering; only set when the session actually had distress.
   const crisisMoment = reportData.crisisMoment?.detected ? reportData.crisisMoment : null;
+
+  // Part 2 of the CDI coaching report ("Crisis Moment"). When
+  // present it takes over the crisis card slot (see crisisCardJsx).
+  const learningMoments = reportData.learningMoments || null;
+
+  // Part 1 of the CDI coaching report — the Coach's Corner breakdown
+  // ({ didWell, growthFocus, wordBank }). Newer sessions carry this; older ones
+  // fall back to the `skillCoaching` markdown string.
+  const coachCorner = reportData.coachCorner || null;
 
   // Independent second "top moment" finder (generateCrisis) — a 2-3
   // consecutive-utterance bonding exchange, separate from the
@@ -624,6 +636,18 @@ export const ReportDetailScreen: React.FC = () => {
     }
   };
 
+  // Copy a Coach's Corner phrasebook line; briefly swap its icon for a check.
+  const handleCopyScript = async (text: string, key: string) => {
+    try {
+      await Clipboard.setStringAsync(text);
+    } catch {
+      // clipboard unavailable — nothing to recover from
+    }
+    amplitudeService.trackEvent('Report Detail Coach Script Copied', { recordingId });
+    setCopiedScript(key);
+    setTimeout(() => setCopiedScript(prev => (prev === key ? null : prev)), 1600);
+  };
+
   // ── First-session template ──
   // The parent's very first completed session gets a distinct,
   // welcome-oriented report: hero image + message, then "what we learned",
@@ -663,7 +687,107 @@ export const ReportDetailScreen: React.FC = () => {
 
   // ── Shared card bodies (used by both the standard and first-session layouts) ──
 
-  const crisisCardJsx = crisisMoment ? (
+  // "Learn more about <skill>" links under Coach's Corner — the SkillImprove
+  // insight, a recommended lesson, a demo video. Shared by the structured card
+  // ("Grow next" tab) and the legacy markdown fallback.
+  const learnMoreBlockJsx = (reportData.skillImprove || learnMoreLesson || learnMoreDemoVideo) ? (
+    <View style={styles.ccLearnMore}>
+      <Text style={styles.learnMoreTitle}>
+        {t('reportDetail.skillCoaching.learnMoreTitle', { skill: getSkillDisplayLabel(goalSkillTag!, t) })}
+      </Text>
+      <View style={styles.badgeRow}>
+        {reportData.skillImprove && (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              const direction = goalType?.startsWith('AVOID_') ? 'AVOID' : 'BUILD';
+              amplitudeService.trackEvent('Report Detail Skill Improve Tapped', { recordingId, skillTag: goalSkillTag, direction });
+              navigation.navigate('SkillImprove', { recordingId, skillTag: goalSkillTag!, direction, skillImprove: reportData.skillImprove! });
+            }}
+          >
+            <View style={styles.improveBadge}>
+              <Text style={styles.improveBadgeText}>{t('reportDetail.skillCoaching.insightsBadge')}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+        {learnMoreLesson && (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              amplitudeService.trackEvent('Report Detail Learn More Tapped', { recordingId, skillTag: goalSkillTag, lessonId: learnMoreLesson.id });
+              if (CONTENT_V2_MODULES.includes(learnMoreLesson.module)) {
+                navigation.navigate('LessonViewerV2', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
+              } else {
+                navigation.navigate('LessonViewer', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
+              }
+            }}
+          >
+            <View style={styles.lessonBadge}>
+              <Text style={styles.lessonBadgeText}>{t('reportDetail.skillCoaching.lessonBadge')}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+        {learnMoreDemoVideo && (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              amplitudeService.trackEvent('Report Detail Demo Video Tapped', { recordingId, skillTag: goalSkillTag, demoVideoId: learnMoreDemoVideo.id });
+              navigation.navigate('DemoVideoDetail', { video: learnMoreDemoVideo });
+            }}
+          >
+            <View style={styles.demoBadge}>
+              <Text style={styles.demoBadgeText}>{t('reportDetail.skillCoaching.demoBadge')}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  ) : null;
+
+  // Curated Part 2 ("Learning Moment") — structured card, same visual language
+  // as SkillImproveScreen's opportunity cards. Only present when it cleared the
+  // curation bar server-side.
+  const learningMomentCardJsx = learningMoments ? (
+    <ReportCard
+      icon="school"
+      iconColor="#C2694B"
+      iconBackgroundColor="#FBE3CE"
+      title={t('reportDetail.learningMoments.title')}
+    >
+      {learningMoments.summary ? (
+        <View style={styles.lmSummaryRow}>
+          <Ionicons name="sparkles" size={15} color="#C2694B" style={styles.lmSummaryIcon} />
+          <Text style={styles.lmSummaryText}>{learningMoments.summary}</Text>
+        </View>
+      ) : null}
+      {learningMoments.points.map((pt, i) => (
+        <View key={i} style={[styles.lmPoint, i > 0 && styles.lmPointDivider]}>
+          <Text style={styles.lmPointTitle}>{pt.title}</Text>
+          <Text style={styles.lmPointExplanation}>{pt.explanation}</Text>
+          {pt.quote ? (
+            <View style={styles.lmQuoteBlock}>
+              {pt.quote.split('\n').filter(Boolean).map((line, li) => (
+                <Text key={li} style={styles.lmQuoteLine}>{line}</Text>
+              ))}
+            </View>
+          ) : null}
+          {pt.suggestedRewrite ? (
+            <View style={styles.lmRewriteBlock}>
+              <View style={styles.lmRewriteLabelRow}>
+                <Ionicons name="checkmark-circle" size={14} color="#0B9A6B" />
+                <Text style={styles.lmRewriteLabel}>{t('reportDetail.learningMoments.tryInstead')}</Text>
+              </View>
+              <Text style={styles.lmRewriteText}>{pt.suggestedRewrite}</Text>
+            </View>
+          ) : null}
+        </View>
+      ))}
+    </ReportCard>
+  ) : null;
+
+  // Legacy crisis card (generateCrisis) — fallback for sessions analyzed before
+  // the curated Learning Moment existed.
+  const legacyCrisisCardJsx = crisisMoment ? (
     <ReportCard
       eyebrow={
         <View style={styles.crisisBadge}>
@@ -687,6 +811,8 @@ export const ReportDetailScreen: React.FC = () => {
       </TouchableOpacity>
     </ReportCard>
   ) : null;
+
+  const crisisCardJsx = learningMomentCardJsx || legacyCrisisCardJsx;
 
   const topMomentBody = (
     <>
@@ -959,7 +1085,7 @@ export const ReportDetailScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {showFirstSession ? (
           <>
-            {/* Crisis Moment — kept on top for the first-session template */}
+            {/* Crisis Moment (or crisis fallback) — kept on top for the first-session template */}
             {crisisCardJsx}
 
             {/* 1. Hero — first-session welcome (image + message) */}
@@ -1012,7 +1138,7 @@ export const ReportDetailScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Crisis Moment — only rendered when the session actually had one */}
+        {/* Crisis Moment (Part 2); falls back to the crisis card for older sessions */}
         {crisisCardJsx}
 
         {/* Top Moment */}
@@ -1023,8 +1149,10 @@ export const ReportDetailScreen: React.FC = () => {
         {/* Interaction Style — summary first, full breakdown behind "Detailed Breakdown" */}
         {interactionCardJsx}
 
-        {/* Skill Coaching — coaching note for tomorrow's goal skill, grounded in this session */}
-        {reportData.skillCoaching && (
+        {/* Coach's Corner — sections "what you did well" + "next growth focus" of
+            the CDI write-up, grounded in this session. Newer sessions render the
+            structured breakdown; older ones the markdown string. */}
+        {(coachCorner || reportData.skillCoaching) && (
           <ReportCard
             title={t('reportDetail.skillCoaching.title')}
             headerRight={
@@ -1035,91 +1163,135 @@ export const ReportDetailScreen: React.FC = () => {
               ) : undefined
             }
           >
-            <MarkdownText style={styles.crisisBody} numberOfLines={skillCoachingExpanded ? undefined : 4}>
-              {reportData.skillCoaching}
-            </MarkdownText>
-            {skillCoachingExpanded && (
-              <>
-                {(reportData.skillImprove || learnMoreLesson || learnMoreDemoVideo) && (
-                  <Text style={styles.learnMoreTitle}>
-                    {t('reportDetail.skillCoaching.learnMoreTitle', { skill: getSkillDisplayLabel(goalSkillTag!, t) })}
-                  </Text>
-                )}
-                <View style={styles.badgeRow}>
-                  {reportData.skillImprove && (
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        const direction = goalType?.startsWith('AVOID_') ? 'AVOID' : 'BUILD';
-                        amplitudeService.trackEvent('Report Detail Skill Improve Tapped', {
-                          recordingId,
-                          skillTag: goalSkillTag,
-                          direction,
-                        });
-                        navigation.navigate('SkillImprove', {
-                          recordingId,
-                          skillTag: goalSkillTag!,
-                          direction,
-                          skillImprove: reportData.skillImprove!,
-                        });
-                      }}
-                    >
-                      <View style={styles.improveBadge}>
-                        <Text style={styles.improveBadgeText}>{t('reportDetail.skillCoaching.insightsBadge')}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                  {learnMoreLesson && (
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        amplitudeService.trackEvent('Report Detail Learn More Tapped', {
-                          recordingId,
-                          skillTag: goalSkillTag,
-                          lessonId: learnMoreLesson.id,
-                        });
-                        if (CONTENT_V2_MODULES.includes(learnMoreLesson.module)) {
-                          navigation.navigate('LessonViewerV2', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
-                        } else {
-                          navigation.navigate('LessonViewer', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
-                        }
-                      }}
-                    >
-                      <View style={styles.lessonBadge}>
-                        <Text style={styles.lessonBadgeText}>{t('reportDetail.skillCoaching.lessonBadge')}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                  {learnMoreDemoVideo && (
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        amplitudeService.trackEvent('Report Detail Demo Video Tapped', {
-                          recordingId,
-                          skillTag: goalSkillTag,
-                          demoVideoId: learnMoreDemoVideo.id,
-                        });
-                        navigation.navigate('DemoVideoDetail', { video: learnMoreDemoVideo });
-                      }}
-                    >
-                      <View style={styles.demoBadge}>
-                        <Text style={styles.demoBadgeText}>{t('reportDetail.skillCoaching.demoBadge')}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
+            <View style={styles.ccBody}>
+            {coachCorner ? (
+              <View>
+                {/* Segmented: what went well vs what to grow next */}
+                <View style={styles.ccSeg}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={[styles.ccSegBtn, coachTab === 'wentWell' && styles.ccSegBtnOn]}
+                    onPress={() => setCoachTab('wentWell')}
+                  >
+                    <Text style={[styles.ccSegText, coachTab === 'wentWell' && styles.ccSegTextOn]}>
+                      {t('reportDetail.skillCoaching.tabWentWell')}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={[styles.ccSegBtn, coachTab === 'growNext' && styles.ccSegBtnOn]}
+                    onPress={() => setCoachTab('growNext')}
+                  >
+                    <Text style={[styles.ccSegText, coachTab === 'growNext' && styles.ccSegTextOn]}>
+                      {t('reportDetail.skillCoaching.tabGrowNext')}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
+
+                {coachTab === 'wentWell' ? (
+                  <View>
+                    {!!coachCorner.didWell.theme && (
+                      <Text style={styles.ccTheme}>{coachCorner.didWell.theme}</Text>
+                    )}
+                    {!!coachCorner.didWell.howItHelps && (
+                      <MarkdownText style={styles.ccProse}>{coachCorner.didWell.howItHelps}</MarkdownText>
+                    )}
+                    {coachCorner.didWell.examples.map((ex, i) => (
+                      <View key={i}>
+                        <View style={styles.ccSaidBox}>
+                          <Text style={styles.ccSaidText}>{`“${ex.quote}”`}</Text>
+                        </View>
+                        {!!ex.benefit && <MarkdownText style={styles.ccWhy}>{ex.benefit}</MarkdownText>}
+                      </View>
+                    ))}
+                    {!!coachCorner.growthFocus.benchmark && (
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        style={styles.ccNudge}
+                        onPress={() => setCoachTab('growNext')}
+                      >
+                        <Ionicons name="flag" size={15} color="#9A5A34" />
+                        <Text style={styles.ccNudgeText}>{t('reportDetail.skillCoaching.tabGrowNext')}</Text>
+                        <Ionicons name="arrow-forward" size={16} color="#9A5A34" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ) : (
+                  <View>
+                    {!!coachCorner.growthFocus.benchmark && (
+                      <View style={styles.ccBenchCard}>
+                        <View style={styles.ccBenchCardLabel}>
+                          <Ionicons name="flag" size={13} color="#C2694B" />
+                          <Text style={styles.ccBenchCardLabelText}>{t('reportDetail.skillCoaching.benchmarkLabel')}</Text>
+                        </View>
+                        <Text style={styles.ccBenchCardValue}>{coachCorner.growthFocus.benchmark}</Text>
+                      </View>
+                    )}
+                    {!!coachCorner.growthFocus.gap && (
+                      <MarkdownText style={styles.ccProse}>{coachCorner.growthFocus.gap}</MarkdownText>
+                    )}
+                    {!!coachCorner.growthFocus.strategy && (
+                      <MarkdownText style={styles.ccStrategy}>{coachCorner.growthFocus.strategy}</MarkdownText>
+                    )}
+
+                    {coachCorner.wordBank.length > 0 && (
+                      <View style={styles.ccWordBank}>
+                        <Text style={styles.ccSectionLabel}>{t('reportDetail.skillCoaching.wordBankLabel')}</Text>
+                        {coachCorner.wordBank.map((g, gi) => (
+                          <View key={gi} style={gi > 0 ? styles.ccWordBankGoalSpaced : undefined}>
+                            {!!g.goal && <Text style={styles.ccGoalName}>{g.goal}</Text>}
+                            {g.categories.map((c, ci) => (
+                              <View key={ci} style={styles.ccCategory}>
+                                {!!c.name && <Text style={styles.ccCategoryName}>{c.name}</Text>}
+                                {c.examples.map((line, li) => {
+                                  const key = `${gi}-${ci}-${li}`;
+                                  const copied = copiedScript === key;
+                                  return (
+                                    <TouchableOpacity
+                                      key={li}
+                                      activeOpacity={0.7}
+                                      style={styles.ccSayBox}
+                                      onPress={() => handleCopyScript(line, key)}
+                                    >
+                                      <Text style={styles.ccSayText}>{`“${line}”`}</Text>
+                                      <Ionicons
+                                        name={copied ? 'checkmark' : 'copy-outline'}
+                                        size={15}
+                                        color={copied ? '#0B9A6B' : '#C2694B'}
+                                      />
+                                    </TouchableOpacity>
+                                  );
+                                })}
+                              </View>
+                            ))}
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    {learnMoreBlockJsx}
+                  </View>
+                )}
+              </View>
+            ) : (
+              <>
+                <MarkdownText style={styles.crisisBody} numberOfLines={skillCoachingExpanded ? undefined : 4}>
+                  {reportData.skillCoaching ?? ''}
+                </MarkdownText>
+                {skillCoachingExpanded && learnMoreBlockJsx}
+                <TouchableOpacity
+                  style={styles.crisisReadMoreRow}
+                  activeOpacity={0.7}
+                  onPress={() => setSkillCoachingExpanded(prev => !prev)}
+                >
+                  <Text style={styles.crisisReadMoreText}>
+                    {skillCoachingExpanded ? t('reportDetail.crisis.showLess') : t('reportDetail.crisis.readMore')}
+                  </Text>
+                  <Ionicons name={skillCoachingExpanded ? 'chevron-up' : 'chevron-down'} size={14} color="#C2694B" />
+                </TouchableOpacity>
               </>
             )}
-            <TouchableOpacity
-              style={styles.crisisReadMoreRow}
-              activeOpacity={0.7}
-              onPress={() => setSkillCoachingExpanded(prev => !prev)}
-            >
-              <Text style={styles.crisisReadMoreText}>
-                {skillCoachingExpanded ? t('reportDetail.crisis.showLess') : t('reportDetail.crisis.readMore')}
-              </Text>
-              <Ionicons name={skillCoachingExpanded ? 'chevron-up' : 'chevron-down'} size={14} color="#C2694B" />
-            </TouchableOpacity>
+            </View>
           </ReportCard>
         )}
 
@@ -1379,6 +1551,56 @@ const styles = StyleSheet.create({
   crisisReadMoreRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start' },
   crisisReadMoreText: { fontFamily: FONTS.semiBold, fontSize: 13, color: '#C2694B' },
 
+  // ── Coach's Corner (structured Part 1) — segmented "Went well" / "Grow next" ──
+  ccBody: { marginTop: 14 },
+  ccSeg: { flexDirection: 'row', gap: 4, backgroundColor: '#F6ECE2', borderRadius: 999, padding: 4, marginBottom: 14 },
+  ccSegBtn: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 999 },
+  ccSegBtnOn: { backgroundColor: '#FFFFFF', shadowColor: '#3D2A1E', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 2 },
+  ccSegText: { fontFamily: FONTS.bold, fontSize: 13, color: '#A98C74' },
+  ccSegTextOn: { color: '#C2694B' },
+
+  ccTheme: { fontFamily: FONTS.bold, fontSize: 16, lineHeight: 22, color: '#3D2A1E', marginBottom: 6 },
+  ccProse: { fontFamily: FONTS.regular, fontSize: 15, lineHeight: 22, color: '#4B5563' },
+  ccStrategy: { fontFamily: FONTS.regular, fontSize: 15, lineHeight: 22, color: '#4B5563', marginTop: 6 },
+  ccSectionLabel: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', color: '#C2694B', marginBottom: 4 },
+
+  // sample-sentence boxes — the parent's own praise ("said") and phrases to try ("say")
+  ccSaidBox: { backgroundColor: '#FBEEDF', borderWidth: 1, borderColor: '#EAD3B6', borderLeftWidth: 4, borderLeftColor: '#C2694B', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, marginTop: 10 },
+  ccSaidText: { fontFamily: FONTS.regularItalic, fontSize: 14, lineHeight: 20, color: '#3D2A1E' },
+  ccWhy: { fontFamily: FONTS.regular, fontSize: 13, lineHeight: 18, color: '#6B7280', marginTop: 6, marginLeft: 5 },
+  ccSayBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FBEEDF', borderWidth: 1, borderColor: '#EAD3B6', borderLeftWidth: 4, borderLeftColor: '#E9A688', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 13, marginTop: 8 },
+  ccSayText: { flex: 1, fontFamily: FONTS.regular, fontSize: 14, lineHeight: 20, color: '#3D2A1E' },
+
+  ccNudge: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 18, paddingVertical: 12, paddingHorizontal: 15, backgroundColor: '#FDF2E9', borderRadius: 16 },
+  ccNudgeText: { flex: 1, fontFamily: FONTS.semiBold, fontSize: 13, lineHeight: 18, color: '#9A5A34' },
+
+  ccBenchCard: { backgroundColor: '#FDF2E9', borderWidth: 1, borderColor: '#F3DEC8', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, marginBottom: 8 },
+  ccBenchCardLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  ccBenchCardLabelText: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', color: '#C2694B' },
+  ccBenchCardValue: { fontFamily: FONTS.bold, fontSize: 15, lineHeight: 21, color: '#3D2A1E', marginTop: 6 },
+
+  ccWordBank: { marginTop: 20, borderTopWidth: 1, borderTopColor: '#F0E6DC', paddingTop: 16 },
+  ccWordBankGoalSpaced: { marginTop: 16 },
+  ccGoalName: { fontFamily: FONTS.bold, fontSize: 15, lineHeight: 21, color: '#3D2A1E', marginTop: 10 },
+  ccCategory: { marginTop: 10 },
+  ccCategoryName: { fontFamily: FONTS.semiBold, fontSize: 13, letterSpacing: 0.3, color: '#9A7A5C', marginBottom: 2 },
+  ccLearnMore: { marginTop: 20, borderTopWidth: 1, borderTopColor: '#F0E6DC', paddingTop: 14 },
+
+  // ── Learning Moment (curated Part 2) content — mirrors SkillImproveScreen ──
+  lmSummaryRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 4, marginBottom: 4 },
+  lmSummaryIcon: { marginTop: 2 },
+  lmSummaryText: { flex: 1, fontFamily: FONTS.semiBold, fontSize: 14, lineHeight: 20, color: COLORS.textDark },
+  lmPoint: { marginTop: 14 },
+  lmPointDivider: { borderTopWidth: 1, borderTopColor: '#F0E6DC', paddingTop: 14 },
+  lmPointTitle: { fontFamily: FONTS.bold, fontSize: 15, lineHeight: 21, color: '#3D2A1E' },
+  lmPointExplanation: { fontFamily: FONTS.regular, fontSize: 14, lineHeight: 20, color: '#4B5563', marginTop: 5 },
+  lmQuoteBlock: { marginTop: 10, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: '#C2694B', gap: 3 },
+  lmQuoteLine: { fontFamily: FONTS.regular, fontStyle: 'italic', fontSize: 14, lineHeight: 20, color: '#3D2A1E' },
+  lmRewriteBlock: { marginTop: 10, borderRadius: 14, padding: 12, backgroundColor: '#CFF3E3' },
+  lmRewriteLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  lmRewriteLabel: { fontFamily: FONTS.semiBold, fontSize: 12, color: '#0B9A6B' },
+  lmRewriteText: { fontFamily: FONTS.regular, fontSize: 14, lineHeight: 20, color: '#3D2A1E', marginTop: 4 },
+
   // ── Top Moment content ──
   quoteLines: { marginTop: 4, gap: 6, alignItems: 'center' },
   quoteLine: { fontFamily: FONTS.regular, fontSize: 15, color: REPORT_CARD_COLORS.title, lineHeight: 22, textAlign: 'center' },
@@ -1449,7 +1671,7 @@ const styles = StyleSheet.create({
   // ── What we learned about {childName} content ──
   childInsightTitleBadge: { alignSelf: 'flex-start', backgroundColor: '#FDF2E9', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, marginBottom: 8 },
   childInsightTitleBadgeText: { fontFamily: FONTS.bold, fontSize: 13, color: '#C2694B' },
-  childInsightBody: { fontFamily: FONTS.regular, fontSize: 14, color: REPORT_CARD_COLORS.subtitle, lineHeight: 19, marginBottom: 10 },
+  childInsightBody: { fontFamily: FONTS.regular, fontSize: 15, color: '#4B5563', lineHeight: 22, marginBottom: 10 },
   childTagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   childTagChip: { backgroundColor: '#FDF2E9', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
   childTagText: { fontFamily: FONTS.semiBold, fontSize: 12, color: '#C2694B' },
