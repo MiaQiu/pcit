@@ -11,10 +11,12 @@
  * prompt / schema change (e.g. swapping the default Gemini flash model).
  *
  * Usage:
- *   node scripts/e2e-llm-calls.cjs <sessionId> [--skip-coding] [--only=stage,stage]
+ *   node scripts/e2e-llm-calls.cjs <sessionId> [--skip-coding] [--only=stage,stage] [--dump=<dir>]
  *
  *   --skip-coding      skip the pcit-coding stage (the slowest / most expensive call)
  *   --only=a,b         run only the named stages (see STAGE list printed at top)
+ *   --dump=<dir>       write each stage's returned value + the per-call llm_call log
+ *                      as JSON files under <dir> (for prompt-tuning / diffing runs)
  *
  * Example:
  *   node scripts/e2e-llm-calls.cjs ba468741-e26c-4c8d-b075-9ce1d149b4d8
@@ -39,10 +41,12 @@ const {
   generateReportHighlights,
   generateCrisis,
   generatePDITwoChoicesAnalysis,
+  // Import the coding cache key + PDF path from the service so the inline
+  // pcit-coding replica below can never drift from the real pipeline's cache
+  // identity (a mismatch there poisons the shared cache and breaks review-feedback).
+  dpicsCacheKey,
+  DPICS_PDF_PATH,
 } = require('../server/services/pcitAnalysisService.cjs');
-
-const DPICS_PDF_PATH = process.env.DPICS_PDF_PATH
-  || path.join(__dirname, '../server/assets/DPICS-Manual.2.18.pdf');
 
 // ── args ─────────────────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
@@ -50,6 +54,8 @@ const SESSION_ID = args.find(a => !a.startsWith('--'));
 const SKIP_CODING = args.includes('--skip-coding');
 const ONLY = (args.find(a => a.startsWith('--only=')) || '').replace('--only=', '')
   .split(',').map(s => s.trim()).filter(Boolean);
+const DUMP_DIR = (args.find(a => a.startsWith('--dump=')) || '').replace('--dump=', '') || null;
+if (DUMP_DIR) require('fs').mkdirSync(DUMP_DIR, { recursive: true });
 
 const ALL_STAGES = [
   'quality-check', 'role-id', 'pcit-coding', 'dev-profiling', 'about-child',
@@ -120,6 +126,14 @@ async function stage(name, fn) {
   const calls = llmLog.slice(before);
   results.push({ name, status, note, calls, ms: Date.now() - t0, value });
   origLog(`   → ${name}: ${status}${note ? ` (${note})` : ''} — ${calls.length} llm call(s), ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+  if (DUMP_DIR) {
+    try {
+      require('fs').writeFileSync(
+        path.join(DUMP_DIR, `${name}.json`),
+        JSON.stringify({ name, status, note, ms: Date.now() - t0, calls, value }, null, 2),
+      );
+    } catch (e) { origLog(`   ⚠️  dump failed for ${name}: ${e.message}`); }
+  }
   return value;
 }
 
@@ -129,6 +143,7 @@ async function stage(name, fn) {
   origLog(`\n${'='.repeat(78)}`);
   origLog(`E2E LLM CALLS — session ${SESSION_ID}`);
   origLog(`gemini path: ${gem.primary} → ${gem.fallback}  (GEMINI_FLASH_MODEL=${process.env.GEMINI_FLASH_MODEL || 'unset'})`);
+  origLog(`streaming model (pcit-coding, coaching-narrative, review-feedback): ${process.env.GEMINI_STREAMING_MODEL || 'unset → profile default'}`);
   origLog(`stages: ${ALL_STAGES.filter(wanted).join(', ')}`);
   origLog('='.repeat(78));
 
@@ -211,6 +226,11 @@ This is a PDI (Parent-Directed Interaction) session. The rules above apply for c
 - **IC (Indirect Command)**: Still undesirable. Coach toward a DC instead (e.g. "Try stating it directly: 'Please put the block down.'"). Do NOT suggest using BD or LP.
 All other feedback rules remain the same.` : '';
     const dpicsSystemPrompt = loadPrompt('dpicsCoding-agentic-v10-4') + pdiOverride;
+    // Mirror analyzePCITCoding: coding runs on $GEMINI_STREAMING_MODEL when set, else the
+    // profile default. This must match the model review-feedback (#14) uses, since both
+    // share the DPICS context cache and Gemini rejects a generateContent model that differs
+    // from the cache's model. Cache key + PDF path come from the service (dpicsCacheKey).
+    const codingModel = process.env.GEMINI_STREAMING_MODEL || undefined;
     const utterancesData = utterances.map((u, i) => ({ id: i, role: u.role, text: u.text }));
     const userPrompt = `Code every utterance where role is "adult". Skip all "child" entries.
 
@@ -223,7 +243,8 @@ Return a minified JSON array for adult utterances only:
 - Every adult entry MUST have "id" and "code"`;
     const coding = await llmCall(userPrompt, {
       profile: 'pcit-coding',
-      cache: { key: isCDI ? 'dpics-cdi' : 'dpics-pdi', primaryFile: DPICS_PDF_PATH, systemPrompt: dpicsSystemPrompt },
+      ...(codingModel ? { model: codingModel } : {}),
+      cache: { key: dpicsCacheKey(isCDI), primaryFile: DPICS_PDF_PATH, systemPrompt: dpicsSystemPrompt },
       label: 'pcit-coding',
       sessionId: SESSION_ID,
     });

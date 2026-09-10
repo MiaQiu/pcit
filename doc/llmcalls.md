@@ -96,7 +96,7 @@ pcitTag, noraTag, feedback, order`). `SILENT_SPEAKER_ID` rows are synthetic
 
 - **Function / step:** `analyzePCITCoding()` STEP 2 (STEP-7/8 logs). Model knob: `$GEMINI_STREAMING_MODEL` override, else profile default. Skipped entirely if `Session.pcitCodingDone` (checkpoint replay).
 - **Prompt:**
-  - **System / cached context:** `loadPrompt('dpicsCoding-agentic-v10-4')` (the full DPICS coding manual/rubric, in Traditional Chinese) + a PDI feedback-override paragraph appended when `session.mode === 'PDI'`. Plus the DPICS PDF (`assets/DPICS-Manual.2.18.pdf`) — both go through the gateway prompt cache keyed `dpics-cdi` / `dpics-pdi`.
+  - **System / cached context:** `loadPrompt('dpicsCoding-agentic-v10-4')` (the full DPICS coding manual/rubric, in Traditional Chinese) + a PDI feedback-override paragraph appended when `session.mode === 'PDI'`. Plus the DPICS PDF (`assets/DPICS-Manual.2.18.pdf`) — both go through the gateway prompt cache keyed `dpics-cdi-<streaming-model>` / `dpics-pdi-<streaming-model>` (via `dpicsCacheKey()`; model-qualified so a stale registry entry at another model can't break `review-feedback` #14 when coding is checkpoint-skipped).
   - **User prompt (inline):** instruction to "Code every utterance where role is 'adult'" + `JSON.stringify(utterancesData)` where `utterancesData` = updated `Utterance` rows mapped to `{id: idx, role, text}`.
 - **Output:** JSON array `[{id:<int>, code:<enum>}]` (schema enum: `LP UP BD RF RQ Q DC IC NTA AK ID TC`; runtime also tolerates `LP1-4`, `DQ`, `IQ`, `NC`, `Uncoded`).
 - **Stored in:**
@@ -225,7 +225,7 @@ Merged into #7 — "About Child" is now a single LLM call, not a prose-then-extr
   - `counts` — `Session.tagCounts`; metrics section differs CDI vs PDI.
   - transcript — `formatUtterancesForReview(utterances)`: `[NN] Parent/Child: "text" [TAG]` (tags from `Utterance.pcitTag`).
   - `pdiResult` (#12 output) injected for PDI as a "Two Choices Flow Analysis" block.
-  - **System / cache:** `loadPrompt('dpicsCoding-agentic-v10-4')` (+ PDI override) + DPICS PDF, cache key `dpics-cdi`/`dpics-pdi`.
+  - **System / cache:** `loadPrompt('dpicsCoding-agentic-v10-4')` (+ PDI override) + DPICS PDF, cache key `dpicsCacheKey(isCDI)` = `dpics-{cdi,pdi}-<streaming-model>` — must run on `$GEMINI_STREAMING_MODEL` to match that cache's model.
   - language line appended.
 - **Output:** `REVIEW_FEEDBACK` — JSON array `[{ id, feedback, additional_tip? }]` (parent utterances with a DPICS tag + ≤3 silence slots; neutral codes → null/skipped).
 - **Stored in:** per-utterance via `updateRevisedFeedback()`:

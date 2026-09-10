@@ -21,6 +21,23 @@ const DPICS_PDF_PATH      = process.env.DPICS_PDF_PATH      || require('path').j
 // alongside the static coaching instructions, same pattern as DPICS coding.
 const CDI_COACHING_PDF_PATH = process.env.CDI_COACHING_PDF_PATH || require('path').join(__dirname, '../prompts/Parent-Child Interaction Therapy_CDI.pdf');
 
+/**
+ * DPICS context-cache registry key, shared by pcit-coding, pcit-coding-supplemental
+ * and review-feedback. Model-qualified for the same reason as the CDI coaching cache
+ * (see generateCdiCoaching): Gemini rejects a generateContent call whose model differs
+ * from its CachedContent's model, and the registry key is not model-aware on its own.
+ * All three callers run on $GEMINI_STREAMING_MODEL, so keying on that model stops a
+ * stale entry — created by an eval script, an e2e run, or a previous value of
+ * $GEMINI_STREAMING_MODEL — from poisoning the shared on-disk registry and breaking
+ * review-feedback whenever pcit-coding is skipped by the checkpoint.
+ * @param {boolean} isCDI
+ * @returns {string}
+ */
+function dpicsCacheKey(isCDI) {
+  const model = process.env.GEMINI_STREAMING_MODEL || 'default';
+  return `${isCDI ? 'dpics-cdi' : 'dpics-pdi'}-${model.replace(/[^a-z0-9.-]/gi, '_')}`;
+}
+
 // ============================================================================
 // Session Quality Gate
 // ============================================================================
@@ -214,6 +231,42 @@ function formatGender(genderEnum) {
     'OTHER': 'child'
   };
   return genderMap[genderEnum] || 'child';
+}
+
+/**
+ * Naming directive appended to every parent-facing LLM prompt in this file.
+ *
+ * The child's name comes from the user's profile. Parents routinely address the
+ * child by a nickname, pet name, or role word ("buddy", "baby", "哥哥", "妹妹")
+ * in the transcript, and the models will otherwise echo whatever the parent
+ * used — so every report ends up naming the child inconsistently. This forces
+ * the profile name into the output regardless of the transcript.
+ *
+ * Returns '' when no real name is available (falls back to "the child"), so the
+ * wrapper leaves those prompts untouched.
+ * @param {string|null|undefined} childName
+ * @returns {string}
+ */
+function childNameDirective(childName) {
+  const name = (childName && childName !== 'the child') ? String(childName).trim() : '';
+  if (!name) return '';
+  return `CHILD'S NAME — REQUIRED: Always call the child "${name}" in your output. `
+    + `The parent may address the child differently in the transcript — a nickname, pet name, `
+    + `term of endearment, initials, or a role word ("buddy", "sweetie", "宝宝", "哥哥", "妹妹"). `
+    + `Ignore those and use "${name}" every time you refer to the child by name. Do not invent a `
+    + `different name and do not repeat the parent's nickname. This applies in every language.`;
+}
+
+/**
+ * Append childNameDirective to a prompt string, spaced off with a blank line.
+ * No-op when no real name is available.
+ * @param {string} prompt
+ * @param {string|null|undefined} childName
+ * @returns {string}
+ */
+function withChildNameDirective(prompt, childName) {
+  const directive = childNameDirective(childName);
+  return directive ? `${prompt}\n\n${directive}` : prompt;
 }
 
 /**
@@ -575,7 +628,7 @@ async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts =
   console.log(`📊 [DEV-PROFILING] Generating developmental profiling...`);
 
   try {
-    const parsed = await llmCall(prompt, {
+    const parsed = await llmCall(withChildNameDirective(prompt, variables.CHILD_NAME), {
       profile:  'dev-profiling',
       schema:   SCHEMAS.DEV_PROFILING,
       label:    'dev-profiling',
@@ -639,7 +692,7 @@ async function generateAboutChild(utterances, childInfo, tagCounts = {}, session
   console.log(`📊 [ABOUT-CHILD] Generating child observations...`);
 
   try {
-    const raw = await llmCall(promptFinal, {
+    const raw = await llmCall(withChildNameDirective(promptFinal, name), {
       profile:  'about-child',
       schema:   SCHEMAS.ABOUT_CHILD,
       label:    'about-child',
@@ -786,7 +839,7 @@ ${variables.LANGUAGE_INSTRUCTION}`;
   console.log(`📊 [CDI-COACHING] Step 2: Generating coaching report${coachingModel ? ` (${coachingModel})` : ''}...`);
 
   try {
-    const coachingReport = await llmCall(coachingUserPrompt, {
+    const coachingReport = await llmCall(withChildNameDirective(coachingUserPrompt, variables.CHILD_NAME), {
       profile:  'coaching-narrative',
       ...(coachingModel ? { model: coachingModel } : {}),
       // Context cache: static instructions + CDI manual PDF. Key is model-qualified
@@ -820,7 +873,7 @@ ${variables.LANGUAGE_INSTRUCTION}`;
         LANGUAGE_INSTRUCTION: variables.LANGUAGE_INSTRUCTION || '',
       });
       console.log(`📊 [CDI-COACHING] Step 3: Formatting for Coach's Corner + Crisis Moment...`);
-      const formatted = await llmCall(formatPrompt, {
+      const formatted = await llmCall(withChildNameDirective(formatPrompt, variables.CHILD_NAME), {
         profile:        'coaching-format',
         schema:         SCHEMAS.COACHING_FORMAT,
         label:          'coaching-format',
@@ -1054,7 +1107,7 @@ async function generateCDIFeedback(counts, utterances, childName, isCDI = true, 
   // Call 1: Combined feedback prompt (analysis + improvement + example in one)
   console.log('📝 [CDI-FEEDBACK] Running combined feedback prompt...');
   const feedbackData = await llmCall(
-    generateCombinedFeedbackPrompt(counts, utterances, childName, language),
+    withChildNameDirective(generateCombinedFeedbackPrompt(counts, utterances, childName, language), childName),
     { profile: 'combined-feedback', schema: SCHEMAS.COMBINED_FEEDBACK, label: 'combined-feedback', sessionId }
   );
 
@@ -1076,16 +1129,16 @@ This is a PDI (Parent-Directed Interaction) session. The rules above apply for c
 All other feedback rules remain the same.` : '');
 
       const reviewPrompt = generateReviewFeedbackPrompt(counts, utterances, isCDI, pdiResult, language);
-      // review-feedback shares the DPICS context cache ('dpics-cdi'/'dpics-pdi') with the
-      // pcit-coding step. Gemini requires the generateContent model and the CachedContent
-      // model to match, and the cache registry key isn't model-qualified — so this call must
-      // run on the same model as coding ($GEMINI_STREAMING_MODEL), not the 'gemini' default.
+      // review-feedback shares the DPICS context cache with pcit-coding (see dpicsCacheKey).
+      // Gemini requires the generateContent model and the CachedContent model to match, so
+      // this call must run on the same model as coding ($GEMINI_STREAMING_MODEL), not the
+      // 'gemini' default — and the cache key is model-qualified to match.
       const reviewModel = process.env.GEMINI_STREAMING_MODEL || undefined;
-      const reviewData = await llmCall(reviewPrompt, {
+      const reviewData = await llmCall(withChildNameDirective(reviewPrompt, childName), {
         profile: 'review-feedback',
         ...(reviewModel ? { model: reviewModel } : {}),
         cache: {
-          key:         isCDI ? 'dpics-cdi' : 'dpics-pdi',
+          key:         dpicsCacheKey(isCDI),
           primaryFile: DPICS_PDF_PATH,
           systemPrompt: dpicsSystemPrompt,
         },
@@ -1208,7 +1261,7 @@ async function generateReportHighlights(coachingText, topMomentQuote, counts, ch
 
   console.log('📊 [REPORT-HIGHLIGHTS] Generating hero text, celebration, interaction tip, crisis moment...');
   try {
-    const result = await llmCall(generateReportHighlightsPrompt(coachingText, topMomentQuote, counts, childName, language), {
+    const result = await llmCall(withChildNameDirective(generateReportHighlightsPrompt(coachingText, topMomentQuote, counts, childName, language), childName), {
       profile: 'report-highlights',
       schema:  SCHEMAS.REPORT_HIGHLIGHTS,
       label:   'report-highlights',
@@ -1318,7 +1371,7 @@ async function generateCrisis(utterances, coachingText, childName, goalDirective
 
   console.log('📊 [CRISIS-COACHING] Generating hero text, crisis coaching, skill coaching, top moment...');
   try {
-    const result = await llmCall(generateCrisisPrompt(utterances, coachingText, childName, goalDirective, language), {
+    const result = await llmCall(withChildNameDirective(generateCrisisPrompt(utterances, coachingText, childName, goalDirective, language), childName), {
       profile: 'crisis-coaching',
       schema:  SCHEMAS.CRISIS_COACHING,
       label:   'crisis-coaching',
@@ -1455,7 +1508,7 @@ async function generateSkillImprove(utterances, goalDirective, childName, sessio
 
   console.log(`📊 [SKILL-IMPROVE] Generating opportunities for ${goalDirective.focusSkill}...`);
   try {
-    const result = await llmCall(generateSkillImprovePrompt(utterances, goalDirective, childName, language), {
+    const result = await llmCall(withChildNameDirective(generateSkillImprovePrompt(utterances, goalDirective, childName, language), childName), {
       profile: 'skill-improve',
       schema:  SCHEMAS.SKILL_IMPROVE,
       label:   'skill-improve',
@@ -1513,7 +1566,7 @@ async function generatePDITwoChoicesAnalysis(utterances, childName, sessionId = 
   });
 
   try {
-    const result = await llmCall(prompt, {
+    const result = await llmCall(withChildNameDirective(prompt, childName), {
       profile:  'pdi-two-choices',
       schema:   SCHEMAS.PDI_TWO_CHOICES,
       label:    'pdi-two-choices',
@@ -1978,7 +2031,7 @@ Return a minified JSON array for adult utterances only:
 
     // DPICS context cache config — gateway resolves or creates the cache, falls back to inline prompt
     const dpicsCacheConfig = {
-      key:         isCDI ? 'dpics-cdi' : 'dpics-pdi',
+      key:         dpicsCacheKey(isCDI),
       primaryFile: DPICS_PDF_PATH,
       systemPrompt: dpicsSystemPrompt,
     };
@@ -2410,5 +2463,7 @@ module.exports = {
   generateDevelopmentalProfiling,
   generateCdiCoaching,
   generateAboutChild,
-  getParentSkillProgress
+  getParentSkillProgress,
+  dpicsCacheKey,
+  DPICS_PDF_PATH,
 };
