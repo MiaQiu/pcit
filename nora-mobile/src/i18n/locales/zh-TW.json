@@ -607,6 +607,7 @@
       "playInterruptions": "遊戲干擾",
       "playInterruptionsSubtitle": "可以一起改進的地方",
       "moments_other": "{{count}} 次",
+      "parentSuperpowers": "你的育兒超能力",
       "whyPersonalised": {
         "toddler": "你來到 Nora 是為了解決{{concern}}。{{childName}}才{{age}}歲，大腦剛開始建立自我控制的神經連結，而這靠的是與你一次次的小互動，而不是長篇大論。我們記為**「自信建立」**的時刻——讚美、描述{{childName}}在玩什麼、讓他／她主導——是滋養親子關係和孩子自信的存款；而**「遊戲干擾」**——提問、命令、糾正——則在悄悄抵消它。所以我們會一次只練一項技能，把每一項單獨拿出來練熟，再加入下一項。",
         "preschool": "你來到 Nora 是為了解決{{concern}}。{{childName}}{{age}}歲，正處在這些能力發展最快的階段，而它們是在與你的日常互動中成長的。我們記為**「自信建立」**的時刻——讚美、描述{{childName}}在玩什麼、讓他／她主導——是滋養親子關係和孩子自信的存款；而**「遊戲干擾」**——提問、命令、糾正——則在悄悄抵消它。所以我們會一次只練一項技能，把每一項單獨拿出來練熟，再加入下一項。",
@@ -676,6 +677,9 @@
       "title": "我們對{{childName}}的瞭解",
       "shareMessage": "今天用 Nora 我們瞭解到關於{{childName}}的一件事：{{insight}}",
       "advancedLanguageTag": "語言能力進階"
+    },
+    "whatWeLearnt": {
+      "title": "我們對你的瞭解"
     },
     "developmental": {
       "shareMessage": "用 Nora 追蹤{{childName}}的發展里程碑——來看看進展吧！"

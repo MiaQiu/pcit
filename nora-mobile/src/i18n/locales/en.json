@@ -608,6 +608,7 @@
       "playInterruptionsSubtitle": "Opportunities to improve together",
       "moments_one": "{{count}} moment",
       "moments_other": "{{count}} moments",
+      "parentSuperpowers": "Your parenting superpowers",
       "whyPersonalised": {
         "toddler": "You came to Nora for help with {{concern}}. At just {{age}}, {{childName}}'s brain is only beginning to build the wiring for self-control, and it develops through small, repeated moments with you rather than big conversations. The moments we counted as **Confidence Builders** — praising, describing {{childName}}'s play, letting them lead — are the deposits that grow your bond and their confidence, while the **Play Interruptions** — questions, commands, corrections — quietly pull against it. That's why we'll work on one skill at a time, isolating each one so you can practice it on its own before adding the next.",
         "preschool": "You came to Nora for help with {{concern}}. At {{age}}, {{childName}} is right in the window where these skills grow fastest, and they grow through everyday moments with you. The moments we counted as **Confidence Builders** — praising, describing {{childName}}'s play, letting them lead — are the deposits that grow your bond and their confidence, while the **Play Interruptions** — questions, commands, corrections — quietly pull against it. That's why we'll work on one skill at a time, isolating each one so you can practice it on its own before adding the next.",
@@ -677,6 +678,9 @@
       "title": "What we learned about {{childName}}",
       "shareMessage": "Here's something we learned about {{childName}} today with Nora: {{insight}}",
       "advancedLanguageTag": "Advanced Language Skill"
+    },
+    "whatWeLearnt": {
+      "title": "What we learnt about you"
     },
     "developmental": {
       "shareMessage": "Tracking {{childName}}'s developmental milestones with Nora — check out the progress!"

@@ -38,7 +38,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
 import { SkillProgressBar } from '../components/SkillProgressBar';
 import { ReportCard, REPORT_CARD_COLORS } from '../components/ReportCard';
-import { COLORS, FONTS, REPORT_DETAIL_DRAGON } from '../constants/assets';
+import { COLORS, FONTS, REPORT_DETAIL_DRAGON, DRAGON_WAVING_SMALL } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService, useLessonService } from '../contexts/AppContext';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
@@ -166,18 +166,6 @@ const GOAL_TYPE_SKILL_TAG: Record<string, string> = {
   AVOID_COMMANDS: 'Commands',
   AVOID_QUESTIONS: 'Questions',
   AVOID_CRITICISM: 'Criticism',
-};
-
-// Maps the tomorrow's-goal skill to a static "why this matters" i18n key
-// (reportDetail.tomorrowGoal.why.*), shown only on the first-session
-// template. `generic` covers goals with no single countable skill.
-const GOAL_WHY_I18N_KEY: Record<string, string> = {
-  'Praise (Labeled)': 'praise',
-  'Narrate': 'narrate',
-  'Echo': 'echo',
-  'Commands': 'commands',
-  'Questions': 'questions',
-  'Criticism': 'criticism',
 };
 
 // Maps the same skill labels to the `teachesCategories` values lessons are
@@ -703,13 +691,10 @@ export const ReportDetailScreen: React.FC = () => {
   // moment was detected.
   const showFirstSession = devForceFirstSession || isFirstSession === true;
 
-  // "Why this matters" for the first session is deliberately personalised —
-  // it's the retention hook. It weaves in the parent's stated concern
-  // (currentUser.issue) and the child's age band on top of the skill-specific
-  // reason, so the goal feels chosen for this family rather than generic.
-  const whyKey = goal.skillTag ? GOAL_WHY_I18N_KEY[goal.skillTag] : undefined;
-  const skillReason = t(`reportDetail.tomorrowGoal.why.${whyKey || 'generic'}` as any, { childName });
-
+  // "Why this matters" for the first session's Interaction Style card
+  // (whyPersonalised below) is deliberately personalised — it weaves in the
+  // parent's stated concern (currentUser.issue) and the child's age band, so
+  // the copy feels chosen for this family rather than generic.
   const primaryIssue = Array.isArray(currentUser?.issue) ? currentUser?.issue[0] : currentUser?.issue;
   const concernKey = primaryIssue ? `reportDetail.tomorrowGoal.concern.${primaryIssue}` : null;
   const concern = concernKey && i18n.exists(concernKey)
@@ -724,11 +709,6 @@ export const ReportDetailScreen: React.FC = () => {
       : childAge <= 5
         ? 'preschool'
         : 'schoolAge';
-
-  const whyThisMatters = t(
-    `reportDetail.tomorrowGoal.whyPersonalised.${ageBandKey}` as any,
-    { childName, age: childAge ?? undefined, concern, skillReason },
-  );
 
   // ── Shared card bodies (used by both the standard and first-session layouts) ──
 
@@ -999,20 +979,36 @@ export const ReportDetailScreen: React.FC = () => {
     ? Math.round((interruptionMoments / interactionTotalMoments) * 100)
     : 0;
 
-  const interactionCardJsx = (
-    <ReportCard title={t('reportDetail.interactionStyle.title')}>
-      {/* "Why this matters" — first session only; sits right under the title,
-          no box, no heading. Prefers the session-grounded LLM explanation
-          (generateFirstSessionInsights); falls back to the static
-          personalised copy when that call failed or hasn't run. */}
-      {showFirstSession && (
-        <MarkdownText style={styles.interactionWhyBody}>
-          {firstSessionInsights?.interactionStyle
-            ? `${firstSessionInsights.interactionStyle.dimensionsExplanation || ''}\n\n${firstSessionInsights.interactionStyle.effectivenessExplanation || ''}`.trim()
-            : t(`reportDetail.interactionStyle.whyPersonalised.${ageBandKey}` as any, { childName, age: childAge ?? undefined, concern })}
-        </MarkdownText>
+  // "What we learnt about you" — first-session only, sits ahead of the
+  // Interaction Style card. Surfaces the two parent-facing halves of
+  // generateFirstSessionInsights: the parent's own strengths ("superpowers")
+  // and the session-grounded interaction-style explanation — falling back to
+  // the static personalised copy for the latter when the LLM call failed or
+  // hasn't run. Replaces the old crammed-together "why this matters" blob
+  // that used to sit at the top of the Interaction Style card.
+  const whatWeLearntAboutYouCardJsx = showFirstSession ? (
+    <ReportCard icon="sparkles" title={t('reportDetail.whatWeLearnt.title')}>
+      {!!firstSessionInsights?.parentSuperpowers?.length && (
+        <>
+          <Text style={styles.wwlSubtitle}>{t('reportDetail.interactionStyle.parentSuperpowers')}</Text>
+          {firstSessionInsights.parentSuperpowers.map((strength, i) => (
+            <Text key={i} style={styles.wwlBody}>{`• ${strength}`}</Text>
+          ))}
+        </>
       )}
 
+      <Text style={[styles.wwlSubtitle, styles.wwlSubtitleSpaced]}>{t('reportDetail.interactionStyle.title')}</Text>
+      <MarkdownText style={styles.wwlBody}>
+        {firstSessionInsights?.interactionStyle
+          ? [firstSessionInsights.interactionStyle.dimensionsExplanation, firstSessionInsights.interactionStyle.effectivenessExplanation]
+              .filter(Boolean).join('\n\n')
+          : t(`reportDetail.interactionStyle.whyPersonalised.${ageBandKey}` as any, { childName, age: childAge ?? undefined, concern })}
+      </MarkdownText>
+    </ReportCard>
+  ) : null;
+
+  const interactionCardJsx = (
+    <ReportCard title={t('reportDetail.interactionStyle.title')}>
       {/* Collapsed: rolled-up summary. Expanded: full breakdown replaces it
           (the summary is hidden, not stacked above). */}
       <View style={styles.interactionCardBody}>
@@ -1171,7 +1167,10 @@ export const ReportDetailScreen: React.FC = () => {
               {topMomentBody}
             </ReportCard>
 
-            {/* 4. Today's Interaction Style */}
+            {/* 4. What we learnt about you (parent superpowers + interaction style) */}
+            {whatWeLearntAboutYouCardJsx}
+
+            {/* 5. Today's Interaction Style */}
             {interactionCardJsx}
 
             {/* Survey for personalised coaching */}
@@ -1181,11 +1180,22 @@ export const ReportDetailScreen: React.FC = () => {
                 personalised (WACB) survey, so it appears right after they
                 answer it rather than being visible (and skippable) up front. */}
             {wacbCompleted === true && goal.focusSkill && (
-              <ReportCard title={t('reportDetail.tomorrowGoal.title')} tip={goal.description || undefined}>
-                <Text style={styles.goalPlanReadyCheer}>{t('reportDetail.tomorrowGoal.planReadyCheer')}</Text>
+              <ReportCard
+                eyebrow={
+                  <View style={styles.goalCheerRow}>
+                    <Image source={DRAGON_WAVING_SMALL} style={styles.goalCheerDragon} resizeMode="contain" />
+                    <Text style={styles.goalPlanReadyCheer}>{t('reportDetail.tomorrowGoal.planReadyCheer')}</Text>
+                  </View>
+                }
+                title={t('reportDetail.tomorrowGoal.title')}
+                tip={goal.description || undefined}
+                headerRight={
+                  <View style={styles.goalLevelBadge}>
+                    <Text style={styles.goalLevelBadgeText}>{t('profileReport.journeyLevelBadge', { level: parentLevel })}</Text>
+                  </View>
+                }
+              >
                 <Text style={styles.goalFocusSkill}>{goal.focusSkill}</Text>
-                <Text style={styles.fsWhyTitle}>{t('reportDetail.tomorrowGoal.whyTitle')}</Text>
-                <Text style={styles.fsWhyBody}>{whyThisMatters}</Text>
               </ReportCard>
             )}
 
@@ -1537,23 +1547,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // ── First-session "why this matters" (inside the Tomorrow's Goal card) ──
-  fsWhyTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 14,
-    letterSpacing: 0.4,
-    color: '#B08A5A',
-    textTransform: 'uppercase',
-    marginTop: 14,
-    marginBottom: 6,
-  },
-  fsWhyBody: {
-    fontFamily: FONTS.regular,
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#4B5563',
-  },
-
   // ── Dev preview bar (__DEV__ only) ──
   devBar: {
     marginTop: 8,
@@ -1703,7 +1696,11 @@ const styles = StyleSheet.create({
   quoteSpeaker: { fontFamily: FONTS.bold, color: REPORT_CARD_COLORS.title },
 
   // ── Tomorrow's Goal content ──
-  goalPlanReadyCheer: { fontFamily: FONTS.bold, fontSize: 15, color: COLORS.mainPurple, marginBottom: 8 },
+  goalCheerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  goalCheerDragon: { width: 28, height: 28 },
+  goalPlanReadyCheer: { fontFamily: FONTS.bold, fontSize: 15, color: COLORS.mainPurple, flexShrink: 1 },
+  goalLevelBadge: { backgroundColor: '#F5EAFB', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  goalLevelBadgeText: { fontFamily: FONTS.bold, fontSize: 11, color: '#8C49D5' },
   goalFocusSkill: { fontFamily: FONTS.bold, fontSize: 16, color: REPORT_CARD_COLORS.title },
   tomorrowGoalValue: { fontFamily: FONTS.bold, fontSize: 22, color: COLORS.mainPurple, textAlign: 'center', paddingVertical: 6 },
 
@@ -1729,7 +1726,18 @@ const styles = StyleSheet.create({
   interactionSectionIconBadge: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
   interactionSectionTitle: { fontFamily: FONTS.bold, fontSize: 15, color: REPORT_CARD_COLORS.title },
   interactionDivider: { height: 1, backgroundColor: '#F3E9DD', marginTop: 6, marginBottom: 20 },
-  interactionWhyBody: { fontFamily: FONTS.regular, fontSize: 16, lineHeight: 24, color: '#4B5563', marginTop: 6 },
+
+  // ── "What we learnt about you" content ──
+  wwlSubtitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    letterSpacing: 0.4,
+    color: '#B08A5A',
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  wwlSubtitleSpaced: { marginTop: 14 },
+  wwlBody: { fontFamily: FONTS.regular, fontSize: 16, lineHeight: 24, color: '#4B5563' },
 
   // ── Today's Interaction Style — rolled-up summary ──
   interactionBreakdownLink: {
