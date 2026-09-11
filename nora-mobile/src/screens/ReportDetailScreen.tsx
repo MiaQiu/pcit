@@ -42,10 +42,12 @@ import { COLORS, FONTS, REPORT_DETAIL_DRAGON } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService, useLessonService } from '../contexts/AppContext';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
-import type { RecordingAnalysis, User, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ParentSkillLevel, DemoVideo } from '@nora/core';
+import type { RecordingAnalysis, User, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ParentSkillLevel, DemoVideo, ChildSnapshotSurvey } from '@nora/core';
+import { computeFocusAreas, primaryFocusAreas, type FocusAreaData } from '../utils/snapshotFocusAreas';
 import { MomentPlayer } from '../components/MomentPlayer';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
+import { NextLevelOverviewModal } from '../components/NextLevelOverviewModal';
 import { MarkdownText } from '../utils/MarkdownText';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
@@ -235,7 +237,7 @@ export const ReportDetailScreen: React.FC = () => {
   const recordingService = useRecordingService();
   const authService = useAuthService();
   const lessonService = useLessonService();
-  const { recordingId } = route.params;
+  const { recordingId, leveledUp, toLevel } = route.params;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -272,6 +274,15 @@ export const ReportDetailScreen: React.FC = () => {
   // screen forces it on regardless, for preview.
   const [isFirstSession, setIsFirstSession] = useState<boolean | null>(null);
   const [devForceFirstSession, setDevForceFirstSession] = useState(false);
+  // Shown in place of the immediate exit when this session leveled the
+  // parent up (leveledUp/toLevel passed in from ReportScreen_v2/v3) — a
+  // preview of the next skill, gated behind an explicit "I am committed".
+  const [showNextLevelOverview, setShowNextLevelOverview] = useState(false);
+  // Same Child Snapshot focus-area computation as ProfileReportScreen, used
+  // only to pick the journeyFocusSlug for the next-level overview's
+  // personalised levelHelp copy (see journeyFocusSlug below). null until the
+  // survey fetch resolves; [] means "checked, no survey yet" (-> 'generic').
+  const [focusAreas, setFocusAreas] = useState<FocusAreaData[] | null>(null);
 
   useEffect(() => {
     amplitudeService.trackScreenView('ReportDetail', { recordingId });
@@ -280,7 +291,17 @@ export const ReportDetailScreen: React.FC = () => {
     loadWacbStatus();
     loadParentSkillLevel();
     loadSessionCount();
+    loadFocusAreas();
   }, [recordingId]);
+
+  const loadFocusAreas = async () => {
+    try {
+      const survey: ChildSnapshotSurvey | null = await authService.getLatestSnapshotSurvey();
+      setFocusAreas(survey ? computeFocusAreas(survey) : []);
+    } catch (err) {
+      setFocusAreas([]);
+    }
+  };
 
   // Decides the first-session template: true when this recording is the only
   // COMPLETED session in the parent's history. Fails closed to the standard
@@ -453,9 +474,21 @@ export const ReportDetailScreen: React.FC = () => {
   const handleBack = () => navigation.goBack();
 
   // The report is otherwise a dead end — the back arrow returns to the
-  // progress-celebration screen, not out. "See you tomorrow" is the clean exit.
+  // progress-celebration screen, not out. "See you tomorrow" is the clean
+  // exit — unless this session leveled the parent up, in which case it
+  // first shows a preview of the next skill (see handleCommitToNextLevel).
   const handleSeeYouTomorrow = () => {
-    amplitudeService.trackEvent('Report Detail See You Tomorrow Tapped', { recordingId });
+    amplitudeService.trackEvent('Report Detail See You Tomorrow Tapped', { recordingId, leveledUp: !!leveledUp });
+    if (leveledUp && toLevel) {
+      setShowNextLevelOverview(true);
+      return;
+    }
+    navigation.navigate('MainTabs', { screen: 'Home' });
+  };
+
+  const handleCommitToNextLevel = () => {
+    amplitudeService.trackEvent('Report Detail Next Level Committed Tapped', { recordingId, level: toLevel });
+    setShowNextLevelOverview(false);
     navigation.navigate('MainTabs', { screen: 'Home' });
   };
 
@@ -499,6 +532,12 @@ export const ReportDetailScreen: React.FC = () => {
   }
 
   // ── Derived data ──
+
+  // Same journeyFocusSlug derivation as ProfileReportScreen's Personalized
+  // Learning Journey — the top signal (severity high/moderate) Snapshot
+  // focus-area category, or 'generic' with no survey signal — used to pick
+  // the personalised levelHelp copy for the next-level overview.
+  const journeyFocusSlug = primaryFocusAreas(focusAreas)[0]?.key ?? 'generic';
 
   const skills = reportData.skills || [];
   const filteredAreas = (reportData.areasToAvoid || []).filter(
@@ -1070,6 +1109,13 @@ export const ReportDetailScreen: React.FC = () => {
           {devForceFirstSession ? 'First time template: ON' : 'First time template: OFF'}
         </Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => setShowNextLevelOverview(true)}
+        style={styles.devChip}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.devChipText}>Preview level-up overview</Text>
+      </TouchableOpacity>
     </View>
   ) : null;
 
@@ -1122,6 +1168,13 @@ export const ReportDetailScreen: React.FC = () => {
 
             {/* Survey for personalised coaching */}
             {surveyCardJsx}
+
+            {/* SEE YOU TOMORROW — same exit as the standard template; without
+                it the first-session report is a dead end (the header back
+                arrow only returns to the progress-celebration screen). */}
+            <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
+              <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
+            </TouchableOpacity>
           </>
         ) : (
           <>
@@ -1374,6 +1427,19 @@ export const ReportDetailScreen: React.FC = () => {
         loading={loadingDomainMilestones}
         onClose={handleCloseDomainModal}
       />
+
+      {/* toLevel comes from the real leveledUp flow; __DEV__'s "Preview
+          level-up overview" chip has no real toLevel, so it falls back to
+          parentLevel + 1 just so the modal has something to render. */}
+      {(toLevel || (__DEV__ && parentLevel)) && (
+        <NextLevelOverviewModal
+          visible={showNextLevelOverview}
+          level={toLevel ?? (Math.min(parentLevel + 1, 9) as ParentSkillLevel)}
+          focusSlug={journeyFocusSlug}
+          childName={childName}
+          onCommit={handleCommitToNextLevel}
+        />
+      )}
     </SafeAreaView>
   );
 };

@@ -694,7 +694,6 @@
     },
     "seeYouTomorrow": "See you tomorrow",
     "nextLevelOverview": {
-      "eyebrow": "Level {{level}} unlocked",
       "commitButton": "I am committed"
     },
     "footer": "You're showing up in the moments that matter most. Keep going!"

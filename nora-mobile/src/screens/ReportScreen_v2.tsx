@@ -125,7 +125,10 @@ export const ReportScreen_v2: React.FC = () => {
 
   const handleContinueToCoaching = () => {
     amplitudeService.trackEvent('Report V2 Continue To Coaching Tapped', { recordingId });
-    navigation.navigate('ReportDetail', { recordingId });
+    navigation.navigate('ReportDetail', {
+      recordingId,
+      ...(levelUpInfo ? { leveledUp: true, fromLevel: levelUpInfo.from, toLevel: levelUpInfo.to } : {}),
+    });
   };
 
   const handleLevelCardPress = () => {

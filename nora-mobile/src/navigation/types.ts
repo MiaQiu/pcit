@@ -145,6 +145,11 @@ export type RootStackParamList = {
   };
   ReportDetail: {
     recordingId: string;
+    // Passed by ReportScreen_v2/ReportScreen_v3 when this session pushed the
+    // parent up a level — drives the "See you tomorrow" next-skill overview.
+    leveledUp?: boolean;
+    fromLevel?: ParentSkillLevel;
+    toLevel?: ParentSkillLevel;
   };
   SkillImprove: {
     recordingId: string;
