@@ -616,6 +616,7 @@
     },
     "tomorrowGoal": {
       "title": "明日目标",
+      "planReadyCheer": "太棒了！迫不及待想和你一起开始这段新旅程！",
       "todayLabel": "今天",
       "tomorrowLabel": "明天",
       "aimFor": "目标 {{count}} 次",

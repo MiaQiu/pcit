@@ -650,6 +650,12 @@ export const ReportDetailScreen: React.FC = () => {
   // extraction fall back to childReaction.
   const childInsightBody = aboutChildItem?.Details || aboutChildItem?.Description || reportData.childReaction || null;
 
+  // First-session-only child + parent insights (generateFirstSessionInsights) —
+  // replaces the aboutChild-sourced "what we learned" body and the static
+  // "why this matters" interaction-style copy, only for the parent's first
+  // completed session. null on every later session.
+  const firstSessionInsights = reportData.firstSessionInsights || null;
+
   // Not currently wired to a ReportCard headerRight — share buttons on these
   // two cards are temporarily hidden, kept here (not deleted) to restore later.
   const handleShareChildInsight = async () => {
@@ -891,14 +897,22 @@ export const ReportDetailScreen: React.FC = () => {
   );
 
   const childInsightBodyJsx = (
-    <>
-      {aboutChildItem?.Title && (
-        <View style={styles.childInsightTitleBadge}>
-          <Text style={styles.childInsightTitleBadgeText}>{aboutChildItem.Title}</Text>
-        </View>
-      )}
-      {childInsightBody && <Text style={styles.childInsightBody}>{childInsightBody}</Text>}
-    </>
+    showFirstSession && firstSessionInsights?.childStrengths?.length ? (
+      <>
+        {firstSessionInsights.childStrengths.map((strength, i) => (
+          <Text key={i} style={styles.childInsightBody}>{strength}</Text>
+        ))}
+      </>
+    ) : (
+      <>
+        {aboutChildItem?.Title && (
+          <View style={styles.childInsightTitleBadge}>
+            <Text style={styles.childInsightTitleBadgeText}>{aboutChildItem.Title}</Text>
+          </View>
+        )}
+        {childInsightBody && <Text style={styles.childInsightBody}>{childInsightBody}</Text>}
+      </>
+    )
   );
 
   const interactionBody = (
@@ -988,10 +1002,14 @@ export const ReportDetailScreen: React.FC = () => {
   const interactionCardJsx = (
     <ReportCard title={t('reportDetail.interactionStyle.title')}>
       {/* "Why this matters" — first session only; sits right under the title,
-          no box, no heading */}
+          no box, no heading. Prefers the session-grounded LLM explanation
+          (generateFirstSessionInsights); falls back to the static
+          personalised copy when that call failed or hasn't run. */}
       {showFirstSession && (
         <MarkdownText style={styles.interactionWhyBody}>
-          {t(`reportDetail.interactionStyle.whyPersonalised.${ageBandKey}` as any, { childName, age: childAge ?? undefined, concern })}
+          {firstSessionInsights?.interactionStyle
+            ? `${firstSessionInsights.interactionStyle.dimensionsExplanation || ''}\n\n${firstSessionInsights.interactionStyle.effectivenessExplanation || ''}`.trim()
+            : t(`reportDetail.interactionStyle.whyPersonalised.${ageBandKey}` as any, { childName, age: childAge ?? undefined, concern })}
         </MarkdownText>
       )}
 
@@ -1131,9 +1149,6 @@ export const ReportDetailScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {showFirstSession ? (
           <>
-            {/* Crisis Moment (or crisis fallback) — kept on top for the first-session template */}
-            {crisisCardJsx}
-
             {/* 1. Hero — first-session welcome (image + message) */}
             <View style={styles.fsHeroCard}>
               <Image source={REPORT_DETAIL_DRAGON} style={styles.fsHeroImage} resizeMode="contain" />
@@ -1142,6 +1157,9 @@ export const ReportDetailScreen: React.FC = () => {
                 {t('reportDetail.firstSession.heroMessage', { childName })}
               </Text>
             </View>
+
+            {/* Crisis Moment (or crisis fallback) */}
+            {crisisCardJsx}
 
             {/* 2. What we learned about {childName} */}
             <ReportCard icon="heart" title={t('reportDetail.childInsight.title', { childName })}>
@@ -1156,25 +1174,32 @@ export const ReportDetailScreen: React.FC = () => {
             {/* 4. Today's Interaction Style */}
             {interactionCardJsx}
 
-            {/* Tomorrow's Goal — hidden for now
-            {goal.focusSkill && (
+            {/* Survey for personalised coaching */}
+            {surveyCardJsx}
+
+            {/* Tomorrow's Goal — withheld until the parent has completed the
+                personalised (WACB) survey, so it appears right after they
+                answer it rather than being visible (and skippable) up front. */}
+            {wacbCompleted === true && goal.focusSkill && (
               <ReportCard title={t('reportDetail.tomorrowGoal.title')} tip={goal.description || undefined}>
+                <Text style={styles.goalPlanReadyCheer}>{t('reportDetail.tomorrowGoal.planReadyCheer')}</Text>
                 <Text style={styles.goalFocusSkill}>{goal.focusSkill}</Text>
                 <Text style={styles.fsWhyTitle}>{t('reportDetail.tomorrowGoal.whyTitle')}</Text>
                 <Text style={styles.fsWhyBody}>{whyThisMatters}</Text>
               </ReportCard>
             )}
-            */}
 
-            {/* Survey for personalised coaching */}
-            {surveyCardJsx}
-
-            {/* SEE YOU TOMORROW — same exit as the standard template; without
-                it the first-session report is a dead end (the header back
-                arrow only returns to the progress-celebration screen). */}
-            <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
-              <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
-            </TouchableOpacity>
+            {/* SEE YOU TOMORROW — withheld until the parent has completed the
+                personalised (WACB) survey, so the first session pushes them
+                toward the survey rather than letting them skip past it. Once
+                wacbCompleted resolves true (including on return from the
+                survey flow, since loadWacbStatus reruns on mount) this is the
+                same exit as the standard template. */}
+            {wacbCompleted === true && (
+              <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
+                <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
+              </TouchableOpacity>
+            )}
           </>
         ) : (
           <>
@@ -1408,10 +1433,15 @@ export const ReportDetailScreen: React.FC = () => {
         {surveyCardJsx}
 
         {/* SEE YOU TOMORROW — the report's only easy exit (the back arrow
-            returns to the progress-celebration screen, not out). */}
-        <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
-          <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
-        </TouchableOpacity>
+            returns to the progress-celebration screen, not out). Withheld
+            until the parent has completed the personalised (WACB) survey —
+            every session's report pushes toward the survey until it's done,
+            not just the first. */}
+        {wacbCompleted === true && (
+          <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
+            <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
+          </TouchableOpacity>
+        )}
           </>
         )}
 
@@ -1673,6 +1703,7 @@ const styles = StyleSheet.create({
   quoteSpeaker: { fontFamily: FONTS.bold, color: REPORT_CARD_COLORS.title },
 
   // ── Tomorrow's Goal content ──
+  goalPlanReadyCheer: { fontFamily: FONTS.bold, fontSize: 15, color: COLORS.mainPurple, marginBottom: 8 },
   goalFocusSkill: { fontFamily: FONTS.bold, fontSize: 16, color: REPORT_CARD_COLORS.title },
   tomorrowGoalValue: { fontFamily: FONTS.bold, fontSize: 22, color: COLORS.mainPurple, textAlign: 'center', paddingVertical: 6 },
 

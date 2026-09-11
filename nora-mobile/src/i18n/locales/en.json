@@ -617,6 +617,7 @@
     },
     "tomorrowGoal": {
       "title": "Tomorrow's Goal",
+      "planReadyCheer": "Wonderful! Can't wait to start the new journey with you!",
       "todayLabel": "Today",
       "tomorrowLabel": "Tomorrow",
       "aimFor": "Aim for {{count}} time",
