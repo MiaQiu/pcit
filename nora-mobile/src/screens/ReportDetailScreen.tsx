@@ -701,6 +701,29 @@ export const ReportDetailScreen: React.FC = () => {
     ? t(concernKey, { childName })
     : t('reportDetail.tomorrowGoal.concern.generic', { childName });
 
+  // Same idea as `concern` above, but for the "Unlock Your Personalized
+  // Roadmap" survey card: turns the parentGoal code(s) picked during
+  // onboarding into the readable phrase used in that card's copy.
+  const parentGoalLabelKeys: Record<string, string> = {
+    truly_understanding_kid: 'onboarding.parentGoal.trulyUnderstanding',
+    boost_kid_development: 'onboarding.parentGoal.boostDevelopment',
+    feeling_more_connected: 'onboarding.parentGoal.feelingConnected',
+    feeling_less_overwhelmed: 'onboarding.parentGoal.feelingLessOverwhelmed',
+    less_chaos_day_to_day: 'onboarding.parentGoal.lessChaos',
+    respond_calmly: 'onboarding.parentGoal.respondCalmly',
+    confident_in_parenting: 'onboarding.parentGoal.confidentParenting',
+  };
+  const parentGoalCodes = Array.isArray(currentUser?.parentGoal)
+    ? currentUser.parentGoal
+    : currentUser?.parentGoal ? [currentUser.parentGoal] : [];
+  const parentGoalLabels = parentGoalCodes
+    .map((code) => parentGoalLabelKeys[code])
+    .filter((key): key is string => !!key)
+    .map((key) => t(key).toLowerCase());
+  const parentGoals = parentGoalLabels.length > 0
+    ? parentGoalLabels.join(', ')
+    : t('reportDetail.unlock.parentGoalsFallback', { childName });
+
   const childAge = calculateChildAge(currentUser?.childBirthday, currentUser?.childBirthYear);
   const ageBandKey = childAge == null
     ? 'unknownAge'
@@ -979,36 +1002,12 @@ export const ReportDetailScreen: React.FC = () => {
     ? Math.round((interruptionMoments / interactionTotalMoments) * 100)
     : 0;
 
-  // "What we learnt about you" — first-session only, sits ahead of the
-  // Interaction Style card. Surfaces the two parent-facing halves of
-  // generateFirstSessionInsights: the parent's own strengths ("superpowers")
-  // and the session-grounded interaction-style explanation — falling back to
-  // the static personalised copy for the latter when the LLM call failed or
-  // hasn't run. Replaces the old crammed-together "why this matters" blob
-  // that used to sit at the top of the Interaction Style card.
-  const whatWeLearntAboutYouCardJsx = showFirstSession ? (
-    <ReportCard icon="sparkles" title={t('reportDetail.whatWeLearnt.title')}>
-      {!!firstSessionInsights?.parentSuperpowers?.length && (
-        <>
-          <Text style={styles.wwlSubtitle}>{t('reportDetail.interactionStyle.parentSuperpowers')}</Text>
-          {firstSessionInsights.parentSuperpowers.map((strength, i) => (
-            <Text key={i} style={styles.wwlBody}>{`• ${strength}`}</Text>
-          ))}
-        </>
-      )}
-
-      <Text style={[styles.wwlSubtitle, styles.wwlSubtitleSpaced]}>{t('reportDetail.interactionStyle.title')}</Text>
-      <MarkdownText style={styles.wwlBody}>
-        {firstSessionInsights?.interactionStyle
-          ? [firstSessionInsights.interactionStyle.dimensionsExplanation, firstSessionInsights.interactionStyle.effectivenessExplanation]
-              .filter(Boolean).join('\n\n')
-          : t(`reportDetail.interactionStyle.whyPersonalised.${ageBandKey}` as any, { childName, age: childAge ?? undefined, concern })}
-      </MarkdownText>
-    </ReportCard>
-  ) : null;
-
-  const interactionCardJsx = (
-    <ReportCard title={t('reportDetail.interactionStyle.title')}>
+  // The expandable bars (rolled-up summary + "Detailed Breakdown" toggle) —
+  // shared between the standard template's standalone Interaction Style card
+  // and the first-session "What we learnt about you" card, where they sit
+  // under the "Your Interaction Style" subtitle instead.
+  const interactionBarsJsx = (
+    <>
       {/* Collapsed: rolled-up summary. Expanded: full breakdown replaces it
           (the summary is hidden, not stacked above). */}
       <View style={styles.interactionCardBody}>
@@ -1068,38 +1067,58 @@ export const ReportDetailScreen: React.FC = () => {
         <Text style={styles.interactionBreakdownLinkText}>{t('reportDetail.interactionStyle.detailedBreakdown')}</Text>
         <Ionicons name={interactionExpanded ? 'chevron-up' : 'chevron-down'} size={15} color="#8C49D5" />
       </TouchableOpacity>
+    </>
+  );
+
+  const interactionCardJsx = (
+    <ReportCard title={t('reportDetail.interactionStyle.title')}>
+      {interactionBarsJsx}
     </ReportCard>
   );
 
-  // Real first-session parents almost never have the WACB survey done yet;
-  // the __DEV__ force-toggle also shows it regardless so it can be previewed.
-  const surveyCardJsx = (wacbCompleted === false || devForceFirstSession) ? (
+  // "What we learnt about you" — first-session only, replaces the standalone
+  // Interaction Style card. Surfaces the two parent-facing halves of
+  // generateFirstSessionInsights: the parent's own strengths ("superpowers")
+  // and the session-grounded interaction-style explanation (falling back to
+  // the static personalised copy when the LLM call failed or hasn't run) —
+  // with the same expandable bars (interactionBarsJsx) tucked under the
+  // "Your Interaction Style" subtitle instead of living in their own card.
+  const whatWeLearntAboutYouCardJsx = showFirstSession ? (
+    <ReportCard icon="sparkles" title={t('reportDetail.whatWeLearnt.title')}>
+      {!!firstSessionInsights?.parentSuperpowers?.length && (
+        <>
+          <Text style={styles.wwlSubtitle}>{t('reportDetail.interactionStyle.parentSuperpowers')}</Text>
+          {firstSessionInsights.parentSuperpowers.map((strength, i) => (
+            <Text key={i} style={styles.wwlBody}>{`• ${strength}`}</Text>
+          ))}
+        </>
+      )}
+
+      <Text style={[styles.wwlSubtitle, styles.wwlSubtitleSpaced]}>{t('reportDetail.interactionStyle.title')}</Text>
+      <MarkdownText style={styles.wwlBody}>
+        {firstSessionInsights?.interactionStyle
+          ? [firstSessionInsights.interactionStyle.dimensionsExplanation, firstSessionInsights.interactionStyle.effectivenessExplanation]
+              .filter(Boolean).join('\n\n')
+          : t(`reportDetail.interactionStyle.whyPersonalised.${ageBandKey}` as any, { childName, age: childAge ?? undefined, concern })}
+      </MarkdownText>
+
+      <View style={styles.wwlInteractionBars}>
+        {interactionBarsJsx}
+      </View>
+    </ReportCard>
+  ) : null;
+
+  // Real first-session parents almost never have the WACB survey done yet.
+  const surveyCardJsx = wacbCompleted === false ? (
     <View style={styles.unlockCard}>
       <View style={styles.unlockIconBadge}>
         <Ionicons name="lock-closed" size={22} color={COLORS.mainPurple} />
       </View>
-      <Text style={styles.unlockTitle}>{t('reportDetail.unlock.title', { childName })}</Text>
-
-      <View style={styles.unlockFeatureRow}>
-        <View style={styles.unlockFeature}>
-          <View style={styles.unlockFeatureBadge}>
-            <Ionicons name="trending-up" size={16} color={COLORS.mainPurple} />
-          </View>
-          <Text style={styles.unlockFeatureText}>{t('reportDetail.unlock.featureGrowthPlan')}</Text>
-        </View>
-        <View style={styles.unlockFeature}>
-          <View style={styles.unlockFeatureBadge}>
-            <Ionicons name="person-circle-outline" size={16} color={COLORS.mainPurple} />
-          </View>
-          <Text style={styles.unlockFeatureText}>{t('reportDetail.unlock.featureSnapshot')}</Text>
-        </View>
-        <View style={styles.unlockFeature}>
-          <View style={styles.unlockFeatureBadge}>
-            <Ionicons name="analytics-outline" size={16} color={COLORS.mainPurple} />
-          </View>
-          <Text style={styles.unlockFeatureText}>{t('reportDetail.unlock.featureTracking')}</Text>
-        </View>
-      </View>
+      <Text style={styles.unlockTitle}>{t('reportDetail.unlock.heading')}</Text>
+      <Text style={styles.unlockSubtitle}>
+        {t('reportDetail.unlock.titlePre', { childName, parentGoals })}
+        <Text style={styles.unlockTitleBold}>{t('reportDetail.unlock.titleBold')}</Text>
+      </Text>
 
       <TouchableOpacity style={styles.unlockButton} activeOpacity={0.85} onPress={handleUnlockPlan}>
         <Text style={styles.unlockButtonText}>{t('reportDetail.unlock.cta')}</Text>
@@ -1167,11 +1186,10 @@ export const ReportDetailScreen: React.FC = () => {
               {topMomentBody}
             </ReportCard>
 
-            {/* 4. What we learnt about you (parent superpowers + interaction style) */}
+            {/* 4. What we learnt about you (parent superpowers + interaction
+                style, including the expandable bars formerly in their own
+                "Today's Interaction Style" card) */}
             {whatWeLearntAboutYouCardJsx}
-
-            {/* 5. Today's Interaction Style */}
-            {interactionCardJsx}
 
             {/* Survey for personalised coaching */}
             {surveyCardJsx}
@@ -1738,6 +1756,7 @@ const styles = StyleSheet.create({
   },
   wwlSubtitleSpaced: { marginTop: 14 },
   wwlBody: { fontFamily: FONTS.regular, fontSize: 16, lineHeight: 24, color: '#4B5563' },
+  wwlInteractionBars: { marginTop: 14 },
 
   // ── Today's Interaction Style — rolled-up summary ──
   interactionBreakdownLink: {
@@ -1796,13 +1815,13 @@ const styles = StyleSheet.create({
   // ── Unlock My Child's Plan (bespoke) ──
   unlockCard: {
     alignItems: 'center',
-    backgroundColor: '#FCEFE0',
+    backgroundColor: '#FFFFFF',
     borderRadius: 28,
-    padding: 26,
+    padding: 22,
     marginBottom: 18,
     shadowColor: '#8C49D5',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.08,
     shadowRadius: 28,
     elevation: 3,
   },
@@ -1810,25 +1829,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: REPORT_CARD_COLORS.iconBackground,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
   },
   unlockTitle: { fontFamily: FONTS.bold, fontSize: 18, color: REPORT_CARD_COLORS.title, textAlign: 'center', marginBottom: 8 },
   unlockSubtitle: { fontFamily: FONTS.regular, fontSize: 14, color: REPORT_CARD_COLORS.subtitle, textAlign: 'center', marginBottom: 18 },
-  unlockFeatureRow: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginBottom: 22 },
-  unlockFeature: { alignItems: 'center', width: 82 },
-  unlockFeatureBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 7,
-  },
-  unlockFeatureText: { fontFamily: FONTS.semiBold, fontSize: 12, color: REPORT_CARD_COLORS.title, textAlign: 'center', lineHeight: 14 },
+  unlockTitleBold: { fontFamily: FONTS.bold, color: REPORT_CARD_COLORS.subtitle },
   unlockButton: {
     width: '100%',
     backgroundColor: COLORS.mainPurple,

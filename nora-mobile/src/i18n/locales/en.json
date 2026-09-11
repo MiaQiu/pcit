@@ -690,10 +690,10 @@
       "subtitle": "Read the full conversation from today's play session."
     },
     "unlock": {
-      "title": "Answer 10 quick questions to help Nora understand {{childName}} and personalize your learning journey:",
-      "featureGrowthPlan": "Personalized Learning Plan",
-      "featureSnapshot": "Child Behavior Snapshot",
-      "featureTracking": "Track Progress",
+      "heading": "Next Step: Unlock Your Personalized Roadmap",
+      "titlePre": "To ensure every skill is tailored directly to {{childName}}'s daily routines, personality, and your goals around {{parentGoals}}, please complete the ",
+      "titleBold": "10 quick daily behavior questions",
+      "parentGoalsFallback": "building a stronger connection with {{childName}}",
       "cta": "Continue",
       "time": "Takes about 2 minutes"
     },
