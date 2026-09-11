@@ -1257,7 +1257,7 @@ export const ReportDetailScreen: React.FC = () => {
                                       <Ionicons
                                         name={copied ? 'checkmark' : 'copy-outline'}
                                         size={15}
-                                        color={copied ? '#0B9A6B' : '#C2694B'}
+                                        color="#0B9A6B"
                                       />
                                     </TouchableOpacity>
                                   );
@@ -1568,7 +1568,7 @@ const styles = StyleSheet.create({
   ccSaidBox: { backgroundColor: '#FBEEDF', borderWidth: 1, borderColor: '#EAD3B6', borderLeftWidth: 4, borderLeftColor: '#C2694B', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, marginTop: 10 },
   ccSaidText: { fontFamily: FONTS.regularItalic, fontSize: 14, lineHeight: 20, color: '#3D2A1E' },
   ccWhy: { fontFamily: FONTS.regular, fontSize: 13, lineHeight: 18, color: '#6B7280', marginTop: 6, marginLeft: 5 },
-  ccSayBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FBEEDF', borderWidth: 1, borderColor: '#EAD3B6', borderLeftWidth: 4, borderLeftColor: '#E9A688', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 13, marginTop: 8 },
+  ccSayBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#E3F5EC', borderWidth: 1, borderColor: '#BFE8D3', borderLeftWidth: 4, borderLeftColor: '#0B9A6B', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 13, marginTop: 8 },
   ccSayText: { flex: 1, fontFamily: FONTS.regular, fontSize: 14, lineHeight: 20, color: '#3D2A1E' },
 
   ccNudge: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 18, paddingVertical: 12, paddingHorizontal: 15, backgroundColor: '#FDF2E9', borderRadius: 16 },
