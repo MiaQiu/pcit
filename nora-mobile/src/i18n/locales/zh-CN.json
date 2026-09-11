@@ -692,6 +692,10 @@
       "time": "大约需要 2 分钟"
     },
     "seeYouTomorrow": "明天见",
+    "nextLevelOverview": {
+      "eyebrow": "已解锁第 {{level}} 级",
+      "commitButton": "我承诺做到"
+    },
     "footer": "你正在最重要的时刻陪伴着孩子，继续加油！"
   },
   "skillImprove": {
@@ -1202,6 +1206,7 @@
     "meetCoachBodyEnd": " 的进度。",
     "chatWithCoach": "与教练对话",
     "recordAgain": "再次录制",
+    "recordAgainBody": "今天的练习已完成，做得好！",
     "noraDaily": "Nora Daily",
     "noraDailySubtitle": "每日为您带来科学育儿贴士与灵感。",
     "subActionLearnMore": "了解更多",
@@ -1246,18 +1251,6 @@
       "beforeSchool": "上学前充电",
       "afterSchool": "放学后重聚",
       "beforeSleep": "睡前游戏时间"
-    },
-    "recordMessages": {
-      "0start": "您做得太棒了！准备好再次闪耀了吗？与 ",
-      "0end": " 录制另一个练习，见证奇迹发生！ ✨",
-      "1start": "保持那股惊人的气势！与 ",
-      "1end": " 进行另一个有趣的练习吧！",
-      "2start": "到目前为止都很出色！与 ",
-      "2end": " 再进行 5 分钟的特别时间，继续共同成长！ 🌟",
-      "3start": "您可以做到的！与 ",
-      "3end": " 再录制一次快速愉快的练习，庆祝您的进步！",
-      "4start": "准备好迎接更多乐趣了吗？与 ",
-      "4end": " 捕捉另一个超赞的游戏时光吧！"
     },
     "getReadyLabel": "游戏指南",
     "getReadyBody": "开始之前，你需要知道的一切。",

@@ -693,6 +693,10 @@
       "time": "Takes about 2 minutes"
     },
     "seeYouTomorrow": "See you tomorrow",
+    "nextLevelOverview": {
+      "eyebrow": "Level {{level}} unlocked",
+      "commitButton": "I am committed"
+    },
     "footer": "You're showing up in the moments that matter most. Keep going!"
   },
   "skillImprove": {
@@ -1154,6 +1158,7 @@
     "meetCoachBodyEnd": " is progressing.",
     "chatWithCoach": "Chat with Coach",
     "recordAgain": "Record Again",
+    "recordAgainBody": "Today’s practice is completed. Nice work!",
     "noraDaily": "Nora Daily",
     "noraDailySubtitle": "Your daily dose of science-backed tips & inspiration.",
     "subActionLearnMore": "Learn more",
@@ -1198,18 +1203,6 @@
       "beforeSchool": "Before-School Booster",
       "afterSchool": "After-School Reconnect",
       "beforeSleep": "Before-Sleep Play"
-    },
-    "recordMessages": {
-      "0start": "You are doing amazing! Ready to shine again? Record another session with ",
-      "0end": " and watch the magic happen! ✨",
-      "1start": "Keep that fantastic momentum going! Jump into another fun session with ",
-      "1end": "!",
-      "2start": "Awesome job so far! Grab another 5 minutes of special time with ",
-      "2end": " to keep growing together! 🌟",
-      "3start": "You've got this! Record another quick, joyful session with ",
-      "3end": " and celebrate your amazing progress!",
-      "4start": "Ready for more fun? Capture another awesome play session with ",
-      "4end": "!"
     },
     "getReadyLabel": "Play Guide",
     "getReadyBody": "Everything you need before you begin.",

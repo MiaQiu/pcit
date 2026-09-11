@@ -631,8 +631,6 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
-// recordMessages moved inside component to use t()
-
 export const HomeScreen_v2: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const tabNavigation = useNavigation<RootTabNavigationProp>();
@@ -681,14 +679,6 @@ export const HomeScreen_v2: React.FC = () => {
   const [nextLessonId, setNextLessonId] = useState<string | null>(null);
   const [hasAnySession, setHasAnySession] = useState(false);
   const [getReadyDismissed, setGetReadyDismissed] = useState(false);
-  const recordMessage = useMemo(() => {
-    const idx = Math.floor(Math.random() * 5);
-    return {
-      start: t(`homeV2.recordMessages.${idx}start` as any),
-      end: t(`homeV2.recordMessages.${idx}end` as any),
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const [latestWeeklyReport, setLatestWeeklyReport] = useState<{ id: string; weekStartDate: string; weekEndDate: string; headline: string | null; markedReadAt: string | null } | null>(null);
   const [isWeeklyReportDismissed, setIsWeeklyReportDismissed] = useState(false);
   const [sessionNotifications, setSessionNotifications] = useState<{ postSession?: string; tomorrow?: string } | null>(null);
@@ -1526,9 +1516,7 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.massageLabel}>{t('homeV2.dailyEmotionalMassageLabel')}</Text>
               </View>
               <Text style={styles.massageBody}>
-                {recordMessage.start}
-                <Text style={styles.massageChildName}>{childName}</Text>
-                {recordMessage.end}
+                {t('homeV2.recordAgainBody')}
               </Text>
               <TouchableOpacity
                 style={[styles.recordButton, !isOnline && styles.recordButtonDisabled]}
