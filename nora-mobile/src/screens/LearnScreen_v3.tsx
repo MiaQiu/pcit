@@ -107,6 +107,11 @@ export const LearnScreen_v3: React.FC = () => {
   const [scriptContent, setScriptContent] = useState<string>('');
   const [scriptShareCount, setScriptShareCount] = useState(0);
   const [scriptLoading, setScriptLoading] = useState(false);
+  // Set when the lesson-detail fetch itself fails (network/server), as
+  // opposed to succeeding with empty contentV2 — the two need different
+  // copy (retry vs. "no text version yet") and without this an offline
+  // blip just renders a blank modal with no way to recover.
+  const [scriptError, setScriptError] = useState(false);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [coverTitle, setCoverTitle] = useState<string | null>(null);
   const [coverSubtitle, setCoverSubtitle] = useState<string | null>(null);
@@ -215,7 +220,7 @@ export const LearnScreen_v3: React.FC = () => {
       // Skip ahead to the next lesson that actually has narration; close the
       // mini-player if nothing further along the list has audio yet.
       const next = orderedLessons.slice(idx + 1).find((l) => l.audioUrl);
-      if (next) player.loadLesson(next.id, next.audioUrl, i18n.language);
+      if (next) player.loadLesson(next.id, next.audioUrl, i18n.language, next.title);
       else player.clear();
       lessonService
         .completeLesson(finishedId)
@@ -232,6 +237,15 @@ export const LearnScreen_v3: React.FC = () => {
       player.setOnFinish(handlePlayerFinish);
       return () => player.setOnFinish(null);
     }, [handlePlayerFinish, player])
+  );
+
+  // This screen has its own mini-player — suppress the app-wide bar while focused.
+  const { setScreenOwnsPlayer } = player;
+  useFocusEffect(
+    useCallback(() => {
+      setScreenOwnsPlayer(true);
+      return () => setScreenOwnsPlayer(false);
+    }, [setScreenOwnsPlayer])
   );
 
   const playProgress = player.durationMillis > 0
@@ -315,7 +329,7 @@ export const LearnScreen_v3: React.FC = () => {
         moduleKey: lesson.module,
         source: 'learn_v3_inline',
       });
-      player.loadLesson(lesson.id, lesson.audioUrl, i18n.language);
+      player.loadLesson(lesson.id, lesson.audioUrl, i18n.language, lesson.title);
     }
   };
 
@@ -323,6 +337,7 @@ export const LearnScreen_v3: React.FC = () => {
     setScriptLesson(lesson);
     setScriptContent('');
     setScriptShareCount(0);
+    setScriptError(false);
     setScriptLoading(true);
 
     // Reading counts as viewing it — touch lastViewedAt so the "Last viewed"
@@ -341,6 +356,7 @@ export const LearnScreen_v3: React.FC = () => {
       setScriptShareCount(detail.lesson.shareCount ?? 0);
     } catch (err) {
       console.error('Failed to load lesson script:', err);
+      setScriptError(true);
     } finally {
       setScriptLoading(false);
     }
@@ -627,6 +643,17 @@ export const LearnScreen_v3: React.FC = () => {
             <View style={styles.scriptModalLoading}>
               <ActivityIndicator size="large" color={COLORS.mainPurple} />
             </View>
+          ) : scriptError ? (
+            <View style={styles.scriptModalLoading}>
+              <Text style={styles.scriptStateText}>{t('learnV3.scriptLoadError')}</Text>
+              <TouchableOpacity
+                style={styles.scriptRetryButton}
+                onPress={() => scriptLesson && handleReadPress(scriptLesson)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.scriptRetryButtonText}>{t('common.retry')}</Text>
+              </TouchableOpacity>
+            </View>
           ) : (
             <ScrollView contentContainerStyle={styles.scriptModalScrollContent} showsVerticalScrollIndicator={false}>
               {scriptLesson && (
@@ -644,7 +671,9 @@ export const LearnScreen_v3: React.FC = () => {
                   <Text style={styles.scriptArticleTitle}>{scriptLesson.title}</Text>
                 </View>
               )}
-              {scriptFallbackParagraphs ? (
+              {!scriptContent ? (
+                <Text style={styles.scriptStateText}>{t('learnV3.scriptNoContent')}</Text>
+              ) : scriptFallbackParagraphs ? (
                 scriptFallbackParagraphs.map((paragraph, i) => (
                   <Text key={i} style={styles.scriptParagraph}>
                     {paragraph}
@@ -1149,6 +1178,26 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  scriptStateText: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    lineHeight: 24,
+    color: LESSON_TEXT_GREY,
+    textAlign: 'center',
+  },
+  scriptRetryButton: {
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 112,
+    backgroundColor: COLORS.mainPurple,
+  },
+  scriptRetryButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: '#FFFFFF',
   },
   scriptModalScrollContent: {
     paddingTop: 8,

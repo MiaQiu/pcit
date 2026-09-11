@@ -84,7 +84,15 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({ recordingId, i
   // selectedCategory/matchIndices effect below auto-scrolls to the first
   // match once transcriptSegments loads, same as tapping the chip.
   const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory ?? null);
+  // Narrows the selected category to a single underlying noraTag (e.g. show
+  // only 'Labeled Praise' within the Praise category). null = all tags.
+  const [tagSubFilter, setTagSubFilter] = useState<string | null>(null);
   const [matchCursor, setMatchCursor] = useState(0);
+
+  // In restricted (single-skill) mode the sub-filter defaults to the category's
+  // primary tag (e.g. Labeled Praise) rather than "All"; this guards that
+  // default so it's applied once and doesn't override the user's later choice.
+  const didInitSubFilter = useRef(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const listContainerY = useRef(0);
@@ -203,9 +211,17 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({ recordingId, i
   const isCategoryAvailable = (category: string): boolean =>
     (CATEGORY_TAGS[category] || []).some((tag) => presentTags.has(tag));
 
+  // The underlying noraTags for the selected category that actually appear in
+  // this transcript. When more than one is present (e.g. Labeled + Unlabeled
+  // Praise), the sub-filter badge row lets the user narrow to just one.
+  const subFilterTags = useMemo(() => {
+    if (!selectedCategory) return [];
+    return (CATEGORY_TAGS[selectedCategory] || []).filter((tag) => presentTags.has(tag));
+  }, [selectedCategory, presentTags]);
+
   const matchIndices = useMemo(() => {
     if (!selectedCategory) return [];
-    const tags = CATEGORY_TAGS[selectedCategory] || [];
+    const tags = tagSubFilter ? [tagSubFilter] : (CATEGORY_TAGS[selectedCategory] || []);
     const indices: number[] = [];
     transcriptSegments.forEach((segment, index) => {
       if (segment.role === 'adult' && segment.tag && tags.includes(segment.tag)) {
@@ -213,12 +229,21 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({ recordingId, i
       }
     });
     return indices;
-  }, [transcriptSegments, selectedCategory]);
+  }, [transcriptSegments, selectedCategory, tagSubFilter]);
 
   const scrollToSegment = (index: number) => {
     const y = listContainerY.current + (itemY.current[index] ?? 0);
     scrollViewRef.current?.scrollTo({ y: Math.max(y - 12, 0), animated: true });
   };
+
+  useEffect(() => {
+    if (!didInitSubFilter.current && restrictToInitialCategory && subFilterTags.length > 1) {
+      didInitSubFilter.current = true;
+      setTagSubFilter(subFilterTags[0]);
+      setMatchCursor(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restrictToInitialCategory, subFilterTags]);
 
   useEffect(() => {
     if (selectedCategory && matchIndices.length > 0) {
@@ -230,12 +255,18 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({ recordingId, i
 
   const handleSelectCategory = (category: string) => {
     if (!isCategoryAvailable(category)) return;
+    setTagSubFilter(null);
     if (selectedCategory === category) {
       setSelectedCategory(null);
       setMatchCursor(0);
       return;
     }
     setSelectedCategory(category);
+    setMatchCursor(0);
+  };
+
+  const handleSelectSubFilter = (tag: string | null) => {
+    setTagSubFilter(tag);
     setMatchCursor(0);
   };
 
@@ -309,6 +340,42 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({ recordingId, i
                 ))}
               </View>
             </>
+          )}
+
+          {selectedCategory && subFilterTags.length > 1 && (
+            <View style={[styles.subFilterRow, restrictToInitialCategory && styles.subFilterRowStandalone]}>
+              <TouchableOpacity
+                onPress={() => handleSelectSubFilter(null)}
+                style={[
+                  styles.subFilterBadge,
+                  tagSubFilter === null
+                    ? { backgroundColor: getTagColor(CATEGORY_TAGS[selectedCategory][0]), borderColor: getTagColor(CATEGORY_TAGS[selectedCategory][0]) }
+                    : styles.subFilterBadgeInactive,
+                ]}
+              >
+                <Text style={[styles.subFilterBadgeText, tagSubFilter === null ? styles.subFilterBadgeTextActive : styles.subFilterBadgeTextInactive]}>
+                  {t('transcript.subFilterAll', 'All')}
+                </Text>
+              </TouchableOpacity>
+              {subFilterTags.map((tag) => {
+                const isActive = tagSubFilter === tag;
+                const color = getTagColor(tag);
+                return (
+                  <TouchableOpacity
+                    key={tag}
+                    onPress={() => handleSelectSubFilter(tag)}
+                    style={[
+                      styles.subFilterBadge,
+                      isActive ? { backgroundColor: color, borderColor: color } : styles.subFilterBadgeInactive,
+                    ]}
+                  >
+                    <Text style={[styles.subFilterBadgeText, isActive ? styles.subFilterBadgeTextActive : styles.subFilterBadgeTextInactive]}>
+                      {t(`transcript.pcitTags.${tag}`, tag)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           )}
 
           {selectedCategory && (
@@ -534,6 +601,37 @@ const styles = StyleSheet.create({
   },
   matchNavRowStandalone: {
     marginTop: 0,
+  },
+  subFilterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingHorizontal: 16,
+    marginTop: 10,
+  },
+  subFilterRowStandalone: {
+    marginTop: 0,
+    marginBottom: 2,
+  },
+  subFilterBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  subFilterBadgeInactive: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#D1D5DB',
+  },
+  subFilterBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+  },
+  subFilterBadgeTextActive: {
+    color: '#FFFFFF',
+  },
+  subFilterBadgeTextInactive: {
+    color: '#6B7280',
   },
   matchNavText: {
     fontFamily: FONTS.regular,

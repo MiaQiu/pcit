@@ -22,10 +22,14 @@ const HISTORY_LOOKBACK = 30; // rows fetched once, covers both windows above
 
 // Lowercase, strip punctuation/extra whitespace — good enough to catch the
 // LLM re-generating the literal same title again; not semantic similarity.
+// \p{L}/\p{N} (Unicode letter/number classes, needs the 'u' flag) instead of
+// a-z0-9 — the ASCII-only version stripped CJK titles down to '', collapsing
+// every non-Latin-script title to the same empty key and silently disabling
+// dedup for them (confirmed against real Chinese-titled sessions in dev).
 function normalizeKey(title) {
   return (title || '')
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/[^\p{L}\p{N}\s]/gu, '')
     .replace(/\s+/g, ' ')
     .trim();
 }

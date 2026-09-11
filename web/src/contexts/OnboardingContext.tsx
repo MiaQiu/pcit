@@ -3,14 +3,15 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 export interface WacbAnswers {
   parentingStressLevel?: number;
   q1Dawdle?: number;
-  q2MealBehavior?: number;
-  q3Disobey?: number;
-  q4Angry?: number;
-  q5Scream?: number;
-  q6Destroy?: number;
-  q7ProvokeFights?: number;
-  q8Interrupt?: number;
-  q9Attention?: number;
+  q2Disobey?: number;
+  q3Tantrum?: number;
+  q4Defiance?: number;
+  q5FocusDemand?: number;
+  q6Restless?: number;
+  q7TaskCompletion?: number;
+  q8Destroy?: number;
+  q9Aggression?: number;
+  q10LieSteal?: number;
 }
 
 export interface PlanDiscountInfo {
@@ -38,6 +39,10 @@ export interface OnboardingData {
   accessToken: string | null;
   // partner (set when user arrived via /p/:slug)
   partnerInfo: PartnerInfo | null;
+  // referral (set when user arrived via /join/:code) — partnerInfo also holds
+  // the referral trial config; these carry the attribution code + who invited.
+  referralCode: string | null;
+  referrerName: string | null;
   // profile
   name: string;
   relationshipToChild: string | null;
@@ -56,6 +61,7 @@ interface OnboardingContextValue {
   setPassword: (password: string) => void;
   setAccessToken: (token: string | null) => void;
   setPartnerInfo: (info: PartnerInfo | null) => void;
+  setReferral: (code: string | null, referrerName?: string | null) => void;
   setName: (name: string) => void;
   setRelationshipToChild: (rel: string | null) => void;
   setChildName: (name: string) => void;
@@ -80,6 +86,8 @@ const defaultData: OnboardingData = {
   password: '',
   accessToken: localStorage.getItem('accessToken'),
   partnerInfo: loadPartnerInfo(),
+  referralCode: localStorage.getItem('referralCode'),
+  referrerName: localStorage.getItem('referrerName'),
   name: '',
   relationshipToChild: null,
   childName: '',
@@ -105,10 +113,25 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     else localStorage.removeItem('partnerInfo');
   }, [data.partnerInfo]);
 
+  useEffect(() => {
+    if (data.referralCode) localStorage.setItem('referralCode', data.referralCode);
+    else localStorage.removeItem('referralCode');
+  }, [data.referralCode]);
+
+  useEffect(() => {
+    if (data.referrerName) localStorage.setItem('referrerName', data.referrerName);
+    else localStorage.removeItem('referrerName');
+  }, [data.referrerName]);
+
   const setEmail = useCallback((email: string) => setData(d => ({ ...d, email })), []);
   const setPassword = useCallback((password: string) => setData(d => ({ ...d, password })), []);
   const setAccessToken = useCallback((accessToken: string | null) => setData(d => ({ ...d, accessToken })), []);
   const setPartnerInfo = useCallback((partnerInfo: PartnerInfo | null) => setData(d => ({ ...d, partnerInfo })), []);
+  const setReferral = useCallback(
+    (referralCode: string | null, referrerName: string | null = null) =>
+      setData(d => ({ ...d, referralCode, referrerName })),
+    []
+  );
   const setName = useCallback((name: string) => setData(d => ({ ...d, name })), []);
   const setRelationshipToChild = useCallback((relationshipToChild: string | null) => setData(d => ({ ...d, relationshipToChild })), []);
   const setChildName = useCallback((childName: string) => setData(d => ({ ...d, childName })), []);
@@ -127,6 +150,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       setPassword,
       setAccessToken,
       setPartnerInfo,
+      setReferral,
       setName,
       setRelationshipToChild,
       setChildName,
@@ -160,9 +184,9 @@ export function computeWacbScore(wacb: WacbAnswers): number {
 export type BehaviorCategory = 'stable' | 'mild' | 'medium' | 'high';
 
 export function getBehaviorCategory(score: number): BehaviorCategory {
-  if (score <= 25) return 'stable';
-  if (score <= 35) return 'mild';
-  if (score <= 45) return 'medium';
+  if (score <= 28) return 'stable';
+  if (score <= 39) return 'mild';
+  if (score <= 50) return 'medium';
   return 'high';
 }
 

@@ -6,7 +6,8 @@ Clinical prioritization engine that evaluates child issues and writes interventi
 
 The priority engine combines two data sources to determine clinical priorities:
 1. **User.issue** - Issues selected during onboarding (e.g., tantrums, not-listening)
-2. **WacbSurvey** - Weekly Assessment of Child Behavior scores
+2. **ChildSnapshotSurvey** - Child Snapshot behavior survey scores (10 items;
+   supersedes the legacy `WacbSurvey` table, which is retained for history only)
 
 It outputs four fields on the `Child` model:
 - `primaryIssue` - Highest priority clinical level
@@ -53,19 +54,20 @@ User.issue values map to clinical levels:
 | `frustration_tolerance` | FLOURISH |
 | `other` | *(ignored)* |
 
-## WACB Question Mappings
+## Child Snapshot Question Mappings
 
-WACB survey questions map to clinical levels:
+Child Snapshot survey questions (table `ChildSnapshotSurvey`; the legacy
+`WacbSurvey` table is kept for historical rows only) map to clinical levels:
 
 | Clinical Level | Questions |
 |----------------|-----------|
-| `STABILIZE` | q4Angry, q6Destroy |
-| `DE_ESCALATE` | q5Scream, q7ProvokeFights |
-| `DIRECT` | q1Dawdle, q2MealBehavior, q3Disobey, q8Interrupt |
-| `FLOURISH` | q9Attention |
-| `SUPPORT` | *(no WACB questions)* |
+| `STABILIZE` | q8Destroy, q9Aggression |
+| `DE_ESCALATE` | q3Tantrum, q4Defiance, q10LieSteal |
+| `DIRECT` | q1Dawdle, q2Disobey, q6Restless, q7TaskCompletion |
+| `FLOURISH` | q5FocusDemand |
+| `SUPPORT` | *(no snapshot questions)* |
 
-**Signal Threshold:** A WACB question score >= 3 counts as a signal present.
+**Signal Threshold:** A question score >= 3 counts as a signal present.
 
 ## Sorting Logic
 
@@ -107,11 +109,11 @@ Both are fire-and-forget calls that don't block the response.
 
 ## API
 
-### `runPriorityEngine(userId, { wacbSurveyId } = {})`
+### `runPriorityEngine(userId, { snapshotSurveyId } = {})`
 
 Main entry point. Finds or creates a `Child` record for the user, evaluates priorities, updates the child, and appends `ChildIssuePriority` history rows.
 
-- `wacbSurveyId` (optional) - Links the history rows to the triggering WACB survey
+- `snapshotSurveyId` (optional) - Links the history rows to the triggering Child Snapshot survey (`ChildIssuePriority.snapshotSurveyId`)
 
 ```js
 const { runPriorityEngine } = require('./server/services/priorityEngine.cjs');
@@ -119,8 +121,8 @@ const { runPriorityEngine } = require('./server/services/priorityEngine.cjs');
 const updatedChild = await runPriorityEngine(userId);
 // Returns the updated Child record with priority fields populated
 
-// With WACB survey link:
-const updatedChild = await runPriorityEngine(userId, { wacbSurveyId: survey.id });
+// With Child Snapshot survey link:
+const updatedChild = await runPriorityEngine(userId, { snapshotSurveyId: survey.id });
 ```
 
 ### `evaluatePriorities(userId)`
@@ -225,17 +227,19 @@ model ChildIssuePriority {
   fromWacb      Boolean              @default(false)
   userIssues    String?              // JSON array of issue strings
   wacbQuestions String?              // JSON array of question keys
-  wacbScore     Int?                 // Aggregate WACB score for this level
+  wacbScore     Int?                 // Aggregate snapshot score for this level
   computedAt    DateTime             @default(now())
-  wacbSurveyId  String?              // Which WACB survey triggered this computation
+  wacbSurveyId  String?              // legacy WacbSurvey link (historical rows)
+  snapshotSurveyId String?           // Which ChildSnapshotSurvey triggered this computation
   Child         Child                @relation(...)
   WacbSurvey    WacbSurvey?          @relation(...)
+  ChildSnapshotSurvey ChildSnapshotSurvey? @relation(...)
 }
 ```
 
 ## History Tracking
 
-The `ChildIssuePriority` table builds a historical timeline of how each issue/behavior evolves. New rows are **appended** each time the priority engine runs (not deleted/replaced), so you get a full history. The `computedAt` timestamp + optional `wacbSurveyId` link each snapshot to when/why it was computed.
+The `ChildIssuePriority` table builds a historical timeline of how each issue/behavior evolves. New rows are **appended** each time the priority engine runs (not deleted/replaced), so you get a full history. The `computedAt` timestamp + optional `snapshotSurveyId` link each snapshot to when/why it was computed.
 
 ### Query Examples
 

@@ -52,37 +52,40 @@ export interface User {
   isFreeAccount?: boolean;
 }
 
-// WACB-N survey — 9-item behavior questionnaire + parenting stress rating.
-// Each qN field is a raw 1-5 Likert value (Never..Very Often) as submitted
-// by the client; totalScore is the clinically-weighted point total computed
-// server-side (see server/routes/wacb-survey.cjs's VALUE_TO_POINTS mapping).
-export interface WacbSurvey {
+// Child Snapshot survey — 10-item behavior questionnaire + parenting stress
+// rating (formerly "WACB-N", 9 items). Each qN field is a raw 1-5 Likert value
+// (Never..Very Often) as submitted by the client; totalScore is the
+// clinically-weighted point total computed server-side (see
+// server/routes/wacb-survey.cjs's VALUE_TO_POINTS mapping).
+export interface ChildSnapshotSurvey {
   id: string;
   userId: string;
   submittedAt: string;
   parentingStressLevel: number;
   q1Dawdle: number;
-  q2MealBehavior: number;
-  q3Disobey: number;
-  q4Angry: number;
-  q5Scream: number;
-  q6Destroy: number;
-  q7ProvokeFights: number;
-  q8Interrupt: number;
-  q9Attention: number;
+  q2Disobey: number;
+  q3Tantrum: number;
+  q4Defiance: number;
+  q5FocusDemand: number;
+  q6Restless: number;
+  q7TaskCompletion: number;
+  q8Destroy: number;
+  q9Aggression: number;
+  q10LieSteal: number;
   totalScore: number;
 }
 
-// Parent Skill Level — 1-7 rung on the "Personalized Learning Journey"
+// Parent Skill Level — 1-9 rung on the "Personalized Learning Journey"
 // ladder, gated server-side by session skill counts (see
-// server/services/parentSkillLevelService.cjs). Levels 6-7 are defined but
-// not yet advanced into automatically — currentLevel caps at 6 for now.
-export type ParentSkillLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+// server/services/parentSkillLevelService.cjs).
+export type ParentSkillLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 export interface ParentSkillLevelInfo {
   currentLevel: ParentSkillLevel;
-  // Qualifying PDI sessions seen so far toward clearing Level 5 (needs 2).
-  // Only meaningful while currentLevel === 5.
+  // Qualifying PDI sessions seen so far toward clearing Level 7 (needs 2).
+  // Only meaningful while currentLevel === 7. Legacy field name — this
+  // column predates the ladder's expansion from 7 to 9 levels (see
+  // doc/goal.md and server/services/parentSkillLevelService.cjs).
   level5QualifyingCount: number;
 }
 
@@ -481,7 +484,12 @@ export interface BrandingImagesResponse {
 // only, in display order.
 export interface DemoVideo {
   id: string;
+  // Localized to the requested locale where the admin has set an override,
+  // else the English value (see LessonService.getDemoVideos).
   title: string;
+  // Always the English title, regardless of locale — use for matching a
+  // specific demo by name (e.g. a skill-tag → demo-title map).
+  baseTitle: string;
   description: string | null;
   additionalText: string | null;
   videoUrl: string;
@@ -534,6 +542,9 @@ export interface HomeCardComponent {
   inputLabel: string | null;
   inputPlaceholder: string | null;
   userAnswer?: string | null;
+  // USER_INPUT only: also render this input inline on the Home card (see
+  // HomeScreen_v2's SubActionCard), not just this detail page.
+  showOnCard?: boolean;
 }
 
 export interface HomeCardDetail {

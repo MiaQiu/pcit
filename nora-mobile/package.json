@@ -2,6 +2,13 @@
   "name": "nora-mobile",
   "version": "1.0.0",
   "main": "index.ts",
+  "expo": {
+    "autolinking": {
+      "searchPaths": [
+        "./modules"
+      ]
+    }
+  },
   "scripts": {
     "start": "expo start",
     "start:prod": "cp .env.production .env && expo start",
@@ -14,6 +21,7 @@
     "postinstall": "cd ../packages/nora-core && npm install && npm run build"
   },
   "dependencies": {
+    "haptic-engine": "file:./modules/haptic-engine",
     "@amplitude/analytics-react-native": "^1.5.32",
     "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@expo/vector-icons": "^15.0.3",
@@ -37,6 +45,7 @@
     "expo-document-picker": "~14.0.8",
     "expo-file-system": "~19.0.22",
     "expo-font": "~14.0.9",
+    "expo-haptics": "~15.0.8",
     "expo-linear-gradient": "~15.0.8",
     "expo-localization": "~17.0.8",
     "expo-notifications": "^0.32.14",

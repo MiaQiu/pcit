@@ -77,8 +77,8 @@ The screen receives a `reportId` param and loads the pre-generated report from t
 - Disclaimer text
 - **Issue improvement ratings:** Items are pulled from the top 5 `ChildIssuePriority` rows (ordered by `priorityRank` ASC) for the user's child. Each row's `userIssues` (JSON array) and `wacbQuestions` (JSON array) are parsed, flattened, and deduplicated into a single list. Each item is shown as a row with Better / Same / Worse chips.
   - `userIssues` keys (e.g. `adhd`, `attention_focus`) are translated via `issueTags.*` in the locale files
-  - `wacbQuestions` keys (e.g. `q1Dawdle`, `q3Disobey`) are prefixed `wacb:` internally and translated via `weeklyReport.page7.wacbQuestions.*`
-  - All possible wacb question keys: `q1Dawdle`, `q2MealBehavior`, `q3Disobey`, `q4Angry`, `q5Scream`, `q6Destroy`, `q7ProvokeFights`, `q8Interrupt`, `q9Attention`
+  - `wacbQuestions` keys (e.g. `q1Dawdle`, `q3Tantrum`) are prefixed `wacb:` internally and translated via `weeklyReport.page7.wacbQuestions.*`
+  - All possible Child Snapshot question keys: `q1Dawdle`, `q2Disobey`, `q3Tantrum`, `q4Defiance`, `q5FocusDemand`, `q6Restless`, `q7TaskCompletion`, `q8Destroy`, `q9Aggression`, `q10LieSteal`
 
 ## API Endpoints
 

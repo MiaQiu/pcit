@@ -9,6 +9,7 @@
   "scripts": {
     "dev:mobile": "npm run start --workspace=nora-mobile",
     "server": "node server.cjs",
+    "server:docker": "docker compose up --build",
     "build:core": "npm run build --workspace=@nora/core",
     "android": "expo run:android",
     "ios": "expo run:ios"

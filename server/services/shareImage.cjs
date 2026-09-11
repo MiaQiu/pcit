@@ -8,10 +8,11 @@
  * path for both Home Cards and Lessons instead of per-surface duplicates.
  *
  * Font note: rendered via sharp's bundled librsvg/pango, which resolves
- * font-family through the container's fontconfig — the deploy target likely
- * has no fonts installed, so this deliberately uses a generic sans-serif
- * stack rather than 'Plus Jakarta Sans'. Fine for a preview thumbnail;
- * pixel-perfect brand font matching is a possible fast-follow, not a v1 goal.
+ * font-family through the container's fontconfig. Alpine ships no fonts, so
+ * the Dockerfile installs fontconfig + ttf-dejavu and copies the bundled
+ * Plus Jakarta Sans faces (server/assets/fonts/) into /usr/share/fonts —
+ * without that, SVG <text> renders as tofu boxes. Locally (macOS) any of
+ * the fallbacks below resolve, so it looks right there regardless.
  */
 
 const fs = require('fs');
@@ -27,7 +28,7 @@ const MIN_HEIGHT = 400;
 const PADDING = 64;
 const THUMB_SIZE = 340;
 const THUMB_RADIUS = 20;
-const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+const FONT = "'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, 'DejaVu Sans', sans-serif";
 const NORA_ICON_PATH = path.join(__dirname, '..', '..', 'public', 'images', 'nora-icon.png');
 
 function escapeXml(str) {
@@ -39,22 +40,32 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
+// CJK (Chinese/Japanese/Korean) text has no spaces between words, so the
+// Latin word-wrap below would treat a whole zh-TW/zh-CN title as one
+// unbreakable "word" and run it off the edge of the canvas uncut. Detect it
+// and wrap per-character instead (no separator needed — CJK reads fine
+// broken anywhere); glyphs are also roughly full-width/square rather than
+// ~0.55×fontSize like Latin ones, so maxChars needs a wider estimate too.
+const CJK_RE = /[\u3400-\u9FFF\uF900-\uFAFF\u3040-\u30FF\uAC00-\uD7AF]/;
+
 // Rough word-wrap for SVG <text> (which doesn't wrap on its own): estimates
 // average glyph width as a fraction of font size rather than measuring real
 // metrics, since the actual rendering font isn't known ahead of time (see
 // the font-note above) — good enough for a preview thumbnail, not exact.
 function wrapText(text, maxWidth, fontSize, maxLines) {
-  const avgCharWidth = fontSize * 0.55;
+  const isCJK = CJK_RE.test(text);
+  const avgCharWidth = fontSize * (isCJK ? 1.0 : 0.55);
   const maxChars = Math.max(1, Math.floor(maxWidth / avgCharWidth));
-  const words = text.trim().split(/\s+/).filter(Boolean);
+  const units = isCJK ? Array.from(text.trim()) : text.trim().split(/\s+/).filter(Boolean);
+  const sep = isCJK ? '' : ' ';
   const lines = [];
   let current = '';
 
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word;
+  for (const unit of units) {
+    const candidate = current ? `${current}${sep}${unit}` : unit;
     if (candidate.length > maxChars && current) {
       lines.push(current);
-      current = word;
+      current = unit;
     } else {
       current = candidate;
     }
@@ -68,8 +79,10 @@ function wrapText(text, maxWidth, fontSize, maxLines) {
     lines.length = maxLines;
   }
   const last = lines[lines.length - 1];
-  if (last && lines.length === maxLines && words.join(' ').length > lines.join(' ').length) {
-    lines[lines.length - 1] = last.replace(/\s*\S*$/, '').trim() + '…';
+  if (last && lines.length === maxLines && units.join(sep).length > lines.join(sep).length) {
+    lines[lines.length - 1] = isCJK
+      ? last.slice(0, -1) + '…'
+      : last.replace(/\s*\S*$/, '').trim() + '…';
   }
   return lines;
 }
@@ -143,10 +156,15 @@ async function buildShareCardImage({ title, subtitle, thumbnailUrl, badgeText, b
   const hasThumb = !!thumbnail;
   const textWidth = hasThumb ? WIDTH - PADDING * 2 - THUMB_SIZE - 48 : WIDTH - PADDING * 2;
 
-  const TITLE_FONT_SIZE = 60;
-  const TITLE_LINE_HEIGHT = 74;
-  const SUBTITLE_FONT_SIZE = 36;
-  const SUBTITLE_LINE_HEIGHT = 50;
+  // The card is always shown scaled down inside a link-preview bubble
+  // (WhatsApp etc.), so type is sized large relative to the 1200px canvas.
+  // Bump SCALE to enlarge every text element together.
+  const SCALE = 1.4;
+
+  const TITLE_FONT_SIZE = Math.round(60 * SCALE);
+  const TITLE_LINE_HEIGHT = Math.round(74 * SCALE);
+  const SUBTITLE_FONT_SIZE = Math.round(36 * SCALE);
+  const SUBTITLE_LINE_HEIGHT = Math.round(50 * SCALE);
   const titleLines = wrapText(stripMarkdown(title), textWidth, TITLE_FONT_SIZE, 3);
   const subtitleLines = subtitle ? wrapText(stripMarkdown(subtitle), textWidth, SUBTITLE_FONT_SIZE, 3) : [];
 
@@ -154,17 +172,17 @@ async function buildShareCardImage({ title, subtitle, thumbnailUrl, badgeText, b
   // badgeColor behind badgeColor-tinted text (see subActionBadgePill(Text)
   // in HomeScreen_v2.tsx), sitting above the title.
   const hasBadge = !!(badgeText && badgeColor);
-  const BADGE_HEIGHT = 44;
-  const BADGE_FONT_SIZE = 20;
+  const BADGE_HEIGHT = Math.round(44 * SCALE);
+  const BADGE_FONT_SIZE = Math.round(20 * SCALE);
   const contentTop = PADDING;
   const titleStartY = hasBadge
     ? contentTop + BADGE_HEIGHT + 28 + TITLE_FONT_SIZE
     : contentTop + TITLE_FONT_SIZE;
   const subtitleStartY = titleStartY + (titleLines.length - 1) * TITLE_LINE_HEIGHT + TITLE_LINE_HEIGHT * 0.55 + SUBTITLE_FONT_SIZE * 0.9;
 
-  const footerIconSize = 64;
-  const FOOTER_FONT_SIZE = 40;
-  const GAP_BEFORE_FOOTER = 48;
+  const footerIconSize = Math.round(64 * SCALE);
+  const FOOTER_FONT_SIZE = Math.round(40 * SCALE);
+  const GAP_BEFORE_FOOTER = Math.round(48 * SCALE);
 
   // Bottom of the last line of actual text (subtitle if present, else title).
   const contentBottom = subtitleLines.length

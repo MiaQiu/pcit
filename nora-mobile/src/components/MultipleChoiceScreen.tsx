@@ -48,6 +48,9 @@ export interface MultipleChoiceScreenProps {
   phase?: number;
   stepInPhase?: number;
   totalStepsInPhase?: number;
+  // Renders the progress header with a single segment for the current phase
+  // only — for flows that run separately from onboarding (e.g. the WACB survey).
+  singlePhaseHeader?: boolean;
   prevScreen?: keyof import('../navigation/types').OnboardingStackParamList;
   disableAutoNavigate?: boolean; // Disable auto-navigation for single-select
   allowOtherOption?: boolean; // Enable "Others" option with text input
@@ -70,6 +73,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   phase = 1,
   stepInPhase = 1,
   totalStepsInPhase = 1,
+  singlePhaseHeader = false,
   prevScreen,
   disableAutoNavigate = false,
   allowOtherOption = false,
@@ -229,7 +233,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
       >
         <View style={styles.content}>
           {/* Progress Header */}
-          {headerOverride ?? <OnboardingProgressHeader phase={phase} step={stepInPhase} totalSteps={totalStepsInPhase} />}
+          {headerOverride ?? <OnboardingProgressHeader phase={phase} step={stepInPhase} totalSteps={totalStepsInPhase} singlePhase={singlePhaseHeader} />}
 
           {/* Title */}
           <View style={styles.header}>

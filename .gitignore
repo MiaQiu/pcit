@@ -55,3 +55,4 @@ nora-mobile/assets/images/*.mov
 nora-mobile/assets/images/*.mp4
 eval-results/
 server/llm/providers/.gemini-cache-registry.json
+/scratch/

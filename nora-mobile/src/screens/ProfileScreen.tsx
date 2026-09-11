@@ -30,6 +30,11 @@ import { FONTS, COLORS } from '../constants/assets';
 import type { SubscriptionPlan, SubscriptionStatus, RelationshipToChild } from '@nora/core';
 import amplitudeService from '../services/amplitudeService';
 import { changeLanguage } from '../i18n';
+import {
+  computeFocusAreas,
+  primaryFocusLabels,
+  type FocusAreaData,
+} from '../utils/snapshotFocusAreas';
 
 interface UserProfile {
   name: string;
@@ -56,6 +61,8 @@ export const ProfileScreen: React.FC = () => {
   const { checkSubscriptionStatus } = useSubscription();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  // null = not loaded yet; [] = survey checked, none completed
+  const [focusAreas, setFocusAreas] = useState<FocusAreaData[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -77,8 +84,20 @@ export const ProfileScreen: React.FC = () => {
     React.useCallback(() => {
       loadProfile();
       loadRevenueCatStatus();
+      loadFocusAreas();
     }, [])
   );
+
+  // Latest Child Snapshot survey → the 4 focus-area categories (severity-sorted).
+  // Merged with the pre-selected User.issue list in the "Primary Focus Area" row.
+  const loadFocusAreas = async () => {
+    try {
+      const survey = await authService.getLatestSnapshotSurvey();
+      setFocusAreas(survey ? computeFocusAreas(survey) : []);
+    } catch {
+      setFocusAreas([]);
+    }
+  };
 
   // Load real-time subscription status directly from RevenueCat SDK
   const loadRevenueCatStatus = async () => {
@@ -286,16 +305,21 @@ export const ProfileScreen: React.FC = () => {
     return null;
   };
 
-  const getIssueLabel = (issue?: string | string[]) => {
-    const getLabel = (key: string) => t(`profile.issueTags.${key}`, { defaultValue: key });
+  const asIssueArray = (issue?: string | string[]): string[] =>
+    Array.isArray(issue) ? issue : issue ? [issue] : [];
 
-    if (!issue) return t('profile.issueNotSpecified');
+  // The merged "Primary Focus Area" list — same derivation as the ProfileReport
+  // learning-journey subtitle (see utils/snapshotFocusAreas.ts).
+  const getPrimaryFocusText = (): string | null => {
+    const labels = primaryFocusLabels(focusAreas, asIssueArray(profile?.issue), t);
+    return labels.length ? labels.join(', ') : null;
+  };
 
-    if (Array.isArray(issue)) {
-      return issue.map(i => getLabel(i)).join(', ');
-    }
-
-    return getLabel(issue);
+  // Tapping the "Primary Focus Area" row opens the fuller Child Snapshot +
+  // learning-journey view. It's user-scoped (no session needed).
+  const handlePrimaryFocusPress = () => {
+    amplitudeService.trackEvent('Profile Primary Focus Tapped');
+    navigation.navigate('ProfileReport', {});
   };
 
   const formatLocalDate = (date: Date): string => {
@@ -514,20 +538,28 @@ export const ProfileScreen: React.FC = () => {
               </>
             )}
 
-            {profile?.issue && (
-              <>
-                <View style={styles.divider} />
-                <View style={styles.infoRow}>
-                  <View style={styles.infoIcon}>
-                    <Ionicons name="heart-outline" size={20} color="#8C49D5" />
-                  </View>
-                  <View style={styles.infoContent}>
-                    <Text style={styles.infoLabel}>{t('profile.primaryFocusLabel')}</Text>
-                    <Text style={styles.infoValue}>{getIssueLabel(profile.issue)}</Text>
-                  </View>
-                </View>
-              </>
-            )}
+            {(() => {
+              const primaryFocusText = getPrimaryFocusText();
+              return primaryFocusText ? (
+                <>
+                  <View style={styles.divider} />
+                  <TouchableOpacity
+                    style={styles.infoRow}
+                    activeOpacity={0.7}
+                    onPress={handlePrimaryFocusPress}
+                  >
+                    <View style={styles.infoIcon}>
+                      <Ionicons name="heart-outline" size={20} color="#8C49D5" />
+                    </View>
+                    <View style={styles.infoContent}>
+                      <Text style={styles.infoLabel}>{t('profile.primaryFocusLabel')}</Text>
+                      <Text style={styles.infoValue}>{primaryFocusText}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                  </TouchableOpacity>
+                </>
+              ) : null;
+            })()}
           </View>
         </View>
 

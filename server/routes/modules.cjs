@@ -35,17 +35,18 @@ const ISSUE_TO_MODULE = {
   parental_divorce: 'DIVORCE',
 };
 
-// Maps WACB survey questions to module keys
+// Maps Child Snapshot survey questions to module keys
 const WACB_TO_MODULE = {
-  q4Angry: 'AGGRESSION',
-  q6Destroy: 'RESPONSIBILITY',
-  q5Scream: 'EMOTIONS',
-  q7ProvokeFights: 'CONFLICT',
   q1Dawdle: 'PROCRASTINATION',
-  q2MealBehavior: 'MEALS',
-  q3Disobey: 'DEFIANCE',
-  q8Interrupt: 'PATIENCE',
-  q9Attention: 'FOCUS',
+  q2Disobey: 'DEFIANCE',
+  q3Tantrum: 'EMOTIONS',
+  q4Defiance: 'DEFIANCE',
+  q5FocusDemand: 'FOCUS',
+  q6Restless: 'PATIENCE',
+  q7TaskCompletion: 'PROCRASTINATION',
+  q8Destroy: 'RESPONSIBILITY',
+  q9Aggression: 'AGGRESSION',
+  q10LieSteal: 'RESPONSIBILITY',
 };
 
 /**

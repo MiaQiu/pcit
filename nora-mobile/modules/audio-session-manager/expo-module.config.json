@@ -1,9 +1,0 @@
-{
-  "platforms": ["ios", "android"],
-  "ios": {
-    "modules": ["AudioSessionManager"]
-  },
-  "android": {
-    "modules": ["com.chromamind.nora.audiosessionmanager.AudioSessionManagerPackage"]
-  }
-}

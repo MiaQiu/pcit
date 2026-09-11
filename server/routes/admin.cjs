@@ -9,6 +9,8 @@ const { sendPushNotificationToUser } = require('../services/pushNotifications.cj
 const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo, uploadDemoVideo, uploadDemoVideoThumbnail, uploadHomeCardImage, uploadBrandingImage, uploadPartnerQrCode, resolveLessonAudioUrl, resolveDragonImageUrl } = require('../services/storage-s3.cjs');
 const { processRecordingWithRetry } = require('../services/processingService.cjs');
 const { transcribeLessonNarration } = require('../services/transcriptionService.cjs');
+const { translateDemoVideoBundle } = require('../services/translationService.cjs');
+const { SUPPORTED_LOCALES } = require('../middleware/locale.cjs');
 
 const uploadMiddleware = multer({
   storage: multer.memoryStorage(),
@@ -1137,7 +1139,7 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         childBirthday: true,
         issue: true,
         _count: { select: { Session: true } },
-        WacbSurvey: {
+        ChildSnapshotSurvey: {
           select: { totalScore: true },
           orderBy: { submittedAt: 'desc' },
           take: 1,
@@ -1183,7 +1185,7 @@ router.get('/users', requireAdminAuth, async (req, res) => {
         trialEndDate: u.trialEndDate,
         childBirthday: u.childBirthday,
         issue: u.issue,
-        wacbTotalScore: u.WacbSurvey[0]?.totalScore ?? null,
+        wacbTotalScore: u.ChildSnapshotSurvey[0]?.totalScore ?? null,
       };
     });
 
@@ -1991,7 +1993,9 @@ router.get('/home-cards', requireAdminAuth, async (req, res) => {
       shareCount: _count.shares,
       imageUrl: await resolveDragonImageUrl(image),
       components: await Promise.all(components.map(async ({ image: componentImage, ...component }) => ({
-        ...component,
+        // USER_INPUT reuses `text` as the "show on home card" flag — expose
+        // it as a boolean and blank the raw marker so the form never shows it.
+        ...serializeHomeCardComponentForAdmin(component),
         imageUrl: await resolveDragonImageUrl(componentImage),
       }))),
     })));
@@ -2076,20 +2080,34 @@ function validateHomeCardComponents(components, homeCardId) {
       if (!c.linkedCardId) throw { status: 400, message: `components[${index}]: linkedCardId is required for OPEN_DETAILS components` };
       if (c.linkedCardId === homeCardId) throw { status: 400, message: `components[${index}]: a card cannot link to itself` };
     }
-    if (c.type === 'USER_INPUT' && (!c.inputLabel || !c.inputLabel.trim())) {
-      throw { status: 400, message: `components[${index}]: inputLabel is required for USER_INPUT components` };
-    }
     return {
       id: c.id || undefined,
       type: c.type,
       order: index,
-      text: c.type === 'TEXT' ? c.text.trim() : null,
+      // TEXT stores its body here; USER_INPUT reuses this column as a flag
+      // for "also show inline on the home card" (no schema change) — the
+      // marker is stripped back out in every read path (see the admin list
+      // GET below and config.cjs's detail endpoint).
+      text: c.type === 'TEXT'
+        ? c.text.trim()
+        : (c.type === 'USER_INPUT' && c.showOnCard ? 'HOME_CARD' : null),
       linkedCardId: c.type === 'OPEN_DETAILS' ? c.linkedCardId : null,
       ctaLabel: c.type === 'OPEN_DETAILS' ? (c.ctaLabel?.trim() || null) : null,
-      inputLabel: c.type === 'USER_INPUT' ? c.inputLabel.trim() : null,
+      inputLabel: c.type === 'USER_INPUT' ? (c.inputLabel?.trim() || null) : null,
       inputPlaceholder: c.type === 'USER_INPUT' ? (c.inputPlaceholder?.trim() || null) : null,
     };
   });
+}
+
+/**
+ * Normalizes a stored HomeCardComponent for an admin API response: turns the
+ * USER_INPUT `text` marker back into a `showOnCard` boolean and blanks the
+ * raw marker. Mirrors the map in GET /home-cards.
+ */
+function serializeHomeCardComponentForAdmin(component) {
+  if (component.type !== 'USER_INPUT') return component;
+  const { text, ...rest } = component;
+  return { ...rest, text: null, showOnCard: text === 'HOME_CARD' };
 }
 
 /**
@@ -2184,7 +2202,7 @@ router.post('/home-cards', requireAdminAuth, async (req, res) => {
       include: { components: { orderBy: { order: 'asc' } } },
     });
 
-    res.status(201).json({ homeCard: { ...homeCard, badgeText: badge.name, badgeColor: badge.color } });
+    res.status(201).json({ homeCard: { ...homeCard, components: homeCard.components.map(serializeHomeCardComponentForAdmin), badgeText: badge.name, badgeColor: badge.color } });
   } catch (error) {
     console.error('Admin create home card error:', error);
     res.status(500).json({ error: 'Failed to create home card' });
@@ -2262,7 +2280,7 @@ router.put('/home-cards/:id', requireAdminAuth, async (req, res) => {
       });
     });
 
-    res.json({ homeCard: { ...homeCard, badgeText: homeCard.badge.name, badgeColor: homeCard.badge.color } });
+    res.json({ homeCard: { ...homeCard, components: homeCard.components.map(serializeHomeCardComponentForAdmin), badgeText: homeCard.badge.name, badgeColor: homeCard.badge.color } });
   } catch (error) {
     console.error('Admin update home card error:', error);
     res.status(500).json({ error: 'Failed to update home card' });
@@ -2378,12 +2396,19 @@ router.get('/demo-videos', requireAdminAuth, async (req, res) => {
   try {
     const demoVideos = await prisma.demoVideo.findMany({
       orderBy: { displayOrder: 'asc' },
+      include: { translations: true },
     });
 
     const resolved = await Promise.all(demoVideos.map(async (v) => ({
       ...v,
       videoUrl: await resolveDragonImageUrl(v.videoUrl),
       thumbnailUrl: await resolveDragonImageUrl(v.thumbnailUrl),
+      translations: await Promise.all(
+        v.translations.map(async (tx) => ({
+          ...tx,
+          videoUrl: await resolveDragonImageUrl(tx.videoUrl),
+        }))
+      ),
     })));
 
     res.json({ demoVideos: resolved });
@@ -2542,6 +2567,160 @@ router.post('/demo-videos/:id/thumbnail', requireAdminAuth, uploadMiddleware.sin
   } catch (error) {
     console.error('Admin demo video thumbnail upload error:', error);
     res.status(500).json({ error: error.message || 'Failed to upload thumbnail' });
+  }
+});
+
+// ---- Demo video translations (per-locale title/text + localized video file) ----
+
+// Non-English locales that a demo video can be localized into.
+const DEMO_VIDEO_LOCALES = [...SUPPORTED_LOCALES].filter((l) => l !== 'en');
+
+/**
+ * PUT /api/admin/demo-videos/:id/translations/:locale
+ * Upsert the per-locale text fields (title/description/additionalText) of a
+ * demo video. Any subset may be sent; a field sent as '' or null clears that
+ * override (mobile falls back to the English base row). The localized video
+ * file is uploaded separately via POST .../video.
+ */
+router.put('/demo-videos/:id/translations/:locale', requireAdminAuth, async (req, res) => {
+  try {
+    const { id: demoVideoId, locale } = req.params;
+    if (!DEMO_VIDEO_LOCALES.includes(locale)) {
+      return res.status(400).json({ error: `Unsupported locale: ${locale}` });
+    }
+
+    const existing = await prisma.demoVideo.findUnique({ where: { id: demoVideoId } });
+    if (!existing) return res.status(404).json({ error: 'Demo video not found' });
+
+    const { title, description, additionalText, reviewed } = req.body;
+    const data = {};
+    if (title !== undefined) data.title = title?.trim() || null;
+    if (description !== undefined) data.description = description?.trim() || null;
+    if (additionalText !== undefined) data.additionalText = additionalText?.trim() || null;
+    if (reviewed !== undefined) data.reviewed = !!reviewed;
+    if ('title' in data || 'description' in data || 'additionalText' in data) {
+      data.autoTranslated = false;
+      data.translatedAt = new Date();
+    }
+
+    const tx = await prisma.demoVideoTranslation.upsert({
+      where: { demoVideoId_locale: { demoVideoId, locale } },
+      update: data,
+      create: { demoVideoId, locale, autoTranslated: false, ...data },
+    });
+    // Bump the parent so mobile clients re-fetch (and re-cache) on next check.
+    await prisma.demoVideo.update({ where: { id: demoVideoId }, data: { updatedAt: new Date() } });
+
+    res.json({ translation: { ...tx, videoUrl: await resolveDragonImageUrl(tx.videoUrl) } });
+  } catch (error) {
+    console.error('Admin upsert demo video translation error:', error);
+    res.status(500).json({ error: 'Failed to save translation' });
+  }
+});
+
+/**
+ * POST /api/admin/demo-videos/:id/translations/:locale/auto
+ * Machine-translate the base (English) title/description/additionalText into
+ * :locale and store the result (autoTranslated: true, reviewed: false).
+ * Does not touch the video file.
+ */
+router.post('/demo-videos/:id/translations/:locale/auto', requireAdminAuth, async (req, res) => {
+  try {
+    const { id: demoVideoId, locale } = req.params;
+    if (!DEMO_VIDEO_LOCALES.includes(locale)) {
+      return res.status(400).json({ error: `Unsupported locale: ${locale}` });
+    }
+
+    const video = await prisma.demoVideo.findUnique({ where: { id: demoVideoId } });
+    if (!video) return res.status(404).json({ error: 'Demo video not found' });
+
+    const bundle = {
+      title: video.title,
+      description: video.description || '',
+      additionalText: video.additionalText || '',
+    };
+    const translated = await translateDemoVideoBundle(bundle, locale);
+
+    const tx = await prisma.demoVideoTranslation.upsert({
+      where: { demoVideoId_locale: { demoVideoId, locale } },
+      update: {
+        title: translated.title || null,
+        description: translated.description || null,
+        additionalText: translated.additionalText || null,
+        autoTranslated: true,
+        reviewed: false,
+        translatedAt: new Date(),
+      },
+      create: {
+        demoVideoId,
+        locale,
+        title: translated.title || null,
+        description: translated.description || null,
+        additionalText: translated.additionalText || null,
+        autoTranslated: true,
+        reviewed: false,
+      },
+    });
+    await prisma.demoVideo.update({ where: { id: demoVideoId }, data: { updatedAt: new Date() } });
+
+    res.json({ translation: { ...tx, videoUrl: await resolveDragonImageUrl(tx.videoUrl) } });
+  } catch (error) {
+    console.error('Admin auto-translate demo video error:', error);
+    res.status(500).json({ error: error.message || 'Failed to auto-translate' });
+  }
+});
+
+/**
+ * POST /api/admin/demo-videos/:id/translations/:locale/video
+ * Upload (or replace) the localized video file (subtitles burned in) for
+ * :locale. Stored under demo-videos/<id>/<locale>/.
+ */
+router.post(
+  '/demo-videos/:id/translations/:locale/video',
+  requireAdminAuth,
+  demoVideoUploadMiddleware.single('video'),
+  async (req, res) => {
+    try {
+      const { id: demoVideoId, locale } = req.params;
+      if (!DEMO_VIDEO_LOCALES.includes(locale)) {
+        return res.status(400).json({ error: `Unsupported locale: ${locale}` });
+      }
+
+      const existing = await prisma.demoVideo.findUnique({ where: { id: demoVideoId } });
+      if (!existing) return res.status(404).json({ error: 'Demo video not found' });
+      if (!req.file) return res.status(400).json({ error: 'No video file provided' });
+
+      const ext = (req.file.originalname.split('.').pop() || 'mp4').toLowerCase();
+      const key = await uploadDemoVideo(req.file.buffer, demoVideoId, ext, locale);
+
+      const tx = await prisma.demoVideoTranslation.upsert({
+        where: { demoVideoId_locale: { demoVideoId, locale } },
+        update: { videoUrl: key },
+        create: { demoVideoId, locale, videoUrl: key, autoTranslated: false },
+      });
+      await prisma.demoVideo.update({ where: { id: demoVideoId }, data: { updatedAt: new Date() } });
+
+      res.json({ translation: { ...tx, videoUrl: await resolveDragonImageUrl(key) } });
+    } catch (error) {
+      console.error('Admin localized demo video upload error:', error);
+      res.status(500).json({ error: error.message || 'Failed to upload localized video' });
+    }
+  }
+);
+
+/**
+ * DELETE /api/admin/demo-videos/:id/translations/:locale
+ * Remove a locale variant entirely (text + localized video reference).
+ */
+router.delete('/demo-videos/:id/translations/:locale', requireAdminAuth, async (req, res) => {
+  try {
+    const { id: demoVideoId, locale } = req.params;
+    await prisma.demoVideoTranslation.deleteMany({ where: { demoVideoId, locale } });
+    await prisma.demoVideo.update({ where: { id: demoVideoId }, data: { updatedAt: new Date() } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin delete demo video translation error:', error);
+    res.status(500).json({ error: 'Failed to delete translation' });
   }
 });
 
@@ -2886,8 +3065,15 @@ router.post('/sessions/:id/rerun-cdi-coaching', requireAdminAuth, async (req, re
     const result = await generateCdiCoaching(utterances, childInfo, tagCounts, childSpeaker);
     if (!result) return res.status(500).json({ error: 'generateCdiCoaching returned null' });
 
-    const coachingCards = (result.coachingCards || result.goalDirective)
-      ? { sections: result.coachingCards || null, tomorrowGoal: result.tomorrowGoal || null, notifications: result.notifications || null, goalDirective: result.goalDirective || null }
+    const coachingCards = (result.coachingCards || result.coachingPart1 || result.goalDirective)
+      ? {
+          sections: result.coachingCards || null,
+          part1: result.coachingPart1 || null,
+          part2: result.coachingPart2 || null,
+          tomorrowGoal: result.tomorrowGoal || null,
+          notifications: result.notifications || null,
+          goalDirective: result.goalDirective || null,
+        }
       : null;
 
     await prisma.session.update({

@@ -1,5 +1,5 @@
 /**
- * Backfill WACB totalScore using new scoring formula:
+ * Backfill ChildSnapshotSurvey totalScore using the scoring formula:
  * value 1 -> 1 pts, 2 -> 2 pts, 3 -> 4 pts, 4 -> 6 pts, 5 -> 7 pts
  */
 
@@ -9,19 +9,21 @@ const prisma = new PrismaClient();
 const VALUE_TO_POINTS = { 1: 1, 2: 2, 3: 4, 4: 6, 5: 7 };
 const toPoints = (v) => VALUE_TO_POINTS[v] ?? v;
 
+const ITEMS = [
+  'q1Dawdle', 'q2Disobey', 'q3Tantrum', 'q4Defiance', 'q5FocusDemand',
+  'q6Restless', 'q7TaskCompletion', 'q8Destroy', 'q9Aggression', 'q10LieSteal',
+];
+
 async function backfill() {
-  const surveys = await prisma.wacbSurvey.findMany();
+  const surveys = await prisma.childSnapshotSurvey.findMany();
   console.log(`Found ${surveys.length} survey(s) to recalculate.\n`);
 
   let updated = 0;
   for (const s of surveys) {
-    const newScore =
-      toPoints(s.q1Dawdle) + toPoints(s.q2MealBehavior) + toPoints(s.q3Disobey) +
-      toPoints(s.q4Angry) + toPoints(s.q5Scream) + toPoints(s.q6Destroy) +
-      toPoints(s.q7ProvokeFights) + toPoints(s.q8Interrupt) + toPoints(s.q9Attention);
+    const newScore = ITEMS.reduce((sum, f) => sum + toPoints(s[f]), 0);
 
     if (newScore !== s.totalScore) {
-      await prisma.wacbSurvey.update({
+      await prisma.childSnapshotSurvey.update({
         where: { id: s.id },
         data: { totalScore: newScore }
       });

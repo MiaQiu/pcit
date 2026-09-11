@@ -16,25 +16,26 @@ async function testChild(childId) {
   console.log("Child:", child.name, "| ID:", child.id.substring(0,8));
   console.log("User issue:", child.User.issue);
 
-  const survey = await prisma.wacbSurvey.findFirst({
+  const survey = await prisma.childSnapshotSurvey.findFirst({
     where: { userId: child.userId },
     orderBy: { submittedAt: "desc" }
   });
 
   if (survey) {
-    console.log("WACB:", {
+    console.log("Snapshot:", {
       q1Dawdle: survey.q1Dawdle,
-      q2MealBehavior: survey.q2MealBehavior,
-      q3Disobey: survey.q3Disobey,
-      q4Angry: survey.q4Angry,
-      q5Scream: survey.q5Scream,
-      q6Destroy: survey.q6Destroy,
-      q7ProvokeFights: survey.q7ProvokeFights,
-      q8Interrupt: survey.q8Interrupt,
-      q9Attention: survey.q9Attention
+      q2Disobey: survey.q2Disobey,
+      q3Tantrum: survey.q3Tantrum,
+      q4Defiance: survey.q4Defiance,
+      q5FocusDemand: survey.q5FocusDemand,
+      q6Restless: survey.q6Restless,
+      q7TaskCompletion: survey.q7TaskCompletion,
+      q8Destroy: survey.q8Destroy,
+      q9Aggression: survey.q9Aggression,
+      q10LieSteal: survey.q10LieSteal
     });
   } else {
-    console.log("WACB: None");
+    console.log("Snapshot: None");
   }
 
   const result = await runPriorityEngine(child.userId);

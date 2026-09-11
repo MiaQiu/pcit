@@ -5,16 +5,17 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator, TextInput, LayoutAnimation, Platform, UIManager, Animated, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator, TextInput, LayoutAnimation, Platform, UIManager, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { SkillProgressBar } from '../components/SkillProgressBar';
 import { Button } from '../components/Button';
-import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
+import { COLORS, FONTS, PROFILE_REPORT_CHILD, PROFILE_REPORT_THANKS_DRAGON, REPORT_DETAIL_DRAGON } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, WacbSurvey, ParentSkillLevel } from '@nora/core';
+import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ChildSnapshotSurvey, ParentSkillLevel } from '@nora/core';
+import { computeFocusAreas, primaryFocusAreas, primaryFocusLabels, type FocusAreaData, type FocusSeverity } from '../utils/snapshotFocusAreas';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
 import { MarkdownText } from '../utils/MarkdownText';
@@ -23,8 +24,14 @@ import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
 import * as userStorage from '../lib/userStorage';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import {
+  PARENT_SKILL_LEVEL_ORDER,
+  PARENT_SKILL_LEVEL_KEYS,
+  PARENT_SKILL_LEVEL_ICONS,
+  PARENT_SKILL_LEVEL_SKILL_LABEL,
+} from '../constants/parentSkillLevels';
 
-type ProfileReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
+type ProfileReportScreenRouteProp = RouteProp<RootStackParamList, 'ProfileReport'>;
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -127,11 +134,9 @@ const calculateAge = (birthday?: Date | string | null): number | null => {
   return Math.max(age, 0);
 };
 
-// ─── Core Focus Areas — derived from the WACB-N questionnaire ────────────────
-// The 9 WACB items group into 4 clinical domains; each domain's severity is
-// computed from its items' answers rather than hardcoded per domain.
-
-type FocusSeverity = 'high' | 'moderate' | 'mild';
+// ─── Core Focus Areas — derived from the Child Snapshot questionnaire ────────
+// The derivation (FOCUS_AREA_GROUPS / severity / computeFocusAreas) is shared
+// with ProfileScreen — see utils/snapshotFocusAreas.ts.
 
 const LEVEL_COLORS: Record<FocusSeverity, { bg: string; text: string }> = {
   moderate: { bg: '#FDECC8', text: '#B45309' },
@@ -139,63 +144,25 @@ const LEVEL_COLORS: Record<FocusSeverity, { bg: string; text: string }> = {
   mild: { bg: '#D8F3E9', text: '#0F9D6C' },
 };
 
-// Raw 1-5 Likert (Never..Very Often) → clinical point weight, same mapping
-// the server uses to score submissions (see server/routes/wacb-survey.cjs).
-const VALUE_TO_POINTS: Record<number, number> = { 1: 1, 2: 2, 3: 4, 4: 6, 5: 7 };
-const toPoints = (raw: number | null | undefined): number | null =>
-  raw != null ? (VALUE_TO_POINTS[raw] ?? raw) : null;
-
-// A domain is "high" if any item scored 6-7 pts (raw Often/Very Often),
-// "moderate" if any item scored 3-5 pts (raw Sometimes), else "mild".
-const severityForPoints = (points: Array<number | null>): FocusSeverity => {
-  const values = points.filter((p): p is number => p != null);
-  if (values.some(p => p >= 6)) return 'high';
-  if (values.some(p => p >= 3)) return 'moderate';
-  return 'mild';
-};
-
-const FOCUS_AREA_GROUPS = [
-  { key: 'routines', icon: 'time-outline', iconBg: '#FDECC8', iconColor: '#C2790C', fields: ['q1Dawdle', 'q2MealBehavior'] as const },
-  { key: 'emotional', icon: 'flash', iconBg: '#FCE0E0', iconColor: '#DC2626', fields: ['q4Angry', 'q5Scream', 'q6Destroy'] as const },
-  { key: 'attention', icon: 'locate-outline', iconBg: '#DBEAFE', iconColor: '#2563EB', fields: ['q3Disobey', 'q8Interrupt', 'q9Attention'] as const },
-  { key: 'social', icon: 'people-outline', iconBg: '#D8F3E9', iconColor: '#0F9D6C', fields: ['q7ProvokeFights'] as const },
-] as const;
-
-interface FocusAreaData {
-  key: string;
-  icon: string;
-  iconBg: string;
-  iconColor: string;
-  severity: FocusSeverity;
-}
-
-const computeFocusAreas = (survey: WacbSurvey): FocusAreaData[] =>
-  FOCUS_AREA_GROUPS.map(group => ({
-    key: group.key,
-    icon: group.icon,
-    iconBg: group.iconBg,
-    iconColor: group.iconColor,
-    severity: severityForPoints(group.fields.map(field => toPoints(survey[field]))),
-  }));
-
-const FOCUS_CARD_WIDTH = 156;
-const FOCUS_CARD_GAP = 12;
-
-// ─── Personalized Learning Journey — the 7-level parent-skill ladder ──────────
+// ─── Personalized Learning Journey — the 9-level parent-skill ladder ──────────
 // currentLevel comes from the server (authService.getParentSkillLevel(),
-// gated by real session counts — see parentSkillLevelService.cjs). Levels
-// 6-7 are defined here for display but aren't advanced into automatically
-// yet, so a parent can be shown "at" level 6 indefinitely.
+// gated by real session counts — see parentSkillLevelService.cjs). Level
+// ordering/keys/icons/skill-tap-through are the shared single source of
+// truth in constants/parentSkillLevels.ts (also used by ParentLevelDetailScreen
+// and LevelUpModal), rather than a duplicated array local to this screen.
+const PARENT_SKILL_LEVELS = PARENT_SKILL_LEVEL_ORDER.map(level => ({
+  level,
+  key: PARENT_SKILL_LEVEL_KEYS[level],
+  icon: PARENT_SKILL_LEVEL_ICONS[level],
+  skillKey: PARENT_SKILL_LEVEL_SKILL_LABEL[level],
+}));
 
-const PARENT_SKILL_LEVELS = [
-  { level: 1, key: 'playBuilder', icon: 'happy-outline', skillKey: undefined },
-  { level: 2, key: 'confidenceBuilder', icon: 'star-outline', skillKey: 'Praise (Labeled)' },
-  { level: 3, key: 'attentionBuilder', icon: 'locate-outline', skillKey: 'Narrate' },
-  { level: 4, key: 'communicationBuilder', icon: 'chatbubble-outline', skillKey: 'Echo' },
-  { level: 5, key: 'cooperationBuilder', icon: 'flag-outline', skillKey: undefined },
-  { level: 6, key: 'boundaryBuilder', icon: 'shield-checkmark-outline', skillKey: undefined },
-  { level: 7, key: 'confidentParent', icon: 'trophy-outline', skillKey: undefined },
-] as const;
+// The Personalized Learning Journey walks the full 9-level ladder in three
+// steps: Fewer Play Interruptions (levels 1–3), More Confidence Builders
+// (levels 4–6), then Calm Discipline (levels 7–9). Each step lists its levels
+// with a one-line note — profileReport.journeyPlan.levelHelp.<levelKey>.<slug>
+// — explaining how that level's skill addresses the top Snapshot focus.
+const JOURNEY_PHASE_LEVELS: ParentSkillLevel[][] = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
 
 /** PDI Coach's Corner — Two Choices Flow skills */
 const PDICoachCorner: React.FC<{
@@ -277,9 +244,10 @@ export const ProfileReportScreen: React.FC = () => {
   const { t } = useTranslation();
   const recordingService = useRecordingService();
   const authService = useAuthService();
-  const { recordingId } = route.params;
+  const { recordingId, justCompletedWacb } = route.params ?? {};
 
-  const [loading, setLoading] = useState(true);
+  // Only block on a report load when we were actually given a session.
+  const [loading, setLoading] = useState(Boolean(recordingId));
   const [error, setError] = useState<string | null>(null);
   const [reportData, setReportData] = useState<RecordingAnalysis | null>(null);
   const [pollingCount, setPollingCount] = useState(0);
@@ -295,11 +263,12 @@ export const ProfileReportScreen: React.FC = () => {
   const [showDomainModal, setShowDomainModal] = useState(false);
   const [loadingDomainMilestones, setLoadingDomainMilestones] = useState(false);
 
-  // Focus areas carousel pagination
-  const [activeFocusIndex, setActiveFocusIndex] = useState(0);
-  // null until the WACB survey fetch resolves — an empty array (not null)
-  // means "checked, no survey yet", so the section renders as hidden.
+  // null until the Child Snapshot survey fetch resolves — an empty array (not
+  // null) means "checked, no survey yet", so the section falls back to the
+  // pre-selected issues below.
   const [focusAreas, setFocusAreas] = useState<FocusAreaData[] | null>(null);
+  // Pre-selected User.issue values — the fallback shown when there's no survey.
+  const [issues, setIssues] = useState<string[]>([]);
 
   // Feedback state
   const [feedbackSentiment, setFeedbackSentiment] = useState<'positive' | 'negative' | null>(null);
@@ -310,6 +279,7 @@ export const ProfileReportScreen: React.FC = () => {
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const handleSentimentPress = useCallback((sentiment: 'positive' | 'negative') => {
+    if (!recordingId) return;
     amplitudeService.trackEvent('Report Feedback Sentiment Selected', { sentiment, recordingId });
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setFeedbackSentiment(sentiment);
@@ -337,7 +307,7 @@ export const ProfileReportScreen: React.FC = () => {
   }, []);
 
   const handleSubmitFeedback = useCallback(async () => {
-    if (!feedbackSentiment) return;
+    if (!feedbackSentiment || !recordingId) return;
     amplitudeService.trackEvent('Report Feedback Submitted', { sentiment: feedbackSentiment, reasons: feedbackReasons, recordingId });
     try {
       await recordingService.submitReportFeedback(recordingId, {
@@ -353,7 +323,7 @@ export const ProfileReportScreen: React.FC = () => {
   }, [feedbackSentiment, feedbackReasons, feedbackText, recordingId, recordingService]);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Report', { recordingId, version: 'v2' });
+    amplitudeService.trackScreenView('Report', { recordingId: recordingId ?? null, version: 'v2' });
     loadReportData();
     loadChildProfile();
     loadDevelopmentalVisibility();
@@ -406,7 +376,7 @@ export const ProfileReportScreen: React.FC = () => {
 
   const loadFocusAreas = async () => {
     try {
-      const survey: WacbSurvey | null = await authService.getLatestWacbSurvey();
+      const survey: ChildSnapshotSurvey | null = await authService.getLatestSnapshotSurvey();
       setFocusAreas(survey ? computeFocusAreas(survey) : []);
     } catch (err) {
       setFocusAreas([]);
@@ -427,12 +397,20 @@ export const ProfileReportScreen: React.FC = () => {
       const user = await authService.getCurrentUser();
       if (user?.childName) setChildName(user.childName);
       setChildAge(calculateAge(user?.childBirthday));
+      const rawIssue = user?.issue;
+      setIssues(Array.isArray(rawIssue) ? rawIssue : rawIssue ? [rawIssue] : []);
     } catch (err) {
       // Keep defaults if fetch fails
     }
   };
 
   const loadReportData = async () => {
+    // No session in scope (opened from Profile) — the Snapshot + journey below
+    // are user-scoped and don't need one.
+    if (!recordingId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -469,15 +447,30 @@ export const ProfileReportScreen: React.FC = () => {
     navigation.goBack();
   };
 
-  const handleFocusScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const x = e.nativeEvent.contentOffset.x;
-    const idx = Math.round(x / (FOCUS_CARD_WIDTH + FOCUS_CARD_GAP));
-    setActiveFocusIndex(Math.max(0, Math.min((focusAreas?.length ?? 1) - 1, idx)));
+  // Jump into the standalone Child Snapshot survey. On submit it returns to this
+  // session's ProfileReport (when we have one) or to Profile.
+  const handleTakeSnapshot = () => {
+    amplitudeService.trackEvent('Profile Report Take Snapshot Tapped', { recordingId: recordingId ?? null });
+    navigation.navigate('Onboarding', {
+      initialStep: 'WacbQuestion1',
+      wacbReturnRecordingId: recordingId,
+    });
+  };
+
+  const handleLevelCardPress = () => {
+    amplitudeService.trackEvent('Profile Report Level Card Tapped', { level: parentSkillLevel });
+    navigation.navigate('ParentLevelDetail', { level: parentSkillLevel });
+  };
+
+  const handleSeeYouTomorrow = () => {
+    amplitudeService.trackEvent('Profile Report See You Tomorrow Tapped', { recordingId: recordingId ?? null });
+    navigation.navigate('MainTabs', { screen: 'Home' });
   };
 
   const isPDI = reportData?.mode === 'PDI';
 
   const handleLevelPress = (step: { level: number; key: string; skillKey?: string }) => {
+    if (!recordingId) return;
     amplitudeService.trackEvent('Report Journey Level Tapped', { level: step.level, recordingId });
     if (step.skillKey && reportData) {
       const skill = reportData.skills.find(s => s.label === step.skillKey);
@@ -502,8 +495,11 @@ export const ProfileReportScreen: React.FC = () => {
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('report.headerTitle')}</Text>
-          <View style={{ width: 28 }} />
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>{t('profileReport.headerTitle', { childName })}</Text>
+            <Text style={styles.headerSubtitle}>{t('profileReport.headerSubtitle')}</Text>
+          </View>
+          <View style={{ width: 40 }} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.mainPurple} />
@@ -515,16 +511,20 @@ export const ProfileReportScreen: React.FC = () => {
     );
   }
 
-  // Error state
-  if (error || !reportData) {
+  // Error state — only when a session was requested but couldn't load. Without
+  // a recordingId the screen still renders (Snapshot + journey are user-scoped).
+  if (recordingId && (error || !reportData)) {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('report.headerTitle')}</Text>
-          <View style={{ width: 28 }} />
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>{t('profileReport.headerTitle', { childName })}</Text>
+            <Text style={styles.headerSubtitle}>{t('profileReport.headerSubtitle')}</Text>
+          </View>
+          <View style={{ width: 40 }} />
         </View>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color="#E74C3C" />
@@ -537,10 +537,29 @@ export const ProfileReportScreen: React.FC = () => {
     );
   }
 
-  const focusHeading = isPDI ? t('profileReport.focusHeadingPDI') : t('profileReport.focusHeadingCDI');
-  const focusDescription = (isPDI && reportData.pdiEncouragement)
-    ? reportData.pdiEncouragement
-    : (reportData.feedback || reportData.encouragement || '');
+  // Mirror the Core Focus Areas carousel: the hero heading is the first card's
+  // title (highest-severity, since computeFocusAreas sorts high→moderate→mild).
+  // Falls back to the mode-based static heading when the WACB survey isn't done.
+  const focusHeading = focusAreas && focusAreas.length > 0
+    ? t(`profileReport.focusAreas.${focusAreas[0].key}.label`)
+    : (isPDI ? t('profileReport.focusHeadingPDI') : t('profileReport.focusHeadingCDI'));
+  // Describe the picked focus area (same first card the heading mirrors); fall
+  // back to the session's own feedback/encouragement copy when there's no WACB.
+  const focusDescription = focusAreas && focusAreas.length > 0
+    ? t(`profileReport.focusAreas.${focusAreas[0].key}.heroDescription`, { childName })
+    : (isPDI && reportData?.pdiEncouragement)
+      ? reportData.pdiEncouragement
+      : (reportData?.feedback || reportData?.encouragement || '');
+
+  // The journey subtitle mirrors Profile's "Primary Focus Area" row (same merged
+  // list). The journey itself is tailored to the single top Snapshot category
+  // (severity-sorted); with no signal it shows a generic Child-Led Play arc.
+  const primaryAreas = primaryFocusAreas(focusAreas);
+  const journeyHeading = primaryFocusLabels(focusAreas, issues, t).join(', ') || focusHeading;
+
+  const topFocusKey = primaryAreas[0]?.key ?? null;
+  const journeyFocusSlug = topFocusKey ?? 'generic';
+  const showJourneyCta = focusAreas?.length === 0; // survey not done at all
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
@@ -549,8 +568,11 @@ export const ProfileReportScreen: React.FC = () => {
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('report.headerTitle')}</Text>
-        <View style={{ width: 28 }} />
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>{t('profileReport.headerTitle', { childName })}</Text>
+          <Text style={styles.headerSubtitle}>{t('profileReport.headerSubtitle')}</Text>
+        </View>
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -558,11 +580,26 @@ export const ProfileReportScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Thanks-for-answering banner — only right after finishing the WACB survey */}
+        {justCompletedWacb && (
+          <View style={styles.thanksBanner}>
+            <Image source={PROFILE_REPORT_THANKS_DRAGON} style={styles.thanksBannerDragon} resizeMode="contain" />
+            <View style={styles.thanksBannerText}>
+              <Text style={styles.thanksBannerTitle}>{t('profileReport.thanksBannerTitle')}</Text>
+              <Text style={styles.thanksBannerBody}>{t('profileReport.thanksBannerBody', { childName })}</Text>
+              <View style={styles.thanksBannerBadge}>
+                <Ionicons name="checkmark-circle" size={16} color={COLORS.mainPurple} />
+                <Text style={styles.thanksBannerBadgeText}>{t('profileReport.thanksBannerBadge')}</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* Hero — child + primary focus */}
-        <View style={styles.heroCard}>
+        {/* <View style={styles.heroCard}>
           <View style={styles.heroTopRow}>
             <View style={styles.heroDragonCircle}>
-              <Image source={DRAGON_PURPLE} style={styles.heroDragonImage} resizeMode="contain" />
+              <Image source={PROFILE_REPORT_CHILD} style={styles.heroDragonImage} resizeMode="cover" />
             </View>
             <View style={styles.heroInfo}>
               <View style={styles.heroNameRow}>
@@ -579,7 +616,7 @@ export const ProfileReportScreen: React.FC = () => {
           {!!focusDescription && (
             <Text style={styles.heroDescription}>{focusDescription}</Text>
           )}
-        </View>
+        </View> */}
 
         {/* Core Focus Areas — derived from the WACB questionnaire; hidden until completed */}
         {!!focusAreas?.length && (
@@ -591,553 +628,210 @@ export const ProfileReportScreen: React.FC = () => {
                 <Ionicons name="information-circle-outline" size={15} color="#9CA3AF" />
               </View>
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={handleFocusScrollEnd}
-              snapToInterval={FOCUS_CARD_WIDTH + FOCUS_CARD_GAP}
-              decelerationRate="fast"
-              contentContainerStyle={styles.focusAreasScrollContent}
-            >
+            <Text style={styles.sectionSubtitleTight}>{t('profileReport.coreFocusAreasSubtitle', { childName })}</Text>
+            <View style={styles.focusAreaList}>
               {focusAreas.map(area => {
                 const levelColors = LEVEL_COLORS[area.severity];
                 return (
-                  <View key={area.key} style={styles.focusAreaCard}>
+                  <View key={area.key} style={styles.focusAreaRow}>
                     <View style={[styles.focusAreaIconCircle, { backgroundColor: area.iconBg }]}>
                       <Ionicons name={area.icon as any} size={20} color={area.iconColor} />
                     </View>
-                    <Text style={styles.focusAreaLabel}>{t(`profileReport.focusAreas.${area.key}.label`)}</Text>
-                    <View style={[styles.focusAreaLevelBadge, { backgroundColor: levelColors.bg }]}>
-                      <Text style={[styles.focusAreaLevelText, { color: levelColors.text }]}>{t(`profileReport.severity.${area.severity}`)}</Text>
+                    <View style={styles.focusAreaRowText}>
+                      <View style={styles.focusAreaRowTitleLine}>
+                        <Text style={styles.focusAreaLabel}>{t(`profileReport.focusAreas.${area.key}.label`)}</Text>
+                        <View style={[styles.focusAreaLevelBadge, { backgroundColor: levelColors.bg }]}>
+                          <Text style={[styles.focusAreaLevelText, { color: levelColors.text }]}>{t(`profileReport.severity.${area.severity}`)}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.focusAreaFocusText}>{t(`profileReport.focusAreas.${area.key}.focus`)}</Text>
                     </View>
-                    <Text style={styles.focusAreaFocusText}>{t(`profileReport.focusAreas.${area.key}.focus`)}</Text>
                   </View>
                 );
               })}
-            </ScrollView>
-            <View style={styles.focusAreasDots}>
-              {focusAreas.map((area, i) => (
-                <View key={area.key} style={[styles.focusAreaDot, i === activeFocusIndex && styles.focusAreaDotActive]} />
+            </View>
+          </View>
+        )}
+
+        {/* Fallback when the Child Snapshot survey isn't done yet — the
+            pre-selected issues from onboarding (User.issue), plus a nudge to
+            take the survey for the full severity-scored picture. */}
+        {focusAreas?.length === 0 && issues.length > 0 && (
+          <View style={styles.focusAreasSection}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>{t('profileReport.issuesFallbackTitle', { childName })}</Text>
+              <View style={styles.fromIntakeRow}>
+                <Text style={styles.fromIntakeText}>{t('profileReport.fromYourIntake')}</Text>
+                <Ionicons name="information-circle-outline" size={15} color="#9CA3AF" />
+              </View>
+            </View>
+            <Text style={styles.sectionSubtitleTight}>{t('profileReport.issuesFallbackSubtitle')}</Text>
+            <View style={styles.focusAreaList}>
+              {issues.map(issue => (
+                <View key={issue} style={styles.focusAreaRow}>
+                  <View style={[styles.focusAreaIconCircle, { backgroundColor: '#F3E8FF' }]}>
+                    <Ionicons name="heart-outline" size={20} color={COLORS.mainPurple} />
+                  </View>
+                  <View style={styles.focusAreaRowText}>
+                    <Text style={styles.focusAreaLabel}>{t(`profile.issueTags.${issue}`, { defaultValue: issue })}</Text>
+                  </View>
+                </View>
               ))}
             </View>
           </View>
         )}
 
-        {/* Personalized Learning Journey — 7-level parent skill ladder */}
-        <View style={styles.journeySection}>
-          <Text style={styles.cardTitle}>{t('profileReport.journeyTitle')}</Text>
-          <Text style={styles.sectionSubtitle}>{t('profileReport.journeySubtitle')}</Text>
-          <View style={styles.journeyCard}>
-            {(() => {
-              const activeStep = PARENT_SKILL_LEVELS.find(s => s.level === parentSkillLevel) ?? PARENT_SKILL_LEVELS[0];
-              return (
-                <TouchableOpacity
-                  style={styles.journeyActiveCard}
-                  activeOpacity={0.85}
-                  onPress={() => handleLevelPress(activeStep)}
-                >
-                  <View style={styles.journeyActiveHeaderRow}>
-                    <View style={styles.journeyLevelBadge}>
-                      <Text style={styles.journeyLevelBadgeText}>{t('profileReport.journeyLevelBadge', { level: activeStep.level })}</Text>
-                    </View>
-                    <Ionicons name={activeStep.icon as any} size={20} color={COLORS.mainPurple} />
-                  </View>
-                  <Text style={styles.journeyActiveTitle}>{t(`profileReport.levels.${activeStep.key}.title`)}</Text>
-                  <Text style={styles.journeyActiveSkill}>{t(`profileReport.levels.${activeStep.key}.skill`)}</Text>
-                  <Text style={styles.journeyActiveGoal}>
-                    <Text style={styles.journeyActiveGoalLabel}>{t('profileReport.journeyGoalLabel')}</Text>
-                    {t(`profileReport.levels.${activeStep.key}.goal`)}
-                  </Text>
-                  <Text style={styles.journeyActiveLearn}>{t(`profileReport.levels.${activeStep.key}.learn`)}</Text>
-                </TouchableOpacity>
-              );
-            })()}
-
-            <View style={styles.journeyRoadmap}>
-              {PARENT_SKILL_LEVELS.map((step, index) => {
-                const status = step.level < parentSkillLevel ? 'done' : step.level === parentSkillLevel ? 'active' : 'locked';
-                return (
-                  <View key={step.key} style={styles.journeyRoadmapRow}>
-                    <View style={styles.journeyStepIndicatorCol}>
-                      <View style={[
-                        styles.journeyStepNumberCircle,
-                        status === 'done' && styles.journeyStepNumberCircleDone,
-                        status === 'locked' && styles.journeyStepNumberCircleLocked,
-                      ]}>
-                        {status === 'done' ? (
-                          <Ionicons name="checkmark" size={13} color="#FFFFFF" />
-                        ) : status === 'locked' ? (
-                          <Ionicons name="lock-closed" size={11} color="#9CA3AF" />
-                        ) : (
-                          <Text style={styles.journeyStepNumberText}>{step.level}</Text>
-                        )}
-                      </View>
-                      {index < PARENT_SKILL_LEVELS.length - 1 && <View style={styles.journeyStepLine} />}
-                    </View>
-                    <View style={styles.journeyRoadmapTextCol}>
-                      <Text style={[styles.journeyRoadmapTitle, status === 'locked' && styles.journeyRoadmapTitleLocked]}>
-                        {t(`profileReport.levels.${step.key}.title`)}
-                      </Text>
-                      <Text style={styles.journeyRoadmapSkill}>{t(`profileReport.levels.${step.key}.skill`)}</Text>
-                    </View>
-                  </View>
-                );
-              })}
+        {/* Why we're starting here — explains why the roadmap targets this focus area */}
+        {/* {focusAreas && focusAreas.length > 0 && (
+          <View style={styles.whyHereCard}>
+            <View style={styles.whyHereHeaderRow}>
+              <View style={styles.whyHereIconCircle}>
+                <Ionicons name="bulb" size={18} color="#FFFFFF" />
+              </View>
+              <Text style={styles.whyHereTitle}>{t('profileReport.whyHereTitle')}</Text>
+              <Image source={REPORT_DETAIL_DRAGON} style={styles.whyHereDragon} resizeMode="contain" />
             </View>
-          </View>
-        </View>
-
-        {/* Nora Score */}
-        <View style={styles.scoreSection}>
-          <Text style={styles.sectionTitle}>{t('report.section.emotionalBankAccount')}</Text>
-          <View style={styles.skillsContainer}>
-            {(() => {
-              const score = reportData.noraScore ?? 0;
-              let scoreColor: string;
-              let suffix: string;
-              if (score < 80) {
-                scoreColor = '#852221';
-                suffix = t('report.skillRating.payAttention');
-              } else if (score < 90) {
-                scoreColor = '#6750A4';
-                suffix = t('report.skillRating.good');
-              } else {
-                scoreColor = '#6750A4';
-                suffix = t('report.skillRating.excellent');
-              }
-              return (
-                <SkillProgressBar
-                  label={t('report.overallLabel')}
-                  progress={score}
-                  maxValue={100}
-                  color={scoreColor}
-                  textColor={scoreColor}
-                  prefix="+"
-                  suffix={suffix}
-                  onPress={() => { amplitudeService.trackEvent('Report Overall Score Tapped', { score }); navigation.navigate('SkillExplanation', { skillKey: 'Overall', score, tip: reportData.tip ?? undefined }); }}
-                />
-              );
-            })()}
-          </View>
-        </View>
-
-        {/* PRN Skills Section */}
-        <View style={styles.skillsSection}>
-          <Text style={styles.sectionTitle}>{t('report.section.penSkills')}</Text>
-          <Text style={styles.sectionSubtitle}>{t('report.section.penSkillsSubtitle')}</Text>
-          <View style={styles.skillsContainer}>
-            {(() => {
-              const childUtteranceCount = reportData.transcript
-                ? reportData.transcript.filter(u => u.role === 'child').length
-                : 0;
-              const echoTarget = childUtteranceCount < 10
-                ? Math.round(childUtteranceCount * 0.75)
-                : 10;
-              return reportData.skills.map((skill, index) => {
-                const maxValue = skill.label === 'Echo' ? echoTarget : 10;
-                const rating = getSkillRating(skill.progress, t, maxValue);
-                const isDynamicEcho = skill.label === 'Echo' && childUtteranceCount < 10;
-                return (
-                  <SkillProgressBar
-                    key={index}
-                    label={getSkillDisplayLabel(skill.label, t)}
-                    progress={skill.progress}
-                    maxValue={maxValue}
-                    color={rating.barColor}
-                    textColor={rating.textColor}
-                    suffix={isDynamicEcho ? `${rating.suffix}*` : rating.suffix}
-                    onPress={() => { amplitudeService.trackEvent('Report Skill Tapped', { skillKey: skill.label, progress: skill.progress }); navigation.navigate('SkillUtterances', { skillKey: skill.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, skill.label), target: maxValue, childUtteranceCount }); }}
-                  />
-                );
-              });
-            })()}
-          </View>
-          {(() => {
-            const childUtteranceCount = reportData.transcript
-              ? reportData.transcript.filter(u => u.role === 'child').length
-              : 0;
-            if (childUtteranceCount >= 10) return null;
-            const echoSkill = reportData.skills.find(s => s.label === 'Echo');
-            if (!echoSkill) return null;
-            const echoTarget = Math.round(childUtteranceCount * 0.75);
-            return (
-              <Text style={styles.echoFootnote}>
-                {`* ${t('skillInfo.echoGoalDynamic' as any, { count: childUtteranceCount, target: echoTarget })}`}
-              </Text>
-            );
-          })()}
-        </View>
-
-        {/* Areas to Avoid */}
-        <View style={styles.avoidSection}>
-          {(() => {
-            const filteredAreas = reportData.areasToAvoid
-              .filter(area => !(reportData.mode === 'PDI' && (typeof area === 'string' ? area : area.label) === 'Commands'));
-            const avoidTotal = filteredAreas.reduce((s: number, a: any) => s + (typeof a === 'string' ? 0 : (a.count || 0)), 0);
-            let avoidRatingSuffix: string;
-            let avoidRatingColor: string;
-            if (avoidTotal > 3) {
-              avoidRatingSuffix = t('report.skillRating.payAttention');
-              avoidRatingColor = '#852221';
-            } else if (avoidTotal === 0) {
-              avoidRatingSuffix = t('report.skillRating.excellent');
-              avoidRatingColor = '#6750A4';
-            } else {
-              avoidRatingSuffix = t('report.skillRating.good');
-              avoidRatingColor = '#6750A4';
-            }
-            return (
-              <>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>{t('report.section.areasToAvoid')}</Text>
-                  <Text style={[styles.skillRatingBadge, { color: avoidRatingColor }]}>{avoidTotal} {avoidRatingSuffix}</Text>
-                </View>
-                <Text style={styles.sectionSubtitle}>{t('report.section.areasToAvoidSubtitle')}</Text>
-                <View style={styles.avoidContainer}>
-                  {filteredAreas.map((area, index) => {
-                    const areaData = typeof area === 'string' ? { label: area, count: 0 } : area;
-                    const needsAttention = areaData.count > 0;
-                    return (
-                      <View key={index} style={styles.avoidItem}>
-                        <View style={styles.avoidRow}>
-                          <Text style={styles.avoidLabel}>{getSkillDisplayLabel(areaData.label, t)}</Text>
-                          <TouchableOpacity
-                            style={styles.avoidRightContainer}
-                            onPress={() => { amplitudeService.trackEvent('Report Area Avoided Tapped', { skillKey: areaData.label, count: areaData.count }); navigation.navigate('SkillUtterances', { skillKey: areaData.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, areaData.label) }); }}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                          >
-                            <Ionicons name="chevron-forward" size={12} color={needsAttention ? '#852221' : '#6750A4'} />
-                          </TouchableOpacity>
-                        </View>
-                        <View style={styles.circlesContainer}>
-                          {Array.from({ length: areaData.count }).map((_, i) => (
-                            <View key={i} style={[styles.circle, needsAttention && styles.circleAttention]} />
-                          ))}
-                        </View>
-                      </View>
-                    );
-                  })}
-                </View>
-              </>
-            );
-          })()}
-        </View>
-
-        {/* Top Moment */}
-        <View>
-          <Text style={styles.cardTitle}>{t('report.section.topMoment')}</Text>
-          <View style={styles.card}>
-            <Text style={styles.quoteText}>
-              "{reportData.topMomentUtteranceNumber != null && reportData.transcript?.[reportData.topMomentUtteranceNumber]
-                ? stripPcitTags(reportData.transcript[reportData.topMomentUtteranceNumber].text)
-                : stripPcitTags(typeof reportData.topMoment === 'string' ? reportData.topMoment : reportData.topMoment.quote)}"
+            <Text style={styles.whyHereBody}>
+              {t('profileReport.whyHereBody1Prefix')}
+              <Text style={styles.whyHereBodyBold}>{focusHeading}</Text>
+              {t('profileReport.whyHereBody1Suffix')}
             </Text>
-            {reportData.audioUrl && reportData.topMomentStartTime != null && reportData.topMomentEndTime != null && (
-              <MomentPlayer
-                audioUrl={reportData.audioUrl}
-                startTime={reportData.topMomentStartTime}
-                endTime={reportData.topMomentEndTime}
-              />
-            )}
+            <Text style={[styles.whyHereBody, styles.whyHereBodyLast]}>{t('profileReport.whyHereBody2')}</Text>
           </View>
-        </View>
+        )} */}
 
-        {/* Coach's Corner */}
-        {reportData.mode === 'PDI' && reportData.pdiSkills && Array.isArray(reportData.pdiSkills) && reportData.pdiSkills.length > 0 ? (
-          <PDICoachCorner pdiSkills={reportData.pdiSkills} commandSequences={reportData.pdiCommandSequences} summary={reportData.pdiSummary} recordingId={recordingId} navigation={navigation} tomorrowGoal={reportData.pdiTomorrowGoal} />
-        ) : (
-          !reportData.coachingCards && reportData.coachingSummary ? (
-            <View>
-              <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
-              <View style={styles.coachCard}>
-                <Text style={styles.coachDescription}>{reportData.coachingSummary}</Text>
-                <TouchableOpacity
-                  style={styles.cardLinkButton}
-                  onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
-                >
-                  <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
-                </TouchableOpacity>
+        {/* Personalized Learning Journey — Child-Led Play (drop the Play
+            Interruptions, then build the Confidence Builders), then Calm
+            Discipline. Phase-1 steps highlight the skill/avoid-item tied to
+            the top Snapshot focus category. */}
+        {focusAreas !== null && (
+          <View style={styles.journeySection}>
+            <Text style={styles.cardTitle}>{t('profileReport.journeyTitle')}</Text>
+            <Text style={styles.sectionSubtitle}>
+              {t('profileReport.whyHereBody1Prefix')}
+              <Text style={styles.sectionSubtitleBold}>{journeyHeading}</Text>
+              {t('profileReport.whyHereBody1Suffix')}{' '}
+              {t('profileReport.journeySubtitle', { childName })}
+            </Text>
+            <View style={styles.journeyCard}>
+              <View style={styles.journeyRoadmap}>
+                {(() => {
+                  const steps: Array<{
+                    phase?: string;
+                    title: string;
+                    body: string;
+                    levels: ParentSkillLevel[];
+                  }> = [
+                    {
+                      phase: t('profileReport.journeyPlan.phase1'),
+                      title: t('profileReport.journeyPlan.step1Title'),
+                      body: t(`profileReport.journeyPlan.interruptionBody.${journeyFocusSlug}`, { childName }),
+                      levels: JOURNEY_PHASE_LEVELS[0],
+                    },
+                    {
+                      title: t('profileReport.journeyPlan.step2Title'),
+                      body: t(`profileReport.journeyPlan.builderBody.${journeyFocusSlug}`, { childName }),
+                      levels: JOURNEY_PHASE_LEVELS[1],
+                    },
+                    {
+                      phase: t('profileReport.journeyPlan.phase2'),
+                      title: t('profileReport.journeyPlan.step3Title'),
+                      body: t(`profileReport.journeyDisciplineWhy.${journeyFocusSlug}`, { childName }),
+                      levels: JOURNEY_PHASE_LEVELS[2],
+                    },
+                  ];
+                  return steps.map((step, index) => {
+                    const isLast = index === steps.length - 1;
+                    return (
+                      <React.Fragment key={step.title}>
+                        {!!step.phase && (
+                          <Text style={[styles.journeyPhaseLabel, index > 0 && styles.journeyPhaseLabelGap]}>
+                            {step.phase}
+                          </Text>
+                        )}
+                        <View style={styles.journeyRoadmapRow}>
+                          <View style={styles.journeyStepIndicatorCol}>
+                            <View style={styles.journeyStepNumberCircle}>
+                              <Text style={styles.journeyStepNumberText}>{index + 1}</Text>
+                            </View>
+                            {!isLast && <View style={styles.journeyStepLine} />}
+                          </View>
+                          <View style={styles.journeyRoadmapTextCol}>
+                            <Text style={styles.journeyStepTitle}>{step.title}</Text>
+                            <Text style={styles.journeyStepBody}>{step.body}</Text>
+                            <View style={styles.journeyLevelList}>
+                              {step.levels.map(lvl => {
+                                const levelKey = PARENT_SKILL_LEVEL_KEYS[lvl];
+                                return (
+                                  <View key={lvl} style={styles.journeyLevelItem}>
+                                    <Text style={styles.journeyLevelHead}>
+                                      <Text style={styles.journeyLevelNum}>{t('profileReport.journeyLevelBadge', { level: lvl })}</Text>
+                                      {`  ${t(`profileReport.levels.${levelKey}.skill`)}`}
+                                    </Text>
+                                    <Text style={styles.journeyLevelHelp}>
+                                      {t(`profileReport.journeyPlan.levelHelp.${levelKey}.${journeyFocusSlug}`, { childName })}
+                                    </Text>
+                                  </View>
+                                );
+                              })}
+                            </View>
+                          </View>
+                        </View>
+                      </React.Fragment>
+                    );
+                  });
+                })()}
               </View>
+              {showJourneyCta && (
+                <TouchableOpacity style={styles.journeyCta} onPress={handleTakeSnapshot} activeOpacity={0.7}>
+                  <Text style={styles.cardLinkText}>{t('profileReport.journeyPlan.cta', { childName })}</Text>
+                </TouchableOpacity>
+              )}
             </View>
-          ) : reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
-            const items = reportData.coachingCards;
-            const isNewFormat = items.length > 0 && 'content' in items[0];
+          </View>
+        )}
 
-            if (isNewFormat) {
-              const sections = items as CoachingSection[];
-              const tomorrowGoalText = reportData.tomorrowGoal;
-              return (
-                <View>
-                  <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
-                  <View style={styles.coachCard}>
-                    {sections.map((section, idx) => (
-                      <View key={idx} style={idx > 0 ? { marginTop: 16 } : undefined}>
-                        <Text style={styles.coachLabelBold}>{section.title}</Text>
-                        <MarkdownText style={styles.coachDescription}>{section.content}</MarkdownText>
-                      </View>
-                    ))}
-                    {tomorrowGoalText && (
-                      <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tomorrowsGoal')}</Text>{tomorrowGoalText}</Text>
-                    )}
-                    <TouchableOpacity
-                      style={styles.cardLinkButton}
-                      onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
-                    >
-                      <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
-                    </TouchableOpacity>
+        {/* Your current level & target — one section (Snapshot / journey
+            format), ended with a soft exit */}
+        {(() => {
+          const levelKey = PARENT_SKILL_LEVEL_KEYS[parentSkillLevel];
+          return (
+            <View style={styles.journeySection}>
+              <Text style={styles.cardTitle}>{t('profileReport.currentLevelTitle')}</Text>
+              <Text style={styles.sectionSubtitle}>{t('profileReport.currentLevelSubtitle', { childName })}</Text>
+
+              <View style={styles.journeyCard}>
+                <TouchableOpacity style={styles.currentLevelRow} activeOpacity={0.85} onPress={handleLevelCardPress}>
+                  <View style={styles.levelNumberBadge}>
+                    <Text style={styles.levelNumberText}>{parentSkillLevel}</Text>
+                  </View>
+                  <View style={styles.levelBodyTextCol}>
+                    <Text style={styles.currentLevelEyebrow}>{t('reportV2.levelHeading', { level: parentSkillLevel })}</Text>
+                    <Text style={styles.levelTitle}>{t(`profileReport.levels.${levelKey}.title`)}</Text>
+                    <Text style={styles.levelSubtitle}>{t(`profileReport.levels.${levelKey}.goal`)}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                </TouchableOpacity>
+
+                <View style={styles.currentTargetRow}>
+                  <View style={styles.currentTargetIcon}>
+                    <Ionicons name="flag" size={14} color={COLORS.mainPurple} />
+                  </View>
+                  <View style={styles.levelBodyTextCol}>
+                    <Text style={styles.currentTargetLabel}>{t('reportDetail.tomorrowGoal.title')}</Text>
+                    <Text style={styles.currentTargetValue}>{t(`profileReport.levels.${levelKey}.shortGoal`)}</Text>
                   </View>
                 </View>
-              );
-            }
-
-            // Legacy CoachingCard format
-            const cards = (items as CoachingCard[]).slice(0, 1);
-            const legacyTomorrowGoal = reportData.tomorrowGoal || (cards[0]?.next_day_goal ?? null);
-            return (
-              <View>
-                <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
-                {cards.map((card) => (
-                    <View key={card.card_id} style={styles.coachCard}>
-                      {reportData.coachingSummary ? (
-                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.summary')}</Text>{reportData.coachingSummary}</Text>
-                      ) : null}
-                      {card.coaching_tip ? (
-                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tipForNextSession')}</Text>{card.coaching_tip}</Text>
-                      ) : null}
-                      {card.scenario && (
-                        <View style={styles.coachExampleContainer}>
-                          {card.scenario.instead_of ? (
-                            <View style={styles.coachInsteadOfRow}>
-                              <Ionicons name="bulb-outline" size={16} color="#6B7280" />
-                              <Text style={styles.coachExampleInsteadOf}><Text style={styles.coachExampleInsteadOfLabel}>{t('report.coachingCard.insteadOf')}</Text>{card.scenario.instead_of}</Text>
-                            </View>
-                          ) : null}
-                          {card.scenario.try_this ? (
-                            <Text style={styles.coachExampleImproved}><Text style={styles.coachExampleImprovedLabel}>{t('report.coachingCard.try')}</Text>{card.scenario.try_this}</Text>
-                          ) : null}
-                        </View>
-                      )}
-                      {card.apply_in_daily_life ? (
-                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.applyInDailyLife')}</Text>{card.apply_in_daily_life}</Text>
-                      ) : null}
-                      {legacyTomorrowGoal && (
-                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tomorrowsGoal')}</Text>{legacyTomorrowGoal}</Text>
-                      )}
-                      <TouchableOpacity
-                        style={styles.cardLinkButton}
-                        onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
-                      >
-                        <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
-                      </TouchableOpacity>
-                    </View>
-                ))}
               </View>
-            );
-          })()
-        )
-        }
 
-        {/* What we learnt about Child */}
-        {((reportData.aboutChild && reportData.aboutChild.length > 0) || (reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations) && reportData.milestoneCelebrations.length > 0)) && (() => {
-          // Server-persisted selection (dedup'd + ratio-balanced — see
-          // aboutChildSelectionService.cjs); falls back to a random pick only
-          // for older sessions predating selection, so the card stays stable
-          // across re-renders instead of re-randomizing on every one.
-          const item = reportData.selectedAboutChild
-            || (reportData.aboutChild && reportData.aboutChild.length > 0 ? reportData.aboutChild![Math.floor(Math.random() * reportData.aboutChild.length)] : null);
-          const milestones = reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations)
-            ? (reportData.milestoneCelebrations as MilestoneCelebration[]).slice(0, 1)
-            : [];
-
-          return (
-            <View>
-              <Text style={styles.cardTitle}>{t('report.section.whatWeLearnt', { childName })}</Text>
-              <View style={styles.card}>
-                {item && (
-                  <View>
-                    <Text style={styles.learnSubsectionLabel}>{t('report.subsection.observation')}</Text>
-                    <View style={styles.aboutChildTitleBadge}>
-                      <Ionicons name="sparkles" size={14} color="#7C3AED" />
-                      <Text style={styles.aboutChildTitleText}>{item.Title}</Text>
-                    </View>
-                    <Text style={styles.aboutChildDescription}>{item.Description}</Text>
-                    {item.Details ? (
-                      <Text style={styles.aboutChildDetails}>{item.Details}</Text>
-                    ) : null}
-                  </View>
-                )}
-
-                {milestones.map((milestone, index) => {
-                  const isAchieved = milestone.status === 'ACHIEVED';
-                  const personalizedDescription = isAchieved
-                    ? t('report.milestone.achieved', { childName, title: milestone.title.toLowerCase() })
-                    : t('report.milestone.emerging', { childName, title: milestone.title.toLowerCase() });
-
-                  return (
-                    <View key={index}>
-                      {item && <View style={styles.aboutChildDivider} />}
-                      <Text style={styles.learnSubsectionLabel}>{t('report.subsection.newMilestone', { category: milestone.category })}</Text>
-                      <Text style={styles.milestonePersonalizedText}>{personalizedDescription}</Text>
-                      {milestone.evidenceSummary && !milestone.evidenceSummary.toLowerCase().startsWith('not observed') && (
-                        <Text style={styles.milestoneEvidenceSummary}>"{milestone.evidenceSummary}"</Text>
-                      )}
-                      {milestone.actionTip && (
-                        <View style={styles.milestoneActionTip}>
-                          <Ionicons name="bulb-outline" size={16} color="#6B7280" />
-                          <Text style={styles.milestoneActionTipText}>{milestone.actionTip}</Text>
-                        </View>
-                      )}
-                    </View>
-                  );
-                })}
-              </View>
+              <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
+                <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
+              </TouchableOpacity>
             </View>
           );
         })()}
 
-        {/* Developmental Milestones */}
-        {developmentalProgress && developmentalProgress.completedSessionCount >= 5 ? (
-          <View>
-            <Text style={styles.cardTitle}>{developmentalProgress.childName ? t('report.section.developmentalMilestonesWithName', { childName: developmentalProgress.childName }) : t('report.section.developmentalMilestones')}</Text>
-            <RadarChart
-              data={developmentalProgress}
-              childName={developmentalProgress.childName}
-              onDomainPress={handleDomainPress}
-              showTitle={false}
-            />
-          </View>
-        ) : (
-          <View style={styles.milestoneLockedCard}>
-            <Text style={styles.milestoneLockedTitle}>{t('report.section.developmentalMilestones')}</Text>
-            <View style={styles.milestoneLockedBadge}>
-              <Text style={styles.milestoneLockedBadgeText}>{t('report.milestone.lockedBadge', { count: developmentalProgress?.completedSessionCount ?? 0 })}</Text>
-            </View>
-            <Text style={styles.milestoneLockedDesc}>
-              {t('report.milestone.lockedDescription')}
-            </Text>
-          </View>
-        )}
-
-        {/* Report Feedback */}
-        {feedbackSubmitted ? (
-          <View style={styles.feedbackCard}>
-            <View style={styles.feedbackThankYou}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={styles.feedbackThankYouText}>{t('report.feedback.thankYou')}</Text>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.feedbackCard}>
-            <Text style={styles.feedbackTitle}>{t('report.feedback.question')}</Text>
-
-            <View style={styles.feedbackSentimentRow}>
-              <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
-                <TouchableOpacity
-                  style={[
-                    styles.feedbackPill,
-                    styles.feedbackPillNegative,
-                    feedbackSentiment === 'positive' && styles.feedbackPillPositiveActive,
-                  ]}
-                  onPress={() => handleSentimentPress('positive')}
-                >
-                  <Ionicons
-                    name={feedbackSentiment === 'positive' ? 'thumbs-up' : 'thumbs-up-outline'}
-                    size={18}
-                    color={feedbackSentiment === 'positive' ? '#FFFFFF' : '#9CA3AF'}
-                  />
-                  <Text style={[
-                    styles.feedbackPillText,
-                    styles.feedbackPillTextNegative,
-                    feedbackSentiment === 'positive' && styles.feedbackPillTextActive,
-                  ]}>{t('report.feedbackYes')}</Text>
-                </TouchableOpacity>
-              </Animated.View>
-
-              <TouchableOpacity
-                style={[
-                  styles.feedbackPill,
-                  styles.feedbackPillNegative,
-                  feedbackSentiment === 'negative' && styles.feedbackPillNegativeActive,
-                ]}
-                onPress={() => handleSentimentPress('negative')}
-              >
-                <Ionicons
-                  name={feedbackSentiment === 'negative' ? 'thumbs-down' : 'thumbs-down-outline'}
-                  size={18}
-                  color={feedbackSentiment === 'negative' ? '#FFFFFF' : '#9CA3AF'}
-                />
-                <Text style={[
-                  styles.feedbackPillText,
-                  styles.feedbackPillTextNegative,
-                  feedbackSentiment === 'negative' && styles.feedbackPillTextActive,
-                ]}>{t('report.feedbackNotReally')}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {feedbackSentiment === 'negative' && (
-              <View style={styles.feedbackFollowUp}>
-                <Text style={styles.feedbackFollowUpLabel}>{t('report.feedbackWhatBetter')}</Text>
-
-                <View style={styles.feedbackChipsRow}>
-                  {NEGATIVE_REASONS.map(reason => {
-                    const reasonKeyMap: Record<string, string> = {
-                      'Too generic': t('report.negativeReasons.tooGeneric'),
-                      'Not accurate': t('report.negativeReasons.notAccurate'),
-                      'Hard to understand': t('report.negativeReasons.hardToUnderstand'),
-                      'Missing something': t('report.negativeReasons.missingSomething'),
-                    };
-                    return (
-                      <TouchableOpacity
-                        key={reason}
-                        style={[
-                          styles.feedbackChip,
-                          feedbackReasons.includes(reason) && styles.feedbackChipActiveNegative,
-                        ]}
-                        onPress={() => toggleReason(reason)}
-                      >
-                        <Text style={[
-                          styles.feedbackChipText,
-                          feedbackReasons.includes(reason) && styles.feedbackChipTextActive,
-                        ]}>{reasonKeyMap[reason] || reason}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                <TextInput
-                  style={styles.feedbackInput}
-                  placeholder={t('report.feedbackPlaceholder')}
-                  placeholderTextColor="#9CA3AF"
-                  value={feedbackText}
-                  onChangeText={setFeedbackText}
-                  multiline
-                  numberOfLines={2}
-                  textAlignVertical="top"
-                />
-
-                <TouchableOpacity style={styles.feedbackSubmitButton} onPress={handleSubmitFeedback}>
-                  <Text style={styles.feedbackSubmitText}>{t('report.feedbackSubmit')}</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
       </ScrollView>
-
-      <PhaseCelebrationModal
-        visible={showPhaseCelebration}
-        onClose={() => setShowPhaseCelebration(false)}
-        childName={childName}
-      />
-      <DomainMilestoneModal
-        visible={showDomainModal}
-        domain={selectedDomain}
-        milestones={domainMilestones}
-        profiling={domainProfiling}
-        childName={domainChildName}
-        loading={loadingDomainMilestones}
-        onClose={handleCloseDomainModal}
-      />
     </SafeAreaView>
   );
 };
@@ -1158,10 +852,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
   headerTitle: {
     fontFamily: FONTS.bold,
     fontSize: 18,
     color: COLORS.textDark,
+  },
+  headerSubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 1,
   },
   loadingContainer: {
     flex: 1,
@@ -1195,6 +899,51 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
 
+  // ── Thanks-for-answering banner ──
+  thanksBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 20,
+  },
+  thanksBannerDragon: {
+    width: 124,
+    height: 124,
+    flexShrink: 0,
+    marginLeft: -8,
+  },
+  thanksBannerText: {
+    flex: 1,
+  },
+  thanksBannerTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: COLORS.mainPurple,
+    marginBottom: 6,
+  },
+  thanksBannerBody: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    lineHeight: 20,
+    color: COLORS.textDark,
+    marginBottom: 12,
+  },
+  thanksBannerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    backgroundColor: '#EDE7F6',
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  thanksBannerBadgeText: {
+    fontFamily: FONTS.bold,
+    fontSize: 13,
+    color: COLORS.mainPurple,
+  },
+
   // ── Hero card ──
   heroCard: {
     backgroundColor: '#F5F0FF',
@@ -1217,8 +966,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   heroDragonImage: {
-    width: 100,
-    height: 100,
+    width: '100%',
+    height: '100%',
   },
   heroInfo: {
     flex: 1,
@@ -1248,22 +997,22 @@ const styles = StyleSheet.create({
   },
   heroPrimaryFocusLabel: {
     fontFamily: FONTS.semiBold,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.mainPurple,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
   heroFocusHeading: {
     fontFamily: FONTS.bold,
-    fontSize: 16,
+    fontSize: 17,
     color: COLORS.textDark,
-    lineHeight: 22,
+    lineHeight: 23,
   },
   heroDescription: {
     fontFamily: FONTS.regular,
-    fontSize: 13,
+    fontSize: 16,
     color: '#4B5563',
-    lineHeight: 19,
+    lineHeight: 24,
     marginTop: 14,
   },
 
@@ -1275,7 +1024,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 6,
+  },
+  sectionSubtitleTight: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    lineHeight: 19,
+    color: '#6B7280',
+    marginBottom: 14,
   },
   fromIntakeRow: {
     flexDirection: 'row',
@@ -1284,20 +1040,36 @@ const styles = StyleSheet.create({
   },
   fromIntakeText: {
     fontFamily: FONTS.regular,
-    fontSize: 12,
+    fontSize: 13,
     color: '#9CA3AF',
   },
-  focusAreasScrollContent: {
-    gap: FOCUS_CARD_GAP,
-    paddingRight: 4,
+  focusAreaList: {
+    gap: 10,
   },
-  focusAreaCard: {
-    width: FOCUS_CARD_WIDTH,
+  issuesFallbackCta: {
+    marginTop: 14,
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  focusAreaRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#E5E7EB',
     padding: 14,
+  },
+  focusAreaRowText: {
+    flex: 1,
+  },
+  focusAreaRowTitleLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 3,
   },
   focusAreaIconCircle: {
     width: 36,
@@ -1305,47 +1077,74 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
   },
   focusAreaLabel: {
+    flexShrink: 1,
     fontFamily: FONTS.semiBold,
-    fontSize: 13,
+    fontSize: 15,
     color: COLORS.textDark,
-    lineHeight: 18,
-    marginBottom: 10,
-    minHeight: 36,
+    lineHeight: 20,
   },
   focusAreaLevelBadge: {
-    alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 10,
-    marginBottom: 10,
   },
   focusAreaLevelText: {
     fontFamily: FONTS.semiBold,
-    fontSize: 12,
+    fontSize: 13,
   },
   focusAreaFocusText: {
     fontFamily: FONTS.regular,
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: 19,
     color: '#9CA3AF',
   },
-  focusAreasDots: {
+
+  // ── Why we're starting here ──
+  whyHereCard: {
+    backgroundColor: '#F5F0FF',
+    borderRadius: 24,
+    padding: 18,
+    marginBottom: 24,
+  },
+  whyHereHeaderRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 14,
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
   },
-  focusAreaDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#E5E7EB',
-  },
-  focusAreaDotActive: {
+  whyHereIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: COLORS.mainPurple,
-    width: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  whyHereTitle: {
+    flex: 1,
+    fontFamily: FONTS.bold,
+    fontSize: 17,
+    color: COLORS.mainPurple,
+  },
+  whyHereDragon: {
+    width: 64,
+    height: 64,
+  },
+  whyHereBody: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    lineHeight: 20,
+    color: COLORS.textDark,
+    marginBottom: 10,
+  },
+  whyHereBodyLast: {
+    marginBottom: 0,
+  },
+  whyHereBodyBold: {
+    fontFamily: FONTS.bold,
+    color: COLORS.textDark,
   },
 
   // ── Personalized Learning Journey ──
@@ -1359,64 +1158,10 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     overflow: 'hidden',
   },
-  // Active (current) level hero card
-  journeyActiveCard: {
-    backgroundColor: '#F5F0FF',
-    borderRadius: 20,
-    padding: 16,
-    margin: 12,
-    marginBottom: 8,
-  },
-  journeyActiveHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  journeyLevelBadge: {
-    backgroundColor: COLORS.mainPurple,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  journeyLevelBadgeText: {
-    fontFamily: FONTS.bold,
-    fontSize: 11,
-    color: '#FFFFFF',
-    letterSpacing: 0.4,
-  },
-  journeyActiveTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 17,
-    color: COLORS.textDark,
-    marginBottom: 2,
-  },
-  journeyActiveSkill: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 13,
-    color: COLORS.mainPurple,
-    marginBottom: 10,
-  },
-  journeyActiveGoal: {
-    fontFamily: FONTS.regular,
-    fontSize: 13,
-    color: COLORS.textDark,
-    lineHeight: 18,
-    marginBottom: 6,
-  },
-  journeyActiveGoalLabel: {
-    fontFamily: FONTS.bold,
-  },
-  journeyActiveLearn: {
-    fontFamily: FONTS.regular,
-    fontSize: 12,
-    color: '#6B7280',
-    lineHeight: 17,
-  },
-  // Roadmap — compact list of all 7 levels
   journeyRoadmap: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingTop: 18,
+    paddingBottom: 4,
   },
   journeyRoadmapRow: {
     flexDirection: 'row',
@@ -1426,23 +1171,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   journeyStepNumberCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: COLORS.mainPurple,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 4,
-  },
-  journeyStepNumberCircleDone: {
-    backgroundColor: '#10B981',
-  },
-  journeyStepNumberCircleLocked: {
-    backgroundColor: '#F3F4F6',
+    marginTop: 2,
   },
   journeyStepNumberText: {
     fontFamily: FONTS.bold,
-    fontSize: 11,
+    fontSize: 13,
     color: '#FFFFFF',
   },
   journeyStepLine: {
@@ -1454,22 +1193,171 @@ const styles = StyleSheet.create({
   },
   journeyRoadmapTextCol: {
     flex: 1,
-    paddingLeft: 8,
-    paddingBottom: 16,
+    paddingLeft: 10,
+    paddingBottom: 20,
   },
-  journeyRoadmapTitle: {
-    fontFamily: FONTS.semiBold,
+  journeyStepTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: COLORS.textDark,
+    marginBottom: 3,
+  },
+  journeyStepBody: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#6B7280',
+  },
+  journeyLevelList: {
+    marginTop: 12,
+    gap: 12,
+  },
+  journeyLevelItem: {
+    borderLeftWidth: 2,
+    borderLeftColor: '#EDE7F6',
+    paddingLeft: 10,
+  },
+  journeyLevelHead: {
+    fontFamily: FONTS.bold,
     fontSize: 13,
     color: COLORS.textDark,
-    marginBottom: 1,
+    marginBottom: 2,
   },
-  journeyRoadmapTitleLocked: {
-    color: '#9CA3AF',
-  },
-  journeyRoadmapSkill: {
-    fontFamily: FONTS.regular,
+  journeyLevelNum: {
+    fontFamily: FONTS.bold,
     fontSize: 11,
+    letterSpacing: 0.4,
+    color: COLORS.mainPurple,
+  },
+  journeyLevelHelp: {
+    fontFamily: FONTS.regular,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: '#6B7280',
+  },
+  journeyWhyBox: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 10,
+    backgroundColor: '#F5F0FF',
+    borderRadius: 12,
+    padding: 10,
+  },
+  journeyWhyText: {
+    flex: 1,
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    lineHeight: 18,
+    color: COLORS.textDark,
+  },
+  journeyPhaseLabel: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
     color: '#9CA3AF',
+    marginBottom: 10,
+    marginLeft: 2,
+  },
+  journeyPhaseLabelGap: {
+    marginTop: 6,
+  },
+  journeyCta: {
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    marginTop: 4,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+
+  // ── Your current level & target + exit ──
+  currentLevelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 18,
+  },
+  currentLevelEyebrow: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: COLORS.mainPurple,
+    marginBottom: 3,
+  },
+  levelNumberBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.mainPurple,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  levelNumberText: {
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    color: '#FFFFFF',
+  },
+  levelBodyTextCol: {
+    flex: 1,
+  },
+  levelTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 2,
+  },
+  levelSubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#6B7280',
+  },
+  currentTargetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#EFEAF7',
+    backgroundColor: '#F9F6FF',
+  },
+  currentTargetIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#EDE7F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  currentTargetLabel: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: COLORS.mainPurple,
+    marginBottom: 2,
+  },
+  currentTargetValue: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    lineHeight: 21,
+    color: COLORS.textDark,
+  },
+  seeYouTomorrowButton: {
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 999,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  seeYouTomorrowButtonText: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    color: '#FFFFFF',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 
   card: {
@@ -1509,15 +1397,20 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: FONTS.bold,
-    fontSize: 16,
+    fontSize: 18,
     color: COLORS.textDark,
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontFamily: FONTS.regular,
-    fontSize: 13,
+    fontSize: 14,
+    lineHeight: 19,
     color: '#6B7280',
     marginBottom: 16,
+  },
+  sectionSubtitleBold: {
+    fontFamily: FONTS.bold,
+    color: COLORS.textDark,
   },
   skillsContainer: {
     gap: 4,

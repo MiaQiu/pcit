@@ -25,15 +25,15 @@ async function main() {
   }
   console.log("User:", user.childName, "| Issues:", user.issue);
 
-  // Show latest WACB survey
-  const survey = await prisma.wacbSurvey.findFirst({
+  // Show latest Child Snapshot survey
+  const survey = await prisma.childSnapshotSurvey.findFirst({
     where: { userId },
     orderBy: { submittedAt: "desc" }
   });
   if (survey) {
-    console.log("Latest WACB survey:", survey.id.substring(0, 8), "| submitted:", survey.submittedAt.toISOString());
+    console.log("Latest snapshot survey:", survey.id.substring(0, 8), "| submitted:", survey.submittedAt.toISOString());
   } else {
-    console.log("No WACB survey found");
+    console.log("No snapshot survey found");
   }
 
   // Preview priorities
@@ -50,8 +50,8 @@ async function main() {
     : 0;
   console.log(`\nChildIssuePriority rows before: ${beforeCount}`);
 
-  // Run the engine (pass wacbSurveyId if a survey exists)
-  const result = await runPriorityEngine(userId, { wacbSurveyId: survey?.id });
+  // Run the engine (pass snapshotSurveyId if a survey exists)
+  const result = await runPriorityEngine(userId, { snapshotSurveyId: survey?.id });
   console.log("\nChild updated:", {
     primaryIssue: result.primaryIssue,
     primaryStrategy: result.primaryStrategy,

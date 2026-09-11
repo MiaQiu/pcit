@@ -474,6 +474,7 @@ model User {
   UserSkillProgress         UserSkillProgress[]
   ParentSkillProgress       ParentSkillProgress?
   WacbSurvey                WacbSurvey[]
+  ChildSnapshotSurvey       ChildSnapshotSurvey[]
   ChildProfiling            ChildProfiling[]
   Child                     Child[]
   WeeklyReport              WeeklyReport[]
@@ -484,6 +485,7 @@ model User {
   HomeCardUserInputResponse HomeCardUserInputResponse[]
   HomeCardView              HomeCardView[]
   HomeCardShare             HomeCardShare[]
+  HomeCardImpression        HomeCardImpression[]
   referralsGiven            Referral[]                  @relation("ReferralsGiven")
   referralReceived          Referral?                   @relation("ReferralReceived")
   partnerId                 String?
@@ -517,18 +519,24 @@ model UserLessonProgress {
 model ParentSkillProgress {
   id                    String   @id @default(uuid())
   userId                String   @unique
-  // 1-7, see server/services/parentSkillLevelService.cjs for the level ladder.
-  // Levels 5->6 and 6->7 each require 2 qualifying sessions (not necessarily
+  // 1-9, see server/services/parentSkillLevelService.cjs for the level ladder.
+  // Levels 7->8 and 8->9 each require 2 qualifying sessions (not necessarily
   // consecutive) using DPICS-tag proxies, since no compliance/timeout coding
   // exists to measure command effectiveness or calm follow-through directly.
   currentLevel          Int      @default(1)
-  // Level 5 needs "1 effective command" met across 2 PDI sessions, not
-  // necessarily consecutive — this counts qualifying sessions seen so far.
+  // LEGACY FIELD NAMES: these three columns predate the ladder's expansion
+  // from 7 to 9 levels (level 1 split into 3 levels; no schema migration was
+  // done, only a data backfill of +2 on currentLevel — see doc/goal.md) and
+  // now map to different level numbers than their names suggest:
+  //
+  // Level 7 ("Cooperation Builder") needs "1 effective command" met across
+  // 2 PDI sessions, not necessarily consecutive — this counts qualifying
+  // sessions seen so far.
   level5QualifyingCount Int      @default(0)
-  // Level 6 ("Calm Follow-Through") proxy: PDI session with >=1 direct
+  // Level 8 ("Calm Follow-Through") proxy: PDI session with >=1 direct
   // command and 0 criticism. Counts qualifying sessions seen so far.
   level6QualifyingCount Int      @default(0)
-  // Level 7 ("Confident Parent") proxy: either mode's "everything clicking"
+  // Level 9 ("Confident Parent") proxy: either mode's "everything clicking"
   // session. Counts qualifying sessions seen so far (caps at 2).
   level7QualifyingCount Int      @default(0)
   createdAt             DateTime @default(now())
@@ -604,6 +612,34 @@ model WacbSurvey {
   @@index([userId])
 }
 
+// Child Snapshot survey — 10-item behavior questionnaire + parenting stress
+// rating. Supersedes WacbSurvey (kept for historical rows only). Each qN field
+// is a raw 1-5 Likert value (Never..Very Often) as submitted by the client;
+// totalScore is the clinically-weighted point total computed server-side
+// (see server/routes/wacb-survey.cjs's VALUE_TO_POINTS mapping).
+model ChildSnapshotSurvey {
+  id                   String               @id
+  userId               String
+  submittedAt          DateTime             @default(now())
+  parentingStressLevel Int
+  q1Dawdle             Int
+  q2Disobey            Int
+  q3Tantrum            Int
+  q4Defiance           Int
+  q5FocusDemand        Int
+  q6Restless           Int
+  q7TaskCompletion     Int
+  q8Destroy            Int
+  q9Aggression         Int
+  q10LieSteal          Int
+  totalScore           Int
+  User                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ChildIssuePriority   ChildIssuePriority[]
+
+  @@index([submittedAt])
+  @@index([userId])
+}
+
 model ChildProfiling {
   id        String   @id @default(uuid())
   userId    String
@@ -661,8 +697,10 @@ model ChildIssuePriority {
   wacbScore     Int?
   computedAt    DateTime             @default(now())
   wacbSurveyId  String?
+  snapshotSurveyId String?
   Child         Child                @relation(fields: [childId], references: [id], onDelete: Cascade)
   WacbSurvey    WacbSurvey?          @relation(fields: [wacbSurveyId], references: [id], onDelete: SetNull)
+  ChildSnapshotSurvey ChildSnapshotSurvey? @relation(fields: [snapshotSurveyId], references: [id], onDelete: SetNull)
 
   @@index([childId])
   @@index([childId, computedAt])
@@ -903,8 +941,33 @@ model DemoVideo {
   updatedAt      DateTime @updatedAt
 
   UserDemoVideoProgress UserDemoVideoProgress[]
+  translations          DemoVideoTranslation[]
 
   @@index([isActive, displayOrder])
+}
+
+// Per-locale variant of a DemoVideo. Unlike a pure text translation table,
+// this also carries videoUrl — the video file itself is localized (subtitles
+// burned in), since the mobile player (expo-av) has no caption-track API.
+// Every field is nullable and falls back to the base DemoVideo row at read
+// time (see applyDemoVideoTx in routes/lessons.cjs): text can be
+// auto-translated in bulk, videoUrl is always a manual upload, so a row may
+// have text but no localized video (plays the English file) or vice versa.
+model DemoVideoTranslation {
+  demoVideoId    String
+  locale         String // 'zh-CN' | 'zh-TW' (SUPPORTED_LOCALES, middleware/locale.cjs)
+  title          String?
+  description    String?
+  additionalText String?
+  // Bare S3 key like DemoVideo.videoUrl, under demo-videos/<id>/<locale>/.
+  videoUrl       String?
+  autoTranslated Boolean   @default(true)
+  reviewed       Boolean   @default(false)
+  translatedAt   DateTime  @default(now())
+  DemoVideo      DemoVideo @relation(fields: [demoVideoId], references: [id], onDelete: Cascade)
+
+  @@id([demoVideoId, locale])
+  @@index([locale])
 }
 
 // Per-user viewing progress for DemoVideo, mirroring UserLessonProgress.
@@ -974,8 +1037,10 @@ model HomeCard {
   likes              HomeCardLike[]
   views              HomeCardView[]
   shares             HomeCardShare[]
+  impressions        HomeCardImpression[]
   components         HomeCardComponent[] @relation("HomeCardComponents")
   linkedByComponents HomeCardComponent[] @relation("HomeCardComponentLink")
+  translations       HomeCardTranslation[]
 
   @@index([isActive, displayOrder])
 }
@@ -1056,6 +1121,56 @@ model HomeCardShare {
   @@index([homeCardId])
 }
 
+// Records which card was chosen as a user's single "Nora Daily" pick for a
+// given Singapore-calendar day (see pickTodaysCard in config.cjs) — mobile
+// only ever renders the top card in the ranked list (HomeScreen_v2.tsx), so
+// without this record the same highest-scoring card would freeze in that
+// slot forever once ranking inputs stop changing. Created the first time
+// GET /api/config/home-cards is called on a given day, regardless of
+// whether the user goes on to tap/like/share it — this IS the "displayed"
+// record, independent of HomeCardView (which only fires for an opened
+// CONTENT detail page). One row per user per day; `homeCardId` is then
+// reused for the rest of that day so a pull-to-refresh mid-day doesn't
+// change the pick out from under them, and consulted on later days so the
+// rotation doesn't repeat a card until every eligible one has been shown.
+model HomeCardImpression {
+  id         String   @id @default(uuid())
+  homeCardId String
+  userId     String
+  // 'YYYY-MM-DD' in Singapore time (SGT_OFFSET_MS convention, see
+  // getSingaporeDateString in config.cjs) — a calendar label, not an
+  // instant, so it's a plain string rather than DateTime.
+  shownDate  String
+  createdAt  DateTime @default(now())
+  HomeCard   HomeCard @relation(fields: [homeCardId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, shownDate])
+  @@index([userId])
+  @@index([homeCardId])
+}
+
+// Per-locale translation of a HomeCard's text fields, following the same
+// shape/conventions as LessonTranslation: auto-translated in bulk via
+// server/scripts/translateHomeCards.cjs (Claude, see translateHomeCardBundle
+// in translationService.cjs), individually re-editable/reviewable after.
+// Null fields fall back to the base (English) HomeCard row at read time
+// (see applyHomeCardTx in config.cjs) — a row doesn't need every field set.
+model HomeCardTranslation {
+  homeCardId     String
+  locale         String
+  message        String?
+  attribution    String?
+  detailTitle    String?
+  autoTranslated Boolean  @default(true)
+  reviewed       Boolean  @default(false)
+  translatedAt   DateTime @default(now())
+  homeCard       HomeCard @relation(fields: [homeCardId], references: [id], onDelete: Cascade)
+
+  @@id([homeCardId, locale])
+  @@index([locale])
+}
+
 // One typed block in a CONTENT home card's detail page, in admin-chosen
 // order (replaces the old single detailContent blob). Authored and reordered
 // entirely within the card's edit form in the admin portal — POST/PUT
@@ -1088,8 +1203,28 @@ model HomeCardComponent {
   createdAt        DateTime                    @default(now())
   updatedAt        DateTime                    @updatedAt
   responses        HomeCardUserInputResponse[]
+  translations     HomeCardComponentTranslation[]
 
   @@index([homeCardId, order])
+}
+
+// Per-locale translation of one HomeCardComponent's text fields — same
+// fallback-to-English convention as HomeCardTranslation. image/linkedCardId
+// aren't translatable so they're not duplicated here.
+model HomeCardComponentTranslation {
+  componentId      String
+  locale           String
+  text             String?
+  ctaLabel         String?
+  inputLabel       String?
+  inputPlaceholder String?
+  autoTranslated   Boolean           @default(true)
+  reviewed         Boolean           @default(false)
+  translatedAt     DateTime          @default(now())
+  component        HomeCardComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
+
+  @@id([componentId, locale])
+  @@index([locale])
 }
 
 enum HomeCardComponentType {

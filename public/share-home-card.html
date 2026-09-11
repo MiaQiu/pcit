@@ -6,9 +6,11 @@
   <title>Nora</title>
   <meta name="description" content="A parenting moment shared from Nora" />
 
-  <!-- Open Graph meta tags for rich link previews -->
+  <!-- Open Graph meta tags for rich link previews. No og:description on
+       purpose: the og:image is a rendered card that already shows the badge,
+       title and body, so a description line under it in WhatsApp/etc. just
+       repeats what's in the image. -->
   <meta property="og:title" content="Shared from Nora" />
-  <meta property="og:description" content="A parenting moment shared from Nora" />
   <meta property="og:type" content="article" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -388,9 +390,8 @@
     function displayCard(card) {
       document.title = card.cardType === 'QUOTE' ? 'A quote from Nora' : (card.detailTitle || 'Shared from Nora');
       const ogTitle = card.cardType === 'QUOTE' ? 'A quote shared from Nora' : (card.detailTitle || 'Shared from Nora');
-      const ogDesc = card.cardType === 'QUOTE' ? card.message : (card.detailTitle || '');
       document.querySelector('meta[property="og:title"]').setAttribute('content', ogTitle);
-      document.querySelector('meta[property="og:description"]').setAttribute('content', ogDesc);
+      // No og:description — see the meta tags in <head>.
 
       const container = document.getElementById('card-container');
       container.innerHTML = card.cardType === 'QUOTE' ? renderQuoteCard(card) : renderContentCard(card);

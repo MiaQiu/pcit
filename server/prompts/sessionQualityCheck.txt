@@ -17,6 +17,9 @@ Important: Be lose about the gate, if there is some meaninful insight we can get
 **ROLE IDENTIFICATION:**
 {{ROLE_IDENTIFICATION}}
 
+**LANGUAGE:**
+{{LANGUAGE_INSTRUCTION}}
+
 **TRANSCRIPT SAMPLE:**
 {{UTTERANCES_SAMPLE}}
 

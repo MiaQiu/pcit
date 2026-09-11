@@ -245,6 +245,10 @@
       "social": "培养社交情绪技能",
       "attention_focus": "注意力与集中力问题",
       "adhd": "ADHD / 注意力不足过动症",
+      "big_feelings_tantrums": "强烈情绪与发脾气",
+      "listening_cooperation": "聆听与配合",
+      "anxiety_confidence": "焦虑与自信",
+      "developmental_concerns": "发展相关担忧",
       "parenting_strategies": "学习更有效的教养策略",
       "defiance": "反抗行为",
       "aggression": "攻击性行为",
@@ -287,6 +291,7 @@
     "next": "下一个",
     "matchCounter": "第 {{current}} 个，共 {{total}} 个",
     "noMatches": "未找到相关时刻",
+    "subFilterAll": "全部",
     "pcitTags": {
       "Praise": "赞美",
       "Echo": "回应",
@@ -361,15 +366,16 @@
     },
     "page7": {
       "wacbQuestions": {
-        "q1Dawdle": "拖延或故意磨蹭",
-        "q2MealBehavior": "用餐时行为不当",
-        "q3Disobey": "拒绝听从或遵守规则",
-        "q4Angry": "发脾气或有肢体攻击行为",
-        "q5Scream": "尖叫或难以平息的脾气",
-        "q6Destroy": "破坏物品或玩耍太粗鲁",
-        "q7ProvokeFights": "主动挑衅或故意取笑他人",
-        "q8Interrupt": "打断他人或不断要求注意",
-        "q9Attention": "难以专注或坐不住"
+        "q1Dawdle": "日常例行活动中拖拖拉拉",
+        "q2Disobey": "拒绝听从或遵守规则",
+        "q3Tantrum": "难以平息的脾气",
+        "q4Defiance": "与大人争辩或顶嘴",
+        "q5FocusDemand": "难以专注或频繁要求关注",
+        "q6Restless": "打断他人或坐不住",
+        "q7TaskCompletion": "难以按时完成任务",
+        "q8Destroy": "弄坏东西或粗鲁对待物品",
+        "q9Aggression": "肢体攻击或打架",
+        "q10LieSteal": "说谎或偷拿东西"
       }
     },
     "page2": {
@@ -494,9 +500,24 @@
     }
   },
   "reportV2": {
+    "firstSession": {
+      "headline": "你做到了！",
+      "subtitle": "你完成了第一次练习。",
+      "subtext": "你在育儿旅程中迈出了重要的一步。",
+      "depositLabel": "情感存款",
+      "depositFirst": "你的第一笔存款",
+      "depositNote": "每一个专注的陪玩时刻，都给孩子练习重要技能的机会。",
+      "stepTitle": "很棒的第一步",
+      "stepBody": "你今天给了孩子 {{count}} 分钟的专注陪伴。",
+      "startingTitle": "你的起点已确定",
+      "startingBody": "Nora 已记录你的第一次练习，我们将据此为你个性化指导，并追踪你的长期进步。",
+      "cta": "查看我的指导"
+    },
     "headlineAmazing": "太棒了！",
     "headlineGood": "进步不错！",
     "headlineSubtext": "继续保持\n你做得很好！",
+    "headlineEveryPlay": "每一次陪玩都很重要。",
+    "headlineEveryPlaySubtext": "你今天存入了一笔重要的存款。",
     "depositLabel": "存款",
     "deltaToday": "今日 {{count}}",
     "todaysGoal": "今日目标",
@@ -512,7 +533,34 @@
       "subtitle": "你已达到等级 {{level}}",
       "skillUnlocked": "解锁新技能",
       "continueButton": "太棒了！"
-    }
+    },
+    "emotionalDeposit": "情感存款",
+    "depositTotalLabel": "情感存款总额",
+    "depositTodayAdd": "今天 +{{count}}",
+    "depositToday": "今天",
+    "depositVsLast": "对比上次练习",
+    "deltaFrom": "较",
+    "deltaLastSession": "上次练习",
+    "reduceSkill": "减少{{skill}}",
+    "criteriaFlat": "{{skill}} {{symbol}} {{target}}",
+    "criteriaLevel7": "直接指令 ≥ 1，连续 {{count}} 次达标管教时光",
+    "criteriaLevel8": "直接指令 ≥ 1 且批评 = 0，连续 {{count}} 次达标管教时光",
+    "criteriaLevel9": "（游戏时光：批评 = 0，赞美 ≥ {{target}}，描述 ≥ {{target}}，回应 ≥ {{target}}）或（管教时光：批评 = 0，直接指令 ≥ 1），连续 {{count}} 次达标练习",
+    "youDidIt": "做到了！",
+    "almostThere": "就快达成！",
+    "notYetToday": "今天还没做到。",
+    "goalRegressedEncouragement": "没关系！我们会在今天的指导中一起练习。",
+    "onlyCountToday": "只有 <0>{{count}}</0> 次{{skill}}",
+    "countToday": "今天有 <0>{{count}}</0> 次{{skill}}",
+    "lastTime": "（上次：{{count}}）",
+    "lastSession": "（上次练习：{{count}}）",
+    "goalEncouragement": "你已经进步了，\n继续加油！",
+    "parentingLevel": "育儿等级",
+    "levelHeading": "第 {{level}} 级",
+    "levelUpHeadline": "升级了！",
+    "levelUpReached": "你已升到<0>第 {{level}} 级</0>",
+    "parentingLevelTitle": "平静玩伴",
+    "levelFooter": "距离第 {{nextLevel}} 级已取得 {{percent}}%！"
   },
   "reportDetail": {
     "headerTitle": "今日指导",
@@ -524,11 +572,23 @@
       "readMore": "阅读更多",
       "showLess": "收起"
     },
+    "learningMoments": {
+      "title": "危机时刻",
+      "tryInstead": "可以试着这样说："
+    },
     "skillCoaching": {
       "title": "教练角",
+      "didWellLabel": "你做得好的地方",
+      "wordBankLabel": "下次可以这样说",
+      "tabWentWell": "做得好",
+      "tabGrowNext": "下一步",
+      "benchmarkLabel": "目标",
       "learnMoreTitle": "了解更多关于{{skill}}的内容",
       "lessonBadge": "课程",
-      "demoBadge": "示范"
+      "demoBadge": "示范",
+      "insightsBadge": "今日洞察",
+      "improveLinkText": "在本次练习中提升{{skill}}",
+      "removeLinkText": "在本次练习中减少{{skill}}"
     },
     "topMoment": {
       "title": "高光时刻",
@@ -539,14 +599,77 @@
       "title": "亲子时刻"
     },
     "interactionStyle": {
-      "title": "今日互动",
-      "viewTips": "查看建议"
+      "title": "你的互动风格",
+      "viewTips": "查看建议",
+      "detailedBreakdown": "详细分析",
+      "confidenceBuilders": "自信建立",
+      "confidenceBuildersSubtitle": "提升自信与专注",
+      "playInterruptions": "游戏干扰",
+      "playInterruptionsSubtitle": "可以一起改进的地方",
+      "moments_other": "{{count}} 次",
+      "whyPersonalised": {
+        "toddler": "你来到 Nora 是为了解决{{concern}}。{{childName}}才{{age}}岁，大脑刚开始建立自我控制的神经连接，而这靠的是与你一次次的小互动，而不是长篇大论。我们记为**“自信建立”**的时刻——表扬、描述{{childName}}在玩什么、让他/她主导——是滋养亲子关系和孩子自信的存款；而**“游戏干扰”**——提问、命令、纠正——则在悄悄抵消它。所以我们会一次只练一项技能，把每一项单独拿出来练熟，再加入下一项。",
+        "preschool": "你来到 Nora 是为了解决{{concern}}。{{childName}}{{age}}岁，正处在这些能力发展最快的阶段，而它们是在与你的日常互动中成长的。我们记为**“自信建立”**的时刻——表扬、描述{{childName}}在玩什么、让他/她主导——是滋养亲子关系和孩子自信的存款；而**“游戏干扰”**——提问、命令、纠正——则在悄悄抵消它。所以我们会一次只练一项技能，把每一项单独拿出来练熟，再加入下一项。",
+        "schoolAge": "你来到 Nora 是为了解决{{concern}}。{{childName}}{{age}}岁，已经懂得很多，剩下的是稳定、持续的练习。我们记为**“自信建立”**的时刻——表扬、描述{{childName}}在玩什么、让他/她主导——是滋养亲子关系和孩子自信的存款；而**“游戏干扰”**——提问、命令、纠正——则在悄悄抵消它。所以我们会一次只练一项技能，把每一项单独拿出来练熟，再加入下一项。",
+        "unknownAge": "你来到 Nora 是为了解决{{concern}}。你想要的改变，是通过与{{childName}}一次次的小互动建立起来的，而不是长篇大论。我们记为**“自信建立”**的时刻——表扬、描述{{childName}}在玩什么、让他/她主导——是滋养亲子关系和孩子自信的存款；而**“游戏干扰”**——提问、命令、纠正——则在悄悄抵消它。所以我们会一次只练一项技能，把每一项单独拿出来练熟，再加入下一项。"
+      }
     },
     "tomorrowGoal": {
       "title": "明日目标",
       "todayLabel": "今天",
       "tomorrowLabel": "明天",
-      "aimFor": "目标 {{count}} 次"
+      "aimFor": "目标 {{count}} 次",
+      "short": {
+        "BUILD_PRAISE": "{{count}} 次具体赞美",
+        "BUILD_NARRATION": "{{count}} 次行为描述",
+        "BUILD_ECHO": "{{count}} 次回应",
+        "BUILD_COMMANDS": "{{count}} 个清晰指令",
+        "AVOID_COMMANDS": "指令少于 {{count}} 次",
+        "AVOID_QUESTIONS": "问句少于 {{count}} 次",
+        "AVOID_CRITICISM": "批评少于 {{count}} 次"
+      },
+      "whyTitle": "为什么这很重要",
+      "why": {
+        "generic": "这方面的改变是一个个小片刻累积出来的，不是靠一次长谈。",
+        "praise": "具体的表扬——明确说出你欣赏的是什么——是让期望行为增加的最快方式之一，因为{{childName}}会重复被关注到的行为。",
+        "narrate": "不带提问、不带纠正地描述{{childName}}的游戏，能培养专注力，也让{{childName}}感到和你在一起是平静、安全的。",
+        "echo": "把{{childName}}的话重复回去，能发展语言，同样重要的是让{{childName}}真切地感到被你听见。",
+        "commands": "一次给出一个清晰、直接的指令，能让{{childName}}有机会做到并完成，也能避免这一刻变成拉锯战。",
+        "questions": "少问一些问题，能把主导权交回给{{childName}}，让游戏保持轻松，而不像在考试。",
+        "criticism": "用平静的引导代替批评，能降低{{childName}}的戒备，配合度因此提高，你们之间的联系也保持完好。"
+      },
+      "concern": {
+        "generic": "最近和{{childName}}相处中最难的部分",
+        "big_feelings_tantrums": "{{childName}}的强烈情绪和发脾气",
+        "listening_cooperation": "让{{childName}}听话和配合",
+        "attention_focus": "{{childName}}很难专注",
+        "social": "帮{{childName}}发展社交和情绪能力",
+        "anxiety_confidence": "{{childName}}的焦虑和自信",
+        "adhd": "{{childName}}的注意力和过动",
+        "developmental_concerns": "{{childName}}的发展情况",
+        "parenting_strategies": "找到真正有效的教养方法",
+        "behavior_challenges": "{{childName}}的发脾气和对抗",
+        "big_emotions": "应对{{childName}}的强烈情绪",
+        "frustration_tolerance": "{{childName}}很容易感到挫败",
+        "defiance": "{{childName}}的对抗行为",
+        "aggression": "{{childName}}的攻击行为",
+        "emotional": "{{childName}}的情绪起伏",
+        "routine": "为{{childName}}建立规律和结构",
+        "general": "{{childName}}在家的行为",
+        "new_baby_in_the_house": "帮{{childName}}适应家里的新宝宝",
+        "moving_house": "帮{{childName}}度过搬家和转学",
+        "parental_divorce": "帮{{childName}}面对家庭的变化"
+      },
+      "whyPersonalised": {
+        "toddler": "你来 Nora，是想解决{{concern}}。才{{age}}岁，{{childName}}大脑里负责自控的连接才刚开始搭建，它是在和你的一个个小片刻中长出来的，而不是靠长篇大论。{{skillReason}}所以明天的目标只是一个很小、很具体的动作——做一次，就已经开始了。",
+        "preschool": "你来 Nora，是想解决{{concern}}。{{age}}岁正是这些能力发展最快的阶段，而它们是在和你的日常互动中长出来的。{{skillReason}}所以明天的目标只是一个很小、很具体的动作——做一次，就已经开始了。",
+        "schoolAge": "你来 Nora，是想解决{{concern}}。{{age}}岁的{{childName}}其实已经懂得不少，接下来靠的是稳定、持续的练习。{{skillReason}}所以明天的目标只是一个很小、很具体的动作——做一次，就已经开始了。",
+        "unknownAge": "你来 Nora，是想解决{{concern}}。你想要的改变，是在和{{childName}}相处的一个个小片刻中累积出来的，而不是靠一次长谈。{{skillReason}}所以明天的目标只是一个很小、很具体的动作——做一次，就已经开始了。"
+      }
+    },
+    "firstSession": {
+      "heroIntro": "你做到了——这是你和{{childName}}的第一次练习！",
+      "heroMessage": "每一次游戏时光都是你与{{childName}}关系中的一笔存款。以下是我们今天注意到的。"
     },
     "childInsight": {
       "title": "我们对{{childName}}的了解",
@@ -561,58 +684,163 @@
       "subtitle": "阅读今天游戏时光的完整对话。"
     },
     "unlock": {
-      "title": "想要更个性化的指导吗？",
-      "subtitle": "回答 9 个简单问题（约 2 分钟），即可解锁：",
-      "featureGrowthPlan": "个性化成长计划",
-      "featureSnapshot": "孩子概览",
-      "featureTracking": "进度追踪",
-      "cta": "解锁我孩子的计划",
+      "title": "回答 10 个简单问题，帮助 Nora 了解{{childName}}并为你定制学习旅程：",
+      "featureGrowthPlan": "个性化学习计划",
+      "featureSnapshot": "孩子行为概览",
+      "featureTracking": "追踪进度",
+      "cta": "继续",
       "time": "大约需要 2 分钟"
     },
+    "seeYouTomorrow": "明天见",
     "footer": "你正在最重要的时刻陪伴着孩子，继续加油！"
   },
+  "skillImprove": {
+    "titleBuild": "提升{{skill}}",
+    "titleAvoid": "减少{{skill}}",
+    "opportunityLabel": "时刻 {{number}}",
+    "tryInstead": "可以试着这样说：",
+    "emptyState": "这次没有特别的建议——继续保持吧！"
+  },
   "profileReport": {
+    "headerTitle": "{{childName}}的快照",
+    "headerSubtitle": "你的起点",
+    "thanksBannerTitle": "感谢你的回答！🎉",
+    "thanksBannerBody": "这些回答能帮助 Nora 更了解 {{childName}}，从而为你的家庭量身定制辅导计划。",
+    "thanksBannerBadge": "问卷已完成",
+    "whyHereTitle": "我们为什么从这里开始",
+    "whyHereBody1Prefix": "根据你的回答，",
+    "whyHereBody1Suffix": "对你家庭的日常生活影响最大。",
+    "whyHereBody2": "好消息是？通过游戏建立更紧密的连接，往往能同时改善专注力、情绪调节和配合度。",
     "primaryFocusLabel": "首要重点",
     "focusHeadingCDI": "建立配合，加强专注力",
     "focusHeadingPDI": "练习平静而一致的界限",
     "ageLabel": "(年龄 {{age}})",
-    "coreFocusAreasTitle": "{{childName}}的核心关注领域",
+    "coreFocusAreasTitle": "{{childName}}的快照",
+    "coreFocusAreasSubtitle": "快速了解 {{childName}} 目前的状态。我们会用它来为你定制专属的辅导计划。",
     "fromYourIntake": "来自您的入档信息",
+    "issuesFallbackTitle": "{{childName}}的关注领域",
+    "issuesFallbackSubtitle": "根据你在设置时告诉我们的内容。",
+    "issuesFallbackCta": "完成儿童快照，了解更全面的情况 →",
     "focusAreas": {
-      "transitions": {
-        "label": "转换与配合",
-        "level": "中等",
-        "focus": "关注：Q1、Q2"
-      },
-      "energy": {
-        "label": "专注力与精力",
-        "level": "较高",
-        "focus": "关注：Q5-Q7"
-      },
-      "boundaries": {
-        "label": "界限",
-        "level": "轻微",
-        "focus": "关注：Q8"
-      },
-      "attention": {
-        "label": "专注力与配合",
-        "focus": "关注：专注力与遵循指令"
-      },
-      "emotional": {
-        "label": "情绪平衡",
-        "focus": "关注：情绪崩溃与攻击行为"
-      },
       "routines": {
         "label": "转换与日常",
-        "focus": "关注：睡前、用餐与拖延"
+        "focus": "关注：睡前、用餐与拖延",
+        "heroDescription": "睡前、用餐和出门等日常过渡，是 {{childName}} 目前一天中最难的时刻。Nora 的计划会让这些时刻更平静、更可预期。"
       },
-      "social": {
-        "label": "社交界限",
-        "focus": "关注：同伴与手足互动"
+      "cooperation": {
+        "label": "倾听与配合",
+        "focus": "关注：遵守规则、发脾气与顶嘴",
+        "heroDescription": "目前 {{childName}} 很难第一次就听从——说「不」、顶嘴，以及事情不如意时发脾气。Nora 的计划会用平静、一致的贯彻执行来培养配合。"
+      },
+      "selfControl": {
+        "label": "专注与自控",
+        "focus": "关注：专注力、静坐与完成任务",
+        "heroDescription": "保持专注并把事情做完，是 {{childName}} 目前最需要支持的地方——分心、坐不住、难以完成任务。Nora 的计划会延长专注时间并奖励坚持到底。"
+      },
+      "boundaries": {
+        "label": "重大行为与界限",
+        "focus": "关注：攻击行为、物品与诚实",
+        "heroDescription": "较严重的行为是 {{childName}} 目前的主要关注领域——肢体攻击、粗鲁对待物品，或不说实话。Nora 的计划会把连接与坚定、平静的界限结合起来，处理那些不能忽视的行为。"
       }
     },
     "journeyTitle": "个性化学习之旅",
-    "journeySubtitle": "您在 Nora 的下一步",
+    "journeySubtitle": "这份计划会先从这里入手，并按对 {{childName}} 最重要的顺序排列。",
+    "currentLevelTitle": "你目前的等级与目标",
+    "currentLevelSubtitle": "你在技能阶梯上的位置，以及下一次和 {{childName}} 练习时要努力的目标。",
+    "journeyPlan": {
+      "phase1": "由孩子主导的游戏",
+      "phase2": "平静的管教",
+      "step1Title": "减少游戏干扰",
+      "step2Title": "增加自信建立行为",
+      "step3Title": "清晰的界限，平静的贯彻执行",
+      "cta": "完成儿童快照，获得为 {{childName}} 量身打造的计划 →",
+      "interruptionBody": {
+        "generic": "游戏中少一些提问、命令和纠正——这些都会悄悄削弱你与 {{childName}} 的连接。",
+        "routines": "少一些命令、别再反复催促，才能让 {{childName}} 的睡前、吃饭和出门不再变成拉锯战。",
+        "cooperation": "少一些命令，才能把每个要求里的权力斗争化解掉——{{childName}} 也就没那么多可对抗的。",
+        "selfControl": "减少接连不断的提问，才能让 {{childName}} 的专注不再每隔几秒就被打断。",
+        "boundaries": "用平静的接纳代替纠正，才能让 {{childName}} 不会一下子就变得抵触。"
+      },
+      "builderBody": {
+        "generic": "每天花 5 分钟做 {{childName}} 最忠实的粉丝——表扬、描述并复述他的游戏。",
+        "routines": "描述 {{childName}} 朝任务迈出的每一小步，才能培养出把事情做完的专注力。",
+        "cooperation": "把 {{childName}} 的话复述回去，才能让他感到被理解，也就少一些对抗。",
+        "selfControl": "对 {{childName}} 的游戏持续地描述，才能抓住他的注意力并慢慢延长。",
+        "boundaries": "把 {{childName}} 温和、诚实的时刻大声说出来，才能让这些正是他会重复的行为。"
+      },
+      "levelHelp": {
+        "calmBuilder": {
+          "generic": "少一些纠正和「不是这样」，能把游戏里的紧张感清掉，{{childName}} 不用一直提防被数落。",
+          "routines": "当过渡时不再伴随纠正，{{childName}} 在面对下一个要求前就不会已经紧绷。",
+          "cooperation": "少一些批评，{{childName}} 能拿来顶嘴的点也就少了，要求不会越演越烈。",
+          "selfControl": "接连不断的纠正会一再把 {{childName}} 从手上的事里拉出来，去掉它就能保护专注。",
+          "boundaries": "重大行为常常源于觉得被攻击；平静的接纳能在还没立规矩前就降低 {{childName}} 的戒备。"
+        },
+        "patienceBuilder": {
+          "generic": "游戏中少给指令，把主导权交回给 {{childName}}，和你相处就不那么像被管着。",
+          "routines": "睡前和吃饭本来就充满指令——游戏里少一些，{{childName}} 才不会把它们全当耳边风。",
+          "cooperation": "每多一个命令就多一次僵持的机会；少一些，{{childName}} 的对抗也就少一些。",
+          "selfControl": "不停的指挥会打断 {{childName}} 的思路——退一步，他才能专注在一件事上。",
+          "boundaries": "当游戏不再是一连串命令，{{childName}} 能违抗的东西就少了，真正重要的界限也更清楚。"
+        },
+        "presenceBuilder": {
+          "generic": "把提问换成陈述，能把游戏里的「考试感」去掉，{{childName}} 才能放松地投入。",
+          "routines": "过渡时一连串问题会让它卡住——改成描述你看到的，能让 {{childName}} 保持往前走。",
+          "cooperation": "提问有时听起来像要求；少一些，气氛才会是合作而不是对峙。",
+          "selfControl": "每个问题都让 {{childName}} 停下来切换去回答——去掉它能保护脆弱的注意力。",
+          "boundaries": "连珠炮式的提问会像审问；缓一缓能让 {{childName}} 不那么防备。"
+        },
+        "confidenceBuilder": {
+          "generic": "明确说出 {{childName}} 哪里做得好，会让他想再做一次——你在培养你想看到的行为。",
+          "routines": "为过渡中每一个小小的配合动作表扬，{{childName}} 下次更可能重复。",
+          "cooperation": "为「第一次就听」而具体表扬，给了 {{childName}} 一个不靠对抗的合作理由。",
+          "selfControl": "点出 {{childName}} 坚持做一件事的时刻，能培养把任务做完的毅力。",
+          "boundaries": "把 {{childName}} 温和、诚实、小心的时刻大声说出来，会让这些成为他重复的行为。"
+        },
+        "attentionBuilder": {
+          "generic": "持续描述 {{childName}} 的游戏，能把他的注意力留在你身上，并延长他投入的时间。",
+          "routines": "把步骤说出来，给 {{childName}} 一个平静、可预期的脚本来走完这段流程。",
+          "cooperation": "描述 {{childName}} 在做什么，能在不加要求的情况下保持连接，合作也就更容易。",
+          "selfControl": "边做边描述 {{childName}} 的动作，能锚住他的注意力，慢慢建立专注。",
+          "boundaries": "平稳、平静的描述能让 {{childName}} 保持稳定和投入，化解走向重大行为的累积。"
+        },
+        "communicationBuilder": {
+          "generic": "把 {{childName}} 的话复述回去，能发展语言，也让他真切地感到被你听见。",
+          "routines": "复述 {{childName}} 的抗议（「你还不想停」），让他感到被理解，过渡会更顺。",
+          "cooperation": "当 {{childName}} 感到被听见，他就没那么固执——复述能在顶嘴开始前就化解它。",
+          "selfControl": "把 {{childName}} 的想法回应回去，能让他和你一起持续地说和想，延长投入的注意力。",
+          "boundaries": "被理解的感觉能降低那份常常让 {{childName}} 转为攻击的挫败感。"
+        },
+        "cooperationBuilder": {
+          "generic": "一次一个清晰、直接的指令，才让 {{childName}} 真的有可能做到并完成。",
+          "routines": "清晰的单步指令，在流程的每个环节都给 {{childName}} 一件做得到的事。",
+          "cooperation": "直接、单一的指令，去掉了 {{childName}} 用来讨价还价或装没听到的空间。",
+          "selfControl": "简短、具体的指令贴合 {{childName}} 的注意力长度，他才能不迷失地跟上。",
+          "boundaries": "一个平静、清晰的指令把界限说明白，{{childName}} 在事情升级前就知道该做什么。"
+        },
+        "boundaryBuilder": {
+          "generic": "平静而一致地贯彻执行，能让 {{childName}} 明白界限是真实的——而且不用权力斗争。",
+          "routines": "当流程每一次都稳固，{{childName}} 就不再试探它，日常的拉锯也随之淡去。",
+          "cooperation": "一致的贯彻执行才能让指令生效——{{childName}} 会明白「不行」就是不行。",
+          "selfControl": "可预期的界限为 {{childName}} 提供外部结构，帮他慢下来、管住冲动。",
+          "boundaries": "每一次都用同样平静而确定的回应面对攻击或不诚实，正是这份一致让重大行为消退。"
+        },
+        "confidentParent": {
+          "generic": "掌握了每一项技能，你就能在当下取用对的那一个——连接和界限一起运作。",
+          "routines": "把表扬、描述和平静的界限融合起来，你就能应对过渡中出现的任何情况。",
+          "cooperation": "流畅地运用整套工具，能让日常的合作保持稳定，而不是靠某一招。",
+          "selfControl": "按需要在投入和结构之间切换，能给 {{childName}} 稳定的专注支持。",
+          "boundaries": "把温暖和坚定、平静的界限配在一起，正是让重大行为持续减少的关键。"
+        }
+      }
+    },
+    "journeyDisciplineWhy": {
+      "generic": "平静、一致的界限能让 {{childName}} 明白界限是真实的——合作也就不再是每天的谈判。",
+      "routines": "平静、一致的界限能把过渡中的权力斗争化解掉——{{childName}} 会知道流程是稳固的，日常的拉锯也随之淡去。",
+      "cooperation": "一致的贯彻执行才能让指令真正生效——{{childName}} 会明白界限是真实的，听从也就不再是没完没了的讨价还价。",
+      "selfControl": "可预期的界限为 {{childName}} 提供了外部结构，帮助他慢下来、专注在一件事上，并克制立刻跳到下一件事的冲动。",
+      "boundaries": "{{childName}} 会明白攻击、弄坏东西和不诚实始终会得到同样平静而确定的回应——正是这份一致性让重大行为逐渐消退。"
+    },
     "phase1Badge": "第一阶段",
     "phase1Title": "儿童主导互动 (CDI)",
     "phase1Subtitle": "建立联结，减少权力冲突。",
@@ -660,54 +888,77 @@
     "journeyLevelBadge": "第 {{level}} 级",
     "journeyGoalLabel": "目标：",
     "levels": {
-      "playBuilder": {
-        "title": "游戏建立者",
-        "skill": "跟随孩子的引导",
-        "goal": "建立一个安全、愉快的游戏体验。",
-        "learn": "让孩子主导游戏 • 减少命令 • 减少提问 • 避免批评",
-        "clearGoal": "在一次游戏时光中，把命令、提问和批评的总次数控制在 6 次或以下。"
+      "calmBuilder": {
+        "title": "平静建立者",
+        "skill": "减少批评",
+        "goal": "建立一个安全、不带评判的游戏空间。",
+        "learn": "留意想要纠正的冲动 • 让小错误只是小错误 • 用平静的接纳代替批评的话语",
+        "clearGoal": "在一次游戏时光中，把批评控制在 3 次或以下。",
+        "shortGoal": "批评 3 次或以下"
+      },
+      "patienceBuilder": {
+        "title": "耐心建立者",
+        "skill": "减少命令",
+        "goal": "让孩子在没有指令的情况下主导游戏。",
+        "learn": "把手放在身下按捺住 • 克制发出指令 • 让孩子选择怎么玩",
+        "clearGoal": "在一次游戏时光中，把命令控制在 3 次或以下。",
+        "shortGoal": "命令 3 次或以下"
+      },
+      "presenceBuilder": {
+        "title": "专注建立者",
+        "skill": "减少提问",
+        "goal": "在不追问的情况下保持专注陪伴。",
+        "learn": "用陈述代替提问 • 描述而不是询问 • 让好奇心来自孩子自己",
+        "clearGoal": "在一次游戏时光中，把提问控制在 3 次或以下。",
+        "shortGoal": "提问 3 次或以下"
       },
       "confidenceBuilder": {
         "title": "自信建立者",
         "skill": "具体的赞美",
         "goal": "帮助孩子感到自己有能力。",
         "learn": "贴标签式赞美 • 赞美努力而非结果 • 通过积极关注建立自信",
-        "clearGoal": "在一次游戏时光中，给出 5 次或以上贴标签式赞美。"
+        "clearGoal": "在一次游戏时光中，给出 10 次或以上贴标签式赞美。",
+        "shortGoal": "10 次具体赞美"
       },
       "attentionBuilder": {
         "title": "专注力建立者",
         "skill": "描述行为",
         "goal": "提升专注力与投入感。",
         "learn": "描述孩子正在做的事 • 让孩子保持投入 • 延长专注时长",
-        "clearGoal": "在一次游戏时光中，描述孩子的行为 5 次或以上。"
+        "clearGoal": "在一次游戏时光中，描述孩子的行为 10 次或以上。",
+        "shortGoal": "10 次行为描述"
       },
       "communicationBuilder": {
         "title": "沟通建立者",
         "skill": "回应（复述）",
         "goal": "帮助孩子感到被理解。",
         "learn": "重复并延伸孩子说的话 • 鼓励语言表达 • 展现积极倾听",
-        "clearGoal": "在一次游戏时光中，回应孩子说的话 5 次或以上。"
+        "clearGoal": "在一次游戏时光中，回应孩子说的话 10 次或以上。",
+        "shortGoal": "10 次回应"
       },
       "cooperationBuilder": {
         "title": "配合建立者",
         "skill": "清晰指令",
         "goal": "提升日常配合度。",
         "learn": "给出有效的指令 • 一次一个指令 • 重复前先等待",
-        "clearGoal": "在一次管教时光中，给出至少 1 次清晰指令，连续完成 2 次达标练习。"
+        "clearGoal": "在一次管教时光中，给出至少 1 次清晰指令，连续完成 2 次达标练习。",
+        "shortGoal": "至少 1 次清晰指令，2 次达标"
       },
       "boundaryBuilder": {
         "title": "界限建立者",
         "skill": "平静地贯彻执行",
         "goal": "建立相互尊重的界限。",
         "learn": "保持平静 • 保持一致 • 贯彻执行界限 • 减少权力斗争",
-        "clearGoal": "在一次管教时光中，给出零批评的清晰指令，连续完成 2 次达标练习。"
+        "clearGoal": "在一次管教时光中，给出零批评的清晰指令，连续完成 2 次达标练习。",
+        "shortGoal": "清晰指令、零批评，2 次达标"
       },
       "confidentParent": {
         "title": "自信的家长",
         "skill": "融会贯通",
         "goal": "在合适的时机运用正确的育儿技巧。",
         "learn": "跟随孩子引导 • 赞美 • 描述行为 • 回应 • 清晰指令 • 平静地贯彻执行",
-        "clearGoal": "将所有技巧融会贯通、零批评地运用，连续完成 2 次达标练习。"
+        "clearGoal": "将所有技巧融会贯通、零批评地运用，连续完成 2 次达标练习。",
+        "shortGoal": "所有技巧、零批评，2 次达标"
       }
     }
   },
@@ -826,6 +1077,11 @@
     "noModulesFound": "找不到章节",
     "tryDifferentSearch": "尝试不同的关键字或筛选条件"
   },
+  "lessonPlayer": {
+    "nowPlaying": "正在播放",
+    "narrationPlaying": "课程语音讲解",
+    "stop": "停止"
+  },
   "record": {
     "uploadingRecording": "正在上传录音...",
     "analyzingTitle": "正在分析游戏时间...\n这需要几分钟。",
@@ -922,6 +1178,8 @@
     "statLogs": "记录",
     "statTimes": "次数",
     "statLessons": "课程",
+    "statWeeks": "周",
+    "statLevel": "级别",
     "tipPerfect": "完美的 7/7！👑\n您太传奇了！",
     "tipDaysDown": "已达成 {{count}} 天！🌟\n我们能挑战满 7 天吗？",
     "tipAimFor4": "目标每周 4 天\n进度会更快喔",
@@ -946,6 +1204,20 @@
     "recordAgain": "再次录制",
     "noraDaily": "Nora Daily",
     "noraDailySubtitle": "每日为您带来科学育儿贴士与灵感。",
+    "subActionLearnMore": "了解更多",
+    "reflectionPrompt": "写下你的感想",
+    "reflectionPlaceholder": "写下你的想法……",
+    "reflectionSave": "保存",
+    "reflectionSaving": "保存中……",
+    "reflectionSaved": "已保存",
+    "reflectionEdit": "编辑感想",
+    "subActionBadges": {
+      "scienceBite": "科学小知识",
+      "tryThisToday": "今天试试看",
+      "quickReflection": "简短反思",
+      "todaysThought": "今日思考",
+      "communityWisdom": "社区智慧"
+    },
     "todaysPlan": "今日计划",
     "planLessonLabel": "每日学习：",
     "planLessonDuration": "5 分钟阅读",
@@ -1005,7 +1277,7 @@
     "completeFoundationFirst": "请先完成基础章节",
     "noLessonsFound": "找不到课程",
     "tryDifferentSearch": "尝试不同的关键字",
-    "noraFoundationsDuration": "120 分钟",
+    "noraFoundationsDuration": "60 分钟",
     "demoVideosTitle": "演示视频",
     "timeAgo": {
       "years_other": "{{count}} 年前",
@@ -1016,9 +1288,33 @@
       "minutes_other": "{{count}} 分钟前",
       "justNow": "刚刚"
     },
-    "noraFoundationsTitle": "Nora Foundations",
-    "noraFoundationsSubtitle": "Connection & Calm Discipline",
-    "gettingStartedTitle": "入门指南"
+    "noraFoundationsTitle": "Nora 基础课程",
+    "noraFoundationsSubtitle": "连结与平静的管教",
+    "playGuideTitle": "游戏指南",
+    "playGuideSubtitle": "为第一次亲子游戏做好准备",
+    "playGuideMeta": "8 个要点",
+    "gettingStartedTitle": "入门指南",
+    "quickGuidesTitle": "快速指南",
+    "quickGuides": {
+      "why5mins": {
+        "cardTitle": "为什么只有 5 分钟？",
+        "titleLine1": "为什么只有",
+        "titleLine2": "5 分钟？",
+        "card1": "因为这不只是玩耍，\n而是 ~~专注的练习。~~",
+        "card2": "把它想成一次**情绪按摩**——短暂而集中的积极关注。",
+        "card3": "就像**锻炼你的育儿肌肉，**专注练习能让这些技巧随时间变得更自然，哪怕在压力时刻。",
+        "card4": "5 分钟的专注\n> ~~胜过一小时的心不在焉。~~"
+      },
+      "whyRecord": {
+        "cardTitle": "为什么需要录制？",
+        "titleLine1": "为什么",
+        "titleLine2": "需要录制？",
+        "card1": "因为按下录制，会让你进入~~练习模式。~~",
+        "card1Body": "家长告诉我们，一旦按下录制，他们会更专注、更用心——把正在学习的技巧真正付诸练习。",
+        "card2": "然后 Nora 会帮你发现**你可能忽略的地方**，以及下一步可以尝试什么。",
+        "card3": "这不是考试，\n~~而是你的镜子。~~"
+      }
+    }
   },
   "learnV3": {
     "title": "Professor Yi-Chuen Chen",
@@ -1037,7 +1333,9 @@
     "rowTitle": "第 {{day}} 天 · {{title}}",
     "readMeta": "第 {{day}} 天 · {{duration}}",
     "lessonFallback": "课程",
-    "nextLessonLabel": "下一课：{{title}}"
+    "nextLessonLabel": "下一课：{{title}}",
+    "scriptLoadError": "无法加载本课程，请检查网络连接后重试。",
+    "scriptNoContent": "本课程暂无文字版。"
   },
   "privacyPolicy": {
     "headerTitle": "隐私权政策"
@@ -1401,15 +1699,16 @@
       "scaleOften": "经常 (每周 5–6 次)",
       "scaleVeryOften": "非常频繁 (每周超过 6 次)",
       "submitSurvey": "提交问卷",
-      "q1": "在过去两周内，{{name}} 有多常做事花太长时间或故意拖延？",
-      "q2": "在过去两周内，{{name}} 在进餐时有多常表现不佳或不守规矩？",
-      "q3": "在过去两周内，{{name}} 有多常拒绝听从或对规定说「不」？",
-      "q4": "在过去两周内，{{name}} 有多常发脾气或动作粗鲁？",
-      "q5": "在过去两周内，{{name}} 有多常尖叫哭闹或难以停止地大发脾气？",
-      "q6": "在过去两周内，{{name}} 有多常弄坏东西或对别人的玩具太粗鲁？",
-      "q7": "在过去两周内，{{name}} 有多常故意挑起争端或取笑他人？",
-      "q8": "在过去两周内，{{name}} 有多常打断谈话或要求持续的关注？",
-      "q9": "在过去两周内，{{name}} 有多常难以专注或无法静坐？",
+      "q1": "在过去两周内，{{name}} 有多常在日常例行活动（例如用餐或睡前）中故意拖拖拉拉？",
+      "q2": "在过去两周内，{{name}} 有多常在被给予规则或要求时拒绝听从或说「不」？",
+      "q3": "在过去两周内，{{name}} 有多常发脾气且难以平息（例如哭闹、呜咽、大叫、尖叫或倒在地上）？",
+      "q4": "在过去两周内，{{name}} 有多常故意与大人争辩、顶嘴或挑衅？",
+      "q5": "在过去两周内，{{name}} 有多常难以专注于单一活动或频繁要求关注？",
+      "q6": "在过去两周内，{{name}} 有多常打断他人或无法静坐？",
+      "q7": "在过去两周内，{{name}} 有多常难以按时完成日常任务或作业？",
+      "q8": "在过去两周内，{{name}} 有多常弄坏东西或粗鲁地对待别人的玩具或物品？",
+      "q9": "在过去两周内，{{name}} 有多常出现肢体攻击行为或与他人（例如父母、手足或同伴）发生肢体冲突？",
+      "q10": "在过去两周内，{{name}} 有多常说谎或偷拿别人的物品？",
       "submissionError": "提交错误",
       "submissionFailed": "提交问卷失败，请再试一次。"
     },

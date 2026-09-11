@@ -19,6 +19,7 @@ import {
   Linking,
   Platform,
   Image,
+  TextInput,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Notifications from 'expo-notifications';
@@ -31,6 +32,7 @@ import { Video, ResizeMode } from 'expo-av';
 import { ProfileCircle } from '../components/ProfileCircle';
 import { ShareSheet } from '../components/ShareSheet';
 import { getHomeCardShareText } from '../utils/shareCardText';
+import { getHomeCardBadgeLabel } from '../utils/homeCardBadgeLabel';
 import { COLORS, FONTS } from '../constants/assets';
 
 const DRAGON_ANIMATION = require('../../assets/images/dragon_amine3.mov');
@@ -53,17 +55,12 @@ import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { getTodaySingapore, toSingaporeDateString, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
 import * as userStorage from '../lib/userStorage';
-import type { RelationshipToChild } from '@nora/core';
+import type { RelationshipToChild, ParentSkillLevel } from '@nora/core';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import type { TextRun } from '../utils/formatLessonContentV2';
-
-// TEMP TESTING FLAG — forces the Main Action Card to always show the "Get
-// Ready to Play" state (ignoring hasAnySession/dismissed) so it can be
-// reviewed repeatedly without resetting app state. Flip back to false (or
-// delete) once the Get Ready to Play screen is signed off.
-const FORCE_SHOW_GET_READY_CARD = true;
+import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 
 // Mixes a hex color toward white — used to derive a CONTENT card's pastel
 // background/badge-pill tints from its (fully-saturated) badgeColor.
@@ -88,6 +85,9 @@ interface WeeklyStats {
   logsThisWeek: number;       // ABC behavior logs submitted this week
   timesRecorded: number;      // number of recordings this week
   lessonsCompleted: number;   // lessons completed this week
+  weeklyStreak: number;       // consecutive weeks with ≥4 completed sessions
+  totalSessions: number;      // all-time completed play sessions
+  parentLevel: number;        // current rung on the 9-level parent-skill ladder
 }
 
 interface TodayPlanItem {
@@ -97,6 +97,7 @@ interface TodayPlanItem {
   title: string;
   duration?: string;
   isCompleted: boolean;
+  moduleKey?: string;
 }
 
 interface HomeCardData {
@@ -134,52 +135,69 @@ interface StatPillProps {
   iconName: keyof typeof Ionicons.glyphMap;
   iconColor: string;
   value: string;
-  total: string;
+  // Omit for metrics with no natural target (e.g. streak, all-time count) —
+  // the "/total" suffix is hidden and the ring shows filled.
+  total?: string;
   unit: string;
   onPress?: () => void;
+  // Greys out the pill and blocks the tap — used for metrics that aren't
+  // meaningful yet (e.g. parenting level before the first report is ready).
+  dimmed?: boolean;
 }
 
-const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, unit, onPress }) => {
-  const progress = Math.min(Number(value) / Number(total), 1);
+const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, unit, onPress, dimmed }) => {
+  const progress = total ? Math.min(Number(value) / Number(total), 1) : 1;
   const dashOffset = RING_CIRCUMFERENCE * (1 - progress);
+  const effectiveIconColor = dimmed ? '#D1D5DB' : iconColor;
 
   return (
-    <TouchableOpacity style={styles.statPill} onPress={onPress} activeOpacity={onPress ? 0.7 : 1} disabled={!onPress}>
-      {/* Circular progress ring with icon centered */}
+    <TouchableOpacity
+      style={[styles.statPill, dimmed && styles.statPillDimmed]}
+      onPress={onPress}
+      activeOpacity={onPress && !dimmed ? 0.7 : 1}
+      disabled={!onPress || dimmed}
+    >
+      {/* Progress ring + centered icon — for targetless metrics (streak,
+          all-time count) the ring is dropped and just the icon is shown. */}
       <View style={styles.statRingWrap}>
-        <Svg width={RING_SIZE} height={RING_SIZE} viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}>
-          {/* Track */}
-          <Circle
-            cx={RING_SIZE / 2}
-            cy={RING_SIZE / 2}
-            r={RING_RADIUS}
-            stroke="#E5E7EB"
-            strokeWidth={RING_STROKE}
-            fill="none"
-          />
-          {/* Progress arc */}
-          <Circle
-            cx={RING_SIZE / 2}
-            cy={RING_SIZE / 2}
-            r={RING_RADIUS}
-            stroke={iconColor}
-            strokeWidth={RING_STROKE}
-            fill="none"
-            strokeDasharray={[RING_CIRCUMFERENCE, RING_CIRCUMFERENCE]}
-            strokeDashoffset={dashOffset}
-            strokeLinecap="round"
-            transform={`rotate(-90, ${RING_SIZE / 2}, ${RING_SIZE / 2})`}
-          />
-        </Svg>
-        {/* Icon overlaid in center */}
+        {total ? (
+          <Svg width={RING_SIZE} height={RING_SIZE} viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}>
+            {/* Track */}
+            <Circle
+              cx={RING_SIZE / 2}
+              cy={RING_SIZE / 2}
+              r={RING_RADIUS}
+              stroke="#E5E7EB"
+              strokeWidth={RING_STROKE}
+              fill="none"
+            />
+            {/* Progress arc */}
+            <Circle
+              cx={RING_SIZE / 2}
+              cy={RING_SIZE / 2}
+              r={RING_RADIUS}
+              stroke={effectiveIconColor}
+              strokeWidth={RING_STROKE}
+              fill="none"
+              strokeDasharray={[RING_CIRCUMFERENCE, RING_CIRCUMFERENCE]}
+              strokeDashoffset={dashOffset}
+              strokeLinecap="round"
+              transform={`rotate(-90, ${RING_SIZE / 2}, ${RING_SIZE / 2})`}
+            />
+          </Svg>
+        ) : null}
+        {/* Icon overlaid in center — ringless metrics (streak, all-time count)
+            get a larger, colored icon; ringed ones keep the muted glyph. */}
         <View style={styles.statRingIcon}>
-          <Ionicons name={iconName} size={18} color="#9CA3AF" />
+          {total
+            ? <Ionicons name={iconName} size={18} color={dimmed ? '#D1D5DB' : '#9CA3AF'} />
+            : <Ionicons name={iconName} size={26} color={effectiveIconColor} />}
         </View>
       </View>
 
       <Text style={styles.statValue}>
         <Text style={styles.statValueBold}>{value}</Text>
-        <Text style={styles.statValueMuted}>/{total}</Text>
+        {total ? <Text style={styles.statValueMuted}>/{total}</Text> : null}
       </Text>
       <Text style={styles.statUnit}>{unit}</Text>
     </TouchableOpacity>
@@ -295,6 +313,87 @@ const InlineMessageText: React.FC<{
   );
 };
 
+// One USER_INPUT block on a CONTENT card's detail page (see
+// HomeCardDetailScreen / getHomeCardDetail). We surface these inline on the
+// Home card too, so a parent can jot a reflection without opening the detail
+// page. `userAnswer` is the requesting user's own saved answer, if any.
+interface HomeCardInputComponent {
+  id: string;
+  type: string;
+  inputLabel: string | null;
+  inputPlaceholder: string | null;
+  userAnswer?: string | null;
+  // Set by the admin per USER_INPUT block — only these render inline on the
+  // Home card; the rest stay detail-page-only.
+  showOnCard?: boolean;
+}
+
+// Collapsible free-text reflection attached to a CONTENT home card. Starts
+// collapsed (just a "＋ Add your reflection" row) unless the user already
+// saved an answer. Saves through the same endpoint the detail page uses
+// (recordingService.submitHomeCardInput) — one answer per user per block.
+const InlineReflection: React.FC<{ cardId: string; component: HomeCardInputComponent }> = ({ cardId, component }) => {
+  const recordingService = useRecordingService();
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(!!component.userAnswer);
+  const [answer, setAnswer] = useState(component.userAnswer || '');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(!!component.userAnswer);
+
+  const handleSave = async () => {
+    if (!answer.trim() || saving) return;
+    setSaving(true);
+    try {
+      await recordingService.submitHomeCardInput(cardId, component.id, answer.trim());
+      setSaved(true);
+      amplitudeService.trackEvent('Home Card Input Saved', { cardId, componentId: component.id, source: 'home_card' });
+    } catch (err) {
+      console.log('[HomeScreen_v2] Failed to save reflection:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!expanded) {
+    return (
+      <TouchableOpacity
+        style={styles.reflectionToggle}
+        onPress={() => setExpanded(true)}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="add-circle-outline" size={18} color={COLORS.mainPurple} />
+        <Text style={styles.reflectionToggleText}>{component.inputLabel || t('homeV2.reflectionPrompt')}</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    // Claims taps that the TextInput / Save button don't, so interacting with
+    // the reflection never triggers the card's "open detail page" onPress.
+    <View style={styles.reflectionBlock} onStartShouldSetResponder={() => true}>
+      {!!component.inputLabel && <Text style={styles.reflectionLabel}>{component.inputLabel}</Text>}
+      <TextInput
+        style={styles.reflectionInput}
+        value={answer}
+        onChangeText={(text) => { setAnswer(text); setSaved(false); }}
+        placeholder={component.inputPlaceholder || t('homeV2.reflectionPlaceholder')}
+        placeholderTextColor="#9CA3AF"
+        multiline
+      />
+      <TouchableOpacity
+        style={[styles.reflectionSaveBtn, (!answer.trim() || saving) && styles.reflectionSaveBtnDisabled]}
+        onPress={handleSave}
+        disabled={!answer.trim() || saving}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.reflectionSaveBtnText}>
+          {saving ? t('homeV2.reflectionSaving') : saved ? t('homeV2.reflectionSaved') : t('homeV2.reflectionSave')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 interface SubActionCardProps {
   card: HomeCardData;
   onPress?: () => void;
@@ -303,10 +402,33 @@ interface SubActionCardProps {
 
 const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName }) => {
   const recordingService = useRecordingService();
+  const { t, i18n } = useTranslation();
 
-  // Local optimistic like state — resynced from the server value whenever it
-  // changes and there's no toggle in flight, so a background refetch (e.g.
-  // liked on another device) still wins once our own request settles.
+  // USER_INPUT blocks for this card, pulled from the detail payload so a
+  // parent can add a reflection right on the Home card (CONTENT cards only —
+  // QUOTE cards have no detail page).
+  const [userInputs, setUserInputs] = useState<HomeCardInputComponent[]>([]);
+  useEffect(() => {
+    if (card.cardType !== 'CONTENT') return;
+    let cancelled = false;
+    recordingService
+      .getHomeCardDetail(card.id, i18n.language)
+      .then((detail) => {
+        if (cancelled) return;
+        setUserInputs(((detail.components ?? []) as HomeCardInputComponent[]).filter((c) => c.type === 'USER_INPUT' && c.showOnCard));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [card.id, card.cardType, i18n.language, recordingService]);
+
+  // Local optimistic like state — resynced from the server value only when the
+  // card prop itself actually changes (e.g. a background refetch picked up a
+  // like made on another device), and never while our own toggle is in flight.
+  // We key the resync off the *previous* prop value rather than just
+  // `likePending` because the Home feed doesn't refetch on tap: if we resynced
+  // on every `likePending` transition, our own optimistic like would be reset
+  // to the stale prop the instant our request settled (heart snaps back to
+  // empty, count drops again).
   // likeCount already includes the server's random per-card base offset
   // (see schema.prisma's HomeCard.likeCountBase) — this just moves it by 1
   // on tap, same as any real like counter.
@@ -314,8 +436,13 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
   const [likePending, setLikePending] = useState(false);
   const [displayLikeCount, setDisplayLikeCount] = useState(card.likeCount);
 
+  const prevCardLike = useRef({ isLiked: card.isLiked, likeCount: card.likeCount });
   useEffect(() => {
-    if (!likePending) {
+    const changed =
+      prevCardLike.current.isLiked !== card.isLiked ||
+      prevCardLike.current.likeCount !== card.likeCount;
+    prevCardLike.current = { isLiked: card.isLiked, likeCount: card.likeCount };
+    if (changed && !likePending) {
       setLiked(card.isLiked);
       setDisplayLikeCount(card.likeCount);
     }
@@ -343,7 +470,12 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
   const sharerFirstName = sharerName?.trim().split(/\s+/)[0];
   if (sharerFirstName) shareParams.set('shared_by', sharerFirstName);
   const shareUrl = `${webUrl}/share-home-card.html?${shareParams.toString()}`;
-  const shareImageUrl = `${webUrl}/api/config/home-cards/${card.id}/share-image.png`;
+  // ?lang= so the in-app preview image matches the (already-localized)
+  // card.message/attribution shown everywhere else — see applyHomeCardTx in
+  // config.cjs. The public share-home-card.html link itself stays English
+  // (no per-viewer locale to go on there), only this in-app preview image.
+  const shareImageLang = i18n.language && i18n.language !== 'en' ? `?lang=${i18n.language}` : '';
+  const shareImageUrl = `${webUrl}/api/config/home-cards/${card.id}/share-image.png${shareImageLang}`;
 
   const handleShare = () => {
     amplitudeService.trackEvent('Home Card Shared', { cardId: card.id });
@@ -376,6 +508,7 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
           >
             <Ionicons name={liked ? 'heart' : 'heart-outline'} size={16} color={liked ? '#EF4444' : '#B99089'} />
           </TouchableOpacity>
+          <Text style={styles.subActionQuoteLikeCount}>{displayLikeCount}</Text>
           <TouchableOpacity
             style={styles.subActionQuoteIconButton}
             onPress={handleShare}
@@ -427,13 +560,14 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
   const badgePillBg = lightenHexColor(card.badgeColor, 0.82);
   const cardBorder = lightenHexColor(card.badgeColor, 0.75);
   const badgeIcon = SUB_ACTION_CARD_ICONS[card.badgeText];
+  const badgeLabel = getHomeCardBadgeLabel(t, card.badgeText);
 
   const inner = (
     <>
       <View style={styles.subActionContentTopRow}>
         <View style={{ flex: 1 }}>
           <View style={[styles.subActionBadgePill, { backgroundColor: badgePillBg }]}>
-            <Text style={[styles.subActionBadgePillText, { color: card.badgeColor }]}>{card.badgeText}</Text>
+            <Text style={[styles.subActionBadgePillText, { color: card.badgeColor }]}>{badgeLabel}</Text>
           </View>
           <Text style={[styles.subActionHeadline, { fontSize: headlineSize, lineHeight: Math.round(headlineSize * 1.3) }]}>
             <InlineRuns runs={headline} bold italic={card.messageItalic} />
@@ -453,11 +587,15 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
         )}
       </View>
 
+      {userInputs.map((component) => (
+        <InlineReflection key={component.id} cardId={card.id} component={component} />
+      ))}
+
       <View style={styles.subActionDivider} />
 
       <View style={styles.subActionBottomRow}>
         <View style={styles.subActionLearnMoreRow}>
-          <Text style={styles.subActionLearnMoreText}>Learn more</Text>
+          <Text style={styles.subActionLearnMoreText}>{t('homeV2.subActionLearnMore')}</Text>
           <Ionicons name="arrow-forward" size={14} color={COLORS.mainPurple} />
         </View>
         <View style={styles.subActionBottomActions}>
@@ -530,6 +668,9 @@ export const HomeScreen_v2: React.FC = () => {
     logsThisWeek: 0,
     timesRecorded: 0,
     lessonsCompleted: 0,
+    weeklyStreak: 0,
+    totalSessions: 0,
+    parentLevel: 1,
   });
   const [weeklyScore, setWeeklyScore] = useState<{ score: number; maxScore: number }>({ score: 0, maxScore: 300 });
   const [todayPlan, setTodayPlan] = useState<TodayPlanItem[]>([]);
@@ -604,14 +745,15 @@ export const HomeScreen_v2: React.FC = () => {
       if (mode === 'full') setLoading(true);
       else if (mode === 'refresh') setIsRefreshing(true);
 
-      const [dashboardData, lessonsResponse, weeklyReportsData, currentUser, homeCardsData] = await Promise.all([
+      const [dashboardData, lessonsResponse, weeklyReportsData, currentUser, homeCardsData, parentSkillLevel] = await Promise.all([
         recordingService.getDashboard(),
         lessonService.getLessons(undefined, i18n.language),
         recordingService.getVisibleWeeklyReports().catch(() => ({ reports: [] })),
         authService.getCurrentUser().catch(() => null),
         // null (not []) on failure — a transient error on a background refetch
         // shouldn't wipe cards that are already showing on screen.
-        recordingService.getHomeCards().catch(() => null),
+        recordingService.getHomeCards(i18n.language).catch(() => null),
+        authService.getParentSkillLevel().catch(() => null),
       ]);
       if (homeCardsData) setHomeCards(homeCardsData.homeCards ?? []);
 
@@ -619,7 +761,13 @@ export const HomeScreen_v2: React.FC = () => {
       if (currentUser?.childName) setChildName(currentUser.childName);
 
       const { todayRecordings, thisWeekRecordings, latestWithReport } = dashboardData;
-      const { lessons } = lessonsResponse;
+      // Home mirrors the Learn tab (LearnScreen_v3): the active curriculum is the
+      // new audio-first "Content V2" modules only. Legacy modules
+      // (GETTING_STARTED, EMOTIONS, DISCIPLINE, …) still exist in the API response
+      // but are hidden here, so "Daily Learning" always points at a real audio lesson.
+      const lessons = (lessonsResponse.lessons ?? []).filter((l: any) =>
+        CONTENT_V2_MODULES.includes(l.module)
+      );
 
       // ── Weekly stats ──
       const today = getTodaySingapore();
@@ -654,6 +802,9 @@ export const HomeScreen_v2: React.FC = () => {
         logsThisWeek: 0,
         timesRecorded: thisWeekRecordings.length,
         lessonsCompleted: lessonsThisWeek.length,
+        weeklyStreak: dashboardData.weeklyStreak ?? 0,
+        totalSessions: dashboardData.totalCompletedSessions ?? 0,
+        parentLevel: parentSkillLevel?.currentLevel ?? 1,
       });
 
       // ── Lesson completed today ──
@@ -733,6 +884,7 @@ export const HomeScreen_v2: React.FC = () => {
           title: lessonForPlan.title,
           duration: t('homeV2.planLessonDuration'),
           isCompleted: !!todayCompletedLesson,
+          moduleKey: lessonForPlan.module,
         });
       }
 
@@ -761,9 +913,20 @@ export const HomeScreen_v2: React.FC = () => {
       }
 
       // ── Setup daily reminder item (shown for first 3 days after account creation) ──
+      // Skip entirely if the user already picked a reminder time during
+      // onboarding (ReminderTimeScreen / NotificationPermissionScreen write
+      // dailyLessonReminder + dailyLessonTime into @notification_preferences).
+      // Only surface this item for users who skipped that step.
+      let hasOnboardingReminder = false;
+      try {
+        const prefsStr = await userStorage.getItem('@notification_preferences');
+        const prefs = prefsStr ? JSON.parse(prefsStr) : {};
+        hasOnboardingReminder = !!prefs.dailyLessonReminder && !!prefs.dailyLessonTime;
+      } catch {}
+
       const reminderDoneDate = await userStorage.getItem('reminder_setup_completed');
       const completedToday = reminderDoneDate === getTodaySingapore();
-      if (!reminderDoneDate || completedToday) {
+      if (!hasOnboardingReminder && (!reminderDoneDate || completedToday)) {
         try {
           const user = await authService.getCurrentUser();
           if (user.createdAt) {
@@ -886,7 +1049,7 @@ export const HomeScreen_v2: React.FC = () => {
     await userStorage.setItem(reportReadKey, latestRecordingId);
     setIsReportRead(true);
     amplitudeService.trackReportViewed(latestRecordingId, undefined, { source: 'home' });
-    navigation.push('ReportV2', { recordingId: latestRecordingId });
+    navigation.push('ReportV3', { recordingId: latestRecordingId });
   };
 
   const handleRecordAgain = () => {
@@ -896,10 +1059,8 @@ export const HomeScreen_v2: React.FC = () => {
 
   const handleGetReadyPress = async () => {
     amplitudeService.trackEvent('Home Get Ready Pressed', { source: 'main_card' });
-    if (!FORCE_SHOW_GET_READY_CARD) {
-      await userStorage.setItem('get_ready_to_play_dismissed', 'true');
-      setGetReadyDismissed(true);
-    }
+    await userStorage.setItem('get_ready_to_play_dismissed', 'true');
+    setGetReadyDismissed(true);
     navigation.push('GetReadyToPlay');
   };
 
@@ -931,7 +1092,11 @@ export const HomeScreen_v2: React.FC = () => {
     amplitudeService.trackEvent('Home Plan Item Tapped', { type: item.type, id: item.id });
     if (item.type === 'lesson') {
       amplitudeService.trackLessonStarted(item.id, item.title, { source: 'home_today_plan' });
-      navigation.push('LessonViewer', { lessonId: item.id });
+      if (item.moduleKey && CONTENT_V2_MODULES.includes(item.moduleKey)) {
+        navigation.push('LessonViewerV2', { lessonId: item.id, moduleKey: item.moduleKey });
+      } else {
+        navigation.push('LessonViewer', { lessonId: item.id });
+      }
     } else if (item.type === 'weekly-report') {
       amplitudeService.trackWeeklyReportTapped(item.id, { source: 'home_today_plan' });
       await userStorage.setItem(`weekly_report_read_date_${item.id}`, getTodaySingapore());
@@ -1201,35 +1366,36 @@ export const HomeScreen_v2: React.FC = () => {
         <View style={styles.statsRow}>
           <StatPill
             iconName="flame"
+            iconColor="#F97316"
+            value={String(weeklyStats.weeklyStreak)}
+            unit={t('homeV2.statWeeks')}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'weekly_streak' }); tabNavigation.navigate('Record'); }}
+          />
+          <StatPill
+            iconName="sparkles"
             iconColor={COLORS.mainPurple}
+            value={String(weeklyStats.totalSessions)}
+            unit={t('homeV2.statTimes')}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'total_sessions' }); tabNavigation.navigate('Record'); }}
+          />
+          <StatPill
+            iconName="calendar-outline"
+            iconColor="#10B981"
             value={String(weeklyStats.daysCompleted)}
             total="7"
             unit={t('homeV2.statDays')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'sessions' }); tabNavigation.navigate('Record'); }}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'days_this_week' }); tabNavigation.navigate('Record'); }}
           />
           <StatPill
-            iconName="flash"
-            iconColor="#10B981"
-            value={String(weeklyStats.minutesPlayed)}
-            total="35"
-            unit={t('homeV2.statMins')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'mins' }); tabNavigation.navigate('Record'); }}
-          />
-          <StatPill
-            iconName="happy-outline"
+            iconName="ribbon-outline"
             iconColor={COLORS.mainPurple}
-            value={String(weeklyStats.timesRecorded)}
-            total="7"
-            unit={t('homeV2.statTimes')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'times' }); tabNavigation.navigate('Record'); }}
-          />
-          <StatPill
-            iconName="book-outline"
-            iconColor="#10B981"
-            value={String(weeklyStats.lessonsCompleted)}
-            total="7"
-            unit={t('homeV2.statLessons')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'lessons' }); tabNavigation.navigate('Learn'); }}
+            value={String(weeklyStats.parentLevel)}
+            total="9"
+            unit={t('homeV2.statLevel')}
+            // Parenting level isn't meaningful until the first session's report
+            // is ready — grey it out and block the tap until then.
+            dimmed={weeklyStats.totalSessions === 0}
+            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'parent_level' }); navigation.push('ParentLevelDetail', { level: weeklyStats.parentLevel as ParentSkillLevel }); }}
           />
         </View>
 
@@ -1285,7 +1451,7 @@ export const HomeScreen_v2: React.FC = () => {
                 {t('homeV2.analyzingSessionSuffix')}
               </Text>
             </>
-          ) : FORCE_SHOW_GET_READY_CARD || (!hasAnySession && !getReadyDismissed) ? (
+          ) : !hasAnySession && !getReadyDismissed ? (
             <>
               <View style={styles.massageHeader}>
                 <View style={styles.greenDot} />
@@ -1610,6 +1776,9 @@ const styles = StyleSheet.create({
     gap: 4,
     minWidth: 72,
   },
+  statPillDimmed: {
+    opacity: 0.5,
+  },
   statRingWrap: {
     width: RING_SIZE,
     height: RING_SIZE,
@@ -1768,6 +1937,56 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30,41,57,0.08)',
     marginVertical: 16,
   },
+
+  // Inline reflection (USER_INPUT block surfaced on the Home card)
+  reflectionToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 14,
+  },
+  reflectionToggleText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.mainPurple,
+  },
+  reflectionBlock: {
+    marginTop: 14,
+  },
+  reflectionLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.textDark,
+    marginBottom: 8,
+  },
+  reflectionInput: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: COLORS.textDark,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(30,41,57,0.12)',
+    borderRadius: 12,
+    padding: 12,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  reflectionSaveBtn: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+  },
+  reflectionSaveBtnDisabled: {
+    opacity: 0.4,
+  },
+  reflectionSaveBtnText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: '#fff',
+  },
   subActionBottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1824,8 +2043,15 @@ const styles = StyleSheet.create({
     top: 14,
     right: 14,
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
     zIndex: 1,
+  },
+  subActionQuoteLikeCount: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: '#B99089',
+    marginLeft: -2,
   },
   subActionQuoteIconButton: {
     width: 28,

@@ -139,7 +139,7 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
   // restarting a second Sound instance for the same audio.
   useEffect(() => {
     if (!lesson) return;
-    player.loadLesson(lesson.id, lesson.audioUrl, i18n.language);
+    player.loadLesson(lesson.id, lesson.audioUrl, i18n.language, lesson.title);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson?.id, lesson?.audioUrl]);
 
@@ -149,7 +149,7 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
       const next = idx >= 0 && idx < dayOrdered.length - 1 ? dayOrdered[idx + 1] : undefined;
       if (next) {
         setCurrentLessonId(next.id);
-        player.loadLesson(next.id, next.audioUrl, i18n.language);
+        player.loadLesson(next.id, next.audioUrl, i18n.language, next.title);
       } else {
         player.clear();
       }
@@ -167,6 +167,15 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
       player.setOnFinish(handleFinish);
       return () => player.setOnFinish(null);
     }, [handleFinish, player])
+  );
+
+  // This screen has its own AudioPlayBar — suppress the app-wide bar while focused.
+  const { setScreenOwnsPlayer } = player;
+  useFocusEffect(
+    useCallback(() => {
+      setScreenOwnsPlayer(true);
+      return () => setScreenOwnsPlayer(false);
+    }, [setScreenOwnsPlayer])
   );
 
   const blocks = useMemo(() => formatLessonContentV2(lesson?.contentV2 || ''), [lesson?.contentV2]);

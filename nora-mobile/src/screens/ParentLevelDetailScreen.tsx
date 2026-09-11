@@ -1,11 +1,11 @@
 /**
  * ParentLevelDetailScreen
- * Explains every level of the 7-level Personalized Learning Journey ladder,
+ * Explains every level of the 9-level Personalized Learning Journey ladder,
  * highlighting the parent's current level. Opened from the Parenting Level
  * card on ReportScreen_v2.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -15,20 +15,15 @@ import { RootStackNavigationProp, RootStackParamList } from '../navigation/types
 import type { ParentSkillLevel } from '@nora/core';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { PARENT_SKILL_LEVEL_ORDER, PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
+import { criteriaForLevel } from '../utils/goalFallback';
 
 type ParentLevelDetailRouteProp = RouteProp<RootStackParamList, 'ParentLevelDetail'>;
 
-// Same 7-level ladder shown in ReportScreen_v2 and ProfileReportScreen's
-// Personalized Learning Journey.
-const PARENT_SKILL_LEVELS: Array<{ level: ParentSkillLevel; key: string }> = [
-  { level: 1, key: 'playBuilder' },
-  { level: 2, key: 'confidenceBuilder' },
-  { level: 3, key: 'attentionBuilder' },
-  { level: 4, key: 'communicationBuilder' },
-  { level: 5, key: 'cooperationBuilder' },
-  { level: 6, key: 'boundaryBuilder' },
-  { level: 7, key: 'confidentParent' },
-];
+// Same ladder shown in ReportScreen_v2 and ProfileReportScreen's Personalized
+// Learning Journey — single source of truth in constants/parentSkillLevels.ts.
+const PARENT_SKILL_LEVELS: Array<{ level: ParentSkillLevel; key: string }> =
+  PARENT_SKILL_LEVEL_ORDER.map(level => ({ level, key: PARENT_SKILL_LEVEL_KEYS[level] }));
 
 export const ParentLevelDetailScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -36,12 +31,26 @@ export const ParentLevelDetailScreen: React.FC = () => {
   const { t } = useTranslation();
   const { level: currentLevel } = route.params;
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  // Only auto-scroll once per mount — the active card's onLayout can fire
+  // more than once (e.g. font/image load reflow), and re-scrolling after the
+  // user has started reading elsewhere would be jarring.
+  const hasAutoScrolledRef = useRef(false);
+
   useEffect(() => {
     amplitudeService.trackScreenView('Parent Level Detail', { currentLevel });
   }, [currentLevel]);
 
   const handleBack = () => {
     navigation.goBack();
+  };
+
+  // Scroll straight to the parent's current level so they don't have to hunt
+  // for it in the 9-step list.
+  const handleActiveCardLayout = (y: number) => {
+    if (hasAutoScrolledRef.current) return;
+    hasAutoScrolledRef.current = true;
+    scrollViewRef.current?.scrollTo({ y: Math.max(y - 16, 0), animated: true });
   };
 
   return (
@@ -55,6 +64,7 @@ export const ParentLevelDetailScreen: React.FC = () => {
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -68,6 +78,7 @@ export const ParentLevelDetailScreen: React.FC = () => {
           return (
             <View
               key={step.key}
+              onLayout={status === 'active' ? (e) => handleActiveCardLayout(e.nativeEvent.layout.y) : undefined}
               style={[
                 styles.levelCard,
                 status === 'active' && styles.levelCardActive,
@@ -106,13 +117,13 @@ export const ParentLevelDetailScreen: React.FC = () => {
               <Text style={[styles.levelName, status === 'locked' && styles.levelTextLocked]}>
                 {t(`profileReport.levels.${step.key}.title`)}
               </Text>
-              <Text style={[styles.levelSkill, status === 'locked' && styles.levelTextLocked]}>
-                {t(`profileReport.levels.${step.key}.skill`)}
+              <Text style={[styles.levelGoal, status === 'locked' && styles.levelTextLocked]}>
+                {t(`profileReport.levels.${step.key}.goal`)}
               </Text>
 
               <Text style={[styles.levelGoal, status === 'locked' && styles.levelTextLocked]}>
                 <Text style={styles.levelGoalLabel}>{t('profileReport.journeyGoalLabel')}</Text>
-                {t(`profileReport.levels.${step.key}.goal`)}
+                <Text style={[styles.levelSkill, status === 'locked' && styles.levelTextLocked]}>{criteriaForLevel(step.level, t)}</Text>
               </Text>
 
               {status !== 'locked' && (

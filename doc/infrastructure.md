@@ -96,6 +96,7 @@ Both environments share the same 9 secret names (different values per env):
 | `AWS_S3_SUPPORT_REGION` | `ap-southeast-1` | `ap-southeast-1` | Support bucket is always sg |
 | `APP_RUNNER_URL` | `https://p2tgddmyxt.us-east-1.awsapprunner.com` | `https://wpwpawhz29.ap-southeast-1.awsapprunner.com` | Added to CORS allowed origins |
 | `WEB_APP_URL` | `https://p2tgddmyxt.us-east-1.awsapprunner.com` | `https://wpwpawhz29.ap-southeast-1.awsapprunner.com` | Base URL for reset-password email link |
+| `EXPO_PUBLIC_WEB_URL` | `https://p2tgddmyxt.us-east-1.awsapprunner.com` | `https://signup.hinora.co` | Public host for share links — `shortlinks.cjs` builds `/s/<code>` from it. Must match `nora-mobile/.env.production`. Falls back to `WEB_APP_URL` if unset. |
 | `FRONTEND_URL` | `https://your-frontend-domain.com` | `https://hinora.co` | CORS allowed origin for web frontend |
 | `PROD_API_URL` | `https://wpwpawhz29.ap-southeast-1.awsapprunner.com` | *(dev-only — admin sync routes call prod from dev)* | |
 | `SMTP_HOST` | `smtp.gmail.com` | `smtp.gmail.com` | |
@@ -114,7 +115,8 @@ Both environments share the same 9 secret names (different values per env):
 | `ADMIN_PASSWORD` | — | same | Admin panel login |
 | `DISABLE_ANALYTICS` | `true` | *(prod omits — analytics enabled)* | Suppresses analytics in dev |
 | `AI_PROVIDER` | *(omits — defaults to `gemini-2.0-flash`)* | `claude-sonnet-4-6` | Default model for all gateway calls. Accepts any full model ID (`claude-*` or `gemini-*`) or named key. Claude calls fall back to Sonnet; Gemini calls fall back within Gemini. See `doc/llm-gateway.md`. |
-| `GEMINI_STREAMING_MODEL` | *(omits — defaults to `gemini-3.1-pro-preview`)* | *(omits)* | Model for CDI coaching & PDI two-choices streaming calls. Falls back to `FALLBACK_MODEL` on failure. |
+| `GEMINI_FLASH_MODEL` | *(omits — defaults to `gemini-3.7-flash`)* | *(omits)* | Flash-tier model for the primary `gemini` gateway path (every profile in `server/llm/profiles.cjs`). Falls back to `gemini-3.1-pro-preview` on failure. |
+| `GEMINI_STREAMING_MODEL` | *(omits — defaults to `gemini-3.1-pro-preview`)* | *(omits)* | Model for CDI coaching & PDI two-choices streaming calls (fall back to `FALLBACK_MODEL`). Also overrides the model for the DPICS `pcit-coding` / `pcit-coding-supplemental` calls in `pcitAnalysisService.cjs` — unset there means the `pcit-coding` profile default (`gemini` key), and a `gemini-*` id keeps Gemini fallback + context-cache support. |
 | `FALLBACK_MODEL` | *(omits — defaults to `claude-sonnet-4-6`)* | *(omits)* | Fallback model for failed Claude (non-fallback) and Gemini streaming calls. Accepts any full model ID (`claude-*` or `gemini-*`). |
 
 ---
@@ -129,6 +131,21 @@ node server.cjs           # starts the server
 ```
 
 `prisma migrate deploy` is idempotent — it only applies migrations that haven't been applied yet. Schema changes are automatically applied to prod DB on the next deploy.
+
+> **Known gap:** `.dockerignore` excludes `prisma/migrations`, so the image ships no migration files and `migrate deploy` is a no-op on deploy. Migrations only reach a DB when run manually over a tunnel. Prod is behind as a result — see the migration-drift notes below before removing that `.dockerignore` line.
+
+---
+
+## Local Development in the Container Image
+
+`npm run server` runs Node on the macOS host, which diverges from the Alpine container App Runner runs (fonts, native libs, musl). To run the *actual* image locally against the dev DB:
+
+```sh
+./scripts/start-db-tunnel.sh    # dev DB on localhost:5432 (keep running)
+npm run server:docker           # = docker compose up --build
+```
+
+Server on `http://localhost:3001` (same port as `npm run server` — stop that first, or set `API_PORT`). Reads the root `.env`, mounts `~/.aws` read-only for S3/Secrets, and bind-mounts `server/` `public/` `prisma/` so `docker compose restart api` picks up edits without a rebuild. See `docker-compose.yml` for details.
 
 ---
 

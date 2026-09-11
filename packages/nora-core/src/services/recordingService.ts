@@ -34,6 +34,9 @@ export type ChildPortfolioInsights = CoachInsight[];
 
 export interface AboutChildItem {
   id: number;
+  // Where the child sits relative to their age. Newer sessions carry this;
+  // `valence` is still derived from it server-side for back-compat.
+  label?: 'advanced' | 'age_appropriate' | 'needs_help';
   valence?: 'STRENGTH' | 'GROWTH_AREA';
   Title: string;
   Description: string;
@@ -151,6 +154,18 @@ export interface MilestoneHistoryResponse {
   };
 }
 
+export interface SkillImproveResult {
+  skillLabel: string;
+  direction: 'BUILD' | 'AVOID';
+  summary: string;
+  opportunities: Array<{
+    title: string;
+    explanation: string;
+    quote?: string | null;
+    suggestedRewrite?: string | null;
+  }>;
+}
+
 export interface RecordingAnalysis {
   id: string;
   mode: 'CDI' | 'PDI';
@@ -184,11 +199,45 @@ export interface RecordingAnalysis {
     description?: string;  // Legacy shape (generateReportHighlights) — older sessions only
     whatHelped?: string[];  // Legacy shape (generateReportHighlights) — older sessions only
   } | null;
-  skillCoaching?: string | null;  // Coaching note for tomorrow's goal skill, grounded in this session (generateCrisis)
+  skillCoaching?: string | null;  // Coach's Corner (string path): raw-report fallback when the cdiCoachingFormat pass failed, or the generateCrisis note for pre-split sessions. Newer sessions use `coachCorner` instead.
+  // Coach's Corner (structured): sections "1. What you did well" + "3. Next
+  // Growth Focus" of the CDI write-up, broken into breakdown fields by
+  // cdiCoachingFormat. Present on newer sessions; the card renders this when set.
+  coachCorner?: {
+    didWell: {
+      theme: string;
+      howItHelps: string;
+      examples: Array<{ quote: string; benefit: string }>;
+    };
+    growthFocus: {
+      heading: string;
+      gap: string;
+      benchmark: string;
+      strategy: string;
+    };
+    wordBank: Array<{
+      goal: string;
+      categories: Array<{ name: string; examples: string[] }>;
+    }>;
+  } | null;
+  // Learning Moment card: a distinct learning / crisis moment extracted from the
+  // coaching write-up (cdiCoachingFormat). Null when the write-up contains none.
+  // Rendered in the crisis-card slot when present.
+  learningMoments?: {
+    summary: string;
+    points: Array<{
+      title: string;
+      explanation: string;
+      quote?: string | null;
+      suggestedRewrite?: string | null;
+    }>;
+  } | null;
+  skillImprove?: SkillImproveResult | null;  // Session-grounded opportunities to build/reduce the goal skill (generateSkillImprove)
   bondingMoment?: {
-    quote: string;             // 2-3 consecutive utterances, quoted verbatim (generateCrisis)
-    utteranceNumber: number;   // Index of the first utterance in the quoted exchange
-    context: string;           // 1-2 sentences describing what was happening
+    quote: string;                 // 2-3 consecutive utterances, rebuilt from the transcript (generateCrisis)
+    utteranceNumber: number;       // Index of the first utterance in the exchange
+    endUtteranceNumber?: number;   // Index of the last utterance in the exchange (absent on pre-range sessions)
+    context: string;               // 1-2 sentences describing what was happening
   } | null;
   topMomentStartTime?: number | null;  // Start time in seconds
   topMomentEndTime?: number | null;  // End time in seconds
@@ -377,6 +426,8 @@ class RecordingService {
     todayRecordings: any[];
     thisWeekRecordings: any[];
     latestWithReport: any | null;
+    totalCompletedSessions: number;
+    weeklyStreak: number;
   }> {
     const response = await this.authService.authenticatedRequest(
       `${this.apiUrl}/api/recordings/dashboard`
@@ -517,9 +568,12 @@ class RecordingService {
   /**
    * Get admin-configured sub-action cards for the Home screen (active only,
    * in display order). CONTENT cards open a detail page (fetch via
-   * getHomeCardDetail); QUOTE cards get a share button instead.
+   * getHomeCardDetail); QUOTE cards get a share button instead. `locale`
+   * (e.g. i18n.language) returns message/attribution translated into that
+   * locale, falling back to English per-field where untranslated — same
+   * convention as lessonService.getModules.
    */
-  async getHomeCards(): Promise<{ homeCards: Array<{
+  async getHomeCards(locale?: string): Promise<{ homeCards: Array<{
     id: string;
     cardType: 'CONTENT' | 'QUOTE';
     badgeText: string;
@@ -533,8 +587,9 @@ class RecordingService {
     isLiked: boolean;
     likeCount: number;
   }> }> {
+    const lang = locale && locale !== 'en' ? `?lang=${locale}` : '';
     const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/config/home-cards`
+      `${this.apiUrl}/api/config/home-cards${lang}`
     );
 
     if (!response.ok) {
@@ -624,11 +679,13 @@ class RecordingService {
 
   /**
    * Get the full title + ordered components for one CONTENT home card, to
-   * render on the detail page opened by tapping its arrow.
+   * render on the detail page opened by tapping its arrow. `locale` works
+   * the same as in getHomeCards.
    */
-  async getHomeCardDetail(id: string): Promise<HomeCardDetail> {
+  async getHomeCardDetail(id: string, locale?: string): Promise<HomeCardDetail> {
+    const lang = locale && locale !== 'en' ? `?lang=${locale}` : '';
     const response = await this.authService.authenticatedRequest(
-      `${this.apiUrl}/api/config/home-cards/${id}`
+      `${this.apiUrl}/api/config/home-cards/${id}${lang}`
     );
 
     if (!response.ok) {

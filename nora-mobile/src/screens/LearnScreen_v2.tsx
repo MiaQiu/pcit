@@ -32,7 +32,6 @@ import { resolveImageUris } from '../services/lessonImageCache';
 import { resolveDemoVideoThumbnailUris } from '../services/demoVideoThumbnailCache';
 import { getCachedLessonData, saveLessonData, isCacheStale } from '../services/lessonDataCache';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import amplitudeService from '../services/amplitudeService';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 
@@ -124,14 +123,16 @@ const LessonCard: React.FC<LessonCardProps> = ({
 
 // ─── Nora Foundations (LearnScreen_v3) entry section ──────────────────────────
 
-const NORA_FOUNDATIONS_COVER = require('../../assets/images/emotional_message.png');
+const NORA_FOUNDATIONS_COVER = require('../../assets/images/nora_foundations.webp');
+const PLAY_GUIDE_COVER = require('../../assets/images/emotional_message.png');
 
 interface NoraFoundationsSectionProps {
   cardWidth: number;
   onPress: () => void;
+  onPlayGuidePress: () => void;
 }
 
-const NoraFoundationsSection: React.FC<NoraFoundationsSectionProps> = ({ cardWidth, onPress }) => {
+const NoraFoundationsSection: React.FC<NoraFoundationsSectionProps> = ({ cardWidth, onPress, onPlayGuidePress }) => {
   const { t } = useTranslation();
 
   return (
@@ -162,7 +163,76 @@ const NoraFoundationsSection: React.FC<NoraFoundationsSectionProps> = ({ cardWid
             </View>
           </View>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.noraCardShadow, { width: cardWidth }]}
+          onPress={onPlayGuidePress}
+          activeOpacity={0.75}
+        >
+          <View style={styles.noraCardInner}>
+            <View style={[styles.lessonImageWrap, { backgroundColor: COLORS.mainPurple }]}>
+              <Image source={PLAY_GUIDE_COVER} style={styles.lessonIcon} resizeMode="cover" />
+            </View>
+            <View style={styles.lessonCardText}>
+              <Text style={[styles.lessonTitle, styles.noraCardTitle]} numberOfLines={2}>{t('learnV2.playGuideTitle')}</Text>
+              <Text style={styles.noraCardSubtitle} numberOfLines={1}>{t('learnV2.playGuideSubtitle')}</Text>
+              <View style={styles.lessonMetaRow}>
+                <Ionicons name="list-outline" size={13} color="#9CA3AF" />
+                <Text style={[styles.lessonMetaText, styles.lessonMetaIconGap]}>{t('learnV2.playGuideMeta')}</Text>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
       </ScrollView>
+    </View>
+  );
+};
+
+// ─── Quick Guides section ────────────────────────────────────────────────────
+
+const QUICK_GUIDE_IMAGES = {
+  why5mins: require('../../assets/images/new onboarding/why5mins.png'),
+  whyRecord: require('../../assets/images/new onboarding/whyrecord.png'),
+} as const;
+
+const QUICK_GUIDES: { guide: 'why5mins' | 'whyRecord' }[] = [
+  { guide: 'why5mins' },
+  { guide: 'whyRecord' },
+];
+
+interface QuickGuidesSectionProps {
+  cardWidth: number;
+  onGuidePress: (guide: 'why5mins' | 'whyRecord') => void;
+}
+
+const QuickGuidesSection: React.FC<QuickGuidesSectionProps> = ({ cardWidth, onGuidePress }) => {
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.demoVideoGrid}>
+      {QUICK_GUIDES.map(({ guide }) => (
+        <TouchableOpacity
+          key={guide}
+          style={[styles.noraCardShadow, { width: cardWidth }]}
+          onPress={() => onGuidePress(guide)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.noraCardInner}>
+            <View style={[styles.lessonImageWrap, styles.quickGuideImageWrap]}>
+              <Image
+                source={QUICK_GUIDE_IMAGES[guide]}
+                style={styles.quickGuideImage}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.lessonCardText}>
+              <Text style={styles.lessonTitle} numberOfLines={2}>
+                {t(`learnV2.quickGuides.${guide}.cardTitle`)}
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 };
@@ -201,7 +271,7 @@ const ModuleSection: React.FC<ModuleSectionProps> = ({
       <TouchableOpacity style={styles.moduleHeader} onPress={onModulePress} activeOpacity={0.7}>
         <Text style={styles.moduleName}>{module.title}</Text>
         {module.isLocked
-          ? <Ionicons name="lock-closed" size={18} color="#BBBBBB" />
+          ? <Ionicons name="lock-closed" size={20} color="#BBBBBB" />
           : <Ionicons name="chevron-forward" size={28} color={COLORS.textDark} />
         }
       </TouchableOpacity>
@@ -245,23 +315,6 @@ const formatVideoDuration = (seconds: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-const formatRelativeTime = (isoDate: string, t: TFunction): string => {
-  const seconds = Math.max(0, (Date.now() - new Date(isoDate).getTime()) / 1000);
-  const units: [string, number][] = [
-    ['years', 60 * 60 * 24 * 365],
-    ['months', 60 * 60 * 24 * 30],
-    ['weeks', 60 * 60 * 24 * 7],
-    ['days', 60 * 60 * 24],
-    ['hours', 60 * 60],
-    ['minutes', 60],
-  ];
-  for (const [unit, unitSeconds] of units) {
-    const value = Math.floor(seconds / unitSeconds);
-    if (value >= 1) return t(`learnV2.timeAgo.${unit}`, { count: value });
-  }
-  return t('learnV2.timeAgo.justNow', {});
-};
-
 interface DemoVideoCardProps {
   video: DemoVideo;
   // Locally cached copy of video.thumbnailUrl (see demoVideoThumbnailCache) —
@@ -273,7 +326,6 @@ interface DemoVideoCardProps {
 }
 
 const DemoVideoCard: React.FC<DemoVideoCardProps> = ({ video, localThumbnailUri, cardWidth, onPress }) => {
-  const { t } = useTranslation();
   const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
   const thumbnailUri = localThumbnailUri ?? video.thumbnailUrl;
 
@@ -300,6 +352,21 @@ const DemoVideoCard: React.FC<DemoVideoCardProps> = ({ video, localThumbnailUri,
               }}
             />
           )}
+          {/* When a cached thumbnail is what's shown above, mount a
+              metadata-only Video (never visible) purely to read the clip
+              length so the duration can replace the upload date below. */}
+          {thumbnailUri && durationSeconds === null && (
+            <Video
+              source={{ uri: video.videoUrl }}
+              style={styles.demoVideoDurationProbe}
+              shouldPlay={false}
+              isMuted
+              useNativeControls={false}
+              onLoad={status => {
+                if (status.isLoaded && status.durationMillis) setDurationSeconds(status.durationMillis / 1000);
+              }}
+            />
+          )}
           {durationSeconds !== null && (
             <View style={styles.demoVideoDurationBadge}>
               <Text style={styles.demoVideoDurationText}>{formatVideoDuration(durationSeconds)}</Text>
@@ -308,7 +375,6 @@ const DemoVideoCard: React.FC<DemoVideoCardProps> = ({ video, localThumbnailUri,
         </View>
         <View style={styles.lessonCardText}>
           <Text style={styles.lessonTitle} numberOfLines={2}>{video.title}</Text>
-          <Text style={styles.demoVideoMeta} numberOfLines={1}>{formatRelativeTime(video.createdAt, t)}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -379,7 +445,7 @@ export const LearnScreen_v2: React.FC = () => {
   // replaced the file, or this is a brand-new video) — so the section shows
   // the current version right away and swaps in the update once it lands.
   const loadDemoVideos = useCallback(() => {
-    lessonService.getDemoVideos()
+    lessonService.getDemoVideos(i18n.language)
       .then(({ demoVideos: videos }) => {
         setDemoVideos(videos);
         resolveDemoVideoThumbnailUris(videos, (id, uri) => {
@@ -389,7 +455,7 @@ export const LearnScreen_v2: React.FC = () => {
         });
       })
       .catch(err => console.error('Failed to load demo videos:', err));
-  }, [lessonService]);
+  }, [lessonService, i18n.language]);
 
   useEffect(() => {
     loadDemoVideos();
@@ -616,10 +682,22 @@ export const LearnScreen_v2: React.FC = () => {
         <View style={styles.sections}>
           <Text style={styles.sectionTitle}>{t('learnV2.gettingStartedTitle')}</Text>
           <NoraFoundationsSection
-            cardWidth={cardWidth * 1.2}
+            cardWidth={demoVideoCardWidth}
             onPress={() => {
               amplitudeService.trackEvent('Learn Module Tapped', { moduleKey: 'LEARN_V3' });
               navigation.push('LearnV3');
+            }}
+            onPlayGuidePress={() => {
+              amplitudeService.trackEvent('Learn Play Guide Tapped');
+              navigation.push('GetReadyToPlay');
+            }}
+          />
+          <Text style={[styles.sectionTitle, styles.sectionTitleBelow]}>{t('learnV2.quickGuidesTitle')}</Text>
+          <QuickGuidesSection
+            cardWidth={demoVideoCardWidth}
+            onGuidePress={guide => {
+              amplitudeService.trackEvent('Learn Quick Guide Tapped', { guide });
+              navigation.push('QuickGuide', { guide });
             }}
           />
           <Text style={[styles.sectionTitle, styles.sectionTitleBelow]}>{t('learnV2.demoVideosTitle')}</Text>
@@ -790,6 +868,14 @@ const styles = StyleSheet.create({
     height: '100%',
     zIndex: 1,
   },
+  quickGuideImageWrap: {
+    backgroundColor: '#F1E9FB',
+  },
+  quickGuideImage: {
+    width: '82%',
+    height: '82%',
+    zIndex: 1,
+  },
   decoCircleLg: {
     position: 'absolute',
     width: 100,
@@ -847,6 +933,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  demoVideoDurationProbe: {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    opacity: 0,
+  },
   demoVideoDurationBadge: {
     position: 'absolute',
     bottom: 6,
@@ -860,12 +952,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: 11,
     color: '#fff',
-  },
-  demoVideoMeta: {
-    fontFamily: FONTS.regular,
-    fontSize: 11,
-    color: '#9CA3AF',
-    marginTop: 3,
   },
   lessonCardText: {
     paddingHorizontal: 5,

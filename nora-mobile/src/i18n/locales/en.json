@@ -245,6 +245,10 @@
       "social": "Building Social-Emotional Skills",
       "attention_focus": "Attention and Focus Issues",
       "adhd": "ADHD / Attention & Hyperactivity",
+      "big_feelings_tantrums": "Big Feelings & Tantrums",
+      "listening_cooperation": "Listening & Cooperation",
+      "anxiety_confidence": "Anxiety & Confidence",
+      "developmental_concerns": "Developmental Concerns",
       "parenting_strategies": "Learning More Effective Parenting Strategies",
       "defiance": "Defiance",
       "aggression": "Aggression",
@@ -287,6 +291,7 @@
     "next": "Next",
     "matchCounter": "{{current}} of {{total}}",
     "noMatches": "No moments found",
+    "subFilterAll": "All",
     "pcitTags": {
       "Praise": "Praise",
       "Echo": "Echo",
@@ -361,15 +366,16 @@
     },
     "page7": {
       "wacbQuestions": {
-        "q1Dawdle": "Dawdling or dragging feet",
-        "q2MealBehavior": "Misbehaving at mealtime",
-        "q3Disobey": "Refusing to listen or follow rules",
-        "q4Angry": "Losing temper or physical aggression",
-        "q5Scream": "Screaming fits or tantrums",
-        "q6Destroy": "Breaking things or rough play",
-        "q7ProvokeFights": "Starting arguments or teasing",
-        "q8Interrupt": "Interrupting or demanding attention",
-        "q9Attention": "Struggling to focus or sit still"
+        "q1Dawdle": "Dawdling in daily routines",
+        "q2Disobey": "Refusing to listen or follow rules",
+        "q3Tantrum": "Tantrums that are hard to stop",
+        "q4Defiance": "Arguing or talking back to adults",
+        "q5FocusDemand": "Trouble focusing or demanding attention",
+        "q6Restless": "Interrupting or can't sit still",
+        "q7TaskCompletion": "Trouble finishing tasks on time",
+        "q8Destroy": "Breaking things or rough handling",
+        "q9Aggression": "Physical aggression or fights",
+        "q10LieSteal": "Lying or taking things"
       }
     },
     "page2": {
@@ -494,9 +500,24 @@
     }
   },
   "reportV2": {
+    "firstSession": {
+      "headline": "You did it!",
+      "subtitle": "Your first practice session is complete!",
+      "subtext": "You just took an important step in your parenting journey.",
+      "depositLabel": "Emotional Deposit",
+      "depositFirst": "Your first deposit",
+      "depositNote": "Every focused play moment gives your child opportunities to practice important skills.",
+      "stepTitle": "A great first step",
+      "stepBody": "You gave your child {{count}} minutes of focused attention today.",
+      "startingTitle": "Your starting point is set",
+      "startingBody": "Nora has captured your first session. We'll use it to personalize your coaching and track your progress over time.",
+      "cta": "See My Coaching"
+    },
     "headlineAmazing": "Amazing session!",
     "headlineGood": "Good progress!",
     "headlineSubtext": "Keep it up\nyou're doing great!",
+    "headlineEveryPlay": "Every play helps.",
+    "headlineEveryPlaySubtext": "You made an important deposit today.",
     "depositLabel": "Deposit",
     "deltaToday": "{{count}} today",
     "todaysGoal": "Today's Goal",
@@ -512,7 +533,34 @@
       "subtitle": "You've reached Level {{level}}",
       "skillUnlocked": "New skill unlocked",
       "continueButton": "Nice!"
-    }
+    },
+    "emotionalDeposit": "Emotional Deposit",
+    "depositTotalLabel": "Total Emotional Deposit",
+    "depositTodayAdd": "+{{count}} today",
+    "depositToday": "Today",
+    "depositVsLast": "vs last session",
+    "deltaFrom": "from",
+    "deltaLastSession": "last session",
+    "reduceSkill": "Reduce {{skill}}",
+    "criteriaFlat": "{{skill}} {{symbol}} {{target}}",
+    "criteriaLevel7": "Direct Command ≥ 1, for {{count}} qualifying sessions",
+    "criteriaLevel8": "Direct Command ≥ 1 and Criticism = 0, for {{count}} qualifying sessions",
+    "criteriaLevel9": "(Play: Criticism = 0, Praise ≥ {{target}}, Narration ≥ {{target}}, Echo ≥ {{target}}) or (Discipline: Criticism = 0, Direct Command ≥ 1), for {{count}} qualifying sessions",
+    "youDidIt": "You did it!",
+    "almostThere": "Almost there!",
+    "notYetToday": "Not yet today.",
+    "goalRegressedEncouragement": "That's okay! We'll practice this together in today's coaching.",
+    "onlyCountToday": "Only <0>{{count}}</0> {{skill}}",
+    "countToday": "<0>{{count}}</0> {{skill}} today",
+    "lastTime": "(last time: {{count}})",
+    "lastSession": "(last session: {{count}})",
+    "goalEncouragement": "You've already improved.\nKeep going!",
+    "parentingLevel": "Parenting Level",
+    "levelHeading": "Level {{level}}",
+    "levelUpHeadline": "Level Up!",
+    "levelUpReached": "You reached <0>Level {{level}}</0>",
+    "parentingLevelTitle": "Calm Play Partner",
+    "levelFooter": "You're {{percent}}% toward Level {{nextLevel}}!"
   },
   "reportDetail": {
     "headerTitle": "Today's Coaching",
@@ -524,11 +572,23 @@
       "readMore": "Read more",
       "showLess": "Show less"
     },
+    "learningMoments": {
+      "title": "Crisis Moment",
+      "tryInstead": "Try saying instead:"
+    },
     "skillCoaching": {
       "title": "Coach's Corner",
+      "didWellLabel": "What you did well",
+      "wordBankLabel": "Try saying next time",
+      "tabWentWell": "Went well",
+      "tabGrowNext": "Grow next",
+      "benchmarkLabel": "Benchmark",
       "learnMoreTitle": "Learn more about {{skill}}",
       "lessonBadge": "Lesson",
-      "demoBadge": "Demo"
+      "demoBadge": "Demo",
+      "insightsBadge": "Today's Insight",
+      "improveLinkText": "Improve {{skill}} in this session",
+      "removeLinkText": "Remove {{skill}} in this session"
     },
     "topMoment": {
       "title": "Top Moment",
@@ -539,14 +599,78 @@
       "title": "Bonding Moment"
     },
     "interactionStyle": {
-      "title": "Today's Interaction",
-      "viewTips": "View tips"
+      "title": "Your Interaction Style",
+      "viewTips": "View tips",
+      "detailedBreakdown": "Detailed Breakdown",
+      "confidenceBuilders": "Confidence Builders",
+      "confidenceBuildersSubtitle": "Boost confidence & attention",
+      "playInterruptions": "Play Interruptions",
+      "playInterruptionsSubtitle": "Opportunities to improve together",
+      "moments_one": "{{count}} moment",
+      "moments_other": "{{count}} moments",
+      "whyPersonalised": {
+        "toddler": "You came to Nora for help with {{concern}}. At just {{age}}, {{childName}}'s brain is only beginning to build the wiring for self-control, and it develops through small, repeated moments with you rather than big conversations. The moments we counted as **Confidence Builders** — praising, describing {{childName}}'s play, letting them lead — are the deposits that grow your bond and their confidence, while the **Play Interruptions** — questions, commands, corrections — quietly pull against it. That's why we'll work on one skill at a time, isolating each one so you can practice it on its own before adding the next.",
+        "preschool": "You came to Nora for help with {{concern}}. At {{age}}, {{childName}} is right in the window where these skills grow fastest, and they grow through everyday moments with you. The moments we counted as **Confidence Builders** — praising, describing {{childName}}'s play, letting them lead — are the deposits that grow your bond and their confidence, while the **Play Interruptions** — questions, commands, corrections — quietly pull against it. That's why we'll work on one skill at a time, isolating each one so you can practice it on its own before adding the next.",
+        "schoolAge": "You came to Nora for help with {{concern}}. At {{age}}, {{childName}} already understands a lot — what's left is steady, consistent practice. The moments we counted as **Confidence Builders** — praising, describing {{childName}}'s play, letting them lead — are the deposits that grow your bond and their confidence, while the **Play Interruptions** — questions, commands, corrections — quietly pull against it. That's why we'll work on one skill at a time, isolating each one so you can practice it on its own before adding the next.",
+        "unknownAge": "You came to Nora for help with {{concern}}. The change you're looking for is built through small, repeated moments with {{childName}}, not big conversations. The moments we counted as **Confidence Builders** — praising, describing {{childName}}'s play, letting them lead — are the deposits that grow your bond and their confidence, while the **Play Interruptions** — questions, commands, corrections — quietly pull against it. That's why we'll work on one skill at a time, isolating each one so you can practice it on its own before adding the next."
+      }
     },
     "tomorrowGoal": {
       "title": "Tomorrow's Goal",
       "todayLabel": "Today",
       "tomorrowLabel": "Tomorrow",
-      "aimFor": "Aim for {{count}} time"
+      "aimFor": "Aim for {{count}} time",
+      "short": {
+        "BUILD_PRAISE": "{{count}} Labeled Praise",
+        "BUILD_NARRATION": "{{count}} Narrations",
+        "BUILD_ECHO": "{{count}} Echoes",
+        "BUILD_COMMANDS": "{{count}} Clear Instructions",
+        "AVOID_COMMANDS": "Fewer than {{count}} Commands",
+        "AVOID_QUESTIONS": "Fewer than {{count}} Questions",
+        "AVOID_CRITICISM": "Fewer than {{count}} Criticisms"
+      },
+      "whyTitle": "Why this matters",
+      "why": {
+        "generic": "The habits that help here are built one small moment at a time, not in a single conversation.",
+        "praise": "Labeled praise — naming exactly what you liked — is one of the fastest ways to see more of the behavior you want, because {{childName}} repeats what gets noticed.",
+        "narrate": "Describing {{childName}}'s play, without questions or corrections, builds focus and tells {{childName}} that being with you is calm and safe.",
+        "echo": "Repeating {{childName}}'s words back grows language and, just as importantly, makes {{childName}} feel genuinely heard by you.",
+        "commands": "Giving one clear, direct instruction at a time makes it possible for {{childName}} to succeed and follow through — and keeps the moment from turning into a standoff.",
+        "questions": "Easing off questions hands the lead back to {{childName}} and keeps the play relaxed instead of feeling like a test.",
+        "criticism": "Replacing criticism with calm redirection lowers {{childName}}'s defenses, so cooperation goes up and the connection between you stays intact."
+      },
+      "concern": {
+        "generic": "what's felt hardest with {{childName}} lately",
+        "big_feelings_tantrums": "{{childName}}'s big feelings and tantrums",
+        "listening_cooperation": "getting {{childName}} to listen and cooperate",
+        "attention_focus": "how hard it is for {{childName}} to focus",
+        "social": "helping {{childName}} build social and emotional skills",
+        "anxiety_confidence": "{{childName}}'s worries and confidence",
+        "adhd": "{{childName}}'s attention and hyperactivity",
+        "developmental_concerns": "{{childName}}'s development",
+        "parenting_strategies": "finding parenting approaches that actually work",
+        "behavior_challenges": "{{childName}}'s tantrums and pushback",
+        "big_emotions": "handling {{childName}}'s big emotions",
+        "frustration_tolerance": "how quickly {{childName}} gets frustrated",
+        "defiance": "{{childName}}'s defiance",
+        "aggression": "{{childName}}'s aggression",
+        "emotional": "{{childName}}'s emotional ups and downs",
+        "routine": "building routine and structure for {{childName}}",
+        "general": "{{childName}}'s behavior at home",
+        "new_baby_in_the_house": "helping {{childName}} adjust to the new baby",
+        "moving_house": "helping {{childName}} through the move and school change",
+        "parental_divorce": "helping {{childName}} through the family changes"
+      },
+      "whyPersonalised": {
+        "toddler": "You came to Nora for help with {{concern}}. At just {{age}}, {{childName}}'s brain is only beginning to build the wiring for self-control, and it develops through small, repeated moments with you rather than big conversations. {{skillReason}} That's why tomorrow's goal is one small, specific action — do it once and you've started.",
+        "preschool": "You came to Nora for help with {{concern}}. At {{age}}, {{childName}} is right in the window where these skills grow fastest, and they grow through everyday moments with you. {{skillReason}} That's why tomorrow's goal is one small, specific action — do it once and you've started.",
+        "schoolAge": "You came to Nora for help with {{concern}}. At {{age}}, {{childName}} already understands a lot — what's left is steady, consistent practice. {{skillReason}} That's why tomorrow's goal is one small, specific action — do it once and you've started.",
+        "unknownAge": "You came to Nora for help with {{concern}}. The change you're looking for is built through small, repeated moments with {{childName}}, not big conversations. {{skillReason}} That's why tomorrow's goal is one small, specific action — do it once and you've started."
+      }
+    },
+    "firstSession": {
+      "heroIntro": "You did it — your first session with {{childName}}!",
+      "heroMessage": "Every play session is a deposit in your relationship with {{childName}}. Here's what we noticed today."
     },
     "childInsight": {
       "title": "What we learned about {{childName}}",
@@ -561,58 +685,163 @@
       "subtitle": "Read the full conversation from today's play session."
     },
     "unlock": {
-      "title": "Ready for more personalized coaching?",
-      "subtitle": "Answer 9 quick questions (about 2 minutes) to unlock:",
-      "featureGrowthPlan": "Personalized Growth Plan",
-      "featureSnapshot": "Child Snapshot",
-      "featureTracking": "Progress Tracking",
-      "cta": "Unlock My Child's Plan",
+      "title": "Answer 10 quick questions to help Nora understand {{childName}} and personalize your learning journey:",
+      "featureGrowthPlan": "Personalized Learning Plan",
+      "featureSnapshot": "Child Behavior Snapshot",
+      "featureTracking": "Track Progress",
+      "cta": "Continue",
       "time": "Takes about 2 minutes"
     },
+    "seeYouTomorrow": "See you tomorrow",
     "footer": "You're showing up in the moments that matter most. Keep going!"
   },
+  "skillImprove": {
+    "titleBuild": "Improve {{skill}}",
+    "titleAvoid": "Reduce {{skill}}",
+    "opportunityLabel": "Moment {{number}}",
+    "tryInstead": "Try saying instead:",
+    "emptyState": "No specific suggestions this time — keep up the great work!"
+  },
   "profileReport": {
+    "headerTitle": "{{childName}}'s Snapshot",
+    "headerSubtitle": "Your starting point",
+    "thanksBannerTitle": "Thanks for answering! 🎉",
+    "thanksBannerBody": "These answers help Nora understand {{childName}} better so we can create a coaching plan that fits your family's unique needs.",
+    "thanksBannerBadge": "Questions complete",
+    "whyHereTitle": "Why we're starting here",
+    "whyHereBody1Prefix": "Based on your answers, ",
+    "whyHereBody1Suffix": " will have the biggest impact on your family's daily life.",
+    "whyHereBody2": "The good news? Building stronger connection through play often improves attention, emotional regulation, and cooperation together.",
     "primaryFocusLabel": "Primary Focus",
     "focusHeadingCDI": "Building Cooperation & Strengthening Focus",
     "focusHeadingPDI": "Practicing Calm, Consistent Limits",
     "ageLabel": "(Age {{age}})",
-    "coreFocusAreasTitle": "{{childName}}'s Core Focus Areas",
+    "coreFocusAreasTitle": "{{childName}}'s Snapshot",
+    "coreFocusAreasSubtitle": "A quick picture of where {{childName}} is today. We'll use this to personalise your coaching journey.",
     "fromYourIntake": "From your intake",
+    "issuesFallbackTitle": "{{childName}}'s Focus Areas",
+    "issuesFallbackSubtitle": "Based on what you told us during setup.",
+    "issuesFallbackCta": "Take the Child Snapshot for a fuller picture →",
     "focusAreas": {
-      "transitions": {
-        "label": "Transitions & Cooperation",
-        "level": "Moderate",
-        "focus": "Focus: Q1, Q2"
-      },
-      "energy": {
-        "label": "Focus & Energy",
-        "level": "High",
-        "focus": "Focus: Q5-Q7"
-      },
-      "boundaries": {
-        "label": "Boundaries",
-        "level": "Mild",
-        "focus": "Focus: Q8"
-      },
-      "attention": {
-        "label": "Focus & Cooperation",
-        "focus": "Focus: Attention & Following Directions"
-      },
-      "emotional": {
-        "label": "Emotional Balance",
-        "focus": "Focus: Meltdowns & Aggression"
-      },
       "routines": {
         "label": "Transitions & Routines",
-        "focus": "Focus: Bedtime, Meals & Delays"
+        "focus": "Focus: Bedtime, Meals & Delays",
+        "heroDescription": "Everyday transitions — bedtime, meals, and getting out the door — are the hardest part of the day for {{childName}} right now. Nora's plan makes these moments calmer and more predictable."
       },
-      "social": {
-        "label": "Social Boundaries",
-        "focus": "Focus: Peer & Sibling Interactions"
+      "cooperation": {
+        "label": "Listening & Cooperation",
+        "focus": "Focus: Following Rules, Tantrums & Talking Back",
+        "heroDescription": "Listening the first time is a struggle for {{childName}} right now — \"no\", talking back, and tantrums when things don't go their way. Nora's plan builds cooperation with calm, consistent follow-through."
+      },
+      "selfControl": {
+        "label": "Focus & Self-Control",
+        "focus": "Focus: Attention, Sitting Still & Finishing Tasks",
+        "heroDescription": "Staying focused and seeing things through is where {{childName}} needs the most support right now — drifting off task, fidgeting, and struggling to finish. Nora's plan stretches attention and rewards follow-through."
+      },
+      "boundaries": {
+        "label": "Big Behaviors & Boundaries",
+        "focus": "Focus: Aggression, Property & Honesty",
+        "heroDescription": "Bigger behaviors are {{childName}}'s main focus area right now — physical aggression, rough handling of things, or bending the truth. Nora's plan pairs connection with firm, calm limits for the behaviors that can't be ignored."
       }
     },
     "journeyTitle": "Personalized Learning Journey",
-    "journeySubtitle": "Your next steps in Nora",
+    "journeySubtitle": "This plan tackles it first, ordered by what matters most for {{childName}}.",
+    "currentLevelTitle": "Your Current Level & Target",
+    "currentLevelSubtitle": "Where you are on the skill ladder, and the goal to aim for in your next session with {{childName}}.",
+    "journeyPlan": {
+      "phase1": "Child-Led Play",
+      "phase2": "Calm Discipline",
+      "step1Title": "Fewer Play Interruptions",
+      "step2Title": "More Confidence Builders",
+      "step3Title": "Clear Limits, Calm Follow-Through",
+      "cta": "Take the Child Snapshot for a plan built around {{childName}} →",
+      "interruptionBody": {
+        "generic": "Ease off questions, commands, and corrections during play — the moves that quietly pull against your connection with {{childName}}.",
+        "routines": "Fewer commands and less repeating is what keeps bedtime, meals, and getting out the door from turning into a standoff with {{childName}}.",
+        "cooperation": "Fewer commands is what takes the power struggle out of each request — {{childName}} has less to push back against.",
+        "selfControl": "Easing off the steady stream of questions is what stops {{childName}}'s concentration from breaking every few seconds.",
+        "boundaries": "Trading corrections for calm acceptance is what keeps {{childName}} from going straight onto the defensive."
+      },
+      "builderBody": {
+        "generic": "Spend 5 minutes a day being {{childName}}'s biggest fan — praise, describe, and reflect their play.",
+        "routines": "Narrating each small step {{childName}} takes toward the task is what builds the focus to see it through.",
+        "cooperation": "Reflecting {{childName}}'s words back is what makes them feel heard, so they dig in less.",
+        "selfControl": "A running description of {{childName}}'s play is what holds their attention and slowly stretches it.",
+        "boundaries": "Naming {{childName}}'s gentle and honest moments out loud is what makes those the moments they repeat."
+      },
+      "levelHelp": {
+        "calmBuilder": {
+          "generic": "Cutting corrections and \"not like that\" clears the tension out of play, so {{childName}} isn't braced for a telling-off.",
+          "routines": "When transitions stop coming with corrections, {{childName}} isn't already on edge before the next request.",
+          "cooperation": "Less criticism means fewer things for {{childName}} to argue back against, so requests stop escalating.",
+          "selfControl": "A steady stream of corrections keeps pulling {{childName}} out of what they're doing — dropping them protects focus.",
+          "boundaries": "Big behaviours often follow feeling attacked; calm acceptance lowers {{childName}}'s defences before a limit is even needed."
+        },
+        "patienceBuilder": {
+          "generic": "Fewer instructions during play hand the lead back to {{childName}}, so time with you feels less like being managed.",
+          "routines": "Bedtime and meals are already full of instructions — easing off in play keeps {{childName}} from tuning them all out.",
+          "cooperation": "Every extra command is another chance for a standoff; fewer of them means {{childName}} pushes back less.",
+          "selfControl": "Constant direction interrupts {{childName}}'s train of thought — stepping back lets them stay with a task.",
+          "boundaries": "When play isn't a series of orders, {{childName}} has less to defy, and the limits that matter stand out."
+        },
+        "presenceBuilder": {
+          "generic": "Swapping questions for statements takes the quiz out of play, so {{childName}} can just relax into it.",
+          "routines": "A run of questions stalls a transition — describing what you see instead keeps things moving for {{childName}}.",
+          "cooperation": "Questions can land like demands; fewer of them keeps the mood cooperative rather than confrontational.",
+          "selfControl": "Each question makes {{childName}} stop and switch to answering — cutting them protects a fragile attention span.",
+          "boundaries": "Rapid-fire questions can feel like an interrogation; easing off keeps {{childName}} from getting defensive."
+        },
+        "confidenceBuilder": {
+          "generic": "Naming exactly what {{childName}} did well makes them want to do it again — you grow the behaviour you want to see.",
+          "routines": "Praising each small cooperative step through a transition makes {{childName}} more likely to repeat it next time.",
+          "cooperation": "Labeled praise for listening the first time gives {{childName}} a reason to cooperate that isn't a battle.",
+          "selfControl": "Calling out the moments {{childName}} sticks with something builds the persistence to finish tasks.",
+          "boundaries": "Praising {{childName}}'s gentle, honest, careful moments out loud makes those the behaviours that get repeated."
+        },
+        "attentionBuilder": {
+          "generic": "A running description of {{childName}}'s play holds their attention on you and stretches how long they stay engaged.",
+          "routines": "Narrating the steps out loud gives {{childName}} a calm, predictable script to move through the routine.",
+          "cooperation": "Describing what {{childName}} is doing keeps you connected without adding demands, so cooperation comes easier.",
+          "selfControl": "Describing {{childName}}'s actions as they work anchors their attention and slowly builds focus.",
+          "boundaries": "Steady, calm narration keeps {{childName}} regulated and engaged, heading off the build-up to big behaviours."
+        },
+        "communicationBuilder": {
+          "generic": "Repeating {{childName}}'s words back grows their language and makes them feel genuinely heard by you.",
+          "routines": "Reflecting {{childName}}'s protests (\"you don't want to stop yet\") helps them feel understood, so the transition goes smoother.",
+          "cooperation": "When {{childName}} feels heard, they dig in less — reflection defuses the talking-back before it starts.",
+          "selfControl": "Echoing {{childName}}'s ideas back keeps them talking and thinking with you, extending engaged attention.",
+          "boundaries": "Feeling understood lowers the frustration that often tips {{childName}} into aggression."
+        },
+        "cooperationBuilder": {
+          "generic": "One clear, direct instruction at a time makes it possible for {{childName}} to actually succeed and follow through.",
+          "routines": "Clear one-step instructions give {{childName}} something doable at each point in the routine.",
+          "cooperation": "Direct, single instructions remove the wiggle room {{childName}} uses to negotiate or ignore.",
+          "selfControl": "Short, specific instructions match {{childName}}'s attention span, so they can follow without getting lost.",
+          "boundaries": "A calm, clear instruction states the boundary plainly, so {{childName}} knows what's expected before things escalate."
+        },
+        "boundaryBuilder": {
+          "generic": "Following through calmly and consistently teaches {{childName}} that limits are real — without a power struggle.",
+          "routines": "When the routine holds firm every time, {{childName}} stops testing it and the daily battles fade.",
+          "cooperation": "Consistent follow-through is what makes instructions stick — {{childName}} learns that \"no\" means no.",
+          "selfControl": "Predictable limits give {{childName}} the outside structure to slow down and manage impulses.",
+          "boundaries": "Meeting aggression or dishonesty with the same calm, certain response every time is what makes big behaviours fade."
+        },
+        "confidentParent": {
+          "generic": "With every skill in hand, you reach for the right one in the moment — connection and limits working together.",
+          "routines": "Blending praise, narration, and calm limits lets you handle whatever a transition throws at you.",
+          "cooperation": "Using the whole toolkit fluidly keeps everyday cooperation steady, not dependent on one trick.",
+          "selfControl": "Moving between engagement and structure as needed gives {{childName}} consistent support for focus.",
+          "boundaries": "Pairing warmth with firm, calm limits is what keeps the big behaviours shrinking for good."
+        }
+      }
+    },
+    "journeyDisciplineWhy": {
+      "generic": "Calm, consistent limits teach {{childName}} that boundaries are real — so cooperation stops being a daily negotiation.",
+      "routines": "Calm, consistent limits take the power struggle out of transitions — {{childName}} learns the routine holds firm, and the daily battles fade.",
+      "cooperation": "Consistent follow-through is what makes directions stick — {{childName}} learns that limits are real, so listening stops being an endless negotiation.",
+      "selfControl": "Predictable limits give {{childName}} the outside structure to slow down, stay with a task, and manage the impulse to jump to the next thing.",
+      "boundaries": "{{childName}} learns that aggression, breaking things, and dishonesty always meet the same calm, certain response — and that consistency is what makes the big behaviours fade."
+    },
     "phase1Badge": "PHASE 1",
     "phase1Title": "Child-Directed Interaction (CDI)",
     "phase1Subtitle": "Build connection & reduce power struggles.",
@@ -660,54 +889,77 @@
     "journeyLevelBadge": "LEVEL {{level}}",
     "journeyGoalLabel": "Goal: ",
     "levels": {
-      "playBuilder": {
-        "title": "Play Builder",
-        "skill": "Follow Your Child's Lead",
-        "goal": "Build a safe and enjoyable play experience.",
-        "learn": "Let the child lead the play • Reduce commands • Reduce questions • Avoid criticism",
-        "clearGoal": "Keep commands, questions, and criticism to 6 or fewer combined in a single session."
+      "calmBuilder": {
+        "title": "Calm Builder",
+        "skill": "Reduce Criticism",
+        "goal": "Build a safe, judgment-free play space.",
+        "learn": "Notice the urge to correct • Let mistakes be mistakes • Replace critical words with calm acceptance",
+        "clearGoal": "Keep criticism to 3 or fewer in a single session.",
+        "shortGoal": "3 or fewer criticisms"
+      },
+      "patienceBuilder": {
+        "title": "Patience Builder",
+        "skill": "Reduce Commands",
+        "goal": "Let your child lead without direction.",
+        "learn": "Sit on your hands • Resist giving instructions • Let your child choose the play",
+        "clearGoal": "Keep commands to 3 or fewer in a single session.",
+        "shortGoal": "3 or fewer commands"
+      },
+      "presenceBuilder": {
+        "title": "Presence Builder",
+        "skill": "Reduce Questions",
+        "goal": "Stay present without quizzing.",
+        "learn": "Swap questions for statements • Describe instead of ask • Let curiosity come from your child",
+        "clearGoal": "Keep questions to 3 or fewer in a single session.",
+        "shortGoal": "3 or fewer questions"
       },
       "confidenceBuilder": {
         "title": "Confidence Builder",
         "skill": "Specific Praise",
         "goal": "Help your child feel capable.",
         "learn": "Labeled praise • Praise effort instead of outcome • Build confidence through positive attention",
-        "clearGoal": "Give 5 or more labeled praises in a single session."
+        "clearGoal": "Give 10 or more labeled praises in a single session.",
+        "shortGoal": "10 labeled praises"
       },
       "attentionBuilder": {
         "title": "Attention Builder",
         "skill": "Narration",
         "goal": "Increase focus and engagement.",
         "learn": "Describe what the child is doing • Keep the child engaged • Extend attention span",
-        "clearGoal": "Narrate what your child is doing 5 or more times in a single session."
+        "clearGoal": "Narrate what your child is doing 10 or more times in a single session.",
+        "shortGoal": "10 narrations"
       },
       "communicationBuilder": {
         "title": "Communication Builder",
         "skill": "Reflection (Echo)",
         "goal": "Help your child feel understood.",
         "learn": "Repeat and expand what the child says • Encourage language • Show active listening",
-        "clearGoal": "Echo what your child says 5 or more times in a single."
+        "clearGoal": "Echo what your child says 10 or more times in a single session.",
+        "shortGoal": "10 echoes"
       },
       "cooperationBuilder": {
         "title": "Cooperation Builder",
         "skill": "Clear Instructions",
         "goal": "Increase everyday cooperation.",
         "learn": "Give effective commands • One instruction at a time • Wait before repeating",
-        "clearGoal": "Give at least 1 clear command in a Discipline session, for 2 qualifying sessions."
+        "clearGoal": "Give at least 1 clear command in a Discipline session, for 2 qualifying sessions.",
+        "shortGoal": "1+ clear command, 2 sessions"
       },
       "boundaryBuilder": {
         "title": "Boundary Builder",
         "skill": "Calm Follow-Through",
         "goal": "Build respectful boundaries.",
         "learn": "Stay calm • Be consistent • Follow through on limits • Reduce power struggles",
-        "clearGoal": "Give a clear command with zero criticism in a Discipline session, for 2 qualifying sessions."
+        "clearGoal": "Give a clear command with zero criticism in a Discipline session, for 2 qualifying sessions.",
+        "shortGoal": "Clear command, zero criticism, 2 sessions"
       },
       "confidentParent": {
         "title": "Confident Parent",
         "skill": "Putting It All Together",
         "goal": "Use the right parenting skill at the right moment.",
         "learn": "Follow Child's Lead • Praise • Narration • Reflection • Clear Instructions • Calm Follow-Through",
-        "clearGoal": "Bring every skill together with zero criticism, for 2 qualifying sessions."
+        "clearGoal": "Bring every skill together with zero criticism, for 2 qualifying sessions.",
+        "shortGoal": "Every skill, zero criticism, 2 sessions"
       }
     }
   },
@@ -776,6 +1028,11 @@
     "couldntLoadModules": "Couldn't Load Modules",
     "noModulesFound": "No modules found",
     "tryDifferentSearch": "Try a different search term or filter"
+  },
+  "lessonPlayer": {
+    "nowPlaying": "Now playing",
+    "narrationPlaying": "Lesson narration",
+    "stop": "Stop"
   },
   "record": {
     "uploadingRecording": "Uploading recording...",
@@ -873,6 +1130,8 @@
     "statLogs": "logs",
     "statTimes": "times",
     "statLessons": "lessons",
+    "statWeeks": "weeks",
+    "statLevel": "level",
     "tipPerfect": "Perfect 7/7! 👑\nYou're legendary!",
     "tipDaysDown": "{{count}} days down! 🌟\nCan we hit a full 7?",
     "tipAimFor4": "Aim for 4 days a week\nfor faster progress",
@@ -897,6 +1156,20 @@
     "recordAgain": "Record Again",
     "noraDaily": "Nora Daily",
     "noraDailySubtitle": "Your daily dose of science-backed tips & inspiration.",
+    "subActionLearnMore": "Learn more",
+    "reflectionPrompt": "Add your reflection",
+    "reflectionPlaceholder": "Write your thoughts…",
+    "reflectionSave": "Save",
+    "reflectionSaving": "Saving…",
+    "reflectionSaved": "Saved",
+    "reflectionEdit": "Edit reflection",
+    "subActionBadges": {
+      "scienceBite": "Science Bite",
+      "tryThisToday": "Try This Today",
+      "quickReflection": "Quick Reflection",
+      "todaysThought": "Today's Thought",
+      "communityWisdom": "Community Wisdom"
+    },
     "todaysPlan": "Today's plan",
     "planLessonLabel": "Daily Learning:",
     "planLessonDuration": "5 min read",
@@ -956,7 +1229,7 @@
     "completeFoundationFirst": "Complete the Foundation module first",
     "noLessonsFound": "No lessons found",
     "tryDifferentSearch": "Try a different search term",
-    "noraFoundationsDuration": "120 min",
+    "noraFoundationsDuration": "60 min",
     "demoVideosTitle": "Demo Videos",
     "timeAgo": {
       "years_one": "{{count}} year ago",
@@ -975,7 +1248,31 @@
     },
     "noraFoundationsTitle": "Nora Foundations",
     "noraFoundationsSubtitle": "Connection & Calm Discipline",
-    "gettingStartedTitle": "Getting Started"
+    "playGuideTitle": "Play Guide",
+    "playGuideSubtitle": "Get set for your first play",
+    "playGuideMeta": "8 quick topics",
+    "gettingStartedTitle": "Getting Started",
+    "quickGuidesTitle": "Quick Guides",
+    "quickGuides": {
+      "why5mins": {
+        "cardTitle": "Why only 5 minutes?",
+        "titleLine1": "Why only",
+        "titleLine2": "5 minutes?",
+        "card1": "Because this isn't just play.\nIt's ~~focused practice.~~",
+        "card2": "Think of it as an **Emotional Massage** — a short, concentrated dose of positive attention.",
+        "card3": "Like a **gym for your parenting muscles,** focused practice helps these skills become more natural over time, even during stress time.",
+        "card4": "5 focused minutes\n> ~~a long distracted hour.~~"
+      },
+      "whyRecord": {
+        "cardTitle": "Why do I need to record?",
+        "titleLine1": "Why do I",
+        "titleLine2": "need to record?",
+        "card1": "Because pressing Record puts you in ~~practice mode.~~",
+        "card1Body": "Parents tell us they feel more present and intentional once they hit Record — putting the skills they're learning into practice.",
+        "card2": "Nora then helps you spot **what you might miss** and what to try next.",
+        "card3": "It's not a test.\n~~It's your mirror.~~"
+      }
+    }
   },
   "learnV3": {
     "title": "Nora Foundations",
@@ -994,7 +1291,9 @@
     "rowTitle": "Day {{day}} · {{title}}",
     "readMeta": "Day {{day}} · {{duration}}",
     "lessonFallback": "Lesson",
-    "nextLessonLabel": "Next: {{title}}"
+    "nextLessonLabel": "Next: {{title}}",
+    "scriptLoadError": "We couldn't load this lesson. Check your connection and try again.",
+    "scriptNoContent": "This lesson doesn't have a text version yet."
   },
   "privacyPolicy": {
     "headerTitle": "Privacy Policy"
@@ -1358,15 +1657,16 @@
       "scaleOften": "Often (5–6 times a week)",
       "scaleVeryOften": "Very often (more than 6 times a week)",
       "submitSurvey": "Submit Survey",
-      "q1": "In the past two weeks, how often has {{name}} taken too long to do things or dragged their feet on purpose?",
-      "q2": "In the past two weeks, how often has {{name}} acted up or misbehaved while eating?",
-      "q3": "In the past two weeks, how often has {{name}} refused to listen or said \"no\" to rules?",
-      "q4": "In the past two weeks, how often has {{name}} lost their temper or acted physically rough?",
-      "q5": "In the past two weeks, how often has {{name}} had a screaming fit or tantrum that was hard to stop?",
-      "q6": "In the past two weeks, how often has {{name}} broken things or been too rough with other people's toys?",
-      "q7": "In the past two weeks, how often has {{name}} started arguments or teased others on purpose?",
-      "q8": "In the past two weeks, how often has {{name}} interrupted conversations or demanded constant attention?",
-      "q9": "In the past two weeks, how often has {{name}} struggled to focus or been unable to sit still?",
+      "q1": "In the past two weeks, how often has {{name}} purposely dragged their feet during daily routine activities (e.g., mealtime or bedtime)?",
+      "q2": "In the past two weeks, how often has {{name}} refused to listen or said \"no\" when given rules or requests?",
+      "q3": "In the past two weeks, how often has {{name}} had a temper tantrum that was hard to stop (e.g., crying, whining, yelling, screaming, or throwing themselves on the floor)?",
+      "q4": "In the past two weeks, how often has {{name}} deliberately argued with, talked back to, or provoked adults?",
+      "q5": "In the past two weeks, how often has {{name}} had difficulty focusing on one activity or frequently demanded attention?",
+      "q6": "In the past two weeks, how often has {{name}} interrupted others or been unable to sit still?",
+      "q7": "In the past two weeks, how often has {{name}} had difficulty completing daily tasks or schoolwork on time?",
+      "q8": "In the past two weeks, how often has {{name}} broken things or handled other people's toys or belongings roughly?",
+      "q9": "In the past two weeks, how often has {{name}} acted physically aggressively or gotten into physical fights with others (e.g., parents, siblings, or peers)?",
+      "q10": "In the past two weeks, how often has {{name}} lied or stolen other people's belongings?",
       "submissionError": "Submission Error",
       "submissionFailed": "Failed to submit survey. Please try again."
     },

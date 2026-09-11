@@ -1,0 +1,60 @@
+# Run the backend locally in the SAME image App Runner runs, so "works on my
+# machine" actually means "works on App Runner". Fixes the class of bugs where
+# the host (macOS, system fonts, native libs) behaves differently from the
+# Alpine container — e.g. the share-card image rendering as tofu boxes.
+#
+# Prerequisites
+#   1. Dev DB tunnel up:   ./scripts/start-db-tunnel.sh      (binds localhost:5432)
+#   2. AWS creds in ~/.aws  (same profile/keys the aws CLI uses)
+#   3. root .env populated  (DATABASE_URL, API keys, AWS_S3_BUCKET, ...)
+#
+# Usage
+#   npm stop / Ctrl-C any host `npm run server` first — it holds port 3001.
+#   docker compose up --build        # first run / after Dockerfile or dep changes
+#   docker compose up                # subsequent runs
+#   docker compose restart api       # pick up server/ code edits (bind-mounted, no rebuild)
+#   docker compose down
+#
+# Server: http://localhost:3001  (health: /api/health) — same port as `npm run server`,
+# so an existing ngrok tunnel to :3001 keeps working. Set API_PORT to use a
+# different host port, e.g.  API_PORT=3002 docker compose up
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${API_PORT:-3001}:3001"
+    env_file:
+      - .env
+    environment:
+      # Read the mounted CLI credentials/config (static keys or SSO).
+      AWS_SDK_LOAD_CONFIG: "1"
+      AWS_SHARED_CREDENTIALS_FILE: /aws/credentials
+      AWS_CONFIG_FILE: /aws/config
+      # Flip to "production" to also mirror App Runner's stricter CORS +
+      # rate limiting (see server.cjs). Left unset here so the local mobile
+      # app / admin panel aren't CORS-blocked during everyday dev.
+      # NODE_ENV: production
+    extra_hosts:
+      # Lets the container reach the host's DB tunnel (Linux; a no-op on
+      # Docker Desktop, which provides host.docker.internal already).
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ~/.aws:/aws:ro
+      # Live code: edit on the host, then `docker compose restart api`
+      # (no rebuild). node_modules stays from the image.
+      - ./server:/app/server
+      - ./server.cjs:/app/server.cjs
+      - ./public:/app/public
+      - ./prisma:/app/prisma
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        # The dev DB tunnel binds localhost:5432 on the host; from inside the
+        # container that address is host.docker.internal. Rewrite just the host
+        # portion of the .env DATABASE_URL so there's still one source of truth.
+        export DATABASE_URL="$$(printf '%s' "$$DATABASE_URL" | sed -E 's#@(localhost|127\.0\.0\.1):#@host.docker.internal:#')"
+        exec ./entrypoint.sh

@@ -5,6 +5,11 @@
  * lesson started in one surface keeps its exact play/pause state and
  * position when the other surface mounts, instead of each owning an
  * independent expo-av Sound instance for the same audio.
+ *
+ * Also drives the app-wide GlobalLessonAudioBar (rendered in App.tsx), which
+ * gives play/pause + stop for the active track on every other screen — so a
+ * lesson opened from a coaching report's "Learn more" link can still be
+ * stopped after navigating away from the viewer.
  */
 
 import React, { createContext, useContext, useRef, useState, useCallback, useEffect } from 'react';
@@ -22,6 +27,9 @@ function defaultRateForLocale(locale: string | null | undefined): number {
 
 interface LessonPlayerContextValue {
   activeLessonId: string | null;
+  /** Display title of the active track — surfaced by the app-wide audio bar
+   * (GlobalLessonAudioBar) on screens that don't have their own player UI. */
+  activeLessonTitle: string | null;
   isLoading: boolean;
   isPlaying: boolean;
   positionMillis: number;
@@ -30,7 +38,7 @@ interface LessonPlayerContextValue {
   /** Switch the active track. No-ops if `lessonId` is already the active
    * track, so mounting a screen for the lesson that's already playing
    * elsewhere just attaches to the existing state instead of restarting it. */
-  loadLesson: (lessonId: string, audioUrl: string | null | undefined, locale?: string | null) => void;
+  loadLesson: (lessonId: string, audioUrl: string | null | undefined, locale?: string | null, title?: string | null) => void;
   play: () => Promise<void>;
   pause: () => Promise<void>;
   seekTo: (millis: number) => Promise<void>;
@@ -41,17 +49,28 @@ interface LessonPlayerContextValue {
    * (typically the focused screen) registers its handler here; it's called
    * with the id of the lesson that just finished. */
   setOnFinish: (cb: ((lessonId: string) => void) | null) => void;
+  /** True while a focused screen has its own player controls for the active
+   * track (LearnScreen_v3 / LessonViewerScreen_v2). The app-wide
+   * GlobalLessonAudioBar hides itself in that case so controls never double
+   * up. Screens toggle it via `setScreenOwnsPlayer` from a useFocusEffect. */
+  screenOwnsPlayer: boolean;
+  setScreenOwnsPlayer: (owns: boolean) => void;
 }
 
 const LessonPlayerContext = createContext<LessonPlayerContextValue | null>(null);
 
 export const LessonPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  const [activeLessonTitle, setActiveLessonTitle] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [positionMillis, setPositionMillis] = useState(0);
   const [durationMillis, setDurationMillis] = useState(0);
   const [rate, setRateState] = useState(1.0);
+  const [screenOwnsPlayer, setScreenOwnsPlayerState] = useState(false);
+  // Ref-counted so a brief overlap during a screen transition (old screen's
+  // cleanup runs after the new screen's setup) can't wrongly reveal the bar.
+  const ownerCountRef = useRef(0);
 
   const soundRef = useRef<Audio.Sound | null>(null);
   const activeLessonIdRef = useRef<string | null>(null);
@@ -76,10 +95,11 @@ export const LessonPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
-  const loadLesson = useCallback((lessonId: string, audioUrl: string | null | undefined, locale?: string | null) => {
+  const loadLesson = useCallback((lessonId: string, audioUrl: string | null | undefined, locale?: string | null, title?: string | null) => {
     if (activeLessonIdRef.current === lessonId) return;
     activeLessonIdRef.current = lessonId;
     setActiveLessonId(lessonId);
+    setActiveLessonTitle(title ?? null);
 
     const token = ++loadTokenRef.current;
     const initialRate = defaultRateForLocale(locale);
@@ -137,6 +157,7 @@ export const LessonPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ 
     loadTokenRef.current += 1;
     activeLessonIdRef.current = null;
     setActiveLessonId(null);
+    setActiveLessonTitle(null);
     setIsPlaying(false);
     positionRef.current = 0;
     setPositionMillis(0);
@@ -200,6 +221,11 @@ export const LessonPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ 
     onFinishRef.current = cb;
   }, []);
 
+  const setScreenOwnsPlayer = useCallback((owns: boolean) => {
+    ownerCountRef.current = Math.max(0, ownerCountRef.current + (owns ? 1 : -1));
+    setScreenOwnsPlayerState(ownerCountRef.current > 0);
+  }, []);
+
   useEffect(() => {
     return () => {
       soundRef.current?.unloadAsync();
@@ -210,6 +236,7 @@ export const LessonPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ 
     <LessonPlayerContext.Provider
       value={{
         activeLessonId,
+        activeLessonTitle,
         isLoading,
         isPlaying,
         positionMillis,
@@ -223,6 +250,8 @@ export const LessonPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         cycleRate,
         clear,
         setOnFinish,
+        screenOwnsPlayer,
+        setScreenOwnsPlayer,
       }}
     >
       {children}

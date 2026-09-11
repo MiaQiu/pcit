@@ -36,7 +36,9 @@ router.post('/', requireAuth, async (req, res) => {
       if (!code) return res.status(500).json({ error: 'Failed to generate short link' });
     }
 
-    const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
+    // EXPO_PUBLIC_WEB_URL is the public share host (e.g. https://signup.hinora.co);
+    // fall back to the App Runner URL rather than localhost when it isn't set.
+    const webUrl = process.env.EXPO_PUBLIC_WEB_URL || process.env.WEB_APP_URL || 'http://localhost:3001';
     res.json({ shortUrl: `${webUrl}/s/${code}` });
   } catch (error) {
     console.error('Create share link error:', error);

@@ -48,13 +48,13 @@ const ISSUE_TO_LEVEL = {
   parental_divorce: 'SUPPORT',
 };
 
-// Maps WACB questions to clinical levels
+// Maps Child Snapshot survey questions to clinical levels
 const WACB_LEVEL_MAP = {
-  STABILIZE: ['q4Angry', 'q6Destroy'],
-  DE_ESCALATE: ['q5Scream', 'q7ProvokeFights'],
-  DIRECT: ['q1Dawdle', 'q2MealBehavior', 'q3Disobey', 'q8Interrupt'],
-  FLOURISH: ['q9Attention']
-  // SUPPORT has no WACB questions
+  STABILIZE: ['q8Destroy', 'q9Aggression'],
+  DE_ESCALATE: ['q3Tantrum', 'q4Defiance', 'q10LieSteal'],
+  DIRECT: ['q1Dawdle', 'q2Disobey', 'q6Restless', 'q7TaskCompletion'],
+  FLOURISH: ['q5FocusDemand']
+  // SUPPORT has no snapshot questions
 };
 
 // Score threshold for WACB signal detection
@@ -134,8 +134,8 @@ async function evaluatePriorities(userId) {
     select: { issue: true }
   });
 
-  // Fetch latest WACB survey
-  const latestSurvey = await prisma.wacbSurvey.findFirst({
+  // Fetch latest Child Snapshot survey
+  const latestSurvey = await prisma.childSnapshotSurvey.findFirst({
     where: { userId },
     orderBy: { submittedAt: 'desc' }
   });
@@ -227,7 +227,7 @@ async function evaluatePriorities(userId) {
  * @param {string} userId - The user's ID
  * @returns {Promise<Object>} Updated Child record
  */
-async function runPriorityEngine(userId, { wacbSurveyId } = {}) {
+async function runPriorityEngine(userId, { snapshotSurveyId } = {}) {
   // First, fetch user data to get child info for find-or-create
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -291,7 +291,7 @@ async function runPriorityEngine(userId, { wacbSurveyId } = {}) {
           wacbQuestions: entry.wacbQuestions.length > 0 ? JSON.stringify(entry.wacbQuestions) : null,
           wacbScore: entry.wacbScore || null,
           computedAt: now,
-          wacbSurveyId: wacbSurveyId || null,
+          snapshotSurveyId: snapshotSurveyId || null,
         }
       })
     );

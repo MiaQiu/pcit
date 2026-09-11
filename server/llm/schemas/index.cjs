@@ -49,10 +49,10 @@ const COMBINED_FEEDBACK = {
     topMoment: {
       type: 'object',
       properties: {
-        quote:           { type: 'string' },
-        utteranceNumber: { type: 'integer' },
+        startUtteranceNumber: { type: 'integer' },
+        endUtteranceNumber:   { type: 'integer' },
       },
-      required: ['quote', 'utteranceNumber'],
+      required: ['startUtteranceNumber', 'endUtteranceNumber'],
     },
     Feedback:              { type: 'string' },
     exampleUtteranceNumber: { type: 'integer' },
@@ -108,14 +108,36 @@ const CRISIS_COACHING = {
     topMoment: {
       type: 'object',
       properties: {
-        quote:           { type: 'string' },
-        utteranceNumber: { type: 'integer' },
-        context:         { type: 'string' },
+        startUtteranceNumber: { type: 'integer' },
+        endUtteranceNumber:   { type: 'integer' },
+        context:              { type: 'string' },
       },
-      required: ['quote', 'utteranceNumber', 'context'],
+      required: ['startUtteranceNumber', 'endUtteranceNumber', 'context'],
     },
   },
   required: ['heroText', 'crisisMoment', 'skillCoaching', 'topMoment'],
+};
+
+// ── about-child ───────────────────────────────────────────────────────────────
+// Array of 10 "About Child" observations from a single LLM pass over the
+// transcript (see generateAboutChild), ranked by how valuable each is to the
+// parent (id 1 = most valuable). `label` places the child relative to their age;
+// `valence` is NOT produced by the model — generateAboutChild derives it from
+// `label` for back-compat with mobile + aboutChildSelectionService.
+const ABOUT_CHILD = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      id:          { type: 'integer' },
+      label:       { type: 'string', enum: ['advanced', 'age_appropriate', 'needs_help'] },
+      Title:       { type: 'string' },
+      Description: { type: 'string' },
+      Details:     { type: 'string' },
+      tags:        { type: 'array', items: { type: 'string' } },
+    },
+    required: ['id', 'label', 'Title', 'Description', 'Details', 'tags'],
+  },
 };
 
 // ── pdi-two-choices ───────────────────────────────────────────────────────────
@@ -231,24 +253,123 @@ const DEV_PROFILING = {
 };
 
 // ── coaching-format ───────────────────────────────────────────────────────────
-// CDI coaching report formatted into 3 mobile-friendly sections
+// Splits the free-form CDI coaching write-up into the two pieces the app shows
+// separately: `coach_corner` — sections "1. What you did well" + "3. Next Growth
+// Focus" broken into structured breakdown fields ({ did_well, growth_focus,
+// word_bank }) so the mobile Coach's Corner card can lay them out (always
+// present) — and, only when the write-up has a "4. Handling tricky moments"
+// section, `tricky_moments` — a structured card ({ summary, points[] }) shown in
+// the Crisis Moment slot; otherwise `tricky_moments` is null.
 const COACHING_FORMAT = {
   type: 'object',
   properties: {
-    sections: {
+    coach_corner: {
+      type: 'object',
+      properties: {
+        // section "1. What you did well"
+        did_well: {
+          type: 'object',
+          properties: {
+            theme:        { type: 'string' },
+            how_it_helps: { type: 'string' },
+            examples: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  quote:   { type: 'string' },
+                  benefit: { type: 'string' },
+                },
+                required: ['quote', 'benefit'],
+              },
+            },
+          },
+          required: ['theme', 'how_it_helps', 'examples'],
+        },
+        // section "3. Next Growth Focus — (Upgrade Strategy)"
+        growth_focus: {
+          type: 'object',
+          properties: {
+            heading:   { type: 'string' },
+            gap:       { type: 'string' },
+            benchmark: { type: 'string' },
+            strategy:  { type: 'string' },
+          },
+          required: ['heading', 'gap', 'benchmark', 'strategy'],
+        },
+        // the tailored word bank under section 3 — one entry per primary child goal
+        word_bank: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              goal: { type: 'string' },
+              categories: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name:     { type: 'string' },
+                    examples: { type: 'array', items: { type: 'string' } },
+                  },
+                  required: ['name', 'examples'],
+                },
+              },
+            },
+            required: ['goal', 'categories'],
+          },
+        },
+      },
+      required: ['did_well', 'growth_focus', 'word_bank'],
+    },
+    tricky_moments: {
+      type: 'object',
+      nullable: true,
+      properties: {
+        summary: { type: 'string' },
+        points: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title:             { type: 'string' },
+              explanation:       { type: 'string' },
+              quote:             { type: 'string', nullable: true },
+              suggested_rewrite: { type: 'string', nullable: true },
+            },
+            required: ['title', 'explanation'],
+          },
+        },
+      },
+      required: ['summary', 'points'],
+    },
+  },
+  required: ['coach_corner'],
+};
+
+// ── skill-improve ─────────────────────────────────────────────────────────────
+// Session-grounded opportunities to build or reduce this session's target skill
+const SKILL_IMPROVE = {
+  type: 'object',
+  properties: {
+    direction: { type: 'string', enum: ['BUILD', 'AVOID'] },
+    summary:   { type: 'string' },
+    opportunities: {
       type: 'array',
       items: {
         type: 'object',
         properties: {
-          title:   { type: 'string' },
-          content: { type: 'string' },
+          title:                { type: 'string' },
+          explanation:          { type: 'string' },
+          startUtteranceNumber: { type: 'integer', nullable: true },
+          endUtteranceNumber:   { type: 'integer', nullable: true },
+          suggestedRewrite:     { type: 'string', nullable: true },
         },
-        required: ['title', 'content'],
+        required: ['title', 'explanation'],
       },
     },
-    tomorrowGoal: { type: 'string', nullable: true },
   },
-  required: ['sections'],
+  required: ['direction', 'summary', 'opportunities'],
 };
 
 // ── milestone-detection ───────────────────────────────────────────────────────
@@ -289,8 +410,10 @@ module.exports = {
   COMBINED_FEEDBACK,
   REPORT_HIGHLIGHTS,
   CRISIS_COACHING,
+  ABOUT_CHILD,
   PDI_TWO_CHOICES,
   DEV_PROFILING,
   COACHING_FORMAT,
   MILESTONE_DETECTION,
+  SKILL_IMPROVE,
 };

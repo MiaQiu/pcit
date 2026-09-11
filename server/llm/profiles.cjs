@@ -4,7 +4,8 @@
  * LLM Call Profiles
  *
  * Named presets for every LLM call in the system.
- * All calls use the 'gemini' model (gemini-3.5-flash → gemini-3.1-pro-preview fallback).
+ * All calls use the 'gemini' model ($GEMINI_FLASH_MODEL, default gemini-3.7-flash →
+ * gemini-3.1-pro-preview fallback).
  * Explicit options at the call site override profile defaults.
  */
 const PROFILES = {
@@ -53,7 +54,7 @@ const PROFILES = {
   'coaching-format': {
     model:       'gemini',
     temperature: 0,
-    maxTokens:   4096,
+    maxTokens:   8192,
     timeout:     120_000,
     output:      'json',
   },
@@ -74,19 +75,11 @@ const PROFILES = {
     output:      'json',
   },
 
-  'about-child-narrative': {
+  'about-child': {
     model:       'gemini',
-    temperature: 0.7,
-    maxTokens:   4096,
+    temperature: 0.6,
+    maxTokens:   8192,
     timeout:     120_000,
-    output:      'text',
-  },
-
-  'about-child-extract': {
-    model:       'gemini',
-    temperature: 0.3,
-    maxTokens:   2048,
-    timeout:     60_000,
     output:      'array',
   },
 
@@ -106,6 +99,14 @@ const PROFILES = {
     output:      'json',
   },
 
+  'skill-improve': {
+    model:       'gemini',
+    temperature: 0.5,
+    maxTokens:   4096,
+    timeout:     120_000,
+    output:      'json',
+  },
+
   'pdi-two-choices': {
     model:       'gemini',
     temperature: 0.4,
@@ -117,7 +118,7 @@ const PROFILES = {
   'role-identification': {
     model:       'gemini',
     temperature: 0.3,
-    maxTokens:   2048,
+    maxTokens:   8192,
     timeout:     60_000,
     output:      'json',
   },
@@ -125,7 +126,7 @@ const PROFILES = {
   'role-id-tiebreaker': {
     model:       'gemini',
     temperature: 0.3,
-    maxTokens:   2048,
+    maxTokens:   8192,
     timeout:     60_000,
     output:      'json',
   },

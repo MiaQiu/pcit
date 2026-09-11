@@ -12,6 +12,10 @@ interface OnboardingProgressHeaderProps {
   phase: number; // 1-4
   step: number; // 1-N (current step within phase)
   totalSteps: number; // total steps in current phase
+  // When true, renders a single segment for the current phase only — used by
+  // flows that now run separately from onboarding (e.g. the WACB survey),
+  // where the already-completed earlier phases shouldn't be shown.
+  singlePhase?: boolean;
 }
 
 const TOTAL_PHASES = 2;
@@ -20,9 +24,11 @@ export const OnboardingProgressHeader: React.FC<OnboardingProgressHeaderProps> =
   phase,
   step,
   totalSteps,
+  singlePhase = false,
 }) => {
   const { t } = useTranslation();
   const phaseName = t(`onboarding.progressHeader.phase${phase}`, '') as string;
+  const segmentCount = singlePhase ? 1 : TOTAL_PHASES;
 
   return (
     <View style={styles.container}>
@@ -40,13 +46,15 @@ export const OnboardingProgressHeader: React.FC<OnboardingProgressHeaderProps> =
         {/* Title + counter row */}
         <View style={styles.titleRow}>
           <Text style={styles.title}>{t('onboarding.progressHeader.title')}</Text>
-          <Text style={styles.counterText}>{phase}/{TOTAL_PHASES}</Text>
+          <Text style={styles.counterText}>
+            {singlePhase ? `${step}/${totalSteps}` : `${phase}/${TOTAL_PHASES}`}
+          </Text>
         </View>
 
         {/* Progress segments */}
         <View style={styles.segmentsContainer}>
-          {Array.from({ length: TOTAL_PHASES }).map((_, index) => {
-            const segmentPhase = index + 1;
+          {Array.from({ length: segmentCount }).map((_, index) => {
+            const segmentPhase = singlePhase ? phase : index + 1;
             let fillRatio = 0;
 
             if (segmentPhase < phase) {

@@ -680,10 +680,14 @@ async function uploadLessonContentVideo(fileBuffer, lessonId, extension = 'mp4')
  * @param {Buffer} fileBuffer
  * @param {string} demoVideoId
  * @param {string} extension - e.g. 'mp4', 'mov', 'webm'
+ * @param {string|null} locale - when set (e.g. 'zh-CN'), the file is a
+ *   localized variant (subtitles burned in) and is keyed under a per-locale
+ *   subfolder so it never collides with the base upload.
  * @returns {Promise<string>} - S3 key (not a full URL)
  */
-async function uploadDemoVideo(fileBuffer, demoVideoId, extension = 'mp4') {
-  const key = `demo-videos/${demoVideoId}/${crypto.randomUUID()}.${extension}`;
+async function uploadDemoVideo(fileBuffer, demoVideoId, extension = 'mp4', locale = null) {
+  const prefix = locale ? `demo-videos/${demoVideoId}/${locale}` : `demo-videos/${demoVideoId}`;
+  const key = `${prefix}/${crypto.randomUUID()}.${extension}`;
 
   if (!S3_ENABLED || !s3Client) {
     console.warn('S3 not configured, using mock storage path for demo video');

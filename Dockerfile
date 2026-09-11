@@ -1,9 +1,15 @@
 FROM node:20-alpine
 
-# Install system dependencies for Prisma and native modules
+# Install system dependencies for Prisma and native modules.
+# fontconfig + ttf-dejavu: Alpine ships no fonts, so sharp's librsvg/Pango
+# renders the share-card image's SVG <text> as tofu boxes without them
+# (see server/services/shareImage.cjs). DejaVu is the last-resort fallback;
+# Plus Jakarta Sans (the brand font) is copied in below.
 RUN apk add --no-cache \
     openssl \
-    libc6-compat
+    libc6-compat \
+    fontconfig \
+    ttf-dejavu
 
 WORKDIR /app
 
@@ -31,6 +37,12 @@ COPY server ./server/
 COPY public ./public/
 COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
+
+# Register the bundled Plus Jakarta Sans faces so the share-card image
+# renders in the brand font instead of the DejaVu fallback.
+RUN mkdir -p /usr/share/fonts/truetype/jakarta \
+    && cp server/assets/fonts/*.ttf /usr/share/fonts/truetype/jakarta/ \
+    && fc-cache -f
 # web/dist already present from the build step above
 
 # Create non-root user for security

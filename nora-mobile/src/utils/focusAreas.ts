@@ -40,13 +40,13 @@ const ISSUE_TO_LEVEL: Record<string, ClinicalLevel> = {
   parental_divorce: 'SUPPORT',
 };
 
-// Maps WACB questions to clinical levels
+// Maps Child Snapshot survey questions to clinical levels
 const WACB_LEVEL_MAP: Record<ClinicalLevel, string[]> = {
-  STABILIZE: ['q4Angry', 'q6Destroy'],
-  DE_ESCALATE: ['q5Scream', 'q7ProvokeFights'],
-  DIRECT: ['q1Dawdle', 'q2MealBehavior', 'q3Disobey', 'q8Interrupt'],
+  STABILIZE: ['q8Destroy', 'q9Aggression'],
+  DE_ESCALATE: ['q3Tantrum', 'q4Defiance', 'q10LieSteal'],
+  DIRECT: ['q1Dawdle', 'q2Disobey', 'q6Restless', 'q7TaskCompletion'],
   SUPPORT: [],
-  FLOURISH: ['q9Attention'],
+  FLOURISH: ['q5FocusDemand'],
 };
 
 // Score threshold for WACB signal detection

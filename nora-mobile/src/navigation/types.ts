@@ -6,7 +6,7 @@
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NavigatorScreenParams } from '@react-navigation/native';
-import { Quiz, User, DemoVideo, ParentSkillLevel } from '@nora/core';
+import { Quiz, User, DemoVideo, ParentSkillLevel, SkillImproveResult } from '@nora/core';
 
 export type RootTabParamList = {
   Home: { showModulePicker?: boolean } | undefined;
@@ -67,6 +67,7 @@ export type OnboardingStackParamList = {
   WacbQuestion7: undefined;
   WacbQuestion8: undefined;
   WacbQuestion9: undefined;
+  WacbQuestion10: undefined;
   Demo1: undefined;
   Demo1B: undefined;
   Demo2: undefined;
@@ -86,9 +87,13 @@ export type OnboardingStackParamList = {
 };
 
 export type RootStackParamList = {
-  Onboarding: { initialStep?: string; resumeUserData?: User } | undefined;
+  Onboarding: { initialStep?: string; resumeUserData?: User; wacbReturnRecordingId?: string } | undefined;
   MainTabs: NavigatorScreenParams<RootTabParamList> | undefined;
   Profile: undefined;
+  // recordingId is optional — the Child Snapshot + learning-journey view is
+  // user-scoped, so it opens without a session (e.g. from Profile). When
+  // present, the screen also loads that session's analysis for fallback copy.
+  ProfileReport: { recordingId?: string; justCompletedWacb?: boolean } | undefined;
   NotificationSettings: undefined;
   Support: undefined;
   TermsAndConditions: undefined;
@@ -132,11 +137,20 @@ export type RootStackParamList = {
   ReportV2: {
     recordingId: string;
   };
+  ReportV3: {
+    recordingId: string;
+  };
   ParentLevelDetail: {
     level: ParentSkillLevel;
   };
   ReportDetail: {
     recordingId: string;
+  };
+  SkillImprove: {
+    recordingId: string;
+    skillTag: string;
+    direction: 'BUILD' | 'AVOID';
+    skillImprove: SkillImproveResult | null;
   };
   Transcript: {
     recordingId: string;
@@ -172,6 +186,9 @@ export type RootStackParamList = {
   GetReadyToPlay: undefined;
   GetReadySection: {
     sectionKey: string;
+  };
+  QuickGuide: {
+    guide: 'why5mins' | 'whyRecord';
   };
 };
 

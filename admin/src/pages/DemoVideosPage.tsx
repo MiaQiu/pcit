@@ -6,9 +6,15 @@ import {
   deleteDemoVideo,
   uploadDemoVideoFile,
   uploadDemoVideoThumbnailFile,
+  saveDemoVideoTranslation,
+  autoTranslateDemoVideo,
+  deleteDemoVideoTranslation,
+  uploadDemoVideoTranslationFile,
   getLessons,
   DemoVideo,
   DemoVideoInput,
+  DemoVideoLocale,
+  DemoVideoTranslation,
   LessonSummary,
 } from '../api/adminApi';
 import { handleBoldShortcut, insertTextareaMarker } from '../utils/textFormatting';
@@ -148,7 +154,16 @@ export default function DemoVideosPage() {
                     </div>
                   )}
                 </td>
-                <td className="cell-definition">{video.title}</td>
+                <td className="cell-definition">
+                  {video.title}
+                  {video.translations && video.translations.length > 0 && (
+                    <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
+                      {video.translations
+                        .map((t) => `${t.locale}${t.videoUrl ? ' 🎬' : ''}`)
+                        .join(' · ')}
+                    </div>
+                  )}
+                </td>
                 <td style={{ whiteSpace: 'nowrap', fontSize: 13, color: video.videoUrl ? '#10B981' : '#9CA3AF' }}>
                   {video.videoUrl ? '✓ Uploaded' : '— None'}
                 </td>
@@ -371,6 +386,29 @@ function DemoVideoModal({
           </label>
         </div>
 
+        {isEdit && video?.id && (
+          <div className="form-group">
+            <label>Translations</label>
+            <p className="form-hint">
+              Per-language title/text and a localized video file (subtitles burned in). Any field left blank
+              falls back to the English version above on mobile. Save English changes first — Auto-translate
+              reads the English fields currently stored.
+            </p>
+            {DEMO_VIDEO_LOCALES.map((loc) => (
+              <DemoVideoTranslationPanel
+                key={loc.code}
+                demoVideoId={video.id}
+                locale={loc.code}
+                localeLabel={loc.label}
+                existing={video.translations?.find((t) => t.locale === loc.code)}
+              />
+            ))}
+          </div>
+        )}
+        {mode === 'add' && (
+          <p className="form-hint">Save this video first, then reopen it to add translations.</p>
+        )}
+
         <div className="modal-actions">
           <button className="btn-secondary" onClick={onClose}>Cancel</button>
           <button className="btn-primary" onClick={handleSubmit} disabled={saving}>
@@ -430,6 +468,178 @@ function FormattingToolbar({
           Fold
         </button>
       )}
+    </div>
+  );
+}
+
+const DEMO_VIDEO_LOCALES: { code: DemoVideoLocale; label: string }[] = [
+  { code: 'zh-CN', label: 'Simplified Chinese (zh-CN)' },
+  { code: 'zh-TW', label: 'Traditional Chinese (zh-TW)' },
+];
+
+// Self-contained per-locale editor: each action hits the API directly (like
+// the base thumbnail upload) rather than being threaded through the modal's
+// Save. Local state reflects what's persisted for this locale.
+function DemoVideoTranslationPanel({
+  demoVideoId,
+  locale,
+  localeLabel,
+  existing,
+}: {
+  demoVideoId: string;
+  locale: DemoVideoLocale;
+  localeLabel: string;
+  existing?: DemoVideoTranslation;
+}) {
+  const [tx, setTx] = useState<DemoVideoTranslation | undefined>(existing);
+  const [title, setTitle] = useState(existing?.title || '');
+  const [description, setDescription] = useState(existing?.description || '');
+  const [additionalText, setAdditionalText] = useState(existing?.additionalText || '');
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState<null | 'save' | 'auto' | 'video' | 'delete'>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const descRef = useRef<HTMLTextAreaElement>(null);
+  const addlRef = useRef<HTMLTextAreaElement>(null);
+
+  const applyTx = (next: DemoVideoTranslation) => {
+    setTx(next);
+    setTitle(next.title || '');
+    setDescription(next.description || '');
+    setAdditionalText(next.additionalText || '');
+  };
+
+  const handleSaveText = async () => {
+    setBusy('save');
+    setStatus(null);
+    try {
+      applyTx(await saveDemoVideoTranslation(demoVideoId, locale, { title, description, additionalText }));
+      setStatus('Saved');
+    } catch (err: any) {
+      setStatus(err.message || 'Save failed');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleAutoTranslate = async () => {
+    if (!window.confirm(`Machine-translate the current English title/description/additional text into ${localeLabel}? This overwrites the text fields below.`)) return;
+    setBusy('auto');
+    setStatus(null);
+    try {
+      applyTx(await autoTranslateDemoVideo(demoVideoId, locale));
+      setStatus('Auto-translated — review and Save if you edit further');
+    } catch (err: any) {
+      setStatus(err.message || 'Auto-translate failed');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleUploadVideo = async () => {
+    if (!file) return;
+    setBusy('video');
+    setStatus(null);
+    try {
+      applyTx(await uploadDemoVideoTranslationFile(demoVideoId, locale, file));
+      setFile(null);
+      setStatus('Localized video uploaded');
+    } catch (err: any) {
+      setStatus(err.message || 'Upload failed');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Remove the ${localeLabel} translation entirely (text and localized video)?`)) return;
+    setBusy('delete');
+    setStatus(null);
+    try {
+      await deleteDemoVideoTranslation(demoVideoId, locale);
+      setTx(undefined);
+      setTitle('');
+      setDescription('');
+      setAdditionalText('');
+      setFile(null);
+      setStatus('Removed');
+    } catch (err: any) {
+      setStatus(err.message || 'Delete failed');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 12, marginTop: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <strong style={{ fontSize: 13 }}>{localeLabel}</strong>
+        <span style={{ fontSize: 12, color: '#6B7280' }}>
+          {tx
+            ? `${tx.autoTranslated ? 'auto' : 'manual'}${tx.reviewed ? ' · reviewed' : ''}${tx.videoUrl ? ' · localized video' : ' · English video'}`
+            : 'not translated'}
+        </span>
+      </div>
+
+      <div className="form-group">
+        <label>Title</label>
+        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Falls back to English title" />
+      </div>
+
+      <div className="form-group">
+        <label>Description</label>
+        <FormattingToolbar textareaRef={descRef} onChange={setDescription} />
+        <textarea
+          ref={descRef}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          onKeyDown={(e) => handleBoldShortcut(e, setDescription)}
+          placeholder="Falls back to English description"
+          rows={3}
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Additional text</label>
+        <FormattingToolbar textareaRef={addlRef} onChange={setAdditionalText} showFold />
+        <textarea
+          ref={addlRef}
+          value={additionalText}
+          onChange={(e) => setAdditionalText(e.target.value)}
+          onKeyDown={(e) => handleBoldShortcut(e, setAdditionalText)}
+          placeholder="Falls back to English additional text"
+          rows={4}
+        />
+      </div>
+
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+        <button type="button" className="btn-primary" onClick={handleSaveText} disabled={busy !== null}>
+          {busy === 'save' ? 'Saving...' : 'Save text'}
+        </button>
+        <button type="button" className="btn-secondary" onClick={handleAutoTranslate} disabled={busy !== null}>
+          {busy === 'auto' ? 'Translating...' : 'Auto-translate from English'}
+        </button>
+        {tx && (
+          <button type="button" className="btn-danger-sm" onClick={handleDelete} disabled={busy !== null}>
+            {busy === 'delete' ? 'Removing...' : 'Remove translation'}
+          </button>
+        )}
+      </div>
+
+      <div className="form-group">
+        <label>Localized video file{tx?.videoUrl ? ' (uploading replaces the current one)' : ''}</label>
+        {tx?.videoUrl && !file && (
+          <video src={tx.videoUrl} controls style={{ width: '100%', maxHeight: 180, borderRadius: 6, marginBottom: 8, background: '#000' }} />
+        )}
+        <input type="file" accept="video/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+        <p className="form-hint">MP4, MOV, or WebM with {localeLabel} subtitles burned in. Up to 200 MB.</p>
+        {file && (
+          <button type="button" className="btn-primary" style={{ marginTop: 6 }} onClick={handleUploadVideo} disabled={busy !== null}>
+            {busy === 'video' ? 'Uploading...' : 'Upload localized video'}
+          </button>
+        )}
+      </div>
+
+      {status && <p className="form-hint" style={{ color: '#374151' }}>{status}</p>}
     </div>
   );
 }

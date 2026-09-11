@@ -98,7 +98,10 @@ export const ShareSheet: React.FC<ShareSheetProps> = ({ visible, onClose, target
   };
 
   const openWhatsApp = async () => {
-    const url = `whatsapp://send?text=${encodeURIComponent(shareText)}`;
+    // Send the link only — WhatsApp unfurls it into the rich preview card
+    // (og:title / og:description / og:image from share-home-card.html), so
+    // adding title+subtitle as plain text just duplicates what the card shows.
+    const url = `whatsapp://send?text=${encodeURIComponent(effectiveUrl)}`;
     const canOpen = await Linking.canOpenURL(url).catch(() => false);
     if (!canOpen) {
       showToast('WhatsApp is not installed', 'error');

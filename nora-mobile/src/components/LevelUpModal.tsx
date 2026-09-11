@@ -7,31 +7,54 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Modal, StyleSheet, TouchableOpacity, Animated, Easing, Dimensions } from 'react-native';
+import { View, Text, Modal, StyleSheet, Pressable, Animated, Easing, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
+import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { FONTS, COLORS, SOUNDS } from '../constants/assets';
-import { PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
+import { PARENT_SKILL_LEVEL_ICONS } from '../constants/parentSkillLevels';
+import { useAnticipationBuzz } from '../hooks/useAnticipationBuzz';
 import type { ParentSkillLevel } from '@nora/core';
-
-// Mirrors PARENT_SKILL_LEVELS' icon choices in ProfileReportScreen.tsx, kept
-// local here since this modal only needs the icon (not the rest of that
-// screen's ladder metadata).
-const LEVEL_ICONS: Record<ParentSkillLevel, keyof typeof Ionicons.glyphMap> = {
-  1: 'happy-outline',
-  2: 'star-outline',
-  3: 'locate-outline',
-  4: 'chatbubble-outline',
-  5: 'flag-outline',
-  6: 'shield-checkmark-outline',
-  7: 'trophy-outline',
-};
 
 const CONFETTI_COLORS = [COLORS.mainPurple, COLORS.tealAccent, '#CBA76A', COLORS.ellipseOrange, COLORS.ellipseCyan, COLORS.cardOrange];
 const CONFETTI_COUNT = 16;
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// How long the coin spins for.
+const SPIN_DURATION_MS = 2600;
+
+// Buzz starts a beat after the spin begins (avoids a jarring simultaneous
+// snap at t=0) but is timed to stop exactly when the coin stops spinning.
+const BUZZ_START_DELAY_MS = 140;
+const BUZZ_DURATION_MS = SPIN_DURATION_MS - BUZZ_START_DELAY_MS;
+
+// The coin "spins" via scaleX oscillation (1 -> 0 -> -1 -> 0 -> 1 per flip),
+// not a real 3D rotateY+perspective transform — that combination rendered
+// with a hard flat clipped edge instead of a smooth foreshortened ellipse on
+// device (a known-flaky pairing under the native driver), and looked like
+// content sliding rather than spinning. scaleX is a plain 2D transform with
+// no perspective math, so it renders predictably everywhere; the same
+// left-right squash-through-zero read as a coin flip long before 3D CSS
+// transforms existed. Precomputed as a dense cosine-sampled curve (not just
+// [1,-1,1] per flip) so `interpolate` has enough points to stay smooth
+// through each zero-crossing rather than linearly cutting corners across it.
+const FLIP_COUNT = 4;
+const FLIP_SAMPLES_PER_TURN = 24;
+const FLIP_INPUT_RANGE = Array.from(
+  { length: FLIP_COUNT * FLIP_SAMPLES_PER_TURN + 1 },
+  (_, i) => i / (FLIP_COUNT * FLIP_SAMPLES_PER_TURN)
+);
+const FLIP_OUTPUT_RANGE = FLIP_INPUT_RANGE.map((t) => Math.cos(2 * Math.PI * FLIP_COUNT * t));
+
+// Fixed spots around the badge for the twinkle sparkles that flash when the
+// new level lands.
+const SPARKLE_POSITIONS = [
+  { top: -4, right: 6 },
+  { bottom: 2, left: -8 },
+  { top: 30, left: -14 },
+];
 
 interface ConfettiPiece {
   left: number;
@@ -68,21 +91,41 @@ interface LevelUpModalProps {
 
 export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, toLevel, onDismiss }) => {
   const { t } = useTranslation();
+  const { startBuzz, stopBuzz } = useAnticipationBuzz();
+
+  // Callers (e.g. ReportScreen_v2) pass an inline, unmemoized onDismiss —
+  // read it via a ref inside the animation effect below instead of listing
+  // it as a dependency, so a parent re-render while the modal is visible
+  // can't restart the whole animation sequence mid-flight.
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const badgeScale = useRef(new Animated.Value(0)).current;
   const badgePulse = useRef(new Animated.Value(1)).current;
+  const badgeSpin = useRef(new Animated.Value(0)).current;
   const ringScale = useRef(new Animated.Value(0)).current;
   const ringOpacity = useRef(new Animated.Value(0)).current;
   const oldContentOpacity = useRef(new Animated.Value(1)).current;
   const oldContentScale = useRef(new Animated.Value(1)).current;
   const newContentOpacity = useRef(new Animated.Value(0)).current;
   const newContentScale = useRef(new Animated.Value(0.4)).current;
+  const shineTranslate = useRef(new Animated.Value(0)).current;
+  const sparkles = useRef(
+    [0, 1, 2].map(() => ({ scale: new Animated.Value(0), opacity: new Animated.Value(0) }))
+  ).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const titleTranslateY = useRef(new Animated.Value(14)).current;
-  const cardOpacity = useRef(new Animated.Value(0)).current;
-  const cardTranslateY = useRef(new Animated.Value(14)).current;
-  const buttonOpacity = useRef(new Animated.Value(0)).current;
+
+  // Landing flourish — fires once the coin's flip actually finishes and
+  // settles, not at the start of the pop like everything else above.
+  const landingBounce = useRef(new Animated.Value(1)).current;
+  const landingFlashScale = useRef(new Animated.Value(0)).current;
+  const landingFlashOpacity = useRef(new Animated.Value(0)).current;
+  const landingRingScale = useRef(new Animated.Value(0)).current;
+  const landingRingOpacity = useRef(new Animated.Value(0)).current;
 
   const confetti = useRef<ConfettiPiece[]>(makeConfetti()).current;
 
@@ -93,17 +136,25 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
     backdropOpacity.setValue(0);
     badgeScale.setValue(0);
     badgePulse.setValue(1);
+    badgeSpin.setValue(0);
     ringScale.setValue(0);
     ringOpacity.setValue(0);
     oldContentOpacity.setValue(1);
     oldContentScale.setValue(1);
     newContentOpacity.setValue(0);
     newContentScale.setValue(0.4);
+    shineTranslate.setValue(0);
+    sparkles.forEach((s) => {
+      s.scale.setValue(0);
+      s.opacity.setValue(0);
+    });
     titleOpacity.setValue(0);
     titleTranslateY.setValue(14);
-    cardOpacity.setValue(0);
-    cardTranslateY.setValue(14);
-    buttonOpacity.setValue(0);
+    landingBounce.setValue(1);
+    landingFlashScale.setValue(0);
+    landingFlashOpacity.setValue(0);
+    landingRingScale.setValue(0);
+    landingRingOpacity.setValue(0);
     confetti.forEach((piece) => {
       piece.fall.setValue(0);
       piece.opacity.setValue(1);
@@ -122,11 +173,33 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
       }
     };
 
-    Animated.sequence([
+    // Intro (backdrop fade + badge pop-in + a beat to let it register) runs
+    // first; sound/haptics/burst-visuals all fire together off its
+    // completion callback, so they land exactly on the pop instead of at
+    // t=0 (a `playPopSound()` fired alongside `.start()` on the whole
+    // sequence would play ~900ms before anything visually happens).
+    const introSequence = Animated.sequence([
       Animated.timing(backdropOpacity, { toValue: 1, duration: 220, useNativeDriver: true }),
       Animated.spring(badgeScale, { toValue: 1, tension: 55, friction: 7, useNativeDriver: true }),
       Animated.delay(450),
-      Animated.parallel([
+    ]);
+
+    // Drives the coin's scaleX flip (FLIP_INPUT_RANGE/FLIP_OUTPUT_RANGE
+    // above) through FLIP_COUNT flips at a CONSTANT rate. Kept OUTSIDE
+    // popParallel (with its own .start() below) so its completion callback
+    // fires exactly when the coin actually settles, independent of
+    // popParallel's other members — that's the "landing" flourish trigger.
+    // Linear, not eased: the flip's own cosine shape already provides all the
+    // "fast in the middle, slow at the ends" character a real coin has, so an
+    // additional easing curve on top would double up and distort the pacing.
+    const spinAnimation = Animated.timing(badgeSpin, {
+      toValue: 1,
+      duration: SPIN_DURATION_MS,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    });
+
+    const popParallel = Animated.parallel([
         // Shockwave ring burst at the moment the level flips.
         Animated.timing(ringScale, { toValue: 1.7, duration: 550, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
         Animated.sequence([
@@ -146,6 +219,27 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
             Animated.spring(newContentScale, { toValue: 1, tension: 80, friction: 6, useNativeDriver: true }),
           ]),
         ]),
+        // Shine sweeps across the coin right as the new number lands.
+        Animated.sequence([
+          Animated.delay(160),
+          Animated.timing(shineTranslate, { toValue: 1, duration: 480, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        ]),
+        // A few sparkles twinkle around the coin at the same moment.
+        ...sparkles.map((s, i) =>
+          Animated.sequence([
+            Animated.delay(160 + i * 90),
+            Animated.parallel([
+              Animated.sequence([
+                Animated.timing(s.opacity, { toValue: 1, duration: 120, useNativeDriver: true }),
+                Animated.timing(s.opacity, { toValue: 0, duration: 340, useNativeDriver: true }),
+              ]),
+              Animated.sequence([
+                Animated.spring(s.scale, { toValue: 1, tension: 120, friction: 6, useNativeDriver: true }),
+                Animated.timing(s.scale, { toValue: 0, duration: 260, useNativeDriver: true }),
+              ]),
+            ]),
+          ])
+        ),
         // Badge itself pulses to sell the impact.
         Animated.sequence([
           Animated.delay(100),
@@ -172,32 +266,75 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
             Animated.spring(titleTranslateY, { toValue: 0, tension: 60, friction: 8, useNativeDriver: true }),
           ]),
         ]),
-        Animated.sequence([
-          Animated.delay(320),
-          Animated.parallel([
-            Animated.timing(cardOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
-            Animated.spring(cardTranslateY, { toValue: 0, tension: 60, friction: 8, useNativeDriver: true }),
-          ]),
-        ]),
-        Animated.sequence([
-          Animated.delay(500),
-          Animated.timing(buttonOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
-        ]),
-      ]),
-    ]).start();
+    ]);
 
-    playPopSound();
+    let buzzStartTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let autoDismissTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    introSequence.start(() => {
+      playPopSound();
+      buzzStartTimeoutId = setTimeout(() => {
+        startBuzz({
+          duration: BUZZ_DURATION_MS,
+          minDelay: 90,
+          maxDelay: 25,
+          // Core Haptics has no literal Hz control — `sharpness` is the closest
+          // analog to "frequency" (low = dull rumble, high = crisp/buzzy).
+          // Pushed higher throughout for a buzzier feel, not just at the end.
+          startSharpness: 0.55,
+          endSharpness: 1,
+        });
+      }, BUZZ_START_DELAY_MS);
+      popParallel.start();
+
+      spinAnimation.start(() => {
+        // Landing flourish — the coin has actually settled on its final
+        // face now, so this is the real "confirmed" reveal moment: a firm
+        // haptic thunk, a bigger bounce than the earlier pulse, a second
+        // (stronger) shockwave ring, and a quick white flash behind the badge.
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+
+        Animated.parallel([
+          Animated.sequence([
+            Animated.spring(landingBounce, { toValue: 1.35, tension: 220, friction: 6, useNativeDriver: true }),
+            Animated.spring(landingBounce, { toValue: 1, tension: 180, friction: 9, useNativeDriver: true }),
+          ]),
+          Animated.parallel([
+            Animated.timing(landingFlashScale, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+            Animated.sequence([
+              Animated.timing(landingFlashOpacity, { toValue: 0.9, duration: 60, useNativeDriver: true }),
+              Animated.timing(landingFlashOpacity, { toValue: 0, duration: 320, useNativeDriver: true }),
+            ]),
+          ]),
+          Animated.parallel([
+            Animated.timing(landingRingScale, { toValue: 2.1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+            Animated.sequence([
+              Animated.timing(landingRingOpacity, { toValue: 0.8, duration: 60, useNativeDriver: true }),
+              Animated.timing(landingRingOpacity, { toValue: 0, duration: 440, useNativeDriver: true }),
+            ]),
+          ]),
+        ]).start();
+
+        // Auto-dismiss back to the screen underneath once the landing
+        // flourish (longest piece: the ring burst, 500ms) has had time to
+        // read, plus a short beat to actually see the final result.
+        autoDismissTimeoutId = setTimeout(() => {
+          onDismissRef.current();
+        }, 900);
+      });
+    });
 
     return () => {
       soundRef?.unloadAsync();
+      if (buzzStartTimeoutId) clearTimeout(buzzStartTimeoutId);
+      if (autoDismissTimeoutId) clearTimeout(autoDismissTimeoutId);
+      stopBuzz();
     };
-  }, [visible, fromLevel, toLevel]);
-
-  const fromKey = PARENT_SKILL_LEVEL_KEYS[fromLevel];
-  const toKey = PARENT_SKILL_LEVEL_KEYS[toLevel];
+  }, [visible, fromLevel, toLevel, startBuzz, stopBuzz]);
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onDismiss}>
+      <Pressable style={styles.overlayPressable} onPress={onDismiss}>
       <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
         <LinearGradient colors={['#7C3AED', '#5B21B6']} style={StyleSheet.absoluteFill} />
 
@@ -238,11 +375,41 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
           <View style={styles.badgeWrap}>
             <Animated.View
               style={[
+                styles.landingFlash,
+                { opacity: landingFlashOpacity, transform: [{ scale: landingFlashScale }] },
+              ]}
+              pointerEvents="none"
+            />
+            <Animated.View
+              style={[
                 styles.ring,
                 { opacity: ringOpacity, transform: [{ scale: ringScale }] },
               ]}
             />
-            <Animated.View style={{ transform: [{ scale: badgeScale }, { scale: badgePulse }] }}>
+            <Animated.View
+              style={[
+                styles.ring,
+                { opacity: landingRingOpacity, transform: [{ scale: landingRingScale }] },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.badgeShadow,
+                {
+                  transform: [
+                    {
+                      scaleX: badgeSpin.interpolate({
+                        inputRange: FLIP_INPUT_RANGE,
+                        outputRange: FLIP_OUTPUT_RANGE,
+                      }),
+                    },
+                    { scale: badgeScale },
+                    { scale: badgePulse },
+                    { scale: landingBounce },
+                  ],
+                },
+              ]}
+            >
               <LinearGradient colors={['#F5D890', '#CBA76A']} style={styles.badgeCircle}>
                 <Animated.View
                   style={[
@@ -250,7 +417,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
                     { opacity: oldContentOpacity, transform: [{ scale: oldContentScale }] },
                   ]}
                 >
-                  <Ionicons name={LEVEL_ICONS[fromLevel]} size={26} color="#FFFFFF" />
+                  <Ionicons name={PARENT_SKILL_LEVEL_ICONS[fromLevel]} size={26} color="#FFFFFF" />
                   <Text style={styles.badgeNumber}>{fromLevel}</Text>
                 </Animated.View>
                 <Animated.View
@@ -260,36 +427,59 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ visible, fromLevel, 
                     { opacity: newContentOpacity, transform: [{ scale: newContentScale }] },
                   ]}
                 >
-                  <Ionicons name={LEVEL_ICONS[toLevel]} size={26} color="#FFFFFF" />
+                  <Ionicons name={PARENT_SKILL_LEVEL_ICONS[toLevel]} size={26} color="#FFFFFF" />
                   <Text style={styles.badgeNumber}>{toLevel}</Text>
                 </Animated.View>
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    styles.shine,
+                    {
+                      opacity: newContentOpacity,
+                      transform: [
+                        { rotate: '10deg' },
+                        {
+                          translateX: shineTranslate.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [-140, 140],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                />
               </LinearGradient>
             </Animated.View>
+            {sparkles.map((s, i) => (
+              <Animated.View
+                key={i}
+                pointerEvents="none"
+                style={[
+                  styles.sparkle,
+                  SPARKLE_POSITIONS[i],
+                  { opacity: s.opacity, transform: [{ scale: s.scale }] },
+                ]}
+              >
+                <Ionicons name="sparkles" size={18} color="#FFFFFF" />
+              </Animated.View>
+            ))}
           </View>
 
           <Animated.View style={{ opacity: titleOpacity, transform: [{ translateY: titleTranslateY }] }}>
             <Text style={styles.title}>{t('reportV2.levelUp.title')}</Text>
             <Text style={styles.subtitle}>{t('reportV2.levelUp.subtitle', { level: toLevel })}</Text>
           </Animated.View>
-
-          <Animated.View style={[styles.card, { opacity: cardOpacity, transform: [{ translateY: cardTranslateY }] }]}>
-            <Text style={styles.cardLabel}>{t('reportV2.levelUp.skillUnlocked')}</Text>
-            <Text style={styles.cardTitle}>{t(`profileReport.levels.${toKey}.title`)}</Text>
-            <Text style={styles.cardSkill}>{t(`profileReport.levels.${toKey}.skill`)}</Text>
-          </Animated.View>
-
-          <Animated.View style={{ opacity: buttonOpacity, width: '100%' }}>
-            <TouchableOpacity style={styles.continueButton} onPress={onDismiss} activeOpacity={0.85}>
-              <Text style={styles.continueButtonText}>{t('reportV2.levelUp.continueButton')}</Text>
-            </TouchableOpacity>
-          </Animated.View>
         </View>
       </Animated.View>
+      </Pressable>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  overlayPressable: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
   },
@@ -321,17 +511,27 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: '#FFFFFF',
   },
+  landingFlash: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: '#FFFFFF',
+  },
+  badgeShadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
   badgeCircle: {
     width: 116,
     height: 116,
     borderRadius: 58,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    overflow: 'hidden',
   },
   badgeContent: {
     justifyContent: 'center',
@@ -346,6 +546,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginTop: 2,
   },
+  shine: {
+    position: 'absolute',
+    top: -60,
+    left: '50%',
+    width: 36,
+    height: 240,
+    marginLeft: -18,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+  },
+  sparkle: {
+    position: 'absolute',
+  },
   title: {
     fontFamily: FONTS.bold,
     fontSize: 30,
@@ -359,46 +571,5 @@ const styles = StyleSheet.create({
     color: '#E9D5FF',
     textAlign: 'center',
     marginTop: 6,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 18,
-    paddingHorizontal: 22,
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 28,
-  },
-  cardLabel: {
-    fontFamily: FONTS.bold,
-    fontSize: 11,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: COLORS.tealAccent,
-  },
-  cardTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 20,
-    color: COLORS.textDark,
-    marginTop: 8,
-  },
-  cardSkill: {
-    fontFamily: FONTS.regular,
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginTop: 4,
-  },
-  continueButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 100,
-    paddingVertical: 16,
-    alignItems: 'center',
-    width: '100%',
-  },
-  continueButtonText: {
-    fontFamily: FONTS.bold,
-    fontSize: 16,
-    color: COLORS.mainPurple,
   },
 });

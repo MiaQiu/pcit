@@ -53,7 +53,7 @@ After auth:
 /onboarding/child-birthday
 /onboarding/child-issue
 /onboarding/snapshot-intro
-/onboarding/wacb/1 … /wacb/9              WACB behavior survey
+/onboarding/wacb/1 … /wacb/10             Child Snapshot behavior survey
 /onboarding/behavior-profile
 /onboarding/intro3
 
@@ -255,19 +255,21 @@ Both paths converge on the same `User` row. The mobile `SubscriptionContext` che
 
 A new mobile app build is required for this change to take effect for existing installs.
 
-### WACB Survey Field Names
+### Child Snapshot Survey Field Names
 
-The WACB survey (`POST /api/wacb-survey`) requires these exact field names — the web app was previously sending different keys and receiving 400 errors:
+The Child Snapshot survey (`POST /api/wacb-survey`, persisted to the
+`ChildSnapshotSurvey` table) requires these exact field names:
 
 | Field | Required | Notes |
 |---|---|---|
 | `parentingStressLevel` | Yes | 1–7; web app defaults to `3` if not collected |
-| `q1Dawdle` | Yes | 1–5 |
-| `q2MealBehavior` | Yes | 1–5 |
-| `q3Disobey` | Yes | 1–5 |
-| `q4Angry` | Yes | 1–5 |
-| `q5Scream` | Yes | 1–5 |
-| `q6Destroy` | Yes | 1–5 |
-| `q7ProvokeFights` | Yes | 1–5 |
-| `q8Interrupt` | Yes | 1–5 |
-| `q9Attention` | Yes | 1–5 |
+| `q1Dawdle` | Yes | 1–5 — dawdling in daily routines |
+| `q2Disobey` | Yes | 1–5 — refusing rules / saying "no" |
+| `q3Tantrum` | Yes | 1–5 — tantrum hard to stop |
+| `q4Defiance` | Yes | 1–5 — arguing / talking back / provoking adults |
+| `q5FocusDemand` | Yes | 1–5 — can't focus / demands attention |
+| `q6Restless` | Yes | 1–5 — interrupts / can't sit still |
+| `q7TaskCompletion` | Yes | 1–5 — can't finish tasks/schoolwork on time |
+| `q8Destroy` | Yes | 1–5 — breaks / handles things roughly |
+| `q9Aggression` | Yes | 1–5 — physical aggression / fights |
+| `q10LieSteal` | Yes | 1–5 — lying or stealing |

@@ -67,11 +67,16 @@ async function backupDatabase() {
     backup.tables.thirdPartyRequests = thirdPartyRequests;
     documentation.push(`ThirdPartyRequest: ${thirdPartyRequests.length} records`);
 
-    // Get all WACB surveys
+    // Get all WACB surveys (legacy) + Child Snapshot surveys (current)
     console.log('Backing up WacbSurvey...');
     const wacbSurveys = await prisma.wacbSurvey.findMany();
     backup.tables.wacbSurveys = wacbSurveys;
     documentation.push(`WacbSurvey: ${wacbSurveys.length} records`);
+
+    console.log('Backing up ChildSnapshotSurvey...');
+    const childSnapshotSurveys = await prisma.childSnapshotSurvey.findMany();
+    backup.tables.childSnapshotSurveys = childSnapshotSurveys;
+    documentation.push(`ChildSnapshotSurvey: ${childSnapshotSurveys.length} records`);
 
     // Calculate total records
     const totalRecords = Object.values(backup.tables).reduce((sum, table) => sum + table.length, 0);

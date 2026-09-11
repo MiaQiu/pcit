@@ -596,6 +596,10 @@ export interface HomeCardComponent {
   ctaLabel: string | null;
   inputLabel: string | null;
   inputPlaceholder: string | null;
+  // USER_INPUT only: also surface this input inline on the home card, not
+  // just the detail page. Stored server-side in the reused `text` column (no
+  // schema change) — see validateHomeCardComponents.
+  showOnCard?: boolean;
 }
 
 // Sent to POST/PUT /api/admin/home-cards as part of `components` — `id`
@@ -608,6 +612,7 @@ export interface HomeCardComponentInput {
   ctaLabel?: string;
   inputLabel?: string;
   inputPlaceholder?: string;
+  showOnCard?: boolean;
 }
 
 export interface HomeCard {
@@ -736,6 +741,20 @@ export async function uploadHomeCardComponentImage(cardId: string, componentId: 
 
 // ---- Demo Videos ----
 
+export type DemoVideoLocale = 'zh-CN' | 'zh-TW';
+
+export interface DemoVideoTranslation {
+  demoVideoId: string;
+  locale: DemoVideoLocale;
+  title: string | null;
+  description: string | null;
+  additionalText: string | null;
+  videoUrl: string | null; // resolved presigned URL when set
+  autoTranslated: boolean;
+  reviewed: boolean;
+  translatedAt: string;
+}
+
 export interface DemoVideo {
   id: string;
   title: string;
@@ -748,6 +767,7 @@ export interface DemoVideo {
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
+  translations?: DemoVideoTranslation[];
 }
 
 export interface DemoVideoInput {
@@ -816,6 +836,63 @@ export async function uploadDemoVideoThumbnailFile(id: string, file: File): Prom
   }
   const data = await res.json();
   return data.demoVideo;
+}
+
+// ---- Demo video translations ----
+
+export interface DemoVideoTranslationInput {
+  title?: string;
+  description?: string;
+  additionalText?: string;
+  reviewed?: boolean;
+}
+
+export async function saveDemoVideoTranslation(
+  id: string,
+  locale: DemoVideoLocale,
+  input: DemoVideoTranslationInput
+): Promise<DemoVideoTranslation> {
+  const data = await apiFetch<{ translation: DemoVideoTranslation }>(
+    `/api/admin/demo-videos/${id}/translations/${locale}`,
+    { method: 'PUT', body: JSON.stringify(input) }
+  );
+  return data.translation;
+}
+
+export async function autoTranslateDemoVideo(
+  id: string,
+  locale: DemoVideoLocale
+): Promise<DemoVideoTranslation> {
+  const data = await apiFetch<{ translation: DemoVideoTranslation }>(
+    `/api/admin/demo-videos/${id}/translations/${locale}/auto`,
+    { method: 'POST' }
+  );
+  return data.translation;
+}
+
+export async function deleteDemoVideoTranslation(id: string, locale: DemoVideoLocale): Promise<void> {
+  await apiFetch(`/api/admin/demo-videos/${id}/translations/${locale}`, { method: 'DELETE' });
+}
+
+export async function uploadDemoVideoTranslationFile(
+  id: string,
+  locale: DemoVideoLocale,
+  file: File
+): Promise<DemoVideoTranslation> {
+  const token = (await import('./client')).getToken();
+  const form = new FormData();
+  form.append('video', file);
+  const res = await fetch(`/api/admin/demo-videos/${id}/translations/${locale}/video`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Upload failed: ${res.status}`);
+  }
+  const data = await res.json();
+  return data.translation;
 }
 
 // ---- Settings ----

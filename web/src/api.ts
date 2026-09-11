@@ -54,6 +54,7 @@ export function signup(
     childConditions?: string[];
     issue?: string;
     partnerSlug?: string;
+    referralCode?: string;
   } = {}
 ) {
   return request<AuthResponse>('/api/auth/signup', {
@@ -81,6 +82,10 @@ export interface PartnerInfo {
 
 export function validatePartner(slug: string) {
   return request<PartnerInfo>(`/api/partner/validate/${encodeURIComponent(slug)}`);
+}
+
+export function referrerName(code: string) {
+  return request<{ firstName: string }>(`/api/referral/referrer-name/${encodeURIComponent(code)}`);
 }
 
 export function login(email: string, password: string) {
@@ -116,14 +121,15 @@ export function completeOnboarding(payload: CompleteOnboardingPayload, token: st
 export interface WacbPayload {
   parentingStressLevel?: number;
   q1Dawdle?: number;
-  q2MealBehavior?: number;
-  q3Disobey?: number;
-  q4Angry?: number;
-  q5Scream?: number;
-  q6Destroy?: number;
-  q7ProvokeFights?: number;
-  q8Interrupt?: number;
-  q9Attention?: number;
+  q2Disobey?: number;
+  q3Tantrum?: number;
+  q4Defiance?: number;
+  q5FocusDemand?: number;
+  q6Restless?: number;
+  q7TaskCompletion?: number;
+  q8Destroy?: number;
+  q9Aggression?: number;
+  q10LieSteal?: number;
 }
 
 export function submitWacbSurvey(payload: WacbPayload, token: string) {

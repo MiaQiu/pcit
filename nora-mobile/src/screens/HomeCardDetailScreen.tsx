@@ -12,9 +12,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { LessonContentBlocks } from '../components/LessonContentBlocks';
 import { ShareSheet } from '../components/ShareSheet';
 import { getHomeCardShareText } from '../utils/shareCardText';
+import { getHomeCardBadgeLabel } from '../utils/homeCardBadgeLabel';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import { COLORS, FONTS } from '../constants/assets';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
@@ -49,16 +51,19 @@ const TextComponent: React.FC<{ text: string }> = ({ text }) => {
   return <LessonContentBlocks blocks={blocks} />;
 };
 
-const OpenDetailsComponent: React.FC<{ component: HomeCardComponentData; navigation: any }> = ({ component, navigation }) => (
-  <TouchableOpacity
-    style={styles.ctaRow}
-    onPress={() => navigation.push('HomeCardDetail', { cardId: component.linkedCardId })}
-    activeOpacity={0.7}
-  >
-    <Text style={styles.ctaLabel}>{component.ctaLabel || 'Learn more'}</Text>
-    <Ionicons name="chevron-forward" size={18} color={COLORS.mainPurple} />
-  </TouchableOpacity>
-);
+const OpenDetailsComponent: React.FC<{ component: HomeCardComponentData; navigation: any }> = ({ component, navigation }) => {
+  const { t } = useTranslation();
+  return (
+    <TouchableOpacity
+      style={styles.ctaRow}
+      onPress={() => navigation.push('HomeCardDetail', { cardId: component.linkedCardId })}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.ctaLabel}>{component.ctaLabel || t('homeV2.subActionLearnMore')}</Text>
+      <Ionicons name="chevron-forward" size={18} color={COLORS.mainPurple} />
+    </TouchableOpacity>
+  );
+};
 
 const UserInputComponent: React.FC<{ cardId: string; component: HomeCardComponentData }> = ({ cardId, component }) => {
   const recordingService = useRecordingService();
@@ -108,6 +113,7 @@ const UserInputComponent: React.FC<{ cardId: string; component: HomeCardComponen
 export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ route, navigation }) => {
   const { cardId } = route.params;
   const recordingService = useRecordingService();
+  const { t, i18n } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,7 +132,7 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
     setLoading(true);
     setError(null);
     recordingService
-      .getHomeCardDetail(cardId)
+      .getHomeCardDetail(cardId, i18n.language)
       .then((data) => {
         if (cancelled) return;
         setDetail(data);
@@ -143,11 +149,15 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
     return () => {
       cancelled = true;
     };
-  }, [cardId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardId, i18n.language]);
 
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
   const webUrl = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3001';
   const shareUrl = `${webUrl}/share-home-card.html?card_id=${encodeURIComponent(cardId)}`;
+  // ?lang= so the in-app preview image matches the (already-localized)
+  // detail.message shown on this screen — see applyHomeCardTx in config.cjs.
+  const shareImageLang = i18n.language && i18n.language !== 'en' ? `?lang=${i18n.language}` : '';
 
   const handleShare = () => {
     if (!detail) return;
@@ -213,7 +223,7 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
 
       <View style={styles.identityRow}>
         <View style={[styles.badge, { backgroundColor: detail.badgeColor }]}>
-          <Text style={styles.badgeText}>{detail.badgeText}</Text>
+          <Text style={styles.badgeText}>{getHomeCardBadgeLabel(t, detail.badgeText)}</Text>
         </View>
         <Text style={styles.title}>{detail.detailTitle}</Text>
       </View>
@@ -245,7 +255,7 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
         targetUrl={shareUrl}
         title={detailShareText.title}
         subtitle={detailShareText.subtitle}
-        previewImageUrl={`${webUrl}/api/config/home-cards/${encodeURIComponent(cardId)}/share-image.png`}
+        previewImageUrl={`${webUrl}/api/config/home-cards/${encodeURIComponent(cardId)}/share-image.png${shareImageLang}`}
       />
     </SafeAreaView>
   );
