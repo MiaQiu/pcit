@@ -703,6 +703,10 @@ export const HomeScreen_v2: React.FC = () => {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [showCustomPicker, setShowCustomPicker] = useState(false);
 
+  // ── Stat explanation popup — tapping a stat pill (streak, sessions, days)
+  // shows what the number means instead of navigating away.
+  const [statInfo, setStatInfo] = useState<{ iconName: keyof typeof Ionicons.glyphMap; iconColor: string; title: string; body: string } | null>(null);
+
   // ── Derived ──
   // Initials from first two words of name, or first two chars
   const userInitials = userName
@@ -1359,14 +1363,30 @@ export const HomeScreen_v2: React.FC = () => {
             iconColor="#F97316"
             value={String(weeklyStats.weeklyStreak)}
             unit={t('homeV2.statWeeks')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'weekly_streak' }); tabNavigation.navigate('Record'); }}
+            onPress={() => {
+              amplitudeService.trackEvent('Home Stat Tapped', { stat: 'weekly_streak' });
+              setStatInfo({
+                iconName: 'flame',
+                iconColor: '#F97316',
+                title: t('homeV2.statInfoWeeklyStreakTitle'),
+                body: t('homeV2.statInfoWeeklyStreakBody', { childName }),
+              });
+            }}
           />
           <StatPill
             iconName="sparkles"
             iconColor={COLORS.mainPurple}
             value={String(weeklyStats.totalSessions)}
             unit={t('homeV2.statTimes')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'total_sessions' }); tabNavigation.navigate('Record'); }}
+            onPress={() => {
+              amplitudeService.trackEvent('Home Stat Tapped', { stat: 'total_sessions' });
+              setStatInfo({
+                iconName: 'sparkles',
+                iconColor: COLORS.mainPurple,
+                title: t('homeV2.statInfoTotalSessionsTitle'),
+                body: t('homeV2.statInfoTotalSessionsBody', { childName }),
+              });
+            }}
           />
           <StatPill
             iconName="calendar-outline"
@@ -1374,7 +1394,15 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.daysCompleted)}
             total="7"
             unit={t('homeV2.statDays')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'days_this_week' }); tabNavigation.navigate('Record'); }}
+            onPress={() => {
+              amplitudeService.trackEvent('Home Stat Tapped', { stat: 'days_this_week' });
+              setStatInfo({
+                iconName: 'calendar-outline',
+                iconColor: '#10B981',
+                title: t('homeV2.statInfoDaysThisWeekTitle'),
+                body: t('homeV2.statInfoDaysThisWeekBody', { childName }),
+              });
+            }}
           />
           <StatPill
             iconName="ribbon-outline"
@@ -1652,6 +1680,26 @@ export const HomeScreen_v2: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
+      </Modal>
+
+      {/* ── Stat Explanation Popup ── */}
+      <Modal visible={!!statInfo} transparent animationType="fade" onRequestClose={() => setStatInfo(null)}>
+        <TouchableOpacity style={styles.statInfoOverlay} activeOpacity={1} onPress={() => setStatInfo(null)}>
+          <TouchableOpacity style={styles.statInfoCard} activeOpacity={1} onPress={() => {}}>
+            {statInfo && (
+              <>
+                <View style={[styles.statInfoIconWrap, { backgroundColor: `${statInfo.iconColor}1A` }]}>
+                  <Ionicons name={statInfo.iconName} size={22} color={statInfo.iconColor} />
+                </View>
+                <Text style={styles.statInfoTitle}>{statInfo.title}</Text>
+                <Text style={styles.statInfoBody}>{statInfo.body}</Text>
+                <TouchableOpacity style={styles.statInfoGotItBtn} onPress={() => setStatInfo(null)} activeOpacity={0.85}>
+                  <Text style={styles.statInfoGotItText}>{t('homeV2.statInfoGotIt')}</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
@@ -2351,5 +2399,57 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     fontSize: 14,
     color: '#9CA3AF',
+  },
+  statInfoOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  statInfoCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 20,
+    alignItems: 'center',
+  },
+  statInfoIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  statInfoTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: '#1E2939',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  statInfoBody: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  statInfoGotItBtn: {
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 100,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+  },
+  statInfoGotItText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: '#fff',
   },
 });
