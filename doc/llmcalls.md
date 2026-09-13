@@ -8,7 +8,7 @@ persisted data reaches the mobile report — either the compact celebration scre
 `nora-mobile/src/screens/ReportDetailScreen.tsx` (plus their navigation
 sub-screens).
 
-_Last reviewed: 2026-09-08 (branch `parent-skill-ladder-9-levels`)._
+_Last reviewed: 2026-09-08 (branch `parent-skill-ladder-9-levels`); #18 appended 2026-09-13 — other entries' line numbers/details not re-verified against intervening commits._
 
 ---
 
@@ -33,6 +33,7 @@ _Last reviewed: 2026-09-08 (branch `parent-skill-ladder-9-levels`)._
 | 15 | 1203 | `crisis-coaching` / `crisis-coaching` | `generateCrisis` | Hero text, crisis coaching, skill coaching, bonding moment | `CRISIS_COACHING` |
 | 16 | 1340 | `skill-improve` / `skill-improve` | `generateSkillImprove` | Session-grounded opportunities for the target skill | `SKILL_IMPROVE` |
 | 17 | 1093 | `report-highlights` / `report-highlights` | `generateReportHighlights` | Hero/celebration/tip/crisis — **dead code**, not called | `REPORT_HIGHLIGHTS` |
+| 18 | 766 | `first-session-insights` / `first-session-insights` | `generateFirstSessionInsights` | "What we learned about the child" + parent strengths/interaction-style, **first CDI session only** | `FIRST_SESSION_INSIGHTS` |
 
 **Execution order** (`analyzePCITCoding`):
 
@@ -43,7 +44,8 @@ STEP 2  #4 pcit-coding → #5 supplemental [if gaps]   → Nora score
 STEP 9  Promise.allSettled:
           ├─ #6 dev-profiling
           ├─ generateCdiCoaching (CDI only): #9 → #10 (×1-2) → #11 [if still bad]
-          └─ generateAboutChild: #7 (single pass)
+          ├─ generateAboutChild: #7 (single pass)
+          └─ #18 first-session-insights           [CDI + isFirstSession only — fires once ever per user]
 COMPETENCY
           ├─ #12 pdi-two-choices                  [PDI only, before feedback]
           └─ generateCDIFeedback:
@@ -272,6 +274,24 @@ Merged into #7 — "About Child" is now a single LLM call, not a prose-then-extr
 - **Would have produced:** `{ heroText, topMomentCelebration, interactionTip, crisisMoment:{detected,title,description,whatHelped[]} }`.
 - **Stored in / shown:** nothing. The recordings API still *reads* `session.competencyAnalysis?.topMomentCelebration` / `?.interactionTip` for backward compat, and ReportDetailScreen still has fallback wiring for `topMomentCelebration` (as the Top Moment card tip, after `bondingMoment.context`) — but for current sessions those keys are never written, so the code paths are effectively inert.
 
+## 18. `first-session-insights` — child learnings + parent strengths (first CDI session only)
+
+- **Function / step:** `generateFirstSessionInsights()`, STEP 9 (parallel branch). **Conditional — runs at most once ever per user:** gated on `isFirstSession && isCDI` (`isFirstSession` = `prisma.session.count({userId, analysisStatus:'COMPLETED'}) === 0`, same source as #6's `IS_FIRST_SESSION_BASELINE`; `isCDI` because the prompt content — PRIDE-skill dimensions — is CDI-specific). If the user's very first completed session happens to be PDI, this never fires for them (by their first CDI session, `priorCompletedCount` is already ≥ 1). Best-effort (`alertOnFailure:false`, returns `null` on failure).
+- **Prompt:** `server/prompts/cdiCoaching-first.txt`. Variables:
+  - `USER_NAME` — `User.name` (decrypted; parent's own name — failure to decrypt falls back to `'there'` without failing the analysis, unlike `CHILD_NAME`).
+  - `CHILD_NAME` — `User.childName` (decrypted); `CHILD_AGE` — years (`calculateChildAge`, not the `_MONTHS` variant #6/#9 use); `CHILD_GENDER` — `User.childGender`.
+  - `PARENT_GOALS` — `User.parentGoal` parsed via `parseUserIssues()` (shared with `priorityEngine.cjs`), tags formatted `snake_case → lower case, comma-joined`.
+  - `PRAISE_COUNT` / `ECHO_COUNT` / `NARRATE_COUNT` / `CRITICISM_COUNT` / `COMMAND_COUNT` / `QUESTION_COUNT` — from `Session.tagCounts` (#4).
+  - `TRANSCRIPT` — non-silent `Utterance` rows as `Parent:/Child:` lines (`formatUtterancesForPsychologist`, same formatter as #6/#7).
+  - `LANGUAGE_INSTRUCTION` appended after the templated prompt (not a `{{}}` var — same pattern as #7).
+  - **Context cache:** deliberately reuses **#9's** cache (`cdi-coaching-<streaming-model>`, same `cdiCoaching.txt` system prompt + CDI manual PDF) instead of creating its own — the call is forced onto `$GEMINI_STREAMING_MODEL` to match, since Gemini requires the `CachedContent` model and the `generateContent` model to match. Fixed a latent race in `geminiCache.cjs` where two concurrent callers sharing a cache key/file (this call and #9, both firing in the same `Promise.allSettled`) could each upload/create a duplicate resource — `getOrUploadFile`/`getOrCreateCache` now de-dup concurrent in-flight calls per key.
+- **Output:** `FIRST_SESSION_INSIGHTS` — `{ child_learnings:{strengths[]}, parent_learnings:{superpowers[], interaction_style:{dimensions_explanation, effectiveness_explanation}} }`, normalized to `{ childStrengths[], parentSuperpowers[], interactionStyle:{dimensionsExplanation, effectivenessExplanation}|null }`.
+- **Stored in:** `Session.coachingCards.firstSessionInsights` — nested inside the same JSON blob as #10/#11's `sections` and the deterministic `tomorrowGoal`/`goalDirective`/`notifications` (no new column; merged in, not overwritten).
+- **Shown in report?** **Yes — ReportDetailScreen only, first-session template (`showFirstSession`).**
+  - "What we learned about {childName}" card — when present, `childStrengths` (one line per strength) **replaces** #7/#13's `aboutChildItem`/`childReaction` body for this session only.
+  - "Today's Interaction Style" card's "why this matters" body — when present, `interactionStyle.{dimensionsExplanation,effectivenessExplanation}` (prefixed with a bolded `parentSuperpowers` line) **replaces** the static i18n `whyPersonalised.<ageBand>` copy. Falls back to that static copy if this call failed or returned no `interactionStyle`.
+  - Not shown in ReportScreen_v3.
+
 ---
 
 ## What each target screen actually renders
@@ -289,7 +309,8 @@ Reads only: `noraScore` (← `Session.overallScore` ← #4), `stats` (← `Sessi
 | Today's Interaction Style (bars + breakdown) | #4/#5 | `Session.tagCounts` |
 | Skill Coaching card | #15 | `competencyAnalysis.skillCoaching` |
 | Skill Coaching → "Insights" badge → SkillImprove screen | #16 | `competencyAnalysis.skillImprove` |
-| "What we learned about {child}" card | #8 (pref.) → #13 fallback | `Session.selectedAboutChild` / `Session.aboutChild` / `competencyAnalysis.childReaction` |
+| "What we learned about {child}" card | #18 (first session, pref.) → #7 → #13 fallback | `Session.coachingCards.firstSessionInsights.childStrengths` / `Session.selectedAboutChild` / `Session.aboutChild` / `competencyAnalysis.childReaction` |
+| Interaction Style "why this matters" body (first session only) | #18 (pref.) → static i18n fallback | `Session.coachingCards.firstSessionInsights.{parentSuperpowers,interactionStyle}` |
 | Developmental Milestones card (RadarChart, ≥5 sessions) | #6 (via cross-session aggregate) | `ChildProfiling` → `DevelopmentalProgress` endpoint |
 | Domain detail modal (on tap) | #6 (per-domain) | `getDomainMilestones` endpoint |
 | Tomorrow's Goal card / skill badge | deterministic goal engine (not LLM) | `Session.coachingCards.goalDirective` |
