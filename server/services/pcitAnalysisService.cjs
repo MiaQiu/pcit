@@ -14,6 +14,7 @@ const { placeFirstSessionLevel } = require('./parentSkillLevelService.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { getLanguageInstruction } = require('../utils/languageUtils.cjs');
 const { classifySpeakersML } = require('./mlDiarizationService.cjs');
+const { parseUserIssues } = require('./priorityEngine.cjs');
 
 // DPICS asset paths — referenced by gateway cache config for coding and review feedback
 const DPICS_PDF_PATH      = process.env.DPICS_PDF_PATH      || require('path').join(__dirname, '../assets/DPICS-Manual.2.18.pdf');
@@ -712,6 +713,88 @@ async function generateAboutChild(utterances, childInfo, tagCounts = {}, session
     return aboutChild;
   } catch (error) {
     console.error('❌ [ABOUT-CHILD] Failed:', error.message);
+    return null;
+  }
+}
+
+// ============================================================================
+// First-Session Insights — child learnings + parent strengths (first CDI session only)
+// ============================================================================
+
+/**
+ * Generate the first-session-only report sections: what we learned about the
+ * child, and a new "parent strengths + interaction style" section. Runs once,
+ * alongside the other STEP 9 profiling calls, only on the parent's first
+ * completed CDI session.
+ *
+ * @param {Array}  utterances - Utterances with roles
+ * @param {Object} childInfo  - { name, ageYears, gender, userName, parentGoalsText }
+ * @param {Object} [tagCounts] - Session metrics from PCIT coding
+ * @returns {Promise<Object|null>} { childStrengths, parentSuperpowers, interactionStyle } or null on failure
+ */
+async function generateFirstSessionInsights(utterances, childInfo, tagCounts = {}, sessionId = null, language = null) {
+  const { name, ageYears, gender, userName, parentGoalsText } = childInfo;
+  const transcript = formatUtterancesForPsychologist(utterances);
+  const languageInstruction = getLanguageInstruction(language);
+
+  const prompt = loadPromptWithVariables('cdiCoaching-first', {
+    USER_NAME: userName || 'there',
+    CHILD_NAME: name || 'the child',
+    CHILD_AGE: ageYears != null ? String(ageYears) : 'unknown',
+    CHILD_GENDER: gender || 'child',
+    PARENT_GOALS: parentGoalsText || 'building a stronger connection with their child',
+    PRAISE_COUNT: String(tagCounts.praise || 0),
+    ECHO_COUNT: String(tagCounts.echo || 0),
+    NARRATE_COUNT: String(tagCounts.narration || 0),
+    CRITICISM_COUNT: String(tagCounts.criticism || 0),
+    COMMAND_COUNT: String(tagCounts.command || 0),
+    QUESTION_COUNT: String(tagCounts.question || 0),
+    TRANSCRIPT: transcript,
+  });
+  const promptFinal = languageInstruction ? `${prompt}\n\n${languageInstruction}` : prompt;
+
+  // Reuse the exact same Gemini context cache as generateCdiCoaching (static
+  // coaching instructions + CDI reference manual PDF), instead of paying to
+  // re-embed that context here. Requires calling on the same model the cache
+  // was created for — Gemini rejects a generateContent call whose model
+  // differs from its CachedContent's model, hence the model override.
+  const coachingModel = process.env.GEMINI_STREAMING_MODEL || undefined;
+
+  console.log(`📊 [FIRST-SESSION-INSIGHTS] Generating first-session child + parent insights...`);
+
+  try {
+    const parsed = await llmCall(withChildNameDirective(promptFinal, name), {
+      profile:  'first-session-insights',
+      ...(coachingModel ? { model: coachingModel } : {}),
+      cache: {
+        key:          `cdi-coaching-${(coachingModel || 'default').replace(/[^a-z0-9.-]/gi, '_')}`,
+        primaryFile:  CDI_COACHING_PDF_PATH,
+        systemPrompt: loadPrompt('cdiCoaching'),
+      },
+      schema:   SCHEMAS.FIRST_SESSION_INSIGHTS,
+      label:    'first-session-insights',
+      sessionId,
+      // Best-effort: a failure here just drops the first-session sections
+      // from the report (STEP 9 swallows it), so don't page on it.
+      alertOnFailure: false,
+    });
+
+    const rawInteractionStyle = parsed.parent_learnings?.interaction_style || null;
+    const result = {
+      childStrengths: parsed.child_learnings?.strengths || [],
+      parentSuperpowers: parsed.parent_learnings?.superpowers || [],
+      interactionStyle: rawInteractionStyle
+        ? {
+            dimensionsExplanation: rawInteractionStyle.dimensions_explanation || null,
+            effectivenessExplanation: rawInteractionStyle.effectiveness_explanation || null,
+          }
+        : null,
+    };
+
+    console.log(`✅ [FIRST-SESSION-INSIGHTS] Generated ${result.childStrengths.length} child strengths, ${result.parentSuperpowers.length} parent superpowers`);
+    return result;
+  } catch (error) {
+    console.error('❌ [FIRST-SESSION-INSIGHTS] Failed:', error.message);
     return null;
   }
 }
@@ -1813,11 +1896,13 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
+      name: true,
       childName: true,
       childGender: true,
       childBirthYear: true,
       childBirthday: true,
       issue: true,
+      parentGoal: true,
       childConditions: true
     }
   });
@@ -1833,6 +1918,17 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
   const childAge = user.childBirthYear ? calculateChildAge(user.childBirthYear, user.childBirthday) : null;
   const childAgeMonths = user.childBirthYear ? calculateChildAgeInMonths(user.childBirthday, user.childBirthYear) : null;
   const childGender = user.childGender ? formatGender(user.childGender) : 'child';
+  // Parent's own name — best-effort; only feeds the first-session prompt, so
+  // a decrypt failure here shouldn't fail the whole analysis (unlike childName above).
+  let userName = 'there';
+  try {
+    userName = user.name ? decryptSensitiveData(user.name) : 'there';
+  } catch (decryptErr) {
+    console.error('⚠️ [ANALYSIS-STEP-1b] Failed to decrypt parent name, using fallback:', decryptErr.message);
+  }
+  const parentGoalsText = parseUserIssues(user.parentGoal)
+    .map(g => g.replace(/_/g, ' ').toLowerCase())
+    .join(', ');
   console.log(`✅ [ANALYSIS-STEP-1b] Child info: ${childName}, ${childAgeMonths} months old, ${childGender}`);
 
   // Fetch Child record early to get clinical priority fields
@@ -2190,24 +2286,31 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
     const childInfoForProfiling = {
       name: childName,
       ageMonths: childAgeMonths,
+      ageYears: childAge,
       gender: childGender,
       clinicalPriority,
       isFirstSession,
       durationSeconds: session.durationSeconds || null,
       achievedMilestoneKeys,
       childId: child?.id || null,
-      userId
+      userId,
+      userName,
+      parentGoalsText
     };
 
-    const [profilingSettled, coachingSettled, aboutChildSettled] = await Promise.allSettled([
+    const runFirstSessionInsights = isFirstSession && isCDI;
+
+    const [profilingSettled, coachingSettled, aboutChildSettled, firstSessionSettled] = await Promise.allSettled([
       generateDevelopmentalProfiling(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId, primaryLanguage),
       isCDI ? generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId, primaryLanguage) : Promise.resolve(null),
-      generateAboutChild(utterancesForProfiling, childInfoForProfiling, tagCounts, sessionId, primaryLanguage)
+      generateAboutChild(utterancesForProfiling, childInfoForProfiling, tagCounts, sessionId, primaryLanguage),
+      runFirstSessionInsights ? generateFirstSessionInsights(utterancesForProfiling, childInfoForProfiling, tagCounts, sessionId, primaryLanguage) : Promise.resolve(null)
     ]);
 
     const profilingResult = profilingSettled.status === 'fulfilled' ? profilingSettled.value : null;
     const coachingResult = coachingSettled.status === 'fulfilled' ? coachingSettled.value : null;
     const aboutChildResult = aboutChildSettled.status === 'fulfilled' ? aboutChildSettled.value : null;
+    const firstSessionResult = firstSessionSettled.status === 'fulfilled' ? firstSessionSettled.value : null;
 
     if (profilingSettled.status === 'rejected') {
       console.error('⚠️ [ANALYSIS-STEP-9] Developmental profiling rejected:', profilingSettled.reason?.message);
@@ -2217,6 +2320,9 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
     }
     if (aboutChildSettled.status === 'rejected') {
       console.error('⚠️ [ANALYSIS-STEP-9] About child rejected:', aboutChildSettled.reason?.message);
+    }
+    if (runFirstSessionInsights && firstSessionSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] First-session insights rejected:', firstSessionSettled.reason?.message);
     }
 
     // Merge into the same shape downstream code expects
@@ -2232,7 +2338,8 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
         tomorrowGoal: coachingResult?.tomorrowGoal || null,
         notifications: coachingResult?.notifications || null,
         goalDirective: coachingResult?.goalDirective || null,
-        aboutChild: aboutChildResult || null
+        aboutChild: aboutChildResult || null,
+        firstSessionInsights: firstSessionResult || null
       };
       console.log(`✅ [ANALYSIS-STEP-9] Child profiling complete — ${childProfilingResult.developmentalObservation?.domains?.length || 0} domains, ${childProfilingResult.coachingCards?.length || 0} coaching cards`);
     } else {
@@ -2353,14 +2460,15 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
       competencyAnalysis,
       overallScore,
       coachingSummary: childProfilingResult?.coachingSummary || null,
-      coachingCards: (childProfilingResult?.coachingCards || childProfilingResult?.coachingPart1 || childProfilingResult?.goalDirective)
+      coachingCards: (childProfilingResult?.coachingCards || childProfilingResult?.coachingPart1 || childProfilingResult?.goalDirective || childProfilingResult?.firstSessionInsights)
         ? {
             sections: childProfilingResult.coachingCards || null,
             part1: childProfilingResult.coachingPart1 || null,
             part2: childProfilingResult.coachingPart2 || null,
             tomorrowGoal: childProfilingResult.tomorrowGoal || null,
             notifications: childProfilingResult.notifications || null,
-            goalDirective: childProfilingResult.goalDirective || null
+            goalDirective: childProfilingResult.goalDirective || null,
+            firstSessionInsights: childProfilingResult.firstSessionInsights || null
           }
         : null,
       aboutChild: childProfilingResult?.aboutChild || null,
@@ -2463,6 +2571,7 @@ module.exports = {
   generateDevelopmentalProfiling,
   generateCdiCoaching,
   generateAboutChild,
+  generateFirstSessionInsights,
   getParentSkillProgress,
   dpicsCacheKey,
   DPICS_PDF_PATH,

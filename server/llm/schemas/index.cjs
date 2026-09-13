@@ -140,6 +140,38 @@ const ABOUT_CHILD = {
   },
 };
 
+// ── first-session-insights ─────────────────────────────────────────────────────
+// First-session-only: what we learned about the child, plus a parent
+// strengths / interaction-style section (see generateFirstSessionInsights)
+const FIRST_SESSION_INSIGHTS = {
+  type: 'object',
+  properties: {
+    child_learnings: {
+      type: 'object',
+      properties: {
+        strengths: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['strengths'],
+    },
+    parent_learnings: {
+      type: 'object',
+      properties: {
+        superpowers: { type: 'array', items: { type: 'string' } },
+        interaction_style: {
+          type: 'object',
+          properties: {
+            dimensions_explanation:   { type: 'string' },
+            effectiveness_explanation: { type: 'string' },
+          },
+          required: ['dimensions_explanation', 'effectiveness_explanation'],
+        },
+      },
+      required: ['superpowers', 'interaction_style'],
+    },
+  },
+  required: ['child_learnings', 'parent_learnings'],
+};
+
 // ── pdi-two-choices ───────────────────────────────────────────────────────────
 // PDI discipline sequence analysis
 const PDI_TWO_CHOICES = {
@@ -411,6 +443,7 @@ module.exports = {
   REPORT_HIGHLIGHTS,
   CRISIS_COACHING,
   ABOUT_CHILD,
+  FIRST_SESSION_INSIGHTS,
   PDI_TWO_CHOICES,
   DEV_PROFILING,
   COACHING_FORMAT,

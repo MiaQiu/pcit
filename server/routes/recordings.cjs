@@ -835,6 +835,10 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       coachingSummary: session.coachingSummary || null,
       coachingCards: coachingData?.sections || (Array.isArray(coachingData) ? coachingData : null),
       tomorrowGoalDirective: coachingData?.goalDirective || fallbackGoalDirective || null,
+      // First-session-only: "what we learned about the child" + parent
+      // strengths/interaction-style explainer (generateFirstSessionInsights).
+      // null on every session after the first.
+      firstSessionInsights: coachingData?.firstSessionInsights || null,
       // Backward compat (old mobile app versions)
       childPortfolioInsights: transformCoachingCardsToPortfolioInsights(Array.isArray(coachingData) ? coachingData : null) || session.childPortfolioInsights || null,
       aboutChild: session.aboutChild || null,

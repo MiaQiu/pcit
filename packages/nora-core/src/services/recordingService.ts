@@ -277,6 +277,17 @@ export interface RecordingAnalysis {
     mode: string;
   } | null;
   childPortfolioInsights?: ChildPortfolioInsights | null;
+  // First-session-only: "what we learned about the child" + parent
+  // strengths/interaction-style explainer (generateFirstSessionInsights).
+  // null on every session after the first.
+  firstSessionInsights?: {
+    childStrengths: string[];
+    parentSuperpowers: string[];
+    interactionStyle: {
+      dimensionsExplanation: string | null;
+      effectivenessExplanation: string | null;
+    } | null;
+  } | null;
   aboutChild?: AboutChildItem[] | null;
   // Server-selected card from `aboutChild` — dedup'd against recently shown
   // titles and balanced ~5:1 STRENGTH:GROWTH_AREA (see aboutChildSelectionService.cjs).
