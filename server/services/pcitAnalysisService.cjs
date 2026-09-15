@@ -10,7 +10,7 @@ const { getUtterances, updateUtteranceRoles, updateUtteranceTags, updateRevisedF
 const { DPICS_TO_TAG_MAP, calculateNoraScore } = require('../utils/scoreConstants.cjs');
 const { loadPrompt, loadPromptWithVariables } = require('../prompts/index.cjs');
 const { generateGoalForLevel, formatNotifications, formatGoalHeadline } = require('../utils/levelGoalEngine.cjs');
-const { placeFirstSessionLevel } = require('./parentSkillLevelService.cjs');
+const { placeFirstSessionLevel, computeLevelUpdate } = require('./parentSkillLevelService.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { getLanguageInstruction } = require('../utils/languageUtils.cjs');
 const { classifySpeakersML } = require('./mlDiarizationService.cjs');
@@ -823,6 +823,23 @@ async function getParentSkillProgress(userId) {
 }
 
 /**
+ * Project this session's own level-up onto freshly-fetched progress before
+ * computing its goal card. updateParentSkillLevel() persists the actual
+ * promotion separately, as fire-and-forget, *after* analysis finishes — so
+ * without this projection, a session that clears its level's criteria would
+ * still show that (now-cleared) level's goal as "tomorrow's goal" instead of
+ * the new level's. Read-only: does not write to the DB, just mirrors
+ * computeLevelUpdate's forward-only logic in-memory for the goal calc.
+ * @param {{ currentLevel: number }} progress
+ * @param {'CDI'|'PDI'} mode
+ * @param {Object} tagCounts
+ */
+function projectLevelForGoal(progress, mode, tagCounts) {
+  const update = computeLevelUpdate(progress, { mode, tagCounts });
+  return update ? { ...progress, ...update } : progress;
+}
+
+/**
  * Generate CDI coaching report
  * Runs the cdiCoaching prompt (which carries its own output format) and returns
  * the report as-is for the Coach's Corner card.
@@ -839,7 +856,7 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
   const { name, userId: childUserId } = childInfo;
 
   console.log(`📊 [CDI-COACHING] Step 1: Computing goal payload...`);
-  const parentProgress = await getParentSkillProgress(childUserId);
+  const parentProgress = projectLevelForGoal(await getParentSkillProgress(childUserId), 'CDI', tagCounts);
   const goalPayload = generateGoalForLevel(parentProgress.currentLevel, tagCounts, 'CDI', parentProgress);
   console.log(`✅ [CDI-COACHING] Level ${parentProgress.currentLevel} goal: ${goalPayload.title} → target ${goalPayload.targetCount}`);
 
@@ -2416,7 +2433,7 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
       // Deterministic goal engine overrides the LLM's tomorrowGoal field
       // (pdiResult.tomorrowGoal is left unused/vestigial rather than
       // touching pdiTwoChoicesFlow's schema for this).
-      const pdiProgress = await getParentSkillProgress(userId);
+      const pdiProgress = projectLevelForGoal(await getParentSkillProgress(userId), 'PDI', tagCounts);
       const pdiGoalPayload = generateGoalForLevel(pdiProgress.currentLevel, tagCounts, 'PDI', pdiProgress);
       competencyAnalysis.pdiTomorrowGoal = formatGoalHeadline(pdiGoalPayload);
       competencyAnalysis.pdiTomorrowGoalDirective = {
