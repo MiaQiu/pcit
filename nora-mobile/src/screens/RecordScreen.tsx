@@ -413,6 +413,14 @@ export const RecordScreen: React.FC = () => {
       return;
     }
 
+    // Guard against the autoStart route (Home screen "Record"/"Record Again")
+    // bypassing the discipline lock via a stale sessionMode left over from
+    // switching tabs in RecordingGuideCard.
+    if (sessionMode === 'discipline' && isDisciplineLocked) {
+      setRecordingState('idle');
+      return;
+    }
+
     try {
       if (!permissionGranted) {
         const granted = await requestPermissions();
