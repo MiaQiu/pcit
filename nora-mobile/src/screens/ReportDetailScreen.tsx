@@ -1317,7 +1317,11 @@ export const ReportDetailScreen: React.FC = () => {
                         onPress={() => setCoachTab('growNext')}
                       >
                         <Ionicons name="flag" size={15} color="#9A5A34" />
-                        <Text style={styles.ccNudgeText}>{t('reportDetail.skillCoaching.tabGrowNext')}</Text>
+                        <Text style={styles.ccNudgeText}>
+                          {t(coachCorner.growthFocus.newSkillIntro
+                            ? 'reportDetail.skillCoaching.tabIntoNewSkill'
+                            : 'reportDetail.skillCoaching.tabGrowNext')}
+                        </Text>
                         <Ionicons name="arrow-forward" size={16} color="#9A5A34" />
                       </TouchableOpacity>
                     )}
