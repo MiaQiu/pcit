@@ -45,7 +45,8 @@ const ISSUE_TAG_OPTIONS = [
   { value: 'attention_focus', label: 'Attention & focus' },
   { value: 'parenting_strategies', label: 'Parenting strategies' },
   { value: 'adhd', label: 'ADHD' },
-  { value: 'anxiety_confidence', label: 'Anxiety / confidence' },
+  { value: 'anxiety', label: 'Anxiety' },
+  { value: 'confidence', label: 'Confidence' },
   { value: 'developmental_concerns', label: 'Developmental concerns' },
   { value: 'other', label: 'Other' },
 ];

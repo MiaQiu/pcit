@@ -35,11 +35,13 @@ const ISSUE_TO_LEVEL = {
   attention_focus: 'FLOURISH',
   parenting_strategies: 'FLOURISH',
   adhd: 'DE_ESCALATE',
-  // "anxiety_confidence", "developmental_concerns", and "other" are
+  // "anxiety", "confidence", "developmental_concerns", and "other" are
   // intentionally omitted — no clinical mapping yet (pending clinical review)
 
   // Legacy values kept for users who selected them before the picker was
   // updated; no longer offered in the UI
+  // ("anxiety_confidence" is also a legacy value, but stays unmapped like its
+  // "anxiety"/"confidence" successors above)
   behavior_challenges: 'DE_ESCALATE',
   big_emotions: 'DE_ESCALATE',
   frustration_tolerance: 'FLOURISH',

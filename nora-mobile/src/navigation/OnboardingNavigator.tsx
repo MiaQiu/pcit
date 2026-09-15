@@ -14,9 +14,10 @@ import { useOnboarding } from '../contexts/OnboardingContext';
 //   ChildIssue → [branch] → ParentGoalIntro → OBLetter → OBLetterContent →
 //   OBPlay1 → OBPlay2 → OBDiscipline → OBIntro1 → ReminderTime → OBIntro2 →
 //   MainTabs (OBIntro2 completes onboarding directly)
-// Branch at ChildIssue: selecting ADHD Support or Developmental Concerns routes
-// through DiagnosisStatus → ProfessionalSupport instead of ParentGoal (see
-// ChildIssueScreen's nextScreen resolver / hasAdhdOrDevelopmentalConcern()).
+// Branch at ChildIssue: selecting ADHD Support, Developmental Concerns, or
+// Anxiety routes through DiagnosisStatus → ProfessionalSupport instead of
+// ParentGoal (see ChildIssueScreen's nextScreen resolver /
+// hasAdhdOrDevelopmentalConcern()).
 // Both paths rejoin at ParentGoalIntro.
 // Subscription is a standalone screen entered from RecordScreen / ProfileScreen.
 // Demo1–5/Demo1B/Demo2B/ParentingIntro/ChildSnapshotIntro/WacbQuestion1–10/

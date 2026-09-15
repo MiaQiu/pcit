@@ -1,7 +1,8 @@
 /**
  * Diagnosis Status Screen
- * ADHD / developmental-concern branch only (see ChildIssueScreen's nextScreen
- * resolver). Replaces ParentGoal on this branch, alongside ProfessionalSupport.
+ * ADHD / developmental-concern / anxiety branch only (see ChildIssueScreen's
+ * nextScreen resolver). Replaces ParentGoal on this branch, alongside
+ * ProfessionalSupport.
  */
 
 import React from 'react';
