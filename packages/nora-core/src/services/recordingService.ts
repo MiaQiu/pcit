@@ -211,6 +211,7 @@ export interface RecordingAnalysis {
     };
     growthFocus: {
       heading: string;
+      newSkillIntro?: string | null;  // set only on a level-up session — a brief intro to the new skill before the usual gap/benchmark/strategy
       gap: string;
       benchmark: string;
       strategy: string;

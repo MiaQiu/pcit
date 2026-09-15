@@ -1324,6 +1324,9 @@ export const ReportDetailScreen: React.FC = () => {
                   </View>
                 ) : (
                   <View>
+                    {!!coachCorner.growthFocus.newSkillIntro && (
+                      <MarkdownText style={styles.ccProse}>{coachCorner.growthFocus.newSkillIntro}</MarkdownText>
+                    )}
                     {!!coachCorner.growthFocus.benchmark && (
                       <View style={styles.ccBenchCard}>
                         <View style={styles.ccBenchCardLabel}>

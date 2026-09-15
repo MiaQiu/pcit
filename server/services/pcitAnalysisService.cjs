@@ -856,9 +856,11 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
   const { name, userId: childUserId } = childInfo;
 
   console.log(`📊 [CDI-COACHING] Step 1: Computing goal payload...`);
-  const parentProgress = projectLevelForGoal(await getParentSkillProgress(childUserId), 'CDI', tagCounts);
+  const preSessionProgress = await getParentSkillProgress(childUserId);
+  const parentProgress = projectLevelForGoal(preSessionProgress, 'CDI', tagCounts);
+  const leveledUpThisSession = parentProgress.currentLevel > preSessionProgress.currentLevel;
   const goalPayload = generateGoalForLevel(parentProgress.currentLevel, tagCounts, 'CDI', parentProgress);
-  console.log(`✅ [CDI-COACHING] Level ${parentProgress.currentLevel} goal: ${goalPayload.title} → target ${goalPayload.targetCount}`);
+  console.log(`✅ [CDI-COACHING] Level ${parentProgress.currentLevel} goal: ${goalPayload.title} → target ${goalPayload.targetCount}${leveledUpThisSession ? ` (leveled up from ${preSessionProgress.currentLevel} this session)` : ''}`);
 
   const goalDirective = {
     focusSkill: goalPayload.title,
@@ -909,6 +911,30 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
     : 'none yet';
   variables.primary_issue = variables.PRIMARY_ISSUE;
 
+  // Parent-facing level copy for the "new skill" intro on a level-up session —
+  // mirrors nora-mobile/src/i18n/locales/en.json profileReport.levels.* (the
+  // Personalized Learning Journey UI) so the report names the skill the same
+  // way the app does. Keep in sync if that copy changes. CDI-only levels 1-7
+  // (7 is the CDI->PDI hand-off, reachable in a CDI session only from level 6).
+  const CDI_LEVEL_COPY = {
+    1: { title: 'Calm Builder', skill: 'Reduce Criticism', goal: 'Build a safe, judgment-free play space.' },
+    2: { title: 'Patience Builder', skill: 'Reduce Commands', goal: 'Let your child lead without direction.' },
+    3: { title: 'Presence Builder', skill: 'Reduce Questions', goal: 'Stay present without quizzing.' },
+    4: { title: 'Confidence Builder', skill: 'Specific Praise', goal: 'Help your child feel capable.' },
+    5: { title: 'Attention Builder', skill: 'Narration', goal: 'Increase focus and engagement.' },
+    6: { title: 'Communication Builder', skill: 'Reflection (Echo)', goal: 'Help your child feel understood.' },
+    7: { title: 'Cooperation Builder', skill: 'Clear Instructions', goal: 'Increase everyday cooperation.' },
+  };
+
+  variables.LEVELED_UP_THIS_SESSION = leveledUpThisSession;
+  if (leveledUpThisSession) {
+    variables.OLD_SKILL_NAME = cdiSkillForLevel(preSessionProgress.currentLevel);
+    const newCopy = CDI_LEVEL_COPY[parentProgress.currentLevel];
+    variables.NEW_SKILL_TITLE = newCopy?.title || variables.skillname;
+    variables.NEW_SKILL_NAME = newCopy?.skill || variables.skillname;
+    variables.NEW_SKILL_GOAL = newCopy?.goal || '';
+  }
+
   // Split the prompt like DPICS coding: the static instructions (role, response
   // structure, tone) + the CDI reference manual PDF go in the Gemini context
   // cache; only the per-session data (child, skill level, metrics, transcript)
@@ -924,7 +950,7 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
 ${variables.SESSION_METRICS}
 - Level-clearing benchmark for the current skill focus: ${variables.MASTERY_BENCHMARK}
 - Focus goal for next session: ${variables.TOMORROW_GOAL}
-- Session Transcript:
+${leveledUpThisSession ? `- LEVEL-UP THIS SESSION: this session's own numbers cleared the parent's previous skill focus, "${variables.OLD_SKILL_NAME}" — celebrate that in section 1. It also unlocked a new skill focus: "${variables.NEW_SKILL_TITLE}" (${variables.NEW_SKILL_NAME}) — ${variables.NEW_SKILL_GOAL} Briefly introduce this new skill at the top of section 3 before coaching it.\n` : ''}- Session Transcript:
 ${variables.TRANSCRIPT}
 
 Produce the coaching feedback now, following the required response structure exactly.
@@ -991,10 +1017,11 @@ ${variables.LANGUAGE_INSTRUCTION}`;
               : [],
           },
           growthFocus: {
-            heading:   cc.growth_focus?.heading || '',
-            gap:       cc.growth_focus?.gap || '',
-            benchmark: cc.growth_focus?.benchmark || '',
-            strategy:  cc.growth_focus?.strategy || '',
+            heading:       cc.growth_focus?.heading || '',
+            newSkillIntro: cc.growth_focus?.new_skill_intro || null,
+            gap:           cc.growth_focus?.gap || '',
+            benchmark:     cc.growth_focus?.benchmark || '',
+            strategy:      cc.growth_focus?.strategy || '',
           },
           wordBank: Array.isArray(cc.word_bank)
             ? cc.word_bank.map(g => ({

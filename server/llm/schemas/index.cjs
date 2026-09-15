@@ -322,10 +322,13 @@ const COACHING_FORMAT = {
         growth_focus: {
           type: 'object',
           properties: {
-            heading:   { type: 'string' },
-            gap:       { type: 'string' },
-            benchmark: { type: 'string' },
-            strategy:  { type: 'string' },
+            heading:         { type: 'string' },
+            // Only present on a level-up session, where section 3 opens by
+            // introducing the brand-new skill focus before coaching it.
+            new_skill_intro: { type: 'string', nullable: true },
+            gap:             { type: 'string' },
+            benchmark:       { type: 'string' },
+            strategy:        { type: 'string' },
           },
           required: ['heading', 'gap', 'benchmark', 'strategy'],
         },
