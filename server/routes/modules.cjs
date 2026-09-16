@@ -17,6 +17,7 @@ router.use(localeMiddleware);
 const ISSUE_TO_MODULE = {
   // Current picker options (see nora-mobile ChildIssueScreen.tsx)
   big_feelings_tantrums: 'EMOTIONS',
+  behavior_challenges: 'COOPERATION',
   listening_cooperation: 'COOPERATION',
   social: 'DEVELOPMENT',
   attention_focus: 'FOCUS',
@@ -29,7 +30,6 @@ const ISSUE_TO_MODULE = {
   // updated; no longer offered in the UI
   // ("anxiety_confidence" is also a legacy value, but stays unmapped like its
   // "anxiety"/"confidence" successors above)
-  behavior_challenges: 'COOPERATION',
   big_emotions: 'EMOTIONS',
   frustration_tolerance: 'EMOTIONS',
   new_baby_in_the_house: 'SIBLINGS',

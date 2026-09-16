@@ -22,6 +22,7 @@ export const ChildIssueScreen: React.FC = () => {
       title={t('onboarding.childIssue.title')}
       options={[
         { value: 'big_feelings_tantrums', label: t('onboarding.childIssue.bigFeelingsTantrums') },
+        { value: 'behavior_challenges', label: t('onboarding.childIssue.behaviorChallenges') },
         { value: 'listening_cooperation', label: t('onboarding.childIssue.listeningCooperation') },
         { value: 'attention_focus', label: t('onboarding.childIssue.attentionFocus') },
         { value: 'social', label: t('onboarding.childIssue.social') },

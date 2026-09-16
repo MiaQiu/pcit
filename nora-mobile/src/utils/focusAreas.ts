@@ -22,6 +22,7 @@ type ClinicalLevel = (typeof CLINICAL_LEVELS_BY_PRIORITY)[number];
 const ISSUE_TO_LEVEL: Record<string, ClinicalLevel> = {
   // Current picker options (see ChildIssueScreen.tsx)
   big_feelings_tantrums: 'DE_ESCALATE',
+  behavior_challenges: 'DE_ESCALATE',
   listening_cooperation: 'DE_ESCALATE',
   social: 'FLOURISH',
   attention_focus: 'FLOURISH',
@@ -34,7 +35,6 @@ const ISSUE_TO_LEVEL: Record<string, ClinicalLevel> = {
   // updated; no longer offered in the UI
   // ("anxiety_confidence" is also a legacy value, but stays unmapped like its
   // "anxiety"/"confidence" successors above)
-  behavior_challenges: 'DE_ESCALATE',
   big_emotions: 'DE_ESCALATE',
   frustration_tolerance: 'FLOURISH',
   new_baby_in_the_house: 'SUPPORT',
