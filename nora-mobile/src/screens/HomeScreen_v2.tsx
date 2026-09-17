@@ -55,6 +55,7 @@ import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { getTodaySingapore, toSingaporeDateString, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
 import * as userStorage from '../lib/userStorage';
+import { getCachedExempt } from '../lib/freeExemptCache';
 import type { RelationshipToChild, ParentSkillLevel } from '@nora/core';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
@@ -689,6 +690,7 @@ export const HomeScreen_v2: React.FC = () => {
   const [abcLoggedToday, setAbcLoggedToday] = useState(false);
   const [abcCardSkipped, setAbcCardSkipped] = useState(false);
   const [freeLimitReached, setFreeLimitReached] = useState(false);
+  const [isFreeExempt, setIsFreeExempt] = useState(false);
   const [homeCards, setHomeCards] = useState<HomeCardData[]>([]);
 
   // ── Reminder presets (inside component to use t()) ──
@@ -860,6 +862,12 @@ export const HomeScreen_v2: React.FC = () => {
       // ── Record lock (free trial exhausted) ──
       const freeLimitCached = await userStorage.getItem('@nora_free_limit_reached');
       setFreeLimitReached(freeLimitCached === 'true');
+      // isSubscribed from SubscriptionContext can still be resolving (or stuck
+      // stale-false for the session — see a841abf) at cold boot, which would
+      // otherwise flash a lock icon on a free/whitelisted account's own button
+      // even though pressing it works fine (RecordScreen re-verifies before
+      // actually blocking). Defer to the same confirmed-exempt cache instead.
+      setIsFreeExempt(await getCachedExempt());
 
       // ── Weekly score — sum of all completed session scores this week (max 300) ──
       const weeklyScoreSum = thisWeekRecordings
@@ -1173,7 +1181,7 @@ export const HomeScreen_v2: React.FC = () => {
   };
 
   // ─── Derived: record lock ─────────────────────────────────────────────────
-  const isRecordLocked = !isSubscribed && freeLimitReached;
+  const isRecordLocked = !isSubscribed && freeLimitReached && !isFreeExempt;
 
   // ─── Arc dimensions ───────────────────────────────────────────────────────
 

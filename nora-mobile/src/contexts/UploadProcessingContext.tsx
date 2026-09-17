@@ -75,6 +75,7 @@ interface UploadProcessingContextType {
   reinitialize: () => Promise<void>;
   isProcessing: boolean;
   reportCompletedTimestamp: number | null;
+  hasHydrated: boolean;
 }
 
 const UploadProcessingContext = createContext<UploadProcessingContextType | null>(null);
@@ -103,6 +104,11 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [reportCompletedTimestamp, setReportCompletedTimestamp] = useState<number | null>(null);
+  // True once the initial AsyncStorage reconciliation (loadState) has resolved.
+  // Consumers should wait for this before treating reportCompletedTimestamp as
+  // "new" — otherwise a leftover processing entry from a previous session that
+  // resolves shortly after mount looks identical to a session that just finished.
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   const uploadXhrRef = useRef<XMLHttpRequest | null>(null);
   const recordingIdRef = useRef(recordingId);
@@ -114,7 +120,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
 
   // Load saved state on mount
   useEffect(() => {
-    loadState();
+    loadState().finally(() => setHasHydrated(true));
 
     // Cleanup on unmount
     return () => {
@@ -710,6 +716,7 @@ export const UploadProcessingProvider: React.FC<UploadProcessingProviderProps> =
     reinitialize,
     isProcessing: state === 'uploading' || state === 'processing',
     reportCompletedTimestamp,
+    hasHydrated,
   };
 
   return (

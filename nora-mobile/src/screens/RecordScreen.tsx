@@ -23,6 +23,7 @@ import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import * as userStorage from '../lib/userStorage';
+import { getCachedExempt, setCachedExempt } from '../lib/freeExemptCache';
 import { sendNewReportNotification } from '../utils/notifications';
 import { startRecording as startNativeRecording, stopRecording as stopNativeRecording, getRecordingStatus, addAutoStopListener, removeAutoStopListener, getPendingRecording, endBackgroundTask, setCompletionSound as setNativeCompletionSound } from '../utils/AudioSessionManager';
 import type { EmitterSubscription } from 'react-native';
@@ -50,6 +51,14 @@ const withTimeout = <T,>(promise: Promise<T>, ms: number, message: string): Prom
 export const RecordScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<RouteProp<RootTabParamList, 'Record'>>();
+  // Mirrors route.params on every render. The auto-start useFocusEffect below is
+  // memoized with useCallback against unrelated deps (isCheckingLimit,
+  // uploadProcessing.isProcessing) — if those don't change between two focus
+  // events, React reuses the same closure, which would otherwise keep reading
+  // the route object from whenever it was last created instead of the current
+  // params (e.g. autoStart:true set by a later navigate() call).
+  const routeParamsRef = useRef(route.params);
+  routeParamsRef.current = route.params;
   const { t } = useTranslation();
   const recordingService = useRecordingService();
   const authService = useAuthService();
@@ -91,10 +100,42 @@ export const RecordScreen: React.FC = () => {
 
       if (subscriptionLoading) return;
 
+      // Final authoritative check before actually blocking the user — isSubscribed
+      // from SubscriptionContext can still be resolving at cold boot (the same
+      // race a841abf patched inside SubscriptionContext itself), so a free/
+      // whitelisted account can reach this point with a stale isSubscribed=false.
+      // Re-verify directly against the server right at the decision point instead
+      // of trusting context state that may not have settled yet.
+      const isActuallyExempt = async () => {
+        // Trust a recent confirmed-exempt verdict instead of re-hitting the
+        // network on every single Record visit — SubscriptionContext's own
+        // isSubscribed can stay stuck false for the rest of the app session
+        // once it loses this race once (no retry mechanism there), so without
+        // this cache every visit would pay a full round-trip.
+        if (await getCachedExempt()) return true;
+
+        const freshUser: any = await authService.getCurrentUser(true).catch(() => null);
+        const exempt = !!(freshUser?.isFreeAccount || freshUser?.isSubscribed);
+        if (exempt) await setCachedExempt();
+        return exempt;
+      };
+
       const checkFreeLimit = async () => {
+        // Check exemption first — once cached (see isActuallyExempt above) this
+        // is a single local AsyncStorage read, not a network call, so an exempt
+        // user skips getRecordings() entirely instead of paying for it on every
+        // single visit just to immediately discover they're exempt anyway.
+        if (await isActuallyExempt()) {
+          await userStorage.removeItem('@nora_free_limit_reached').catch(() => {});
+          isCheckingLimitRef.current = false;
+          setIsCheckingLimit(false);
+          return;
+        }
+
         // Use cached flag to avoid an API call on every focus
         const cached = await userStorage.getItem('@nora_free_limit_reached');
         if (cached === 'true') {
+          console.log('[RecordScreen] Free-limit gate: cached flag set, navigating to Subscription');
           navigation.navigate('Onboarding', { initialStep: 'Subscription' });
           return;
         }
@@ -106,15 +147,18 @@ export const RecordScreen: React.FC = () => {
           ).length;
 
           if (completedCount >= FREE_SESSIONS_LIMIT) {
+            console.log('[RecordScreen] Free-limit gate: limit reached, navigating to Subscription', completedCount);
             await userStorage.setItem('@nora_free_limit_reached', 'true');
             navigation.navigate('Onboarding', { initialStep: 'Subscription' });
             return;
           }
-        } catch {
+        } catch (error) {
           // On API error, don't block the user
+          console.log('[RecordScreen] Free-limit gate: getRecordings failed, not blocking', error);
         }
         isCheckingLimitRef.current = false;
         setIsCheckingLimit(false);
+        console.log('[RecordScreen] Free-limit gate cleared, isCheckingLimit=false');
       };
 
       checkFreeLimit();
@@ -136,9 +180,21 @@ export const RecordScreen: React.FC = () => {
   // Prevents processing the same auto-stopped recording twice (event vs polling race)
   const isProcessingRef = useRef(false);
 
-  // Capture the report timestamp that existed when this screen mounted, so we
-  // only react to a *new* completed report (not one from a prior session).
-  const initialReportTimestampRef = useRef(uploadProcessing.reportCompletedTimestamp);
+  // Capture the report timestamp baseline once the upload-processing context has
+  // finished reconciling AsyncStorage (hasHydrated), so we only react to a *new*
+  // completed report — not a leftover 'processing' entry from a prior session that
+  // resolves shortly after this screen mounts (which would otherwise look
+  // identical to "a report just finished" and bounce the user straight to Home).
+  const initialReportTimestampRef = useRef<number | null>(null);
+  const hasCapturedBaselineRef = useRef(false);
+
+  useEffect(() => {
+    if (uploadProcessing.hasHydrated && !hasCapturedBaselineRef.current) {
+      initialReportTimestampRef.current = uploadProcessing.reportCompletedTimestamp;
+      hasCapturedBaselineRef.current = true;
+      console.log('[RecordScreen] Report-timestamp baseline captured:', uploadProcessing.reportCompletedTimestamp);
+    }
+  }, [uploadProcessing.hasHydrated, uploadProcessing.reportCompletedTimestamp]);
 
   // Navigate to Home as soon as the report is ready (new timestamp detected).
   // This handles all combinations of notification permission and app state:
@@ -148,10 +204,19 @@ export const RecordScreen: React.FC = () => {
   //   - Notifications denied + background   → AppState listener fires on return
   useEffect(() => {
     if (
+      hasCapturedBaselineRef.current &&
       uploadProcessing.reportCompletedTimestamp !== null &&
       uploadProcessing.reportCompletedTimestamp !== initialReportTimestampRef.current
     ) {
-      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+      // 'Home' is a tab inside MainTabs, not a root-stack screen — resetting
+      // straight to it here was invalid (caught by tsc: Type '"Home"' is not
+      // assignable to type 'keyof RootStackParamList') and left the stack in a
+      // broken state instead of actually landing on the Home tab.
+      console.log('[RecordScreen] Report-ready reset to Home firing:', {
+        baseline: initialReportTimestampRef.current,
+        current: uploadProcessing.reportCompletedTimestamp,
+      });
+      navigation.reset({ index: 0, routes: [{ name: 'MainTabs', params: { screen: 'Home' } }] });
     }
   }, [uploadProcessing.reportCompletedTimestamp, navigation]);
 
@@ -322,7 +387,7 @@ export const RecordScreen: React.FC = () => {
 
       // Auto-start: show RecordingCard immediately, defer startRecording until
       // after the tab navigation animation completes so the JS bridge is free.
-      if (route.params?.autoStart) {
+      if (routeParamsRef.current?.autoStart) {
         navigation.setParams({ autoStart: undefined } as any);
         setRecordingDuration(0);
         setRecordingState('recording');
@@ -819,12 +884,7 @@ export const RecordScreen: React.FC = () => {
 
             <View style={[styles.guideCardContainer, { marginTop:24 }]}>
               <RecordingGuideCard onModeChange={(mode, locked) => {
-                // Never let the actual session mode land on 'discipline' while
-                // locked — the guide card still shows the discipline tab (with
-                // its lock overlay) for preview, but the session itself falls
-                // back to specialTime/CDI so a stale mode can't start a PDI
-                // session it shouldn't.
-                setSessionMode(locked ? 'specialTime' : mode);
+                setSessionMode(mode);
                 setIsDisciplineLocked(locked);
               }} />
             </View>
