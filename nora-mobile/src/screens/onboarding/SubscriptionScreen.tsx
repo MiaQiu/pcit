@@ -46,6 +46,19 @@ export const SubscriptionScreen: React.FC = () => {
     error: subscriptionError
   } = useSubscription();
 
+  // SubscriptionContext's own offerings fetch runs once at app launch and
+  // skips itself if the user isn't authenticated yet at that exact instant
+  // (e.g. fresh install, login happens later in the same session) — leaving
+  // availablePackages permanently empty for the rest of the session with no
+  // retry. Don't trust that it landed; make sure this screen has pricing
+  // whenever it's actually shown. Cheap no-op if RevenueCat already has it
+  // cached.
+  useEffect(() => {
+    if (availablePackages.length === 0 && !subscriptionLoading) {
+      refreshOfferings().catch(() => {});
+    }
+  }, []);
+
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
   const [isLoading, setIsLoading] = useState(false);
   const [checkingFreeAccount, setCheckingFreeAccount] = useState(true);
