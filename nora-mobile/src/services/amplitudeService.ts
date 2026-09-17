@@ -49,7 +49,10 @@ class AmplitudeService {
         defaultTracking: {
           sessions: true,
           appLifecycles: true,
-          screenViews: true,
+          // Autocapture can't understand a React Navigation stack (it's one native
+          // screen), so it's off here in favor of the explicit trackScreenView calls
+          // wired through NavigationContainer.onStateChange in App.tsx.
+          screenViews: false,
         },
         // React Native specific configuration
         instanceName: 'nora-mobile',
@@ -124,6 +127,21 @@ class AmplitudeService {
   }
 
   /**
+   * Track how far a user scrolled down a screen (fired once per depth
+   * milestone per visit, e.g. 25/50/75/100)
+   */
+  trackScreenScrolled(screenName: string, depthPercent: number, properties: Record<string, any> = {}) {
+    this.trackEvent('Screen Scrolled', { screen: screenName, depthPercent, ...properties });
+  }
+
+  /**
+   * Track how long a screen was on-screen for one visit (focus to blur)
+   */
+  trackScreenViewDuration(screenName: string, durationMs: number, properties: Record<string, any> = {}) {
+    this.trackEvent('Screen View Duration', { screen: screenName, durationMs, ...properties });
+  }
+
+  /**
    * Track user login
    */
   trackLogin(method: string = 'email') {
@@ -191,6 +209,13 @@ class AmplitudeService {
    */
   trackReportViewed(recordingId: string, score?: number, properties: Record<string, any> = {}) {
     this.trackEvent('Report Viewed', { recordingId, score, ...properties });
+  }
+
+  /**
+   * Track any button/touchable click, tagged with the screen it happened on
+   */
+  trackButtonClicked(label: string, screen?: string, properties: Record<string, any> = {}) {
+    this.trackEvent('Button Clicked', { label, screen, ...properties });
   }
 
   /**

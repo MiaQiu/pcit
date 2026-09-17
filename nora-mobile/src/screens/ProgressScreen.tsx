@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
   Image,
   Dimensions,
-  TouchableOpacity,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,6 +30,7 @@ import { toSingaporeDateString, getTodaySingapore, getYesterdaySingapore } from 
 import amplitudeService from '../services/amplitudeService';
 import { DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling } from '@nora/core';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -177,13 +177,13 @@ const CalendarView: React.FC<{
       <View style={styles.calendarContainer}>
         {/* Month navigation */}
         <View style={styles.monthNavigation}>
-          <TouchableOpacity onPress={goToPreviousMonth} style={styles.monthArrow}>
+          <TrackedTouchable analyticsId="goToPreviousMonth" onPress={goToPreviousMonth} style={styles.monthArrow}>
             <Ionicons name="chevron-back" size={20} color="#6B7280" />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.monthName}>{monthName}</Text>
-          <TouchableOpacity onPress={goToNextMonth} style={styles.monthArrow}>
+          <TrackedTouchable analyticsId="goToNextMonth" onPress={goToNextMonth} style={styles.monthArrow}>
             <Ionicons name="chevron-forward" size={20} color="#6B7280" />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
 
         {/* Day headers */}
@@ -207,7 +207,7 @@ const CalendarView: React.FC<{
 
             if (day.hasRecording && isCurrentMonth) {
               return (
-                <TouchableOpacity
+                <TrackedTouchable analyticsId={`Calendar Day: ${dateStr}`}
                   key={index}
                   style={styles.dayCell}
                   onPress={() => setSelectedDate(isSelected ? null : dateStr)}
@@ -218,13 +218,13 @@ const CalendarView: React.FC<{
                       {day.date.getDate()}
                     </Text>
                   </View>
-                </TouchableOpacity>
+                </TrackedTouchable>
               );
             }
 
             if (isWeeklyReportMonday) {
               return (
-                <TouchableOpacity
+                <TrackedTouchable analyticsId={`Calendar Day (Weekly Report): ${dateStr}`}
                   key={index}
                   style={styles.dayCell}
                   onPress={() => setSelectedDate(isSelected ? null : dateStr)}
@@ -235,7 +235,7 @@ const CalendarView: React.FC<{
                       {day.date.getDate()}
                     </Text>
                   </View>
-                </TouchableOpacity>
+                </TrackedTouchable>
               );
             }
 
@@ -267,7 +267,7 @@ const CalendarView: React.FC<{
             <View style={styles.dayReportsDivider} />
             <Text style={styles.dayReportsDate}>{formatSelectedDate(selectedDate)}</Text>
             {selectedDateRecordings.map((recording) => (
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="progress.sessionReport"
                 key={recording.id}
                 style={styles.dayReportItem}
                 onPress={() => onReportPress(recording.id)}
@@ -288,10 +288,10 @@ const CalendarView: React.FC<{
                   )}
                   <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
                 </View>
-              </TouchableOpacity>
+              </TrackedTouchable>
             ))}
             {selectedDateWeeklyReport && (
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="progress.weeklyReport"
                 style={styles.dayReportItem}
                 onPress={() => onWeeklyReportPress(selectedDateWeeklyReport.id)}
                 activeOpacity={0.7}
@@ -306,7 +306,7 @@ const CalendarView: React.FC<{
                   </View>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-              </TouchableOpacity>
+              </TrackedTouchable>
             )}
           </View>
         )}
@@ -464,9 +464,6 @@ export const ProgressScreen: React.FC = () => {
 
   useFocusEffect(
     useCallback(() => {
-      amplitudeService.trackScreenView('Progress', {
-        screen: 'progress',
-      });
       loadProgressData();
     }, [])
   );
@@ -807,12 +804,12 @@ export const ProgressScreen: React.FC = () => {
                 <View style={styles.progressTrack}>
                   <View style={[styles.progressFill, { width: `${percentage}%` }]} />
                 </View>
-                <TouchableOpacity
+                <TrackedTouchable analyticsId="progress.readReport"
                   onPress={() => { amplitudeService.trackReportViewed(lastSessionScore.recordingId, lastSessionScore.score, { source: 'progress_last_session' }); navigation.navigate('ReportV3', { recordingId: lastSessionScore.recordingId }); }}
                   style={styles.linkContainer}
                 >
                   <Text style={styles.linkText}>{t('progress.readReport')}</Text>
-                </TouchableOpacity>
+                </TrackedTouchable>
               </View>
             </View>
           );

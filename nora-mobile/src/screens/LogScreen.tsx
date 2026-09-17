@@ -3,7 +3,6 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
@@ -16,6 +15,7 @@ import { COLORS, FONTS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
 import { RootStackNavigationProp } from '../navigation/types';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 const CORAL = '#D97558';
@@ -213,9 +213,9 @@ const InsightCard: React.FC<InsightCardProps> = ({
         <View style={insightStyles.header}>
           <Ionicons name="bulb-outline" size={16} color={COLORS.mainPurple} />
           <Text style={insightStyles.headerTitle}>Nora's insight</Text>
-          <TouchableOpacity onPress={onRefresh} hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+          <TrackedTouchable analyticsId="onRefresh" onPress={onRefresh} hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
             <Ionicons name="refresh-outline" size={16} color="#9CA3AF" />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
         <Text style={insightStyles.errorText}>Could not load. Tap ↻ to retry.</Text>
       </View>
@@ -235,9 +235,9 @@ const InsightCard: React.FC<InsightCardProps> = ({
           <Text style={insightStyles.headerTitle}>Nora's insight</Text>
           {insightDate && <Text style={insightStyles.headerDate}>{insightDate}</Text>}
         </View>
-        <TouchableOpacity onPress={onRefresh} hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+        <TrackedTouchable analyticsId="onRefresh" onPress={onRefresh} hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
           <Ionicons name="refresh-outline" size={16} color="#9CA3AF" />
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
 
       {/* Sections */}
@@ -262,7 +262,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
               { emoji: '😐', label: 'A bit', val: 3 },
               { emoji: '😊', label: 'Yes!', val: 5 },
             ].map(({ emoji, label, val }) => (
-              <TouchableOpacity
+              <TrackedTouchable analyticsId={`Insight Feedback: ${label}`}
                 key={val}
                 style={insightStyles.followUpBtn}
                 onPress={() => onFollowUp(val)}
@@ -271,7 +271,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
               >
                 <Text style={insightStyles.followUpEmoji}>{emoji}</Text>
                 <Text style={insightStyles.followUpLabel}>{label}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             ))}
           </View>
         </View>
@@ -385,7 +385,6 @@ export const LogScreen: React.FC = () => {
   };
 
   useFocusEffect(useCallback(() => {
-    amplitudeService.trackScreenView('Log Insights');
     insightFetchedRef.current = false; // allow re-fetch on each focus
     fetchLogs();
   }, []));
@@ -458,27 +457,27 @@ export const LogScreen: React.FC = () => {
   const renderHeader = () => (
     <View style={styles.header}>
       <Text style={styles.headerTitle}>Behavior Log</Text>
-      <TouchableOpacity
+      <TrackedTouchable analyticsId={`${activeTab === 'wins' ? 'Log Win' : 'Add Log'} Button`}
         style={[styles.addBtn, activeTab === 'wins' && { backgroundColor: GREEN }]}
         onPress={activeTab === 'wins' ? handleLogWinPress : handleLogPress}
         activeOpacity={0.85}
       >
         <Ionicons name="add" size={20} color="#fff" />
         <Text style={styles.addBtnText}>{activeTab === 'wins' ? 'Log Win' : 'Add'}</Text>
-      </TouchableOpacity>
+      </TrackedTouchable>
     </View>
   );
 
   const renderTabToggle = () => (
     <View style={styles.tabToggle}>
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="Tough moments"
         style={[styles.tabBtn, activeTab === 'challenges' && styles.tabBtnActive]}
         onPress={() => setActiveTab('challenges')}
         activeOpacity={0.8}
       >
         <Text style={[styles.tabBtnText, activeTab === 'challenges' && styles.tabBtnTextActive]}>Tough moments</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
+      </TrackedTouchable>
+      <TrackedTouchable analyticsId="Bright spots"
         style={[styles.tabBtn, activeTab === 'wins' && styles.tabBtnActiveGreen]}
         onPress={() => setActiveTab('wins')}
         activeOpacity={0.8}
@@ -487,7 +486,7 @@ export const LogScreen: React.FC = () => {
         {positiveLogs.length > 0 && (
           <View style={styles.tabBadge}><Text style={styles.tabBadgeText}>{positiveLogs.length}</Text></View>
         )}
-      </TouchableOpacity>
+      </TrackedTouchable>
     </View>
   );
 
@@ -503,14 +502,14 @@ export const LogScreen: React.FC = () => {
           <Text style={styles.emptyTitle}>Nothing logged yet</Text>
           <Text style={styles.emptyBody}>Log a tough moment or a win. Nora will start spotting patterns once you have a few of each.</Text>
           <View style={styles.emptyBtnRow}>
-            <TouchableOpacity style={[styles.emptyBtn, { backgroundColor: COLORS.mainPurple }]} onPress={handleLogPress} activeOpacity={0.85}>
+            <TrackedTouchable analyticsId="Log a moment" style={[styles.emptyBtn, { backgroundColor: COLORS.mainPurple }]} onPress={handleLogPress} activeOpacity={0.85}>
               <Ionicons name="add" size={18} color="#fff" />
               <Text style={styles.emptyBtnText}>Log a moment</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.emptyBtn, { backgroundColor: GREEN }]} onPress={handleLogWinPress} activeOpacity={0.85}>
+            </TrackedTouchable>
+            <TrackedTouchable analyticsId="Log a win" style={[styles.emptyBtn, { backgroundColor: GREEN }]} onPress={handleLogWinPress} activeOpacity={0.85}>
               <Ionicons name="star-outline" size={18} color="#fff" />
               <Text style={styles.emptyBtnText}>Log a win</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         </View>
       </SafeAreaView>
@@ -534,10 +533,10 @@ export const LogScreen: React.FC = () => {
             <Text style={styles.emptyBody}>
               Catch the moments your child did something well. PCIT works best when you track the good along with the tough.
             </Text>
-            <TouchableOpacity style={[styles.emptyBtn, { backgroundColor: GREEN }]} onPress={handleLogWinPress} activeOpacity={0.85}>
+            <TrackedTouchable analyticsId="Log your first win" style={[styles.emptyBtn, { backgroundColor: GREEN }]} onPress={handleLogWinPress} activeOpacity={0.85}>
               <Ionicons name="add" size={18} color="#fff" />
               <Text style={styles.emptyBtnText}>Log your first win</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         ) : (
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}
@@ -590,10 +589,10 @@ export const LogScreen: React.FC = () => {
               <Ionicons name="journal-outline" size={56} color="#D1D5DB" />
               <Text style={styles.emptyTitle}>No tough moments logged yet</Text>
               <Text style={styles.emptyBody}>Log a difficult moment and Nora will start spotting what triggers your child's behaviors.</Text>
-              <TouchableOpacity style={[styles.emptyBtn, { backgroundColor: COLORS.mainPurple }]} onPress={handleLogPress} activeOpacity={0.85}>
+              <TrackedTouchable analyticsId="Log a behavior" style={[styles.emptyBtn, { backgroundColor: COLORS.mainPurple }]} onPress={handleLogPress} activeOpacity={0.85}>
                 <Ionicons name="add" size={18} color="#fff" />
                 <Text style={styles.emptyBtnText}>Log a behavior</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
           ) : (
             <>
@@ -659,13 +658,13 @@ export const LogScreen: React.FC = () => {
 
               {/* Wins nudge — when no positive logs logged yet */}
               {positiveLogs.length === 0 && challengingLogs.length >= 2 && (
-                <TouchableOpacity style={styles.winsNudge} onPress={handleLogWinPress} activeOpacity={0.85}>
+                <TrackedTouchable analyticsId="Catch the bright spots too" style={styles.winsNudge} onPress={handleLogWinPress} activeOpacity={0.85}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.winsNudgeTitle}>Catch the bright spots too</Text>
                     <Text style={styles.winsNudgeBody}>PCIT works best when you track both. Tap to log a moment your child handled well.</Text>
                   </View>
                   <Ionicons name="star-outline" size={24} color={GREEN} style={{ marginLeft: 12 }} />
-                </TouchableOpacity>
+                </TrackedTouchable>
               )}
 
               {/* 4. Recent logs — raw history, last */}

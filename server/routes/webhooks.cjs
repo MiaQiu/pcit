@@ -3,6 +3,7 @@ const express = require('express');
 const crypto = require('crypto');
 const prisma = require('../services/db.cjs');
 const { grantReferralReward } = require('../services/referralReward.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 const router = express.Router();
 
@@ -257,7 +258,7 @@ router.post('/revenuecat', async (req, res) => {
     // Always return 200 to acknowledge receipt
     res.status(200).json({ received: true });
   } catch (error) {
-    console.error('Webhook processing error:', error);
+    logError(error, { route: 'webhooks#Webhook processing error', userId: req.user?.id });
     // Still return 200 to prevent retry
     res.status(200).json({ received: true, error: 'Processing failed' });
   }

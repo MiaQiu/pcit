@@ -9,7 +9,6 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
@@ -32,6 +31,8 @@ import { checkOnboardingStep } from '../../utils/onboardingCheck';
 import { useCoachUnread } from '../../contexts/CoachUnreadContext';
 import { useUploadProcessing } from '../../contexts/UploadProcessingContext';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
+import { reportError } from '../../utils/reportError';
 
 const PENDING_REFERRAL_KEY = '@nora_pending_referral_code';
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -55,7 +56,6 @@ export const LoginScreen: React.FC = () => {
   // When opened via a referral deep link (nora://join?referralCode=...), store the code
   // so it can be applied after successful login
   useEffect(() => {
-    amplitudeService.trackScreenView('Login');
   }, []);
 
   useEffect(() => {
@@ -149,6 +149,7 @@ export const LoginScreen: React.FC = () => {
 
       await navigateAfterAuth();
     } catch (error: any) {
+      reportError(error, 'LoginScreen.handleLogin');
       console.error('Login error:', error);
       const errorMessage = getErrorMessage(error, ErrorMessages.AUTH.LOGIN_FAILED);
       Alert.alert(t('login.loginFailedTitle'), errorMessage);
@@ -182,6 +183,7 @@ export const LoginScreen: React.FC = () => {
         await handleSocialAuthSuccess(response.user);
       }
     } catch (error: any) {
+      reportError(error, 'LoginScreen.handleAppleSignIn');
       console.error('Apple sign in error:', error);
       Alert.alert(t('login.errorEmptyTitle'), error.message || t('login.appleSignInFailedMessage'));
     } finally {
@@ -199,6 +201,7 @@ export const LoginScreen: React.FC = () => {
         await handleSocialAuthSuccess(response.user);
       }
     } catch (error: any) {
+      reportError(error, 'LoginScreen.handleGoogleSignIn');
       console.error('Google sign in error:', error);
       Alert.alert(t('login.errorEmptyTitle'), error.message || t('login.googleSignInFailedMessage'));
     } finally {
@@ -213,9 +216,9 @@ export const LoginScreen: React.FC = () => {
         style={styles.keyboardView}
       >
         {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TrackedTouchable analyticsId="Back" style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={28} color="#1E2939" />
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -227,7 +230,7 @@ export const LoginScreen: React.FC = () => {
 
           {/* Apple Sign In - temporarily hidden */}
           {false && (
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="login.signInWithApple"
               style={styles.appleButton}
               onPress={handleAppleSignIn}
               activeOpacity={0.85}
@@ -241,12 +244,12 @@ export const LoginScreen: React.FC = () => {
                   <Text style={styles.appleButtonText}>{t('login.signInWithApple')}</Text>
                 </View>
               )}
-            </TouchableOpacity>
+            </TrackedTouchable>
           )}
 
           {/* Google Sign In - temporarily hidden */}
           {false && (
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="login.signInWithGoogle"
               style={styles.googleButton}
               onPress={handleGoogleSignIn}
               activeOpacity={0.85}
@@ -256,7 +259,7 @@ export const LoginScreen: React.FC = () => {
                 <Ionicons name="logo-google" size={20} color="#DB4437" />
                 <Text style={styles.googleButtonText}>{t('login.signInWithGoogle')}</Text>
               </View>
-            </TouchableOpacity>
+            </TrackedTouchable>
           )}
 
           {/* Email Input */}
@@ -285,7 +288,7 @@ export const LoginScreen: React.FC = () => {
               autoCorrect={false}
               editable={!loading}
             />
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="Toggle Password Visibility"
               onPress={() => setShowPassword(!showPassword)}
               style={styles.eyeIcon}
             >
@@ -294,11 +297,11 @@ export const LoginScreen: React.FC = () => {
                 size={22}
                 color="#9CA3AF"
               />
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
 
           {/* Log In Button */}
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="login.logIn"
             style={[styles.loginButton, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             activeOpacity={0.8}
@@ -309,15 +312,15 @@ export const LoginScreen: React.FC = () => {
             ) : (
               <Text style={styles.loginButtonText}>{t('login.logIn')}</Text>
             )}
-          </TouchableOpacity>
+          </TrackedTouchable>
 
           {/* Forgot Password */}
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="login.forgotPassword"
             style={styles.forgotPasswordContainer}
             onPress={() => navigation.navigate('ForgotPassword')}
           >
             <Text style={styles.forgotPasswordText}>{t('login.forgotPassword')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

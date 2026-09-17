@@ -6,13 +6,14 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS } from '../constants/assets';
 import type { RootStackNavigationProp } from '../navigation/types';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 const SECTION_KEYS = [
   'toysToUse',
@@ -32,7 +33,7 @@ const SectionRow: React.FC<{
   subtitle: string;
   onPress: () => void;
 }> = ({ title, subtitle, onPress }) => (
-  <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.8}>
+  <TrackedTouchable analyticsId="on" style={styles.row} onPress={onPress} activeOpacity={0.8}>
     <View style={styles.rowHeader}>
       <View style={styles.rowTextWrap}>
         <Text style={styles.rowTitle}>{title}</Text>
@@ -40,7 +41,7 @@ const SectionRow: React.FC<{
       </View>
       <Ionicons name="chevron-forward" size={20} color={COLORS.mainPurple} />
     </View>
-  </TouchableOpacity>
+  </TrackedTouchable>
 );
 
 export const GetReadyToPlayScreen: React.FC = () => {
@@ -50,14 +51,14 @@ export const GetReadyToPlayScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.navRow}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="Back"
           onPress={() => navigation.goBack()}
           style={styles.backCircle}
           activeOpacity={0.7}
           accessibilityLabel="Back"
         >
           <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

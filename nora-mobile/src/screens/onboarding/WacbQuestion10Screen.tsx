@@ -10,6 +10,7 @@ import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { getWacbQuestions } from './wacbQuestions.config';
 import { useAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { reportError } from '../../utils/reportError';
 
 export const WacbQuestion10Screen: React.FC = () => {
   const authService = useAuthService();
@@ -51,6 +52,7 @@ export const WacbQuestion10Screen: React.FC = () => {
       const result = await response.json();
       console.log('Survey submitted successfully:', result);
     } catch (err: any) {
+      reportError(err, 'WacbQuestion10Screen.handleSubmitSurvey');
       console.error('Child Snapshot Survey submission error:', err);
       Alert.alert(
         t('onboarding.wacb.submissionError'),

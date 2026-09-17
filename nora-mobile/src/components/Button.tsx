@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { TouchableOpacity, Text, View, ActivityIndicator } from 'react-native';
+import { Text, View, ActivityIndicator } from 'react-native';
 import { colors } from '../theme';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface ButtonProps {
   onPress: () => void;
@@ -15,6 +16,8 @@ interface ButtonProps {
   loading?: boolean;
   icon?: React.ReactNode;
   height?: number;
+  /** Analytics label for this button; defaults to the visible text if it's a plain string. */
+  analyticsId?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -25,6 +28,7 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   icon,
   height = 64,
+  analyticsId,
 }) => {
   const isPrimary = variant === 'primary';
   const bgColor = disabled
@@ -34,7 +38,8 @@ export const Button: React.FC<ButtonProps> = ({
     : '#F3F4F6';
 
   return (
-    <TouchableOpacity
+    <TrackedTouchable
+      analyticsId={analyticsId ?? (typeof children === 'string' ? children : 'Button')}
       onPress={onPress}
       disabled={disabled || loading}
       style={{
@@ -74,6 +79,6 @@ export const Button: React.FC<ButtonProps> = ({
           </>
         )}
       </View>
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };

@@ -3,13 +3,13 @@ import {
   Modal,
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   Platform,
   Linking,
   ScrollView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from './TrackedTouchable';
 
 const IOS_STORE_URL = process.env.EXPO_PUBLIC_IOS_STORE_URL || '';
 const ANDROID_STORE_URL = process.env.EXPO_PUBLIC_ANDROID_STORE_URL || '';
@@ -49,13 +49,13 @@ export const WhatsNewModal: React.FC<Props> = ({ visible, version, whatsNew, onD
             ))}
           </ScrollView>
 
-          <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
+          <TrackedTouchable analyticsId="whatsNew.updateNow" style={styles.updateButton} onPress={handleUpdate}>
             <Text style={styles.updateButtonText}>{t('whatsNew.updateNow')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
 
-          <TouchableOpacity style={styles.dismissButton} onPress={onDismiss}>
+          <TrackedTouchable analyticsId="whatsNew.maybeLater" style={styles.dismissButton} onPress={onDismiss}>
             <Text style={styles.dismissButtonText}>{t('whatsNew.maybeLater')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </View>
     </Modal>

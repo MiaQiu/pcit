@@ -6,6 +6,7 @@ const prisma = require('../services/db.cjs');
 const storage = require('../services/storage-s3.cjs');
 const { encrypt } = require('../utils/encryption.cjs');
 const { updateUserStreak, getUserStreak } = require('../utils/streak.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 const router = express.Router();
 
@@ -70,7 +71,7 @@ router.post('/upload', async (req, res) => {
           data: { storagePath }
         });
       } catch (error) {
-        console.error('Audio upload error:', error);
+        logError(error, { route: 'sessions#Audio upload error', userId: req.user?.id });
         // Continue without audio - don't fail the whole session
       }
     }
@@ -102,7 +103,7 @@ router.post('/upload', async (req, res) => {
     try {
       streakInfo = await updateUserStreak(req.userId);
     } catch (error) {
-      console.error('Failed to update streak:', error);
+      logError(error, { route: 'sessions#Failed to update streak', userId: req.user?.id });
       // Don't fail the whole request if streak update fails
     }
 
@@ -115,7 +116,7 @@ router.post('/upload', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Session upload error:', error);
+    logError(error, { route: 'sessions#Session upload error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to save session' });
   }
 });
@@ -157,7 +158,7 @@ router.get('/', async (req, res) => {
     res.json({ sessions, total });
 
   } catch (error) {
-    console.error('Get sessions error:', error);
+    logError(error, { route: 'sessions#Get sessions error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch sessions' });
   }
 });
@@ -172,7 +173,7 @@ router.get('/streak', async (req, res) => {
     const streakInfo = await getUserStreak(req.userId);
     res.json(streakInfo);
   } catch (error) {
-    console.error('Get streak error:', error);
+    logError(error, { route: 'sessions#Get streak error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch streak information' });
   }
 });
@@ -200,7 +201,7 @@ router.get('/:id', async (req, res) => {
       try {
         audioUrl = await storage.getSignedUrl(session.storagePath);
       } catch (error) {
-        console.error('Signed URL error:', error);
+        logError(error, { route: 'sessions#Signed URL error', userId: req.user?.id });
       }
     }
 
@@ -211,7 +212,7 @@ router.get('/:id', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get session error:', error);
+    logError(error, { route: 'sessions#Get session error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch session' });
   }
 });
@@ -246,7 +247,7 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'Session deleted successfully' });
 
   } catch (error) {
-    console.error('Delete session error:', error);
+    logError(error, { route: 'sessions#Delete session error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to delete session' });
   }
 });
@@ -355,7 +356,7 @@ async function logRiskDetection(userId, sessionId, riskDetection, transcript) {
 
     console.log(`Risk logged: ${riskDetection.level} level, session ${sessionId}`);
   } catch (error) {
-    console.error('Risk logging error:', error);
+    logError(error, { route: 'sessions#Risk logging error' });
     // Don't throw - logging failure shouldn't break the session flow
   }
 }

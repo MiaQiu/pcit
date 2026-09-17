@@ -12,6 +12,7 @@ const { evaluateTextInput } = require('../services/textInputEvaluationService.cj
 const { resolveDragonImageUrl, resolveLessonAudioUrl, resolveContentMediaUrls } = require('../services/storage-s3.cjs');
 const { buildShareCardImage } = require('../services/shareImage.cjs');
 const { localeMiddleware } = require('../middleware/locale.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 const router = express.Router();
 
@@ -463,7 +464,7 @@ router.get('/:id/share-image.png', async (req, res) => {
     res.set('Cache-Control', 'no-cache');
     res.send(png);
   } catch (error) {
-    console.error('Generate lesson share image error:', error);
+    logError(error, { route: 'lessons#Generate lesson share image error', userId: req.user?.id });
     res.status(500).end();
   }
 });

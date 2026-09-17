@@ -8,7 +8,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   SafeAreaView,
   TextInput,
   Alert,
@@ -27,6 +26,8 @@ import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
 import { handleApiSuccess } from '../../utils/NetworkMonitor';
 import amplitudeService from '../../services/amplitudeService';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
+import { reportError } from '../../utils/reportError';
 
 export const CreateAccountScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -42,7 +43,6 @@ export const CreateAccountScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Create Account');
   }, []);
 
   // Validation
@@ -130,6 +130,7 @@ export const CreateAccountScreen: React.FC = () => {
       // Navigate to next step
       navigation.navigate('OB1V2');
     } catch (error: any) {
+      reportError(error, 'CreateAccountScreen.handleSignup');
       console.error('Signup error:', error);
       const errorMessage = getErrorMessage(error, ErrorMessages.AUTH.SIGNUP_FAILED);
       Alert.alert(t('createAccount.signupFailedTitle'), errorMessage);
@@ -151,13 +152,13 @@ export const CreateAccountScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           {/* Back Button */}
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Back"
             style={styles.backButton}
             onPress={() => navigation.goBack()}
             activeOpacity={0.7}
           >
             <Ionicons name="arrow-back" size={24} color="#1F2937" />
-          </TouchableOpacity>
+          </TrackedTouchable>
 
           {/* Header */}
           <View style={styles.header}>
@@ -208,7 +209,7 @@ export const CreateAccountScreen: React.FC = () => {
                 textContentType="none"
                 autoComplete="off"
               />
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="Toggle Password Visibility"
                 style={styles.eyeIcon}
                 onPress={() => setShowPassword(!showPassword)}
               >
@@ -217,7 +218,7 @@ export const CreateAccountScreen: React.FC = () => {
                   size={20}
                   color="#6B7280"
                 />
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
             {password.length > 0 && !validatePassword(password) && (
               <Text style={styles.errorText}>{t('createAccount.passwordWeak')}</Text>
@@ -243,7 +244,7 @@ export const CreateAccountScreen: React.FC = () => {
                 textContentType="none"
                 autoComplete="off"
               />
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="Toggle Confirm Password Visibility"
                 style={styles.eyeIcon}
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
               >
@@ -252,7 +253,7 @@ export const CreateAccountScreen: React.FC = () => {
                   size={20}
                   color="#6B7280"
                 />
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
             {confirmPassword.length > 0 && password !== confirmPassword && (
               <Text style={styles.errorText}>{t('createAccount.passwordMismatch')}</Text>
@@ -263,7 +264,7 @@ export const CreateAccountScreen: React.FC = () => {
           <View style={styles.spacer} />
 
           {/* Create Account Button */}
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="createAccount.createButton"
             style={[styles.button, (!isFormValid || isLoading) && styles.buttonDisabled]}
             onPress={handleSignup}
             disabled={!isFormValid || isLoading}
@@ -276,7 +277,7 @@ export const CreateAccountScreen: React.FC = () => {
                 {t('createAccount.createButton')}
               </Text>
             )}
-          </TouchableOpacity>
+          </TrackedTouchable>
 
           {/* Terms */}
           {/* <Text style={styles.terms}>

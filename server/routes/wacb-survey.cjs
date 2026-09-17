@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const { requireAuth } = require('../middleware/auth.cjs');
 const prisma = require('../services/db.cjs');
 const { runPriorityEngine } = require('../services/priorityEngine.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 const router = express.Router();
 
@@ -84,7 +85,7 @@ router.post('/', async (req, res) => {
       submittedAt: survey.submittedAt,
     });
   } catch (error) {
-    console.error('Submit Child Snapshot survey error:', error);
+    logError(error, { route: 'wacb-survey#Submit Child Snapshot survey error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to submit survey' });
   }
 });
@@ -109,7 +110,7 @@ router.get('/', async (req, res) => {
 
     res.json({ surveys, total });
   } catch (error) {
-    console.error('Get Child Snapshot surveys error:', error);
+    logError(error, { route: 'wacb-survey#Get Child Snapshot surveys error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch surveys' });
   }
 });
@@ -133,7 +134,7 @@ router.get('/latest', async (req, res) => {
 
     res.json({ survey });
   } catch (error) {
-    console.error('Get latest Child Snapshot survey error:', error);
+    logError(error, { route: 'wacb-survey#Get latest Child Snapshot survey error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch latest survey' });
   }
 });

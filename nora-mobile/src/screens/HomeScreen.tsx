@@ -27,6 +27,7 @@ import amplitudeService from '../services/amplitudeService';
 import * as userStorage from '../lib/userStorage';
 import type { ModuleWithProgress } from '@nora/core';
 import { useTranslation } from 'react-i18next';
+import { reportError } from '../utils/reportError';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -193,11 +194,6 @@ export const HomeScreen: React.FC = () => {
       // Reset scroll position to top when screen comes into focus
       scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
 
-      // Track home screen viewed
-      amplitudeService.trackScreenView('Home', {
-        screen: 'home',
-      });
-
       // Reload lessons and dashboard data when tab comes into focus
       // This ensures NextActionCard shows the correct lesson (not stale cached data)
       loadLessons(false); // Refresh lessons without showing loading spinner
@@ -248,6 +244,7 @@ export const HomeScreen: React.FC = () => {
       setProfileImageUrl(user.profileImageUrl);
       setRelationshipToChild(user.relationshipToChild);
     } catch (error) {
+      reportError(error, 'HomeScreen.loadUserProfile');
       // Show toast if offline
       if (!isOnline) {
         showToast(t('home.unableToLoadProfile'), 'error');

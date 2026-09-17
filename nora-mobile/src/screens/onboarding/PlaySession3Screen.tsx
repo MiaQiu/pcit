@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Image,
-  TouchableOpacity,
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +13,7 @@ import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { OnboardingBackButton } from '../../components/OnboardingBackButton';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_W = SCREEN_WIDTH - 40;
@@ -58,13 +58,13 @@ export const PlaySession3Screen: React.FC = () => {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         <OnboardingBackButton onPress={() => navigation.goBack()} />
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="onboarding.continue"
           style={styles.button}
           onPress={() => { amplitudeService.trackOnboardingStepCompleted('play_session3', 42); navigation.navigate('PlaySession4'); }}
           activeOpacity={0.85}
         >
           <Text style={styles.buttonText}>{t('onboarding.continue')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

@@ -25,6 +25,7 @@ import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
 import * as userStorage from '../lib/userStorage';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
 
@@ -659,7 +660,6 @@ export const ReportScreen: React.FC = () => {
   }, [feedbackSentiment, feedbackReasons, feedbackText, recordingId, recordingService]);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Report', { recordingId });
     loadReportData();
     loadChildName();
     loadDevelopmentalVisibility();
@@ -780,9 +780,9 @@ export const ReportScreen: React.FC = () => {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.headerTitle}>{t('report.headerTitle')}</Text>
           <View style={{ width: 28 }} />
         </View>
@@ -801,9 +801,9 @@ export const ReportScreen: React.FC = () => {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.headerTitle}>{t('report.headerTitle')}</Text>
           <View style={{ width: 28 }} />
         </View>
@@ -822,9 +822,9 @@ export const ReportScreen: React.FC = () => {
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+        <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <Text style={styles.headerTitle}>{t('report.headerTitle')}</Text>
         <View style={{ width: 28 }} />
       </View>
@@ -1344,7 +1344,7 @@ export const ReportScreen: React.FC = () => {
 
             <View style={styles.feedbackSentimentRow}>
               <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
-                <TouchableOpacity
+                <TrackedTouchable analyticsId="report.feedbackYes"
                   style={[
                     styles.feedbackPill,
                     styles.feedbackPillNegative,
@@ -1362,10 +1362,10 @@ export const ReportScreen: React.FC = () => {
                     styles.feedbackPillTextNegative,
                     feedbackSentiment === 'positive' && styles.feedbackPillTextActive,
                   ]}>{t('report.feedbackYes')}</Text>
-                </TouchableOpacity>
+                </TrackedTouchable>
               </Animated.View>
 
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="report.feedbackNotReally"
                 style={[
                   styles.feedbackPill,
                   styles.feedbackPillNegative,
@@ -1383,7 +1383,7 @@ export const ReportScreen: React.FC = () => {
                   styles.feedbackPillTextNegative,
                   feedbackSentiment === 'negative' && styles.feedbackPillTextActive,
                 ]}>{t('report.feedbackNotReally')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
 
             {feedbackSentiment === 'negative' && (
@@ -1399,7 +1399,7 @@ export const ReportScreen: React.FC = () => {
                       'Missing something': t('report.negativeReasons.missingSomething'),
                     };
                     return (
-                      <TouchableOpacity
+                      <TrackedTouchable analyticsId={`Feedback Reason: ${reason}`}
                         key={reason}
                         style={[
                           styles.feedbackChip,
@@ -1411,7 +1411,7 @@ export const ReportScreen: React.FC = () => {
                           styles.feedbackChipText,
                           feedbackReasons.includes(reason) && styles.feedbackChipTextActive,
                         ]}>{reasonKeyMap[reason] || reason}</Text>
-                      </TouchableOpacity>
+                      </TrackedTouchable>
                     );
                   })}
                 </View>
@@ -1427,9 +1427,9 @@ export const ReportScreen: React.FC = () => {
                   textAlignVertical="top"
                 />
 
-                <TouchableOpacity style={styles.feedbackSubmitButton} onPress={handleSubmitFeedback}>
+                <TrackedTouchable analyticsId="report.feedbackSubmit" style={styles.feedbackSubmitButton} onPress={handleSubmitFeedback}>
                   <Text style={styles.feedbackSubmitText}>{t('report.feedbackSubmit')}</Text>
-                </TouchableOpacity>
+                </TrackedTouchable>
               </View>
             )}
           </View>
@@ -1456,15 +1456,15 @@ export const ReportScreen: React.FC = () => {
           {showChatDemoMessage && (
             <View style={styles.chatDemoMessageRow}>
               <Text style={styles.chatDemoText}>{t('report.chatDemo.message')}</Text>
-              <TouchableOpacity onPress={dismissChatDemoMessage} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <TrackedTouchable analyticsId="dismissChatDemoMessage" onPress={dismissChatDemoMessage} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Ionicons name="close" size={18} color="#6B7280" />
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
           )}
           <Animated.View style={{ transform: [{ translateY: chatDemoJump }], alignSelf: 'flex-end' }}>
-            <TouchableOpacity style={styles.chatDemoIconCircle} activeOpacity={0.85} onPress={() => dismissChatDemo(true)}>
+            <TrackedTouchable analyticsId="Dismiss Chat Demo" style={styles.chatDemoIconCircle} activeOpacity={0.85} onPress={() => dismissChatDemo(true)}>
               <Ionicons name="chatbox-ellipses" size={26} color="#fff" />
-            </TouchableOpacity>
+            </TrackedTouchable>
           </Animated.View>
         </Animated.View>
       )}

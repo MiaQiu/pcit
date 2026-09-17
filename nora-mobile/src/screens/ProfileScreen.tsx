@@ -30,6 +30,8 @@ import { FONTS, COLORS } from '../constants/assets';
 import type { SubscriptionPlan, SubscriptionStatus, RelationshipToChild } from '@nora/core';
 import amplitudeService from '../services/amplitudeService';
 import { changeLanguage } from '../i18n';
+import { TrackedTouchable } from '../components/TrackedTouchable';
+import { reportError } from '../utils/reportError';
 import {
   computeFocusAreas,
   primaryFocusLabels,
@@ -76,7 +78,6 @@ export const ProfileScreen: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Profile');
   }, []);
 
   // Refresh profile when screen gains focus (ensures subscription status is current)
@@ -160,6 +161,7 @@ export const ProfileScreen: React.FC = () => {
         subscriptionEndDate: user.subscriptionEndDate,
       });
     } catch (error) {
+      reportError(error, 'ProfileScreen.loadProfile');
       console.error('Failed to load profile:', error);
       Alert.alert(t('common.error'), t('profile.errorLoadProfile'));
     } finally {
@@ -193,6 +195,7 @@ export const ProfileScreen: React.FC = () => {
         routes: [{ name: 'Onboarding' }],
       });
     } catch (error) {
+      reportError(error, 'ProfileScreen.performLogout');
       console.error('Logout error:', error);
       Alert.alert(t('common.error'), t('profile.errorLogOut'));
     } finally {
@@ -224,6 +227,7 @@ export const ProfileScreen: React.FC = () => {
         routes: [{ name: 'Onboarding' }],
       });
     } catch (error: any) {
+      reportError(error, 'ProfileScreen.performDeleteAccount');
       console.error('Delete account error:', error);
       Alert.alert(t('common.error'), error.message || t('profile.errorDeleteAccount'));
     } finally {
@@ -241,6 +245,7 @@ export const ProfileScreen: React.FC = () => {
         const { url } = await authService.createBillingPortalSession();
         await Linking.openURL(url);
       } catch (error) {
+        reportError(error, 'ProfileScreen.handleManageSubscription');
         console.error('Failed to open Stripe billing portal:', error);
         const errorMessage = error instanceof Error ? error.message : String(error);
         amplitudeService.trackEvent('Manage Subscription Error', {
@@ -270,6 +275,7 @@ export const ProfileScreen: React.FC = () => {
         }
       }
     } catch (error) {
+      reportError(error, 'ProfileScreen.handleManageSubscription');
       console.error('Failed to open subscription management:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       amplitudeService.trackEvent('Manage Subscription Error', {
@@ -456,12 +462,12 @@ export const ProfileScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="Back"
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <Text style={styles.headerTitle}>{t('profile.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -543,7 +549,7 @@ export const ProfileScreen: React.FC = () => {
               return primaryFocusText ? (
                 <>
                   <View style={styles.divider} />
-                  <TouchableOpacity
+                  <TrackedTouchable analyticsId="profile.primaryFocusLabel"
                     style={styles.infoRow}
                     activeOpacity={0.7}
                     onPress={handlePrimaryFocusPress}
@@ -556,7 +562,7 @@ export const ProfileScreen: React.FC = () => {
                       <Text style={styles.infoValue}>{primaryFocusText}</Text>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                  </TouchableOpacity>
+                  </TrackedTouchable>
                 </>
               ) : null;
             })()}
@@ -604,13 +610,13 @@ export const ProfileScreen: React.FC = () => {
                 || profile?.subscriptionStatus === 'PAST_DUE'
               );
             return hasActiveSub ? (
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="profile.manageSubscription"
                 style={styles.linkButton}
                 activeOpacity={0.7}
                 onPress={handleManageSubscription}
               >
                 <Text style={styles.linkButtonText}>{t('profile.manageSubscription')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             ) : (
               <TouchableOpacity
                 style={styles.linkButton}
@@ -659,7 +665,7 @@ export const ProfileScreen: React.FC = () => {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="profile.language"
               style={styles.settingRow}
               activeOpacity={0.7}
               onPress={handleLanguagePress}
@@ -672,7 +678,7 @@ export const ProfileScreen: React.FC = () => {
                 <Text style={{ fontFamily: FONTS.regular, fontSize: 14, color: '#9CA3AF' }}>{currentLanguageLabel}</Text>
                 <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
               </View>
-            </TouchableOpacity>
+            </TrackedTouchable>
 
             <View style={styles.divider} />
 
@@ -719,7 +725,7 @@ export const ProfileScreen: React.FC = () => {
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="profile.logOut"
           style={styles.logoutButton}
           onPress={handleLogout}
           disabled={loggingOut || deletingAccount}
@@ -733,10 +739,10 @@ export const ProfileScreen: React.FC = () => {
               <Text style={styles.logoutText}>{t('profile.logOut')}</Text>
             </>
           )}
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         {/* Delete Account Button */}
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="profile.deleteAccount"
           style={styles.deleteAccountButton}
           onPress={handleDeleteAccount}
           disabled={loggingOut || deletingAccount}
@@ -747,7 +753,7 @@ export const ProfileScreen: React.FC = () => {
           ) : (
             <Text style={styles.deleteAccountText}>{t('profile.deleteAccount')}</Text>
           )}
-        </TouchableOpacity>
+        </TrackedTouchable>
 
       </ScrollView>
     </SafeAreaView>

@@ -11,6 +11,7 @@
   },
   "scripts": {
     "start": "expo start",
+    "check:tracked-buttons": "bash scripts/check-tracked-buttons.sh",
     "start:prod": "cp .env.production .env && expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",

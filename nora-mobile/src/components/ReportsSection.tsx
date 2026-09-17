@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,6 +7,7 @@ import { RootStackNavigationProp } from '../navigation/types';
 import { useRecordingService } from '../contexts/AppContext';
 import * as userStorage from '../lib/userStorage';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface Recording {
   id: string;
@@ -106,7 +107,7 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
         <View style={styles.subsection}>
           <Text style={styles.subsectionTitle}>{t('reports.recentSessions')}</Text>
           {recentRecordings.map((recording) => (
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="--"
               key={recording.id}
               style={styles.sessionCard}
               onPress={() => navigation.navigate('ReportV3', { recordingId: recording.id })}
@@ -124,7 +125,7 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
                 )}
                 <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
               </View>
-            </TouchableOpacity>
+            </TrackedTouchable>
           ))}
         </View>
       )}
@@ -134,7 +135,7 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
         <View style={styles.subsection}>
           <Text style={styles.subsectionTitle}>{t('reports.weeklyReports')}</Text>
           {weeklyReports.map((report) => (
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="reports.weeklyReport"
               key={report.id}
               style={styles.weeklyCard}
               onPress={async () => {
@@ -158,7 +159,7 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ recordings, comp
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-            </TouchableOpacity>
+            </TrackedTouchable>
           ))}
         </View>
       )}

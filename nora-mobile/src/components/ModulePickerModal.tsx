@@ -5,11 +5,12 @@
  */
 
 import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { Modal, View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
 import type { ModuleWithProgress } from '@nora/core';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from './TrackedTouchable';
 
 const { height } = Dimensions.get('window');
 
@@ -52,9 +53,9 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           {/* Close button */}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <TrackedTouchable analyticsId="onClose" style={styles.closeButton} onPress={onClose}>
             <Ionicons name="close" size={24} color="#999999" />
-          </TouchableOpacity>
+          </TrackedTouchable>
 
           {/* Header */}
           <Text style={styles.celebrationEmoji}>🎉</Text>
@@ -111,9 +112,9 @@ export const ModulePickerModal: React.FC<ModulePickerModalProps> = ({
           </ScrollView>
 
           {/* Skip button */}
-          <TouchableOpacity style={styles.skipButton} onPress={onClose}>
+          <TrackedTouchable analyticsId="modulePicker.ok" style={styles.skipButton} onPress={onClose}>
             <Text style={styles.skipText}>{t('modulePicker.ok')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </View>
     </Modal>
@@ -134,7 +135,7 @@ const ModulePickerCard: React.FC<{
   const isInProgress = module.completedLessons > 0;
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+    <TrackedTouchable analyticsId="modulePicker.current" style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle} numberOfLines={1}>{module.title}</Text>
         {isCurrent && (
@@ -160,7 +161,7 @@ const ModulePickerCard: React.FC<{
         )}
         <Ionicons name="chevron-forward" size={16} color={COLORS.mainPurple} />
       </View>
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 

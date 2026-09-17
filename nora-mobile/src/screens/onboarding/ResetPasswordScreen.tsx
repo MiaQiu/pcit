@@ -10,7 +10,6 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
@@ -22,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStackNavigationProp, OnboardingStackParamList } from '../../navigation/types';
 import { useAuthService } from '../../contexts/AppContext';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 type ResetPasswordScreenRouteProp = RouteProp<OnboardingStackParamList, 'ResetPassword'>;
 
@@ -39,7 +39,6 @@ export const ResetPasswordScreen: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Reset Password');
     // If token is provided in route params, use it
     if (route.params?.token) {
       setToken(route.params.token);
@@ -116,9 +115,9 @@ export const ResetPasswordScreen: React.FC = () => {
         style={styles.keyboardView}
       >
         {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <TrackedTouchable analyticsId="Back" style={styles.backButton} onPress={handleBack}>
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         <View style={styles.content}>
           {/* Title */}
@@ -157,7 +156,7 @@ export const ResetPasswordScreen: React.FC = () => {
                 autoCorrect={false}
                 editable={!loading}
               />
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="Toggle Password Visibility"
                 style={styles.eyeIcon}
                 onPress={() => setShowPassword(!showPassword)}
               >
@@ -166,7 +165,7 @@ export const ResetPasswordScreen: React.FC = () => {
                   size={20}
                   color="#6B7280"
                 />
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
             <Text style={styles.hint}>{t('resetPassword.passwordHint')}</Text>
           </View>
@@ -186,7 +185,7 @@ export const ResetPasswordScreen: React.FC = () => {
                 autoCorrect={false}
                 editable={!loading}
               />
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="Toggle Confirm Password Visibility"
                 style={styles.eyeIcon}
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
               >
@@ -195,7 +194,7 @@ export const ResetPasswordScreen: React.FC = () => {
                   size={20}
                   color="#6B7280"
                 />
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
           </View>
 
@@ -203,7 +202,7 @@ export const ResetPasswordScreen: React.FC = () => {
           <View style={{ flex: 1 }} />
 
           {/* Reset Password Button */}
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="resetPassword.resetButton"
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleResetPassword}
             activeOpacity={0.8}
@@ -214,14 +213,14 @@ export const ResetPasswordScreen: React.FC = () => {
             ) : (
               <Text style={styles.buttonText}>{t('resetPassword.resetButton')}</Text>
             )}
-          </TouchableOpacity>
+          </TrackedTouchable>
 
           {/* Back to Login Link */}
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>{t('resetPassword.rememberPassword')}</Text>
-            <TouchableOpacity onPress={handleBack}>
+            <TrackedTouchable analyticsId="resetPassword.logIn" onPress={handleBack}>
               <Text style={styles.loginLink}>{t('resetPassword.logIn')}</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         </View>
       </KeyboardAvoidingView>

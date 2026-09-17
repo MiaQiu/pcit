@@ -34,7 +34,6 @@ export const LessonCompleteScreen: React.FC = () => {
   const completedDays = [true, true, true, true, true, true, false];
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Lesson Complete', { lessonId });
     loadLessonData();
   }, [lessonId]);
 

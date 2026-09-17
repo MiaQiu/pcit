@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface OnboardingButtonProps {
   onPress: () => void;
@@ -22,7 +23,7 @@ export const OnboardingButton: React.FC<OnboardingButtonProps> = ({
   const label = text ?? t('onboarding.continue');
 
   return (
-    <TouchableOpacity
+    <TrackedTouchable analyticsId="on"
       style={[styles.button, disabled && styles.buttonDisabled]}
       onPress={onPress}
       disabled={disabled}
@@ -31,7 +32,7 @@ export const OnboardingButton: React.FC<OnboardingButtonProps> = ({
       <Text style={[styles.buttonText, disabled && styles.buttonTextDisabled]}>
         {label}
       </Text>
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 

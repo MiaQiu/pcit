@@ -9,7 +9,6 @@ import {
   Text,
   StyleSheet,
   Image,
-  TouchableOpacity,
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +21,7 @@ import { useAuthService, useLessonService } from '../../contexts/AppContext';
 import { prefetchLessons } from '../../services/lessonDataCache';
 import { OnboardingBackButton } from '../../components/OnboardingBackButton';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -79,20 +79,20 @@ export const Intro3Screen: React.FC = () => {
       <View style={[styles.footer, { paddingBottom: insets.bottom + 8 }]}>
         <View style={styles.buttonRow}>
           <OnboardingBackButton onPress={() => navigation.goBack()} />
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="onboarding.letsBegin"
             style={styles.button}
             onPress={() => { amplitudeService.trackOnboardingStepCompleted('intro3', 40); navigation.navigate('PlaySession1'); }}
             activeOpacity={0.85}
           >
             <Text style={styles.buttonText}>{t('onboarding.letsBegin')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="onboarding.skipForNow"
           onPress={handleSkip}
           activeOpacity={0.7}
         >
           <Text style={styles.skipText}>{t('onboarding.skipForNow')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

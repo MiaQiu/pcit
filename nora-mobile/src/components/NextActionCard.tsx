@@ -6,11 +6,12 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS, DRAGON_PURPLE } from '../constants/assets';
 import { Badge } from './Badge';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from './TrackedTouchable';
 
 export type CardType = 'lesson' | 'record' | 'readReport' | 'recordAgain';
 
@@ -133,13 +134,13 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
 
             {/* Read Report Link */}
             {onReadReport && (
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="nextActionCard.readReportLink"
                 onPress={onReadReport}
                 style={styles.linkContainer}
                 disabled={!isOnline}
               >
                 <Text style={[styles.linkText, !isOnline && styles.linkTextDisabled]}>{t('nextActionCard.readReportLink')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             )}
           </View>
 
@@ -198,7 +199,7 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
         {/* CTA Button - Only show if onPress is provided */}
         {onPress && buttonText && (
           <>
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="on"
               style={[styles.button, !isOnline && styles.buttonDisabled]}
               onPress={onPress}
               activeOpacity={0.8}
@@ -206,7 +207,7 @@ export const NextActionCard: React.FC<NextActionCardProps> = ({
             >
               <Text style={[styles.buttonText, !isOnline && styles.buttonTextDisabled]}>{buttonText}</Text>
               <Ionicons name="chevron-forward" size={20} color={!isOnline ? "#999999" : "#FFFFFF"} />
-            </TouchableOpacity>
+            </TrackedTouchable>
 
             {/* Next Lesson unlock message - Only for recordAgain */}
             {/* {type === 'recordAgain' && (

@@ -4,11 +4,12 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
 import type { ModuleWithProgress } from '@nora/core';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface ModuleCardProps {
   module: ModuleWithProgress;
@@ -24,7 +25,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onPress, isCurre
   const isLocked = module.isLocked;
 
   return (
-    <TouchableOpacity
+    <TrackedTouchable analyticsId="moduleCard.lessonCount"
       style={[styles.container, isLocked && styles.containerLocked]}
       onPress={isLocked ? undefined : onPress}
       activeOpacity={isLocked ? 1 : 0.7}
@@ -66,7 +67,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ module, onPress, isCurre
         </Text>
         <Ionicons name={isLocked ? "lock-closed" : "chevron-forward"} size={18} color={isLocked ? "#CCCCCC" : "#CCCCCC"} />
       </View>
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 

@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +23,7 @@ import { useLessonPlayer } from '../contexts/LessonPlayerContext';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 // Admin-configurable via Settings → Branding in the admin portal; falls back
 // to this bundled asset when no custom image has been uploaded.
@@ -217,23 +218,23 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View onLayout={(e) => setContentHeight(e.nativeEvent.layout.height)}>
         <View style={styles.navRow}>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Close lesson"
             style={styles.closeButton}
             onPress={() => navigation.goBack()}
             accessibilityLabel="Close lesson"
           >
             <Ionicons name="chevron-down" size={24} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <View style={styles.shareGroup}>
             {!!lesson.shareCount && <Text style={styles.shareCount}>{lesson.shareCount}</Text>}
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="Share"
               style={styles.shareButton}
               onPress={handleShare}
               activeOpacity={0.7}
               accessibilityLabel="Share"
             >
               <Ionicons name="share-outline" size={18} color={COLORS.textDark} />
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         </View>
 

@@ -58,9 +58,12 @@ import * as userStorage from '../lib/userStorage';
 import type { RelationshipToChild, ParentSkillLevel } from '@nora/core';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { useScreenViewDuration } from '../hooks/useScreenViewDuration';
+import { useScrollDepthTracking } from '../hooks/useScrollDepthTracking';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import type { TextRun } from '../utils/formatLessonContentV2';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 // Mixes a hex color toward white — used to derive a CONTENT card's pastel
 // background/badge-pill tints from its (fully-saturated) badgeColor.
@@ -151,7 +154,7 @@ const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, 
   const effectiveIconColor = dimmed ? '#D1D5DB' : iconColor;
 
   return (
-    <TouchableOpacity
+    <TrackedTouchable analyticsId="Stat Pill"
       style={[styles.statPill, dimmed && styles.statPillDimmed]}
       onPress={onPress}
       activeOpacity={onPress && !dimmed ? 0.7 : 1}
@@ -200,7 +203,7 @@ const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, 
         {total ? <Text style={styles.statValueMuted}>/{total}</Text> : null}
       </Text>
       <Text style={styles.statUnit}>{unit}</Text>
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 
@@ -213,7 +216,7 @@ interface PlanItemProps {
 }
 
 const PlanItem: React.FC<PlanItemProps> = ({ item, onPress, locked }) => (
-  <TouchableOpacity style={styles.planItem} onPress={onPress} activeOpacity={0.7}>
+  <TrackedTouchable analyticsId={`Today Plan Item: ${item.type}`} style={styles.planItem} onPress={onPress} activeOpacity={0.7}>
     {/* Checkbox */}
     <View style={[styles.planCheckbox, item.isCompleted && styles.planCheckboxDone]}>
       {item.isCompleted && <Ionicons name="checkmark" size={14} color="#fff" />}
@@ -233,7 +236,7 @@ const PlanItem: React.FC<PlanItemProps> = ({ item, onPress, locked }) => (
       </Text>
     </View>
     {locked && <Ionicons name="lock-closed" size={15} color="#9CA3AF" />}
-  </TouchableOpacity>
+  </TrackedTouchable>
 );
 
 // ─── Sub Action Card ─────────────────────────────────────────────────────────
@@ -356,14 +359,14 @@ const InlineReflection: React.FC<{ cardId: string; component: HomeCardInputCompo
 
   if (!expanded) {
     return (
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="homeV2.reflectionPrompt"
         style={styles.reflectionToggle}
         onPress={() => setExpanded(true)}
         activeOpacity={0.7}
       >
         <Ionicons name="add-circle-outline" size={18} color={COLORS.mainPurple} />
         <Text style={styles.reflectionToggleText}>{component.inputLabel || t('homeV2.reflectionPrompt')}</Text>
-      </TouchableOpacity>
+      </TrackedTouchable>
     );
   }
 
@@ -380,7 +383,7 @@ const InlineReflection: React.FC<{ cardId: string; component: HomeCardInputCompo
         placeholderTextColor="#9CA3AF"
         multiline
       />
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="homeV2.reflectionSaving"
         style={[styles.reflectionSaveBtn, (!answer.trim() || saving) && styles.reflectionSaveBtnDisabled]}
         onPress={handleSave}
         disabled={!answer.trim() || saving}
@@ -389,7 +392,7 @@ const InlineReflection: React.FC<{ cardId: string; component: HomeCardInputCompo
         <Text style={styles.reflectionSaveBtnText}>
           {saving ? t('homeV2.reflectionSaving') : saved ? t('homeV2.reflectionSaved') : t('homeV2.reflectionSave')}
         </Text>
-      </TouchableOpacity>
+      </TrackedTouchable>
     </View>
   );
 };
@@ -500,23 +503,23 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
     return (
       <View style={styles.subActionQuoteCard}>
         <View style={styles.subActionQuoteActions}>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="ToggleLike"
             style={styles.subActionQuoteIconButton}
             onPress={handleToggleLike}
             activeOpacity={0.7}
             accessibilityLabel={liked ? 'Unlike' : 'Like'}
           >
             <Ionicons name={liked ? 'heart' : 'heart-outline'} size={16} color={liked ? '#EF4444' : '#B99089'} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.subActionQuoteLikeCount}>{displayLikeCount}</Text>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Share"
             style={styles.subActionQuoteIconButton}
             onPress={handleShare}
             activeOpacity={0.7}
             accessibilityLabel="Share"
           >
             <Ionicons name="share-outline" size={16} color="#B99089" />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
 
         {card.imageUrl && (
@@ -599,33 +602,33 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
           <Ionicons name="arrow-forward" size={14} color={COLORS.mainPurple} />
         </View>
         <View style={styles.subActionBottomActions}>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="ToggleLike"
             style={styles.subActionCircleButton}
             onPress={handleToggleLike}
             activeOpacity={0.7}
             accessibilityLabel={liked ? 'Unlike' : 'Like'}
           >
             <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color={liked ? '#EF4444' : COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.subActionLikeCount}>{displayLikeCount}</Text>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Share"
             style={styles.subActionCircleButton}
             onPress={handleShare}
             activeOpacity={0.7}
             accessibilityLabel="Share"
           >
             <Ionicons name="share-outline" size={16} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </View>
     </>
   );
 
   return (
-    <TouchableOpacity style={[styles.subActionCard, { backgroundColor: cardBg, borderColor: cardBorder }]} onPress={onPress} activeOpacity={0.85}>
+    <TrackedTouchable analyticsId="Sub Action Card" style={[styles.subActionCard, { backgroundColor: cardBg, borderColor: cardBorder }]} onPress={onPress} activeOpacity={0.85}>
       {inner}
       {shareSheet}
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 
@@ -957,10 +960,14 @@ export const HomeScreen_v2: React.FC = () => {
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Home');
     loadUserProfile();
     loadData('full');
   }, []);
+
+  // Screen view is now tracked centrally from NavigationContainer.onStateChange
+  // in App.tsx; this hook adds this screen's visit duration on top of that.
+  useScreenViewDuration('Home');
+  const scrollDepthTracking = useScrollDepthTracking('Home');
 
   useFocusEffect(
     useCallback(() => {
@@ -1220,6 +1227,7 @@ export const HomeScreen_v2: React.FC = () => {
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          {...scrollDepthTracking}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -1430,7 +1438,7 @@ export const HomeScreen_v2: React.FC = () => {
                   ? latestWeeklyReport.headline
                   : t('homeV2.weeklyReportFallback', { childName })}
               </Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="homeV2.viewWeeklyReport"
                 style={styles.recordButton}
                 onPress={async () => {
                   amplitudeService.trackWeeklyReportTapped(latestWeeklyReport.id, { source: 'home_card' });
@@ -1444,7 +1452,7 @@ export const HomeScreen_v2: React.FC = () => {
               >
                 {/* <Ionicons name="stats-chart-outline" size={20} color="#fff" /> */}
                 <Text style={styles.recordButtonText}>{t('homeV2.viewWeeklyReport')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
               <TouchableOpacity
                 style={styles.skipButton}
                 onPress={async () => {
@@ -1476,13 +1484,13 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.massageLabel}>{t('homeV2.getReadyLabel')}</Text>
               </View>
               <Text style={styles.massageBody}>{t('homeV2.getReadyBody')}</Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="homeV2.getReadyButton"
                 style={styles.recordButton}
                 onPress={handleGetReadyPress}
                 activeOpacity={0.85}
               >
                 <Text style={styles.recordButtonText}>{t('homeV2.getReadyButton')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </>
           ) : !hasRecordedSession ? (
             <>
@@ -1501,7 +1509,7 @@ export const HomeScreen_v2: React.FC = () => {
                   </>
                 )}
               </Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="homeV2.recordNow"
                 style={[styles.recordButton, !isOnline && styles.recordButtonDisabled]}
                 onPress={handleRecordPress}
                 activeOpacity={0.85}
@@ -1509,7 +1517,7 @@ export const HomeScreen_v2: React.FC = () => {
               >
                 <Ionicons name={isRecordLocked ? 'lock-closed' : 'mic'} size={20} color="#fff" />
                 <Text style={styles.recordButtonText}>{t('homeV2.recordNow')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </>
           ) : hasRecordedSession && !isReportRead ? (
             <>
@@ -1526,7 +1534,7 @@ export const HomeScreen_v2: React.FC = () => {
                   </>
                 )}
               </Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="homeV2.readReport"
                 style={[styles.recordButton, !isOnline && styles.recordButtonDisabled]}
                 onPress={handleReadReport}
                 activeOpacity={0.85}
@@ -1534,7 +1542,7 @@ export const HomeScreen_v2: React.FC = () => {
               >
                 <Ionicons name="document-text-outline" size={20} color="#fff" />
                 <Text style={styles.recordButtonText}>{t('homeV2.readReport')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </>
           // Chat intro card temporarily hidden
           ) : (
@@ -1546,7 +1554,7 @@ export const HomeScreen_v2: React.FC = () => {
               <Text style={styles.massageBody}>
                 {t('homeV2.recordAgainBody')}
               </Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="homeV2.recordAgain"
                 style={[styles.recordButton, !isOnline && styles.recordButtonDisabled]}
                 onPress={handleRecordAgain}
                 activeOpacity={0.85}
@@ -1554,7 +1562,7 @@ export const HomeScreen_v2: React.FC = () => {
               >
                 <Ionicons name={isRecordLocked ? 'lock-closed' : 'mic'} size={20} color="#fff" />
                 <Text style={styles.recordButtonText}>{t('homeV2.recordAgain')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </>
           )}
         </View>
@@ -1625,7 +1633,7 @@ export const HomeScreen_v2: React.FC = () => {
             {/* Preset options */}
             <View style={styles.reminderPresets}>
               {REMINDER_PRESETS.map(preset => (
-                <TouchableOpacity
+                <TrackedTouchable analyticsId={`Reminder Preset: ${preset.label}`}
                   key={preset.time}
                   style={[styles.reminderPresetBtn, selectedPreset === preset.time && styles.reminderPresetBtnActive]}
                   onPress={() => handleSelectPreset(preset)}
@@ -1637,12 +1645,12 @@ export const HomeScreen_v2: React.FC = () => {
                   <Text style={[styles.reminderPresetTime, selectedPreset === preset.time && styles.reminderPresetLabelActive]}>
                     {preset.display}
                   </Text>
-                </TouchableOpacity>
+                </TrackedTouchable>
               ))}
             </View>
 
             {/* Custom time row */}
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="homeV2.reminderCustomTime"
               style={[styles.reminderCustomRow, !selectedPreset && styles.reminderCustomRowActive]}
               onPress={() => {
                 setSelectedPreset(null);
@@ -1656,7 +1664,7 @@ export const HomeScreen_v2: React.FC = () => {
                 {t('homeV2.reminderCustomTime', { time: formatReminderTime(reminderTime) })}
               </Text>
               <Ionicons name="chevron-down" size={16} color={!selectedPreset ? COLORS.mainPurple : '#9CA3AF'} />
-            </TouchableOpacity>
+            </TrackedTouchable>
 
             {/* Time picker — inline on iOS, dialog on Android */}
             {(showCustomPicker || (Platform.OS === 'ios' && !selectedPreset)) && (
@@ -1672,19 +1680,21 @@ export const HomeScreen_v2: React.FC = () => {
               />
             )}
 
-            <TouchableOpacity style={styles.reminderSaveBtn} onPress={handleSaveReminder} activeOpacity={0.85}>
+            <TrackedTouchable analyticsId="homeV2.setReminder" style={styles.reminderSaveBtn} onPress={handleSaveReminder} activeOpacity={0.85}>
               <Text style={styles.reminderSaveBtnText}>{t('homeV2.setReminder')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.reminderCancelBtn} onPress={() => setShowReminderModal(false)} activeOpacity={0.7}>
+            </TrackedTouchable>
+            <TrackedTouchable analyticsId="common.cancel" style={styles.reminderCancelBtn} onPress={() => setShowReminderModal(false)} activeOpacity={0.7}>
               <Text style={styles.reminderCancelText}>{t('common.cancel')}</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         </View>
       </Modal>
 
       {/* ── Stat Explanation Popup ── */}
       <Modal visible={!!statInfo} transparent animationType="fade" onRequestClose={() => setStatInfo(null)}>
-        <TouchableOpacity style={styles.statInfoOverlay} activeOpacity={1} onPress={() => setStatInfo(null)}>
+        <TrackedTouchable analyticsId="Stat Info Dismiss" style={styles.statInfoOverlay} activeOpacity={1} onPress={() => setStatInfo(null)}>
+          {/* Not tracked: this only exists to swallow taps so they don't bubble
+              to the overlay's dismiss handler above; it isn't a real user action. */}
           <TouchableOpacity style={styles.statInfoCard} activeOpacity={1} onPress={() => {}}>
             {statInfo && (
               <>
@@ -1693,13 +1703,13 @@ export const HomeScreen_v2: React.FC = () => {
                 </View>
                 <Text style={styles.statInfoTitle}>{statInfo.title}</Text>
                 <Text style={styles.statInfoBody}>{statInfo.body}</Text>
-                <TouchableOpacity style={styles.statInfoGotItBtn} onPress={() => setStatInfo(null)} activeOpacity={0.85}>
+                <TrackedTouchable analyticsId="homeV2.statInfoGotIt" style={styles.statInfoGotItBtn} onPress={() => setStatInfo(null)} activeOpacity={0.85}>
                   <Text style={styles.statInfoGotItText}>{t('homeV2.statInfoGotIt')}</Text>
-                </TouchableOpacity>
+                </TrackedTouchable>
               </>
             )}
           </TouchableOpacity>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </Modal>
     </SafeAreaView>
   );

@@ -4,9 +4,10 @@
  */
 
 import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { Modal, View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { FONTS, COLORS } from '../constants/assets';
 import { Keyword } from '@nora/core';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface KeywordDefinitionModalProps {
   visible: boolean;
@@ -83,20 +84,20 @@ export const KeywordDefinitionModal: React.FC<KeywordDefinitionModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="×"
         style={styles.overlay}
         activeOpacity={1}
         onPress={onClose}
       >
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="×"
           style={styles.modalContainer}
           activeOpacity={1}
           onPress={(e) => e.stopPropagation()}
         >
           {/* Close button */}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <TrackedTouchable analyticsId="×" style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeIcon}>×</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
 
           {/* Keyword term as title */}
           <Text style={styles.term}>{keyword.term}</Text>
@@ -108,8 +109,8 @@ export const KeywordDefinitionModal: React.FC<KeywordDefinitionModalProps> = ({
           >
             {formatDefinitionText(keyword.definition)}
           </ScrollView>
-        </TouchableOpacity>
-      </TouchableOpacity>
+        </TrackedTouchable>
+      </TrackedTouchable>
     </Modal>
   );
 };

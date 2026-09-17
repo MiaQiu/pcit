@@ -3,7 +3,7 @@
  * Includes tab navigator and modal screens
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Purchases from 'react-native-purchases';
@@ -86,7 +86,6 @@ export const RootNavigator: React.FC = () => {
   const [resumeUserData, setResumeUserData] = useState<User | null>(null);
   const [updateRequired, setUpdateRequired] = useState(false);
   const [softUpdate, setSoftUpdate] = useState<{ version: string; whatsNew: string[] } | null>(null);
-  const navigationRef = useRef<any>(null);
 
   // Handle session expiration
   const handleSessionExpired = useCallback(async () => {

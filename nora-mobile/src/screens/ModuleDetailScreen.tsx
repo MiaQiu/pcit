@@ -11,7 +11,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
-  TouchableOpacity,
   Image,
   useWindowDimensions,
 } from 'react-native';
@@ -28,6 +27,7 @@ import { resolveImageUris } from '../services/lessonImageCache';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 const H_PAD = 20;
 const CARD_GAP = 10;
@@ -56,7 +56,6 @@ export const ModuleDetailScreen: React.FC = () => {
   const [isCurrentModule, setIsCurrentModule] = useState(false);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Module Detail', { moduleKey });
     loadModuleDetail();
     checkIfCurrentModule();
   }, [moduleKey]);
@@ -127,9 +126,9 @@ export const ModuleDetailScreen: React.FC = () => {
   // Shared top bar — always rendered so layout is stable across all states
   const topBar = (title: string) => (
     <View style={styles.topBar}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
+      <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
         <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
-      </TouchableOpacity>
+      </TrackedTouchable>
       <Text style={styles.topBarTitle} numberOfLines={1}>{title}</Text>
       <View style={styles.backCirclePlaceholder} />
     </View>
@@ -154,7 +153,7 @@ export const ModuleDetailScreen: React.FC = () => {
           <Ionicons name="lock-closed" size={48} color="#CCCCCC" />
           <Text style={styles.lockedTitle}>{t('moduleDetail.moduleLocked')}</Text>
           <Text style={styles.lockedMessage}>{t('moduleDetail.lockedMessage')}</Text>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="moduleDetail.goToFoundation"
             style={styles.goToFoundationBtn}
             onPress={() => {
               navigation.goBack();
@@ -163,7 +162,7 @@ export const ModuleDetailScreen: React.FC = () => {
             activeOpacity={0.7}
           >
             <Text style={styles.goToFoundationText}>{t('moduleDetail.goToFoundation')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </SafeAreaView>
     );
@@ -199,7 +198,7 @@ export const ModuleDetailScreen: React.FC = () => {
           ) : null}
 
           {mod.key !== 'FOUNDATION' && completedCount < lessons.length && (
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="moduleDetail.currentModule"
               style={isCurrentModule ? styles.currentModuleBtn : styles.startModuleBtn}
               onPress={handleSetAsCurrentModule}
               activeOpacity={0.7}
@@ -209,7 +208,7 @@ export const ModuleDetailScreen: React.FC = () => {
               <Text style={isCurrentModule ? styles.currentModuleBtnText : styles.startModuleBtnText}>
                 {isCurrentModule ? t('moduleDetail.currentModule') : t('moduleDetail.setAsDailyLesson')}
               </Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           )}
         </View>
 
@@ -222,7 +221,7 @@ export const ModuleDetailScreen: React.FC = () => {
             const imageUrl = localImageUris[lesson.id] || (lesson as any).dragonImageUrl;
 
             return (
-              <TouchableOpacity
+              <TrackedTouchable analyticsId={`Lesson Card: ${lesson.title}`}
                 key={lesson.id}
                 style={[styles.card, { width: cardWidth }]}
                 onPress={() => handleLessonPress(lesson.id)}
@@ -254,7 +253,7 @@ export const ModuleDetailScreen: React.FC = () => {
                 <View style={styles.cardText}>
                   <Text style={styles.cardTitle} numberOfLines={2}>{lesson.title}</Text>
                 </View>
-              </TouchableOpacity>
+              </TrackedTouchable>
             );
           })}
         </View>

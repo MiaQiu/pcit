@@ -9,7 +9,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   ActivityIndicator,
   TextInput,
@@ -24,6 +23,7 @@ import { useOnboarding } from '../contexts/OnboardingContext';
 import { OnboardingButtonRow } from './OnboardingButtonRow';
 import { OnboardingProgressHeader } from './OnboardingProgressHeader';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from './TrackedTouchable';
 
 export interface MultipleChoiceOption {
   value: string | number;
@@ -249,7 +249,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
             {options.map((option) => {
               const selected = isSelected(option.value);
               return (
-                <TouchableOpacity
+                <TrackedTouchable analyticsId={`Multiple Choice Option: ${option.label}`}
                   key={String(option.value)}
                   style={[
                     styles.optionCard,
@@ -271,7 +271,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
                       <Ionicons name="checkmark-circle" size={24} color="#007866" />
                     </View>
                   )}
-                </TouchableOpacity>
+                </TrackedTouchable>
               );
             })}
 

@@ -270,7 +270,7 @@ router.post('/auth/login', (req, res) => {
 
     res.json({ token });
   } catch (error) {
-    console.error('Admin login error:', error);
+    logError(error, { route: 'admin#Admin login error', userId: req.user?.id });
     res.status(500).json({ error: 'Login failed' });
   }
 });
@@ -305,7 +305,7 @@ router.post('/auth/therapist-login', async (req, res) => {
     const token = generateAccessToken({ role: 'therapist', userId: user.id });
     res.json({ token });
   } catch (error) {
-    console.error('Therapist login error:', error);
+    logError(error, { route: 'admin#Therapist login error', userId: req.user?.id });
     res.status(500).json({ error: 'Login failed' });
   }
 });
@@ -363,7 +363,7 @@ router.get('/lessons', requireAdminAuth, async (req, res) => {
 
     res.json({ lessons: formatted });
   } catch (error) {
-    console.error('Admin get lessons error:', error);
+    logError(error, { route: 'admin#Admin get lessons error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch lessons' });
   }
 });
@@ -424,7 +424,7 @@ router.get('/lessons/:id', requireAdminAuth, async (req, res) => {
       contentV2Translation
     });
   } catch (error) {
-    console.error('Admin get lesson detail error:', error);
+    logError(error, { route: 'admin#Admin get lesson detail error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch lesson' });
   }
 });
@@ -590,7 +590,7 @@ router.post('/lessons', requireAdminAuth, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Admin create lesson error:', error);
+    logError(error, { route: 'admin#Admin create lesson error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create lesson', details: error.message });
   }
 });
@@ -715,7 +715,7 @@ router.put('/lessons/:id', requireAdminAuth, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Admin update lesson error:', error);
+    logError(error, { route: 'admin#Admin update lesson error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update lesson', details: error.message });
   }
 });
@@ -766,7 +766,7 @@ router.delete('/lessons/:id', requireAdminAuth, async (req, res) => {
 
     res.json({ success: true, deletedId: lessonId });
   } catch (error) {
-    console.error('Admin delete lesson error:', error);
+    logError(error, { route: 'admin#Admin delete lesson error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to delete lesson' });
   }
 });
@@ -794,7 +794,7 @@ router.post('/lessons/:id/image', requireAdminAuth, uploadMiddleware.single('ima
 
     res.json({ dragonImageUrl: imageUrl });
   } catch (error) {
-    console.error('Admin lesson image upload error:', error);
+    logError(error, { route: 'admin#Admin lesson image upload error', userId: req.user?.id });
     res.status(500).json({ error: error.message || 'Failed to upload image' });
   }
 });
@@ -820,7 +820,7 @@ router.post('/lessons/:id/content-image', requireAdminAuth, uploadMiddleware.sin
 
     res.json({ key, marker: `![](${key})`, url: await resolveLessonAudioUrl(key) });
   } catch (error) {
-    console.error('Admin lesson content-image upload error:', error);
+    logError(error, { route: 'admin#Admin lesson content-image upload error', userId: req.user?.id });
     res.status(500).json({ error: error.message || 'Failed to upload image' });
   }
 });
@@ -845,7 +845,7 @@ router.post('/lessons/:id/content-video', requireAdminAuth, lessonContentVideoUp
 
     res.json({ key, marker: `![video](${key})`, url: await resolveLessonAudioUrl(key) });
   } catch (error) {
-    console.error('Admin lesson content-video upload error:', error);
+    logError(error, { route: 'admin#Admin lesson content-video upload error', userId: req.user?.id });
     res.status(500).json({ error: error.message || 'Failed to upload video' });
   }
 });
@@ -885,7 +885,7 @@ router.post('/lessons/:id/audio', requireAdminAuth, lessonAudioUploadMiddleware.
       transcriptText = transcript.text;
       wordTimings = transcript.wordTimings;
     } catch (transcribeErr) {
-      console.error('Lesson audio transcription error:', transcribeErr);
+      logError(transcribeErr, { route: 'admin#Lesson audio transcription error', userId: req.user?.id });
       transcriptionError = transcribeErr.message || 'Transcription failed';
     }
 
@@ -921,7 +921,7 @@ router.post('/lessons/:id/audio', requireAdminAuth, lessonAudioUploadMiddleware.
       transcriptionError,
     });
   } catch (error) {
-    console.error('Admin lesson audio upload error:', error);
+    logError(error, { route: 'admin#Admin lesson audio upload error', userId: req.user?.id });
     res.status(500).json({ error: error.message || 'Failed to upload audio' });
   }
 });
@@ -989,7 +989,7 @@ router.patch('/lessons/:id/content-v2', requireAdminAuth, async (req, res) => {
       durationSeconds: updated.durationSeconds,
     });
   } catch (error) {
-    console.error('Admin lesson content-v2 update error:', error);
+    logError(error, { route: 'admin#Admin lesson content-v2 update error', userId: req.user?.id });
     res.status(500).json({ error: error.message || 'Failed to update content' });
   }
 });
@@ -1027,7 +1027,7 @@ router.get('/modules', requireAdminAuth, async (req, res) => {
 
     res.json({ modules: formatted });
   } catch (error) {
-    console.error('Admin get modules error:', error);
+    logError(error, { route: 'admin#Admin get modules error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch modules' });
   }
 });
@@ -1070,7 +1070,7 @@ router.post('/modules', requireAdminAuth, async (req, res) => {
 
     res.status(201).json({ module: mod });
   } catch (error) {
-    console.error('Admin create module error:', error);
+    logError(error, { route: 'admin#Admin create module error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create module', details: error.message });
   }
 });
@@ -1103,7 +1103,7 @@ router.put('/modules/:key', requireAdminAuth, async (req, res) => {
 
     res.json({ module: mod });
   } catch (error) {
-    console.error('Admin update module error:', error);
+    logError(error, { route: 'admin#Admin update module error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update module', details: error.message });
   }
 });
@@ -1191,7 +1191,7 @@ router.get('/users', requireAdminAuth, async (req, res) => {
 
     res.json({ users: formatted });
   } catch (error) {
-    console.error('Admin get users error:', error);
+    logError(error, { route: 'admin#Admin get users error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 });
@@ -1235,7 +1235,7 @@ router.post('/notifications/send', requireAdminAuth, async (req, res) => {
       results
     });
   } catch (error) {
-    console.error('Admin send notifications error:', error);
+    logError(error, { route: 'admin#Admin send notifications error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to send notifications' });
   }
 });
@@ -1254,7 +1254,7 @@ router.put('/users/:id/tag', requireAdminAuth, async (req, res) => {
     await prisma.user.update({ where: { id }, data: { tag } });
     res.json({ userId: id, tag });
   } catch (error) {
-    console.error('Admin update user tag error:', error);
+    logError(error, { route: 'admin#Admin update user tag error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update tag' });
   }
 });
@@ -1323,7 +1323,7 @@ router.get('/users/:id/profile', requireAdminAuth, async (req, res) => {
       })),
     });
   } catch (error) {
-    console.error('Admin get user profile error:', error);
+    logError(error, { route: 'admin#Admin get user profile error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch user profile' });
   }
 });
@@ -1360,7 +1360,7 @@ router.get('/users/:id/weekly-reports', requireAdminAuth, async (req, res) => {
 
     res.json({ reports });
   } catch (error) {
-    console.error('Admin get user weekly reports error:', error);
+    logError(error, { route: 'admin#Admin get user weekly reports error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch weekly reports' });
   }
 });
@@ -1383,7 +1383,7 @@ router.get('/weekly-reports/:id', requireAdminAuth, async (req, res) => {
     const resolved = await resolveReportAudioUrls(report);
     res.json({ report: resolved });
   } catch (error) {
-    console.error('Admin get weekly report detail error:', error);
+    logError(error, { route: 'admin#Admin get weekly report detail error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch weekly report' });
   }
 });
@@ -1437,7 +1437,7 @@ router.put('/weekly-reports/:id/visibility', requireAdminAuth, async (req, res) 
       notificationSent: notificationResult ? notificationResult.success : false,
     });
   } catch (error) {
-    console.error('Admin toggle weekly report visibility error:', error);
+    logError(error, { route: 'admin#Admin toggle weekly report visibility error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update report visibility' });
   }
 });
@@ -1467,7 +1467,7 @@ router.post('/weekly-reports/generate', requireAdminAuth, async (req, res) => {
     const result = await generateWeeklyReport(userId, weekStartDate);
     res.json({ report: result });
   } catch (error) {
-    console.error('Admin generate weekly report error:', error);
+    logError(error, { route: 'admin#Admin generate weekly report error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to generate weekly report', details: error.message });
   }
 });
@@ -1533,7 +1533,7 @@ router.post('/weekly-reports/generate-all', requireAdminAuth, async (req, res) =
 
     res.json({ generated, failed, skipped, total: userIds.length, results });
   } catch (error) {
-    console.error('Admin generate all weekly reports error:', error);
+    logError(error, { route: 'admin#Admin generate all weekly reports error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to generate weekly reports', details: error.message });
   }
 });
@@ -1564,7 +1564,7 @@ router.put('/users/:id/developmental-visibility', requireAdminAuth, async (req, 
 
     res.json({ userId: updated.id, developmentalVisible: updated.developmentalVisible });
   } catch (error) {
-    console.error('Admin toggle developmental visibility error:', error);
+    logError(error, { route: 'admin#Admin toggle developmental visibility error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update developmental visibility' });
   }
 });
@@ -1591,7 +1591,7 @@ router.put('/users/:id/free-account', requireAdminAuth, async (req, res) => {
 
     res.json({ userId: updated.id, isFreeAccount: updated.isFreeAccount });
   } catch (error) {
-    console.error('Admin toggle free account error:', error);
+    logError(error, { route: 'admin#Admin toggle free account error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update free account status' });
   }
 });
@@ -1612,7 +1612,7 @@ router.get('/free-account-whitelist', requireAdminAuth, async (req, res) => {
     });
     res.json({ entries });
   } catch (error) {
-    console.error('Admin get whitelist error:', error);
+    logError(error, { route: 'admin#Admin get whitelist error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch whitelist' });
   }
 });
@@ -1645,7 +1645,7 @@ router.post('/free-account-whitelist', requireAdminAuth, async (req, res) => {
 
     res.json({ entry, userGranted: !!existingUser });
   } catch (error) {
-    console.error('Admin add whitelist error:', error);
+    logError(error, { route: 'admin#Admin add whitelist error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to add to whitelist' });
   }
 });
@@ -1660,7 +1660,7 @@ router.delete('/free-account-whitelist/:id', requireAdminAuth, async (req, res) 
     await prisma.freeAccountWhitelist.delete({ where: { id } });
     res.json({ ok: true });
   } catch (error) {
-    console.error('Admin delete whitelist error:', error);
+    logError(error, { route: 'admin#Admin delete whitelist error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to remove from whitelist' });
   }
 });
@@ -1684,7 +1684,7 @@ router.get('/settings/report-visibility', requireAdminAuth, async (req, res) => 
 
     res.json(config ? config.value : DEFAULT_REPORT_VISIBILITY);
   } catch (error) {
-    console.error('Admin get report visibility error:', error);
+    logError(error, { route: 'admin#Admin get report visibility error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch report visibility settings' });
   }
 });
@@ -1711,7 +1711,7 @@ router.put('/settings/report-visibility', requireAdminAuth, async (req, res) => 
 
     res.json(value);
   } catch (error) {
-    console.error('Admin update report visibility error:', error);
+    logError(error, { route: 'admin#Admin update report visibility error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update report visibility settings' });
   }
 });
@@ -1762,7 +1762,7 @@ router.get('/settings/branding-images', requireAdminAuth, async (req, res) => {
     const config = await prisma.appConfig.findUnique({ where: { key: BRANDING_IMAGES_KEY } });
     res.json(await buildBrandingResponse(config?.value || {}, req.query.locale || 'en'));
   } catch (error) {
-    console.error('Admin get branding images error:', error);
+    logError(error, { route: 'admin#Admin get branding images error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch branding images' });
   }
 });
@@ -1794,7 +1794,7 @@ router.post('/settings/branding-images/:slot', requireAdminAuth, uploadMiddlewar
 
     res.json(await buildBrandingResponse(value));
   } catch (error) {
-    console.error('Admin upload branding image error:', error);
+    logError(error, { route: 'admin#Admin upload branding image error', userId: req.user?.id });
     res.status(500).json({ error: error.message || 'Failed to upload branding image' });
   }
 });
@@ -1827,7 +1827,7 @@ router.put('/settings/learn-header', requireAdminAuth, async (req, res) => {
 
     res.json(await buildBrandingResponse(value, locale));
   } catch (error) {
-    console.error('Admin update learn header error:', error);
+    logError(error, { route: 'admin#Admin update learn header error', userId: req.user?.id });
     res.status(500).json({ error: error.message || 'Failed to update learn header' });
   }
 });
@@ -1854,7 +1854,7 @@ router.get('/keywords', requireAdminAuth, async (req, res) => {
 
     res.json({ keywords });
   } catch (error) {
-    console.error('Admin list keywords error:', error);
+    logError(error, { route: 'admin#Admin list keywords error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to list keywords' });
   }
 });
@@ -1883,7 +1883,7 @@ router.post('/keywords', requireAdminAuth, async (req, res) => {
     if (error.code === 'P2002') {
       return res.status(409).json({ error: `Keyword "${req.body.term}" already exists` });
     }
-    console.error('Admin create keyword error:', error);
+    logError(error, { route: 'admin#Admin create keyword error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create keyword' });
   }
 });
@@ -1911,7 +1911,7 @@ router.put('/keywords/:id', requireAdminAuth, async (req, res) => {
     if (error.code === 'P2002') {
       return res.status(409).json({ error: `Keyword "${req.body.term}" already exists` });
     }
-    console.error('Admin update keyword error:', error);
+    logError(error, { route: 'admin#Admin update keyword error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update keyword' });
   }
 });
@@ -1927,7 +1927,7 @@ router.delete('/keywords/:id', requireAdminAuth, async (req, res) => {
     await prisma.keyword.delete({ where: { id: req.params.id } });
     res.json({ success: true });
   } catch (error) {
-    console.error('Admin delete keyword error:', error);
+    logError(error, { route: 'admin#Admin delete keyword error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to delete keyword' });
   }
 });
@@ -1945,7 +1945,7 @@ router.get('/home-card-badges', requireAdminAuth, async (req, res) => {
     const badges = await prisma.homeCardBadge.findMany({ orderBy: { name: 'asc' } });
     res.json({ badges });
   } catch (error) {
-    console.error('Admin list home card badges error:', error);
+    logError(error, { route: 'admin#Admin list home card badges error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to list home card badges' });
   }
 });
@@ -1966,7 +1966,7 @@ router.post('/home-card-badges', requireAdminAuth, async (req, res) => {
     res.status(201).json({ badge });
   } catch (error) {
     if (error.code === 'P2002') return res.status(400).json({ error: 'A badge with that name already exists' });
-    console.error('Admin create home card badge error:', error);
+    logError(error, { route: 'admin#Admin create home card badge error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create home card badge' });
   }
 });
@@ -2002,7 +2002,7 @@ router.get('/home-cards', requireAdminAuth, async (req, res) => {
 
     res.json({ homeCards: resolved });
   } catch (error) {
-    console.error('Admin list home cards error:', error);
+    logError(error, { route: 'admin#Admin list home cards error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to list home cards' });
   }
 });
@@ -2204,7 +2204,7 @@ router.post('/home-cards', requireAdminAuth, async (req, res) => {
 
     res.status(201).json({ homeCard: { ...homeCard, components: homeCard.components.map(serializeHomeCardComponentForAdmin), badgeText: badge.name, badgeColor: badge.color } });
   } catch (error) {
-    console.error('Admin create home card error:', error);
+    logError(error, { route: 'admin#Admin create home card error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create home card' });
   }
 });
@@ -2282,7 +2282,7 @@ router.put('/home-cards/:id', requireAdminAuth, async (req, res) => {
 
     res.json({ homeCard: { ...homeCard, components: homeCard.components.map(serializeHomeCardComponentForAdmin), badgeText: homeCard.badge.name, badgeColor: homeCard.badge.color } });
   } catch (error) {
-    console.error('Admin update home card error:', error);
+    logError(error, { route: 'admin#Admin update home card error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update home card' });
   }
 });
@@ -2298,7 +2298,7 @@ router.delete('/home-cards/:id', requireAdminAuth, async (req, res) => {
     await prisma.homeCard.delete({ where: { id: req.params.id } });
     res.json({ success: true });
   } catch (error) {
-    console.error('Admin delete home card error:', error);
+    logError(error, { route: 'admin#Admin delete home card error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to delete home card' });
   }
 });
@@ -2326,7 +2326,7 @@ router.post('/home-cards/:id/image', requireAdminAuth, uploadMiddleware.single('
 
     res.json({ homeCard: { ...homeCard, imageUrl: await resolveDragonImageUrl(image) } });
   } catch (error) {
-    console.error('Admin upload home card image error:', error);
+    logError(error, { route: 'admin#Admin upload home card image error', userId: req.user?.id });
     res.status(500).json({ error: error.message || 'Failed to upload home card image' });
   }
 });
@@ -2347,7 +2347,7 @@ router.delete('/home-cards/:id/image', requireAdminAuth, async (req, res) => {
 
     res.json({ homeCard: { ...homeCard, imageUrl: null } });
   } catch (error) {
-    console.error('Admin remove home card image error:', error);
+    logError(error, { route: 'admin#Admin remove home card image error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to remove home card image' });
   }
 });
@@ -2378,7 +2378,7 @@ router.post('/home-cards/:id/components/:componentId/image', requireAdminAuth, u
 
     res.json({ component: { ...component, imageUrl: await resolveDragonImageUrl(image) } });
   } catch (error) {
-    console.error('Admin upload home card component image error:', error);
+    logError(error, { route: 'admin#Admin upload home card component image error', userId: req.user?.id });
     res.status(500).json({ error: error.message || 'Failed to upload component image' });
   }
 });
@@ -2413,7 +2413,7 @@ router.get('/demo-videos', requireAdminAuth, async (req, res) => {
 
     res.json({ demoVideos: resolved });
   } catch (error) {
-    console.error('Admin list demo videos error:', error);
+    logError(error, { route: 'admin#Admin list demo videos error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to list demo videos' });
   }
 });
@@ -2453,7 +2453,7 @@ router.post('/demo-videos', requireAdminAuth, async (req, res) => {
 
     res.status(201).json({ demoVideo });
   } catch (error) {
-    console.error('Admin create demo video error:', error);
+    logError(error, { route: 'admin#Admin create demo video error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create demo video' });
   }
 });
@@ -2492,7 +2492,7 @@ router.put('/demo-videos/:id', requireAdminAuth, async (req, res) => {
 
     res.json({ demoVideo });
   } catch (error) {
-    console.error('Admin update demo video error:', error);
+    logError(error, { route: 'admin#Admin update demo video error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update demo video' });
   }
 });
@@ -2508,7 +2508,7 @@ router.delete('/demo-videos/:id', requireAdminAuth, async (req, res) => {
     await prisma.demoVideo.delete({ where: { id: req.params.id } });
     res.json({ success: true });
   } catch (error) {
-    console.error('Admin delete demo video error:', error);
+    logError(error, { route: 'admin#Admin delete demo video error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to delete demo video' });
   }
 });
@@ -2536,7 +2536,7 @@ router.post('/demo-videos/:id/video', requireAdminAuth, demoVideoUploadMiddlewar
 
     res.json({ demoVideo: { ...demoVideo, videoUrl: await resolveDragonImageUrl(key) } });
   } catch (error) {
-    console.error('Admin demo video upload error:', error);
+    logError(error, { route: 'admin#Admin demo video upload error', userId: req.user?.id });
     res.status(500).json({ error: error.message || 'Failed to upload video' });
   }
 });
@@ -2565,7 +2565,7 @@ router.post('/demo-videos/:id/thumbnail', requireAdminAuth, uploadMiddleware.sin
 
     res.json({ demoVideo: { ...demoVideo, thumbnailUrl: await resolveDragonImageUrl(key) } });
   } catch (error) {
-    console.error('Admin demo video thumbnail upload error:', error);
+    logError(error, { route: 'admin#Admin demo video thumbnail upload error', userId: req.user?.id });
     res.status(500).json({ error: error.message || 'Failed to upload thumbnail' });
   }
 });
@@ -2613,7 +2613,7 @@ router.put('/demo-videos/:id/translations/:locale', requireAdminAuth, async (req
 
     res.json({ translation: { ...tx, videoUrl: await resolveDragonImageUrl(tx.videoUrl) } });
   } catch (error) {
-    console.error('Admin upsert demo video translation error:', error);
+    logError(error, { route: 'admin#Admin upsert demo video translation error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to save translation' });
   }
 });
@@ -2665,7 +2665,7 @@ router.post('/demo-videos/:id/translations/:locale/auto', requireAdminAuth, asyn
 
     res.json({ translation: { ...tx, videoUrl: await resolveDragonImageUrl(tx.videoUrl) } });
   } catch (error) {
-    console.error('Admin auto-translate demo video error:', error);
+    logError(error, { route: 'admin#Admin auto-translate demo video error', userId: req.user?.id });
     res.status(500).json({ error: error.message || 'Failed to auto-translate' });
   }
 });
@@ -2702,7 +2702,7 @@ router.post(
 
       res.json({ translation: { ...tx, videoUrl: await resolveDragonImageUrl(key) } });
     } catch (error) {
-      console.error('Admin localized demo video upload error:', error);
+      logError(error, { route: 'admin#Admin localized demo video upload error', userId: req.user?.id });
       res.status(500).json({ error: error.message || 'Failed to upload localized video' });
     }
   }
@@ -2719,7 +2719,7 @@ router.delete('/demo-videos/:id/translations/:locale', requireAdminAuth, async (
     await prisma.demoVideo.update({ where: { id: demoVideoId }, data: { updatedAt: new Date() } });
     res.json({ success: true });
   } catch (error) {
-    console.error('Admin delete demo video translation error:', error);
+    logError(error, { route: 'admin#Admin delete demo video translation error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to delete translation' });
   }
 });
@@ -2778,7 +2778,7 @@ router.post('/sync-to-prod', requireAdminAuth, async (req, res) => {
     const result = await response.json();
     res.json(result);
   } catch (error) {
-    console.error('Sync to prod error:', error);
+    logError(error, { route: 'admin#Sync to prod error', userId: req.user?.id });
     res.status(500).json({ error: 'Sync failed: ' + error.message });
   }
 });
@@ -2920,7 +2920,7 @@ router.post('/receive-sync', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Receive sync error:', error);
+    logError(error, { route: 'admin#Receive sync error', userId: req.user?.id });
     res.status(500).json({ error: 'Sync failed: ' + error.message });
   }
 });
@@ -2999,7 +2999,7 @@ router.get('/sessions', requireAdminAuth, async (req, res) => {
       })),
     });
   } catch (error) {
-    console.error('GET /admin/sessions error:', error);
+    logError(error, { route: 'admin#GET /admin/sessions error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch sessions' });
   }
 });
@@ -3219,7 +3219,7 @@ router.get('/subscriptions', requireAdminAuth, async (req, res) => {
 
     res.json({ users: formatted });
   } catch (error) {
-    console.error('Admin get subscriptions error:', error);
+    logError(error, { route: 'admin#Admin get subscriptions error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch subscription data' });
   }
 });
@@ -3239,7 +3239,7 @@ router.post('/subscriptions/send-trial-expiry-emails', requireAdminAuth, async (
     const result = await runTrialExpiryJob(daysBeforeExpiry);
     res.json({ ok: true, ...result });
   } catch (error) {
-    console.error('Admin send trial expiry emails error:', error);
+    logError(error, { route: 'admin#Admin send trial expiry emails error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to send trial expiry emails' });
   }
 });
@@ -3281,7 +3281,7 @@ router.post('/subscriptions/sync-from-rc', requireAdminAuth, async (req, res) =>
 
     res.json({ ok: true, synced, failed, skipped });
   } catch (error) {
-    console.error('Admin sync-from-rc error:', error);
+    logError(error, { route: 'admin#Admin sync-from-rc error', userId: req.user?.id });
     res.status(500).json({ error: 'Sync failed' });
   }
 });
@@ -3346,7 +3346,7 @@ router.get('/coach/users', requireAdminAuth, async (req, res) => {
       totalPages: Math.ceil(total / limit),
     });
   } catch (err) {
-    console.error('Admin coach users search error:', err);
+    logError(err, { route: 'admin#Admin coach users search error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to search users' });
   }
 });
@@ -3381,7 +3381,7 @@ router.get('/coach/chats', requireAdminAuth, async (req, res) => {
 
     res.json({ chats: result });
   } catch (err) {
-    console.error('Admin coach chats error:', err);
+    logError(err, { route: 'admin#Admin coach chats error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch chat list' });
   }
 });
@@ -3412,7 +3412,7 @@ router.get('/coach/chats/:userId', requireAdminAuth, async (req, res) => {
     const messages = rows.slice(0, limit).reverse(); // oldest-first for display
     res.json({ messages, hasMore });
   } catch (err) {
-    console.error('Admin coach chat detail error:', err);
+    logError(err, { route: 'admin#Admin coach chat detail error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch chat messages' });
   }
 });
@@ -3442,7 +3442,7 @@ router.get('/coach/events/:userId', requireAdminAuth, async (req, res) => {
 
     req.on('close', unsubscribe);
   } catch (err) {
-    console.error('Admin coach events error:', err);
+    logError(err, { route: 'admin#Admin coach events error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to subscribe to events' });
   }
 });
@@ -3476,7 +3476,7 @@ router.post('/coach/chats/:userId/reply', requireAdminAuth, async (req, res) => 
 
     res.json({ message: created });
   } catch (err) {
-    console.error('Admin coach reply error:', err);
+    logError(err, { route: 'admin#Admin coach reply error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to send reply' });
   }
 });
@@ -3522,7 +3522,7 @@ router.get('/coach/psychologist-requests', requireAdminAuth, async (req, res) =>
       })),
     });
   } catch (err) {
-    console.error('Admin psychologist requests error:', err);
+    logError(err, { route: 'admin#Admin psychologist requests error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch psychologist requests' });
   }
 });
@@ -3539,7 +3539,7 @@ router.post('/coach/psychologist-requests/:id/dismiss', requireAdminAuth, async 
     });
     res.json({ ok: true });
   } catch (err) {
-    console.error('Admin dismiss psychologist request error:', err);
+    logError(err, { route: 'admin#Admin dismiss psychologist request error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to dismiss request' });
   }
 });
@@ -3612,7 +3612,7 @@ router.get('/coding-review', requireAdminAuth, async (req, res) => {
       })),
     });
   } catch (err) {
-    console.error('GET /admin/coding-review error:', err);
+    logError(err, { route: 'admin#GET /admin/coding-review error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch sessions' });
   }
 });
@@ -3682,7 +3682,7 @@ router.get('/coding-review/:id', requireAdminAuth, async (req, res) => {
       }),
     });
   } catch (err) {
-    console.error('GET /admin/coding-review/:id error:', err);
+    logError(err, { route: 'admin#GET /admin/coding-review/:id error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch session detail' });
   }
 });
@@ -3700,7 +3700,7 @@ router.put('/coding-review/:id/comment/:utteranceId', requireAdminAuth, async (r
     });
     res.json({ ok: true });
   } catch (err) {
-    console.error('PUT /admin/coding-review comment error:', err);
+    logError(err, { route: 'admin#PUT /admin/coding-review comment error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to save comment' });
   }
 });
@@ -3718,7 +3718,7 @@ router.post('/coding-review/:id/submit', requireAdminAuth, async (req, res) => {
     });
     res.json({ ok: true, codingReviewedAt: session.codingReviewedAt });
   } catch (err) {
-    console.error('POST /admin/coding-review submit error:', err);
+    logError(err, { route: 'admin#POST /admin/coding-review submit error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to submit review' });
   }
 });
@@ -3801,7 +3801,7 @@ router.post('/therapist/upload', requirePortalAuth, therapistUploadMiddleware.si
 
     res.json({ sessionId });
   } catch (err) {
-    console.error('Therapist upload error:', err);
+    logError(err, { route: 'admin#Therapist upload error', userId: req.user?.id });
     res.status(500).json({ error: err.message || 'Upload failed' });
   }
 });
@@ -3883,7 +3883,7 @@ router.get('/therapist/sessions/:id', requirePortalAuth, async (req, res) => {
       })
     });
   } catch (err) {
-    console.error('Therapist session get error:', err);
+    logError(err, { route: 'admin#Therapist session get error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to load session' });
   }
 });
@@ -3903,6 +3903,7 @@ function adminStripe() {
 
 const { discountLabel, normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
 const { generatePartnerQrPng } = require('../utils/partnerQr.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 // Generates a QR PNG for the partner's signup link, uploads it, and persists the
 // resulting URL. Used both right after creation and for backfilling legacy partners.
@@ -3913,7 +3914,7 @@ async function generateAndStorePartnerQr(partner) {
     const qrCodeUrl = await uploadPartnerQrCode(qrPng, partner.slug);
     return prisma.partner.update({ where: { id: partner.id }, data: { qrCodeUrl } });
   } catch (err) {
-    console.error('[admin] partner QR generation error:', err);
+    logError(err, { route: 'admin#[admin] partner QR generation error' });
     return partner;
   }
 }
@@ -3983,7 +3984,7 @@ router.get('/partners', requireAdminAuth, async (req, res) => {
       };
     })));
   } catch (err) {
-    console.error('[admin] partners list error:', err);
+    logError(err, { route: 'admin#[admin] partners list error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch partners' });
   }
 });
@@ -4005,8 +4006,54 @@ router.get('/partners/:id', requireAdminAuth, async (req, res) => {
       discountLabels: { monthly: discountLabel(discounts.monthly), yearly: discountLabel(discounts.yearly) },
     });
   } catch (err) {
-    console.error('[admin] partner get error:', err);
+    logError(err, { route: 'admin#[admin] partner get error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch partner' });
+  }
+});
+
+// GET /api/admin/partners/:id/users — signed-up users attributed to this partner + subscription status
+router.get('/partners/:id/users', requireAdminAuth, async (req, res) => {
+  try {
+    const partner = await prisma.partner.findUnique({ where: { id: req.params.id } });
+    if (!partner) return res.status(404).json({ error: 'Partner not found' });
+
+    const users = await prisma.user.findMany({
+      where: { partnerId: partner.id, NOT: { emailHash: { startsWith: 'deleted_' } } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        subscriptionStatus: true,
+        subscriptionPlan: true,
+        subscriptionStartDate: true,
+        subscriptionEndDate: true,
+        trialStartDate: true,
+        trialEndDate: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json({
+      users: users.map(u => {
+        const decrypted = decryptUserData(u);
+        return {
+          id: u.id,
+          name: decrypted.name,
+          email: decrypted.email,
+          createdAt: u.createdAt,
+          subscriptionStatus: u.subscriptionStatus,
+          subscriptionPlan: u.subscriptionPlan,
+          subscriptionStartDate: u.subscriptionStartDate,
+          subscriptionEndDate: u.subscriptionEndDate,
+          trialStartDate: u.trialStartDate,
+          trialEndDate: u.trialEndDate,
+        };
+      }),
+    });
+  } catch (err) {
+    logError(err, { route: 'admin#[admin] partner users list error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to fetch partner users' });
   }
 });
 
@@ -4047,7 +4094,7 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
 
     res.status(201).json({ ...partner, qrCodeUrl: await resolveDragonImageUrl(partner.qrCodeUrl) });
   } catch (err) {
-    console.error('[admin] partner create error:', err);
+    logError(err, { route: 'admin#[admin] partner create error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create partner' });
   }
 });
@@ -4062,7 +4109,7 @@ router.post('/partners/:id/qr-code', requireAdminAuth, async (req, res) => {
     const updated = await generateAndStorePartnerQr(partner);
     res.json({ ...updated, qrCodeUrl: await resolveDragonImageUrl(updated.qrCodeUrl) });
   } catch (err) {
-    console.error('[admin] partner QR regenerate error:', err);
+    logError(err, { route: 'admin#[admin] partner QR regenerate error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to generate QR code' });
   }
 });
@@ -4109,7 +4156,7 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
 
     res.json({ ...updated, qrCodeUrl: await resolveDragonImageUrl(updated.qrCodeUrl) });
   } catch (err) {
-    console.error('[admin] partner update error:', err);
+    logError(err, { route: 'admin#[admin] partner update error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update partner' });
   }
 });
@@ -4120,7 +4167,7 @@ router.delete('/partners/:id', requireAdminAuth, async (req, res) => {
     await prisma.partner.update({ where: { id: req.params.id }, data: { status: 'EXPIRED' } });
     res.json({ ok: true });
   } catch (err) {
-    console.error('[admin] partner delete error:', err);
+    logError(err, { route: 'admin#[admin] partner delete error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to deactivate partner' });
   }
 });

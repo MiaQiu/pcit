@@ -8,7 +8,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Image,
   Dimensions,
 } from 'react-native';
@@ -18,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -60,20 +60,20 @@ export const ParentingIntroScreen: React.FC = () => {
       </View>
 
       <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="Back"
           style={styles.backButton}
           onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('Demo5')}
           activeOpacity={0.8}
         >
           <Ionicons name="arrow-back" size={22} color="#1F2937" />
-        </TouchableOpacity>
-        <TouchableOpacity
+        </TrackedTouchable>
+        <TrackedTouchable analyticsId="onboarding.parentingIntro.continueButton"
           style={styles.button}
           onPress={() => { amplitudeService.trackOnboardingStepCompleted('parenting_intro', 11); navigation.navigate('NameInput'); }}
           activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>{t('onboarding.parentingIntro.continueButton')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

@@ -4,9 +4,10 @@
  */
 
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { Text, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface RecordButtonProps {
   isRecording: boolean;
@@ -20,7 +21,7 @@ export const RecordButton: React.FC<RecordButtonProps> = ({
   disabled = false,
 }) => {
   return (
-    <TouchableOpacity
+    <TrackedTouchable analyticsId="on"
       style={[
         styles.button,
         isRecording && styles.buttonRecording,
@@ -41,7 +42,7 @@ export const RecordButton: React.FC<RecordButtonProps> = ({
           {isRecording ? 'Stop Recording' : 'Start Recording'}
         </Text>
       </View>
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 

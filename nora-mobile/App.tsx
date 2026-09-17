@@ -1,8 +1,8 @@
 import './src/i18n';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, Text, AppState, Platform } from 'react-native';
-import { NavigationContainer, useNavigation, DefaultTheme } from '@react-navigation/native';
+import { NavigationContainer, useNavigation, useNavigationContainerRef, DefaultTheme } from '@react-navigation/native';
 import { I18nextProvider } from 'react-i18next';
 import i18n, { loadSavedLanguage } from './src/i18n';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -34,6 +34,7 @@ import { ToastProvider, useToast } from './src/components/ToastManager';
 import { clearBadge, setupAndroidNotificationChannels } from './src/utils/notifications';
 import * as userStorage from './src/lib/userStorage';
 import amplitudeService from './src/services/amplitudeService';
+import { getSafeRouteParams } from './src/utils/getSafeRouteParams';
 import { REVENUECAT_CONFIG } from './src/config/revenuecat';
 import { getTodaySingapore } from './src/utils/timezone';
 
@@ -195,6 +196,8 @@ export default function App() {
   });
   const [langReady, setLangReady] = useState(false);
   const [rcReady, setRcReady] = useState(false);
+  const navigationRef = useNavigationContainerRef();
+  const routeNameRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     loadSavedLanguage().then(() => setLangReady(true));
@@ -279,7 +282,23 @@ export default function App() {
             <SubscriptionProvider rcReady={rcReady}>
               <OnboardingProvider>
                 <ToastProvider>
-                  <NavigationContainer linking={linking} theme={navigationTheme}>
+                  <NavigationContainer
+                    ref={navigationRef}
+                    linking={linking}
+                    theme={navigationTheme}
+                    onReady={() => {
+                      routeNameRef.current = navigationRef.getCurrentRoute()?.name;
+                    }}
+                    onStateChange={() => {
+                      const previousRouteName = routeNameRef.current;
+                      const currentRoute = navigationRef.getCurrentRoute();
+                      const currentRouteName = currentRoute?.name;
+                      if (currentRouteName && currentRouteName !== previousRouteName) {
+                        amplitudeService.trackScreenView(currentRouteName, getSafeRouteParams(currentRoute?.params));
+                      }
+                      routeNameRef.current = currentRouteName;
+                    }}
+                  >
                     <AppContent />
                   </NavigationContainer>
                 </ToastProvider>

@@ -52,7 +52,10 @@ import { MarkdownText } from '../utils/MarkdownText';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { useScreenViewDuration } from '../hooks/useScreenViewDuration';
+import { useScrollDepthTracking } from '../hooks/useScrollDepthTracking';
 import { deriveGoalFromLevel as deriveGoalNumbersFromLevel } from '../utils/goalFallback';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 type ReportDetailRouteProp = RouteProp<RootStackParamList, 'ReportDetail'>;
 
@@ -288,7 +291,6 @@ export const ReportDetailScreen: React.FC = () => {
   const [focusAreas, setFocusAreas] = useState<FocusAreaData[] | null>(null);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('ReportDetail', { recordingId });
     loadReportData();
     loadChildName();
     loadWacbStatus();
@@ -296,6 +298,12 @@ export const ReportDetailScreen: React.FC = () => {
     loadSessionCount();
     loadFocusAreas();
   }, [recordingId]);
+
+  // Screen view is now tracked centrally from NavigationContainer.onStateChange
+  // in App.tsx; this hook logs how long the user spent on THIS session's
+  // report specifically, and how far they scrolled through it.
+  useScreenViewDuration('ReportDetail', { recordingId });
+  const scrollDepthTracking = useScrollDepthTracking('ReportDetail', { recordingId });
 
   const loadFocusAreas = async () => {
     try {
@@ -499,9 +507,9 @@ export const ReportDetailScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
         </View>
         <View style={styles.loadingContainer}>
@@ -518,9 +526,9 @@ export const ReportDetailScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
         </View>
         <View style={styles.errorContainer}>
@@ -862,7 +870,7 @@ export const ReportDetailScreen: React.FC = () => {
       <MarkdownText style={styles.crisisBody} numberOfLines={crisisExpanded ? undefined : 4}>
         {crisisMoment.coaching || crisisMoment.description || ''}
       </MarkdownText>
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="reportDetail.crisis.showLess"
         style={styles.crisisReadMoreRow}
         activeOpacity={0.7}
         onPress={() => setCrisisExpanded(prev => !prev)}
@@ -871,7 +879,7 @@ export const ReportDetailScreen: React.FC = () => {
           {crisisExpanded ? t('reportDetail.crisis.showLess') : t('reportDetail.crisis.readMore')}
         </Text>
         <Ionicons name={crisisExpanded ? 'chevron-up' : 'chevron-down'} size={14} color="#C2694B" />
-      </TouchableOpacity>
+      </TrackedTouchable>
     </ReportCard>
   ) : null;
 
@@ -1217,9 +1225,9 @@ export const ReportDetailScreen: React.FC = () => {
         <Text style={styles.unlockTitleBold}>{t('reportDetail.unlock.titleBold')}</Text>
       </Text>
 
-      <TouchableOpacity style={styles.unlockButton} activeOpacity={0.85} onPress={handleUnlockPlan}>
+      <TrackedTouchable analyticsId="reportDetail.unlock.cta" style={styles.unlockButton} activeOpacity={0.85} onPress={handleUnlockPlan}>
         <Text style={styles.unlockButtonText}>{t('reportDetail.unlock.cta')}</Text>
-      </TouchableOpacity>
+      </TrackedTouchable>
       <View style={styles.unlockTimeRow}>
         <Ionicons name="time-outline" size={12} color="#9A8672" />
         <Text style={styles.unlockTimeText}>{t('reportDetail.unlock.time')}</Text>
@@ -1230,7 +1238,7 @@ export const ReportDetailScreen: React.FC = () => {
   const devPreviewBar = __DEV__ ? (
     <View style={styles.devBar}>
       <Text style={styles.devBarLabel}>PREVIEW (dev only)</Text>
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="Dev Toggle First Session Template"
         onPress={() => setDevForceFirstSession(v => !v)}
         style={[styles.devChip, devForceFirstSession && styles.devChipActive]}
         activeOpacity={0.7}
@@ -1238,27 +1246,27 @@ export const ReportDetailScreen: React.FC = () => {
         <Text style={[styles.devChipText, devForceFirstSession && styles.devChipTextActive]}>
           {devForceFirstSession ? 'First time template: ON' : 'First time template: OFF'}
         </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
+      </TrackedTouchable>
+      <TrackedTouchable analyticsId="Preview level-up overview"
         onPress={() => setShowNextLevelOverview(true)}
         style={styles.devChip}
         activeOpacity={0.7}
       >
         <Text style={styles.devChipText}>Preview level-up overview</Text>
-      </TouchableOpacity>
+      </TrackedTouchable>
     </View>
   ) : null;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} {...scrollDepthTracking}>
         {showFirstSession ? (
           <>
             {/* 1. Crisis Moment (or crisis fallback) */}
@@ -1313,9 +1321,9 @@ export const ReportDetailScreen: React.FC = () => {
                 survey flow, since loadWacbStatus reruns on mount) this is the
                 same exit as the standard template. */}
             {wacbCompleted === true && (
-              <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
+              <TrackedTouchable analyticsId="reportDetail.seeYouTomorrow" style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
                 <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             )}
           </>
         ) : (
@@ -1363,7 +1371,7 @@ export const ReportDetailScreen: React.FC = () => {
               <View>
                 {/* Segmented: what went well vs what to grow next */}
                 <View style={styles.ccSeg}>
-                  <TouchableOpacity
+                  <TrackedTouchable analyticsId="reportDetail.skillCoaching.tabWentWell"
                     activeOpacity={0.8}
                     style={[styles.ccSegBtn, coachTab === 'wentWell' && styles.ccSegBtnOn]}
                     onPress={() => setCoachTab('wentWell')}
@@ -1371,8 +1379,8 @@ export const ReportDetailScreen: React.FC = () => {
                     <Text style={[styles.ccSegText, coachTab === 'wentWell' && styles.ccSegTextOn]}>
                       {t('reportDetail.skillCoaching.tabWentWell')}
                     </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
+                  </TrackedTouchable>
+                  <TrackedTouchable analyticsId="reportDetail.skillCoaching.tabGrowNext"
                     activeOpacity={0.8}
                     style={[styles.ccSegBtn, coachTab === 'growNext' && styles.ccSegBtnOn]}
                     onPress={() => setCoachTab('growNext')}
@@ -1380,7 +1388,7 @@ export const ReportDetailScreen: React.FC = () => {
                     <Text style={[styles.ccSegText, coachTab === 'growNext' && styles.ccSegTextOn]}>
                       {t('reportDetail.skillCoaching.tabGrowNext')}
                     </Text>
-                  </TouchableOpacity>
+                  </TrackedTouchable>
                 </View>
 
                 {coachTab === 'wentWell' ? (
@@ -1400,7 +1408,7 @@ export const ReportDetailScreen: React.FC = () => {
                       </View>
                     ))}
                     {!!coachCorner.growthFocus.benchmark && (
-                      <TouchableOpacity
+                      <TrackedTouchable analyticsId="Coach Corner Nudge Tab"
                         activeOpacity={0.8}
                         style={styles.ccNudge}
                         onPress={() => setCoachTab('growNext')}
@@ -1412,7 +1420,7 @@ export const ReportDetailScreen: React.FC = () => {
                             : 'reportDetail.skillCoaching.tabGrowNext')}
                         </Text>
                         <Ionicons name="arrow-forward" size={16} color="#9A5A34" />
-                      </TouchableOpacity>
+                      </TrackedTouchable>
                     )}
                   </View>
                 ) : (
@@ -1449,7 +1457,7 @@ export const ReportDetailScreen: React.FC = () => {
                                   const key = `${gi}-${ci}-${li}`;
                                   const copied = copiedScript === key;
                                   return (
-                                    <TouchableOpacity
+                                    <TrackedTouchable analyticsId={`Coach Script Copy: ${key}`}
                                       key={li}
                                       activeOpacity={0.7}
                                       style={styles.ccSayBox}
@@ -1461,7 +1469,7 @@ export const ReportDetailScreen: React.FC = () => {
                                         size={15}
                                         color="#0B9A6B"
                                       />
-                                    </TouchableOpacity>
+                                    </TrackedTouchable>
                                   );
                                 })}
                               </View>
@@ -1481,7 +1489,7 @@ export const ReportDetailScreen: React.FC = () => {
                   {reportData.skillCoaching ?? ''}
                 </MarkdownText>
                 {skillCoachingExpanded && learnMoreBlockJsx}
-                <TouchableOpacity
+                <TrackedTouchable analyticsId="reportDetail.crisis.showLess"
                   style={styles.crisisReadMoreRow}
                   activeOpacity={0.7}
                   onPress={() => setSkillCoachingExpanded(prev => !prev)}
@@ -1490,7 +1498,7 @@ export const ReportDetailScreen: React.FC = () => {
                     {skillCoachingExpanded ? t('reportDetail.crisis.showLess') : t('reportDetail.crisis.readMore')}
                   </Text>
                   <Ionicons name={skillCoachingExpanded ? 'chevron-up' : 'chevron-down'} size={14} color="#C2694B" />
-                </TouchableOpacity>
+                </TrackedTouchable>
               </>
             )}
             </View>
@@ -1562,9 +1570,9 @@ export const ReportDetailScreen: React.FC = () => {
             every session's report pushes toward the survey until it's done,
             not just the first. */}
         {wacbCompleted === true && (
-          <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
+          <TrackedTouchable analyticsId="reportDetail.seeYouTomorrow" style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
             <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         )}
           </>
         )}

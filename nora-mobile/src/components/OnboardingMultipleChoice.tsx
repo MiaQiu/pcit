@@ -4,7 +4,8 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { TrackedTouchable } from './TrackedTouchable';
 
 export interface Option<T = string> {
   id: T;
@@ -31,7 +32,7 @@ export const OnboardingMultipleChoice = <T extends string>({
       </View>
       <View style={styles.optionsContainer}>
         {options.map((option) => (
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="✓"
             key={option.id}
             style={[
               styles.optionButton,
@@ -51,7 +52,7 @@ export const OnboardingMultipleChoice = <T extends string>({
             {selectedValue === option.id && (
               <Text style={styles.checkmark}>✓</Text>
             )}
-          </TouchableOpacity>
+          </TrackedTouchable>
         ))}
       </View>
     </>

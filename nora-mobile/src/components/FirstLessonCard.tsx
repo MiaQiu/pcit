@@ -4,11 +4,12 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Badge } from './Badge';
 import { FONTS } from '../constants/assets';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from './TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.9;
@@ -57,9 +58,9 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
         <Text style={styles.description}>{t('firstLessonCard.description')}</Text>
 
         {onPress && (
-          <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
+          <TrackedTouchable analyticsId="firstLessonCard.startReading" style={styles.button} onPress={onPress} activeOpacity={0.8}>
             <Text style={styles.buttonText}>{t('firstLessonCard.startReading')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         )}
       </View>
     </View>

@@ -8,13 +8,13 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Image,
   ImageSourcePropType,
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface IntroScreenTemplateProps {
@@ -79,13 +79,13 @@ export const IntroScreenTemplate: React.FC<IntroScreenTemplateProps> = ({
             continueText={buttonText}
           />
         ) : (
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="onNext"
             style={styles.button}
             onPress={onNext}
             activeOpacity={0.8}
           >
             <Text style={styles.buttonText}>{buttonText}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         )}
       </View>
     </View>

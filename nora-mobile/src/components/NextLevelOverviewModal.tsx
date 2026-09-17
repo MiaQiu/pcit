@@ -11,12 +11,13 @@
  */
 
 import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { Modal, View, Text, StyleSheet, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { FONTS, COLORS } from '../constants/assets';
 import { PARENT_SKILL_LEVEL_ICONS, PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
 import type { ParentSkillLevel } from '@nora/core';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface NextLevelOverviewModalProps {
   visible: boolean;
@@ -47,9 +48,9 @@ export const NextLevelOverviewModal: React.FC<NextLevelOverviewModalProps> = ({ 
 
           <Text style={styles.description}>{description}</Text>
 
-          <TouchableOpacity style={styles.commitButton} activeOpacity={0.85} onPress={onCommit}>
+          <TrackedTouchable analyticsId="reportDetail.nextLevelOverview.commitButton" style={styles.commitButton} activeOpacity={0.85} onPress={onCommit}>
             <Text style={styles.commitButtonText}>{t('reportDetail.nextLevelOverview.commitButton')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </View>
     </Modal>

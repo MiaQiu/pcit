@@ -1,6 +1,7 @@
 const express = require('express');
 const prisma = require('../services/db.cjs');
 const { discountLabel, normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 const router = express.Router();
 
@@ -43,7 +44,7 @@ router.get('/validate/:slug', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('[partner] validate error:', err);
+    logError(err, { route: 'partner#[partner] validate error', userId: req.user?.id });
     res.status(500).json({ error: 'Internal server error' });
   }
 });

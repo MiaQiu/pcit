@@ -9,7 +9,6 @@ import {
   Text,
   StyleSheet,
   Image,
-  TouchableOpacity,
   Dimensions,
   Linking,
 } from 'react-native';
@@ -19,6 +18,7 @@ import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { MaskedDinoImage } from '../../components/MaskedDinoImage';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -62,22 +62,22 @@ export const StartScreen: React.FC = () => {
         <View style={styles.spacer} />
 
         {/* Get Started Button */}
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="start.getStarted"
           style={styles.button}
           onPress={handleGetStarted}
           activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>{t('start.getStarted')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         {/* Login Button */}
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="start.alreadyHaveAccount"
           style={styles.loginButton}
           onPress={handleLogin}
           activeOpacity={0.8}
         >
           <Text style={styles.loginButtonText}>{t('start.alreadyHaveAccount')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         {/* Terms and Privacy Policy */}
         <Text style={styles.termsText}>

@@ -5,15 +5,14 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
-import { useTranslation } from 'react-i18next';
-import amplitudeService from '../services/amplitudeService';
-import { TranscriptPanel } from '../components/TranscriptPanel';
+import { useTranslation } from 'react-i18next';import { TranscriptPanel } from '../components/TranscriptPanel';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 type SkillUtterancesRouteProp = RouteProp<RootStackParamList, 'SkillUtterances'>;
 
@@ -59,7 +58,6 @@ export const SkillUtterancesScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Skill Utterances', { skillKey, recordingId });
   }, []);
 
   const displayName = t(`skillInfo.${nsKey}.displayName` as any);
@@ -70,9 +68,9 @@ export const SkillUtterancesScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <Text style={styles.headerTitle}>{t('skillInfo.utterancesHeader', { name: displayName })}</Text>
         <View style={{ width: 28 }} />
       </View>
@@ -84,7 +82,7 @@ export const SkillUtterancesScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Skill info card linking to full explanation */}
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="skillInfo.learnAbout"
           style={[styles.explainCard, { borderColor: accentColor }]}
           onPress={() => navigation.navigate('SkillExplanation', { skillKey, target })}
           activeOpacity={0.7}
@@ -99,7 +97,7 @@ export const SkillUtterancesScreen: React.FC = () => {
           {whatItIs && (
             <Text style={styles.whatItIsText}>{whatItIs}</Text>
           )}
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         {/* Session goal */}
         {isPenSkill && target != null && (

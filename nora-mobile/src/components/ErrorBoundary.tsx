@@ -4,11 +4,12 @@
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { FONTS } from '../constants/assets';
 import i18n from '../i18n';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface Props {
   children: ReactNode;
@@ -75,9 +76,9 @@ export class ErrorBoundary extends Component<Props, State> {
               {this.state.errorInfo.componentStack}
             </Text>
           )}
-          <TouchableOpacity style={styles.button} onPress={this.handleReset}>
+          <TrackedTouchable analyticsId="Error Boundary Retry" style={styles.button} onPress={this.handleReset}>
             <Text style={styles.buttonText}>{i18n.t('errorBoundary.tryAgain')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       );
     }

@@ -20,6 +20,7 @@ const {
   UploadError,
   ProcessingError
 } = require('./server/utils/errors.cjs');
+const { logError } = require('./server/utils/errorLogger.cjs');
 
 const app = express();
 
@@ -475,16 +476,7 @@ app.use((req, res, next) => {
 // Global error handler - must be last middleware
 app.use((err, req, res, next) => {
   // Log error with full context
-  console.error('[ERROR]', {
-    timestamp: new Date().toISOString(),
-    path: req.path,
-    method: req.method,
-    userId: req.user?.id,
-    error: err.message,
-    code: err.code || 'INTERNAL_ERROR',
-    statusCode: err.statusCode || 500,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-  });
+  logError(err, { path: req.path, method: req.method, userId: req.user?.id });
 
   // TODO Phase 3: Send to Sentry (error monitoring)
   // if (process.env.SENTRY_DSN && (!err.statusCode || err.statusCode >= 500)) {

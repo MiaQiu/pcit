@@ -9,9 +9,10 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, LayoutAnimation, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS } from '../constants/assets';
+import { TrackedTouchable } from './TrackedTouchable';
 
 export const REPORT_CARD_COLORS = {
   title: '#3D2A1E',
@@ -88,17 +89,17 @@ export const ReportCard: React.FC<ReportCardProps> = ({
     </View>
   );
 
-  const Container = onPress ? TouchableOpacity : View;
+  const Container = onPress ? TrackedTouchable : View;
 
   return (
     <Container
       style={[styles.card, { backgroundColor }, style]}
-      {...(onPress ? { onPress, activeOpacity: 0.85 } : {})}
+      {...(onPress ? { onPress, analyticsId: title || 'ReportCard', activeOpacity: 0.85 } : {})}
     >
       {expandable ? (
-        <TouchableOpacity activeOpacity={0.7} onPress={toggleExpanded}>
+        <TrackedTouchable analyticsId="toggleExpanded" activeOpacity={0.7} onPress={toggleExpanded}>
           {header}
-        </TouchableOpacity>
+        </TrackedTouchable>
       ) : header}
 
       {showContent && children}

@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Animated, Easing } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, Animated, Easing } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -21,6 +21,7 @@ import amplitudeService from '../services/amplitudeService';
 import * as userStorage from '../lib/userStorage';
 import { PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
 import { deriveGoalFromLevel, DerivedGoal, REDUCE_GOAL_TYPES, GOAL_TYPE_SKILL_LABEL_KEY, extractMetricForGoalType, criteriaForGoalType } from '../utils/goalFallback';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 type ReportScreenV3RouteProp = RouteProp<RootStackParamList, 'ReportV3'>;
 
@@ -396,13 +397,13 @@ const FirstSessionReport: React.FC<{
     >
       {/* Hero */}
       <View style={styles.fsHeroSection}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="onBack"
           onPress={onBack}
           style={styles.heroBackButton}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <View style={styles.fsHeroRow}>
           <View style={styles.fsHeroTextCol}>
             <Text style={styles.fsHeadline}>{t('reportV2.firstSession.headline')}</Text>
@@ -456,10 +457,10 @@ const FirstSessionReport: React.FC<{
         </View>
       </View>
 
-      <TouchableOpacity style={styles.continueButton} onPress={onContinue} activeOpacity={0.85}>
+      <TrackedTouchable analyticsId="reportV2.firstSession.cta" style={styles.continueButton} onPress={onContinue} activeOpacity={0.85}>
         <Text style={styles.continueButtonText}>{t('reportV2.firstSession.cta')}</Text>
         <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
-      </TouchableOpacity>
+      </TrackedTouchable>
 
       {devBar}
     </ScrollView>
@@ -515,7 +516,6 @@ export const ReportScreen_v3: React.FC = () => {
   const [devScenario, setDevScenario] = useState<'live' | 'first' | 'inProgress' | 'achieved' | 'regressed' | 'levelup'>('live');
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Report', { recordingId, version: 'v3' });
     loadReportData();
     loadParentSkillLevel();
   }, [recordingId]);
@@ -636,9 +636,9 @@ export const ReportScreen_v3: React.FC = () => {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.mainPurple} />
@@ -654,9 +654,9 @@ export const ReportScreen_v3: React.FC = () => {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color="#E74C3C" />
@@ -789,13 +789,13 @@ export const ReportScreen_v3: React.FC = () => {
       <Text style={styles.devBarLabel}>PREVIEW (dev only)</Text>
       <View style={styles.devBarRow}>
         {(['live', 'first', 'inProgress', 'achieved', 'regressed', 'levelup'] as const).map(s => (
-          <TouchableOpacity
+          <TrackedTouchable analyticsId={`Dev Scenario: ${s}`}
             key={s}
             onPress={() => { setDevScenario(s); setShowDepositCelebration(true); }}
             style={[styles.devChip, devScenario === s && styles.devChipActive]}
           >
             <Text style={[styles.devChipText, devScenario === s && styles.devChipTextActive]}>{s}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         ))}
       </View>
     </View>
@@ -823,13 +823,13 @@ export const ReportScreen_v3: React.FC = () => {
       >
         {/* Hero */}
         <View style={[styles.heroSection, heroConfig.centered && styles.heroSectionCentered]}>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Back"
             onPress={handleBack}
             style={[styles.heroBackButton, heroConfig.centered && styles.heroBackButtonAbs]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
 
           {heroConfig.centered ? (
             <>
@@ -924,7 +924,7 @@ export const ReportScreen_v3: React.FC = () => {
         )}
 
         {/* Parenting Level — taps through to the full level ladder */}
-        <TouchableOpacity style={styles.levelCard} activeOpacity={0.85} onPress={handleLevelCardPress}>
+        <TrackedTouchable analyticsId="reportV2.parentingLevel" style={styles.levelCard} activeOpacity={0.85} onPress={handleLevelCardPress}>
           <View style={styles.levelHeaderRow}>
             <View style={styles.levelStarBadge}>
               <Ionicons name="star" size={13} color={COLORS.mainPurple} />
@@ -981,12 +981,12 @@ export const ReportScreen_v3: React.FC = () => {
               </View>
             </View>
           )}
-        </TouchableOpacity>
+        </TrackedTouchable>
 
-        <TouchableOpacity style={styles.continueButton} onPress={handleContinueToCoaching} activeOpacity={0.85}>
+        <TrackedTouchable analyticsId="reportV2.continueToCoaching" style={styles.continueButton} onPress={handleContinueToCoaching} activeOpacity={0.85}>
           <Text style={styles.continueButtonText}>{t('reportV2.continueToCoaching')}</Text>
           <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         {devBar}
       </ScrollView>

@@ -7,7 +7,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +18,7 @@ import { GetReadySectionBody } from '../components/GetReadySectionBody';
 import { useLessonService } from '../contexts/AppContext';
 import type { RootStackParamList } from '../navigation/types';
 import type { DemoVideo } from '@nora/core';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 interface GetReadySectionScreenProps {
   route: {
@@ -109,7 +110,7 @@ const DemoVideoPlayer: React.FC = () => {
           }}
         />
         {!hasStarted && (
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Play Video"
             style={styles.playOverlay}
             activeOpacity={0.8}
             onPress={async () => {
@@ -125,7 +126,7 @@ const DemoVideoPlayer: React.FC = () => {
             <View style={styles.playButton}>
               <Ionicons name="play" size={28} color="#fff" />
             </View>
-          </TouchableOpacity>
+          </TrackedTouchable>
         )}
       </View>
       {!!playbackError && <Text style={styles.videoErrorText}>Playback error: {playbackError}</Text>}
@@ -141,14 +142,14 @@ export const GetReadySectionScreen: React.FC<GetReadySectionScreenProps> = ({ ro
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.navRow}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="Back"
           onPress={() => navigation.goBack()}
           style={styles.backCircle}
           activeOpacity={0.7}
           accessibilityLabel="Back"
         >
           <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

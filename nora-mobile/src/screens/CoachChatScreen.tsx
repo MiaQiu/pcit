@@ -30,6 +30,8 @@ import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
+import { reportError } from '../utils/reportError';
 
 const PSYCH_REQUESTED_KEY = '@nora_psych_requested';
 
@@ -362,6 +364,7 @@ export const CoachChatScreen: React.FC = () => {
       amplitudeService.trackEvent('Psychologist Requested', {});
       navigation.navigate('PsychologistChat');
     } catch (err) {
+      reportError(err, 'CoachChatScreen.CoachChatScreen');
       amplitudeService.trackEvent('Psychologist Request Error', { error: err instanceof Error ? err.message : String(err) });
       Alert.alert(t('common.error'), t('coachChat.errorSendRequest'));
     } finally {
@@ -373,14 +376,14 @@ export const CoachChatScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="chevron-down" size={26} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{t('coachChat.headerTitle')}</Text>
           <Text style={styles.headerSub}>{t('coachChat.headerSub')}</Text>
         </View>
-        <TouchableOpacity onPress={handleRequestHuman} activeOpacity={0.7} style={styles.humanBtn}>
+        <TrackedTouchable analyticsId="coachChat.talkToPsychologist" onPress={handleRequestHuman} activeOpacity={0.7} style={styles.humanBtn}>
           <Ionicons name="person-circle-outline" size={16} color={COLORS.mainPurple} />
           <Text style={styles.humanBtnText}>{t('coachChat.talkToPsychologist')}</Text>
           {psychUnreadCount > 0 && (
@@ -388,7 +391,7 @@ export const CoachChatScreen: React.FC = () => {
               <Text style={styles.psychBadgeText}>{psychUnreadCount > 9 ? '9+' : psychUnreadCount}</Text>
             </View>
           )}
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
 
       <KeyboardAvoidingView
@@ -476,14 +479,14 @@ export const CoachChatScreen: React.FC = () => {
             maxLength={1000}
             returnKeyType="default"
           />
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Send"
             style={[styles.sendBtn, (!input.trim() || loading) && styles.sendBtnDisabled]}
             onPress={handleSend}
             disabled={!input.trim() || loading}
             activeOpacity={0.8}
           >
             <Ionicons name="arrow-up" size={20} color="#fff" />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </KeyboardAvoidingView>
 
@@ -500,9 +503,9 @@ export const CoachChatScreen: React.FC = () => {
               /* ── T&C view ── */
               <>
                 <View style={styles.termsHeader}>
-                  <TouchableOpacity onPress={() => setShowTerms(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <TrackedTouchable analyticsId="Close Terms" onPress={() => setShowTerms(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                     <Ionicons name="arrow-back" size={22} color={COLORS.textDark} />
-                  </TouchableOpacity>
+                  </TrackedTouchable>
                   <Text style={[styles.modalTitle, { marginBottom: 0, flex: 1, marginLeft: 10 }]}>{t('coachChat.terms.title')}</Text>
                 </View>
 
@@ -531,9 +534,9 @@ export const CoachChatScreen: React.FC = () => {
                 </ScrollView>
 
                 <View style={styles.modalActions}>
-                  <TouchableOpacity style={styles.modalConfirm} onPress={() => setShowTerms(false)} activeOpacity={0.8}>
+                  <TrackedTouchable analyticsId="coachChat.iUnderstand" style={styles.modalConfirm} onPress={() => setShowTerms(false)} activeOpacity={0.8}>
                     <Text style={styles.modalConfirmText}>{t('coachChat.iUnderstand')}</Text>
-                  </TouchableOpacity>
+                  </TrackedTouchable>
                 </View>
               </>
             ) : (
@@ -543,7 +546,7 @@ export const CoachChatScreen: React.FC = () => {
                 <Text style={styles.modalBody}>{t('coachChat.psychologistReplyTime')}</Text>
 
                 {/* Terms checkbox */}
-                <TouchableOpacity
+                <TrackedTouchable analyticsId="coachChat.agreeToTerms"
                   style={styles.checkRow}
                   onPress={() => setAgreedToTerms(v => !v)}
                   activeOpacity={0.7}
@@ -552,21 +555,21 @@ export const CoachChatScreen: React.FC = () => {
                     {agreedToTerms && <Ionicons name="checkmark" size={13} color="#fff" />}
                   </View>
                   <Text style={styles.checkLabel}>{t('coachChat.agreeToTerms')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setShowTerms(true)} activeOpacity={0.7} style={styles.termsLink}>
+                </TrackedTouchable>
+                <TrackedTouchable analyticsId="coachChat.readTerms" onPress={() => setShowTerms(true)} activeOpacity={0.7} style={styles.termsLink}>
                   <Text style={styles.checkLabelLink}>{t('coachChat.readTerms')}</Text>
-                </TouchableOpacity>
+                </TrackedTouchable>
 
                 {/* Actions */}
                 <View style={styles.modalActions}>
-                  <TouchableOpacity
+                  <TrackedTouchable analyticsId="common.cancel"
                     style={styles.modalCancel}
                     onPress={() => { setShowHumanModal(false); setShowTerms(false); }}
                     activeOpacity={0.7}
                   >
                     <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
+                  </TrackedTouchable>
+                  <TrackedTouchable analyticsId="coachChat.sendRequest"
                     style={[styles.modalConfirm, (!agreedToTerms || submittingHuman) && styles.modalConfirmDisabled]}
                     onPress={handleSubmitHuman}
                     disabled={!agreedToTerms || submittingHuman}
@@ -576,7 +579,7 @@ export const CoachChatScreen: React.FC = () => {
                       ? <ActivityIndicator size="small" color="#fff" />
                       : <Text style={styles.modalConfirmText}>{t('coachChat.sendRequest')}</Text>
                     }
-                  </TouchableOpacity>
+                  </TrackedTouchable>
                 </View>
               </>
             )}

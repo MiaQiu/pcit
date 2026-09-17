@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Image, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,7 @@ import { COLORS, FONTS } from '../constants/assets';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import { useRecordingService } from '../contexts/AppContext';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 type HomeCardComponentType = 'TEXT' | 'IMAGE' | 'OPEN_DETAILS' | 'USER_INPUT';
 
@@ -54,14 +55,14 @@ const TextComponent: React.FC<{ text: string }> = ({ text }) => {
 const OpenDetailsComponent: React.FC<{ component: HomeCardComponentData; navigation: any }> = ({ component, navigation }) => {
   const { t } = useTranslation();
   return (
-    <TouchableOpacity
+    <TrackedTouchable analyticsId="homeV2.subActionLearnMore"
       style={styles.ctaRow}
       onPress={() => navigation.push('HomeCardDetail', { cardId: component.linkedCardId })}
       activeOpacity={0.7}
     >
       <Text style={styles.ctaLabel}>{component.ctaLabel || t('homeV2.subActionLearnMore')}</Text>
       <Ionicons name="chevron-forward" size={18} color={COLORS.mainPurple} />
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 
@@ -99,13 +100,13 @@ const UserInputComponent: React.FC<{ cardId: string; component: HomeCardComponen
         placeholderTextColor={LESSON_TEXT_GREY}
         multiline
       />
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="Save"
         style={[styles.saveButton, (!answer.trim() || saving) && styles.saveButtonDisabled]}
         onPress={handleSave}
         disabled={!answer.trim() || saving}
       >
         <Text style={styles.saveButtonText}>{saving ? 'Saving...' : saved ? 'Saved' : 'Save'}</Text>
-      </TouchableOpacity>
+      </TrackedTouchable>
     </View>
   );
 };
@@ -180,13 +181,13 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
     return (
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <View style={styles.navRow}>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Close"
             style={styles.closeButton}
             onPress={() => navigation.goBack()}
             accessibilityLabel="Close"
           >
             <Ionicons name="chevron-down" size={24} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
         <View style={styles.centered}>
           <Text style={styles.errorText}>{error || 'Content not found'}</Text>
@@ -200,21 +201,21 @@ export const HomeCardDetailScreen: React.FC<HomeCardDetailScreenProps> = ({ rout
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.navRow}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="Close"
           style={styles.closeButton}
           onPress={() => navigation.goBack()}
           accessibilityLabel="Close"
         >
           <Ionicons name="chevron-down" size={24} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <View style={{ flex: 1 }} />
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="Share"
           style={styles.shareButton}
           onPress={handleShare}
           accessibilityLabel="Share"
         >
           <Ionicons name="share-outline" size={20} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
 
       {detail.imageUrl && (

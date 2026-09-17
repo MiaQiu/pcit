@@ -8,7 +8,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   ActivityIndicator,
   Alert,
@@ -26,6 +25,8 @@ import { useSubscription } from '../../contexts/SubscriptionContext';
 import { prefetchLessons } from '../../services/lessonDataCache';
 import { REVENUECAT_CONFIG } from '../../config/revenuecat';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
+import { reportError } from '../../utils/reportError';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -196,6 +197,7 @@ export const SubscriptionScreen: React.FC = () => {
         }
       }
     } catch (error: any) {
+      reportError(error, 'SubscriptionScreen.handleStartTrial');
       console.error('Purchase error:', error);
 
       // Already owned — navigate directly since purchase is confirmed
@@ -261,6 +263,7 @@ export const SubscriptionScreen: React.FC = () => {
         );
       }
     } catch (error) {
+      reportError(error, 'SubscriptionScreen.handleRestore');
       Alert.alert(
         t('subscription.restoreFailedTitle'),
         t('subscription.restoreFailedMessage'),
@@ -306,6 +309,7 @@ export const SubscriptionScreen: React.FC = () => {
         CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] })
       );
     } catch (error: any) {
+      reportError(error, 'SubscriptionScreen.handleSkip');
       console.error('Complete onboarding error:', error);
       Alert.alert(
         t('common.error'),
@@ -330,6 +334,7 @@ export const SubscriptionScreen: React.FC = () => {
         })
       );
     } catch (error) {
+      reportError(error, 'SubscriptionScreen.handleLogout');
       console.error('Logout error:', error);
       Alert.alert(t('common.error'), t('subscription.logoutError'));
     }
@@ -371,7 +376,7 @@ export const SubscriptionScreen: React.FC = () => {
           {/* Plan selector */}
           <View style={styles.planSelector}>
             {/* Monthly */}
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="subscription.planMonthly"
               style={[styles.planCard, selectedPlan === 'monthly' && styles.planCardSelected]}
               onPress={() => setSelectedPlan('monthly')}
               activeOpacity={0.8}
@@ -389,10 +394,10 @@ export const SubscriptionScreen: React.FC = () => {
                   {t('subscription.perMonth', { defaultValue: '/month' })}
                 </Text>
               </View>
-            </TouchableOpacity>
+            </TrackedTouchable>
 
             {/* Yearly */}
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="subscription.popular"
               style={[styles.planCard, selectedPlan === 'yearly' && styles.planCardSelected]}
               onPress={() => setSelectedPlan('yearly')}
               activeOpacity={0.8}
@@ -423,7 +428,7 @@ export const SubscriptionScreen: React.FC = () => {
                   {t('subscription.billedAnnuallyAt', { price: yearlyPriceString, defaultValue: `billed annually at ${yearlyPriceString}` })}
                 </Text>
               </View>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
 
           <View style={styles.featureList}>
@@ -449,16 +454,16 @@ export const SubscriptionScreen: React.FC = () => {
           <Text style={styles.link} onPress={handleOpenPrivacy}>{t('subscription.privacyPolicy')}</Text>.
         </Text>
 
-        <TouchableOpacity style={styles.restoreButton} onPress={handleRestore} activeOpacity={0.8}>
+        <TrackedTouchable analyticsId="subscription.restorePurchase" style={styles.restoreButton} onPress={handleRestore} activeOpacity={0.8}>
           <Text style={styles.restoreText}>{t('subscription.restorePurchase')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         <View style={{ height: 140 }} />
       </ScrollView>
 
       {/* Fixed Bottom Button */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="subscription.subscribeNow"
           style={[styles.startButton, (isLoading || subscriptionLoading) && styles.startButtonDisabled]}
           onPress={handleStartTrial}
           disabled={isLoading || subscriptionLoading}
@@ -471,11 +476,11 @@ export const SubscriptionScreen: React.FC = () => {
               {t('subscription.subscribeNow')}
             </Text>
           )}
-        </TouchableOpacity>
+        </TrackedTouchable>
 
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip} activeOpacity={0.8}>
+        <TrackedTouchable analyticsId="subscription.skipForNow" style={styles.skipButton} onPress={handleSkip} activeOpacity={0.8}>
           <Text style={styles.skipText}>{t('subscription.skipForNow', { defaultValue: 'Continue with free version' })}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

@@ -10,12 +10,13 @@
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { useRecordingService } from '../contexts/AppContext';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface TranscriptSegment {
   speaker: string;
@@ -314,7 +315,7 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({ recordingId, i
                       const isSelected = selectedCategory === category;
                       const color = getTagColor(CATEGORY_TAGS[category][0]);
                       return (
-                        <TouchableOpacity
+                        <TrackedTouchable analyticsId={`Transcript Category Filter: ${category}`}
                           key={category}
                           onPress={() => handleSelectCategory(category)}
                           disabled={!isAvailable}
@@ -333,7 +334,7 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({ recordingId, i
                           >
                             {t(`transcript.pcitTags.${category}`, category)}
                           </Text>
-                        </TouchableOpacity>
+                        </TrackedTouchable>
                       );
                     })}
                   </View>
@@ -344,7 +345,7 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({ recordingId, i
 
           {selectedCategory && subFilterTags.length > 1 && (
             <View style={[styles.subFilterRow, restrictToInitialCategory && styles.subFilterRowStandalone]}>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="transcript.subFilterAll"
                 onPress={() => handleSelectSubFilter(null)}
                 style={[
                   styles.subFilterBadge,
@@ -356,12 +357,12 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({ recordingId, i
                 <Text style={[styles.subFilterBadgeText, tagSubFilter === null ? styles.subFilterBadgeTextActive : styles.subFilterBadgeTextInactive]}>
                   {t('transcript.subFilterAll', 'All')}
                 </Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
               {subFilterTags.map((tag) => {
                 const isActive = tagSubFilter === tag;
                 const color = getTagColor(tag);
                 return (
-                  <TouchableOpacity
+                  <TrackedTouchable analyticsId={`Transcript Tag Filter: ${tag}`}
                     key={tag}
                     onPress={() => handleSelectSubFilter(tag)}
                     style={[
@@ -372,7 +373,7 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({ recordingId, i
                     <Text style={[styles.subFilterBadgeText, isActive ? styles.subFilterBadgeTextActive : styles.subFilterBadgeTextInactive]}>
                       {t(`transcript.pcitTags.${tag}`, tag)}
                     </Text>
-                  </TouchableOpacity>
+                  </TrackedTouchable>
                 );
               })}
             </View>
@@ -385,14 +386,14 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({ recordingId, i
                   ? t('transcript.matchCounter', { current: matchCursor + 1, total: matchIndices.length })
                   : t('transcript.noMatches')}
               </Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="transcript.next"
                 style={[styles.nextButton, matchIndices.length === 0 && styles.nextButtonDisabled]}
                 onPress={handleNextMatch}
                 disabled={matchIndices.length === 0}
               >
                 <Text style={styles.nextButtonText}>{t('transcript.next')}</Text>
                 <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
           )}
         </View>

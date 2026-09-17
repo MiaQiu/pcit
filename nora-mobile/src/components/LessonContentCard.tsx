@@ -5,9 +5,10 @@
  */
 
 import React from 'react';
-import { View, Text, Image, StyleSheet, ViewStyle, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/assets';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface LessonContentCardProps {
   children: React.ReactNode;
@@ -53,13 +54,13 @@ export const LessonContentCard: React.FC<LessonContentCardProps> = ({
 
       {/* Share Button - positioned outside card to avoid being covered by ellipse */}
       {onShare && (
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="onShare"
           style={styles.shareButton}
           onPress={onShare}
           activeOpacity={0.7}
         >
           <Ionicons name="share-outline" size={24} color={COLORS.mainPurple} />
-        </TouchableOpacity>
+        </TrackedTouchable>
       )}
 
       {/* Card Content */}

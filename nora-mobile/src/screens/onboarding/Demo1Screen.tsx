@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Image,
-  TouchableOpacity,
   ScrollView,
   Dimensions,
 } from 'react-native';
@@ -13,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_SIZE = SCREEN_WIDTH - 48;
@@ -106,13 +106,13 @@ export const Demo1Screen: React.FC = () => {
 
       {/* Button */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="onboarding.letsGo"
           style={styles.button}
           onPress={() => { amplitudeService.trackOnboardingStepCompleted('demo1', 4); navigation.navigate('Demo1B'); }}
           activeOpacity={0.85}
         >
           <Text style={styles.buttonText}>{t('onboarding.letsGo')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

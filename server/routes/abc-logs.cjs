@@ -2,6 +2,7 @@ const express = require('express');
 const { requireAuth } = require('../middleware/auth.cjs');
 const prisma = require('../services/db.cjs');
 const { llmCall } = require('../llm/gateway.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -47,7 +48,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({ log });
   } catch (err) {
-    console.error('[abc-logs] POST error:', err);
+    logError(err, { route: 'abc-logs#[abc-logs] POST error', userId: req.user?.id });
     res.status(500).json({ error: 'internal server error' });
   }
 });
@@ -73,7 +74,7 @@ router.get('/', async (req, res) => {
 
     res.json({ logs, total });
   } catch (err) {
-    console.error('[abc-logs] GET error:', err);
+    logError(err, { route: 'abc-logs#[abc-logs] GET error', userId: req.user?.id });
     res.status(500).json({ error: 'internal server error' });
   }
 });
@@ -245,7 +246,7 @@ Tone & Formatting [STRICT]: Speak directly to the parent using "you" and "your c
 
     res.json({ insight, insightId: saved.id, cached: false });
   } catch (err) {
-    console.error('[abc-logs] GET /insights error:', err);
+    logError(err, { route: 'abc-logs#[abc-logs] GET /insights error', userId: req.user?.id });
     res.status(500).json({ error: 'internal server error' });
   }
 });
@@ -261,7 +262,7 @@ router.get('/insights/latest', async (req, res) => {
     if (!record) return res.status(404).json({ error: 'no insight found' });
     res.json({ insightId: record.id, insight: record.insight, followUpRating: record.followUpRating, followUpAt: record.followUpAt, createdAt: record.createdAt });
   } catch (err) {
-    console.error('[abc-logs] GET /insights/latest error:', err);
+    logError(err, { route: 'abc-logs#[abc-logs] GET /insights/latest error', userId: req.user?.id });
     res.status(500).json({ error: 'internal server error' });
   }
 });
@@ -287,7 +288,7 @@ router.post('/insights/:id/followup', async (req, res) => {
 
     res.json({ insightId: updated.id, followUpRating: updated.followUpRating });
   } catch (err) {
-    console.error('[abc-logs] POST /insights/:id/followup error:', err);
+    logError(err, { route: 'abc-logs#[abc-logs] POST /insights/:id/followup error', userId: req.user?.id });
     res.status(500).json({ error: 'internal server error' });
   }
 });

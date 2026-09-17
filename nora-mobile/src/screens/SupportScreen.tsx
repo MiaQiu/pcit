@@ -8,7 +8,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   TextInput,
   Alert,
@@ -22,6 +21,8 @@ import { FONTS, COLORS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
+import { reportError } from '../utils/reportError';
 
 interface AttachedFile {
   uri: string;
@@ -41,7 +42,6 @@ export const SupportScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Support');
   }, []);
 
   const handleAttachFile = async () => {
@@ -72,6 +72,7 @@ export const SupportScreen: React.FC = () => {
         Alert.alert(t('common.success'), t('support.filesAttached', { count: newFiles.length }));
       }
     } catch (error) {
+      reportError(error, 'SupportScreen.handleAttachFile');
       console.error('Error picking document:', error);
       Alert.alert(t('common.error'), t('support.errorAttachFile'));
     }
@@ -199,12 +200,12 @@ export const SupportScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="Back"
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <Text style={styles.headerTitle}>{t('support.headerTitle')}</Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -249,14 +250,14 @@ export const SupportScreen: React.FC = () => {
           <View style={styles.section}>
             <View style={styles.attachmentHeader}>
               <Text style={styles.label}>{t('support.attachments')}</Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="support.attachFile"
                 style={styles.attachButton}
                 onPress={handleAttachFile}
                 activeOpacity={0.7}
               >
                 <Ionicons name="attach" size={20} color="#8C49D5" />
                 <Text style={styles.attachButtonText}>{t('support.attachFile')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
 
             {attachedFiles.length > 0 && (
@@ -272,12 +273,12 @@ export const SupportScreen: React.FC = () => {
                       </Text>
                       <Text style={styles.fileSize}>{formatFileSize(file.size)}</Text>
                     </View>
-                    <TouchableOpacity
+                    <TrackedTouchable analyticsId={`Remove Attachment: ${file.name}`}
                       onPress={() => handleRemoveFile(index)}
                       style={styles.removeButton}
                     >
                       <Ionicons name="close-circle" size={20} color="#EF4444" />
-                    </TouchableOpacity>
+                    </TrackedTouchable>
                   </View>
                 ))}
               </View>
@@ -285,7 +286,7 @@ export const SupportScreen: React.FC = () => {
           </View>
 
           {/* Submit Button */}
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="support.submitButton"
             style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
             onPress={handleSubmit}
             disabled={isSubmitting}
@@ -296,7 +297,7 @@ export const SupportScreen: React.FC = () => {
             ) : (
               <Text style={styles.submitButtonText}>{t('support.submitButton')}</Text>
             )}
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </ScrollView>
     </SafeAreaView>

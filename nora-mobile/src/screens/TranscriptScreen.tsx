@@ -8,15 +8,14 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { TranscriptPanel } from '../components/TranscriptPanel';
-import { useTranslation } from 'react-i18next';
-import amplitudeService from '../services/amplitudeService';
+import { useTranslation } from 'react-i18next';import { TrackedTouchable } from '../components/TrackedTouchable';
 
 type TranscriptScreenRouteProp = RouteProp<RootStackParamList, 'Transcript'>;
 
@@ -27,15 +26,14 @@ export const TranscriptScreen: React.FC = () => {
   const { recordingId, initialCategory } = route.params;
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Transcript', { recordingId });
   }, [recordingId]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <Text style={styles.headerTitle}>{t('transcript.headerTitle')}</Text>
         <View style={{ width: 28 }} />
       </View>

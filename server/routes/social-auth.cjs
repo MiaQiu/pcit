@@ -7,6 +7,7 @@ const { OAuth2Client } = require('google-auth-library');
 const prisma = require('../services/db.cjs');
 const { generateAccessToken, generateRefreshToken } = require('../utils/jwt.cjs');
 const { encryptUserData, decryptUserData } = require('../utils/encryption.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 // Apple JWKS cache
 let appleKeysCache = null;
@@ -164,7 +165,7 @@ router.post('/social', async (req, res) => {
       refreshToken,
     });
   } catch (error) {
-    console.error('Social auth error:', error);
+    logError(error, { route: 'social-auth#Social auth error', userId: req.user?.id });
     res.status(500).json({ error: 'Social authentication failed' });
   }
 });
@@ -211,7 +212,7 @@ async function verifyFacebookToken(accessToken) {
       name: meData.name || null,
     };
   } catch (error) {
-    console.error('Facebook token verification error:', error);
+    logError(error, { route: 'social-auth#Facebook token verification error' });
     return null;
   }
 }
@@ -257,7 +258,7 @@ async function verifyAppleToken(idToken) {
       email: payload.email || null,
     };
   } catch (error) {
-    console.error('Apple token verification error:', error);
+    logError(error, { route: 'social-auth#Apple token verification error' });
     return null;
   }
 }
@@ -301,7 +302,7 @@ async function verifyGoogleToken(idToken) {
       picture: payload.picture,
     };
   } catch (error) {
-    console.error('Google token verification error:', error);
+    logError(error, { route: 'social-auth#Google token verification error' });
     return null;
   }
 }

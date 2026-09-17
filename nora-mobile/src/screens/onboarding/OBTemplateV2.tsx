@@ -17,7 +17,6 @@ import React from 'react';
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
   Text,
   Image,
   ImageSourcePropType,
@@ -25,6 +24,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -100,9 +100,9 @@ export const OBTemplateV2: React.FC<OBTemplateV2Props> = ({
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity style={styles.button} onPress={onNext} activeOpacity={0.85}>
+        <TrackedTouchable analyticsId="onboarding.continue" style={styles.button} onPress={onNext} activeOpacity={0.85}>
           <Text style={styles.buttonText}>{t('onboarding.continue')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

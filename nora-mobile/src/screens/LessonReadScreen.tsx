@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, ScrollView, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, ScrollView, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +21,7 @@ import { ShareSheet } from '../components/ShareSheet';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import { useLessonService } from '../contexts/AppContext';
 import { RootStackParamList, RootStackNavigationProp } from '../navigation/types';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 const SENTENCES_PER_FALLBACK_PARAGRAPH = 7;
 const isUnformattedBlob = (text: string): boolean =>
@@ -83,15 +84,15 @@ export const LessonReadScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
+        <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <Text style={styles.headerTitle} numberOfLines={1}>{t('lessonRead.title')}</Text>
         <View style={styles.shareGroup}>
           {shareCount > 0 && <Text style={styles.shareCount}>{shareCount}</Text>}
-          <TouchableOpacity onPress={handleShare} style={styles.backCircle} activeOpacity={0.7} accessibilityLabel="Share">
+          <TrackedTouchable analyticsId="Share" onPress={handleShare} style={styles.backCircle} activeOpacity={0.7} accessibilityLabel="Share">
             <Ionicons name="share-outline" size={18} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </View>
 

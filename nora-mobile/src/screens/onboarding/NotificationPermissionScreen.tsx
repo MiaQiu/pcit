@@ -10,7 +10,6 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
-  TouchableOpacity,
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +24,7 @@ import { requestNotificationPermissions, scheduleDailyLessonReminder } from '../
 import { useAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -121,7 +121,7 @@ export const NotificationPermissionScreen: React.FC = () => {
 
       {/* Fixed bottom bar — mirrors SubscriptionScreen */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="notificationPermission.enabling"
           style={styles.enableButton}
           onPress={handleEnable}
           disabled={isRequesting}
@@ -130,10 +130,10 @@ export const NotificationPermissionScreen: React.FC = () => {
           <Text style={styles.enableButtonText}>
             {isRequesting ? t('notificationPermission.enabling') : t('notificationPermission.enable')}
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleNotNow} activeOpacity={0.7}>
+        </TrackedTouchable>
+        <TrackedTouchable analyticsId="notificationPermission.notNow" onPress={handleNotNow} activeOpacity={0.7}>
           <Text style={styles.notNowText}>{t('notificationPermission.notNow')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

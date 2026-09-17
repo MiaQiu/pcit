@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, ActivityIndicator, AppState, Linking, InteractionManager } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, Image, ActivityIndicator, AppState, Linking, InteractionManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect, useRoute, RouteProp } from '@react-navigation/native';
 import { RootTabParamList } from '../navigation/types';
@@ -32,6 +32,8 @@ import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useToast } from '../components/ToastManager';
 import amplitudeService from '../services/amplitudeService';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from '../components/TrackedTouchable';
+import { reportError } from '../utils/reportError';
 
 type RecordingState = 'idle' | 'ready' | 'recording' | 'paused' | 'completed';
 
@@ -318,11 +320,6 @@ export const RecordScreen: React.FC = () => {
     React.useCallback(() => {
       if (isCheckingLimitRef.current) return;
 
-      // Track record screen viewed
-      amplitudeService.trackScreenView('Record', {
-        screen: 'record',
-      });
-
       // Auto-start: show RecordingCard immediately, defer startRecording until
       // after the tab navigation animation completes so the JS bridge is free.
       if (route.params?.autoStart) {
@@ -409,14 +406,6 @@ export const RecordScreen: React.FC = () => {
     // Check network before starting
     if (!isOnline) {
       showToast('Recording requires internet connection', 'error');
-      setRecordingState('idle');
-      return;
-    }
-
-    // Guard against the autoStart route (Home screen "Record"/"Record Again")
-    // bypassing the discipline lock via a stale sessionMode left over from
-    // switching tabs in RecordingGuideCard.
-    if (sessionMode === 'discipline' && isDisciplineLocked) {
       setRecordingState('idle');
       return;
     }
@@ -610,6 +599,7 @@ export const RecordScreen: React.FC = () => {
           // Upload completed successfully - end background task
           await endBackgroundTask();
         } catch (error) {
+          reportError(error, 'RecordScreen.handleAutoStop');
           console.error('Upload failed:', error);
           // End background task even on failure
           await endBackgroundTask();
@@ -643,6 +633,7 @@ export const RecordScreen: React.FC = () => {
         }
       }
     } catch (error) {
+      reportError(error, 'RecordScreen.handleAutoStop');
       console.error('[RecordScreen] Error handling auto-stop:', error);
       isProcessingRef.current = false; // Allow future recovery attempts
       await endBackgroundTask();
@@ -709,6 +700,7 @@ export const RecordScreen: React.FC = () => {
         try {
           await uploadProcessing.startUpload(uri, durationSeconds, uploadMode);
         } catch (error) {
+          reportError(error, 'RecordScreen.stopRecording');
           console.error('Upload failed:', error);
 
           // Use handleApiError for user-friendly message
@@ -740,6 +732,7 @@ export const RecordScreen: React.FC = () => {
         }
       }
     } catch (error) {
+      reportError(error, 'RecordScreen.stopRecording');
       console.error('Failed to stop recording:', error);
       // Native recording may have already auto-stopped (common when user stops late).
       // Try to recover the pending recording from UserDefaults before surfacing an error.
@@ -826,7 +819,12 @@ export const RecordScreen: React.FC = () => {
 
             <View style={[styles.guideCardContainer, { marginTop:24 }]}>
               <RecordingGuideCard onModeChange={(mode, locked) => {
-                setSessionMode(mode);
+                // Never let the actual session mode land on 'discipline' while
+                // locked — the guide card still shows the discipline tab (with
+                // its lock overlay) for preview, but the session itself falls
+                // back to specialTime/CDI so a stale mode can't start a PDI
+                // session it shouldn't.
+                setSessionMode(locked ? 'specialTime' : mode);
                 setIsDisciplineLocked(locked);
               }} />
             </View>
@@ -894,7 +892,7 @@ export const RecordScreen: React.FC = () => {
       {/* Fixed Bottom Action Buttons */}
       {recordingState === 'idle' && !uploadProcessing.isProcessing && (
         <View style={styles.fixedButtonContainer}>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="record.recordButton"
             style={[styles.actionButton, !canStartSession && styles.actionButtonDisabled]}
             onPress={handleStartSession}
             disabled={!canStartSession}
@@ -902,20 +900,20 @@ export const RecordScreen: React.FC = () => {
           >
             <Text style={styles.actionButtonText}>{t('record.recordButton')}</Text>
             <Ionicons name="mic" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       )}
 
       {recordingState === 'recording' && !uploadProcessing.isProcessing && (
         <View style={styles.fixedButtonContainer}>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="record.stopRecordingButton"
             style={[styles.actionButton, styles.stopButton]}
             onPress={handleStopRecording}
             activeOpacity={0.8}
           >
             <Text style={styles.actionButtonText}>{t('record.stopRecordingButton')}</Text>
             <Ionicons name="stop" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       )}
     </SafeAreaView>

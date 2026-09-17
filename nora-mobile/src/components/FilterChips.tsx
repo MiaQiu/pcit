@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { FlatList, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { FlatList, Text, StyleSheet } from 'react-native';
 import { FONTS, COLORS } from '../constants/assets';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface Chip {
   key: string;
@@ -33,7 +34,7 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
       renderItem={({ item }) => {
         const isActive = item.key === activeKey;
         return (
-          <TouchableOpacity
+          <TrackedTouchable analyticsId={`Filter Chip: ${item.label}`}
             style={[styles.chip, isActive && styles.chipActive]}
             onPress={() => onSelect(item.key)}
             activeOpacity={0.7}
@@ -41,7 +42,7 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
             <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
               {item.label}
             </Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         );
       }}
     />

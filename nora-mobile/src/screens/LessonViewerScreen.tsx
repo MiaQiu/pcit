@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Share, PanResponder, Clipboard, AppState, TextInput } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert, Share, PanResponder, Clipboard, AppState, TextInput } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProgressBar } from '../components/ProgressBar';
 import { Button } from '../components/Button';
@@ -31,6 +31,8 @@ import { getMockLessonDetail } from '../data/mockLessons';
 import amplitudeService from '../services/amplitudeService';
 import { getTodaySingapore } from '../utils/timezone';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from '../components/TrackedTouchable';
+import { reportError } from '../utils/reportError';
 
 type VirtualItem = { type: 'segment'; segment: LessonSegment } | { type: 'quiz' };
 
@@ -427,6 +429,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
 
       setLoading(false);
     } catch (error: any) {
+      reportError(error, 'LessonViewerScreen.loadLessonDetail');
       console.error('Failed to load lesson:', error);
 
       if (error instanceof UserNotFoundError || error.name === 'UserNotFoundError') {
@@ -491,6 +494,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       // Reset timer for next segment
       setStartTime(new Date());
     } catch (error: any) {
+      reportError(error, 'LessonViewerScreen.updateProgress');
       console.error('Failed to update progress:', error);
 
       // Handle lesson not found (404) - lesson may have been updated/deleted
@@ -537,6 +541,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         }
       );
     } catch (error: any) {
+      reportError(error, 'LessonViewerScreen.completeLesson');
       console.error('Failed to mark lesson as completed:', error);
 
       // Handle lesson not found (404) - lesson may have been updated/deleted
@@ -590,6 +595,7 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         attemptNumber: response.attemptNumber,
       });
     } catch (error) {
+      reportError(error, 'LessonViewerScreen.handleSubmitTextInput');
       console.error('Failed to submit text input:', error);
       Alert.alert(t('common.error'), t('lessonViewer.errorEvaluateResponse'));
     } finally {
@@ -760,24 +766,24 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         <View style={StyleSheet.absoluteFillObject}>
           <CustomHtmlSegment html={currentSegment.customHtml} />
         </View>
-        <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={handleContinue} activeOpacity={1} />
+        <TrackedTouchable analyticsId="Continue" style={StyleSheet.absoluteFillObject} onPress={handleContinue} activeOpacity={1} />
         <SafeAreaView edges={['top', 'left', 'right']} style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
           <View style={styles.header}>
             <View style={styles.progressBarContainer}>
               <ProgressBar totalSegments={totalSegments} currentSegment={currentSegmentIndex + 1} height={4} />
             </View>
-            <TouchableOpacity style={styles.closeButton} onPress={handleClose} accessibilityLabel="Close lesson">
+            <TrackedTouchable analyticsId="Close lesson" style={styles.closeButton} onPress={handleClose} accessibilityLabel="Close lesson">
               <Text style={styles.closeIcon}>×</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         </SafeAreaView>
         <SafeAreaView edges={['left', 'right']} style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
           <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
             <View style={styles.buttonRow}>
               <View style={styles.halfButton}>
-                <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7}>
+                <TrackedTouchable analyticsId="lessonViewer.buttonBack" style={styles.backButton} onPress={handleBack} activeOpacity={0.7}>
                   <Text style={styles.backButtonText}>{t('lessonViewer.buttonBack')}</Text>
-                </TouchableOpacity>
+                </TrackedTouchable>
               </View>
               <View style={styles.halfButton}>
                 <Button onPress={handleContinue} height={48}>{buttonText}</Button>
@@ -803,13 +809,13 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
         </View>
 
         {/* Close Button */}
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="Close lesson"
           style={styles.closeButton}
           onPress={handleClose}
           accessibilityLabel="Close lesson"
         >
           <Text style={styles.closeIcon}>×</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
 
       {/* Scrollable Content */}
@@ -929,13 +935,13 @@ export const LessonViewerScreen: React.FC<LessonViewerScreenProps> = ({ route, n
       <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
         <View style={styles.buttonRow}>
           <View style={styles.halfButton}>
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="lessonViewer.buttonBack"
               style={styles.backButton}
               onPress={handleBack}
               activeOpacity={0.7}
             >
               <Text style={styles.backButtonText}>{t('lessonViewer.buttonBack')}</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
           <View style={styles.halfButton}>
             <Button

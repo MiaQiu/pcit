@@ -5,6 +5,7 @@ const { requireAuth } = require('../middleware/auth.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
 const { grantReferralReward } = require('../services/referralReward.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 let _stripe = null;
 function stripe() {
@@ -73,7 +74,7 @@ router.get('/prices', async (req, res) => {
 
     res.json({ monthly: monthlyData, yearly: yearlyData, savingsPercent, yearlyPerMonth });
   } catch (error) {
-    console.error('Stripe prices fetch error:', error);
+    logError(error, { route: 'stripe#Stripe prices fetch error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch prices' });
   }
 });
@@ -157,7 +158,7 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
 
     res.json({ url: session.url, sessionId: session.id });
   } catch (error) {
-    console.error('Stripe create-checkout-session error:', error);
+    logError(error, { route: 'stripe#Stripe create-checkout-session error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create checkout session' });
   }
 });
@@ -184,7 +185,7 @@ router.post('/create-portal-session', requireAuth, async (req, res) => {
 
     res.json({ url: session.url });
   } catch (error) {
-    console.error('Stripe create-portal-session error:', error);
+    logError(error, { route: 'stripe#Stripe create-portal-session error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create billing portal session' });
   }
 });
