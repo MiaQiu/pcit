@@ -141,35 +141,68 @@ const ABOUT_CHILD = {
 };
 
 // ── first-session-insights ─────────────────────────────────────────────────────
-// First-session-only: what we learned about the child, plus a parent
-// strengths / interaction-style section (see generateFirstSessionInsights)
+// First-session-only "first coaching report" (see generateFirstSessionInsights,
+// cdiCoaching-first_v3.txt): three sections telling one story — what we
+// learned about the child (2 named strengths + 1 plain challenge sentence),
+// the skills underneath the parent's target issue(s) (3 named+defined
+// skills), and how they'll practice together (a fixed paragraph, split into
+// sentences — no dynamic quote/example; that mechanism was removed).
 const FIRST_SESSION_INSIGHTS = {
   type: 'object',
   properties: {
-    child_learnings: {
+    what_we_learned: {
       type: 'object',
       properties: {
-        strengths: { type: 'array', items: { type: 'string' } },
-      },
-      required: ['strengths'],
-    },
-    parent_learnings: {
-      type: 'object',
-      properties: {
-        superpowers: { type: 'array', items: { type: 'string' } },
-        interaction_style: {
-          type: 'object',
-          properties: {
-            dimensions_explanation:   { type: 'string' },
-            effectiveness_explanation: { type: 'string' },
+        // First two bullets — a named strength + explanation each, same
+        // {name, definition}-style split as skills_underneath.skills.
+        strengths: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name:        { type: 'string' },
+              explanation: { type: 'string' },
+            },
+            required: ['name', 'explanation'],
           },
-          required: ['dimensions_explanation', 'effectiveness_explanation'],
+        },
+        // Third bullet — the normalizing acknowledgment, no label to split out.
+        challenge: { type: 'string' },
+      },
+      required: ['strengths', 'challenge'],
+    },
+    skills_underneath: {
+      type: 'object',
+      properties: {
+        opening_sentence: { type: 'string' },
+        skills: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name:       { type: 'string' },
+              definition: { type: 'string' },
+            },
+            required: ['name', 'definition'],
+          },
         },
       },
-      required: ['superpowers', 'interaction_style'],
+      required: ['opening_sentence', 'skills'],
+    },
+    how_we_practice_together: {
+      type: 'object',
+      properties: {
+        // The fixed "How We'll Practice Together" paragraph (with the 3
+        // tailored skills woven in), split one sentence per array entry so
+        // the app can render it as short chunks instead of one paragraph.
+        // The dimension bars themselves come from Session.tagCounts, not
+        // generated here.
+        sentences: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['sentences'],
     },
   },
-  required: ['child_learnings', 'parent_learnings'],
+  required: ['what_we_learned', 'skills_underneath', 'how_we_practice_together'],
 };
 
 // ── pdi-two-choices ───────────────────────────────────────────────────────────

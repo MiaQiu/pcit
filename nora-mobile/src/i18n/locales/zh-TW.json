@@ -605,7 +605,7 @@
       "title": "你的互動風格",
       "viewTips": "檢視建議",
       "detailedBreakdown": "詳細分析",
-      "confidenceBuilders": "自信建立",
+      "confidenceBuilders": "技能建立",
       "confidenceBuildersSubtitle": "提升自信與專注",
       "playInterruptions": "遊戲干擾",
       "playInterruptionsSubtitle": "可以一起改進的地方",
@@ -685,6 +685,12 @@
     },
     "whatWeLearnt": {
       "title": "我們對你的瞭解"
+    },
+    "skillsUnderneath": {
+      "title": "困擾背後的技能"
+    },
+    "howWePracticeTogether": {
+      "title": "我們將如何一起練習"
     },
     "developmental": {
       "shareMessage": "用 Nora 追蹤{{childName}}的發展里程碑——來看看進展吧！"

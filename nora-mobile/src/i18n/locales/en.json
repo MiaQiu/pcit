@@ -605,7 +605,7 @@
       "title": "Your Interaction Style",
       "viewTips": "View tips",
       "detailedBreakdown": "Detailed Breakdown",
-      "confidenceBuilders": "Confidence Builders",
+      "confidenceBuilders": "Skill Builders",
       "confidenceBuildersSubtitle": "Boost confidence & attention",
       "playInterruptions": "Play Interruptions",
       "playInterruptionsSubtitle": "Opportunities to improve together",
@@ -686,6 +686,12 @@
     },
     "whatWeLearnt": {
       "title": "What we learnt about you"
+    },
+    "skillsUnderneath": {
+      "title": "The skills underneath the issues"
+    },
+    "howWePracticeTogether": {
+      "title": "How We'll Practice Together"
     },
     "developmental": {
       "shareMessage": "Tracking {{childName}}'s developmental milestones with Nora — check out the progress!"

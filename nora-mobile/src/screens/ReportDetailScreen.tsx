@@ -56,6 +56,21 @@ import { deriveGoalFromLevel as deriveGoalNumbersFromLevel } from '../utils/goal
 
 type ReportDetailRouteProp = RouteProp<RootStackParamList, 'ReportDetail'>;
 
+// First-session report visual language — same "rotating palette per list item"
+// + "Warm Elevation" accent pattern SkillImproveScreen.tsx uses, applied to
+// generateFirstSessionInsights' bullets/skills/quote blocks.
+const FIRST_SESSION_PALETTE: { color: string; background: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { color: '#8C49D5', background: '#F5EAFB', icon: 'sparkles' },
+  { color: '#3B82F6', background: '#DBEAFE', icon: 'chatbubble-ellipses' },
+  { color: '#F97316', background: '#FFEDD5', icon: 'heart' },
+];
+// "What we learned" bullets 1-2 are the child's strengths; bullet 3 is the
+// normalizing acknowledgment of the parent's target issue — same green/orange
+// split as the Confidence Builders / Play Interruptions bars elsewhere, so
+// "strength" and "growth area" read consistently across the whole report.
+const FIRST_SESSION_STRENGTH_ACCENT  = { color: '#3BA55D', background: '#DDF3E4', icon: 'heart' as const };
+const FIRST_SESSION_CHALLENGE_ACCENT = { color: '#E08A3C', background: '#FBE7D2', icon: 'leaf' as const };
+
 // Same API-label → i18n-key mapping used by ReportScreen.tsx / ReportScreen_v2.tsx.
 const SKILL_LABEL_I18N_KEY: Record<string, string> = {
   'Praise (Labeled)': 'praiseLabeleld',
@@ -900,12 +915,38 @@ export const ReportDetailScreen: React.FC = () => {
   );
 
   const childInsightBodyJsx = (
-    showFirstSession && firstSessionInsights?.childStrengths?.length ? (
-      <>
-        {firstSessionInsights.childStrengths.map((strength, i) => (
-          <Text key={i} style={styles.childInsightBody}>{strength}</Text>
-        ))}
-      </>
+    showFirstSession && (firstSessionInsights?.whatWeLearned?.strengths?.length || firstSessionInsights?.whatWeLearned?.challenge) ? (
+      <View style={styles.fsSkillList}>
+        {/* Points 1-2: the child's strengths — same badge-name + plain-text-
+            explanation treatment as "The skills underneath the issues". */}
+        {firstSessionInsights.whatWeLearned.strengths?.map((strength, i) => {
+          if (!strength.name) return null;
+          const strengthName = strength.name.replace(/\*\*/g, '');
+          return (
+            <View key={i} style={styles.fsSkillItem}>
+              <View style={[styles.fsSkillPill, { backgroundColor: FIRST_SESSION_STRENGTH_ACCENT.background }]}>
+                <Ionicons name={FIRST_SESSION_STRENGTH_ACCENT.icon} size={11} color={FIRST_SESSION_STRENGTH_ACCENT.color} />
+                <Text style={[styles.fsSkillPillText, { color: FIRST_SESSION_STRENGTH_ACCENT.color }]}>{strengthName}</Text>
+              </View>
+              {!!strength.explanation && (
+                <MarkdownText style={styles.fsSkillDefinition}>{strength.explanation}</MarkdownText>
+              )}
+            </View>
+          );
+        })}
+
+        {/* Point 3: the normalizing acknowledgment — no label, tinted row. */}
+        {!!firstSessionInsights.whatWeLearned.challenge && (
+          <View style={[styles.fsBulletRow, styles.fsBulletRowChallenge]}>
+            <View style={[styles.fsBulletIconBadge, { backgroundColor: FIRST_SESSION_CHALLENGE_ACCENT.background }]}>
+              <Ionicons name={FIRST_SESSION_CHALLENGE_ACCENT.icon} size={14} color={FIRST_SESSION_CHALLENGE_ACCENT.color} />
+            </View>
+            <View style={styles.fsBulletTextCol}>
+              <MarkdownText style={styles.fsBulletText}>{firstSessionInsights.whatWeLearned.challenge}</MarkdownText>
+            </View>
+          </View>
+        )}
+      </View>
     ) : (
       <>
         {aboutChildItem?.Title && (
@@ -1108,6 +1149,62 @@ export const ReportDetailScreen: React.FC = () => {
     </ReportCard>
   ) : null;
 
+  // "The skills underneath the issues" — first-session only, section 2 of
+  // generateFirstSessionInsights (cdiCoaching-first_v3.txt): an opening
+  // sentence + 3 named, defined skills.
+  const skillsUnderneathCardJsx = showFirstSession && firstSessionInsights?.skillsUnderneath ? (
+    <ReportCard title={t('reportDetail.skillsUnderneath.title')}>
+      {!!firstSessionInsights.skillsUnderneath.openingSentence && (
+        <MarkdownText style={styles.wwlBody}>{firstSessionInsights.skillsUnderneath.openingSentence}</MarkdownText>
+      )}
+      <View style={styles.fsSkillList}>
+        {firstSessionInsights.skillsUnderneath.skills?.map((skill, i) => {
+          if (!skill.name) return null;
+          const palette = FIRST_SESSION_PALETTE[i % FIRST_SESSION_PALETTE.length];
+          // Strip any bold markers the model may have put around the skill
+          // name itself — it already gets its own emphasis from the pill.
+          const skillName = skill.name.replace(/\*\*/g, '');
+          return (
+            <View key={i} style={styles.fsSkillItem}>
+              <View style={[styles.fsSkillPill, { backgroundColor: palette.background }]}>
+                <Ionicons name={palette.icon} size={11} color={palette.color} />
+                <Text style={[styles.fsSkillPillText, { color: palette.color }]}>{skillName}</Text>
+              </View>
+              {!!skill.definition && (
+                <MarkdownText style={styles.fsSkillDefinition}>{skill.definition}</MarkdownText>
+              )}
+            </View>
+          );
+        })}
+      </View>
+    </ReportCard>
+  ) : null;
+
+  // "How we'll practice together" — first-session only, section 3. A single
+  // fixed paragraph (with the 3 target skills woven in), split into short
+  // sentence chunks, followed by the real dimension bars (Confidence
+  // Builders / Play Interruptions) computed from this session's tagCounts.
+  // All text is model-translated (not client i18n) so it stays in the same
+  // language as the rest of the report — see cdiCoaching-first_v3.txt's
+  // fidelity/format-prompt notes. Combines the former separate "How we'll
+  // help" (with its dynamic quote/coaching-opportunity example) and "Your
+  // starting point snapshot" cards into one section.
+  const howWePracticeTogetherCardJsx = showFirstSession && firstSessionInsights?.howWePracticeTogether ? (
+    <ReportCard title={t('reportDetail.howWePracticeTogether.title')}>
+      {firstSessionInsights.howWePracticeTogether.sentences?.map((sentence, i) => (
+        <MarkdownText
+          key={i}
+          style={StyleSheet.flatten([styles.wwlBody, i > 0 && styles.fsSentenceSpaced])}
+        >
+          {sentence}
+        </MarkdownText>
+      ))}
+      <View style={styles.wwlInteractionBars}>
+        {interactionBarsJsx}
+      </View>
+    </ReportCard>
+  ) : null;
+
   // Real first-session parents almost never have the WACB survey done yet.
   const surveyCardJsx = wacbCompleted === false ? (
     <View style={styles.unlockCard}>
@@ -1164,32 +1261,24 @@ export const ReportDetailScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {showFirstSession ? (
           <>
-            {/* 1. Hero — first-session welcome (image + message) */}
-            <View style={styles.fsHeroCard}>
-              <Image source={REPORT_DETAIL_DRAGON} style={styles.fsHeroImage} resizeMode="contain" />
-              <Text style={styles.fsHeroIntro}>{t('reportDetail.firstSession.heroIntro', { childName })}</Text>
-              <Text style={styles.fsHeroMessage}>
-                {t('reportDetail.firstSession.heroMessage', { childName })}
-              </Text>
-            </View>
-
-            {/* Crisis Moment (or crisis fallback) */}
+            {/* 1. Crisis Moment (or crisis fallback) */}
             {crisisCardJsx}
 
             {/* 2. What we learned about {childName} */}
-            <ReportCard icon="heart" title={t('reportDetail.childInsight.title', { childName })}>
+            <ReportCard title={t('reportDetail.childInsight.title', { childName })}>
               {childInsightBodyJsx}
             </ReportCard>
 
-            {/* 3. Top Moment */}
-            <ReportCard icon="star" title={t('reportDetail.topMoment.title')} tip={celebration || undefined}>
-              {topMomentBody}
-            </ReportCard>
+            {/* 3. The skills underneath the issues */}
+            {skillsUnderneathCardJsx}
 
-            {/* 4. What we learnt about you (parent superpowers + interaction
-                style, including the expandable bars formerly in their own
-                "Today's Interaction Style" card) */}
-            {whatWeLearntAboutYouCardJsx}
+            {/* 4. How we'll practice together */}
+            {howWePracticeTogetherCardJsx}
+
+            {/* Hero, Top Moment, and "What we learnt about you" (parent
+                superpowers + interaction style) are hidden on the first-
+                session report — kept defined (fsHeroCard styles,
+                whatWeLearntAboutYouCardJsx) in case they're reinstated. */}
 
             {/* Survey for personalised coaching */}
             {surveyCardJsx}
@@ -1764,6 +1853,44 @@ const styles = StyleSheet.create({
   wwlSubtitleSpaced: { marginTop: 14 },
   wwlBody: { fontFamily: FONTS.regular, fontSize: 16, lineHeight: 24, color: '#4B5563' },
   wwlInteractionBars: { marginTop: 14 },
+
+  // ── First-session report visual language (generateFirstSessionInsights) ──
+  // "What we learned" point 3 (the challenge) — colored icon badge + text.
+  fsBulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  fsBulletRowChallenge: {
+    backgroundColor: '#FBE7D2',
+    borderRadius: 14,
+    padding: 10,
+    marginTop: 2,
+  },
+  fsBulletIconBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginTop: 1,
+  },
+  fsBulletTextCol: { flex: 1 },
+  fsBulletText: { fontFamily: FONTS.regular, fontSize: 15, lineHeight: 22, color: '#4B5563' },
+
+  // "Skills underneath" — one colored pill (skill name) + definition per skill.
+  fsSkillList: { marginTop: 14, gap: 12 },
+  fsSkillItem: { gap: 6 },
+  fsSkillPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  fsSkillPillText: { fontFamily: FONTS.bold, fontSize: 12 },
+  fsSkillDefinition: { fontFamily: FONTS.regular, fontSize: 14, lineHeight: 20, color: '#4B5563' },
+
+  fsSentenceSpaced: { marginTop: 8 },
 
   // ── Today's Interaction Style — rolled-up summary ──
   interactionBreakdownLink: {

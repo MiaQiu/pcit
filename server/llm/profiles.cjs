@@ -88,6 +88,14 @@ const PROFILES = {
     temperature: 0.5,
     maxTokens:   4096,
     timeout:     120_000,
+    output:      'text',
+  },
+
+  'first-session-format': {
+    model:       'gemini',
+    temperature: 0,
+    maxTokens:   4096,
+    timeout:     90_000,
     output:      'json',
   },
 

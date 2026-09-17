@@ -10,7 +10,15 @@
  * exactly what analyzePCITCoding step 9 writes.
  *
  * Usage:
- *   node server/scripts/run-first-session-insights.cjs <sessionId> [--write]
+ *   node server/scripts/run-first-session-insights.cjs <sessionId> [--write] [--parent-goals='["tag1","tag2"]'] [--issue='["tag1","tag2"]']
+ *
+ *   --parent-goals   Override PARENT_GOALS for this run only (same raw shape
+ *                     as User.parentGoal — a JSON array string or plain
+ *                     string), formatted the same way the real pipeline does.
+ *                     Does not touch the DB user record.
+ *   --issue          Override the parent's target issue(s) (User.issue) for
+ *                     this run only, same raw shape and caveat as
+ *                     --parent-goals above.
  */
 
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
@@ -26,6 +34,9 @@ const { generateFirstSessionInsights } = require('../services/pcitAnalysisServic
 const { getUtterances } = require('../utils/utteranceUtils.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { parseUserIssues } = require('../services/priorityEngine.cjs');
+const fmt = (s) => parseUserIssues(s).map(g => g.replace(/_/g, ' ').toLowerCase()).join(', ');
+
+const formatGender = (g) => ({ BOY: 'boy', GIRL: 'girl', OTHER: 'child' }[g] || 'child');
 
 function calculateChildAge(birthYear, birthday) {
   const today = new Date();
@@ -38,12 +49,15 @@ function calculateChildAge(birthYear, birthday) {
   }
   return birthYear ? today.getFullYear() - birthYear : null;
 }
-const formatGender = (g) => ({ BOY: 'boy', GIRL: 'girl', OTHER: 'child' }[g] || 'child');
 
 const sessionId = process.argv[2];
 const DO_WRITE = process.argv.includes('--write');
+const parentGoalsArg = process.argv.find(a => a.startsWith('--parent-goals='));
+const PARENT_GOALS_OVERRIDE = parentGoalsArg ? parentGoalsArg.slice('--parent-goals='.length) : null;
+const issueArg = process.argv.find(a => a.startsWith('--issue='));
+const ISSUE_OVERRIDE = issueArg ? issueArg.slice('--issue='.length) : null;
 if (!sessionId) {
-  console.error('Usage: node server/scripts/run-first-session-insights.cjs <sessionId> [--write]');
+  console.error('Usage: node server/scripts/run-first-session-insights.cjs <sessionId> [--write] [--parent-goals=\'["tag1","tag2"]\']');
   process.exit(1);
 }
 
@@ -56,16 +70,10 @@ async function main() {
   const childName = user?.childName ? decryptSensitiveData(user.childName) : 'the child';
   const childAge = calculateChildAge(user?.childBirthYear, user?.childBirthday);
   const childGender = user?.childGender ? formatGender(user.childGender) : 'child';
-  let userName = 'there';
-  try {
-    userName = user?.name ? decryptSensitiveData(user.name) : 'there';
-  } catch (e) {
-    console.error('⚠️ Failed to decrypt parent name, using fallback:', e.message);
-  }
-  const parentGoalsText = parseUserIssues(user?.parentGoal).map(g => g.replace(/_/g, ' ').toLowerCase()).join(', ');
+  const parentGoalsText = PARENT_GOALS_OVERRIDE != null ? fmt(PARENT_GOALS_OVERRIDE) : fmt(user?.parentGoal);
+  const parentContextText = ISSUE_OVERRIDE != null ? fmt(ISSUE_OVERRIDE) : fmt(user?.issue);
 
   const utterances = await getUtterances(sessionId);
-  const tagCounts = session.tagCounts || {};
   const priorCompletedCount = await prisma.session.count({ where: { userId, analysisStatus: 'COMPLETED', id: { not: sessionId } } });
   const primaryLanguage = session.elevenLabsJson?.language_code || null;
 
@@ -73,18 +81,17 @@ async function main() {
   console.log(`Session:           ${sessionId}`);
   console.log(`mode:              ${session.mode}`);
   console.log(`Child:             ${childName}, ${childAge} yrs, ${childGender}`);
-  console.log(`Parent:            ${userName}`);
-  console.log(`Parent goals:      ${parentGoalsText || '(none)'}`);
+  console.log(`Parent goals:      ${parentGoalsText || '(none)'}${PARENT_GOALS_OVERRIDE != null ? '  (overridden for this run)' : ''}`);
+  console.log(`Parent context:    ${parentContextText || '(none)'}${ISSUE_OVERRIDE != null ? '  (overridden for this run)' : ''}`);
   console.log(`utterances:        ${utterances.length}`);
-  console.log(`tagCounts:         praise=${tagCounts.praise || 0} echo=${tagCounts.echo || 0} narration=${tagCounts.narration || 0} question=${tagCounts.question || 0} command=${tagCounts.command || 0} criticism=${tagCounts.criticism || 0}`);
   console.log(`priorCompleted:    ${priorCompletedCount}  (real isFirstSession=${priorCompletedCount === 0})`);
   console.log(`primaryLanguage:   ${primaryLanguage || '(none)'}`);
   console.log(`write:             ${DO_WRITE}`);
   console.log('='.repeat(70));
 
-  const childInfo = { name: childName, ageYears: childAge, gender: childGender, userName, parentGoalsText };
+  const childInfo = { name: childName, ageYears: childAge, gender: childGender, parentGoalsText, parentContextText };
 
-  const result = await generateFirstSessionInsights(utterances, childInfo, tagCounts, sessionId, primaryLanguage);
+  const result = await generateFirstSessionInsights(utterances, childInfo, sessionId, primaryLanguage);
   if (!result) { console.error('❌ generateFirstSessionInsights returned null'); process.exit(1); }
 
   fs.writeFileSync(path.join(OUT_DIR, `result.${sessionId}.json`), JSON.stringify(result, null, 2));

@@ -126,6 +126,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 3,
   },
   headerTitleRow: {
     flexDirection: 'row',
