@@ -116,6 +116,28 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/wacb-survey/completed
+ * Whether the user has ever submitted a survey, checking both the current
+ * ChildSnapshotSurvey table and the legacy WacbSurvey table (rows there
+ * predate the Child Snapshot rename and should still count as "completed").
+ */
+router.get('/completed', async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const [snapshotSurvey, legacySurvey] = await Promise.all([
+      prisma.childSnapshotSurvey.findFirst({ where: { userId }, select: { id: true } }),
+      prisma.wacbSurvey.findFirst({ where: { userId }, select: { id: true } }),
+    ]);
+
+    res.json({ completed: !!(snapshotSurvey || legacySurvey) });
+  } catch (error) {
+    logError(error, { route: 'wacb-survey#Get survey completion status error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to fetch survey completion status' });
+  }
+});
+
+/**
  * GET /api/wacb-survey/latest
  * Get user's most recent survey
  */

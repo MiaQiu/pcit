@@ -549,11 +549,20 @@ class AuthService {
   }
 
   /**
-   * Whether the user has ever submitted a Child Snapshot survey — used to gate
-   * the "unlock my child's plan" upsell.
+   * Whether the user has ever submitted a survey — used to gate the "unlock
+   * my child's plan" upsell. Checks both the current ChildSnapshotSurvey
+   * table and the legacy WacbSurvey table, since rows in either should
+   * count as "already completed" (see /api/wacb-survey/completed).
    */
   async hasCompletedSnapshotSurvey(): Promise<boolean> {
-    return (await this.getLatestSnapshotSurvey()) !== null;
+    const response = await this.authenticatedRequest(
+      `${this.apiUrl}/api/wacb-survey/completed`
+    );
+    if (!response.ok) {
+      throw new Error(await parseErrorResponse(response, 'Failed to fetch survey completion status'));
+    }
+    const { completed } = await response.json();
+    return completed;
   }
 
   /**
