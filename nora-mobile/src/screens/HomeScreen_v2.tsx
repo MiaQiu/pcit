@@ -856,8 +856,13 @@ export const HomeScreen_v2: React.FC = () => {
       setChatIntroDismissed(!!chatIntroDismissedVal);
 
       // ── Get Ready to Play dismissed ──
+      // Use a monotonic update: a background loadData() call started before the
+      // user dismissed the card can have its storage read resolve after the
+      // dismiss's own write+setState (async-storage callback ordering across
+      // concurrent calls isn't guaranteed), which would otherwise clobber the
+      // dismissal back to false and leave the card stuck until app restart.
       const getReadyDismissedVal = await userStorage.getItem('get_ready_to_play_dismissed');
-      setGetReadyDismissed(!!getReadyDismissedVal);
+      setGetReadyDismissed(prev => prev || !!getReadyDismissedVal);
 
       // ── Record lock (free trial exhausted) ──
       const freeLimitCached = await userStorage.getItem('@nora_free_limit_reached');
