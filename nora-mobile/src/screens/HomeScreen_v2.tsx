@@ -96,7 +96,7 @@ interface WeeklyStats {
 
 interface TodayPlanItem {
   id: string;
-  type: 'lesson' | 'record' | 'weekly-report' | 'setup-reminder' | 'log-behavior';
+  type: 'lesson' | 'record' | 'weekly-report' | 'setup-reminder' | 'log-behavior' | 'play-guide';
   label: string;
   title: string;
   duration?: string;
@@ -885,6 +885,19 @@ export const HomeScreen_v2: React.FC = () => {
       setNextLessonId(nextLesson?.id ?? null);
       const plan: TodayPlanItem[] = [];
 
+      // Show alongside the main action card's "Play Guide" — same gating
+      // (no session recorded yet AND not dismissed), so it disappears from
+      // the plan for good the moment the user dismisses it, same as the card.
+      if (!latestWithReport && !getReadyDismissedVal) {
+        plan.push({
+          id: 'play-guide',
+          type: 'play-guide',
+          label: t('homeV2.planPlayGuideLabel'),
+          title: t('homeV2.planPlayGuideTitle'),
+          isCompleted: false,
+        });
+      }
+
       const lessonForPlan = todayCompletedLesson || nextLesson;
       if (lessonForPlan) {
         plan.push({
@@ -1071,10 +1084,11 @@ export const HomeScreen_v2: React.FC = () => {
     tabNavigation.navigate('Record', { autoStart: true });
   };
 
-  const handleGetReadyPress = async () => {
-    amplitudeService.trackEvent('Home Get Ready Pressed', { source: 'main_card' });
+  const handleGetReadyPress = async (source: 'main_card' | 'today_plan' = 'main_card') => {
+    amplitudeService.trackEvent('Home Get Ready Pressed', { source });
     await userStorage.setItem('get_ready_to_play_dismissed', 'true');
     setGetReadyDismissed(true);
+    setTodayPlan(prev => prev.filter(item => item.id !== 'play-guide'));
     navigation.push('GetReadyToPlay');
   };
 
@@ -1124,6 +1138,8 @@ export const HomeScreen_v2: React.FC = () => {
       tabNavigation.navigate('Record');
     } else if (item.type === 'log-behavior') {
       navigation.push('ABCLog', { mode: 'challenging', source: 'quick' });
+    } else if (item.type === 'play-guide') {
+      handleGetReadyPress('today_plan');
     }
   };
 
@@ -1499,7 +1515,7 @@ export const HomeScreen_v2: React.FC = () => {
               <Text style={styles.massageBody}>{t('homeV2.getReadyBody')}</Text>
               <TrackedTouchable analyticsId="homeV2.getReadyButton"
                 style={styles.recordButton}
-                onPress={handleGetReadyPress}
+                onPress={() => handleGetReadyPress('main_card')}
                 activeOpacity={0.85}
               >
                 <Text style={styles.recordButtonText}>{t('homeV2.getReadyButton')}</Text>
