@@ -535,18 +535,20 @@ export const ProgressScreen: React.FC = () => {
           setLastSessionScore(null);
         }
 
+        const completedRecordings = recordings.filter(r => r.analysisStatus === 'COMPLETED');
+
         // Calculate streak based on recordings only
-        const currentStreak = calculateStreak(recordings);
+        const currentStreak = calculateStreak(completedRecordings);
 
         // Calculate stats - use lesson completion count from learning stats
         setStats({
           lessonsCompleted: learningStats?.completedLessons || 0,
-          playsessionsRecorded: recordings.length,
+          playsessionsRecorded: completedRecordings.length,
           currentStreak,
         });
 
         // Extract recording dates
-        const dates = recordings
+        const dates = completedRecordings
           .map((r) => new Date(r.createdAt))
           .filter((date) => !isNaN(date.getTime()));
         setRecordingDates(dates);
