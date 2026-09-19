@@ -55,9 +55,6 @@ scripts
 gcp-service-account.json
 *-service-account.json
 
-# Prisma migrations (will be applied via prisma migrate deploy)
-prisma/migrations
-
 # Docker
 Dockerfile
 .dockerignore

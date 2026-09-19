@@ -1275,3 +1275,21 @@ export async function deactivatePartner(id: string, opts?: ApiEnvOpts): Promise<
 export async function regeneratePartnerQrCode(id: string, opts?: ApiEnvOpts): Promise<Partner> {
   return apiFetchEnv(`/api/admin/partners/${id}/qr-code`, { method: 'POST' }, opts);
 }
+
+export interface PartnerUser {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+  subscriptionStatus: string;
+  subscriptionPlan: string;
+  subscriptionStartDate: string | null;
+  subscriptionEndDate: string | null;
+  trialStartDate: string | null;
+  trialEndDate: string | null;
+}
+
+export async function getPartnerUsers(id: string, opts?: ApiEnvOpts): Promise<PartnerUser[]> {
+  const data = await apiFetchEnv<{ users: PartnerUser[] }>(`/api/admin/partners/${id}/users`, {}, opts);
+  return data.users;
+}

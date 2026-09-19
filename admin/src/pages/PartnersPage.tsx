@@ -1,11 +1,34 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  getPartners, createPartner, updatePartner, deactivatePartner, regeneratePartnerQrCode,
-  Partner, PartnerCreatePayload,
+  getPartners, createPartner, updatePartner, deactivatePartner, regeneratePartnerQrCode, getPartnerUsers,
+  Partner, PartnerCreatePayload, PartnerUser,
 } from '../api/adminApi';
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
 
 const BASE_URL = 'https://signup.hinora.co';
+
+const SUBSCRIPTION_STATUS_COLORS: Record<string, string> = {
+  TRIAL: '#f59e0b',
+  ACTIVE: '#10b981',
+  EXPIRED: '#ef4444',
+  CANCELLED: '#6b7280',
+  NONE: '#9ca3af',
+  INACTIVE: '#9ca3af',
+};
+
+function subscriptionBadge(status: string) {
+  const color = SUBSCRIPTION_STATUS_COLORS[status] ?? '#9ca3af';
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      background: `${color}22`, color, borderRadius: 12,
+      padding: '2px 10px', fontSize: 12, fontWeight: 600,
+    }}>
+      {status}
+    </span>
+  );
+}
 
 function partnerUrl(slug: string) {
   return `${BASE_URL}/p/${slug}`;
@@ -61,6 +84,7 @@ const emptyDiscountStates = (): Record<PlanKey, DiscountFormState> => ({
 export default function PartnersPage() {
   const { env, prodToken } = useEnv();
   const callOpts = env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined;
+  const navigate = useNavigate();
 
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +104,12 @@ export default function PartnersPage() {
   const [qrPartner, setQrPartner] = useState<Partner | null>(null);
   const [qrGenerating, setQrGenerating] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
+
+  // Partner users modal
+  const [usersPartner, setUsersPartner] = useState<Partner | null>(null);
+  const [partnerUsers, setPartnerUsers] = useState<PartnerUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState<string | null>(null);
 
   useEffect(() => {
     load();
@@ -195,6 +225,20 @@ export default function PartnersPage() {
   function openQr(partner: Partner) {
     setQrError(null);
     setQrPartner(partner);
+  }
+
+  async function openUsers(partner: Partner) {
+    setUsersError(null);
+    setPartnerUsers([]);
+    setUsersPartner(partner);
+    setUsersLoading(true);
+    try {
+      setPartnerUsers(await getPartnerUsers(partner.id, callOpts));
+    } catch (e: unknown) {
+      setUsersError(e instanceof Error ? e.message : 'Failed to load users');
+    } finally {
+      setUsersLoading(false);
+    }
   }
 
   async function handleGenerateQr() {
@@ -471,7 +515,14 @@ export default function PartnersPage() {
                   <td style={{ fontSize: 13 }}>
                     {p.redemptions}{p.config.maxRedemptions ? ` / ${p.config.maxRedemptions}` : ''} signups
                     <br />
-                    <span style={{ color: '#6b7280' }}>{p.userCount} users</span>
+                    <button
+                      className="link-btn"
+                      style={{ color: '#6b7280', padding: 0, font: 'inherit', cursor: p.userCount ? 'pointer' : 'default' }}
+                      onClick={() => p.userCount && openUsers(p)}
+                      disabled={!p.userCount}
+                    >
+                      {p.userCount} users
+                    </button>
                   </td>
                   <td>{statusBadge(p.status)}</td>
                   <td style={{ fontSize: 13, color: '#6b7280' }}>{fmt(p.createdAt)}</td>
@@ -546,6 +597,57 @@ export default function PartnersPage() {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {usersPartner && (
+        <div className="modal-overlay" onClick={() => setUsersPartner(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ width: 640 }}>
+            <div className="modal-header">
+              <h2>{usersPartner.name} — signed-up users</h2>
+              <button className="btn-remove" onClick={() => setUsersPartner(null)}>&times;</button>
+            </div>
+            {usersLoading && <div className="loading-state">Loading…</div>}
+            {usersError && <div className="error-state">{usersError}</div>}
+            {!usersLoading && !usersError && (
+              partnerUsers.length === 0 ? (
+                <div className="empty-state">No signed-up users for this partner yet.</div>
+              ) : (
+                <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Joined</th>
+                        <th>Subscription</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {partnerUsers.map(u => (
+                        <tr key={u.id}>
+                          <td>{u.name || '—'}</td>
+                          <td style={{ fontSize: 13 }}>{u.email || '—'}</td>
+                          <td style={{ fontSize: 13, color: '#6b7280' }}>{fmt(u.createdAt)}</td>
+                          <td>{subscriptionBadge(u.subscriptionStatus)}</td>
+                          <td>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ fontSize: 12, padding: '2px 10px', height: 26 }}
+                              onClick={() => navigate(`/users/${u.id}`)}
+                            >
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            )}
           </div>
         </div>
       )}

@@ -9,10 +9,13 @@
  *
  * Font note: rendered via sharp's bundled librsvg/pango, which resolves
  * font-family through the container's fontconfig. Alpine ships no fonts, so
- * the Dockerfile installs fontconfig + ttf-dejavu and copies the bundled
- * Plus Jakarta Sans faces (server/assets/fonts/) into /usr/share/fonts —
- * without that, SVG <text> renders as tofu boxes. Locally (macOS) any of
- * the fallbacks below resolve, so it looks right there regardless.
+ * the Dockerfile installs fontconfig + ttf-dejavu + font-noto-cjk and copies
+ * the bundled Plus Jakarta Sans faces (server/assets/fonts/) into
+ * /usr/share/fonts — without that, SVG <text> renders as tofu boxes (CJK
+ * text does even with Plus Jakarta Sans/DejaVu alone, since neither has Han
+ * glyphs — hence 'Noto Sans CJK SC' in the FONT stack below). Locally
+ * (macOS) any of the fallbacks below resolve, so it looks right there
+ * regardless.
  */
 
 const fs = require('fs');
@@ -28,7 +31,7 @@ const MIN_HEIGHT = 400;
 const PADDING = 64;
 const THUMB_SIZE = 340;
 const THUMB_RADIUS = 20;
-const FONT = "'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, 'DejaVu Sans', sans-serif";
+const FONT = "'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, 'Noto Sans CJK SC', 'DejaVu Sans', sans-serif";
 const NORA_ICON_PATH = path.join(__dirname, '..', '..', 'public', 'images', 'nora-icon.png');
 
 function escapeXml(str) {

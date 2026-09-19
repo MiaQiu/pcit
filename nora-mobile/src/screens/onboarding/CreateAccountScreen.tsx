@@ -28,6 +28,7 @@ import amplitudeService from '../../services/amplitudeService';
 import { useTranslation } from 'react-i18next';
 import { TrackedTouchable } from '../../components/TrackedTouchable';
 import { reportError } from '../../utils/reportError';
+import * as userStorage from '../../lib/userStorage';
 
 export const CreateAccountScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -95,6 +96,13 @@ export const CreateAccountScreen: React.FC = () => {
         childConditions: ['none'],// Placeholder
       });
       handleApiSuccess(); // Mark server as up
+
+      // Without this, userStorage has no userId yet this session, so every
+      // setItem/getItem call during onboarding (reminder prefs, etc.) no-ops.
+      if (response && response.user) {
+        await userStorage.setCurrentUserId(String(response.user.id));
+        await userStorage.migrateLegacyDeviceKeys();
+      }
 
       // Track signup in Amplitude with user properties
       if (response && response.user) {

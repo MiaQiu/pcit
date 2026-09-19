@@ -1078,7 +1078,7 @@
   },
   "forceUpdate": {
     "title": "Update Required",
-    "message": "A new version of Nora is available. Please update to continue using the app.",
+    "message": "Update to our new Personalized Learning Journey, where Nora will guide you through one skill at a time!",
     "updateButton": "Update Now"
   },
   "errorBoundary": {

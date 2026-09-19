@@ -48,7 +48,7 @@ import { TrackedTouchable } from '../components/TrackedTouchable';
 
 // Admin-configurable via Settings → Branding in the admin portal; falls back
 // to this bundled asset when no custom image has been uploaded.
-const DEFAULT_COVER_IMAGE = require('../../assets/images/prof_chen.png');
+const DEFAULT_COVER_IMAGE = require('../../assets/images/dino_new.webp');
 
 const lastViewedMillis = (l: LessonCardData) =>
   l.progress?.lastViewedAt ? new Date(l.progress.lastViewedAt).getTime() : 0;
@@ -112,25 +112,7 @@ export const LearnScreen_v3: React.FC = () => {
   // copy (retry vs. "no text version yet") and without this an offline
   // blip just renders a blank modal with no way to recover.
   const [scriptError, setScriptError] = useState(false);
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
-  const [coverTitle, setCoverTitle] = useState<string | null>(null);
-  const [coverSubtitle, setCoverSubtitle] = useState<string | null>(null);
-  // Gates the initial render so the cover band never flashes the bundled
-  // default image/copy before the admin-configured branding loads.
-  const [brandingLoading, setBrandingLoading] = useState(true);
   const player = useLessonPlayer();
-
-  useEffect(() => {
-    lessonService.getBrandingImages(i18n.language)
-      .then(({ learnCoverUrl, learnTitle, learnSubtitle }) => {
-        setCoverImageUrl(learnCoverUrl);
-        setCoverTitle(learnTitle);
-        setCoverSubtitle(learnSubtitle);
-      })
-      .catch((err) => console.error('Failed to load branding images:', err))
-      .finally(() => setBrandingLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i18n.language]);
 
   const applyData = useCallback((modulesRes: ModuleListResponse, lessonsRes: LessonListResponse) => {
     handleApiSuccess();
@@ -483,7 +465,7 @@ export const LearnScreen_v3: React.FC = () => {
 
   const languageBadgeLabel = i18n.language === 'zh-TW' ? '繁' : i18n.language === 'zh-CN' ? '简' : 'EN';
 
-  if (loading || brandingLoading) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.loadingWrap}>
         <ActivityIndicator size="large" color={COLORS.mainPurple} />
@@ -497,10 +479,9 @@ export const LearnScreen_v3: React.FC = () => {
         <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
         </TrackedTouchable>
-        <Image source={coverImageUrl ? { uri: coverImageUrl } : DEFAULT_COVER_IMAGE} style={styles.coverImage} resizeMode="cover" />
+        <Image source={DEFAULT_COVER_IMAGE} style={styles.coverImage} resizeMode="cover" />
         <View style={styles.coverTextColumn}>
-          <Text style={styles.coverTitle} numberOfLines={2}>{coverTitle ?? t('learnV3.title')}</Text>
-          <Text style={styles.coverSubtitle} numberOfLines={2}>{coverSubtitle ?? t('learnV3.subtitle')}</Text>
+          <Text style={styles.coverTitle} numberOfLines={2}>{t('learnV3.title')}</Text>
         </View>
         <TrackedTouchable analyticsId="Language" style={styles.languageBadge} onPress={handleLanguagePress}>
           <Ionicons name="language" size={14} color={COLORS.mainPurple} />
@@ -800,12 +781,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.textDark,
     lineHeight: 24,
-  },
-  coverSubtitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 13,
-    color: COLORS.textDark,
-    marginTop: 6,
   },
   languageBadge: {
     flexDirection: 'row',

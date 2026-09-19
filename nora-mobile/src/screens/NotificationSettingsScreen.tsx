@@ -47,7 +47,8 @@ interface NotificationPreferences {
 }
 
 const DEFAULT_PREFERENCES: NotificationPreferences = {
-  dailyLessonReminder: true,
+  // Also the pre-load render state — must not claim "on" before anything is saved.
+  dailyLessonReminder: false,
   dailyLessonTime: '18:30',
   practiceReminders: true,
   progressUpdates: true,
