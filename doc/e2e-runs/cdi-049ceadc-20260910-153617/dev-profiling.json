@@ -1,0 +1,142 @@
+{
+  "name": "dev-profiling",
+  "status": "OK",
+  "note": "",
+  "ms": 8796,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "dev-profiling",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 8794,
+      "inputTokens": 2637,
+      "outputTokens": 2304,
+      "thinkingTokens": 1132,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "developmentalObservation": {
+      "summary": "Eh在语言和认知方面表现出符合甚至部分超越同龄水平的发展特征，能清晰表达简单指令、命名游戏对象并主动探究因果关系（如连续提出‘为什么不可以’）。在情绪应对方面，面对积木未对齐等挫折时表现出一定的情绪脆弱性，但能在母亲支持下迅速平复并继续投入游戏。",
+      "domains": [
+        {
+          "category": "Language",
+          "framework": "Brown's Stages",
+          "developmental_status": "符合年龄预期 (Age Appropriate)",
+          "current_level": "Stage I to Stage II",
+          "benchmark_for_age": "37个月儿童应具备使用短句表达语义关系、方位词及基础否定结构的能力",
+          "detailed_observations": [
+            {
+              "insight": "语义关系与动宾组合表达",
+              "evidence": "Eh在游戏中清晰说出‘小动物出来吧’和‘下来，小动物’，展现了主体与动作的结合。"
+            },
+            {
+              "insight": "使用直接否定词",
+              "evidence": "在与母亲互动时清晰表达‘No。’进行否定回应。"
+            }
+          ],
+          "detected_milestone_keys": [
+            {
+              "milestone_key": "language_brown_stage1_semantic",
+              "evidence_summary": "Eh说‘小动物出来吧’和‘下来，小动物’，展现了语义角色表达。"
+            },
+            {
+              "milestone_key": "language_brown_stage1_negation",
+              "evidence_summary": "Eh在对话中说‘No。’表达否定。"
+            }
+          ]
+        },
+        {
+          "category": "Cognitive",
+          "framework": "Piaget/Brown Proxies",
+          "developmental_status": "发展超前 (Advanced)",
+          "current_level": "Causal Logic (因果逻辑探索期)",
+          "benchmark_for_age": "37个月儿童处于前运算阶段早期，开始发展时间序列与基础因果探究意识",
+          "detailed_observations": [
+            {
+              "insight": "事物命名与情境表征",
+              "evidence": "Eh将玩具磁力片内的角色命名为‘小动物’并进行情境操作。"
+            },
+            {
+              "insight": "主动发起因果探究提问",
+              "evidence": "Eh连续提问‘为什么这个不可以？’和‘所以说这个不--为什么这两个都不可以？’，探究物体不能闭合的物理原因。"
+            }
+          ],
+          "detected_milestone_keys": [
+            {
+              "milestone_key": "cognitive_preop_naming",
+              "evidence_summary": "Eh使用‘小动物’进行具体命名与即时表征。"
+            },
+            {
+              "milestone_key": "cognitive_causal_reasoning",
+              "evidence_summary": "Eh主动提问‘为什么这个不可以？’探寻机械结构的因果联系。"
+            }
+          ]
+        },
+        {
+          "category": "Social",
+          "framework": "Halliday Interactional",
+          "developmental_status": "符合年龄预期 (Age Appropriate)",
+          "current_level": "Transition (24-36m)",
+          "benchmark_for_age": "37个月儿童能够主动发起游戏主题，并在成人引导下维持轮流互动",
+          "detailed_observations": [
+            {
+              "insight": "游戏主题发起与引导",
+              "evidence": "Eh主动引入‘小动物出来’的游戏情节，并引导后续互动。"
+            }
+          ],
+          "detected_milestone_keys": [
+            {
+              "milestone_key": "social_interaction_initiation",
+              "evidence_summary": "Eh发出指令‘小动物出来吧’，主动发起象征性游戏互动。"
+            }
+          ]
+        },
+        {
+          "category": "Emotional",
+          "framework": "Halliday Personal",
+          "developmental_status": "符合年龄预期 (Age Appropriate)",
+          "current_level": "Assertion (24-36m)",
+          "benchmark_for_age": "37个月儿童能确立自我边界，但在遭遇失败时仍需成人协助调节情绪",
+          "detailed_observations": [
+            {
+              "insight": "边界与意愿主张",
+              "evidence": "Eh在沟通中使用坚定的‘No。’来表达自身观点与界限。"
+            }
+          ],
+          "detected_milestone_keys": [
+            {
+              "milestone_key": "emotional_personal_boundaries",
+              "evidence_summary": "Eh通过单字‘No。’直接主张个人拒绝与界限。"
+            }
+          ]
+        },
+        {
+          "category": "Connection",
+          "framework": "Biringen EA",
+          "developmental_status": "符合年龄预期 (Age Appropriate)",
+          "current_level": "Involvement (24-48m)",
+          "benchmark_for_age": "37个月儿童在互动中展现对父母的关注与情感连结",
+          "detailed_observations": [
+            {
+              "insight": "共享注意与情感依托",
+              "evidence": "Eh在受挫时向母亲寻求情感支持（母亲提供拥抱与安抚），随后重新投入互动。"
+            }
+          ],
+          "detected_milestone_keys": []
+        }
+      ]
+    },
+    "metadata": {
+      "subject": "Eh",
+      "age_months": 37,
+      "overall_impression": "在5分钟的游戏互动中，Eh表现出一定的搭建专注力与情绪敏感度，在遇到困难时会通过哭泣表达挫折感，但随后能通过提问和象征性游戏语言积极探索并尝试解决问题，亲子互动温和且富有回应性。"
+    },
+    "baselineAchieved": []
+  }
+}

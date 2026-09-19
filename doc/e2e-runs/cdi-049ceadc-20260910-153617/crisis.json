@@ -1,0 +1,38 @@
+{
+  "name": "crisis",
+  "status": "OK",
+  "note": "",
+  "ms": 8707,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "crisis-coaching",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 8707,
+      "inputTokens": 2867,
+      "outputTokens": 1925,
+      "thinkingTokens": 1478,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "heroText": "温柔陪伴，见证Eh的成长与坚持！",
+    "crisisMoment": {
+      "detected": true,
+      "title": "搭建受阻时的挫败哭泣",
+      "coaching": "当磁力片高低不平、对不齐时，Eh因为遇到困难产生了**挫败感与难过情绪**。\n\n妈妈非常敏锐地觉察到了Eh的情绪，并及时给予了**温暖的拥抱与共情**，帮助他从哭泣中慢慢平复下来，重新投入到探索搭建中。\n\n下一次遇到类似情绪时刻，可以尝试：\n• **描述感受与现状**：用柔和的声音说出他的情绪，“磁力片卡住了，这让你觉得有点着急”。\n• **减少指令与代劳**：克制想要直接指导的冲动，留出空间让Eh主导寻找解决办法。\n• **及时捕捉微小坚持**：当Eh停止哭泣重新动手时，立刻肯定他“你愿意继续尝试，真有耐心”。"
+    },
+    "skillCoaching": "在今天的游戏中，你送出了6次具体的行为表扬，每当Eh听到你肯定他的专注与耐心时，他都表现出更强的探索意愿，甚至主动修好了房子。这种明确的表扬能让Eh清晰知道自己的好行为，从而建立更强的抗挫能力。明天的目标是展开“表扬大搜寻”，争取捕捉10个具体瞬间。当Eh动作轻柔、自主调整磁力片或保持冷静时，不妨立刻用具体的语言大声夸奖他吧！",
+    "topMoment": {
+      "quote": "Parent: 胖 虎 把 这 个 中 间 的 门 打 开 了 。\nChild: 小 动 物 出 来 吧 。\nParent: 小 动 物 出 来 吧 。",
+      "utteranceNumber": 38,
+      "endUtteranceNumber": 40,
+      "context": "Eh在妈妈的鼓励下成功打开了磁力片搭建的门，兴奋地投入到角色扮演中，妈妈温暖地复述他的话语，彼此紧密同频。"
+    }
+  }
+}

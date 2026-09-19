@@ -1,0 +1,26 @@
+{
+  "name": "pcit-coding",
+  "status": "OK",
+  "note": "",
+  "ms": 54521,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "pcit-coding",
+      "model": "gemini-3.1-pro-preview",
+      "provider": "gemini",
+      "latencyMs": 54520,
+      "inputTokens": 34404,
+      "outputTokens": 5308,
+      "thinkingTokens": 5005,
+      "hasSchema": false,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "coded": 41
+  }
+}

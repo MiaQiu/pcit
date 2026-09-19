@@ -1,0 +1,38 @@
+{
+  "name": "report-highlights",
+  "status": "OK",
+  "note": "",
+  "ms": 3872,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "report-highlights",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 3871,
+      "inputTokens": 1165,
+      "outputTokens": 768,
+      "thinkingTokens": 585,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "heroText": "面对Eh拼磁力片受挫时的哭泣，你耐心地陪伴并帮助他平复情绪。",
+    "topMomentCelebration": "肯定Eh认真修好玩具，巧妙培养了他面对困难的耐受力。",
+    "interactionTip": "继续用具体的夸奖肯定Eh专注轻柔的动作，并多描述他的尝试过程。",
+    "crisisMoment": {
+      "detected": true,
+      "title": "拼搭受挫哭泣",
+      "description": "Eh因为磁力片拼不上而产生挫败感并哭泣。你在旁耐心陪伴，尝试引导他继续探索。",
+      "whatHelped": [
+        "描述动作过程",
+        "共情急躁情绪",
+        "减少直接指令"
+      ]
+    }
+  }
+}

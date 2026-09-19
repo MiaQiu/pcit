@@ -1,0 +1,109 @@
+{
+  "name": "cdi-coaching",
+  "status": "OK",
+  "note": "",
+  "ms": 56855,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "coaching-narrative",
+      "model": "gemini-3.1-pro-preview",
+      "provider": "gemini",
+      "latencyMs": 45696,
+      "inputTokens": 58427,
+      "outputTokens": 3370,
+      "thinkingTokens": 2862,
+      "hasSchema": false,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    },
+    {
+      "event": "llm_call",
+      "label": "coaching-format",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 10174,
+      "inputTokens": 3679,
+      "outputTokens": 3879,
+      "thinkingTokens": 3186,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "coachingSummary": "**1. What you did well: 关注并表扬耐心与轻柔的动作**\n* 你在游戏中敏锐地捕捉到了Eh专注和轻柔的瞬间，这些 **label praise** 直接鼓励了他用更和平、更耐心的方式对待玩具，这正是减少破坏和粗鲁行为的关键。\n* \"[咳嗽] 妈妈喜欢看Eh专心地在摆房子。\" (这让Eh明确知道，他安静、专注的行为能获得你最大的关注和肯定，从而减少粗鲁的举动。)\n* \"哎，妈妈喜欢看Eh认真地把它修好了。\" (这强化了他遇到困难时动手解决问题的耐心，帮助他建立挫折忍受力，而不是一生气就破坏玩具。)\n\n**3. Next Growth Focus — (Upgrade Strategy)**\n* 你离目标已经非常近了！精通此阶段需要在5分钟内给出10次 **label praise**，今天你成功做到了6次。\n* **升级策略：** 下一次我们的重点是“表扬大搜寻”——仔细观察Eh做对的每一个小细节（比如动作轻、遇到困难没有发脾气），并立刻用 **label praise** 大声肯定他（例如：“我喜欢你……”或“谢谢你……”）。\n\n* **减少破坏与肢体冲突**\n  * **动作轻柔:**\n    * \"我喜欢你这么轻柔地把磁力片放上去。\"\n    * \"你把小动物轻轻放进房子里，做得真好。\"\n  * **保持耐心与冷静:**\n    * \"你发现门打不开时还能保持冷静，真棒！\"\n    * \"我为你坚持尝试把屋顶盖好而感到骄傲。\"\n\n**4. Handling tricky moments**\n* **应对游戏中的挫败感**\n* 当Eh因为磁力片拼不上而哭泣时，你可能会感到有压力，并本能地想要帮他解决问题或给出指示。这很正常，但在由孩子主导的游戏中，我们希望避免给出指令，让他自己主导并寻找解决办法。\n* 你的话： \"我们把它放下来。\" 或者 \"现在试试。\"\n* **Try saying instead:** 使用 **narration** 描述他的动作：\"你在尝试把它们拼在一起。\" 或者使用 **echo** 回应他的话语和感受：\"磁力片卡住了，这让你有点着急。\"",
+    "coachingCards": null,
+    "coachingPart1": {
+      "didWell": {
+        "theme": "关注并表扬耐心与轻柔的动作",
+        "howItHelps": "你在游戏中敏锐地捕捉到了Eh专注和轻柔的瞬间，这些 **label praise** 直接鼓励了他用更和平、更耐心的方式对待玩具，这正是减少破坏和粗鲁行为的关键。",
+        "examples": [
+          {
+            "quote": "[咳嗽] 妈妈喜欢看Eh专心地在摆房子。",
+            "benefit": "这让Eh明确知道，他安静、专注的行为能获得你最大的关注和肯定，从而减少粗鲁的举动。"
+          },
+          {
+            "quote": "哎，妈妈喜欢看Eh认真地把它修好了。",
+            "benefit": "这强化了他遇到困难时动手解决问题的耐心，帮助他建立挫折忍受力，而不是一生气就破坏玩具。"
+          }
+        ]
+      },
+      "growthFocus": {
+        "heading": "下一个成长重点 — (升级策略)",
+        "gap": "你离目标已经非常近了！精通此阶段需要在5分钟内给出10次 **label praise**，今天你成功做到了6次。",
+        "benchmark": "精通此阶段需要在5分钟内给出10次 **label praise**，今天你成功做到了6次。",
+        "strategy": "下一次我们的重点是“表扬大搜寻”——仔细观察Eh做对的每一个小细节（比如动作轻、遇到困难没有发脾气），并立刻用 **label praise** 大声肯定他（例如：“我喜欢你……”或“谢谢你……”）。"
+      },
+      "wordBank": [
+        {
+          "goal": "减少破坏与肢体冲突",
+          "categories": [
+            {
+              "name": "动作轻柔",
+              "examples": [
+                "我喜欢你这么轻柔地把磁力片放上去。",
+                "你把小动物轻轻放进房子里，做得真好。"
+              ]
+            },
+            {
+              "name": "保持耐心与冷静",
+              "examples": [
+                "你发现门打不开时还能保持冷静，真棒！",
+                "我为你坚持尝试把屋顶盖好而感到骄傲。"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "coachingPart2": {
+      "summary": "当Eh因为磁力片拼不上而哭泣时，你可能会感到有压力，并本能地想要帮他解决问题或给出指示。",
+      "points": [
+        {
+          "title": "应对游戏中的挫败感",
+          "explanation": "当Eh因为磁力片拼不上而哭泣时，你可能会感到有压力，并本能地想要帮他解决问题或给出指示。这很正常，但在由孩子主导的游戏中，我们希望避免给出指令，让他自己主导并寻找解决办法。",
+          "quote": "我们把它放下来。\n现在试试。",
+          "suggestedRewrite": "使用 **narration** 描述他的动作：“你在尝试把它们拼在一起。” 或者使用 **echo** 回应他的话语和感受：“磁力片卡住了，这让你有点着急。”"
+        }
+      ]
+    },
+    "tomorrowGoal": "The Praise Hunt — Hunt for 10 specific things your child does well today and praise them out loud.",
+    "notifications": {
+      "postSession": "Nice work with Eh today! You're working on: The Praise Hunt.",
+      "tomorrow": "Hunt for 10 specific things your child does well today and praise them out loud."
+    },
+    "goalDirective": {
+      "focusSkill": "The Praise Hunt",
+      "currentNumber": 6,
+      "targetNumber": 10,
+      "goalType": "BUILD_PRAISE",
+      "actionPrompt": "Hunt for 10 specific things your child does well today and praise them out loud.",
+      "coachingTip": "Be specific: \"I love how carefully you stacked that!\" lands better than just \"Good job.\""
+    }
+  }
+}

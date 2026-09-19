@@ -1,0 +1,337 @@
+{
+  "name": "cdi-feedback",
+  "status": "OK",
+  "note": "",
+  "ms": 51518,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "combined-feedback",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 4372,
+      "inputTokens": 2236,
+      "outputTokens": 876,
+      "thinkingTokens": 690,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    },
+    {
+      "event": "llm_call",
+      "label": "skill-improve",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 4297,
+      "inputTokens": 2063,
+      "outputTokens": 338,
+      "thinkingTokens": null,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    },
+    {
+      "event": "llm_call",
+      "label": "crisis-coaching",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 6799,
+      "inputTokens": 2867,
+      "outputTokens": 1649,
+      "thinkingTokens": 1268,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    },
+    {
+      "event": "llm_call",
+      "label": "review-feedback",
+      "model": "gemini-3.1-pro-preview",
+      "provider": "gemini",
+      "latencyMs": 47142,
+      "inputTokens": 33889,
+      "outputTokens": 5582,
+      "thinkingTokens": 3927,
+      "hasSchema": false,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "topMoment": "小 动 物 出 来 吧 。\n小 动 物 出 来 吧 。",
+    "topMomentUtteranceNumber": 39,
+    "heroText": "温柔陪伴，看见Eh的专注！",
+    "crisisMoment": {
+      "detected": true,
+      "title": "拼搭受挫哭泣",
+      "coaching": "当磁力片高低不一致、无法对齐时，Eh因为**受挫感强烈**而哭泣。\n\n你及时察觉到了Eh的情绪并给予拥抱，随后用**具体表扬**肯定他重新尝试的耐心，帮助Eh迅速重拾信心并继续探索玩法。\n\n下次可以尝试：\n• **接纳情绪**：先共情并复述感受，如“磁力片没对齐让你有点着急了”。\n• **描述过程**：用陈述句描述他的动作，把探索解决的主动权留给Eh。\n• **捕捉坚持**：在Eh重新伸手尝试时，立刻肯定他的耐挫力。"
+    },
+    "skillCoaching": "今天你在游戏中送出了6次生动的具体表扬，每一次都让Eh感受到满满的安全感。特别是在拼搭遇到阻碍时，你的鼓励让Eh很快化解了沮丧，主动探索出用磁力片做小门的新玩法。明天的“表扬大搜寻”中，可以继续敏锐捕捉Eh轻柔操作与耐心尝试的每一个微小动作，用夸奖点亮他的自信心。",
+    "bondingMoment": {
+      "quote": "Parent: 胖 虎 把 这 个 中 间 的 门 打 开 了 。\nChild: 小 动 物 出 来 吧 。\nParent: 小 动 物 出 来 吧 。",
+      "utteranceNumber": 38,
+      "endUtteranceNumber": 40,
+      "context": "Eh成功把磁力片做成的门打开，满怀期待地叫小动物出来，妈妈随即温柔地呼应了他的想象力游戏。"
+    },
+    "skillImprove": {
+      "skillLabel": "The Praise Hunt",
+      "direction": "BUILD",
+      "summary": "家长在游戏中给出了不少夸奖，但部分行为描述或解决问题的时刻还可以进一步转化为具体的贴标签赞赏（Labeled Praise），从而更明确地肯定Eh的努力和动手能力。",
+      "opportunities": [
+        {
+          "title": "将行为描述升级为贴标签赞赏",
+          "explanation": "家长观察到了Eh盖好屋顶的动作并进行了描述，如果能直接夸奖Eh的动手能力或成果，强化效果会更好。",
+          "quote": "耶 ， 胖 虎 把 屋 顶 盖 好 啰 。",
+          "suggestedRewrite": "太棒了，Eh把屋顶盖得又整齐又稳固！"
+        },
+        {
+          "title": "肯定Eh探索发现的创意",
+          "explanation": "家长描述了Eh用磁力片拉起其他玩具的巧妙动作，这里正是赞赏Eh聪明想办法、有创意的绝佳时机。",
+          "quote": "哎 ， 胖 虎 用 一 片 磁 力 片 把 其 他 两 个 拉 上 来 了 。",
+          "suggestedRewrite": "Eh太聪明了，懂得用磁力片把它们拉上来，真有创意！"
+        },
+        {
+          "title": "具体赞扬Eh独立解决问题的能力",
+          "explanation": "家长注意到了Eh自己解决了卡住的问题，但只是作为陈述说出，可以直接升级为对独立思考和坚持尝试的贴标签赞赏。",
+          "quote": "哎 ， 现 在 可 以 了 ，",
+          "suggestedRewrite": "哇，Eh遇到困难自己动脑筋想办法解决了，真厉害！"
+        }
+      ]
+    },
+    "feedback": "今天游戏中虽有情绪波动，但您的陪伴让Eh感受到了接纳与支持。",
+    "example": 40,
+    "childReaction": "当听到您温暖的肯定时，Eh能够逐渐平复挫败感并重新尝试搭建。在得到您的及时呼应后，Eh也更乐意分享自己的游戏想象与探索过程。",
+    "reminder": "通过增加对具体行为的肯定与描述，您能帮助Eh在面对挑战时建立更多信心。保持温和而积极的互动，孩子将体会到更深层的安全感与快乐。",
+    "activity": "磁力片拼搭小房子",
+    "revisedFeedback": [
+      {
+        "id": "01",
+        "feedback": "赞美Eh专心摆房子，非常具体的称赞！",
+        "additional_tip": null
+      },
+      {
+        "id": "02",
+        "feedback": "赞美房子好看且五颜六色，让Eh知道你喜欢他的作品！",
+        "additional_tip": null
+      },
+      {
+        "id": "03",
+        "feedback": "描述Eh摆了很高的房子，很好的行为描述！",
+        "additional_tip": null
+      },
+      {
+        "id": "04",
+        "feedback": "在这个停顿中，可以加入行为描述来填补空白，比如‘Eh正在拿红色的磁力片’。",
+        "additional_tip": null
+      },
+      {
+        "id": "05",
+        "feedback": "称赞Eh有耐心，这能鼓励他继续保持专注！",
+        "additional_tip": null
+      },
+      {
+        "id": "08",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "10",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "11",
+        "feedback": "再次具体表扬Eh耐心地摆放，强化了他的好行为！",
+        "additional_tip": null
+      },
+      {
+        "id": "14",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "15",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "16",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "17",
+        "feedback": "描述Eh把玩具摆得很高，让Eh知道你在关注他的游戏！",
+        "additional_tip": null
+      },
+      {
+        "id": "18",
+        "feedback": "趁着Eh专心玩耍，可以用行为描述来跟随他，比如‘Eh正在看着自己搭好的屋顶’。",
+        "additional_tip": null
+      },
+      {
+        "id": "20",
+        "feedback": "像体育解说员一样描述Eh盖好屋顶，很棒的行为描述！",
+        "additional_tip": null
+      },
+      {
+        "id": "22",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "23",
+        "feedback": "尽量减少指令，可以把‘我们把它放下来’改为行为描述：‘Eh把这个放下来了。’",
+        "additional_tip": null
+      },
+      {
+        "id": "24",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "25",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "26",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "27",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "28",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "29",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "30",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "31",
+        "feedback": "称赞Eh探索怎么玩，非常好的具体赞美！",
+        "additional_tip": null
+      },
+      {
+        "id": "32",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "33",
+        "feedback": "准确描述Eh用磁力片拉起其他两片的动作，非常棒！",
+        "additional_tip": null
+      },
+      {
+        "id": "34",
+        "feedback": "赞美Eh认真修好玩具，这能增加他的自信心！",
+        "additional_tip": null
+      },
+      {
+        "id": "35",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "36",
+        "feedback": "当Eh在安静探索时，可以加入具体的赞美，例如‘妈妈很喜欢看Eh这么开心地玩磁力片’。",
+        "additional_tip": null
+      },
+      {
+        "id": "37",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "38",
+        "feedback": "描述Eh打开中间的门，完美地跟随了孩子的带领！",
+        "additional_tip": null
+      },
+      {
+        "id": "40",
+        "feedback": "准确地反映了Eh说‘小动物出来吧’，这能让Eh觉得被倾听了！",
+        "additional_tip": null
+      },
+      {
+        "id": "42",
+        "feedback": "尽量减少提问，可以把‘为什么这个不可以’改为反映孩子的话：‘Eh在想为什么这个不可以。’",
+        "additional_tip": null
+      },
+      {
+        "id": "43",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "45",
+        "feedback": "避免给孩子下指令，可以把‘现在试试’改为行为描述：‘Eh现在又试了一下。’",
+        "additional_tip": null
+      },
+      {
+        "id": "46",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "47",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "50",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "52",
+        "feedback": "提问可以转换为反映，试试把‘为什么这两个都不可以’改成：‘Eh发现这两个都不可以。’",
+        "additional_tip": null
+      },
+      {
+        "id": "53",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "56",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "57",
+        "feedback": "避免用提问测试孩子，可以把‘是怎么想到办法的’改为具体赞美：‘Eh自己想到了好办法，太聪明了！’",
+        "additional_tip": null
+      },
+      {
+        "id": "58",
+        "feedback": null,
+        "additional_tip": null
+      },
+      {
+        "id": "61",
+        "feedback": null,
+        "additional_tip": null
+      }
+    ]
+  }
+}

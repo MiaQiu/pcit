@@ -1,0 +1,37 @@
+{
+  "name": "report-highlights",
+  "status": "OK",
+  "note": "",
+  "ms": 4432,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "report-highlights",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 4431,
+      "inputTokens": 1173,
+      "outputTokens": 809,
+      "thinkingTokens": 645,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "heroText": "You validated Lucas's frustration with gentle limits and helped him practice careful play.",
+    "topMomentCelebration": "You noticed Lucas handling items carefully and encouraged his positive effort with warm praise.",
+    "interactionTip": "Adding specific details to your praise will clearly show Lucas which gentle behaviors you love seeing.",
+    "crisisMoment": {
+      "detected": true,
+      "title": "Frustration Over Limits",
+      "description": "Lucas became upset when he was not allowed to take everything out of the container. You validated his feelings to help calm his frustration before it escalated.",
+      "whatHelped": [
+        "Validating his feelings",
+        "Praising careful handling"
+      ]
+    }
+  }
+}

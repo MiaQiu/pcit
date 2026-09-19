@@ -1,0 +1,90 @@
+{
+  "name": "role-id",
+  "status": "OK",
+  "note": "",
+  "ms": 3247,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "role-id-gemini",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 3244,
+      "inputTokens": 7625,
+      "outputTokens": 794,
+      "thinkingTokens": 451,
+      "hasSchema": false,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "roleIdentificationJson": {
+      "speaker_identification": {
+        "speaker_0": {
+          "role": "ADULT",
+          "confidence": 0.99,
+          "reasoning": "Clear maternal role ('Mama'); sets behavioral boundaries, teaches motor skills ('use your thumb'), provides analogies to explain rules (rice container), and manages safety around vitamin bottle.",
+          "utterance_count": 63
+        },
+        "speaker_1": {
+          "role": "CHILD",
+          "confidence": 0.99,
+          "reasoning": "Clear child patterns (Bobby); repetitive short requests ('Mama, open', 'Mama, take out'), simple syntax, sensory play language ('Squishy, squishy'), and addressing adults as 'Mama'.",
+          "utterance_count": 58
+        },
+        "speaker_2": {
+          "role": "ADULT",
+          "confidence": 0.98,
+          "reasoning": "Clear paternal role ('Papa'); supports boundary setting ('Vitamins are expensive'), addresses the child as 'Bobby', refers to self in 3rd person ('Papa is very careful, right?'), and assists with physical interaction.",
+          "utterance_count": 16
+        }
+      },
+      "_vote_sources": [
+        "gemini"
+      ],
+      "_vote_detail": {
+        "speaker_0": {
+          "adult": 1,
+          "child": 0,
+          "winner": "adult",
+          "votes": [
+            {
+              "source": "gemini",
+              "role": "adult"
+            }
+          ]
+        },
+        "speaker_1": {
+          "adult": 0,
+          "child": 1,
+          "winner": "child",
+          "votes": [
+            {
+              "source": "gemini",
+              "role": "child"
+            }
+          ]
+        },
+        "speaker_2": {
+          "adult": 1,
+          "child": 0,
+          "winner": "adult",
+          "votes": [
+            {
+              "source": "gemini",
+              "role": "adult"
+            }
+          ]
+        }
+      }
+    },
+    "roleMap": {
+      "speaker_0": "adult",
+      "speaker_1": "child",
+      "speaker_2": "adult"
+    }
+  }
+}
