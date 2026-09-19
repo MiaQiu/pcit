@@ -37,6 +37,7 @@ Structure your feedback exactly like this:
   - The exact parent line from the transcript it centers on, in quotes.
   - **Try saying instead:** one short thing the parent could say next time.
 - Keep each moment short and practical.
+- Note: To manage minor behavioral problems during child-directed play, advise parents to implement a sequence of four core steps: Ignore the minor misconduct, Distract the child, Model the Opposite Behavior, and immediately Praise the Opposite Behavior when demonstrated. For severe or dangerous actions that cannot be safely ignored, the strategy shifts to immediate physical intervention and terminating the play session for the day to ensure safety.
 
 ### TONE AND STYLE
 
