@@ -603,51 +603,49 @@ router.get('/:id', requireAuth, async (req, res) => {
 });
 
 /**
- * GET /api/recordings/:id/analysis
- * Get detailed analysis results for a recording
+ * Builds the full session-report payload (same shape the mobile app's
+ * ReportScreen_v3 / ReportDetailScreen consume) for a given session. Shared
+ * by the mobile-facing /:id/analysis route below and the admin portal's
+ * read-only session report view (server/routes/admin.cjs), so the two never
+ * drift apart. Pass `requesterUserId` to enforce the mobile app's
+ * owns-this-session check; the admin route omits it since admins can view
+ * any user's session.
  */
-router.get('/:id/analysis', requireAuth, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.userId;
+async function buildAnalysisResponse(id, { requesterUserId } = {}) {
+  const [session, childProfiling] = await Promise.all([
+    prisma.session.findUnique({ where: { id } }),
+    prisma.childProfiling.findUnique({ where: { sessionId: id } })
+  ]);
 
-    const [session, childProfiling] = await Promise.all([
-      prisma.session.findUnique({ where: { id } }),
-      prisma.childProfiling.findUnique({ where: { sessionId: id } })
-    ]);
+  if (!session) {
+    return { status: 404, body: { error: 'Recording not found' } };
+  }
 
-    if (!session) {
-      return res.status(404).json({ error: 'Recording not found' });
-    }
+  if (requesterUserId && session.userId !== requesterUserId) {
+    return { status: 403, body: { error: 'Access denied' } };
+  }
 
-    if (session.userId !== userId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
+  console.log(`[GET-ANALYSIS] Session ${id.substring(0, 8)} - Status: ${session.analysisStatus}`);
 
-    console.log(`[GET-ANALYSIS] Session ${id.substring(0, 8)} - Status: ${session.analysisStatus}`);
-
-    if (session.analysisStatus === 'FAILED') {
-      return res.status(500).json({
+  if (session.analysisStatus === 'FAILED') {
+    return {
+      status: 500,
+      body: {
         status: 'failed',
         error: 'Report generation failed',
         message: session.analysisError || 'An error occurred while analyzing your recording. Please try recording again.',
         failedAt: session.analysisFailedAt
-      });
-    }
+      }
+    };
+  }
 
-    if (!session.transcript) {
-      return res.status(202).json({
-        status: 'processing',
-        message: 'Transcription in progress'
-      });
-    }
+  if (!session.transcript) {
+    return { status: 202, body: { status: 'processing', message: 'Transcription in progress' } };
+  }
 
-    if (session.analysisStatus !== 'COMPLETED' || !session.pcitCoding || Object.keys(session.pcitCoding).length === 0) {
-      return res.status(202).json({
-        status: 'processing',
-        message: 'PCIT analysis in progress'
-      });
-    }
+  if (session.analysisStatus !== 'COMPLETED' || !session.pcitCoding || Object.keys(session.pcitCoding).length === 0) {
+    return { status: 202, body: { status: 'processing', message: 'PCIT analysis in progress' } };
+  }
 
     console.log(`[GET-ANALYSIS] Returning COMPLETED for session ${id.substring(0, 8)}`);
 
@@ -735,7 +733,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
     let tomorrowGoal = coachingData?.tomorrowGoal || null;
     let fallbackGoalDirective = null;
     if (!tomorrowGoal) {
-      const parentProgress = await getParentSkillProgress(userId);
+      const parentProgress = await getParentSkillProgress(session.userId);
       const goalPayload = generateGoalForLevel(parentProgress.currentLevel, session.tagCounts || {}, isCDI ? 'CDI' : 'PDI', parentProgress);
       tomorrowGoal = formatGoalHeadline(goalPayload);
       fallbackGoalDirective = {
@@ -767,7 +765,7 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       topMomentEndTime = transcriptSegments[topMomentIdx].end;
     }
 
-    res.json({
+  const payload = {
       id: session.id,
       mode: session.mode,
       durationSeconds: session.durationSeconds,
@@ -848,8 +846,20 @@ router.get('/:id/analysis', requireAuth, async (req, res) => {
       // Enrichment status — lets the mobile app show partial-loading states
       enrichmentStatus: session.enrichmentStatus || null,
       enrichmentError: session.enrichmentError || null
-    });
+    };
 
+  return { status: 200, body: payload };
+}
+
+/**
+ * GET /api/recordings/:id/analysis
+ * Get detailed analysis results for a recording
+ */
+router.get('/:id/analysis', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await buildAnalysisResponse(id, { requesterUserId: req.userId });
+    res.status(result.status).json(result.body);
   } catch (error) {
     console.error('Get analysis error:', error);
     res.status(500).json({
@@ -961,3 +971,4 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.buildAnalysisResponse = buildAnalysisResponse;

@@ -132,19 +132,30 @@ export default function UserDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sessions.map((s) => (
-                    <tr key={s.id}>
-                      <td className="monospace" style={{ fontSize: 12 }}>{s.id}</td>
-                      <td>{s.mode}</td>
-                      <td>
-                        <span className={`status-badge status-${s.status.toLowerCase()}`}>
-                          {s.status}
-                        </span>
-                      </td>
-                      <td>{s.overallScore ?? '—'}</td>
-                      <td>{fmt(s.createdAt)}</td>
-                    </tr>
-                  ))}
+                  {sessions.map((s) => {
+                    const reportable = s.status === 'COMPLETED';
+                    return (
+                      <tr
+                        key={s.id}
+                        className={reportable ? 'clickable-row' : undefined}
+                        title={reportable ? 'View session report' : 'Report not available until analysis completes'}
+                        onClick={() => {
+                          if (!reportable) return;
+                          navigate(`/users/${userId}/sessions/${s.id}`, { state: { userName: user?.name } });
+                        }}
+                      >
+                        <td className="monospace" style={{ fontSize: 12 }}>{s.id}</td>
+                        <td>{s.mode}</td>
+                        <td>
+                          <span className={`status-badge status-${s.status.toLowerCase()}`}>
+                            {s.status}
+                          </span>
+                        </td>
+                        <td>{s.overallScore ?? '—'}</td>
+                        <td>{fmt(s.createdAt)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}

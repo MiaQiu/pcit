@@ -16,6 +16,7 @@ import HomeCardsPage from './pages/HomeCardsPage';
 import DemoVideosPage from './pages/DemoVideosPage';
 import UsersPage from './pages/UsersPage';
 import UserDetailPage from './pages/UserDetailPage';
+import SessionReportPage from './pages/SessionReportPage';
 import SubscriptionsPage from './pages/SubscriptionsPage';
 import FreeAccountsPage from './pages/FreeAccountsPage';
 import ChatPage from './pages/ChatPage';
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="sessions" element={<SessionsPage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="users/:userId" element={<UserDetailPage />} />
+          <Route path="users/:userId/sessions/:sessionId" element={<SessionReportPage />} />
           <Route path="users/:userId/weekly-reports" element={<UserWeeklyReportsPage />} />
           <Route path="subscriptions" element={<SubscriptionsPage />} />
           <Route path="free-accounts" element={<FreeAccountsPage />} />

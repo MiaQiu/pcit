@@ -124,6 +124,7 @@ All require admin auth.
 | `PUT` | `/api/admin/users/:id/tag` | Update user tag (`user` or `tester`) |
 | `GET` | `/api/admin/users/:id/profile` | User's completed lessons and sessions |
 | `PUT` | `/api/admin/users/:id/free-account` | Grant or revoke free account access. Body: `{ isFreeAccount: boolean }` |
+| `GET` | `/api/admin/sessions/:id/analysis` | Full session report for any user's session (score, skills, coaching, transcript, audio). Same payload shape as the mobile app's `/api/recordings/:id/analysis`; `202` while analysis is still processing, `500 {status:'failed'}` if it failed |
 
 ### Notifications
 
@@ -401,6 +402,21 @@ The send script hard-codes `daysLeft` and `trialEndFormatted` from the draft run
 - Two side-by-side tables:
   - **Lessons completed** — module, lesson title, completed date
   - **Sessions** — session ID, mode, status, score, date
+- Clicking a session row whose status is `COMPLETED` opens its **Session Report** (rows in other statuses aren't clickable — analysis isn't ready yet)
+
+### Session Report (`/users/:id/sessions/:sessionId`)
+
+Read-only admin view of a single session's report — the same underlying data the mobile app's `ReportScreen_v3.tsx` / `ReportDetailScreen.tsx` render (via the shared `buildAnalysisResponse` in `server/routes/recordings.cjs`, reused by the admin API), restyled as a plain data page rather than replicating the mobile app's card animations/layout:
+
+- Session meta (mode, date, duration) and the emotional-deposit score
+- **Confidence Builders** — Praise/Echo/Narrate progress bars
+- **Play Interruptions** — Questions/Commands/Criticism counts
+- **Top Moment** — quote + inline audio player (presigned S3 URL)
+- **Coach's Corner** — structured "went well" / "grow next" / phrasebook, or the legacy plain-text coaching note for older sessions
+- **Learning Moment** (or the legacy **Crisis Moment** card for older sessions)
+- **About the Child**, when the session has an about-child insight
+- **Tomorrow's Goal**
+- **Transcript** — collapsed by default, expandable to the full line-by-line transcript with PCIT tags
 
 ### Notifications (`/notifications`)
 

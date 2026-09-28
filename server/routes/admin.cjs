@@ -11,6 +11,7 @@ const { processRecordingWithRetry } = require('../services/processingService.cjs
 const { transcribeLessonNarration } = require('../services/transcriptionService.cjs');
 const { translateDemoVideoBundle } = require('../services/translationService.cjs');
 const { SUPPORTED_LOCALES } = require('../middleware/locale.cjs');
+const { buildAnalysisResponse: buildSessionAnalysisResponse } = require('./recordings.cjs');
 
 const uploadMiddleware = multer({
   storage: multer.memoryStorage(),
@@ -3001,6 +3002,23 @@ router.get('/sessions', requireAdminAuth, async (req, res) => {
   } catch (error) {
     logError(error, { route: 'admin#GET /admin/sessions error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
+});
+
+/**
+ * GET /api/admin/sessions/:id/analysis
+ * Full session report (same payload the mobile app's ReportScreen_v3 /
+ * ReportDetailScreen render) for any user's session — backs the "click a
+ * session to see its report" link on the User Detail page. Reuses the
+ * mobile-facing builder in recordings.cjs so the two views never drift.
+ */
+router.get('/sessions/:id/analysis', requireAdminAuth, async (req, res) => {
+  try {
+    const result = await buildSessionAnalysisResponse(req.params.id);
+    res.status(result.status).json(result.body);
+  } catch (error) {
+    logError(error, { route: 'admin#GET /admin/sessions/:id/analysis error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to fetch session analysis' });
   }
 });
 

@@ -1,4 +1,4 @@
-import { apiFetch, apiFetchEnv, setToken } from './client';
+import { apiFetch, apiFetchEnv, apiFetchRaw, setToken } from './client';
 
 // Options for calling dev or prod API
 export interface ApiEnvOpts {
@@ -1111,6 +1111,125 @@ export async function rerunCdiCoaching(sessionId: string, opts?: ApiEnvOpts): Pr
     { method: 'POST' },
     opts
   );
+}
+
+// ---- Session Report (mirrors the mobile app's ReportScreen_v3 / ReportDetailScreen data) ----
+
+export interface SessionReportSkill {
+  label: string;
+  progress: number;
+}
+
+export interface SessionReportAvoidArea {
+  label: string;
+  count: number;
+}
+
+export interface SessionReportTranscriptLine {
+  speaker: string;
+  text: string;
+  start: number | null;
+  end: number | null;
+  role: string | null;
+  tag: string | null;
+  pcitTag: string | null;
+  feedback: string | null;
+}
+
+export interface SessionReportCoachCornerExample {
+  quote: string;
+  benefit: string;
+}
+
+export interface SessionReportCoachCornerDidWell {
+  theme: string;
+  howItHelps: string;
+  examples: SessionReportCoachCornerExample[];
+}
+
+export interface SessionReportCoachCornerGrowthFocus {
+  heading: string;
+  newSkillIntro: string | null;
+  gap: string;
+  benchmark: string;
+  strategy: string;
+}
+
+export interface SessionReportWordBankCategory {
+  name: string;
+  examples: string[];
+}
+
+export interface SessionReportWordBankGoal {
+  goal: string;
+  categories: SessionReportWordBankCategory[];
+}
+
+export interface SessionReportCoachCorner {
+  didWell: SessionReportCoachCornerDidWell;
+  growthFocus: SessionReportCoachCornerGrowthFocus;
+  wordBank: SessionReportWordBankGoal[];
+}
+
+export interface SessionReportLearningMoment {
+  title: string;
+  explanation: string;
+  quote: string | null;
+  suggestedRewrite: string | null;
+}
+
+export interface SessionReportLearningMoments {
+  summary: string | null;
+  points: SessionReportLearningMoment[];
+}
+
+export interface SessionReportGoalDirective {
+  focusSkill: string;
+  currentNumber: number | null;
+  targetNumber: number | string | null;
+  goalType: string | null;
+  actionPrompt: string | null;
+}
+
+// Full session report payload — same shape /api/recordings/:id/analysis returns
+// to the mobile app. Fields not needed by the admin view are left untyped here.
+export interface SessionReport {
+  id: string;
+  mode: string;
+  durationSeconds: number;
+  createdAt: string;
+  noraScore: number;
+  skills: SessionReportSkill[];
+  areasToAvoid: SessionReportAvoidArea[];
+  topMoment: string | null;
+  topMomentCelebration: string | null;
+  coachCorner: SessionReportCoachCorner | null;
+  skillCoaching: string | null;
+  learningMoments: SessionReportLearningMoments | null;
+  crisisMoment: { title?: string; description?: string; coaching?: string } | null;
+  audioUrl: string | null;
+  tomorrowGoal: string | null;
+  tomorrowGoalDirective: SessionReportGoalDirective | null;
+  transcript: SessionReportTranscriptLine[];
+  aboutChild: Array<{ Title?: string; Description?: string; Details?: string }> | null;
+}
+
+export type SessionReportResult =
+  | { status: 'completed'; report: SessionReport }
+  | { status: 'processing'; message: string }
+  | { status: 'failed'; message: string }
+  | { status: 'not_found' };
+
+export async function getSessionReport(sessionId: string, opts?: ApiEnvOpts): Promise<SessionReportResult> {
+  const res = await apiFetchRaw(`/api/admin/sessions/${sessionId}/analysis`, {}, opts);
+  const body = await res.json().catch(() => ({}));
+  if (res.status === 404) return { status: 'not_found' };
+  if (res.status === 202) return { status: 'processing', message: body.message || 'Analysis in progress' };
+  if (res.status === 500 && body.status === 'failed') {
+    return { status: 'failed', message: body.message || body.error || 'Analysis failed' };
+  }
+  if (!res.ok) throw new Error(body.error || `Request failed: ${res.status}`);
+  return { status: 'completed', report: body };
 }
 
 // ---- Coding Review ----
