@@ -35,6 +35,8 @@ export const SubscriptionScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
+  // Android is edge-to-edge, so keep the subscribe bar above the system nav bar
+  const androidBottomInset = Platform.OS === 'android' ? insets.bottom : 0;
   const { data, completeOnboarding } = useOnboarding();
   const authService = useAuthService();
   const lessonService = useLessonService();
@@ -473,11 +475,11 @@ export const SubscriptionScreen: React.FC = () => {
           <Text style={styles.restoreText}>{t('subscription.restorePurchase')}</Text>
         </TrackedTouchable>
 
-        <View style={{ height: 140 + insets.bottom }} />
+        <View style={{ height: 140 + androidBottomInset }} />
       </ScrollView>
 
       {/* Fixed Bottom Button */}
-      <View style={[styles.bottomBar, { paddingBottom: 10 + insets.bottom }]}>
+      <View style={[styles.bottomBar, { paddingBottom: 10 + androidBottomInset }]}>
         <TrackedTouchable analyticsId="subscription.subscribeNow"
           style={[styles.startButton, (isLoading || subscriptionLoading) && styles.startButtonDisabled]}
           onPress={handleStartTrial}
