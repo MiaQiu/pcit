@@ -518,6 +518,9 @@ export const ReportScreen_v3: React.FC = () => {
   useEffect(() => {
     loadReportData();
     loadParentSkillLevel();
+    // Per-recording read flag — lets Home keep surfacing an unread report
+    // across days, whichever entry point (home, progress, push) opened it.
+    userStorage.setItem(`report_read_${recordingId}`, 'true').catch(() => {});
   }, [recordingId]);
 
   const loadParentSkillLevel = async () => {

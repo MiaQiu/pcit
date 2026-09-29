@@ -821,21 +821,23 @@ export const HomeScreen_v2: React.FC = () => {
         (r: any) => r.analysisStatus === 'COMPLETED'
       );
       setHasRecordedSession(hasCompleted);
-      const latestCompleted = todayRecordings.find((r: any) => r.analysisStatus === 'COMPLETED');
-      if (latestCompleted) {
-        setLatestRecordingId(latestCompleted.id);
-        // Check if report was already read today
-        const reportReadKey = `report_read_${getTodaySingapore()}`;
-        const reportReadId = await userStorage.getItem(reportReadKey);
-        setIsReportRead(reportReadId === latestCompleted.id);
-        setSessionNotifications({
-          postSession: latestCompleted.coachingCards?.notifications?.postSession,
-          tomorrow: latestCompleted.coachingCards?.notifications?.tomorrow ?? latestWithReport?.coachingCards?.notifications?.tomorrow,
-        });
+
+      // ── Latest report read state ──
+      // latestWithReport is the newest completed session from any day, so an
+      // unopened report keeps its "Read Report" card past midnight until read.
+      if (latestWithReport) {
+        setLatestRecordingId(latestWithReport.id);
+        const [readFlag, legacyReadId] = await Promise.all([
+          userStorage.getItem(`report_read_${latestWithReport.id}`),
+          // Pre-carry-over builds stored `report_read_<SGT date>` = recordingId
+          userStorage.getItem(`report_read_${toSingaporeDateString(latestWithReport.createdAt)}`),
+        ]);
+        setIsReportRead(readFlag === 'true' || legacyReadId === latestWithReport.id);
       } else {
+        setLatestRecordingId(null);
         setIsReportRead(false);
-        setSessionNotifications(latestWithReport?.coachingCards?.notifications ?? null);
       }
+      setSessionNotifications(latestWithReport?.coachingCards?.notifications ?? null);
 
       // ── Has any completed session ever ──
       setHasAnySession(!!latestWithReport);
@@ -1072,8 +1074,7 @@ export const HomeScreen_v2: React.FC = () => {
 
   const handleReadReport = async () => {
     if (!latestRecordingId) return;
-    const reportReadKey = `report_read_${getTodaySingapore()}`;
-    await userStorage.setItem(reportReadKey, latestRecordingId);
+    // ReportV3 persists the per-recording read flag on open
     setIsReportRead(true);
     amplitudeService.trackReportViewed(latestRecordingId, undefined, { source: 'home' });
     navigation.push('ReportV3', { recordingId: latestRecordingId });
@@ -1454,7 +1455,7 @@ export const HomeScreen_v2: React.FC = () => {
           />
         </View>
 
-        {/* ── Main Action Card — priority: weekly report > record > read report > record again ── */}
+        {/* ── Main Action Card — priority: weekly report > unread report (any day) > record > record again ── */}
         <View style={styles.massageCard}>
           {latestWeeklyReport && !isWeeklyReportDismissed ? (
             <>
@@ -1521,7 +1522,7 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.recordButtonText}>{t('homeV2.getReadyButton')}</Text>
               </TrackedTouchable>
             </>
-          ) : !hasRecordedSession ? (
+          ) : !hasRecordedSession && (isReportRead || !latestRecordingId) ? (
             <>
               <View style={styles.massageHeader}>
                 <View style={styles.greenDot} />
@@ -1548,7 +1549,7 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.recordButtonText}>{t('homeV2.recordNow')}</Text>
               </TrackedTouchable>
             </>
-          ) : hasRecordedSession && !isReportRead ? (
+          ) : latestRecordingId && !isReportRead ? (
             <>
               <View style={styles.massageHeader}>
                 <View style={styles.greenDot} />
