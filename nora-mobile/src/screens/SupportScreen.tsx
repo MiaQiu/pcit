@@ -12,11 +12,14 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  ActionSheetIOS,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { FONTS, COLORS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
 import { useTranslation } from 'react-i18next';
@@ -44,7 +47,55 @@ export const SupportScreen: React.FC = () => {
   useEffect(() => {
   }, []);
 
-  const handleAttachFile = async () => {
+  const handleAttachFile = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [t('common.cancel'), t('support.attachFromPhotos'), t('support.attachFromFiles')],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) handlePickPhotos();
+          else if (buttonIndex === 2) handlePickDocuments();
+        }
+      );
+    } else {
+      Alert.alert(t('support.attachFile'), undefined, [
+        { text: t('support.attachFromPhotos'), onPress: handlePickPhotos },
+        { text: t('support.attachFromFiles'), onPress: handlePickDocuments },
+        { text: t('common.cancel'), style: 'cancel' },
+      ]);
+    }
+  };
+
+  const handlePickPhotos = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        // Images only: videos routinely exceed the server's 10MB per-file limit
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const newFiles: AttachedFile[] = result.assets.map((asset, i) => ({
+          uri: asset.uri,
+          name: asset.fileName || `photo_${Date.now()}_${i}.jpg`,
+          size: asset.fileSize || 0,
+          mimeType: asset.mimeType || 'image/jpeg',
+        }));
+
+        setAttachedFiles(prev => [...prev, ...newFiles]);
+        Alert.alert(t('common.success'), t('support.filesAttached', { count: newFiles.length }));
+      }
+    } catch (error) {
+      reportError(error, 'SupportScreen.handlePickPhotos');
+      console.error('Error picking photos:', error);
+      Alert.alert(t('common.error'), t('support.errorAttachFile'));
+    }
+  };
+
+  const handlePickDocuments = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: '*/*',
@@ -72,7 +123,7 @@ export const SupportScreen: React.FC = () => {
         Alert.alert(t('common.success'), t('support.filesAttached', { count: newFiles.length }));
       }
     } catch (error) {
-      reportError(error, 'SupportScreen.handleAttachFile');
+      reportError(error, 'SupportScreen.handlePickDocuments');
       console.error('Error picking document:', error);
       Alert.alert(t('common.error'), t('support.errorAttachFile'));
     }

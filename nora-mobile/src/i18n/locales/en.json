@@ -1131,6 +1131,8 @@
     "successMessage": "Thank you for contacting us. We will review your request and get back to you shortly.",
     "filesAttached": "{{count}} file(s) attached",
     "errorAttachFile": "Failed to attach file. Please try again.",
+    "attachFromPhotos": "Photos",
+    "attachFromFiles": "Files",
     "errorSubmit": "Failed to submit request. Please try again."
   },
   "psychologistChat": {

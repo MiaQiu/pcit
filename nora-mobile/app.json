@@ -61,6 +61,14 @@
       "@react-native-firebase/crashlytics",
       "expo-localization",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Nora needs access to your photos so you can attach screenshots to support requests.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
         "react-native-share",
         {
           "android": ["com.whatsapp", "com.facebook.katana", "com.tencent.mm"]

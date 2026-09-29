@@ -1179,6 +1179,8 @@
     "successMessage": "感谢您的联系。我们将审核您的请求并尽快回复。",
     "filesAttached": "已夹带 {{count}} 个文件",
     "errorAttachFile": "夹带文件失败，请再试一次。",
+    "attachFromPhotos": "照片",
+    "attachFromFiles": "文件",
     "errorSubmit": "提交请求失败，请再试一次。"
   },
   "psychologistChat": {
