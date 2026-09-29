@@ -8,6 +8,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { RootTabParamList } from './types';
 import { useTranslation } from 'react-i18next';
+import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   HomeScreen,
   RecordScreen,
@@ -21,6 +23,9 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export const TabNavigator: React.FC = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  // Android is edge-to-edge, so the tab bar must sit above the system nav bar
+  const androidBottomInset = Platform.OS === 'android' ? insets.bottom : 0;
   return (
     <Tab.Navigator
       screenOptions={{
@@ -28,9 +33,9 @@ export const TabNavigator: React.FC = () => {
         tabBarActiveTintColor: '#8C49D5', // Main purple
         tabBarInactiveTintColor: '#7C7C7C', // Gray to match Figma
         tabBarStyle: {
-          height: 74,
+          height: 74 + androidBottomInset,
           paddingTop: 4.5,
-          paddingBottom: 15,
+          paddingBottom: 15 + androidBottomInset,
           paddingHorizontal: 30,
           backgroundColor: '#FFFFFF',
           borderTopWidth: 0,

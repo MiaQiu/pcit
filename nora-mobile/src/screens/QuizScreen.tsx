@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ResponseButton } from '../components/ResponseButton';
 import { QuizFeedback } from '../components/QuizFeedback';
@@ -104,7 +104,11 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
   const sortedOptions = [...quiz.options].sort((a, b) => a.order - b.order);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={styles.container}
+      // Android is edge-to-edge, so keep the footer above the system nav bar
+      edges={Platform.OS === 'android' ? ['top', 'left', 'right', 'bottom'] : ['top', 'left', 'right']}
+    >
       {/* Header with Progress Bar and Close Button */}
       <View style={styles.header}>
         <ProgressBar
