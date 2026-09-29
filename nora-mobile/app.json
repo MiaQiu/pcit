@@ -63,9 +63,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Nora needs access to your photos so you can attach screenshots to support requests.",
-          "cameraPermission": false,
-          "microphonePermission": false
+          "photosPermission": "Nora needs access to your photos so you can attach screenshots to support requests."
         }
       ],
       [
