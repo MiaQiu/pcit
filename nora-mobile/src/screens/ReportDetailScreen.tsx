@@ -314,16 +314,21 @@ export const ReportDetailScreen: React.FC = () => {
     }
   };
 
-  // Decides the first-session template: true when this recording is the only
-  // COMPLETED session in the parent's history. Fails closed to the standard
-  // template.
+  // Decides the first-session template: true when this recording is the
+  // earliest COMPLETED session in the parent's history (so the first report
+  // keeps its template after later sessions exist). Fails closed to the
+  // standard template.
   const loadSessionCount = async () => {
     try {
       const { recordings } = await recordingService.getRecordings();
-      const completedCount = (recordings || []).filter(
+      const completed = (recordings || []).filter(
         (r: any) => r.analysisStatus === 'COMPLETED'
-      ).length;
-      setIsFirstSession(completedCount <= 1);
+      );
+      const earliest = completed.reduce<any>(
+        (min, r) => (!min || new Date(r.createdAt).getTime() < new Date(min.createdAt).getTime() ? r : min),
+        null
+      );
+      setIsFirstSession(!earliest || earliest.id === recordingId);
     } catch (err) {
       setIsFirstSession(false);
     }
