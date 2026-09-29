@@ -276,9 +276,9 @@ async function uploadSupportAttachment(fileBuffer, userId, requestId, fileName, 
         uploadedAt: new Date().toISOString()
       },
       // Server-side encryption
-      ServerSideEncryption: 'AES256',
-      // Make publicly readable so support staff can access
-      ACL: 'public-read'
+      ServerSideEncryption: 'AES256'
+      // No ACL: the bucket enforces BucketOwnerEnforced (ACLs rejected). Support
+      // staff get the files as email attachments instead (see supportEmail.cjs).
     });
 
     await supportS3Client.send(command);

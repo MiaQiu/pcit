@@ -99,6 +99,7 @@ router.post('/request',
           contactEmail: email,
           description,
           attachments: attachmentUrls,
+          files: req.files || [],
           account,
           createdAt: supportRequest.createdAt,
         }));

@@ -54,11 +54,12 @@ function formatSize(bytes) {
  * @param {string} params.userId
  * @param {string} params.contactEmail   - Email the user typed into the form
  * @param {string} params.description
- * @param {Array<{url: string, name: string, size: number}>} [params.attachments]
+ * @param {Array<{url: string, name: string, size: number}>} [params.attachments] - Stored S3 objects
+ * @param {Array<{originalname: string, mimetype: string, buffer: Buffer}>} [params.files] - Uploaded files (multer), attached to the email
  * @param {{email?: string, name?: string}|null} [params.account] - The user's account record
  * @param {Date} [params.createdAt]
  */
-async function sendSupportRequestEmail({ requestId, userId, contactEmail, description, attachments = [], account = null, createdAt = new Date() }) {
+async function sendSupportRequestEmail({ requestId, userId, contactEmail, description, attachments = [], files = [], account = null, createdAt = new Date() }) {
   const to = process.env.SUPPORT_NOTIFY_EMAIL || DEFAULT_RECIPIENT;
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.warn('[support-email] SMTP not configured, skipping support request notification');
@@ -74,10 +75,15 @@ async function sendSupportRequestEmail({ requestId, userId, contactEmail, descri
           <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${value}</td>
         </tr>`;
 
-  const attachmentsHtml = attachments.length > 0
-    ? `<ul style="padding-left: 20px;">${attachments.map(a =>
-        `<li><a href="${escapeHtml(a.url)}">${escapeHtml(a.name)}</a> (${formatSize(a.size)})</li>`
-      ).join('')}</ul>`
+  // Files are attached to the email directly; the S3 bucket is private, so the
+  // S3 keys are listed only for reference. Uploads that failed have no S3 key.
+  const attachmentsHtml = files.length > 0
+    ? `<ul style="padding-left: 20px;">${files.map(f => {
+        const stored = attachments.find(a => a.name === f.originalname);
+        return `<li>${escapeHtml(f.originalname)} (${formatSize(f.buffer.length)})${stored
+          ? `<br><span style="color: #6b7280; font-size: 12px; font-family: monospace;">${escapeHtml(stored.url)}</span>`
+          : ' <span style="color: #dc2626;">— failed to save to S3</span>'}</li>`;
+      }).join('')}</ul>`
     : '<p style="color: #6b7280;">None</p>';
 
   const html = `
@@ -93,7 +99,7 @@ async function sendSupportRequestEmail({ requestId, userId, contactEmail, descri
       </table>
       <h3 style="margin-bottom: 8px;">Description</h3>
       <div style="white-space: pre-wrap; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px;">${escapeHtml(description)}</div>
-      <h3 style="margin-bottom: 8px;">Attachments (${attachments.length})</h3>
+      <h3 style="margin-bottom: 8px;">Attachments (${files.length})</h3>
       ${attachmentsHtml}
       <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
       <p style="color: #9ca3af; font-size: 12px; text-align: center;">Nora — Support Request Notification. Reply to this email to respond to the user.</p>
@@ -107,6 +113,11 @@ async function sendSupportRequestEmail({ requestId, userId, contactEmail, descri
       replyTo: contactEmail,
       subject,
       html,
+      attachments: files.map(f => ({
+        filename:    f.originalname,
+        content:     f.buffer,
+        contentType: f.mimetype,
+      })),
     });
   } catch (mailErr) {
     console.error(`[support-email] Failed to send notification for request ${requestId}: ${mailErr.message}`);
