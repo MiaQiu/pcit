@@ -564,17 +564,21 @@ export const ReportScreen_v3: React.FC = () => {
     const otherCompleted = recordings.filter(
       (r: any) => r.analysisStatus === 'COMPLETED' && r.id !== recordingId
     );
-    setIsFirstSession(otherCompleted.length === 0);
+    const currentTime = new Date(current.createdAt).getTime();
+    const earlierCompleted = otherCompleted.filter(
+      (r: any) => new Date(r.createdAt).getTime() < currentTime
+    );
+    // First session = no completed session before this one, so reopening the
+    // first report later still shows FirstSessionReport.
+    setIsFirstSession(earlierCompleted.length === 0);
 
-    // Running total of all *other* completed sessions; today's score is
-    // added on top by the card's animation.
-    const totalBefore = otherCompleted.reduce((sum: number, r: any) => sum + (r.overallScore || 0), 0);
+    // Running total of the completed sessions before this one; today's score
+    // is added on top by the card's animation.
+    const totalBefore = earlierCompleted.reduce((sum: number, r: any) => sum + (r.overallScore || 0), 0);
     setDepositTotalBefore(totalBefore);
     if ((current.noraScore ?? 0) > 0) setShowDepositCelebration(true);
 
-    const currentTime = new Date(current.createdAt).getTime();
-    const previous = otherCompleted
-      .filter((r: any) => new Date(r.createdAt).getTime() < currentTime)
+    const previous = earlierCompleted
       .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
     if (!previous) return;
 
