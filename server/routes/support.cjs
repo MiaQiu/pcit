@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const prisma = require('../services/db.cjs');
 const { uploadSupportAttachment } = require('../services/storage-s3.cjs');
 const { logError } = require('../utils/errorLogger.cjs');
+const { sendSupportRequestEmail } = require('../services/supportEmail.cjs');
 
 const router = express.Router();
 
@@ -88,6 +89,19 @@ router.post('/request',
 
       console.log(`Support request created: ${requestId} for user ${userId}`);
       console.log(`Attachments saved: ${attachmentUrls.length}`);
+
+      // Notify the support inbox (fire-and-forget; never blocks the response)
+      prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
+        .catch(() => null)
+        .then(account => sendSupportRequestEmail({
+          requestId,
+          userId,
+          contactEmail: email,
+          description,
+          attachments: attachmentUrls,
+          account,
+          createdAt: supportRequest.createdAt,
+        }));
 
       res.status(201).json({
         success: true,
