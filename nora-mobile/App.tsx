@@ -1,8 +1,8 @@
 import './src/i18n';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, Text, AppState, Platform } from 'react-native';
-import { NavigationContainer, useNavigation, useNavigationContainerRef, DefaultTheme } from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRefContext, useNavigation, useNavigationContainerRef, DefaultTheme } from '@react-navigation/native';
 import { I18nextProvider } from 'react-i18next';
 import i18n, { loadSavedLanguage } from './src/i18n';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -75,9 +75,26 @@ const navigationTheme = {
   },
 };
 
+// On Android, a remote push tapped while the app is backgrounded/killed can
+// arrive with an empty content.data; the Expo payload is then only on the FCM
+// message, JSON-encoded under remoteMessage.data.body
+const getNotificationData = (notification: Notifications.Notification): Record<string, unknown> => {
+  const data = notification.request.content.data;
+  if (data && Object.keys(data).length > 0) return data;
+
+  const remoteData = (notification.request.trigger as any)?.remoteMessage?.data;
+  if (typeof remoteData?.body === 'string') {
+    try {
+      return JSON.parse(remoteData.body);
+    } catch {}
+  }
+  return data ?? {};
+};
+
 // Helper component that provides navigation to UploadProcessingProvider
 const AppContent: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const navigationContainer = useContext(NavigationContainerRefContext);
   const { showToast } = useToast();
 
   const handleNavigateToHome = () => {
@@ -91,74 +108,85 @@ const AppContent: React.FC = () => {
     await userStorage.setItem(reportReadKey, recordingId);
     console.log('[App] Marked report as read from alert:', reportReadKey, recordingId);
 
-    navigation.navigate('Report', { recordingId });
+    navigation.navigate('ReportV3', { recordingId });
   };
 
   const handleReportReady = (_recordingId: string) => {
     // No-op: navigation is handled by reportCompletedTimestamp in RecordScreen
   };
 
-  // Handle notification taps
-  useEffect(() => {
-    // Handle notification tap when app is in foreground or background
-    const subscription = Notifications.addNotificationResponseReceivedListener(async (response) => {
-      console.log('[App] Notification tapped:', response);
+  // Notification ids already routed, so a tap delivered to both the response
+  // listener and getLastNotificationResponse() only navigates once
+  const handledNotificationIds = useRef(new Set<string>());
 
-      const data = response.notification.request.content.data;
-      const notificationType = (data.type || 'unknown') as string;
+  // True once the logged-in app is showing. Every root screen (MainTabs
+  // included) is also registered under the login/onboarding stack, so check
+  // that Onboarding is gone (login and onboarding both reset the root to
+  // [MainTabs]) rather than that some screen name exists.
+  const isInApp = () => {
+    const state = navigationContainer?.getRootState();
+    return !!state?.routeNames && !state.routes.some((route) => route.name === 'Onboarding');
+  };
 
-      // Track notification opened
-      amplitudeService.trackNotificationOpened(notificationType);
+  // Run a tap's navigation once the logged-in app is showing. Before that
+  // (loading spinner, force update, login, onboarding) a navigate is either
+  // dropped or would skip past auth.
+  const whenInApp = (run: () => void) => {
+    if (isInApp()) {
+      run();
+      return;
+    }
+    const unsubscribe = navigationContainer?.addListener('state', () => {
+      if (!isInApp()) return;
+      unsubscribe?.();
+      run();
+    });
+  };
 
-      if (data.type === 'new_report' && data.recordingId) {
-        console.log('[App] Navigating to report:', data.recordingId);
+  const handleNotificationResponse = (response: Notifications.NotificationResponse) => {
+    const notificationId = response.notification.request.identifier;
+    if (handledNotificationIds.current.has(notificationId)) return;
+    handledNotificationIds.current.add(notificationId);
+    // Stop the native side from replaying this tap if AppContent remounts
+    Notifications.clearLastNotificationResponse();
 
-        // Track report viewed from notification
-        amplitudeService.trackReportViewed(
-          data.recordingId as string,
-          undefined, // Score not available in notification data
-          {
-            source: 'notification',
-            notificationType: 'new_report',
-          }
-        );
+    console.log('[App] Notification tapped:', response);
 
-        // Mark report as read before navigating
-        // This ensures the NextActionCard updates correctly when user returns to Home screen
-        const reportReadKey = `report_read_${getTodaySingapore()}`;
-        await userStorage.setItem(reportReadKey, data.recordingId as string);
-        console.log('[App] Marked report as read:', reportReadKey, data.recordingId);
+    const data = getNotificationData(response.notification);
+    const notificationType = (data.type || 'unknown') as string;
 
-        // Navigate to the report screen
-        navigation.navigate('Report', { recordingId: data.recordingId as string });
-      } else if (data.type === 'weekly_report' && data.reportId) {
-        console.log('[App] Navigating to weekly report:', data.reportId);
-        await userStorage.setItem(`weekly_report_dismissed_${data.reportId as string}`, 'true');
-        navigation.navigate('WeeklyReport', { reportId: data.reportId as string });
+    // Track notification opened
+    amplitudeService.trackNotificationOpened(notificationType);
+
+    whenInApp(() => {
+      if (data.type === 'new_report' || data.type === 'weekly_report') {
+        // Land on Home, where the report surfaces on the home card. refreshAt
+        // makes Home reload: if the user left the app on Home, this navigate
+        // doesn't refocus it, so its focus-based reload never runs.
+        console.log('[App] Navigating to Home for', data.type, data.recordingId ?? data.reportId);
+        navigation.navigate('MainTabs', { screen: 'Home', params: { refreshAt: Date.now() } });
       } else if (data.type === 'milestones_unlocked') {
         console.log('[App] Navigating to Progress > Milestones section');
         navigation.navigate('MainTabs', { screen: 'Progress', params: { scrollToDevelopmental: true } });
       } else if (data.type === 'daily_session_reminder') {
         console.log('[App] Navigating to Record screen from daily reminder');
-        navigation.navigate('Record');
+        navigation.navigate('MainTabs', { screen: 'Record' });
       }
     });
+  };
 
+  // Handle notification tap when app is in foreground or background
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
     return () => subscription.remove();
   }, [navigation]);
 
-  // Handle cold-start from a notification tap (app was killed)
+  // Handle cold-start from a notification tap (app was killed): native emits
+  // the launching tap before this listener exists, so read it back instead
   useEffect(() => {
-    Notifications.getLastNotificationResponseAsync().then(async (response) => {
-      if (!response) return;
-      const data = response.notification.request.content.data;
-      if (data.type === 'weekly_report' && data.reportId) {
-        console.log('[App] Cold-start: navigating to weekly report:', data.reportId);
-        await userStorage.setItem(`weekly_report_dismissed_${data.reportId as string}`, 'true');
-        navigation.navigate('WeeklyReport', { reportId: data.reportId as string });
-      }
-    });
-  }, [navigation]);
+    const response = Notifications.getLastNotificationResponse();
+    if (response) handleNotificationResponse(response);
+  }, []);
 
   // Clear badge when app comes to foreground
   useEffect(() => {

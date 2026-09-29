@@ -25,7 +25,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Notifications from 'expo-notifications';
 import { scheduleDailyLessonReminder } from '../utils/notifications';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { Video, ResizeMode } from 'expo-av';
@@ -47,7 +47,7 @@ const SUB_ACTION_CARD_ICONS: Record<string, ReturnType<typeof require>> = {
   "Today's Thought": require('../../assets/images/SubActionCard_icon/today_thought.png'),
   'Community Wisdom': require('../../assets/images/SubActionCard_icon/community_wisdom.png'),
 };
-import { RootStackNavigationProp, RootTabNavigationProp } from '../navigation/types';
+import { RootStackNavigationProp, RootTabNavigationProp, RootTabParamList } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
@@ -638,6 +638,7 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
 export const HomeScreen_v2: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const tabNavigation = useNavigation<RootTabNavigationProp>();
+  const route = useRoute<RouteProp<RootTabParamList, 'Home'>>();
   const { unreadCount } = useCoachUnread();
   const { width: screenWidth } = useWindowDimensions();
   const lessonService = useLessonService();
@@ -1019,6 +1020,13 @@ export const HomeScreen_v2: React.FC = () => {
       loadData('background');
     }
   }, [uploadProcessing.reportCompletedTimestamp]);
+
+  // Reload when a report notification tap lands here (see App.tsx)
+  useEffect(() => {
+    if (route.params?.refreshAt) {
+      loadData('background');
+    }
+  }, [route.params?.refreshAt]);
 
   // Show tip for 3 seconds starting 1s after animation begins or loops
   const showTipSequence = useCallback(() => {

@@ -9,7 +9,7 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 import { Quiz, User, DemoVideo, ParentSkillLevel, SkillImproveResult } from '@nora/core';
 
 export type RootTabParamList = {
-  Home: { showModulePicker?: boolean } | undefined;
+  Home: { showModulePicker?: boolean; refreshAt?: number } | undefined;
   Record: { autoStart?: boolean } | undefined;
   Log: undefined;
   Learn: undefined;
