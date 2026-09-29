@@ -831,12 +831,15 @@ export const HomeScreen_v2: React.FC = () => {
       // device (app update, new device, account switch) knows nothing about
       // past reads. Baseline once: treat the existing latest report as read,
       // unless it's from today — the old per-day card would still show that.
+      // Write the read flag BEFORE the baseline marker: mount fires two
+      // loadData() calls concurrently, and one that sees the marker must also
+      // see the flag or it renders the report as unread.
       const baselined = await userStorage.getItem('report_read_baselined');
       if (!baselined) {
-        await userStorage.setItem('report_read_baselined', 'true');
         if (latestWithReport && !isTodaySingapore(latestWithReport.createdAt)) {
           await userStorage.setItem(`report_read_${latestWithReport.id}`, 'true');
         }
+        await userStorage.setItem('report_read_baselined', 'true');
       }
       if (latestWithReport) {
         setLatestRecordingId(latestWithReport.id);
