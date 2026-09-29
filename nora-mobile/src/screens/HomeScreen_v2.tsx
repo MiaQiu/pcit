@@ -53,7 +53,7 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
-import { getTodaySingapore, toSingaporeDateString, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
+import { getTodaySingapore, toSingaporeDateString, isTodaySingapore, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
 import * as userStorage from '../lib/userStorage';
 import { getCachedExempt } from '../lib/freeExemptCache';
 import type { RelationshipToChild, ParentSkillLevel } from '@nora/core';
@@ -826,6 +826,18 @@ export const HomeScreen_v2: React.FC = () => {
       // ── Latest report read state ──
       // latestWithReport is the newest completed session from any day, so an
       // unopened report keeps its "Read Report" card past midnight until read.
+      //
+      // Read flags are device-local, so the first load for a user on this
+      // device (app update, new device, account switch) knows nothing about
+      // past reads. Baseline once: treat the existing latest report as read,
+      // unless it's from today — the old per-day card would still show that.
+      const baselined = await userStorage.getItem('report_read_baselined');
+      if (!baselined) {
+        await userStorage.setItem('report_read_baselined', 'true');
+        if (latestWithReport && !isTodaySingapore(latestWithReport.createdAt)) {
+          await userStorage.setItem(`report_read_${latestWithReport.id}`, 'true');
+        }
+      }
       if (latestWithReport) {
         setLatestRecordingId(latestWithReport.id);
         const [readFlag, legacyReadId] = await Promise.all([
