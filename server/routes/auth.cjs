@@ -352,9 +352,22 @@ router.post('/logout', async (req, res) => {
     // Hash and delete refresh token
     const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
+    const session = await prisma.refreshToken.findUnique({
+      where: { tokenHash: refreshTokenHash },
+      select: { userId: true }
+    });
+
     await prisma.refreshToken.deleteMany({
       where: { tokenHash: refreshTokenHash }
     });
+
+    // Stop pushes to the logged-out device. A user has one session at a time
+    // (RefreshToken.userId is unique), so this token belongs to this device;
+    // the app registers it again on the next login.
+    if (session) {
+      const { unregisterPushToken } = require('../services/pushNotifications.cjs');
+      await unregisterPushToken(session.userId);
+    }
 
     res.json({ message: 'Logged out successfully' });
 
