@@ -120,6 +120,8 @@ export type RootStackParamList = {
     moduleKey?: string;
     moduleTitle?: string;
     nextLessonId?: string;
+    // Defaults to true. Only applies to the lesson opened initially.
+    autoPlay?: boolean;
   };
   Quiz: {
     quizId: string;

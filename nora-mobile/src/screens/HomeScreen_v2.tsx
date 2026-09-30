@@ -1145,7 +1145,7 @@ export const HomeScreen_v2: React.FC = () => {
     if (item.type === 'lesson') {
       amplitudeService.trackLessonStarted(item.id, item.title, { source: 'home_today_plan' });
       if (item.moduleKey && CONTENT_V2_MODULES.includes(item.moduleKey)) {
-        navigation.push('LessonViewerV2', { lessonId: item.id, moduleKey: item.moduleKey });
+        navigation.push('LessonViewerV2', { lessonId: item.id, moduleKey: item.moduleKey, autoPlay: false });
       } else {
         navigation.push('LessonViewer', { lessonId: item.id });
       }

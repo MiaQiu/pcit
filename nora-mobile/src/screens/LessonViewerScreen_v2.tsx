@@ -35,6 +35,7 @@ interface LessonViewerScreenV2Props {
       lessonId: string;
       moduleKey?: string;
       moduleTitle?: string;
+      autoPlay?: boolean;
     };
   };
   navigation: any;
@@ -133,6 +134,10 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
 
   const lesson = lessonData?.lesson;
 
+  // route.params.autoPlay only governs the lesson this screen was opened with;
+  // later loads (playlist taps, auto-advance) always play.
+  const initialAutoPlayRef = useRef(route.params.autoPlay ?? true);
+
   // Attach to (or start) the shared player for whichever lesson this screen
   // is currently showing. No-ops if it's already the active track elsewhere
   // (e.g. started from the LearnScreen_v3 mini-player), so opening this
@@ -140,7 +145,9 @@ export const LessonViewerScreenV2: React.FC<LessonViewerScreenV2Props> = ({ rout
   // restarting a second Sound instance for the same audio.
   useEffect(() => {
     if (!lesson) return;
-    player.loadLesson(lesson.id, lesson.audioUrl, i18n.language, lesson.title);
+    const autoPlay = lesson.id === route.params.lessonId ? initialAutoPlayRef.current : true;
+    initialAutoPlayRef.current = true;
+    player.loadLesson(lesson.id, lesson.audioUrl, i18n.language, lesson.title, { autoPlay });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson?.id, lesson?.audioUrl]);
 

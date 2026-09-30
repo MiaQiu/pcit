@@ -38,7 +38,13 @@ interface LessonPlayerContextValue {
   /** Switch the active track. No-ops if `lessonId` is already the active
    * track, so mounting a screen for the lesson that's already playing
    * elsewhere just attaches to the existing state instead of restarting it. */
-  loadLesson: (lessonId: string, audioUrl: string | null | undefined, locale?: string | null, title?: string | null) => void;
+  loadLesson: (
+    lessonId: string,
+    audioUrl: string | null | undefined,
+    locale?: string | null,
+    title?: string | null,
+    options?: { autoPlay?: boolean }
+  ) => void;
   play: () => Promise<void>;
   pause: () => Promise<void>;
   seekTo: (millis: number) => Promise<void>;
@@ -95,7 +101,14 @@ export const LessonPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
-  const loadLesson = useCallback((lessonId: string, audioUrl: string | null | undefined, locale?: string | null, title?: string | null) => {
+  const loadLesson = useCallback((
+    lessonId: string,
+    audioUrl: string | null | undefined,
+    locale?: string | null,
+    title?: string | null,
+    options?: { autoPlay?: boolean }
+  ) => {
+    const autoPlay = options?.autoPlay ?? true;
     if (activeLessonIdRef.current === lessonId) return;
     activeLessonIdRef.current = lessonId;
     setActiveLessonId(lessonId);
@@ -143,8 +156,10 @@ export const LessonPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (initialRate !== 1.0) {
           await sound.setRateAsync(initialRate, true);
         }
-        await sound.playAsync();
-        setIsPlaying(true);
+        if (autoPlay) {
+          await sound.playAsync();
+          setIsPlaying(true);
+        }
       } catch (error) {
         console.error('LessonPlayerContext load error:', error);
       } finally {
