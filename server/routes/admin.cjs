@@ -3906,8 +3906,32 @@ function adminStripe() {
 }
 
 const { discountLabel, normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
-const { generatePartnerQrPng } = require('../utils/partnerQr.cjs');
+const { generatePartnerQrPng, buildPartnerUrl } = require('../utils/partnerQr.cjs');
 const { logError } = require('../utils/errorLogger.cjs');
+
+// Single response shape for every partner endpoint, so the admin table never receives
+// a partner missing discountLabels/userCount/signupUrl (e.g. right after create/edit).
+// Pass a row that includes `_count.users`, or an explicit userCount.
+async function serializePartner(partner, userCount = partner._count?.users ?? 0) {
+  const { _count, ...rest } = partner;
+  const discounts = normalizeDiscounts(partner.config);
+  return {
+    ...rest,
+    config: { ...partner.config, discounts }, // always the resolved per-plan shape, regardless of storage format
+    qrCodeUrl: await resolveDragonImageUrl(partner.qrCodeUrl),
+    signupUrl: buildPartnerUrl(partner.slug), // same URL the QR code encodes
+    userCount,
+    discountLabels: {
+      monthly: discountLabel(discounts.monthly),
+      yearly: discountLabel(discounts.yearly),
+    },
+  };
+}
+
+// Deleted accounts are anonymized in place (emailHash 'deleted_…'), not removed —
+// exclude them so userCount matches GET /partners/:id/users.
+const activePartnerUsers = { NOT: { emailHash: { startsWith: 'deleted_' } } };
+const partnerWithUserCount = { _count: { select: { users: { where: activePartnerUsers } } } };
 
 // Generates a QR PNG for the partner's signup link, uploads it, and persists the
 // resulting URL. Used both right after creation and for backfilling legacy partners.
@@ -3916,11 +3940,20 @@ async function generateAndStorePartnerQr(partner) {
   try {
     const qrPng = await generatePartnerQrPng(partner.slug);
     const qrCodeUrl = await uploadPartnerQrCode(qrPng, partner.slug);
-    return prisma.partner.update({ where: { id: partner.id }, data: { qrCodeUrl } });
+    return await prisma.partner.update({ where: { id: partner.id }, data: { qrCodeUrl }, include: partnerWithUserCount });
   } catch (err) {
     logError(err, { route: 'admin#[admin] partner QR generation error' });
     return partner;
   }
+}
+
+// A discount only makes sense for a plan the partner actually offers — drop the rest
+// so no Stripe coupon is created for a hidden plan.
+function onlyOfferedPlans(discounts, plans = ['monthly', 'yearly']) {
+  return {
+    monthly: plans.includes('monthly') ? (discounts?.monthly ?? null) : null,
+    yearly: plans.includes('yearly') ? (discounts?.yearly ?? null) : null,
+  };
 }
 
 async function syncStripeCoupon(partnerName, slug, planLabel, discount, expiresAt, maxRedemptions, existingCouponId) {
@@ -3946,23 +3979,35 @@ async function syncStripeCoupon(partnerName, slug, planLabel, discount, expiresA
   return coupon.id;
 }
 
+// Canonical form of a discount for change detection — ignores key order and the
+// server-managed stripeCouponId.
+function discountKey(d) {
+  if (!d) return 'null';
+  const { stripeCouponId, ...rest } = d;
+  return JSON.stringify(Object.keys(rest).sort().map(k => [k, rest[k]]));
+}
+
 // Syncs both plans' Stripe coupons, only recreating a coupon for a plan whose discount
 // actually changed (per-plan, not a whole-object diff — editing the yearly discount
-// shouldn't churn the monthly coupon).
-async function syncDiscounts(partnerName, slug, newDiscounts, expiresAt, maxRedemptions, oldDiscounts) {
+// shouldn't churn the monthly coupon). The coupon also bakes in redeem_by (expiresAt)
+// and max_redemptions, so a change to either of those forces every discounted plan's
+// coupon to be recreated — otherwise extending a partner's expiry would leave a coupon
+// Stripe rejects at checkout once the old date passes.
+async function syncDiscounts(partnerName, slug, newDiscounts, expiresAt, maxRedemptions, oldDiscounts, limitsChanged = false) {
   const result = {};
   for (const plan of ['monthly', 'yearly']) {
     const next = newDiscounts?.[plan] ?? null;
     const prev = oldDiscounts?.[plan] ?? null;
-    const changed = JSON.stringify(next) !== JSON.stringify(prev ? { ...prev, stripeCouponId: undefined } : null);
+    const changed = discountKey(next) !== discountKey(prev) || (limitsChanged && !!next);
     if (!changed) {
       result[plan] = prev;
       continue;
     }
+    const { stripeCouponId: _ignored, ...nextFields } = next ?? {};
     const stripeCouponId = await syncStripeCoupon(
       partnerName, slug, plan, next, expiresAt, maxRedemptions, prev?.stripeCouponId ?? null
     );
-    result[plan] = next ? { ...next, stripeCouponId } : null;
+    result[plan] = next ? { ...nextFields, stripeCouponId } : null;
   }
   return result;
 }
@@ -3972,21 +4017,9 @@ router.get('/partners', requireAdminAuth, async (req, res) => {
   try {
     const partners = await prisma.partner.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { users: true } } },
+      include: partnerWithUserCount,
     });
-    res.json(await Promise.all(partners.map(async p => {
-      const discounts = normalizeDiscounts(p.config);
-      return {
-        ...p,
-        config: { ...p.config, discounts }, // always the resolved per-plan shape, regardless of storage format
-        qrCodeUrl: await resolveDragonImageUrl(p.qrCodeUrl),
-        userCount: p._count.users,
-        discountLabels: {
-          monthly: discountLabel(discounts.monthly),
-          yearly: discountLabel(discounts.yearly),
-        },
-      };
-    })));
+    res.json(await Promise.all(partners.map(p => serializePartner(p))));
   } catch (err) {
     logError(err, { route: 'admin#[admin] partners list error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch partners' });
@@ -3998,17 +4031,10 @@ router.get('/partners/:id', requireAdminAuth, async (req, res) => {
   try {
     const partner = await prisma.partner.findUnique({
       where: { id: req.params.id },
-      include: { _count: { select: { users: true } } },
+      include: partnerWithUserCount,
     });
     if (!partner) return res.status(404).json({ error: 'Partner not found' });
-    const discounts = normalizeDiscounts(partner.config);
-    res.json({
-      ...partner,
-      config: { ...partner.config, discounts },
-      qrCodeUrl: await resolveDragonImageUrl(partner.qrCodeUrl),
-      userCount: partner._count.users,
-      discountLabels: { monthly: discountLabel(discounts.monthly), yearly: discountLabel(discounts.yearly) },
-    });
+    res.json(await serializePartner(partner));
   } catch (err) {
     logError(err, { route: 'admin#[admin] partner get error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch partner' });
@@ -4022,7 +4048,7 @@ router.get('/partners/:id/users', requireAdminAuth, async (req, res) => {
     if (!partner) return res.status(404).json({ error: 'Partner not found' });
 
     const users = await prisma.user.findMany({
-      where: { partnerId: partner.id, NOT: { emailHash: { startsWith: 'deleted_' } } },
+      where: { partnerId: partner.id, ...activePartnerUsers },
       select: {
         id: true,
         name: true,
@@ -4074,7 +4100,7 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
     const existing = await prisma.partner.findUnique({ where: { slug } });
     if (existing) return res.status(409).json({ error: `Slug '${slug}' is already in use` });
 
-    const syncedDiscounts = await syncDiscounts(name, slug, discounts, expiresAt, maxRedemptions, null);
+    const syncedDiscounts = await syncDiscounts(name, slug, onlyOfferedPlans(discounts, plans), expiresAt, maxRedemptions, null);
 
     const config = {
       trialDays,
@@ -4096,7 +4122,7 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
 
     partner = await generateAndStorePartnerQr(partner);
 
-    res.status(201).json({ ...partner, qrCodeUrl: await resolveDragonImageUrl(partner.qrCodeUrl) });
+    res.status(201).json(await serializePartner(partner, 0));
   } catch (err) {
     logError(err, { route: 'admin#[admin] partner create error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create partner' });
@@ -4111,7 +4137,7 @@ router.post('/partners/:id/qr-code', requireAdminAuth, async (req, res) => {
     if (!partner) return res.status(404).json({ error: 'Partner not found' });
 
     const updated = await generateAndStorePartnerQr(partner);
-    res.json({ ...updated, qrCodeUrl: await resolveDragonImageUrl(updated.qrCodeUrl) });
+    res.json(await serializePartner(updated, await prisma.user.count({ where: { partnerId: partner.id, ...activePartnerUsers } })));
   } catch (err) {
     logError(err, { route: 'admin#[admin] partner QR regenerate error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to generate QR code' });
@@ -4129,23 +4155,28 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
       name, status, trialDays, plans, discounts, welcomeMessage, maxRedemptions, expiresAt,
     } = req.body;
 
+    // `undefined` = leave unchanged; `null` (or '') = clear.
     const oldConfig = partner.config;
     const oldDiscounts = normalizeDiscounts(oldConfig); // reads either old or new shape
-    const newDiscounts = discounts !== undefined ? discounts : oldDiscounts;
+    const nextPlans = plans ?? oldConfig.plans ?? ['monthly', 'yearly'];
+    const nextExpiresAt = expiresAt !== undefined ? (expiresAt ? new Date(expiresAt) : null) : partner.expiresAt;
+    const nextMaxRedemptions = maxRedemptions !== undefined ? (maxRedemptions || null) : (oldConfig.maxRedemptions ?? null);
+    const limitsChanged =
+      (nextExpiresAt?.getTime() ?? null) !== (partner.expiresAt?.getTime() ?? null) ||
+      nextMaxRedemptions !== (oldConfig.maxRedemptions ?? null);
 
-    const syncedDiscounts = discounts !== undefined
-      ? await syncDiscounts(
-          name ?? partner.name, partner.slug, newDiscounts,
-          expiresAt ?? partner.expiresAt, maxRedemptions ?? oldConfig.maxRedemptions, oldDiscounts,
-        )
-      : oldDiscounts;
+    const newDiscounts = onlyOfferedPlans(discounts !== undefined ? discounts : oldDiscounts, nextPlans);
+    const syncedDiscounts = await syncDiscounts(
+      name || partner.name, partner.slug, newDiscounts,
+      nextExpiresAt, nextMaxRedemptions, oldDiscounts, limitsChanged,
+    );
 
     const config = {
       trialDays: trialDays ?? oldConfig.trialDays,
-      plans: plans ?? oldConfig.plans,
+      plans: nextPlans,
       discounts: syncedDiscounts,
-      welcomeMessage: welcomeMessage !== undefined ? welcomeMessage : oldConfig.welcomeMessage,
-      maxRedemptions: maxRedemptions !== undefined ? maxRedemptions : oldConfig.maxRedemptions,
+      welcomeMessage: welcomeMessage !== undefined ? (welcomeMessage || null) : (oldConfig.welcomeMessage ?? null),
+      maxRedemptions: nextMaxRedemptions,
     };
 
     const updated = await prisma.partner.update({
@@ -4154,11 +4185,12 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
         ...(name ? { name } : {}),
         ...(status ? { status } : {}),
         config,
-        expiresAt: expiresAt !== undefined ? (expiresAt ? new Date(expiresAt) : null) : partner.expiresAt,
+        expiresAt: nextExpiresAt,
       },
+      include: partnerWithUserCount,
     });
 
-    res.json({ ...updated, qrCodeUrl: await resolveDragonImageUrl(updated.qrCodeUrl) });
+    res.json(await serializePartner(updated));
   } catch (err) {
     logError(err, { route: 'admin#[admin] partner update error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update partner' });

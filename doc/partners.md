@@ -7,10 +7,11 @@ Business partners (clinics, employers, health plans) receive a unique QR code / 
 ## How it works end-to-end
 
 ```
-Partner QR code → hinora.co/p/sgh-family
-                        │  (Express redirect)
+Partner QR code → signup.hinora.co/p/sgh-family
+                        │  (web SPA route on Vercel; the API also serves
+                        │   /p/:slug as a 302 to SIGNUP_APP_URL/p/:slug)
                         ▼
-              hinora.co/signup/p/sgh-family
+              signup.hinora.co/p/sgh-family
                         │  (web SPA, PartnerLandingScreen — no visible UI)
                         │
               GET /api/partner/validate/sgh-family
@@ -18,7 +19,7 @@ Partner QR code → hinora.co/p/sgh-family
                    discounts: { monthly: {...}|null, yearly: {...}|null } }
                         │
               Saved into OnboardingContext (→ localStorage), then
-              immediately redirected to hinora.co/signup/ (replace, no history entry)
+              immediately redirected to signup.hinora.co/ (replace, no history entry)
                         │
               User clicks "Get Started" on the (undifferentiated) landing page
                         │
@@ -34,9 +35,11 @@ Partner QR code → hinora.co/p/sgh-family
                              its own "Special discount for X" badge, and independent pricing
                         │
               POST /api/stripe/create-checkout-session { plan }
-              Server reads user.partner.config, resolves discounts for the SELECTED plan only:
+              Server reads user.partner.config (even if the partner has since been
+              deactivated), resolves discounts for the SELECTED plan only:
                 - trial_period_days = config.trialDays
-                - discounts = [{ coupon: discounts[plan].stripeCouponId }]  (if set for that plan)
+                - discounts = [{ coupon: discounts[plan].stripeCouponId }]  (if set for that plan
+                  and the partner's expiresAt hasn't passed)
                 - validates requested plan is in config.plans
                         │
               Stripe Checkout (discounted per the selected plan's own coupon)
@@ -59,6 +62,7 @@ model Partner {
   config      Json                     // PartnerConfig — see below
   expiresAt   DateTime?                // optional hard expiry
   redemptions Int           @default(0) // signup counter
+  qrCodeUrl   String?                  // S3 key partners/<slug>/qr.png (presigned on read)
   createdAt   DateTime      @default(now())
   users       User[]
 }
@@ -70,7 +74,11 @@ partnerId  String?
 partner    Partner? @relation(...)
 ```
 
-Migration: `prisma/migrations/20260701000000_add_partner/`
+Migrations: `20260701000000_add_partner`, `20260729024440_add_partner_qr_code_url`, `20260828130000_seed_referral_partner`.
+
+### Reserved `referral` partner
+
+`20260828130000_seed_referral_partner` inserts a partner with slug `referral` (30-day trial, no discounts). Users who sign up via a referral link (and no partner link) are attached to it, so they get the referral trial through the same checkout pipeline; per-referrer attribution lives in the `Referral` table (see `doc/implementation/unified-referral-partner.md`). It appears on the admin Partners page labelled "Reserved"; editing its trial changes the referral offer, and deactivating it stops referred users getting the trial (the portal warns before doing so). Its `redemptions` counts referred signups.
 
 ---
 
@@ -154,8 +162,12 @@ Changing one plan's discount only touches that plan's coupon — editing the yea
 |---|---|
 | Create partner with a plan's discount | New coupon created for that plan, ID written to config |
 | Update a plan's discount | That plan's old coupon archived (deleted), new coupon created |
-| Update partner without changing a plan's discount | That plan's existing coupon unchanged |
-| Deactivate partner (status=EXPIRED) | Coupons left in Stripe (existing users unaffected) |
+| Change `expiresAt` or `maxRedemptions` | Every discounted plan's coupon is recreated — both values are baked into the coupon as `redeem_by` / `max_redemptions`, so a stale coupon would otherwise be rejected by Stripe at checkout |
+| Update partner without changing a plan's discount or the limits | That plan's existing coupon unchanged |
+| Untick a plan under "Available plans" | That plan's discount is dropped (no coupon for a plan that isn't offered) |
+| Deactivate partner (status=EXPIRED) | Coupons left in Stripe; already-signed-up users can still check out with them |
+
+Change detection ignores key order and `stripeCouponId`. Note `max_redemptions` on a coupon counts **checkouts on that plan**, whereas the partner cap counts **signups** — the signup cap is the real limit.
 
 The coupon is attached to the checkout session via `session.discounts`, not to the subscription directly.
 
@@ -163,16 +175,15 @@ The coupon is attached to the checkout session via `session.discounts`, not to t
 
 ## URL / QR code
 
-| Format | URL |
-|---|---|
-| Short (QR-friendly) | `hinora.co/p/sgh-family` |
-| Full (SPA route) | `hinora.co/signup/p/sgh-family` |
+The partner link is `${SIGNUP_APP_URL}/p/<slug>` (prod: `https://signup.hinora.co/p/sgh-family`), built by `buildPartnerUrl()` in `server/utils/partnerQr.cjs`. The API returns it as `signupUrl` on every admin partner response, and the portal's **Copy** button and QR modal both use it, so the copied link always matches the QR code for the environment you're viewing.
 
-The short URL is an Express redirect (`302`) to the full SPA route. Use the short form on QR codes — it's shorter and survives future path changes.
+**QR code** — generated automatically on create: a 512px PNG of `signupUrl`, uploaded to S3 at `partners/<slug>/qr.png`, stored in `Partner.qrCodeUrl` and served as a presigned URL. Generation is best-effort (a failure never blocks create). Use **QR → Generate / Regenerate** in the portal to backfill or refresh one (`POST /api/admin/partners/:id/qr-code`). The App Runner role needs S3 access to the `partners/*` prefix.
 
 ---
 
 ## Access gates
+
+**Deactivating a partner only blocks new signups.** Users already attributed to it keep its trial length, plan list and discount at checkout (`stripe.cjs` does not gate on partner status). After the partner's `expiresAt` the discount is no longer applied (its coupon's `redeem_by` has passed), but the trial length still is.
 
 Partner users go through the **same Stripe checkout** as self-serve users. After checkout, they are indistinguishable in the DB — their `subscriptionStatus` becomes `ACTIVE` (or `TRIAL`), and `isSubscribed` is computed server-side. The mobile app sees them as subscribed via the normal `isSubscribed` check.
 
@@ -216,11 +227,15 @@ Response:
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/api/admin/partners` | GET | List all partners (includes `userCount`, `discountLabels: {monthly, yearly}`) |
+| `/api/admin/partners` | GET | List all partners |
 | `/api/admin/partners` | POST | Create partner + auto-create Stripe coupon(s) for whichever plans have a discount |
 | `/api/admin/partners/:id` | GET | Single partner detail |
-| `/api/admin/partners/:id` | PATCH | Update config; re-creates a plan's coupon only if that plan's discount changed |
+| `/api/admin/partners/:id` | PATCH | Update config / status; re-creates a plan's coupon only if that plan's discount (or the expiry/cap) changed |
 | `/api/admin/partners/:id` | DELETE | Soft-deactivate (sets status=EXPIRED) |
+| `/api/admin/partners/:id/qr-code` | POST | (Re)generate the QR code |
+| `/api/admin/partners/:id/users` | GET | Users attributed to the partner, with subscription status |
+
+Every partner response (list, get, create, update, qr-code) has the same shape: the row plus `config.discounts` (normalized per-plan), presigned `qrCodeUrl`, `signupUrl`, `userCount` and `discountLabels: {monthly, yearly}`.
 
 **Create/update body:**
 ```json
@@ -239,7 +254,7 @@ Response:
 }
 ```
 
-`slug` is immutable after creation. `discounts.<plan>.stripeCouponId` is always set by the server — omit it from requests. Omitting `discounts` entirely on a PATCH leaves existing discounts untouched.
+`slug` is immutable after creation. `discounts.<plan>.stripeCouponId` is always set by the server — omit it from requests. On a PATCH, an omitted field is left unchanged and `null` clears it — e.g. `{ "maxRedemptions": null, "expiresAt": null, "welcomeMessage": null }` makes the partner unlimited with no expiry. Omitting `discounts` leaves existing discounts untouched. A discount for a plan not in `plans` is dropped.
 
 ---
 
@@ -247,12 +262,13 @@ Response:
 
 **Partners page** (`/partners` in the admin portal):
 
-- **Create** — form with all config fields; slug is auto-suggested from name (lowercased, spaces → hyphens)
-- **Edit** — same form, slug is read-only; each plan's discount block is independent — editing yearly's discount doesn't touch monthly's, and vice versa
+- **Create** — form with all config fields; the slug is typed manually (lowercased, anything outside `a-z0-9-` becomes `-`)
+- **Edit** — same form, slug is read-only; each plan's discount block is independent — editing yearly's discount doesn't touch monthly's, and vice versa. Emptying Max redemptions, Expires or Welcome message clears them
 - **Discounts** — one block per plan currently checked under "Available plans"; each has its own "Apply a discount" toggle, type (percent/amount), amount, and duration
-- **URL copy** — one-click copy of the short partner URL (`hinora.co/p/:slug`)
-- **Table** — shows offer summary (trial days, plans), a discount line per plan that has one, redemption count vs cap, user count, status badge, created date
-- **Deactivate** — sets status=EXPIRED; existing users retain access, new signups are blocked
+- **Copy / QR** — copy the partner's `signupUrl`, or open the QR modal (view, open, generate/regenerate)
+- **Table** — shows offer summary (trial days, plans), a discount line per plan that has one, signups vs cap, attributed user count (click to list them with subscription status), status badge, created date
+- **Deactivate / Reactivate** — Deactivate sets status=EXPIRED (new signups blocked; signed-up users keep their offer). Reactivate sets it back to ACTIVE
+- **Env toggle** — the portal can target the dev or prod API; the PROD badge shows which
 
 ---
 
@@ -325,15 +341,15 @@ Redemption counter is incremented **at signup time**, not at checkout completion
 2. Fill: name, slug (e.g. `hospital-name`), trial days, available plans, optional cap + expiry
 3. For each available plan you want discounted, tick **Apply a discount** in that plan's block and fill in its type/amount/duration
 4. Click **Create partner** — a Stripe coupon is auto-created per discounted plan
-5. Click **Copy** next to the partner's slug to get `hinora.co/p/hospital-name`
-6. Generate a QR code from that URL (any QR generator; encode as-is)
+5. Click **Copy** next to the partner's slug to get `signup.hinora.co/p/hospital-name`
+6. Click **QR** to open the auto-generated QR code (use **Generate** if it's missing), then **Open in new tab** to save it
 7. Hand off URL / QR code to partner
 
 ### Pause a partner temporarily
 
-Admin portal → Partners → **Deactivate**. Sets status=EXPIRED. The URL returns 404 for new visitors. Existing users are unaffected.
+Admin portal → Partners → **Deactivate**. Sets status=EXPIRED. New visitors silently fall through to normal signup with no partner attached. Users who already signed up still get the partner offer at checkout.
 
-To re-activate: `PATCH /api/admin/partners/:id` with `{ "status": "ACTIVE" }` (direct API call for now — re-activate button can be added to the portal later).
+To re-activate: **Reactivate** on the same row. If the partner's expiry date has passed, also clear or extend **Expires** via Edit, or the link will still be rejected.
 
 ### Change a partner's discount
 
@@ -341,7 +357,7 @@ Admin portal → Partners → **Edit** → update the specific plan's discount b
 
 ### Check usage
 
-Partners table shows redemptions (signup count) vs cap, and user count (those who completed checkout). The gap between the two is users who signed up but haven't subscribed yet.
+Partners table shows redemptions (signup count) vs cap, and user count — every user currently attributed to the partner, whether or not they subscribed. Click the user count to see each user's subscription status (TRIAL / ACTIVE / INACTIVE…). Deleted accounts are excluded from the user count but not from redemptions, so redemptions can be higher.
 
 ---
 

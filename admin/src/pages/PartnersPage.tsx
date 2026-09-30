@@ -6,8 +6,6 @@ import {
 } from '../api/adminApi';
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
 
-const BASE_URL = 'https://signup.hinora.co';
-
 const SUBSCRIPTION_STATUS_COLORS: Record<string, string> = {
   TRIAL: '#f59e0b',
   ACTIVE: '#10b981',
@@ -30,10 +28,6 @@ function subscriptionBadge(status: string) {
   );
 }
 
-function partnerUrl(slug: string) {
-  return `${BASE_URL}/p/${slug}`;
-}
-
 function statusBadge(status: Partner['status']) {
   const styles: Record<string, string> = {
     ACTIVE: 'background:#d1fae5;color:#065f46',
@@ -49,6 +43,9 @@ function statusBadge(status: Partner['status']) {
     </span>
   );
 }
+
+// Reserved row (migration 20260828130000) that carries the referral-link trial.
+const REFERRAL_PARTNER_SLUG = 'referral';
 
 const emptyForm: PartnerCreatePayload = {
   slug: '', name: '', trialDays: 7,
@@ -98,7 +95,7 @@ export default function PartnersPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
+  const [statusChangingId, setStatusChangingId] = useState<string | null>(null);
 
   // QR code modal
   const [qrPartner, setQrPartner] = useState<Partner | null>(null);
@@ -175,7 +172,12 @@ export default function PartnersPage() {
         ? { ...base, percentOff: s.percentOff }
         : { ...base, amountOff: s.amountOff, currency: s.currency };
     };
-    return { monthly: build(discountStates.monthly), yearly: build(discountStates.yearly) };
+    // Only offered plans can carry a discount — a toggle left on for an unticked plan is ignored.
+    const offered = (plan: PlanKey) => form.plans?.includes(plan) ?? true;
+    return {
+      monthly: offered('monthly') ? build(discountStates.monthly) : null,
+      yearly: offered('yearly') ? build(discountStates.yearly) : null,
+    };
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -186,9 +188,10 @@ export default function PartnersPage() {
       const payload: PartnerCreatePayload = {
         ...form,
         discounts: buildDiscounts(),
-        maxRedemptions: form.maxRedemptions || undefined,
-        expiresAt: form.expiresAt || undefined,
-        welcomeMessage: form.welcomeMessage || undefined,
+        // null (not undefined) so clearing a field on edit actually clears it server-side.
+        maxRedemptions: form.maxRedemptions || null,
+        expiresAt: form.expiresAt || null,
+        welcomeMessage: form.welcomeMessage || null,
       };
       if (editingId) {
         const updated = await updatePartner(editingId, payload, callOpts);
@@ -206,20 +209,36 @@ export default function PartnersPage() {
   }
 
   async function handleDeactivate(partner: Partner) {
-    if (!window.confirm(`Deactivate partner "${partner.name}"?\n\nNew signups will be blocked. Existing users keep access.`)) return;
-    setDeactivatingId(partner.id);
+    const referralWarning = partner.slug === REFERRAL_PARTNER_SLUG
+      ? '\n\nWARNING: this is the reserved referral partner. Deactivating it stops referred users from getting the referral trial.'
+      : '';
+    if (!window.confirm(`Deactivate partner "${partner.name}"?\n\nNew signups will be blocked. Users who already signed up keep their offer.${referralWarning}`)) return;
+    setStatusChangingId(partner.id);
     try {
       await deactivatePartner(partner.id, callOpts);
       setPartners(prev => prev.map(p => p.id === partner.id ? { ...p, status: 'EXPIRED' } : p));
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Failed');
     } finally {
-      setDeactivatingId(null);
+      setStatusChangingId(null);
     }
   }
 
-  function copyUrl(slug: string) {
-    navigator.clipboard.writeText(partnerUrl(slug)).catch(() => {});
+  async function handleReactivate(partner: Partner) {
+    if (!window.confirm(`Reactivate partner "${partner.name}"? New signups through its link will be allowed again.`)) return;
+    setStatusChangingId(partner.id);
+    try {
+      const updated = await updatePartner(partner.id, { status: 'ACTIVE' }, callOpts);
+      setPartners(prev => prev.map(p => p.id === updated.id ? updated : p));
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Failed');
+    } finally {
+      setStatusChangingId(null);
+    }
+  }
+
+  function copyUrl(partner: Partner) {
+    navigator.clipboard.writeText(partner.signupUrl).catch(() => {});
   }
 
   function openQr(partner: Partner) {
@@ -312,7 +331,7 @@ export default function PartnersPage() {
                 <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>Welcome message (optional)</span>
                 <input
                   style={inputStyle}
-                  value={form.welcomeMessage}
+                  value={form.welcomeMessage ?? ''}
                   onChange={e => setForm(f => ({ ...f, welcomeMessage: e.target.value }))}
                   placeholder="Welcome, SGH partners! Enjoy your exclusive offer."
                 />
@@ -340,7 +359,7 @@ export default function PartnersPage() {
                 <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>Expires</span>
                 <input
                   type="date" style={inputStyle}
-                  value={form.expiresAt}
+                  value={form.expiresAt ?? ''}
                   onChange={e => setForm(f => ({ ...f, expiresAt: e.target.value }))}
                 />
               </label>
@@ -476,6 +495,9 @@ export default function PartnersPage() {
                 <tr key={p.id}>
                   <td>
                     <p style={{ fontWeight: 600, margin: 0 }}>{p.name}</p>
+                    {p.slug === REFERRAL_PARTNER_SLUG && (
+                      <p style={{ fontSize: 12, color: '#92400e', margin: 0 }}>Reserved — powers referral-link trials</p>
+                    )}
                     {p.config.welcomeMessage && (
                       <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>{p.config.welcomeMessage}</p>
                     )}
@@ -488,7 +510,7 @@ export default function PartnersPage() {
                       <button
                         className="btn btn-secondary"
                         style={{ fontSize: 11, padding: '2px 8px', height: 24 }}
-                        onClick={() => copyUrl(p.slug)}
+                        onClick={() => copyUrl(p)}
                         title="Copy URL"
                       >
                         Copy
@@ -535,14 +557,23 @@ export default function PartnersPage() {
                       >
                         Edit
                       </button>
-                      {p.status === 'ACTIVE' && (
+                      {p.status === 'ACTIVE' ? (
                         <button
                           className="btn btn-secondary"
                           style={{ fontSize: 12, padding: '2px 10px', height: 26 }}
-                          disabled={deactivatingId === p.id}
+                          disabled={statusChangingId === p.id}
                           onClick={() => handleDeactivate(p)}
                         >
-                          {deactivatingId === p.id ? '…' : 'Deactivate'}
+                          {statusChangingId === p.id ? '…' : 'Deactivate'}
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-secondary"
+                          style={{ fontSize: 12, padding: '2px 10px', height: 26 }}
+                          disabled={statusChangingId === p.id}
+                          onClick={() => handleReactivate(p)}
+                        >
+                          {statusChangingId === p.id ? '…' : 'Reactivate'}
                         </button>
                       )}
                     </div>
@@ -562,7 +593,7 @@ export default function PartnersPage() {
               <button className="btn-remove" onClick={() => setQrPartner(null)}>&times;</button>
             </div>
             <code style={{ fontSize: 12, background: '#f3f4f6', padding: '2px 6px', borderRadius: 4 }}>
-              {partnerUrl(qrPartner.slug)}
+              {qrPartner.signupUrl}
             </code>
             <div style={{ margin: '16px 0' }}>
               {qrPartner.qrCodeUrl ? (

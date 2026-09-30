@@ -1342,6 +1342,7 @@ export interface Partner {
   expiresAt: string | null;
   redemptions: number;
   qrCodeUrl: string | null;
+  signupUrl: string; // same URL the QR code encodes (server's SIGNUP_APP_URL)
   userCount: number;
   discountLabels: { monthly: string | null; yearly: string | null };
   createdAt: string;
@@ -1356,9 +1357,10 @@ export interface PartnerCreatePayload {
     monthly?: Omit<PartnerDiscount, 'stripeCouponId'> | null;
     yearly?: Omit<PartnerDiscount, 'stripeCouponId'> | null;
   };
-  welcomeMessage?: string;
-  maxRedemptions?: number;
-  expiresAt?: string;
+  // On update: omit = leave unchanged, null = clear.
+  welcomeMessage?: string | null;
+  maxRedemptions?: number | null;
+  expiresAt?: string | null;
 }
 
 export async function getPartners(opts?: ApiEnvOpts): Promise<Partner[]> {
