@@ -458,6 +458,8 @@ model User {
   tag                       String                      @default("user")
   referralCode              String?                     @unique
   preferredLocale           String                      @default("en")
+  // Set on the first authenticated request of each Singapore (UTC+8) day (app open). See server/services/userActivity.cjs.
+  lastActiveAt              DateTime?
   LearningProgress          LearningProgress?
   ModuleHistory             ModuleHistory[]
   PasswordResetToken        PasswordResetToken[]

@@ -1,6 +1,7 @@
 // JWT authentication middleware
 const { verifyAccessToken } = require('../utils/jwt.cjs');
 const { UnauthorizedError, AppError } = require('../utils/errors.cjs');
+const { markUserActive } = require('../services/userActivity.cjs');
 
 function requireAuth(req, res, next) {
   try {
@@ -29,6 +30,8 @@ function requireAuth(req, res, next) {
       id: payload.userId,
       email: payload.email
     };
+
+    markUserActive(payload.userId);
 
     next();
   } catch (error) {
