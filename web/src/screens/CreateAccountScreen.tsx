@@ -11,14 +11,19 @@ export default function CreateAccountScreen() {
   const { data, setEmail, setPassword, setAccessToken } = useOnboarding();
   const [emailVal, setEmailVal] = useState('');
   const [passwordVal, setPasswordVal] = useState('');
+  const [phoneVal, setPhoneVal] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   // Campaign links can override this screen's title/subtitle (referral copy still wins).
   const landing = data.referralCode ? null : data.partnerInfo?.landing;
 
   const handleSignup = async () => {
-    if (!emailVal || !passwordVal) {
+    if (!emailVal || !phoneVal.trim() || !passwordVal) {
       setError('Please fill in all fields.');
+      return;
+    }
+    if (!/^\+?[\d\s().-]{7,25}$/.test(phoneVal.trim())) {
+      setError('Please enter a valid phone number.');
       return;
     }
     if (passwordVal.length < 8) {
@@ -39,6 +44,7 @@ export default function CreateAccountScreen() {
 
       const res = await signup(emailVal, passwordVal, {
         name: data.name || undefined,
+        phone: phoneVal.trim(),
         childName: data.childName || undefined,
         childBirthYear,
         childBirthday: data.childBirthday ? new Date(data.childBirthday).toISOString() : undefined,
@@ -90,6 +96,18 @@ export default function CreateAccountScreen() {
               placeholder="you@example.com"
               className="input-field"
               autoComplete="email"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#1E2939] mb-2">Phone number</label>
+            <input
+              type="tel"
+              value={phoneVal}
+              onChange={e => setPhoneVal(e.target.value)}
+              placeholder="9123 4567"
+              className="input-field"
+              autoComplete="tel"
             />
           </div>
 

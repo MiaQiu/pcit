@@ -48,6 +48,7 @@ export function signup(
   password: string,
   extra: {
     name?: string;
+    phone?: string;
     childName?: string;
     childBirthYear?: number;
     childBirthday?: string;

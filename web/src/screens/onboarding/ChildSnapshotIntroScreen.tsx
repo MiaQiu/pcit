@@ -42,6 +42,8 @@ export default function ChildSnapshotIntroScreen() {
   const { data } = useOnboarding();
   const name = data.name || 'there';
   const childName = data.childName || 'your child';
+  // Campaign signups must complete the survey — no skip.
+  const isCampaign = !data.referralCode && data.partnerInfo?.kind === 'CAMPAIGN';
 
   return (
     <OnboardingLayout progress={48} backTo="/onboarding/child-issue">
@@ -85,12 +87,14 @@ export default function ChildSnapshotIntroScreen() {
         <PrimaryButton onClick={() => navigate('/onboarding/wacb/1')}>
           Start
         </PrimaryButton>
-        <button
-          onClick={() => navigate('/onboarding/behavior-profile?locked=true')}
-          className="w-full mt-1 py-2 text-[#6B7280] font-medium text-sm hover:text-[#1E2939] transition-colors"
-        >
-          Skip for Now
-        </button>
+        {!isCampaign && (
+          <button
+            onClick={() => navigate('/onboarding/behavior-profile?locked=true')}
+            className="w-full mt-1 py-2 text-[#6B7280] font-medium text-sm hover:text-[#1E2939] transition-colors"
+          >
+            Skip for Now
+          </button>
+        )}
       </div>
     </OnboardingLayout>
   );

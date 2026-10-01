@@ -481,18 +481,17 @@ export default function PartnersPage() {
                 <span style={{ fontWeight: 600 }}>Skip the subscription / offer page</span>
               </label>
               <span style={{ display: 'block', color: '#6b7280', fontSize: 12, marginTop: 4, marginLeft: 24 }}>
-                Users go straight from onboarding to the "You're all set" download page, with no web trial or checkout.
-                They can still subscribe later in the mobile app at standard pricing.
+                Users go straight from onboarding to the "You're all set" download page, with no checkout.
+                They get the free trial below (no card needed), then can subscribe in the mobile app at standard pricing.
               </span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
-              <label style={{ fontSize: 13, opacity: form.skipSubscription ? 0.4 : 1 }}>
+              <label style={{ fontSize: 13 }}>
                 <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>Trial days</span>
                 <input
                   type="number" min={1} max={365} style={inputStyle}
                   value={form.trialDays}
-                  disabled={form.skipSubscription}
                   onChange={e => setForm(f => ({ ...f, trialDays: Number(e.target.value) }))}
                 />
               </label>
@@ -804,7 +803,7 @@ export default function PartnersPage() {
                   </td>
                   <td style={{ fontSize: 13 }}>
                     {p.config.skipSubscription ? (
-                      <p style={{ margin: '0 0 2px', color: '#6b7280' }}>No offer page (skipped)</p>
+                      <p style={{ margin: '0 0 2px', color: '#6b7280' }}>{p.config.trialDays}d trial · no offer page</p>
                     ) : (
                       <p style={{ margin: '0 0 2px' }}>{p.config.trialDays}d trial · {planLabels(p.config.plans)}</p>
                     )}

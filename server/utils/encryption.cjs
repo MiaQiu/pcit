@@ -82,7 +82,8 @@ function encryptUserData(userData) {
     ...userData,
     email: userData.email ? encryptSensitiveData(userData.email) : null,
     name: userData.name ? encryptSensitiveData(userData.name) : null,
-    childName: userData.childName ? encryptSensitiveData(userData.childName) : null
+    childName: userData.childName ? encryptSensitiveData(userData.childName) : null,
+    phone: userData.phone ? encryptSensitiveData(userData.phone) : null
   };
 }
 
@@ -112,6 +113,7 @@ function decryptUserData(userData) {
     email: userData.email ? decryptSensitiveData(userData.email) : null,
     name: userData.name ? decryptSensitiveData(userData.name) : null,
     childName: userData.childName ? decryptSensitiveData(userData.childName) : null,
+    phone: userData.phone ? decryptSensitiveData(userData.phone) : null,
     childConditions
   };
 }

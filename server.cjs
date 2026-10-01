@@ -521,6 +521,9 @@ scheduleTrialExpiryJob();
 const { scheduleReferralExpiryJob } = require('./server/jobs/referralExpiryJob.cjs');
 scheduleReferralExpiryJob();
 
+const { scheduleDirectTrialExpiryJob } = require('./server/jobs/directTrialExpiryJob.cjs');
+scheduleDirectTrialExpiryJob();
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Health check: http://localhost:${PORT}/api/health`);

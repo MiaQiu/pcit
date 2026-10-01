@@ -433,6 +433,7 @@ model User {
   childBirthYear            Int
   childConditions           String
   emailHash                 String?                     @unique
+  phone                     String? // encrypted, like email/name
   childBirthday             DateTime?
   issue                     String?
   parentGoal                String?
