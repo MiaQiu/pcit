@@ -27,6 +27,7 @@ import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import type { ContentBlock, TextRun } from '../utils/formatLessonContentV2';
 import { LessonContentBlocks } from '../components/LessonContentBlocks';
 import { TrackedTouchable } from '../components/TrackedTouchable';
+import type { DemoVideo } from '@nora/core';
 
 type DemoVideoDetailRouteProp = RouteProp<RootStackParamList, 'DemoVideoDetail'>;
 
@@ -93,7 +94,7 @@ function FaqRunText({ runs }: { runs: TextRun[] }) {
   );
 }
 
-const FaqAccordion: React.FC<{ blocks: ContentBlock[] }> = ({ blocks }) => {
+const FaqAccordion: React.FC<{ blocks: ContentBlock[]; video: DemoVideo }> = ({ blocks, video }) => {
   const items = useMemo(() => toAdditionalTextItems(blocks), [blocks]);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
@@ -121,6 +122,12 @@ const FaqAccordion: React.FC<{ blocks: ContentBlock[] }> = ({ blocks }) => {
         const isOpen = canToggle && expanded.has(i);
         return (
           <TrackedTouchable analyticsId={`FAQ Item ${i + 1}`}
+            analyticsProperties={{
+              demoVideoId: video.id,
+              demoVideoTitle: video.baseTitle,
+              question: item.header.map((run) => run.text).join(''),
+              action: isOpen ? 'collapse' : 'expand',
+            }}
             key={i}
             style={faqStyles.card}
             activeOpacity={canToggle ? 0.75 : 1}
@@ -175,7 +182,7 @@ export const DemoVideoDetailScreen: React.FC = () => {
 
   const handleViewLesson = () => {
     if (!video.lessonId) return;
-    amplitudeService.trackEvent('Demo Video Lesson Link Tapped', { demoVideoId: video.id, lessonId: video.lessonId });
+    amplitudeService.trackEvent('Demo Video Lesson Link Tapped', { demoVideoId: video.id, demoVideoTitle: video.baseTitle, lessonId: video.lessonId });
     navigation.push('LessonRead', { lessonId: video.lessonId, moduleKey: video.moduleKey ?? undefined, title: video.lessonTitle ?? undefined });
   };
 
@@ -217,7 +224,7 @@ export const DemoVideoDetailScreen: React.FC = () => {
               style={styles.video}
               activeOpacity={0.85}
               onPress={() => {
-                amplitudeService.trackEvent('Demo Video Play Pressed', { demoVideoId: video.id });
+                amplitudeService.trackEvent('Demo Video Play Pressed', { demoVideoId: video.id, demoVideoTitle: video.baseTitle });
                 setPlaybackStarted(true);
               }}
             >
@@ -235,7 +242,7 @@ export const DemoVideoDetailScreen: React.FC = () => {
 
         {additionalTextBlocks.length > 0 && (
           <View style={styles.additionalText}>
-            <FaqAccordion blocks={additionalTextBlocks} />
+            <FaqAccordion blocks={additionalTextBlocks} video={video} />
           </View>
         )}
 

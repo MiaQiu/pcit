@@ -705,7 +705,7 @@ export const LearnScreen_v2: React.FC = () => {
             localThumbnailUris={localDemoVideoThumbnailUris}
             cardWidth={demoVideoCardWidth}
             onSelectVideo={video => {
-              amplitudeService.trackEvent('Demo Video Tapped', { demoVideoId: video.id });
+              amplitudeService.trackEvent('Demo Video Tapped', { demoVideoId: video.id, demoVideoTitle: video.baseTitle });
               // Pass the locally cached thumbnail through as the poster the
               // detail screen shows while its video buffers, same as here.
               const localThumbnailUri = localDemoVideoThumbnailUris[video.id];

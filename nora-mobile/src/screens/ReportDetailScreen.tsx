@@ -807,7 +807,7 @@ export const ReportDetailScreen: React.FC = () => {
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => {
-              amplitudeService.trackEvent('Report Detail Demo Video Tapped', { recordingId, skillTag: goalSkillTag, demoVideoId: learnMoreDemoVideo.id });
+              amplitudeService.trackEvent('Report Detail Demo Video Tapped', { recordingId, skillTag: goalSkillTag, demoVideoId: learnMoreDemoVideo.id, demoVideoTitle: learnMoreDemoVideo.baseTitle });
               navigation.navigate('DemoVideoDetail', { video: learnMoreDemoVideo });
             }}
           >
