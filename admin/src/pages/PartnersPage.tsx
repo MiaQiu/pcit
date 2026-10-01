@@ -6,40 +6,10 @@ import {
   Partner, PartnerCreatePayload, PartnerUser, PartnerKind, PartnerLandingText,
 } from '../api/adminApi';
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
-import defaultSignupImage from '../assets/signup-default.jpg';
-
-// Default copy of the customisable web signup screens (web/src/screens/LandingScreen.tsx,
-// CreateAccountScreen.tsx, SuccessScreen.tsx) — shown as placeholders and in the preview.
-const DEFAULT_LANDING: Record<keyof PartnerLandingText, string> = {
-  headline: 'Raise confident, happy kids — with just 5 minutes a day',
-  subtext: 'Science-backed parenting coaching, personalized for your child',
-  ctaText: 'Get Started',
-  accountTitle: 'Create your account',
-  accountSubtitle: 'Join thousands of parents raising happier, more confident kids.',
-  successTitle: "You're all set!",
-  successSubtitle: 'Your account is ready. Download the Nora app to start your first play session. Log in with your email and password in the Nora mobile app.',
-};
-
-// Mirrors server/utils/partnerLanding.cjs LANDING_LIMITS.
-const LANDING_LIMITS: Record<keyof PartnerLandingText, number> = {
-  headline: 120, subtext: 300, ctaText: 40, accountTitle: 80, accountSubtitle: 300,
-  successTitle: 80, successSubtitle: 300,
-};
-
-const emptyLandingText = (): PartnerLandingText => ({
-  headline: null, subtext: null, ctaText: null, accountTitle: null, accountSubtitle: null,
-  successTitle: null, successSubtitle: null,
-});
-
-// Hero image edits are applied after the partner row is saved (the upload needs its id).
-interface LandingImageState {
-  currentUrl: string | null;   // presigned URL of the saved (or duplicated) image
-  currentKey: string | null;   // S3 key — only sent on create, when duplicating
-  pendingFile: File | null;    // new upload chosen in the form
-  remove: boolean;             // revert to the default image on save
-}
-
-const emptyImageState = (): LandingImageState => ({ currentUrl: null, currentKey: null, pendingFile: null, remove: false });
+import {
+  LandingEditor, LandingField, LandingImageState, emptyImageState, emptyLandingText, landingTextOf, inputStyle,
+} from '../components/partners/LandingEditor';
+import CampaignLinksModal from '../components/partners/CampaignLinksModal';
 
 type KindFilter = 'ALL' | PartnerKind;
 
@@ -135,7 +105,6 @@ export default function PartnersPage() {
   // Campaign rules behind the create-account consent checkbox (campaigns only).
   const [rules, setRules] = useState({ title: '', content: '' });
   const [imageState, setImageState] = useState<LandingImageState>(emptyImageState());
-  const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -148,6 +117,10 @@ export default function PartnersPage() {
   const [qrGenerating, setQrGenerating] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
 
+  // Messages, link builder & stats modal (holds the id so it follows list updates)
+  const [linksPartnerId, setLinksPartnerId] = useState<string | null>(null);
+  const linksPartner = partners.find(p => p.id === linksPartnerId) ?? null;
+
   // Partner users modal
   const [usersPartner, setUsersPartner] = useState<Partner | null>(null);
   const [partnerUsers, setPartnerUsers] = useState<PartnerUser[]>([]);
@@ -157,17 +130,6 @@ export default function PartnersPage() {
   useEffect(() => {
     load();
   }, [env, prodToken]);
-
-  // Object URL for previewing a not-yet-uploaded hero image.
-  useEffect(() => {
-    if (!imageState.pendingFile) {
-      setPendingPreviewUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(imageState.pendingFile);
-    setPendingPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [imageState.pendingFile]);
 
   async function load() {
     setLoading(true);
@@ -209,15 +171,7 @@ export default function PartnersPage() {
       skipSubscription: cfg.skipSubscription === true,
     });
     const l = cfg.landing;
-    setLandingText({
-      headline: l?.headline ?? null,
-      subtext: l?.subtext ?? null,
-      ctaText: l?.ctaText ?? null,
-      accountTitle: l?.accountTitle ?? null,
-      accountSubtitle: l?.accountSubtitle ?? null,
-      successTitle: l?.successTitle ?? null,
-      successSubtitle: l?.successSubtitle ?? null,
-    });
+    setLandingText(landingTextOf(l));
     setRules({ title: cfg.campaignRules?.title ?? '', content: cfg.campaignRules?.content ?? '' });
     setImageState({ currentUrl: p.landingImageUrl, currentKey: l?.imageKey ?? null, pendingFile: null, remove: false });
     const next = emptyDiscountStates();
@@ -385,11 +339,6 @@ export default function PartnersPage() {
 
   const isCampaign = form.kind === 'CAMPAIGN';
   const visiblePartners = kindFilter === 'ALL' ? partners : partners.filter(p => p.kind === kindFilter);
-  const previewImage = imageState.pendingFile
-    ? pendingPreviewUrl
-    : (!imageState.remove && imageState.currentUrl) || defaultSignupImage;
-  const setLandingField = (field: keyof PartnerLandingText, value: string) =>
-    setLandingText(prev => ({ ...prev, [field]: value || null }));
 
   return (
     <div className="page">
@@ -630,122 +579,13 @@ export default function PartnersPage() {
               <span style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 2 }}>Signup screen messages</span>
               <span style={{ display: 'block', color: '#6b7280', fontSize: 12, marginBottom: 10 }}>
                 Optional. Leave a field blank to keep the default text (shown greyed out). Line breaks are kept.
+                This is the copy for the plain <code>/p/{form.slug || 'slug'}</code> link — to test different messages
+                (and get per-channel links), add message variants under <b>Messages &amp; links</b> after saving.
               </span>
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 20, alignItems: 'start' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#6b7280' }}>SCREEN 1 · WELCOME</p>
-                  <div style={{ fontSize: 13 }}>
-                    <span style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>Hero image</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <label className="btn btn-secondary" style={{ fontSize: 12, padding: '2px 10px', height: 28, cursor: 'pointer' }}>
-                        {imageState.pendingFile || (imageState.currentUrl && !imageState.remove) ? 'Replace image' : 'Upload image'}
-                        <input
-                          type="file" accept="image/*" style={{ display: 'none' }}
-                          onChange={e => {
-                            const file = e.target.files?.[0] ?? null;
-                            e.target.value = '';
-                            if (file) setImageState(st => ({ ...st, pendingFile: file, remove: false }));
-                          }}
-                        />
-                      </label>
-                      {(imageState.pendingFile || (imageState.currentUrl && !imageState.remove)) && (
-                        <button
-                          type="button" className="btn btn-secondary"
-                          style={{ fontSize: 12, padding: '2px 10px', height: 28 }}
-                          onClick={() => setImageState(st => ({ ...st, pendingFile: null, remove: true }))}
-                        >
-                          Use default image
-                        </button>
-                      )}
-                      <span style={{ fontSize: 12, color: '#6b7280' }}>
-                        {imageState.pendingFile
-                          ? `New: ${imageState.pendingFile.name} (uploads on save)`
-                          : imageState.currentUrl && !imageState.remove ? 'Custom image' : 'Default image'}
-                      </span>
-                    </div>
-                  </div>
-                  {([
-                    ['headline', 'Headline', true],
-                    ['subtext', 'Subtext', true],
-                    ['ctaText', 'Button text', false],
-                  ] as const).map(([field, label, multiline]) => (
-                    <LandingField
-                      key={field} label={label} multiline={multiline}
-                      value={landingText[field]} placeholder={DEFAULT_LANDING[field]} maxLength={LANDING_LIMITS[field]}
-                      onChange={v => setLandingField(field, v)}
-                    />
-                  ))}
-                  <p style={{ margin: '6px 0 0', fontSize: 12, fontWeight: 700, color: '#6b7280' }}>SCREEN 2 · CREATE ACCOUNT</p>
-                  {([
-                    ['accountTitle', 'Title', false],
-                    ['accountSubtitle', 'Subtitle', true],
-                  ] as const).map(([field, label, multiline]) => (
-                    <LandingField
-                      key={field} label={label} multiline={multiline}
-                      value={landingText[field]} placeholder={DEFAULT_LANDING[field]} maxLength={LANDING_LIMITS[field]}
-                      onChange={v => setLandingField(field, v)}
-                    />
-                  ))}
-                  <p style={{ margin: '6px 0 0', fontSize: 12, fontWeight: 700, color: '#6b7280' }}>LAST SCREEN · ALL SET (DOWNLOAD APP)</p>
-                  {([
-                    ['successTitle', 'Title', false],
-                    ['successSubtitle', 'Message', true],
-                  ] as const).map(([field, label, multiline]) => (
-                    <LandingField
-                      key={field} label={label} multiline={multiline}
-                      value={landingText[field]} placeholder={DEFAULT_LANDING[field]} maxLength={LANDING_LIMITS[field]}
-                      onChange={v => setLandingField(field, v)}
-                    />
-                  ))}
-                </div>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', maxWidth: 406 }}>
-                  <PhonePreview label="Screen 1">
-                    <div style={{ width: '100%', aspectRatio: '1', borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}>
-                      <img src={previewImage ?? defaultSignupImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                    <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, textAlign: 'center', color: '#1E2939', whiteSpace: 'pre-line', lineHeight: 1.25 }}>
-                      {landingText.headline || DEFAULT_LANDING.headline}
-                    </p>
-                    <p style={{ margin: 0, fontSize: 10, textAlign: 'center', color: '#6B7280', whiteSpace: 'pre-line' }}>
-                      {landingText.subtext || DEFAULT_LANDING.subtext}
-                    </p>
-                    <div style={{ marginTop: 'auto', background: '#8C49D5', color: '#fff', borderRadius: 999, padding: '7px 0', textAlign: 'center', fontSize: 11, fontWeight: 600 }}>
-                      {landingText.ctaText || DEFAULT_LANDING.ctaText}
-                    </div>
-                  </PhonePreview>
-                  <PhonePreview label="Screen 2">
-                    <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: '#1E2939', whiteSpace: 'pre-line' }}>
-                      {landingText.accountTitle || DEFAULT_LANDING.accountTitle}
-                    </p>
-                    <p style={{ margin: '0 0 14px', fontSize: 10, color: '#6B7280', whiteSpace: 'pre-line' }}>
-                      {landingText.accountSubtitle || DEFAULT_LANDING.accountSubtitle}
-                    </p>
-                    {['Email', 'Password'].map(f => (
-                      <div key={f} style={{ marginBottom: 8 }}>
-                        <p style={{ margin: '0 0 3px', fontSize: 9, fontWeight: 600, color: '#1E2939' }}>{f}</p>
-                        <div style={{ height: 22, border: '1px solid #e5e7eb', borderRadius: 6 }} />
-                      </div>
-                    ))}
-                    <div style={{ marginTop: 'auto', background: '#8C49D5', color: '#fff', borderRadius: 999, padding: '7px 0', textAlign: 'center', fontSize: 11, fontWeight: 600 }}>
-                      Create Account
-                    </div>
-                  </PhonePreview>
-                  <PhonePreview label="Last screen">
-                    <p style={{ margin: '16px 0 6px', fontSize: 14, fontWeight: 700, textAlign: 'center', color: '#1E2939', whiteSpace: 'pre-line' }}>
-                      {landingText.successTitle || DEFAULT_LANDING.successTitle}
-                    </p>
-                    <p style={{ margin: '0 0 16px', fontSize: 10, textAlign: 'center', color: '#6B7280', whiteSpace: 'pre-line', lineHeight: 1.4 }}>
-                      {landingText.successSubtitle || DEFAULT_LANDING.successSubtitle}
-                    </p>
-                    <p style={{ margin: '0 0 8px', fontSize: 10, fontWeight: 600, textAlign: 'center', color: '#1E2939' }}>Download the Nora App</p>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      {['App Store', 'Google Play'].map(s => (
-                        <div key={s} style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 999, padding: '6px 0', textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#1E2939' }}>{s}</div>
-                      ))}
-                    </div>
-                  </PhonePreview>
-                </div>
-              </div>
+              <LandingEditor
+                text={landingText} onTextChange={setLandingText}
+                image={imageState} onImageChange={setImageState}
+              />
             </div>
 
             {/* Campaign rules — linked from the consent checkbox on the create-account screen */}
@@ -871,6 +711,15 @@ export default function PartnersPage() {
                         QR
                       </button>
                     </div>
+                    <button
+                      className="link-btn"
+                      style={{ color: '#7c3aed', padding: 0, marginTop: 4, font: 'inherit', fontSize: 12, cursor: 'pointer' }}
+                      onClick={() => setLinksPartnerId(p.id)}
+                    >
+                      {p.messages.length > 0
+                        ? `${p.messages.filter(m => m.active).length} message${p.messages.filter(m => m.active).length === 1 ? '' : 's'} · links & stats`
+                        : 'Messages, links & stats'}
+                    </button>
                   </td>
                   <td style={{ fontSize: 13 }}>
                     {p.config.skipSubscription ? (
@@ -996,9 +845,18 @@ export default function PartnersPage() {
         </div>
       )}
 
+      {linksPartner && (
+        <CampaignLinksModal
+          partner={linksPartner}
+          callOpts={callOpts}
+          onUpdated={updated => setPartners(prev => prev.map(p => p.id === updated.id ? updated : p))}
+          onClose={() => setLinksPartnerId(null)}
+        />
+      )}
+
       {usersPartner && (
         <div className="modal-overlay" onClick={() => setUsersPartner(null)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ width: 640 }}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ width: 760 }}>
             <div className="modal-header">
               <h2>{usersPartner.name} — signed-up users</h2>
               <button className="btn-remove" onClick={() => setUsersPartner(null)}>&times;</button>
@@ -1016,6 +874,7 @@ export default function PartnersPage() {
                         <th>Name</th>
                         <th>Email</th>
                         <th>Joined</th>
+                        <th>Message / channel</th>
                         <th>Subscription</th>
                         <th></th>
                       </tr>
@@ -1026,6 +885,9 @@ export default function PartnersPage() {
                           <td>{u.name || '—'}</td>
                           <td style={{ fontSize: 13 }}>{u.email || '—'}</td>
                           <td style={{ fontSize: 13, color: '#6b7280' }}>{fmt(u.createdAt)}</td>
+                          <td style={{ fontSize: 12, color: '#6b7280' }}>
+                            {u.messageKey ?? 'default'} · {u.signupSource ?? '—'}
+                          </td>
                           <td>{subscriptionBadge(u.subscriptionStatus)}</td>
                           <td>
                             <button
@@ -1049,56 +911,3 @@ export default function PartnersPage() {
     </div>
   );
 }
-
-function LandingField({ label, value, placeholder, maxLength, multiline, onChange }: {
-  label: string;
-  value: string | null;
-  placeholder: string;
-  maxLength: number;
-  multiline: boolean;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label style={{ fontSize: 13 }}>
-      <span style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, marginBottom: 4 }}>
-        {label}
-        <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: 11 }}>{(value ?? '').length}/{maxLength}</span>
-      </span>
-      {multiline ? (
-        <textarea
-          style={{ ...inputStyle, height: 60, padding: '8px 10px', resize: 'vertical', fontFamily: 'inherit' }}
-          value={value ?? ''} placeholder={placeholder} maxLength={maxLength}
-          onChange={e => onChange(e.target.value)}
-        />
-      ) : (
-        <input
-          style={inputStyle}
-          value={value ?? ''} placeholder={placeholder} maxLength={maxLength}
-          onChange={e => onChange(e.target.value)}
-        />
-      )}
-    </label>
-  );
-}
-
-// Rough phone-sized mock of a web signup screen, for previewing campaign copy.
-function PhonePreview({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{
-        width: 190, height: 380, border: '6px solid #1f2937', borderRadius: 22, background: '#fff',
-        padding: '14px 12px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', textAlign: 'left',
-        overflow: 'hidden',
-      }}>
-        {children}
-      </div>
-      <span style={{ fontSize: 11, color: '#6b7280' }}>{label}</span>
-    </div>
-  );
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', height: 36, borderRadius: 8,
-  border: '1px solid #d1d5db', padding: '0 10px', fontSize: 13,
-  boxSizing: 'border-box',
-};

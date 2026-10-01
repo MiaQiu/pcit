@@ -51,6 +51,8 @@ export default function App() {
         <Routes>
           {/* Partner landing — QR code destination */}
           <Route path="/p/:slug" element={<PartnerLandingScreen />} />
+          {/* Campaign message variant: /p/:slug/:messageKey (?src=<channel> on either) */}
+          <Route path="/p/:slug/:messageKey" element={<PartnerLandingScreen />} />
 
           {/* Referral landing — hinora.co/join/:code destination */}
           <Route path="/join/:code" element={<ReferralLandingScreen />} />

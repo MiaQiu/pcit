@@ -1348,6 +1348,18 @@ export interface PartnerLanding extends PartnerLandingText {
 
 export type PartnerKind = 'PARTNER' | 'CAMPAIGN';
 
+// A message variant of a campaign link (/p/<slug>/<key>). Blank landing fields fall back
+// to the campaign's own landing copy, then to the app defaults.
+export interface CampaignMessage {
+  id: string;
+  key: string;    // URL segment, immutable
+  name: string;   // internal label
+  landing: PartnerLanding | null;
+  active: boolean;
+  createdAt: string;
+  landingImageUrl: string | null; // presigned preview of landing.imageKey
+}
+
 export interface PartnerConfig {
   trialDays: number;
   plans: ('monthly' | 'yearly')[];
@@ -1367,6 +1379,7 @@ export interface Partner {
   kind: PartnerKind;
   status: 'ACTIVE' | 'PAUSED' | 'EXPIRED';
   config: PartnerConfig;
+  messages: CampaignMessage[];
   expiresAt: string | null;
   redemptions: number;
   visits: number;
@@ -1434,14 +1447,15 @@ export async function regeneratePartnerQrCode(id: string, opts?: ApiEnvOpts): Pr
 }
 
 // Multipart upload — apiFetchEnv forces a JSON content type, so build the request here.
-async function partnerImageRequest(id: string, method: 'POST' | 'DELETE', file: File | null, opts?: ApiEnvOpts): Promise<Partner> {
+// `path` is the landing-image endpoint, relative to /api/admin/partners/.
+async function partnerImageRequest(path: string, method: 'POST' | 'DELETE', file: File | null, opts?: ApiEnvOpts): Promise<Partner> {
   const token = opts?.token ?? (await import('./client')).getToken();
   let body: FormData | undefined;
   if (file) {
     body = new FormData();
     body.append('image', file);
   }
-  const res = await fetch(`${opts?.baseUrl ?? ''}/api/admin/partners/${id}/landing-image`, {
+  const res = await fetch(`${opts?.baseUrl ?? ''}/api/admin/partners/${path}`, {
     method,
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body,
@@ -1454,11 +1468,78 @@ async function partnerImageRequest(id: string, method: 'POST' | 'DELETE', file: 
 }
 
 export function uploadPartnerLandingImage(id: string, file: File, opts?: ApiEnvOpts): Promise<Partner> {
-  return partnerImageRequest(id, 'POST', file, opts);
+  return partnerImageRequest(`${id}/landing-image`, 'POST', file, opts);
 }
 
 export function removePartnerLandingImage(id: string, opts?: ApiEnvOpts): Promise<Partner> {
-  return partnerImageRequest(id, 'DELETE', null, opts);
+  return partnerImageRequest(`${id}/landing-image`, 'DELETE', null, opts);
+}
+
+// ---- Campaign messages, link builder, stats ----
+// Message mutations return the whole updated Partner (with its messages).
+
+export interface CampaignMessagePayload {
+  key?: string;   // create only
+  name?: string;
+  // imageKey is honored on create only (to reuse a duplicated message's image).
+  landing?: (PartnerLandingText & { imageKey?: string | null }) | null;
+  active?: boolean;
+}
+
+export async function createCampaignMessage(partnerId: string, payload: CampaignMessagePayload, opts?: ApiEnvOpts): Promise<Partner> {
+  return apiFetchEnv(`/api/admin/partners/${partnerId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, opts);
+}
+
+export async function updateCampaignMessage(
+  partnerId: string, messageId: string, payload: CampaignMessagePayload, opts?: ApiEnvOpts
+): Promise<Partner> {
+  return apiFetchEnv(`/api/admin/partners/${partnerId}/messages/${messageId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  }, opts);
+}
+
+export function uploadCampaignMessageImage(partnerId: string, messageId: string, file: File, opts?: ApiEnvOpts): Promise<Partner> {
+  return partnerImageRequest(`${partnerId}/messages/${messageId}/landing-image`, 'POST', file, opts);
+}
+
+export function removeCampaignMessageImage(partnerId: string, messageId: string, opts?: ApiEnvOpts): Promise<Partner> {
+  return partnerImageRequest(`${partnerId}/messages/${messageId}/landing-image`, 'DELETE', null, opts);
+}
+
+export interface CampaignLink {
+  url: string;
+  source: string | null; // normalised ?src= value
+  qrDataUrl: string;     // PNG data URL
+}
+
+export async function getCampaignLink(
+  partnerId: string, messageKey: string | null, source: string | null, opts?: ApiEnvOpts
+): Promise<CampaignLink> {
+  const params = new URLSearchParams();
+  if (messageKey) params.set('m', messageKey);
+  if (source) params.set('src', source);
+  return apiFetchEnv(`/api/admin/partners/${partnerId}/link?${params}`, {}, opts);
+}
+
+// One row per (message, channel); '' = default message / no ?src=.
+export interface CampaignStatsRow {
+  messageKey: string;
+  source: string;
+  visits: number;
+  signups: number;
+}
+
+export interface CampaignStats {
+  totalVisits: number; // Partner.visits, incl. visits from before per-message tracking
+  rows: CampaignStatsRow[];
+}
+
+export async function getCampaignStats(partnerId: string, opts?: ApiEnvOpts): Promise<CampaignStats> {
+  return apiFetchEnv(`/api/admin/partners/${partnerId}/stats`, {}, opts);
 }
 
 export interface PartnerUser {
@@ -1472,6 +1553,8 @@ export interface PartnerUser {
   subscriptionEndDate: string | null;
   trialStartDate: string | null;
   trialEndDate: string | null;
+  signupSource: string | null; // ?src= channel
+  messageKey: string | null;   // campaign message variant
 }
 
 export async function getPartnerUsers(id: string, opts?: ApiEnvOpts): Promise<PartnerUser[]> {

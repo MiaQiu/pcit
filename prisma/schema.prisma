@@ -493,6 +493,10 @@ model User {
   referralReceived          Referral?                   @relation("ReferralReceived")
   partnerId                 String?
   partner                   Partner?                    @relation(fields: [partnerId], references: [id])
+  // Campaign attribution: which message variant (/p/<slug>/<key>) and channel (?src=) the user signed up through.
+  campaignMessageId         String?
+  campaignMessage           CampaignMessage?            @relation(fields: [campaignMessageId], references: [id], onDelete: SetNull)
+  signupSource              String?
 
   @@index([emailHash])
   @@index([pushToken])
@@ -869,6 +873,38 @@ model Partner {
   qrCodeUrl   String?
   createdAt   DateTime      @default(now())
   users       User[]
+  messages    CampaignMessage[]
+  visitStats  CampaignVisit[]
+}
+
+// A message variant of a campaign/partner link: its own signup-screen copy + hero
+// image, served at /p/<slug>/<key>. Blank landing fields fall back to the parent
+// Partner's config.landing, then to the web app's default copy.
+model CampaignMessage {
+  id        String   @id @default(uuid())
+  partnerId String
+  key       String // URL segment (a-z0-9-), immutable after create
+  name      String // internal label
+  landing   Json? // same shape as Partner.config.landing
+  active    Boolean  @default(true) // archived messages fall back to the parent's copy
+  createdAt DateTime @default(now())
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  users     User[]
+
+  @@unique([partnerId, key])
+}
+
+// Link-open counter per (link, message, channel). messageKey/source use '' for
+// "default message" / "no ?src=" so the compound unique works for upserts.
+model CampaignVisit {
+  id         String  @id @default(uuid())
+  partnerId  String
+  messageKey String  @default("")
+  source     String  @default("")
+  count      Int     @default(0)
+  partner    Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, messageKey, source])
 }
 
 enum PartnerKind {

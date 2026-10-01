@@ -297,10 +297,13 @@ app.use('/api/stripe', stripeRoutes);
 const partnerRoutes = require('./server/routes/partner.cjs');
 app.use('/api/partner', partnerRoutes);
 
-// Short partner URL redirect: /p/:slug → signup.hinora.co/p/:slug (web SPA handles it)
-app.get('/p/:slug', (req, res) => {
+// Short partner URL redirect: /p/:slug[/:messageKey] → signup.hinora.co/p/… (web SPA
+// handles it). The query string (?src=<channel>) is kept for campaign attribution.
+app.get(['/p/:slug', '/p/:slug/:messageKey'], (req, res) => {
   const signupAppUrl = process.env.SIGNUP_APP_URL || 'https://signup.hinora.co';
-  res.redirect(302, `${signupAppUrl}/p/${req.params.slug}`);
+  const path = [req.params.slug, req.params.messageKey].filter(Boolean).map(encodeURIComponent).join('/');
+  const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+  res.redirect(302, `${signupAppUrl}/p/${path}${qs}`);
 });
 
 // Mount referral routes

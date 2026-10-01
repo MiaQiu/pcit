@@ -9,8 +9,19 @@ function buildPartnerUrl(slug) {
   return `${signupAppUrl}/p/${slug}`;
 }
 
+// Campaign link for one message variant and channel: /p/<slug>[/<messageKey>][?src=<source>].
+function buildCampaignUrl(slug, messageKey = null, source = null) {
+  const path = messageKey ? `${buildPartnerUrl(slug)}/${messageKey}` : buildPartnerUrl(slug);
+  return source ? `${path}?src=${encodeURIComponent(source)}` : path;
+}
+
 async function generatePartnerQrPng(slug) {
   return QRCode.toBuffer(buildPartnerUrl(slug), { type: 'png', width: 512, margin: 2 });
 }
 
-module.exports = { buildPartnerUrl, generatePartnerQrPng };
+// On-the-fly QR for a link-builder URL (not stored — every message x channel combination has one).
+async function generateQrDataUrl(url) {
+  return QRCode.toDataURL(url, { width: 512, margin: 2 });
+}
+
+module.exports = { buildPartnerUrl, buildCampaignUrl, generatePartnerQrPng, generateQrDataUrl };

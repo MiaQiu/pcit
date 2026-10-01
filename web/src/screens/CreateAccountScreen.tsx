@@ -60,6 +60,8 @@ export default function CreateAccountScreen() {
         childConditions,
         issue: data.issue.join(', ') || undefined,
         partnerSlug: data.referralCode ? undefined : (data.partnerInfo?.slug ?? undefined),
+        campaignMessageKey: data.referralCode ? undefined : (data.partnerInfo?.messageKey ?? undefined),
+        signupSource: data.referralCode ? undefined : (data.partnerInfo?.source ?? undefined),
         referralCode: data.referralCode ?? undefined,
       });
       setEmail(emailVal);

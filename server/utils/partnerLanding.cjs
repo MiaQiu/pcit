@@ -70,6 +70,51 @@ function sanitizeDisplayName(value) {
   return cleanText(value, DISPLAY_NAME_LIMIT, 'displayName');
 }
 
+// Campaign links: /p/<slug>/<messageKey>?src=<source>. Both are lowercase a-z0-9,
+// '-' and '_' (sources only); anything else is replaced with '-'.
+const MESSAGE_KEY_LIMIT = 40;
+const MESSAGE_NAME_LIMIT = 120;
+const SOURCE_LIMIT = 40;
+
+/** Strict validation for a new message key (admin input). */
+function sanitizeMessageKey(value) {
+  const key = cleanText(value, MESSAGE_KEY_LIMIT, 'key');
+  if (!key || !/^[a-z0-9-]+$/.test(key)) {
+    throw new PartnerConfigError('key must be lowercase letters, digits and dashes');
+  }
+  return key;
+}
+
+function sanitizeMessageName(value) {
+  const name = cleanText(value, MESSAGE_NAME_LIMIT, 'name');
+  if (!name) throw new PartnerConfigError('name is required');
+  return name;
+}
+
+/**
+ * Lenient normalisation of a public `?src=` channel tag (never throws — it comes
+ * from ad URLs). Returns null when empty.
+ */
+function normalizeSource(value) {
+  if (typeof value !== 'string') return null;
+  const src = value.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, SOURCE_LIMIT);
+  return src || null;
+}
+
+/**
+ * Field-by-field merge of a message's landing over the parent link's landing:
+ * a blank message field keeps the parent's value (which may itself be blank =
+ * the web app's default).
+ */
+function mergeLanding(base, override) {
+  if (!override) return base ?? null;
+  const merged = { ...(base ?? {}) };
+  for (const [field, value] of Object.entries(override)) {
+    if (value != null) merged[field] = value;
+  }
+  return Object.values(merged).some(v => v != null) ? merged : null;
+}
+
 /**
  * The public name for the subscribe page. B2B partners fall back to their name;
  * campaigns fall back to nothing (their name is an internal label).
@@ -84,7 +129,13 @@ module.exports = {
   LANDING_LIMITS,
   DISPLAY_NAME_LIMIT,
   RULES_LIMITS,
+  MESSAGE_KEY_LIMIT,
+  MESSAGE_NAME_LIMIT,
   PartnerConfigError,
+  sanitizeMessageKey,
+  sanitizeMessageName,
+  normalizeSource,
+  mergeLanding,
   sanitizeLanding,
   sanitizeDisplayName,
   sanitizeCampaignRules,

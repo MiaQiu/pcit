@@ -3905,19 +3905,24 @@ function adminStripe() {
   return _adminStripe;
 }
 
+const { Prisma } = require('@prisma/client');
 const { discountLabel, normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
-const { generatePartnerQrPng, buildPartnerUrl } = require('../utils/partnerQr.cjs');
-const { PartnerConfigError, sanitizeLanding, sanitizeDisplayName, sanitizeCampaignRules } = require('../utils/partnerLanding.cjs');
+const { generatePartnerQrPng, buildPartnerUrl, buildCampaignUrl, generateQrDataUrl } = require('../utils/partnerQr.cjs');
+const {
+  PartnerConfigError, sanitizeLanding, sanitizeDisplayName, sanitizeCampaignRules,
+  sanitizeMessageKey, sanitizeMessageName, normalizeSource,
+} = require('../utils/partnerLanding.cjs');
 const { logError } = require('../utils/errorLogger.cjs');
 
 // Single response shape for every partner endpoint, so the admin table never receives
 // a partner missing discountLabels/userCount/signupUrl (e.g. right after create/edit).
 // Pass a row that includes `_count.users`, or an explicit userCount.
 async function serializePartner(partner, userCount = partner._count?.users ?? 0) {
-  const { _count, ...rest } = partner;
+  const { _count, messages = [], ...rest } = partner;
   const discounts = normalizeDiscounts(partner.config);
   return {
     ...rest,
+    messages: await Promise.all(messages.map(serializeMessage)),
     config: { ...partner.config, discounts }, // always the resolved per-plan shape, regardless of storage format
     qrCodeUrl: await resolveDragonImageUrl(partner.qrCodeUrl),
     signupUrl: buildPartnerUrl(partner.slug), // same URL the QR code encodes
@@ -3933,10 +3938,27 @@ async function serializePartner(partner, userCount = partner._count?.users ?? 0)
   };
 }
 
+// A campaign message variant (/p/<slug>/<key>), with a presigned preview of its hero image.
+async function serializeMessage(message) {
+  const imageKey = message.landing?.imageKey;
+  return {
+    id: message.id,
+    key: message.key,
+    name: message.name,
+    landing: message.landing ?? null,
+    active: message.active,
+    createdAt: message.createdAt,
+    landingImageUrl: imageKey ? await resolveDragonImageUrl(imageKey) : null,
+  };
+}
+
 // Deleted accounts are anonymized in place (emailHash 'deleted_…'), not removed —
 // exclude them so userCount matches GET /partners/:id/users.
 const activePartnerUsers = { NOT: { emailHash: { startsWith: 'deleted_' } } };
-const partnerWithUserCount = { _count: { select: { users: { where: activePartnerUsers } } } };
+const partnerWithUserCount = {
+  _count: { select: { users: { where: activePartnerUsers } } },
+  messages: { orderBy: { createdAt: 'asc' } },
+};
 
 // Generates a QR PNG for the partner's signup link, uploads it, and persists the
 // resulting URL. Used both right after creation and for backfilling legacy partners.
@@ -4065,6 +4087,8 @@ router.get('/partners/:id/users', requireAdminAuth, async (req, res) => {
         subscriptionEndDate: true,
         trialStartDate: true,
         trialEndDate: true,
+        signupSource: true,
+        campaignMessage: { select: { key: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -4083,6 +4107,8 @@ router.get('/partners/:id/users', requireAdminAuth, async (req, res) => {
           subscriptionEndDate: u.subscriptionEndDate,
           trialStartDate: u.trialStartDate,
           trialEndDate: u.trialEndDate,
+          signupSource: u.signupSource,
+          messageKey: u.campaignMessage?.key ?? null,
         };
       }),
     });
@@ -4277,6 +4303,172 @@ router.delete('/partners/:id/landing-image', requireAdminAuth, async (req, res) 
   } catch (err) {
     logError(err, { route: 'admin#[admin] partner landing image remove error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to remove image' });
+  }
+});
+
+// ---- Campaign messages (variants of one link's signup copy) ----
+
+async function serializePartnerById(id) {
+  return serializePartner(await prisma.partner.findUnique({ where: { id }, include: partnerWithUserCount }));
+}
+
+async function findMessage(req, res) {
+  const message = await prisma.campaignMessage.findUnique({ where: { id: req.params.messageId } });
+  if (!message || message.partnerId !== req.params.id) {
+    res.status(404).json({ error: 'Message not found' });
+    return null;
+  }
+  return message;
+}
+
+// POST /api/admin/partners/:id/messages — { key, name, landing }. landing.imageKey is
+// accepted (when under partners/) so a message can be duplicated with its image.
+router.post('/partners/:id/messages', requireAdminAuth, async (req, res) => {
+  try {
+    const partner = await prisma.partner.findUnique({ where: { id: req.params.id } });
+    if (!partner) return res.status(404).json({ error: 'Partner not found' });
+
+    const key = sanitizeMessageKey(req.body.key);
+    const name = sanitizeMessageName(req.body.name);
+    const landing = sanitizeLanding(req.body.landing, { allowImageKey: true });
+
+    const existing = await prisma.campaignMessage.findUnique({ where: { partnerId_key: { partnerId: partner.id, key } } });
+    if (existing) return res.status(409).json({ error: `Message key '${key}' is already used in this campaign` });
+
+    await prisma.campaignMessage.create({
+      data: { id: crypto.randomUUID(), partnerId: partner.id, key, name, landing: landing ?? undefined },
+    });
+    res.status(201).json(await serializePartnerById(partner.id));
+  } catch (err) {
+    if (err instanceof PartnerConfigError) return res.status(400).json({ error: err.message });
+    logError(err, { route: 'admin#[admin] campaign message create error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to create message' });
+  }
+});
+
+// PATCH /api/admin/partners/:id/messages/:messageId — { name?, landing?, active? }.
+// The key is immutable (it's in published links); the image only changes via the
+// landing-image endpoints.
+router.patch('/partners/:id/messages/:messageId', requireAdminAuth, async (req, res) => {
+  try {
+    const message = await findMessage(req, res);
+    if (!message) return;
+
+    const { name, landing, active } = req.body;
+    const data = {};
+    if (name !== undefined) data.name = sanitizeMessageName(name);
+    if (landing !== undefined) {
+      data.landing = sanitizeLanding(landing, { existingImageKey: message.landing?.imageKey ?? null }) ?? Prisma.DbNull;
+    }
+    if (active !== undefined) data.active = active === true;
+
+    await prisma.campaignMessage.update({ where: { id: message.id }, data });
+    res.json(await serializePartnerById(message.partnerId));
+  } catch (err) {
+    if (err instanceof PartnerConfigError) return res.status(400).json({ error: err.message });
+    logError(err, { route: 'admin#[admin] campaign message update error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to update message' });
+  }
+});
+
+// POST /api/admin/partners/:id/messages/:messageId/landing-image — multipart `image`,
+// stored under partners/<slug>/<messageKey>/.
+router.post('/partners/:id/messages/:messageId/landing-image', requireAdminAuth, uploadMiddleware.single('image'), async (req, res) => {
+  try {
+    const message = await findMessage(req, res);
+    if (!message) return;
+    if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+
+    const partner = await prisma.partner.findUnique({ where: { id: message.partnerId } });
+    const ext = (req.file.originalname.split('.').pop() || 'jpg').toLowerCase();
+    const imageKey = await uploadPartnerLandingImage(req.file.buffer, partner.slug, ext, message.key);
+    await prisma.campaignMessage.update({
+      where: { id: message.id },
+      data: { landing: { ...(message.landing ?? {}), imageKey } },
+    });
+    res.json(await serializePartnerById(message.partnerId));
+  } catch (err) {
+    logError(err, { route: 'admin#[admin] campaign message image upload error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to upload image' });
+  }
+});
+
+// DELETE /api/admin/partners/:id/messages/:messageId/landing-image — fall back to the
+// campaign's image (S3 object kept, as for partner images).
+router.delete('/partners/:id/messages/:messageId/landing-image', requireAdminAuth, async (req, res) => {
+  try {
+    const message = await findMessage(req, res);
+    if (!message) return;
+
+    const remaining = { ...(message.landing ?? {}), imageKey: null };
+    const landing = Object.values(remaining).some(v => v != null) ? remaining : Prisma.DbNull;
+    await prisma.campaignMessage.update({ where: { id: message.id }, data: { landing } });
+    res.json(await serializePartnerById(message.partnerId));
+  } catch (err) {
+    logError(err, { route: 'admin#[admin] campaign message image remove error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to remove image' });
+  }
+});
+
+// GET /api/admin/partners/:id/link?m=<messageKey>&src=<source> — link-builder URL + QR.
+router.get('/partners/:id/link', requireAdminAuth, async (req, res) => {
+  try {
+    const partner = await prisma.partner.findUnique({ where: { id: req.params.id } });
+    if (!partner) return res.status(404).json({ error: 'Partner not found' });
+
+    let messageKey = null;
+    if (typeof req.query.m === 'string' && req.query.m) {
+      const message = await prisma.campaignMessage.findUnique({
+        where: { partnerId_key: { partnerId: partner.id, key: req.query.m } },
+      });
+      if (!message) return res.status(404).json({ error: 'Message not found' });
+      messageKey = message.key;
+    }
+    const source = normalizeSource(req.query.src);
+    const url = buildCampaignUrl(partner.slug, messageKey, source);
+    res.json({ url, source, qrDataUrl: await generateQrDataUrl(url) });
+  } catch (err) {
+    logError(err, { route: 'admin#[admin] campaign link error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to build link' });
+  }
+});
+
+// GET /api/admin/partners/:id/stats — visits and signups per (messageKey, source).
+// '' = default message / no ?src=. Visits are only broken down from when per-message
+// tracking started, so they can sum to less than Partner.visits.
+router.get('/partners/:id/stats', requireAdminAuth, async (req, res) => {
+  try {
+    const partner = await prisma.partner.findUnique({
+      where: { id: req.params.id },
+      include: { messages: { select: { id: true, key: true } } },
+    });
+    if (!partner) return res.status(404).json({ error: 'Partner not found' });
+
+    const [visits, signups] = await Promise.all([
+      prisma.campaignVisit.findMany({ where: { partnerId: partner.id } }),
+      prisma.user.groupBy({
+        by: ['campaignMessageId', 'signupSource'],
+        where: { partnerId: partner.id, ...activePartnerUsers },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const keyById = new Map(partner.messages.map(m => [m.id, m.key]));
+    const rows = new Map();
+    const row = (messageKey, source) => {
+      const id = `${messageKey}|${source}`;
+      if (!rows.has(id)) rows.set(id, { messageKey, source, visits: 0, signups: 0 });
+      return rows.get(id);
+    };
+    for (const v of visits) row(v.messageKey, v.source).visits += v.count;
+    for (const s of signups) {
+      row(keyById.get(s.campaignMessageId) ?? '', s.signupSource ?? '').signups += s._count._all;
+    }
+
+    res.json({ totalVisits: partner.visits, rows: [...rows.values()] });
+  } catch (err) {
+    logError(err, { route: 'admin#[admin] campaign stats error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to load stats' });
   }
 });
 

@@ -38,6 +38,9 @@ export interface PartnerInfo {
   // Public display name for the subscribe page; null for a campaign without one.
   name: string | null;
   kind?: 'PARTNER' | 'CAMPAIGN';
+  // Campaign attribution: message variant (/p/:slug/:messageKey) and channel (?src=).
+  messageKey?: string | null;
+  source?: string | null;
   skipSubscription?: boolean; // campaign option: skip /subscribe, go straight to /success
   landing?: SignupLanding | null;
   // Campaign rules behind the create-account consent checkbox (campaigns only).

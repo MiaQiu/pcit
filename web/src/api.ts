@@ -55,6 +55,8 @@ export function signup(
     childConditions?: string[];
     issue?: string;
     partnerSlug?: string;
+    campaignMessageKey?: string;
+    signupSource?: string;
     referralCode?: string;
   } = {}
 ) {
@@ -87,6 +89,9 @@ export interface PartnerInfo {
   // Public display name for the subscribe page; null for a campaign without one.
   name: string | null;
   kind?: 'PARTNER' | 'CAMPAIGN';
+  // Resolved campaign attribution (null = default message / no ?src=), sent back on signup.
+  messageKey?: string | null;
+  source?: string | null;
   skipSubscription?: boolean; // campaign option: skip /subscribe, go straight to /success
   landing?: SignupLanding | null;
   // Campaign rules behind the create-account consent checkbox (campaigns only).
@@ -100,8 +105,12 @@ export interface PartnerInfo {
   };
 }
 
-export function validatePartner(slug: string) {
-  return request<PartnerInfo>(`/api/partner/validate/${encodeURIComponent(slug)}`);
+export function validatePartner(slug: string, opts: { messageKey?: string; source?: string | null } = {}) {
+  const params = new URLSearchParams();
+  if (opts.messageKey) params.set('m', opts.messageKey);
+  if (opts.source) params.set('src', opts.source);
+  const qs = params.toString();
+  return request<PartnerInfo>(`/api/partner/validate/${encodeURIComponent(slug)}${qs ? `?${qs}` : ''}`);
 }
 
 export function referrerName(code: string) {
