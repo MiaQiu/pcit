@@ -575,11 +575,13 @@ async function uploadPartnerQrCode(fileBuffer, slug) {
  * @param {Buffer} fileBuffer
  * @param {string} slug - Partner slug
  * @param {string} extension - e.g. 'jpg', 'png', 'webp'
+ * @param {string|null} messageKey - campaign message variant; its images go under partners/<slug>/<key>/
  * @returns {Promise<string>} - S3 key (not a full URL), or mock path
  */
-async function uploadPartnerLandingImage(fileBuffer, slug, extension = 'jpg') {
+async function uploadPartnerLandingImage(fileBuffer, slug, extension = 'jpg', messageKey = null) {
   const ext = extension.toLowerCase();
-  const key = `partners/${slug}/hero-${Date.now()}.${ext}`;
+  const folder = messageKey ? `partners/${slug}/${messageKey}` : `partners/${slug}`;
+  const key = `${folder}/hero-${Date.now()}.${ext}`;
 
   if (!S3_ENABLED || !s3Client) {
     console.warn('S3 not configured, using mock storage path for partner landing image');

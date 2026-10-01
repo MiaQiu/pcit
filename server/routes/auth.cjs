@@ -19,6 +19,7 @@ const {
 } = require('../utils/errors.cjs');
 const { getReferralPartner, linkReferral } = require('../services/referralAttribution.cjs');
 const { logError } = require('../utils/errorLogger.cjs');
+const { normalizeSource } = require('../utils/partnerLanding.cjs');
 
 const router = express.Router();
 
@@ -66,6 +67,9 @@ const signupSchema = Joi.object({
   issue: Joi.string().min(1).optional(),
   therapistId: Joi.string().uuid().optional(),
   partnerSlug: Joi.string().max(100).optional(),
+  // Campaign attribution from /p/<slug>/<messageKey>?src=<source>; only used with partnerSlug.
+  campaignMessageKey: Joi.string().max(40).optional(),
+  signupSource: Joi.string().max(100).optional(),
   referralCode: Joi.string().max(40).optional(),
 });
 
@@ -84,13 +88,14 @@ router.post('/signup', async (req, res, next) => {
       return next(new ValidationError(errors[0], errors));
     }
 
-    const { email, password, name, phone, childName, childBirthYear, childBirthday, childConditions, issue, therapistId, partnerSlug, referralCode } = value;
+    const { email, password, name, phone, childName, childBirthYear, childBirthday, childConditions, issue, therapistId, partnerSlug, campaignMessageKey, signupSource, referralCode } = value;
 
     // Resolve partner before creating user so we can fail early.
     // A referral link resolves to the reserved "referral" partner, so referred
     // users flow through the same partner -> Stripe-checkout trial pipeline.
     // The referrer link itself is recorded separately in the Referral table below.
     let partner = null;
+    let campaignMessage = null;
     const isReferral = !partnerSlug && !!referralCode;
 
     if (partnerSlug) {
@@ -104,6 +109,13 @@ router.post('/signup', async (req, res, next) => {
       const cfg = partner.config;
       if (cfg.maxRedemptions != null && partner.redemptions >= cfg.maxRedemptions) {
         return next(new ValidationError('This partner link has reached its limit'));
+      }
+      // Best-effort: an unknown/archived message just leaves the user unattributed to one.
+      if (campaignMessageKey) {
+        campaignMessage = await prisma.campaignMessage.findUnique({
+          where: { partnerId_key: { partnerId: partner.id, key: campaignMessageKey.toLowerCase() } },
+        });
+        if (!campaignMessage?.active) campaignMessage = null;
       }
     } else if (isReferral) {
       // Best-effort: a missing/paused "referral" partner just means the referee
@@ -161,6 +173,8 @@ router.post('/signup', async (req, res, next) => {
         issue,
         therapistId,
         partnerId: partner?.id ?? null,
+        campaignMessageId: campaignMessage?.id ?? null,
+        signupSource: partnerSlug ? normalizeSource(signupSource) : null,
         subscriptionSource: isReferral ? 'referral' : (partner ? 'partner' : null),
         subscriptionPlan: 'FREE',
         subscriptionStatus: directTrialEnd ? 'TRIAL' : 'INACTIVE',

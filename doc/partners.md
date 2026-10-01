@@ -64,7 +64,29 @@ A **campaign** is a marketing signup link (e.g. one per ad, audience or channel)
 | `campaignRules` | `{ title, content }`, campaigns only. Campaign signups must tick a consent checkbox on `/create-account`: "I am the parent or legal guardian of the participating child, and I agree to the [*title*] and Nora Parenting's standard Terms of Service and Privacy Policy." The title opens a pop-up with `content` (plain text, line breaks kept). No content → `null`, and the checkbox omits the rules part. Limits: title 120, content 20,000. Returned by the public validate API only for `kind = CAMPAIGN`. |
 | `displayName` | Public name on the subscribe page ("Special discount for X"). A campaign's `name` is internal and is **never** sent to the browser; with no `displayName` the badge just says "Special discount". Partners fall back to `name`. |
 
-Create N campaigns from the admin portal (**+ New Campaign**, or **Duplicate** on an existing row — same offer, messages and image, new slug). Links are the same `/p/<slug>` format as partners. See "Launch a campaign" in the runbook.
+Links are the same `/p/<slug>` format as partners. See "Launch a campaign" in the runbook.
+
+### Messages and channels
+
+One campaign row is **one offer** (trial, discounts, `skipSubscription`, rules, cap, expiry). To A/B different copy and track different ad channels you don't create more rows:
+
+| Dimension | How | Stored as |
+|---|---|---|
+| **Message** (copy variant) | `CampaignMessage` child row with its own `key`, internal `name`, `landing` (same shape as `config.landing`) and hero image. Link: `/p/<slug>/<key>` | `User.campaignMessageId` |
+| **Channel** | Free-form `?src=<channel>` on any link — no setup. Normalised to lowercase `a-z0-9_-`, max 40 chars (`Face Book` → `face-book`) | `User.signupSource` |
+
+So 3 messages × 2 channels = 1 campaign + 3 messages, giving 6 links like `signup.hinora.co/p/oct-challenge/tantrums?src=instagram`. Editing a message updates it for every channel.
+
+- **Copy inheritance** — a message's blank landing field (and image) falls back to the campaign's `config.landing`, then to the app default. The plain `/p/<slug>` link is the "Default" message (the campaign's own copy).
+- **Key** — `a-z0-9-`, max 40, unique per campaign, immutable (it's in published links).
+- **Archive** — `active = false`. Its links keep working but show the campaign's default copy, and new signups aren't attributed to the message. There is no hard delete (signed-up users reference it).
+- **Unknown / archived key** → validate returns `messageKey: null` and the default copy; the user is still attributed to the campaign.
+- **Message images** — S3 `partners/<slug>/<key>/hero-<timestamp>.<ext>`.
+- **Visits** — every validate call also upserts `CampaignVisit(partnerId, messageKey, source)` (`''` = default message / no `src`), alongside the raw `Partner.visits` total. Visits from before this tracking existed are only in the total.
+- **Stickiness** — the resolved `messageKey`/`source` are stored inside `partnerInfo` in localStorage, so a returning visitor stays attributed to the same message and channel. Referral links override them, like the rest of `partnerInfo`.
+- Works for `PARTNER` rows too (e.g. a clinic poster vs. a newsletter), though the main use is campaigns.
+
+Migration: `20261001140000_add_campaign_messages_and_sources` (adds `CampaignMessage`, `CampaignVisit`, `User.campaignMessageId`, `User.signupSource`).
 
 **Partner vs campaign** — `kind` only changes defaults and labelling; both kinds support every setting:
 
@@ -77,15 +99,18 @@ Create N campaigns from the admin portal (**+ New Campaign**, or **Duplicate** o
 **Campaign signup flow:**
 
 ```
-signup.hinora.co/p/oct-toddlers
-      │  PartnerLandingScreen (no UI): GET /api/partner/validate/oct-toddlers
-      │  → visits += 1; { name: displayName|null, kind, skipSubscription, landing{…, imageUrl}, offer… }
+signup.hinora.co/p/oct-toddlers[/<messageKey>][?src=<channel>]
+      │  PartnerLandingScreen (no UI): GET /api/partner/validate/oct-toddlers?m=<messageKey>&src=<channel>
+      │  → visits += 1 (+ CampaignVisit per message × channel)
+      │  → { name: displayName|null, kind, skipSubscription, landing{…, imageUrl} (message merged over campaign),
+      │      messageKey, source, offer… }
       │  → saved to OnboardingContext / localStorage, redirect to /
       ▼
 /  LandingScreen         — landing.headline / subtext / ctaText / imageUrl (else defaults)
 /intro                   — advisor intro (AdvisorIntroScreen, web port of mobile OB2); all signups
-/create-account          — landing.accountTitle / accountSubtitle (else defaults); signup sends partnerSlug
-                           → User.partnerId set, redemptions += 1
+/create-account          — landing.accountTitle / accountSubtitle (else defaults); signup sends partnerSlug,
+                           campaignMessageKey, signupSource
+                           → User.partnerId / campaignMessageId / signupSource set, redemptions += 1
 onboarding → play sessions
 /subscribe               — skipSubscription ? redirect to /success : offer page (trial/discounts as partners)
 /success                 — landing.successTitle / successSubtitle (else defaults)
@@ -266,9 +291,9 @@ Both the web signup flow (`web/src/screens/SubscriptionScreen.tsx`, "Skip for No
 
 | Endpoint | Auth | Description |
 |---|---|---|
-| `GET /api/partner/validate/:slug` | none | Validate slug + return display info. Returns 404 if not found / PAUSED / EXPIRED, 410 if cap reached or expired. |
+| `GET /api/partner/validate/:slug?m=<messageKey>&src=<channel>` | none | Validate slug + return display info. Returns 404 if not found / PAUSED / EXPIRED, 410 if cap reached or expired. `m` and `src` are optional (see "Messages and channels"). |
 
-Each successful call also increments `Partner.visits`.
+Each successful call also increments `Partner.visits` and the matching `CampaignVisit` row. The response also carries `messageKey` (resolved active message, else `null`), `source` (normalised channel, else `null`) and, for campaigns, `campaignRules`; `landing` is the message's copy merged over the campaign's.
 
 Response:
 ```json
@@ -302,6 +327,13 @@ Response:
 | `/api/admin/partners/:id/users` | GET | Users attributed to the partner, with subscription status |
 | `/api/admin/partners/:id/landing-image` | POST | Upload/replace the signup hero image (multipart `image`) |
 | `/api/admin/partners/:id/landing-image` | DELETE | Revert to the default signup image |
+| `/api/admin/partners/:id/messages` | POST | Create a message `{ key, name, landing }` → updated partner |
+| `/api/admin/partners/:id/messages/:messageId` | PATCH | `{ name?, landing?, active? }` (key is immutable) → updated partner |
+| `/api/admin/partners/:id/messages/:messageId/landing-image` | POST / DELETE | Upload / remove the message's hero image (falls back to the campaign's) |
+| `/api/admin/partners/:id/link?m=&src=` | GET | `{ url, source, qrDataUrl }` for one message × channel (QR not stored) |
+| `/api/admin/partners/:id/stats` | GET | `{ totalVisits, rows: [{ messageKey, source, visits, signups }] }` (`''` = default / no src) |
+
+Partner responses include `messages: [{ id, key, name, landing, active, createdAt, landingImageUrl }]`. The users list also returns `messageKey` and `signupSource` per user.
 
 Every partner response (list, get, create, update, qr-code) has the same shape: the row plus `config.discounts` (normalized per-plan), presigned `qrCodeUrl`, `signupUrl`, `landingImageUrl` (presigned preview of the hero image), `userCount` and `discountLabels: {monthly, yearly}`. Create/update also accept `kind`, `displayName`, `skipSubscription` and `landing` (text fields; `landing.imageKey` is honored on create only, for Duplicate). Over-limit text returns 400.
 
@@ -342,6 +374,11 @@ Every partner response (list, get, create, update, qr-code) has the same shape: 
 - **Discounts** — one block per plan currently checked under "Available plans"; each has its own "Apply a discount" toggle, type (percent/amount), amount, and duration
 - **Copy / QR** — copy the partner's `signupUrl`, or open the QR modal (view, open, generate/regenerate)
 - **Table** — shows offer summary (trial days, plans — or "No offer page (skipped)"), a discount line per plan that has one, signups vs cap, attributed user count (click to list them with subscription status), status badge, created date
+- **Messages, links & stats** (link under each row's slug) — modal with three tabs:
+  - **Messages** — Default (the row's own copy) plus each message variant: name, `/p/<slug>/<key>` link, headline, signups; **+ New message**, **Edit**, **Duplicate**, **Archive/Restore**. The editor is the same copy/image/phone-preview editor as the main form, with the campaign's copy as greyed-out placeholders
+  - **Link builder** — pick messages and channels (presets: facebook, instagram, tiktok, whatsapp, google, email, plus any custom one) → a table of every message × channel link with **Copy** / **QR** (QR generated on the fly, downloadable PNG), and **Copy all** (tab-separated, pastes into a sheet)
+  - **Stats** — grid of messages × channels, each cell `signups / visits (conversion %)`, with totals
+- **Users modal** — also shows each user's message and channel
 - **Deactivate / Reactivate** — Deactivate sets status=EXPIRED (new signups blocked; signed-up users keep their offer). Reactivate sets it back to ACTIVE
 - **Env toggle** — the portal can target the dev or prod API; the PROD badge shows which
 
@@ -448,10 +485,12 @@ Redemption counter is incremented **at signup time**, not at checkout completion
    - **No web offer** — tick **Skip the subscription / offer page**; users finish onboarding on the download page and subscribe in the app at standard pricing
    - **Web offer** — leave it unticked and set trial days, plans and per-plan discounts as for a partner
 4. Optionally customise **Signup screen messages** (hero image, headline, subtext, button, create-account title/subtitle, last-screen title/message) and check the phone preview
-5. **Create campaign**, then **Copy** the `signup.hinora.co/p/<slug>` link (or use **QR**) for the ad / post
-6. Track it in the funnel column: visits → signups (conversion %), then click the user count for subscription status
+5. **Create campaign**
+6. To test several messages: **Messages, links & stats** → **Messages** → **+ New message** for each variant (key e.g. `tantrums`; only fill the fields that differ from the campaign's copy)
+7. **Link builder** → tick the messages and channels you're running → **Copy** each link (or **Copy all**) into the matching ad. Need a new channel later? Just add it here — nothing to create
+8. Track it in **Stats** (messages × channels), or the row's funnel column for the totals; click the user count for subscription status
 
-One campaign per ad/channel gives per-channel numbers; Duplicate makes that quick.
+Use one campaign per offer, not per ad: messages and `?src=` channels give the per-ad numbers. To change copy, edit the message once and every channel's link picks it up.
 
 ### Pause a partner temporarily
 
