@@ -6,17 +6,16 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import type { ParentSkillLevel } from '@nora/core';
-import { useTranslation } from 'react-i18next';
-import amplitudeService from '../services/amplitudeService';
-import { PARENT_SKILL_LEVEL_ORDER, PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
+import { useTranslation } from 'react-i18next';import { PARENT_SKILL_LEVEL_ORDER, PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
 import { criteriaForLevel } from '../utils/goalFallback';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 type ParentLevelDetailRouteProp = RouteProp<RootStackParamList, 'ParentLevelDetail'>;
 
@@ -38,7 +37,6 @@ export const ParentLevelDetailScreen: React.FC = () => {
   const hasAutoScrolledRef = useRef(false);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Parent Level Detail', { currentLevel });
   }, [currentLevel]);
 
   const handleBack = () => {
@@ -56,9 +54,9 @@ export const ParentLevelDetailScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+        <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <Text style={styles.headerTitle}>{t('parentLevelDetail.title')}</Text>
         <View style={{ width: 28 }} />
       </View>

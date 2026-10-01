@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { TouchableOpacity, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface OnboardingBackButtonProps {
   onPress: () => void;
@@ -15,13 +16,13 @@ export const OnboardingBackButton: React.FC<OnboardingBackButtonProps> = ({
   onPress,
 }) => {
   return (
-    <TouchableOpacity
+    <TrackedTouchable analyticsId="on"
       style={styles.button}
       onPress={onPress}
       activeOpacity={0.85}
     >
       <Ionicons name="arrow-back" size={22} color="#1F2937" />
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 

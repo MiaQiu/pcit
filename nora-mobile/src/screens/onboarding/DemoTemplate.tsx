@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -45,12 +45,12 @@ export const DemoTemplate: React.FC<DemoTemplateProps> = ({
 
       {/* Buttons — fixed at bottom */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack} activeOpacity={0.85}>
+        <TrackedTouchable analyticsId="onBack" style={styles.backButton} onPress={onBack} activeOpacity={0.85}>
           <Ionicons name="arrow-back" size={22} color="#1F2937" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={onNext} activeOpacity={0.85}>
+        </TrackedTouchable>
+        <TrackedTouchable analyticsId="onboarding.next" style={styles.button} onPress={onNext} activeOpacity={0.85}>
           <Text style={styles.buttonText}>{t('onboarding.next')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

@@ -10,10 +10,11 @@ const { getUtterances, updateUtteranceRoles, updateUtteranceTags, updateRevisedF
 const { DPICS_TO_TAG_MAP, calculateNoraScore } = require('../utils/scoreConstants.cjs');
 const { loadPrompt, loadPromptWithVariables } = require('../prompts/index.cjs');
 const { generateGoalForLevel, formatNotifications, formatGoalHeadline } = require('../utils/levelGoalEngine.cjs');
-const { placeFirstSessionLevel } = require('./parentSkillLevelService.cjs');
+const { placeFirstSessionLevel, computeLevelUpdate } = require('./parentSkillLevelService.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { getLanguageInstruction } = require('../utils/languageUtils.cjs');
 const { classifySpeakersML } = require('./mlDiarizationService.cjs');
+const { parseUserIssues } = require('./priorityEngine.cjs');
 
 // DPICS asset paths — referenced by gateway cache config for coding and review feedback
 const DPICS_PDF_PATH      = process.env.DPICS_PDF_PATH      || require('path').join(__dirname, '../assets/DPICS-Manual.2.18.pdf');
@@ -716,6 +717,113 @@ async function generateAboutChild(utterances, childInfo, tagCounts = {}, session
   }
 }
 
+// ============================================================================
+// First-Session Insights — child learnings + parent strengths (first CDI session only)
+// ============================================================================
+
+/**
+ * Generate the first-session-only "first coaching report": what we learned
+ * about the child, the skills underneath the parent's target issue(s), and
+ * how they'll practice together. Two-call flow, mirroring generateCdiCoaching's
+ * coaching-narrative → coaching-format split:
+ *   1. cdiCoaching-first_v3.txt writes the free-form three-section report.
+ *   2. cdiCoaching-firstFormat.txt lifts it verbatim into structured JSON
+ *      (SCHEMAS.FIRST_SESSION_INSIGHTS) — no rewording, no translation, so
+ *      whatever language step 1 wrote in is preserved exactly.
+ * Runs once, alongside the other STEP 9 profiling calls, only on the
+ * parent's first completed CDI session.
+ *
+ * @param {Array}  utterances - Utterances with roles
+ * @param {Object} childInfo  - { name, ageYears, parentGoalsText, parentContextText }
+ * @returns {Promise<Object|null>} { whatWeLearned, skillsUnderneath, howWePracticeTogether } or null on failure
+ */
+async function generateFirstSessionInsights(utterances, childInfo, sessionId = null, language = null) {
+  const { name, ageYears, parentGoalsText, parentContextText } = childInfo;
+  const childName = name || 'the child';
+  const languageInstruction = getLanguageInstruction(language);
+  // v3 collapses PARENT_GOALS + PARENT_CONTEXT into one "target issue(s)" input.
+  const targetIssuesText = [parentGoalsText, parentContextText].filter(Boolean).join(', ')
+    || 'general parenting concerns';
+
+  const prompt = loadPromptWithVariables('cdiCoaching-first_v3', {
+    CHILD_NAME: childName,
+    CHILD_AGE: ageYears != null ? String(ageYears) : 'unknown',
+    TARGET_ISSUES: targetIssuesText,
+    // Plain Parent:/Child: narrative — v3 asks the model to judge Praise/
+    // Narration/Echo directly from the transcript, no separate tagged view.
+    TRANSCRIPT: formatUtterancesForPsychologist(utterances),
+  });
+  const promptFinal = languageInstruction ? `${prompt}\n\n${languageInstruction}` : prompt;
+
+  // Reuse the exact same Gemini context cache as generateCdiCoaching (static
+  // coaching instructions + CDI reference manual PDF), instead of paying to
+  // re-embed that context here. Requires calling on the same model the cache
+  // was created for — Gemini rejects a generateContent call whose model
+  // differs from its CachedContent's model, hence the model override.
+  const coachingModel = process.env.GEMINI_STREAMING_MODEL || undefined;
+
+  console.log(`📊 [FIRST-SESSION-INSIGHTS] Step 1: writing first coaching report...`);
+
+  try {
+    const report = await llmCall(withChildNameDirective(promptFinal, childName), {
+      profile:  'first-session-insights',
+      ...(coachingModel ? { model: coachingModel } : {}),
+      cache: {
+        key:          `cdi-coaching-${(coachingModel || 'default').replace(/[^a-z0-9.-]/gi, '_')}`,
+        primaryFile:  CDI_COACHING_PDF_PATH,
+        systemPrompt: loadPrompt('cdiCoaching'),
+      },
+      label:    'first-session-insights',
+      sessionId,
+      // Best-effort: a failure here just drops the first-session sections
+      // from the report (STEP 9 swallows it), so don't page on it.
+      alertOnFailure: false,
+    });
+
+    console.log(`📊 [FIRST-SESSION-INSIGHTS] Step 2: formatting report into structured fields...`);
+
+    const formatPrompt = loadPromptWithVariables('cdiCoaching-firstFormat', {
+      LANGUAGE_INSTRUCTION: languageInstruction,
+      CHILD_NAME: childName,
+      REPORT: report,
+    });
+
+    const parsed = await llmCall(withChildNameDirective(formatPrompt, childName), {
+      profile:  'first-session-format',
+      schema:   SCHEMAS.FIRST_SESSION_INSIGHTS,
+      label:    'first-session-format',
+      sessionId,
+      alertOnFailure: false,
+    });
+
+    const result = {
+      whatWeLearned: {
+        strengths: (parsed.what_we_learned?.strengths || []).map(s => ({
+          name: s.name || null,
+          explanation: s.explanation || null,
+        })),
+        challenge: parsed.what_we_learned?.challenge || null,
+      },
+      skillsUnderneath: {
+        openingSentence: parsed.skills_underneath?.opening_sentence || null,
+        skills: (parsed.skills_underneath?.skills || []).map(s => ({
+          name: s.name || null,
+          definition: s.definition || null,
+        })),
+      },
+      howWePracticeTogether: {
+        sentences: parsed.how_we_practice_together?.sentences || [],
+      },
+    };
+
+    console.log(`✅ [FIRST-SESSION-INSIGHTS] Generated report — ${result.skillsUnderneath.skills.length} target skills`);
+    return result;
+  } catch (error) {
+    console.error('❌ [FIRST-SESSION-INSIGHTS] Failed:', error.message);
+    return null;
+  }
+}
+
 /**
  * Fetch the parent's current level (1-9) and qualifying-instance counters
  * from ParentSkillProgress. Defaults to level 1 / 0 counters when no
@@ -740,6 +848,23 @@ async function getParentSkillProgress(userId) {
 }
 
 /**
+ * Project this session's own level-up onto freshly-fetched progress before
+ * computing its goal card. updateParentSkillLevel() persists the actual
+ * promotion separately, as fire-and-forget, *after* analysis finishes — so
+ * without this projection, a session that clears its level's criteria would
+ * still show that (now-cleared) level's goal as "tomorrow's goal" instead of
+ * the new level's. Read-only: does not write to the DB, just mirrors
+ * computeLevelUpdate's forward-only logic in-memory for the goal calc.
+ * @param {{ currentLevel: number }} progress
+ * @param {'CDI'|'PDI'} mode
+ * @param {Object} tagCounts
+ */
+function projectLevelForGoal(progress, mode, tagCounts) {
+  const update = computeLevelUpdate(progress, { mode, tagCounts });
+  return update ? { ...progress, ...update } : progress;
+}
+
+/**
  * Generate CDI coaching report
  * Runs the cdiCoaching prompt (which carries its own output format) and returns
  * the report as-is for the Coach's Corner card.
@@ -756,9 +881,11 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
   const { name, userId: childUserId } = childInfo;
 
   console.log(`📊 [CDI-COACHING] Step 1: Computing goal payload...`);
-  const parentProgress = await getParentSkillProgress(childUserId);
+  const preSessionProgress = await getParentSkillProgress(childUserId);
+  const parentProgress = projectLevelForGoal(preSessionProgress, 'CDI', tagCounts);
+  const leveledUpThisSession = parentProgress.currentLevel > preSessionProgress.currentLevel;
   const goalPayload = generateGoalForLevel(parentProgress.currentLevel, tagCounts, 'CDI', parentProgress);
-  console.log(`✅ [CDI-COACHING] Level ${parentProgress.currentLevel} goal: ${goalPayload.title} → target ${goalPayload.targetCount}`);
+  console.log(`✅ [CDI-COACHING] Level ${parentProgress.currentLevel} goal: ${goalPayload.title} → target ${goalPayload.targetCount}${leveledUpThisSession ? ` (leveled up from ${preSessionProgress.currentLevel} this session)` : ''}`);
 
   const goalDirective = {
     focusSkill: goalPayload.title,
@@ -809,6 +936,30 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
     : 'none yet';
   variables.primary_issue = variables.PRIMARY_ISSUE;
 
+  // Parent-facing level copy for the "new skill" intro on a level-up session —
+  // mirrors nora-mobile/src/i18n/locales/en.json profileReport.levels.* (the
+  // Personalized Learning Journey UI) so the report names the skill the same
+  // way the app does. Keep in sync if that copy changes. CDI-only levels 1-7
+  // (7 is the CDI->PDI hand-off, reachable in a CDI session only from level 6).
+  const CDI_LEVEL_COPY = {
+    1: { title: 'Calm Builder', skill: 'Reduce Criticism', goal: 'Build a safe, judgment-free play space.' },
+    2: { title: 'Patience Builder', skill: 'Reduce Commands', goal: 'Let your child lead without direction.' },
+    3: { title: 'Presence Builder', skill: 'Reduce Questions', goal: 'Stay present without quizzing.' },
+    4: { title: 'Confidence Builder', skill: 'Specific Praise', goal: 'Help your child feel capable.' },
+    5: { title: 'Attention Builder', skill: 'Narration', goal: 'Increase focus and engagement.' },
+    6: { title: 'Communication Builder', skill: 'Reflection (Echo)', goal: 'Help your child feel understood.' },
+    7: { title: 'Cooperation Builder', skill: 'Clear Instructions', goal: 'Increase everyday cooperation.' },
+  };
+
+  variables.LEVELED_UP_THIS_SESSION = leveledUpThisSession;
+  if (leveledUpThisSession) {
+    variables.OLD_SKILL_NAME = cdiSkillForLevel(preSessionProgress.currentLevel);
+    const newCopy = CDI_LEVEL_COPY[parentProgress.currentLevel];
+    variables.NEW_SKILL_TITLE = newCopy?.title || variables.skillname;
+    variables.NEW_SKILL_NAME = newCopy?.skill || variables.skillname;
+    variables.NEW_SKILL_GOAL = newCopy?.goal || '';
+  }
+
   // Split the prompt like DPICS coding: the static instructions (role, response
   // structure, tone) + the CDI reference manual PDF go in the Gemini context
   // cache; only the per-session data (child, skill level, metrics, transcript)
@@ -824,7 +975,7 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
 ${variables.SESSION_METRICS}
 - Level-clearing benchmark for the current skill focus: ${variables.MASTERY_BENCHMARK}
 - Focus goal for next session: ${variables.TOMORROW_GOAL}
-- Session Transcript:
+${leveledUpThisSession ? `- LEVEL-UP THIS SESSION: this session's own numbers cleared the parent's previous skill focus, "${variables.OLD_SKILL_NAME}" — celebrate that in section 1. It also unlocked a new skill focus: "${variables.NEW_SKILL_TITLE}" (${variables.NEW_SKILL_NAME}) — ${variables.NEW_SKILL_GOAL} Briefly introduce this new skill at the top of section 3 before coaching it.\n` : ''}- Session Transcript:
 ${variables.TRANSCRIPT}
 
 Produce the coaching feedback now, following the required response structure exactly.
@@ -891,10 +1042,11 @@ ${variables.LANGUAGE_INSTRUCTION}`;
               : [],
           },
           growthFocus: {
-            heading:   cc.growth_focus?.heading || '',
-            gap:       cc.growth_focus?.gap || '',
-            benchmark: cc.growth_focus?.benchmark || '',
-            strategy:  cc.growth_focus?.strategy || '',
+            heading:       cc.growth_focus?.heading || '',
+            newSkillIntro: cc.growth_focus?.new_skill_intro || null,
+            gap:           cc.growth_focus?.gap || '',
+            benchmark:     cc.growth_focus?.benchmark || '',
+            strategy:      cc.growth_focus?.strategy || '',
           },
           wordBank: Array.isArray(cc.word_bank)
             ? cc.word_bank.map(g => ({
@@ -1104,19 +1256,18 @@ No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` :
 async function generateCDIFeedback(counts, utterances, childName, isCDI = true, pdiResult = null, sessionId = null, language = null, coachingNarrativeText = null, goalDirective = null) {
   console.log(`🚀 [CDI-FEEDBACK] Starting feedback generation (mode: ${isCDI ? 'CDI' : 'PDI'})...`);
 
-  // Call 1: Combined feedback prompt (analysis + improvement + example in one)
-  console.log('📝 [CDI-FEEDBACK] Running combined feedback prompt...');
-  const feedbackData = await llmCall(
+  // Call 1 (combined-feedback), Call 2 (review-feedback), Call 3
+  // (crisis-coaching), and Call 4 (skill-improve) are independent of each
+  // other — none consumes another's output, they only share `counts`/
+  // `utterances`/`pdiResult`/`coachingNarrativeText`/`goalDirective`, all of
+  // which are already available — so run all four in parallel rather than
+  // awaiting combined-feedback first.
+  console.log('📝 [CDI-FEEDBACK] Running combined-feedback + review-feedback + crisis-coaching + skill-improve in parallel...');
+
+  const combinedFeedbackPromise = llmCall(
     withChildNameDirective(generateCombinedFeedbackPrompt(counts, utterances, childName, language), childName),
     { profile: 'combined-feedback', schema: SCHEMAS.COMBINED_FEEDBACK, label: 'combined-feedback', sessionId }
   );
-
-  console.log('✅ [CDI-FEEDBACK] Combined feedback result:', JSON.stringify(feedbackData).substring(0, 300));
-
-  // Call 2 (review-feedback), Call 3 (crisis-coaching), and Call 4
-  // (skill-improve) are independent of each other, so run them in parallel
-  // rather than serializing.
-  console.log('📝 [CDI-FEEDBACK] Running review-feedback + crisis-coaching + skill-improve in parallel...');
 
   const reviewFeedbackPromise = (async () => {
     try {
@@ -1157,7 +1308,11 @@ All other feedback rules remain the same.` : '');
   const crisisPromise = generateCrisis(utterances, coachingNarrativeText, childName, goalDirective, sessionId, language);
   const skillImprovePromise = generateSkillImprove(utterances, goalDirective, childName, sessionId, language);
 
-  const [revisedFeedback, crisisResult, skillImproveResult] = await Promise.all([reviewFeedbackPromise, crisisPromise, skillImprovePromise]);
+  const [feedbackData, revisedFeedback, crisisResult, skillImproveResult] = await Promise.all([
+    combinedFeedbackPromise, reviewFeedbackPromise, crisisPromise, skillImprovePromise
+  ]);
+
+  console.log('✅ [CDI-FEEDBACK] Combined feedback result:', JSON.stringify(feedbackData).substring(0, 300));
 
   // Rebuild the top-moment quote from the transcript rather than the LLM's
   // typed-back text (see quoteFromUtteranceRange). `topMoment` stays a plain
@@ -1818,6 +1973,7 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
       childBirthYear: true,
       childBirthday: true,
       issue: true,
+      parentGoal: true,
       childConditions: true
     }
   });
@@ -1833,6 +1989,14 @@ async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
   const childAge = user.childBirthYear ? calculateChildAge(user.childBirthYear, user.childBirthday) : null;
   const childAgeMonths = user.childBirthYear ? calculateChildAgeInMonths(user.childBirthday, user.childBirthYear) : null;
   const childGender = user.childGender ? formatGender(user.childGender) : 'child';
+  const parentGoalsText = parseUserIssues(user.parentGoal)
+    .map(g => g.replace(/_/g, ' ').toLowerCase())
+    .join(', ');
+  // "Additional parent context" for the first-session prompt — the presenting
+  // issue/concern, distinct from the goals the parent picked (parentGoalsText).
+  const parentContextText = parseUserIssues(user.issue)
+    .map(g => g.replace(/_/g, ' ').toLowerCase())
+    .join(', ');
   console.log(`✅ [ANALYSIS-STEP-1b] Child info: ${childName}, ${childAgeMonths} months old, ${childGender}`);
 
   // Fetch Child record early to get clinical priority fields
@@ -2154,9 +2318,23 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
     console.log(`✅ [ANALYSIS-STEP-8] PCIT coding checkpoint saved`);
   }
 
-  // STEP 9: Child Profiling — parallel developmental + coaching calls
+  // STEP 9: Child Profiling — parallel developmental + coaching calls.
+  // Only the coaching branch (#9/#10/#11) feeds anything the competency
+  // analysis phase below needs (coachingNarrativeText / goalDirective) —
+  // dev-profiling, about-child, and first-session-insights feed nothing
+  // until the final DB write / STEP 10-11. So we still kick off all four
+  // concurrently, but only await the coaching branch here; the other three
+  // are picked up further down, after competency analysis has already run
+  // concurrently with them, instead of gating it on whichever of the four
+  // happens to be slowest.
   console.log(`📊 [ANALYSIS-STEP-9] Generating child profiling (developmental + coaching in parallel)...`);
   let childProfilingResult = null;
+  let coachingResult = null;
+  let remainingStep9Promise = Promise.resolve([
+    { status: 'fulfilled', value: null },
+    { status: 'fulfilled', value: null },
+    { status: 'fulfilled', value: null }
+  ]);
   try {
     const utterancesForProfiling = await getUtterances(sessionId);
     const childSpeaker = getChildSpeaker(roleIdentificationJson);
@@ -2190,54 +2368,36 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
     const childInfoForProfiling = {
       name: childName,
       ageMonths: childAgeMonths,
+      ageYears: childAge,
       gender: childGender,
       clinicalPriority,
       isFirstSession,
       durationSeconds: session.durationSeconds || null,
       achievedMilestoneKeys,
       childId: child?.id || null,
-      userId
+      userId,
+      parentGoalsText,
+      parentContextText
     };
 
-    const [profilingSettled, coachingSettled, aboutChildSettled] = await Promise.allSettled([
-      generateDevelopmentalProfiling(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId, primaryLanguage),
-      isCDI ? generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId, primaryLanguage) : Promise.resolve(null),
-      generateAboutChild(utterancesForProfiling, childInfoForProfiling, tagCounts, sessionId, primaryLanguage)
-    ]);
+    const runFirstSessionInsights = isFirstSession && isCDI;
 
-    const profilingResult = profilingSettled.status === 'fulfilled' ? profilingSettled.value : null;
-    const coachingResult = coachingSettled.status === 'fulfilled' ? coachingSettled.value : null;
-    const aboutChildResult = aboutChildSettled.status === 'fulfilled' ? aboutChildSettled.value : null;
+    // Kick off all four branches concurrently...
+    const profilingPromise = generateDevelopmentalProfiling(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId, primaryLanguage);
+    const coachingPromise = isCDI ? generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId, primaryLanguage) : Promise.resolve(null);
+    const aboutChildPromise = generateAboutChild(utterancesForProfiling, childInfoForProfiling, tagCounts, sessionId, primaryLanguage);
+    const firstSessionPromise = runFirstSessionInsights ? generateFirstSessionInsights(utterancesForProfiling, childInfoForProfiling, sessionId, primaryLanguage) : Promise.resolve(null);
 
-    if (profilingSettled.status === 'rejected') {
-      console.error('⚠️ [ANALYSIS-STEP-9] Developmental profiling rejected:', profilingSettled.reason?.message);
-    }
+    // ...but only await the coaching branch now — competency analysis needs
+    // coachingResult.{coachingSummary,goalDirective}. The other three keep
+    // running in the background; we pick them up after competency analysis.
+    const [coachingSettled] = await Promise.allSettled([coachingPromise]);
+    coachingResult = coachingSettled.status === 'fulfilled' ? coachingSettled.value : null;
     if (coachingSettled.status === 'rejected') {
       console.error('⚠️ [ANALYSIS-STEP-9] CDI coaching rejected:', coachingSettled.reason?.message);
     }
-    if (aboutChildSettled.status === 'rejected') {
-      console.error('⚠️ [ANALYSIS-STEP-9] About child rejected:', aboutChildSettled.reason?.message);
-    }
 
-    // Merge into the same shape downstream code expects
-    if (profilingResult || coachingResult) {
-      childProfilingResult = {
-        developmentalObservation: profilingResult?.developmentalObservation || null,
-        metadata: profilingResult?.metadata || null,
-        baselineAchieved: profilingResult?.baselineAchieved || [],
-        coachingSummary: coachingResult?.coachingSummary || null,
-        coachingCards: coachingResult?.coachingCards || null,
-        coachingPart1: coachingResult?.coachingPart1 || null,
-        coachingPart2: coachingResult?.coachingPart2 || null,
-        tomorrowGoal: coachingResult?.tomorrowGoal || null,
-        notifications: coachingResult?.notifications || null,
-        goalDirective: coachingResult?.goalDirective || null,
-        aboutChild: aboutChildResult || null
-      };
-      console.log(`✅ [ANALYSIS-STEP-9] Child profiling complete — ${childProfilingResult.developmentalObservation?.domains?.length || 0} domains, ${childProfilingResult.coachingCards?.length || 0} coaching cards`);
-    } else {
-      console.log(`⚠️ [ANALYSIS-STEP-9] Child profiling skipped or both calls failed`);
-    }
+    remainingStep9Promise = Promise.allSettled([profilingPromise, aboutChildPromise, firstSessionPromise]);
   } catch (profilingError) {
     console.error('⚠️ [ANALYSIS-STEP-9] Child profiling error:', profilingError.message);
   }
@@ -2272,11 +2432,14 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
     // crisis moment) read the already-generated coaching narrative, not the
     // transcript — generateCDIFeedback runs that call internally, in parallel
     // with review-feedback, once combined-feedback's topMoment quote is known.
-    const coachingNarrativeText = childProfilingResult?.coachingSummary || pdiResult?.summary || null;
+    // Read from `coachingResult` (not `childProfilingResult`, which isn't
+    // merged until after this block — see STEP 9 above) so competency
+    // analysis doesn't wait on dev-profiling/about-child/first-session-insights.
+    const coachingNarrativeText = coachingResult?.coachingSummary || pdiResult?.summary || null;
 
     // Run multi-prompt feedback flow for both CDI and PDI (mode-aware)
     console.log(`🎯 [COMPETENCY-ANALYSIS] Using multi-prompt feedback generation for ${session.mode} session...`);
-    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName, isCDI, pdiResult, sessionId, primaryLanguage, coachingNarrativeText, childProfilingResult?.goalDirective || null);
+    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName, isCDI, pdiResult, sessionId, primaryLanguage, coachingNarrativeText, coachingResult?.goalDirective || null);
 
     // Save revised feedback to database
     if (feedbackResult.revisedFeedback && feedbackResult.revisedFeedback.length > 0) {
@@ -2309,7 +2472,7 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
       // Deterministic goal engine overrides the LLM's tomorrowGoal field
       // (pdiResult.tomorrowGoal is left unused/vestigial rather than
       // touching pdiTwoChoicesFlow's schema for this).
-      const pdiProgress = await getParentSkillProgress(userId);
+      const pdiProgress = projectLevelForGoal(await getParentSkillProgress(userId), 'PDI', tagCounts);
       const pdiGoalPayload = generateGoalForLevel(pdiProgress.currentLevel, tagCounts, 'PDI', pdiProgress);
       competencyAnalysis.pdiTomorrowGoal = formatGoalHeadline(pdiGoalPayload);
       competencyAnalysis.pdiTomorrowGoalDirective = {
@@ -2325,6 +2488,47 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
     }
   } catch (compError) {
     console.error('Error generating competency analysis:', compError.message);
+  }
+
+  // STEP 9 (continued): pick up dev-profiling / about-child /
+  // first-session-insights now — they've been running in the background
+  // since STEP 9 kicked them off, concurrently with the competency-analysis
+  // block above, instead of gating it.
+  {
+    const [profilingSettled, aboutChildSettled, firstSessionSettled] = await remainingStep9Promise;
+    const profilingResult = profilingSettled.status === 'fulfilled' ? profilingSettled.value : null;
+    const aboutChildResult = aboutChildSettled.status === 'fulfilled' ? aboutChildSettled.value : null;
+    const firstSessionResult = firstSessionSettled.status === 'fulfilled' ? firstSessionSettled.value : null;
+
+    if (profilingSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] Developmental profiling rejected:', profilingSettled.reason?.message);
+    }
+    if (aboutChildSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] About child rejected:', aboutChildSettled.reason?.message);
+    }
+    if (firstSessionSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] First-session insights rejected:', firstSessionSettled.reason?.message);
+    }
+
+    if (profilingResult || coachingResult) {
+      childProfilingResult = {
+        developmentalObservation: profilingResult?.developmentalObservation || null,
+        metadata: profilingResult?.metadata || null,
+        baselineAchieved: profilingResult?.baselineAchieved || [],
+        coachingSummary: coachingResult?.coachingSummary || null,
+        coachingCards: coachingResult?.coachingCards || null,
+        coachingPart1: coachingResult?.coachingPart1 || null,
+        coachingPart2: coachingResult?.coachingPart2 || null,
+        tomorrowGoal: coachingResult?.tomorrowGoal || null,
+        notifications: coachingResult?.notifications || null,
+        goalDirective: coachingResult?.goalDirective || null,
+        aboutChild: aboutChildResult || null,
+        firstSessionInsights: firstSessionResult || null
+      };
+      console.log(`✅ [ANALYSIS-STEP-9] Child profiling complete — ${childProfilingResult.developmentalObservation?.domains?.length || 0} domains, ${childProfilingResult.coachingCards?.length || 0} coaching cards`);
+    } else {
+      console.log(`⚠️ [ANALYSIS-STEP-9] Child profiling skipped or both calls failed`);
+    }
   }
 
   // Calculate Nora Score
@@ -2353,14 +2557,15 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
       competencyAnalysis,
       overallScore,
       coachingSummary: childProfilingResult?.coachingSummary || null,
-      coachingCards: (childProfilingResult?.coachingCards || childProfilingResult?.coachingPart1 || childProfilingResult?.goalDirective)
+      coachingCards: (childProfilingResult?.coachingCards || childProfilingResult?.coachingPart1 || childProfilingResult?.goalDirective || childProfilingResult?.firstSessionInsights)
         ? {
             sections: childProfilingResult.coachingCards || null,
             part1: childProfilingResult.coachingPart1 || null,
             part2: childProfilingResult.coachingPart2 || null,
             tomorrowGoal: childProfilingResult.tomorrowGoal || null,
             notifications: childProfilingResult.notifications || null,
-            goalDirective: childProfilingResult.goalDirective || null
+            goalDirective: childProfilingResult.goalDirective || null,
+            firstSessionInsights: childProfilingResult.firstSessionInsights || null
           }
         : null,
       aboutChild: childProfilingResult?.aboutChild || null,
@@ -2463,6 +2668,7 @@ module.exports = {
   generateDevelopmentalProfiling,
   generateCdiCoaching,
   generateAboutChild,
+  generateFirstSessionInsights,
   getParentSkillProgress,
   dpicsCacheKey,
   DPICS_PDF_PATH,

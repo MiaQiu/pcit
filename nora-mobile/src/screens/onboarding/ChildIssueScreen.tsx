@@ -22,10 +22,12 @@ export const ChildIssueScreen: React.FC = () => {
       title={t('onboarding.childIssue.title')}
       options={[
         { value: 'big_feelings_tantrums', label: t('onboarding.childIssue.bigFeelingsTantrums') },
+        { value: 'behavior_challenges', label: t('onboarding.childIssue.behaviorChallenges') },
         { value: 'listening_cooperation', label: t('onboarding.childIssue.listeningCooperation') },
         { value: 'attention_focus', label: t('onboarding.childIssue.attentionFocus') },
         { value: 'social', label: t('onboarding.childIssue.social') },
-        { value: 'anxiety_confidence', label: t('onboarding.childIssue.anxietyConfidence') },
+        { value: 'anxiety', label: t('onboarding.childIssue.anxiety') },
+        { value: 'confidence', label: t('onboarding.childIssue.confidence') },
         { value: 'adhd', label: t('onboarding.childIssue.adhd') },
         { value: 'developmental_concerns', label: t('onboarding.childIssue.developmentalConcerns') },
         { value: 'parenting_strategies', label: t('onboarding.childIssue.parentingStrategies') },

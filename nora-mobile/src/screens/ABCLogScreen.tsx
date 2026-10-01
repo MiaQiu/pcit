@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -31,6 +30,7 @@ import { getTodaySingapore } from '../utils/timezone';
 import * as userStorage from '../lib/userStorage';
 import amplitudeService from '../services/amplitudeService';
 import { RootStackParamList } from '../navigation/types';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 const CUSTOM_TAGS_KEY = (cat: string) => `abc_custom_tags_${cat}`;
@@ -209,7 +209,6 @@ export const ABCLogScreen: React.FC = () => {
   // ── Init ─────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    amplitudeService.trackScreenView('ABC Log');
 
     const init = async () => {
       const [seen, ...freqResults] = await Promise.all([
@@ -454,7 +453,7 @@ export const ABCLogScreen: React.FC = () => {
           const sel = selectedSet.has(tag);
           const isCust = customTags[cat].includes(tag);
           return (
-            <TouchableOpacity
+            <TrackedTouchable analyticsId={`ABC Tag: ${tag}`}
               key={tag}
               style={[styles.optionCard, sel && { borderColor: accentColor, borderWidth: 2, backgroundColor: selectedBg }]}
               onPress={() => toggleTag(cat, tag)}
@@ -463,18 +462,18 @@ export const ABCLogScreen: React.FC = () => {
             >
               <Text style={styles.optionLabel}>{tag}</Text>
               {sel && <Ionicons name="checkmark-circle" size={24} color={accentColor} />}
-            </TouchableOpacity>
+            </TrackedTouchable>
           );
         })}
         {allowCustom && customTags[cat].length < 3 && (
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Add your own"
             style={[styles.addCustomCard, { borderColor: accentColor }]}
             onPress={() => { setCustomModalCategory(cat); setCustomTagInput(''); setShowCustomModal(true); }}
             activeOpacity={0.8}
           >
             <Ionicons name="add-circle-outline" size={20} color={accentColor} />
             <Text style={[styles.addCustomLabel, { color: accentColor }]}>Add your own</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         )}
       </ScrollView>
     );
@@ -486,7 +485,7 @@ export const ABCLogScreen: React.FC = () => {
     return sorted.map(tag => {
       const sel = selected[cat].includes(tag);
       return (
-        <TouchableOpacity
+        <TrackedTouchable analyticsId={`ABC Tag: ${tag}`}
           key={tag}
           style={[styles.optionCard, sel && { borderColor: accentColor, borderWidth: 2, backgroundColor: selectedBg }]}
           onPress={() => toggleTag(cat, tag)}
@@ -494,7 +493,7 @@ export const ABCLogScreen: React.FC = () => {
         >
           <Text style={styles.optionLabel}>{tag}</Text>
           {sel && <Ionicons name="checkmark-circle" size={24} color={accentColor} />}
-        </TouchableOpacity>
+        </TrackedTouchable>
       );
     });
   };
@@ -515,7 +514,7 @@ export const ABCLogScreen: React.FC = () => {
       {tags.map(tag => {
         const sel = posSelected[cat].includes(tag);
         return (
-          <TouchableOpacity
+          <TrackedTouchable analyticsId={`Positive Tag: ${tag}`}
             key={tag}
             style={[styles.optionCard, sel && { borderColor: accentColor, borderWidth: 2, backgroundColor: selectedBg }]}
             onPress={() => togglePosTag(cat, tag)}
@@ -523,7 +522,7 @@ export const ABCLogScreen: React.FC = () => {
           >
             <Text style={styles.optionLabel}>{tag}</Text>
             {sel && <Ionicons name="checkmark-circle" size={24} color={accentColor} />}
-          </TouchableOpacity>
+          </TrackedTouchable>
         );
       })}
     </ScrollView>
@@ -536,7 +535,7 @@ export const ABCLogScreen: React.FC = () => {
         {TIME_SLOTS.map(slot => {
           const active = selectedTimeSlot === slot.hour;
           return (
-            <TouchableOpacity
+            <TrackedTouchable analyticsId={`Time Slot: ${slot.label}`}
               key={slot.hour}
               style={[styles.timeChip, active && { borderColor: accentColor, borderWidth: 2, backgroundColor: selectedBg }]}
               onPress={() => setSelectedTimeSlot(active ? null : slot.hour)}
@@ -544,7 +543,7 @@ export const ABCLogScreen: React.FC = () => {
             >
               <Text style={[styles.timeChipLabel, active && { color: accentColor }]}>{slot.label}</Text>
               <Text style={styles.timeChipRange}>{slot.range}</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           );
         })}
       </View>
@@ -559,7 +558,7 @@ export const ABCLogScreen: React.FC = () => {
           const val = i + 1;
           const active = intensity === val;
           return (
-            <TouchableOpacity
+            <TrackedTouchable analyticsId={`Intensity: ${val}`}
               key={val}
               style={[styles.intensityBtn, active && { borderColor: accentColor, backgroundColor: selectedBg }]}
               onPress={() => setIntensity(active ? null : val)}
@@ -567,7 +566,7 @@ export const ABCLogScreen: React.FC = () => {
             >
               <Text style={styles.intensityEmoji}>{emoji}</Text>
               <Text style={[styles.intensityNum, active && { color: accentColor }]}>{val}</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           );
         })}
       </View>
@@ -575,7 +574,7 @@ export const ABCLogScreen: React.FC = () => {
       {DURATION_OPTIONS.map(opt => {
         const active = durationBucket === opt;
         return (
-          <TouchableOpacity
+          <TrackedTouchable analyticsId={`Duration: ${opt}`}
             key={opt}
             style={[styles.optionCard, active && { borderColor: accentColor, borderWidth: 2, backgroundColor: selectedBg }]}
             onPress={() => setDurationBucket(active ? null : opt)}
@@ -583,7 +582,7 @@ export const ABCLogScreen: React.FC = () => {
           >
             <Text style={styles.optionLabel}>{opt}</Text>
             {active && <Ionicons name="checkmark-circle" size={24} color={accentColor} />}
-          </TouchableOpacity>
+          </TrackedTouchable>
         );
       })}
     </ScrollView>
@@ -671,16 +670,16 @@ export const ABCLogScreen: React.FC = () => {
             </View>
           </ScrollView>
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
+            <TrackedTouchable analyticsId="Back" style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
               <Ionicons name="arrow-back" size={22} color="#1F2937" />
-            </TouchableOpacity>
-            <TouchableOpacity
+            </TrackedTouchable>
+            <TrackedTouchable analyticsId="Let's start"
               style={[styles.continueBtn, { backgroundColor: accentColor }]}
               onPress={async () => { await userStorage.setItem(INTRO_SEEN_KEY, '1'); setShowIntro(false); }}
               activeOpacity={0.8}
             >
               <Text style={styles.continueBtnText}>Let's start</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         </View>
       </SafeAreaView>
@@ -690,7 +689,11 @@ export const ABCLogScreen: React.FC = () => {
   // ── Main form ────────────────────────────────────────────────────────────────
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={styles.safeArea}
+      // Android is edge-to-edge, so keep the button row above the system nav bar
+      edges={Platform.OS === 'android' ? ['top', 'left', 'right', 'bottom'] : ['top', 'left', 'right']}
+    >
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.container}>
 
@@ -729,10 +732,10 @@ export const ABCLogScreen: React.FC = () => {
 
           {/* Primary action row */}
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.backBtn} onPress={goBack} activeOpacity={0.85}>
+            <TrackedTouchable analyticsId="goBack" style={styles.backBtn} onPress={goBack} activeOpacity={0.85}>
               <Ionicons name="arrow-back" size={22} color="#1F2937" />
-            </TouchableOpacity>
-            <TouchableOpacity
+            </TrackedTouchable>
+            <TrackedTouchable analyticsId={`${isQuickSave || isLastStep ? 'Save Log' : 'Continue'} Button`}
               style={[styles.continueBtn, { backgroundColor: accentColor }, !canAdvance() && styles.continueBtnDisabled]}
               onPress={isQuickSave || isLastStep ? handleSubmit : goNext}
               disabled={!canAdvance() || submitting}
@@ -744,22 +747,22 @@ export const ABCLogScreen: React.FC = () => {
                     {isQuickSave || isLastStep ? 'Save Log' : 'Continue'}
                   </Text>
               }
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
 
           {/* "Add more context" at step 2 */}
           {isQuickSave && (
-            <TouchableOpacity style={styles.addContextBtn} onPress={goNext} activeOpacity={0.7}>
+            <TrackedTouchable analyticsId="Add more context" style={styles.addContextBtn} onPress={goNext} activeOpacity={0.7}>
               <Text style={[styles.addContextText, { color: accentColor }]}>Add more context</Text>
               <Ionicons name="chevron-forward" size={15} color={accentColor} />
-            </TouchableOpacity>
+            </TrackedTouchable>
           )}
 
           {/* Skip as a real bordered button for extended steps */}
           {!isPositive && step >= 3 && step < TOTAL_STEPS - 1 && (
-            <TouchableOpacity style={styles.skipBtn} onPress={goNext} activeOpacity={0.7}>
+            <TrackedTouchable analyticsId="Skip this step" style={styles.skipBtn} onPress={goNext} activeOpacity={0.7}>
               <Text style={styles.skipBtnText}>Skip this step</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           )}
 
           {(isPositive || (!isQuickSave && (step < 3 || step === TOTAL_STEPS - 1))) && (
@@ -774,9 +777,9 @@ export const ABCLogScreen: React.FC = () => {
           <View style={styles.toastInner}>
             <Ionicons name="checkmark-circle" size={22} color="#10B981" />
             <Text style={styles.toastMessage} numberOfLines={2}>{toastMessage}</Text>
-            <TouchableOpacity style={styles.toastNewEntry} onPress={handleNewEntry} activeOpacity={0.8}>
+            <TrackedTouchable analyticsId="New Entry" style={styles.toastNewEntry} onPress={handleNewEntry} activeOpacity={0.8}>
               <Text style={styles.toastNewEntryText}>New Entry</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         </Animated.View>
       )}
@@ -800,16 +803,16 @@ export const ABCLogScreen: React.FC = () => {
               📞 Mental health support: 1800-221-4444 (Singapore){'\n'}
               💬 Your child's therapist is always your first call.
             </Text>
-            <TouchableOpacity style={[styles.modalAdd, { marginTop: 8 }]} onPress={handleSafetyAcknowledged} activeOpacity={0.85}>
+            <TrackedTouchable analyticsId="Got it — save my log" style={[styles.modalAdd, { marginTop: 8 }]} onPress={handleSafetyAcknowledged} activeOpacity={0.85}>
               <Text style={styles.modalAddText}>Got it — save my log</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         </View>
       </Modal>
 
       {/* Custom tag modal */}
       <Modal visible={showCustomModal} transparent animationType="fade" onRequestClose={() => setShowCustomModal(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowCustomModal(false)}>
+        <TrackedTouchable analyticsId="Add your own option" style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowCustomModal(false)}>
           <View style={styles.modalCard} onStartShouldSetResponder={() => true}>
             <Text style={styles.modalTitle}>Add your own option</Text>
             <TextInput
@@ -823,19 +826,19 @@ export const ABCLogScreen: React.FC = () => {
               onSubmitEditing={handleAddCustomTag}
             />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setShowCustomModal(false)}>
+              <TrackedTouchable analyticsId="Cancel" style={styles.modalCancel} onPress={() => setShowCustomModal(false)}>
                 <Text style={styles.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </TrackedTouchable>
+              <TrackedTouchable analyticsId="Add"
                 style={[styles.modalAdd, { backgroundColor: accentColor }, !customTagInput.trim() && { backgroundColor: '#E5E7EB' }]}
                 onPress={handleAddCustomTag}
                 disabled={!customTagInput.trim()}
               >
                 <Text style={styles.modalAddText}>Add</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
           </View>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </Modal>
     </SafeAreaView>
   );

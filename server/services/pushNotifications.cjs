@@ -172,6 +172,17 @@ async function registerPushToken(userId, pushToken) {
       return false;
     }
 
+    // A device token belongs to whoever logged in last on that device. Drop it
+    // from any other account, e.g. one whose session expired without a logout,
+    // so their pushes don't land on this user's phone.
+    await prisma.user.updateMany({
+      where: { pushToken, id: { not: userId } },
+      data: {
+        pushToken: null,
+        pushTokenUpdatedAt: new Date()
+      }
+    });
+
     await prisma.user.update({
       where: { id: userId },
       data: {

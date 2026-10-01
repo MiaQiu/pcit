@@ -13,6 +13,8 @@ export default function CreateAccountScreen() {
   const [passwordVal, setPasswordVal] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Campaign links can override this screen's title/subtitle (referral copy still wins).
+  const landing = data.referralCode ? null : data.partnerInfo?.landing;
 
   const handleSignup = async () => {
     if (!emailVal || !passwordVal) {
@@ -63,7 +65,9 @@ export default function CreateAccountScreen() {
       </div>
 
       <div className="flex-1 flex flex-col px-6 pt-4 pb-8">
-        <h1 className="text-[#1E2939] text-2xl font-bold mb-2">Create your account</h1>
+        <h1 className="text-[#1E2939] text-2xl font-bold mb-2 whitespace-pre-line">
+          {landing?.accountTitle || 'Create your account'}
+        </h1>
         {data.referralCode ? (
           <p className="text-[#6B7280] text-sm mb-8">
             {data.referrerName ? `${data.referrerName} invited you to Nora. ` : ''}
@@ -71,8 +75,8 @@ export default function CreateAccountScreen() {
             {data.partnerInfo?.trialDays ?? 30}-day free trial.
           </p>
         ) : (
-          <p className="text-[#6B7280] text-sm mb-8">
-            Join thousands of parents raising happier, more confident kids.
+          <p className="text-[#6B7280] text-sm mb-8 whitespace-pre-line">
+            {landing?.accountSubtitle || 'Join thousands of parents raising happier, more confident kids.'}
           </p>
         )}
 

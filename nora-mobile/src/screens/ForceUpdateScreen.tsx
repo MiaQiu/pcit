@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Linking, Image } from 'react-native';
+import { View, Text, StyleSheet, Platform, Linking, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 const IOS_STORE_URL = process.env.EXPO_PUBLIC_IOS_STORE_URL || '';
 const ANDROID_STORE_URL = process.env.EXPO_PUBLIC_ANDROID_STORE_URL || '';
@@ -10,7 +11,6 @@ export const ForceUpdateScreen: React.FC = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Force Update');
   }, []);
 
   const handleUpdate = () => {
@@ -26,9 +26,9 @@ export const ForceUpdateScreen: React.FC = () => {
       <Image source={require('../../assets/splash_icon_dino_small.png')} style={styles.dragon} />
       <Text style={styles.title}>{t('forceUpdate.title')}</Text>
       <Text style={styles.message}>{t('forceUpdate.message')}</Text>
-      <TouchableOpacity style={styles.button} onPress={handleUpdate}>
+      <TrackedTouchable analyticsId="forceUpdate.updateButton" style={styles.button} onPress={handleUpdate}>
         <Text style={styles.buttonText}>{t('forceUpdate.updateButton')}</Text>
-      </TouchableOpacity>
+      </TrackedTouchable>
     </View>
   );
 };

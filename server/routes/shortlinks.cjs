@@ -1,6 +1,7 @@
 const express = require('express');
 const prisma = require('../services/db.cjs');
 const { requireAuth } = require('../middleware/auth.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 const router = express.Router();
 const CODE_LENGTH = 8;
@@ -41,7 +42,7 @@ router.post('/', requireAuth, async (req, res) => {
     const webUrl = process.env.EXPO_PUBLIC_WEB_URL || process.env.WEB_APP_URL || 'http://localhost:3001';
     res.json({ shortUrl: `${webUrl}/s/${code}` });
   } catch (error) {
-    console.error('Create share link error:', error);
+    logError(error, { route: 'shortlinks#Create share link error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create share link' });
   }
 });

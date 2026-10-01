@@ -26,6 +26,8 @@ import amplitudeService from '../services/amplitudeService';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import type { ContentBlock, TextRun } from '../utils/formatLessonContentV2';
 import { LessonContentBlocks } from '../components/LessonContentBlocks';
+import { TrackedTouchable } from '../components/TrackedTouchable';
+import type { DemoVideo } from '@nora/core';
 
 type DemoVideoDetailRouteProp = RouteProp<RootStackParamList, 'DemoVideoDetail'>;
 
@@ -92,7 +94,7 @@ function FaqRunText({ runs }: { runs: TextRun[] }) {
   );
 }
 
-const FaqAccordion: React.FC<{ blocks: ContentBlock[] }> = ({ blocks }) => {
+const FaqAccordion: React.FC<{ blocks: ContentBlock[]; video: DemoVideo }> = ({ blocks, video }) => {
   const items = useMemo(() => toAdditionalTextItems(blocks), [blocks]);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
@@ -119,7 +121,13 @@ const FaqAccordion: React.FC<{ blocks: ContentBlock[] }> = ({ blocks }) => {
         const canToggle = !!item.answer && item.answer.length > 0;
         const isOpen = canToggle && expanded.has(i);
         return (
-          <TouchableOpacity
+          <TrackedTouchable analyticsId={`FAQ Item ${i + 1}`}
+            analyticsProperties={{
+              demoVideoId: video.id,
+              demoVideoTitle: video.baseTitle,
+              question: item.header.map((run) => run.text).join(''),
+              action: isOpen ? 'collapse' : 'expand',
+            }}
             key={i}
             style={faqStyles.card}
             activeOpacity={canToggle ? 0.75 : 1}
@@ -139,7 +147,7 @@ const FaqAccordion: React.FC<{ blocks: ContentBlock[] }> = ({ blocks }) => {
                 <LessonContentBlocks blocks={item.answer} />
               </View>
             )}
-          </TouchableOpacity>
+          </TrackedTouchable>
         );
       })}
     </View>
@@ -157,7 +165,6 @@ export const DemoVideoDetailScreen: React.FC = () => {
   const [playbackStarted, setPlaybackStarted] = useState(false);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('DemoVideoDetail');
     lessonService.markDemoVideoViewed(video.id).catch((error) => {
       console.error('Failed to mark demo video viewed:', error.message);
     });
@@ -175,16 +182,16 @@ export const DemoVideoDetailScreen: React.FC = () => {
 
   const handleViewLesson = () => {
     if (!video.lessonId) return;
-    amplitudeService.trackEvent('Demo Video Lesson Link Tapped', { demoVideoId: video.id, lessonId: video.lessonId });
+    amplitudeService.trackEvent('Demo Video Lesson Link Tapped', { demoVideoId: video.id, demoVideoTitle: video.baseTitle, lessonId: video.lessonId });
     navigation.push('LessonRead', { lessonId: video.lessonId, moduleKey: video.moduleKey ?? undefined, title: video.lessonTitle ?? undefined });
   };
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
+        <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <View style={styles.backCircle} />
       </View>
 
@@ -217,7 +224,7 @@ export const DemoVideoDetailScreen: React.FC = () => {
               style={styles.video}
               activeOpacity={0.85}
               onPress={() => {
-                amplitudeService.trackEvent('Demo Video Play Pressed', { demoVideoId: video.id });
+                amplitudeService.trackEvent('Demo Video Play Pressed', { demoVideoId: video.id, demoVideoTitle: video.baseTitle });
                 setPlaybackStarted(true);
               }}
             >
@@ -235,12 +242,12 @@ export const DemoVideoDetailScreen: React.FC = () => {
 
         {additionalTextBlocks.length > 0 && (
           <View style={styles.additionalText}>
-            <FaqAccordion blocks={additionalTextBlocks} />
+            <FaqAccordion blocks={additionalTextBlocks} video={video} />
           </View>
         )}
 
         {!!video.lessonId && (
-          <TouchableOpacity style={styles.lessonLink} onPress={handleViewLesson} activeOpacity={0.75}>
+          <TrackedTouchable analyticsId="demoVideoDetail.viewLesson" style={styles.lessonLink} onPress={handleViewLesson} activeOpacity={0.75}>
             <View style={styles.lessonLinkText}>
               <Text style={styles.lessonLinkTitle}>{t('demoVideoDetail.viewLesson')}</Text>
               {!!video.lessonTitle && (
@@ -248,7 +255,7 @@ export const DemoVideoDetailScreen: React.FC = () => {
               )}
             </View>
             <Ionicons name="chevron-forward" size={22} color={COLORS.mainPurple} />
-          </TouchableOpacity>
+          </TrackedTouchable>
         )}
       </ScrollView>
     </SafeAreaView>

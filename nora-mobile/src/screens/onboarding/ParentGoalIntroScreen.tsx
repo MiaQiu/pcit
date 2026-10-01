@@ -12,7 +12,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +19,7 @@ import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { hasAdhdOrDevelopmentalConcern } from '../../utils/onboardingBranch';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 export const ParentGoalIntroScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -83,7 +83,7 @@ export const ParentGoalIntroScreen: React.FC = () => {
       </View>
 
       <View style={[styles.footer, { paddingBottom: useSafeAreaInsets().bottom + 12 }]}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="onboarding.parentGoalIntro.discoverButton"
           style={styles.button}
           onPress={() => {
             amplitudeService.trackOnboardingStepCompleted('parent_goal_intro', 19);
@@ -92,7 +92,7 @@ export const ParentGoalIntroScreen: React.FC = () => {
           activeOpacity={0.85}
         >
           <Text style={styles.buttonText}>{t('onboarding.parentGoalIntro.discoverButton')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

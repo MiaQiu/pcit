@@ -1,0 +1,146 @@
+{
+  "name": "cdi-feedback",
+  "status": "OK",
+  "note": "",
+  "ms": 74862,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "combined-feedback",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 6158,
+      "inputTokens": 2785,
+      "outputTokens": 1385,
+      "thinkingTokens": 1227,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    },
+    {
+      "event": "llm_call",
+      "label": "skill-improve",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 4426,
+      "inputTokens": 2609,
+      "outputTokens": 1025,
+      "thinkingTokens": 740,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    },
+    {
+      "event": "llm_call",
+      "label": "crisis-coaching",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 6919,
+      "inputTokens": 3427,
+      "outputTokens": 1599,
+      "thinkingTokens": 1251,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    },
+    {
+      "event": "llm_call",
+      "label": "review-feedback",
+      "model": "gemini-3.1-pro-preview",
+      "provider": "gemini",
+      "latencyMs": 68702,
+      "inputTokens": 34578,
+      "outputTokens": 8164,
+      "thinkingTokens": 7860,
+      "hasSchema": false,
+      "usedFallback": false,
+      "usedRepair": true,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "topMoment": "One, one, tight, tight, one, one.\nThis is tight, tight, tight.",
+    "topMomentUtteranceNumber": 104,
+    "heroText": "You gently guided Lucas through a tricky limit.",
+    "crisisMoment": {
+      "detected": true,
+      "title": "Frustration Over Limits",
+      "coaching": "**What happened:** Lucas became distressed and insisted on opening the bottle repeatedly after being told he could not pour everything out.\n\n**What helped:** Your moment of **validating his feelings** helped de-escalate his upset, and **redirecting him with a clear task** gave him a safe way to stay involved.\n\n**Try this next time:**\n• **Acknowledge big feelings first** before explaining reasons, helping Lucas feel understood quickly.\n• **Offer a safe alternative object** right away rather than debating non-toy limits.\n• **Provide clear positive choices** such as \"You can hold the bottle or shake it once.\""
+    },
+    "skillCoaching": "During play, Lucas showed how well he can cooperate when given clear, gentle guidance to take out just one piece. Adding specific details to praises helps him connect your appreciation directly to his careful actions. When he hears labeled praise for using gentle hands or following limits, it encourages him to repeat those positive behaviors. Going on a Praise Hunt tomorrow is a wonderful way to celebrate all the helpful things Lucas does throughout the day.",
+    "bondingMoment": {
+      "quote": "Child: Put water.\nChild: Mama, drink water.\nParent: Okay.",
+      "utteranceNumber": 132,
+      "endUtteranceNumber": 134,
+      "context": "After packing the bottle away, Lucas sweetly shifted the play toward caring for you by offering you some pretend water."
+    },
+    "skillImprove": {
+      "skillLabel": "The Praise Hunt",
+      "direction": "BUILD",
+      "summary": "Practicing The Praise Hunt helps you catch Lucas's positive behaviors and cooperative efforts during play. Turning general comments and unlabeled praise into specific labeled praises reinforces the exact actions you want to see more often.",
+      "opportunities": [
+        {
+          "title": "Praise effort with fine motor skills",
+          "explanation": "When Lucas tries using his thumb to open the bottle as guided, acknowledging his specific effort reinforces his persistence and listening.",
+          "quote": "Thumb.",
+          "suggestedRewrite": "Great effort trying to use your thumb to push that lid up, Lucas!"
+        },
+        {
+          "title": "Praise cooperative intentions",
+          "explanation": "Lucas shows willingness to put the vitamin back on his own, which is an ideal moment to catch positive compliance with labeled praise.",
+          "quote": "I put back now.",
+          "suggestedRewrite": "Thank you for offering to put it back so carefully!"
+        },
+        {
+          "title": "Upgrade unlabeled praise to labeled praise",
+          "explanation": "When Lucas successfully follows instructions to take out just one vitamin, naming the exact action helps him understand precisely what behavior was praiseworthy.",
+          "quote": "Yeah, just one.",
+          "suggestedRewrite": "Great job taking out just one vitamin, Lucas!"
+        }
+      ]
+    },
+    "feedback": "Today's play included big emotions. With gentle shifts, your positive attention will help connection flourish.",
+    "example": 105,
+    "childReaction": "Lucas showed eager curiosity and responded warmly whenever his words were mirrored. Replacing corrections with encouraging descriptions will help Lucas stay cooperative and deeply engaged.",
+    "reminder": "Following your child's lead during play turns everyday moments into joyful connection. Every small step builds positive communication and helps Lucas feel understood.",
+    "activity": "exploring a vitamin bottle",
+    "revisedFeedback": [
+      {
+        "id": 0,
+        "feedback": "Instead of asking a question, you could reflect Lucas's interest by saying, \"You want to play with the vitamin bottle.\"",
+        "additional_tip": null
+      },
+      {
+        "id": 2,
+        "feedback": "To let Lucas take the lead, you could describe his action with a Behavioral Description like, \"You are getting ready to play with the bottle.\"",
+        "additional_tip": null
+      },
+      {
+        "id": 7,
+        "feedback": "Instead of giving a command, try narrating his effort by saying, \"You are trying so hard to open that bottle.\"",
+        "additional_tip": null
+      },
+      {
+        "id": 9,
+        "feedback": "Rather than telling Lucas how to do it, you could praise his effort by saying, \"Great job trying to figure out how to open that!\"",
+        "additional_tip": null
+      },
+      {
+        "id": 10,
+        "feedback": "Avoid negative words like \"don't\"; instead, you could describe what Lucas is doing by saying, \"You are touching the lid.\"",
+        "additional_tip": null
+      },
+      {
+        "id": 12,
+        "feedback": "Instead of directing his fingers, try a Behavioral Description like, \"You are using your hands to open it.\""
+      }
+    ]
+  }
+}

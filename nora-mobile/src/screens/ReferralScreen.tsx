@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Share,
   ActivityIndicator,
   ScrollView,
@@ -16,6 +15,7 @@ import { useAuthService } from '../contexts/AppContext';
 import { FONTS, COLORS } from '../constants/assets';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -38,7 +38,6 @@ export const ReferralScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Referral');
     fetchReferralCode();
   }, []);
 
@@ -80,9 +79,9 @@ export const ReferralScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <Text style={styles.headerTitle}>{t('referral.headerTitle')}</Text>
         <View style={{ width: 40 }} />
       </View>
@@ -106,10 +105,10 @@ export const ReferralScreen: React.FC = () => {
                   {data.shareUrl}
                 </Text>
               </View>
-              <TouchableOpacity style={styles.shareButton} onPress={handleShare} activeOpacity={0.8}>
+              <TrackedTouchable analyticsId="referral.shareButton" style={styles.shareButton} onPress={handleShare} activeOpacity={0.8}>
                 <Ionicons name="share-outline" size={20} color="#fff" />
                 <Text style={styles.shareButtonText}>{t('referral.shareButton')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
 
             <View style={styles.statsCard}>

@@ -248,6 +248,8 @@
       "big_feelings_tantrums": "Big Feelings & Tantrums",
       "listening_cooperation": "Listening & Cooperation",
       "anxiety_confidence": "Anxiety & Confidence",
+      "anxiety": "Anxiety",
+      "confidence": "Confidence",
       "developmental_concerns": "Developmental Concerns",
       "parenting_strategies": "Learning More Effective Parenting Strategies",
       "defiance": "Defiance",
@@ -582,6 +584,7 @@
       "wordBankLabel": "Try saying next time",
       "tabWentWell": "Went well",
       "tabGrowNext": "Grow next",
+      "tabIntoNewSkill": "Into the new skill",
       "benchmarkLabel": "Benchmark",
       "learnMoreTitle": "Learn more about {{skill}}",
       "lessonBadge": "Lesson",
@@ -602,12 +605,13 @@
       "title": "Your Interaction Style",
       "viewTips": "View tips",
       "detailedBreakdown": "Detailed Breakdown",
-      "confidenceBuilders": "Confidence Builders",
+      "confidenceBuilders": "Skill Builders",
       "confidenceBuildersSubtitle": "Boost confidence & attention",
       "playInterruptions": "Play Interruptions",
       "playInterruptionsSubtitle": "Opportunities to improve together",
       "moments_one": "{{count}} moment",
       "moments_other": "{{count}} moments",
+      "parentSuperpowers": "Your parenting superpowers",
       "whyPersonalised": {
         "toddler": "You came to Nora for help with {{concern}}. At just {{age}}, {{childName}}'s brain is only beginning to build the wiring for self-control, and it develops through small, repeated moments with you rather than big conversations. The moments we counted as **Confidence Builders** — praising, describing {{childName}}'s play, letting them lead — are the deposits that grow your bond and their confidence, while the **Play Interruptions** — questions, commands, corrections — quietly pull against it. That's why we'll work on one skill at a time, isolating each one so you can practice it on its own before adding the next.",
         "preschool": "You came to Nora for help with {{concern}}. At {{age}}, {{childName}} is right in the window where these skills grow fastest, and they grow through everyday moments with you. The moments we counted as **Confidence Builders** — praising, describing {{childName}}'s play, letting them lead — are the deposits that grow your bond and their confidence, while the **Play Interruptions** — questions, commands, corrections — quietly pull against it. That's why we'll work on one skill at a time, isolating each one so you can practice it on its own before adding the next.",
@@ -617,6 +621,7 @@
     },
     "tomorrowGoal": {
       "title": "Tomorrow's Goal",
+      "planReadyCheer": "Wonderful! Can't wait to start the new journey with you!",
       "todayLabel": "Today",
       "tomorrowLabel": "Tomorrow",
       "aimFor": "Aim for {{count}} time",
@@ -646,6 +651,8 @@
         "attention_focus": "how hard it is for {{childName}} to focus",
         "social": "helping {{childName}} build social and emotional skills",
         "anxiety_confidence": "{{childName}}'s worries and confidence",
+        "anxiety": "{{childName}}'s worries and anxiety",
+        "confidence": "{{childName}}'s confidence",
         "adhd": "{{childName}}'s attention and hyperactivity",
         "developmental_concerns": "{{childName}}'s development",
         "parenting_strategies": "finding parenting approaches that actually work",
@@ -677,6 +684,15 @@
       "shareMessage": "Here's something we learned about {{childName}} today with Nora: {{insight}}",
       "advancedLanguageTag": "Advanced Language Skill"
     },
+    "whatWeLearnt": {
+      "title": "What we learnt about you"
+    },
+    "skillsUnderneath": {
+      "title": "The skills underneath the issues"
+    },
+    "howWePracticeTogether": {
+      "title": "How We'll Practice Together"
+    },
     "developmental": {
       "shareMessage": "Tracking {{childName}}'s developmental milestones with Nora — check out the progress!"
     },
@@ -685,14 +701,17 @@
       "subtitle": "Read the full conversation from today's play session."
     },
     "unlock": {
-      "title": "Answer 10 quick questions to help Nora understand {{childName}} and personalize your learning journey:",
-      "featureGrowthPlan": "Personalized Learning Plan",
-      "featureSnapshot": "Child Behavior Snapshot",
-      "featureTracking": "Track Progress",
+      "heading": "Next Step: Unlock Your Personalized Roadmap",
+      "titlePre": "To ensure every skill is tailored directly to {{childName}}'s daily routines, personality, and your goals around {{parentGoals}}, please complete the ",
+      "titleBold": "10 quick daily behavior questions",
+      "parentGoalsFallback": "building a stronger connection with {{childName}}",
       "cta": "Continue",
       "time": "Takes about 2 minutes"
     },
     "seeYouTomorrow": "See you tomorrow",
+    "nextLevelOverview": {
+      "commitButton": "I am committed"
+    },
     "footer": "You're showing up in the moments that matter most. Keep going!"
   },
   "skillImprove": {
@@ -1059,7 +1078,7 @@
   },
   "forceUpdate": {
     "title": "Update Required",
-    "message": "A new version of Nora is available. Please update to continue using the app.",
+    "message": "Update to our new Personalized Learning Journey, where Nora will guide you through one skill at a time!",
     "updateButton": "Update Now"
   },
   "errorBoundary": {
@@ -1112,6 +1131,8 @@
     "successMessage": "Thank you for contacting us. We will review your request and get back to you shortly.",
     "filesAttached": "{{count}} file(s) attached",
     "errorAttachFile": "Failed to attach file. Please try again.",
+    "attachFromPhotos": "Photos",
+    "attachFromFiles": "Files",
     "errorSubmit": "Failed to submit request. Please try again."
   },
   "psychologistChat": {
@@ -1132,6 +1153,13 @@
     "statLessons": "lessons",
     "statWeeks": "weeks",
     "statLevel": "level",
+    "statInfoGotIt": "Got it",
+    "statInfoWeeklyStreakTitle": "Weekly Streak",
+    "statInfoWeeklyStreakBody": "The number of consecutive weeks you've completed at least 4 play sessions with {{childName}}. Keep it up to build a strong routine!",
+    "statInfoTotalSessionsTitle": "Total Sessions",
+    "statInfoTotalSessionsBody": "The total number of play sessions you've completed with {{childName}} since you started using Nora.",
+    "statInfoDaysThisWeekTitle": "Days This Week",
+    "statInfoDaysThisWeekBody": "The number of days this week (out of 7) you've completed at least one play session with {{childName}}.",
     "tipPerfect": "Perfect 7/7! 👑\nYou're legendary!",
     "tipDaysDown": "{{count}} days down! 🌟\nCan we hit a full 7?",
     "tipAimFor4": "Aim for 4 days a week\nfor faster progress",
@@ -1154,6 +1182,7 @@
     "meetCoachBodyEnd": " is progressing.",
     "chatWithCoach": "Chat with Coach",
     "recordAgain": "Record Again",
+    "recordAgainBody": "Today’s practice is completed. Nice work!",
     "noraDaily": "Nora Daily",
     "noraDailySubtitle": "Your daily dose of science-backed tips & inspiration.",
     "subActionLearnMore": "Learn more",
@@ -1171,6 +1200,8 @@
       "communityWisdom": "Community Wisdom"
     },
     "todaysPlan": "Today's plan",
+    "planPlayGuideLabel": "Play Guide:",
+    "planPlayGuideTitle": "Get set for your first play",
     "planLessonLabel": "Daily Learning:",
     "planLessonDuration": "5 min read",
     "planRecordLabel": "Start Emotional Massage:",
@@ -1198,18 +1229,6 @@
       "beforeSchool": "Before-School Booster",
       "afterSchool": "After-School Reconnect",
       "beforeSleep": "Before-Sleep Play"
-    },
-    "recordMessages": {
-      "0start": "You are doing amazing! Ready to shine again? Record another session with ",
-      "0end": " and watch the magic happen! ✨",
-      "1start": "Keep that fantastic momentum going! Jump into another fun session with ",
-      "1end": "!",
-      "2start": "Awesome job so far! Grab another 5 minutes of special time with ",
-      "2end": " to keep growing together! 🌟",
-      "3start": "You've got this! Record another quick, joyful session with ",
-      "3end": " and celebrate your amazing progress!",
-      "4start": "Ready for more fun? Capture another awesome play session with ",
-      "4end": "!"
     },
     "getReadyLabel": "Play Guide",
     "getReadyBody": "Everything you need before you begin.",
@@ -1503,10 +1522,12 @@
       "headerText": "There are no right or wrong answers. Select all that applies.",
       "title": "What Brings You Here?",
       "bigFeelingsTantrums": "Big Feelings & Tantrums",
+      "behaviorChallenges": "Behavior Challenges",
       "listeningCooperation": "Listening & Cooperation",
       "attentionFocus": "Attention & Focus",
       "social": "Social & Emotional Skills",
-      "anxietyConfidence": "Anxiety & Confidence",
+      "anxiety": "Anxiety",
+      "confidence": "Confidence",
       "adhd": "ADHD Support",
       "developmentalConcerns": "Developmental Concerns",
       "parentingStrategies": "Become a More Confident Parent",
@@ -1830,11 +1851,11 @@
     },
     "ob2": {
       "profName": "Prof. Yi-Chuen Chen, PhD",
-      "profTitle1": "Clinical Child Psychologist.",
-      "profTitle2": "Nora Clinical Guidance",
-      "headingPre": "Nora will make you\na ",
-      "headingHighlight": "parenting expert",
-      "headingPost": "\nyour child needs."
+      "profTitle1": "Clinical Child Psychologist",
+      "profTitle2": "Clinical Advisor to Nora",
+      "headingPre": "Nora helps you build the skills\nfor ",
+      "headingHighlight": "hard moments",
+      "headingPost": ", together."
     },
     "ob3": {
       "titlePre": "Your data",

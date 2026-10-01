@@ -51,6 +51,7 @@ DROP (only these):
 
 ### `coach_corner.growth_focus` — from section "3. Next Growth Focus"
 - `heading`: the section-3 heading text, verbatim (strip only a leading "3." and any wrapping "**"). Translate it only if section 3 left it in English.
+- `new_skill_intro`: ONLY when section 3 opens by introducing a brand-new skill focus (a level-up session) — the sentence(s) doing that introduction, verbatim, before the gap/benchmark/strategy content. `null` when section 3 has no such introduction (the common case).
 - `gap`: the line(s) naming the current gap — verbatim.
 - `benchmark`: the quantitative benchmark sentence — verbatim (e.g. "Mastery requires 10 label praises in 5 minutes").
 - `strategy`: the "how to hit that target" text — the one key strategy or formula — verbatim, in full.
@@ -98,6 +99,7 @@ Return ONLY valid JSON — no markdown fences, no extra text. Every `<…>` belo
     },
     "growth_focus": {
       "heading": "<section-3 heading, verbatim>",
+      "new_skill_intro": "<the new-skill introduction, verbatim, ONLY on a level-up session — otherwise null>",
       "gap": "<the current-gap line(s), verbatim>",
       "benchmark": "<the quantitative benchmark, verbatim>",
       "strategy": "<the key strategy or formula, verbatim>"

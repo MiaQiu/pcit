@@ -8,6 +8,9 @@ PODS:
     - ReactCommon/turbomodule/core
   - EXConstants (18.0.11):
     - ExpoModulesCore
+  - EXImageLoader (6.0.0):
+    - ExpoModulesCore
+    - React-Core
   - EXJSONUtils (0.15.0)
   - EXManifests (1.0.10):
     - ExpoModulesCore
@@ -224,6 +227,8 @@ PODS:
   - ExpoFont (14.0.9):
     - ExpoModulesCore
   - ExpoHaptics (15.0.8):
+    - ExpoModulesCore
+  - ExpoImagePicker (17.0.11):
     - ExpoModulesCore
   - ExpoKeepAwake (15.0.7):
     - ExpoModulesCore
@@ -2250,6 +2255,7 @@ DEPENDENCIES:
   - EXApplication (from `../../node_modules/expo-application/ios`)
   - EXAV (from `../../node_modules/expo-av/ios`)
   - EXConstants (from `../../node_modules/expo-constants/ios`)
+  - EXImageLoader (from `../../node_modules/expo-image-loader/ios`)
   - EXJSONUtils (from `../../node_modules/expo-json-utils/ios`)
   - EXManifests (from `../../node_modules/expo-manifests/ios`)
   - EXNotifications (from `../../node_modules/expo-notifications/ios`)
@@ -2266,6 +2272,7 @@ DEPENDENCIES:
   - ExpoFileSystem (from `../../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../../node_modules/expo-font/ios`)
   - ExpoHaptics (from `../../node_modules/expo-haptics/ios`)
+  - ExpoImagePicker (from `../../node_modules/expo-image-picker/ios`)
   - ExpoKeepAwake (from `../../node_modules/expo-keep-awake/ios`)
   - ExpoLinearGradient (from `../../node_modules/expo-linear-gradient/ios`)
   - ExpoLinking (from `../../node_modules/expo-linking/ios`)
@@ -2383,6 +2390,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/expo-av/ios"
   EXConstants:
     :path: "../../node_modules/expo-constants/ios"
+  EXImageLoader:
+    :path: "../../node_modules/expo-image-loader/ios"
   EXJSONUtils:
     :path: "../../node_modules/expo-json-utils/ios"
   EXManifests:
@@ -2415,6 +2424,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/expo-font/ios"
   ExpoHaptics:
     :path: "../../node_modules/expo-haptics/ios"
+  ExpoImagePicker:
+    :path: "../../node_modules/expo-image-picker/ios"
   ExpoKeepAwake:
     :path: "../../node_modules/expo-keep-awake/ios"
   ExpoLinearGradient:
@@ -2598,6 +2609,7 @@ SPEC CHECKSUMS:
   EXApplication: 1e98d4b1dccdf30627f92917f4b2c5a53c330e5f
   EXAV: e3fefaca88f14624bca01d9a128562a5f8e738f8
   EXConstants: c378c1b344ff1ecfbad27b90f0e48d1d0ead8cbb
+  EXImageLoader: 189e3476581efe3ad4d1d3fb4735b7179eb26f05
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: a8d97683e5c7a3b026ffbd58559c64dc655b747b
   EXNotifications: 52c982ff8aa4ed971534e27f20dbf532aa4082b1
@@ -2614,6 +2626,7 @@ SPEC CHECKSUMS:
   ExpoFileSystem: ad991457efaa14253723f1dda997eac6024c700d
   ExpoFont: cf9d90ec1d3b97c4f513211905724c8171f82961
   ExpoHaptics: d3a6375d8dcc3a1083d003bc2298ff654fafb536
+  ExpoImagePicker: ade85e148f735fc7e6f27dfe3eef28eb3887e90a
   ExpoKeepAwake: 1a2e820692e933c94a565ec3fbbe38ac31658ffe
   ExpoLinearGradient: 809102bdb979f590083af49f7fa4805cd931bd58
   ExpoLinking: f4c4a351523da72a6bfa7e1f4ca92aee1043a3ca

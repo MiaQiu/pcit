@@ -5,13 +5,14 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from './Card';
 import { MaskedDinoImage } from './MaskedDinoImage';
 import { RecordingTimer } from './RecordingTimer';
 import { FONTS, COLORS } from '../constants/assets';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from './TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -65,7 +66,7 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
         {/* Record Button - Only show if onRecordPress is provided */}
         {!isRecording && onRecordPress && (
           <View style={styles.recordButtonContainer}>
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="recordingCard.record"
               style={[styles.recordButton, !canRecord && styles.recordButtonDisabled]}
               onPress={onRecordPress}
               disabled={!canRecord}
@@ -73,21 +74,21 @@ export const RecordingCard: React.FC<RecordingCardProps> = ({
             >
               <Text style={styles.recordButtonText}>{t('recordingCard.record')}</Text>
               <Ionicons name="mic" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         )}
 
         {/* Stop Button - Only show if onRecordPress is provided */}
         {isRecording && onRecordPress && (
           <View style={styles.recordButtonContainer}>
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="recordingCard.stop"
               style={styles.stopButton}
               onPress={onRecordPress}
               activeOpacity={0.8}
             >
               <Text style={styles.stopButtonText}>{t('recordingCard.stop')}</Text>
               <Ionicons name="stop" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         )}
       </View>

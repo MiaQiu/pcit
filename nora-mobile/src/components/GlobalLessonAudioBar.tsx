@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS } from '../constants/assets';
 import { useLessonPlayer } from '../contexts/LessonPlayerContext';
 import type { RootStackNavigationProp } from '../navigation/types';
+import { TrackedTouchable } from './TrackedTouchable';
 
 export const GlobalLessonAudioBar: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -35,7 +36,7 @@ export const GlobalLessonAudioBar: React.FC = () => {
 
   return (
     <View style={[styles.wrap, { paddingBottom: insets.bottom || 8 }]}>
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="lessonPlayer.nowPlaying"
         style={styles.info}
         activeOpacity={0.7}
         onPress={() => navigation.navigate('LessonViewerV2', { lessonId: player.activeLessonId! })}
@@ -45,9 +46,9 @@ export const GlobalLessonAudioBar: React.FC = () => {
           <Text style={styles.eyebrow}>{t('lessonPlayer.nowPlaying')}</Text>
           <Text style={styles.title} numberOfLines={1}>{title}</Text>
         </View>
-      </TouchableOpacity>
+      </TrackedTouchable>
 
-      <TouchableOpacity
+      <TrackedTouchable analyticsId={`Global Audio Bar: ${player.isPlaying ? 'Pause' : 'Play'}`}
         style={styles.iconButton}
         onPress={() => (player.isPlaying ? player.pause() : player.play())}
         disabled={player.isLoading}
@@ -59,16 +60,16 @@ export const GlobalLessonAudioBar: React.FC = () => {
         ) : (
           <Ionicons name={player.isPlaying ? 'pause' : 'play'} size={20} color={COLORS.white} />
         )}
-      </TouchableOpacity>
+      </TrackedTouchable>
 
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="lessonPlayer.stop"
         style={styles.iconButton}
         onPress={() => player.clear()}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         accessibilityLabel={t('lessonPlayer.stop')}
       >
         <Ionicons name="close" size={22} color={COLORS.white} />
-      </TouchableOpacity>
+      </TrackedTouchable>
     </View>
   );
 };

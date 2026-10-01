@@ -25,7 +25,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Notifications from 'expo-notifications';
 import { scheduleDailyLessonReminder } from '../utils/notifications';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { Video, ResizeMode } from 'expo-av';
@@ -47,20 +47,24 @@ const SUB_ACTION_CARD_ICONS: Record<string, ReturnType<typeof require>> = {
   "Today's Thought": require('../../assets/images/SubActionCard_icon/today_thought.png'),
   'Community Wisdom': require('../../assets/images/SubActionCard_icon/community_wisdom.png'),
 };
-import { RootStackNavigationProp, RootTabNavigationProp } from '../navigation/types';
+import { RootStackNavigationProp, RootTabNavigationProp, RootTabParamList } from '../navigation/types';
 import { useLessonService, useAuthService, useRecordingService } from '../contexts/AppContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
-import { getTodaySingapore, toSingaporeDateString, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
+import { getTodaySingapore, toSingaporeDateString, isTodaySingapore, getStartOfTodaySingapore, getEndOfTodaySingapore } from '../utils/timezone';
 import * as userStorage from '../lib/userStorage';
+import { getCachedExempt } from '../lib/freeExemptCache';
 import type { RelationshipToChild, ParentSkillLevel } from '@nora/core';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { useScreenViewDuration } from '../hooks/useScreenViewDuration';
+import { useScrollDepthTracking } from '../hooks/useScrollDepthTracking';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
 import type { TextRun } from '../utils/formatLessonContentV2';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 // Mixes a hex color toward white — used to derive a CONTENT card's pastel
 // background/badge-pill tints from its (fully-saturated) badgeColor.
@@ -92,7 +96,7 @@ interface WeeklyStats {
 
 interface TodayPlanItem {
   id: string;
-  type: 'lesson' | 'record' | 'weekly-report' | 'setup-reminder' | 'log-behavior';
+  type: 'lesson' | 'record' | 'weekly-report' | 'setup-reminder' | 'log-behavior' | 'play-guide';
   label: string;
   title: string;
   duration?: string;
@@ -151,7 +155,7 @@ const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, 
   const effectiveIconColor = dimmed ? '#D1D5DB' : iconColor;
 
   return (
-    <TouchableOpacity
+    <TrackedTouchable analyticsId="Stat Pill"
       style={[styles.statPill, dimmed && styles.statPillDimmed]}
       onPress={onPress}
       activeOpacity={onPress && !dimmed ? 0.7 : 1}
@@ -200,7 +204,7 @@ const StatPill: React.FC<StatPillProps> = ({ iconName, iconColor, value, total, 
         {total ? <Text style={styles.statValueMuted}>/{total}</Text> : null}
       </Text>
       <Text style={styles.statUnit}>{unit}</Text>
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 
@@ -213,7 +217,7 @@ interface PlanItemProps {
 }
 
 const PlanItem: React.FC<PlanItemProps> = ({ item, onPress, locked }) => (
-  <TouchableOpacity style={styles.planItem} onPress={onPress} activeOpacity={0.7}>
+  <TrackedTouchable analyticsId={`Today Plan Item: ${item.type}`} style={styles.planItem} onPress={onPress} activeOpacity={0.7}>
     {/* Checkbox */}
     <View style={[styles.planCheckbox, item.isCompleted && styles.planCheckboxDone]}>
       {item.isCompleted && <Ionicons name="checkmark" size={14} color="#fff" />}
@@ -233,7 +237,7 @@ const PlanItem: React.FC<PlanItemProps> = ({ item, onPress, locked }) => (
       </Text>
     </View>
     {locked && <Ionicons name="lock-closed" size={15} color="#9CA3AF" />}
-  </TouchableOpacity>
+  </TrackedTouchable>
 );
 
 // ─── Sub Action Card ─────────────────────────────────────────────────────────
@@ -356,14 +360,14 @@ const InlineReflection: React.FC<{ cardId: string; component: HomeCardInputCompo
 
   if (!expanded) {
     return (
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="homeV2.reflectionPrompt"
         style={styles.reflectionToggle}
         onPress={() => setExpanded(true)}
         activeOpacity={0.7}
       >
         <Ionicons name="add-circle-outline" size={18} color={COLORS.mainPurple} />
         <Text style={styles.reflectionToggleText}>{component.inputLabel || t('homeV2.reflectionPrompt')}</Text>
-      </TouchableOpacity>
+      </TrackedTouchable>
     );
   }
 
@@ -380,7 +384,7 @@ const InlineReflection: React.FC<{ cardId: string; component: HomeCardInputCompo
         placeholderTextColor="#9CA3AF"
         multiline
       />
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="homeV2.reflectionSaving"
         style={[styles.reflectionSaveBtn, (!answer.trim() || saving) && styles.reflectionSaveBtnDisabled]}
         onPress={handleSave}
         disabled={!answer.trim() || saving}
@@ -389,7 +393,7 @@ const InlineReflection: React.FC<{ cardId: string; component: HomeCardInputCompo
         <Text style={styles.reflectionSaveBtnText}>
           {saving ? t('homeV2.reflectionSaving') : saved ? t('homeV2.reflectionSaved') : t('homeV2.reflectionSave')}
         </Text>
-      </TouchableOpacity>
+      </TrackedTouchable>
     </View>
   );
 };
@@ -500,23 +504,23 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
     return (
       <View style={styles.subActionQuoteCard}>
         <View style={styles.subActionQuoteActions}>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="ToggleLike"
             style={styles.subActionQuoteIconButton}
             onPress={handleToggleLike}
             activeOpacity={0.7}
             accessibilityLabel={liked ? 'Unlike' : 'Like'}
           >
             <Ionicons name={liked ? 'heart' : 'heart-outline'} size={16} color={liked ? '#EF4444' : '#B99089'} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.subActionQuoteLikeCount}>{displayLikeCount}</Text>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Share"
             style={styles.subActionQuoteIconButton}
             onPress={handleShare}
             activeOpacity={0.7}
             accessibilityLabel="Share"
           >
             <Ionicons name="share-outline" size={16} color="#B99089" />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
 
         {card.imageUrl && (
@@ -599,43 +603,42 @@ const SubActionCard: React.FC<SubActionCardProps> = ({ card, onPress, sharerName
           <Ionicons name="arrow-forward" size={14} color={COLORS.mainPurple} />
         </View>
         <View style={styles.subActionBottomActions}>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="ToggleLike"
             style={styles.subActionCircleButton}
             onPress={handleToggleLike}
             activeOpacity={0.7}
             accessibilityLabel={liked ? 'Unlike' : 'Like'}
           >
             <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color={liked ? '#EF4444' : COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.subActionLikeCount}>{displayLikeCount}</Text>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Share"
             style={styles.subActionCircleButton}
             onPress={handleShare}
             activeOpacity={0.7}
             accessibilityLabel="Share"
           >
             <Ionicons name="share-outline" size={16} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </View>
     </>
   );
 
   return (
-    <TouchableOpacity style={[styles.subActionCard, { backgroundColor: cardBg, borderColor: cardBorder }]} onPress={onPress} activeOpacity={0.85}>
+    <TrackedTouchable analyticsId="Sub Action Card" style={[styles.subActionCard, { backgroundColor: cardBg, borderColor: cardBorder }]} onPress={onPress} activeOpacity={0.85}>
       {inner}
       {shareSheet}
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
-// recordMessages moved inside component to use t()
-
 export const HomeScreen_v2: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const tabNavigation = useNavigation<RootTabNavigationProp>();
+  const route = useRoute<RouteProp<RootTabParamList, 'Home'>>();
   const { unreadCount } = useCoachUnread();
   const { width: screenWidth } = useWindowDimensions();
   const lessonService = useLessonService();
@@ -681,14 +684,6 @@ export const HomeScreen_v2: React.FC = () => {
   const [nextLessonId, setNextLessonId] = useState<string | null>(null);
   const [hasAnySession, setHasAnySession] = useState(false);
   const [getReadyDismissed, setGetReadyDismissed] = useState(false);
-  const recordMessage = useMemo(() => {
-    const idx = Math.floor(Math.random() * 5);
-    return {
-      start: t(`homeV2.recordMessages.${idx}start` as any),
-      end: t(`homeV2.recordMessages.${idx}end` as any),
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const [latestWeeklyReport, setLatestWeeklyReport] = useState<{ id: string; weekStartDate: string; weekEndDate: string; headline: string | null; markedReadAt: string | null } | null>(null);
   const [isWeeklyReportDismissed, setIsWeeklyReportDismissed] = useState(false);
   const [sessionNotifications, setSessionNotifications] = useState<{ postSession?: string; tomorrow?: string } | null>(null);
@@ -696,6 +691,7 @@ export const HomeScreen_v2: React.FC = () => {
   const [abcLoggedToday, setAbcLoggedToday] = useState(false);
   const [abcCardSkipped, setAbcCardSkipped] = useState(false);
   const [freeLimitReached, setFreeLimitReached] = useState(false);
+  const [isFreeExempt, setIsFreeExempt] = useState(false);
   const [homeCards, setHomeCards] = useState<HomeCardData[]>([]);
 
   // ── Reminder presets (inside component to use t()) ──
@@ -712,6 +708,10 @@ export const HomeScreen_v2: React.FC = () => {
   });
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [showCustomPicker, setShowCustomPicker] = useState(false);
+
+  // ── Stat explanation popup — tapping a stat pill (streak, sessions, days)
+  // shows what the number means instead of navigating away.
+  const [statInfo, setStatInfo] = useState<{ iconName: keyof typeof Ionicons.glyphMap; iconColor: string; title: string; body: string } | null>(null);
 
   // ── Derived ──
   // Initials from first two words of name, or first two chars
@@ -822,21 +822,38 @@ export const HomeScreen_v2: React.FC = () => {
         (r: any) => r.analysisStatus === 'COMPLETED'
       );
       setHasRecordedSession(hasCompleted);
-      const latestCompleted = todayRecordings.find((r: any) => r.analysisStatus === 'COMPLETED');
-      if (latestCompleted) {
-        setLatestRecordingId(latestCompleted.id);
-        // Check if report was already read today
-        const reportReadKey = `report_read_${getTodaySingapore()}`;
-        const reportReadId = await userStorage.getItem(reportReadKey);
-        setIsReportRead(reportReadId === latestCompleted.id);
-        setSessionNotifications({
-          postSession: latestCompleted.coachingCards?.notifications?.postSession,
-          tomorrow: latestCompleted.coachingCards?.notifications?.tomorrow ?? latestWithReport?.coachingCards?.notifications?.tomorrow,
-        });
-      } else {
-        setIsReportRead(false);
-        setSessionNotifications(latestWithReport?.coachingCards?.notifications ?? null);
+
+      // ── Latest report read state ──
+      // latestWithReport is the newest completed session from any day, so an
+      // unopened report keeps its "Read Report" card past midnight until read.
+      //
+      // Read flags are device-local, so the first load for a user on this
+      // device (app update, new device, account switch) knows nothing about
+      // past reads. Baseline once: treat the existing latest report as read,
+      // unless it's from today — the old per-day card would still show that.
+      // Write the read flag BEFORE the baseline marker: mount fires two
+      // loadData() calls concurrently, and one that sees the marker must also
+      // see the flag or it renders the report as unread.
+      const baselined = await userStorage.getItem('report_read_baselined');
+      if (!baselined) {
+        if (latestWithReport && !isTodaySingapore(latestWithReport.createdAt)) {
+          await userStorage.setItem(`report_read_${latestWithReport.id}`, 'true');
+        }
+        await userStorage.setItem('report_read_baselined', 'true');
       }
+      if (latestWithReport) {
+        setLatestRecordingId(latestWithReport.id);
+        const [readFlag, legacyReadId] = await Promise.all([
+          userStorage.getItem(`report_read_${latestWithReport.id}`),
+          // Pre-carry-over builds stored `report_read_<SGT date>` = recordingId
+          userStorage.getItem(`report_read_${toSingaporeDateString(latestWithReport.createdAt)}`),
+        ]);
+        setIsReportRead(readFlag === 'true' || legacyReadId === latestWithReport.id);
+      } else {
+        setLatestRecordingId(null);
+        setIsReportRead(false);
+      }
+      setSessionNotifications(latestWithReport?.coachingCards?.notifications ?? null);
 
       // ── Has any completed session ever ──
       setHasAnySession(!!latestWithReport);
@@ -857,12 +874,23 @@ export const HomeScreen_v2: React.FC = () => {
       setChatIntroDismissed(!!chatIntroDismissedVal);
 
       // ── Get Ready to Play dismissed ──
+      // Use a monotonic update: a background loadData() call started before the
+      // user dismissed the card can have its storage read resolve after the
+      // dismiss's own write+setState (async-storage callback ordering across
+      // concurrent calls isn't guaranteed), which would otherwise clobber the
+      // dismissal back to false and leave the card stuck until app restart.
       const getReadyDismissedVal = await userStorage.getItem('get_ready_to_play_dismissed');
-      setGetReadyDismissed(!!getReadyDismissedVal);
+      setGetReadyDismissed(prev => prev || !!getReadyDismissedVal);
 
       // ── Record lock (free trial exhausted) ──
       const freeLimitCached = await userStorage.getItem('@nora_free_limit_reached');
       setFreeLimitReached(freeLimitCached === 'true');
+      // isSubscribed from SubscriptionContext can still be resolving (or stuck
+      // stale-false for the session — see a841abf) at cold boot, which would
+      // otherwise flash a lock icon on a free/whitelisted account's own button
+      // even though pressing it works fine (RecordScreen re-verifies before
+      // actually blocking). Defer to the same confirmed-exempt cache instead.
+      setIsFreeExempt(await getCachedExempt());
 
       // ── Weekly score — sum of all completed session scores this week (max 300) ──
       const weeklyScoreSum = thisWeekRecordings
@@ -874,6 +902,19 @@ export const HomeScreen_v2: React.FC = () => {
       const nextLesson = lessons.find((l: any) => l.progress?.status !== 'COMPLETED');
       setNextLessonId(nextLesson?.id ?? null);
       const plan: TodayPlanItem[] = [];
+
+      // Show alongside the main action card's "Play Guide" — same gating
+      // (no session recorded yet AND not dismissed), so it disappears from
+      // the plan for good the moment the user dismisses it, same as the card.
+      if (!latestWithReport && !getReadyDismissedVal) {
+        plan.push({
+          id: 'play-guide',
+          type: 'play-guide',
+          label: t('homeV2.planPlayGuideLabel'),
+          title: t('homeV2.planPlayGuideTitle'),
+          isCompleted: false,
+        });
+      }
 
       const lessonForPlan = todayCompletedLesson || nextLesson;
       if (lessonForPlan) {
@@ -963,10 +1004,14 @@ export const HomeScreen_v2: React.FC = () => {
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Home');
     loadUserProfile();
     loadData('full');
   }, []);
+
+  // Screen view is now tracked centrally from NavigationContainer.onStateChange
+  // in App.tsx; this hook adds this screen's visit duration on top of that.
+  useScreenViewDuration('Home');
+  const scrollDepthTracking = useScrollDepthTracking('Home');
 
   useFocusEffect(
     useCallback(() => {
@@ -990,6 +1035,13 @@ export const HomeScreen_v2: React.FC = () => {
       loadData('background');
     }
   }, [uploadProcessing.reportCompletedTimestamp]);
+
+  // Reload when a report notification tap lands here (see App.tsx)
+  useEffect(() => {
+    if (route.params?.refreshAt) {
+      loadData('background');
+    }
+  }, [route.params?.refreshAt]);
 
   // Show tip for 3 seconds starting 1s after animation begins or loops
   const showTipSequence = useCallback(() => {
@@ -1045,8 +1097,7 @@ export const HomeScreen_v2: React.FC = () => {
 
   const handleReadReport = async () => {
     if (!latestRecordingId) return;
-    const reportReadKey = `report_read_${getTodaySingapore()}`;
-    await userStorage.setItem(reportReadKey, latestRecordingId);
+    // ReportV3 persists the per-recording read flag on open
     setIsReportRead(true);
     amplitudeService.trackReportViewed(latestRecordingId, undefined, { source: 'home' });
     navigation.push('ReportV3', { recordingId: latestRecordingId });
@@ -1057,10 +1108,11 @@ export const HomeScreen_v2: React.FC = () => {
     tabNavigation.navigate('Record', { autoStart: true });
   };
 
-  const handleGetReadyPress = async () => {
-    amplitudeService.trackEvent('Home Get Ready Pressed', { source: 'main_card' });
+  const handleGetReadyPress = async (source: 'main_card' | 'today_plan' = 'main_card') => {
+    amplitudeService.trackEvent('Home Get Ready Pressed', { source });
     await userStorage.setItem('get_ready_to_play_dismissed', 'true');
     setGetReadyDismissed(true);
+    setTodayPlan(prev => prev.filter(item => item.id !== 'play-guide'));
     navigation.push('GetReadyToPlay');
   };
 
@@ -1093,7 +1145,7 @@ export const HomeScreen_v2: React.FC = () => {
     if (item.type === 'lesson') {
       amplitudeService.trackLessonStarted(item.id, item.title, { source: 'home_today_plan' });
       if (item.moduleKey && CONTENT_V2_MODULES.includes(item.moduleKey)) {
-        navigation.push('LessonViewerV2', { lessonId: item.id, moduleKey: item.moduleKey });
+        navigation.push('LessonViewerV2', { lessonId: item.id, moduleKey: item.moduleKey, autoPlay: false });
       } else {
         navigation.push('LessonViewer', { lessonId: item.id });
       }
@@ -1110,6 +1162,8 @@ export const HomeScreen_v2: React.FC = () => {
       tabNavigation.navigate('Record');
     } else if (item.type === 'log-behavior') {
       navigation.push('ABCLog', { mode: 'challenging', source: 'quick' });
+    } else if (item.type === 'play-guide') {
+      handleGetReadyPress('today_plan');
     }
   };
 
@@ -1172,7 +1226,7 @@ export const HomeScreen_v2: React.FC = () => {
   };
 
   // ─── Derived: record lock ─────────────────────────────────────────────────
-  const isRecordLocked = !isSubscribed && freeLimitReached;
+  const isRecordLocked = !isSubscribed && freeLimitReached && !isFreeExempt;
 
   // ─── Arc dimensions ───────────────────────────────────────────────────────
 
@@ -1226,6 +1280,7 @@ export const HomeScreen_v2: React.FC = () => {
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          {...scrollDepthTracking}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -1369,14 +1424,30 @@ export const HomeScreen_v2: React.FC = () => {
             iconColor="#F97316"
             value={String(weeklyStats.weeklyStreak)}
             unit={t('homeV2.statWeeks')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'weekly_streak' }); tabNavigation.navigate('Record'); }}
+            onPress={() => {
+              amplitudeService.trackEvent('Home Stat Tapped', { stat: 'weekly_streak' });
+              setStatInfo({
+                iconName: 'flame',
+                iconColor: '#F97316',
+                title: t('homeV2.statInfoWeeklyStreakTitle'),
+                body: t('homeV2.statInfoWeeklyStreakBody', { childName }),
+              });
+            }}
           />
           <StatPill
             iconName="sparkles"
             iconColor={COLORS.mainPurple}
             value={String(weeklyStats.totalSessions)}
             unit={t('homeV2.statTimes')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'total_sessions' }); tabNavigation.navigate('Record'); }}
+            onPress={() => {
+              amplitudeService.trackEvent('Home Stat Tapped', { stat: 'total_sessions' });
+              setStatInfo({
+                iconName: 'sparkles',
+                iconColor: COLORS.mainPurple,
+                title: t('homeV2.statInfoTotalSessionsTitle'),
+                body: t('homeV2.statInfoTotalSessionsBody', { childName }),
+              });
+            }}
           />
           <StatPill
             iconName="calendar-outline"
@@ -1384,7 +1455,15 @@ export const HomeScreen_v2: React.FC = () => {
             value={String(weeklyStats.daysCompleted)}
             total="7"
             unit={t('homeV2.statDays')}
-            onPress={() => { amplitudeService.trackEvent('Home Stat Tapped', { stat: 'days_this_week' }); tabNavigation.navigate('Record'); }}
+            onPress={() => {
+              amplitudeService.trackEvent('Home Stat Tapped', { stat: 'days_this_week' });
+              setStatInfo({
+                iconName: 'calendar-outline',
+                iconColor: '#10B981',
+                title: t('homeV2.statInfoDaysThisWeekTitle'),
+                body: t('homeV2.statInfoDaysThisWeekBody', { childName }),
+              });
+            }}
           />
           <StatPill
             iconName="ribbon-outline"
@@ -1399,7 +1478,7 @@ export const HomeScreen_v2: React.FC = () => {
           />
         </View>
 
-        {/* ── Main Action Card — priority: weekly report > record > read report > record again ── */}
+        {/* ── Main Action Card — priority: weekly report > unread report (any day) > record > record again ── */}
         <View style={styles.massageCard}>
           {latestWeeklyReport && !isWeeklyReportDismissed ? (
             <>
@@ -1412,7 +1491,7 @@ export const HomeScreen_v2: React.FC = () => {
                   ? latestWeeklyReport.headline
                   : t('homeV2.weeklyReportFallback', { childName })}
               </Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="homeV2.viewWeeklyReport"
                 style={styles.recordButton}
                 onPress={async () => {
                   amplitudeService.trackWeeklyReportTapped(latestWeeklyReport.id, { source: 'home_card' });
@@ -1426,7 +1505,7 @@ export const HomeScreen_v2: React.FC = () => {
               >
                 {/* <Ionicons name="stats-chart-outline" size={20} color="#fff" /> */}
                 <Text style={styles.recordButtonText}>{t('homeV2.viewWeeklyReport')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
               <TouchableOpacity
                 style={styles.skipButton}
                 onPress={async () => {
@@ -1458,15 +1537,15 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.massageLabel}>{t('homeV2.getReadyLabel')}</Text>
               </View>
               <Text style={styles.massageBody}>{t('homeV2.getReadyBody')}</Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="homeV2.getReadyButton"
                 style={styles.recordButton}
-                onPress={handleGetReadyPress}
+                onPress={() => handleGetReadyPress('main_card')}
                 activeOpacity={0.85}
               >
                 <Text style={styles.recordButtonText}>{t('homeV2.getReadyButton')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </>
-          ) : !hasRecordedSession ? (
+          ) : !hasRecordedSession && (isReportRead || !latestRecordingId) ? (
             <>
               <View style={styles.massageHeader}>
                 <View style={styles.greenDot} />
@@ -1483,7 +1562,7 @@ export const HomeScreen_v2: React.FC = () => {
                   </>
                 )}
               </Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="homeV2.recordNow"
                 style={[styles.recordButton, !isOnline && styles.recordButtonDisabled]}
                 onPress={handleRecordPress}
                 activeOpacity={0.85}
@@ -1491,9 +1570,9 @@ export const HomeScreen_v2: React.FC = () => {
               >
                 <Ionicons name={isRecordLocked ? 'lock-closed' : 'mic'} size={20} color="#fff" />
                 <Text style={styles.recordButtonText}>{t('homeV2.recordNow')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </>
-          ) : hasRecordedSession && !isReportRead ? (
+          ) : latestRecordingId && !isReportRead ? (
             <>
               <View style={styles.massageHeader}>
                 <View style={styles.greenDot} />
@@ -1508,7 +1587,7 @@ export const HomeScreen_v2: React.FC = () => {
                   </>
                 )}
               </Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="homeV2.readReport"
                 style={[styles.recordButton, !isOnline && styles.recordButtonDisabled]}
                 onPress={handleReadReport}
                 activeOpacity={0.85}
@@ -1516,7 +1595,7 @@ export const HomeScreen_v2: React.FC = () => {
               >
                 <Ionicons name="document-text-outline" size={20} color="#fff" />
                 <Text style={styles.recordButtonText}>{t('homeV2.readReport')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </>
           // Chat intro card temporarily hidden
           ) : (
@@ -1526,11 +1605,9 @@ export const HomeScreen_v2: React.FC = () => {
                 <Text style={styles.massageLabel}>{t('homeV2.dailyEmotionalMassageLabel')}</Text>
               </View>
               <Text style={styles.massageBody}>
-                {recordMessage.start}
-                <Text style={styles.massageChildName}>{childName}</Text>
-                {recordMessage.end}
+                {t('homeV2.recordAgainBody')}
               </Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="homeV2.recordAgain"
                 style={[styles.recordButton, !isOnline && styles.recordButtonDisabled]}
                 onPress={handleRecordAgain}
                 activeOpacity={0.85}
@@ -1538,7 +1615,7 @@ export const HomeScreen_v2: React.FC = () => {
               >
                 <Ionicons name={isRecordLocked ? 'lock-closed' : 'mic'} size={20} color="#fff" />
                 <Text style={styles.recordButtonText}>{t('homeV2.recordAgain')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </>
           )}
         </View>
@@ -1609,7 +1686,7 @@ export const HomeScreen_v2: React.FC = () => {
             {/* Preset options */}
             <View style={styles.reminderPresets}>
               {REMINDER_PRESETS.map(preset => (
-                <TouchableOpacity
+                <TrackedTouchable analyticsId={`Reminder Preset: ${preset.label}`}
                   key={preset.time}
                   style={[styles.reminderPresetBtn, selectedPreset === preset.time && styles.reminderPresetBtnActive]}
                   onPress={() => handleSelectPreset(preset)}
@@ -1621,12 +1698,12 @@ export const HomeScreen_v2: React.FC = () => {
                   <Text style={[styles.reminderPresetTime, selectedPreset === preset.time && styles.reminderPresetLabelActive]}>
                     {preset.display}
                   </Text>
-                </TouchableOpacity>
+                </TrackedTouchable>
               ))}
             </View>
 
             {/* Custom time row */}
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="homeV2.reminderCustomTime"
               style={[styles.reminderCustomRow, !selectedPreset && styles.reminderCustomRowActive]}
               onPress={() => {
                 setSelectedPreset(null);
@@ -1640,7 +1717,7 @@ export const HomeScreen_v2: React.FC = () => {
                 {t('homeV2.reminderCustomTime', { time: formatReminderTime(reminderTime) })}
               </Text>
               <Ionicons name="chevron-down" size={16} color={!selectedPreset ? COLORS.mainPurple : '#9CA3AF'} />
-            </TouchableOpacity>
+            </TrackedTouchable>
 
             {/* Time picker — inline on iOS, dialog on Android */}
             {(showCustomPicker || (Platform.OS === 'ios' && !selectedPreset)) && (
@@ -1656,14 +1733,36 @@ export const HomeScreen_v2: React.FC = () => {
               />
             )}
 
-            <TouchableOpacity style={styles.reminderSaveBtn} onPress={handleSaveReminder} activeOpacity={0.85}>
+            <TrackedTouchable analyticsId="homeV2.setReminder" style={styles.reminderSaveBtn} onPress={handleSaveReminder} activeOpacity={0.85}>
               <Text style={styles.reminderSaveBtnText}>{t('homeV2.setReminder')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.reminderCancelBtn} onPress={() => setShowReminderModal(false)} activeOpacity={0.7}>
+            </TrackedTouchable>
+            <TrackedTouchable analyticsId="common.cancel" style={styles.reminderCancelBtn} onPress={() => setShowReminderModal(false)} activeOpacity={0.7}>
               <Text style={styles.reminderCancelText}>{t('common.cancel')}</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         </View>
+      </Modal>
+
+      {/* ── Stat Explanation Popup ── */}
+      <Modal visible={!!statInfo} transparent animationType="fade" onRequestClose={() => setStatInfo(null)}>
+        <TrackedTouchable analyticsId="Stat Info Dismiss" style={styles.statInfoOverlay} activeOpacity={1} onPress={() => setStatInfo(null)}>
+          {/* Not tracked: this only exists to swallow taps so they don't bubble
+              to the overlay's dismiss handler above; it isn't a real user action. */}
+          <TouchableOpacity style={styles.statInfoCard} activeOpacity={1} onPress={() => {}}>
+            {statInfo && (
+              <>
+                <View style={[styles.statInfoIconWrap, { backgroundColor: `${statInfo.iconColor}1A` }]}>
+                  <Ionicons name={statInfo.iconName} size={22} color={statInfo.iconColor} />
+                </View>
+                <Text style={styles.statInfoTitle}>{statInfo.title}</Text>
+                <Text style={styles.statInfoBody}>{statInfo.body}</Text>
+                <TrackedTouchable analyticsId="homeV2.statInfoGotIt" style={styles.statInfoGotItBtn} onPress={() => setStatInfo(null)} activeOpacity={0.85}>
+                  <Text style={styles.statInfoGotItText}>{t('homeV2.statInfoGotIt')}</Text>
+                </TrackedTouchable>
+              </>
+            )}
+          </TouchableOpacity>
+        </TrackedTouchable>
       </Modal>
     </SafeAreaView>
   );
@@ -2363,5 +2462,57 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     fontSize: 14,
     color: '#9CA3AF',
+  },
+  statInfoOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  statInfoCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 20,
+    alignItems: 'center',
+  },
+  statInfoIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  statInfoTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: '#1E2939',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  statInfoBody: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  statInfoGotItBtn: {
+    backgroundColor: COLORS.mainPurple,
+    borderRadius: 100,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+  },
+  statInfoGotItText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: '#fff',
   },
 });

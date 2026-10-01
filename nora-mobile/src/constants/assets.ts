@@ -20,6 +20,7 @@ export const REPORT_TARGET_ORANGE = require('../../assets/images/new onboarding/
 export const REPORT_TARGET_SMALL = require('../../assets/images/target-small.png');
 export const REPORT_STAR_SMALL = require('../../assets/images/star-small.png');
 export const REPORT_FIRST_SESSION_DRAGON = require('../../assets/images/new onboarding/dashboard_first.png');
+export const DRAGON_WAVING_SMALL = require('../../assets/images/dragon_waving.png');
 
 // Design Tokens from Figma
 export const COLORS = {

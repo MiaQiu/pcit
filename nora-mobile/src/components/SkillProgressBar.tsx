@@ -5,9 +5,10 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface SkillProgressBarProps {
   label: string;
@@ -57,9 +58,9 @@ export const SkillProgressBar: React.FC<SkillProgressBarProps> = ({
           <Text style={styles.label}>{label}</Text>
         )}
         {onPress ? (
-          <TouchableOpacity onPress={onPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TrackedTouchable analyticsId="on" onPress={onPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             {PercentageContent}
-          </TouchableOpacity>
+          </TrackedTouchable>
         ) : (
           PercentageContent
         )}

@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { View, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, Image, StyleSheet, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -20,13 +21,13 @@ export const OBLetterScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <TouchableOpacity style={styles.content} onPress={handleOpen} activeOpacity={0.85}>
+      <TrackedTouchable analyticsId="Open" style={styles.content} onPress={handleOpen} activeOpacity={0.85}>
         <Image
           source={require('../../../assets/images/new onboarding/OB-letter.png')}
           style={styles.image}
           resizeMode="contain"
         />
-      </TouchableOpacity>
+      </TrackedTouchable>
     </View>
   );
 };

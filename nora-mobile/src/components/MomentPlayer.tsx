@@ -4,10 +4,11 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface MomentPlayerProps {
   audioUrl: string;
@@ -124,7 +125,7 @@ export const MomentPlayer: React.FC<MomentPlayerProps> = ({
     <View style={styles.container}>
       <Text style={styles.timestamp}>at {formatTime(startTime)}</Text>
       <View style={styles.playerRow}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="PlayPause"
           style={styles.playButton}
           onPress={handlePlayPause}
           disabled={isLoading}
@@ -138,7 +139,7 @@ export const MomentPlayer: React.FC<MomentPlayerProps> = ({
               color={COLORS.textDark}
             />
           )}
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         <View style={styles.waveformContainer}>
           {WAVEFORM_BARS.map((height, index) => {

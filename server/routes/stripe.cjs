@@ -5,6 +5,7 @@ const { requireAuth } = require('../middleware/auth.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
 const { normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
 const { grantReferralReward } = require('../services/referralReward.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 let _stripe = null;
 function stripe() {
@@ -73,7 +74,7 @@ router.get('/prices', async (req, res) => {
 
     res.json({ monthly: monthlyData, yearly: yearlyData, savingsPercent, yearlyPerMonth });
   } catch (error) {
-    console.error('Stripe prices fetch error:', error);
+    logError(error, { route: 'stripe#Stripe prices fetch error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch prices' });
   }
 });
@@ -104,8 +105,13 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
     const userEmail = decryptSensitiveData(user.email);
     const userName = decryptSensitiveData(user.name);
 
-    // Resolve partner config (used to customise trial days, coupon, and plan availability)
-    const partnerConfig = (user.partner?.status === 'ACTIVE') ? user.partner.config : null;
+    // Resolve partner config (used to customise trial days, coupon, and plan availability).
+    // Deliberately NOT gated on partner.status: deactivating a partner only blocks NEW
+    // signups (auth.cjs); users already attributed keep the offer they signed up for.
+    const partnerConfig = user.partner ? user.partner.config : null;
+    // Past expiresAt the coupon's redeem_by has also passed and Stripe would reject it,
+    // so drop the coupon (the trial length and plan list still apply).
+    const partnerOfferExpired = !!(user.partner?.expiresAt && new Date(user.partner.expiresAt) < new Date());
 
     // Validate requested plan against partner's allowed plans
     const allowedPlans = partnerConfig?.plans ?? ['monthly', 'yearly'];
@@ -138,7 +144,9 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
 
     const trialDays = partnerConfig?.trialDays ?? 7;
     // Discounts are configured per-plan — use whichever plan the user actually selected.
-    const stripeCouponId = partnerConfig ? normalizeDiscounts(partnerConfig)[plan]?.stripeCouponId ?? null : null;
+    const stripeCouponId = partnerConfig && !partnerOfferExpired
+      ? normalizeDiscounts(partnerConfig)[plan]?.stripeCouponId ?? null
+      : null;
 
     const session = await stripe().checkout.sessions.create({
       customer: stripeCustomerId,
@@ -157,7 +165,7 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
 
     res.json({ url: session.url, sessionId: session.id });
   } catch (error) {
-    console.error('Stripe create-checkout-session error:', error);
+    logError(error, { route: 'stripe#Stripe create-checkout-session error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create checkout session' });
   }
 });
@@ -184,7 +192,7 @@ router.post('/create-portal-session', requireAuth, async (req, res) => {
 
     res.json({ url: session.url });
   } catch (error) {
-    console.error('Stripe create-portal-session error:', error);
+    logError(error, { route: 'stripe#Stripe create-portal-session error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create billing portal session' });
   }
 });

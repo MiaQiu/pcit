@@ -6,11 +6,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from './TrackedTouchable';
 
 export type GuideMode = 'specialTime' | 'discipline';
 
@@ -164,7 +165,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
     <View>
       {/* Tab Toggle */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="recordingGuide.playTimeTab"
           style={[styles.tab, mode === 'specialTime' && styles.tabActive]}
           onPress={() => handleModeChange('specialTime')}
           activeOpacity={0.7}
@@ -172,8 +173,8 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
           <Text style={[styles.tabText, mode === 'specialTime' && styles.tabTextActive]}>
             {t('recordingGuide.playTimeTab')}
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </TrackedTouchable>
+        <TrackedTouchable analyticsId="recordingGuide.disciplineTab"
           style={[styles.tab, mode === 'discipline' && styles.tabActive]}
           onPress={() => handleModeChange('discipline')}
           activeOpacity={0.7}
@@ -181,7 +182,7 @@ export const RecordingGuideCard: React.FC<RecordingGuideCardProps> = ({ onModeCh
           <Text style={[styles.tabText, mode === 'discipline' && styles.tabTextActive]}>
             {t('recordingGuide.disciplineTab')}
           </Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
 
       {/* Card Content */}

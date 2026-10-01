@@ -6,6 +6,7 @@ const { resolveDragonImageUrl } = require('../services/storage-s3.cjs');
 const { buildShareCardImage, lightenHexColor } = require('../services/shareImage.cjs');
 const { getUserMatchContext } = require('../services/priorityEngine.cjs');
 const { localeMiddleware } = require('../middleware/locale.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 const router = express.Router();
 router.use(localeMiddleware);
@@ -187,11 +188,15 @@ async function pickTodaysCard(userId, sortedHomeCards, matchContext) {
  * GET /api/config/app-version
  * Returns the minimum required app version. No auth required.
  * Bump minRequiredVersion to force users on older versions to update.
+ * Do not deploy this bump until 1.0.11 is actually live on both the App
+ * Store and Play Store — otherwise every existing user gets forced onto
+ * ForceUpdateScreen with an "Update" button that points at a store listing
+ * that isn't there yet, locking them out of the app entirely.
  */
 router.get('/app-version', (req, res) => {
   res.json({
-    minRequiredVersion: '1.0.5',
-    latestVersion: '1.0.5',
+    minRequiredVersion: '1.0.11',
+    latestVersion: '1.0.11',
     whatsNew: [
       'Exciting new user experience',
       'Fresh learning modules to dive into',
@@ -211,7 +216,7 @@ router.get('/report-visibility', requireAuth, async (req, res) => {
 
     res.json(config ? config.value : DEFAULT_REPORT_VISIBILITY);
   } catch (error) {
-    console.error('Get report visibility error:', error);
+    logError(error, { route: 'config#Get report visibility error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch report visibility settings' });
   }
 });
@@ -293,7 +298,7 @@ router.get('/home-cards', requireAuth, async (req, res) => {
     })));
     res.json({ homeCards: resolved });
   } catch (error) {
-    console.error('Get home cards error:', error);
+    logError(error, { route: 'config#Get home cards error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch home cards' });
   }
 });
@@ -326,7 +331,7 @@ router.post('/home-cards/:id/like', requireAuth, async (req, res) => {
 
     res.json({ liked });
   } catch (error) {
-    console.error('Toggle home card like error:', error);
+    logError(error, { route: 'config#Toggle home card like error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update like' });
   }
 });
@@ -359,7 +364,7 @@ router.post('/home-cards/:id/view', requireAuth, async (req, res) => {
     }
     res.json({ success: true });
   } catch (error) {
-    console.error('Record home card view error:', error);
+    logError(error, { route: 'config#Record home card view error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to record view' });
   }
 });
@@ -378,7 +383,7 @@ router.post('/home-cards/:id/share', requireAuth, async (req, res) => {
     await prisma.homeCardShare.create({ data: { homeCardId: req.params.id, userId: req.userId } });
     res.json({ success: true });
   } catch (error) {
-    console.error('Record home card share error:', error);
+    logError(error, { route: 'config#Record home card share error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to record share' });
   }
 });
@@ -458,7 +463,7 @@ router.get('/home-cards/:id', requireAuth, async (req, res) => {
       components,
     });
   } catch (error) {
-    console.error('Get home card detail error:', error);
+    logError(error, { route: 'config#Get home card detail error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch home card' });
   }
 });
@@ -496,7 +501,7 @@ router.post('/home-cards/:cardId/components/:componentId/input', requireAuth, as
 
     res.json({ answer: response.answer });
   } catch (error) {
-    console.error('Save home card input error:', error);
+    logError(error, { route: 'config#Save home card input error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to save answer' });
   }
 });
@@ -545,7 +550,7 @@ router.get('/home-cards/share/:id', async (req, res) => {
       components,
     });
   } catch (error) {
-    console.error('Get shared home card error:', error);
+    logError(error, { route: 'config#Get shared home card error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch card' });
   }
 });
@@ -616,7 +621,7 @@ router.get('/home-cards/:id/share-image.png', async (req, res) => {
     res.set('Cache-Control', 'no-cache');
     res.send(png);
   } catch (error) {
-    console.error('Generate share image error:', error);
+    logError(error, { route: 'config#Generate share image error', userId: req.user?.id });
     res.status(500).end();
   }
 });
@@ -646,7 +651,7 @@ router.get('/weekly-reports', requireAuth, async (req, res) => {
 
     res.json({ reports });
   } catch (error) {
-    console.error('Get visible weekly reports error:', error);
+    logError(error, { route: 'config#Get visible weekly reports error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch weekly reports' });
   }
 });
@@ -673,7 +678,7 @@ router.get('/weekly-reports/:id', requireAuth, async (req, res) => {
     const resolved = await resolveReportAudioUrls(report);
     res.json(resolved);
   } catch (error) {
-    console.error('Get weekly report error:', error);
+    logError(error, { route: 'config#Get weekly report error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch weekly report' });
   }
 });
@@ -701,7 +706,7 @@ router.patch('/weekly-reports/:id/mark-read', requireAuth, async (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Mark weekly report read error:', error);
+    logError(error, { route: 'config#Mark weekly report read error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to mark report as read' });
   }
 });
@@ -735,7 +740,7 @@ router.patch('/weekly-reports/:id/checkin', requireAuth, async (req, res) => {
 
     res.json({ success: true, moodSelection: updated.moodSelection, issueRatings: updated.issueRatings });
   } catch (error) {
-    console.error('Save weekly checkin error:', error);
+    logError(error, { route: 'config#Save weekly checkin error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to save check-in' });
   }
 });
@@ -753,7 +758,7 @@ router.get('/developmental-visibility', requireAuth, async (req, res) => {
 
     res.json({ visible: user ? user.developmentalVisible : false });
   } catch (error) {
-    console.error('Get developmental visibility error:', error);
+    logError(error, { route: 'config#Get developmental visibility error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch developmental visibility' });
   }
 });

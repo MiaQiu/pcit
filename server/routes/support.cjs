@@ -5,6 +5,8 @@ const multer = require('multer');
 const crypto = require('crypto');
 const prisma = require('../services/db.cjs');
 const { uploadSupportAttachment } = require('../services/storage-s3.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
+const { sendSupportRequestEmail } = require('../services/supportEmail.cjs');
 
 const router = express.Router();
 
@@ -66,7 +68,7 @@ router.post('/request',
             );
             attachmentUrls.push(attachmentData);
           } catch (uploadError) {
-            console.error('Failed to upload attachment:', uploadError);
+            logError(uploadError, { route: 'support#Failed to upload attachment', userId: req.user?.id });
             // Continue with other files even if one fails
           }
         }
@@ -88,13 +90,27 @@ router.post('/request',
       console.log(`Support request created: ${requestId} for user ${userId}`);
       console.log(`Attachments saved: ${attachmentUrls.length}`);
 
+      // Notify the support inbox (fire-and-forget; never blocks the response)
+      prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
+        .catch(() => null)
+        .then(account => sendSupportRequestEmail({
+          requestId,
+          userId,
+          contactEmail: email,
+          description,
+          attachments: attachmentUrls,
+          files: req.files || [],
+          account,
+          createdAt: supportRequest.createdAt,
+        }));
+
       res.status(201).json({
         success: true,
         requestId: supportRequest.id,
         message: 'Support request submitted successfully'
       });
     } catch (err) {
-      console.error('Support request error:', err);
+      logError(err, { route: 'support#Support request error', userId: req.user?.id });
       res.status(500).json({ error: 'Failed to submit support request' });
     }
   }
@@ -124,7 +140,7 @@ router.get('/requests', require('../middleware/auth.cjs').requireAuth, async (re
 
     res.json({ requests });
   } catch (err) {
-    console.error('Get support requests error:', err);
+    logError(err, { route: 'support#Get support requests error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to retrieve support requests' });
   }
 });
@@ -149,7 +165,7 @@ router.get('/request/:requestId', require('../middleware/auth.cjs').requireAuth,
 
     res.json({ request });
   } catch (err) {
-    console.error('Get support request error:', err);
+    logError(err, { route: 'support#Get support request error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to retrieve support request' });
   }
 });

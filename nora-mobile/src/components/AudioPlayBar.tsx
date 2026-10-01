@@ -9,10 +9,11 @@
  */
 
 import React, { useRef } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator, GestureResponderEvent } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, GestureResponderEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { LESSON_TEXT_DARK } from '../constants/lessonViewerColors';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface AudioPlayBarProps {
   isLoading: boolean;
@@ -65,55 +66,55 @@ export const AudioPlayBar: React.FC<AudioPlayBarProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.scrubberRow}>
-        <TouchableOpacity style={styles.skipButton} onPress={() => onSeekBy(-15000)} disabled={isLoading}>
+        <TrackedTouchable analyticsId="15" style={styles.skipButton} onPress={() => onSeekBy(-15000)} disabled={isLoading}>
           <Ionicons name="play-back" size={14} color={LESSON_TEXT_DARK} />
           <Text style={styles.skipLabel}>15</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         <View style={styles.progressColumn}>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Seek"
             style={styles.track}
             onLayout={(e) => { trackWidthRef.current = e.nativeEvent.layout.width; }}
             onPress={handleSeek}
           >
             <View style={styles.trackBackground} />
             <View style={[styles.trackFill, { width: `${progress * 100}%` }]} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <View style={styles.timeRow}>
             <Text style={styles.timeText}>{formatTime(positionMillis / 1000)}</Text>
             <Text style={styles.timeText}>{formatTime(durationMillis / 1000)}</Text>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.skipButton} onPress={() => onSeekBy(30000)} disabled={isLoading}>
+        <TrackedTouchable analyticsId="30" style={styles.skipButton} onPress={() => onSeekBy(30000)} disabled={isLoading}>
           <Ionicons name="play-forward" size={14} color={LESSON_TEXT_DARK} />
           <Text style={styles.skipLabel}>30</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
 
       <View style={styles.controlsRow}>
         <View style={styles.controlButton} />
 
-        <TouchableOpacity style={styles.controlButton} onPress={onPrev} disabled={!hasPrev}>
+        <TrackedTouchable analyticsId="onPrev" style={styles.controlButton} onPress={onPrev} disabled={!hasPrev}>
           <Ionicons name="play-skip-back" size={22} color={hasPrev ? LESSON_TEXT_DARK : '#D1D5DB'} />
-        </TouchableOpacity>
+        </TrackedTouchable>
 
-        <TouchableOpacity style={styles.playButton} onPress={onPlayPause} disabled={isLoading}>
+        <TrackedTouchable analyticsId="onPlayPause" style={styles.playButton} onPress={onPlayPause} disabled={isLoading}>
           {isLoading ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <Ionicons name={isPlaying ? 'pause' : 'play'} size={26} color="#FFFFFF" />
           )}
-        </TouchableOpacity>
+        </TrackedTouchable>
 
-        <TouchableOpacity style={styles.controlButton} onPress={onNext} disabled={!hasNext}>
+        <TrackedTouchable analyticsId="onNext" style={styles.controlButton} onPress={onNext} disabled={!hasNext}>
           <Ionicons name="play-skip-forward" size={22} color={hasNext ? LESSON_TEXT_DARK : '#D1D5DB'} />
-        </TouchableOpacity>
+        </TrackedTouchable>
 
-        <TouchableOpacity style={styles.controlButton} onPress={onCycleRate}>
+        <TrackedTouchable analyticsId="x" style={styles.controlButton} onPress={onCycleRate}>
           <Text style={styles.controlLabel}>{rate.toFixed(2).replace(/\.?0+$/, '') || '1'}x</Text>
           <Text style={styles.speedText}>Speed</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

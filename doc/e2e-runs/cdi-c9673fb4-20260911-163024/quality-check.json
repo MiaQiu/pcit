@@ -1,0 +1,26 @@
+{
+  "name": "quality-check",
+  "status": "OK",
+  "note": "",
+  "ms": 1856,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "session-quality-check",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 1852,
+      "inputTokens": 4038,
+      "outputTokens": 133,
+      "thinkingTokens": 128,
+      "hasSchema": false,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "valid": true
+  }
+}

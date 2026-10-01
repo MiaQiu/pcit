@@ -30,6 +30,17 @@ const _loaded = loadRegistry();
 const _fileRegistry  = _loaded.fileRegistry;  // { [filePath]: { uri, expiresAt } }   — Files API 48 h TTL
 const _cacheRegistry = _loaded.cacheRegistry; // { [variant]:  { name, expiresAt } }  — cache 2 h TTL
 
+// In-process de-dup for concurrent callers racing on the same key (e.g. a
+// variant shared by multiple call sites — dpicsCacheKey across pcit-coding /
+// review-feedback, or cdi-coaching shared with generateFirstSessionInsights —
+// firing together in the same Promise.allSettled). Without this, two callers
+// that both see a registry miss would each upload/create their own duplicate
+// resource. Not persisted: this only needs to cover in-process concurrency —
+// a cross-process race is rare and self-heals (worst case one wasted upload
+// or cache creation, cleaned up by the losing entry's own TTL).
+const _pendingUploads = new Map(); // filePath -> Promise<uri>
+const _pendingCaches  = new Map(); // variant  -> Promise<name>
+
 function saveRegistry() {
   try {
     fs.writeFileSync(REGISTRY_PATH, JSON.stringify({ fileRegistry: _fileRegistry, cacheRegistry: _cacheRegistry }, null, 2));
@@ -96,12 +107,26 @@ async function getOrUploadFile(filePath, mimeType) {
     return entry.uri;
   }
 
-  console.log(`📤 [GEMINI-CACHE] Uploading ${path.basename(filePath)} to Files API...`);
-  const uri = await uploadFile(apiKey, filePath, mimeType);
-  _fileRegistry[filePath] = { uri, expiresAt: now + 2 * 3_600_000 }; // 2 h
-  saveRegistry();
-  console.log(`✅ [GEMINI-CACHE] File uploaded: ${uri}`);
-  return uri;
+  if (_pendingUploads.has(filePath)) {
+    console.log(`⏳ [GEMINI-CACHE] Awaiting in-flight upload of ${path.basename(filePath)}...`);
+    return _pendingUploads.get(filePath);
+  }
+
+  const upload = (async () => {
+    console.log(`📤 [GEMINI-CACHE] Uploading ${path.basename(filePath)} to Files API...`);
+    const uri = await uploadFile(apiKey, filePath, mimeType);
+    _fileRegistry[filePath] = { uri, expiresAt: Date.now() + 2 * 3_600_000 }; // 2 h
+    saveRegistry();
+    console.log(`✅ [GEMINI-CACHE] File uploaded: ${uri}`);
+    return uri;
+  })();
+
+  _pendingUploads.set(filePath, upload);
+  try {
+    return await upload;
+  } finally {
+    _pendingUploads.delete(filePath);
+  }
 }
 
 // ─── Context Cache API ────────────────────────────────────────────────────────
@@ -180,21 +205,35 @@ async function getOrCreateCache(variant, pdfPath, systemInstruction, model, extr
     return entry.name;
   }
 
-  // Upload primary PDF + any extra files (reuses existing uploads if still valid)
-  const primaryUri = await getOrUploadFile(pdfPath, 'application/pdf');
-  const files = [{ mimeType: 'application/pdf', fileUri: primaryUri }];
-  for (const f of extraFiles) {
-    const uri = await getOrUploadFile(f.path, f.mimeType);
-    files.push({ mimeType: f.mimeType, fileUri: uri });
+  if (_pendingCaches.has(variant)) {
+    console.log(`⏳ [GEMINI-CACHE] Awaiting in-flight ${variant} cache creation...`);
+    return _pendingCaches.get(variant);
   }
 
-  console.log(`📦 [GEMINI-CACHE] Creating ${variant} context cache (model: ${model}, files: ${files.length})...`);
-  const name = await createCache(apiKey, model, files, systemInstruction, ttl);
-  const ttlMs = parseFloat(ttl) * 1000; // Gemini duration format, e.g. '7200s' or '3.5s'
-  _cacheRegistry[variant] = { name, expiresAt: now + ttlMs };
-  saveRegistry();
-  console.log(`✅ [GEMINI-CACHE] Created ${variant} cache: ${name}`);
-  return name;
+  const creation = (async () => {
+    // Upload primary PDF + any extra files (reuses existing uploads if still valid)
+    const primaryUri = await getOrUploadFile(pdfPath, 'application/pdf');
+    const files = [{ mimeType: 'application/pdf', fileUri: primaryUri }];
+    for (const f of extraFiles) {
+      const uri = await getOrUploadFile(f.path, f.mimeType);
+      files.push({ mimeType: f.mimeType, fileUri: uri });
+    }
+
+    console.log(`📦 [GEMINI-CACHE] Creating ${variant} context cache (model: ${model}, files: ${files.length})...`);
+    const name = await createCache(apiKey, model, files, systemInstruction, ttl);
+    const ttlMs = parseFloat(ttl) * 1000; // Gemini duration format, e.g. '7200s' or '3.5s'
+    _cacheRegistry[variant] = { name, expiresAt: Date.now() + ttlMs };
+    saveRegistry();
+    console.log(`✅ [GEMINI-CACHE] Created ${variant} cache: ${name}`);
+    return name;
+  })();
+
+  _pendingCaches.set(variant, creation);
+  try {
+    return await creation;
+  } finally {
+    _pendingCaches.delete(variant);
+  }
 }
 
 /**

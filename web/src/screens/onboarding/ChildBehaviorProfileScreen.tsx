@@ -47,7 +47,7 @@ export default function ChildBehaviorProfileScreen() {
 
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
         <h1 className="text-[#1E2939] text-xl font-bold leading-tight mb-1 text-center">
-          {childName}'s Behavior Profile
+          {childName}'s Behavior Profile Snapshot
         </h1>
         <p className="text-[#6B7280] text-sm mb-6 text-center">
           Based on your responses over the past two weeks
@@ -69,7 +69,7 @@ export default function ChildBehaviorProfileScreen() {
           <div className="px-5 py-4">
             <div className="flex items-center justify-between mb-3">
               <span className="font-bold text-base" style={{ color: profile.color }}>
-                {profile.label}
+                Current Snapshot: {profile.label}
               </span>
               <span className="text-xs font-medium" style={{ color: profile.color }}>
                 Score: {score}
@@ -94,7 +94,7 @@ export default function ChildBehaviorProfileScreen() {
                 {s.icon}
                 <h3 className="font-bold text-[#1E2939] text-sm">{s.label}</h3>
               </div>
-              <p className="text-[#6B7280] text-sm leading-relaxed">{s.content}</p>
+              <p className="text-[#6B7280] text-sm leading-relaxed whitespace-pre-line">{s.content}</p>
             </div>
           ))}
         </div>

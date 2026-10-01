@@ -4,12 +4,16 @@ FROM node:20-alpine
 # fontconfig + ttf-dejavu: Alpine ships no fonts, so sharp's librsvg/Pango
 # renders the share-card image's SVG <text> as tofu boxes without them
 # (see server/services/shareImage.cjs). DejaVu is the last-resort fallback;
-# Plus Jakarta Sans (the brand font) is copied in below.
+# Plus Jakarta Sans (the brand font) is copied in below. font-noto-cjk covers
+# Chinese/Japanese/Korean glyphs, which neither Plus Jakarta Sans nor DejaVu
+# has — without it, CJK share-card text (e.g. Nora Daily cards) renders as
+# missing-glyph tofu boxes instead of characters.
 RUN apk add --no-cache \
     openssl \
     libc6-compat \
     fontconfig \
-    ttf-dejavu
+    ttf-dejavu \
+    font-noto-cjk
 
 WORKDIR /app
 

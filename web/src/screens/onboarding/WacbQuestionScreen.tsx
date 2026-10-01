@@ -8,6 +8,9 @@ import { submitWacbSurvey } from '../../api';
 
 type WacbKey = keyof WacbAnswers;
 
+// Kept word-for-word in sync with the mobile Child Snapshot survey
+// (nora-mobile/src/i18n/locales/en.json → onboarding.wacb.q1–q10), which is also
+// what ReportDetailScreen's "Unlock My Child's Plan" card launches.
 interface Question {
   key: WacbKey;
   text: (name: string) => string;
@@ -15,7 +18,7 @@ interface Question {
 
 const QUESTIONS: Question[] = [
   { key: 'q1Dawdle',        text: (name) => `In the past two weeks, how often has ${name} purposely dragged their feet during daily routine activities (e.g., mealtime or bedtime)?` },
-  { key: 'q2Disobey',       text: (name) => `In the past two weeks, how often has ${name} refused to listen or said 'no' when given rules or requests?` },
+  { key: 'q2Disobey',       text: (name) => `In the past two weeks, how often has ${name} refused to listen or said "no" when given rules or requests?` },
   { key: 'q3Tantrum',       text: (name) => `In the past two weeks, how often has ${name} had a temper tantrum that was hard to stop (e.g., crying, whining, yelling, screaming, or throwing themselves on the floor)?` },
   { key: 'q4Defiance',      text: (name) => `In the past two weeks, how often has ${name} deliberately argued with, talked back to, or provoked adults?` },
   { key: 'q5FocusDemand',   text: (name) => `In the past two weeks, how often has ${name} had difficulty focusing on one activity or frequently demanded attention?` },
@@ -55,7 +58,8 @@ export default function WacbQuestionScreen() {
       setSubmitting(true);
       try {
         await submitWacbSurvey({
-          parentingStressLevel: data.wacb.parentingStressLevel ?? 3,
+          // Not asked in the 10-item survey; same default the mobile flow sends.
+          parentingStressLevel: data.wacb.parentingStressLevel || 1,
           ...data.wacb,
           [question.key]: val,
         }, data.accessToken);
@@ -93,11 +97,9 @@ export default function WacbQuestionScreen() {
           {question.text(childName)}
         </h1>
 
-        {/* <div className="rounded-xl p-4 mb-6">
-          <p className="text-[#6B7280] text-xs">
-            There are no right or wrong answers — and this is not a diagnosis.
-          </p>
-        </div> */}
+        <p className="text-[#6B7280] text-xs mb-6 text-center">
+          There are no right or wrong answers — and this is not a diagnosis.
+        </p>
 
         <ScaleQuestion value={currentValue} onChange={handleAnswer} />
 
@@ -110,7 +112,7 @@ export default function WacbQuestionScreen() {
           disabled={currentValue === undefined}
           loading={submitting}
         >
-          {qNum === 10 ? 'See My Results' : 'Next'}
+          {qNum === 10 ? 'Submit Survey' : 'Next'}
         </PrimaryButton>
       </div>
     </OnboardingLayout>

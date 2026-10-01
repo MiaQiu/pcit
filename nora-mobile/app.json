@@ -2,7 +2,7 @@
   "expo": {
     "name": "Nora",
     "slug": "nora-mobile",
-    "version": "1.0.9",
+    "version": "1.0.11",
     "main": "index.ts",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -28,7 +28,7 @@
           "fb"
         ]
       },
-      "buildNumber": "86"
+      "buildNumber": "106"
     },
     "android": {
       "adaptiveIcon": {
@@ -46,7 +46,7 @@
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "versionCode": 83
+      "versionCode": 111
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -60,6 +60,12 @@
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics",
       "expo-localization",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Nora needs access to your photos so you can attach screenshots to support requests."
+        }
+      ],
       [
         "react-native-share",
         {

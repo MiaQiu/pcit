@@ -38,21 +38,41 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/Button';
 import { SkillProgressBar } from '../components/SkillProgressBar';
 import { ReportCard, REPORT_CARD_COLORS } from '../components/ReportCard';
-import { COLORS, FONTS, REPORT_DETAIL_DRAGON } from '../constants/assets';
+import { COLORS, FONTS, REPORT_DETAIL_DRAGON, DRAGON_WAVING_SMALL } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
 import { useRecordingService, useAuthService, useLessonService } from '../contexts/AppContext';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
-import type { RecordingAnalysis, User, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ParentSkillLevel, DemoVideo } from '@nora/core';
+import type { RecordingAnalysis, User, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ParentSkillLevel, DemoVideo, ChildSnapshotSurvey } from '@nora/core';
+import { computeFocusAreas, primaryFocusAreas, type FocusAreaData } from '../utils/snapshotFocusAreas';
 import { MomentPlayer } from '../components/MomentPlayer';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
+import { NextLevelOverviewModal } from '../components/NextLevelOverviewModal';
 import { MarkdownText } from '../utils/MarkdownText';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { useScreenViewDuration } from '../hooks/useScreenViewDuration';
+import { useScrollDepthTracking } from '../hooks/useScrollDepthTracking';
 import { deriveGoalFromLevel as deriveGoalNumbersFromLevel } from '../utils/goalFallback';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 type ReportDetailRouteProp = RouteProp<RootStackParamList, 'ReportDetail'>;
+
+// First-session report visual language — same "rotating palette per list item"
+// + "Warm Elevation" accent pattern SkillImproveScreen.tsx uses, applied to
+// generateFirstSessionInsights' bullets/skills/quote blocks.
+const FIRST_SESSION_PALETTE: { color: string; background: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { color: '#8C49D5', background: '#F5EAFB', icon: 'sparkles' },
+  { color: '#3B82F6', background: '#DBEAFE', icon: 'chatbubble-ellipses' },
+  { color: '#F97316', background: '#FFEDD5', icon: 'heart' },
+];
+// "What we learned" bullets 1-2 are the child's strengths; bullet 3 is the
+// normalizing acknowledgment of the parent's target issue — same green/orange
+// split as the Confidence Builders / Play Interruptions bars elsewhere, so
+// "strength" and "growth area" read consistently across the whole report.
+const FIRST_SESSION_STRENGTH_ACCENT  = { color: '#3BA55D', background: '#DDF3E4', icon: 'heart' as const };
+const FIRST_SESSION_CHALLENGE_ACCENT = { color: '#E08A3C', background: '#FBE7D2', icon: 'leaf' as const };
 
 // Same API-label → i18n-key mapping used by ReportScreen.tsx / ReportScreen_v2.tsx.
 const SKILL_LABEL_I18N_KEY: Record<string, string> = {
@@ -166,18 +186,6 @@ const GOAL_TYPE_SKILL_TAG: Record<string, string> = {
   AVOID_CRITICISM: 'Criticism',
 };
 
-// Maps the tomorrow's-goal skill to a static "why this matters" i18n key
-// (reportDetail.tomorrowGoal.why.*), shown only on the first-session
-// template. `generic` covers goals with no single countable skill.
-const GOAL_WHY_I18N_KEY: Record<string, string> = {
-  'Praise (Labeled)': 'praise',
-  'Narrate': 'narrate',
-  'Echo': 'echo',
-  'Commands': 'commands',
-  'Questions': 'questions',
-  'Criticism': 'criticism',
-};
-
 // Maps the same skill labels to the `teachesCategories` values lessons are
 // tagged with server-side (server/routes/lessons.cjs's by-category lookup),
 // used to find a lesson to recommend from the Skill Coaching card's
@@ -235,7 +243,7 @@ export const ReportDetailScreen: React.FC = () => {
   const recordingService = useRecordingService();
   const authService = useAuthService();
   const lessonService = useLessonService();
-  const { recordingId } = route.params;
+  const { recordingId, leveledUp, toLevel } = route.params;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -272,26 +280,55 @@ export const ReportDetailScreen: React.FC = () => {
   // screen forces it on regardless, for preview.
   const [isFirstSession, setIsFirstSession] = useState<boolean | null>(null);
   const [devForceFirstSession, setDevForceFirstSession] = useState(false);
+  // Shown in place of the immediate exit when this session leveled the
+  // parent up (leveledUp/toLevel passed in from ReportScreen_v2/v3) — a
+  // preview of the next skill, gated behind an explicit "I am committed".
+  const [showNextLevelOverview, setShowNextLevelOverview] = useState(false);
+  // Same Child Snapshot focus-area computation as ProfileReportScreen, used
+  // only to pick the journeyFocusSlug for the next-level overview's
+  // personalised levelHelp copy (see journeyFocusSlug below). null until the
+  // survey fetch resolves; [] means "checked, no survey yet" (-> 'generic').
+  const [focusAreas, setFocusAreas] = useState<FocusAreaData[] | null>(null);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('ReportDetail', { recordingId });
     loadReportData();
     loadChildName();
     loadWacbStatus();
     loadParentSkillLevel();
     loadSessionCount();
+    loadFocusAreas();
   }, [recordingId]);
 
-  // Decides the first-session template: true when this recording is the only
-  // COMPLETED session in the parent's history. Fails closed to the standard
-  // template.
+  // Screen view is now tracked centrally from NavigationContainer.onStateChange
+  // in App.tsx; this hook logs how long the user spent on THIS session's
+  // report specifically, and how far they scrolled through it.
+  useScreenViewDuration('ReportDetail', { recordingId });
+  const scrollDepthTracking = useScrollDepthTracking('ReportDetail', { recordingId });
+
+  const loadFocusAreas = async () => {
+    try {
+      const survey: ChildSnapshotSurvey | null = await authService.getLatestSnapshotSurvey();
+      setFocusAreas(survey ? computeFocusAreas(survey) : []);
+    } catch (err) {
+      setFocusAreas([]);
+    }
+  };
+
+  // Decides the first-session template: true when this recording is the
+  // earliest COMPLETED session in the parent's history (so the first report
+  // keeps its template after later sessions exist). Fails closed to the
+  // standard template.
   const loadSessionCount = async () => {
     try {
       const { recordings } = await recordingService.getRecordings();
-      const completedCount = (recordings || []).filter(
+      const completed = (recordings || []).filter(
         (r: any) => r.analysisStatus === 'COMPLETED'
-      ).length;
-      setIsFirstSession(completedCount <= 1);
+      );
+      const earliest = completed.reduce<any>(
+        (min, r) => (!min || new Date(r.createdAt).getTime() < new Date(min.createdAt).getTime() ? r : min),
+        null
+      );
+      setIsFirstSession(!earliest || earliest.id === recordingId);
     } catch (err) {
       setIsFirstSession(false);
     }
@@ -453,9 +490,21 @@ export const ReportDetailScreen: React.FC = () => {
   const handleBack = () => navigation.goBack();
 
   // The report is otherwise a dead end — the back arrow returns to the
-  // progress-celebration screen, not out. "See you tomorrow" is the clean exit.
+  // progress-celebration screen, not out. "See you tomorrow" is the clean
+  // exit — unless this session leveled the parent up, in which case it
+  // first shows a preview of the next skill (see handleCommitToNextLevel).
   const handleSeeYouTomorrow = () => {
-    amplitudeService.trackEvent('Report Detail See You Tomorrow Tapped', { recordingId });
+    amplitudeService.trackEvent('Report Detail See You Tomorrow Tapped', { recordingId, leveledUp: !!leveledUp });
+    if (leveledUp && toLevel) {
+      setShowNextLevelOverview(true);
+      return;
+    }
+    navigation.navigate('MainTabs', { screen: 'Home' });
+  };
+
+  const handleCommitToNextLevel = () => {
+    amplitudeService.trackEvent('Report Detail Next Level Committed Tapped', { recordingId, level: toLevel });
+    setShowNextLevelOverview(false);
     navigation.navigate('MainTabs', { screen: 'Home' });
   };
 
@@ -463,9 +512,9 @@ export const ReportDetailScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
         </View>
         <View style={styles.loadingContainer}>
@@ -482,9 +531,9 @@ export const ReportDetailScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
         </View>
         <View style={styles.errorContainer}>
@@ -499,6 +548,12 @@ export const ReportDetailScreen: React.FC = () => {
   }
 
   // ── Derived data ──
+
+  // Same journeyFocusSlug derivation as ProfileReportScreen's Personalized
+  // Learning Journey — the top signal (severity high/moderate) Snapshot
+  // focus-area category, or 'generic' with no survey signal — used to pick
+  // the personalised levelHelp copy for the next-level overview.
+  const journeyFocusSlug = primaryFocusAreas(focusAreas)[0]?.key ?? 'generic';
 
   const skills = reportData.skills || [];
   const filteredAreas = (reportData.areasToAvoid || []).filter(
@@ -611,6 +666,12 @@ export const ReportDetailScreen: React.FC = () => {
   // extraction fall back to childReaction.
   const childInsightBody = aboutChildItem?.Details || aboutChildItem?.Description || reportData.childReaction || null;
 
+  // First-session-only child + parent insights (generateFirstSessionInsights) —
+  // replaces the aboutChild-sourced "what we learned" body and the static
+  // "why this matters" interaction-style copy, only for the parent's first
+  // completed session. null on every later session.
+  const firstSessionInsights = reportData.firstSessionInsights || null;
+
   // Not currently wired to a ReportCard headerRight — share buttons on these
   // two cards are temporarily hidden, kept here (not deleted) to restore later.
   const handleShareChildInsight = async () => {
@@ -658,18 +719,38 @@ export const ReportDetailScreen: React.FC = () => {
   // moment was detected.
   const showFirstSession = devForceFirstSession || isFirstSession === true;
 
-  // "Why this matters" for the first session is deliberately personalised —
-  // it's the retention hook. It weaves in the parent's stated concern
-  // (currentUser.issue) and the child's age band on top of the skill-specific
-  // reason, so the goal feels chosen for this family rather than generic.
-  const whyKey = goal.skillTag ? GOAL_WHY_I18N_KEY[goal.skillTag] : undefined;
-  const skillReason = t(`reportDetail.tomorrowGoal.why.${whyKey || 'generic'}` as any, { childName });
-
+  // "Why this matters" for the first session's Interaction Style card
+  // (whyPersonalised below) is deliberately personalised — it weaves in the
+  // parent's stated concern (currentUser.issue) and the child's age band, so
+  // the copy feels chosen for this family rather than generic.
   const primaryIssue = Array.isArray(currentUser?.issue) ? currentUser?.issue[0] : currentUser?.issue;
   const concernKey = primaryIssue ? `reportDetail.tomorrowGoal.concern.${primaryIssue}` : null;
   const concern = concernKey && i18n.exists(concernKey)
     ? t(concernKey, { childName })
     : t('reportDetail.tomorrowGoal.concern.generic', { childName });
+
+  // Same idea as `concern` above, but for the "Unlock Your Personalized
+  // Roadmap" survey card: turns the parentGoal code(s) picked during
+  // onboarding into the readable phrase used in that card's copy.
+  const parentGoalLabelKeys: Record<string, string> = {
+    truly_understanding_kid: 'onboarding.parentGoal.trulyUnderstanding',
+    boost_kid_development: 'onboarding.parentGoal.boostDevelopment',
+    feeling_more_connected: 'onboarding.parentGoal.feelingConnected',
+    feeling_less_overwhelmed: 'onboarding.parentGoal.feelingLessOverwhelmed',
+    less_chaos_day_to_day: 'onboarding.parentGoal.lessChaos',
+    respond_calmly: 'onboarding.parentGoal.respondCalmly',
+    confident_in_parenting: 'onboarding.parentGoal.confidentParenting',
+  };
+  const parentGoalCodes = Array.isArray(currentUser?.parentGoal)
+    ? currentUser.parentGoal
+    : currentUser?.parentGoal ? [currentUser.parentGoal] : [];
+  const parentGoalLabels = parentGoalCodes
+    .map((code) => parentGoalLabelKeys[code])
+    .filter((key): key is string => !!key)
+    .map((key) => t(key).toLowerCase());
+  const parentGoals = parentGoalLabels.length > 0
+    ? parentGoalLabels.join(', ')
+    : t('reportDetail.unlock.parentGoalsFallback', { childName });
 
   const childAge = calculateChildAge(currentUser?.childBirthday, currentUser?.childBirthYear);
   const ageBandKey = childAge == null
@@ -679,11 +760,6 @@ export const ReportDetailScreen: React.FC = () => {
       : childAge <= 5
         ? 'preschool'
         : 'schoolAge';
-
-  const whyThisMatters = t(
-    `reportDetail.tomorrowGoal.whyPersonalised.${ageBandKey}` as any,
-    { childName, age: childAge ?? undefined, concern, skillReason },
-  );
 
   // ── Shared card bodies (used by both the standard and first-session layouts) ──
 
@@ -731,7 +807,7 @@ export const ReportDetailScreen: React.FC = () => {
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => {
-              amplitudeService.trackEvent('Report Detail Demo Video Tapped', { recordingId, skillTag: goalSkillTag, demoVideoId: learnMoreDemoVideo.id });
+              amplitudeService.trackEvent('Report Detail Demo Video Tapped', { recordingId, skillTag: goalSkillTag, demoVideoId: learnMoreDemoVideo.id, demoVideoTitle: learnMoreDemoVideo.baseTitle });
               navigation.navigate('DemoVideoDetail', { video: learnMoreDemoVideo });
             }}
           >
@@ -799,7 +875,7 @@ export const ReportDetailScreen: React.FC = () => {
       <MarkdownText style={styles.crisisBody} numberOfLines={crisisExpanded ? undefined : 4}>
         {crisisMoment.coaching || crisisMoment.description || ''}
       </MarkdownText>
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="reportDetail.crisis.showLess"
         style={styles.crisisReadMoreRow}
         activeOpacity={0.7}
         onPress={() => setCrisisExpanded(prev => !prev)}
@@ -808,7 +884,7 @@ export const ReportDetailScreen: React.FC = () => {
           {crisisExpanded ? t('reportDetail.crisis.showLess') : t('reportDetail.crisis.readMore')}
         </Text>
         <Ionicons name={crisisExpanded ? 'chevron-up' : 'chevron-down'} size={14} color="#C2694B" />
-      </TouchableOpacity>
+      </TrackedTouchable>
     </ReportCard>
   ) : null;
 
@@ -852,14 +928,48 @@ export const ReportDetailScreen: React.FC = () => {
   );
 
   const childInsightBodyJsx = (
-    <>
-      {aboutChildItem?.Title && (
-        <View style={styles.childInsightTitleBadge}>
-          <Text style={styles.childInsightTitleBadgeText}>{aboutChildItem.Title}</Text>
-        </View>
-      )}
-      {childInsightBody && <Text style={styles.childInsightBody}>{childInsightBody}</Text>}
-    </>
+    showFirstSession && (firstSessionInsights?.whatWeLearned?.strengths?.length || firstSessionInsights?.whatWeLearned?.challenge) ? (
+      <View style={styles.fsSkillList}>
+        {/* Points 1-2: the child's strengths — same badge-name + plain-text-
+            explanation treatment as "The skills underneath the issues". */}
+        {firstSessionInsights.whatWeLearned.strengths?.map((strength, i) => {
+          if (!strength.name) return null;
+          const strengthName = strength.name.replace(/\*\*/g, '');
+          return (
+            <View key={i} style={styles.fsSkillItem}>
+              <View style={[styles.fsSkillPill, { backgroundColor: FIRST_SESSION_STRENGTH_ACCENT.background }]}>
+                <Ionicons name={FIRST_SESSION_STRENGTH_ACCENT.icon} size={11} color={FIRST_SESSION_STRENGTH_ACCENT.color} />
+                <Text style={[styles.fsSkillPillText, { color: FIRST_SESSION_STRENGTH_ACCENT.color }]}>{strengthName}</Text>
+              </View>
+              {!!strength.explanation && (
+                <MarkdownText style={styles.fsSkillDefinition}>{strength.explanation}</MarkdownText>
+              )}
+            </View>
+          );
+        })}
+
+        {/* Point 3: the normalizing acknowledgment — no label, tinted row. */}
+        {!!firstSessionInsights.whatWeLearned.challenge && (
+          <View style={[styles.fsBulletRow, styles.fsBulletRowChallenge]}>
+            <View style={[styles.fsBulletIconBadge, { backgroundColor: FIRST_SESSION_CHALLENGE_ACCENT.background }]}>
+              <Ionicons name={FIRST_SESSION_CHALLENGE_ACCENT.icon} size={14} color={FIRST_SESSION_CHALLENGE_ACCENT.color} />
+            </View>
+            <View style={styles.fsBulletTextCol}>
+              <MarkdownText style={styles.fsBulletText}>{firstSessionInsights.whatWeLearned.challenge}</MarkdownText>
+            </View>
+          </View>
+        )}
+      </View>
+    ) : (
+      <>
+        {aboutChildItem?.Title && (
+          <View style={styles.childInsightTitleBadge}>
+            <Text style={styles.childInsightTitleBadgeText}>{aboutChildItem.Title}</Text>
+          </View>
+        )}
+        {childInsightBody && <Text style={styles.childInsightBody}>{childInsightBody}</Text>}
+      </>
+    )
   );
 
   const interactionBody = (
@@ -946,16 +1056,12 @@ export const ReportDetailScreen: React.FC = () => {
     ? Math.round((interruptionMoments / interactionTotalMoments) * 100)
     : 0;
 
-  const interactionCardJsx = (
-    <ReportCard title={t('reportDetail.interactionStyle.title')}>
-      {/* "Why this matters" — first session only; sits right under the title,
-          no box, no heading */}
-      {showFirstSession && (
-        <MarkdownText style={styles.interactionWhyBody}>
-          {t(`reportDetail.interactionStyle.whyPersonalised.${ageBandKey}` as any, { childName, age: childAge ?? undefined, concern })}
-        </MarkdownText>
-      )}
-
+  // The expandable bars (rolled-up summary + "Detailed Breakdown" toggle) —
+  // shared between the standard template's standalone Interaction Style card
+  // and the first-session "What we learnt about you" card, where they sit
+  // under the "Your Interaction Style" subtitle instead.
+  const interactionBarsJsx = (
+    <>
       {/* Collapsed: rolled-up summary. Expanded: full breakdown replaces it
           (the summary is hidden, not stacked above). */}
       <View style={styles.interactionCardBody}>
@@ -1015,42 +1121,118 @@ export const ReportDetailScreen: React.FC = () => {
         <Text style={styles.interactionBreakdownLinkText}>{t('reportDetail.interactionStyle.detailedBreakdown')}</Text>
         <Ionicons name={interactionExpanded ? 'chevron-up' : 'chevron-down'} size={15} color="#8C49D5" />
       </TouchableOpacity>
+    </>
+  );
+
+  const interactionCardJsx = (
+    <ReportCard title={t('reportDetail.interactionStyle.title')}>
+      {interactionBarsJsx}
     </ReportCard>
   );
 
-  // Real first-session parents almost never have the WACB survey done yet;
-  // the __DEV__ force-toggle also shows it regardless so it can be previewed.
-  const surveyCardJsx = (wacbCompleted === false || devForceFirstSession) ? (
+  // "What we learnt about you" — first-session only, replaces the standalone
+  // Interaction Style card. Surfaces the two parent-facing halves of
+  // generateFirstSessionInsights: the parent's own strengths ("superpowers")
+  // and the session-grounded interaction-style explanation (falling back to
+  // the static personalised copy when the LLM call failed or hasn't run) —
+  // with the same expandable bars (interactionBarsJsx) tucked under the
+  // "Your Interaction Style" subtitle instead of living in their own card.
+  const whatWeLearntAboutYouCardJsx = showFirstSession ? (
+    <ReportCard icon="sparkles" title={t('reportDetail.whatWeLearnt.title')}>
+      {!!firstSessionInsights?.parentSuperpowers?.length && (
+        <>
+          <Text style={styles.wwlSubtitle}>{t('reportDetail.interactionStyle.parentSuperpowers')}</Text>
+          {firstSessionInsights.parentSuperpowers.map((strength, i) => (
+            <Text key={i} style={styles.wwlBody}>{`• ${strength}`}</Text>
+          ))}
+        </>
+      )}
+
+      <Text style={[styles.wwlSubtitle, styles.wwlSubtitleSpaced]}>{t('reportDetail.interactionStyle.title')}</Text>
+      <MarkdownText style={styles.wwlBody}>
+        {firstSessionInsights?.interactionStyle
+          ? [firstSessionInsights.interactionStyle.dimensionsExplanation, firstSessionInsights.interactionStyle.effectivenessExplanation]
+              .filter(Boolean).join('\n\n')
+          : t(`reportDetail.interactionStyle.whyPersonalised.${ageBandKey}` as any, { childName, age: childAge ?? undefined, concern })}
+      </MarkdownText>
+
+      <View style={styles.wwlInteractionBars}>
+        {interactionBarsJsx}
+      </View>
+    </ReportCard>
+  ) : null;
+
+  // "The skills underneath the issues" — first-session only, section 2 of
+  // generateFirstSessionInsights (cdiCoaching-first_v3.txt): an opening
+  // sentence + 3 named, defined skills.
+  const skillsUnderneathCardJsx = showFirstSession && firstSessionInsights?.skillsUnderneath ? (
+    <ReportCard title={t('reportDetail.skillsUnderneath.title')}>
+      {!!firstSessionInsights.skillsUnderneath.openingSentence && (
+        <MarkdownText style={styles.wwlBody}>{firstSessionInsights.skillsUnderneath.openingSentence}</MarkdownText>
+      )}
+      <View style={styles.fsSkillList}>
+        {firstSessionInsights.skillsUnderneath.skills?.map((skill, i) => {
+          if (!skill.name) return null;
+          const palette = FIRST_SESSION_PALETTE[i % FIRST_SESSION_PALETTE.length];
+          // Strip any bold markers the model may have put around the skill
+          // name itself — it already gets its own emphasis from the pill.
+          const skillName = skill.name.replace(/\*\*/g, '');
+          return (
+            <View key={i} style={styles.fsSkillItem}>
+              <View style={[styles.fsSkillPill, { backgroundColor: palette.background }]}>
+                <Ionicons name={palette.icon} size={11} color={palette.color} />
+                <Text style={[styles.fsSkillPillText, { color: palette.color }]}>{skillName}</Text>
+              </View>
+              {!!skill.definition && (
+                <MarkdownText style={styles.fsSkillDefinition}>{skill.definition}</MarkdownText>
+              )}
+            </View>
+          );
+        })}
+      </View>
+    </ReportCard>
+  ) : null;
+
+  // "How we'll practice together" — first-session only, section 3. A single
+  // fixed paragraph (with the 3 target skills woven in), split into short
+  // sentence chunks, followed by the real dimension bars (Confidence
+  // Builders / Play Interruptions) computed from this session's tagCounts.
+  // All text is model-translated (not client i18n) so it stays in the same
+  // language as the rest of the report — see cdiCoaching-first_v3.txt's
+  // fidelity/format-prompt notes. Combines the former separate "How we'll
+  // help" (with its dynamic quote/coaching-opportunity example) and "Your
+  // starting point snapshot" cards into one section.
+  const howWePracticeTogetherCardJsx = showFirstSession && firstSessionInsights?.howWePracticeTogether ? (
+    <ReportCard title={t('reportDetail.howWePracticeTogether.title')}>
+      {firstSessionInsights.howWePracticeTogether.sentences?.map((sentence, i) => (
+        <MarkdownText
+          key={i}
+          style={StyleSheet.flatten([styles.wwlBody, i > 0 && styles.fsSentenceSpaced])}
+        >
+          {sentence}
+        </MarkdownText>
+      ))}
+      <View style={styles.wwlInteractionBars}>
+        {interactionBarsJsx}
+      </View>
+    </ReportCard>
+  ) : null;
+
+  // Real first-session parents almost never have the WACB survey done yet.
+  const surveyCardJsx = wacbCompleted === false ? (
     <View style={styles.unlockCard}>
       <View style={styles.unlockIconBadge}>
         <Ionicons name="lock-closed" size={22} color={COLORS.mainPurple} />
       </View>
-      <Text style={styles.unlockTitle}>{t('reportDetail.unlock.title', { childName })}</Text>
+      <Text style={styles.unlockTitle}>{t('reportDetail.unlock.heading')}</Text>
+      <Text style={styles.unlockSubtitle}>
+        {t('reportDetail.unlock.titlePre', { childName, parentGoals })}
+        <Text style={styles.unlockTitleBold}>{t('reportDetail.unlock.titleBold')}</Text>
+      </Text>
 
-      <View style={styles.unlockFeatureRow}>
-        <View style={styles.unlockFeature}>
-          <View style={styles.unlockFeatureBadge}>
-            <Ionicons name="trending-up" size={16} color={COLORS.mainPurple} />
-          </View>
-          <Text style={styles.unlockFeatureText}>{t('reportDetail.unlock.featureGrowthPlan')}</Text>
-        </View>
-        <View style={styles.unlockFeature}>
-          <View style={styles.unlockFeatureBadge}>
-            <Ionicons name="person-circle-outline" size={16} color={COLORS.mainPurple} />
-          </View>
-          <Text style={styles.unlockFeatureText}>{t('reportDetail.unlock.featureSnapshot')}</Text>
-        </View>
-        <View style={styles.unlockFeature}>
-          <View style={styles.unlockFeatureBadge}>
-            <Ionicons name="analytics-outline" size={16} color={COLORS.mainPurple} />
-          </View>
-          <Text style={styles.unlockFeatureText}>{t('reportDetail.unlock.featureTracking')}</Text>
-        </View>
-      </View>
-
-      <TouchableOpacity style={styles.unlockButton} activeOpacity={0.85} onPress={handleUnlockPlan}>
+      <TrackedTouchable analyticsId="reportDetail.unlock.cta" style={styles.unlockButton} activeOpacity={0.85} onPress={handleUnlockPlan}>
         <Text style={styles.unlockButtonText}>{t('reportDetail.unlock.cta')}</Text>
-      </TouchableOpacity>
+      </TrackedTouchable>
       <View style={styles.unlockTimeRow}>
         <Ionicons name="time-outline" size={12} color="#9A8672" />
         <Text style={styles.unlockTimeText}>{t('reportDetail.unlock.time')}</Text>
@@ -1061,7 +1243,7 @@ export const ReportDetailScreen: React.FC = () => {
   const devPreviewBar = __DEV__ ? (
     <View style={styles.devBar}>
       <Text style={styles.devBarLabel}>PREVIEW (dev only)</Text>
-      <TouchableOpacity
+      <TrackedTouchable analyticsId="Dev Toggle First Session Template"
         onPress={() => setDevForceFirstSession(v => !v)}
         style={[styles.devChip, devForceFirstSession && styles.devChipActive]}
         activeOpacity={0.7}
@@ -1069,59 +1251,85 @@ export const ReportDetailScreen: React.FC = () => {
         <Text style={[styles.devChipText, devForceFirstSession && styles.devChipTextActive]}>
           {devForceFirstSession ? 'First time template: ON' : 'First time template: OFF'}
         </Text>
-      </TouchableOpacity>
+      </TrackedTouchable>
+      <TrackedTouchable analyticsId="Preview level-up overview"
+        onPress={() => setShowNextLevelOverview(true)}
+        style={styles.devChip}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.devChipText}>Preview level-up overview</Text>
+      </TrackedTouchable>
     </View>
   ) : null;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.headerButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="chevron-back" size={22} color={COLORS.mainPurple} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <Text style={styles.headerTitle}>{t('reportDetail.headerTitle')}</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} {...scrollDepthTracking}>
         {showFirstSession ? (
           <>
-            {/* Crisis Moment (or crisis fallback) — kept on top for the first-session template */}
+            {/* 1. Crisis Moment (or crisis fallback) */}
             {crisisCardJsx}
 
-            {/* 1. Hero — first-session welcome (image + message) */}
-            <View style={styles.fsHeroCard}>
-              <Image source={REPORT_DETAIL_DRAGON} style={styles.fsHeroImage} resizeMode="contain" />
-              <Text style={styles.fsHeroIntro}>{t('reportDetail.firstSession.heroIntro', { childName })}</Text>
-              <Text style={styles.fsHeroMessage}>
-                {t('reportDetail.firstSession.heroMessage', { childName })}
-              </Text>
-            </View>
-
             {/* 2. What we learned about {childName} */}
-            <ReportCard icon="heart" title={t('reportDetail.childInsight.title', { childName })}>
+            <ReportCard title={t('reportDetail.childInsight.title', { childName })}>
               {childInsightBodyJsx}
             </ReportCard>
 
-            {/* 3. Top Moment */}
-            <ReportCard icon="star" title={t('reportDetail.topMoment.title')} tip={celebration || undefined}>
-              {topMomentBody}
-            </ReportCard>
+            {/* 3. The skills underneath the issues */}
+            {skillsUnderneathCardJsx}
 
-            {/* 4. Today's Interaction Style */}
-            {interactionCardJsx}
+            {/* 4. How we'll practice together */}
+            {howWePracticeTogetherCardJsx}
 
-            {/* Tomorrow's Goal — hidden for now
-            {goal.focusSkill && (
-              <ReportCard title={t('reportDetail.tomorrowGoal.title')} tip={goal.description || undefined}>
-                <Text style={styles.goalFocusSkill}>{goal.focusSkill}</Text>
-                <Text style={styles.fsWhyTitle}>{t('reportDetail.tomorrowGoal.whyTitle')}</Text>
-                <Text style={styles.fsWhyBody}>{whyThisMatters}</Text>
-              </ReportCard>
-            )}
-            */}
+            {/* Hero, Top Moment, and "What we learnt about you" (parent
+                superpowers + interaction style) are hidden on the first-
+                session report — kept defined (fsHeroCard styles,
+                whatWeLearntAboutYouCardJsx) in case they're reinstated. */}
 
             {/* Survey for personalised coaching */}
             {surveyCardJsx}
+
+            {/* Tomorrow's Goal — withheld until the parent has completed the
+                personalised (WACB) survey, so it appears right after they
+                answer it rather than being visible (and skippable) up front. */}
+            {wacbCompleted === true && goal.focusSkill && (
+              <ReportCard
+                eyebrow={
+                  <View style={styles.goalCheerRow}>
+                    <Image source={DRAGON_WAVING_SMALL} style={styles.goalCheerDragon} resizeMode="contain" />
+                    <Text style={styles.goalPlanReadyCheer}>{t('reportDetail.tomorrowGoal.planReadyCheer')}</Text>
+                  </View>
+                }
+                title={t('reportDetail.tomorrowGoal.title')}
+                tip={goal.description || undefined}
+                headerRight={
+                  <View style={styles.goalLevelBadge}>
+                    <Text style={styles.goalLevelBadgeText}>{t('profileReport.journeyLevelBadge', { level: parentLevel })}</Text>
+                  </View>
+                }
+              >
+                <Text style={styles.goalFocusSkill}>{goal.focusSkill}</Text>
+              </ReportCard>
+            )}
+
+            {/* SEE YOU TOMORROW — withheld until the parent has completed the
+                personalised (WACB) survey, so the first session pushes them
+                toward the survey rather than letting them skip past it. Once
+                wacbCompleted resolves true (including on return from the
+                survey flow, since loadWacbStatus reruns on mount) this is the
+                same exit as the standard template. */}
+            {wacbCompleted === true && (
+              <TrackedTouchable analyticsId="reportDetail.seeYouTomorrow" style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
+                <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
+              </TrackedTouchable>
+            )}
           </>
         ) : (
           <>
@@ -1168,7 +1376,7 @@ export const ReportDetailScreen: React.FC = () => {
               <View>
                 {/* Segmented: what went well vs what to grow next */}
                 <View style={styles.ccSeg}>
-                  <TouchableOpacity
+                  <TrackedTouchable analyticsId="reportDetail.skillCoaching.tabWentWell"
                     activeOpacity={0.8}
                     style={[styles.ccSegBtn, coachTab === 'wentWell' && styles.ccSegBtnOn]}
                     onPress={() => setCoachTab('wentWell')}
@@ -1176,8 +1384,8 @@ export const ReportDetailScreen: React.FC = () => {
                     <Text style={[styles.ccSegText, coachTab === 'wentWell' && styles.ccSegTextOn]}>
                       {t('reportDetail.skillCoaching.tabWentWell')}
                     </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
+                  </TrackedTouchable>
+                  <TrackedTouchable analyticsId="reportDetail.skillCoaching.tabGrowNext"
                     activeOpacity={0.8}
                     style={[styles.ccSegBtn, coachTab === 'growNext' && styles.ccSegBtnOn]}
                     onPress={() => setCoachTab('growNext')}
@@ -1185,7 +1393,7 @@ export const ReportDetailScreen: React.FC = () => {
                     <Text style={[styles.ccSegText, coachTab === 'growNext' && styles.ccSegTextOn]}>
                       {t('reportDetail.skillCoaching.tabGrowNext')}
                     </Text>
-                  </TouchableOpacity>
+                  </TrackedTouchable>
                 </View>
 
                 {coachTab === 'wentWell' ? (
@@ -1205,19 +1413,26 @@ export const ReportDetailScreen: React.FC = () => {
                       </View>
                     ))}
                     {!!coachCorner.growthFocus.benchmark && (
-                      <TouchableOpacity
+                      <TrackedTouchable analyticsId="Coach Corner Nudge Tab"
                         activeOpacity={0.8}
                         style={styles.ccNudge}
                         onPress={() => setCoachTab('growNext')}
                       >
                         <Ionicons name="flag" size={15} color="#9A5A34" />
-                        <Text style={styles.ccNudgeText}>{t('reportDetail.skillCoaching.tabGrowNext')}</Text>
+                        <Text style={styles.ccNudgeText}>
+                          {t(coachCorner.growthFocus.newSkillIntro
+                            ? 'reportDetail.skillCoaching.tabIntoNewSkill'
+                            : 'reportDetail.skillCoaching.tabGrowNext')}
+                        </Text>
                         <Ionicons name="arrow-forward" size={16} color="#9A5A34" />
-                      </TouchableOpacity>
+                      </TrackedTouchable>
                     )}
                   </View>
                 ) : (
                   <View>
+                    {!!coachCorner.growthFocus.newSkillIntro && (
+                      <MarkdownText style={styles.ccProse}>{coachCorner.growthFocus.newSkillIntro}</MarkdownText>
+                    )}
                     {!!coachCorner.growthFocus.benchmark && (
                       <View style={styles.ccBenchCard}>
                         <View style={styles.ccBenchCardLabel}>
@@ -1247,7 +1462,7 @@ export const ReportDetailScreen: React.FC = () => {
                                   const key = `${gi}-${ci}-${li}`;
                                   const copied = copiedScript === key;
                                   return (
-                                    <TouchableOpacity
+                                    <TrackedTouchable analyticsId={`Coach Script Copy: ${key}`}
                                       key={li}
                                       activeOpacity={0.7}
                                       style={styles.ccSayBox}
@@ -1257,9 +1472,9 @@ export const ReportDetailScreen: React.FC = () => {
                                       <Ionicons
                                         name={copied ? 'checkmark' : 'copy-outline'}
                                         size={15}
-                                        color={copied ? '#0B9A6B' : '#C2694B'}
+                                        color="#0B9A6B"
                                       />
-                                    </TouchableOpacity>
+                                    </TrackedTouchable>
                                   );
                                 })}
                               </View>
@@ -1279,7 +1494,7 @@ export const ReportDetailScreen: React.FC = () => {
                   {reportData.skillCoaching ?? ''}
                 </MarkdownText>
                 {skillCoachingExpanded && learnMoreBlockJsx}
-                <TouchableOpacity
+                <TrackedTouchable analyticsId="reportDetail.crisis.showLess"
                   style={styles.crisisReadMoreRow}
                   activeOpacity={0.7}
                   onPress={() => setSkillCoachingExpanded(prev => !prev)}
@@ -1288,7 +1503,7 @@ export const ReportDetailScreen: React.FC = () => {
                     {skillCoachingExpanded ? t('reportDetail.crisis.showLess') : t('reportDetail.crisis.readMore')}
                   </Text>
                   <Ionicons name={skillCoachingExpanded ? 'chevron-up' : 'chevron-down'} size={14} color="#C2694B" />
-                </TouchableOpacity>
+                </TrackedTouchable>
               </>
             )}
             </View>
@@ -1355,10 +1570,15 @@ export const ReportDetailScreen: React.FC = () => {
         {surveyCardJsx}
 
         {/* SEE YOU TOMORROW — the report's only easy exit (the back arrow
-            returns to the progress-celebration screen, not out). */}
-        <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
-          <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
-        </TouchableOpacity>
+            returns to the progress-celebration screen, not out). Withheld
+            until the parent has completed the personalised (WACB) survey —
+            every session's report pushes toward the survey until it's done,
+            not just the first. */}
+        {wacbCompleted === true && (
+          <TrackedTouchable analyticsId="reportDetail.seeYouTomorrow" style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
+            <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
+          </TrackedTouchable>
+        )}
           </>
         )}
 
@@ -1374,6 +1594,19 @@ export const ReportDetailScreen: React.FC = () => {
         loading={loadingDomainMilestones}
         onClose={handleCloseDomainModal}
       />
+
+      {/* toLevel comes from the real leveledUp flow; __DEV__'s "Preview
+          level-up overview" chip has no real toLevel, so it falls back to
+          parentLevel + 1 just so the modal has something to render. */}
+      {(toLevel || (__DEV__ && parentLevel)) && (
+        <NextLevelOverviewModal
+          visible={showNextLevelOverview}
+          level={toLevel ?? (Math.min(parentLevel + 1, 9) as ParentSkillLevel)}
+          focusSlug={journeyFocusSlug}
+          childName={childName}
+          onCommit={handleCommitToNextLevel}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -1439,23 +1672,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#7A4A22',
     textAlign: 'center',
-  },
-
-  // ── First-session "why this matters" (inside the Tomorrow's Goal card) ──
-  fsWhyTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 14,
-    letterSpacing: 0.4,
-    color: '#B08A5A',
-    textTransform: 'uppercase',
-    marginTop: 14,
-    marginBottom: 6,
-  },
-  fsWhyBody: {
-    fontFamily: FONTS.regular,
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#4B5563',
   },
 
   // ── Dev preview bar (__DEV__ only) ──
@@ -1568,7 +1784,7 @@ const styles = StyleSheet.create({
   ccSaidBox: { backgroundColor: '#FBEEDF', borderWidth: 1, borderColor: '#EAD3B6', borderLeftWidth: 4, borderLeftColor: '#C2694B', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, marginTop: 10 },
   ccSaidText: { fontFamily: FONTS.regularItalic, fontSize: 14, lineHeight: 20, color: '#3D2A1E' },
   ccWhy: { fontFamily: FONTS.regular, fontSize: 13, lineHeight: 18, color: '#6B7280', marginTop: 6, marginLeft: 5 },
-  ccSayBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FBEEDF', borderWidth: 1, borderColor: '#EAD3B6', borderLeftWidth: 4, borderLeftColor: '#E9A688', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 13, marginTop: 8 },
+  ccSayBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#E3F5EC', borderWidth: 1, borderColor: '#BFE8D3', borderLeftWidth: 4, borderLeftColor: '#0B9A6B', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 13, marginTop: 8 },
   ccSayText: { flex: 1, fontFamily: FONTS.regular, fontSize: 14, lineHeight: 20, color: '#3D2A1E' },
 
   ccNudge: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 18, paddingVertical: 12, paddingHorizontal: 15, backgroundColor: '#FDF2E9', borderRadius: 16 },
@@ -1607,6 +1823,11 @@ const styles = StyleSheet.create({
   quoteSpeaker: { fontFamily: FONTS.bold, color: REPORT_CARD_COLORS.title },
 
   // ── Tomorrow's Goal content ──
+  goalCheerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  goalCheerDragon: { width: 28, height: 28 },
+  goalPlanReadyCheer: { fontFamily: FONTS.bold, fontSize: 15, color: COLORS.mainPurple, flexShrink: 1 },
+  goalLevelBadge: { backgroundColor: '#F5EAFB', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  goalLevelBadgeText: { fontFamily: FONTS.bold, fontSize: 11, color: '#8C49D5' },
   goalFocusSkill: { fontFamily: FONTS.bold, fontSize: 16, color: REPORT_CARD_COLORS.title },
   tomorrowGoalValue: { fontFamily: FONTS.bold, fontSize: 22, color: COLORS.mainPurple, textAlign: 'center', paddingVertical: 6 },
 
@@ -1632,7 +1853,57 @@ const styles = StyleSheet.create({
   interactionSectionIconBadge: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
   interactionSectionTitle: { fontFamily: FONTS.bold, fontSize: 15, color: REPORT_CARD_COLORS.title },
   interactionDivider: { height: 1, backgroundColor: '#F3E9DD', marginTop: 6, marginBottom: 20 },
-  interactionWhyBody: { fontFamily: FONTS.regular, fontSize: 16, lineHeight: 24, color: '#4B5563', marginTop: 6 },
+
+  // ── "What we learnt about you" content ──
+  wwlSubtitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    letterSpacing: 0.4,
+    color: '#B08A5A',
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  wwlSubtitleSpaced: { marginTop: 14 },
+  wwlBody: { fontFamily: FONTS.regular, fontSize: 16, lineHeight: 24, color: '#4B5563' },
+  wwlInteractionBars: { marginTop: 14 },
+
+  // ── First-session report visual language (generateFirstSessionInsights) ──
+  // "What we learned" point 3 (the challenge) — colored icon badge + text.
+  fsBulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  fsBulletRowChallenge: {
+    backgroundColor: '#FBE7D2',
+    borderRadius: 14,
+    padding: 10,
+    marginTop: 2,
+  },
+  fsBulletIconBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginTop: 1,
+  },
+  fsBulletTextCol: { flex: 1 },
+  fsBulletText: { fontFamily: FONTS.regular, fontSize: 15, lineHeight: 22, color: '#4B5563' },
+
+  // "Skills underneath" — one colored pill (skill name) + definition per skill.
+  fsSkillList: { marginTop: 14, gap: 12 },
+  fsSkillItem: { gap: 6 },
+  fsSkillPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  fsSkillPillText: { fontFamily: FONTS.bold, fontSize: 12 },
+  fsSkillDefinition: { fontFamily: FONTS.regular, fontSize: 14, lineHeight: 20, color: '#4B5563' },
+
+  fsSentenceSpaced: { marginTop: 8 },
 
   // ── Today's Interaction Style — rolled-up summary ──
   interactionBreakdownLink: {
@@ -1691,13 +1962,13 @@ const styles = StyleSheet.create({
   // ── Unlock My Child's Plan (bespoke) ──
   unlockCard: {
     alignItems: 'center',
-    backgroundColor: '#FCEFE0',
+    backgroundColor: '#FFFFFF',
     borderRadius: 28,
-    padding: 26,
+    padding: 22,
     marginBottom: 18,
     shadowColor: '#8C49D5',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.08,
     shadowRadius: 28,
     elevation: 3,
   },
@@ -1705,25 +1976,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: REPORT_CARD_COLORS.iconBackground,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
   },
   unlockTitle: { fontFamily: FONTS.bold, fontSize: 18, color: REPORT_CARD_COLORS.title, textAlign: 'center', marginBottom: 8 },
   unlockSubtitle: { fontFamily: FONTS.regular, fontSize: 14, color: REPORT_CARD_COLORS.subtitle, textAlign: 'center', marginBottom: 18 },
-  unlockFeatureRow: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginBottom: 22 },
-  unlockFeature: { alignItems: 'center', width: 82 },
-  unlockFeatureBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 7,
-  },
-  unlockFeatureText: { fontFamily: FONTS.semiBold, fontSize: 12, color: REPORT_CARD_COLORS.title, textAlign: 'center', lineHeight: 14 },
+  unlockTitleBold: { fontFamily: FONTS.bold, color: REPORT_CARD_COLORS.subtitle },
   unlockButton: {
     width: '100%',
     backgroundColor: COLORS.mainPurple,

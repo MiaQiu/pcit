@@ -12,12 +12,13 @@
  */
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, LayoutChangeEvent, Animated, PanResponder, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, LayoutChangeEvent, Animated, PanResponder, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerColors';
 import type { LessonCardData } from '@nora/core';
+import { TrackedTouchable } from './TrackedTouchable';
 
 export interface PlaylistModule {
   key: string;
@@ -149,7 +150,7 @@ export const LessonPlaylistSheet: React.FC<LessonPlaylistSheetProps> = ({
   const renderRow = (lesson: LessonCardData) => {
     const isCurrent = lesson.id === currentLessonId;
     return (
-      <TouchableOpacity
+      <TrackedTouchable analyticsId={`Playlist Lesson: ${lesson.title}`}
         key={lesson.id}
         style={[styles.row, isCurrent && styles.rowActive]}
         onPress={() => onSelectLesson(lesson.id)}
@@ -166,7 +167,7 @@ export const LessonPlaylistSheet: React.FC<LessonPlaylistSheetProps> = ({
             Day {lesson.dayNumber} · {lesson.title}
           </Text>
         </View>
-      </TouchableOpacity>
+      </TrackedTouchable>
     );
   };
 
@@ -175,9 +176,9 @@ export const LessonPlaylistSheet: React.FC<LessonPlaylistSheetProps> = ({
       style={[styles.container, { height: availableHeight, transform: [{ translateY }] }]}
     >
       <View {...panResponder.panHandlers}>
-        <TouchableOpacity style={styles.handleRow} onPress={() => snapTo(!expanded)}>
+        <TrackedTouchable analyticsId={`Playlist ${expanded ? 'Collapse' : 'Expand'}`} style={styles.handleRow} onPress={() => snapTo(!expanded)}>
           <View style={styles.handle} />
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle} numberOfLines={1}>Play List</Text>

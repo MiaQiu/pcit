@@ -12,7 +12,6 @@ import {
   Text,
   StyleSheet,
   Platform,
-  TouchableOpacity,
 } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +23,7 @@ import { useAuthService } from '../../contexts/AppContext';
 import * as userStorage from '../../lib/userStorage';
 import { requestNotificationPermissions, scheduleDailyLessonReminder } from '../../utils/notifications';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 export const ReminderTimeScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -107,7 +107,7 @@ export const ReminderTimeScreen: React.FC = () => {
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="notificationPermission.enabling"
           style={styles.button}
           onPress={handleEnable}
           disabled={isRequesting}
@@ -116,10 +116,10 @@ export const ReminderTimeScreen: React.FC = () => {
           <Text style={styles.buttonText}>
             {isRequesting ? t('notificationPermission.enabling') : t('onboarding.reminderTime.enableButton')}
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleSkip} activeOpacity={0.7}>
+        </TrackedTouchable>
+        <TrackedTouchable analyticsId="onboarding.reminderTime.skip" onPress={handleSkip} activeOpacity={0.7}>
           <Text style={styles.skipText}>{t('onboarding.reminderTime.skip')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

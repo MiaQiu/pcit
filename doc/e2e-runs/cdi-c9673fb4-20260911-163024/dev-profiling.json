@@ -1,0 +1,124 @@
+{
+  "name": "dev-profiling",
+  "status": "OK",
+  "note": "",
+  "ms": 6610,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "dev-profiling",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 6607,
+      "inputTokens": 2920,
+      "outputTokens": 1633,
+      "thinkingTokens": 1053,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "developmentalObservation": {
+      "summary": "Lucas demonstrates active communication using early multi-word combinations, prepositions, and direct action demands, while navigating emotional limits during structured interactions.",
+      "domains": [
+        {
+          "category": "Language",
+          "framework": "Brown's Stages",
+          "developmental_status": "Age-Appropriate Foundation",
+          "current_level": "Stage II (Prepositions & Semantic Relations)",
+          "benchmark_for_age": "Stage IV (35-40m): Articles and Regular Past Tense",
+          "detailed_observations": [
+            {
+              "insight": "Use of prepositions in multi-word phrases",
+              "evidence": "Lucas stated, 'Pour on Mama hand.' and 'Squishy, squishy on that one.'"
+            },
+            {
+              "insight": "Early negation constructions",
+              "evidence": "Lucas stated, 'Don't, don't pour it!' and 'No!'"
+            }
+          ],
+          "detected_milestone_keys": [
+            {
+              "milestone_key": "language_brown_stage1_semantic",
+              "evidence_summary": "Lucas used agent-action and action-object combinations such as 'Mama, open it' and 'Mama, drink water.'"
+            },
+            {
+              "milestone_key": "language_brown_stage1_negation",
+              "evidence_summary": "Lucas expressed negation saying 'Don't, don't pour it!' and 'No!'"
+            },
+            {
+              "milestone_key": "language_brown_stage2_prepositions",
+              "evidence_summary": "Lucas used the preposition 'on' in 'Pour on Mama hand.'"
+            }
+          ]
+        },
+        {
+          "category": "Cognitive",
+          "framework": "Piaget/Brown Proxies",
+          "developmental_status": "Developing",
+          "current_level": "Pre-Operational",
+          "benchmark_for_age": "Temporal Logic (36-48m)",
+          "detailed_observations": [
+            {
+              "insight": "Immediate naming and labeling of present objects/actions",
+              "evidence": "Lucas identified attributes and objects saying 'Thumb', 'Squishy, squishy', and 'One'."
+            }
+          ],
+          "detected_milestone_keys": [
+            {
+              "milestone_key": "cognitive_preop_naming",
+              "evidence_summary": "Lucas labeled immediate items and sensory qualities saying 'Thumb' and 'Squishy, squishy'."
+            }
+          ]
+        },
+        {
+          "category": "Social",
+          "framework": "Halliday Interactional",
+          "developmental_status": "Developing",
+          "current_level": "Transition (24-36m)",
+          "benchmark_for_age": "Pragmatic Development (36-60m)",
+          "detailed_observations": [
+            {
+              "insight": "Initiating interactive play and actions with parent",
+              "evidence": "Lucas directed the parent with 'Mama, eat it' and 'Mama, drink water.'"
+            }
+          ],
+          "detected_milestone_keys": [
+            {
+              "milestone_key": "social_interaction_initiation",
+              "evidence_summary": "Lucas initiated interactions by directing play: 'Mama, drink water' and 'Mama, eat it.'"
+            }
+          ]
+        },
+        {
+          "category": "Emotional",
+          "framework": "Halliday Personal",
+          "developmental_status": "Age-Appropriate",
+          "current_level": "Assertion (24-36m)",
+          "benchmark_for_age": "Identity (36-60m)",
+          "detailed_observations": [
+            {
+              "insight": "Asserting personal boundaries and protesting parent actions",
+              "evidence": "Lucas protested parental intervention saying 'No!', 'Don't, don't pour it!', and 'Mama, get out.'"
+            }
+          ],
+          "detected_milestone_keys": [
+            {
+              "milestone_key": "emotional_personal_boundaries",
+              "evidence_summary": "Lucas asserted boundaries firmly by exclaiming 'No!' and 'Don't, don't pour it!'"
+            }
+          ]
+        }
+      ]
+    },
+    "metadata": {
+      "subject": "Lucas",
+      "age_months": 37,
+      "overall_impression": "Lucas engaged in play involving a vitamin bottle and demonstrated direct communication, repetitive requests, and boundary assertions while navigating parental limits."
+    },
+    "baselineAchieved": []
+  }
+}

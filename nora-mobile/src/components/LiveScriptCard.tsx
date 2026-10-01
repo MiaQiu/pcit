@@ -21,7 +21,7 @@
  */
 
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, ScrollView, LayoutChangeEvent } from 'react-native';
+import { View, Text, Image, StyleSheet, Modal, ScrollView, LayoutChangeEvent } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -32,6 +32,7 @@ import { LessonContentBlocks } from './LessonContentBlocks';
 import { flattenBlocksToChunks, countChunkWords } from '../utils/formatLessonContentV2';
 import type { ContentBlock } from '../utils/formatLessonContentV2';
 import type { WordTiming } from '@nora/core';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface LiveScriptCardProps {
   blocks: ContentBlock[];
@@ -181,21 +182,21 @@ export const LiveScriptCard: React.FC<LiveScriptCardProps> = ({ blocks, wordTimi
         style={styles.bottomFade}
         pointerEvents="none"
       />
-      <TouchableOpacity style={styles.expandButton} onPress={() => setExpanded(true)} accessibilityLabel="Expand script">
+      <TrackedTouchable analyticsId="Expand script" style={styles.expandButton} onPress={() => setExpanded(true)} accessibilityLabel="Expand script">
         <Ionicons name="expand" size={16} color={COLORS.textDark} />
-      </TouchableOpacity>
+      </TrackedTouchable>
 
       <Modal visible={expanded} animationType="slide" onRequestClose={() => setExpanded(false)}>
         <View style={[styles.modalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Script</Text>
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="×"
               onPress={() => setExpanded(false)}
               style={styles.modalClose}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={styles.modalCloseIcon}>×</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
           <ScrollView contentContainerStyle={styles.modalScrollContent}>
             {hasWordTimings ? (

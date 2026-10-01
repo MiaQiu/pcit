@@ -79,3 +79,36 @@ export async function apiFetchEnv<T = any>(
 
   return res.json();
 }
+
+// Like apiFetchEnv, but hands back the raw Response instead of throwing on
+// non-2xx — for endpoints (e.g. session analysis) whose non-200 statuses
+// (202 processing, 500 failed-analysis) are expected states, not errors.
+export async function apiFetchRaw(
+  path: string,
+  options: RequestInit = {},
+  envOpts?: { baseUrl?: string; token?: string }
+): Promise<Response> {
+  const token = envOpts?.token ?? getToken();
+  const baseUrl = envOpts?.baseUrl ?? '';
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${baseUrl}${path}`, { ...options, headers });
+
+  if (res.status === 401) {
+    if (!envOpts?.baseUrl) {
+      clearToken();
+      window.location.href = '/login';
+    }
+    throw new Error('Unauthorized');
+  }
+
+  return res;
+}

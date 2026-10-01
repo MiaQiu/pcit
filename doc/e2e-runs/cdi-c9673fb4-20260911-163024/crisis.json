@@ -1,0 +1,38 @@
+{
+  "name": "crisis",
+  "status": "OK",
+  "note": "",
+  "ms": 6580,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "crisis-coaching",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 6579,
+      "inputTokens": 3427,
+      "outputTokens": 1506,
+      "thinkingTokens": 1148,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "heroText": "You navigated tricky boundaries with patience and warmth today!",
+    "crisisMoment": {
+      "detected": true,
+      "title": "Setting Item Boundaries",
+      "coaching": "**What happened:** Lucas felt frustrated and protested repeatedly when he was not allowed to pour out all the vitamins.\n\n**Why it happened:** Toddlers are naturally drawn to sensory exploration, making it tough to understand strict safety limits on **non-toy items** during play.\n\n**What helped:** You stayed remarkably calm and used **emotional validation** by saying, \"I know that you're upset,\" which kept the interaction gentle and helped Lucas regain control.\n\n**Try this next time:**\n• Put away non-toy items before special play starts to prevent boundary struggles.\n• Offer a clear, immediate alternative (e.g., \"Vitamins stay in the bottle, but let's pour these blocks!\").\n• Keep explanations short and simple, as toddlers process fewer words when upset."
+    },
+    "skillCoaching": "Lucas showed wonderful focus and pride when he succeeded in taking out just one piece carefully. Naming the exact behavior you love seeing—like gentle hands or listening closely—gives Lucas clear, positive feedback he can repeat. Practicing labeled praises during play will build on his natural eagerness to cooperate.",
+    "topMoment": {
+      "quote": "Parent: Then tomorrow, you wanna give me one more?\nChild: Yeah.\nParent: You can give me one more tomorrow, okay?",
+      "utteranceNumber": 127,
+      "endUtteranceNumber": 129,
+      "context": "After working together to close the bottle safely, Lucas happily agreed to save the rest and share one more with you tomorrow."
+    }
+  }
+}

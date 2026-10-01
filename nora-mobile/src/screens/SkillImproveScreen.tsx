@@ -12,7 +12,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, ScrollView, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, ScrollView, Text, Image, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,8 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { FONTS, COLORS, REPORT_DETAIL_DRAGON, REPORT_DRAGON_GOOD } from '../constants/assets';
 import { ReportCard, REPORT_CARD_COLORS } from '../components/ReportCard';
 import { RootStackParamList, RootStackNavigationProp } from '../navigation/types';
-import type { SkillImproveResult } from '@nora/core';
-import amplitudeService from '../services/amplitudeService';
+import type { SkillImproveResult } from '@nora/core';import { TrackedTouchable } from '../components/TrackedTouchable';
 
 // Same "Warm Elevation" accent split used elsewhere for build-vs-avoid goals
 // (e.g. ReportDetailScreen's improveBadge vs demoBadge/crisis colors) — green
@@ -68,7 +67,6 @@ export const SkillImproveScreen: React.FC = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    amplitudeService.trackScreenView('SkillImprove');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -83,9 +81,9 @@ export const SkillImproveScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
+        <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={18} color={REPORT_CARD_COLORS.title} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <View style={styles.backCircle} />
       </View>
 

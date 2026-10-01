@@ -458,6 +458,8 @@ model User {
   tag                       String                      @default("user")
   referralCode              String?                     @unique
   preferredLocale           String                      @default("en")
+  // Set on the first authenticated request of each Singapore (UTC+8) day (app open). See server/services/userActivity.cjs.
+  lastActiveAt              DateTime?
   LearningProgress          LearningProgress?
   ModuleHistory             ModuleHistory[]
   PasswordResetToken        PasswordResetToken[]
@@ -855,15 +857,22 @@ model Partner {
   id          String        @id @default(uuid())
   slug        String        @unique
   name        String
+  kind        PartnerKind   @default(PARTNER)
   status      PartnerStatus @default(ACTIVE)
-  config      Json // PartnerConfig: { trialDays, plans, discounts: { monthly, yearly }, welcomeMessage, maxRedemptions }
+  config      Json // PartnerConfig: { trialDays, plans, discounts: { monthly, yearly }, welcomeMessage, maxRedemptions, displayName, skipSubscription, landing }
   // (older rows may still have a single legacy `discount` field instead of
   // `discounts` — see server/utils/partnerDiscount.cjs normalizeDiscounts())
   expiresAt   DateTime?
   redemptions Int           @default(0)
+  visits      Int           @default(0) // successful link validations (GET /api/partner/validate/:slug)
   qrCodeUrl   String?
   createdAt   DateTime      @default(now())
   users       User[]
+}
+
+enum PartnerKind {
+  PARTNER
+  CAMPAIGN
 }
 
 enum PartnerStatus {

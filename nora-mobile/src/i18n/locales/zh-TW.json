@@ -248,6 +248,8 @@
       "big_feelings_tantrums": "強烈情緒與發脾氣",
       "listening_cooperation": "聆聽與配合",
       "anxiety_confidence": "焦慮與自信",
+      "anxiety": "焦慮",
+      "confidence": "自信",
       "developmental_concerns": "發展相關擔憂",
       "parenting_strategies": "學習更有效的教養策略",
       "defiance": "反抗行為",
@@ -582,6 +584,7 @@
       "wordBankLabel": "下次可以這樣說",
       "tabWentWell": "做得好",
       "tabGrowNext": "下一步",
+      "tabIntoNewSkill": "進入新技能",
       "benchmarkLabel": "目標",
       "learnMoreTitle": "了解更多關於{{skill}}的內容",
       "lessonBadge": "課程",
@@ -602,11 +605,12 @@
       "title": "你的互動風格",
       "viewTips": "檢視建議",
       "detailedBreakdown": "詳細分析",
-      "confidenceBuilders": "自信建立",
+      "confidenceBuilders": "技能建立",
       "confidenceBuildersSubtitle": "提升自信與專注",
       "playInterruptions": "遊戲干擾",
       "playInterruptionsSubtitle": "可以一起改進的地方",
       "moments_other": "{{count}} 次",
+      "parentSuperpowers": "你的育兒超能力",
       "whyPersonalised": {
         "toddler": "你來到 Nora 是為了解決{{concern}}。{{childName}}才{{age}}歲，大腦剛開始建立自我控制的神經連結，而這靠的是與你一次次的小互動，而不是長篇大論。我們記為**「自信建立」**的時刻——讚美、描述{{childName}}在玩什麼、讓他／她主導——是滋養親子關係和孩子自信的存款；而**「遊戲干擾」**——提問、命令、糾正——則在悄悄抵消它。所以我們會一次只練一項技能，把每一項單獨拿出來練熟，再加入下一項。",
         "preschool": "你來到 Nora 是為了解決{{concern}}。{{childName}}{{age}}歲，正處在這些能力發展最快的階段，而它們是在與你的日常互動中成長的。我們記為**「自信建立」**的時刻——讚美、描述{{childName}}在玩什麼、讓他／她主導——是滋養親子關係和孩子自信的存款；而**「遊戲干擾」**——提問、命令、糾正——則在悄悄抵消它。所以我們會一次只練一項技能，把每一項單獨拿出來練熟，再加入下一項。",
@@ -616,6 +620,7 @@
     },
     "tomorrowGoal": {
       "title": "明日目標",
+      "planReadyCheer": "太棒了！迫不及待想和你一起開始這段新旅程！",
       "todayLabel": "今天",
       "tomorrowLabel": "明天",
       "aimFor": "目標 {{count}} 次",
@@ -645,6 +650,8 @@
         "attention_focus": "{{childName}}很難專注",
         "social": "幫{{childName}}發展社交和情緒能力",
         "anxiety_confidence": "{{childName}}的焦慮和自信",
+        "anxiety": "{{childName}}的焦慮",
+        "confidence": "{{childName}}的自信",
         "adhd": "{{childName}}的注意力和過動",
         "developmental_concerns": "{{childName}}的發展情況",
         "parenting_strategies": "找到真正有效的教養方法",
@@ -676,6 +683,15 @@
       "shareMessage": "今天用 Nora 我們瞭解到關於{{childName}}的一件事：{{insight}}",
       "advancedLanguageTag": "語言能力進階"
     },
+    "whatWeLearnt": {
+      "title": "我們對你的瞭解"
+    },
+    "skillsUnderneath": {
+      "title": "困擾背後的技能"
+    },
+    "howWePracticeTogether": {
+      "title": "我們將如何一起練習"
+    },
     "developmental": {
       "shareMessage": "用 Nora 追蹤{{childName}}的發展里程碑——來看看進展吧！"
     },
@@ -692,6 +708,9 @@
       "time": "大約需要 2 分鐘"
     },
     "seeYouTomorrow": "明天見",
+    "nextLevelOverview": {
+      "commitButton": "我承諾做到"
+    },
     "footer": "你正在最重要的時刻陪伴著孩子，繼續加油！"
   },
   "skillImprove": {
@@ -1107,7 +1126,7 @@
   },
   "forceUpdate": {
     "title": "需要更新",
-    "message": "Nora 有新版本。請更新以繼續使用。",
+    "message": "更新至全新的個人化學習之旅，讓 Nora 帶你一次專注掌握一項技能！",
     "updateButton": "立即更新"
   },
   "errorBoundary": {
@@ -1160,6 +1179,8 @@
     "successMessage": "感謝您的聯繫。我們將審核您的請求並盡快回覆。",
     "filesAttached": "已夾帶 {{count}} 個檔案",
     "errorAttachFile": "夾帶檔案失敗，請再試一次。",
+    "attachFromPhotos": "照片",
+    "attachFromFiles": "檔案",
     "errorSubmit": "提交請求失敗，請再試一次。"
   },
   "psychologistChat": {
@@ -1180,6 +1201,13 @@
     "statLessons": "課程",
     "statWeeks": "週",
     "statLevel": "級別",
+    "statInfoGotIt": "知道了",
+    "statInfoWeeklyStreakTitle": "連續週數",
+    "statInfoWeeklyStreakBody": "您與 {{childName}} 連續完成至少 4 次遊戲時段的週數。持續下去，建立穩定的習慣！",
+    "statInfoTotalSessionsTitle": "總次數",
+    "statInfoTotalSessionsBody": "自您開始使用 Nora 以來，與 {{childName}} 完成的遊戲時段總次數。",
+    "statInfoDaysThisWeekTitle": "本週天數",
+    "statInfoDaysThisWeekBody": "本週（共 7 天中）您與 {{childName}} 至少完成一次遊戲時段的天數。",
     "tipPerfect": "完美的 7/7！👑\n您太傳奇了！",
     "tipDaysDown": "已達成 {{count}} 天！🌟\n我們能挑戰滿 7 天嗎？",
     "tipAimFor4": "目標每週 4 天\n進度會更快喔",
@@ -1202,6 +1230,7 @@
     "meetCoachBodyEnd": " 的進度。",
     "chatWithCoach": "與教練對話",
     "recordAgain": "再次錄製",
+    "recordAgainBody": "今天的練習已完成，做得好！",
     "noraDaily": "Nora Daily",
     "noraDailySubtitle": "每日為您帶來科學育兒貼士與靈感。",
     "subActionLearnMore": "了解更多",
@@ -1219,6 +1248,8 @@
       "communityWisdom": "社群智慧"
     },
     "todaysPlan": "今日計畫",
+    "planPlayGuideLabel": "遊戲指南：",
+    "planPlayGuideTitle": "為第一次親子遊戲做好準備",
     "planLessonLabel": "每日學習：",
     "planLessonDuration": "5 分鐘閱讀",
     "planRecordLabel": "開始情感按摩：",
@@ -1246,18 +1277,6 @@
       "beforeSchool": "上學前充電",
       "afterSchool": "放學後重聚",
       "beforeSleep": "睡前遊戲時間"
-    },
-    "recordMessages": {
-      "0start": "您做得太棒了！準備好再次閃耀了嗎？與 ",
-      "0end": " 錄製另一個練習，見證奇蹟發生！ ✨",
-      "1start": "保持那股驚人的氣勢！與 ",
-      "1end": " 進行另一個有趣的練習吧！",
-      "2start": "到目前為止都很出色！與 ",
-      "2end": " 再進行 5 分鐘的特別時間，繼續共同成長！ 🌟",
-      "3start": "您可以做到的！與 ",
-      "3end": " 再錄製一次快速愉快的練習，慶祝您的進步！",
-      "4start": "準備好迎接更多樂趣了嗎？與 ",
-      "4end": " 捕捉另一個超讚的遊戲時光吧！"
     },
     "getReadyLabel": "遊戲指南",
     "getReadyBody": "開始之前，你需要知道的一切。",
@@ -1545,10 +1564,12 @@
       "headerText": "答案沒有對錯。請選擇所有適用的選項。",
       "title": "是什麼帶您來到這裡？",
       "bigFeelingsTantrums": "強烈情緒與發脾氣",
+      "behaviorChallenges": "行為挑戰",
       "listeningCooperation": "聆聽與配合",
       "attentionFocus": "注意力與專注力",
       "social": "社交與情緒技能",
-      "anxietyConfidence": "焦慮與自信",
+      "anxiety": "焦慮",
+      "confidence": "自信",
       "adhd": "ADHD 支持",
       "developmentalConcerns": "發展相關擔憂",
       "parentingStrategies": "成為更自信的家長",
@@ -1872,11 +1893,11 @@
     },
     "ob2": {
       "profName": "Yi-Chuen Chen 博士",
-      "profTitle1": "臨床兒童心理學家。",
-      "profTitle2": "Nora 臨床指導",
-      "headingPre": "Nora 會幫你成為\n",
-      "headingHighlight": "育兒專家",
-      "headingPost": "\n孩子所需要的那種。"
+      "profTitle1": "兒童臨床心理學家",
+      "profTitle2": "Nora 臨床專業顧問",
+      "headingPre": "Nora 幫你練就應對\n",
+      "headingHighlight": "艱難時刻",
+      "headingPost": "的教養技巧，一路相伴。"
     },
     "ob3": {
       "titlePre": "你的資料",

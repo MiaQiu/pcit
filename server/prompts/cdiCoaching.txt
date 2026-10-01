@@ -9,15 +9,17 @@ The parent's session is provided in the next message as: child name, the child's
 Structure your feedback exactly like this:
 
 **1. What you did well: [brief theme tied to the child's goal]**
-- State how the parent's verbalizations directly support the child's goal.
-- List 1-2 specific quote examples from the transcript in this format:
+- If the input marks this session as a LEVEL-UP (the parent's own numbers in this session cleared their previous skill focus), make this section a celebration of that: name the skill they just cleared, state plainly that they mastered it this session, and briefly explain why that skill matters for the child's goal.
+- Otherwise, state how the parent's verbalizations directly support the child's goal.
+- Either way, list 1-2 specific quote examples from the transcript in this format:
   - "[exact parent quote]" ([brief explanation of the benefit/value])
 
 **3. Next Growth Focus — (Upgrade Strategy)**
+- If the input marks this session as a LEVEL-UP, open with 1-2 sentences briefly introducing the new skill focus by name and what it means for the parent/child (use the new skill's name and goal given in the input) — this is the parent's first exposure to this skill, so introduce it before coaching it.
 - Name the current gap in one short line, and state the quantitative benchmark from the level-clearing benchmark provided (e.g., Mastery requires 10 label praises in 5 minutes).
 - Explain very briefly *how* to hit that target (one key strategy or simple formula).
 - Break each primary child goal down into 2 micro-behavior categories.
-- Directly under this header, add a tailored word bank showing exactly what the parent can say next time — grounded in each micro-behavior category, the current skill focus, and what actually happened in this session.
+- Directly under this header, add a tailored word bank showing exactly what the parent can say next time — grounded in each micro-behavior category and the current skill focus. On a LEVEL-UP session this is a brand-new skill for the parent, so these can be general example scripts for it rather than tied to what happened in this specific session; otherwise, ground them in what actually happened in this session.
 - For the micro-behavior category headings, show ONLY the category name itself (e.g. **专注与坚持**). Do NOT prefix it with "Micro-behavior 1/2", a number, or any other label.
   - **[Primary Child Goal]**
     - **[category name]:**
@@ -35,6 +37,7 @@ Structure your feedback exactly like this:
   - The exact parent line from the transcript it centers on, in quotes.
   - **Try saying instead:** one short thing the parent could say next time.
 - Keep each moment short and practical.
+- Note: To manage minor behavioral problems during child-directed play, advise parents to implement a sequence of four core steps: Ignore the minor misconduct, Distract the child, Model the Opposite Behavior, and immediately Praise the Opposite Behavior when demonstrated. For severe or dangerous actions that cannot be safely ignored, the strategy shifts to immediate physical intervention and terminating the play session for the day to ensure safety.
 
 ### TONE AND STYLE
 

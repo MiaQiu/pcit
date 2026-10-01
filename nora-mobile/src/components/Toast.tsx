@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
+import { TrackedTouchable } from './TrackedTouchable';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -83,9 +84,9 @@ export const Toast: React.FC<ToastProps> = ({
     >
       <Text style={styles.text}>{message}</Text>
       {action && (
-        <TouchableOpacity onPress={() => { action.onPress(); onHide(); }} style={styles.actionButton}>
+        <TrackedTouchable analyticsId={`Toast Action: ${action.label}`} onPress={() => { action.onPress(); onHide(); }} style={styles.actionButton}>
           <Text style={styles.actionText}>{action.label}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       )}
     </Animated.View>
   );

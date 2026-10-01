@@ -8,13 +8,14 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS } from '../constants/assets';
 import type { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 type GuideKey = 'why5mins' | 'whyRecord';
 
@@ -82,14 +83,14 @@ export const QuickGuideScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.navRow}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="Back"
           onPress={() => navigation.goBack()}
           style={styles.backCircle}
           activeOpacity={0.7}
           accessibilityLabel="Back"
         >
           <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

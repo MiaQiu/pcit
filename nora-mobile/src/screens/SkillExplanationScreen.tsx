@@ -4,14 +4,13 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
-import { useTranslation } from 'react-i18next';
-import amplitudeService from '../services/amplitudeService';
+import { useTranslation } from 'react-i18next';import { TrackedTouchable } from '../components/TrackedTouchable';
 
 type SkillExplanationRouteProp = RouteProp<RootStackParamList, 'SkillExplanation'>;
 
@@ -47,7 +46,6 @@ export const SkillExplanationScreen: React.FC = () => {
   const canonicalKey = (SKILL_ALIASES[skillKey] || skillKey).toLowerCase();
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Skill Explanation', { skillKey, score });
   }, []);
   const category = SKILL_CATEGORIES[canonicalKey];
 
@@ -85,9 +83,9 @@ export const SkillExplanationScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.headerTitle}>{noraScoreExplanation.title}</Text>
           <View style={{ width: 28 }} />
         </View>
@@ -152,9 +150,9 @@ export const SkillExplanationScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Text style={styles.headerTitle}>{t('skillInfo.skillDetails')}</Text>
           <View style={{ width: 28 }} />
         </View>
@@ -172,9 +170,9 @@ export const SkillExplanationScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+        <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <Text style={styles.headerTitle}>{explanation.title}</Text>
         <View style={{ width: 28 }} />
       </View>

@@ -11,7 +11,6 @@ import {
   StyleSheet,
   Dimensions,
   Animated,
-  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import amplitudeService from '../services/amplitudeService';
@@ -26,6 +25,7 @@ import Svg, {
   Stop,
 } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = Math.min(SCREEN_WIDTH - 32, 390);
@@ -40,7 +40,6 @@ export const EmotionalMassageScreen: React.FC = () => {
   const bounceY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Emotional Massage');
     Animated.loop(
       Animated.sequence([
         Animated.timing(bounceY, { toValue: -120, duration: 500, useNativeDriver: true }),
@@ -77,29 +76,29 @@ export const EmotionalMassageScreen: React.FC = () => {
 
         {/* Navigation row */}
         <View style={sh.navRow}>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="goPrev"
             onPress={goPrev}
             disabled={currentCard === 0}
             style={[sh.navArrow, currentCard === 0 && sh.navArrowDisabled]}
           >
             <Ionicons name="chevron-back" size={22} color={currentCard === 0 ? '#CCC' : '#1A1A1A'} />
-          </TouchableOpacity>
+          </TrackedTouchable>
 
           <View style={sh.dotsRow}>
             {Array.from({ length: TOTAL_CARDS }).map((_, i) => (
-              <TouchableOpacity key={i} onPress={() => setCurrentCard(i)}>
+              <TrackedTouchable analyticsId={`Card Dot: ${i}`} key={i} onPress={() => setCurrentCard(i)}>
                 <View style={[sh.navDot, i === currentCard && sh.navDotActive]} />
-              </TouchableOpacity>
+              </TrackedTouchable>
             ))}
           </View>
 
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="goNext"
             onPress={goNext}
             disabled={currentCard === TOTAL_CARDS - 1}
             style={[sh.navArrow, currentCard === TOTAL_CARDS - 1 && sh.navArrowDisabled]}
           >
             <Ionicons name="chevron-forward" size={22} color={currentCard === TOTAL_CARDS - 1 ? '#CCC' : '#1A1A1A'} />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </ScrollView>
     </SafeAreaView>

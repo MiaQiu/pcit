@@ -3,6 +3,7 @@ const express = require('express');
 const crypto = require('crypto');
 const { requireAuth } = require('../middleware/auth.cjs');
 const prisma = require('../services/db.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 const router = express.Router();
 
@@ -63,7 +64,7 @@ router.post('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Submit PHQ-2 survey error:', error);
+    logError(error, { route: 'phq2-survey#Submit PHQ-2 survey error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to submit survey' });
   }
 });
@@ -89,7 +90,7 @@ router.get('/', async (req, res) => {
     res.json({ surveys, total });
 
   } catch (error) {
-    console.error('Get PHQ-2 surveys error:', error);
+    logError(error, { route: 'phq2-survey#Get PHQ-2 surveys error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch surveys' });
   }
 });
@@ -114,7 +115,7 @@ router.get('/latest', async (req, res) => {
     res.json({ survey });
 
   } catch (error) {
-    console.error('Get latest PHQ-2 survey error:', error);
+    logError(error, { route: 'phq2-survey#Get latest PHQ-2 survey error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch latest survey' });
   }
 });

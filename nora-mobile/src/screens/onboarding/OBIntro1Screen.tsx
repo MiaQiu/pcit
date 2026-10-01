@@ -10,7 +10,6 @@ import {
   Text,
   Image,
   StyleSheet,
-  TouchableOpacity,
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_SCALE = 0.9;
@@ -53,7 +53,7 @@ export const OBIntro1Screen: React.FC = () => {
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="onboarding.obIntro1.continueButton"
           style={styles.button}
           onPress={() => {
             amplitudeService.trackOnboardingStepCompleted('ob_intro1', 25);
@@ -62,7 +62,7 @@ export const OBIntro1Screen: React.FC = () => {
           activeOpacity={0.85}
         >
           <Text style={styles.buttonText}>{t('onboarding.obIntro1.continueButton')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

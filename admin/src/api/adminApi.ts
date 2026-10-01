@@ -1,4 +1,4 @@
-import { apiFetch, apiFetchEnv, setToken } from './client';
+import { apiFetch, apiFetchEnv, apiFetchRaw, setToken } from './client';
 
 // Options for calling dev or prod API
 export interface ApiEnvOpts {
@@ -1113,6 +1113,125 @@ export async function rerunCdiCoaching(sessionId: string, opts?: ApiEnvOpts): Pr
   );
 }
 
+// ---- Session Report (mirrors the mobile app's ReportScreen_v3 / ReportDetailScreen data) ----
+
+export interface SessionReportSkill {
+  label: string;
+  progress: number;
+}
+
+export interface SessionReportAvoidArea {
+  label: string;
+  count: number;
+}
+
+export interface SessionReportTranscriptLine {
+  speaker: string;
+  text: string;
+  start: number | null;
+  end: number | null;
+  role: string | null;
+  tag: string | null;
+  pcitTag: string | null;
+  feedback: string | null;
+}
+
+export interface SessionReportCoachCornerExample {
+  quote: string;
+  benefit: string;
+}
+
+export interface SessionReportCoachCornerDidWell {
+  theme: string;
+  howItHelps: string;
+  examples: SessionReportCoachCornerExample[];
+}
+
+export interface SessionReportCoachCornerGrowthFocus {
+  heading: string;
+  newSkillIntro: string | null;
+  gap: string;
+  benchmark: string;
+  strategy: string;
+}
+
+export interface SessionReportWordBankCategory {
+  name: string;
+  examples: string[];
+}
+
+export interface SessionReportWordBankGoal {
+  goal: string;
+  categories: SessionReportWordBankCategory[];
+}
+
+export interface SessionReportCoachCorner {
+  didWell: SessionReportCoachCornerDidWell;
+  growthFocus: SessionReportCoachCornerGrowthFocus;
+  wordBank: SessionReportWordBankGoal[];
+}
+
+export interface SessionReportLearningMoment {
+  title: string;
+  explanation: string;
+  quote: string | null;
+  suggestedRewrite: string | null;
+}
+
+export interface SessionReportLearningMoments {
+  summary: string | null;
+  points: SessionReportLearningMoment[];
+}
+
+export interface SessionReportGoalDirective {
+  focusSkill: string;
+  currentNumber: number | null;
+  targetNumber: number | string | null;
+  goalType: string | null;
+  actionPrompt: string | null;
+}
+
+// Full session report payload — same shape /api/recordings/:id/analysis returns
+// to the mobile app. Fields not needed by the admin view are left untyped here.
+export interface SessionReport {
+  id: string;
+  mode: string;
+  durationSeconds: number;
+  createdAt: string;
+  noraScore: number;
+  skills: SessionReportSkill[];
+  areasToAvoid: SessionReportAvoidArea[];
+  topMoment: string | null;
+  topMomentCelebration: string | null;
+  coachCorner: SessionReportCoachCorner | null;
+  skillCoaching: string | null;
+  learningMoments: SessionReportLearningMoments | null;
+  crisisMoment: { title?: string; description?: string; coaching?: string } | null;
+  audioUrl: string | null;
+  tomorrowGoal: string | null;
+  tomorrowGoalDirective: SessionReportGoalDirective | null;
+  transcript: SessionReportTranscriptLine[];
+  aboutChild: Array<{ Title?: string; Description?: string; Details?: string }> | null;
+}
+
+export type SessionReportResult =
+  | { status: 'completed'; report: SessionReport }
+  | { status: 'processing'; message: string }
+  | { status: 'failed'; message: string }
+  | { status: 'not_found' };
+
+export async function getSessionReport(sessionId: string, opts?: ApiEnvOpts): Promise<SessionReportResult> {
+  const res = await apiFetchRaw(`/api/admin/sessions/${sessionId}/analysis`, {}, opts);
+  const body = await res.json().catch(() => ({}));
+  if (res.status === 404) return { status: 'not_found' };
+  if (res.status === 202) return { status: 'processing', message: body.message || 'Analysis in progress' };
+  if (res.status === 500 && body.status === 'failed') {
+    return { status: 'failed', message: body.message || body.error || 'Analysis failed' };
+  }
+  if (!res.ok) throw new Error(body.error || `Request failed: ${res.status}`);
+  return { status: 'completed', report: body };
+}
+
 // ---- Coding Review ----
 
 export interface CodingReviewSession {
@@ -1206,23 +1325,45 @@ export interface PartnerDiscounts {
   yearly: PartnerDiscount | null;
 }
 
+// Custom copy for the first two web signup screens. null = default copy.
+export interface PartnerLandingText {
+  headline: string | null;
+  subtext: string | null;
+  ctaText: string | null;
+  accountTitle: string | null;
+  accountSubtitle: string | null;
+}
+
+export interface PartnerLanding extends PartnerLandingText {
+  imageKey: string | null; // raw S3 key; set via upload/remove endpoints
+}
+
+export type PartnerKind = 'PARTNER' | 'CAMPAIGN';
+
 export interface PartnerConfig {
   trialDays: number;
   plans: ('monthly' | 'yearly')[];
   discounts: PartnerDiscounts;
   welcomeMessage: string | null;
   maxRedemptions: number | null;
+  displayName?: string | null;     // public name on the subscribe page
+  skipSubscription?: boolean;      // skip /subscribe in web signup
+  landing?: PartnerLanding | null;
 }
 
 export interface Partner {
   id: string;
   slug: string;
   name: string;
+  kind: PartnerKind;
   status: 'ACTIVE' | 'PAUSED' | 'EXPIRED';
   config: PartnerConfig;
   expiresAt: string | null;
   redemptions: number;
+  visits: number;
+  landingImageUrl: string | null; // presigned preview of config.landing.imageKey
   qrCodeUrl: string | null;
+  signupUrl: string; // same URL the QR code encodes (server's SIGNUP_APP_URL)
   userCount: number;
   discountLabels: { monthly: string | null; yearly: string | null };
   createdAt: string;
@@ -1231,15 +1372,21 @@ export interface Partner {
 export interface PartnerCreatePayload {
   slug: string;
   name: string;
+  kind?: PartnerKind;
+  displayName?: string | null;
+  skipSubscription?: boolean;
+  // imageKey is honored on create only (to reuse a duplicated campaign's image).
+  landing?: (PartnerLandingText & { imageKey?: string | null }) | null;
   trialDays?: number;
   plans?: ('monthly' | 'yearly')[];
   discounts?: {
     monthly?: Omit<PartnerDiscount, 'stripeCouponId'> | null;
     yearly?: Omit<PartnerDiscount, 'stripeCouponId'> | null;
   };
-  welcomeMessage?: string;
-  maxRedemptions?: number;
-  expiresAt?: string;
+  // On update: omit = leave unchanged, null = clear.
+  welcomeMessage?: string | null;
+  maxRedemptions?: number | null;
+  expiresAt?: string | null;
 }
 
 export async function getPartners(opts?: ApiEnvOpts): Promise<Partner[]> {
@@ -1274,4 +1421,50 @@ export async function deactivatePartner(id: string, opts?: ApiEnvOpts): Promise<
 
 export async function regeneratePartnerQrCode(id: string, opts?: ApiEnvOpts): Promise<Partner> {
   return apiFetchEnv(`/api/admin/partners/${id}/qr-code`, { method: 'POST' }, opts);
+}
+
+// Multipart upload — apiFetchEnv forces a JSON content type, so build the request here.
+async function partnerImageRequest(id: string, method: 'POST' | 'DELETE', file: File | null, opts?: ApiEnvOpts): Promise<Partner> {
+  const token = opts?.token ?? (await import('./client')).getToken();
+  let body: FormData | undefined;
+  if (file) {
+    body = new FormData();
+    body.append('image', file);
+  }
+  const res = await fetch(`${opts?.baseUrl ?? ''}/api/admin/partners/${id}/landing-image`, {
+    method,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export function uploadPartnerLandingImage(id: string, file: File, opts?: ApiEnvOpts): Promise<Partner> {
+  return partnerImageRequest(id, 'POST', file, opts);
+}
+
+export function removePartnerLandingImage(id: string, opts?: ApiEnvOpts): Promise<Partner> {
+  return partnerImageRequest(id, 'DELETE', null, opts);
+}
+
+export interface PartnerUser {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+  subscriptionStatus: string;
+  subscriptionPlan: string;
+  subscriptionStartDate: string | null;
+  subscriptionEndDate: string | null;
+  trialStartDate: string | null;
+  trialEndDate: string | null;
+}
+
+export async function getPartnerUsers(id: string, opts?: ApiEnvOpts): Promise<PartnerUser[]> {
+  const data = await apiFetchEnv<{ users: PartnerUser[] }>(`/api/admin/partners/${id}/users`, {}, opts);
+  return data.users;
 }

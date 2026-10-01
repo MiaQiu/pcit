@@ -5,10 +5,11 @@
  */
 
 import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { Modal, View, Text, StyleSheet, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface PhaseCelebrationModalProps {
   visible: boolean;
@@ -69,13 +70,13 @@ export const PhaseCelebrationModal: React.FC<PhaseCelebrationModalProps> = ({
           </View>
 
           {/* Continue Button */}
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="phaseCelebration.gotIt"
             style={styles.continueButton}
             onPress={onClose}
             activeOpacity={0.8}
           >
             <Text style={styles.continueButtonText}>{t('phaseCelebration.gotIt')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </View>
     </Modal>

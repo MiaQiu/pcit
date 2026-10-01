@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { View, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Image, StyleSheet } from 'react-native';
 import type { RelationshipToChild } from '@nora/core';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface ProfileCircleProps {
   imageUrl?: string;
@@ -68,9 +69,9 @@ export const ProfileCircle: React.FC<ProfileCircleProps> = ({
 
   if (onPress) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+      <TrackedTouchable analyticsId="on" onPress={onPress} activeOpacity={0.8}>
         {content}
-      </TouchableOpacity>
+      </TrackedTouchable>
     );
   }
 

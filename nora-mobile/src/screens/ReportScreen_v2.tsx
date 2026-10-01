@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -20,6 +20,7 @@ import * as userStorage from '../lib/userStorage';
 import { LevelUpModal } from '../components/LevelUpModal';
 import { PARENT_SKILL_LEVEL_KEYS, PARENT_SKILL_LEVEL_ORDER } from '../constants/parentSkillLevels';
 import { deriveGoalFromLevel, DerivedGoal, REDUCE_GOAL_TYPES, GOAL_TYPE_SKILL_LABEL_KEY } from '../utils/goalFallback';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 type ReportScreenV2RouteProp = RouteProp<RootStackParamList, 'ReportV2'>;
 
@@ -45,7 +46,6 @@ export const ReportScreen_v2: React.FC = () => {
   const [levelUpInfo, setLevelUpInfo] = useState<{ from: ParentSkillLevel; to: ParentSkillLevel } | null>(null);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Report', { recordingId, version: 'v2' });
     loadReportData();
     loadParentSkillLevel();
   }, [recordingId]);
@@ -125,7 +125,10 @@ export const ReportScreen_v2: React.FC = () => {
 
   const handleContinueToCoaching = () => {
     amplitudeService.trackEvent('Report V2 Continue To Coaching Tapped', { recordingId });
-    navigation.navigate('ReportDetail', { recordingId });
+    navigation.navigate('ReportDetail', {
+      recordingId,
+      ...(levelUpInfo ? { leveledUp: true, fromLevel: levelUpInfo.from, toLevel: levelUpInfo.to } : {}),
+    });
   };
 
   const handleLevelCardPress = () => {
@@ -137,9 +140,9 @@ export const ReportScreen_v2: React.FC = () => {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.mainPurple} />
@@ -155,9 +158,9 @@ export const ReportScreen_v2: React.FC = () => {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color="#E74C3C" />
@@ -204,9 +207,9 @@ export const ReportScreen_v2: React.FC = () => {
       >
         {/* Hero */}
         <View style={styles.heroSection}>
-          <TouchableOpacity onPress={handleBack} style={styles.heroBackButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.heroBackButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <Image source={isAmazing ? REPORT_DRAGON_AMAZING : REPORT_DRAGON_GOOD} style={styles.dragonImage} resizeMode="contain" />
           <View style={styles.heroTextCol}>
             <Text style={styles.headline}>
@@ -243,7 +246,7 @@ export const ReportScreen_v2: React.FC = () => {
             )}
           </View>
 
-          <TouchableOpacity style={[styles.statCard, styles.levelChip]} activeOpacity={0.85} onPress={handleLevelCardPress}>
+          <TrackedTouchable analyticsId="reportV2.levelLabel" style={[styles.statCard, styles.levelChip]} activeOpacity={0.85} onPress={handleLevelCardPress}>
             <MaterialCommunityIcons name="medal-outline" size={40} color="#CBA76A" style={styles.levelChipMedal} />
             <View style={styles.statHeaderRow}>
               <View style={styles.statIconCircle}>
@@ -261,7 +264,7 @@ export const ReportScreen_v2: React.FC = () => {
                 <Text style={styles.levelChipProgressText}>{qualifyingCount}/2</Text>
               </View>
             )}
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
 
         {/* Today's Goal — spotlight card */}
@@ -332,14 +335,14 @@ export const ReportScreen_v2: React.FC = () => {
           </View>
         )}
 
-        <TouchableOpacity style={styles.continueButton} onPress={handleContinueToCoaching} activeOpacity={0.85}>
+        <TrackedTouchable analyticsId="reportV2.continueToCoaching" style={styles.continueButton} onPress={handleContinueToCoaching} activeOpacity={0.85}>
           <MaterialCommunityIcons name="trophy-outline" size={20} color="#FFFFFF" />
           <Text style={styles.continueButtonText}>{t('reportV2.continueToCoaching')}</Text>
           <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         {/* TEMP DEBUG — preview the level-up animation on demand. Remove before merging. */}
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="Preview Level Up (testing)"
           style={{ marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: '#333', alignItems: 'center' }}
           onPress={() => {
             const maxLevel = PARENT_SKILL_LEVEL_ORDER[PARENT_SKILL_LEVEL_ORDER.length - 1];
@@ -348,7 +351,7 @@ export const ReportScreen_v2: React.FC = () => {
           }}
         >
           <Text style={{ color: '#FFFFFF', fontFamily: FONTS.bold }}>Preview Level Up (testing)</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </ScrollView>
 
       {levelUpInfo && (

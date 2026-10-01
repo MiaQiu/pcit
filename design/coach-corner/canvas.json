@@ -1,0 +1,9 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 390, "h": 1420, "title": "Coach's Corner — segmented" }
+  ],
+  "annotations": [
+    { "id": "note-final", "x": 0, "y": -210, "w": 470, "text": "Segmented \"Went well\" / \"Grow next\" card — both tab states shown.\nOnly the sample SENTENCES are boxed, so a parent can scan them: the parent's own praise gets a terracotta-spine box (why it worked sits underneath as a plain caption); each \"try saying next time\" script gets a peach-spine box with a copy affordance. Coaching prose and the benchmark stay unboxed.\n\nData is session 204e744a's latest run: the Chinese category names and single goal are coaching-narrative quirks, not the layout. [婴儿声] in the first quote is a raw transcription artifact." }
+  ],
+  "launch": { "view": "canvas" }
+}

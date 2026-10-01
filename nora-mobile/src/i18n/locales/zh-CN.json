@@ -217,7 +217,7 @@
     "termsAndConditions": "服务条款",
     "privacyPolicy": "隐私权政策",
     "language": "语言",
-    "logOut": "注销",
+    "logOut": "退出登录",
     "deleteAccount": "删除帐号",
     "permissionRequiredTitle": "需要权限",
     "permissionRequiredMessage": "请允许访问您的相片以更换个人头像。",
@@ -225,13 +225,13 @@
     "errorLoadProfile": "加载文件信息失败",
     "errorUploadImage": "上传图片失败",
     "successImageUpdated": "个人头像已成功更新",
-    "logOutConfirmTitle": "注销",
-    "logOutConfirmMessage": "确定要注销吗？",
-    "logOutConfirmButton": "注销",
+    "logOutConfirmTitle": "退出登录",
+    "logOutConfirmMessage": "确定要退出登录吗？",
+    "logOutConfirmButton": "退出登录",
     "deleteConfirmTitle": "删除帐号",
     "deleteConfirmMessage": "这将永久删除您的帐号及其关联的所有个人信息。您将失去所有游戏纪录与分析报告。此操作无法复原。",
     "deleteConfirmButton": "删除帐号",
-    "errorLogOut": "注销失败，请再试一次。",
+    "errorLogOut": "退出登录失败，请再试一次。",
     "errorManageSubscription": "无法打开订阅管理",
     "errorManageSubscriptionRetry": "无法打开订阅管理，请再试一次。",
     "errorDeleteAccount": "删除帐号失败。请再试一次或联系技术支持。",
@@ -248,6 +248,8 @@
       "big_feelings_tantrums": "强烈情绪与发脾气",
       "listening_cooperation": "聆听与配合",
       "anxiety_confidence": "焦虑与自信",
+      "anxiety": "焦虑",
+      "confidence": "自信",
       "developmental_concerns": "发展相关担忧",
       "parenting_strategies": "学习更有效的教养策略",
       "defiance": "反抗行为",
@@ -582,6 +584,7 @@
       "wordBankLabel": "下次可以这样说",
       "tabWentWell": "做得好",
       "tabGrowNext": "下一步",
+      "tabIntoNewSkill": "进入新技能",
       "benchmarkLabel": "目标",
       "learnMoreTitle": "了解更多关于{{skill}}的内容",
       "lessonBadge": "课程",
@@ -602,11 +605,12 @@
       "title": "你的互动风格",
       "viewTips": "查看建议",
       "detailedBreakdown": "详细分析",
-      "confidenceBuilders": "自信建立",
+      "confidenceBuilders": "技能建立",
       "confidenceBuildersSubtitle": "提升自信与专注",
       "playInterruptions": "游戏干扰",
       "playInterruptionsSubtitle": "可以一起改进的地方",
       "moments_other": "{{count}} 次",
+      "parentSuperpowers": "你的育儿超能力",
       "whyPersonalised": {
         "toddler": "你来到 Nora 是为了解决{{concern}}。{{childName}}才{{age}}岁，大脑刚开始建立自我控制的神经连接，而这靠的是与你一次次的小互动，而不是长篇大论。我们记为**“自信建立”**的时刻——表扬、描述{{childName}}在玩什么、让他/她主导——是滋养亲子关系和孩子自信的存款；而**“游戏干扰”**——提问、命令、纠正——则在悄悄抵消它。所以我们会一次只练一项技能，把每一项单独拿出来练熟，再加入下一项。",
         "preschool": "你来到 Nora 是为了解决{{concern}}。{{childName}}{{age}}岁，正处在这些能力发展最快的阶段，而它们是在与你的日常互动中成长的。我们记为**“自信建立”**的时刻——表扬、描述{{childName}}在玩什么、让他/她主导——是滋养亲子关系和孩子自信的存款；而**“游戏干扰”**——提问、命令、纠正——则在悄悄抵消它。所以我们会一次只练一项技能，把每一项单独拿出来练熟，再加入下一项。",
@@ -616,6 +620,7 @@
     },
     "tomorrowGoal": {
       "title": "明日目标",
+      "planReadyCheer": "太棒了！迫不及待想和你一起开始这段新旅程！",
       "todayLabel": "今天",
       "tomorrowLabel": "明天",
       "aimFor": "目标 {{count}} 次",
@@ -645,6 +650,8 @@
         "attention_focus": "{{childName}}很难专注",
         "social": "帮{{childName}}发展社交和情绪能力",
         "anxiety_confidence": "{{childName}}的焦虑和自信",
+        "anxiety": "{{childName}}的焦虑",
+        "confidence": "{{childName}}的自信",
         "adhd": "{{childName}}的注意力和过动",
         "developmental_concerns": "{{childName}}的发展情况",
         "parenting_strategies": "找到真正有效的教养方法",
@@ -676,6 +683,15 @@
       "shareMessage": "今天用 Nora 我们了解到关于{{childName}}的一件事：{{insight}}",
       "advancedLanguageTag": "语言能力进阶"
     },
+    "whatWeLearnt": {
+      "title": "我们对你的了解"
+    },
+    "skillsUnderneath": {
+      "title": "困扰背后的技能"
+    },
+    "howWePracticeTogether": {
+      "title": "我们将如何一起练习"
+    },
     "developmental": {
       "shareMessage": "用 Nora 追踪{{childName}}的发展里程碑——来看看进展吧！"
     },
@@ -692,6 +708,9 @@
       "time": "大约需要 2 分钟"
     },
     "seeYouTomorrow": "明天见",
+    "nextLevelOverview": {
+      "commitButton": "我承诺做到"
+    },
     "footer": "你正在最重要的时刻陪伴着孩子，继续加油！"
   },
   "skillImprove": {
@@ -1107,7 +1126,7 @@
   },
   "forceUpdate": {
     "title": "需要更新",
-    "message": "Nora 有新版本。请更新以继续使用。",
+    "message": "更新至全新的个性化学习之旅，让 Nora 带你一次专注掌握一项技能！",
     "updateButton": "立即更新"
   },
   "errorBoundary": {
@@ -1160,6 +1179,8 @@
     "successMessage": "感谢您的联系。我们将审核您的请求并尽快回复。",
     "filesAttached": "已夹带 {{count}} 个文件",
     "errorAttachFile": "夹带文件失败，请再试一次。",
+    "attachFromPhotos": "照片",
+    "attachFromFiles": "文件",
     "errorSubmit": "提交请求失败，请再试一次。"
   },
   "psychologistChat": {
@@ -1180,6 +1201,13 @@
     "statLessons": "课程",
     "statWeeks": "周",
     "statLevel": "级别",
+    "statInfoGotIt": "知道了",
+    "statInfoWeeklyStreakTitle": "连续周数",
+    "statInfoWeeklyStreakBody": "您与 {{childName}} 连续完成至少 4 次游戏时段的周数。坚持下去，养成稳定的习惯！",
+    "statInfoTotalSessionsTitle": "总次数",
+    "statInfoTotalSessionsBody": "自您开始使用 Nora 以来，与 {{childName}} 完成的游戏时段总次数。",
+    "statInfoDaysThisWeekTitle": "本周天数",
+    "statInfoDaysThisWeekBody": "本周（共 7 天中）您与 {{childName}} 至少完成一次游戏时段的天数。",
     "tipPerfect": "完美的 7/7！👑\n您太传奇了！",
     "tipDaysDown": "已达成 {{count}} 天！🌟\n我们能挑战满 7 天吗？",
     "tipAimFor4": "目标每周 4 天\n进度会更快喔",
@@ -1202,6 +1230,7 @@
     "meetCoachBodyEnd": " 的进度。",
     "chatWithCoach": "与教练对话",
     "recordAgain": "再次录制",
+    "recordAgainBody": "今天的练习已完成，做得好！",
     "noraDaily": "Nora Daily",
     "noraDailySubtitle": "每日为您带来科学育儿贴士与灵感。",
     "subActionLearnMore": "了解更多",
@@ -1219,6 +1248,8 @@
       "communityWisdom": "社区智慧"
     },
     "todaysPlan": "今日计划",
+    "planPlayGuideLabel": "游戏指南：",
+    "planPlayGuideTitle": "为第一次亲子游戏做好准备",
     "planLessonLabel": "每日学习：",
     "planLessonDuration": "5 分钟阅读",
     "planRecordLabel": "开始情感按摩：",
@@ -1246,18 +1277,6 @@
       "beforeSchool": "上学前充电",
       "afterSchool": "放学后重聚",
       "beforeSleep": "睡前游戏时间"
-    },
-    "recordMessages": {
-      "0start": "您做得太棒了！准备好再次闪耀了吗？与 ",
-      "0end": " 录制另一个练习，见证奇迹发生！ ✨",
-      "1start": "保持那股惊人的气势！与 ",
-      "1end": " 进行另一个有趣的练习吧！",
-      "2start": "到目前为止都很出色！与 ",
-      "2end": " 再进行 5 分钟的特别时间，继续共同成长！ 🌟",
-      "3start": "您可以做到的！与 ",
-      "3end": " 再录制一次快速愉快的练习，庆祝您的进步！",
-      "4start": "准备好迎接更多乐趣了吗？与 ",
-      "4end": " 捕捉另一个超赞的游戏时光吧！"
     },
     "getReadyLabel": "游戏指南",
     "getReadyBody": "开始之前，你需要知道的一切。",
@@ -1545,10 +1564,12 @@
       "headerText": "答案没有对错。请选择所有适用的选项。",
       "title": "是什么带您来到这里？",
       "bigFeelingsTantrums": "强烈情绪与发脾气",
+      "behaviorChallenges": "行为挑战",
       "listeningCooperation": "聆听与配合",
       "attentionFocus": "注意力与专注力",
       "social": "社交与情绪技能",
-      "anxietyConfidence": "焦虑与自信",
+      "anxiety": "焦虑",
+      "confidence": "自信",
       "adhd": "ADHD 支持",
       "developmentalConcerns": "发展相关担忧",
       "parentingStrategies": "成为更自信的家长",
@@ -1872,11 +1893,11 @@
     },
     "ob2": {
       "profName": "Yi-Chuen Chen 博士",
-      "profTitle1": "临床儿童心理学家。",
-      "profTitle2": "Nora 临床指导",
-      "headingPre": "Nora 会帮你成为\n",
-      "headingHighlight": "育儿专家",
-      "headingPost": "\n孩子所需要的那种。"
+      "profTitle1": "儿童临床心理学家",
+      "profTitle2": "Nora 临床专业顾问",
+      "headingPre": "Nora 帮你练就应对\n",
+      "headingHighlight": "艰难时刻",
+      "headingPost": "的教养技巧，一路相伴。"
     },
     "ob3": {
       "titlePre": "你的数据",

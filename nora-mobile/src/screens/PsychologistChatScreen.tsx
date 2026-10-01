@@ -8,15 +8,14 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   FlatList,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   Keyboard,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as userStorage from '../lib/userStorage';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +24,7 @@ import { useAuthService } from '../contexts/AppContext';
 import { useCoachUnread } from '../contexts/CoachUnreadContext';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
 
@@ -246,9 +246,9 @@ export const PsychologistChatScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="chevron-down" size={26} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{t('psychologistChat.headerTitle')}</Text>
           <Text style={styles.headerSub}>{t('psychologistChat.headerSub')}</Text>
@@ -295,7 +295,7 @@ export const PsychologistChatScreen: React.FC = () => {
             maxLength={1000}
             returnKeyType="default"
           />
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Send"
             style={[styles.sendBtn, (!input.trim() || sending) && styles.sendBtnDisabled]}
             onPress={handleSend}
             disabled={!input.trim() || sending}
@@ -305,7 +305,7 @@ export const PsychologistChatScreen: React.FC = () => {
               ? <ActivityIndicator size="small" color="#fff" />
               : <Ionicons name="arrow-up" size={20} color="#fff" />
             }
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

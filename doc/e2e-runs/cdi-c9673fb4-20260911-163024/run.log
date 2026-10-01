@@ -1,0 +1,151 @@
+
+==============================================================================
+E2E LLM CALLS — session c9673fb4-f98f-457c-98dd-ee6fd7723302
+gemini path: gemini-3.7-flash → gemini-3.1-pro-preview  (GEMINI_FLASH_MODEL=gemini-3.7-flash)
+streaming model (pcit-coding, coaching-narrative, review-feedback): gemini-3.1-pro-preview
+stages: quality-check, role-id, pcit-coding, dev-profiling, about-child, cdi-coaching, cdi-feedback, report-highlights, crisis, pdi-two-choices
+==============================================================================
+Decryption failed, returning raw value
+
+session   : mode=CDI status=COMPLETED duration=301s
+child     : Lucas, 37 months, girl
+utterances: 137  childSpeaker=speaker_1
+tagCounts : from DB
+language  : eng/none
+
+──────────────────────────────────────────────────────────────────────────────
+▶  quality-check
+──────────────────────────────────────────────────────────────────────────────
+{"event":"llm_call","label":"session-quality-check","model":"gemini-3.7-flash","provider":"gemini","latencyMs":1852,"inputTokens":4038,"outputTokens":133,"thinkingTokens":128,"hasSchema":false,"usedFallback":false,"usedRepair":false,"usedRetry":false,"ok":true}
+   → quality-check: OK — 1 llm call(s), 1.9s
+
+──────────────────────────────────────────────────────────────────────────────
+▶  role-id
+──────────────────────────────────────────────────────────────────────────────
+📊 [ROLE-ID-VOTE] Phase 1: Gemini + ML in parallel...
+{"event":"llm_call","label":"role-id-gemini","model":"gemini-3.7-flash","provider":"gemini","latencyMs":3244,"inputTokens":7625,"outputTokens":794,"thinkingTokens":451,"hasSchema":false,"usedFallback":false,"usedRepair":false,"usedRetry":false,"ok":true}
+✅ [ROLE-ID-VOTE] Gemini: {"speaker_0":"adult","speaker_1":"child","speaker_2":"adult"}
+⚠️ [ROLE-ID-VOTE] ML failed: no result
+✅ [ROLE-ID-VOTE] Final (gemini): {"speaker_0":"adult","speaker_1":"child","speaker_2":"adult"}
+   → role-id: OK — 1 llm call(s), 3.2s
+
+──────────────────────────────────────────────────────────────────────────────
+▶  pcit-coding
+──────────────────────────────────────────────────────────────────────────────
+📤 [GEMINI-CACHE] Uploading DPICS-Manual.2.18.pdf to Files API...
+✅ [GEMINI-CACHE] File uploaded: https://generativelanguage.googleapis.com/v1beta/files/ph336c55zo4q
+📦 [GEMINI-CACHE] Creating dpics-cdi-gemini-3.1-pro-preview context cache (model: gemini-3.1-pro-preview, files: 1)...
+✅ [GEMINI-CACHE] Created dpics-cdi-gemini-3.1-pro-preview cache: cachedContents/f8c2msfusrk2ckhf9l8y1g3de7km6hwawb6fwq9f
+{"event":"llm_call","label":"pcit-coding","model":"gemini-3.1-pro-preview","provider":"gemini","latencyMs":63472,"inputTokens":36620,"outputTokens":6507,"thinkingTokens":5527,"hasSchema":false,"usedFallback":false,"usedRepair":false,"usedRetry":false,"ok":true}
+   → pcit-coding: OK — 1 llm call(s), 63.5s
+
+──────────────────────────────────────────────────────────────────────────────
+▶  dev-profiling
+──────────────────────────────────────────────────────────────────────────────
+📊 [DEV-PROFILING] Generating developmental profiling...
+{"event":"llm_call","label":"dev-profiling","model":"gemini-3.7-flash","provider":"gemini","latencyMs":6607,"inputTokens":2920,"outputTokens":1633,"thinkingTokens":1053,"hasSchema":true,"usedFallback":false,"usedRepair":false,"usedRetry":false,"ok":true}
+✅ [DEV-PROFILING] Response parsed — 4 domains, 0 baseline achieved
+   → dev-profiling: OK — 1 llm call(s), 6.6s
+
+──────────────────────────────────────────────────────────────────────────────
+▶  about-child
+──────────────────────────────────────────────────────────────────────────────
+📊 [ABOUT-CHILD] Generating child observations...
+{"event":"llm_call","label":"about-child","model":"gemini-3.7-flash","provider":"gemini","latencyMs":12599,"inputTokens":1844,"outputTokens":3025,"thinkingTokens":1347,"hasSchema":true,"usedFallback":false,"usedRepair":false,"usedRetry":false,"ok":true}
+✅ [ABOUT-CHILD] Generated 10 child observations
+   → about-child: OK — 1 llm call(s), 12.6s
+
+──────────────────────────────────────────────────────────────────────────────
+▶  cdi-coaching
+──────────────────────────────────────────────────────────────────────────────
+📊 [CDI-COACHING] Step 1: Computing goal payload...
+✅ [CDI-COACHING] Level 4 goal: The Praise Hunt → target 10
+📊 [CDI-COACHING] Step 2: Generating coaching report (gemini-3.1-pro-preview)...
+📤 [GEMINI-CACHE] Uploading Parent-Child Interaction Therapy_CDI.pdf to Files API...
+✅ [GEMINI-CACHE] File uploaded: https://generativelanguage.googleapis.com/v1beta/files/zs4rbr8f0idk
+📦 [GEMINI-CACHE] Creating cdi-coaching-gemini-3.1-pro-preview context cache (model: gemini-3.1-pro-preview, files: 1)...
+✅ [GEMINI-CACHE] Created cdi-coaching-gemini-3.1-pro-preview cache: cachedContents/wp58s0o9hwx4bwax87g0xn02tw1c6tshat2vh1ay
+{"event":"llm_call","label":"coaching-narrative","model":"gemini-3.1-pro-preview","provider":"gemini","latencyMs":47308,"inputTokens":58710,"outputTokens":3316,"thinkingTokens":2794,"hasSchema":false,"usedFallback":false,"usedRepair":false,"usedRetry":false,"ok":true}
+✅ [CDI-COACHING] Coaching report received (2109 chars)
+📊 [CDI-COACHING] Step 3: Formatting for Coach's Corner + Crisis Moment...
+{"event":"llm_call","label":"coaching-format","model":"gemini-3.7-flash","provider":"gemini","latencyMs":7802,"inputTokens":3973,"outputTokens":2691,"thinkingTokens":1964,"hasSchema":true,"usedFallback":false,"usedRepair":false,"usedRetry":false,"ok":true}
+✅ [CDI-COACHING] Formatted — Coach's Corner structured breakdown, tricky moments: 1
+   → cdi-coaching: OK — 2 llm call(s), 55.9s
+
+──────────────────────────────────────────────────────────────────────────────
+▶  cdi-feedback
+──────────────────────────────────────────────────────────────────────────────
+🚀 [CDI-FEEDBACK] Starting feedback generation (mode: CDI)...
+📝 [CDI-FEEDBACK] Running combined feedback prompt...
+{"event":"llm_call","label":"combined-feedback","model":"gemini-3.7-flash","provider":"gemini","latencyMs":6158,"inputTokens":2785,"outputTokens":1385,"thinkingTokens":1227,"hasSchema":true,"usedFallback":false,"usedRepair":false,"usedRetry":false,"ok":true}
+✅ [CDI-FEEDBACK] Combined feedback result: {"topMoment":{"startUtteranceNumber":104,"endUtteranceNumber":105},"Feedback":"Today's play included big emotions. With gentle shifts, your positive attention will help connection flourish.","reminder":"Following your child's lead during play turns everyday moments into joyful connection. Every smal
+📝 [CDI-FEEDBACK] Running review-feedback + crisis-coaching + skill-improve in parallel...
+✅ [GEMINI-CACHE] Reusing dpics-cdi-gemini-3.1-pro-preview cache: cachedContents/f8c2msfusrk2ckhf9l8y1g3de7km6hwawb6fwq9f
+📊 [CRISIS-COACHING] Generating hero text, crisis coaching, skill coaching, top moment...
+📊 [SKILL-IMPROVE] Generating opportunities for The Praise Hunt...
+{"event":"llm_call","label":"skill-improve","model":"gemini-3.7-flash","provider":"gemini","latencyMs":4426,"inputTokens":2609,"outputTokens":1025,"thinkingTokens":740,"hasSchema":true,"usedFallback":false,"usedRepair":false,"usedRetry":false,"ok":true}
+✅ [SKILL-IMPROVE] direction=BUILD, opportunities=3
+{"event":"llm_call","label":"crisis-coaching","model":"gemini-3.7-flash","provider":"gemini","latencyMs":6919,"inputTokens":3427,"outputTokens":1599,"thinkingTokens":1251,"hasSchema":true,"usedFallback":false,"usedRepair":false,"usedRetry":false,"ok":true}
+✅ [CRISIS-COACHING] crisisMoment.detected=true
+{"event":"llm_call","label":"review-feedback","model":"gemini-3.1-pro-preview","provider":"gemini","latencyMs":68702,"inputTokens":34578,"outputTokens":8164,"thinkingTokens":7860,"hasSchema":false,"usedFallback":false,"usedRepair":true,"usedRetry":false,"ok":true}
+✅ [CDI-FEEDBACK] Review feedback result: [{"id":0,"feedback":"Instead of asking a question, you could reflect Lucas's interest by saying, \"You want to play with the vitamin bottle.\"","additional_tip":null},{"id":2,"feedback":"To let Lucas take the lead, you could describe his action with a Behavioral Description like, \"You are getting r
+✅ [CDI-FEEDBACK] Feedback generation complete
+   → cdi-feedback: OK — 4 llm call(s), 74.9s
+
+──────────────────────────────────────────────────────────────────────────────
+▶  report-highlights
+──────────────────────────────────────────────────────────────────────────────
+📊 [REPORT-HIGHLIGHTS] Generating hero text, celebration, interaction tip, crisis moment...
+{"event":"llm_call","label":"report-highlights","model":"gemini-3.7-flash","provider":"gemini","latencyMs":4431,"inputTokens":1173,"outputTokens":809,"thinkingTokens":645,"hasSchema":true,"usedFallback":false,"usedRepair":false,"usedRetry":false,"ok":true}
+✅ [REPORT-HIGHLIGHTS] crisisMoment.detected=true
+   → report-highlights: OK — 1 llm call(s), 4.4s
+
+──────────────────────────────────────────────────────────────────────────────
+▶  crisis
+──────────────────────────────────────────────────────────────────────────────
+📊 [CRISIS-COACHING] Generating hero text, crisis coaching, skill coaching, top moment...
+{"event":"llm_call","label":"crisis-coaching","model":"gemini-3.7-flash","provider":"gemini","latencyMs":6579,"inputTokens":3427,"outputTokens":1506,"thinkingTokens":1148,"hasSchema":true,"usedFallback":false,"usedRepair":false,"usedRetry":false,"ok":true}
+✅ [CRISIS-COACHING] crisisMoment.detected=true
+   → crisis: OK — 1 llm call(s), 6.6s
+
+====================================================================================================
+SUMMARY — session c9673fb4-f98f-457c-98dd-ee6fd7723302
+====================================================================================================
+────────────────────────────────────────────────────────────────────────────────────────────────────
+STAGE             STATUS        CALLS  TIME     NOTE
+────────────────────────────────────────────────────────────────────────────────────────────────────
+quality-check     OK            1      1.9s     
+role-id           OK            1      3.2s     
+pcit-coding       OK            1      63.5s    
+dev-profiling     OK            1      6.6s     
+about-child       OK            1      12.6s    
+cdi-coaching      OK            2      55.9s    
+cdi-feedback      OK            4      74.9s    
+report-highlights OK            1      4.4s     
+crisis            OK            1      6.6s     
+pdi-two-choices   SKIP          0      0.0s     CDI session
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+====================================================================================================
+PER-CALL DETAIL
+====================================================================================================
+────────────────────────────────────────────────────────────────────────────────────────────────────
+LABEL                     MODEL                   LAT     IN      OUT     THINK   FLAGS
+────────────────────────────────────────────────────────────────────────────────────────────────────
+session-quality-check     gemini-3.7-flash        1.9s    4038    133     128     -
+role-id-gemini            gemini-3.7-flash        3.2s    7625    794     451     -
+pcit-coding               gemini-3.1-pro-preview  63.5s   36620   6507    5527    -
+dev-profiling             gemini-3.7-flash        6.6s    2920    1633    1053    schema
+about-child               gemini-3.7-flash        12.6s   1844    3025    1347    schema
+coaching-narrative        gemini-3.1-pro-preview  47.3s   58710   3316    2794    -
+coaching-format           gemini-3.7-flash        7.8s    3973    2691    1964    schema
+combined-feedback         gemini-3.7-flash        6.2s    2785    1385    1227    schema
+skill-improve             gemini-3.7-flash        4.4s    2609    1025    740     schema
+crisis-coaching           gemini-3.7-flash        6.9s    3427    1599    1251    schema
+review-feedback           gemini-3.1-pro-preview  68.7s   34578   8164    7860    repair
+report-highlights         gemini-3.7-flash        4.4s    1173    809     645     schema
+crisis-coaching           gemini-3.7-flash        6.6s    3427    1506    1148    schema
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+9 OK · 0 NULL · 0 FAIL · 1 SKIP  |  13 llm calls, 0 errored, 0 used fallback
+

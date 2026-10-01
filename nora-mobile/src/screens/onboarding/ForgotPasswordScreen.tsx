@@ -9,19 +9,19 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useAuthService } from '../../contexts/AppContext';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 export const ForgotPasswordScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -33,7 +33,6 @@ export const ForgotPasswordScreen: React.FC = () => {
   const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Forgot Password');
   }, []);
 
   const handleSendResetEmail = async () => {
@@ -99,16 +98,16 @@ export const ForgotPasswordScreen: React.FC = () => {
           <View style={{ flex: 1 }} />
 
           {/* Back to Login Button */}
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="forgotPassword.backToLogin"
             style={styles.button}
             onPress={handleBackToLogin}
             activeOpacity={0.8}
           >
             <Text style={styles.buttonText}>{t('forgotPassword.backToLogin')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
 
           {/* Resend Email Link */}
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="forgotPassword.didntReceive"
             style={styles.resendContainer}
             onPress={() => {
               setEmailSent(false);
@@ -117,7 +116,7 @@ export const ForgotPasswordScreen: React.FC = () => {
           >
             <Text style={styles.resendText}>{t('forgotPassword.didntReceive')}</Text>
             <Text style={styles.resendLink}>{t('forgotPassword.tryAgain')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </SafeAreaView>
     );
@@ -130,9 +129,9 @@ export const ForgotPasswordScreen: React.FC = () => {
         style={styles.keyboardView}
       >
         {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <TrackedTouchable analyticsId="Back" style={styles.backButton} onPress={handleBack}>
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         <View style={styles.content}>
           {/* Title */}
@@ -159,7 +158,7 @@ export const ForgotPasswordScreen: React.FC = () => {
           <View style={{ flex: 1 }} />
 
           {/* Send Reset Link Button */}
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="forgotPassword.sendResetLink"
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleSendResetEmail}
             activeOpacity={0.8}
@@ -170,14 +169,14 @@ export const ForgotPasswordScreen: React.FC = () => {
             ) : (
               <Text style={styles.buttonText}>{t('forgotPassword.sendResetLink')}</Text>
             )}
-          </TouchableOpacity>
+          </TrackedTouchable>
 
           {/* Back to Login Link */}
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>{t('forgotPassword.rememberPassword')}</Text>
-            <TouchableOpacity onPress={handleBackToLogin}>
+            <TrackedTouchable analyticsId="forgotPassword.logIn" onPress={handleBackToLogin}>
               <Text style={styles.loginLink}>{t('forgotPassword.logIn')}</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         </View>
       </KeyboardAvoidingView>

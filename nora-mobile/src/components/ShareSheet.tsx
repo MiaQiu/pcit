@@ -18,13 +18,14 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Image, Linking, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, StyleSheet, Image, Linking, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import Share, { Social } from 'react-native-share';
 import { FONTS, COLORS } from '../constants/assets';
 import { useRecordingService } from '../contexts/AppContext';
 import { useToast } from './ToastManager';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface ShareSheetProps {
   visible: boolean;
@@ -157,7 +158,7 @@ export const ShareSheet: React.FC<ShareSheetProps> = ({ visible, onClose, target
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
+      <TrackedTouchable analyticsId="Share to" style={styles.overlay} activeOpacity={1} onPress={onClose}>
         <View style={styles.sheet}>
           <View style={styles.handle} />
 
@@ -171,15 +172,15 @@ export const ShareSheet: React.FC<ShareSheetProps> = ({ visible, onClose, target
 
           <Text style={styles.sectionLabel}>Share to</Text>
           <View style={styles.shareToRow}>
-            <TouchableOpacity style={styles.iconButton} onPress={openWhatsApp} activeOpacity={0.7} accessibilityLabel="WhatsApp">
+            <TrackedTouchable analyticsId="WhatsApp" style={styles.iconButton} onPress={openWhatsApp} activeOpacity={0.7} accessibilityLabel="WhatsApp">
               <Ionicons name="logo-whatsapp" size={24} color="#25D366" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} onPress={openFacebook} activeOpacity={0.7} accessibilityLabel="Facebook">
+            </TrackedTouchable>
+            <TrackedTouchable analyticsId="Facebook" style={styles.iconButton} onPress={openFacebook} activeOpacity={0.7} accessibilityLabel="Facebook">
               <Ionicons name="logo-facebook" size={24} color="#1877F2" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} onPress={openWeChat} activeOpacity={0.7} accessibilityLabel="WeChat">
+            </TrackedTouchable>
+            <TrackedTouchable analyticsId="WeChat" style={styles.iconButton} onPress={openWeChat} activeOpacity={0.7} accessibilityLabel="WeChat">
               <Ionicons name="logo-wechat" size={24} color="#07C160" />
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
 
           <Text style={styles.sectionLabel}>Share link</Text>
@@ -189,12 +190,12 @@ export const ShareSheet: React.FC<ShareSheetProps> = ({ visible, onClose, target
             ) : (
               <Text style={styles.linkText} numberOfLines={1}>{effectiveUrl}</Text>
             )}
-            <TouchableOpacity style={styles.copyButton} onPress={handleCopy} activeOpacity={0.8}>
+            <TrackedTouchable analyticsId="Copy" style={styles.copyButton} onPress={handleCopy} activeOpacity={0.8}>
               <Text style={styles.copyButtonText}>Copy</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         </View>
-      </TouchableOpacity>
+      </TrackedTouchable>
     </Modal>
   );
 };

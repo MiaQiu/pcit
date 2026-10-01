@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ResponseButton } from '../components/ResponseButton';
 import { QuizFeedback } from '../components/QuizFeedback';
@@ -22,6 +22,7 @@ import { COLORS, FONTS } from '../constants/assets';
 import { LessonService, Quiz, QuizOption, SubmitQuizResponse } from '@nora/core';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 interface QuizScreenProps {
   route: {
@@ -46,7 +47,6 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Quiz', { quizId, lessonId, currentSegment, totalSegments });
   }, []);
 
   const handleSubmit = async () => {
@@ -104,20 +104,24 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
   const sortedOptions = [...quiz.options].sort((a, b) => a.order - b.order);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={styles.container}
+      // Android is edge-to-edge, so keep the footer above the system nav bar
+      edges={Platform.OS === 'android' ? ['top', 'left', 'right', 'bottom'] : ['top', 'left', 'right']}
+    >
       {/* Header with Progress Bar and Close Button */}
       <View style={styles.header}>
         <ProgressBar
           totalSegments={totalSegments}
           currentSegment={currentSegment}
         />
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="Close quiz"
           style={styles.closeButton}
           onPress={handleClose}
           accessibilityLabel="Close quiz"
         >
           <Text style={styles.closeIcon}>×</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
 
       {/* Scrollable Content */}
@@ -177,13 +181,13 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ route, navigation }) => 
         ) : (
           <View style={styles.buttonRow}>
             <View style={styles.halfButton}>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="quiz.back"
                 style={styles.backButton}
                 onPress={handleClose}
                 activeOpacity={0.7}
               >
                 <Text style={styles.backButtonText}>{t('quiz.back')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
             <View style={styles.halfButton}>
               <Button onPress={handleContinue}>

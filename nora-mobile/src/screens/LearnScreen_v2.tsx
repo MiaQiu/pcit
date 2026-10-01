@@ -11,7 +11,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
-  TouchableOpacity,
   Image,
   useWindowDimensions,
 } from 'react-native';
@@ -34,6 +33,7 @@ import { getCachedLessonData, saveLessonData, isCacheStale } from '../services/l
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 const H_PAD = 20;
 const CARD_GAP = 10;
@@ -70,7 +70,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
   const fallbackIcon = LESSON_ICONS[(lesson.dayNumber - 1) % LESSON_ICONS.length];
 
   return (
-    <TouchableOpacity
+    <TrackedTouchable analyticsId={`Lesson Card: ${lesson.title}`}
       style={[styles.lessonCard, { width: cardWidth }]}
       onPress={isModuleLocked ? undefined : onPress}
       activeOpacity={isModuleLocked ? 1 : 0.75}
@@ -117,7 +117,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
       <View style={styles.lessonCardText}>
         <Text style={styles.lessonTitle} numberOfLines={3}>{lesson.title}</Text>
       </View>
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 
@@ -143,7 +143,7 @@ const NoraFoundationsSection: React.FC<NoraFoundationsSectionProps> = ({ cardWid
         contentContainerStyle={[styles.lessonRow, styles.noraCardRow]}
         style={styles.lessonRowScroll}
       >
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="learnV2.noraFoundationsTitle"
           style={[styles.noraCardShadow, { width: cardWidth }]}
           onPress={onPress}
           activeOpacity={0.75}
@@ -162,9 +162,9 @@ const NoraFoundationsSection: React.FC<NoraFoundationsSectionProps> = ({ cardWid
               </View>
             </View>
           </View>
-        </TouchableOpacity>
+        </TrackedTouchable>
 
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="learnV2.playGuideTitle"
           style={[styles.noraCardShadow, { width: cardWidth }]}
           onPress={onPlayGuidePress}
           activeOpacity={0.75}
@@ -182,7 +182,7 @@ const NoraFoundationsSection: React.FC<NoraFoundationsSectionProps> = ({ cardWid
               </View>
             </View>
           </View>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </ScrollView>
     </View>
   );
@@ -211,7 +211,7 @@ const QuickGuidesSection: React.FC<QuickGuidesSectionProps> = ({ cardWidth, onGu
   return (
     <View style={styles.demoVideoGrid}>
       {QUICK_GUIDES.map(({ guide }) => (
-        <TouchableOpacity
+        <TrackedTouchable analyticsId={`Quick Guide: ${guide}`}
           key={guide}
           style={[styles.noraCardShadow, { width: cardWidth }]}
           onPress={() => onGuidePress(guide)}
@@ -231,7 +231,7 @@ const QuickGuidesSection: React.FC<QuickGuidesSectionProps> = ({ cardWidth, onGu
               </Text>
             </View>
           </View>
-        </TouchableOpacity>
+        </TrackedTouchable>
       ))}
     </View>
   );
@@ -268,13 +268,13 @@ const ModuleSection: React.FC<ModuleSectionProps> = ({
   return (
     <View style={styles.moduleSection}>
       {/* Module header */}
-      <TouchableOpacity style={styles.moduleHeader} onPress={onModulePress} activeOpacity={0.7}>
+      <TrackedTouchable analyticsId="onModule" style={styles.moduleHeader} onPress={onModulePress} activeOpacity={0.7}>
         <Text style={styles.moduleName}>{module.title}</Text>
         {module.isLocked
           ? <Ionicons name="lock-closed" size={20} color="#BBBBBB" />
           : <Ionicons name="chevron-forward" size={28} color={COLORS.textDark} />
         }
-      </TouchableOpacity>
+      </TrackedTouchable>
 
       {/* Locked notice */}
       {showLockedNotice && (
@@ -330,7 +330,7 @@ const DemoVideoCard: React.FC<DemoVideoCardProps> = ({ video, localThumbnailUri,
   const thumbnailUri = localThumbnailUri ?? video.thumbnailUrl;
 
   return (
-    <TouchableOpacity
+    <TrackedTouchable analyticsId="on"
       style={[styles.noraCardShadow, { width: cardWidth }]}
       onPress={onPress}
       activeOpacity={0.85}
@@ -377,7 +377,7 @@ const DemoVideoCard: React.FC<DemoVideoCardProps> = ({ video, localThumbnailUri,
           <Text style={styles.lessonTitle} numberOfLines={2}>{video.title}</Text>
         </View>
       </View>
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 
@@ -472,7 +472,6 @@ export const LearnScreen_v2: React.FC = () => {
 
   useFocusEffect(
     useCallback(() => {
-      amplitudeService.trackScreenView('Learn');
       scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
       loadCurrentModuleKey();
       if (modules.length > 0) fetchAndSave(i18n.language);
@@ -706,7 +705,7 @@ export const LearnScreen_v2: React.FC = () => {
             localThumbnailUris={localDemoVideoThumbnailUris}
             cardWidth={demoVideoCardWidth}
             onSelectVideo={video => {
-              amplitudeService.trackEvent('Demo Video Tapped', { demoVideoId: video.id });
+              amplitudeService.trackEvent('Demo Video Tapped', { demoVideoId: video.id, demoVideoTitle: video.baseTitle });
               // Pass the locally cached thumbnail through as the poster the
               // detail screen shows while its video buffers, same as here.
               const localThumbnailUri = localDemoVideoThumbnailUris[video.id];

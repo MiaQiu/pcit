@@ -18,6 +18,7 @@ const {
   AppError
 } = require('../utils/errors.cjs');
 const { getReferralPartner, linkReferral } = require('../services/referralAttribution.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 const router = express.Router();
 
@@ -226,7 +227,7 @@ router.post('/signup', async (req, res, next) => {
       return next(error);
     }
 
-    console.error('Signup error:', error);
+    logError(error, { route: 'auth#Signup error', userId: req.user?.id });
     return next(new AppError(
       `Signup error: ${error.message}`,
       500,
@@ -329,7 +330,7 @@ router.post('/login', authLimiter, async (req, res, next) => {
       return next(error);
     }
 
-    console.error('Login error:', error);
+    logError(error, { route: 'auth#Login error', userId: req.user?.id });
     return next(new AppError(
       `Login error: ${error.message}`,
       500,
@@ -351,14 +352,27 @@ router.post('/logout', async (req, res) => {
     // Hash and delete refresh token
     const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
+    const session = await prisma.refreshToken.findUnique({
+      where: { tokenHash: refreshTokenHash },
+      select: { userId: true }
+    });
+
     await prisma.refreshToken.deleteMany({
       where: { tokenHash: refreshTokenHash }
     });
 
+    // Stop pushes to the logged-out device. A user has one session at a time
+    // (RefreshToken.userId is unique), so this token belongs to this device;
+    // the app registers it again on the next login.
+    if (session) {
+      const { unregisterPushToken } = require('../services/pushNotifications.cjs');
+      await unregisterPushToken(session.userId);
+    }
+
     res.json({ message: 'Logged out successfully' });
 
   } catch (error) {
-    console.error('Logout error:', error);
+    logError(error, { route: 'auth#Logout error', userId: req.user?.id });
     res.status(500).json({ error: 'Logout failed' });
   }
 });
@@ -452,7 +466,7 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
     res.json({ message: 'If an account exists with this email, a password reset link has been sent.' });
 
   } catch (error) {
-    console.error('Forgot password error:', error);
+    logError(error, { route: 'auth#Forgot password error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to process password reset request' });
   }
 });
@@ -518,7 +532,7 @@ router.post('/reset-password', async (req, res) => {
     res.json({ message: 'Password reset successfully' });
 
   } catch (error) {
-    console.error('Reset password error:', error);
+    logError(error, { route: 'auth#Reset password error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to reset password' });
   }
 });
@@ -569,7 +583,7 @@ router.post('/refresh', async (req, res) => {
     res.json({ accessToken });
 
   } catch (error) {
-    console.error('Refresh error:', error);
+    logError(error, { route: 'auth#Refresh error', userId: req.user?.id });
     res.status(500).json({ error: 'Token refresh failed' });
   }
 });
@@ -634,7 +648,7 @@ router.get('/me', require('../middleware/auth.cjs').requireAuth, async (req, res
     res.json({ user: { ...decryptedUser, disciplineUnlocked: !!hasQualifyingScore, isSubscribed: !!isSubscribed } });
 
   } catch (error) {
-    console.error('Get user error:', error);
+    logError(error, { route: 'auth#Get user error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to get user info' });
   }
 });
@@ -781,7 +795,7 @@ router.patch('/complete-onboarding', require('../middleware/auth.cjs').requireAu
     res.json({ user: decryptedUser });
 
   } catch (error) {
-    console.error('Complete onboarding error:', error);
+    logError(error, { route: 'auth#Complete onboarding error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update user profile' });
   }
 });
@@ -846,7 +860,7 @@ router.post('/upload-profile-image', require('../middleware/auth.cjs').requireAu
     });
 
   } catch (error) {
-    console.error('Upload profile image error:', error);
+    logError(error, { route: 'auth#Upload profile image error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to upload profile image' });
   }
 });
@@ -869,7 +883,7 @@ router.patch('/locale', require('../middleware/auth.cjs').requireAuth, async (re
     });
     res.json({ preferredLocale: locale });
   } catch (error) {
-    console.error('Update locale error:', error);
+    logError(error, { route: 'auth#Update locale error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update locale' });
   }
 });
@@ -903,7 +917,7 @@ router.post('/push-token', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[AUTH] Error registering push token:', error);
+    logError(error, { route: 'auth#[AUTH] Error registering push token', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to register push token' });
   }
 });
@@ -928,7 +942,7 @@ router.delete('/push-token', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[AUTH] Error unregistering push token:', error);
+    logError(error, { route: 'auth#[AUTH] Error unregistering push token', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to unregister push token' });
   }
 });
@@ -993,7 +1007,7 @@ router.delete('/delete-account', require('../middleware/auth.cjs').requireAuth, 
     });
 
   } catch (error) {
-    console.error('[AUTH] Account deletion error:', error);
+    logError(error, { route: 'auth#[AUTH] Account deletion error', userId: req.user?.id });
     res.status(500).json({
       error: 'Failed to delete account',
       details: 'An error occurred while deleting your account. Please try again or contact support.'
@@ -1033,7 +1047,7 @@ router.get('/child-issues', require('../middleware/auth.cjs').requireAuth, async
 
     res.json({ issues });
   } catch (error) {
-    console.error('Get child issues error:', error);
+    logError(error, { route: 'auth#Get child issues error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to get child issues' });
   }
 });
@@ -1060,7 +1074,7 @@ router.get('/parent-skill-level', require('../middleware/auth.cjs').requireAuth,
       level5QualifyingCount: progress?.level5QualifyingCount ?? 0,
     });
   } catch (error) {
-    console.error('Get parent skill level error:', error);
+    logError(error, { route: 'auth#Get parent skill level error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to get parent skill level' });
   }
 });

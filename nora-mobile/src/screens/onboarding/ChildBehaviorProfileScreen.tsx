@@ -10,7 +10,6 @@ import {
   StyleSheet,
   ScrollView,
   Image,
-  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -19,6 +18,7 @@ import { OnboardingStackNavigationProp, OnboardingStackParamList } from '../../n
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { COLORS, FONTS } from '../../constants/assets';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 type BehaviorCategory = 'stable' | 'mild' | 'medium' | 'high';
 
@@ -129,7 +129,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
         {/* ── Profile snapshot card ── */}
         <View style={styles.card}>
           {locked && (
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="onboarding.childBehaviorProfile.lockText"
               style={styles.lockOverlay}
               onPress={() => navigation.navigate('WacbQuestion1')}
               activeOpacity={0.9}
@@ -138,7 +138,7 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
               <Text style={styles.lockText}>
                 {t('onboarding.childBehaviorProfile.lockText')}
               </Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           )}
 
           {/* Header */}
@@ -255,13 +255,13 @@ export const ChildBehaviorProfileScreen: React.FC = () => {
 
       {/* Footer */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="onboarding.childBehaviorProfile.continueButton"
           style={styles.button}
           onPress={() => { amplitudeService.trackOnboardingStepCompleted('child_behavior_profile', 39); navigation.navigate('Intro3'); }}
           activeOpacity={0.85}
         >
           <Text style={styles.buttonText}>{t('onboarding.childBehaviorProfile.continueButton')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

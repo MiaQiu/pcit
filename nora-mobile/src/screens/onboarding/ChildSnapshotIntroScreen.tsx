@@ -10,7 +10,6 @@ import {
   Text,
   StyleSheet,
   Image,
-  TouchableOpacity,
   Dimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +19,7 @@ import { OnboardingStackNavigationProp } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { OnboardingBackButton } from '../../components/OnboardingBackButton';
 import amplitudeService from '../../services/amplitudeService';
+import { TrackedTouchable } from '../../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -59,20 +59,20 @@ export const ChildSnapshotIntroScreen: React.FC = () => {
       <View style={[styles.footer, { paddingBottom: insets.bottom + 8 }]}>
         <View style={styles.buttonRow}>
           <OnboardingBackButton onPress={() => navigation.goBack()} />
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="onboarding.letsGo"
             style={styles.button}
             onPress={() => { amplitudeService.trackOnboardingStepCompleted('child_snapshot_intro', 28); navigation.navigate('WacbQuestion1'); }}
             activeOpacity={0.85}
           >
             <Text style={styles.buttonText}>{t('onboarding.letsGo')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="onboarding.skipForNow"
           onPress={() => navigation.navigate('ChildBehaviorProfile', { locked: true })}
           activeOpacity={0.7}
         >
           <Text style={styles.skipText}>{t('onboarding.skipForNow')}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
     </View>
   );

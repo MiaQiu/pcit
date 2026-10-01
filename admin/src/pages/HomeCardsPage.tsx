@@ -34,18 +34,19 @@ const BADGE_COLOR_PRESETS = [
 // User.issue/User.parentGoal are written in (see the onboarding pickers in
 // nora-mobile's ChildIssueScreen.tsx/ParentGoalScreen.tsx) plus the derived
 // ClinicalLevel enum (Child.primaryIssue/secondaryIssue). Legacy issue values
-// (behavior_challenges, big_emotions, etc.) are intentionally left off this
-// picker — still valid to match against for existing users, just not offered
-// for new tagging. See homeCardScore in server/routes/config.cjs for how
-// these drive ranking.
+// (big_emotions, etc.) are intentionally left off this picker — still valid
+// to match against for existing users, just not offered for new tagging.
+// See homeCardScore in server/routes/config.cjs for how these drive ranking.
 const ISSUE_TAG_OPTIONS = [
   { value: 'big_feelings_tantrums', label: 'Big feelings / tantrums' },
+  { value: 'behavior_challenges', label: 'Behavior challenges' },
   { value: 'listening_cooperation', label: 'Listening & cooperation' },
   { value: 'social', label: 'Social' },
   { value: 'attention_focus', label: 'Attention & focus' },
   { value: 'parenting_strategies', label: 'Parenting strategies' },
   { value: 'adhd', label: 'ADHD' },
-  { value: 'anxiety_confidence', label: 'Anxiety / confidence' },
+  { value: 'anxiety', label: 'Anxiety' },
+  { value: 'confidence', label: 'Confidence' },
   { value: 'developmental_concerns', label: 'Developmental concerns' },
   { value: 'other', label: 'Other' },
 ];

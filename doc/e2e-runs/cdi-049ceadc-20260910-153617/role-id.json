@@ -1,0 +1,72 @@
+{
+  "name": "role-id",
+  "status": "OK",
+  "note": "",
+  "ms": 2373,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "role-id-gemini",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 2371,
+      "inputTokens": 4182,
+      "outputTokens": 485,
+      "thinkingTokens": 221,
+      "hasSchema": false,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "roleIdentificationJson": {
+      "speaker_identification": {
+        "speaker_0": {
+          "role": "ADULT",
+          "confidence": 0.99,
+          "reasoning": "Refers to self as '妈妈' (Mother) and the child as '胖虎' (Panghu), uses descriptive praise, emotional scaffolding, and sportscasting technique ('妈妈喜欢看胖虎专心地在摆房子', '妈妈发现原因了').",
+          "utterance_count": 41
+        },
+        "speaker_1": {
+          "role": "CHILD",
+          "confidence": 0.99,
+          "reasoning": "Target child ('胖虎'), exhibits emotional crying, asks preschool-level developmental questions ('为什么这个不可以？'), and engages in imaginative play ('小动物出来吧').",
+          "utterance_count": 12
+        }
+      },
+      "_vote_sources": [
+        "gemini"
+      ],
+      "_vote_detail": {
+        "speaker_0": {
+          "adult": 1,
+          "child": 0,
+          "winner": "adult",
+          "votes": [
+            {
+              "source": "gemini",
+              "role": "adult"
+            }
+          ]
+        },
+        "speaker_1": {
+          "adult": 0,
+          "child": 1,
+          "winner": "child",
+          "votes": [
+            {
+              "source": "gemini",
+              "role": "child"
+            }
+          ]
+        }
+      }
+    },
+    "roleMap": {
+      "speaker_0": "adult",
+      "speaker_1": "child"
+    }
+  }
+}

@@ -24,6 +24,7 @@ import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
 import * as userStorage from '../lib/userStorage';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 import {
   PARENT_SKILL_LEVEL_ORDER,
   PARENT_SKILL_LEVEL_KEYS,
@@ -323,7 +324,6 @@ export const ProfileReportScreen: React.FC = () => {
   }, [feedbackSentiment, feedbackReasons, feedbackText, recordingId, recordingService]);
 
   useEffect(() => {
-    amplitudeService.trackScreenView('Report', { recordingId: recordingId ?? null, version: 'v2' });
     loadReportData();
     loadChildProfile();
     loadDevelopmentalVisibility();
@@ -492,9 +492,9 @@ export const ProfileReportScreen: React.FC = () => {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>{t('profileReport.headerTitle', { childName })}</Text>
             <Text style={styles.headerSubtitle}>{t('profileReport.headerSubtitle')}</Text>
@@ -517,9 +517,9 @@ export const ProfileReportScreen: React.FC = () => {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>{t('profileReport.headerTitle', { childName })}</Text>
             <Text style={styles.headerSubtitle}>{t('profileReport.headerSubtitle')}</Text>
@@ -565,9 +565,9 @@ export const ProfileReportScreen: React.FC = () => {
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+        <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{t('profileReport.headerTitle', { childName })}</Text>
           <Text style={styles.headerSubtitle}>{t('profileReport.headerSubtitle')}</Text>
@@ -783,9 +783,9 @@ export const ProfileReportScreen: React.FC = () => {
                 })()}
               </View>
               {showJourneyCta && (
-                <TouchableOpacity style={styles.journeyCta} onPress={handleTakeSnapshot} activeOpacity={0.7}>
+                <TrackedTouchable analyticsId="profileReport.journeyPlan.cta" style={styles.journeyCta} onPress={handleTakeSnapshot} activeOpacity={0.7}>
                   <Text style={styles.cardLinkText}>{t('profileReport.journeyPlan.cta', { childName })}</Text>
-                </TouchableOpacity>
+                </TrackedTouchable>
               )}
             </View>
           </View>
@@ -801,7 +801,7 @@ export const ProfileReportScreen: React.FC = () => {
               <Text style={styles.sectionSubtitle}>{t('profileReport.currentLevelSubtitle', { childName })}</Text>
 
               <View style={styles.journeyCard}>
-                <TouchableOpacity style={styles.currentLevelRow} activeOpacity={0.85} onPress={handleLevelCardPress}>
+                <TrackedTouchable analyticsId="reportV2.levelHeading" style={styles.currentLevelRow} activeOpacity={0.85} onPress={handleLevelCardPress}>
                   <View style={styles.levelNumberBadge}>
                     <Text style={styles.levelNumberText}>{parentSkillLevel}</Text>
                   </View>
@@ -811,7 +811,7 @@ export const ProfileReportScreen: React.FC = () => {
                     <Text style={styles.levelSubtitle}>{t(`profileReport.levels.${levelKey}.goal`)}</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-                </TouchableOpacity>
+                </TrackedTouchable>
 
                 <View style={styles.currentTargetRow}>
                   <View style={styles.currentTargetIcon}>
@@ -824,9 +824,9 @@ export const ProfileReportScreen: React.FC = () => {
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
+              <TrackedTouchable analyticsId="reportDetail.seeYouTomorrow" style={styles.seeYouTomorrowButton} activeOpacity={0.85} onPress={handleSeeYouTomorrow}>
                 <Text style={styles.seeYouTomorrowButtonText}>{t('reportDetail.seeYouTomorrow')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
           );
         })()}

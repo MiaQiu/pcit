@@ -4,9 +4,10 @@
  */
 
 import React, { useState } from 'react';
-import { TextInput, View, Text, TouchableOpacity, TextInputProps, KeyboardTypeOptions } from 'react-native';
+import { TextInput, View, Text, TextInputProps, KeyboardTypeOptions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface InputProps extends Omit<TextInputProps, 'keyboardType'> {
   label?: string;
@@ -120,7 +121,7 @@ export const Input: React.FC<InputProps> = ({
 
         {/* Right Icon */}
         {effectiveRightIcon && (
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="effectiveRightIcon"
             onPress={effectiveRightIconPress}
             disabled={!effectiveRightIconPress}
             className="ml-2"
@@ -130,7 +131,7 @@ export const Input: React.FC<InputProps> = ({
               size={20}
               color="#9CA3AF"
             />
-          </TouchableOpacity>
+          </TrackedTouchable>
         )}
       </View>
 

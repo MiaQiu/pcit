@@ -17,7 +17,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
-  TouchableOpacity,
   Modal,
   Switch,
   Image,
@@ -45,10 +44,11 @@ import { LESSON_TEXT_DARK, LESSON_TEXT_GREY } from '../constants/lessonViewerCol
 import { LessonContentBlocks } from '../components/LessonContentBlocks';
 import { ShareSheet } from '../components/ShareSheet';
 import { formatLessonContentV2 } from '../utils/formatLessonContentV2';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 // Admin-configurable via Settings → Branding in the admin portal; falls back
 // to this bundled asset when no custom image has been uploaded.
-const DEFAULT_COVER_IMAGE = require('../../assets/images/prof_chen.png');
+const DEFAULT_COVER_IMAGE = require('../../assets/images/dino_new.webp');
 
 const lastViewedMillis = (l: LessonCardData) =>
   l.progress?.lastViewedAt ? new Date(l.progress.lastViewedAt).getTime() : 0;
@@ -112,25 +112,7 @@ export const LearnScreen_v3: React.FC = () => {
   // copy (retry vs. "no text version yet") and without this an offline
   // blip just renders a blank modal with no way to recover.
   const [scriptError, setScriptError] = useState(false);
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
-  const [coverTitle, setCoverTitle] = useState<string | null>(null);
-  const [coverSubtitle, setCoverSubtitle] = useState<string | null>(null);
-  // Gates the initial render so the cover band never flashes the bundled
-  // default image/copy before the admin-configured branding loads.
-  const [brandingLoading, setBrandingLoading] = useState(true);
   const player = useLessonPlayer();
-
-  useEffect(() => {
-    lessonService.getBrandingImages(i18n.language)
-      .then(({ learnCoverUrl, learnTitle, learnSubtitle }) => {
-        setCoverImageUrl(learnCoverUrl);
-        setCoverTitle(learnTitle);
-        setCoverSubtitle(learnSubtitle);
-      })
-      .catch((err) => console.error('Failed to load branding images:', err))
-      .finally(() => setBrandingLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i18n.language]);
 
   const applyData = useCallback((modulesRes: ModuleListResponse, lessonsRes: LessonListResponse) => {
     handleApiSuccess();
@@ -186,7 +168,6 @@ export const LearnScreen_v3: React.FC = () => {
 
   useFocusEffect(
     useCallback(() => {
-      amplitudeService.trackScreenView('Learn');
       fetchAndSave(i18n.language);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [i18n.language])
@@ -400,7 +381,7 @@ export const LearnScreen_v3: React.FC = () => {
             <Text style={styles.lastLearntBadgeText}>{t('learnV3.lastViewed')}</Text>
           </View>
         )}
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="learnV3.rowTitle"
           style={[styles.rowTitleTouchable, isLastLearnt && styles.rowTitleTouchableLastLearnt]}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           onPress={() => handleLessonPress(lesson)}
@@ -415,18 +396,18 @@ export const LearnScreen_v3: React.FC = () => {
           >
             {t('learnV3.rowTitle', { day: lesson.dayNumber, title: lesson.title })}
           </Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
         <View style={styles.rowMetaRow}>
           <Text style={[styles.rowDuration, isCompleted && styles.rowDurationCompleted]}>
             {durationLabel}
             {isCompleted ? ` | ${t('learnV3.completed')}` : ''}
           </Text>
           <View style={styles.rowActions}>
-            <TouchableOpacity style={styles.readButton} onPress={() => handleReadPress(lesson)}>
+            <TrackedTouchable analyticsId="learnV3.read" style={styles.readButton} onPress={() => handleReadPress(lesson)}>
               <Text style={styles.readButtonText}>{t('learnV3.read')}</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
             {lesson.audioUrl && (
-              <TouchableOpacity
+              <TrackedTouchable analyticsId={`Play Lesson Audio: ${lesson.title}`}
                 style={styles.playCircle}
                 onPress={() => handlePlayCirclePress(lesson)}
               >
@@ -444,7 +425,7 @@ export const LearnScreen_v3: React.FC = () => {
                     />
                   </Svg>
                 )}
-              </TouchableOpacity>
+              </TrackedTouchable>
             )}
           </View>
         </View>
@@ -484,7 +465,7 @@ export const LearnScreen_v3: React.FC = () => {
 
   const languageBadgeLabel = i18n.language === 'zh-TW' ? '繁' : i18n.language === 'zh-CN' ? '简' : 'EN';
 
-  if (loading || brandingLoading) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.loadingWrap}>
         <ActivityIndicator size="large" color={COLORS.mainPurple} />
@@ -495,18 +476,17 @@ export const LearnScreen_v3: React.FC = () => {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.coverBand}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
+        <TrackedTouchable analyticsId="Back" onPress={() => navigation.goBack()} style={styles.backCircle} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={18} color={COLORS.textDark} />
-        </TouchableOpacity>
-        <Image source={coverImageUrl ? { uri: coverImageUrl } : DEFAULT_COVER_IMAGE} style={styles.coverImage} resizeMode="cover" />
+        </TrackedTouchable>
+        <Image source={DEFAULT_COVER_IMAGE} style={styles.coverImage} resizeMode="cover" />
         <View style={styles.coverTextColumn}>
-          <Text style={styles.coverTitle} numberOfLines={2}>{coverTitle ?? t('learnV3.title')}</Text>
-          <Text style={styles.coverSubtitle} numberOfLines={2}>{coverSubtitle ?? t('learnV3.subtitle')}</Text>
+          <Text style={styles.coverTitle} numberOfLines={2}>{t('learnV3.title')}</Text>
         </View>
-        <TouchableOpacity style={styles.languageBadge} onPress={handleLanguagePress}>
+        <TrackedTouchable analyticsId="Language" style={styles.languageBadge} onPress={handleLanguagePress}>
           <Ionicons name="language" size={14} color={COLORS.mainPurple} />
           <Text style={styles.languageBadgeText}>{languageBadgeLabel}</Text>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </View>
 
       <View style={styles.progressCard}>
@@ -520,10 +500,10 @@ export const LearnScreen_v3: React.FC = () => {
             </View>
           </View>
           {displayContinueLesson && (
-            <TouchableOpacity style={styles.continueButton} onPress={() => handlePlayCirclePress(displayContinueLesson)}>
+            <TrackedTouchable analyticsId="learnV3.continue" style={styles.continueButton} onPress={() => handlePlayCirclePress(displayContinueLesson)}>
               <Ionicons name="play" size={13} color="#FFFFFF" />
               <Text style={styles.continueButtonText}>{t('learnV3.continue')}</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           )}
         </View>
         {displayContinueLesson && (
@@ -535,12 +515,12 @@ export const LearnScreen_v3: React.FC = () => {
 
       <View style={styles.playlistCard}>
         <View style={styles.filterRow}>
-          <TouchableOpacity style={styles.filterChip} onPress={() => setShowModuleModal(true)}>
+          <TrackedTouchable analyticsId="learnV3.module" style={styles.filterChip} onPress={() => setShowModuleModal(true)}>
             <Text style={styles.filterChipText} numberOfLines={1}>
               {moduleFilter ? moduleByKey.get(moduleFilter)?.title ?? t('learnV3.module') : t('learnV3.allModules')}
             </Text>
             <Ionicons name="chevron-down" size={14} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
 
           <View style={styles.unfinishedToggle}>
             <Text style={styles.unfinishedText}>{t('learnV3.onlyUnfinished')}</Text>
@@ -584,18 +564,18 @@ export const LearnScreen_v3: React.FC = () => {
       </View>
 
       <Modal visible={showModuleModal} transparent animationType="fade" onRequestClose={() => setShowModuleModal(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowModuleModal(false)}>
+        <TrackedTouchable analyticsId="learnV3.allModules" style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowModuleModal(false)}>
           <View style={styles.modalSheet}>
             <ScrollView>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="learnV3.allModules"
                 style={styles.modalOption}
                 onPress={() => { setModuleFilter(null); setShowModuleModal(false); }}
               >
                 <Text style={styles.modalOptionText}>{t('learnV3.allModules')}</Text>
                 {!moduleFilter && <Ionicons name="checkmark" size={18} color={COLORS.mainPurple} />}
-              </TouchableOpacity>
+              </TrackedTouchable>
               {orderedModules.map(mod => (
-                <TouchableOpacity
+                <TrackedTouchable analyticsId={`Module Filter: ${mod.title}`}
                   key={mod.key}
                   style={styles.modalOption}
                   disabled={mod.isLocked}
@@ -609,34 +589,34 @@ export const LearnScreen_v3: React.FC = () => {
                   ) : (
                     moduleFilter === mod.key && <Ionicons name="checkmark" size={18} color={COLORS.mainPurple} />
                   )}
-                </TouchableOpacity>
+                </TrackedTouchable>
               ))}
             </ScrollView>
           </View>
-        </TouchableOpacity>
+        </TrackedTouchable>
       </Modal>
 
       <Modal visible={!!scriptLesson} animationType="slide" onRequestClose={() => setScriptLesson(null)}>
         <View style={[styles.scriptModalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
           <View style={styles.scriptModalHeader}>
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="Close Script Modal"
               onPress={() => setScriptLesson(null)}
               style={styles.scriptModalClose}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Ionicons name="chevron-back" size={24} color={COLORS.textDark} />
-            </TouchableOpacity>
+            </TrackedTouchable>
             <View style={{ flex: 1 }} />
             <View style={styles.scriptModalShareGroup}>
               {scriptShareCount > 0 && <Text style={styles.scriptModalShareCount}>{scriptShareCount}</Text>}
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="Share"
                 onPress={handleShareLesson}
                 style={styles.scriptModalClose}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityLabel="Share"
               >
                 <Ionicons name="share-outline" size={20} color={COLORS.textDark} />
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
           </View>
           {scriptLoading ? (
@@ -646,13 +626,13 @@ export const LearnScreen_v3: React.FC = () => {
           ) : scriptError ? (
             <View style={styles.scriptModalLoading}>
               <Text style={styles.scriptStateText}>{t('learnV3.scriptLoadError')}</Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="common.retry"
                 style={styles.scriptRetryButton}
                 onPress={() => scriptLesson && handleReadPress(scriptLesson)}
                 activeOpacity={0.7}
               >
                 <Text style={styles.scriptRetryButtonText}>{t('common.retry')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
           ) : (
             <ScrollView contentContainerStyle={styles.scriptModalScrollContent} showsVerticalScrollIndicator={false}>
@@ -683,7 +663,7 @@ export const LearnScreen_v3: React.FC = () => {
                 <LessonContentBlocks blocks={scriptBlocks} fontScale={1.2} />
               )}
               {nextReadLesson && (
-                <TouchableOpacity
+                <TrackedTouchable analyticsId="learnV3.nextLessonLabel"
                   style={styles.nextLessonButton}
                   onPress={() => handleReadPress(nextReadLesson)}
                 >
@@ -691,7 +671,7 @@ export const LearnScreen_v3: React.FC = () => {
                     {t('learnV3.nextLessonLabel', { title: nextReadLesson.title })}
                   </Text>
                   <Ionicons name="chevron-forward" size={18} color={COLORS.mainPurple} />
-                </TouchableOpacity>
+                </TrackedTouchable>
               )}
             </ScrollView>
           )}
@@ -709,7 +689,7 @@ export const LearnScreen_v3: React.FC = () => {
 
       {playingLesson && (
         <View style={styles.miniPlayer}>
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="Mini Player Open"
             style={styles.miniPlayerTapArea}
             onPress={() => handleLessonPress(playingLesson)}
           >
@@ -720,8 +700,8 @@ export const LearnScreen_v3: React.FC = () => {
               <Text style={styles.miniPlayerTitle} numberOfLines={1}>{playingLesson.title}</Text>
               <Text style={styles.miniPlayerDuration}>{formatDuration(playingLesson.durationSeconds)}</Text>
             </View>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </TrackedTouchable>
+          <TrackedTouchable analyticsId={`Mini Player ${player.isPlaying ? 'Pause' : 'Play'}`}
             style={styles.miniPlayerPlayButton}
             onPress={() => (player.isPlaying ? player.pause() : player.play())}
             disabled={player.isLoading}
@@ -753,10 +733,10 @@ export const LearnScreen_v3: React.FC = () => {
             ) : (
               <Ionicons name={player.isPlaying ? 'pause' : 'play'} size={16} color={COLORS.textDark} />
             )}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.miniPlayerButton} onPress={() => player.clear()}>
+          </TrackedTouchable>
+          <TrackedTouchable analyticsId="Mini Player Close" style={styles.miniPlayerButton} onPress={() => player.clear()}>
             <Ionicons name="close" size={20} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       )}
     </SafeAreaView>
@@ -801,12 +781,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.textDark,
     lineHeight: 24,
-  },
-  coverSubtitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 13,
-    color: COLORS.textDark,
-    marginTop: 6,
   },
   languageBadge: {
     flexDirection: 'row',

@@ -211,6 +211,7 @@ export interface RecordingAnalysis {
     };
     growthFocus: {
       heading: string;
+      newSkillIntro?: string | null;  // set only on a level-up session — a brief intro to the new skill before the usual gap/benchmark/strategy
       gap: string;
       benchmark: string;
       strategy: string;
@@ -277,6 +278,30 @@ export interface RecordingAnalysis {
     mode: string;
   } | null;
   childPortfolioInsights?: ChildPortfolioInsights | null;
+  // First-session-only "first coaching report": what we learned about the
+  // child (2 named strengths + 1 plain challenge sentence), the skills
+  // underneath the parent's target issue(s) (3 named + defined skills), and
+  // how they'll practice together (generateFirstSessionInsights,
+  // cdiCoaching-first_v3.txt). null on every session after the first.
+  firstSessionInsights?: {
+    whatWeLearned: {
+      // First two bullets — a named strength + explanation each, same
+      // {name, definition}-style split as skillsUnderneath.skills.
+      strengths: Array<{ name: string | null; explanation: string | null }>;
+      // Third bullet — the normalizing acknowledgment, no label.
+      challenge: string | null;
+    };
+    skillsUnderneath: {
+      openingSentence: string | null;
+      skills: Array<{ name: string | null; definition: string | null }>;
+    };
+    // The fixed "How We'll Practice Together" paragraph (with the 3 tailored
+    // skills woven in), split one sentence per entry. The dimension bars
+    // themselves come from `skills`/`areasToAvoid`.
+    howWePracticeTogether: {
+      sentences: string[];
+    };
+  } | null;
   aboutChild?: AboutChildItem[] | null;
   // Server-selected card from `aboutChild` — dedup'd against recently shown
   // titles and balanced ~5:1 STRENGTH:GROWTH_AREA (see aboutChildSelectionService.cjs).

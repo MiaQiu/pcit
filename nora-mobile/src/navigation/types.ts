@@ -9,7 +9,7 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 import { Quiz, User, DemoVideo, ParentSkillLevel, SkillImproveResult } from '@nora/core';
 
 export type RootTabParamList = {
-  Home: { showModulePicker?: boolean } | undefined;
+  Home: { showModulePicker?: boolean; refreshAt?: number } | undefined;
   Record: { autoStart?: boolean } | undefined;
   Log: undefined;
   Learn: undefined;
@@ -120,6 +120,8 @@ export type RootStackParamList = {
     moduleKey?: string;
     moduleTitle?: string;
     nextLessonId?: string;
+    // Defaults to true. Only applies to the lesson opened initially.
+    autoPlay?: boolean;
   };
   Quiz: {
     quizId: string;
@@ -145,6 +147,11 @@ export type RootStackParamList = {
   };
   ReportDetail: {
     recordingId: string;
+    // Passed by ReportScreen_v2/ReportScreen_v3 when this session pushed the
+    // parent up a level — drives the "See you tomorrow" next-skill overview.
+    leveledUp?: boolean;
+    fromLevel?: ParentSkillLevel;
+    toLevel?: ParentSkillLevel;
   };
   SkillImprove: {
     recordingId: string;

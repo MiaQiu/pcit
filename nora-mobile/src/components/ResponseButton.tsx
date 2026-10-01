@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { COLORS, FONTS } from '../constants/assets';
+import { TrackedTouchable } from './TrackedTouchable';
 
 export interface ResponseButtonProps {
   label: string;
@@ -31,7 +32,7 @@ export const ResponseButton: React.FC<ResponseButtonProps> = ({
   const stateStyles = getStateStyles();
 
   return (
-    <TouchableOpacity
+    <TrackedTouchable analyticsId="✓"
       style={[styles.container, stateStyles.container]}
       onPress={onPress}
       activeOpacity={0.7}
@@ -51,7 +52,7 @@ export const ResponseButton: React.FC<ResponseButtonProps> = ({
       {isSelected && isCorrect && (
         <Text style={styles.checkmark}>✓</Text>
       )}
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 

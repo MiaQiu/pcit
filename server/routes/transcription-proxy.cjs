@@ -13,6 +13,7 @@ const fetch = require('node-fetch');
 const FormData = require('form-data');
 const { requireAuth } = require('../middleware/auth.cjs');
 const { createAnonymizedRequest } = require('../utils/anonymization.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 const {
   ValidationError,
   ServiceUnavailableError,
@@ -110,7 +111,7 @@ router.post('/elevenlabs', async (req, res, next) => {
       return next(error);
     }
 
-    console.error('[PROXY] ElevenLabs proxy error:', error);
+    logError(error, { route: 'transcription-proxy#[PROXY] ElevenLabs proxy error', userId: req.user?.id });
     return next(new AppError(
       `ElevenLabs proxy error: ${error.message}`,
       500,
@@ -177,7 +178,7 @@ router.post('/deepgram', async (req, res) => {
     res.json(result);
 
   } catch (error) {
-    console.error('[PROXY] Deepgram proxy error:', error);
+    logError(error, { route: 'transcription-proxy#[PROXY] Deepgram proxy error', userId: req.user?.id });
     res.status(500).json({ error: 'Transcription proxy failed' });
   }
 });
@@ -265,7 +266,7 @@ router.post('/assemblyai', async (req, res) => {
     res.json({ transcription_id: id, requestId });
 
   } catch (error) {
-    console.error('[PROXY] AssemblyAI proxy error:', error);
+    logError(error, { route: 'transcription-proxy#[PROXY] AssemblyAI proxy error', userId: req.user?.id });
     res.status(500).json({ error: 'Transcription proxy failed' });
   }
 });
@@ -294,7 +295,7 @@ router.get('/assemblyai/:id', async (req, res) => {
     res.json(result);
 
   } catch (error) {
-    console.error('[PROXY] AssemblyAI poll error:', error);
+    logError(error, { route: 'transcription-proxy#[PROXY] AssemblyAI poll error', userId: req.user?.id });
     res.status(500).json({ error: 'Poll failed' });
   }
 });

@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const { requireAuth } = require('../middleware/auth.cjs');
 const prisma = require('../services/db.cjs');
 const { runPriorityEngine } = require('../services/priorityEngine.cjs');
+const { logError } = require('../utils/errorLogger.cjs');
 
 const router = express.Router();
 
@@ -84,7 +85,7 @@ router.post('/', async (req, res) => {
       submittedAt: survey.submittedAt,
     });
   } catch (error) {
-    console.error('Submit Child Snapshot survey error:', error);
+    logError(error, { route: 'wacb-survey#Submit Child Snapshot survey error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to submit survey' });
   }
 });
@@ -109,8 +110,30 @@ router.get('/', async (req, res) => {
 
     res.json({ surveys, total });
   } catch (error) {
-    console.error('Get Child Snapshot surveys error:', error);
+    logError(error, { route: 'wacb-survey#Get Child Snapshot surveys error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch surveys' });
+  }
+});
+
+/**
+ * GET /api/wacb-survey/completed
+ * Whether the user has ever submitted a survey, checking both the current
+ * ChildSnapshotSurvey table and the legacy WacbSurvey table (rows there
+ * predate the Child Snapshot rename and should still count as "completed").
+ */
+router.get('/completed', async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const [snapshotSurvey, legacySurvey] = await Promise.all([
+      prisma.childSnapshotSurvey.findFirst({ where: { userId }, select: { id: true } }),
+      prisma.wacbSurvey.findFirst({ where: { userId }, select: { id: true } }),
+    ]);
+
+    res.json({ completed: !!(snapshotSurvey || legacySurvey) });
+  } catch (error) {
+    logError(error, { route: 'wacb-survey#Get survey completion status error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to fetch survey completion status' });
   }
 });
 
@@ -133,7 +156,7 @@ router.get('/latest', async (req, res) => {
 
     res.json({ survey });
   } catch (error) {
-    console.error('Get latest Child Snapshot survey error:', error);
+    logError(error, { route: 'wacb-survey#Get latest Child Snapshot survey error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to fetch latest survey' });
   }
 });

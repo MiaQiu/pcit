@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../components/OnboardingLayout';
 import PrimaryButton from '../components/PrimaryButton';
 import { useOnboarding } from '../contexts/OnboardingContext';
@@ -13,7 +13,16 @@ const CheckIcon = () => (
   </svg>
 );
 
+// Campaigns configured with "skip subscription" never show the offer page — every
+// route into /subscribe (Intro3 "Skip for Now", PlaySession5 "Continue") lands on
+// /success instead.
 export default function SubscriptionScreen() {
+  const { data } = useOnboarding();
+  if (data.partnerInfo?.skipSubscription) return <Navigate to="/success" replace />;
+  return <SubscriptionOffer />;
+}
+
+function SubscriptionOffer() {
   const navigate = useNavigate();
   const { data } = useOnboarding();
   const partner = data.partnerInfo;
@@ -130,7 +139,7 @@ export default function SubscriptionScreen() {
               <div className="absolute -top-3 left-4">
                 <span className="bg-[#8C49D5] text-white text-xs font-bold px-3 py-1 rounded-full">
                   {yearlyDiscount
-                    ? `Special discount for ${partner?.name}: ${yearlyDiscount.percentOff != null ? `${yearlyDiscount.percentOff}% off` : yearlyDiscount.label}`
+                    ? `Special discount${partner?.name ? ` for ${partner.name}` : ''}: ${yearlyDiscount.percentOff != null ? `${yearlyDiscount.percentOff}% off` : yearlyDiscount.label}`
                     : `BEST VALUE${saveBadge ? ` · SAVE ${saveBadge}` : ''}`}
                 </span>
               </div>
@@ -156,7 +165,7 @@ export default function SubscriptionScreen() {
               {monthlyDiscount && (
                 <div className="absolute -top-3 left-4">
                   <span className="bg-[#8C49D5] text-white text-xs font-bold px-3 py-1 rounded-full">
-                    {`Special discount for ${partner?.name}: ${monthlyDiscount.percentOff != null ? `${monthlyDiscount.percentOff}% off` : monthlyDiscount.label}`}
+                    {`Special discount${partner?.name ? ` for ${partner.name}` : ''}: ${monthlyDiscount.percentOff != null ? `${monthlyDiscount.percentOff}% off` : monthlyDiscount.label}`}
                   </span>
                 </div>
               )}

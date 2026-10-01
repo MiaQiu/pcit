@@ -1,0 +1,155 @@
+{
+  "name": "about-child",
+  "status": "OK",
+  "note": "",
+  "ms": 12602,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "about-child",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 12599,
+      "inputTokens": 1844,
+      "outputTokens": 3025,
+      "thinkingTokens": 1347,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": [
+    {
+      "id": 1,
+      "label": "advanced",
+      "Title": "Connecting Real Routines",
+      "Description": "Lucas automatically links taking vitamins to drinking water, showing sophisticated real-world logical thinking.",
+      "Details": "Right after pretending to feed Mom a vitamin, Lucas says, 'Put water. Mama, drink water.' At just three years old, understanding that one action naturally leads to another across a whole daily routine shows strong cognitive sequencing and memory. She is not just playing with an object; she is mentally running through an entire real-life care routine. To stretch this strength, ask her what happens next during other everyday moments (like 'We brushed our teeth, what comes next before bed?') to let her practice running the show.",
+      "tags": [
+        "Logical",
+        "Sequencing",
+        "Insightful"
+      ],
+      "valence": "STRENGTH"
+    },
+    {
+      "id": 2,
+      "label": "advanced",
+      "Title": "Self-Talk Self-Control",
+      "Description": "Lucas whispers 'Take out one' and 'tight, tight' to guide her own hands and manage her impulses.",
+      "Details": "When Mom set a boundary that she could not dump all the vitamins, Lucas repeated 'One, tight, tight, one, one' and 'Take out one.' This kind of out-loud self-talk (talking to oneself to stay in control) is an advanced tool that older preschoolers use to resist impulses and follow tricky rules. It shows she is actively working to calm herself down and stay within the boundary. You can support this by offering catchy little rhyming mantras when she needs to be gentle or wait, such as 'Gentle hands, slow and steady.'",
+      "tags": [
+        "Self-Regulation",
+        "Focus",
+        "Mindful"
+      ],
+      "valence": "STRENGTH"
+    },
+    {
+      "id": 3,
+      "label": "advanced",
+      "Title": "Caring Role Reversal",
+      "Description": "Lucas quickly shifts from wanting to play with the bottle to lovingly taking care of her mom.",
+      "Details": "Rather than staying upset about the bottle limits, Lucas pivots the interaction into nurturing play: 'Mama, eat it' and 'Mama, drink water.' Stepping into the role of caregiver requires empathy and theory of mind—understanding that others have needs and enjoying the feeling of helping. To build on this sweet quality, give her small 'caring' jobs around the house, like offering a blanket when someone sits on the couch or feeding a stuffed animal when it feels sick.",
+      "tags": [
+        "Empathetic",
+        "Nurturing",
+        "Playful"
+      ],
+      "valence": "STRENGTH"
+    },
+    {
+      "id": 4,
+      "label": "age_appropriate",
+      "Title": "Vivid Sensory Words",
+      "Description": "Lucas notices and labels the soft texture of the vitamins with fun descriptive words.",
+      "Details": "When feeling the vitamin, Lucas immediately comments, 'Squishy, squishy on that one.' Using texture words to describe physical sensations is a great milestone for 37 months, showing that she pays close attention to how things feel in her hands and has the vocabulary to express it. You can build on this by playing a mystery bag game: hide different textured items (a bumpy pinecone, a silky scarf, a rough sponge) in a pillowcase and have her describe them using only her fingers.",
+      "tags": [
+        "Descriptive",
+        "Observant",
+        "Sensory"
+      ],
+      "valence": "STRENGTH"
+    },
+    {
+      "id": 5,
+      "label": "age_appropriate",
+      "Title": "Smart Problem Solving",
+      "Description": "Lucas adjusts her strategy to reach her goal rather than giving up when told no.",
+      "Details": "When she realized Mom would not let her dump the whole bottle, Lucas changed her request to 'Take out one' and willingly involved Dad to get help. This shows flexible thinking: instead of having a meltdown, she negotiated down to an acceptable middle ground so the play could keep going. To encourage this flexible thinking, praise her flexibility explicitly when it happens: 'I love how you found a safe way for us to still play!'",
+      "tags": [
+        "Flexible",
+        "Persistent",
+        "Adaptive"
+      ],
+      "valence": "STRENGTH"
+    },
+    {
+      "id": 6,
+      "label": "age_appropriate",
+      "Title": "Body Part Precision",
+      "Description": "Lucas listens to physical instructions and isolates specific fingers to complete a task.",
+      "Details": "When Mom guided her to use her thumb instead of her fingernail to flip the cap, Lucas repeated 'Thumb' and adjusted her grip. Isolating individual fingers and connecting spoken body terms to fine motor movements is right on track for a 3-year-old. You can strengthen her finger control through playful finger games like thumb-wrestling, using droppers in bath water, or popping bubble wrap one bubble at a time.",
+      "tags": [
+        "Coordination",
+        "Listening",
+        "Dexterity"
+      ],
+      "valence": "STRENGTH"
+    },
+    {
+      "id": 7,
+      "label": "age_appropriate",
+      "Title": "Grasping 'Just One'",
+      "Description": "Lucas understands the concept of a single item and matches her actions to the number one.",
+      "Details": "Throughout the interaction, Lucas clearly understands the quantity of 'one' ('Take out one', 'One'). While counting higher numbers comes with time, truly understanding that 'one' means a single object and stopping after taking just one is an essential early math milestone. To reinforce early quantity concepts, practice 'one for you, one for me' during snack time with berries or crackers.",
+      "tags": [
+        "Number-Sense",
+        "Attentive",
+        "Intentional"
+      ],
+      "valence": "STRENGTH"
+    },
+    {
+      "id": 8,
+      "label": "age_appropriate",
+      "Title": "Speaking Up Honestly",
+      "Description": "Lucas uses words like 'No!' and 'Don't pour it' to express her boundaries and feelings.",
+      "Details": "When the play was interrupted and Mom tried to step in, Lucas protested clearly with 'No! Don't, don't pour it!' While hearing 'no' can feel challenging for parents, it is completely healthy for a 37-month-old to use verbal resistance instead of physical aggression like hitting or throwing. To help her expand her emotional toolbox, acknowledge her feelings first: 'You really wanted to keep holding it, I hear you!' before holding your gentle boundary.",
+      "tags": [
+        "Assertive",
+        "Expressive",
+        "Direct"
+      ],
+      "valence": "STRENGTH"
+    },
+    {
+      "id": 9,
+      "label": "age_appropriate",
+      "Title": "Clear Direct Requests",
+      "Description": "Lucas expresses what she wants using clear, concise multi-word sentences.",
+      "Details": "Lucas uses phrases like 'Mama, open it' and 'Pour on Mama hand' to make her wishes known directly. Her ability to combine verbs, objects, and people into functional requests makes daily communication smooth and effective. You can naturally expand her sentences by echoing them back with one extra detail: if she says 'Mama, open it,' you can reply, 'Open the green bottle? Sure!'",
+      "tags": [
+        "Verbal",
+        "Clear",
+        "Communicative"
+      ],
+      "valence": "STRENGTH"
+    },
+    {
+      "id": 10,
+      "label": "age_appropriate",
+      "Title": "Asking for Help",
+      "Description": "Lucas turns to trusted adults when a physical task is too tricky for her little hands.",
+      "Details": "When the bottle lid proved too tight to open independently, Lucas repeatedly approached Mom and Dad to get assistance. Knowing when to ask for a hand rather than getting instantly overwhelmed is a great foundational social skill. Keep encouraging this healthy habit by thanking her for asking nicely whenever she invites you to help solve a tricky physical puzzle.",
+      "tags": [
+        "Cooperative",
+        "Social",
+        "Trusting"
+      ],
+      "valence": "STRENGTH"
+    }
+  ]
+}

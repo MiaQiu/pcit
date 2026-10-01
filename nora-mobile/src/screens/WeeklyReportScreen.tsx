@@ -15,13 +15,12 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
   Image,
   Dimensions,
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ProgressBar } from '../components/ProgressBar';
@@ -32,6 +31,7 @@ import { useRecordingService, useAuthService } from '../contexts/AppContext';
 import amplitudeService from '../services/amplitudeService';
 import { WeeklyReportData } from '@nora/core';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from '../components/TrackedTouchable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TOTAL_PAGES = 7;
@@ -530,7 +530,7 @@ export const WeeklyReportScreen: React.FC = () => {
         </Text>
 
         {/* Why this matters — expandable */}
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="weeklyReport.page6.whyTitle"
           style={styles.whyToggle}
           onPress={() => setWhyExpanded(!whyExpanded)}
           activeOpacity={0.7}
@@ -547,7 +547,7 @@ export const WeeklyReportScreen: React.FC = () => {
               color="#9CA3AF"
             />
           </View>
-        </TouchableOpacity>
+        </TrackedTouchable>
 
         {whyExpanded && report?.whyExplanation && (
           <View style={styles.whyBody}>
@@ -590,7 +590,7 @@ export const WeeklyReportScreen: React.FC = () => {
           <Text style={styles.checkinQuestion}>{t('weeklyReport.checkInMoodQuestion')}</Text>
           <View style={styles.moodGrid}>
             {MOODS.map((mood) => (
-              <TouchableOpacity
+              <TrackedTouchable analyticsId={`Mood: ${mood.label}`}
                 key={mood.label}
                 style={[
                   styles.moodChip,
@@ -604,7 +604,7 @@ export const WeeklyReportScreen: React.FC = () => {
                   styles.moodLabel,
                   moodSelection === mood.label && styles.moodLabelSelected,
                 ]}>{mood.display}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             ))}
           </View>
           <Text style={styles.checkinDisclaimer}>
@@ -627,7 +627,7 @@ export const WeeklyReportScreen: React.FC = () => {
                 </Text>
                 <View style={styles.ratingButtons}>
                   {RATINGS.map((rating) => (
-                    <TouchableOpacity
+                    <TrackedTouchable analyticsId={`Issue Rating: ${issue} - ${rating.key}`}
                       key={rating.key}
                       style={[
                         styles.ratingChip,
@@ -640,7 +640,7 @@ export const WeeklyReportScreen: React.FC = () => {
                         styles.ratingText,
                         issueRatings[issue] === rating.key && styles.ratingTextSelected,
                       ]}>{rating.display}</Text>
-                    </TouchableOpacity>
+                    </TrackedTouchable>
                   ))}
                 </View>
               </View>
@@ -683,9 +683,9 @@ export const WeeklyReportScreen: React.FC = () => {
         <View style={styles.emptyState}>
           <Ionicons name="document-text-outline" size={48} color="#D1D5DB" />
           <Text style={styles.emptyStateText}>{t('weeklyReport.noReport')}</Text>
-          <TouchableOpacity onPress={handleClose} style={styles.goBackButton}>
+          <TrackedTouchable analyticsId="weeklyReport.goBack" onPress={handleClose} style={styles.goBackButton}>
             <Text style={styles.goBackText}>{t('weeklyReport.goBack')}</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </SafeAreaView>
     );
@@ -697,9 +697,9 @@ export const WeeklyReportScreen: React.FC = () => {
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+          <TrackedTouchable analyticsId="Close" onPress={handleClose} style={styles.closeButton}>
             <Ionicons name="close" size={28} color={COLORS.textDark} />
-          </TouchableOpacity>
+          </TrackedTouchable>
           <View style={styles.progressBarWrapper}>
             <ProgressBar
               totalSegments={TOTAL_PAGES}
@@ -714,15 +714,15 @@ export const WeeklyReportScreen: React.FC = () => {
         {/* Bottom Buttons */}
         <View style={styles.bottomButtons}>
           {currentPage > 1 && (
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="weeklyReport.buttonBack"
               style={styles.bottomButton}
               onPress={handleBack}
               activeOpacity={0.8}
             >
               <Text style={styles.bottomButtonText}>{t('weeklyReport.buttonBack')}</Text>
-            </TouchableOpacity>
+            </TrackedTouchable>
           )}
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="weeklyReport.buttonSubmit"
             style={styles.bottomButton}
             onPress={handleContinue}
             activeOpacity={0.8}
@@ -730,7 +730,7 @@ export const WeeklyReportScreen: React.FC = () => {
             <Text style={styles.bottomButtonText}>
               {currentPage === TOTAL_PAGES ? t('weeklyReport.buttonSubmit') : t('weeklyReport.buttonContinue')}
             </Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </View>
       </View>
     </SafeAreaView>

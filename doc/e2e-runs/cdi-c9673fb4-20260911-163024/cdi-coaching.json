@@ -1,0 +1,128 @@
+{
+  "name": "cdi-coaching",
+  "status": "OK",
+  "note": "",
+  "ms": 55942,
+  "calls": [
+    {
+      "event": "llm_call",
+      "label": "coaching-narrative",
+      "model": "gemini-3.1-pro-preview",
+      "provider": "gemini",
+      "latencyMs": 47308,
+      "inputTokens": 58710,
+      "outputTokens": 3316,
+      "thinkingTokens": 2794,
+      "hasSchema": false,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    },
+    {
+      "event": "llm_call",
+      "label": "coaching-format",
+      "model": "gemini-3.7-flash",
+      "provider": "gemini",
+      "latencyMs": 7802,
+      "inputTokens": 3973,
+      "outputTokens": 2691,
+      "thinkingTokens": 1964,
+      "hasSchema": true,
+      "usedFallback": false,
+      "usedRepair": false,
+      "usedRetry": false,
+      "ok": true
+    }
+  ],
+  "value": {
+    "coachingSummary": "**1. What you did well: Encouraging careful handling**\n- By noticing when Lucas followed your directions to handle the items carefully, you reinforced the exact gentle behavior we want to see more of to reduce rough handling. \n- \"Good job, [Lucas].\" (This general praise shows him you appreciate his effort to take out just one item safely).\n- \"I know that you're upset you cannot take everything out.\" (Validating his feelings helps calm his frustration before it can escalate into physical aggression).\n\n**3. Next Growth Focus — The Praise Hunt**\nYou gave a great general praise today, and our goal for Mastery requires 10 label praises in 5 minutes. \nTo hit this target, simply add exactly what you liked to the end of your praise (e.g., \"Good job taking out just one!\"). For your homework this week, go on a \"Praise Hunt\" — hunt for 10 specific things Lucas does well today and praise them out loud.\n\n- **Breaking things or rough handling**\n  - **Gentle Hands:**\n    - \"I love how gently you are holding the pieces.\"\n    - \"Thank you for using soft hands while we play.\"\n  - **Careful Play:**\n    - \"Great job taking out just one piece so carefully!\"\n    - \"I like how you are keeping the toys safely on the table.\"\n\n- **Physical aggression or fights**\n  - **Staying Calm:**\n    - \"I'm so proud of you for staying calm when the bottle was hard to open.\"\n    - \"Thank you for using your words to ask for help.\"\n  - **Sharing and Taking Turns:**\n    - \"It is so much fun taking turns with you!\"\n    - \"Thank you for sharing your water with me.\"\n\n**4. Handling tricky moments**\n**Playing with non-toys**\n- Using a real vitamin bottle naturally required you to set limits, ask questions, and give commands to keep Lucas safe, which makes it very hard to let him lead the play.\n- \"We shouldn't, we shouldn't play with this, because this is expensive.\"\n- **Try saying instead:** \"Vitamins aren't for playing, so I'm putting them away. Let's build with your blocks instead!\" *(Tip: Before your 5 minutes start, clear away any items that aren't safe, creative toys so you don't have to set rules or correct him).*",
+    "coachingCards": null,
+    "coachingPart1": {
+      "didWell": {
+        "theme": "Encouraging careful handling",
+        "howItHelps": "By noticing when Lucas followed your directions to handle the items carefully, you reinforced the exact gentle behavior we want to see more of to reduce rough handling.",
+        "examples": [
+          {
+            "quote": "Good job, Lucas.",
+            "benefit": "This general praise shows him you appreciate his effort to take out just one item safely"
+          },
+          {
+            "quote": "I know that you're upset you cannot take everything out.",
+            "benefit": "Validating his feelings helps calm his frustration before it can escalate into physical aggression"
+          }
+        ]
+      },
+      "growthFocus": {
+        "heading": "Next Growth Focus — The Praise Hunt",
+        "gap": "You gave a great general praise today,",
+        "benchmark": "and our goal for Mastery requires 10 label praises in 5 minutes.",
+        "strategy": "To hit this target, simply add exactly what you liked to the end of your praise (e.g., \"Good job taking out just one!\"). For your homework this week, go on a \"Praise Hunt\" — hunt for 10 specific things Lucas does well today and praise them out loud."
+      },
+      "wordBank": [
+        {
+          "goal": "Breaking things or rough handling",
+          "categories": [
+            {
+              "name": "Gentle Hands",
+              "examples": [
+                "I love how gently you are holding the pieces.",
+                "Thank you for using soft hands while we play."
+              ]
+            },
+            {
+              "name": "Careful Play",
+              "examples": [
+                "Great job taking out just one piece so carefully!",
+                "I like how you are keeping the toys safely on the table."
+              ]
+            }
+          ]
+        },
+        {
+          "goal": "Physical aggression or fights",
+          "categories": [
+            {
+              "name": "Staying Calm",
+              "examples": [
+                "I'm so proud of you for staying calm when the bottle was hard to open.",
+                "Thank you for using your words to ask for help."
+              ]
+            },
+            {
+              "name": "Sharing and Taking Turns",
+              "examples": [
+                "It is so much fun taking turns with you!",
+                "Thank you for sharing your water with me."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "coachingPart2": {
+      "summary": "Using a real vitamin bottle naturally required you to set limits, ask questions, and give commands to keep Lucas safe, which makes it very hard to let him lead the play.",
+      "points": [
+        {
+          "title": "Playing with non-toys",
+          "explanation": "Using a real vitamin bottle naturally required you to set limits, ask questions, and give commands to keep Lucas safe, which makes it very hard to let him lead the play.",
+          "quote": "We shouldn't, we shouldn't play with this, because this is expensive.",
+          "suggestedRewrite": "\"Vitamins aren't for playing, so I'm putting them away. Let's build with your blocks instead!\" *(Tip: Before your 5 minutes start, clear away any items that aren't safe, creative toys so you don't have to set rules or correct him).*"
+        }
+      ]
+    },
+    "tomorrowGoal": "The Praise Hunt — Hunt for 10 specific things your child does well today and praise them out loud.",
+    "notifications": {
+      "postSession": "Nice work with Lucas today! You're working on: The Praise Hunt.",
+      "tomorrow": "Hunt for 10 specific things your child does well today and praise them out loud."
+    },
+    "goalDirective": {
+      "focusSkill": "The Praise Hunt",
+      "currentNumber": 0,
+      "targetNumber": 10,
+      "goalType": "BUILD_PRAISE",
+      "actionPrompt": "Hunt for 10 specific things your child does well today and praise them out loud.",
+      "coachingTip": "Be specific: \"I love how carefully you stacked that!\" lands better than just \"Good job.\""
+    }
+  }
+}

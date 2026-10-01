@@ -9,7 +9,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   ScrollView,
   Dimensions,
@@ -19,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
 import type { DomainMilestone, DomainType, DomainProfiling } from '@nora/core';
 import { useTranslation } from 'react-i18next';
+import { TrackedTouchable } from './TrackedTouchable';
 
 interface DomainMilestoneModalProps {
   visible: boolean;
@@ -130,9 +130,9 @@ export const DomainMilestoneModal: React.FC<DomainMilestoneModalProps> = ({
         </TouchableWithoutFeedback>
         <View style={styles.modalContainer}>
           {/* Close button */}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <TrackedTouchable analyticsId="×" style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeIcon}>×</Text>
-          </TouchableOpacity>
+          </TrackedTouchable>
 
           {/* Title */}
           <Text style={styles.title}>{t('domainMilestone.title', { domain: domain ? t(`radarChart.domain.${domain}`, domain) : domain })}</Text>

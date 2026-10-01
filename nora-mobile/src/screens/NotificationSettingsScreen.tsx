@@ -8,7 +8,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   Switch,
   Alert,
@@ -32,6 +31,8 @@ import {
 import { useAuthService } from '../contexts/AppContext';
 import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
+import { reportError } from '../utils/reportError';
 
 interface NotificationPreferences {
   dailyLessonReminder: boolean;
@@ -46,7 +47,8 @@ interface NotificationPreferences {
 }
 
 const DEFAULT_PREFERENCES: NotificationPreferences = {
-  dailyLessonReminder: true,
+  // Also the pre-load render state — must not claim "on" before anything is saved.
+  dailyLessonReminder: false,
   dailyLessonTime: '18:30',
   practiceReminders: true,
   progressUpdates: true,
@@ -89,7 +91,6 @@ export const NotificationSettingsScreen: React.FC = () => {
   useEffect(() => {
     loadPreferences();
     checkNotificationPermissions();
-    amplitudeService.trackScreenView('Notification Settings');
   }, []);
 
   // Check permission status when screen comes into focus (e.g., returning from Settings)
@@ -167,6 +168,7 @@ export const NotificationSettingsScreen: React.FC = () => {
       await userStorage.setItem(STORAGE_KEY, JSON.stringify(newPreferences));
       setPreferences(newPreferences);
     } catch (error) {
+      reportError(error, 'NotificationSettingsScreen.savePreferences');
       console.error('Failed to save notification preferences:', error);
       Alert.alert(t('common.error'), t('notificationSettings.errorSavePreferences'));
     }
@@ -402,6 +404,7 @@ export const NotificationSettingsScreen: React.FC = () => {
         }
       });
     } catch (error) {
+      reportError(error, 'NotificationSettingsScreen.playSound');
       console.error('Error playing sound:', error);
       Alert.alert(t('common.error'), t('notificationSettings.errorPlaySound'));
     }
@@ -421,12 +424,12 @@ export const NotificationSettingsScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
+        <TrackedTouchable analyticsId="Back"
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TouchableOpacity>
+        </TrackedTouchable>
         <Text style={styles.headerTitle}>{t('notificationSettings.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -441,14 +444,14 @@ export const NotificationSettingsScreen: React.FC = () => {
               <Text style={styles.permissionSubtitle}>
                 {t('notificationSettings.permissionBannerSubtitle')}
               </Text>
-              <TouchableOpacity
+              <TrackedTouchable analyticsId="notificationSettings.openSettings"
                 style={styles.settingsButton}
                 onPress={() => Linking.openSettings()}
                 activeOpacity={0.7}
               >
                 <Ionicons name="settings-outline" size={16} color="#FFFFFF" />
                 <Text style={styles.settingsButtonText}>{t('notificationSettings.openSettings')}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             </View>
           </View>
         )}
@@ -490,7 +493,7 @@ export const NotificationSettingsScreen: React.FC = () => {
             {preferences.dailyLessonReminder && (
               <>
                 <View style={styles.divider} />
-                <TouchableOpacity
+                <TrackedTouchable analyticsId="notificationSettings.reminderTime"
                   style={styles.timeRow}
                   onPress={handleTimeChange}
                   activeOpacity={0.7}
@@ -500,7 +503,7 @@ export const NotificationSettingsScreen: React.FC = () => {
                     <Text style={styles.timeText}>{preferences.dailyLessonTime}</Text>
                     <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
                   </View>
-                </TouchableOpacity>
+                </TrackedTouchable>
               </>
             )}
           </View>
@@ -616,7 +619,7 @@ export const NotificationSettingsScreen: React.FC = () => {
 
           <View style={styles.card}>
             {/* CDI Complete Sound */}
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="notificationSettings.connectPhase"
               style={styles.soundRow}
               onPress={() => handleSoundChange('cdiComplete')}
               activeOpacity={0.7}
@@ -634,12 +637,12 @@ export const NotificationSettingsScreen: React.FC = () => {
                 <Text style={styles.soundLabel}>{getSoundLabel(preferences.cdiCompleteSound)}</Text>
                 <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
               </View>
-            </TouchableOpacity>
+            </TrackedTouchable>
 
             <View style={styles.divider} />
 
             {/* PDI Transition Sound */}
-            <TouchableOpacity
+            <TrackedTouchable analyticsId="notificationSettings.disciplinePhase"
               style={styles.soundRow}
               onPress={() => handleSoundChange('pdiTransition')}
               activeOpacity={0.7}
@@ -657,7 +660,7 @@ export const NotificationSettingsScreen: React.FC = () => {
                 <Text style={styles.soundLabel}>{getSoundLabel(preferences.pdiTransitionSound)}</Text>
                 <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
               </View>
-            </TouchableOpacity>
+            </TrackedTouchable>
           </View>
         </View>
 
@@ -678,20 +681,20 @@ export const NotificationSettingsScreen: React.FC = () => {
           animationType="slide"
           onRequestClose={handleCancelTimePicker}
         >
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="notificationSettings.pickerCancel"
             style={styles.modalOverlay}
             activeOpacity={1}
             onPress={handleCancelTimePicker}
           >
             <View style={styles.modalContent}>
               <View style={styles.pickerHeader}>
-                <TouchableOpacity onPress={handleCancelTimePicker}>
+                <TrackedTouchable analyticsId="notificationSettings.pickerCancel" onPress={handleCancelTimePicker}>
                   <Text style={styles.pickerButton}>{t('notificationSettings.pickerCancel')}</Text>
-                </TouchableOpacity>
+                </TrackedTouchable>
                 <Text style={styles.pickerTitle}>{t('notificationSettings.selectTime')}</Text>
-                <TouchableOpacity onPress={handleConfirmTime}>
+                <TrackedTouchable analyticsId="notificationSettings.pickerDone" onPress={handleConfirmTime}>
                   <Text style={[styles.pickerButton, styles.pickerButtonConfirm]}>{t('notificationSettings.pickerDone')}</Text>
-                </TouchableOpacity>
+                </TrackedTouchable>
               </View>
               <DateTimePicker
                 value={tempTime}
@@ -702,7 +705,7 @@ export const NotificationSettingsScreen: React.FC = () => {
                 style={styles.timePicker}
               />
             </View>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </Modal>
       )}
 
@@ -725,7 +728,7 @@ export const NotificationSettingsScreen: React.FC = () => {
           animationType="slide"
           onRequestClose={() => setShowSoundPicker(false)}
         >
-          <TouchableOpacity
+          <TrackedTouchable analyticsId="notificationSettings.connectPhaseSoundTitle"
             style={styles.modalOverlay}
             activeOpacity={1}
             onPress={() => setShowSoundPicker(false)}
@@ -736,9 +739,9 @@ export const NotificationSettingsScreen: React.FC = () => {
                 <Text style={styles.pickerTitle}>
                   {soundPickerType === 'cdiComplete' ? t('notificationSettings.connectPhaseSoundTitle') : t('notificationSettings.disciplinePhaseSoundTitle')}
                 </Text>
-                <TouchableOpacity onPress={() => setShowSoundPicker(false)}>
+                <TrackedTouchable analyticsId="notificationSettings.pickerDone" onPress={() => setShowSoundPicker(false)}>
                   <Text style={styles.pickerButton}>{t('notificationSettings.pickerDone')}</Text>
-                </TouchableOpacity>
+                </TrackedTouchable>
               </View>
 
               <ScrollView style={styles.soundOptionsContainer}>
@@ -748,7 +751,7 @@ export const NotificationSettingsScreen: React.FC = () => {
                     : preferences.pdiTransitionSound === sound.id;
 
                   return (
-                    <TouchableOpacity
+                    <TrackedTouchable analyticsId={`Sound Option: ${sound.id}`}
                       key={sound.id}
                       style={[
                         styles.soundOption,
@@ -769,12 +772,12 @@ export const NotificationSettingsScreen: React.FC = () => {
                       {isSelected && (
                         <Ionicons name="checkmark-circle" size={24} color="#8C49D5" />
                       )}
-                    </TouchableOpacity>
+                    </TrackedTouchable>
                   );
                 })}
               </ScrollView>
             </View>
-          </TouchableOpacity>
+          </TrackedTouchable>
         </Modal>
       )}
     </SafeAreaView>

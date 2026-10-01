@@ -4,9 +4,10 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS } from '../constants/assets';
+import { TrackedTouchable } from './TrackedTouchable';
 
 export interface LessonListItemProps {
   id: string;
@@ -23,7 +24,7 @@ export const LessonListItem: React.FC<LessonListItemProps> = ({
   onPress,
 }) => {
   return (
-    <TouchableOpacity
+    <TrackedTouchable analyticsId="Lesson"
       style={styles.container}
       onPress={onPress}
       activeOpacity={0.7}
@@ -51,7 +52,7 @@ export const LessonListItem: React.FC<LessonListItemProps> = ({
         size={20}
         color={isCompleted ? COLORS.mainPurple : '#CCCCCC'}
       />
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 };
 

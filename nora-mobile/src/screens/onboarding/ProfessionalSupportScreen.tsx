@@ -1,6 +1,6 @@
 /**
  * Professional Support Screen
- * ADHD / developmental-concern branch only. Follows DiagnosisStatus,
+ * ADHD / developmental-concern / anxiety branch only. Follows DiagnosisStatus,
  * rejoins the main flow at ParentGoalIntro (ParentGoal is skipped on this branch).
  */
 
