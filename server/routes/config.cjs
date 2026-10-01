@@ -188,15 +188,15 @@ async function pickTodaysCard(userId, sortedHomeCards, matchContext) {
  * GET /api/config/app-version
  * Returns the minimum required app version. No auth required.
  * Bump minRequiredVersion to force users on older versions to update.
- * Do not deploy this bump until 1.0.10 is actually live on both the App
+ * Do not deploy this bump until 1.0.11 is actually live on both the App
  * Store and Play Store — otherwise every existing user gets forced onto
  * ForceUpdateScreen with an "Update" button that points at a store listing
  * that isn't there yet, locking them out of the app entirely.
  */
 router.get('/app-version', (req, res) => {
   res.json({
-    minRequiredVersion: '1.0.10',
-    latestVersion: '1.0.10',
+    minRequiredVersion: '1.0.11',
+    latestVersion: '1.0.11',
     whatsNew: [
       'Exciting new user experience',
       'Fresh learning modules to dive into',
