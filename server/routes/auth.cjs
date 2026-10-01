@@ -56,6 +56,9 @@ const signupSchema = Joi.object({
       'string.pattern.base': 'Password must contain at least 1 uppercase, 1 lowercase, and 1 number'
     }),
   name: Joi.string().max(100).allow('').optional(),
+  // Required on the web signup form; optional here because the mobile app doesn't collect it.
+  phone: Joi.string().trim().pattern(/^\+?[\d\s().-]{7,25}$/).optional()
+    .messages({ 'string.pattern.base': 'Please enter a valid phone number' }),
   childName: Joi.string().max(50).allow('').optional(),
   childBirthYear: Joi.number().integer().min(1900).max(new Date().getFullYear()).required(),
   childBirthday: Joi.date().optional(),
@@ -81,7 +84,7 @@ router.post('/signup', async (req, res, next) => {
       return next(new ValidationError(errors[0], errors));
     }
 
-    const { email, password, name, childName, childBirthYear, childBirthday, childConditions, issue, therapistId, partnerSlug, referralCode } = value;
+    const { email, password, name, phone, childName, childBirthYear, childBirthday, childConditions, issue, therapistId, partnerSlug, referralCode } = value;
 
     // Resolve partner before creating user so we can fail early.
     // A referral link resolves to the reserved "referral" partner, so referred
@@ -127,15 +130,22 @@ router.post('/signup', async (req, res, next) => {
     // Hash password
     const passwordHash = await hashPassword(password);
 
-    // Encrypt sensitive user data (email, name, childName)
+    // Encrypt sensitive user data (email, name, childName, phone)
     const encryptedData = encryptUserData({
       email,
       name: name || null,
       childName: childName || null,
+      phone: phone ? phone.replace(/[\s().-]/g, '') : null,
     });
 
     // Create user with INACTIVE subscription status
-    // Subscription will be activated by RevenueCat webhook after purchase
+    // Subscription will be activated by RevenueCat webhook after purchase.
+    // Exception: a link with skipSubscription never reaches Stripe checkout, so its
+    // free trial (if any) is granted here directly — no card, no auto-renewal.
+    const skipTrialDays = partner?.config?.skipSubscription === true ? Number(partner.config.trialDays) || 0 : 0;
+    const now = new Date();
+    const directTrialEnd = skipTrialDays > 0 ? new Date(now.getTime() + skipTrialDays * 24 * 60 * 60 * 1000) : null;
+
     let user = await prisma.user.create({
       data: {
         id: crypto.randomUUID(),
@@ -144,6 +154,7 @@ router.post('/signup', async (req, res, next) => {
         passwordHash,
         name: encryptedData.name || null,
         childName: encryptedData.childName || null,
+        phone: encryptedData.phone,
         childBirthYear,
         childBirthday: childBirthday ? new Date(childBirthday) : null,
         childConditions: JSON.stringify(childConditions), // Stored as plain JSON
@@ -152,7 +163,13 @@ router.post('/signup', async (req, res, next) => {
         partnerId: partner?.id ?? null,
         subscriptionSource: isReferral ? 'referral' : (partner ? 'partner' : null),
         subscriptionPlan: 'FREE',
-        subscriptionStatus: 'INACTIVE',
+        subscriptionStatus: directTrialEnd ? 'TRIAL' : 'INACTIVE',
+        ...(directTrialEnd && {
+          trialStartDate: now,
+          trialEndDate: directTrialEnd,
+          subscriptionStartDate: now,
+          subscriptionEndDate: directTrialEnd,
+        }),
       }
     });
 

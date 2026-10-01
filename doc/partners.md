@@ -2,6 +2,8 @@
 
 Business partners (clinics, employers, health plans) receive a unique QR code / URL. When their end-users sign up through that link, they automatically receive a customised Stripe checkout — partner-configured trial period, group discount coupon, and plan selection applied without any user action.
 
+The same mechanism powers **marketing campaign links** (see "Campaign links"), which can also customise the signup screens (first two and the last) and skip the web offer page.
+
 ---
 
 ## How it works end-to-end
@@ -53,17 +55,43 @@ Partner QR code → signup.hinora.co/p/sgh-family
 
 ## Campaign links
 
-A **campaign** is a marketing signup link: a `Partner` row with `kind = CAMPAIGN`. It reuses the whole partner pipeline (link + QR, attribution via `User.partnerId`, signup counter, optional trial/discount, users list), and adds three things, all stored in `config`:
+A **campaign** is a marketing signup link (e.g. one per ad, audience or channel): a `Partner` row with `kind = CAMPAIGN`. It reuses the whole partner pipeline (link + QR, attribution via `User.partnerId`, signup counter, optional trial/discount, users list), and adds three things, all stored in `config`:
 
 | Setting | Effect |
 |---|---|
-| `landing` | Custom copy for the first two web signup screens — `headline`, `subtext`, `ctaText` (screen 1, `LandingScreen`), `accountTitle`, `accountSubtitle` (screen 2, `CreateAccountScreen`), plus an optional hero image (`imageKey`). Any blank field keeps the default copy/image. Available to partners too. |
+| `landing` | Custom copy for the web signup screens — `headline`, `subtext`, `ctaText` (screen 1, `LandingScreen`), `accountTitle`, `accountSubtitle` (screen 2, `CreateAccountScreen`), `successTitle`, `successSubtitle` (last screen, `SuccessScreen` — "You're all set!" / download the app), plus an optional hero image (`imageKey`). Any blank field keeps the default copy/image. Available to partners too. |
 | `skipSubscription` | Web signup never shows `/subscribe`: `SubscriptionScreen` redirects to `/success` (the "download the app" page), so there's no web trial or checkout. Users can still subscribe later in the mobile app at standard pricing. |
+| `campaignRules` | `{ title, content }`, campaigns only. Campaign signups must tick a consent checkbox on `/create-account`: "I am the parent or legal guardian of the participating child, and I agree to the [*title*] and Nora Parenting's standard Terms of Service and Privacy Policy." The title opens a pop-up with `content` (plain text, line breaks kept). No content → `null`, and the checkbox omits the rules part. Limits: title 120, content 20,000. Returned by the public validate API only for `kind = CAMPAIGN`. |
 | `displayName` | Public name on the subscribe page ("Special discount for X"). A campaign's `name` is internal and is **never** sent to the browser; with no `displayName` the badge just says "Special discount". Partners fall back to `name`. |
 
-Create N campaigns from the admin portal (**+ New Campaign**, or **Duplicate** on an existing row — same offer, messages and image, new slug). Links are the same `/p/<slug>` format as partners.
+Create N campaigns from the admin portal (**+ New Campaign**, or **Duplicate** on an existing row — same offer, messages and image, new slug). Links are the same `/p/<slug>` format as partners. See "Launch a campaign" in the runbook.
 
-**Hero image** — uploaded via `POST /api/admin/partners/:id/landing-image` (multipart `image`, ≤10 MB) to S3 `partners/<slug>/hero-<timestamp>.<ext>`; `DELETE` on the same path reverts to the default image (the S3 object is kept, since a duplicated campaign may share it). The public API returns a presigned `imageUrl` (1h); the web app falls back to the default image if it fails to load. Text limits (server-enforced, `server/utils/partnerLanding.cjs`): headline 120, subtext 300, button 40, account title 80, account subtitle 300, display name 80.
+**Partner vs campaign** — `kind` only changes defaults and labelling; both kinds support every setting:
+
+| | Partner (`PARTNER`) | Campaign (`CAMPAIGN`) |
+|---|---|---|
+| Typical use | Clinic, employer, health plan | Ad, social post, newsletter, event |
+| `name` | Public — shown on the subscribe page unless `displayName` is set | Internal label only, never sent to the browser |
+| Admin | Counted in "active partners"; Partners filter | Purple CAMPAIGN tag; counted in "active campaigns"; Campaigns filter |
+
+**Campaign signup flow:**
+
+```
+signup.hinora.co/p/oct-toddlers
+      │  PartnerLandingScreen (no UI): GET /api/partner/validate/oct-toddlers
+      │  → visits += 1; { name: displayName|null, kind, skipSubscription, landing{…, imageUrl}, offer… }
+      │  → saved to OnboardingContext / localStorage, redirect to /
+      ▼
+/  LandingScreen         — landing.headline / subtext / ctaText / imageUrl (else defaults)
+/intro                   — advisor intro (AdvisorIntroScreen, web port of mobile OB2); all signups
+/create-account          — landing.accountTitle / accountSubtitle (else defaults); signup sends partnerSlug
+                           → User.partnerId set, redemptions += 1
+onboarding → play sessions
+/subscribe               — skipSubscription ? redirect to /success : offer page (trial/discounts as partners)
+/success                 — landing.successTitle / successSubtitle (else defaults)
+```
+
+**Hero image** — uploaded via `POST /api/admin/partners/:id/landing-image` (multipart `image`, ≤10 MB) to S3 `partners/<slug>/hero-<timestamp>.<ext>`; `DELETE` on the same path reverts to the default image (the S3 object is kept, since a duplicated campaign may share it). The public API returns a presigned `imageUrl` (1h); the web app falls back to the default image if it fails to load. Text limits (server-enforced, `server/utils/partnerLanding.cjs`): headline 120, subtext 300, button 40, account title 80, account subtitle 300, success title 80, success message 300, display name 80.
 
 **Visits** — `Partner.visits` counts successful `GET /api/partner/validate/:slug` calls (i.e. link opens, including referral-link opens on the `referral` row). The admin table shows visits, signups, and signup conversion %. It's a raw counter: refreshes, bots and link-preview crawlers that run JS can inflate it slightly.
 
@@ -98,7 +126,7 @@ partnerId  String?
 partner    Partner? @relation(...)
 ```
 
-Migrations: `20260701000000_add_partner`, `20260729024440_add_partner_qr_code_url`, `20260828130000_seed_referral_partner`.
+Migrations: `20260701000000_add_partner`, `20260729024440_add_partner_qr_code_url`, `20260828130000_seed_referral_partner`, `20261001120000_add_partner_kind_and_visits`.
 
 ### Reserved `referral` partner
 
@@ -133,9 +161,11 @@ interface PartnerConfig {
   maxRedemptions?: number | null;             // null = unlimited
   displayName?: string | null;                // public name on the subscribe page (see Campaign links)
   skipSubscription?: boolean;                 // skip /subscribe in web signup
+  campaignRules?: { title: string | null; content: string } | null; // consent-checkbox rules (campaigns)
   landing?: {                                 // custom signup copy; null fields = default
     headline: string | null; subtext: string | null; ctaText: string | null;
     accountTitle: string | null; accountSubtitle: string | null;
+    successTitle: string | null; successSubtitle: string | null;
     imageKey: string | null;                  // S3 key; set only via the landing-image endpoints
   } | null;
 }
@@ -298,13 +328,20 @@ Every partner response (list, get, create, update, qr-code) has the same shape: 
 
 ## Admin portal
 
-**Partners page** (`/partners` in the admin portal):
+**Partners & Campaigns page** (`/partners` in the admin portal):
 
-- **Create** — form with all config fields; the slug is typed manually (lowercased, anything outside `a-z0-9-` becomes `-`)
+- **Create** — **+ New Partner** or **+ New Campaign** opens the same form with `kind` preset (switchable via the Type radio); all config fields; the slug is typed manually (lowercased, anything outside `a-z0-9-` becomes `-`)
+- **Public display name** — optional; placeholder explains the default (partner name, or hidden for campaigns)
+- **Skip the subscription / offer page** — checkbox for `skipSubscription`; when ticked, trial days are disabled and the plans/discounts blocks are hidden (they'd never be shown)
+- **Signup screen messages** — hero image (upload/replace, or **Use default image**; a new file uploads on save), headline, subtext, button text (screen 1), title, subtitle (screen 2) and title, message (last screen — "You're all set!"). Blank fields show the default copy greyed out; line breaks are kept; per-field character limits match the server. A **phone preview** of all three screens updates live
+- **Campaign rules** (campaigns only) — rules title (e.g. "21-Day Challenge Campaign Rules") and content for the create-account consent checkbox; empty content drops the rules part
+- **Duplicate** — opens the create form pre-filled from a row (offer, messages, hero image; name gets "(copy)", slug blank)
+- **Filter** — All / Partners / Campaigns tabs with counts; campaigns carry a purple CAMPAIGN tag
+- **Funnel column** — visits, signups (vs cap) and signup conversion % (`redemptions / visits`), plus attributed user count
 - **Edit** — same form, slug is read-only; each plan's discount block is independent — editing yearly's discount doesn't touch monthly's, and vice versa. Emptying Max redemptions, Expires or Welcome message clears them
 - **Discounts** — one block per plan currently checked under "Available plans"; each has its own "Apply a discount" toggle, type (percent/amount), amount, and duration
 - **Copy / QR** — copy the partner's `signupUrl`, or open the QR modal (view, open, generate/regenerate)
-- **Table** — shows offer summary (trial days, plans), a discount line per plan that has one, signups vs cap, attributed user count (click to list them with subscription status), status badge, created date
+- **Table** — shows offer summary (trial days, plans — or "No offer page (skipped)"), a discount line per plan that has one, signups vs cap, attributed user count (click to list them with subscription status), status badge, created date
 - **Deactivate / Reactivate** — Deactivate sets status=EXPIRED (new signups blocked; signed-up users keep their offer). Reactivate sets it back to ACTIVE
 - **Env toggle** — the portal can target the dev or prod API; the PROD badge shows which
 
@@ -327,9 +364,23 @@ interface PlanDiscountInfo {
   amountOff: number | null; // cents
 }
 
+interface SignupLanding {        // campaign signup copy; null = default
+  headline: string | null;
+  subtext: string | null;
+  ctaText: string | null;
+  imageUrl: string | null;       // presigned, ~1h
+  accountTitle: string | null;
+  accountSubtitle: string | null;
+  successTitle: string | null;
+  successSubtitle: string | null;
+}
+
 interface PartnerInfo {
   slug: string;
-  name: string;
+  name: string | null;           // public display name; null for a campaign without one
+  kind?: 'PARTNER' | 'CAMPAIGN';
+  skipSubscription?: boolean;
+  landing?: SignupLanding | null;
   welcomeMessage: string | null;
   trialDays: number;
   plans: ('monthly' | 'yearly')[];
@@ -342,12 +393,18 @@ interface PartnerInfo {
 
 Persisted to `localStorage` under key `partnerInfo`. Cleared when set to null. Since this is set by `PartnerLandingScreen` *before* the redirect to `/`, it's already available by the time the user reaches `/create-account` and `/subscribe`, regardless of the fact that visiting `/p/:slug` no longer shows its own screen.
 
-**`CreateAccountScreen`** — passes `partnerSlug: data.partnerInfo?.slug` in the signup payload. It's also now the **first** screen after Landing (see flow-order change below), so `partnerInfo` (if any) is already set by the time this fires.
+**`LandingScreen`** — uses `partnerInfo.landing` `headline` / `subtext` / `ctaText` / `imageUrl` when set, else the default copy and image. Line breaks in custom copy are preserved (`whitespace-pre-line`). If the presigned hero image fails to load (e.g. expired after ~1h in a stale tab), it falls back to the default image.
 
-**`SubscriptionScreen`** — when `partnerInfo` is set, each plan card is independent:
+**`AdvisorIntroScreen`** (`/intro`) — web port of the mobile `OB2Screen_v2` (clinical advisor intro, same `OB-2_v2.png` art as `advisor.png` with text overlaid). Shown in every web signup (campaign, partner, referral and direct): `LandingScreen`'s CTA goes here, and `CreateAccountScreen`'s back button returns here.
+
+**`CreateAccountScreen`** — for campaigns (not referrals), the footer "By creating an account…" line is replaced by a required consent checkbox (parent/guardian + campaign rules + Terms/Privacy); **Create Account** stays disabled until it's ticked. The rules title opens `campaignRules.content` in a pop-up. The consent is not recorded server-side. Title/subtitle come from `partnerInfo.landing.accountTitle` / `accountSubtitle` when set, except for referred users (`referralCode` set), who always see the referral copy. Passes `partnerSlug: data.partnerInfo?.slug` in the signup payload. It's also now the **first** screen after Landing (see flow-order change below), so `partnerInfo` (if any) is already set by the time this fires.
+
+**`SuccessScreen`** — title/message come from `partnerInfo.landing.successTitle` / `successSubtitle` when set (except for referred users, as on `CreateAccountScreen`), else "You're all set!" and the default download-the-app message.
+
+**`SubscriptionScreen`** — if `partnerInfo.skipSubscription` is true, it renders `<Navigate to="/success" replace />`, so every route into `/subscribe` (Intro3 "Skip for Now", PlaySession5 "Continue") lands on the download page instead. Otherwise, when `partnerInfo` is set, each plan card is independent:
 - Filters plan cards to `partnerInfo.plans` only
 - Each plan shows its **own** discount (or none) — strikethrough original price + discounted price, computed client-side with the same percentOff/amountOff math Stripe's checkout applies, so the display isn't just a promise
-- Each plan's top-left badge shows "Special discount for {partner name}: X% off" if that specific plan has a discount, otherwise Yearly falls back to the generic "BEST VALUE · SAVE X%" badge (Monthly has no fallback badge)
+- Each plan's top-left badge shows "Special discount for {partner name}: X% off" (just "Special discount: X% off" when `name` is null) if that specific plan has a discount, otherwise Yearly falls back to the generic "BEST VALUE · SAVE X%" badge (Monthly has no fallback badge)
 - For partner customers with a yearly discount, both the crossed-out "original" per-month price and the discounted "offer" price on the Yearly card are derived from the **yearly plan's own base price** (yearly amount ÷ 12), before and after the discount respectively
 - Replaces "7 days free" with the partner's trial days throughout
 - Footer copy shows the discount label only for whichever plan is currently selected
@@ -383,6 +440,19 @@ Redemption counter is incremented **at signup time**, not at checkout completion
 6. Click **QR** to open the auto-generated QR code (use **Generate** if it's missing), then **Open in new tab** to save it
 7. Hand off URL / QR code to partner
 
+### Launch a campaign
+
+1. Admin portal → Partners → **+ New Campaign** (or **Duplicate** an existing campaign to reuse its offer, messages and image)
+2. Fill: internal name (e.g. "Oct FB ad — toddler parents"; never shown to users), slug (e.g. `oct-toddlers`), optional public display name, cap and expiry
+3. Choose the offer:
+   - **No web offer** — tick **Skip the subscription / offer page**; users finish onboarding on the download page and subscribe in the app at standard pricing
+   - **Web offer** — leave it unticked and set trial days, plans and per-plan discounts as for a partner
+4. Optionally customise **Signup screen messages** (hero image, headline, subtext, button, create-account title/subtitle, last-screen title/message) and check the phone preview
+5. **Create campaign**, then **Copy** the `signup.hinora.co/p/<slug>` link (or use **QR**) for the ad / post
+6. Track it in the funnel column: visits → signups (conversion %), then click the user count for subscription status
+
+One campaign per ad/channel gives per-channel numbers; Duplicate makes that quick.
+
 ### Pause a partner temporarily
 
 Admin portal → Partners → **Deactivate**. Sets status=EXPIRED. New visitors silently fall through to normal signup with no partner attached. Users who already signed up still get the partner offer at checkout.
@@ -395,7 +465,7 @@ Admin portal → Partners → **Edit** → update the specific plan's discount b
 
 ### Check usage
 
-Partners table shows redemptions (signup count) vs cap, and user count — every user currently attributed to the partner, whether or not they subscribed. Click the user count to see each user's subscription status (TRIAL / ACTIVE / INACTIVE…). Deleted accounts are excluded from the user count but not from redemptions, so redemptions can be higher.
+Partners table shows visits (link opens), redemptions (signup count) vs cap with conversion %, and user count — every user currently attributed to the partner, whether or not they subscribed. Click the user count to see each user's subscription status (TRIAL / ACTIVE / INACTIVE…). Deleted accounts are excluded from the user count but not from redemptions, so redemptions can be higher.
 
 ---
 

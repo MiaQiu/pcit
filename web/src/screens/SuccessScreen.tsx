@@ -1,8 +1,14 @@
 import React from 'react';
 import OnboardingLayout from '../components/OnboardingLayout';
+import { useOnboarding } from '../contexts/OnboardingContext';
 import googlePlayIcon from '../assets/images/googleplay.png';
 
 export default function SuccessScreen() {
+  // Campaign/partner links can override the title and message (referral copy still wins,
+  // as on CreateAccountScreen); blank fields keep the default copy.
+  const { data } = useOnboarding();
+  const landing = data.referralCode ? null : data.partnerInfo?.landing;
+
   return (
     <OnboardingLayout>
       <div className="flex-1 flex flex-col px-6 py-12">
@@ -14,11 +20,11 @@ export default function SuccessScreen() {
             </svg>
           </div> */}
 
-          <h1 className="text-[#1E2939] text-2xl font-bold text-center mb-3">
-            You're all set!
+          <h1 className="text-[#1E2939] text-2xl font-bold text-center mb-3 whitespace-pre-line">
+            {landing?.successTitle || "You're all set!"}
           </h1>
-          <p className="text-[#6B7280] text-sm text-center leading-relaxed">
-            Your account is ready. Download the Nora app to start your first play session. Log in with your email and password in the Nora mobile app.
+          <p className="text-[#6B7280] text-sm text-center leading-relaxed whitespace-pre-line">
+            {landing?.successSubtitle || 'Your account is ready. Download the Nora app to start your first play session. Log in with your email and password in the Nora mobile app.'}
           </p>
         </div>
 

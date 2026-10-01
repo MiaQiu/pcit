@@ -7,6 +7,7 @@ import LandingScreen from './screens/LandingScreen';
 import LoginScreen from './screens/LoginScreen';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import CreateAccountScreen from './screens/CreateAccountScreen';
+import AdvisorIntroScreen from './screens/AdvisorIntroScreen';
 
 // Demo screens
 import Demo1Screen from './screens/demo/Demo1Screen';
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="/" element={<LandingScreen />} />
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+          <Route path="/intro" element={<AdvisorIntroScreen />} />
           <Route path="/create-account" element={<CreateAccountScreen />} />
 
           {/* Demo slides */}

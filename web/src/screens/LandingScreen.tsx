@@ -36,7 +36,7 @@ export default function LandingScreen() {
         </p>
 
         <div className="mt-auto">
-          <PrimaryButton onClick={() => navigate('/create-account')}>
+          <PrimaryButton onClick={() => navigate('/intro')}>
             {landing?.ctaText || 'Get Started'}
           </PrimaryButton>
         </div>

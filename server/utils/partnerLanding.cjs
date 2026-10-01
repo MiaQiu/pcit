@@ -4,8 +4,11 @@
 //   displayName      — public name shown on the subscribe page ("Special discount for X").
 //                      Campaigns default to none so an internal campaign name never leaks.
 //   skipSubscription — web signup skips /subscribe and goes straight to /success.
-//   landing          — custom copy for the first two web signup screens:
-//     { headline, subtext, ctaText, imageKey, accountTitle, accountSubtitle }
+//   campaignRules    — { title, content } shown behind the consent checkbox on the
+//                      web create-account screen (campaigns only).
+//   landing          — custom copy for the web signup screens:
+//     { headline, subtext, ctaText, imageKey, accountTitle, accountSubtitle,
+//       successTitle, successSubtitle }
 // Every field is optional; blank falls back to the web app's default copy.
 
 const LANDING_LIMITS = {
@@ -14,8 +17,11 @@ const LANDING_LIMITS = {
   ctaText: 40,
   accountTitle: 80,
   accountSubtitle: 300,
+  successTitle: 80,
+  successSubtitle: 300,
 };
 const DISPLAY_NAME_LIMIT = 80;
+const RULES_LIMITS = { title: 120, content: 20000 };
 
 function cleanText(value, max, field) {
   if (value == null) return null;
@@ -48,6 +54,18 @@ function sanitizeLanding(input, { existingImageKey = null, allowImageKey = false
   return Object.values(landing).some(v => v != null) ? landing : null;
 }
 
+/**
+ * Normalise campaign rules. Returns null when no content is given (the title alone
+ * is meaningless — the checkbox then only covers the Terms and Privacy Policy).
+ */
+function sanitizeCampaignRules(input) {
+  if (input == null) return null;
+  const content = cleanText(input.content, RULES_LIMITS.content, 'campaignRules.content');
+  if (!content) return null;
+  const title = cleanText(input.title, RULES_LIMITS.title, 'campaignRules.title');
+  return { title, content };
+}
+
 function sanitizeDisplayName(value) {
   return cleanText(value, DISPLAY_NAME_LIMIT, 'displayName');
 }
@@ -65,8 +83,10 @@ function publicDisplayName(partner) {
 module.exports = {
   LANDING_LIMITS,
   DISPLAY_NAME_LIMIT,
+  RULES_LIMITS,
   PartnerConfigError,
   sanitizeLanding,
   sanitizeDisplayName,
+  sanitizeCampaignRules,
   publicDisplayName,
 };

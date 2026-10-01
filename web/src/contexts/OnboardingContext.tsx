@@ -20,7 +20,7 @@ export interface PlanDiscountInfo {
   amountOff: number | null; // cents
 }
 
-// Custom copy for the first two signup screens (campaign links). Any field may be
+// Custom copy for the signup screens (landing, create account, success). Any field may be
 // null, meaning "use the default copy".
 export interface SignupLanding {
   headline: string | null;
@@ -29,6 +29,8 @@ export interface SignupLanding {
   imageUrl: string | null; // presigned, ~1h — fall back to the default image on load error
   accountTitle: string | null;
   accountSubtitle: string | null;
+  successTitle: string | null;
+  successSubtitle: string | null;
 }
 
 export interface PartnerInfo {
@@ -38,6 +40,8 @@ export interface PartnerInfo {
   kind?: 'PARTNER' | 'CAMPAIGN';
   skipSubscription?: boolean; // campaign option: skip /subscribe, go straight to /success
   landing?: SignupLanding | null;
+  // Campaign rules behind the create-account consent checkbox (campaigns only).
+  campaignRules?: { title: string | null; content: string } | null;
   welcomeMessage: string | null;
   trialDays: number;
   plans: ('monthly' | 'yearly')[];
