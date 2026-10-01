@@ -6,18 +6,22 @@ import MultipleChoice from '../../components/MultipleChoice';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { completeOnboarding } from '../../api';
 
+// Same options and values as the mobile app (nora-mobile ChildIssueScreen.tsx);
+// the server maps these keys to modules and clinical levels
+// (server/routes/modules.cjs, server/services/priorityEngine.cjs).
+const OTHER = 'other';
 const issueOptions = [
-  { value: 'Behavior Challenges (Tantrums, Arguing)', label: 'Behavior Challenges (Tantrums, Arguing)' },
-  { value: 'Handling big emotions', label: 'Handling big emotions' },
-  { value: 'Low frustration tolerance', label: 'Low frustration tolerance' },
-  { value: 'New Baby in the Home', label: 'New Baby in the Home' },
-  { value: 'Moving House & School Changes', label: 'Moving House & School Changes' },
-  { value: 'Navigating Parental Divorces', label: 'Navigating Parental Divorces' },
-  { value: 'Building Social-Emotional Skills', label: 'Building Social-Emotional Skills' },
-  { value: 'Attention and Focus Issues', label: 'Attention and Focus Issues' },
-  { value: 'ADHD / Attention & Hyperactivity', label: 'ADHD / Attention & Hyperactivity' },
-  { value: 'Learning More Effective Parenting Strategies', label: 'Learning More Effective Parenting Strategies' },
-  { value: 'Others', label: 'Others' },
+  { value: 'big_feelings_tantrums', label: 'Big Feelings & Tantrums' },
+  { value: 'behavior_challenges', label: 'Behavior Challenges' },
+  { value: 'listening_cooperation', label: 'Listening & Cooperation' },
+  { value: 'attention_focus', label: 'Attention & Focus' },
+  { value: 'social', label: 'Social & Emotional Skills' },
+  { value: 'anxiety', label: 'Anxiety' },
+  { value: 'confidence', label: 'Confidence' },
+  { value: 'adhd', label: 'ADHD Support' },
+  { value: 'developmental_concerns', label: 'Developmental Concerns' },
+  { value: 'parenting_strategies', label: 'Become a More Confident Parent' },
+  { value: OTHER, label: 'Other' },
 ];
 
 export default function ChildIssueScreen() {
@@ -25,7 +29,10 @@ export default function ChildIssueScreen() {
   const { data, setIssue, setIssueOther } = useOnboarding();
   const [otherText, setOtherText] = useState(data.issueOther);
   const [loading, setLoading] = useState(false);
-  const showOther = data.issue.includes('Others');
+  // Drop answers saved in localStorage by the old picker (free-text labels), which
+  // no longer match any option and the server doesn't map.
+  const selected = data.issue.filter(v => issueOptions.some(o => o.value === v));
+  const showOther = selected.includes(OTHER);
 
   const handleChange = (vals: string | string[]) => {
     const arr = Array.isArray(vals) ? vals : [vals];
@@ -34,6 +41,10 @@ export default function ChildIssueScreen() {
 
   const handleContinue = async () => {
     if (showOther) setIssueOther(otherText);
+    // Like the mobile app, "Other" is sent as the parent's own text in place of 'other'.
+    const issue = showOther
+      ? selected.filter(v => v !== OTHER).concat(otherText.trim())
+      : selected;
 
     // Consolidated sync point: by now every field NameInputScreen..ChildIssueScreen collects is
     // available, so this is the one place we PATCH them all to the backend (only relevant if
@@ -49,7 +60,7 @@ export default function ChildIssueScreen() {
           childName: data.childName,
           childGender: data.childGender,
           childBirthday: data.childBirthday.toISOString(),
-          issue: data.issue,
+          issue,
         }, data.accessToken);
       } catch {
         // Non-blocking
@@ -67,15 +78,15 @@ export default function ChildIssueScreen() {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
         <h1 className="text-[#1E2939] text-2xl font-bold mb-2 leading-tight text-center">
-          What would feel most helpful to you as a parent?
+          What Brings You Here?
         </h1>
         <p className="text-[#6B7280] text-sm mb-6 text-center">
-          Pick the ones that resonate most.
+          Select all that applies.
         </p>
 
         <MultipleChoice
           options={issueOptions}
-          selected={data.issue}
+          selected={selected}
           multi={true}
           onChange={handleChange}
         />
@@ -88,7 +99,7 @@ export default function ChildIssueScreen() {
             <textarea
               value={otherText}
               onChange={e => setOtherText(e.target.value)}
-              placeholder="Tell us more about your situation..."
+              placeholder="Please describe the issue..."
               rows={3}
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-[#1E2939] text-sm
                          focus:outline-none focus:ring-2 focus:ring-[#8C49D5] focus:border-transparent
@@ -102,7 +113,7 @@ export default function ChildIssueScreen() {
       <div className="px-1 pb-2 pt-3">
         <PrimaryButton
           onClick={handleContinue}
-          disabled={data.issue.length === 0}
+          disabled={selected.length === 0 || (showOther && !otherText.trim())}
           loading={loading}
         >
           Continue

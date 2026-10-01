@@ -8,23 +8,27 @@ import {
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
 import defaultSignupImage from '../assets/signup-default.jpg';
 
-// Default copy of the first two web signup screens (web/src/screens/LandingScreen.tsx,
-// CreateAccountScreen.tsx) — shown as placeholders and in the preview.
+// Default copy of the customisable web signup screens (web/src/screens/LandingScreen.tsx,
+// CreateAccountScreen.tsx, SuccessScreen.tsx) — shown as placeholders and in the preview.
 const DEFAULT_LANDING: Record<keyof PartnerLandingText, string> = {
   headline: 'Raise confident, happy kids — with just 5 minutes a day',
   subtext: 'Science-backed parenting coaching, personalized for your child',
   ctaText: 'Get Started',
   accountTitle: 'Create your account',
   accountSubtitle: 'Join thousands of parents raising happier, more confident kids.',
+  successTitle: "You're all set!",
+  successSubtitle: 'Your account is ready. Download the Nora app to start your first play session. Log in with your email and password in the Nora mobile app.',
 };
 
 // Mirrors server/utils/partnerLanding.cjs LANDING_LIMITS.
 const LANDING_LIMITS: Record<keyof PartnerLandingText, number> = {
   headline: 120, subtext: 300, ctaText: 40, accountTitle: 80, accountSubtitle: 300,
+  successTitle: 80, successSubtitle: 300,
 };
 
 const emptyLandingText = (): PartnerLandingText => ({
   headline: null, subtext: null, ctaText: null, accountTitle: null, accountSubtitle: null,
+  successTitle: null, successSubtitle: null,
 });
 
 // Hero image edits are applied after the partner row is saved (the upload needs its id).
@@ -128,6 +132,8 @@ export default function PartnersPage() {
   const [form, setForm] = useState<PartnerCreatePayload>(emptyForm);
   const [discountStates, setDiscountStates] = useState<Record<PlanKey, DiscountFormState>>(emptyDiscountStates());
   const [landingText, setLandingText] = useState<PartnerLandingText>(emptyLandingText());
+  // Campaign rules behind the create-account consent checkbox (campaigns only).
+  const [rules, setRules] = useState({ title: '', content: '' });
   const [imageState, setImageState] = useState<LandingImageState>(emptyImageState());
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -179,6 +185,7 @@ export default function PartnersPage() {
     setForm({ ...emptyForm, kind });
     setDiscountStates(emptyDiscountStates());
     setLandingText(emptyLandingText());
+    setRules({ title: '', content: '' });
     setImageState(emptyImageState());
     setEditingId(null);
     setSaveError(null);
@@ -208,7 +215,10 @@ export default function PartnersPage() {
       ctaText: l?.ctaText ?? null,
       accountTitle: l?.accountTitle ?? null,
       accountSubtitle: l?.accountSubtitle ?? null,
+      successTitle: l?.successTitle ?? null,
+      successSubtitle: l?.successSubtitle ?? null,
     });
+    setRules({ title: cfg.campaignRules?.title ?? '', content: cfg.campaignRules?.content ?? '' });
     setImageState({ currentUrl: p.landingImageUrl, currentKey: l?.imageKey ?? null, pendingFile: null, remove: false });
     const next = emptyDiscountStates();
     (['monthly', 'yearly'] as const).forEach(plan => {
@@ -269,6 +279,10 @@ export default function PartnersPage() {
         welcomeMessage: form.welcomeMessage || null,
         displayName: form.displayName || null,
         landing,
+        // Only campaigns show the consent checkbox; no content = no rules.
+        campaignRules: form.kind === 'CAMPAIGN' && rules.content.trim()
+          ? { title: rules.title.trim() || null, content: rules.content }
+          : null,
       };
       let saved = editingId
         ? await updatePartner(editingId, payload, callOpts)
@@ -672,8 +686,19 @@ export default function PartnersPage() {
                       onChange={v => setLandingField(field, v)}
                     />
                   ))}
+                  <p style={{ margin: '6px 0 0', fontSize: 12, fontWeight: 700, color: '#6b7280' }}>LAST SCREEN · ALL SET (DOWNLOAD APP)</p>
+                  {([
+                    ['successTitle', 'Title', false],
+                    ['successSubtitle', 'Message', true],
+                  ] as const).map(([field, label, multiline]) => (
+                    <LandingField
+                      key={field} label={label} multiline={multiline}
+                      value={landingText[field]} placeholder={DEFAULT_LANDING[field]} maxLength={LANDING_LIMITS[field]}
+                      onChange={v => setLandingField(field, v)}
+                    />
+                  ))}
                 </div>
-                <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', maxWidth: 406 }}>
                   <PhonePreview label="Screen 1">
                     <div style={{ width: '100%', aspectRatio: '1', borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}>
                       <img src={previewImage ?? defaultSignupImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -705,9 +730,55 @@ export default function PartnersPage() {
                       Create Account
                     </div>
                   </PhonePreview>
+                  <PhonePreview label="Last screen">
+                    <p style={{ margin: '16px 0 6px', fontSize: 14, fontWeight: 700, textAlign: 'center', color: '#1E2939', whiteSpace: 'pre-line' }}>
+                      {landingText.successTitle || DEFAULT_LANDING.successTitle}
+                    </p>
+                    <p style={{ margin: '0 0 16px', fontSize: 10, textAlign: 'center', color: '#6B7280', whiteSpace: 'pre-line', lineHeight: 1.4 }}>
+                      {landingText.successSubtitle || DEFAULT_LANDING.successSubtitle}
+                    </p>
+                    <p style={{ margin: '0 0 8px', fontSize: 10, fontWeight: 600, textAlign: 'center', color: '#1E2939' }}>Download the Nora App</p>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {['App Store', 'Google Play'].map(s => (
+                        <div key={s} style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 999, padding: '6px 0', textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#1E2939' }}>{s}</div>
+                      ))}
+                    </div>
+                  </PhonePreview>
                 </div>
               </div>
             </div>
+
+            {/* Campaign rules — linked from the consent checkbox on the create-account screen */}
+            {isCampaign && (
+              <div style={{ marginBottom: 16 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 2 }}>Campaign rules</span>
+                <span style={{ display: 'block', color: '#6b7280', fontSize: 12, marginBottom: 10 }}>
+                  Campaign signups must tick a consent checkbox on the create-account screen: "I am the parent or legal
+                  guardian of the participating child, and I agree to the <b>{rules.title.trim() || 'Campaign Rules'}</b> and
+                  Nora Parenting's standard Terms of Service and Privacy Policy." The rules title opens the content below.
+                  Leave the content empty to drop the rules part (the checkbox then covers only the Terms and Privacy Policy).
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <LandingField
+                    label="Rules title" multiline={false}
+                    value={rules.title} placeholder="21-Day Challenge Campaign Rules" maxLength={120}
+                    onChange={v => setRules(r => ({ ...r, title: v }))}
+                  />
+                  <label style={{ fontSize: 13 }}>
+                    <span style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, marginBottom: 4 }}>
+                      Rules content
+                      <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: 11 }}>{rules.content.length}/20000</span>
+                    </span>
+                    <textarea
+                      style={{ ...inputStyle, height: 220, padding: '8px 10px', resize: 'vertical', fontFamily: 'inherit' }}
+                      value={rules.content} maxLength={20000}
+                      placeholder={'1. Eligibility…\n2. How to participate…\n3. Rewards…'}
+                      onChange={e => setRules(r => ({ ...r, content: e.target.value }))}
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
 
             {saveError && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 10 }}>{saveError}</p>}
             <div style={{ display: 'flex', gap: 10 }}>

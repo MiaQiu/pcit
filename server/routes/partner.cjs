@@ -54,6 +54,8 @@ router.get('/validate/:slug', async (req, res) => {
       kind: partner.kind,
       skipSubscription: config.skipSubscription === true,
       landing: await publicLanding(config.landing),
+      // Shown behind the consent checkbox on the campaign create-account screen.
+      campaignRules: partner.kind === 'CAMPAIGN' ? (config.campaignRules ?? null) : null,
       welcomeMessage: config.welcomeMessage ?? null,
       trialDays: config.trialDays ?? 7,
       plans: config.plans ?? ['monthly', 'yearly'],

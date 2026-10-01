@@ -3907,7 +3907,7 @@ function adminStripe() {
 
 const { discountLabel, normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
 const { generatePartnerQrPng, buildPartnerUrl } = require('../utils/partnerQr.cjs');
-const { PartnerConfigError, sanitizeLanding, sanitizeDisplayName } = require('../utils/partnerLanding.cjs');
+const { PartnerConfigError, sanitizeLanding, sanitizeDisplayName, sanitizeCampaignRules } = require('../utils/partnerLanding.cjs');
 const { logError } = require('../utils/errorLogger.cjs');
 
 // Single response shape for every partner endpoint, so the admin table never receives
@@ -4098,7 +4098,7 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
     const {
       slug, name, kind = 'PARTNER', trialDays = 7, plans = ['monthly', 'yearly'],
       discounts, welcomeMessage, maxRedemptions, expiresAt,
-      displayName, skipSubscription = false, landing,
+      displayName, skipSubscription = false, landing, campaignRules,
     } = req.body;
 
     if (!slug || !name) return res.status(400).json({ error: 'slug and name are required' });
@@ -4107,6 +4107,7 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
     // allowImageKey: a duplicated campaign may reuse its source's (immutable, timestamped) hero image.
     const cleanLanding = sanitizeLanding(landing, { allowImageKey: true });
     const cleanDisplayName = sanitizeDisplayName(displayName);
+    const cleanRules = sanitizeCampaignRules(campaignRules);
 
     const existing = await prisma.partner.findUnique({ where: { slug } });
     if (existing) return res.status(409).json({ error: `Slug '${slug}' is already in use` });
@@ -4122,6 +4123,7 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
       displayName: cleanDisplayName,
       skipSubscription: skipSubscription === true,
       landing: cleanLanding,
+      campaignRules: cleanRules,
     };
 
     let partner = await prisma.partner.create({
@@ -4169,7 +4171,7 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
 
     const {
       name, kind, status, trialDays, plans, discounts, welcomeMessage, maxRedemptions, expiresAt,
-      displayName, skipSubscription, landing,
+      displayName, skipSubscription, landing, campaignRules,
     } = req.body;
     if (kind !== undefined && !['PARTNER', 'CAMPAIGN'].includes(kind)) {
       return res.status(400).json({ error: 'kind must be PARTNER or CAMPAIGN' });
@@ -4177,6 +4179,8 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
 
     // `undefined` = leave unchanged; `null` (or '') = clear.
     const oldConfig = partner.config;
+    // Validated before the Stripe sync below so a 400 has no side effects.
+    const nextRules = campaignRules !== undefined ? sanitizeCampaignRules(campaignRules) : (oldConfig.campaignRules ?? null);
     const oldDiscounts = normalizeDiscounts(oldConfig); // reads either old or new shape
     const nextPlans = plans ?? oldConfig.plans ?? ['monthly', 'yearly'];
     const nextExpiresAt = expiresAt !== undefined ? (expiresAt ? new Date(expiresAt) : null) : partner.expiresAt;
@@ -4207,6 +4211,7 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
       displayName: displayName !== undefined ? sanitizeDisplayName(displayName) : (oldConfig.displayName ?? null),
       skipSubscription: skipSubscription !== undefined ? skipSubscription === true : oldConfig.skipSubscription === true,
       landing: nextLanding,
+      campaignRules: nextRules,
     };
     delete config.discount; // legacy shared-discount field, superseded by `discounts`
 

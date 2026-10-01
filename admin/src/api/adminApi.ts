@@ -1325,13 +1325,21 @@ export interface PartnerDiscounts {
   yearly: PartnerDiscount | null;
 }
 
-// Custom copy for the first two web signup screens. null = default copy.
+// Custom copy for the web signup screens (landing, create account, success). null = default copy.
 export interface PartnerLandingText {
   headline: string | null;
   subtext: string | null;
   ctaText: string | null;
   accountTitle: string | null;
   accountSubtitle: string | null;
+  successTitle: string | null;
+  successSubtitle: string | null;
+}
+
+// Campaign rules linked from the create-account consent checkbox. null = no rules.
+export interface CampaignRules {
+  title: string | null;
+  content: string;
 }
 
 export interface PartnerLanding extends PartnerLandingText {
@@ -1349,6 +1357,7 @@ export interface PartnerConfig {
   displayName?: string | null;     // public name on the subscribe page
   skipSubscription?: boolean;      // skip /subscribe in web signup
   landing?: PartnerLanding | null;
+  campaignRules?: CampaignRules | null; // consent-checkbox rules (campaigns only)
 }
 
 export interface Partner {
@@ -1377,6 +1386,7 @@ export interface PartnerCreatePayload {
   skipSubscription?: boolean;
   // imageKey is honored on create only (to reuse a duplicated campaign's image).
   landing?: (PartnerLandingText & { imageKey?: string | null }) | null;
+  campaignRules?: CampaignRules | null;
   trialDays?: number;
   plans?: ('monthly' | 'yearly')[];
   discounts?: {
