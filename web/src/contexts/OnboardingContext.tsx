@@ -174,8 +174,15 @@ export function useOnboarding(): OnboardingContextValue {
 // WACB scoring
 const VALUE_TO_POINTS: Record<number, number> = { 1: 0, 2: 2, 3: 4, 4: 6, 5: 7 };
 
+const SNAPSHOT_ITEMS = [
+  'q1Dawdle', 'q2Disobey', 'q3Tantrum', 'q4Defiance', 'q5FocusDemand',
+  'q6Restless', 'q7TaskCompletion', 'q8Destroy', 'q9Aggression', 'q10LieSteal',
+] as const;
+
+// Sums only the 10 survey items (0–70) — parentingStressLevel is not part of the score.
 export function computeWacbScore(wacb: WacbAnswers): number {
-  return Object.values(wacb).reduce((sum, val) => {
+  return SNAPSHOT_ITEMS.reduce((sum, key) => {
+    const val = wacb[key];
     if (val === undefined) return sum;
     return sum + (VALUE_TO_POINTS[val] ?? 0);
   }, 0);
@@ -200,6 +207,8 @@ export interface BehaviorProfile {
   whatToExpect: string;
 }
 
+// Copy mirrors the mobile app (nora-mobile/src/i18n/locales/en.json →
+// onboarding.childBehaviorProfile.categories). Keep the two in sync.
 export function getBehaviorProfile(category: BehaviorCategory): BehaviorProfile {
   switch (category) {
     case 'stable':
@@ -208,9 +217,9 @@ export function getBehaviorProfile(category: BehaviorCategory): BehaviorProfile 
         label: 'On Track',
         color: '#16A34A',
         bgColor: '#DCFCE7',
-        whatItMeans: "Your child's behavior is generally well-regulated and age-appropriate. They show good self-control and emotional resilience for their developmental stage.",
-        startingPlan: "We'll focus on strengthening your connection through play, building on the positive foundation you've already established, and giving you tools to maintain this healthy development.",
-        whatToExpect: "You'll see continued growth in your child's confidence, communication, and social skills. Our daily 5-minute play sessions will deepen your bond and keep development on track.",
+        whatItMeans: "Your child is generally managing emotions, attention, and behavior in an age-appropriate way.",
+        startingPlan: "Spend 5 minutes a day in Emotional Massage — a simple child-led play where you follow your child's lead and stay fully present.\n\nA small moment that strengthens connection and supports positive behavior.",
+        whatToExpect: "You may begin to notice subtle shifts within a few weeks.\nOver time, you'll also learn how to support emotions and set gentle boundaries.",
       };
     case 'mild':
       return {
@@ -218,9 +227,9 @@ export function getBehaviorProfile(category: BehaviorCategory): BehaviorProfile 
         label: 'Needs Some Support',
         color: '#CA8A04',
         bgColor: '#FEF9C3',
-        whatItMeans: "Your child shows some behavioral challenges that are common and very manageable. With the right guidance, these patterns can shift quickly.",
-        startingPlan: "We'll introduce structured play techniques that give your child healthy ways to express emotions, and coach you on responding in ways that reduce challenging behaviors.",
-        whatToExpect: "Most families see noticeable improvement within 2–4 weeks. Consistent 5-minute daily play sessions make a significant difference in emotional regulation.",
+        whatItMeans: "Your child may sometimes struggle with listening, managing emotions, or staying focused in daily situations.\nSmall challenges are common at this age. With the right support, they can improve quickly.",
+        startingPlan: "Spend 5 minutes a day in Emotional Massage — a simple child-led play where you follow your child's lead and strengthen your connection — and helps reduce behavior struggles over time.",
+        whatToExpect: "Many families notice changes within 2–3 weeks.\nFrom there, we'll guide you through emotions and boundaries.",
       };
     case 'medium':
       return {
@@ -228,9 +237,9 @@ export function getBehaviorProfile(category: BehaviorCategory): BehaviorProfile 
         label: 'Needs More Support',
         color: '#EA580C',
         bgColor: '#FFEDD5',
-        whatItMeans: "Your child is experiencing some behavioral difficulties that would benefit from consistent, targeted support. This is more common than you might think.",
-        startingPlan: "We'll prioritize techniques from Child-Parent Relationship Therapy (CPRT) to help your child feel more secure, which naturally reduces behavioral challenges over time.",
-        whatToExpect: "With regular practice, you'll start to see meaningful changes in 3–6 weeks. Our AI coaching will help you identify patterns and give you precise, actionable guidance.",
+        whatItMeans: "Your child may frequently have difficulty with emotions, focus, or cooperation during everyday moments.\nSome moments may feel more challenging right now. With consistent support, meaningful progress is very possible.",
+        startingPlan: "Begin with 5 minutes a day of Emotional Massage — following your child's lead in a calm, focused way.\n\nConnection is where change begins — and supports better behavior over time.",
+        whatToExpect: "With consistency, progress often starts within a few weeks.\nYou'll be guided through emotions, boundaries, and everyday situations.",
       };
     case 'high':
       return {
@@ -238,9 +247,9 @@ export function getBehaviorProfile(category: BehaviorCategory): BehaviorProfile 
         label: 'Needs Extra Support',
         color: '#DC2626',
         bgColor: '#FEE2E2',
-        whatItMeans: "Your child is showing significant behavioral challenges. This is a signal that they need more support, and so do you — and that's exactly what Nora is here for.",
-        startingPlan: "We'll start with foundational connection-building exercises and work up to evidence-based behavioral strategies. You'll get daily coaching tailored to your specific situation.",
-        whatToExpect: "Change takes time, but you'll start feeling more confident and less overwhelmed within the first week. Consistent engagement with Nora leads to measurable improvement in most families within 4–8 weeks.",
+        whatItMeans: "Your child may be having difficulty managing emotions or staying focused in daily situations.\nYou're not alone — many families go through this. With the right support, positive change can happen.",
+        startingPlan: "Begin with 5 minutes a day of Emotional Massage — gently following your child's lead and staying present with them.\n\nThis creates a safe foundation for change and supports behavior over time.",
+        whatToExpect: "Small changes can begin within a few weeks.\nWe'll guide you closely through emotions, boundaries, and daily challenges.",
       };
   }
 }
