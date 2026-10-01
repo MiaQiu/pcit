@@ -1325,22 +1325,43 @@ export interface PartnerDiscounts {
   yearly: PartnerDiscount | null;
 }
 
+// Custom copy for the first two web signup screens. null = default copy.
+export interface PartnerLandingText {
+  headline: string | null;
+  subtext: string | null;
+  ctaText: string | null;
+  accountTitle: string | null;
+  accountSubtitle: string | null;
+}
+
+export interface PartnerLanding extends PartnerLandingText {
+  imageKey: string | null; // raw S3 key; set via upload/remove endpoints
+}
+
+export type PartnerKind = 'PARTNER' | 'CAMPAIGN';
+
 export interface PartnerConfig {
   trialDays: number;
   plans: ('monthly' | 'yearly')[];
   discounts: PartnerDiscounts;
   welcomeMessage: string | null;
   maxRedemptions: number | null;
+  displayName?: string | null;     // public name on the subscribe page
+  skipSubscription?: boolean;      // skip /subscribe in web signup
+  landing?: PartnerLanding | null;
 }
 
 export interface Partner {
   id: string;
   slug: string;
   name: string;
+  kind: PartnerKind;
   status: 'ACTIVE' | 'PAUSED' | 'EXPIRED';
   config: PartnerConfig;
   expiresAt: string | null;
   redemptions: number;
+  visits: number;
+  landingImageUrl: string | null; // presigned preview of config.landing.imageKey
   qrCodeUrl: string | null;
   signupUrl: string; // same URL the QR code encodes (server's SIGNUP_APP_URL)
   userCount: number;
@@ -1351,6 +1372,11 @@ export interface Partner {
 export interface PartnerCreatePayload {
   slug: string;
   name: string;
+  kind?: PartnerKind;
+  displayName?: string | null;
+  skipSubscription?: boolean;
+  // imageKey is honored on create only (to reuse a duplicated campaign's image).
+  landing?: (PartnerLandingText & { imageKey?: string | null }) | null;
   trialDays?: number;
   plans?: ('monthly' | 'yearly')[];
   discounts?: {
@@ -1395,6 +1421,34 @@ export async function deactivatePartner(id: string, opts?: ApiEnvOpts): Promise<
 
 export async function regeneratePartnerQrCode(id: string, opts?: ApiEnvOpts): Promise<Partner> {
   return apiFetchEnv(`/api/admin/partners/${id}/qr-code`, { method: 'POST' }, opts);
+}
+
+// Multipart upload — apiFetchEnv forces a JSON content type, so build the request here.
+async function partnerImageRequest(id: string, method: 'POST' | 'DELETE', file: File | null, opts?: ApiEnvOpts): Promise<Partner> {
+  const token = opts?.token ?? (await import('./client')).getToken();
+  let body: FormData | undefined;
+  if (file) {
+    body = new FormData();
+    body.append('image', file);
+  }
+  const res = await fetch(`${opts?.baseUrl ?? ''}/api/admin/partners/${id}/landing-image`, {
+    method,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export function uploadPartnerLandingImage(id: string, file: File, opts?: ApiEnvOpts): Promise<Partner> {
+  return partnerImageRequest(id, 'POST', file, opts);
+}
+
+export function removePartnerLandingImage(id: string, opts?: ApiEnvOpts): Promise<Partner> {
+  return partnerImageRequest(id, 'DELETE', null, opts);
 }
 
 export interface PartnerUser {

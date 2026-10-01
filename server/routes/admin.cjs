@@ -6,7 +6,7 @@ const { generateAccessToken, verifyAccessToken } = require('../utils/jwt.cjs');
 const { requireAdminAuth } = require('../middleware/adminAuth.cjs');
 const { verifyPassword } = require('../utils/password.cjs');
 const { sendPushNotificationToUser } = require('../services/pushNotifications.cjs');
-const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo, uploadDemoVideo, uploadDemoVideoThumbnail, uploadHomeCardImage, uploadBrandingImage, uploadPartnerQrCode, resolveLessonAudioUrl, resolveDragonImageUrl } = require('../services/storage-s3.cjs');
+const { uploadLessonImage, uploadAudioFile, uploadLessonAudio, uploadLessonContentImage, uploadLessonContentVideo, uploadDemoVideo, uploadDemoVideoThumbnail, uploadHomeCardImage, uploadBrandingImage, uploadPartnerQrCode, uploadPartnerLandingImage, resolveLessonAudioUrl, resolveDragonImageUrl } = require('../services/storage-s3.cjs');
 const { processRecordingWithRetry } = require('../services/processingService.cjs');
 const { transcribeLessonNarration } = require('../services/transcriptionService.cjs');
 const { translateDemoVideoBundle } = require('../services/translationService.cjs');
@@ -3907,6 +3907,7 @@ function adminStripe() {
 
 const { discountLabel, normalizeDiscounts } = require('../utils/partnerDiscount.cjs');
 const { generatePartnerQrPng, buildPartnerUrl } = require('../utils/partnerQr.cjs');
+const { PartnerConfigError, sanitizeLanding, sanitizeDisplayName } = require('../utils/partnerLanding.cjs');
 const { logError } = require('../utils/errorLogger.cjs');
 
 // Single response shape for every partner endpoint, so the admin table never receives
@@ -3920,6 +3921,10 @@ async function serializePartner(partner, userCount = partner._count?.users ?? 0)
     config: { ...partner.config, discounts }, // always the resolved per-plan shape, regardless of storage format
     qrCodeUrl: await resolveDragonImageUrl(partner.qrCodeUrl),
     signupUrl: buildPartnerUrl(partner.slug), // same URL the QR code encodes
+    // Presigned preview of the custom hero image (config.landing.imageKey stays the raw key).
+    landingImageUrl: partner.config?.landing?.imageKey
+      ? await resolveDragonImageUrl(partner.config.landing.imageKey)
+      : null,
     userCount,
     discountLabels: {
       monthly: discountLabel(discounts.monthly),
@@ -4091,11 +4096,17 @@ router.get('/partners/:id/users', requireAdminAuth, async (req, res) => {
 router.post('/partners', requireAdminAuth, async (req, res) => {
   try {
     const {
-      slug, name, trialDays = 7, plans = ['monthly', 'yearly'],
+      slug, name, kind = 'PARTNER', trialDays = 7, plans = ['monthly', 'yearly'],
       discounts, welcomeMessage, maxRedemptions, expiresAt,
+      displayName, skipSubscription = false, landing,
     } = req.body;
 
     if (!slug || !name) return res.status(400).json({ error: 'slug and name are required' });
+    if (!['PARTNER', 'CAMPAIGN'].includes(kind)) return res.status(400).json({ error: 'kind must be PARTNER or CAMPAIGN' });
+
+    // allowImageKey: a duplicated campaign may reuse its source's (immutable, timestamped) hero image.
+    const cleanLanding = sanitizeLanding(landing, { allowImageKey: true });
+    const cleanDisplayName = sanitizeDisplayName(displayName);
 
     const existing = await prisma.partner.findUnique({ where: { slug } });
     if (existing) return res.status(409).json({ error: `Slug '${slug}' is already in use` });
@@ -4108,6 +4119,9 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
       discounts: syncedDiscounts,
       welcomeMessage: welcomeMessage ?? null,
       maxRedemptions: maxRedemptions ?? null,
+      displayName: cleanDisplayName,
+      skipSubscription: skipSubscription === true,
+      landing: cleanLanding,
     };
 
     let partner = await prisma.partner.create({
@@ -4115,6 +4129,7 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
         id: crypto.randomUUID(),
         slug,
         name,
+        kind,
         config,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
       },
@@ -4124,6 +4139,7 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
 
     res.status(201).json(await serializePartner(partner, 0));
   } catch (err) {
+    if (err instanceof PartnerConfigError) return res.status(400).json({ error: err.message });
     logError(err, { route: 'admin#[admin] partner create error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to create partner' });
   }
@@ -4152,8 +4168,12 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
     if (!partner) return res.status(404).json({ error: 'Partner not found' });
 
     const {
-      name, status, trialDays, plans, discounts, welcomeMessage, maxRedemptions, expiresAt,
+      name, kind, status, trialDays, plans, discounts, welcomeMessage, maxRedemptions, expiresAt,
+      displayName, skipSubscription, landing,
     } = req.body;
+    if (kind !== undefined && !['PARTNER', 'CAMPAIGN'].includes(kind)) {
+      return res.status(400).json({ error: 'kind must be PARTNER or CAMPAIGN' });
+    }
 
     // `undefined` = leave unchanged; `null` (or '') = clear.
     const oldConfig = partner.config;
@@ -4171,18 +4191,30 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
       nextExpiresAt, nextMaxRedemptions, oldDiscounts, limitsChanged,
     );
 
+    // Landing text comes from the request; the hero image is only changed through
+    // the dedicated upload/remove endpoints, so keep the stored imageKey.
+    const nextLanding = landing !== undefined
+      ? sanitizeLanding(landing, { existingImageKey: oldConfig.landing?.imageKey ?? null })
+      : (oldConfig.landing ?? null);
+
     const config = {
+      ...oldConfig, // keep any config keys this route doesn't manage
       trialDays: trialDays ?? oldConfig.trialDays,
       plans: nextPlans,
       discounts: syncedDiscounts,
       welcomeMessage: welcomeMessage !== undefined ? (welcomeMessage || null) : (oldConfig.welcomeMessage ?? null),
       maxRedemptions: nextMaxRedemptions,
+      displayName: displayName !== undefined ? sanitizeDisplayName(displayName) : (oldConfig.displayName ?? null),
+      skipSubscription: skipSubscription !== undefined ? skipSubscription === true : oldConfig.skipSubscription === true,
+      landing: nextLanding,
     };
+    delete config.discount; // legacy shared-discount field, superseded by `discounts`
 
     const updated = await prisma.partner.update({
       where: { id },
       data: {
         ...(name ? { name } : {}),
+        ...(kind ? { kind } : {}),
         ...(status ? { status } : {}),
         config,
         expiresAt: nextExpiresAt,
@@ -4192,8 +4224,54 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
 
     res.json(await serializePartner(updated));
   } catch (err) {
+    if (err instanceof PartnerConfigError) return res.status(400).json({ error: err.message });
     logError(err, { route: 'admin#[admin] partner update error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to update partner' });
+  }
+});
+
+// POST /api/admin/partners/:id/landing-image — upload/replace the signup hero image (multipart `image`)
+router.post('/partners/:id/landing-image', requireAdminAuth, uploadMiddleware.single('image'), async (req, res) => {
+  try {
+    const partner = await prisma.partner.findUnique({ where: { id: req.params.id } });
+    if (!partner) return res.status(404).json({ error: 'Partner not found' });
+    if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+
+    const ext = (req.file.originalname.split('.').pop() || 'jpg').toLowerCase();
+    const imageKey = await uploadPartnerLandingImage(req.file.buffer, partner.slug, ext);
+    const landing = { ...(partner.config.landing ?? {}), imageKey };
+
+    const updated = await prisma.partner.update({
+      where: { id: partner.id },
+      data: { config: { ...partner.config, landing } },
+      include: partnerWithUserCount,
+    });
+    res.json(await serializePartner(updated));
+  } catch (err) {
+    logError(err, { route: 'admin#[admin] partner landing image upload error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to upload image' });
+  }
+});
+
+// DELETE /api/admin/partners/:id/landing-image — revert to the default signup image.
+// The S3 object is left in place (a duplicated campaign may still reference it).
+router.delete('/partners/:id/landing-image', requireAdminAuth, async (req, res) => {
+  try {
+    const partner = await prisma.partner.findUnique({ where: { id: req.params.id } });
+    if (!partner) return res.status(404).json({ error: 'Partner not found' });
+
+    const remaining = { ...(partner.config.landing ?? {}), imageKey: null };
+    const landing = Object.values(remaining).some(v => v != null) ? remaining : null;
+
+    const updated = await prisma.partner.update({
+      where: { id: partner.id },
+      data: { config: { ...partner.config, landing } },
+      include: partnerWithUserCount,
+    });
+    res.json(await serializePartner(updated));
+  } catch (err) {
+    logError(err, { route: 'admin#[admin] partner landing image remove error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to remove image' });
   }
 });
 

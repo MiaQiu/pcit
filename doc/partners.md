@@ -51,6 +51,28 @@ Partner QR code → signup.hinora.co/p/sgh-family
 
 ---
 
+## Campaign links
+
+A **campaign** is a marketing signup link: a `Partner` row with `kind = CAMPAIGN`. It reuses the whole partner pipeline (link + QR, attribution via `User.partnerId`, signup counter, optional trial/discount, users list), and adds three things, all stored in `config`:
+
+| Setting | Effect |
+|---|---|
+| `landing` | Custom copy for the first two web signup screens — `headline`, `subtext`, `ctaText` (screen 1, `LandingScreen`), `accountTitle`, `accountSubtitle` (screen 2, `CreateAccountScreen`), plus an optional hero image (`imageKey`). Any blank field keeps the default copy/image. Available to partners too. |
+| `skipSubscription` | Web signup never shows `/subscribe`: `SubscriptionScreen` redirects to `/success` (the "download the app" page), so there's no web trial or checkout. Users can still subscribe later in the mobile app at standard pricing. |
+| `displayName` | Public name on the subscribe page ("Special discount for X"). A campaign's `name` is internal and is **never** sent to the browser; with no `displayName` the badge just says "Special discount". Partners fall back to `name`. |
+
+Create N campaigns from the admin portal (**+ New Campaign**, or **Duplicate** on an existing row — same offer, messages and image, new slug). Links are the same `/p/<slug>` format as partners.
+
+**Hero image** — uploaded via `POST /api/admin/partners/:id/landing-image` (multipart `image`, ≤10 MB) to S3 `partners/<slug>/hero-<timestamp>.<ext>`; `DELETE` on the same path reverts to the default image (the S3 object is kept, since a duplicated campaign may share it). The public API returns a presigned `imageUrl` (1h); the web app falls back to the default image if it fails to load. Text limits (server-enforced, `server/utils/partnerLanding.cjs`): headline 120, subtext 300, button 40, account title 80, account subtitle 300, display name 80.
+
+**Visits** — `Partner.visits` counts successful `GET /api/partner/validate/:slug` calls (i.e. link opens, including referral-link opens on the `referral` row). The admin table shows visits, signups, and signup conversion %. It's a raw counter: refreshes, bots and link-preview crawlers that run JS can inflate it slightly.
+
+Note that the campaign config (incl. copy) is saved in the browser's `localStorage`, so someone who opened a campaign link and later returns to `signup.hinora.co` directly still sees the campaign copy and is still attributed to it — same as partner links. A referral link (`/join/:code`) overrides it, and screen 2 always shows the referral copy for referred users.
+
+Migration: `20261001120000_add_partner_kind_and_visits` (adds `Partner.kind` enum `PARTNER|CAMPAIGN`, default `PARTNER`, and `Partner.visits`).
+
+---
+
 ## Partner model
 
 ```prisma
@@ -61,7 +83,9 @@ model Partner {
   status      PartnerStatus @default(ACTIVE)
   config      Json                     // PartnerConfig — see below
   expiresAt   DateTime?                // optional hard expiry
+  kind        PartnerKind   @default(PARTNER) // PARTNER | CAMPAIGN
   redemptions Int           @default(0) // signup counter
+  visits      Int           @default(0) // link opens (successful validate calls)
   qrCodeUrl   String?                  // S3 key partners/<slug>/qr.png (presigned on read)
   createdAt   DateTime      @default(now())
   users       User[]
@@ -107,6 +131,13 @@ interface PartnerConfig {
   };
   welcomeMessage?: string;                    // stored + returned by the API, not currently rendered anywhere
   maxRedemptions?: number | null;             // null = unlimited
+  displayName?: string | null;                // public name on the subscribe page (see Campaign links)
+  skipSubscription?: boolean;                 // skip /subscribe in web signup
+  landing?: {                                 // custom signup copy; null fields = default
+    headline: string | null; subtext: string | null; ctaText: string | null;
+    accountTitle: string | null; accountSubtitle: string | null;
+    imageKey: string | null;                  // S3 key; set only via the landing-image endpoints
+  } | null;
 }
 ```
 
@@ -207,10 +238,15 @@ Both the web signup flow (`web/src/screens/SubscriptionScreen.tsx`, "Skip for No
 |---|---|---|
 | `GET /api/partner/validate/:slug` | none | Validate slug + return display info. Returns 404 if not found / PAUSED / EXPIRED, 410 if cap reached or expired. |
 
+Each successful call also increments `Partner.visits`.
+
 Response:
 ```json
 {
   "name": "SGH Family Medicine",
+  "kind": "PARTNER",
+  "skipSubscription": false,
+  "landing": null,
   "welcomeMessage": "Welcome, SGH partners!",
   "trialDays": 30,
   "plans": ["monthly", "yearly"],
@@ -234,8 +270,10 @@ Response:
 | `/api/admin/partners/:id` | DELETE | Soft-deactivate (sets status=EXPIRED) |
 | `/api/admin/partners/:id/qr-code` | POST | (Re)generate the QR code |
 | `/api/admin/partners/:id/users` | GET | Users attributed to the partner, with subscription status |
+| `/api/admin/partners/:id/landing-image` | POST | Upload/replace the signup hero image (multipart `image`) |
+| `/api/admin/partners/:id/landing-image` | DELETE | Revert to the default signup image |
 
-Every partner response (list, get, create, update, qr-code) has the same shape: the row plus `config.discounts` (normalized per-plan), presigned `qrCodeUrl`, `signupUrl`, `userCount` and `discountLabels: {monthly, yearly}`.
+Every partner response (list, get, create, update, qr-code) has the same shape: the row plus `config.discounts` (normalized per-plan), presigned `qrCodeUrl`, `signupUrl`, `landingImageUrl` (presigned preview of the hero image), `userCount` and `discountLabels: {monthly, yearly}`. Create/update also accept `kind`, `displayName`, `skipSubscription` and `landing` (text fields; `landing.imageKey` is honored on create only, for Duplicate). Over-limit text returns 400.
 
 **Create/update body:**
 ```json

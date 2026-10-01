@@ -568,6 +568,41 @@ async function uploadPartnerQrCode(fileBuffer, slug) {
 }
 
 /**
+ * Upload a partner/campaign signup landing (hero) image to AWS S3. Private bucket —
+ * read via resolveDragonImageUrl, which presigns `partners/` keys. The key is
+ * timestamped so a replaced image never serves a stale cached copy, and so a
+ * duplicated campaign can keep pointing at the original's image safely.
+ * @param {Buffer} fileBuffer
+ * @param {string} slug - Partner slug
+ * @param {string} extension - e.g. 'jpg', 'png', 'webp'
+ * @returns {Promise<string>} - S3 key (not a full URL), or mock path
+ */
+async function uploadPartnerLandingImage(fileBuffer, slug, extension = 'jpg') {
+  const ext = extension.toLowerCase();
+  const key = `partners/${slug}/hero-${Date.now()}.${ext}`;
+
+  if (!S3_ENABLED || !s3Client) {
+    console.warn('S3 not configured, using mock storage path for partner landing image');
+    return `mock://${key}`;
+  }
+
+  const contentTypeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: contentTypeMap[ext] || 'image/jpeg',
+    Metadata: { partnerSlug: slug, uploadedAt: new Date().toISOString() },
+    ServerSideEncryption: 'AES256',
+  });
+
+  await s3Client.send(command);
+
+  console.log(`Partner landing image uploaded to S3: ${key}`);
+  return key;
+}
+
+/**
  * Upload lesson narration audio to AWS S3 (bucket is private — read via resolveLessonAudioUrl)
  * @param {Buffer} fileBuffer
  * @param {string} lessonId
@@ -818,6 +853,7 @@ module.exports = {
   uploadSupportAttachment,
   uploadLessonImage,
   uploadPartnerQrCode,
+  uploadPartnerLandingImage,
   uploadLessonAudio,
   uploadLessonContentImage,
   uploadLessonContentVideo,
