@@ -5,6 +5,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import BackButton from '../components/BackButton';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { login } from '../api';
+import { identifyUser, trackEvent } from '../analytics';
 
 export default function LoginScreen() {
   const navigate = useNavigate();
@@ -26,6 +27,8 @@ export default function LoginScreen() {
       setEmail(emailVal);
       setPassword(passwordVal);
       setAccessToken(res.accessToken);
+      if (res.user?.id) identifyUser(res.user.id);
+      trackEvent('User Logged In', { method: 'email' });
       navigate('/onboarding/name');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Login failed. Please try again.');

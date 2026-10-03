@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { validatePartner, referrerName } from '../api';
 import { useOnboarding, type PartnerInfo } from '../contexts/OnboardingContext';
+import { entryAttribution, trackEvent } from '../analytics';
 
 // Referral link destination (/join/:code). No visible UI — mirrors
 // PartnerLandingScreen: saves the referral trial config + attribution code into
@@ -45,6 +46,10 @@ export default function ReferralLandingScreen() {
       referrerName(code),
     ])
       .then(([offer, referrer]) => {
+        trackEvent('Signup Link Opened', {
+          ...entryAttribution(),
+          valid: true, linkType: 'referral', partnerSlug: null, partnerKind: null, messageKey: null, source: null,
+        });
         setPartnerInfo(
           offer.status === 'fulfilled'
             ? { slug: 'referral', ...offer.value }

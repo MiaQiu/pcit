@@ -4,6 +4,7 @@ import OnboardingLayout from '../components/OnboardingLayout';
 import PrimaryButton from '../components/PrimaryButton';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { createCheckoutSession, fetchPrices, StripePrices } from '../api';
+import { trackEvent } from '../analytics';
 
 type Plan = 'monthly' | 'yearly';
 
@@ -92,6 +93,7 @@ function SubscriptionOffer() {
     setLoading(true);
     setError('');
     try {
+      trackEvent('Checkout Started', { plan: selectedPlan, discounted: !!selectedDiscount });
       const result = await createCheckoutSession({
         plan: selectedPlan,
         successUrl: `${window.location.origin}/success`,
@@ -100,6 +102,7 @@ function SubscriptionOffer() {
       window.location.href = result.url;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Unable to start checkout. Please try again.');
+      trackEvent('Checkout Failed', { plan: selectedPlan });
       setLoading(false);
     }
   };

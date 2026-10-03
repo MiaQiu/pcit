@@ -1,6 +1,7 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { OnboardingProvider } from './contexts/OnboardingContext';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { OnboardingProvider, useOnboarding } from './contexts/OnboardingContext';
+import { setCampaignContext, trackScreenView } from './analytics';
 
 // Screens
 import LandingScreen from './screens/LandingScreen';
@@ -44,10 +45,29 @@ import SuccessScreen from './screens/SuccessScreen';
 import PartnerLandingScreen from './screens/PartnerLandingScreen';
 import ReferralLandingScreen from './screens/ReferralLandingScreen';
 
+// Sends a 'Screen Viewed' event on every route change, tagged with the visitor's signup
+// link (campaign/partner/referral/direct, message, channel). The context effect is
+// declared first so a /p/ redirect's new partnerInfo is applied before the next screen view.
+function AnalyticsTracker() {
+  const { pathname } = useLocation();
+  const { data } = useOnboarding();
+
+  useEffect(() => {
+    setCampaignContext(data.partnerInfo, data.referralCode);
+  }, [data.partnerInfo, data.referralCode]);
+
+  useEffect(() => {
+    trackScreenView(pathname);
+  }, [pathname]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <OnboardingProvider>
+        <AnalyticsTracker />
         <Routes>
           {/* Partner landing — QR code destination */}
           <Route path="/p/:slug" element={<PartnerLandingScreen />} />
