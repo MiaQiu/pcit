@@ -297,6 +297,10 @@ app.use('/api/stripe', stripeRoutes);
 const partnerRoutes = require('./server/routes/partner.cjs');
 app.use('/api/partner', partnerRoutes);
 
+// Mount signup-draft routes (web signup SPA only — anonymous progress for account-last links)
+const signupDraftRoutes = require('./server/routes/signup-draft.cjs');
+app.use('/api/signup-draft', signupDraftRoutes);
+
 // Short partner URL redirect: /p/:slug[/:messageKey] → signup.hinora.co/p/… (web SPA
 // handles it). The query string (?src=<channel>) is kept for campaign attribution.
 app.get(['/p/:slug', '/p/:slug/:messageKey'], (req, res) => {

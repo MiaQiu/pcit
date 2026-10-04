@@ -93,6 +93,7 @@ export interface PartnerInfo {
   messageKey?: string | null;
   source?: string | null;
   skipSubscription?: boolean; // campaign option: skip /subscribe, go straight to /success
+  accountLast?: boolean; // ask for the account at the end of onboarding instead of the start
   landing?: SignupLanding | null;
   // Campaign rules behind the create-account consent checkbox (campaigns only).
   campaignRules?: { title: string | null; content: string } | null;
@@ -111,6 +112,37 @@ export function validatePartner(slug: string, opts: { messageKey?: string; sourc
   if (opts.source) params.set('src', opts.source);
   const qs = params.toString();
   return request<PartnerInfo>(`/api/partner/validate/${encodeURIComponent(slug)}${qs ? `?${qs}` : ''}`);
+}
+
+// Anonymous signup drafts (account-last links only). All best-effort: callers ignore failures.
+export interface SignupDraftUpdate {
+  childBirthYear?: number | null;
+  concerns?: string[];
+  wacbScore?: number | null;
+  lastStep?: string;
+}
+
+export function createSignupDraft(
+  payload: { partnerSlug: string; messageKey?: string | null; source?: string | null } & SignupDraftUpdate
+) {
+  return request<{ id: string }>('/api/signup-draft', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateSignupDraft(id: string, payload: SignupDraftUpdate) {
+  return request<{ ok: boolean }>(`/api/signup-draft/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function convertSignupDraft(id: string, token: string, progress: SignupDraftUpdate) {
+  return request<{ ok: boolean }>(`/api/signup-draft/${encodeURIComponent(id)}/convert`, {
+    method: 'POST',
+    body: JSON.stringify(progress),
+  }, token);
 }
 
 export function referrerName(code: string) {

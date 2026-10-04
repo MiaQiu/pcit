@@ -71,6 +71,8 @@ router.get('/validate/:slug', async (req, res) => {
       name: publicDisplayName(partner),
       kind: partner.kind,
       skipSubscription: config.skipSubscription === true,
+      // Web signup asks for the account at the end of onboarding instead of the start.
+      accountLast: config.accountLast === true,
       landing: await publicLanding(mergeLanding(config.landing, activeMessage?.landing)),
       // Resolved attribution — echoed back by the web app in the signup request.
       messageKey: activeMessage?.key ?? null,

@@ -4,14 +4,17 @@ import OnboardingLayout from '../components/OnboardingLayout';
 import BackButton from '../components/BackButton';
 import PrimaryButton from '../components/PrimaryButton';
 import advisorImage from '../assets/images/advisor.png';
+import { accountLast, useOnboarding } from '../contexts/OnboardingContext';
 
 // Web port of the mobile OB2Screen_v2 (clinical advisor intro). Shown to every
-// signup, between LandingScreen and /create-account.
+// signup, between LandingScreen and /create-account (account-last links: and the
+// first onboarding question).
 // advisor.png is the text-free OB-2_v2.png (690x552); the text is overlaid at the
 // same percentage positions as the mobile screen. Font sizes use container-width
 // units so the overlay scales with the image.
 export default function AdvisorIntroScreen() {
   const navigate = useNavigate();
+  const next = accountLast(useOnboarding().data) ? '/onboarding/name' : '/create-account';
 
   return (
     <OnboardingLayout>
@@ -48,7 +51,7 @@ export default function AdvisorIntroScreen() {
       </div>
 
       <div className="px-6 pb-8 pt-3">
-        <PrimaryButton onClick={() => navigate('/create-account')}>Continue</PrimaryButton>
+        <PrimaryButton onClick={() => navigate(next)}>Continue</PrimaryButton>
       </div>
     </OnboardingLayout>
   );

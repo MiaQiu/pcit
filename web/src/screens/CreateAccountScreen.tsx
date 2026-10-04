@@ -3,13 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../components/OnboardingLayout';
 import PrimaryButton from '../components/PrimaryButton';
 import BackButton from '../components/BackButton';
-import { useOnboarding } from '../contexts/OnboardingContext';
+import { accountLast, resolvedIssues, useOnboarding } from '../contexts/OnboardingContext';
 import { signup } from '../api';
 import { identifyUser, trackEvent } from '../analytics';
+import { saveAnswersAfterAuth } from '../signupSync';
 
 export default function CreateAccountScreen() {
   const navigate = useNavigate();
-  const { data, setEmail, setPassword, setAccessToken } = useOnboarding();
+  const { data, setEmail, setPassword, setAccessToken, clearAnswers } = useOnboarding();
+  // Account-last links reach this screen after onboarding, with every answer collected.
+  const isLast = accountLast(data);
   const [emailVal, setEmailVal] = useState('');
   const [passwordVal, setPasswordVal] = useState('');
   const [phoneVal, setPhoneVal] = useState('');
@@ -50,7 +53,8 @@ export default function CreateAccountScreen() {
       const childBirthYear = data.childBirthday
         ? new Date(data.childBirthday).getFullYear()
         : new Date().getFullYear() - 4;
-      const childConditions = data.issue.length > 0 ? data.issue : ['General parenting support'];
+      const issues = resolvedIssues(data);
+      const childConditions = issues.length > 0 ? issues : ['General parenting support'];
 
       const res = await signup(emailVal, passwordVal, {
         name: data.name || undefined,
@@ -59,7 +63,7 @@ export default function CreateAccountScreen() {
         childBirthYear,
         childBirthday: data.childBirthday ? new Date(data.childBirthday).toISOString() : undefined,
         childConditions,
-        issue: data.issue.join(', ') || undefined,
+        issue: issues.join(', ') || undefined,
         partnerSlug: data.referralCode ? undefined : (data.partnerInfo?.slug ?? undefined),
         campaignMessageKey: data.referralCode ? undefined : (data.partnerInfo?.messageKey ?? undefined),
         signupSource: data.referralCode ? undefined : (data.partnerInfo?.source ?? undefined),
@@ -69,8 +73,14 @@ export default function CreateAccountScreen() {
       setPassword(passwordVal);
       setAccessToken(res.accessToken);
       if (res.user?.id) identifyUser(res.user.id);
-      trackEvent('User Signed Up', { method: 'email' });
-      navigate('/onboarding/name');
+      trackEvent('User Signed Up', { method: 'email', accountStep: isLast ? 'last' : 'first' });
+      if (isLast) {
+        await saveAnswersAfterAuth(data, res.accessToken);
+        clearAnswers();
+        navigate('/subscribe');
+      } else {
+        navigate('/onboarding/name');
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Sign up failed. Please try again.');
     } finally {
@@ -81,7 +91,7 @@ export default function CreateAccountScreen() {
   return (
     <OnboardingLayout>
       <div className="flex items-center px-4 pt-2">
-        <BackButton to="/intro" />
+        <BackButton to={isLast ? undefined /* back to the last onboarding screen */ : '/intro'} />
       </div>
 
       <div className="flex-1 flex flex-col px-6 pt-4 pb-8">
@@ -180,6 +190,19 @@ export default function CreateAccountScreen() {
           <PrimaryButton onClick={handleSignup} loading={loading} disabled={isCampaign && !agreed}>
             Create Account
           </PrimaryButton>
+
+          {isLast && (
+            <p className="text-center text-sm text-[#6B7280] mt-4">
+              Already have an account?{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/login', { state: { next: '/subscribe' } })}
+                className="text-[#8C49D5] font-medium underline"
+              >
+                Log in
+              </button>
+            </p>
+          )}
 
           {!isCampaign && (
             <p className="text-center text-xs text-gray-400 mt-4 leading-relaxed">

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../components/OnboardingLayout';
 import PrimaryButton from '../components/PrimaryButton';
-import { useOnboarding } from '../contexts/OnboardingContext';
+import { accountLast, useOnboarding } from '../contexts/OnboardingContext';
 import { createCheckoutSession, fetchPrices, StripePrices } from '../api';
 import { trackEvent } from '../analytics';
 
@@ -16,9 +16,11 @@ const CheckIcon = () => (
 
 // Campaigns configured with "skip subscription" never show the offer page — every
 // route into /subscribe (Intro3 "Skip for Now", PlaySession5 "Continue") lands on
-// /success instead.
+// /success instead. Account-last links without an account yet go to /create-account first
+// (checkout needs a signed-in user).
 export default function SubscriptionScreen() {
   const { data } = useOnboarding();
+  if (accountLast(data) && !data.accessToken) return <Navigate to="/create-account" replace />;
   if (data.partnerInfo?.skipSubscription) return <Navigate to="/success" replace />;
   return <SubscriptionOffer />;
 }

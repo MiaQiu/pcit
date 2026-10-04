@@ -19,7 +19,7 @@ Every event carries `platform: 'web-signup'`, `environment` (`production` only o
 |---|---|---|
 | `Signup Link Opened` | `/p/…` or `/join/…` validated (or failed) | `valid`, `entryPath`, `utm_*`, `fbclid`, `gclid`, `ttclid`, `entryReferrer` |
 | `Screen Viewed` | every route change (not the invisible `/p/`, `/join/` redirects) | `screen` (readable name), `step` (flow order), `detail` (WACB question / play session / demo number), `path` |
-| `User Signed Up` | `/create-account` succeeded | `method: 'email'` |
+| `User Signed Up` | `/create-account` succeeded | `method: 'email'`, `accountStep: 'first' \| 'last'` (`last` = account-at-the-end link, `config.accountLast`) |
 | `User Logged In` | `/login` succeeded | `method: 'email'` |
 | `Checkout Started` / `Checkout Failed` | Subscribe button / Stripe session error | `plan`, `discounted` |
 
@@ -36,4 +36,4 @@ Screen names in flow order: Landing → Advisor Intro → Create Account → Par
 - **Lazy SDK:** `@amplitude/analytics-browser` (~70 kB gzipped) is loaded with a dynamic import so it never delays the landing page. Calls made before it loads are queued and replayed in order, each with the campaign context from when it was made. If an ad blocker blocks the SDK, analytics simply stays off.
 - **SDK attribution is disabled:** the SDK reads the URL when it loads. By then a `/p/` link has often already redirected to `/`, so it would record every `initial_utm_*` as `EMPTY`. The app captures the entry URL at startup instead (see user properties above).
 - **Dev double-counting:** React StrictMode runs effects twice in dev, so `Signup Link Opened` appears twice locally. Production fires it once.
-- **Suggested funnel:** `Signup Link Opened` → `Screen Viewed` (screen = Create Account) → `User Signed Up` → `Screen Viewed` (screen = Play Session, detail = 5) → `Screen Viewed` (screen = Success). Filter on `environment = production` and group by `messageKey` / `source`.
+- **Suggested funnel:** `Signup Link Opened` → `Screen Viewed` (screen = Create Account) → `User Signed Up` → `Screen Viewed` (screen = Play Session, detail = 5) → `Screen Viewed` (screen = Success). Filter on `environment = production` and group by `messageKey` / `source`. For links with the account at the end (`accountLast`), Create Account comes after Intro 3 / Play Session — split funnels by `accountStep`.

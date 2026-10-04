@@ -62,9 +62,31 @@ A **campaign** is a marketing signup link (e.g. one per ad, audience or channel)
 | `landing` | Custom copy for the web signup screens — `headline`, `subtext`, `ctaText` (screen 1, `LandingScreen`), `accountTitle`, `accountSubtitle` (screen 2, `CreateAccountScreen`), `successTitle`, `successSubtitle` (last screen, `SuccessScreen` — "You're all set!" / download the app), plus an optional hero image (`imageKey`). Any blank field keeps the default copy/image. Available to partners too. |
 | `skipSubscription` | Web signup never shows `/subscribe`: `SubscriptionScreen` redirects to `/success` (the "download the app" page), so there's no web trial or checkout. Users can still subscribe later in the mobile app at standard pricing. |
 | `campaignRules` | `{ title, content }`, campaigns only. Campaign signups must tick a consent checkbox on `/create-account`: "I am the parent or legal guardian of the participating child, and I agree to the [*title*] and Nora Parenting's standard Terms of Service and Privacy Policy." The title opens a pop-up with `content` (plain text, line breaks kept). No content → `null`, and the checkbox omits the rules part. Limits: title 120, content 20,000. Returned by the public validate API only for `kind = CAMPAIGN`. |
+| `accountLast` | **Account at the end of signup** (default off; partners too). The web flow asks for the account after onboarding — `/intro` → onboarding questions → behavior snapshot → `intro3`/play → `/create-account` → `/subscribe` (or `/success` with `skipSubscription`) — instead of right after `/intro`. Visitors who start but don't finish leave an anonymous `SignupDraft` (birth year, concern keys, WACB score, last screen). Not recommended with `skipSubscription`. See "Account at the end" below. |
 | `displayName` | Public name on the subscribe page ("Special discount for X"). A campaign's `name` is internal and is **never** sent to the browser; with no `displayName` the badge just says "Special discount". Partners fall back to `name`. |
 
 Links are the same `/p/<slug>` format as partners. See "Launch a campaign" in the runbook.
+
+### Account at the end (`accountLast`)
+
+With the switch on, `CreateAccountScreen` moves from right after `/intro` to just before
+`/subscribe` (checkout needs an account). After signup — or "Already have an account? Log
+in" — the web saves the collected answers with the existing `complete-onboarding` and
+`wacb-survey` endpoints, so nothing the mobile app uses changes. Referral links keep the
+account-first flow.
+
+To keep visibility into drop-off, the web keeps an anonymous **signup draft** per visitor
+(`SignupDraft`, `server/routes/signup-draft.cjs`): created on the first onboarding screen,
+updated on every screen change, converted at the end. It stores only child birth year,
+concern keys (never the "Other" text), the WACB total and the last screen — no name,
+contact details or IP. The admin "links & stats" view shows **Started** per message ×
+channel plus drop-off by screen and birth year / concerns / behavior band for started vs.
+finished.
+
+Visitors who leave early and later sign up in the mobile app can't be matched to the link
+(app signup carries no partner), so they lose its attribution and — for
+`skipSubscription` — its signup-time trial. Full design, rollout and rollback:
+`doc/implementation/account-last-signup.md`.
 
 ### Messages and channels
 

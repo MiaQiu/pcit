@@ -13,7 +13,7 @@ export default function PartnerLandingScreen() {
   const { slug, messageKey } = useParams<{ slug: string; messageKey?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { setPartnerInfo } = useOnboarding();
+  const { setPartnerInfo, setAccessToken, setSignupDraftId } = useOnboarding();
 
   useEffect(() => {
     if (!slug) {
@@ -22,9 +22,19 @@ export default function PartnerLandingScreen() {
     }
     // The server echoes back the resolved messageKey/source (stored with the rest of
     // partnerInfo, so a returning visitor stays attributed to the same message/channel).
+    // A superseded run (React StrictMode's double effect in dev) is ignored, so its late
+    // response can't reset state after the visitor has moved on.
+    let cancelled = false;
     validatePartner(slug, { messageKey, source: searchParams.get('src') })
       .then(info => {
+        if (cancelled) return;
         setPartnerInfo({ slug, ...info });
+        if (info.accountLast) {
+          // Account-last links start a fresh signup: a token left from an earlier signup in
+          // this browser would otherwise send this visitor's answers to that old account.
+          setAccessToken(null);
+          setSignupDraftId(null);
+        }
         trackEvent('Signup Link Opened', {
           ...entryAttribution(),
           valid: true,
@@ -36,12 +46,14 @@ export default function PartnerLandingScreen() {
         });
       })
       .catch(() => {
+        if (cancelled) return;
         trackEvent('Signup Link Opened', {
           ...entryAttribution(),
           valid: false, partnerSlug: slug, messageKey: messageKey ?? null, source: searchParams.get('src'),
         });
       })
-      .finally(() => navigate('/', { replace: true }));
+      .finally(() => { if (!cancelled) navigate('/', { replace: true }); });
+    return () => { cancelled = true; };
   }, [slug, messageKey]);
 
   return null;
