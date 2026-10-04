@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import PrimaryButton from '../../components/PrimaryButton';
+import { afterOnboardingPath, useOnboarding } from '../../contexts/OnboardingContext';
 import play5Image from '../../assets/images/play5.png';
 
 const privacyItems = [
@@ -48,6 +49,7 @@ const privacyItems = [
 
 export default function PlaySession5Screen() {
   const navigate = useNavigate();
+  const { data } = useOnboarding();
 
   return (
     <OnboardingLayout progress={100} backTo="/play/4">
@@ -80,7 +82,7 @@ export default function PlaySession5Screen() {
 
       </div>
       <div className="px-1 pb-2 pt-3">
-        <PrimaryButton onClick={() => navigate('/subscribe')}>
+        <PrimaryButton onClick={() => navigate(afterOnboardingPath(data))}>
             Continue
           </PrimaryButton>
         </div>

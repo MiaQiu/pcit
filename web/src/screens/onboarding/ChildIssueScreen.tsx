@@ -48,9 +48,10 @@ export default function ChildIssueScreen() {
 
     // Consolidated sync point: by now every field NameInputScreen..ChildIssueScreen collects is
     // available, so this is the one place we PATCH them all to the backend (only relevant if
-    // signup already happened — i.e. accessToken exists, which is always true in the current
-    // Landing -> Create Account -> Onboarding flow order). Mobile app login relies on these
-    // fields being populated to decide whether to skip its own onboarding.
+    // signup already happened — i.e. accessToken exists, which is true in the account-first
+    // Landing -> Create Account -> Onboarding flow order; account-last links save them after
+    // signup instead, see signupSync.ts). Mobile app login relies on these fields being
+    // populated to decide whether to skip its own onboarding.
     if (data.accessToken && data.name && data.relationshipToChild && data.childName && data.childGender && data.childBirthday) {
       setLoading(true);
       try {

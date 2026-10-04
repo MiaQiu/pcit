@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import PrimaryButton from '../../components/PrimaryButton';
-import { useOnboarding } from '../../contexts/OnboardingContext';
+import { accountLast, useOnboarding } from '../../contexts/OnboardingContext';
 
 export default function NameInputScreen() {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ export default function NameInputScreen() {
   const [nameVal, setNameVal] = useState(data.name);
 
   return (
-    <OnboardingLayout progress={29} backTo="/create-account">
+    <OnboardingLayout progress={29} backTo={accountLast(data) ? '/intro' : '/create-account'}>
 
       <div className="flex-1 flex flex-col px-4 pt-6 pb-2">
         <h1 className="text-[#1E2939] text-2xl font-bold mb-2 text-center">

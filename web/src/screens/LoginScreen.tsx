@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../components/OnboardingLayout';
 import PrimaryButton from '../components/PrimaryButton';
 import BackButton from '../components/BackButton';
-import { useOnboarding } from '../contexts/OnboardingContext';
+import { accountLast, useOnboarding } from '../contexts/OnboardingContext';
 import { login } from '../api';
 import { identifyUser, trackEvent } from '../analytics';
+import { saveAnswersAfterAuth } from '../signupSync';
 
 export default function LoginScreen() {
   const navigate = useNavigate();
-  const { setEmail, setPassword, setAccessToken } = useOnboarding();
+  const { data, setEmail, setPassword, setAccessToken, clearAnswers } = useOnboarding();
+  // Set when coming from the account-last create-account screen ("Already have an account?").
+  const next = (useLocation().state as { next?: string } | null)?.next;
+  const finishingOnboarding = !!next && accountLast(data);
   const [emailVal, setEmailVal] = useState('');
   const [passwordVal, setPasswordVal] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +33,15 @@ export default function LoginScreen() {
       setAccessToken(res.accessToken);
       if (res.user?.id) identifyUser(res.user.id);
       trackEvent('User Logged In', { method: 'email' });
-      navigate('/onboarding/name');
+      if (finishingOnboarding) {
+        // Save this visit's answers to the existing account (its partner attribution is
+        // unchanged), then continue where the account-last flow goes next.
+        await saveAnswersAfterAuth(data, res.accessToken);
+        clearAnswers();
+        navigate(next!);
+      } else {
+        navigate('/onboarding/name');
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Login failed. Please try again.');
     } finally {
@@ -40,7 +52,7 @@ export default function LoginScreen() {
   return (
     <OnboardingLayout>
       <div className="flex items-center px-4 pt-2">
-        <BackButton to="/" />
+        <BackButton to={finishingOnboarding ? undefined : "/"} />
       </div>
 
       <div className="flex-1 flex flex-col px-6 pt-4 pb-8">

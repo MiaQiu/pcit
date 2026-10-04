@@ -62,6 +62,7 @@ const emptyForm: PartnerCreatePayload = {
   expiresAt: '',
   displayName: '',
   skipSubscription: false,
+  accountLast: false,
 };
 
 type PlanKey = 'monthly' | 'yearly';
@@ -169,6 +170,7 @@ export default function PartnersPage() {
       expiresAt: p.expiresAt ? p.expiresAt.slice(0, 10) : '',
       displayName: cfg.displayName ?? '',
       skipSubscription: cfg.skipSubscription === true,
+      accountLast: cfg.accountLast === true,
     });
     const l = cfg.landing;
     setLandingText(landingTextOf(l));
@@ -446,6 +448,26 @@ export default function PartnersPage() {
               <span style={{ display: 'block', color: '#6b7280', fontSize: 12, marginTop: 4, marginLeft: 24 }}>
                 Users go straight from onboarding to the "You're all set" download page, with no checkout.
                 They get the free trial below (no card needed), then can subscribe in the mobile app at standard pricing.
+              </span>
+            </div>
+            {/* Account at the end */}
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={form.accountLast === true}
+                  onChange={e => setForm(f => ({ ...f, accountLast: e.target.checked }))}
+                />
+                <span style={{ fontWeight: 600 }}>Ask for the account at the end of signup</span>
+              </label>
+              <span style={{ display: 'block', color: '#6b7280', fontSize: 12, marginTop: 4, marginLeft: 24 }}>
+                Users answer the onboarding questions first and create their account just before the offer page.
+                Anonymous progress (child birth year, concerns, survey score, last screen) is recorded for people who don't finish — see "links &amp; stats".
+                {form.skipSubscription && (
+                  <strong style={{ display: 'block', color: '#92400e', marginTop: 4 }}>
+                    Not recommended with "skip subscription": people who leave early and sign up in the app instead lose this link's free trial.
+                  </strong>
+                )}
               </span>
             </div>
 

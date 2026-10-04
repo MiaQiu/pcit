@@ -42,6 +42,7 @@ export interface PartnerInfo {
   messageKey?: string | null;
   source?: string | null;
   skipSubscription?: boolean; // campaign option: skip /subscribe, go straight to /success
+  accountLast?: boolean; // ask for the account at the end of onboarding instead of the start
   landing?: SignupLanding | null;
   // Campaign rules behind the create-account consent checkbox (campaigns only).
   campaignRules?: { title: string | null; content: string } | null;
@@ -75,6 +76,8 @@ export interface OnboardingData {
   issueOther: string;
   // wacb
   wacb: WacbAnswers;
+  // anonymous server-side progress record (account-last links only)
+  signupDraftId: string | null;
 }
 
 interface OnboardingContextValue {
@@ -92,6 +95,8 @@ interface OnboardingContextValue {
   setIssue: (issues: string[]) => void;
   setIssueOther: (other: string) => void;
   setWacbAnswer: (key: keyof WacbAnswers, value: number) => void;
+  setSignupDraftId: (id: string | null) => void;
+  clearAnswers: () => void;
 }
 
 function loadPartnerInfo(): PartnerInfo | null {
@@ -103,13 +108,15 @@ function loadPartnerInfo(): PartnerInfo | null {
   }
 }
 
-const defaultData: OnboardingData = {
-  email: '',
-  password: '',
-  accessToken: localStorage.getItem('accessToken'),
-  partnerInfo: loadPartnerInfo(),
-  referralCode: localStorage.getItem('referralCode'),
-  referrerName: localStorage.getItem('referrerName'),
+// Onboarding answers are kept in sessionStorage (this tab only) so a refresh doesn't lose
+// them — with the account at the end of the flow (account-last links), nothing reaches the
+// server until signup. Cleared after an account-last signup/login.
+const ANSWERS_KEY = 'onboardingAnswers';
+type Answers = Pick<OnboardingData,
+  'name' | 'relationshipToChild' | 'childName' | 'childGender' | 'childBirthday' |
+  'issue' | 'issueOther' | 'wacb' | 'signupDraftId'>;
+
+const emptyAnswers: Answers = {
   name: '',
   relationshipToChild: null,
   childName: '',
@@ -118,6 +125,32 @@ const defaultData: OnboardingData = {
   issue: [],
   issueOther: '',
   wacb: {},
+  signupDraftId: null,
+};
+
+function loadAnswers(): Answers {
+  try {
+    const raw = sessionStorage.getItem(ANSWERS_KEY);
+    if (!raw) return emptyAnswers;
+    const saved = JSON.parse(raw);
+    return {
+      ...emptyAnswers,
+      ...saved,
+      childBirthday: saved.childBirthday ? new Date(saved.childBirthday) : null,
+    };
+  } catch {
+    return emptyAnswers;
+  }
+}
+
+const defaultData: OnboardingData = {
+  email: '',
+  password: '',
+  accessToken: localStorage.getItem('accessToken'),
+  partnerInfo: loadPartnerInfo(),
+  referralCode: localStorage.getItem('referralCode'),
+  referrerName: localStorage.getItem('referrerName'),
+  ...loadAnswers(),
 };
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
@@ -145,6 +178,26 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     else localStorage.removeItem('referrerName');
   }, [data.referrerName]);
 
+  useEffect(() => {
+    const answers: Answers = {
+      name: data.name,
+      relationshipToChild: data.relationshipToChild,
+      childName: data.childName,
+      childGender: data.childGender,
+      childBirthday: data.childBirthday,
+      issue: data.issue,
+      issueOther: data.issueOther,
+      wacb: data.wacb,
+      signupDraftId: data.signupDraftId,
+    };
+    try {
+      sessionStorage.setItem(ANSWERS_KEY, JSON.stringify(answers)); // Date → ISO string
+    } catch {
+      // Storage unavailable (private mode, quota) — answers just won't survive a refresh.
+    }
+  }, [data.name, data.relationshipToChild, data.childName, data.childGender, data.childBirthday,
+      data.issue, data.issueOther, data.wacb, data.signupDraftId]);
+
   const setEmail = useCallback((email: string) => setData(d => ({ ...d, email })), []);
   const setPassword = useCallback((password: string) => setData(d => ({ ...d, password })), []);
   const setAccessToken = useCallback((accessToken: string | null) => setData(d => ({ ...d, accessToken })), []);
@@ -164,6 +217,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const setWacbAnswer = useCallback((key: keyof WacbAnswers, value: number) => {
     setData(d => ({ ...d, wacb: { ...d.wacb, [key]: value } }));
   }, []);
+  const setSignupDraftId = useCallback((signupDraftId: string | null) => setData(d => ({ ...d, signupDraftId })), []);
+  const clearAnswers = useCallback(() => setData(d => ({ ...d, ...emptyAnswers })), []);
 
   return (
     <OnboardingContext.Provider value={{
@@ -181,6 +236,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       setIssue,
       setIssueOther,
       setWacbAnswer,
+      setSignupDraftId,
+      clearAnswers,
     }}>
       {children}
     </OnboardingContext.Provider>
@@ -193,6 +250,25 @@ export function useOnboarding(): OnboardingContextValue {
   return ctx;
 }
 
+// Partner/campaign links with accountLast on ask for the account at the end of onboarding
+// (before /subscribe) instead of the start. Referral links also set partnerInfo, so they're
+// excluded explicitly. See doc/implementation/account-last-signup.md.
+export function accountLast(d: OnboardingData): boolean {
+  return !!d.partnerInfo?.accountLast && !d.referralCode;
+}
+
+// Where the onboarding screens hand off to (Intro3 "Skip for Now", PlaySession5 "Continue").
+export function afterOnboardingPath(d: OnboardingData): string {
+  return accountLast(d) && !d.accessToken ? '/create-account' : '/subscribe';
+}
+
+// Like the mobile app, "Other" is sent as the parent's own text in place of 'other'.
+export function resolvedIssues(d: OnboardingData): string[] {
+  return d.issue.includes('other')
+    ? d.issue.filter(v => v !== 'other').concat(d.issueOther.trim()).filter(Boolean)
+    : d.issue;
+}
+
 // WACB scoring
 const VALUE_TO_POINTS: Record<number, number> = { 1: 0, 2: 2, 3: 4, 4: 6, 5: 7 };
 
@@ -200,6 +276,10 @@ const SNAPSHOT_ITEMS = [
   'q1Dawdle', 'q2Disobey', 'q3Tantrum', 'q4Defiance', 'q5FocusDemand',
   'q6Restless', 'q7TaskCompletion', 'q8Destroy', 'q9Aggression', 'q10LieSteal',
 ] as const;
+
+export function isWacbComplete(wacb: WacbAnswers): boolean {
+  return SNAPSHOT_ITEMS.every(key => wacb[key] !== undefined);
+}
 
 // Sums only the 10 survey items (0–70) — parentingStressLevel is not part of the score.
 export function computeWacbScore(wacb: WacbAnswers): number {

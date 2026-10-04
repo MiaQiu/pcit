@@ -4124,7 +4124,7 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
     const {
       slug, name, kind = 'PARTNER', trialDays = 7, plans = ['monthly', 'yearly'],
       discounts, welcomeMessage, maxRedemptions, expiresAt,
-      displayName, skipSubscription = false, landing, campaignRules,
+      displayName, skipSubscription = false, accountLast = false, landing, campaignRules,
     } = req.body;
 
     if (!slug || !name) return res.status(400).json({ error: 'slug and name are required' });
@@ -4148,6 +4148,7 @@ router.post('/partners', requireAdminAuth, async (req, res) => {
       maxRedemptions: maxRedemptions ?? null,
       displayName: cleanDisplayName,
       skipSubscription: skipSubscription === true,
+      accountLast: accountLast === true,
       landing: cleanLanding,
       campaignRules: cleanRules,
     };
@@ -4197,7 +4198,7 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
 
     const {
       name, kind, status, trialDays, plans, discounts, welcomeMessage, maxRedemptions, expiresAt,
-      displayName, skipSubscription, landing, campaignRules,
+      displayName, skipSubscription, accountLast, landing, campaignRules,
     } = req.body;
     if (kind !== undefined && !['PARTNER', 'CAMPAIGN'].includes(kind)) {
       return res.status(400).json({ error: 'kind must be PARTNER or CAMPAIGN' });
@@ -4236,6 +4237,7 @@ router.patch('/partners/:id', requireAdminAuth, async (req, res) => {
       maxRedemptions: nextMaxRedemptions,
       displayName: displayName !== undefined ? sanitizeDisplayName(displayName) : (oldConfig.displayName ?? null),
       skipSubscription: skipSubscription !== undefined ? skipSubscription === true : oldConfig.skipSubscription === true,
+      accountLast: accountLast !== undefined ? accountLast === true : oldConfig.accountLast === true,
       landing: nextLanding,
       campaignRules: nextRules,
     };
@@ -4444,11 +4446,17 @@ router.get('/partners/:id/stats', requireAdminAuth, async (req, res) => {
     });
     if (!partner) return res.status(404).json({ error: 'Partner not found' });
 
-    const [visits, signups] = await Promise.all([
+    const [visits, signups, drafts] = await Promise.all([
       prisma.campaignVisit.findMany({ where: { partnerId: partner.id } }),
       prisma.user.groupBy({
         by: ['campaignMessageId', 'signupSource'],
         where: { partnerId: partner.id, ...activePartnerUsers },
+        _count: { _all: true },
+      }),
+      // Account-last links only: visitors who started onboarding (see SignupDraft).
+      prisma.signupDraft.groupBy({
+        by: ['campaignMessageId', 'signupSource'],
+        where: { partnerId: partner.id },
         _count: { _all: true },
       }),
     ]);
@@ -4457,18 +4465,76 @@ router.get('/partners/:id/stats', requireAdminAuth, async (req, res) => {
     const rows = new Map();
     const row = (messageKey, source) => {
       const id = `${messageKey}|${source}`;
-      if (!rows.has(id)) rows.set(id, { messageKey, source, visits: 0, signups: 0 });
+      if (!rows.has(id)) rows.set(id, { messageKey, source, visits: 0, started: 0, signups: 0 });
       return rows.get(id);
     };
     for (const v of visits) row(v.messageKey, v.source).visits += v.count;
     for (const s of signups) {
       row(keyById.get(s.campaignMessageId) ?? '', s.signupSource ?? '').signups += s._count._all;
     }
+    for (const d of drafts) {
+      row(keyById.get(d.campaignMessageId) ?? '', d.signupSource ?? '').started += d._count._all;
+    }
 
     res.json({ totalVisits: partner.visits, rows: [...rows.values()] });
   } catch (err) {
     logError(err, { route: 'admin#[admin] campaign stats error', userId: req.user?.id });
     res.status(500).json({ error: 'Failed to load stats' });
+  }
+});
+
+// Same cut-offs as the web/mobile behavior snapshot (getBehaviorCategory).
+function wacbCategory(score) {
+  if (score <= 28) return 'stable';
+  if (score <= 39) return 'mild';
+  if (score <= 50) return 'medium';
+  return 'high';
+}
+
+// GET /api/admin/partners/:id/drafts/summary — account-last links: where visitors who
+// started onboarding stopped, and their child birth year / concerns / WACB band, split
+// into started vs. converted (created an account or logged in at the end).
+router.get('/partners/:id/drafts/summary', requireAdminAuth, async (req, res) => {
+  try {
+    const drafts = await prisma.signupDraft.findMany({
+      where: { partnerId: req.params.id },
+      select: { lastStep: true, childBirthYear: true, concerns: true, wacbScore: true, convertedAt: true },
+    });
+
+    const tally = () => new Map();
+    const add = (map, key, converted) => {
+      const entry = map.get(key) ?? { key, started: 0, converted: 0 };
+      entry.started += 1;
+      if (converted) entry.converted += 1;
+      map.set(key, entry);
+    };
+    const dropOff = new Map(); // unconverted drafts by last screen opened
+    const birthYears = tally();
+    const concerns = tally();
+    const wacbBands = tally();
+    for (const d of drafts) {
+      const converted = d.convertedAt != null;
+      if (!converted) {
+        const step = d.lastStep ?? '(unknown)';
+        dropOff.set(step, (dropOff.get(step) ?? 0) + 1);
+      }
+      add(birthYears, d.childBirthYear ?? 'unknown', converted);
+      for (const c of d.concerns) add(concerns, c, converted);
+      add(wacbBands, d.wacbScore != null ? wacbCategory(d.wacbScore) : 'not completed', converted);
+    }
+
+    const sorted = map => [...map.values()].sort((a, b) => b.started - a.started);
+    res.json({
+      started: drafts.length,
+      converted: drafts.filter(d => d.convertedAt != null).length,
+      dropOff: [...dropOff.entries()].map(([step, count]) => ({ step, count })).sort((a, b) => b.count - a.count),
+      birthYears: [...birthYears.values()].sort((a, b) => String(a.key).localeCompare(String(b.key))),
+      concerns: sorted(concerns),
+      wacbBands: sorted(wacbBands),
+    });
+  } catch (err) {
+    logError(err, { route: 'admin#[admin] signup drafts summary error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to load signup drafts' });
   }
 });
 

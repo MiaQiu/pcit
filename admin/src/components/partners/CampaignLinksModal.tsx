@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
   createCampaignMessage, updateCampaignMessage, uploadCampaignMessageImage, removeCampaignMessageImage,
-  getCampaignLink, getCampaignStats,
-  ApiEnvOpts, CampaignMessage, CampaignStats, Partner, PartnerLandingText,
+  getCampaignLink, getCampaignStats, getSignupDraftSummary,
+  ApiEnvOpts, CampaignMessage, CampaignStats, DraftTally, Partner, PartnerLandingText, SignupDraftSummary,
 } from '../../api/adminApi';
 import {
   LandingEditor, LandingImageState, emptyImageState, emptyLandingText, landingTextOf, inputStyle,
@@ -43,6 +43,7 @@ export default function CampaignLinksModal({ partner, callOpts, onUpdated, onClo
   const [tab, setTab] = useState<Tab>(partner.messages.length ? 'links' : 'messages');
   const [stats, setStats] = useState<CampaignStats | null>(null);
   const [statsError, setStatsError] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<SignupDraftSummary | null>(null);
 
   useEffect(() => {
     loadStats();
@@ -51,7 +52,13 @@ export default function CampaignLinksModal({ partner, callOpts, onUpdated, onClo
   async function loadStats() {
     setStatsError(null);
     try {
-      setStats(await getCampaignStats(partner.id, callOpts));
+      const [nextStats, nextDrafts] = await Promise.all([
+        getCampaignStats(partner.id, callOpts),
+        // Optional extra: an API without the drafts endpoint just hides the drafts section.
+        getSignupDraftSummary(partner.id, callOpts).catch(() => null),
+      ]);
+      setStats(nextStats);
+      setDrafts(nextDrafts);
     } catch (e: unknown) {
       setStatsError(e instanceof Error ? e.message : 'Failed to load stats');
     }
@@ -80,7 +87,7 @@ export default function CampaignLinksModal({ partner, callOpts, onUpdated, onClo
           <MessagesTab partner={partner} stats={stats} callOpts={callOpts} onUpdated={onUpdated} />
         )}
         {tab === 'links' && <LinksTab partner={partner} callOpts={callOpts} />}
-        {tab === 'stats' && <StatsTab partner={partner} stats={stats} error={statsError} onRefresh={loadStats} />}
+        {tab === 'stats' && <StatsTab partner={partner} stats={stats} drafts={drafts} error={statsError} onRefresh={loadStats} />}
       </div>
     </div>
   );
@@ -437,9 +444,10 @@ function LinksTab({ partner, callOpts }: { partner: Partner; callOpts?: ApiEnvOp
 
 // ---- Stats: messages x channels ----
 
-function StatsTab({ partner, stats, error, onRefresh }: {
+function StatsTab({ partner, stats, drafts, error, onRefresh }: {
   partner: Partner;
   stats: CampaignStats | null;
+  drafts: SignupDraftSummary | null;
   error: string | null;
   onRefresh: () => void;
 }) {
@@ -456,7 +464,11 @@ function StatsTab({ partner, stats, error, onRefresh }: {
 
   const cell = (filter: (r: CampaignStats['rows'][number]) => boolean) => {
     const rows = stats.rows.filter(filter);
-    return { visits: rows.reduce((s, r) => s + r.visits, 0), signups: rows.reduce((s, r) => s + r.signups, 0) };
+    return {
+      visits: rows.reduce((s, r) => s + r.visits, 0),
+      started: rows.reduce((s, r) => s + (r.started ?? 0), 0),
+      signups: rows.reduce((s, r) => s + r.signups, 0),
+    };
   };
   const trackedVisits = cell(() => true).visits;
 
@@ -464,7 +476,8 @@ function StatsTab({ partner, stats, error, onRefresh }: {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: 12, color: '#6b7280' }}>
-          Each cell: signups / visits (conversion). "no src" = link opened without a ?src= channel.
+          Each cell: signups / visits (conversion){drafts?.started ? ', plus how many started onboarding (account-at-end links)' : ''}.
+          "no src" = link opened without a ?src= channel.
         </span>
         <button className="btn btn-secondary" style={smallBtn} onClick={onRefresh}>Refresh</button>
       </div>
@@ -503,19 +516,78 @@ function StatsTab({ partner, stats, error, onRefresh }: {
           per-message/channel tracking and aren't in this breakdown. Signups from before then count as Default / no src.
         </p>
       )}
+      {drafts && drafts.started > 0 && <DraftSummary drafts={drafts} />}
     </div>
   );
 }
 
-function StatCell({ visits, signups, bold }: { visits: number; signups: number; bold?: boolean }) {
-  if (!visits && !signups) return <td style={{ fontSize: 13, color: '#d1d5db' }}>—</td>;
+function StatCell({ visits, started, signups, bold }: { visits: number; started: number; signups: number; bold?: boolean }) {
+  if (!visits && !signups && !started) return <td style={{ fontSize: 13, color: '#d1d5db' }}>—</td>;
   return (
     <td style={{ fontSize: 13, fontWeight: bold ? 600 : 400, whiteSpace: 'nowrap' }}>
       {signups} / {visits}
       {visits > 0 && <span style={{ color: '#6b7280', fontWeight: 400 }}> ({Math.round((signups / visits) * 100)}%)</span>}
+      {started > 0 && <div style={{ fontSize: 11, color: '#6b7280', fontWeight: 400 }}>{started} started</div>}
     </td>
   );
 }
+
+// ---- Account-at-end links: anonymous signup drafts ----
+
+function DraftSummary({ drafts }: { drafts: SignupDraftSummary }) {
+  const notFinished = drafts.started - drafts.converted;
+  return (
+    <div style={{ marginTop: 20 }}>
+      <h4 style={{ margin: '0 0 4px', fontSize: 14 }}>Started onboarding (account at the end)</h4>
+      <p style={{ fontSize: 12, color: '#6b7280', margin: '0 0 12px' }}>
+        {drafts.started} started · {drafts.converted} created an account or logged in · {notFinished} didn't finish.
+        Anonymous — no names or contact details are recorded.
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+        <div>
+          <h5 style={draftHeading}>Where they stopped</h5>
+          {drafts.dropOff.length === 0 ? (
+            <div style={{ fontSize: 12, color: '#6b7280' }}>Everyone who started finished.</div>
+          ) : (
+            <table className="data-table">
+              <thead><tr><th>Last screen</th><th>People</th></tr></thead>
+              <tbody>
+                {drafts.dropOff.map(d => (
+                  <tr key={d.step}><td style={{ fontSize: 12 }}>{d.step}</td><td style={{ fontSize: 12 }}>{d.count}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <TallyTable title="Child birth year" rows={drafts.birthYears} />
+        <TallyTable title="Concerns" rows={drafts.concerns} />
+        <TallyTable title="Behavior snapshot" rows={drafts.wacbBands} />
+      </div>
+    </div>
+  );
+}
+
+function TallyTable({ title, rows }: { title: string; rows: DraftTally[] }) {
+  return (
+    <div>
+      <h5 style={draftHeading}>{title}</h5>
+      <table className="data-table">
+        <thead><tr><th></th><th>Started</th><th>Finished</th></tr></thead>
+        <tbody>
+          {rows.map(r => (
+            <tr key={String(r.key)}>
+              <td style={{ fontSize: 12 }}>{String(r.key).replace(/_/g, ' ')}</td>
+              <td style={{ fontSize: 12 }}>{r.started}</td>
+              <td style={{ fontSize: 12 }}>{r.converted}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const draftHeading: React.CSSProperties = { margin: '0 0 6px', fontSize: 12, fontWeight: 700, color: '#374151' };
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (

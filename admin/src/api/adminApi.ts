@@ -1368,6 +1368,7 @@ export interface PartnerConfig {
   maxRedemptions: number | null;
   displayName?: string | null;     // public name on the subscribe page
   skipSubscription?: boolean;      // skip /subscribe in web signup
+  accountLast?: boolean;           // web signup asks for the account at the end of onboarding
   landing?: PartnerLanding | null;
   campaignRules?: CampaignRules | null; // consent-checkbox rules (campaigns only)
 }
@@ -1397,6 +1398,7 @@ export interface PartnerCreatePayload {
   kind?: PartnerKind;
   displayName?: string | null;
   skipSubscription?: boolean;
+  accountLast?: boolean;
   // imageKey is honored on create only (to reuse a duplicated campaign's image).
   landing?: (PartnerLandingText & { imageKey?: string | null }) | null;
   campaignRules?: CampaignRules | null;
@@ -1530,6 +1532,7 @@ export interface CampaignStatsRow {
   messageKey: string;
   source: string;
   visits: number;
+  started: number; // account-last links: visitors who started onboarding (signup drafts)
   signups: number;
 }
 
@@ -1540,6 +1543,26 @@ export interface CampaignStats {
 
 export async function getCampaignStats(partnerId: string, opts?: ApiEnvOpts): Promise<CampaignStats> {
   return apiFetchEnv(`/api/admin/partners/${partnerId}/stats`, {}, opts);
+}
+
+// Account-last links: anonymous signup drafts, started vs. converted (account created).
+export interface DraftTally {
+  key: string | number; // birth year / concern key / WACB band
+  started: number;
+  converted: number;
+}
+
+export interface SignupDraftSummary {
+  started: number;
+  converted: number;
+  dropOff: { step: string; count: number }[]; // unconverted drafts by last screen opened
+  birthYears: DraftTally[];
+  concerns: DraftTally[];
+  wacbBands: DraftTally[]; // stable / mild / medium / high / not completed
+}
+
+export async function getSignupDraftSummary(partnerId: string, opts?: ApiEnvOpts): Promise<SignupDraftSummary> {
+  return apiFetchEnv(`/api/admin/partners/${partnerId}/drafts/summary`, {}, opts);
 }
 
 export interface PartnerUser {

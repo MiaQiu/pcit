@@ -864,7 +864,7 @@ model Partner {
   name        String
   kind        PartnerKind   @default(PARTNER)
   status      PartnerStatus @default(ACTIVE)
-  config      Json // PartnerConfig: { trialDays, plans, discounts: { monthly, yearly }, welcomeMessage, maxRedemptions, displayName, skipSubscription, landing }
+  config      Json // PartnerConfig: { trialDays, plans, discounts: { monthly, yearly }, welcomeMessage, maxRedemptions, displayName, skipSubscription, accountLast, landing }
   // (older rows may still have a single legacy `discount` field instead of
   // `discounts` — see server/utils/partnerDiscount.cjs normalizeDiscounts())
   expiresAt   DateTime?
@@ -875,6 +875,7 @@ model Partner {
   users       User[]
   messages    CampaignMessage[]
   visitStats  CampaignVisit[]
+  drafts      SignupDraft[]
 }
 
 // A message variant of a campaign/partner link: its own signup-screen copy + hero
@@ -890,6 +891,7 @@ model CampaignMessage {
   createdAt DateTime @default(now())
   partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   users     User[]
+  drafts    SignupDraft[]
 
   @@unique([partnerId, key])
 }
@@ -905,6 +907,30 @@ model CampaignVisit {
   partner    Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
   @@unique([partnerId, messageKey, source])
+}
+
+// Anonymous progress of a web signup through an account-last link (config.accountLast):
+// one row per visitor, created on the first onboarding screen and updated on every
+// screen change; converted once they create an account (or log in) at the end.
+// Holds nothing that identifies a person. See doc/implementation/account-last-signup.md.
+model SignupDraft {
+  id                String           @id @default(uuid())
+  partnerId         String
+  campaignMessageId String?
+  signupSource      String?
+  childBirthYear    Int?
+  concerns          String[] // ChildIssueScreen option keys only; never the "Other" text
+  wacbScore         Int? // 0-70, only once all 10 items are answered
+  lastStep          String? // last route opened, e.g. "/onboarding/wacb/6"
+  convertedUserId   String? // a user can finish more than one visit (e.g. log in again via another link)
+  convertedAt       DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  partner           Partner          @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  campaignMessage   CampaignMessage? @relation(fields: [campaignMessageId], references: [id], onDelete: SetNull)
+
+  @@index([partnerId, createdAt])
+  @@index([convertedUserId])
 }
 
 enum PartnerKind {

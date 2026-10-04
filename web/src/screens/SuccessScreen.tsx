@@ -1,6 +1,7 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import OnboardingLayout from '../components/OnboardingLayout';
-import { useOnboarding } from '../contexts/OnboardingContext';
+import { accountLast, useOnboarding } from '../contexts/OnboardingContext';
 import googlePlayIcon from '../assets/images/googleplay.png';
 
 export default function SuccessScreen() {
@@ -8,6 +9,9 @@ export default function SuccessScreen() {
   // as on CreateAccountScreen); blank fields keep the default copy.
   const { data } = useOnboarding();
   const landing = data.referralCode ? null : data.partnerInfo?.landing;
+
+  // Account-last links: "You're all set" only once the account exists.
+  if (accountLast(data) && !data.accessToken) return <Navigate to="/create-account" replace />;
 
   return (
     <OnboardingLayout>

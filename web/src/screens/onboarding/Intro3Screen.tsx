@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import PrimaryButton from '../../components/PrimaryButton';
+import { afterOnboardingPath, useOnboarding } from '../../contexts/OnboardingContext';
 import emotionalMassageImage from '../../assets/images/emotional-massage.png';
 
 const benefits = [
@@ -14,6 +15,7 @@ const benefits = [
 
 export default function Intro3Screen() {
   const navigate = useNavigate();
+  const { data } = useOnboarding();
 
   return (
     <OnboardingLayout progress={84} backTo="/onboarding/behavior-profile">
@@ -53,7 +55,7 @@ export default function Intro3Screen() {
           Let's Begin
         </PrimaryButton>
         <button
-          onClick={() => navigate('/subscribe')}
+          onClick={() => navigate(afterOnboardingPath(data))}
           className="w-full mt-1 py-2 text-[#6B7280] font-medium text-sm hover:text-[#1E2939] transition-colors"
         >
           Skip for Now

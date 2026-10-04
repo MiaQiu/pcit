@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { OnboardingProvider, useOnboarding } from './contexts/OnboardingContext';
 import { setCampaignContext, trackScreenView } from './analytics';
+import DraftSync from './components/DraftSync';
 
 // Screens
 import LandingScreen from './screens/LandingScreen';
@@ -68,6 +69,7 @@ export default function App() {
     <BrowserRouter>
       <OnboardingProvider>
         <AnalyticsTracker />
+        <DraftSync />
         <Routes>
           {/* Partner landing — QR code destination */}
           <Route path="/p/:slug" element={<PartnerLandingScreen />} />
