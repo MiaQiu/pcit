@@ -1191,6 +1191,33 @@ export interface SessionReportGoalDirective {
   actionPrompt: string | null;
 }
 
+// First-session-only report (generateFirstSessionInsights) — replaces the
+// standard "About the child" / Top Moment / Coach's Corner cards on the
+// user's chronologically first completed session. See isFirstSession below.
+export interface SessionReportStrength {
+  name: string | null;
+  explanation: string | null;
+}
+
+export interface SessionReportSkillUnderneath {
+  name: string | null;
+  definition: string | null;
+}
+
+export interface SessionReportFirstSessionInsights {
+  whatWeLearned: {
+    strengths: SessionReportStrength[];
+    challenge: string | null;
+  };
+  skillsUnderneath: {
+    openingSentence: string | null;
+    skills: SessionReportSkillUnderneath[];
+  };
+  howWePracticeTogether: {
+    sentences: string[];
+  };
+}
+
 // Full session report payload — same shape /api/recordings/:id/analysis returns
 // to the mobile app. Fields not needed by the admin view are left untyped here.
 export interface SessionReport {
@@ -1212,6 +1239,8 @@ export interface SessionReport {
   tomorrowGoalDirective: SessionReportGoalDirective | null;
   transcript: SessionReportTranscriptLine[];
   aboutChild: Array<{ Title?: string; Description?: string; Details?: string }> | null;
+  isFirstSession: boolean;
+  firstSessionInsights: SessionReportFirstSessionInsights | null;
 }
 
 export type SessionReportResult =

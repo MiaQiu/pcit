@@ -52,6 +52,9 @@ export default function SessionReportPage() {
               {userName && <span style={{ marginRight: 12 }}>{userName}</span>}
               <span className="monospace" style={{ fontSize: 12, color: '#888' }}>{sessionId}</span>
               {env === 'prod' && <span className="env-badge prod">PROD</span>}
+              {report?.isFirstSession && (
+                <span className="status-badge status-completed" style={{ marginLeft: 8 }}>First Session</span>
+              )}
             </p>
           </div>
         </div>
@@ -136,8 +139,9 @@ export default function SessionReportPage() {
             </div>
           </div>
 
-          {/* Top Moment */}
-          {(report.topMoment || report.audioUrl) && (
+          {/* Top Moment — hidden on the first-session report (see mobile's
+              ReportDetailScreen.tsx showFirstSession branch) */}
+          {!report.isFirstSession && (report.topMoment || report.audioUrl) && (
             <div className="wr-card">
               <div className="wr-section-title" style={{ marginBottom: 8 }}>Top Moment</div>
               {report.topMomentCelebration && (
@@ -154,8 +158,10 @@ export default function SessionReportPage() {
             </div>
           )}
 
-          {/* Coach's Corner */}
-          {(report.coachCorner || report.skillCoaching) && (
+          {/* Coach's Corner — also hidden on the first-session report; it's
+              replaced by "Skills Underneath the Issues" / "How We'll Practice
+              Together" below */}
+          {!report.isFirstSession && (report.coachCorner || report.skillCoaching) && (
             <div className="wr-card">
               <div className="wr-section-title" style={{ marginBottom: 12 }}>Coach's Corner</div>
               {report.coachCorner ? (
@@ -270,18 +276,78 @@ export default function SessionReportPage() {
             </div>
           ) : null}
 
-          {/* About Child */}
-          {report.aboutChild && report.aboutChild.length > 0 && report.aboutChild[0]?.Description && (
+          {/* What We Learned About the Child — on the first session this prefers
+              firstSessionInsights.whatWeLearned (strengths + the normalizing
+              challenge note) over the standard aboutChild extraction, same as
+              mobile's childInsightBodyJsx */}
+          {report.isFirstSession && (report.firstSessionInsights?.whatWeLearned.strengths.length || report.firstSessionInsights?.whatWeLearned.challenge) ? (
             <div className="wr-card">
-              <div className="wr-section-title" style={{ marginBottom: 8 }}>About the Child</div>
-              {report.aboutChild[0].Title && (
-                <div style={{ fontWeight: 700, fontSize: 14, color: '#1E2939', marginBottom: 4 }}>{report.aboutChild[0].Title}</div>
+              <div className="wr-section-title" style={{ marginBottom: 8 }}>What We Learned About the Child</div>
+              {report.firstSessionInsights!.whatWeLearned.strengths.map((s, i) => (
+                s.name ? (
+                  <div key={i} style={{ marginBottom: 8 }}>
+                    <span style={{ padding: '4px 10px', borderRadius: 10, background: '#DDF3E4', fontSize: 13, fontWeight: 600, color: '#3BA55D' }}>
+                      {s.name}
+                    </span>
+                    {s.explanation && (
+                      <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, marginTop: 4 }}>{s.explanation}</div>
+                    )}
+                  </div>
+                ) : null
+              ))}
+              {report.firstSessionInsights!.whatWeLearned.challenge && (
+                <div style={{ background: '#FBE7D2', borderRadius: 10, padding: 10, marginTop: 4 }}>
+                  <div style={{ fontSize: 14, color: '#1E2939', lineHeight: 1.5 }}>{report.firstSessionInsights!.whatWeLearned.challenge}</div>
+                </div>
               )}
-              <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5 }}>
-                {report.aboutChild[0].Details || report.aboutChild[0].Description}
+            </div>
+          ) : (
+            report.aboutChild && report.aboutChild.length > 0 && report.aboutChild[0]?.Description && (
+              <div className="wr-card">
+                <div className="wr-section-title" style={{ marginBottom: 8 }}>About the Child</div>
+                {report.aboutChild[0].Title && (
+                  <div style={{ fontWeight: 700, fontSize: 14, color: '#1E2939', marginBottom: 4 }}>{report.aboutChild[0].Title}</div>
+                )}
+                <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5 }}>
+                  {report.aboutChild[0].Details || report.aboutChild[0].Description}
+                </div>
               </div>
+            )
+          )}
+
+          {/* Skills Underneath the Issues — first-session only */}
+          {report.isFirstSession && report.firstSessionInsights?.skillsUnderneath && (
+            <div className="wr-card">
+              <div className="wr-section-title" style={{ marginBottom: 8 }}>Skills Underneath the Issues</div>
+              {report.firstSessionInsights.skillsUnderneath.openingSentence && (
+                <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, marginBottom: 10 }}>
+                  {report.firstSessionInsights.skillsUnderneath.openingSentence}
+                </div>
+              )}
+              {report.firstSessionInsights.skillsUnderneath.skills.map((skill, i) => (
+                skill.name ? (
+                  <div key={i} style={{ marginBottom: 8 }}>
+                    <span style={{ padding: '4px 10px', borderRadius: 10, background: '#F5EAFB', fontSize: 13, fontWeight: 600, color: '#8C49D5' }}>
+                      {skill.name.replace(/\*\*/g, '')}
+                    </span>
+                    {skill.definition && (
+                      <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, marginTop: 4 }}>{skill.definition}</div>
+                    )}
+                  </div>
+                ) : null
+              ))}
             </div>
           )}
+
+          {/* How We'll Practice Together — first-session only */}
+          {report.isFirstSession && report.firstSessionInsights?.howWePracticeTogether.sentences.length ? (
+            <div className="wr-card">
+              <div className="wr-section-title" style={{ marginBottom: 8 }}>How We'll Practice Together</div>
+              {report.firstSessionInsights.howWePracticeTogether.sentences.map((sentence, i) => (
+                <div key={i} style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, marginBottom: 8 }}>{sentence}</div>
+              ))}
+            </div>
+          ) : null}
 
           {/* Tomorrow's Goal */}
           {(report.tomorrowGoalDirective || report.tomorrowGoal) && (

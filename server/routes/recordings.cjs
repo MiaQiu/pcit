@@ -649,6 +649,20 @@ async function buildAnalysisResponse(id, { requesterUserId } = {}) {
 
     console.log(`[GET-ANALYSIS] Returning COMPLETED for session ${id.substring(0, 8)}`);
 
+    // Chronologically first completed session for this user — not "no other
+    // completed session exists yet" (that's a point-in-time fact, true for
+    // every session right up until the next one completes). Lets consumers
+    // (admin's session report) pick the first-session report template
+    // regardless of when the session is being viewed.
+    const priorCompletedCount = await prisma.session.count({
+      where: {
+        userId: session.userId,
+        analysisStatus: 'COMPLETED',
+        createdAt: { lt: session.createdAt },
+      },
+    });
+    const isFirstSession = priorCompletedCount === 0;
+
     const utterances = await getUtterances(session.id);
     const transcriptSegments = utterances.map(utt => ({
       speaker: utt.speaker,
@@ -837,6 +851,8 @@ async function buildAnalysisResponse(id, { requesterUserId } = {}) {
       // strengths/interaction-style explainer (generateFirstSessionInsights).
       // null on every session after the first.
       firstSessionInsights: coachingData?.firstSessionInsights || null,
+      // Chronologically the user's first completed session — see isFirstSession above.
+      isFirstSession,
       // Backward compat (old mobile app versions)
       childPortfolioInsights: transformCoachingCardsToPortfolioInsights(Array.isArray(coachingData) ? coachingData : null) || session.childPortfolioInsights || null,
       aboutChild: session.aboutChild || null,
