@@ -628,6 +628,12 @@ export const ReportScreen_v3: React.FC = () => {
 
   const handleContinueToCoaching = () => {
     amplitudeService.trackEvent('Report V2 Continue To Coaching Tapped', { recordingId });
+    // First-time sessions go to the old single-screen report instead of
+    // ReportDetailScreen's firstSessionInsights-driven layout.
+    if (isFirstSessionView) {
+      navigation.navigate('Report', { recordingId });
+      return;
+    }
     navigation.navigate('ReportDetail', {
       recordingId,
       ...(levelUpInfo ? { leveledUp: true, fromLevel: levelUpInfo.from, toLevel: levelUpInfo.to } : {}),
