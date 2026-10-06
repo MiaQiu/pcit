@@ -4,7 +4,7 @@ Web-based admin interface for managing lessons (CRUD with live mobile preview), 
 
 ## Production URL
 
-**`https://admin.hinora.co`** — hosted on Vercel (project: `pcit`). DNS for `admin.hinora.co` points to Vercel. `vercel.json` rewrites all `/api/*` requests to the prod App Runner (`https://wpwpawhz29.ap-southeast-1.awsapprunner.com`).
+**`https://admin.hinora.co`** — hosted on Vercel (project: `pcit`). DNS for `admin.hinora.co` points to Vercel. `admin/vercel.json` rewrites `/api/*` requests to one App Runner backend — currently the **dev** App Runner (`https://p2tgddmyxt.us-east-1.awsapprunner.com`); see "Switching the API backend" below. Independently of that, the portal's in-app **PROD** toggle calls the prod App Runner (`https://wpwpawhz29.ap-southeast-1.awsapprunner.com`) directly.
 
 ## Quick Start (local dev)
 
@@ -22,6 +22,21 @@ The Vite dev server proxies `/api` to `localhost:3001` (local backend).
 
 ## Deploying
 
+### Frontend (admin SPA) — automatic
+
+The Vercel project `pcit` is connected to the GitHub repo (`MiaQiu/pcit`), so **no manual deploy is needed**:
+
+- **Merge/push to `main`** → Vercel builds `admin/` and deploys to production; `admin.hinora.co` updates when the build finishes.
+- **Push to any other branch** → a Preview deployment only (its own `*.vercel.app` URL); production is untouched.
+
+The same push also builds the other Vercel projects in this repo (`pcit-6dbg`, `nora-demo`). To check whether a commit is live, look at its `Vercel – pcit` status on GitHub (`gh api repos/MiaQiu/pcit/commits/<sha>/statuses`) and confirm the commit is on `main`.
+
+Manual fallback (e.g. to redeploy without a new commit), from the repo root:
+
+```bash
+npx vercel --prod --scope qiuy0002-gmailcoms-projects --yes --archive=tgz
+```
+
 ### Switching the API backend (dev ↔ prod)
 
 ```bash
@@ -29,16 +44,11 @@ The Vite dev server proxies `/api` to `localhost:3001` (local backend).
 ./admin-switch.sh prod   # point admin.hinora.co → prod App Runner (ap-southeast-1)
 ```
 
-`admin-switch.sh` rewrites `admin/vercel.json` with the correct App Runner URL and immediately redeploys to Vercel. Default is prod. After switching to dev, `admin/vercel.json` will appear modified in git — don't commit it while pointing at dev.
+`admin-switch.sh` rewrites `admin/vercel.json` with the chosen App Runner URL and immediately runs the manual Vercel deploy above. That change is local only: the next auto-deploy from `main` uses whatever `admin/vercel.json` is **committed** (currently dev). To make a switch stick, commit the updated `admin/vercel.json` to `main`.
 
-### Frontend (admin SPA)
+### Frontend and backend deploy separately
 
-```bash
-# From repo root
-npx vercel --prod --scope qiuy0002-gmailcoms-projects --yes --archive=tgz
-```
-
-This builds `admin/` and deploys to Vercel. The live site at `admin.hinora.co` updates immediately.
+Vercel only deploys the admin SPA. The API it calls (App Runner) is deployed separately with `./docker_deploy*.sh`. When a change touches both — e.g. new fields the admin page reads — deploy the backend (and run its migration) **before** merging the frontend to `main`, or the live admin page will run against the old API until the backend catches up.
 
 ### Backend + DB migrations
 
@@ -50,7 +60,7 @@ npx prisma migrate dev --name <description>
 ./docker_deploy_prod.sh
 ```
 
-`prisma migrate deploy` runs automatically in `entrypoint.sh` on every container startup — it applies any committed migration files not yet applied to the connected DB.
+`prisma migrate deploy` runs automatically in `entrypoint.sh` on every container startup — it applies any committed migration files not yet applied to the connected DB. (This works because `prisma/migrations` ships in the Docker image; before commit `dad9186`, `.dockerignore` excluded it and the step silently did nothing.) If a migration needs to land before the code that uses it, apply it first over the DB tunnel with `DATABASE_URL=<tunneled url> npx prisma migrate deploy` — never `migrate dev`, `db push` or `migrate reset` against prod, and never pass `--shadow-database-url` pointing at a real database.
 
 **Never use `prisma db push`** — it applies schema changes directly to the DB without creating a migration file, causing drift between dev and prod.
 
