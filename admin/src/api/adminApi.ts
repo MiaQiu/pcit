@@ -92,6 +92,7 @@ export interface UserSummary {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   tag: string;
   hasPushToken: boolean;
   pushTokenUpdatedAt: string | null;

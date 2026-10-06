@@ -130,7 +130,7 @@ All require admin auth.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/admin/users` | List all users with name, email, joined date, last active, session count, tag, child birthday, issue, latest WACB total score, and `isFreeAccount` flag |
+| `GET` | `/api/admin/users` | List all users with name, email, phone (decrypted, `null` if not provided), joined date, last active, session count, tag, child birthday, issue, latest WACB total score, and `isFreeAccount` flag |
 | `PUT` | `/api/admin/users/:id/tag` | Update user tag (`user` or `tester`) |
 | `GET` | `/api/admin/users/:id/profile` | User's completed lessons and sessions |
 | `PUT` | `/api/admin/users/:id/free-account` | Grant or revoke free account access. Body: `{ isFreeAccount: boolean }` |
@@ -295,7 +295,7 @@ The body text textarea supports:
 
 ### Users (`/users`)
 
-- Table of all registered users: user ID (clickable), name, email, joined date, last active date, session count, tag, child birthday, issue, WACB score (latest `totalScore` from `wacbsurvey`)
+- Table of all registered users: user ID (clickable), name, email, phone (`—` if not provided), joined date, last active date, session count, tag, child birthday, issue, WACB score (latest `totalScore` from `wacbsurvey`)
 - Click any column header to sort (toggles asc/desc)
 - **Tag** column: inline dropdown to toggle between `user` and `tester` — persisted immediately via `PUT /api/admin/users/:id/tag`
 - Click a user ID to open the user detail page

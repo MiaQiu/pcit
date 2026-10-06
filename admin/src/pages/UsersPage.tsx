@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getUsers, updateUserTag, UserSummary } from '../api/adminApi';
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
 
-type SortField = 'id' | 'name' | 'email' | 'createdAt' | 'lastActiveAt' | 'sessionCount' | 'tag' | 'childBirthday' | 'issue' | 'wacbTotalScore';
+type SortField = 'id' | 'name' | 'email' | 'phone' | 'createdAt' | 'lastActiveAt' | 'sessionCount' | 'tag' | 'childBirthday' | 'issue' | 'wacbTotalScore';
 type SortDir = 'asc' | 'desc';
 
 export default function UsersPage() {
@@ -91,6 +91,7 @@ export default function UsersPage() {
                 <th style={thStyle} onClick={() => handleSort('id')}>User ID{sortIndicator('id')}</th>
                 <th style={thStyle} onClick={() => handleSort('name')}>Name{sortIndicator('name')}</th>
                 <th style={thStyle} onClick={() => handleSort('email')}>Email{sortIndicator('email')}</th>
+                <th style={thStyle} onClick={() => handleSort('phone')}>Phone{sortIndicator('phone')}</th>
                 <th style={thStyle} onClick={() => handleSort('createdAt')}>Joined{sortIndicator('createdAt')}</th>
                 <th style={thStyle} onClick={() => handleSort('lastActiveAt')}>Last Active{sortIndicator('lastActiveAt')}</th>
                 <th style={thStyle} onClick={() => handleSort('sessionCount')}>Sessions{sortIndicator('sessionCount')}</th>
@@ -113,6 +114,7 @@ export default function UsersPage() {
                   </td>
                   <td>{u.name}</td>
                   <td>{u.email}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{u.phone ?? '—'}</td>
                   <td>{fmt(u.createdAt)}</td>
                   <td>{fmt(u.lastActiveAt)}</td>
                   <td>{u.sessionCount}</td>
