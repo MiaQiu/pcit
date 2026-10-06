@@ -844,8 +844,12 @@ async function buildAnalysisResponse(id, { requesterUserId } = {}) {
       developmentalObservation: childProfiling
         ? { summary: childProfiling.summary, domains: childProfiling.domains }
         : null,
-      coachingSummary: session.coachingSummary || null,
-      coachingCards: coachingData?.sections || (Array.isArray(coachingData) ? coachingData : null),
+      // legacyCoaching (first-session-only, see generateLegacyCdiCoaching) takes
+      // priority when present — restores exactly what the old ReportScreen.tsx's
+      // Coach's Corner expects. Absent on every other session, so this is a
+      // no-op there — falls through to today's fields unchanged.
+      coachingSummary: coachingData?.legacyCoaching?.summary || session.coachingSummary || null,
+      coachingCards: coachingData?.legacyCoaching?.sections || coachingData?.sections || (Array.isArray(coachingData) ? coachingData : null),
       tomorrowGoalDirective: coachingData?.goalDirective || fallbackGoalDirective || null,
       // First-session-only: "what we learned about the child" + parent
       // strengths/interaction-style explainer (generateFirstSessionInsights).

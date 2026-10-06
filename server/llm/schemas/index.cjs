@@ -415,6 +415,30 @@ const COACHING_FORMAT = {
   required: ['coach_corner'],
 };
 
+// ── coaching-format-legacy ─────────────────────────────────────────────────────
+// Pre-2026-09-09 shape (generic titled sections) — restored, under a distinct
+// name, only for the revived first-session ReportScreen.tsx's Coach's Corner.
+// Never reuse COACHING_FORMAT's name for this; that constant now holds the
+// unrelated coach_corner/tricky_moments shape.
+const COACHING_FORMAT_LEGACY = {
+  type: 'object',
+  properties: {
+    sections: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          title:   { type: 'string' },
+          content: { type: 'string' },
+        },
+        required: ['title', 'content'],
+      },
+    },
+    tomorrowGoal: { type: 'string', nullable: true },
+  },
+  required: ['sections'],
+};
+
 // ── skill-improve ─────────────────────────────────────────────────────────────
 // Session-grounded opportunities to build or reduce this session's target skill
 const SKILL_IMPROVE = {
@@ -483,6 +507,7 @@ module.exports = {
   PDI_TWO_CHOICES,
   DEV_PROFILING,
   COACHING_FORMAT,
+  COACHING_FORMAT_LEGACY,
   MILESTONE_DETECTION,
   SKILL_IMPROVE,
 };

@@ -1095,6 +1095,82 @@ ${variables.LANGUAGE_INSTRUCTION}`;
   }
 }
 
+/**
+ * Restores the exact pre-2026-09-09 Coach's Corner pipeline (commit 513b183) —
+ * a free-form coaching narrative split into generic titled sections — for the
+ * revived first-session ReportScreen.tsx, which still reads coachingCards as
+ * an array of { title, content } sections. Only steps 2+3 of the old
+ * generateCdiCoaching (narrative + format); steps 1/1b/1c (goal directive,
+ * notification copy, mastery update) are skipped on purpose — today's main
+ * generateCdiCoaching call above already computes those correctly and
+ * ReportScreen.tsx's other cards already read that output via
+ * tomorrowGoal/tomorrowGoalDirective. Deliberately uses its own prompt files
+ * (cdiCoaching-legacy.txt / cdiCoachingFormat-legacy.txt) and no Gemini
+ * context cache — matching how this ran in production back then, and keeping
+ * it fully isolated from today's cdiCoaching.txt-backed cache that
+ * generateFirstSessionInsights shares.
+ *
+ * @returns {Promise<{summary: string, sections: Array|null}|null>}
+ */
+async function generateLegacyCdiCoaching(utterances, childInfo, tagCounts = {}, childSpeaker = null, sessionId = null, language = null, fallbackTomorrowGoal = null) {
+  const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
+  variables.LANGUAGE_INSTRUCTION = getLanguageInstruction(language);
+  variables.TOMORROW_GOAL = fallbackTomorrowGoal || 'Continue building connection through play.';
+
+  const prompt = loadPromptWithVariables('cdiCoaching-legacy', variables);
+
+  console.log(`📊 [LEGACY-CDI-COACHING] Step 1: Generating coaching report...`);
+
+  try {
+    const coachingReport = await llmCall(prompt, {
+      model:          'gemini',
+      output:         'text',
+      temperature:    0.5,
+      maxTokens:      16384,
+      timeout:        300_000,
+      label:          'coaching-narrative-legacy',
+      sessionId,
+      alertOnFailure: false, // first-session-only, best-effort — must not page
+    });
+
+    console.log(`✅ [LEGACY-CDI-COACHING] Coaching report received (${coachingReport.length} chars)`);
+    console.log(`📊 [LEGACY-CDI-COACHING] Step 2: Formatting coaching sections...`);
+
+    const formatPrompt = loadPromptWithVariables('cdiCoachingFormat-legacy', {
+      COACHING_REPORT:      coachingReport,
+      LANGUAGE_INSTRUCTION: variables.LANGUAGE_INSTRUCTION || '',
+      CHILD_GENDER:         variables.CHILD_GENDER || 'child',
+    });
+
+    const checkComplete = (result) => {
+      const sections = result?.sections;
+      const totalContentLen = sections?.reduce((sum, s) => sum + (s.content?.length || 0), 0) || 0;
+      return Array.isArray(sections)
+        && sections.length >= 3
+        && sections.every(s => s.title?.trim() && s.content?.trim())
+        && totalContentLen >= coachingReport.length * 0.6;
+    };
+
+    let formatted = null;
+    try {
+      formatted = await withQualityRetry(
+        () => llmCall(formatPrompt, { model: 'gemini', output: 'json', temperature: 0, maxTokens: 8192, timeout: 120_000, schema: SCHEMAS.COACHING_FORMAT_LEGACY, label: 'coaching-format-legacy', sessionId, alertOnFailure: false }),
+        checkComplete,
+        () => llmCall(formatPrompt, { model: 'claude', output: 'json', temperature: 0, maxTokens: 8192, timeout: 120_000, schema: SCHEMAS.COACHING_FORMAT_LEGACY, label: 'coaching-format-legacy-escalated', sessionId, alertOnFailure: false })
+      );
+    } catch (formatError) {
+      console.error('❌ [LEGACY-CDI-COACHING] Format call failed:', formatError.message);
+    }
+
+    console.log(`✅ [LEGACY-CDI-COACHING] Formatted — ${formatted?.sections?.length || 0} sections`);
+
+    return { summary: coachingReport, sections: formatted?.sections || null };
+  } catch (error) {
+    console.error('❌ [LEGACY-CDI-COACHING] Error:', error.message);
+    return null;
+  }
+}
+
 // ============================================================================
 // CDI Feedback Generation (Multi-prompt approach)
 // ============================================================================
@@ -2397,7 +2473,14 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
       console.error('⚠️ [ANALYSIS-STEP-9] CDI coaching rejected:', coachingSettled.reason?.message);
     }
 
-    remainingStep9Promise = Promise.allSettled([profilingPromise, aboutChildPromise, firstSessionPromise]);
+    // Kicked off after coachingResult resolves (not with the other three
+    // above) so it can seed {{TOMORROW_GOAL}} from the real deterministic
+    // goal instead of the generic fallback — see generateLegacyCdiCoaching.
+    const legacyCoachingPromise = runFirstSessionInsights
+      ? generateLegacyCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId, primaryLanguage, coachingResult?.tomorrowGoal)
+      : Promise.resolve(null);
+
+    remainingStep9Promise = Promise.allSettled([profilingPromise, aboutChildPromise, firstSessionPromise, legacyCoachingPromise]);
   } catch (profilingError) {
     console.error('⚠️ [ANALYSIS-STEP-9] Child profiling error:', profilingError.message);
   }
@@ -2495,10 +2578,11 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
   // since STEP 9 kicked them off, concurrently with the competency-analysis
   // block above, instead of gating it.
   {
-    const [profilingSettled, aboutChildSettled, firstSessionSettled] = await remainingStep9Promise;
+    const [profilingSettled, aboutChildSettled, firstSessionSettled, legacyCoachingSettled] = await remainingStep9Promise;
     const profilingResult = profilingSettled.status === 'fulfilled' ? profilingSettled.value : null;
     const aboutChildResult = aboutChildSettled.status === 'fulfilled' ? aboutChildSettled.value : null;
     const firstSessionResult = firstSessionSettled.status === 'fulfilled' ? firstSessionSettled.value : null;
+    const legacyCoachingResult = legacyCoachingSettled.status === 'fulfilled' ? legacyCoachingSettled.value : null;
 
     if (profilingSettled.status === 'rejected') {
       console.error('⚠️ [ANALYSIS-STEP-9] Developmental profiling rejected:', profilingSettled.reason?.message);
@@ -2508,6 +2592,9 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
     }
     if (firstSessionSettled.status === 'rejected') {
       console.error('⚠️ [ANALYSIS-STEP-9] First-session insights rejected:', firstSessionSettled.reason?.message);
+    }
+    if (legacyCoachingSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] Legacy coaching rejected:', legacyCoachingSettled.reason?.message);
     }
 
     if (profilingResult || coachingResult) {
@@ -2522,6 +2609,7 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
         tomorrowGoal: coachingResult?.tomorrowGoal || null,
         notifications: coachingResult?.notifications || null,
         goalDirective: coachingResult?.goalDirective || null,
+        legacyCoaching: legacyCoachingResult || null,
         aboutChild: aboutChildResult || null,
         firstSessionInsights: firstSessionResult || null
       };
@@ -2557,7 +2645,7 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
       competencyAnalysis,
       overallScore,
       coachingSummary: childProfilingResult?.coachingSummary || null,
-      coachingCards: (childProfilingResult?.coachingCards || childProfilingResult?.coachingPart1 || childProfilingResult?.goalDirective || childProfilingResult?.firstSessionInsights)
+      coachingCards: (childProfilingResult?.coachingCards || childProfilingResult?.coachingPart1 || childProfilingResult?.goalDirective || childProfilingResult?.firstSessionInsights || childProfilingResult?.legacyCoaching)
         ? {
             sections: childProfilingResult.coachingCards || null,
             part1: childProfilingResult.coachingPart1 || null,
@@ -2565,7 +2653,10 @@ ${JSON.stringify(missedAdultUtts, null, 2)}`;
             tomorrowGoal: childProfilingResult.tomorrowGoal || null,
             notifications: childProfilingResult.notifications || null,
             goalDirective: childProfilingResult.goalDirective || null,
-            firstSessionInsights: childProfilingResult.firstSessionInsights || null
+            firstSessionInsights: childProfilingResult.firstSessionInsights || null,
+            // { summary, sections } — pre-2026-09-09 Coach's Corner pipeline,
+            // only populated for a first session; see generateLegacyCdiCoaching.
+            legacyCoaching: childProfilingResult.legacyCoaching || null
           }
         : null,
       aboutChild: childProfilingResult?.aboutChild || null,
@@ -2667,6 +2758,7 @@ module.exports = {
   generatePDITwoChoicesAnalysis,
   generateDevelopmentalProfiling,
   generateCdiCoaching,
+  generateLegacyCdiCoaching,
   generateAboutChild,
   generateFirstSessionInsights,
   getParentSkillProgress,
