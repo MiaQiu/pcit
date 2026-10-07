@@ -13,8 +13,10 @@ import { SkillProgressBar } from '../components/SkillProgressBar';
 import { Button } from '../components/Button';
 import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
 import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
-import { useRecordingService, useAuthService } from '../contexts/AppContext';
-import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling } from '@nora/core';
+import { useRecordingService, useAuthService, useLessonService } from '../contexts/AppContext';
+import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling, ParentSkillLevel, DemoVideo } from '@nora/core';
+import { PARENT_SKILL_LEVEL_KEYS } from '../constants/parentSkillLevels';
+import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 import { RadarChart } from '../components/RadarChart';
 import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -185,6 +187,38 @@ const getSkillDisplayLabel = (apiLabel: string, t: Function): string => {
   return translated || apiLabel;
 };
 
+// Same maps as ReportDetailScreen.tsx — drive the "Insights / Lesson / Demo"
+// learn-more badges at the end of the How We'll Practice Together card.
+const GOAL_TYPE_SKILL_TAG: Record<string, string> = {
+  BUILD_PRAISE: 'Praise (Labeled)',
+  BUILD_NARRATION: 'Narrate',
+  BUILD_ECHO: 'Echo',
+  BUILD_COMMANDS: 'Commands',
+  AVOID_COMMANDS: 'Commands',
+  AVOID_QUESTIONS: 'Questions',
+  AVOID_CRITICISM: 'Criticism',
+};
+
+const SKILL_TAG_TO_CATEGORY: Record<string, string> = {
+  'Praise (Labeled)': 'PRAISE',
+  'Narrate': 'NARRATION',
+  'Echo': 'ECHO',
+  'Commands': 'COMMANDS',
+  'Questions': 'QUESTIONS',
+  'Criticism': 'CRITICISM',
+};
+
+const FULL_DEMO_VIDEO_TITLE = 'Full Demo of P.E.N skills and active ignoring';
+
+const SKILL_TAG_TO_DEMO_VIDEO_TITLE: Record<string, string> = {
+  'Praise (Labeled)': 'Labelled Praise',
+  'Narrate': 'Narrate',
+  'Echo': 'Echo',
+  'Commands': FULL_DEMO_VIDEO_TITLE,
+  'Questions': FULL_DEMO_VIDEO_TITLE,
+  'Criticism': FULL_DEMO_VIDEO_TITLE,
+};
+
 const getUtterancesForSkill = (
   transcript: any[] | undefined,
   skillLabel: string,
@@ -339,9 +373,9 @@ const PDICoachCorner: React.FC<{
           </>
         )}
 
-        {tomorrowGoal && (
-          <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tomorrowsGoal')}</Text>{tomorrowGoal}</Text>
-        )}
+        {/* Tomorrow's Goal intentionally hidden in Coach's Corner — for
+            first-session CDI reports it's shown instead at the end of the
+            How We'll Practice Together card, to avoid showing it twice. */}
         <TouchableOpacity
           style={styles.cardLinkButton}
           onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
@@ -540,9 +574,10 @@ const eboStyles = StyleSheet.create({
 export const ReportScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<ReportScreenRouteProp>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const recordingService = useRecordingService();
   const authService = useAuthService();
+  const lessonService = useLessonService();
   const { recordingId } = route.params;
 
   const [loading, setLoading] = useState(true);
@@ -550,6 +585,13 @@ export const ReportScreen: React.FC = () => {
   const [reportData, setReportData] = useState<RecordingAnalysis | null>(null);
   const [pollingCount, setPollingCount] = useState(0);
   const [childName, setChildName] = useState<string>('Your Child');
+  const [parentLevel, setParentLevel] = useState<ParentSkillLevel>(1);
+  // Drive the Insights/Lesson/Demo learn-more badges at the end of How We'll
+  // Practice Together — same derivation as ReportDetailScreen.tsx.
+  const [goalSkillTag, setGoalSkillTag] = useState<string | undefined>(undefined);
+  const [goalType, setGoalType] = useState<string | null>(null);
+  const [learnMoreLesson, setLearnMoreLesson] = useState<{ id: string; module: string; title: string } | null>(null);
+  const [learnMoreDemoVideo, setLearnMoreDemoVideo] = useState<DemoVideo | null>(null);
   const [developmentalVisible, setDevelopmentalVisible] = useState(false);
   const [totalRecordings, setTotalRecordings] = useState<number>(0);
   const [developmentalProgress, setDevelopmentalProgress] = useState<DevelopmentalProgress | null>(null);
@@ -662,6 +704,7 @@ export const ReportScreen: React.FC = () => {
   useEffect(() => {
     loadReportData();
     loadChildName();
+    loadParentSkillLevel();
     loadDevelopmentalVisibility();
     recordingService.getRecordings().then(({ recordings }) => {
       setTotalRecordings(recordings?.length ?? 0);
@@ -684,6 +727,57 @@ export const ReportScreen: React.FC = () => {
       if (data) setDevelopmentalProgress(data);
     }).catch(() => {});
   }, [reportData?.createdAt]);
+
+  // Resolves the skill the deterministic tomorrow's-goal engine is
+  // targeting — drives the lesson and demo-video learn-more badges below.
+  useEffect(() => {
+    if (!reportData) {
+      setGoalSkillTag(undefined);
+      setGoalType(null);
+      return;
+    }
+    const directive = reportData.mode === 'PDI'
+      ? reportData.pdiTomorrowGoalDirective ?? null
+      : reportData.tomorrowGoalDirective ?? null;
+    setGoalType(directive?.goalType ?? null);
+    setGoalSkillTag(directive?.goalType ? GOAL_TYPE_SKILL_TAG[directive.goalType] : undefined);
+  }, [reportData]);
+
+  // Recommend a lesson for the same skill.
+  useEffect(() => {
+    const category = goalSkillTag ? SKILL_TAG_TO_CATEGORY[goalSkillTag] : undefined;
+    if (!category) {
+      setLearnMoreLesson(null);
+      return;
+    }
+    let cancelled = false;
+    lessonService.getLessonsByCategory(category, i18n.language)
+      .then(lessons => {
+        if (cancelled) return;
+        const lesson = lessons?.[0];
+        setLearnMoreLesson(lesson ? { id: lesson.id, module: lesson.module, title: lesson.title } : null);
+      })
+      .catch(() => { if (!cancelled) setLearnMoreLesson(null); });
+    return () => { cancelled = true; };
+  }, [goalSkillTag]);
+
+  // Demo video for the same skill — matched by admin-curated title.
+  useEffect(() => {
+    const demoTitle = goalSkillTag ? SKILL_TAG_TO_DEMO_VIDEO_TITLE[goalSkillTag] : undefined;
+    if (!demoTitle) {
+      setLearnMoreDemoVideo(null);
+      return;
+    }
+    let cancelled = false;
+    lessonService.getDemoVideos(i18n.language)
+      .then(({ demoVideos }) => {
+        if (cancelled) return;
+        const match = demoVideos.find(v => v.baseTitle.trim().toLowerCase() === demoTitle.toLowerCase()) || null;
+        setLearnMoreDemoVideo(match);
+      })
+      .catch(() => { if (!cancelled) setLearnMoreDemoVideo(null); });
+    return () => { cancelled = true; };
+  }, [goalSkillTag, i18n.language]);
 
   const handleDomainPress = async (domain: DomainType) => {
     setSelectedDomain(domain);
@@ -730,6 +824,20 @@ export const ReportScreen: React.FC = () => {
     } catch (err) {
       // Keep default "Your Child" if fetch fails
     }
+  };
+
+  const loadParentSkillLevel = async () => {
+    try {
+      const info = await authService.getParentSkillLevel();
+      setParentLevel(info.currentLevel);
+    } catch (err) {
+      // Keep default level 1 if fetch fails
+    }
+  };
+
+  const handleLevelPress = () => {
+    amplitudeService.trackEvent('Report Parenting Level Tapped', { level: parentLevel, recordingId, source: 'howWePracticeTogether' });
+    navigation.navigate('ParentLevelDetail', { level: parentLevel });
   };
 
   const loadReportData = async () => {
@@ -1038,7 +1146,6 @@ export const ReportScreen: React.FC = () => {
 
             if (isNewFormat) {
               const sections = items as CoachingSection[];
-              const tomorrowGoalText = reportData.tomorrowGoal;
               return (
                 <View>
                   <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
@@ -1049,9 +1156,9 @@ export const ReportScreen: React.FC = () => {
                         <MarkdownText style={styles.coachDescription}>{section.content}</MarkdownText>
                       </View>
                     ))}
-                    {tomorrowGoalText && (
-                      <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tomorrowsGoal')}</Text>{tomorrowGoalText}</Text>
-                    )}
+                    {/* Tomorrow's Goal intentionally hidden in Coach's Corner —
+                        shown instead at the end of the How We'll Practice
+                        Together card, to avoid showing it twice. */}
                     <TouchableOpacity
                       style={styles.cardLinkButton}
                       onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
@@ -1065,7 +1172,6 @@ export const ReportScreen: React.FC = () => {
 
             // Legacy CoachingCard format
             const cards = (items as CoachingCard[]).slice(0, 1);
-            const legacyTomorrowGoal = reportData.tomorrowGoal || (cards[0]?.next_day_goal ?? null);
             return (
               <View>
                 <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
@@ -1093,9 +1199,9 @@ export const ReportScreen: React.FC = () => {
                       {card.apply_in_daily_life ? (
                         <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.applyInDailyLife')}</Text>{card.apply_in_daily_life}</Text>
                       ) : null}
-                      {legacyTomorrowGoal && (
-                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tomorrowsGoal')}</Text>{legacyTomorrowGoal}</Text>
-                      )}
+                      {/* Tomorrow's Goal intentionally hidden in Coach's Corner —
+                          shown instead at the end of the How We'll Practice
+                          Together card, to avoid showing it twice. */}
                       <TouchableOpacity
                         style={styles.cardLinkButton}
                         onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
@@ -1109,6 +1215,101 @@ export const ReportScreen: React.FC = () => {
           })()
         )
         }
+
+        {/* How We'll Practice Together — first-session only (generateFirstSessionInsights) */}
+        {reportData.firstSessionInsights?.howWePracticeTogether?.sentences && reportData.firstSessionInsights.howWePracticeTogether.sentences.length > 0 && (
+          <View>
+            <Text style={styles.cardTitle}>{t('reportDetail.howWePracticeTogether.title')}</Text>
+            <View style={styles.coachCard}>
+              {/* One block with natural paragraph breaks — same as Coach's
+                  Corner's section.content, instead of separately-margined
+                  Text per sentence (which stacked extra gap on top of line
+                  height). */}
+              <MarkdownText style={styles.coachDescription}>
+                {reportData.firstSessionInsights.howWePracticeTogether.sentences.join('\n\n')}
+              </MarkdownText>
+
+              <View style={styles.aboutChildDivider} />
+
+              <TrackedTouchable
+                analyticsId="report.howWePracticeTogether.level"
+                activeOpacity={0.7}
+                onPress={handleLevelPress}
+                style={{ flexDirection: 'row', alignItems: 'center' }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.coachLabelBold}>{t('reportDetail.howWePracticeTogether.currentLevel')}</Text>
+                  <Text style={styles.coachDescription}>
+                    {t('reportV2.levelHeading', { level: parentLevel })} · {t(`profileReport.levels.${PARENT_SKILL_LEVEL_KEYS[parentLevel]}.title`)}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+              </TrackedTouchable>
+
+              {reportData.tomorrowGoal && (
+                <View style={{ marginTop: 12, width: '100%' }}>
+                  <Text style={styles.coachLabelBold}>{t('report.coachingCard.tomorrowsGoal')}</Text>
+                  <Text style={[styles.coachDescription, { flexShrink: 1, flexWrap: 'wrap' }]}>{reportData.tomorrowGoal}</Text>
+                </View>
+              )}
+
+              {/* Insights / Lesson / Demo — same learn-more badges as ReportDetailScreen.tsx's Coach's Corner */}
+              {goalSkillTag && (reportData.skillImprove || learnMoreLesson || learnMoreDemoVideo) && (
+                <View style={styles.ccLearnMore}>
+                  <Text style={styles.learnMoreTitle}>
+                    {t('reportDetail.skillCoaching.learnMoreTitle', { skill: getSkillDisplayLabel(goalSkillTag, t) })}
+                  </Text>
+                  <View style={styles.badgeRow}>
+                    {reportData.skillImprove && (
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          const direction = goalType?.startsWith('AVOID_') ? 'AVOID' : 'BUILD';
+                          amplitudeService.trackEvent('Report Skill Improve Tapped', { recordingId, skillTag: goalSkillTag, direction, source: 'howWePracticeTogether' });
+                          navigation.navigate('SkillImprove', { recordingId, skillTag: goalSkillTag, direction, skillImprove: reportData.skillImprove! });
+                        }}
+                      >
+                        <View style={styles.improveBadge}>
+                          <Text style={styles.improveBadgeText}>{t('reportDetail.skillCoaching.insightsBadge')}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                    {learnMoreLesson && (
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          amplitudeService.trackEvent('Report Learn More Tapped', { recordingId, skillTag: goalSkillTag, lessonId: learnMoreLesson.id, source: 'howWePracticeTogether' });
+                          if (CONTENT_V2_MODULES.includes(learnMoreLesson.module)) {
+                            navigation.navigate('LessonViewerV2', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
+                          } else {
+                            navigation.navigate('LessonViewer', { lessonId: learnMoreLesson.id, moduleKey: learnMoreLesson.module });
+                          }
+                        }}
+                      >
+                        <View style={styles.lessonBadge}>
+                          <Text style={styles.lessonBadgeText}>{t('reportDetail.skillCoaching.lessonBadge')}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                    {learnMoreDemoVideo && (
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          amplitudeService.trackEvent('Report Demo Video Tapped', { recordingId, skillTag: goalSkillTag, demoVideoId: learnMoreDemoVideo.id, demoVideoTitle: learnMoreDemoVideo.baseTitle, source: 'howWePracticeTogether' });
+                          navigation.navigate('DemoVideoDetail', { video: learnMoreDemoVideo });
+                        }}
+                      >
+                        <View style={styles.demoBadge}>
+                          <Text style={styles.demoBadgeText}>{t('reportDetail.skillCoaching.demoBadge')}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* What we learnt about Child */}
         {/* Section 1: What we learnt about child today */}
@@ -1146,7 +1347,7 @@ export const ReportScreen: React.FC = () => {
                 )}
 
                 {/* New Milestone */}
-                {milestones.map((milestone, index) => {
+                {/* {milestones.map((milestone, index) => {
                   const isAchieved = milestone.status === 'ACHIEVED';
                   const personalizedDescription = isAchieved
                     ? t('report.milestone.achieved', { childName, title: milestone.title.toLowerCase() })
@@ -1157,7 +1358,6 @@ export const ReportScreen: React.FC = () => {
                       {item && <View style={styles.aboutChildDivider} />}
                       <Text style={styles.learnSubsectionLabel}>{t('report.subsection.newMilestone', { category: milestone.category })}</Text>
                       <Text style={styles.milestonePersonalizedText}>{personalizedDescription}</Text>
-                      {/* <Text style={styles.milestoneCategory}>{milestone.category}</Text> */}
                       {milestone.evidenceSummary && !milestone.evidenceSummary.toLowerCase().startsWith('not observed') && (
                         <Text style={styles.milestoneEvidenceSummary}>"{milestone.evidenceSummary}"</Text>
                       )}
@@ -1169,7 +1369,7 @@ export const ReportScreen: React.FC = () => {
                       )}
                     </View>
                   );
-                })}
+                })} */}
               </View>
             </View>
           );
@@ -2171,6 +2371,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
     marginVertical: 14,
   },
+  // Insights / Lesson / Demo learn-more badges — same values as ReportDetailScreen.tsx
+  ccLearnMore: { marginTop: 20 },
+  learnMoreTitle: { fontFamily: FONTS.semiBold, fontSize: 13, color: '#7A6252', marginTop: 14 },
+  badgeRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 8, alignSelf: 'stretch' },
+  lessonBadge: { backgroundColor: '#F5EAFB', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
+  lessonBadgeText: { fontFamily: FONTS.bold, fontSize: 13, color: '#8C49D5' },
+  demoBadge: { backgroundColor: '#FBE3CE', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
+  demoBadgeText: { fontFamily: FONTS.bold, fontSize: 13, color: '#C2694B' },
+  improveBadge: { backgroundColor: '#DFF3EE', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
+  improveBadgeText: { fontFamily: FONTS.bold, fontSize: 13, color: '#0E7C66' },
   aboutChildDetails: {
     fontFamily: FONTS.regular,
     fontSize: 14,

@@ -748,7 +748,7 @@ async function buildAnalysisResponse(id, { requesterUserId } = {}) {
     let fallbackGoalDirective = null;
     if (!tomorrowGoal) {
       const parentProgress = await getParentSkillProgress(session.userId);
-      const goalPayload = generateGoalForLevel(parentProgress.currentLevel, session.tagCounts || {}, isCDI ? 'CDI' : 'PDI', parentProgress);
+      const goalPayload = generateGoalForLevel(parentProgress.currentLevel, session.tagCounts || {}, isCDI ? 'CDI' : 'PDI', parentProgress, session.elevenLabsJson?.language_code || null);
       tomorrowGoal = formatGoalHeadline(goalPayload);
       fallbackGoalDirective = {
         focusSkill: goalPayload.title,

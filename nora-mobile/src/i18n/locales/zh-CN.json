@@ -690,7 +690,8 @@
       "title": "困扰背后的技能"
     },
     "howWePracticeTogether": {
-      "title": "我们将如何一起练习"
+      "title": "我们将如何一起练习",
+      "currentLevel": "你目前的等级"
     },
     "developmental": {
       "shareMessage": "用 Nora 追踪{{childName}}的发展里程碑——来看看进展吧！"

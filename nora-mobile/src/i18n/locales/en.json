@@ -691,7 +691,8 @@
       "title": "The skills underneath the issues"
     },
     "howWePracticeTogether": {
-      "title": "How We'll Practice Together"
+      "title": "How We'll Practice Together",
+      "currentLevel": "Your current level"
     },
     "developmental": {
       "shareMessage": "Tracking {{childName}}'s developmental milestones with Nora — check out the progress!"

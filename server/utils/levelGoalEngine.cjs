@@ -18,6 +18,7 @@ const {
   CDI_FLAT_LEVELS,
   tagCountsToMetrics,
   tagCountsToPdiCommandMetrics,
+  getFlatLevelText,
 } = require('./parentLevelLadder.cjs');
 
 /**
@@ -148,12 +149,15 @@ function generateMaintenanceGoal(mode) {
  * @param {Object} tagCounts - raw DB tagCounts for this session
  * @param {'CDI'|'PDI'} mode
  * @param {{level6QualifyingCount?: number, level7QualifyingCount?: number}} [progress]
+ * @param {string|null} [language] - session's primary language (e.g. 'zh-CN'/'zh-TW');
+ *   only levels 1-6 (parentLevelLadder.cjs) have translated copy — levels 7-9
+ *   below are still English-only.
  * @returns {GoalPayload}
  */
-function generateGoalForLevel(level, tagCounts, mode, progress = {}) {
+function generateGoalForLevel(level, tagCounts, mode, progress = {}, language = null) {
   const metrics = tagCountsToMetrics(tagCounts);
   const flatLevel = level <= 1 ? 1 : level;
-  const flatDef = CDI_FLAT_LEVELS[flatLevel];
+  const flatDef = getFlatLevelText(flatLevel, language);
 
   if (flatDef && mode === 'CDI') return generateFlatCdiLevelGoal(flatDef, metrics);
   if (level === 7 && mode === 'PDI') return generateLevel7Goal(tagCountsToPdiCommandMetrics(tagCounts));
