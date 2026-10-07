@@ -28,13 +28,11 @@ Explain the target issue(s) as a gap in developing skills, not a character flaw.
 * Provide 3 bullet points naming the underlying skills they need to practice (e.g., Frustration tolerance, Emotional regulation, Sustained attention, Positive attention-seeking, Impulse control). Define each briefly.
 
 ## How We'll Practice Together
-Write this section EXACTLY as formatted below, filling in the bracketed placeholder. For the tailored skills, phrase the SAME 3 skills named in "The Skills Underneath the Issues" above as a short, natural list (2-5 words each, comma-separated) — do not invent a different set of skills here.
+Write this section EXACTLY as formatted below, filling in the bracketed placeholder. 
 
 "The skills children need in hard moments are best practiced through play.
 
-Nora will coach you to use specialized coaching skills to help {{CHILD_NAME}} practice [the 3 tailored skills from "The Skills Underneath the Issues", phrased naturally, e.g. "staying calm, sharing control, and communicating through challenges"].
-
-This first recording captures your natural play style. As we practice, we will work on lowering play interruptions while boosting your Skill Builders."
+This first recording captures your natural play style. As we practice, we will work on lowering Areas to Avoid while boosting your PEN Skills."
 
 ### FINAL OUTPUT
 Return ONLY the three sections above, in order, following their exact headings and instructions. Do not output any internal reasoning, a summary before or after the sections, or any content beyond what the structure above asks for.
