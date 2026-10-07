@@ -318,6 +318,7 @@ export interface RecordingAnalysis {
   pdiCommandSequences?: Array<{
     title: string;
     label: string;
+    whatHappened?: string;
     command: string;
     waitTime: string;
     followThrough: string;

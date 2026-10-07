@@ -74,6 +74,13 @@ const FIRST_SESSION_PALETTE: { color: string; background: string; icon: keyof ty
 const FIRST_SESSION_STRENGTH_ACCENT  = { color: '#3BA55D', background: '#DDF3E4', icon: 'heart' as const };
 const FIRST_SESSION_CHALLENGE_ACCENT = { color: '#E08A3C', background: '#FBE7D2', icon: 'leaf' as const };
 
+// PDI command-sequence label badges — same mapping as ReportScreen.tsx's
+// PDICoachCorner; unknown labels read as "Needs Work".
+const PDI_SEQ_LABEL_COLORS: Record<string, { bg: string; text: string }> = {
+  'Great!': { bg: '#DCFCE7', text: '#15803D' },
+  'Needs Work': { bg: '#FEF3C7', text: '#B45309' },
+};
+
 // Same API-label → i18n-key mapping used by ReportScreen.tsx / ReportScreen_v2.tsx.
 const SKILL_LABEL_I18N_KEY: Record<string, string> = {
   'Praise (Labeled)': 'praiseLabeleld',
@@ -577,6 +584,13 @@ export const ReportDetailScreen: React.FC = () => {
   // ({ didWell, growthFocus, wordBank }). Newer sessions carry this; older ones
   // fall back to the `skillCoaching` markdown string.
   const coachCorner = reportData.coachCorner || null;
+
+  // PDI Coach's Corner — the Two Choices Flow write-up (pdiSummary + per-command
+  // sequences), ported from ReportScreen.tsx's PDICoachCorner. Gated on
+  // pdiSkills like the original; replaces the CDI card for PDI sessions.
+  const showPdiCoachCorner = reportData.mode === 'PDI'
+    && Array.isArray(reportData.pdiSkills) && reportData.pdiSkills.length > 0;
+  const pdiCommandSequences = reportData.pdiCommandSequences || [];
 
   // Independent second "top moment" finder (generateCrisis) — a 2-3
   // consecutive-utterance bonding exchange, separate from the
@@ -1359,8 +1373,62 @@ export const ReportDetailScreen: React.FC = () => {
 
         {/* Coach's Corner — sections "what you did well" + "next growth focus" of
             the CDI write-up, grounded in this session. Newer sessions render the
-            structured breakdown; older ones the markdown string. */}
-        {(coachCorner || reportData.skillCoaching) && (
+            structured breakdown; older ones the markdown string. PDI sessions
+            get the Two Choices Flow card instead. */}
+        {showPdiCoachCorner && (
+          <ReportCard title={t('reportDetail.skillCoaching.title')}>
+            <View style={styles.ccBody}>
+              {!!reportData.pdiSummary && (
+                <MarkdownText style={styles.ccProse}>{reportData.pdiSummary}</MarkdownText>
+              )}
+
+              {pdiCommandSequences.length > 0 && (
+                <View style={reportData.pdiSummary ? styles.pdiSeqSection : undefined}>
+                  <Text style={styles.ccSectionLabel}>{t('report.pdi.commandSequencesSubtitle')}</Text>
+                  {pdiCommandSequences.map((seq, index) => {
+                    const labelColors = PDI_SEQ_LABEL_COLORS[seq.label] || PDI_SEQ_LABEL_COLORS['Needs Work'];
+                    return (
+                      <View key={index} style={[styles.pdiSeqBlock, index > 0 && styles.pdiSeqBlockDivider]}>
+                        <View style={styles.pdiSeqHeaderRow}>
+                          <Text style={styles.pdiSeqTitle}>{t('report.pdi.sequenceTitle', { index: index + 1, title: seq.title })}</Text>
+                          {!!seq.label && (
+                            <View style={[styles.pdiSeqLabelBadge, { backgroundColor: labelColors.bg }]}>
+                              <Text style={[styles.pdiSeqLabelText, { color: labelColors.text }]}>{seq.label}</Text>
+                            </View>
+                          )}
+                        </View>
+                        {!!seq.whatHappened && (
+                          <Text style={styles.pdiSeqWhatHappened}>{seq.whatHappened}</Text>
+                        )}
+                        <Text style={styles.pdiSeqLine}><Text style={styles.pdiSeqBold}>{t('report.pdi.command')}</Text>{seq.command}</Text>
+                        <Text style={styles.pdiSeqLine}><Text style={styles.pdiSeqBold}>{t('report.pdi.waitTime')}</Text>{seq.waitTime}</Text>
+                        <Text style={styles.pdiSeqLine}><Text style={styles.pdiSeqBold}>{t('report.pdi.followThrough')}</Text>{seq.followThrough}</Text>
+                        {!!seq.coachTip && (
+                          <View style={styles.pdiSeqTipBox}>
+                            <Text style={styles.pdiSeqTipText}><Text style={styles.pdiSeqBold}>{t('report.pdi.coachsTip')}</Text>{seq.coachTip}</Text>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+
+              {!!goal.focusSkill && (
+                <View style={[styles.ccBenchCard, styles.pdiGoalCard]}>
+                  <View style={styles.ccBenchCardLabel}>
+                    <Ionicons name="flag" size={13} color="#C2694B" />
+                    <Text style={styles.ccBenchCardLabelText}>{t('reportDetail.tomorrowGoal.title')}</Text>
+                  </View>
+                  <Text style={styles.ccBenchCardValue}>{goal.focusSkill}</Text>
+                  {!!goal.description && <MarkdownText style={styles.ccStrategy}>{goal.description}</MarkdownText>}
+                </View>
+              )}
+            </View>
+          </ReportCard>
+        )}
+
+        {!showPdiCoachCorner && (coachCorner || reportData.skillCoaching) && (
           <ReportCard
             title={t('reportDetail.skillCoaching.title')}
             headerRight={
@@ -1794,6 +1862,21 @@ const styles = StyleSheet.create({
   ccBenchCardLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   ccBenchCardLabelText: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', color: '#C2694B' },
   ccBenchCardValue: { fontFamily: FONTS.bold, fontSize: 15, lineHeight: 21, color: '#3D2A1E', marginTop: 6 },
+
+  // ── PDI Coach's Corner (Two Choices Flow command sequences) ──
+  pdiSeqSection: { marginTop: 18 },
+  pdiSeqBlock: { paddingVertical: 12 },
+  pdiSeqBlockDivider: { borderTopWidth: 1, borderTopColor: '#F0E6DC' },
+  pdiSeqHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 },
+  pdiSeqTitle: { flex: 1, fontFamily: FONTS.bold, fontSize: 15, lineHeight: 21, color: '#3D2A1E' },
+  pdiSeqLabelBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  pdiSeqLabelText: { fontFamily: FONTS.bold, fontSize: 11 },
+  pdiSeqWhatHappened: { fontFamily: FONTS.regularItalic, fontSize: 14, lineHeight: 20, color: '#6B7280', marginBottom: 6 },
+  pdiSeqLine: { fontFamily: FONTS.regular, fontSize: 14, lineHeight: 21, color: '#4B5563', marginTop: 2 },
+  pdiSeqBold: { fontFamily: FONTS.bold, color: '#3D2A1E' },
+  pdiSeqTipBox: { backgroundColor: '#E3F5EC', borderLeftWidth: 4, borderLeftColor: '#0B9A6B', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, marginTop: 8 },
+  pdiSeqTipText: { fontFamily: FONTS.regular, fontSize: 14, lineHeight: 20, color: '#3D2A1E' },
+  pdiGoalCard: { marginTop: 12, marginBottom: 0 },
 
   ccWordBank: { marginTop: 20, borderTopWidth: 1, borderTopColor: '#F0E6DC', paddingTop: 16 },
   ccWordBankGoalSpaced: { marginTop: 16 },
