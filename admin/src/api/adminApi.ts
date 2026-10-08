@@ -674,8 +674,8 @@ export async function createHomeCardBadge(name: string, color: string): Promise<
   return data.badge;
 }
 
-export async function getHomeCards(): Promise<HomeCard[]> {
-  const data = await apiFetch<{ homeCards: HomeCard[] }>('/api/admin/home-cards');
+export async function getHomeCards(opts?: ApiEnvOpts): Promise<HomeCard[]> {
+  const data = await apiFetchEnv<{ homeCards: HomeCard[] }>('/api/admin/home-cards', {}, opts);
   return data.homeCards;
 }
 
@@ -706,8 +706,8 @@ export interface HomeCardEngagement {
   shares: (HomeCardEngagementUser & { shareCount: number; lastSharedAt: string })[];
 }
 
-export async function getHomeCardEngagement(id: string): Promise<HomeCardEngagement> {
-  return apiFetch<HomeCardEngagement>(`/api/admin/home-cards/${id}/engagement`);
+export async function getHomeCardEngagement(id: string, opts?: ApiEnvOpts): Promise<HomeCardEngagement> {
+  return apiFetchEnv<HomeCardEngagement>(`/api/admin/home-cards/${id}/engagement`, {}, opts);
 }
 
 export async function deleteHomeCard(id: string): Promise<void> {

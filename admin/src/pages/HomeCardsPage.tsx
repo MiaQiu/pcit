@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useEnv, PROD_API_URL } from '../context/EnvContext';
 import { handleBoldShortcut, insertTextareaMarker } from '../utils/textFormatting';
 import {
   getHomeCards,
@@ -14,6 +15,7 @@ import {
   getHomeCardEngagement,
   HomeCard,
   HomeCardEngagement,
+  ApiEnvOpts,
   HomeCardInput,
   HomeCardType,
   HomeCardFontSize,
@@ -186,6 +188,37 @@ export default function HomeCardsPage() {
   const [modal, setModal] = useState<{ mode: 'add' } | { mode: 'edit'; card: HomeCard } | null>(null);
   const [engagement, setEngagement] = useState<{ card: HomeCard; tab: EngagementTab } | null>(null);
 
+  // Card content is always authored on dev (and synced to prod by
+  // scripts/sync-home-cards-to-prod.cjs, which keeps ids identical), so the
+  // list and every edit stay on dev. Only the per-user engagement numbers
+  // follow the env toggle — in prod mode they're looked up by card id from
+  // the prod API.
+  const { env, prodToken } = useEnv();
+  const prodOpts: ApiEnvOpts | undefined = useMemo(
+    () => (env === 'prod' ? { baseUrl: PROD_API_URL, token: prodToken ?? undefined } : undefined),
+    [env, prodToken],
+  );
+  const [prodStats, setProdStats] = useState<Map<string, HomeCard> | null>(null);
+  const [prodStatsError, setProdStatsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setProdStats(null);
+    setProdStatsError(null);
+    if (!prodOpts) return;
+    let cancelled = false;
+    getHomeCards(prodOpts)
+      .then((cards) => { if (!cancelled) setProdStats(new Map(cards.map((c) => [c.id, c]))); })
+      .catch((err) => { if (!cancelled) setProdStatsError(err instanceof Error ? err.message : 'Failed to load prod stats'); });
+    return () => { cancelled = true; };
+  }, [prodOpts]);
+
+  // Counts for the active env; null while prod stats are loading/failed.
+  const statsFor = (card: HomeCard): Pick<HomeCard, 'likeCount' | 'viewCount' | 'shareCount'> | null => {
+    if (env !== 'prod') return card;
+    if (!prodStats) return null;
+    return prodStats.get(card.id) ?? { likeCount: 0, viewCount: 0, shareCount: 0 };
+  };
+
   const fetchHomeCards = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -264,7 +297,15 @@ export default function HomeCardsPage() {
           <h1>Home Cards</h1>
           <p className="page-subtitle">
             Sub-action cards shown on the mobile Home screen, below the main action card
+            {env === 'prod' && <span className="env-badge prod">PROD</span>}
           </p>
+          {env === 'prod' && (
+            <p className="page-subtitle" style={{ marginTop: 4 }}>
+              {prodStatsError
+                ? `Couldn't load prod likes/views/shares: ${prodStatsError}`
+                : 'Likes, views and shares are from prod. Card content and edits are always dev — sync to push them to prod.'}
+            </p>
+          )}
         </div>
         <button className="btn-primary" onClick={() => setModal({ mode: 'add' })}>
           + Add Card
@@ -292,7 +333,9 @@ export default function HomeCardsPage() {
             </tr>
           </thead>
           <tbody>
-            {homeCards.map((card, index) => (
+            {homeCards.map((card, index) => {
+              const stats = statsFor(card);
+              return (
               <tr key={card.id}>
                 <td style={{ whiteSpace: 'nowrap' }}>
                   <button
@@ -355,17 +398,17 @@ export default function HomeCardsPage() {
                     onClick={() => setEngagement({ card, tab: 'likes' })}
                     title="See who liked this card"
                   >
-                    ♥ {card.likeCount}
+                    ♥ {stats ? stats.likeCount : '…'}
                   </button>
                 </td>
-                <td style={{ whiteSpace: 'nowrap' }}>{card.cardType === 'CONTENT' ? card.viewCount : '—'}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>{card.cardType === 'CONTENT' ? (stats ? stats.viewCount : '…') : '—'}</td>
                 <td style={{ whiteSpace: 'nowrap' }}>
                   <button
                     className="btn-link"
                     onClick={() => setEngagement({ card, tab: 'shares' })}
                     title="See who shared this card"
                   >
-                    {card.shareCount}
+                    {stats ? stats.shareCount : '…'}
                   </button>
                 </td>
                 <td>
@@ -390,7 +433,8 @@ export default function HomeCardsPage() {
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {homeCards.length === 0 && (
               <tr>
                 <td colSpan={10} className="empty-state">
@@ -418,6 +462,7 @@ export default function HomeCardsPage() {
         <HomeCardEngagementModal
           card={engagement.card}
           initialTab={engagement.tab}
+          envOpts={prodOpts}
           onClose={() => setEngagement(null)}
         />
       )}
@@ -434,21 +479,23 @@ function formatEngagementDate(iso: string): string {
 // Lists the users behind a card's Likes / Shares counts. Likes are who
 // currently has the card liked; shares are share-button taps grouped per user
 // (the OS share sheet doesn't tell us whether the share was actually sent).
-function HomeCardEngagementModal({ card, initialTab, onClose }: {
+function HomeCardEngagementModal({ card, initialTab, envOpts, onClose }: {
   card: HomeCard;
   initialTab: EngagementTab;
+  envOpts?: ApiEnvOpts;
   onClose: () => void;
 }) {
   const navigate = useNavigate();
+  const { env } = useEnv();
   const [tab, setTab] = useState<EngagementTab>(initialTab);
   const [data, setData] = useState<HomeCardEngagement | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getHomeCardEngagement(card.id)
+    getHomeCardEngagement(card.id, envOpts)
       .then(setData)
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load engagement'));
-  }, [card.id]);
+  }, [card.id, envOpts]);
 
   const rows = !data
     ? []
@@ -463,7 +510,10 @@ function HomeCardEngagementModal({ card, initialTab, onClose }: {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" style={{ maxWidth: 640 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Card engagement</h2>
+          <h2>
+            Card engagement
+            {env === 'prod' && <span className="env-badge prod" style={{ marginLeft: 8 }}>PROD</span>}
+          </h2>
           <button className="btn-remove" onClick={onClose}>&times;</button>
         </div>
 
