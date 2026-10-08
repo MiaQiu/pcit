@@ -2293,6 +2293,58 @@ router.delete('/home-cards/:id', requireAdminAuth, async (req, res) => {
 });
 
 /**
+ * GET /api/admin/home-cards/:id/engagement
+ * Which users liked / shared a card. Likes are current state (unliking
+ * deletes the HomeCardLike row); shares are one HomeCardShare row per tap of
+ * the share button, grouped here into one entry per user with a count.
+ */
+router.get('/home-cards/:id/engagement', requireAdminAuth, async (req, res) => {
+  try {
+    const homeCardId = req.params.id;
+    const existing = await prisma.homeCard.findUnique({ where: { id: homeCardId }, select: { id: true } });
+    if (!existing) return res.status(404).json({ error: 'Home card not found' });
+
+    const userSelect = { id: true, name: true, email: true, phone: true };
+    const [likes, shares] = await Promise.all([
+      prisma.homeCardLike.findMany({
+        where: { homeCardId },
+        orderBy: { createdAt: 'desc' },
+        include: { User: { select: userSelect } },
+      }),
+      prisma.homeCardShare.findMany({
+        where: { homeCardId },
+        orderBy: { sharedAt: 'desc' },
+        include: { User: { select: userSelect } },
+      }),
+    ]);
+
+    const toUser = (u) => {
+      const decrypted = decryptUserData(u);
+      return { userId: u.id, name: decrypted.name, email: decrypted.email };
+    };
+
+    // Rows are newest-first, so the first row seen per user is their latest share.
+    const sharesByUser = new Map();
+    for (const s of shares) {
+      const entry = sharesByUser.get(s.userId);
+      if (entry) {
+        entry.shareCount += 1;
+      } else {
+        sharesByUser.set(s.userId, { ...toUser(s.User), shareCount: 1, lastSharedAt: s.sharedAt });
+      }
+    }
+
+    res.json({
+      likes: likes.map((l) => ({ ...toUser(l.User), likedAt: l.createdAt })),
+      shares: [...sharesByUser.values()],
+    });
+  } catch (error) {
+    logError(error, { route: 'admin#Admin home card engagement error', userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to load home card engagement' });
+  }
+});
+
+/**
  * POST /api/admin/home-cards/:id/image
  * Upload (or replace) the banner image for a home card.
  */

@@ -695,6 +695,21 @@ export async function updateHomeCard(id: string, input: Partial<HomeCardInput>):
   return data.homeCard;
 }
 
+export interface HomeCardEngagementUser {
+  userId: string;
+  name: string | null;
+  email: string | null;
+}
+
+export interface HomeCardEngagement {
+  likes: (HomeCardEngagementUser & { likedAt: string })[];
+  shares: (HomeCardEngagementUser & { shareCount: number; lastSharedAt: string })[];
+}
+
+export async function getHomeCardEngagement(id: string): Promise<HomeCardEngagement> {
+  return apiFetch<HomeCardEngagement>(`/api/admin/home-cards/${id}/engagement`);
+}
+
 export async function deleteHomeCard(id: string): Promise<void> {
   await apiFetch(`/api/admin/home-cards/${id}`, { method: 'DELETE' });
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { handleBoldShortcut, insertTextareaMarker } from '../utils/textFormatting';
 import {
   getHomeCards,
@@ -10,7 +11,9 @@ import {
   getHomeCardBadges,
   createHomeCardBadge,
   uploadHomeCardComponentImage,
+  getHomeCardEngagement,
   HomeCard,
+  HomeCardEngagement,
   HomeCardInput,
   HomeCardType,
   HomeCardFontSize,
@@ -181,6 +184,7 @@ export default function HomeCardsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<{ mode: 'add' } | { mode: 'edit'; card: HomeCard } | null>(null);
+  const [engagement, setEngagement] = useState<{ card: HomeCard; tab: EngagementTab } | null>(null);
 
   const fetchHomeCards = useCallback(async () => {
     setLoading(true);
@@ -345,9 +349,25 @@ export default function HomeCardsPage() {
                     </span>
                   )}
                 </td>
-                <td style={{ whiteSpace: 'nowrap' }}>♥ {card.likeCount}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  <button
+                    className="btn-link"
+                    onClick={() => setEngagement({ card, tab: 'likes' })}
+                    title="See who liked this card"
+                  >
+                    ♥ {card.likeCount}
+                  </button>
+                </td>
                 <td style={{ whiteSpace: 'nowrap' }}>{card.cardType === 'CONTENT' ? card.viewCount : '—'}</td>
-                <td style={{ whiteSpace: 'nowrap' }}>{card.shareCount}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  <button
+                    className="btn-link"
+                    onClick={() => setEngagement({ card, tab: 'shares' })}
+                    title="See who shared this card"
+                  >
+                    {card.shareCount}
+                  </button>
+                </td>
                 <td>
                   <button
                     className={`settings-toggle ${card.isActive ? 'active' : ''}`}
@@ -393,6 +413,119 @@ export default function HomeCardsPage() {
           onSaved={handleSaved}
         />
       )}
+
+      {engagement && (
+        <HomeCardEngagementModal
+          card={engagement.card}
+          initialTab={engagement.tab}
+          onClose={() => setEngagement(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+type EngagementTab = 'likes' | 'shares';
+
+function formatEngagementDate(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+// Lists the users behind a card's Likes / Shares counts. Likes are who
+// currently has the card liked; shares are share-button taps grouped per user
+// (the OS share sheet doesn't tell us whether the share was actually sent).
+function HomeCardEngagementModal({ card, initialTab, onClose }: {
+  card: HomeCard;
+  initialTab: EngagementTab;
+  onClose: () => void;
+}) {
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<EngagementTab>(initialTab);
+  const [data, setData] = useState<HomeCardEngagement | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getHomeCardEngagement(card.id)
+      .then(setData)
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load engagement'));
+  }, [card.id]);
+
+  const rows = !data
+    ? []
+    : tab === 'likes'
+      ? data.likes.map((l) => ({ ...l, detail: formatEngagementDate(l.likedAt) }))
+      : data.shares.map((s) => ({
+          ...s,
+          detail: `${s.shareCount}× · last ${formatEngagementDate(s.lastSharedAt)}`,
+        }));
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" style={{ maxWidth: 640 }} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Card engagement</h2>
+          <button className="btn-remove" onClick={onClose}>&times;</button>
+        </div>
+
+        <p style={{ fontSize: 13, color: '#6B7280', marginTop: 0 }}>{card.message}</p>
+
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <button
+            type="button"
+            className={tab === 'likes' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setTab('likes')}
+          >
+            Likes{data ? ` (${data.likes.length})` : ''}
+          </button>
+          <button
+            type="button"
+            className={tab === 'shares' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setTab('shares')}
+          >
+            Shared by{data ? ` (${data.shares.length})` : ''}
+          </button>
+        </div>
+
+        {error ? (
+          <div className="error-state">{error}</div>
+        ) : !data ? (
+          <div className="loading-state">Loading...</div>
+        ) : (
+          <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>{tab === 'likes' ? 'Liked' : 'Shares'}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.userId}>
+                    <td>{r.name || '—'}</td>
+                    <td style={{ fontSize: 13 }}>{r.email || '—'}</td>
+                    <td style={{ fontSize: 13, color: '#6B7280', whiteSpace: 'nowrap' }}>{r.detail}</td>
+                    <td>
+                      <button className="btn-secondary-sm" onClick={() => navigate(`/users/${r.userId}`)}>
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="empty-state">
+                      {tab === 'likes' ? 'No likes yet.' : 'No shares yet.'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
