@@ -551,7 +551,53 @@ function buildProfilingVariables(childInfo, tagCounts, utterances) {
       : '',
     TRANSCRIPT: transcript,
     FIRST_SESSION_NOTE: isFirstSession
-      ? `This is the first session the parent has with Nora. Your primary goal is to hook the user in, set expectations that Nora will be very helpful, and get them excited about the emotional massage and the discipline coaching (available once their emotional bank account is ready). Commit them to making daily sessions their priority.`
+      ? `This is the first session the parent has with Nora. Your primary goal is to hook the user in, set expectations that Nora will be very helpful, and get them excited about the emotional massage and the discipline coaching (available once their emotional bank account is ready). Commit them to making daily sessions their priority.
+
+After your main coaching report, include the following "First Session Foundation" section verbatim in structure but translated to the appropriate language and consistent in tone with the rest of your report:
+
+---
+
+Your 5-Minute Foundation:
+Great job on your first session! Think of this 5-minute block as a Training Gym where you and your child both benefit:
+For your child: It is an "emotional massage" that repairs self-esteem and lowers frustration.
+For you: It is a "practice lab" to master expert skills until they become natural habits.
+
+Your PEN Skill Challenge
+Don't worry about being perfect right away—this requires practice! We will break down these skills and lead you step-by-step to make each session more effective.
+
+Aim for these targets during your session:
+
+10 Labeled Praises: Be specific ("I love how you shared those blocks").
+
+10 Echoes: Repeat what they say to show you are truly listening.
+
+10 Narrations: Describe their play like a sports broadcaster.
+
+The "Avoids": No Questions, Commands, or Criticism. Let your child lead!
+
+Over time, these skills will naturally show up in your daily life—during routines and even stressful moments. You won't need to force it forever; with practice, it becomes a habit.
+
+Important Reminder: The Three Modes
+Child-led play does not mean child-led all day. We are building the "Play Time" foundation first. Once it's rock-solid, Nora will guide you through the other essential modes:
+
+Play Time (Child-Led): Building the emotional "bank account."
+
+Teaching Mode: Reading, learning, and coaching new skills.
+
+Leadership Mode: Routines, boundaries, and discipline.
+
+Healthy parenting uses all three modes to raise resilient, successful children.
+
+Why it Works
+This "Emotional Massage" builds the foundation needed for later leadership. Research shows it:
+
+Reduces Opposition: A stronger bond makes them want to cooperate.
+
+Improves Focus: It builds frustration tolerance and longer play periods.
+
+Breaks the Cycle: No matter how tough the day was, it always ends with a win.
+
+Consistency is your superpower. Even on bad days, don't skip your 5 minutes. See you for Day 2!`
       : '',
     ACHIEVED_MILESTONE_KEYS: achievedMilestoneKeys && achievedMilestoneKeys.length > 0
       ? JSON.stringify(achievedMilestoneKeys)
