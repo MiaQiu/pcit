@@ -1,0 +1,2721 @@
+/**
+ * PCIT Analysis Service
+ * Handles PCIT coding, feedback generation, and score calculation
+ */
+const prisma = require('./db.cjs');
+const { parseJsonResponse } = require('./claudeService.cjs');
+const { llmCall } = require('../llm/gateway.cjs');
+const SCHEMAS = require('../llm/schemas/index.cjs');
+const { getUtterances, updateUtteranceRoles, updateUtteranceTags, updateRevisedFeedback, SILENT_SPEAKER_ID } = require('../utils/utteranceUtils.cjs');
+const { DPICS_TO_TAG_MAP, calculateNoraScore } = require('../utils/scoreConstants.cjs');
+const { loadPrompt, loadPromptWithVariables } = require('../prompts/index.cjs');
+const { generateGoalForLevel, formatNotifications, formatGoalHeadline } = require('../utils/levelGoalEngine.cjs');
+const { placeFirstSessionLevel, computeLevelUpdate } = require('./parentSkillLevelService.cjs');
+const { decryptSensitiveData } = require('../utils/encryption.cjs');
+const { getLanguageInstruction } = require('../utils/languageUtils.cjs');
+const { classifySpeakersML } = require('./mlDiarizationService.cjs');
+const { parseUserIssues } = require('./priorityEngine.cjs');
+
+// DPICS asset paths — referenced by gateway cache config for coding and review feedback
+const DPICS_PDF_PATH      = process.env.DPICS_PDF_PATH      || require('path').join(__dirname, '../assets/DPICS-Manual.2.18.pdf');
+// CDI coaching reference manual — baked into the 'cdi-coaching' Gemini context cache
+// alongside the static coaching instructions, same pattern as DPICS coding.
+const CDI_COACHING_PDF_PATH = process.env.CDI_COACHING_PDF_PATH || require('path').join(__dirname, '../prompts/Parent-Child Interaction Therapy_CDI.pdf');
+
+/**
+ * DPICS context-cache registry key, shared by pcit-coding, pcit-coding-supplemental
+ * and review-feedback. Model-qualified for the same reason as the CDI coaching cache
+ * (see generateCdiCoaching): Gemini rejects a generateContent call whose model differs
+ * from its CachedContent's model, and the registry key is not model-aware on its own.
+ * All three callers run on $GEMINI_STREAMING_MODEL, so keying on that model stops a
+ * stale entry — created by an eval script, an e2e run, or a previous value of
+ * $GEMINI_STREAMING_MODEL — from poisoning the shared on-disk registry and breaking
+ * review-feedback whenever pcit-coding is skipped by the checkpoint.
+ * @param {boolean} isCDI
+ * @returns {string}
+ */
+function dpicsCacheKey(isCDI) {
+  const model = process.env.GEMINI_STREAMING_MODEL || 'default';
+  return `${isCDI ? 'dpics-cdi' : 'dpics-pdi'}-${model.replace(/[^a-z0-9.-]/gi, '_')}`;
+}
+
+// ============================================================================
+// Session Quality Gate
+// ============================================================================
+
+/**
+ * Thrown when a recording fails the quality gate.
+ * Signals to callers that retries are pointless and no team alert is needed.
+ */
+class SessionQualityError extends Error {
+  constructor(userMessage) {
+    super(userMessage);
+    this.name = 'SessionQualityError';
+    this.userMessage = userMessage;
+  }
+}
+
+/**
+ * Thrown when a recording cannot be processed due to a permanent data problem.
+ * Signals to callers that retries are pointless (unlike transient network errors).
+ * Does NOT trigger a team Slack alert — these are data/config issues, not system bugs.
+ */
+class PermanentFailureError extends Error {
+  constructor(message, userMessage) {
+    super(message);
+    this.name = 'PermanentFailureError';
+    this.userMessage = userMessage || 'An error occurred while analyzing your recording. Please try again.';
+  }
+}
+
+/**
+ * User-facing messages for the heuristic quality checks. These run before any
+ * LLM call, so they are translated in code rather than by a prompt. Generic
+ * Mandarin codes from ElevenLabs ('cmn' / 'zho') fall back to Simplified.
+ */
+const QUALITY_MESSAGES = {
+  lowData: {
+    eng: 'Your recording didn\'t capture enough speech to generate a report. This can happen if the recording started too late or the audio was too quiet. Try starting the recording before your play session begins and ensure the device is nearby.',
+    'zh-CN': '录音没有采集到足够的对话内容，无法生成报告。这可能是因为录音开始得太晚，或者声音太小。请在亲子游戏开始前就开始录音，并确保设备放在旁边。',
+    'zh-TW': '錄音沒有擷取到足夠的對話內容，無法產生報告。這可能是因為錄音開始得太晚，或者聲音太小。請在親子遊戲開始前就開始錄音，並確保裝置放在旁邊。',
+  },
+  tooShort: {
+    eng: 'Your recording was too short to generate a report. A play session needs to be at least a few minutes long for a meaningful analysis. Try recording a longer session next time.',
+    'zh-CN': '录音时间太短，无法生成报告。有意义的分析需要至少几分钟的亲子游戏时间。下次请录制更长的时段。',
+    'zh-TW': '錄音時間太短，無法產生報告。有意義的分析需要至少幾分鐘的親子遊戲時間。下次請錄製更長的時段。',
+  },
+  singleSpeaker: {
+    eng: 'We could only make out one voice in your recording, so there wasn\'t an interaction to analyze. This can happen if only one person was speaking or the voices were too hard to tell apart. Try recording again in a quieter space with both you and your child close to the device.',
+    'zh-CN': '录音中只能辨识出一个人的声音，因此没有可供分析的亲子互动。这可能是因为只有一个人在说话，或者两个人的声音太难区分。请换到更安静的环境重新录音，并让您和孩子都靠近设备。',
+    'zh-TW': '錄音中只能辨識出一個人的聲音，因此沒有可供分析的親子互動。這可能是因為只有一個人在說話，或者兩個人的聲音太難區分。請換到更安靜的環境重新錄音，並讓您和孩子都靠近裝置。',
+  },
+  analysisFailed: {
+    eng: 'Your recording could not be analyzed. Please try recording a play session with your child again.',
+    'zh-CN': '您的录音无法分析。请重新录制一段您和孩子的亲子游戏。',
+    'zh-TW': '您的錄音無法分析。請重新錄製一段您和孩子的親子遊戲。',
+  },
+};
+
+/**
+ * Resolve a heuristic quality message for the given language.
+ * @param {keyof QUALITY_MESSAGES} key
+ * @param {string|null} language - ElevenLabs / preferred language code
+ */
+function qualityMessage(key, language) {
+  const variants = QUALITY_MESSAGES[key];
+  if (variants[language]) return variants[language];
+  if (language === 'cmn' || language === 'zho') return variants['zh-CN'];
+  return variants.eng;
+}
+
+/**
+ * Validate that a session is suitable for PCIT analysis.
+ * Runs cheap heuristics first, then one LLM call for everything else.
+ * Throws SessionQualityError if the session should not be processed.
+ */
+async function validateSessionQuality(utterances, durationSeconds, roleIdentificationJson, sessionId = null, language = null) {
+  const SILENT_ID = SILENT_SPEAKER_ID;
+  const nonSilent = utterances.filter(u => u.speaker !== SILENT_ID);
+  const speakerIds = new Set(nonSilent.map(u => u.speaker));
+
+  // --- Heuristic pre-filters (no LLM cost) ---
+  if (nonSilent.length < 10) {
+    throw new SessionQualityError(qualityMessage('lowData', language));
+  }
+
+  if (durationSeconds < 60) {
+    throw new SessionQualityError(qualityMessage('tooShort', language));
+  }
+
+  if (speakerIds.size < 2) {
+    throw new SessionQualityError(qualityMessage('singleSpeaker', language));
+  }
+
+  // --- LLM quality check ---
+  const sample = nonSilent.slice(0, 60).map(u => ({
+    speaker: u.speaker,
+    text: u.text,
+    start: u.startTime,
+    end: u.endTime
+  }));
+
+  const languageInstruction = getLanguageInstruction(language);
+  const prompt = loadPromptWithVariables('sessionQualityCheck', {
+    DURATION_SECONDS: String(durationSeconds),
+    UTTERANCE_COUNT: String(nonSilent.length),
+    SPEAKER_COUNT: String(speakerIds.size),
+    UTTERANCES_SAMPLE: JSON.stringify(sample, null, 2),
+    ROLE_IDENTIFICATION: roleIdentificationJson ? JSON.stringify(roleIdentificationJson, null, 2) : 'Not available',
+    LANGUAGE_INSTRUCTION: languageInstruction
+      ? `${languageInstruction} This applies to the "userMessage" text only — keep the JSON keys and boolean values exactly as specified.`
+      : ''
+  });
+
+  const result = await llmCall(prompt, {
+    profile:  'quality-check',
+    label:    'session-quality-check',
+    sessionId,
+  });
+
+  if (result.valid === false) {
+    throw new SessionQualityError(
+      result.userMessage || qualityMessage('analysisFailed', language)
+    );
+  }
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Calculate child's age from birth year or birthday
+ * @param {number} birthYear - Child's birth year
+ * @param {Date} birthday - Child's birthday (optional, more precise)
+ * @returns {number} Child's age in years
+ */
+function calculateChildAge(birthYear, birthday) {
+  const today = new Date();
+  if (birthday) {
+    const birthDate = new Date(birthday);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
+  return today.getFullYear() - birthYear;
+}
+
+/**
+ * Calculate child's age in months from birthday
+ * @param {Date} birthday - Child's birthday
+ * @param {number} birthYear - Child's birth year (fallback)
+ * @returns {number} Child's age in months
+ */
+function calculateChildAgeInMonths(birthday, birthYear) {
+  const today = new Date();
+  if (birthday) {
+    const birthDate = new Date(birthday);
+    const months = (today.getFullYear() - birthDate.getFullYear()) * 12 + (today.getMonth() - birthDate.getMonth());
+    return months;
+  }
+  // Fallback: assume mid-year birth if only year is available
+  return (today.getFullYear() - birthYear) * 12;
+}
+
+/**
+ * Extract child speaker from role identification JSON
+ * @param {Object} roleIdentificationJson - Role identification data
+ * @returns {string|null} Speaker ID of the child, or null if not found
+ */
+function getChildSpeaker(roleIdentificationJson) {
+  const speakerIdentification = roleIdentificationJson?.speaker_identification || {};
+  for (const [speakerId, info] of Object.entries(speakerIdentification)) {
+    if (info.role === 'CHILD') {
+      return speakerId;
+    }
+  }
+  return null;
+}
+
+/**
+ * Format gender enum to readable text
+ * @param {string} genderEnum - Gender enum value (BOY, GIRL, OTHER)
+ * @returns {string} Readable gender text
+ */
+function formatGender(genderEnum) {
+  const genderMap = {
+    'BOY': 'boy',
+    'GIRL': 'girl',
+    'OTHER': 'child'
+  };
+  return genderMap[genderEnum] || 'child';
+}
+
+/**
+ * Naming directive appended to every parent-facing LLM prompt in this file.
+ *
+ * The child's name comes from the user's profile. Parents routinely address the
+ * child by a nickname, pet name, or role word ("buddy", "baby", "哥哥", "妹妹")
+ * in the transcript, and the models will otherwise echo whatever the parent
+ * used — so every report ends up naming the child inconsistently. This forces
+ * the profile name into the output regardless of the transcript.
+ *
+ * Returns '' when no real name is available (falls back to "the child"), so the
+ * wrapper leaves those prompts untouched.
+ * @param {string|null|undefined} childName
+ * @returns {string}
+ */
+function childNameDirective(childName) {
+  const name = (childName && childName !== 'the child') ? String(childName).trim() : '';
+  if (!name) return '';
+  return `CHILD'S NAME — REQUIRED: Always call the child "${name}" in your output. `
+    + `The parent may address the child differently in the transcript — a nickname, pet name, `
+    + `term of endearment, initials, or a role word ("buddy", "sweetie", "宝宝", "哥哥", "妹妹"). `
+    + `Ignore those and use "${name}" every time you refer to the child by name. Do not invent a `
+    + `different name and do not repeat the parent's nickname. This applies in every language.`;
+}
+
+/**
+ * Append childNameDirective to a prompt string, spaced off with a blank line.
+ * No-op when no real name is available.
+ * @param {string} prompt
+ * @param {string|null|undefined} childName
+ * @returns {string}
+ */
+function withChildNameDirective(prompt, childName) {
+  const directive = childNameDirective(childName);
+  return directive ? `${prompt}\n\n${directive}` : prompt;
+}
+
+/**
+ * Format utterances for prompt display
+ * Handles silent slots specially to make them visible as coaching opportunities
+ * @param {Array} utterances - Array of utterance objects
+ * @returns {string} Formatted transcript string
+ */
+function formatUtterancesForPrompt(utterances) {
+  return utterances.map((u, i) => {
+    if (u.speaker === SILENT_SPEAKER_ID) {
+      const duration = (u.endTime - u.startTime).toFixed(1);
+      return `[${String(i).padStart(2, '0')}] ⏸️ SILENCE (${duration}s) - opportunity to narrate or praise`;
+    }
+    const roleLabel = u.role === 'adult' ? 'Parent' : u.role === 'child' ? 'Child' : u.speaker;
+    const tagSuffix = u.pcitTag ? ` [${u.pcitTag}]` : '';
+    return `[${String(i).padStart(2, '0')}] ${roleLabel}: ${u.text}${tagSuffix}`;
+  }).join('\n');
+}
+
+/**
+ * Rebuild a verbatim quote from a range of utterance indices the LLM selected,
+ * instead of trusting free text it typed back. The models routinely echo the
+ * "[NN] Parent: … [TAG]" prompt formatting into the quote, and paraphrase or
+ * re-segment the words — so we ask only for the index range and reconstruct
+ * the text here from the same array that was numbered in the prompt.
+ *
+ * @param {Array} utterances - the exact array passed to formatUtterancesForPrompt
+ * @param {number} start - first utterance index (inclusive)
+ * @param {number} [end] - last utterance index (inclusive); defaults to `start`
+ * @param {{ withRoleLabels?: boolean, maxSpan?: number }} [opts]
+ *   withRoleLabels: prefix each line with "Parent:"/"Child:" (default true)
+ *   maxSpan: hard cap on how many utterances the range may cover (default 3)
+ * @returns {{ quote: string, utteranceNumber: number, endUtteranceNumber: number } | null}
+ */
+function quoteFromUtteranceRange(utterances, start, end, opts = {}) {
+  const { withRoleLabels = true, maxSpan = 3 } = opts;
+  if (!Array.isArray(utterances) || !utterances.length || !Number.isInteger(start)) return null;
+
+  let lo = start;
+  let hi = Number.isInteger(end) ? end : start;
+  if (hi < lo) [lo, hi] = [hi, lo];
+  lo = Math.max(0, lo);
+  hi = Math.min(hi, utterances.length - 1, lo + maxSpan - 1);
+  if (lo > utterances.length - 1) return null;
+
+  const lines = [];
+  for (let i = lo; i <= hi; i++) {
+    const u = utterances[i];
+    if (!u || u.speaker === SILENT_SPEAKER_ID || !u.text) continue;
+    if (withRoleLabels) {
+      const roleLabel = u.role === 'adult' ? 'Parent' : u.role === 'child' ? 'Child' : u.speaker;
+      lines.push(`${roleLabel}: ${u.text}`);
+    } else {
+      lines.push(u.text);
+    }
+  }
+  if (!lines.length) return null;
+  return { quote: lines.join('\n'), utteranceNumber: lo, endUtteranceNumber: hi };
+}
+
+// ============================================================================
+// Performance vs Goal Section Builder
+// ============================================================================
+
+const METRIC_ALIASES = {
+  praise:    ['praise', 'praises', 'labeled praise', 'labeled praises'],
+  echo:      ['refl', 'reflection', 'reflections', 'echo'],
+  narration: ['behav_desc', 'behavioral description', 'behavioral descriptions', 'narrate', 'narration'],
+  question:  ['question', 'questions', 'ques'],
+  command:   ['command', 'commands', 'cmd'],
+  criticism: ['criticism', 'criticisms', 'crit'],
+};
+const METRIC_DISPLAY = {
+  praise: 'Praises', echo: 'Refl', narration: 'Narrate',
+  question: 'Ques', command: 'Cmd', criticism: 'Crit',
+};
+
+function parseGoalMeta(goalText) {
+  if (!goalText) return null;
+  const lower = goalText.toLowerCase();
+  let metricKey = null;
+  for (const [key, aliases] of Object.entries(METRIC_ALIASES)) {
+    if (aliases.some(a => lower.includes(a))) { metricKey = key; break; }
+  }
+  const numMatch = goalText.match(/\b(\d+)\b/);
+  const target = numMatch ? parseInt(numMatch[1], 10) : null;
+  return metricKey && target ? { metricKey, target } : null;
+}
+
+function buildPerformanceVsGoalSection(historicalCdiSessions, currentTagCounts, yesterdayGoal) {
+  const sessions = historicalCdiSessions || [];
+  if (sessions.length === 0 && !yesterdayGoal) return 'No prior sessions.';
+
+  const fmtDate = (d) => {
+    const dt = new Date(d);
+    return `${dt.toLocaleString('en-US', { month: 'short' })} ${dt.getDate()}`;
+  };
+
+  const lines = [];
+
+  sessions.forEach((s, i) => {
+    const tc = s.tagCounts || {};
+    const prev = i > 0 ? sessions[i - 1] : null;
+    const goalText = s.sessionGoal || prev?.tomorrowGoal || null;
+    const meta = parseGoalMeta(goalText);
+    const prevTc = prev?.tagCounts || {};
+
+    const goalPart = meta
+      ? `Goal: ${METRIC_DISPLAY[meta.metricKey]} (${meta.target})`
+      : goalText ? `Goal: ${goalText.substring(0, 35)}` : 'Goal: -';
+    const actualPart = meta
+      ? ` | actual ${prevTc[meta.metricKey] ?? '-'} -> ${tc[meta.metricKey] ?? 0}`
+      : '';
+
+    lines.push(`[${fmtDate(s.createdAt)}, S${i + 1}] ${goalPart}${actualPart}`);
+  });
+
+  // Current session row
+  const lastTc = sessions[sessions.length - 1]?.tagCounts || {};
+  const meta = parseGoalMeta(yesterdayGoal);
+  const goalPart = meta
+    ? `Goal: ${METRIC_DISPLAY[meta.metricKey]} (${meta.target})`
+    : yesterdayGoal ? `Goal: ${yesterdayGoal.substring(0, 35)}` : 'Goal: -';
+  const actualPart = meta
+    ? ` | actual ${lastTc[meta.metricKey] ?? '-'} -> ${currentTagCounts[meta.metricKey] ?? 0}`
+    : '';
+  lines.push(`[Today] ${goalPart}${actualPart}`);
+
+  return lines.join('\n');
+}
+
+// ============================================================================
+// Quality-Gate Retry Helper
+// ============================================================================
+
+/**
+ * Run callFn up to twice; if output fails isComplete, escalate to escalateFn.
+ * Returns the first complete result, or null if all attempts fail/are incomplete.
+ * Throws only if callFn throws on the first attempt — caller wraps in try/catch.
+ */
+async function withQualityRetry(callFn, isComplete, escalateFn) {
+  let result = await callFn();
+  if (isComplete(result)) return result;
+  result = await callFn();
+  if (isComplete(result)) return result;
+  try {
+    const escalated = await escalateFn();
+    if (isComplete(escalated)) return escalated;
+  } catch (_) {}
+  return null;
+}
+
+// ============================================================================
+// Child Profiling — Developmental + Coaching
+// ============================================================================
+
+/**
+ * Format utterances for psychologist review
+ * @param {Array} utterances - Array of utterance objects with roles
+ * @returns {string} Formatted transcript for psychologist
+ */
+function formatUtterancesForPsychologist(utterances) {
+  return utterances
+    .filter(u => u.speaker !== SILENT_SPEAKER_ID)
+    .map((u, i) => {
+      const roleLabel = u.role === 'adult' ? 'Parent' : u.role === 'child' ? 'Child' : u.speaker;
+      return `${roleLabel}: ${u.text}`;
+    }).join('\n');
+}
+
+// Human-readable labels for the 10 Child Snapshot ("WACB") behavior items.
+// Mirrors nora-mobile en.json onboarding.page7.wacbQuestions — keep in sync.
+// Used so issuePriority rows sourced from the snapshot survey render as plain
+// language in profiling/coaching prompts instead of leaking raw keys
+// (e.g. "q8Destroy") into parent-facing output.
+const SNAPSHOT_ITEM_LABELS = {
+  q1Dawdle:         'dawdling in daily routines',
+  q2Disobey:        'refusing to listen or follow rules',
+  q3Tantrum:        'tantrums that are hard to stop',
+  q4Defiance:       'arguing or talking back to adults',
+  q5FocusDemand:    'trouble focusing or demanding attention',
+  q6Restless:       'interrupting or trouble sitting still',
+  q7TaskCompletion: 'trouble finishing tasks on time',
+  q8Destroy:        'breaking things or rough handling',
+  q9Aggression:     'physical aggression or fights',
+  q10LieSteal:      'lying or taking things',
+};
+const snapshotItemLabel = (key) => SNAPSHOT_ITEM_LABELS[key] || String(key).replace(/^q\d+/, '').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().trim() || key;
+
+/**
+ * Build shared template variables for child profiling prompts
+ * @param {Object} childInfo - Child's info (name, ageMonths, gender, clinicalPriority)
+ * @param {Object} tagCounts - Session metrics from PCIT coding
+ * @param {Array} utterances - Utterances with roles
+ * @returns {Object} Template variables object
+ */
+function buildProfilingVariables(childInfo, tagCounts, utterances) {
+  const { name, ageMonths, gender, clinicalPriority, isFirstSession, durationSeconds, achievedMilestoneKeys, historicalCdiSessions, yesterdayGoal } = childInfo;
+  const transcript = formatUtterancesForPsychologist(utterances);
+
+  const formatLevel = (level) => level ? level.replace(/_/g, ' ').toLowerCase() : 'none';
+  const formatStrategy = (strategy) => strategy ? strategy.replace(/_/g, ' ').toLowerCase() : 'none';
+
+  const formatRowDetails = (row) => {
+    const parts = [];
+    if (row.fromUserIssue && row.userIssues) {
+      const issues = JSON.parse(row.userIssues).map(i => i.replace(/_/g, ' '));
+      parts.push(`User-reported: ${issues.join(', ')}`);
+    }
+    if (row.fromWacb && row.wacbQuestions) {
+      const qs = JSON.parse(row.wacbQuestions).map(snapshotItemLabel);
+      parts.push(`WACB signals: ${qs.join(', ')}${row.wacbScore ? ` (score: ${row.wacbScore})` : ''}`);
+    }
+    return parts.length > 0 ? parts.join('. ') : 'none';
+  };
+
+  const primaryRow = (clinicalPriority?.issuePriorities || []).find(r => r.priorityRank === 1);
+  const otherPriorities = (clinicalPriority?.issuePriorities || []).filter(r => r.priorityRank > 1);
+
+  // Extract human-readable issue names from issuePriority rows
+  const formatIssueLabel = (row) => {
+    if (row?.fromUserIssue && row.userIssues) {
+      try {
+        return JSON.parse(row.userIssues).map(i => i.replace(/_/g, ' ').toLowerCase()).join(', ');
+      } catch (_) {}
+    }
+    if (row?.fromWacb && row.wacbQuestions) {
+      try {
+        return JSON.parse(row.wacbQuestions).map(snapshotItemLabel).join(', ');
+      } catch (_) {}
+    }
+    return formatLevel(row?.clinicalLevel);
+  };
+
+  const primaryIssueText = primaryRow ? formatIssueLabel(primaryRow) : 'none';
+  const otherIssuesText = otherPriorities.length > 0
+    ? otherPriorities.map(r => `  - ${formatIssueLabel(r)}`).join('\n')
+    : '  none';
+
+  const sessionMetrics = `- Labeled Praises: ${tagCounts.praise || 0} (goal: 10+)
+- Reflections: ${tagCounts.echo || 0} (goal: 10+)
+- Behavioral Descriptions: ${tagCounts.narration || 0} (goal: 10+)
+- Questions: ${tagCounts.question || 0} (reduce)
+- Commands: ${tagCounts.command || 0} (reduce)
+- Criticisms: ${tagCounts.criticism || 0} (eliminate)`;
+
+  const totalMinutes = durationSeconds ? Math.floor(durationSeconds / 60) : null;
+  const totalSeconds = durationSeconds ? durationSeconds % 60 : null;
+  const sessionDuration = durationSeconds
+    ? (totalMinutes > 0 ? `${totalMinutes} min ${totalSeconds} sec` : `${totalSeconds} sec`)
+    : 'unknown';
+
+  const formatSessionDate = (createdAt) => {
+    const d = new Date(createdAt);
+    return `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
+  };
+
+  const historicalMetrics = historicalCdiSessions && historicalCdiSessions.length > 0
+    ? historicalCdiSessions.map(s => {
+        const tc = s.tagCounts || {};
+        return `- [${formatSessionDate(s.createdAt)}]: Praise ${tc.praise || 0}, Echo ${tc.echo || 0}, Narrate ${tc.narration || 0} | Questions ${tc.question || 0}, Commands ${tc.command || 0}, Criticism ${tc.criticism || 0}`;
+      }).join('\n')
+    : null;
+
+  return {
+    CHILD_NAME: name || 'the child',
+    CHILD_AGE_MONTHS: String(ageMonths || 'unknown'),
+    CHILD_GENDER: gender || 'child',
+    PRIMARY_ISSUE: primaryIssueText,
+    PRIMARY_STRATEGY: formatStrategy(clinicalPriority?.primaryStrategy),
+    PRIMARY_DETAILS: primaryRow ? formatRowDetails(primaryRow) : 'none',
+    OTHER_ISSUES: otherIssuesText,
+    SESSION_METRICS: sessionMetrics,
+    SESSION_DURATION: sessionDuration,
+    HISTORICAL_METRICS_SECTION: historicalMetrics
+      ? `**Historical Session Metrics (last sessions, oldest → most recent):**\n${historicalMetrics}`
+      : '',
+    YESTERDAY_GOAL_SECTION: yesterdayGoal
+      ? `**Yesterday's Focus Goal:**\n${yesterdayGoal}\nWhen setting the "key focus for tomorrow", acknowledge whether yesterday's goal was achieved before setting the next one.`
+      : '',
+    TRANSCRIPT: transcript,
+    FIRST_SESSION_NOTE: isFirstSession
+      ? `This is the first session the parent has with Nora. Your primary goal is to hook the user in, set expectations that Nora will be very helpful, and get them excited about the emotional massage and the discipline coaching (available once their emotional bank account is ready). Commit them to making daily sessions their priority.`
+      : '',
+    ACHIEVED_MILESTONE_KEYS: achievedMilestoneKeys && achievedMilestoneKeys.length > 0
+      ? JSON.stringify(achievedMilestoneKeys)
+      : '[] (none yet)',
+    IS_FIRST_SESSION_BASELINE: isFirstSession
+      ? `FIRST SESSION — BASELINE ASSESSMENT:
+This is the child's first profiling session. In addition to detecting emerging milestones in "detected_milestone_keys",
+also identify milestones the child has CLEARLY ALREADY MASTERED based on age and transcript evidence.
+- Only include in "baseline_achieved" if the child's age is at or past the typical mastery age AND the transcript shows clear evidence
+- These will be marked directly as ACHIEVED (not EMERGING)
+Return these in the top-level "baseline_achieved" array.`
+      : 'This is NOT the first session. Leave "baseline_achieved" as an empty array [].'
+  };
+}
+
+/**
+ * Generate developmental profiling
+ * Produces developmental observations (5 clinical domains) with milestone library framework
+ * @param {Array} utterances - Utterances with roles
+ * @param {Object} childInfo - Child's info (name, ageMonths, gender, clinicalPriority)
+ * @param {Object} tagCounts - Session metrics from PCIT coding
+ * @returns {Promise<Object|null>} { developmentalObservation, metadata } or null on failure
+ */
+async function generateDevelopmentalProfiling(utterances, childInfo, tagCounts = {}, childSpeaker = null, sessionId = null, language = null) {
+  const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
+  variables.LANGUAGE_INSTRUCTION = getLanguageInstruction(language);
+  const prompt = loadPromptWithVariables('developmentalProfiling', variables);
+
+  console.log(`📊 [DEV-PROFILING] Generating developmental profiling...`);
+
+  try {
+    const parsed = await llmCall(withChildNameDirective(prompt, variables.CHILD_NAME), {
+      profile:  'dev-profiling',
+      schema:   SCHEMAS.DEV_PROFILING,
+      label:    'dev-profiling',
+      sessionId,
+    });
+
+    const result = {
+      developmentalObservation: parsed.developmental_observation || null,
+      metadata: parsed.session_metadata || null,
+      baselineAchieved: parsed.baseline_achieved || []
+    };
+
+    console.log(`✅ [DEV-PROFILING] Response parsed — ${result.developmentalObservation?.domains?.length || 0} domains, ${result.baselineAchieved.length} baseline achieved`);
+    return result;
+  } catch (error) {
+    console.error('❌ [DEV-PROFILING] Error:', error.message);
+    return null;
+  }
+}
+
+// ============================================================================
+// About Child — Age-Referenced Observations (single pass)
+// ============================================================================
+
+// New `label` (child vs. their age) → legacy `valence` (STRENGTH/GROWTH_AREA).
+// The model only emits `label`; generateAboutChild adds `valence` so older
+// readers keep working: mobile ReportScreen/ReportDetailScreen and the
+// deficit-based ratio in aboutChildSelectionService.cjs both key on `valence`.
+const ABOUT_CHILD_LABEL_TO_VALENCE = {
+  advanced:        'STRENGTH',
+  age_appropriate: 'STRENGTH',
+  needs_help:      'GROWTH_AREA',
+};
+
+/**
+ * Generate "About Child" observations in one LLM call.
+ *
+ * A single pass over the transcript asks an assessment-informed persona (TPBA /
+ * KOI / Renzulli) for 10 observations, each tagged advanced / age_appropriate /
+ * needs_help for the child's age and ranked by how valuable it is to the parent
+ * (id 1 = the biggest "aha"). Output is parent-facing prose — no jargon.
+ *
+ * @param {Array}  utterances - Utterances with roles
+ * @param {Object} childInfo  - { name, ageMonths, gender }
+ * @param {Object} [tagCounts] - Unused; kept for call-site compatibility
+ * @returns {Promise<Array|null>} Array of AboutChildItem or null on failure
+ */
+async function generateAboutChild(utterances, childInfo, tagCounts = {}, sessionId = null, language = null) {
+  const { name, ageMonths, gender } = childInfo;
+  const transcript = formatUtterancesForPsychologist(utterances);
+  const languageInstruction = getLanguageInstruction(language);
+
+  const prompt = loadPromptWithVariables('aboutChild', {
+    CHILD_NAME: name || 'the child',
+    AGE_MONTHS: String(ageMonths || 'unknown'),
+    GENDER: gender || 'child',
+    TRANSCRIPT: transcript,
+  });
+  const promptFinal = languageInstruction ? `${prompt}\n\n${languageInstruction}` : prompt;
+
+  console.log(`📊 [ABOUT-CHILD] Generating child observations...`);
+
+  try {
+    const raw = await llmCall(withChildNameDirective(promptFinal, name), {
+      profile:  'about-child',
+      schema:   SCHEMAS.ABOUT_CHILD,
+      label:    'about-child',
+      sessionId,
+      // Best-effort: a failure here just drops the "About Child" card for the
+      // session (STEP 9 swallows it), so don't page on it.
+      alertOnFailure: false,
+    });
+    if (!Array.isArray(raw)) throw new Error('Expected array response');
+
+    const aboutChild = raw.map(item => ({
+      ...item,
+      valence: ABOUT_CHILD_LABEL_TO_VALENCE[item.label] || 'STRENGTH',
+    }));
+
+    console.log(`✅ [ABOUT-CHILD] Generated ${aboutChild.length} child observations`);
+    return aboutChild;
+  } catch (error) {
+    console.error('❌ [ABOUT-CHILD] Failed:', error.message);
+    return null;
+  }
+}
+
+// ============================================================================
+// First-Session Insights — child learnings + parent strengths (first CDI session only)
+// ============================================================================
+
+/**
+ * Generate the first-session-only "first coaching report": what we learned
+ * about the child, the skills underneath the parent's target issue(s), and
+ * how they'll practice together. Two-call flow, mirroring generateCdiCoaching's
+ * coaching-narrative → coaching-format split:
+ *   1. cdiCoaching-first_v3.txt writes the free-form three-section report.
+ *   2. cdiCoaching-firstFormat.txt lifts it verbatim into structured JSON
+ *      (SCHEMAS.FIRST_SESSION_INSIGHTS) — no rewording, no translation, so
+ *      whatever language step 1 wrote in is preserved exactly.
+ * Runs once, alongside the other STEP 9 profiling calls, only on the
+ * parent's first completed CDI session.
+ *
+ * @param {Array}  utterances - Utterances with roles
+ * @param {Object} childInfo  - { name, ageYears, parentGoalsText, parentContextText }
+ * @returns {Promise<Object|null>} { whatWeLearned, skillsUnderneath, howWePracticeTogether } or null on failure
+ */
+async function generateFirstSessionInsights(utterances, childInfo, sessionId = null, language = null) {
+  const { name, ageYears, parentGoalsText, parentContextText } = childInfo;
+  const childName = name || 'the child';
+  const languageInstruction = getLanguageInstruction(language);
+  // v3 collapses PARENT_GOALS + PARENT_CONTEXT into one "target issue(s)" input.
+  const targetIssuesText = [parentGoalsText, parentContextText].filter(Boolean).join(', ')
+    || 'general parenting concerns';
+
+  const prompt = loadPromptWithVariables('cdiCoaching-first_v3', {
+    CHILD_NAME: childName,
+    CHILD_AGE: ageYears != null ? String(ageYears) : 'unknown',
+    TARGET_ISSUES: targetIssuesText,
+    // Plain Parent:/Child: narrative — v3 asks the model to judge Praise/
+    // Narration/Echo directly from the transcript, no separate tagged view.
+    TRANSCRIPT: formatUtterancesForPsychologist(utterances),
+  });
+  const promptFinal = languageInstruction ? `${prompt}\n\n${languageInstruction}` : prompt;
+
+  // Reuse the exact same Gemini context cache as generateCdiCoaching (static
+  // coaching instructions + CDI reference manual PDF), instead of paying to
+  // re-embed that context here. Requires calling on the same model the cache
+  // was created for — Gemini rejects a generateContent call whose model
+  // differs from its CachedContent's model, hence the model override.
+  const coachingModel = process.env.GEMINI_STREAMING_MODEL || undefined;
+
+  console.log(`📊 [FIRST-SESSION-INSIGHTS] Step 1: writing first coaching report...`);
+
+  try {
+    const report = await llmCall(withChildNameDirective(promptFinal, childName), {
+      profile:  'first-session-insights',
+      ...(coachingModel ? { model: coachingModel } : {}),
+      cache: {
+        key:          `cdi-coaching-${(coachingModel || 'default').replace(/[^a-z0-9.-]/gi, '_')}`,
+        primaryFile:  CDI_COACHING_PDF_PATH,
+        systemPrompt: loadPrompt('cdiCoaching'),
+      },
+      label:    'first-session-insights',
+      sessionId,
+      // Best-effort: a failure here just drops the first-session sections
+      // from the report (STEP 9 swallows it), so don't page on it.
+      alertOnFailure: false,
+    });
+
+    console.log(`📊 [FIRST-SESSION-INSIGHTS] Step 2: formatting report into structured fields...`);
+
+    const formatPrompt = loadPromptWithVariables('cdiCoaching-firstFormat', {
+      LANGUAGE_INSTRUCTION: languageInstruction,
+      CHILD_NAME: childName,
+      REPORT: report,
+    });
+
+    const parsed = await llmCall(withChildNameDirective(formatPrompt, childName), {
+      profile:  'first-session-format',
+      schema:   SCHEMAS.FIRST_SESSION_INSIGHTS,
+      label:    'first-session-format',
+      sessionId,
+      alertOnFailure: false,
+    });
+
+    const result = {
+      whatWeLearned: {
+        strengths: (parsed.what_we_learned?.strengths || []).map(s => ({
+          name: s.name || null,
+          explanation: s.explanation || null,
+        })),
+        challenge: parsed.what_we_learned?.challenge || null,
+      },
+      skillsUnderneath: {
+        openingSentence: parsed.skills_underneath?.opening_sentence || null,
+        skills: (parsed.skills_underneath?.skills || []).map(s => ({
+          name: s.name || null,
+          definition: s.definition || null,
+        })),
+      },
+      howWePracticeTogether: {
+        sentences: parsed.how_we_practice_together?.sentences || [],
+      },
+    };
+
+    console.log(`✅ [FIRST-SESSION-INSIGHTS] Generated report — ${result.skillsUnderneath.skills.length} target skills`);
+    return result;
+  } catch (error) {
+    console.error('❌ [FIRST-SESSION-INSIGHTS] Failed:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Fetch the parent's current level (1-9) and qualifying-instance counters
+ * from ParentSkillProgress. Defaults to level 1 / 0 counters when no
+ * record exists yet — this read path doesn't create the row (that happens
+ * later in parentSkillLevelService.cjs, after this session's own results
+ * are folded in).
+ * @param {string} userId
+ * @returns {Promise<{currentLevel: number, level6QualifyingCount: number, level7QualifyingCount: number}>}
+ */
+async function getParentSkillProgress(userId) {
+  try {
+    const progress = await prisma.parentSkillProgress.findUnique({ where: { userId } });
+    return {
+      currentLevel: progress?.currentLevel ?? 1,
+      level6QualifyingCount: progress?.level6QualifyingCount ?? 0,
+      level7QualifyingCount: progress?.level7QualifyingCount ?? 0,
+    };
+  } catch (e) {
+    console.warn('⚠️ [PARENT-SKILL-LEVEL] Could not fetch progress, defaulting to level 1:', e.message);
+    return { currentLevel: 1, level6QualifyingCount: 0, level7QualifyingCount: 0 };
+  }
+}
+
+/**
+ * Project this session's own level-up onto freshly-fetched progress before
+ * computing its goal card. updateParentSkillLevel() persists the actual
+ * promotion separately, as fire-and-forget, *after* analysis finishes — so
+ * without this projection, a session that clears its level's criteria would
+ * still show that (now-cleared) level's goal as "tomorrow's goal" instead of
+ * the new level's. Read-only: does not write to the DB, just mirrors
+ * computeLevelUpdate's forward-only logic in-memory for the goal calc.
+ * @param {{ currentLevel: number }} progress
+ * @param {'CDI'|'PDI'} mode
+ * @param {Object} tagCounts
+ */
+function projectLevelForGoal(progress, mode, tagCounts) {
+  const update = computeLevelUpdate(progress, { mode, tagCounts });
+  return update ? { ...progress, ...update } : progress;
+}
+
+/**
+ * Generate CDI coaching report
+ * Runs the cdiCoaching prompt (which carries its own output format) and returns
+ * the report as-is for the Coach's Corner card.
+ * @param {Array} utterances - Utterances with roles
+ * @param {Object} childInfo - Child's info (name, ageMonths, gender, clinicalPriority)
+ * @param {Object} tagCounts - Session metrics from PCIT coding
+ * @returns {Promise<Object|null>} { coachingSummary, coachingPart1, coachingPart2, ... } or null on failure
+ */
+async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childSpeaker = null, sessionId = null, language = null) {
+  const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
+  variables.LANGUAGE_INSTRUCTION = getLanguageInstruction(language);
+
+  // Step 1: Deterministic goal engine — no LLM needed
+  const { name, userId: childUserId } = childInfo;
+
+  console.log(`📊 [CDI-COACHING] Step 1: Computing goal payload...`);
+  const preSessionProgress = await getParentSkillProgress(childUserId);
+  const parentProgress = projectLevelForGoal(preSessionProgress, 'CDI', tagCounts);
+  const leveledUpThisSession = parentProgress.currentLevel > preSessionProgress.currentLevel;
+  const goalPayload = generateGoalForLevel(parentProgress.currentLevel, tagCounts, 'CDI', parentProgress, language);
+  console.log(`✅ [CDI-COACHING] Level ${parentProgress.currentLevel} goal: ${goalPayload.title} → target ${goalPayload.targetCount}${leveledUpThisSession ? ` (leveled up from ${preSessionProgress.currentLevel} this session)` : ''}`);
+
+  const goalDirective = {
+    focusSkill: goalPayload.title,
+    currentNumber: goalPayload.baselineCount,
+    targetNumber: goalPayload.targetCount,
+    goalType: goalPayload.goalType,
+    actionPrompt: goalPayload.actionPrompt,
+    coachingTip: goalPayload.coachingTip,
+  };
+
+  const tomorrowGoal = formatGoalHeadline(goalPayload);
+  const notifications = formatNotifications(goalPayload, name);
+
+  // Step 2: Coaching report — tomorrow goal injected so narrative reinforces the decided goal
+  variables.TOMORROW_GOAL = tomorrowGoal || 'Continue building connection through play.';
+
+  // Level-clearing benchmark for the coaching prompt: levels 1-3 clear at
+  // <=3 of a skill to reduce, levels 4-6 clear at >=10 of a skill to build
+  // (parentLevelLadder.cjs — same number is the goal-card target and the gate).
+  if (typeof goalPayload.targetCount === 'number') {
+    const reduce = String(goalPayload.goalType || '').startsWith('AVOID_');
+    const current = goalPayload.baselineCount != null ? goalPayload.baselineCount : 0;
+    variables.MASTERY_BENCHMARK = reduce
+      ? `Mastery = ${goalPayload.targetCount} or fewer per 5-minute session (this session: ${current}).`
+      : `Mastery = ${goalPayload.targetCount} or more per 5-minute session (this session: ${current}).`;
+  } else {
+    variables.MASTERY_BENCHMARK = `Mastery = keep this skill natural and consistent (this session: ${goalPayload.baselineCount != null ? goalPayload.baselineCount : 'n/a'}).`;
+  }
+
+  // CDI skill labels for the coaching prompt, keyed on the deterministic ladder
+  // (parentLevelLadder.cjs): levels 1-6 each train one skill, 7+ is integration.
+  // currentLevel is the level the parent is *working on* now, so levels
+  // 1..currentLevel-1 are the ones already cleared.
+  const CDI_SKILL_BY_LEVEL = {
+    1: 'Avoiding Criticism',
+    2: 'Avoiding Commands',
+    3: 'Avoiding Questions',
+    4: 'Labeled Praise',
+    5: 'Narrate (Behavioral Description)',
+    6: 'Echo (Reflection)',
+  };
+  const cdiSkillForLevel = (lvl) =>
+    CDI_SKILL_BY_LEVEL[lvl <= 1 ? 1 : lvl] || 'Integrating all CDI skills (Labeled Praise, Narrate, Echo)';
+
+  variables.skillname = cdiSkillForLevel(parentProgress.currentLevel);
+  variables.passed_levels_skillnames = parentProgress.currentLevel > 1
+    ? Array.from({ length: Math.min(parentProgress.currentLevel - 1, 6) }, (_, i) => CDI_SKILL_BY_LEVEL[i + 1]).join(', ')
+    : 'none yet';
+  variables.primary_issue = variables.PRIMARY_ISSUE;
+
+  // Parent-facing level copy for the "new skill" intro on a level-up session —
+  // mirrors nora-mobile/src/i18n/locales/en.json profileReport.levels.* (the
+  // Personalized Learning Journey UI) so the report names the skill the same
+  // way the app does. Keep in sync if that copy changes. CDI-only levels 1-7
+  // (7 is the CDI->PDI hand-off, reachable in a CDI session only from level 6).
+  const CDI_LEVEL_COPY = {
+    1: { title: 'Calm Builder', skill: 'Reduce Criticism', goal: 'Build a safe, judgment-free play space.' },
+    2: { title: 'Patience Builder', skill: 'Reduce Commands', goal: 'Let your child lead without direction.' },
+    3: { title: 'Presence Builder', skill: 'Reduce Questions', goal: 'Stay present without quizzing.' },
+    4: { title: 'Confidence Builder', skill: 'Specific Praise', goal: 'Help your child feel capable.' },
+    5: { title: 'Attention Builder', skill: 'Narration', goal: 'Increase focus and engagement.' },
+    6: { title: 'Communication Builder', skill: 'Reflection (Echo)', goal: 'Help your child feel understood.' },
+    7: { title: 'Cooperation Builder', skill: 'Clear Instructions', goal: 'Increase everyday cooperation.' },
+  };
+
+  variables.LEVELED_UP_THIS_SESSION = leveledUpThisSession;
+  if (leveledUpThisSession) {
+    variables.OLD_SKILL_NAME = cdiSkillForLevel(preSessionProgress.currentLevel);
+    const newCopy = CDI_LEVEL_COPY[parentProgress.currentLevel];
+    variables.NEW_SKILL_TITLE = newCopy?.title || variables.skillname;
+    variables.NEW_SKILL_NAME = newCopy?.skill || variables.skillname;
+    variables.NEW_SKILL_GOAL = newCopy?.goal || '';
+  }
+
+  // Split the prompt like DPICS coding: the static instructions (role, response
+  // structure, tone) + the CDI reference manual PDF go in the Gemini context
+  // cache; only the per-session data (child, skill level, metrics, transcript)
+  // is sent as the per-call prompt.
+  const coachingSystemPrompt = loadPrompt('cdiCoaching');
+  const coachingUserPrompt = `Here is the session to coach.
+
+- Child Name: ${variables.CHILD_NAME}
+- Child's Primary Goal(s): ${variables.primary_issue}
+- Parent's Current Skill Focus/Level: ${variables.skillname}
+- Skills the parent has already mastered: ${variables.passed_levels_skillnames}
+- Parent's Current Skill Focus/Level Mastery (this session's counts):
+${variables.SESSION_METRICS}
+- Level-clearing benchmark for the current skill focus: ${variables.MASTERY_BENCHMARK}
+- Focus goal for next session: ${variables.TOMORROW_GOAL}
+${leveledUpThisSession ? `- LEVEL-UP THIS SESSION: this session's own numbers cleared the parent's previous skill focus, "${variables.OLD_SKILL_NAME}" — celebrate that in section 1. It also unlocked a new skill focus: "${variables.NEW_SKILL_TITLE}" (${variables.NEW_SKILL_NAME}) — ${variables.NEW_SKILL_GOAL} Briefly introduce this new skill at the top of section 3 before coaching it.\n` : ''}- Session Transcript:
+${variables.TRANSCRIPT}
+
+Produce the coaching feedback now, following the required response structure exactly.
+
+${variables.LANGUAGE_INSTRUCTION}`;
+
+  // CDI coaching runs on the same model knob as DPICS coding
+  // ($GEMINI_STREAMING_MODEL, e.g. gemini-3.1-pro-preview), not the 'gemini'
+  // (flash) profile default. Unset → falls back to the profile default.
+  const coachingModel = process.env.GEMINI_STREAMING_MODEL || undefined;
+
+  console.log(`📊 [CDI-COACHING] Step 2: Generating coaching report${coachingModel ? ` (${coachingModel})` : ''}...`);
+
+  try {
+    const coachingReport = await llmCall(withChildNameDirective(coachingUserPrompt, variables.CHILD_NAME), {
+      profile:  'coaching-narrative',
+      ...(coachingModel ? { model: coachingModel } : {}),
+      // Context cache: static instructions + CDI manual PDF. Key is model-qualified
+      // because Gemini requires the CachedContent model and the generateContent
+      // model to match, and the registry key is not model-aware on its own.
+      cache: {
+        key:          `cdi-coaching-${(coachingModel || 'default').replace(/[^a-z0-9.-]/gi, '_')}`,
+        primaryFile:  CDI_COACHING_PDF_PATH,
+        systemPrompt: coachingSystemPrompt,
+      },
+      label:    'coaching-narrative',
+      sessionId,
+    });
+
+    console.log(`✅ [CDI-COACHING] Coaching report received (${coachingReport.length} chars)`);
+
+    // Step 3: split the narrative for mobile — sections "1. What you did well" +
+    // "3. Next Growth Focus" → coachingPart1 (Coach's Corner), a structured
+    // breakdown { didWell, growthFocus, wordBank }; section "4. Handling tricky
+    // moments" → coachingPart2 ({ summary, points[] }, Crisis Moment slot).
+    // Best-effort: if the format pass fails, coachingPart1 stays the raw report
+    // string (older render path) and no tricky-moments card is shown.
+    let coachingPart1 = coachingReport.trim();
+    let coachingPart2 = null;
+    try {
+      const formatPrompt = loadPromptWithVariables('cdiCoachingFormat', {
+        COACHING_REPORT:      coachingReport,
+        TRANSCRIPT:           variables.TRANSCRIPT || '',
+        CHILD_NAME:           variables.CHILD_NAME || 'the child',
+        CHILD_GENDER:         variables.CHILD_GENDER || 'child',
+        LANGUAGE_INSTRUCTION: variables.LANGUAGE_INSTRUCTION || '',
+      });
+      console.log(`📊 [CDI-COACHING] Step 3: Formatting for Coach's Corner + Crisis Moment...`);
+      const formatted = await llmCall(withChildNameDirective(formatPrompt, variables.CHILD_NAME), {
+        profile:        'coaching-format',
+        schema:         SCHEMAS.COACHING_FORMAT,
+        label:          'coaching-format',
+        sessionId,
+        alertOnFailure: false,
+      });
+      const cc = formatted?.coach_corner;
+      if (cc && typeof cc === 'object' && cc.did_well) {
+        coachingPart1 = {
+          didWell: {
+            theme:      cc.did_well.theme || '',
+            howItHelps: cc.did_well.how_it_helps || '',
+            examples: Array.isArray(cc.did_well.examples)
+              ? cc.did_well.examples.map(e => ({ quote: e.quote || '', benefit: e.benefit || '' }))
+              : [],
+          },
+          growthFocus: {
+            heading:       cc.growth_focus?.heading || '',
+            newSkillIntro: cc.growth_focus?.new_skill_intro || null,
+            gap:           cc.growth_focus?.gap || '',
+            benchmark:     cc.growth_focus?.benchmark || '',
+            strategy:      cc.growth_focus?.strategy || '',
+          },
+          wordBank: Array.isArray(cc.word_bank)
+            ? cc.word_bank.map(g => ({
+                goal: g.goal || '',
+                categories: Array.isArray(g.categories)
+                  ? g.categories.map(c => ({
+                      name:     c.name || '',
+                      examples: Array.isArray(c.examples) ? c.examples.filter(Boolean) : [],
+                    }))
+                  : [],
+              }))
+            : [],
+        };
+      }
+
+      const tm = formatted?.tricky_moments;
+      if (tm && Array.isArray(tm.points) && tm.points.length > 0) {
+        coachingPart2 = {
+          summary: tm.summary || '',
+          points: tm.points.map(p => ({
+            title:            p.title,
+            explanation:      p.explanation,
+            quote:            p.quote || null,
+            suggestedRewrite: p.suggested_rewrite || null,
+          })),
+        };
+      }
+      const ccShape = typeof coachingPart1 === 'string' ? `${coachingPart1.length} chars (raw fallback)` : 'structured breakdown';
+      console.log(`✅ [CDI-COACHING] Formatted — Coach's Corner ${ccShape}, tricky moments: ${coachingPart2 ? coachingPart2.points.length : 0}`);
+    } catch (formatError) {
+      console.warn(`⚠️ [CDI-COACHING] Format pass failed, using raw report for Coach's Corner: ${formatError.message}`);
+    }
+
+    return {
+      coachingSummary: coachingReport, // raw report — still consumed by generateCDIFeedback / weekly report
+      coachingCards: null,             // legacy sectioning shape retired
+      coachingPart1,                   // → Coach's Corner — structured { didWell, growthFocus, wordBank } (or raw string if the format pass failed)
+      coachingPart2,                   // → Crisis Moment slot ({ summary, points[] }) or null
+      tomorrowGoal, // always the deterministic value
+      notifications,
+      goalDirective
+    };
+  } catch (error) {
+    console.error('❌ [CDI-COACHING] Error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Restores the exact pre-2026-09-09 Coach's Corner pipeline (commit 513b183) —
+ * a free-form coaching narrative split into generic titled sections — for the
+ * revived first-session ReportScreen.tsx, which still reads coachingCards as
+ * an array of { title, content } sections. Only steps 2+3 of the old
+ * generateCdiCoaching (narrative + format); steps 1/1b/1c (goal directive,
+ * notification copy, mastery update) are skipped on purpose — today's main
+ * generateCdiCoaching call above already computes those correctly and
+ * ReportScreen.tsx's other cards already read that output via
+ * tomorrowGoal/tomorrowGoalDirective. Deliberately uses its own prompt files
+ * (cdiCoaching-legacy.txt / cdiCoachingFormat-legacy.txt) and no Gemini
+ * context cache — matching how this ran in production back then, and keeping
+ * it fully isolated from today's cdiCoaching.txt-backed cache that
+ * generateFirstSessionInsights shares.
+ *
+ * @returns {Promise<{summary: string, sections: Array|null}|null>}
+ */
+async function generateLegacyCdiCoaching(utterances, childInfo, tagCounts = {}, childSpeaker = null, sessionId = null, language = null, fallbackTomorrowGoal = null) {
+  const variables = buildProfilingVariables(childInfo, tagCounts, utterances);
+  variables.LANGUAGE_INSTRUCTION = getLanguageInstruction(language);
+  variables.TOMORROW_GOAL = fallbackTomorrowGoal || 'Continue building connection through play.';
+
+  const prompt = loadPromptWithVariables('cdiCoaching-legacy', variables);
+
+  console.log(`📊 [LEGACY-CDI-COACHING] Step 1: Generating coaching report...`);
+
+  try {
+    const coachingReport = await llmCall(prompt, {
+      model:          'gemini',
+      output:         'text',
+      temperature:    0.5,
+      maxTokens:      16384,
+      timeout:        300_000,
+      label:          'coaching-narrative-legacy',
+      sessionId,
+      alertOnFailure: false, // first-session-only, best-effort — must not page
+    });
+
+    console.log(`✅ [LEGACY-CDI-COACHING] Coaching report received (${coachingReport.length} chars)`);
+    console.log(`📊 [LEGACY-CDI-COACHING] Step 2: Formatting coaching sections...`);
+
+    const formatPrompt = loadPromptWithVariables('cdiCoachingFormat-legacy', {
+      COACHING_REPORT:      coachingReport,
+      LANGUAGE_INSTRUCTION: variables.LANGUAGE_INSTRUCTION || '',
+      CHILD_GENDER:         variables.CHILD_GENDER || 'child',
+    });
+
+    const checkComplete = (result) => {
+      const sections = result?.sections;
+      const totalContentLen = sections?.reduce((sum, s) => sum + (s.content?.length || 0), 0) || 0;
+      return Array.isArray(sections)
+        && sections.length >= 3
+        && sections.every(s => s.title?.trim() && s.content?.trim())
+        && totalContentLen >= coachingReport.length * 0.6;
+    };
+
+    let formatted = null;
+    try {
+      formatted = await withQualityRetry(
+        () => llmCall(formatPrompt, { model: 'gemini', output: 'json', temperature: 0, maxTokens: 8192, timeout: 120_000, schema: SCHEMAS.COACHING_FORMAT_LEGACY, label: 'coaching-format-legacy', sessionId, alertOnFailure: false }),
+        checkComplete,
+        () => llmCall(formatPrompt, { model: 'claude', output: 'json', temperature: 0, maxTokens: 8192, timeout: 120_000, schema: SCHEMAS.COACHING_FORMAT_LEGACY, label: 'coaching-format-legacy-escalated', sessionId, alertOnFailure: false })
+      );
+    } catch (formatError) {
+      console.error('❌ [LEGACY-CDI-COACHING] Format call failed:', formatError.message);
+    }
+
+    console.log(`✅ [LEGACY-CDI-COACHING] Formatted — ${formatted?.sections?.length || 0} sections`);
+
+    return { summary: coachingReport, sections: formatted?.sections || null };
+  } catch (error) {
+    console.error('❌ [LEGACY-CDI-COACHING] Error:', error.message);
+    return null;
+  }
+}
+
+// ============================================================================
+// CDI Feedback Generation (Multi-prompt approach)
+// ============================================================================
+
+/**
+ * Generate combined analysis and feedback prompt for CDI session
+ * Combines analysis and improvement into a single prompt
+ */
+function generateCombinedFeedbackPrompt(counts, utterances, childName = 'the child', language = null) {
+  return `You are an expert in parent-child interaction. Analyze this 5-minute play session with ${childName}.
+
+**Session Metrics:**
+- Labeled Praises: ${counts.praise} (goal: 10+)
+- Reflections: ${counts.echo} (goal: 10+)
+- Behavioral Descriptions: ${counts.narration} (goal: 10+)
+- Questions: ${counts.question} (reduce)
+- Commands: ${counts.command} (reduce)
+- Criticisms: ${counts.criticism} (reduce)
+- Negative Phrases: ${counts.negative_phrases} (eliminate)
+
+**Transcript:**
+${formatUtterancesForPrompt(utterances)}
+
+**Task:**
+1. **Top Moment**: Find the ONE moment that shows the strongest parent-child connection, joy, or positive interaction. Child's utterance is prefered over parent's. Report it as the utterance index RANGE (from the [NN] markers in the transcript) — 1 utterance, or 2-3 consecutive ones if the moment needs the surrounding lines to make sense. Do NOT quote the text yourself; just give the indices.
+
+2. **Feedback**: Be warm and encouraging. within 20 words. Give a opening messages to the session report. Do not mention PCIT, therapy, or clinical terms.
+Example opening messages for feedback:
+- "Today's play made a net emotional deposit — your child felt seen, safe, and connected."
+- "Today's play added only a small deposit — with a few gentle shifts, your emotional massage can feel much more soothing and connecting."
+- "Today's play showed clear progress from last time — your deposits were more consistent, and your child stayed more relaxed and engaged."
+- "Today's play included big emotions and some dysregulation. When stress runs high, deposits don't always land — and that's okay. Consistent emotional massage brings the account back."
+
+3. **Reminder**: Write exactly 2 sentences of encouragement about how improving creates positive experiences for the child. Keep it warm and forward-looking.
+
+4.  **ChildReaction**: Highlight insights about ${childName}'s behavior, to boost the parent's motivation to continue practising the desired skills and avoid undesired skills. Use ${childName}'s name in your response.
+
+5. **Activity**: Infer in a few words what game or activity the parent and child played in this session (e.g. "building blocks", "coloring", "pretend cooking", "puzzle").
+
+Return ONLY valid JSON:
+{
+  "topMoment": {
+    "startUtteranceNumber": index of the first utterance of the moment,
+    "endUtteranceNumber": index of the last utterance of the moment (same as start for a single line)
+  },
+  "Feedback": "2 sentences of opening message",
+  "exampleUtteranceNumber": index of the utterance used as example,
+  "reminder": "2 sentences of encouragement",
+  "ChildReaction":"2-3 sentences",
+  "activity": "a few words describing the game/activity"
+}
+
+Do not mention PCIT, therapy, or clinical terms in the output.
+
+No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` : ''}`;
+}
+
+
+/**
+ * Format utterances for the review-feedback pass
+ * @param {Array} utterances - Utterances with roles and PCIT tags
+ * @returns {string} Formatted transcript string
+ */
+function formatUtterancesForReview(utterances) {
+  return utterances.map((u, i) => {
+    if (u.speaker === SILENT_SPEAKER_ID) {
+      const duration = (u.endTime - u.startTime).toFixed(1);
+      return `[${String(i).padStart(2, '0')}] ⏸️ SILENCE (${duration}s)`;
+    }
+    const roleLabel = u.role === 'adult' ? 'Parent' : u.role === 'child' ? 'Child' : u.speaker;
+    const tagSuffix = u.pcitTag ? ` [${u.pcitTag}]` : '';
+    return `[${String(i).padStart(2, '0')}] ${roleLabel}: "${u.text}"${tagSuffix}`;
+  }).join('\n');
+}
+
+/**
+ * Generate feedback prompt for CDI/PDI session
+ * Writes feedback from scratch for all coded parent utterances and selected silence slots
+ */
+function generateReviewFeedbackPrompt(counts, utterances, isCDI = true, pdiResult = null, language = null) {
+  const commandCoachingSection = isCDI
+    ? `   **For undesirable skills (NTA, DC, IC, Q, UP)**: 1 coaching sentence with a specific PRIDE alternative (BD, LP, or RF) per the DPICS manual. Reference what the parent actually said. Before finalising, verify your suggested alternative: does it contain a "?" → it's a Q; does it direct the child ("put X", "can you...") → it's an IC; does it evaluate negatively → it's NTA. Rephrase until it's a clean PRIDE skill.`
+    : `   **Commands — PDI focus:**
+   - **DC (Direct Command)** is a TARGET SKILL in PDI. Reinforce it warmly. Coach on quality: was it direct, specific, positively phrased, one at a time, age-appropriate, and calm? Do not suggest replacing it with a PRIDE skill.
+   - **IC (Indirect Command)** is still undesirable. Coach the parent toward a DC instead (e.g. "Try stating it directly: 'Please put the block down.'").
+   - **After every DC or IC**, identify the full command sequence across the surrounding utterances:
+     • Did the parent wait ~5 seconds after giving the command? (check the next silence slot or child utterance timing)
+     • Did the child comply or refuse?
+     • If the child refused: did the parent offer a Two-Choice? Was it logical and age-appropriate?
+     • Was follow-through consistent — brief and matter-of-fact, without nagging or over-explaining?
+     • Was LP used immediately after the child complied?
+     Attach coaching to the specific utterance ID where the breakdown occurred (or reinforce the utterance where it went well).
+   **For all other undesirable skills (NTA, Q, UP)**: 1 coaching sentence with a specific PRIDE alternative per the DPICS manual. Verify the alternative contains no "?", no directives, and no negative evaluations.`;
+
+  const metricsSection = isCDI
+    ? `- Labeled Praises: ${counts.praise} (goal: 10+)
+- Reflections/Echo: ${counts.echo} (goal: 10+)
+- Behavioral Descriptions/Narration: ${counts.narration} (goal: 10+)
+- Questions: ${counts.question} (reduce)
+- Commands: ${counts.command} (reduce)
+- Criticisms: ${counts.criticism} (reduce)`
+    : `- Direct Commands: ${counts.direct_command} (use consistently — this is the goal)
+- Indirect Commands: ${counts.indirect_command} (reduce — convert to Direct Commands)
+- Labeled Praises: ${counts.praise} (use after child compliance as success marker)
+- Questions: ${counts.question} (reduce during discipline sequences)
+- Criticisms: ${counts.criticism} (eliminate)`;
+
+  const pdiTwoChoicesSection = (!isCDI && pdiResult)
+    ? `\n**PDI Two Choices Flow Analysis:**\n${JSON.stringify({ pdiSkills: pdiResult.pdiSkills, commandSequences: pdiResult.commandSequences }, null, 2)}\n\nUse this analysis to inform feedback on command sequences. Reference specific command sequences when coaching on DC/IC utterances.\n`
+    : '';
+
+  return `You are an expert PCIT parent-child interaction therapist. You have access to the DPICS manual and Appendix A (sufficiently positive words). Refer to them when writing suggested alternatives for undesirable skills.
+
+**Session Metrics:**
+${metricsSection}
+${pdiTwoChoicesSection}
+**Full Session Transcript:**
+${formatUtterancesForReview(utterances)}
+
+**Your Task:**
+1. Write feedback for every coded Parent utterance (those with a DPICS tag in brackets).
+   **For desirable skills (LP, BD, RF, RQ)**: 1 short warm sentence reinforcing what the parent did well. Reference what they actually said — be specific, not generic. You may add an "additional_tip" only if it is extremely insightful and would help the parent improve their overall performance.
+   **For neutral codes (AK, ID, TC, NC)**: set feedback to null — skip these.
+   Child utterances have no tag — skip them entirely.
+${commandCoachingSection}
+
+2. Identify any silence slots that:
+   - Are good opportunities for the parent to practice skills
+   - Come at natural moments (not awkward pauses)
+   - Would benefit from coaching tips${isCDI ? ' (PEN skills)' : ' (e.g. strategic wait time after a command)'}
+
+**Output Format:**
+Return ONLY a valid JSON array. Each item has:
+- "id": the utterance index number (from [XX] in the transcript)
+- "feedback": revised feedback string (1-2 sentences, warm and specific)
+- "additional_tip": optional extra tip for desirable skills (null if not applicable)
+
+**Rules:**
+- Include ALL parent utterances that have a DPICS tag
+- Maximum 3 silence slots
+- Be specific — reference what the parent actually said, never write generic boilerplate
+- Suggested alternatives must be valid PRIDE skills — verify no "?", no directives, no negative evaluations
+- Return ONLY the JSON array, no other text
+
+No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` : ''}`;
+}
+
+/**
+ * Orchestrator function for multi-prompt feedback (CDI and PDI)
+ * @param {Object} counts - Tag counts from PCIT coding
+ * @param {Array} utterances - Utterances with tags
+ * @param {string} childName - Child's name for personalized feedback
+ * @param {boolean} isCDI - true for CDI sessions, false for PDI
+ * @param {Object|null} [goalDirective] - Tomorrow's deterministic goal (see levelGoalEngine.cjs)
+ *   — { focusSkill, currentNumber, targetNumber, goalType, actionPrompt, coachingTip }. CDI only
+ *   (computed before this call in generateCdiCoaching); null for PDI sessions.
+ * @returns {Promise<Object>} Assembled feedback result
+ */
+async function generateCDIFeedback(counts, utterances, childName, isCDI = true, pdiResult = null, sessionId = null, language = null, coachingNarrativeText = null, goalDirective = null) {
+  console.log(`🚀 [CDI-FEEDBACK] Starting feedback generation (mode: ${isCDI ? 'CDI' : 'PDI'})...`);
+
+  // Call 1 (combined-feedback), Call 2 (review-feedback), Call 3
+  // (crisis-coaching), and Call 4 (skill-improve) are independent of each
+  // other — none consumes another's output, they only share `counts`/
+  // `utterances`/`pdiResult`/`coachingNarrativeText`/`goalDirective`, all of
+  // which are already available — so run all four in parallel rather than
+  // awaiting combined-feedback first.
+  console.log('📝 [CDI-FEEDBACK] Running combined-feedback + review-feedback + crisis-coaching + skill-improve in parallel...');
+
+  const combinedFeedbackPromise = llmCall(
+    withChildNameDirective(generateCombinedFeedbackPrompt(counts, utterances, childName, language), childName),
+    { profile: 'combined-feedback', schema: SCHEMAS.COMBINED_FEEDBACK, label: 'combined-feedback', sessionId }
+  );
+
+  const reviewFeedbackPromise = (async () => {
+    try {
+      const dpicsSystemPrompt = loadPrompt('dpicsCoding-agentic-v10-4') + (!isCDI ? `
+
+**PDI SESSION — Feedback Override for Commands:**
+This is a PDI (Parent-Directed Interaction) session. The rules above apply for coding, but the feedback generation strategy for commands is different:
+- **DC (Direct Command)**: DC is a TARGET SKILL in PDI. Do NOT suggest replacing it with a PRIDE skill. Instead, briefly reinforce it or coach on quality (e.g. was it direct, specific, calm, positively phrased?).
+- **IC (Indirect Command)**: Still undesirable. Coach toward a DC instead (e.g. "Try stating it directly: 'Please put the block down.'"). Do NOT suggest using BD or LP.
+All other feedback rules remain the same.` : '');
+
+      const reviewPrompt = generateReviewFeedbackPrompt(counts, utterances, isCDI, pdiResult, language);
+      // review-feedback shares the DPICS context cache with pcit-coding (see dpicsCacheKey).
+      // Gemini requires the generateContent model and the CachedContent model to match, so
+      // this call must run on the same model as coding ($GEMINI_STREAMING_MODEL), not the
+      // 'gemini' default — and the cache key is model-qualified to match.
+      const reviewModel = process.env.GEMINI_STREAMING_MODEL || undefined;
+      const reviewData = await llmCall(withChildNameDirective(reviewPrompt, childName), {
+        profile: 'review-feedback',
+        ...(reviewModel ? { model: reviewModel } : {}),
+        cache: {
+          key:         dpicsCacheKey(isCDI),
+          primaryFile: DPICS_PDF_PATH,
+          systemPrompt: dpicsSystemPrompt,
+        },
+        label:    'review-feedback',
+        sessionId,
+      });
+      const revisedFeedback = Array.isArray(reviewData) ? reviewData : [];
+      console.log('✅ [CDI-FEEDBACK] Review feedback result:', JSON.stringify(revisedFeedback).substring(0, 300));
+      return revisedFeedback;
+    } catch (reviewError) {
+      console.error('⚠️ [CDI-FEEDBACK] Review feedback failed, continuing without revised feedback:', reviewError.message);
+      return [];
+    }
+  })();
+
+  const crisisPromise = generateCrisis(utterances, coachingNarrativeText, childName, goalDirective, sessionId, language);
+  const skillImprovePromise = generateSkillImprove(utterances, goalDirective, childName, sessionId, language);
+
+  const [feedbackData, revisedFeedback, crisisResult, skillImproveResult] = await Promise.all([
+    combinedFeedbackPromise, reviewFeedbackPromise, crisisPromise, skillImprovePromise
+  ]);
+
+  console.log('✅ [CDI-FEEDBACK] Combined feedback result:', JSON.stringify(feedbackData).substring(0, 300));
+
+  // Rebuild the top-moment quote from the transcript rather than the LLM's
+  // typed-back text (see quoteFromUtteranceRange). `topMoment` stays a plain
+  // string — downstream (weeklyReportService, recordings route, mobile
+  // fallback) reads it as one.
+  const fbTop = quoteFromUtteranceRange(
+    utterances,
+    feedbackData.topMoment?.startUtteranceNumber,
+    feedbackData.topMoment?.endUtteranceNumber,
+    { withRoleLabels: false, maxSpan: 3 },
+  );
+
+  // Assemble final result
+  const result = {
+    topMoment: fbTop?.quote ?? null,
+    topMomentUtteranceNumber: fbTop?.utteranceNumber ?? null,
+    heroText: crisisResult?.heroText || null,
+    crisisMoment: crisisResult?.crisisMoment || null,
+    skillCoaching: crisisResult?.skillCoaching || null,
+    bondingMoment: crisisResult?.topMoment || null,
+    skillImprove: skillImproveResult || null,
+    feedback: feedbackData.Feedback,
+    example: feedbackData.exampleUtteranceNumber,
+    childReaction: feedbackData.ChildReaction,
+    reminder: feedbackData.reminder,
+    activity: feedbackData.activity || null,
+    revisedFeedback: revisedFeedback  // Array of {id, feedback, additional_tip}
+  };
+
+  console.log('✅ [CDI-FEEDBACK] Feedback generation complete');
+  return result;
+}
+
+// ============================================================================
+// Report Highlights — Hero Text, Top-Moment Celebration, Interaction Tip,
+// and Crisis-Moment Extraction, all from the already-generated coaching
+// narrative (not the raw transcript)
+// ============================================================================
+
+/**
+ * Build the report-highlights prompt. Reads the already-generated coaching
+ * narrative (coachingSummary for CDI, pdiResult.summary for PDI) plus the
+ * identified top-moment quote — cheaper than re-reading the full transcript,
+ * and the narrative already synthesizes any hard moment in the session.
+ */
+function generateReportHighlightsPrompt(coachingText, topMomentQuote, counts, childName, language = null) {
+  return `You are reviewing a parent coaching summary written after a parent-child play session with ${childName}.
+
+**Session Metrics:**
+- Labeled Praises: ${counts.praise}
+- Reflections: ${counts.echo}
+- Behavioral Descriptions: ${counts.narration}
+- Questions: ${counts.question}
+- Commands: ${counts.command}
+- Criticisms: ${counts.criticism}
+
+**Coaching Summary:**
+${coachingText}
+${topMomentQuote ? `\n**Top Moment Quote (already selected as the session's highlight):**\n"${topMomentQuote}"\n` : ''}
+**Task:**
+1. **Hero Text**: Write one short, warm sentence (under 25 words) for the top of the report, reflecting what actually happened this session. If the summary describes ${childName} showing big emotions, a meltdown, refusal, or dysregulation that the parent helped with, write something like "You stayed calm and helped ${childName} start to recover." adapted to the specifics. If the session was calm and positive throughout, write an encouraging line about the connection instead — do NOT invent a crisis that isn't in the summary.
+
+2. **Top Moment Celebration**: One short, warm sentence (under 20 words) celebrating the Top Moment quote above specifically — what makes this exact moment worth celebrating. If no quote is given, celebrate the session's strongest positive moment described in the summary instead.
+
+3. **Interaction Tip**: One short, encouraging sentence (under 25 words) about today's overall interaction pattern — reference something specific that went well or is worth continuing, grounded in the metrics and summary above. Do not mention PCIT, therapy, or clinical terms.
+
+4. **Crisis Moment**: Determine whether the summary describes a real distress moment (crying, tantrum, meltdown, dysregulation, refusal, big emotions).
+   - If YES: set detected=true, write a short title (2-4 words), a 1-2 sentence description of what happened, and 1-3 short phrases (a few words each) describing what specifically helped ${childName} recover — skills or actions the parent used, drawn from the summary.
+   - If NO: set detected=false, and leave title/description as empty strings and whatHelped as an empty array.
+
+Return ONLY valid JSON:
+{
+  "heroText": "one short warm sentence",
+  "topMomentCelebration": "one short warm sentence celebrating the top moment",
+  "interactionTip": "one short encouraging sentence about today's interaction pattern",
+  "crisisMoment": {
+    "detected": true or false,
+    "title": "short title or empty string",
+    "description": "1-2 sentences or empty string",
+    "whatHelped": ["short phrase", "short phrase"]
+  }
+}
+
+No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` : ''}`;
+}
+
+/**
+ * Generate hero banner text, top-moment celebration, interaction-style tip,
+ * and extract a structured crisis moment (if any) — all from the session's
+ * already-generated coaching narrative plus its identified top-moment quote.
+ * @param {string|null} coachingText - coachingSummary (CDI) or pdiResult.summary (PDI)
+ * @param {string|null} topMomentQuote - the quote identified by combined-feedback
+ * @param {Object} counts - tag counts, for the interaction tip's grounding metrics
+ * @returns {Promise<{heroText, topMomentCelebration, interactionTip, crisisMoment}|null>}
+ */
+async function generateReportHighlights(coachingText, topMomentQuote, counts, childName, sessionId = null, language = null) {
+  if (!coachingText) {
+    console.log('⚠️ [REPORT-HIGHLIGHTS] No coaching narrative available, skipping');
+    return null;
+  }
+
+  console.log('📊 [REPORT-HIGHLIGHTS] Generating hero text, celebration, interaction tip, crisis moment...');
+  try {
+    const result = await llmCall(withChildNameDirective(generateReportHighlightsPrompt(coachingText, topMomentQuote, counts, childName, language), childName), {
+      profile: 'report-highlights',
+      schema:  SCHEMAS.REPORT_HIGHLIGHTS,
+      label:   'report-highlights',
+      sessionId,
+    });
+    console.log(`✅ [REPORT-HIGHLIGHTS] crisisMoment.detected=${result?.crisisMoment?.detected}`);
+    return {
+      heroText: result?.heroText || null,
+      topMomentCelebration: result?.topMomentCelebration || null,
+      interactionTip: result?.interactionTip || null,
+      crisisMoment: result?.crisisMoment || null
+    };
+  } catch (error) {
+    console.error('❌ [REPORT-HIGHLIGHTS] Error:', error.message);
+    return null;
+  }
+}
+
+// ============================================================================
+// Crisis Coaching — Hero Text + a free-form coaching report for a detected
+// distress moment, grounded in the raw transcript (not just the coaching
+// narrative) so the "what helped" / "what to try" guidance can cite specifics.
+// ============================================================================
+
+/**
+ * Build the crisis-coaching prompt. Reads the raw transcript AND the
+ * already-generated coaching narrative — unlike generateReportHighlights,
+ * which only reads the narrative — so the crisis writeup can ground its
+ * advice in the actual moment-by-moment exchange, not just its summary.
+ * @param {Object|null} goalDirective - Tomorrow's deterministic goal (see
+ *   levelGoalEngine.cjs) — { focusSkill, currentNumber, targetNumber,
+ *   actionPrompt, coachingTip }. currentNumber is this session's actual
+ *   count for that goal's skill/avoid-item. May be null (e.g. PDI, or a
+ *   session-count-gated goal with no single-session number) — the skill
+ *   coaching task degrades gracefully without a number in that case.
+ */
+function generateCrisisPrompt(utterances, coachingText, childName, goalDirective, language = null) {
+  const goalSection = goalDirective
+    ? `**Tomorrow's Goal:** ${goalDirective.focusSkill}${goalDirective.currentNumber != null ? `\n**This session's count for that goal:** ${goalDirective.currentNumber}` : ''}
+**Goal action:** ${goalDirective.actionPrompt || ''}`
+    : '**Tomorrow\'s Goal:** not available for this session.';
+
+  return `You are reviewing a parent coaching summary written after a parent-child play session with ${childName}.
+
+**Session Transcript:**
+${formatUtterancesForPrompt(utterances)}
+
+**Coaching Summary:**
+${coachingText}
+
+${goalSection}
+
+**Task:**
+1. **Hero Text**: Write one short, warm encouragement sentence (under 10 words) for the top of the report, reflecting what actually happened this session.
+
+2. **Crisis Moment**: Determine whether the transcript/summary describes a real distress moment (crying, tantrum, meltdown, dysregulation, refusal, big emotions).
+   - If YES: set detected=true, write a short title (2-4 words), and a coaching report for the tensed parent — think about what the parent needs at this exact moment. Cover, as short labeled paragraphs separated by blank lines: what happened, why it happened (optional), and if what the parent did helped the child, highlight that specifically; if the parent seemed helpless in the situation, tell them what would have helped instead. End with a short "Try this next time" section as 2-4 bullet points of alternative actionable tips.
+     Format the "coaching" text for easy mobile reading:
+     - Use **bold** on the 2-5 most important phrases (what worked, key techniques, the core cause).
+     - Separate each paragraph/section with a blank line (\n\n).
+     - Write the closing tips as • bullet points, one per line.
+   - If NO: set detected=false, and leave title and coaching as empty strings.
+
+3. **Skill Coaching**: Write a short coaching section (3-5 sentences) about tomorrow's goal skill above, grounded in what actually happened this session (the count given, and specific moments from the transcript). Focus on insights about how ${childName} responded — in the transcript — around that skill or behavior, not on judging the parent's performance. Keep the tone soft and child-focused; do not trigger the parent's defensiveness (avoid phrases like "you didn't" or "you should have"). If no goal is available, skip this gently — return an empty string.
+
+4. **Top Moment**: Find 2-3 CONSECUTIVE utterances from the transcript that best capture a bonding moment, or that highlight ${childName}'s personality or development — the kind of exchange that melts a parent's heart. Report ONLY the utterance index range (the [NN] markers) — the first and last index of the run. Do NOT quote or retype the text; it is reconstructed from the transcript. Also write a 1-2 sentence description of the context (what was happening right before/around it).
+
+Return ONLY valid JSON:
+{
+  "heroText": "one short warm sentence",
+  "crisisMoment": {
+    "detected": true or false,
+    "title": "short title or empty string",
+    "coaching": "formatted coaching report with **bold**, blank-line paragraphs, and • bullet tips — or empty string"
+  },
+  "skillCoaching": "3-5 sentences about tomorrow's goal skill, grounded in this session — or empty string",
+  "topMoment": {
+    "startUtteranceNumber": index of the first utterance in the run,
+    "endUtteranceNumber": index of the last utterance in the run,
+    "context": "1-2 sentences describing what was happening"
+  }
+}
+
+No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` : ''}`;
+}
+
+/**
+ * Generate hero banner text, a free-form crisis coaching report, a skill
+ * coaching note for tomorrow's goal, and a "top moment" bonding exchange —
+ * all grounded in the raw transcript plus the session's already-generated
+ * coaching narrative. Uses Gemini (streaming under the hood via the
+ * gateway, same as every other 'gemini'-model call — see
+ * llm/gateway.cjs's _geminiStreamCall routing).
+ * @param {Array} utterances - Utterances with roles (role/text at minimum)
+ * @param {string|null} coachingText - coachingSummary (CDI) or pdiResult.summary (PDI)
+ * @param {string} childName
+ * @param {Object|null} [goalDirective] - see generateCrisisPrompt's jsdoc
+ * @param {string|null} [sessionId]
+ * @param {string|null} [language]
+ * @returns {Promise<{heroText, crisisMoment, skillCoaching, topMoment}|null>}
+ */
+async function generateCrisis(utterances, coachingText, childName, goalDirective = null, sessionId = null, language = null) {
+  if (!coachingText || !utterances || utterances.length === 0) {
+    console.log('⚠️ [CRISIS-COACHING] No coaching narrative or transcript available, skipping');
+    return null;
+  }
+
+  console.log('📊 [CRISIS-COACHING] Generating hero text, crisis coaching, skill coaching, top moment...');
+  try {
+    const result = await llmCall(withChildNameDirective(generateCrisisPrompt(utterances, coachingText, childName, goalDirective, language), childName), {
+      profile: 'crisis-coaching',
+      schema:  SCHEMAS.CRISIS_COACHING,
+      label:   'crisis-coaching',
+      sessionId,
+    });
+    console.log(`✅ [CRISIS-COACHING] crisisMoment.detected=${result?.crisisMoment?.detected}`);
+
+    // Reconstruct the bonding-exchange quote from the transcript rather than
+    // the LLM's typed-back text (see quoteFromUtteranceRange). Keeps the
+    // { quote, utteranceNumber, context } shape the mobile Top Moment card
+    // expects, plus endUtteranceNumber for its audio-range timing.
+    let topMoment = null;
+    const rawTop = result?.topMoment;
+    if (rawTop) {
+      const rebuilt = quoteFromUtteranceRange(
+        utterances,
+        rawTop.startUtteranceNumber,
+        rawTop.endUtteranceNumber,
+        { withRoleLabels: true, maxSpan: 3 },
+      );
+      if (rebuilt) topMoment = { ...rebuilt, context: rawTop.context || '' };
+    }
+
+    return {
+      heroText: result?.heroText || null,
+      crisisMoment: result?.crisisMoment || null,
+      skillCoaching: result?.skillCoaching || null,
+      topMoment,
+    };
+  } catch (error) {
+    console.error('❌ [CRISIS-COACHING] Error:', error.message);
+    return null;
+  }
+}
+
+// ============================================================================
+// Skill Improve — session-grounded opportunities to build/reduce the
+// session's target skill, for the "Improve/Remove {skill} in this session"
+// link on the mobile report.
+// ============================================================================
+
+const GOAL_TYPE_IMPROVE_GUIDANCE = {
+  BUILD_PRAISE: `Look for unlabeled praise (UP) utterances and show how adding a specific label
+(what exactly was good — the action, effort, or product) turns them into labeled praise (LP).
+Also look for behavioral descriptions (BD) or neutral talk about something the child did well
+that could have been labeled praise instead.`,
+  BUILD_NARRATION: `Look for silence slots, or moments where the parent asked a question (Q) or
+gave a command (IC/DC) instead of describing what the child was doing — show how a behavioral
+description (BD) could have fit there instead.`,
+  BUILD_ECHO: `Look for child talk that went without a reflection — show how the parent could
+have echoed/reflected (RF) the child's words instead of moving on or asking a new question.`,
+  BUILD_COMMANDS: `(PDI) Look for indirect commands (IC) phrased as questions or vague requests —
+show how to rephrase as a direct, specific, positively-stated command (DC).`,
+  AVOID_COMMANDS: `Look for commands (DC/IC) and show a labeled praise, reflection, or behavioral
+description that could have replaced it in the moment.`,
+  AVOID_QUESTIONS: `Look for questions (Q) used instead of a behavioral description or reflection
+— show the non-question alternative.`,
+  AVOID_CRITICISM: `Look for criticism (NTA) and show a neutral or positive reframe instead.`,
+};
+const DEFAULT_IMPROVE_GUIDANCE = `Look at the overall balance of skills used this session and
+suggest 2-3 specific moments that could be sharpened.`;
+
+/**
+ * Build the skill-improve prompt. Reuses the same transcript formatting as
+ * generateCrisisPrompt and the same "cite the index range, don't retype the
+ * quote" convention so quoteFromUtteranceRange can rebuild it verbatim.
+ * @param {Array} utterances - Utterances with roles/pcitTag (same array passed to generateCrisis)
+ * @param {Object} goalDirective - { focusSkill, goalType, ... } — see generateCrisisPrompt's jsdoc
+ * @param {string} childName
+ * @param {string|null} [language]
+ */
+function generateSkillImprovePrompt(utterances, goalDirective, childName, language = null) {
+  const guidance = GOAL_TYPE_IMPROVE_GUIDANCE[goalDirective.goalType] || DEFAULT_IMPROVE_GUIDANCE;
+  const direction = goalDirective.goalType?.startsWith('AVOID_') ? 'AVOID' : 'BUILD';
+
+  return `You are a PCIT coach reviewing a parent-child play session transcript with ${childName},
+looking specifically for moments related to this session's target skill: **${goalDirective.focusSkill}**.
+
+**Session Transcript:**
+${formatUtterancesForPrompt(utterances)}
+
+**What to look for:**
+${guidance}
+
+**Task:**
+Find 2-4 concrete opportunities in the transcript above where the parent could have done this
+better (if direction is BUILD) or done less of this (if direction is AVOID). For each one:
+- Give a short, specific title (e.g. "Turn this into labeled praise").
+- Explain in 1-2 sentences why it's an opportunity, grounded in what actually happened.
+- If a specific utterance or short exchange demonstrates it, report ONLY the utterance index
+  range (the [NN] markers) — the first and last index of the run (max 3 consecutive utterances).
+  Do NOT quote or retype the text; it will be reconstructed from the transcript. If no single
+  utterance captures it (e.g. a general pattern across the session), leave the range as null.
+- Where it helps, write a short suggestedRewrite: what the parent could say instead, in a warm,
+  natural voice — grounded in the same moment, not generic advice.
+
+Also write a 1-2 sentence summary of the overall opportunity this session presents for
+**${goalDirective.focusSkill}**.
+
+Return ONLY valid JSON:
+{
+  "direction": "${direction}",
+  "summary": "1-2 sentence overview",
+  "opportunities": [
+    {
+      "title": "short title",
+      "explanation": "1-2 sentences",
+      "startUtteranceNumber": index or null,
+      "endUtteranceNumber": index or null,
+      "suggestedRewrite": "what the parent could say instead, or null"
+    }
+  ]
+}
+
+No markdown code fences.${language ? `\n\n${getLanguageInstruction(language)}` : ''}`;
+}
+
+/**
+ * Generate session-grounded opportunities to build or reduce the session's
+ * target skill. Skips (returns null) when no goal directive is available —
+ * mirrors generateCrisis's guard.
+ * @param {Array} utterances
+ * @param {Object|null} goalDirective
+ * @param {string} childName
+ * @param {string|null} [sessionId]
+ * @param {string|null} [language]
+ * @returns {Promise<{skillLabel, direction, summary, opportunities}|null>}
+ */
+async function generateSkillImprove(utterances, goalDirective, childName, sessionId = null, language = null) {
+  if (!goalDirective || !utterances || utterances.length === 0) {
+    console.log('⚠️ [SKILL-IMPROVE] No goal directive or transcript available, skipping');
+    return null;
+  }
+
+  console.log(`📊 [SKILL-IMPROVE] Generating opportunities for ${goalDirective.focusSkill}...`);
+  try {
+    const result = await llmCall(withChildNameDirective(generateSkillImprovePrompt(utterances, goalDirective, childName, language), childName), {
+      profile: 'skill-improve',
+      schema:  SCHEMAS.SKILL_IMPROVE,
+      label:   'skill-improve',
+      sessionId,
+    });
+
+    const opportunities = (result?.opportunities || []).map(o => ({
+      title: o.title,
+      explanation: o.explanation,
+      quote: quoteFromUtteranceRange(
+        utterances,
+        o.startUtteranceNumber,
+        o.endUtteranceNumber,
+        { withRoleLabels: false, maxSpan: 3 },
+      )?.quote ?? null,
+      suggestedRewrite: o.suggestedRewrite || null,
+    }));
+
+    console.log(`✅ [SKILL-IMPROVE] direction=${result?.direction}, opportunities=${opportunities.length}`);
+    return {
+      skillLabel: goalDirective.focusSkill,
+      direction: result?.direction || 'BUILD',
+      summary: result?.summary || '',
+      opportunities,
+    };
+  } catch (error) {
+    console.error('❌ [SKILL-IMPROVE] Error:', error.message);
+    return null;
+  }
+}
+
+// ============================================================================
+// PDI Two Choices Flow Analysis
+// ============================================================================
+
+/**
+ * Generate PDI Two Choices Flow analysis
+ * Evaluates the parent on 4 discipline skills from the Two Choices Flow framework
+ * @param {Array} utterances - Utterances with roles and PCIT tags
+ * @param {string} childName - Child's name for personalized feedback
+ * @returns {Promise<Object|null>} PDI analysis result or null on failure
+ */
+async function generatePDITwoChoicesAnalysis(utterances, childName, sessionId = null, language = null) {
+  console.log('🎯 [PDI-TWO-CHOICES] Starting Two Choices Flow analysis...');
+
+  const transcript = utterances
+    .filter(u => u.speaker !== SILENT_SPEAKER_ID)
+    .map((u) => `${u.speaker}: ${u.text}`)
+    .join('\n');
+
+  const prompt = loadPromptWithVariables('pdiTwoChoicesFlow', {
+    CHILD_NAME: childName || 'the child',
+    TRANSCRIPT: transcript,
+    LANGUAGE_INSTRUCTION: getLanguageInstruction(language)
+  });
+
+  try {
+    const result = await llmCall(withChildNameDirective(prompt, childName), {
+      profile:  'pdi-two-choices',
+      schema:   SCHEMAS.PDI_TWO_CHOICES,
+      label:    'pdi-two-choices',
+      sessionId,
+    });
+    const pdiSkills = result?.pdiSkills;
+
+    if (!Array.isArray(pdiSkills) || pdiSkills.length === 0) {
+      console.error('⚠️ [PDI-TWO-CHOICES] Invalid response structure, expected pdiSkills array');
+      return null;
+    }
+
+    console.log(`✅ [PDI-TWO-CHOICES] Analysis complete — ${pdiSkills.length} skills evaluated`);
+    return {
+      pdiSkills,
+      commandSequences: result.commandSequences || [],
+      tomorrowGoal: result.tomorrowGoal || null,
+      encouragement: result.encouragement || null,
+      summary: result.summary || null,
+    };
+  } catch (error) {
+    console.error('❌ [PDI-TWO-CHOICES] Error:', error.message);
+    return null;
+  }
+}
+
+// ============================================================================
+// Role Identification — 3-way Majority Vote
+// ============================================================================
+
+/**
+ * Identify speaker roles using three independent methods in parallel:
+ *   1. Gemini (fast)   — transcript-based LLM
+ *   2. Claude Sonnet   — transcript-based LLM (second opinion, on disagreement only)
+ *   3. ML Lambda       — acoustic model (USC SAIL whisper LoRA)
+ *
+ * For each speaker, the role that receives ≥2 votes wins.
+ * Any individual failure is tolerated; the function only throws if all three fail.
+ *
+ * @param {Array}  utterancesForPrompt  Utterances formatted for the role-ID prompt
+ * @param {Array}  utterances           Full utterance records (for ML segment map)
+ * @param {string} storagePath          S3 key of the audio file
+ * @param {string} sessionId
+ * @returns {{ roleIdentificationJson: Object, roleMap: Object }}
+ *   roleMap: { speaker_0: 'adult', speaker_1: 'child', ... }  (lowercase)
+ */
+async function identifyRolesWithVoting(utterancesForPrompt, utterances, storagePath, sessionId) {
+  const prompt = loadPromptWithVariables('roleIdentification', {
+    UTTERANCES_JSON: JSON.stringify(utterancesForPrompt, null, 2)
+  });
+
+  // ── Phase 1: Gemini + ML in parallel ─────────────────────────────────────
+  console.log(`📊 [ROLE-ID-VOTE] Phase 1: Gemini + ML in parallel...`);
+
+  const [geminiSettled, mlSettled] = await Promise.allSettled([
+    llmCall(prompt, {
+      profile:  'role-identification',
+      label:    'role-id-gemini',
+      sessionId,
+    }),
+    classifySpeakersML(storagePath, utterances, sessionId)
+  ]);
+
+  const votes = [];
+
+  if (geminiSettled.status === 'fulfilled' && geminiSettled.value?.speaker_identification) {
+    const map = {};
+    for (const [id, info] of Object.entries(geminiSettled.value.speaker_identification)) {
+      map[id] = (info.role || '').toLowerCase();
+    }
+    votes.push({ source: 'gemini', map, full: geminiSettled.value });
+    console.log(`✅ [ROLE-ID-VOTE] Gemini: ${JSON.stringify(map)}`);
+  } else {
+    console.warn(`⚠️ [ROLE-ID-VOTE] Gemini failed: ${geminiSettled.reason?.message}`);
+  }
+
+  if (mlSettled.status === 'fulfilled' && mlSettled.value) {
+    const map = {};
+    const conf = {};
+    for (const [id, info] of Object.entries(mlSettled.value)) {
+      if (info.role && info.role !== 'unknown') {
+        map[id] = info.role.toLowerCase();
+        conf[id] = info.confidence;
+      }
+    }
+    if (Object.keys(map).length > 0) {
+      votes.push({ source: 'ml', map, conf, full: mlSettled.value });
+      console.log(`✅ [ROLE-ID-VOTE] ML: ${JSON.stringify(map)}`);
+    }
+  } else {
+    console.warn(`⚠️ [ROLE-ID-VOTE] ML failed: ${mlSettled.reason?.message || 'no result'}`);
+  }
+
+  if (votes.length === 0) {
+    throw new Error('Both Gemini and ML role identification failed');
+  }
+
+  // ── Check for disagreements ───────────────────────────────────────────────
+  const allSpeakers = new Set(votes.flatMap(v => Object.keys(v.map)));
+  const disagreements = [];
+
+  if (votes.length >= 2) {
+    for (const speakerId of allSpeakers) {
+      const speakerVotes = votes.map(v => v.map[speakerId]).filter(Boolean);
+      if (new Set(speakerVotes).size > 1) {
+        disagreements.push(speakerId);
+        console.warn(`⚠️ [ROLE-ID-VOTE] ${speakerId} disagreement: ${votes.map(v => `${v.source}→${v.map[speakerId] ?? '?'}`).join(' | ')}`);
+      }
+    }
+  }
+
+  // ── Phase 2: Claude tiebreaker (only on disagreement) ────────────────────
+  if (disagreements.length > 0) {
+    console.log(`📊 [ROLE-ID-VOTE] Phase 2: Claude resolving ${disagreements.length} disagreement(s)...`);
+    try {
+      const claudeResult = await llmCall(prompt, {
+        profile:  'role-id-tiebreaker',
+        label:    'role-id-claude',
+        sessionId,
+      });
+      if (claudeResult?.speaker_identification) {
+        const map = {};
+        for (const [id, info] of Object.entries(claudeResult.speaker_identification)) {
+          map[id] = (info.role || '').toLowerCase();
+        }
+        votes.push({ source: 'claude', map, full: claudeResult });
+        console.log(`✅ [ROLE-ID-VOTE] Claude: ${JSON.stringify(map)}`);
+      }
+    } catch (claudeError) {
+      console.warn(`⚠️ [ROLE-ID-VOTE] Claude failed: ${claudeError.message}`);
+    }
+  }
+
+  // ── Majority vote per speaker ─────────────────────────────────────────────
+  const uttCounts = {};
+  for (const u of utterances) {
+    if (u.speaker && u.speaker !== SILENT_SPEAKER_ID) {
+      uttCounts[u.speaker] = (uttCounts[u.speaker] || 0) + 1;
+    }
+  }
+
+  const roleMap = {};
+  const voteDetail = {};
+
+  for (const speakerId of allSpeakers) {
+    const speakerVotes = votes
+      .map(v => ({ source: v.source, role: v.map[speakerId], ...(v.conf?.[speakerId] !== undefined && { confidence: v.conf[speakerId] }) }))
+      .filter(v => v.role);
+    const adultN = speakerVotes.filter(v => v.role === 'adult').length;
+    const childN = speakerVotes.filter(v => v.role === 'child').length;
+
+    let winner;
+    if (adultN > childN) winner = 'adult';
+    else if (childN > adultN) winner = 'child';
+    else winner = speakerVotes[0]?.role || 'adult';  // tie: first available
+
+    roleMap[speakerId] = winner;
+    voteDetail[speakerId] = { adult: adultN, child: childN, winner, votes: speakerVotes };
+  }
+
+  const sources = votes.map(v => v.source);
+  console.log(`✅ [ROLE-ID-VOTE] Final (${sources.join('+')}): ${JSON.stringify(roleMap)}`);
+
+  // ── Build roleIdentificationJson ──────────────────────────────────────────
+  const baseFull = (votes.find(v => v.source === 'gemini') || votes.find(v => v.source === 'claude'))?.full;
+  const baseSpeakers = baseFull?.speaker_identification || {};
+
+  const mlVote = votes.find(v => v.source === 'ml');
+
+  // ── Fallback: every speaker labeled ADULT ────────────────────────────────
+  // A PCIT play session always contains a child. If role-ID came back with no
+  // CHILD at all, demote the speaker whose ADULT call is weakest — lowest LLM
+  // confidence, falling back to ML confidence — to CHILD.
+  const allSpeakerIds = Object.keys(roleMap);
+  if (allSpeakerIds.length >= 2 && allSpeakerIds.every(id => roleMap[id] === 'adult')) {
+    const confidenceOf = (id) => {
+      const llmConf = baseSpeakers[id]?.confidence;
+      if (typeof llmConf === 'number') return llmConf;
+      const mlConf = mlVote?.conf?.[id];
+      if (typeof mlConf === 'number') return mlConf;
+      return 1;  // no confidence signal → treat as certain so it isn't picked
+    };
+    const leastConfident = allSpeakerIds.reduce((lo, id) =>
+      confidenceOf(id) < confidenceOf(lo) ? id : lo
+    );
+    console.warn(`⚠️ [ROLE-ID-VOTE] All ${allSpeakerIds.length} speakers labeled ADULT — demoting least-confident speaker ${leastConfident} (confidence ${confidenceOf(leastConfident)}) to CHILD`);
+    roleMap[leastConfident] = 'child';
+    if (voteDetail[leastConfident]) {
+      voteDetail[leastConfident].winner = 'child';
+      voteDetail[leastConfident].all_adult_fallback = true;
+    }
+  }
+
+  const speaker_identification = {};
+  for (const [speakerId, role] of Object.entries(roleMap)) {
+    const existing = baseSpeakers[speakerId] || {};
+    speaker_identification[speakerId] = {
+      ...existing,
+      role: role.toUpperCase(),
+      utterance_count: uttCounts[speakerId] || existing.utterance_count || 0,
+      ...(mlVote?.conf?.[speakerId] !== undefined && { _ml_confidence: mlVote.conf[speakerId] })
+    };
+  }
+
+  return {
+    roleIdentificationJson: {
+      speaker_identification,
+      _vote_sources: sources,
+      _vote_detail: voteDetail
+    },
+    roleMap
+  };
+}
+
+// ============================================================================
+// Main Analysis Function
+// ============================================================================
+
+/**
+ * Analyze PCIT coding for transcript
+ * Called after transcription completes
+ * @param {string} sessionId - Session ID
+ * @param {string} userId - User ID
+ */
+async function analyzePCITCoding(sessionId, userId, preferredLanguage = null) {
+  console.log(`\n${'='.repeat(80)}`);
+  console.log(`🏷️  [ANALYSIS-START] Session ${sessionId.substring(0, 8)} - Starting PCIT analysis`);
+  console.log(`🏷️  [ANALYSIS-START] User: ${userId.substring(0, 8)}`);
+  console.log(`${'='.repeat(80)}\n`);
+
+  // Get session
+  console.log(`📊 [ANALYSIS-STEP-1] Fetching session from database...`);
+  const session = await prisma.session.findUnique({
+    where: { id: sessionId }
+  });
+
+  if (!session) {
+    console.error(`❌ [ANALYSIS-ERROR] Session ${sessionId} not found in database`);
+    throw new Error('Session not found');
+  }
+  console.log(`✅ [ANALYSIS-STEP-1] Session found, mode: ${session.mode}`);
+
+  // Get user's child info for personalized feedback
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      childName: true,
+      childGender: true,
+      childBirthYear: true,
+      childBirthday: true,
+      issue: true,
+      parentGoal: true,
+      childConditions: true
+    }
+  });
+  if (!user) {
+    throw new PermanentFailureError('User record not found', 'An error occurred while analyzing your recording. Please try again.');
+  }
+  let childName = 'the child';
+  try {
+    childName = user.childName ? decryptSensitiveData(user.childName) : 'the child';
+  } catch (decryptErr) {
+    throw new PermanentFailureError('Failed to decrypt child data', 'An error occurred while analyzing your recording. Please try again.');
+  }
+  const childAge = user.childBirthYear ? calculateChildAge(user.childBirthYear, user.childBirthday) : null;
+  const childAgeMonths = user.childBirthYear ? calculateChildAgeInMonths(user.childBirthday, user.childBirthYear) : null;
+  const childGender = user.childGender ? formatGender(user.childGender) : 'child';
+  const parentGoalsText = parseUserIssues(user.parentGoal)
+    .map(g => g.replace(/_/g, ' ').toLowerCase())
+    .join(', ');
+  // "Additional parent context" for the first-session prompt — the presenting
+  // issue/concern, distinct from the goals the parent picked (parentGoalsText).
+  const parentContextText = parseUserIssues(user.issue)
+    .map(g => g.replace(/_/g, ' ').toLowerCase())
+    .join(', ');
+  console.log(`✅ [ANALYSIS-STEP-1b] Child info: ${childName}, ${childAgeMonths} months old, ${childGender}`);
+
+  // Fetch Child record early to get clinical priority fields
+  let child = await prisma.child.findFirst({ where: { userId } });
+  if (!child) {
+    child = await prisma.child.create({
+      data: {
+        userId,
+        name: childName || 'Child',
+        birthday: user?.childBirthday || null,
+        gender: user?.childGender || null,
+        conditions: user?.childConditions || null
+      }
+    });
+    console.log(`✅ [ANALYSIS-STEP-1c] Created Child record ${child.id} for user ${userId.substring(0, 8)}`);
+  }
+  // Fetch latest ChildIssuePriority snapshot for detail context
+  const latestComputedAt = await prisma.childIssuePriority.findFirst({
+    where: { childId: child.id },
+    orderBy: { computedAt: 'desc' },
+    select: { computedAt: true }
+  });
+  const issuePriorities = latestComputedAt
+    ? await prisma.childIssuePriority.findMany({
+        where: { childId: child.id, computedAt: latestComputedAt.computedAt },
+        orderBy: { priorityRank: 'asc' }
+      })
+    : [];
+  const clinicalPriority = {
+    primaryIssue: child.primaryIssue,
+    primaryStrategy: child.primaryStrategy,
+    secondaryIssue: child.secondaryIssue,
+    secondaryStrategy: child.secondaryStrategy,
+    issuePriorities
+  };
+  console.log(`✅ [ANALYSIS-STEP-1c] Clinical priority: primary=${clinicalPriority.primaryIssue || 'none'}, secondary=${clinicalPriority.secondaryIssue || 'none'}, detail rows=${issuePriorities.length}`);
+
+  // Get utterances from database
+  console.log(`📊 [ANALYSIS-STEP-2] Fetching utterances from database...`);
+  const utterances = await getUtterances(sessionId);
+  console.log(`✅ [ANALYSIS-STEP-2] Found ${utterances.length} utterances`);
+
+  if (utterances.length === 0) {
+    throw new Error('No utterances found in session data');
+  }
+
+  // Convert to format expected by role identification prompt
+  const utterancesForPrompt = utterances.map(utt => ({
+    speaker: utt.speaker,
+    text: utt.text,
+    start: utt.startTime,
+    end: utt.endTime
+  }));
+
+  const isCDI = session.mode === 'CDI';
+
+  // Detect primary language from ElevenLabs transcription result.
+  // If ElevenLabs detects Chinese (zho/cmn) and the user's preferred language is
+  // a specific Chinese variant (zh-TW/zh-CN), honour that preference over the
+  // generic Mandarin code.
+  const detectedLanguage = session.elevenLabsJson?.language_code || null;
+  const CHINESE_CODES = new Set(['zho', 'cmn']);
+  const CHINESE_LOCALES = new Set(['zh-TW', 'zh-CN']);
+  const primaryLanguage = (
+    CHINESE_CODES.has(detectedLanguage) && CHINESE_LOCALES.has(preferredLanguage)
+  ) ? preferredLanguage : detectedLanguage;
+  if (primaryLanguage && primaryLanguage !== 'eng') {
+    console.log(`🌐 [ANALYSIS] Primary language: ${primaryLanguage} (detected: ${detectedLanguage}, preferred: ${preferredLanguage || 'none'})`);
+  }
+
+  // STEP 1: Identify speaker roles (skip if already done on a previous attempt)
+  let roleIdentificationJson;
+  let adultSpeakers = [];
+
+  if (session.roleIdDone && session.roleIdentificationJson) {
+    console.log(`[ANALYSIS] Skipping role identification — already completed (checkpoint)`);
+    roleIdentificationJson = session.roleIdentificationJson;
+    const speakerIdentification = roleIdentificationJson.speaker_identification || {};
+    for (const [speakerId, speakerInfo] of Object.entries(speakerIdentification)) {
+      if (speakerInfo.role === 'ADULT') {
+        adultSpeakers.push({
+          id: speakerId,
+          confidence: speakerInfo.confidence,
+          utteranceCount: speakerInfo.utterance_count || 0
+        });
+      }
+    }
+    adultSpeakers.sort((a, b) => b.utteranceCount - a.utteranceCount);
+  } else {
+    try {
+      const { roleIdentificationJson: rij, roleMap } = await identifyRolesWithVoting(
+        utterancesForPrompt, utterances, session.storagePath, sessionId
+      );
+      roleIdentificationJson = rij;
+
+      // Extract adult speakers from voted result
+      for (const [speakerId, info] of Object.entries(roleIdentificationJson.speaker_identification || {})) {
+        if (info.role === 'ADULT') {
+          adultSpeakers.push({
+            id: speakerId,
+            confidence: info.confidence,
+            utteranceCount: info.utterance_count || 0
+          });
+        }
+      }
+      adultSpeakers.sort((a, b) => b.utteranceCount - a.utteranceCount);
+
+      if (adultSpeakers.length === 0) {
+        throw new PermanentFailureError(
+          'No adult speakers found in role identification',
+          'We could not identify a parent speaker in your recording. Please ensure the audio clearly captures your voice.'
+        );
+      }
+
+      console.log(`Adult speakers identified: ${adultSpeakers.map(a => a.id).join(', ')}`);
+
+      // Persist roles
+      console.log(`📊 [ANALYSIS-STEP-5] Updating utterance roles and storing checkpoint...`);
+      console.log(`   Role map: ${JSON.stringify(roleMap)}`);
+      await updateUtteranceRoles(sessionId, roleMap);
+      console.log(`✅ [ANALYSIS-STEP-5] Updated roles for ${Object.keys(roleMap).length} speakers`);
+
+      await prisma.session.update({
+        where: { id: sessionId },
+        data: { roleIdentificationJson, roleIdDone: true }
+      });
+      console.log(`✅ [ANALYSIS-STEP-5] Role identification JSON stored in session`);
+
+    } catch (roleIdError) {
+      if (roleIdError instanceof PermanentFailureError) throw roleIdError;
+      console.error('❌ [ROLE-ID-ERROR] Failed role identification:', roleIdError.message);
+      throw new Error(`Failed role identification: ${roleIdError.message}`);
+    }
+  }
+
+  // Quality gate — one fast LLM call; throws SessionQualityError if invalid
+  console.log(`📊 [ANALYSIS-QUALITY-GATE] Validating session quality...`);
+  await validateSessionQuality(utterances, session.durationSeconds, roleIdentificationJson, sessionId, primaryLanguage);
+  console.log(`✅ [ANALYSIS-QUALITY-GATE] Session passed quality check`);
+
+  // STEP 2: Apply PCIT coding to adult utterances (skip if already done on a previous attempt)
+  let tagCounts = {
+    echo: 0, labeled_praise: 0, unlabeled_praise: 0, praise: 0,
+    product_praise: 0, action_praise: 0, growth_praise: 0, regulatory_praise: 0,
+    narration: 0, direct_command: 0, indirect_command: 0, command: 0,
+    question: 0, criticism: 0, neutral: 0
+  };
+  let codingResults = [];
+  let adultSpeakersForPcit = adultSpeakers; // used in pcitCoding JSON below
+
+  if (session.pcitCodingDone && session.pcitCoding && session.tagCounts) {
+    console.log(`[ANALYSIS] Skipping PCIT coding — already completed (checkpoint)`);
+    codingResults = session.pcitCoding.codingResults || [];
+    tagCounts = session.tagCounts;
+    adultSpeakersForPcit = session.pcitCoding.adultSpeakers || adultSpeakers;
+  } else {
+    // Get updated utterances for PCIT coding
+    console.log(`📊 [ANALYSIS-STEP-6] Fetching updated utterances with roles for PCIT coding...`);
+    const utterancesWithRoles = await getUtterances(sessionId);
+    console.log(`✅ [ANALYSIS-STEP-6] Got ${utterancesWithRoles.length} utterances with roles`);
+
+    // STEP 2: Apply PCIT coding to adult utterances
+    console.log(`📊 [ANALYSIS-STEP-7] Preparing PCIT coding prompt...`);
+    const adultSpeakerIds = adultSpeakers.map(a => a.id).join(', ');
+    console.log(`   Adult speakers: ${adultSpeakerIds}`);
+
+    // Load DPICS system prompt, with PDI-specific feedback override appended
+    const dpicsSystemPrompt = loadPrompt('dpicsCoding-agentic-v10-4') + (!isCDI ? `
+
+**PDI SESSION — Feedback Override for Commands:**
+This is a PDI (Parent-Directed Interaction) session. The rules above apply for coding, but the feedback generation strategy for commands is different:
+- **DC (Direct Command)**: DC is a TARGET SKILL in PDI. Do NOT suggest replacing it with a PRIDE skill. Instead, briefly reinforce it or coach on quality (e.g. was it direct, specific, calm, positively phrased?).
+- **IC (Indirect Command)**: Still undesirable. Coach toward a DC instead (e.g. "Try stating it directly: 'Please put the block down.'"). Do NOT suggest using BD or LP.
+All other feedback rules remain the same.` : '');
+
+    // Prepare utterances data for the prompt
+    const utterancesData = utterancesWithRoles.map((utt, idx) => ({
+      id: idx,
+      role: utt.role,
+      text: utt.text
+    }));
+
+    // Create index mapping for later (idx -> utt.id)
+    const idxToUttId = utterancesWithRoles.map(utt => utt.id);
+
+    // User prompt — transcript only; system instruction and DPICS manual are in the cache
+    const userPrompt = `Code every utterance where role is "adult". Skip all "child" entries.
+
+${JSON.stringify(utterancesData, null, 2)}
+
+Return a minified JSON array for adult utterances only:
+[{"id": <int>, "code": <string>}, ...]
+- Return ONLY the JSON array — no text, no markdown, no code fences
+- First character MUST be [, last character MUST be ]
+- Every adult entry MUST have "id" and "code"`;
+
+    // DPICS context cache config — gateway resolves or creates the cache, falls back to inline prompt
+    const dpicsCacheConfig = {
+      key:         dpicsCacheKey(isCDI),
+      primaryFile: DPICS_PDF_PATH,
+      systemPrompt: dpicsSystemPrompt,
+    };
+
+    // DPICS coding runs on its own model knob ($GEMINI_STREAMING_MODEL), independent of
+    // the shared 'gemini' gateway default the other profiles use. Unset → the profile's
+    // default ('gemini' key). A full 'gemini-*' id keeps Gemini fallback + cache support.
+    const codingModel = process.env.GEMINI_STREAMING_MODEL || undefined;
+
+    console.log(`📊 [ANALYSIS-STEP-8] Calling reasoning model for PCIT coding...`);
+    console.log(`   Mode: ${isCDI ? 'CDI' : 'PDI'}, Utterances: ${utterancesWithRoles.length}`);
+
+    codingResults = await llmCall(userPrompt, {
+      profile: 'pcit-coding',
+      ...(codingModel ? { model: codingModel } : {}),
+      cache:   dpicsCacheConfig,
+      label:   'pcit-coding',
+      sessionId,
+    });
+
+    if (!Array.isArray(codingResults)) {
+      throw new Error('Expected array of coding results');
+    }
+
+    if (codingResults.length === 0) {
+      throw new PermanentFailureError(
+        'PCIT coding returned empty results',
+        'We were unable to analyze the conversation in your recording. Please try recording again.'
+      );
+    }
+
+    console.log(`✅ [ANALYSIS-STEP-8] Successfully parsed ${codingResults.length} coding results`);
+
+    // Detect missed adult utterances (LLM sometimes stops early with a valid closed JSON array)
+    const codedIdSet = new Set(codingResults.map(r => r.id));
+    const missedAdultUtts = utterancesData.filter(u => u.role === 'adult' && !codedIdSet.has(u.id));
+    if (missedAdultUtts.length > 0) {
+      console.warn(`⚠️ [ANALYSIS-STEP-8] ${missedAdultUtts.length} adult utterances not coded — requesting supplemental coding...`);
+      try {
+        const supplementalPrompt = `These adult utterances were missed in the prior pass. Code each one and return ONLY a valid JSON array:
+
+${JSON.stringify(missedAdultUtts, null, 2)}`;
+        const supplementalResults = await llmCall(supplementalPrompt, {
+          profile: 'pcit-coding-supplemental',
+          ...(codingModel ? { model: codingModel } : {}),
+          cache:   dpicsCacheConfig,
+          label:   'pcit-coding-supplemental',
+          sessionId,
+        });
+        if (Array.isArray(supplementalResults) && supplementalResults.length > 0) {
+          codingResults = [...codingResults, ...supplementalResults];
+          console.log(`✅ [ANALYSIS-STEP-8] Supplemental coding added ${supplementalResults.length} results (total: ${codingResults.length})`);
+        }
+      } catch (suppErr) {
+        console.warn(`⚠️ [ANALYSIS-STEP-8] Supplemental coding failed (non-blocking): ${suppErr.message}`);
+      }
+    }
+
+    // Build ID-to-tag maps for efficient updates
+    const pcitTagMap = {};
+    const noraTagMap = {};
+
+    for (const result of codingResults) {
+      if (result.id !== undefined && result.code) {
+        const actualUttId = idxToUttId[result.id];
+        if (actualUttId) {
+          pcitTagMap[actualUttId] = result.code;
+          noraTagMap[actualUttId] = DPICS_TO_TAG_MAP[result.code] || result.code;
+        }
+      }
+    }
+
+    // Update utterances with PCIT tags and Nora tags in database
+    await updateUtteranceTags(sessionId, pcitTagMap, noraTagMap);
+    console.log(`Updated tags for ${Object.keys(pcitTagMap).length} utterances`);
+
+    // Count codes from JSON results
+    for (const result of codingResults) {
+      const code = result.code;
+      if (code === 'RF' || code === 'RQ') {
+        tagCounts.echo++;
+      } else if (code === 'LP' || code === 'LP1' || code === 'LP2' || code === 'LP3' || code === 'LP4') {
+        tagCounts.labeled_praise++;
+        tagCounts.praise++;
+        if (code === 'LP1') tagCounts.product_praise++;
+        else if (code === 'LP2') tagCounts.action_praise++;
+        else if (code === 'LP3') tagCounts.growth_praise++;
+        else if (code === 'LP4') tagCounts.regulatory_praise++;
+        else tagCounts.product_praise++; // legacy LP treated as product praise
+      } else if (code === 'UP') {
+        tagCounts.unlabeled_praise++;
+      } else if (code === 'BD') {
+        tagCounts.narration++;
+      } else if (code === 'DC') {
+        tagCounts.direct_command++;
+        tagCounts.command++;
+      } else if (code === 'IC') {
+        tagCounts.indirect_command++;
+        tagCounts.command++;
+      } else if (code === 'Q' || code === 'DQ' || code === 'IQ') {
+        tagCounts.question++;
+      } else if (code === 'NTA') {
+        tagCounts.criticism++;
+      } else if (code === 'ID' || code === 'AK' || code === 'TA' || code === 'AN') {
+        tagCounts.neutral++;
+      } else if (code === 'NC' || code === 'Uncoded') {
+        // not counted toward any metric
+      }
+    }
+
+    // Set PCIT coding checkpoint
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        pcitCoding: { adultSpeakers: adultSpeakersForPcit, codingResults, fullResponse: JSON.stringify(codingResults), analyzedAt: new Date().toISOString() },
+        tagCounts,
+        pcitCodingDone: true
+      }
+    });
+    console.log(`✅ [ANALYSIS-STEP-8] PCIT coding checkpoint saved`);
+  }
+
+  // STEP 9: Child Profiling — parallel developmental + coaching calls.
+  // Only the coaching branch (#9/#10/#11) feeds anything the competency
+  // analysis phase below needs (coachingNarrativeText / goalDirective) —
+  // dev-profiling, about-child, and first-session-insights feed nothing
+  // until the final DB write / STEP 10-11. So we still kick off all four
+  // concurrently, but only await the coaching branch here; the other three
+  // are picked up further down, after competency analysis has already run
+  // concurrently with them, instead of gating it on whichever of the four
+  // happens to be slowest.
+  console.log(`📊 [ANALYSIS-STEP-9] Generating child profiling (developmental + coaching in parallel)...`);
+  let childProfilingResult = null;
+  let coachingResult = null;
+  let remainingStep9Promise = Promise.resolve([
+    { status: 'fulfilled', value: null },
+    { status: 'fulfilled', value: null },
+    { status: 'fulfilled', value: null }
+  ]);
+  try {
+    const utterancesForProfiling = await getUtterances(sessionId);
+    const childSpeaker = getChildSpeaker(roleIdentificationJson);
+    const [priorCompletedCount, existingChildMilestones] = await Promise.all([
+      prisma.session.count({ where: { userId, analysisStatus: 'COMPLETED' } }),
+      child ? prisma.childMilestone.findMany({
+        where: { childId: child.id },
+        include: { MilestoneLibrary: { select: { key: true } } }
+      }) : Promise.resolve([])
+    ]);
+    const achievedMilestoneKeys = existingChildMilestones
+      .filter(m => m.status === 'ACHIEVED')
+      .map(m => m.MilestoneLibrary.key);
+    const isFirstSession = priorCompletedCount === 0;
+
+    // Ordering fix: on the parent's FIRST CDI session, place them on the
+    // skill ladder from this session's own counts BEFORE coaching is
+    // generated, so the report + tomorrow's goal reflect their real level
+    // instead of the default level 1 (generateCdiCoaching → getParentSkillProgress
+    // reads currentLevel a few lines below). Later sessions are promoted
+    // incrementally by updateParentSkillLevel() after analysis.
+    if (isFirstSession && isCDI) {
+      try {
+        const placedLevel = await placeFirstSessionLevel(userId, tagCounts);
+        console.log(`✅ [ANALYSIS-STEP-9] First-session ladder placement → level ${placedLevel}`);
+      } catch (err) {
+        console.error('⚠️ [ANALYSIS-STEP-9] First-session placement failed, coaching will use existing level:', err.message);
+      }
+    }
+
+    const childInfoForProfiling = {
+      name: childName,
+      ageMonths: childAgeMonths,
+      ageYears: childAge,
+      gender: childGender,
+      clinicalPriority,
+      isFirstSession,
+      durationSeconds: session.durationSeconds || null,
+      achievedMilestoneKeys,
+      childId: child?.id || null,
+      userId,
+      parentGoalsText,
+      parentContextText
+    };
+
+    const runFirstSessionInsights = isFirstSession && isCDI;
+
+    // Kick off all four branches concurrently...
+    const profilingPromise = generateDevelopmentalProfiling(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId, primaryLanguage);
+    const coachingPromise = isCDI ? generateCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId, primaryLanguage) : Promise.resolve(null);
+    const aboutChildPromise = generateAboutChild(utterancesForProfiling, childInfoForProfiling, tagCounts, sessionId, primaryLanguage);
+    const firstSessionPromise = runFirstSessionInsights ? generateFirstSessionInsights(utterancesForProfiling, childInfoForProfiling, sessionId, primaryLanguage) : Promise.resolve(null);
+
+    // ...but only await the coaching branch now — competency analysis needs
+    // coachingResult.{coachingSummary,goalDirective}. The other three keep
+    // running in the background; we pick them up after competency analysis.
+    const [coachingSettled] = await Promise.allSettled([coachingPromise]);
+    coachingResult = coachingSettled.status === 'fulfilled' ? coachingSettled.value : null;
+    if (coachingSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] CDI coaching rejected:', coachingSettled.reason?.message);
+    }
+
+    // Kicked off after coachingResult resolves (not with the other three
+    // above) so it can seed {{TOMORROW_GOAL}} from the real deterministic
+    // goal instead of the generic fallback — see generateLegacyCdiCoaching.
+    const legacyCoachingPromise = runFirstSessionInsights
+      ? generateLegacyCdiCoaching(utterancesForProfiling, childInfoForProfiling, tagCounts, childSpeaker, sessionId, primaryLanguage, coachingResult?.tomorrowGoal)
+      : Promise.resolve(null);
+
+    remainingStep9Promise = Promise.allSettled([profilingPromise, aboutChildPromise, firstSessionPromise, legacyCoachingPromise]);
+  } catch (profilingError) {
+    console.error('⚠️ [ANALYSIS-STEP-9] Child profiling error:', profilingError.message);
+  }
+
+  // For non-English sessions, clear hardcoded English feedback from silence slots
+  // so review-feedback can write localized feedback for the ones it selects.
+  if (primaryLanguage && primaryLanguage !== 'eng') {
+    await prisma.utterance.updateMany({
+      where: { sessionId, speaker: SILENT_SPEAKER_ID },
+      data: { feedback: null }
+    });
+    console.log(`🌐 [ANALYSIS] Cleared silence slot feedback for localization (language: ${primaryLanguage})`);
+  }
+
+  // Get competency analysis based on tag counts and utterances
+  let competencyAnalysis = null;
+  try {
+    // Get updated utterances with tags from database
+    const utterancesWithTags = await getUtterances(sessionId);
+
+    // For PDI sessions, run Two Choices Flow analysis first so its output can inform review-feedback
+    let pdiResult = null;
+    if (!isCDI) {
+      console.log('🎯 [COMPETENCY-ANALYSIS] Running PDI Two Choices Flow analysis...');
+      pdiResult = await generatePDITwoChoicesAnalysis(utterancesWithTags, childName, sessionId, primaryLanguage);
+      if (pdiResult) {
+        console.log(`✅ [COMPETENCY-ANALYSIS] PDI Two Choices Flow analysis complete — ${pdiResult.pdiSkills.length} skills`);
+      }
+    }
+
+    // Report highlights (hero text, top-moment celebration, interaction tip,
+    // crisis moment) read the already-generated coaching narrative, not the
+    // transcript — generateCDIFeedback runs that call internally, in parallel
+    // with review-feedback, once combined-feedback's topMoment quote is known.
+    // Read from `coachingResult` (not `childProfilingResult`, which isn't
+    // merged until after this block — see STEP 9 above) so competency
+    // analysis doesn't wait on dev-profiling/about-child/first-session-insights.
+    const coachingNarrativeText = coachingResult?.coachingSummary || pdiResult?.summary || null;
+
+    // Run multi-prompt feedback flow for both CDI and PDI (mode-aware)
+    console.log(`🎯 [COMPETENCY-ANALYSIS] Using multi-prompt feedback generation for ${session.mode} session...`);
+    const feedbackResult = await generateCDIFeedback(tagCounts, utterancesWithTags, childName, isCDI, pdiResult, sessionId, primaryLanguage, coachingNarrativeText, coachingResult?.goalDirective || null);
+
+    // Save revised feedback to database
+    if (feedbackResult.revisedFeedback && feedbackResult.revisedFeedback.length > 0) {
+      await updateRevisedFeedback(sessionId, feedbackResult.revisedFeedback);
+    }
+
+    competencyAnalysis = {
+      topMoment: feedbackResult.topMoment,
+      topMomentUtteranceNumber: typeof feedbackResult.topMomentUtteranceNumber === 'number' ? feedbackResult.topMomentUtteranceNumber : null,
+      heroText: feedbackResult.heroText || null,
+      crisisMoment: feedbackResult.crisisMoment || null,
+      skillCoaching: feedbackResult.skillCoaching || null,
+      bondingMoment: feedbackResult.bondingMoment || null,
+      skillImprove: feedbackResult.skillImprove || null,
+      feedback: feedbackResult.feedback || null,
+      example: typeof feedbackResult.example === 'number' ? feedbackResult.example : null,
+      childReaction: feedbackResult.childReaction || null,
+      tips: null,
+      reminder: feedbackResult.reminder,
+      activity: feedbackResult.activity || null,
+      analyzedAt: new Date().toISOString(),
+      mode: session.mode
+    };
+
+    console.log(`✅ [COMPETENCY-ANALYSIS] Multi-prompt feedback complete`);
+
+    if (pdiResult) {
+      competencyAnalysis.pdiSkills = pdiResult.pdiSkills;
+      competencyAnalysis.pdiCommandSequences = pdiResult.commandSequences;
+      // Deterministic goal engine overrides the LLM's tomorrowGoal field
+      // (pdiResult.tomorrowGoal is left unused/vestigial rather than
+      // touching pdiTwoChoicesFlow's schema for this).
+      const pdiProgress = projectLevelForGoal(await getParentSkillProgress(userId), 'PDI', tagCounts);
+      const pdiGoalPayload = generateGoalForLevel(pdiProgress.currentLevel, tagCounts, 'PDI', pdiProgress, primaryLanguage);
+      competencyAnalysis.pdiTomorrowGoal = formatGoalHeadline(pdiGoalPayload);
+      competencyAnalysis.pdiTomorrowGoalDirective = {
+        focusSkill: pdiGoalPayload.title,
+        currentNumber: pdiGoalPayload.baselineCount,
+        targetNumber: pdiGoalPayload.targetCount,
+        goalType: pdiGoalPayload.goalType,
+        actionPrompt: pdiGoalPayload.actionPrompt,
+        coachingTip: pdiGoalPayload.coachingTip,
+      };
+      competencyAnalysis.pdiEncouragement = pdiResult.encouragement;
+      competencyAnalysis.pdiSummary = pdiResult.summary;
+    }
+  } catch (compError) {
+    console.error('Error generating competency analysis:', compError.message);
+  }
+
+  // STEP 9 (continued): pick up dev-profiling / about-child /
+  // first-session-insights now — they've been running in the background
+  // since STEP 9 kicked them off, concurrently with the competency-analysis
+  // block above, instead of gating it.
+  {
+    const [profilingSettled, aboutChildSettled, firstSessionSettled, legacyCoachingSettled] = await remainingStep9Promise;
+    const profilingResult = profilingSettled.status === 'fulfilled' ? profilingSettled.value : null;
+    const aboutChildResult = aboutChildSettled.status === 'fulfilled' ? aboutChildSettled.value : null;
+    const firstSessionResult = firstSessionSettled.status === 'fulfilled' ? firstSessionSettled.value : null;
+    const legacyCoachingResult = legacyCoachingSettled.status === 'fulfilled' ? legacyCoachingSettled.value : null;
+
+    if (profilingSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] Developmental profiling rejected:', profilingSettled.reason?.message);
+    }
+    if (aboutChildSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] About child rejected:', aboutChildSettled.reason?.message);
+    }
+    if (firstSessionSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] First-session insights rejected:', firstSessionSettled.reason?.message);
+    }
+    if (legacyCoachingSettled.status === 'rejected') {
+      console.error('⚠️ [ANALYSIS-STEP-9] Legacy coaching rejected:', legacyCoachingSettled.reason?.message);
+    }
+
+    if (profilingResult || coachingResult) {
+      childProfilingResult = {
+        developmentalObservation: profilingResult?.developmentalObservation || null,
+        metadata: profilingResult?.metadata || null,
+        baselineAchieved: profilingResult?.baselineAchieved || [],
+        coachingSummary: coachingResult?.coachingSummary || null,
+        coachingCards: coachingResult?.coachingCards || null,
+        coachingPart1: coachingResult?.coachingPart1 || null,
+        coachingPart2: coachingResult?.coachingPart2 || null,
+        tomorrowGoal: coachingResult?.tomorrowGoal || null,
+        notifications: coachingResult?.notifications || null,
+        goalDirective: coachingResult?.goalDirective || null,
+        legacyCoaching: legacyCoachingResult || null,
+        aboutChild: aboutChildResult || null,
+        firstSessionInsights: firstSessionResult || null
+      };
+      console.log(`✅ [ANALYSIS-STEP-9] Child profiling complete — ${childProfilingResult.developmentalObservation?.domains?.length || 0} domains, ${childProfilingResult.coachingCards?.length || 0} coaching cards`);
+    } else {
+      console.log(`⚠️ [ANALYSIS-STEP-9] Child profiling skipped or both calls failed`);
+    }
+  }
+
+  // Calculate Nora Score
+  const { score: overallScore } = calculateNoraScore(tagCounts, session.mode);
+
+  // Store PCIT coding, competency analysis, and overall score in database
+  console.log(`💾 [DATABASE-UPDATE] Saving competencyAnalysis for session ${sessionId}:`, competencyAnalysis ? 'present' : 'NULL');
+
+  // Evaluate enrichment outcome
+  const hasFeedback  = competencyAnalysis !== null;
+  const hasProfiling = childProfilingResult !== null;
+  const enrichmentStatus =
+    hasFeedback && hasProfiling ? 'COMPLETED' :
+    hasFeedback || hasProfiling ? 'PARTIAL'   : 'FAILED';
+  const enrichmentError =
+    enrichmentStatus !== 'COMPLETED'
+      ? [!hasFeedback && 'competencyAnalysis', !hasProfiling && 'childProfiling'].filter(Boolean).join(', ') + ' failed'
+      : null;
+  if (enrichmentStatus !== 'COMPLETED') {
+    console.warn(`⚠️ [ENRICHMENT] Session ${sessionId.substring(0, 8)} enrichmentStatus=${enrichmentStatus} — ${enrichmentError}`);
+  }
+
+  await prisma.session.update({
+    where: { id: sessionId },
+    data: {
+      competencyAnalysis,
+      overallScore,
+      coachingSummary: childProfilingResult?.coachingSummary || null,
+      coachingCards: (childProfilingResult?.coachingCards || childProfilingResult?.coachingPart1 || childProfilingResult?.goalDirective || childProfilingResult?.firstSessionInsights || childProfilingResult?.legacyCoaching)
+        ? {
+            sections: childProfilingResult.coachingCards || null,
+            part1: childProfilingResult.coachingPart1 || null,
+            part2: childProfilingResult.coachingPart2 || null,
+            tomorrowGoal: childProfilingResult.tomorrowGoal || null,
+            notifications: childProfilingResult.notifications || null,
+            goalDirective: childProfilingResult.goalDirective || null,
+            firstSessionInsights: childProfilingResult.firstSessionInsights || null,
+            // { summary, sections } — pre-2026-09-09 Coach's Corner pipeline,
+            // only populated for a first session; see generateLegacyCdiCoaching.
+            legacyCoaching: childProfilingResult.legacyCoaching || null
+          }
+        : null,
+      aboutChild: childProfilingResult?.aboutChild || null,
+      enrichmentStatus,
+      enrichmentError
+    }
+  });
+
+  // Upsert ChildProfiling record if profiling succeeded (child already fetched earlier)
+  if (childProfilingResult?.developmentalObservation && child) {
+    try {
+      await prisma.childProfiling.upsert({
+        where: { sessionId },
+        create: {
+          userId,
+          sessionId,
+          childId: child.id,
+          summary: childProfilingResult.developmentalObservation.summary || null,
+          domains: childProfilingResult.developmentalObservation.domains || [],
+          metadata: childProfilingResult.metadata || null
+        },
+        update: {
+          childId: child.id,
+          summary: childProfilingResult.developmentalObservation.summary || null,
+          domains: childProfilingResult.developmentalObservation.domains || [],
+          metadata: childProfilingResult.metadata || null
+        }
+      });
+      console.log(`✅ [DATABASE-UPDATE] ChildProfiling record upserted for session ${sessionId}`);
+
+      // STEP 10: Milestone Detection (non-blocking) — uses keys detected by Prompt 1
+      try {
+        const { detectAndUpdateMilestones } = require('./milestoneDetectionService.cjs');
+        const detectedMilestones = (childProfilingResult.developmentalObservation.domains || [])
+          .flatMap(d => d.detected_milestone_keys || []);
+        const milestoneResult = await detectAndUpdateMilestones(child.id, detectedMilestones, childProfilingResult.baselineAchieved);
+        if (milestoneResult) {
+          console.log(`✅ [ANALYSIS-STEP-10] Milestones: ${milestoneResult.newEmerging} emerging, ${milestoneResult.newAchieved} achieved`);
+
+          // Store celebrations in session if any
+          if (milestoneResult.celebrations && milestoneResult.celebrations.length > 0) {
+            await prisma.session.update({
+              where: { id: sessionId },
+              data: { milestoneCelebrations: milestoneResult.celebrations }
+            });
+            console.log(`✅ [ANALYSIS-STEP-10] Stored ${milestoneResult.celebrations.length} milestone celebrations`);
+
+            // Send milestone push notification (non-blocking)
+            try {
+              const { sendMilestoneNotification } = require('./pushNotifications.cjs');
+              await sendMilestoneNotification(userId, milestoneResult.celebrations);
+            } catch (notifError) {
+              console.error('⚠️ [ANALYSIS-STEP-10] Milestone notification error (non-blocking):', notifError.message);
+            }
+          }
+        }
+      } catch (milestoneError) {
+        console.error('⚠️ [ANALYSIS-STEP-10] Milestone detection error (non-blocking):', milestoneError.message);
+      }
+    } catch (profilingDbError) {
+      console.error('⚠️ [DATABASE-UPDATE] Failed to upsert ChildProfiling:', profilingDbError.message);
+    }
+  }
+
+  // STEP 11: About Child Card Selection (non-blocking) — picks which of this
+  // session's aboutChild observations to actually show, honoring the 5:1
+  // strength/growth-area ratio and skipping recently-shown titles.
+  if (childProfilingResult?.aboutChild?.length && child) {
+    try {
+      const { selectAboutChildCard } = require('./aboutChildSelectionService.cjs');
+      const selected = await selectAboutChildCard(child.id, sessionId, childProfilingResult.aboutChild);
+      if (selected) {
+        await prisma.session.update({
+          where: { id: sessionId },
+          data: { selectedAboutChild: selected }
+        });
+        console.log(`✅ [ANALYSIS-STEP-11] Selected about-child card: "${selected.Title}"`);
+      }
+    } catch (selectionError) {
+      console.error('⚠️ [ANALYSIS-STEP-11] About-child selection error (non-blocking):', selectionError.message);
+    }
+  }
+
+  console.log(`✅ [DATABASE-UPDATE] PCIT coding and overall score (${overallScore}) stored for session ${sessionId}`);
+
+  return { tagCounts, competencyAnalysis, overallScore, childProfilingResult };
+}
+
+module.exports = {
+  SessionQualityError,
+  PermanentFailureError,
+  analyzePCITCoding,
+  validateSessionQuality,
+  identifyRolesWithVoting,
+  generateCDIFeedback,
+  generateReportHighlights,
+  generateCrisis,
+  generateSkillImprove,
+  generatePDITwoChoicesAnalysis,
+  generateDevelopmentalProfiling,
+  generateCdiCoaching,
+  generateLegacyCdiCoaching,
+  generateAboutChild,
+  generateFirstSessionInsights,
+  getParentSkillProgress,
+  dpicsCacheKey,
+  DPICS_PDF_PATH,
+};

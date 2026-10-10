@@ -1,0 +1,2621 @@
+/**
+ * ReportScreen
+ * Displays daily performance report with skills, tips, and goals
+ * Based on Figma design
+ */
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator, TextInput, LayoutAnimation, Platform, UIManager, Animated, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { SkillProgressBar } from '../components/SkillProgressBar';
+import { Button } from '../components/Button';
+import { COLORS, FONTS, DRAGON_PURPLE } from '../constants/assets';
+import { RootStackNavigationProp, RootStackParamList } from '../navigation/types';
+import { useRecordingService, useAuthService } from '../contexts/AppContext';
+import type { RecordingAnalysis, CoachingCard, CoachingSection, MilestoneCelebration, DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling } from '@nora/core';
+import { RadarChart } from '../components/RadarChart';
+import { DomainMilestoneModal } from '../components/DomainMilestoneModal';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MarkdownText } from '../utils/MarkdownText';
+import { DragonCard } from '../components/DragonCard';
+import { MomentPlayer } from '../components/MomentPlayer';
+import { PhaseCelebrationModal } from '../components/PhaseCelebrationModal';
+import * as userStorage from '../lib/userStorage';
+import { useTranslation } from 'react-i18next';
+import amplitudeService from '../services/amplitudeService';
+import { TrackedTouchable } from '../components/TrackedTouchable';
+
+type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
+
+// PCIT tag color mapping
+const TAG_COLORS: { [key: string]: string } = {
+  // CDI - DO tags (green/blue/purple)
+  'Praise': '#10B981',
+  'Echo': '#3B82F6',
+  'Narration': '#8B5CF6',
+  'Labeled Praise': '#10B981',
+
+  // CDI - DON'T tags (red/orange)
+  'Question': '#EF4444',
+  'Command': '#EF4444',
+  'Criticism': '#DC2626',
+  'Negative Talk': '#DC2626',
+  'Direct Command': '#EF4444',
+  'Indirect Command': '#F97316',
+
+  // Neutral (gray)
+  'NEUTRAL': '#6B7280',
+  'Neutral': '#6B7280',
+};
+
+const getTagColor = (tag?: string): string => {
+  if (!tag) return '#6B7280';
+  return TAG_COLORS[tag] || '#6B7280';
+};
+
+const getSkillType = (tag?: string): 'desirable' | 'undesirable' | 'neutral' => {
+  if (!tag) return 'neutral';
+
+  // Desirable skills
+  if (tag === 'Echo' || tag === 'Labeled Praise' || tag === 'Narration' || tag === 'Praise') {
+    return 'desirable';
+  }
+
+  // Neutral skills
+  if (tag === 'NEUTRAL' || tag === 'Neutral') {
+    return 'neutral';
+  }
+
+  // Everything else is undesirable
+  return 'undesirable';
+};
+
+// Helper to get skill rating info based on progress value
+const getSkillRating = (progress: number, t: Function, maxValue: number = 10): { barColor?: string; textColor?: string; suffix?: string } => {
+  if (progress <= maxValue * 0.5) {
+    return { barColor: '#852221', textColor: '#852221', suffix: t('report.skillRating.payAttention') };
+  } else if (progress <= maxValue * 0.8) {
+    return { barColor: '#6750A4', textColor: '#6750A4', suffix: t('report.skillRating.good') };
+  } else {
+    return { barColor: '#6750A4', textColor: '#6750A4', suffix: t('report.skillRating.excellent') };
+  }
+};
+
+// Light background colors for different speakers
+const SPEAKER_COLORS = [
+  '#E3F2FD', // Light blue
+  '#FFF3E0', // Light orange
+  '#F3E5F5', // Light purple
+  '#E8F5E9', // Light green
+];
+
+const getSpeakerMappings = (transcript: any[]) => {
+  const labelMapping: { [key: string]: string } = {};
+  const colorMapping: { [key: string]: string } = {};
+  const seenSpeakers = new Set<string>();
+  const adultSpeakers: string[] = [];
+  const childSpeakers: string[] = [];
+  let colorIndex = 0;
+
+  // Group speakers by role (only add each speaker once)
+  transcript.forEach(segment => {
+    const role = segment.role;
+    if (!seenSpeakers.has(segment.speaker)) {
+      seenSpeakers.add(segment.speaker);
+      if (role === 'adult') {
+        adultSpeakers.push(segment.speaker);
+      } else if (role === 'child') {
+        childSpeakers.push(segment.speaker);
+      }
+    }
+  });
+
+  // Sort to ensure consistent ordering
+  adultSpeakers.sort();
+  childSpeakers.sort();
+
+  // Assign labels and colors
+  adultSpeakers.forEach((speaker, index) => {
+    labelMapping[speaker] = adultSpeakers.length > 1 ? `Adult ${index + 1}` : 'Adult';
+    colorMapping[speaker] = SPEAKER_COLORS[colorIndex % SPEAKER_COLORS.length];
+    colorIndex++;
+  });
+  childSpeakers.forEach((speaker, index) => {
+    labelMapping[speaker] = childSpeakers.length > 1 ? `Child ${index + 1}` : 'Child';
+    colorMapping[speaker] = SPEAKER_COLORS[colorIndex % SPEAKER_COLORS.length];
+    colorIndex++;
+  });
+
+  return { labelMapping, colorMapping };
+};
+
+// Helper to add empty lines between sentences
+const formatWithLineBreaks = (text: string): string => {
+  if (!text) return text;
+  // Replace sentence endings (. ! ?) followed by a space and capital letter with double newlines
+  return text.replace(/([.!?])\s+(?=[A-Z])/g, '$1\n\n');
+};
+
+// Helper to add new lines when seeing '***'
+const formatWithStarBreaks = (text: string): string => {
+  if (!text) return text;
+  return text.replace(/\*\*\*/g, '\n\n');
+};
+
+// Helper to strip PCIT tags (e.g., LP, IC, DC, RF, BD) from quote text
+const stripPcitTags = (text: string): string => {
+  if (!text) return text;
+  // Remove tags at the end of lines (e.g., "Great job! LP" -> "Great job!")
+  return text
+    .split('\n')
+    .map(line => line.replace(/\s+(LP|IC|DC|RF|BD|NT|QU|CM|CR|UP|NE|EC|PR|NA)$/gi, ''))
+    .join('\n')
+    .trim();
+};
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const SKILL_TAG_MAP: Record<string, string> = {
+  'Praise (Labeled)': 'Labeled Praise',
+  'Echo': 'Echo',
+  'Narrate': 'Narration',
+  'Questions': 'Question',
+  'Commands': 'Command',
+  'Criticism': 'Criticism',
+};
+
+// Maps API label → i18n key suffix (under report.skillLabel.*)
+const SKILL_LABEL_I18N_KEY: Record<string, string> = {
+  'Praise (Labeled)': 'praiseLabeleld',
+  'Echo': 'echo',
+  'Narrate': 'narrate',
+  'Questions': 'questions',
+  'Commands': 'commands',
+  'Criticism': 'criticism',
+};
+
+const getSkillDisplayLabel = (apiLabel: string, t: Function): string => {
+  const key = SKILL_LABEL_I18N_KEY[apiLabel];
+  if (!key) return apiLabel;
+  const translated = t(`report.skillLabel.${key}`);
+  return translated || apiLabel;
+};
+
+const getUtterancesForSkill = (
+  transcript: any[] | undefined,
+  skillLabel: string,
+): Array<{
+  preceding?: { role?: string; text: string };
+  main: { role?: string; text: string; tag?: string; feedback?: string };
+}> => {
+  if (!transcript?.length) return [];
+  const tag = (SKILL_TAG_MAP[skillLabel] || skillLabel).toLowerCase();
+  const results: Array<{
+    preceding?: { role?: string; text: string };
+    main: { role?: string; text: string; tag?: string; feedback?: string };
+  }> = [];
+  transcript.forEach((u, index) => {
+    if (u.tag && u.tag.toLowerCase() === tag) {
+      const prev = index > 0 ? transcript[index - 1] : null;
+      results.push({
+        preceding: prev && prev.speaker !== '__SILENT__'
+          ? { role: prev.role, text: prev.text }
+          : undefined,
+        main: { role: u.role, text: u.text, tag: u.tag, feedback: u.feedback },
+      });
+    }
+  });
+  return results;
+};
+
+const NEGATIVE_REASONS = ['Too generic', 'Not accurate', 'Hard to understand', 'Missing something'];
+
+const getExampleUtterances = (exampleIndex: number, transcript: any[]) => {
+  const result: { utterance: any; originalIndex: number }[] = [];
+  if (exampleIndex > 0 && transcript[exampleIndex - 1]) {
+    result.push({ utterance: transcript[exampleIndex - 1], originalIndex: exampleIndex - 1 });
+  }
+  if (transcript[exampleIndex]) {
+    result.push({ utterance: transcript[exampleIndex], originalIndex: exampleIndex });
+  }
+  if (exampleIndex < transcript.length - 1 && transcript[exampleIndex + 1]) {
+    result.push({ utterance: transcript[exampleIndex + 1], originalIndex: exampleIndex + 1 });
+  }
+  return result;
+};
+
+// Performance badge color mapping
+const PERFORMANCE_COLORS: { [key: string]: { bg: string; text: string } } = {
+  'Excellent': { bg: '#DCFCE7', text: '#15803D' },
+  'Good': { bg: '#EDE9FE', text: '#6D28D9' },
+  'Fair': { bg: '#FEF3C7', text: '#B45309' },
+  'Needs Practice': { bg: '#FEE2E2', text: '#B91C1C' },
+  'Not Observed': { bg: '#F3F4F6', text: '#6B7280' },
+};
+
+const getPerformanceColors = (performance: string) => {
+  // Handle composite like "Fair/Good"
+  const key = Object.keys(PERFORMANCE_COLORS).find(k =>
+    performance.toLowerCase().includes(k.toLowerCase())
+  );
+  return PERFORMANCE_COLORS[key || 'Not Observed'];
+};
+
+/** Label color mapping for command sequences */
+const LABEL_COLORS: { [key: string]: { bg: string; text: string } } = {
+  'Great!': { bg: '#DCFCE7', text: '#15803D' },
+  'Needs Work': { bg: '#FEF3C7', text: '#B45309' },
+};
+
+const getLabelColors = (label: string) => {
+  return LABEL_COLORS[label] || LABEL_COLORS['Needs Work'];
+};
+
+/** PDI Coach's Corner — Two Choices Flow skills */
+const PDICoachCorner: React.FC<{
+  pdiSkills: Array<{ skill: string; performance: string; feedback: string }>;
+  commandSequences?: Array<{ title: string; label: string; whatHappened?: string; command: string; waitTime: string; followThrough: string; coachTip?: string }> | null;
+  summary?: string | null;
+  recordingId: string;
+  navigation: any;
+  tomorrowGoal?: string | null;
+}> = ({ pdiSkills, commandSequences, summary, recordingId, navigation, tomorrowGoal }) => {
+  const { t } = useTranslation();
+  return (
+    <View>
+      <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
+      <View style={styles.coachCard}>
+        {summary && (
+          <Text style={styles.pdiSummaryText}>{summary}</Text>
+        )}
+
+        {/* Skills List */}
+        {/* <Text style={styles.pdiSectionSubtitle}>The Two Choices Flow</Text>
+        {pdiSkills.map((item, index) => {
+          const colors = getPerformanceColors(item.performance);
+          return (
+            <View
+              key={index}
+              style={[
+                styles.pdiSkillItem,
+                index < pdiSkills.length - 1 && styles.pdiSkillItemBorder,
+              ]}
+            >
+              <View style={styles.pdiSkillTitleRow}>
+                <Text style={styles.pdiSkillName}>{item.skill}</Text>
+                <View style={[styles.pdiPerformanceBadge, { backgroundColor: colors.bg }]}>
+                  <Text style={[styles.pdiPerformanceText, { color: colors.text }]}>{item.performance}</Text>
+                </View>
+              </View>
+              <Text style={styles.pdiSkillFeedback}>{item.feedback}</Text>
+            </View>
+          );
+        })} */}
+
+        {/* Command Sequences */}
+        {commandSequences && commandSequences.length > 0 && (
+          <>
+            <Text style={[styles.pdiSectionSubtitle, { marginTop: 20 }]}>{t('report.pdi.commandSequencesSubtitle')}</Text>
+            {commandSequences.map((seq, index) => {
+              const labelColors = getLabelColors(seq.label);
+              return (
+                <View
+                  key={index}
+                  style={[
+                    styles.pdiSeqBlock,
+                    index < commandSequences.length - 1 && styles.pdiSkillItemBorder,
+                  ]}
+                >
+                  <View style={styles.pdiSeqHeaderRow}>
+                    <Text style={styles.pdiSeqTitle}>{t('report.pdi.sequenceTitle', { index: index + 1, title: seq.title })}</Text>
+                    <View style={[styles.pdiSeqLabelBadge, { backgroundColor: labelColors.bg }]}>
+                      <Text style={[styles.pdiSeqLabelText, { color: labelColors.text }]}>{seq.label}</Text>
+                    </View>
+                  </View>
+                  {seq.whatHappened && (
+                    <Text style={styles.pdiSeqWhatHappened}>{seq.whatHappened}</Text>
+                  )}
+                  <View style={styles.pdiSeqBullet}>
+                    <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>{t('report.pdi.command')}</Text>{seq.command}</Text>
+                  </View>
+                  <View style={styles.pdiSeqBullet}>
+                    <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>{t('report.pdi.waitTime')}</Text>{seq.waitTime}</Text>
+                  </View>
+                  <View style={styles.pdiSeqBullet}>
+                    <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>{t('report.pdi.followThrough')}</Text>{seq.followThrough}</Text>
+                  </View>
+                  {seq.coachTip && (
+                    <View style={styles.pdiSeqBullet}>
+                      <Text style={styles.pdiSeqBulletText}><Text style={styles.pdiSeqBold}>{t('report.pdi.coachsTip')}</Text>{seq.coachTip}</Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </>
+        )}
+
+        {tomorrowGoal && (
+          <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tomorrowsGoal')}</Text>{tomorrowGoal}</Text>
+        )}
+        <TouchableOpacity
+          style={styles.cardLinkButton}
+          onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
+        >
+          <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const EBA_TOTAL = 50;
+
+const EmotionalBankBar: React.FC<{
+  noraScore: number;
+  skills: Array<{ label: string; progress: number }>;
+  areasToAvoid: Array<any>;
+}> = ({ noraScore, skills, areasToAvoid }) => {
+  const HALF = EBA_TOTAL / 2; // 25 — center divider
+
+  // Green: base 50pts (fixed) + 1pt per PEN skill use
+  const penPoints = skills.reduce((s, sk) => s + (sk.progress || 0), 0);
+  const totalPositive = 50 + penPoints;
+  const totalGreenSegs = Math.min(Math.round(totalPositive / 100 * HALF), HALF);
+  const penSegs = totalPositive > 0 ? Math.round((penPoints / totalPositive) * totalGreenSegs) : 0;
+  const baseSegs = totalGreenSegs - penSegs;
+
+  // Red: 1pt per negative use (Questions, Commands, Criticism)
+  const avoidTotal = areasToAvoid.reduce((s: number, a: any) => {
+    return s + (typeof a === 'string' ? 0 : (a.count || 0));
+  }, 0);
+  const negPoints = avoidTotal;
+  const redSegs = Math.min(Math.round(negPoints / 100 * HALF), HALF);
+
+  // Build segment type array: 0=empty, 1=base green, 2=pen green, 3=red
+  // Left half  = indices 0..24, right half = indices 25..49
+  const segs = Array(EBA_TOTAL).fill(0) as number[];
+  // Green: from index 24 going left
+  for (let i = 0; i < baseSegs; i++) segs[HALF - 1 - i] = 1;
+  for (let i = 0; i < penSegs; i++) segs[HALF - 1 - baseSegs - i] = 2;
+  // Red: from index 25 going right
+  for (let i = 0; i < redSegs; i++) segs[HALF + i] = 3;
+
+  const getColor = (type: number, pos: number): string => {
+    if (type === 1) return '#6750A4';
+    if (type === 2) return '#C4B5FD';
+    if (type === 3) return '#852221';
+    return '#E5E7EB';
+  };
+
+  const scoreColor = noraScore < 80 ? '#852221' : '#6750A4';
+
+  return (
+    <View>
+      <View style={eboStyles.scoreHeader}>
+        <View style={eboStyles.scoreNumRow}>
+          <Text style={[eboStyles.scoreNum, { color: scoreColor }]}>{noraScore}</Text>
+          <Text style={eboStyles.scoreDenom}>/100</Text>
+        </View>
+      </View>
+      <View style={eboStyles.bar}>
+        {segs.map((type, i) => (
+          <View key={i} style={[eboStyles.seg, { backgroundColor: getColor(type, i) }]} />
+        ))}
+      </View>
+      <View style={eboStyles.pointsRow}>
+        <View style={eboStyles.pointsLeftHalf}>
+          <Text style={eboStyles.pointsGreen}>+{penPoints} pts ({penPoints} PEN × 1)</Text>
+          <Text style={eboStyles.pointsBase}>50 (base)</Text>
+        </View>
+        <View style={eboStyles.pointsRightHalf}>
+          <Text style={eboStyles.pointsRed}>−{negPoints} pts ({avoidTotal} avoid × 1)</Text>
+        </View>
+      </View>
+      {/* <View style={eboStyles.legend}>
+        <View style={eboStyles.legendLeft}>
+        <View style={eboStyles.legendItem}>
+            <View style={[eboStyles.dot, { backgroundColor: '#C4B5FD' }]} />
+            <Text style={eboStyles.legendLabel}>PEN skills</Text>
+          </View>
+          <View style={eboStyles.legendItem}>
+            <View style={[eboStyles.dot, { backgroundColor: '#6750A4' }]} />
+            <Text style={eboStyles.legendLabel}>Base</Text>
+          </View>
+
+        </View>
+        <View style={eboStyles.legendItem}>
+          <View style={[eboStyles.dot, { backgroundColor: '#852221' }]} />
+          <Text style={eboStyles.legendLabel}>Areas to avoid</Text>
+        </View>
+      </View> */}
+    </View>
+  );
+};
+
+const eboStyles = StyleSheet.create({
+  scoreHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  scoreNumRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 2,
+  },
+  scoreNum: {
+    fontFamily: FONTS.bold,
+    fontSize: 36,
+  },
+  scoreDenom: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: '#9CA3AF',
+  },
+  suffixBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  suffixText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+  },
+  bar: {
+    flexDirection: 'row',
+    height: 11,
+    borderRadius: 3,
+    gap: 2,
+    alignItems: 'center',
+  },
+  seg: {
+    flex: 1,
+    height: '100%',
+    borderRadius: 3,
+  },
+  pointsRow: {
+    flexDirection: 'row',
+    marginTop: 6,
+    paddingHorizontal: 2,
+  },
+  pointsLeftHalf: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingRight: 6,
+  },
+  pointsRightHalf: {
+    flex: 1,
+    alignItems: 'flex-end',
+    paddingLeft: 6,
+  },
+  pointsBase: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#6750A4',
+  },
+  pointsGreen: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#C4B5FD',
+  },
+  pointsRed: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#852221',
+  },
+  legend: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingHorizontal: 2,
+  },
+  legendLeft: {
+    flexDirection: 'row',
+    gap: 14,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+  },
+  legendLabel: {
+    fontFamily: FONTS.regular,
+    fontSize: 11,
+    color: '#6B7280',
+  },
+});
+
+export const ReportScreen: React.FC = () => {
+  const navigation = useNavigation<RootStackNavigationProp>();
+  const route = useRoute<ReportScreenRouteProp>();
+  const { t } = useTranslation();
+  const recordingService = useRecordingService();
+  const authService = useAuthService();
+  const { recordingId } = route.params;
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reportData, setReportData] = useState<RecordingAnalysis | null>(null);
+  const [pollingCount, setPollingCount] = useState(0);
+  const [childName, setChildName] = useState<string>('Your Child');
+  const [developmentalVisible, setDevelopmentalVisible] = useState(false);
+  const [totalRecordings, setTotalRecordings] = useState<number>(0);
+  const [developmentalProgress, setDevelopmentalProgress] = useState<DevelopmentalProgress | null>(null);
+  const [selectedDomain, setSelectedDomain] = useState<DomainType | null>(null);
+  const [domainMilestones, setDomainMilestones] = useState<DomainMilestone[] | null>(null);
+  const [domainProfiling, setDomainProfiling] = useState<DomainProfiling | null>(null);
+  const [domainChildName, setDomainChildName] = useState<string | null>(null);
+  const [showDomainModal, setShowDomainModal] = useState(false);
+  const [loadingDomainMilestones, setLoadingDomainMilestones] = useState(false);
+
+  // Feedback state
+  const [feedbackSentiment, setFeedbackSentiment] = useState<'positive' | 'negative' | null>(null);
+  const [feedbackReasons, setFeedbackReasons] = useState<string[]>([]);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [showPhaseCelebration, setShowPhaseCelebration] = useState(false);
+  const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  // One-time coach chat demo bubble
+  const [showChatDemo, setShowChatDemo] = useState(false);
+  const [showChatDemoMessage, setShowChatDemoMessage] = useState(true);
+  const chatDemoAnim = useRef(new Animated.Value(0)).current;
+  const chatDemoJump = useRef(new Animated.Value(0)).current;
+  const aboutChildSectionY = useRef<number | null>(null);
+  const chatDemoTriggered = useRef(false);
+
+  const dismissChatDemo = useCallback(async (navigate = false) => {
+    if (navigate) amplitudeService.trackChatBubbleTapped('report_demo');
+    Animated.timing(chatDemoAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
+      setShowChatDemo(false);
+    });
+    await userStorage.setItem('@report_chat_demo_shown', 'true');
+    if (navigate) navigation.push('CoachChat');
+  }, [chatDemoAnim, navigation]);
+
+  const dismissChatDemoMessage = useCallback(() => {
+    setShowChatDemoMessage(false);
+    userStorage.setItem('@report_chat_demo_shown', 'true');
+  }, []);
+
+  const handleScroll = useCallback((event: any) => {
+    if (chatDemoTriggered.current || aboutChildSectionY.current === null) return;
+    const scrollY = event.nativeEvent.contentOffset.y;
+    const screenHeight = Dimensions.get('window').height;
+    if (scrollY + screenHeight * 0.65 >= aboutChildSectionY.current) {
+      chatDemoTriggered.current = true;
+      userStorage.getItem('@report_chat_demo_shown').then(shown => {
+        if (shown) return;
+        setShowChatDemo(true);
+        Animated.spring(chatDemoAnim, { toValue: 1, useNativeDriver: true, tension: 60, friction: 10 }).start(() => {
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(chatDemoJump, { toValue: -12, duration: 200, useNativeDriver: true }),
+              Animated.spring(chatDemoJump, { toValue: 0, useNativeDriver: true, tension: 120, friction: 6 }),
+              Animated.delay(1800),
+            ]),
+            { iterations: 3 }
+          ).start();
+        });
+      });
+    }
+  }, [chatDemoAnim]);
+
+  const handleSentimentPress = useCallback((sentiment: 'positive' | 'negative') => {
+    amplitudeService.trackEvent('Report Feedback Sentiment Selected', { sentiment, recordingId });
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setFeedbackSentiment(sentiment);
+
+    if (sentiment === 'positive') {
+      // Shake animation to acknowledge
+      Animated.sequence([
+        Animated.timing(shakeAnim, { toValue: 8, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -8, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 6, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -6, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+      ]).start();
+
+      // Auto-submit positive feedback (fire and forget)
+      recordingService.submitReportFeedback(recordingId, {
+        sentiment: 'positive',
+        reasons: [],
+      }).catch(err => console.log('Feedback submit error:', err));
+    }
+  }, [shakeAnim, recordingId, recordingService]);
+
+  const toggleReason = useCallback((reason: string) => {
+    setFeedbackReasons(prev =>
+      prev.includes(reason) ? prev.filter(r => r !== reason) : [...prev, reason]
+    );
+  }, []);
+
+  const handleSubmitFeedback = useCallback(async () => {
+    if (!feedbackSentiment) return;
+    amplitudeService.trackEvent('Report Feedback Submitted', { sentiment: feedbackSentiment, reasons: feedbackReasons, recordingId });
+    try {
+      await recordingService.submitReportFeedback(recordingId, {
+        sentiment: feedbackSentiment,
+        reasons: feedbackReasons,
+        freeText: feedbackText || undefined,
+      });
+    } catch (err) {
+      // Silently fail — feedback is non-critical
+      console.log('Feedback submit error:', err);
+    }
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setFeedbackSubmitted(true);
+  }, [feedbackSentiment, feedbackReasons, feedbackText, recordingId, recordingService]);
+
+  useEffect(() => {
+    loadReportData();
+    loadChildName();
+    loadDevelopmentalVisibility();
+    recordingService.getRecordings().then(({ recordings }) => {
+      setTotalRecordings(recordings?.length ?? 0);
+    }).catch(() => {});
+    // getDevelopmentalProgress is called in a separate useEffect once reportData is available
+    // Show bubble immediately (no animation, no message) if demo was already seen
+    userStorage.getItem('@report_chat_demo_shown').then(shown => {
+      if (shown) {
+        chatDemoAnim.setValue(1);
+        setShowChatDemoMessage(false);
+        setShowChatDemo(true);
+        chatDemoTriggered.current = true;
+      }
+    });
+  }, [recordingId]);
+
+  useEffect(() => {
+    if (!reportData) return;
+    recordingService.getDevelopmentalProgress().then(data => {
+      if (data) setDevelopmentalProgress(data);
+    }).catch(() => {});
+  }, [reportData?.createdAt]);
+
+  const handleDomainPress = async (domain: DomainType) => {
+    setSelectedDomain(domain);
+    setShowDomainModal(true);
+    setLoadingDomainMilestones(true);
+    setDomainMilestones(null);
+    setDomainProfiling(null);
+    setDomainChildName(null);
+    try {
+      const response = await recordingService.getDomainMilestones(domain);
+      setDomainMilestones(response.milestones);
+      setDomainProfiling(response.profiling);
+      setDomainChildName(response.childName);
+    } catch (error) {
+      console.error('Failed to load domain milestones:', error);
+    } finally {
+      setLoadingDomainMilestones(false);
+    }
+  };
+
+  const handleCloseDomainModal = () => {
+    setShowDomainModal(false);
+    setSelectedDomain(null);
+    setDomainMilestones(null);
+    setDomainProfiling(null);
+    setDomainChildName(null);
+  };
+
+  const loadDevelopmentalVisibility = async () => {
+    try {
+      const result = await recordingService.getDevelopmentalVisibility();
+      setDevelopmentalVisible(result.visible);
+    } catch (err) {
+      // Keep default false
+    }
+  };
+
+  const loadChildName = async () => {
+    try {
+      const user = await authService.getCurrentUser();
+      if (user?.childName) {
+        setChildName(user.childName);
+      }
+    } catch (err) {
+      // Keep default "Your Child" if fetch fails
+    }
+  };
+
+  const loadReportData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await recordingService.getAnalysis(recordingId);
+      setReportData(data);
+      setLoading(false);
+
+      // Show phase celebration if this is the first CDI session with score >= 80
+      if ((data.noraScore ?? 0) >= 80) {
+        const celebrated = await userStorage.getItem('@discipline_phase_celebrated');
+        if (!celebrated) {
+          await userStorage.setItem('@discipline_phase_celebrated', 'true');
+          setShowPhaseCelebration(true);
+        }
+      }
+    } catch (err: any) {
+      console.log('Report error:', err.message);
+
+      // If still processing, poll again after 3 seconds
+      if (err.message.includes('processing') && pollingCount < 20) {
+        setPollingCount(prev => prev + 1);
+        setTimeout(() => {
+          loadReportData();
+        }, 3000);
+      } else if (pollingCount >= 20) {
+        setError('Analysis is taking longer than expected. Please try again later.');
+        setLoading(false);
+      } else {
+        setError(err.message || t('report.failedToLoad'));
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleBack = () => {
+    navigation.goBack();
+  };
+
+  const handleBackToHome = () => {
+    navigation.navigate('MainTabs', { screen: 'Home' });
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+        <View style={styles.header}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
+          </TrackedTouchable>
+          <Text style={styles.headerTitle}>{t('report.headerTitle')}</Text>
+          <View style={{ width: 28 }} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.mainPurple} />
+          <Text style={styles.loadingText}>
+            {pollingCount > 0 ? t('report.analyzingSession') : t('report.loadingReport')}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Error state
+  if (error || !reportData) {
+    return (
+      <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+        <View style={styles.header}>
+          <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
+          </TrackedTouchable>
+          <Text style={styles.headerTitle}>{t('report.headerTitle')}</Text>
+          <View style={{ width: 28 }} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color="#E74C3C" />
+          <Text style={styles.errorText}>{error || t('report.failedToLoad')}</Text>
+          <Button onPress={loadReportData} variant="primary">
+            {t('report.tryAgain')}
+          </Button>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TrackedTouchable analyticsId="Back" onPress={handleBack} style={styles.backButton}>
+          <Ionicons name="chevron-back" size={28} color={COLORS.textDark} />
+        </TrackedTouchable>
+        <Text style={styles.headerTitle}>{t('report.headerTitle')}</Text>
+        <View style={{ width: 28 }} />
+      </View>
+
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={200}
+      >
+        {/* Header with Dragon Icon and Encouragement Message */}
+        <View style={styles.headerSection}>
+          <View style={styles.dragonIconContainer}>
+            <Image
+              source={DRAGON_PURPLE}
+              style={styles.dragonIcon}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.headerTextBox}>
+            <Text style={styles.headerText}>
+              {(reportData.mode === 'PDI' && reportData.pdiEncouragement)
+                ? reportData.pdiEncouragement
+                : (reportData.feedback || reportData.encouragement)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Nora Score */}
+        <View style={styles.scoreSection}>
+          <Text style={styles.sectionTitle}>{t('report.section.emotionalBankAccount')}</Text>
+          <View style={styles.skillsContainer}>
+            {(() => {
+              const score = reportData.noraScore ?? 0;
+              let scoreColor: string;
+              let suffix: string;
+              if (score < 80) {
+                scoreColor = '#852221';
+                suffix = t('report.skillRating.payAttention');
+              } else if (score < 90) {
+                scoreColor = '#6750A4';
+                suffix = t('report.skillRating.good');
+              } else {
+                scoreColor = '#6750A4';
+                suffix = t('report.skillRating.excellent');
+              }
+              return (
+                <SkillProgressBar
+                  label={t('report.overallLabel')}
+                  progress={score}
+                  maxValue={100}
+                  color={scoreColor}
+                  textColor={scoreColor}
+                  prefix="+"
+                  suffix={suffix}
+                  onPress={() => { amplitudeService.trackEvent('Report Overall Score Tapped', { score }); navigation.navigate('SkillExplanation', { skillKey: 'Overall', score, tip: reportData.tip ?? undefined }); }}
+                />
+              );
+            })()}
+          </View>
+          {/* <EmotionalBankBar
+            noraScore={reportData.noraScore ?? 0}
+            skills={reportData.skills}
+            areasToAvoid={reportData.areasToAvoid}
+          /> */}
+        </View>
+
+        {/* PRN Skills Section */}
+        <View style={styles.skillsSection}>
+          <Text style={styles.sectionTitle}>{t('report.section.penSkills')}</Text>
+          <Text style={styles.sectionSubtitle}>{t('report.section.penSkillsSubtitle')}</Text>
+          <View style={styles.skillsContainer}>
+            {(() => {
+              const childUtteranceCount = reportData.transcript
+                ? reportData.transcript.filter(u => u.role === 'child').length
+                : 0;
+              const echoTarget = childUtteranceCount < 10
+                ? Math.round(childUtteranceCount * 0.75)
+                : 10;
+              return reportData.skills.map((skill, index) => {
+                const maxValue = skill.label === 'Echo' ? echoTarget : 10;
+                const rating = getSkillRating(skill.progress, t, maxValue);
+                const isDynamicEcho = skill.label === 'Echo' && childUtteranceCount < 10;
+                return (
+                  <SkillProgressBar
+                    key={index}
+                    label={getSkillDisplayLabel(skill.label, t)}
+                    progress={skill.progress}
+                    maxValue={maxValue}
+                    color={rating.barColor}
+                    textColor={rating.textColor}
+                    suffix={isDynamicEcho ? `${rating.suffix}*` : rating.suffix}
+                    onPress={() => { amplitudeService.trackEvent('Report Skill Tapped', { skillKey: skill.label, progress: skill.progress }); navigation.navigate('SkillUtterances', { skillKey: skill.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, skill.label), target: maxValue, childUtteranceCount }); }}
+                  />
+                );
+              });
+            })()}
+          </View>
+          {(() => {
+            const childUtteranceCount = reportData.transcript
+              ? reportData.transcript.filter(u => u.role === 'child').length
+              : 0;
+            if (childUtteranceCount >= 10) return null;
+            const echoSkill = reportData.skills.find(s => s.label === 'Echo');
+            if (!echoSkill) return null;
+            const echoTarget = Math.round(childUtteranceCount * 0.75);
+            return (
+              <Text style={styles.echoFootnote}>
+                {`* ${t('skillInfo.echoGoalDynamic' as any, { count: childUtteranceCount, target: echoTarget })}`}
+              </Text>
+            );
+          })()}
+        </View>
+
+        {/* Areas to Avoid */}
+        <View style={styles.avoidSection}>
+          {(() => {
+            const filteredAreas = reportData.areasToAvoid
+              .filter(area => !(reportData.mode === 'PDI' && (typeof area === 'string' ? area : area.label) === 'Commands'));
+            const avoidTotal = filteredAreas.reduce((s: number, a: any) => s + (typeof a === 'string' ? 0 : (a.count || 0)), 0);
+            let avoidRatingSuffix: string;
+            let avoidRatingColor: string;
+            if (avoidTotal > 3) {
+              avoidRatingSuffix = t('report.skillRating.payAttention');
+              avoidRatingColor = '#852221';
+            } else if (avoidTotal === 0) {
+              avoidRatingSuffix = t('report.skillRating.excellent');
+              avoidRatingColor = '#6750A4';
+            } else {
+              avoidRatingSuffix = t('report.skillRating.good');
+              avoidRatingColor = '#6750A4';
+            }
+            return (
+              <>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>{t('report.section.areasToAvoid')}</Text>
+                  <Text style={[styles.skillRatingBadge, { color: avoidRatingColor }]}>{avoidTotal} {avoidRatingSuffix}</Text>
+                </View>
+                <Text style={styles.sectionSubtitle}>{t('report.section.areasToAvoidSubtitle')}</Text>
+                <View style={styles.avoidContainer}>
+                  {filteredAreas.map((area, index) => {
+                    const areaData = typeof area === 'string' ? { label: area, count: 0 } : area;
+                    const needsAttention = areaData.count > 0;
+                    return (
+                      <View key={index} style={styles.avoidItem}>
+                        <View style={styles.avoidRow}>
+                          <Text style={styles.avoidLabel}>{getSkillDisplayLabel(areaData.label, t)}</Text>
+                          <TouchableOpacity
+                            style={styles.avoidRightContainer}
+                            onPress={() => { amplitudeService.trackEvent('Report Area Avoided Tapped', { skillKey: areaData.label, count: areaData.count }); navigation.navigate('SkillUtterances', { skillKey: areaData.label, recordingId, utterances: getUtterancesForSkill(reportData.transcript, areaData.label) }); }}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Ionicons name="chevron-forward" size={12} color={needsAttention ? '#852221' : '#6750A4'} />
+                          </TouchableOpacity>
+                        </View>
+                        <View style={styles.circlesContainer}>
+                          {Array.from({ length: areaData.count }).map((_, i) => (
+                            <View key={i} style={[styles.circle, needsAttention && styles.circleAttention]} />
+                          ))}
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              </>
+            );
+          })()}
+        </View>
+
+        {/* Top Moment */}
+        <View>
+          <Text style={styles.cardTitle}>{t('report.section.topMoment')}</Text>
+          <View style={styles.card}>
+            <Text style={styles.quoteText}>
+              "{reportData.topMomentUtteranceNumber != null && reportData.transcript?.[reportData.topMomentUtteranceNumber]
+                ? stripPcitTags(reportData.transcript[reportData.topMomentUtteranceNumber].text)
+                : stripPcitTags(typeof reportData.topMoment === 'string' ? reportData.topMoment : reportData.topMoment.quote)}"
+            </Text>
+            {reportData.audioUrl && reportData.topMomentStartTime != null && reportData.topMomentEndTime != null && (
+              <MomentPlayer
+                audioUrl={reportData.audioUrl}
+                startTime={reportData.topMomentStartTime}
+                endTime={reportData.topMomentEndTime}
+              />
+            )}
+          </View>
+        </View>
+
+        {/* Coach's Corner */}
+        {reportData.mode === 'PDI' && reportData.pdiSkills && Array.isArray(reportData.pdiSkills) && reportData.pdiSkills.length > 0 ? (
+          <PDICoachCorner pdiSkills={reportData.pdiSkills} commandSequences={reportData.pdiCommandSequences} summary={reportData.pdiSummary} recordingId={recordingId} navigation={navigation} tomorrowGoal={reportData.pdiTomorrowGoal} />
+        ) : (
+          !reportData.coachingCards && reportData.coachingSummary ? (
+            <View>
+              <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
+              <View style={styles.coachCard}>
+                <Text style={styles.coachDescription}>{reportData.coachingSummary}</Text>
+                <TouchableOpacity
+                  style={styles.cardLinkButton}
+                  onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
+                >
+                  <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : reportData.coachingCards && Array.isArray(reportData.coachingCards) && reportData.coachingCards.length > 0 && (() => {
+            const items = reportData.coachingCards;
+            // Detect new format (sections with title + content) vs legacy (CoachingCard objects)
+            const isNewFormat = items.length > 0 && 'content' in items[0];
+
+            if (isNewFormat) {
+              const sections = items as CoachingSection[];
+              const tomorrowGoalText = reportData.tomorrowGoal;
+              return (
+                <View>
+                  <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
+                  <View style={styles.coachCard}>
+                    {sections.map((section, idx) => (
+                      <View key={idx} style={idx > 0 ? { marginTop: 16 } : undefined}>
+                        <Text style={styles.coachLabelBold}>{section.title}</Text>
+                        <MarkdownText style={styles.coachDescription}>{section.content}</MarkdownText>
+                      </View>
+                    ))}
+                    {tomorrowGoalText && (
+                      <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tomorrowsGoal')}</Text>{tomorrowGoalText}</Text>
+                    )}
+                    <TouchableOpacity
+                      style={styles.cardLinkButton}
+                      onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
+                    >
+                      <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            }
+
+            // Legacy CoachingCard format
+            const cards = (items as CoachingCard[]).slice(0, 1);
+            const legacyTomorrowGoal = reportData.tomorrowGoal || (cards[0]?.next_day_goal ?? null);
+            return (
+              <View>
+                <Text style={styles.cardTitle}>{t('report.section.coachsCorner')}</Text>
+                {cards.map((card) => (
+                    <View key={card.card_id} style={styles.coachCard}>
+                      {reportData.coachingSummary ? (
+                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.summary')}</Text>{reportData.coachingSummary}</Text>
+                      ) : null}
+                      {card.coaching_tip ? (
+                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tipForNextSession')}</Text>{card.coaching_tip}</Text>
+                      ) : null}
+                      {card.scenario && (
+                        <View style={styles.coachExampleContainer}>
+                          {card.scenario.instead_of ? (
+                            <View style={styles.coachInsteadOfRow}>
+                              <Ionicons name="bulb-outline" size={16} color="#6B7280" />
+                              <Text style={styles.coachExampleInsteadOf}><Text style={styles.coachExampleInsteadOfLabel}>{t('report.coachingCard.insteadOf')}</Text>{card.scenario.instead_of}</Text>
+                            </View>
+                          ) : null}
+                          {card.scenario.try_this ? (
+                            <Text style={styles.coachExampleImproved}><Text style={styles.coachExampleImprovedLabel}>{t('report.coachingCard.try')}</Text>{card.scenario.try_this}</Text>
+                          ) : null}
+                        </View>
+                      )}
+                      {card.apply_in_daily_life ? (
+                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.applyInDailyLife')}</Text>{card.apply_in_daily_life}</Text>
+                      ) : null}
+                      {legacyTomorrowGoal && (
+                        <Text style={styles.coachDescription}><Text style={styles.coachLabelBold}>{t('report.coachingCard.tomorrowsGoal')}</Text>{legacyTomorrowGoal}</Text>
+                      )}
+                      <TouchableOpacity
+                        style={styles.cardLinkButton}
+                        onPress={() => { amplitudeService.trackEvent('Report Transcript Tapped', { recordingId }); navigation.navigate('Transcript', { recordingId }); }}
+                      >
+                        <Text style={styles.cardLinkText}>{t('report.coachingCard.readFullTranscript')}</Text>
+                      </TouchableOpacity>
+                    </View>
+                ))}
+              </View>
+            );
+          })()
+        )
+        }
+
+        {/* What we learnt about Child */}
+        {/* Section 1: What we learnt about child today */}
+        {((reportData.aboutChild && reportData.aboutChild.length > 0) || (reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations) && reportData.milestoneCelebrations.length > 0)) && (() => {
+          // Server-persisted selection (dedup'd + ratio-balanced — see
+          // aboutChildSelectionService.cjs); falls back to a random pick only
+          // for older sessions predating selection, so the card stays stable
+          // across re-renders instead of re-randomizing on every one.
+          const item = reportData.selectedAboutChild
+            || (reportData.aboutChild && reportData.aboutChild.length > 0 ? reportData.aboutChild![Math.floor(Math.random() * reportData.aboutChild.length)] : null);
+          const milestones = reportData.milestoneCelebrations && Array.isArray(reportData.milestoneCelebrations)
+            ? (reportData.milestoneCelebrations as MilestoneCelebration[]).slice(0, 1)
+            : [];
+
+          return (
+            <View onLayout={e => { aboutChildSectionY.current = e.nativeEvent.layout.y; }}>
+              <Text style={styles.cardTitle}>{t('report.section.whatWeLearnt', { childName })}</Text>
+              <View style={styles.card}>
+                {/* Observation */}
+                {item && (
+                  <View>
+                    <Text style={styles.learnSubsectionLabel}>{t('report.subsection.observation')}</Text>
+                    <View style={styles.aboutChildTitleBadge}>
+                      <Ionicons name="sparkles" size={14} color="#7C3AED" />
+                      <Text style={styles.aboutChildTitleText}>{item.Title}</Text>
+                    </View>
+                    <Text style={styles.aboutChildDescription}>{item.Description}</Text>
+                    {item.Details ? (
+                      <>
+                        {/* <View style={styles.aboutChildDivider} /> */}
+                        <Text style={styles.aboutChildDetails}>{item.Details}</Text>
+                      </>
+                    ) : null}
+                  </View>
+                )}
+
+                {/* New Milestone */}
+                {milestones.map((milestone, index) => {
+                  const isAchieved = milestone.status === 'ACHIEVED';
+                  const personalizedDescription = isAchieved
+                    ? t('report.milestone.achieved', { childName, title: milestone.title.toLowerCase() })
+                    : t('report.milestone.emerging', { childName, title: milestone.title.toLowerCase() });
+
+                  return (
+                    <View key={index}>
+                      {item && <View style={styles.aboutChildDivider} />}
+                      <Text style={styles.learnSubsectionLabel}>{t('report.subsection.newMilestone', { category: milestone.category })}</Text>
+                      <Text style={styles.milestonePersonalizedText}>{personalizedDescription}</Text>
+                      {/* <Text style={styles.milestoneCategory}>{milestone.category}</Text> */}
+                      {milestone.evidenceSummary && !milestone.evidenceSummary.toLowerCase().startsWith('not observed') && (
+                        <Text style={styles.milestoneEvidenceSummary}>"{milestone.evidenceSummary}"</Text>
+                      )}
+                      {milestone.actionTip && (
+                        <View style={styles.milestoneActionTip}>
+                          <Ionicons name="bulb-outline" size={16} color="#6B7280" />
+                          <Text style={styles.milestoneActionTipText}>{milestone.actionTip}</Text>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })()}
+
+        {/* Section 2: Developmental Milestones */}
+        {developmentalProgress && developmentalProgress.completedSessionCount >= 5 ? (
+          <View>
+            <Text style={styles.cardTitle}>{developmentalProgress.childName ? t('report.section.developmentalMilestonesWithName', { childName: developmentalProgress.childName }) : t('report.section.developmentalMilestones')}</Text>
+            <RadarChart
+              data={developmentalProgress}
+              childName={developmentalProgress.childName}
+              onDomainPress={handleDomainPress}
+              showTitle={false}
+            />
+          </View>
+        ) : (
+          <View style={styles.milestoneLockedCard}>
+            <Text style={styles.milestoneLockedTitle}>{t('report.section.developmentalMilestones')}</Text>
+            <View style={styles.milestoneLockedBadge}>
+              <Text style={styles.milestoneLockedBadgeText}>{t('report.milestone.lockedBadge', { count: developmentalProgress?.completedSessionCount ?? 0 })}</Text>
+            </View>
+            <Text style={styles.milestoneLockedDesc}>
+              {t('report.milestone.lockedDescription')}
+            </Text>
+          </View>
+        )}
+
+        {/* Tips for Next Time - TEMPORARILY HIDDEN */}
+        {/* <View>
+          <Text style={styles.cardTitle}>Session Overview</Text>
+          {(reportData.feedback || (reportData.exampleIndex != null && reportData.transcript && reportData.transcript.length > 0) || (!reportData.tip && reportData.tips && typeof reportData.tips === 'object')) && (
+          <View style={styles.card}>
+            {reportData.feedback && (
+              <Text style={styles.transitionText}>{formatWithStarBreaks(reportData.feedback)}</Text>
+            )}
+
+            {reportData.exampleIndex != null && reportData.transcript && reportData.transcript.length > 0 && (() => {
+              const speakerMappings = getSpeakerMappings(reportData.transcript);
+              const exampleUtterances = getExampleUtterances(reportData.exampleIndex, reportData.transcript);
+              const middleIndex = exampleUtterances.length === 3 ? 1 : (exampleUtterances.length === 2 && reportData.exampleIndex === 0 ? 0 : 1);
+
+              return (
+                <View style={styles.exampleUtterancesContainer}>
+                  <Text style={styles.exampleLabel}>Example from the session:</Text>
+                  {exampleUtterances.map((item, idx) => {
+                    const { utterance, originalIndex } = item;
+                    const isMiddle = originalIndex === reportData.exampleIndex;
+
+                    if (utterance.speaker === '__SILENT__') {
+                      const duration = (utterance.end || 0) - (utterance.start || 0);
+                      const durationText = duration >= 60
+                        ? `${Math.floor(duration / 60)}m ${Math.round(duration % 60)}s`
+                        : `${duration.toFixed(1)}s`;
+
+                      return (
+                        <View key={idx} style={[styles.silentSlotContainer, isMiddle && styles.utteranceHighlighted]}>
+                          <View style={styles.silentSlotHeader}>
+                            <View style={styles.silentSlotBadge}>
+                              <Text style={styles.silentSlotBadgeText}>Silent Moment</Text>
+                            </View>
+                          </View>
+                          {isMiddle && utterance.feedback && (
+                            <View style={styles.silentSlotFeedback}>
+                              <Text style={styles.silentSlotFeedbackText}>
+                                💡 {utterance.feedback}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      );
+                    }
+
+                    const speakerLabel = speakerMappings.labelMapping[utterance.speaker] || t('report.speakerUnknown');
+                    const speakerColor = speakerMappings.colorMapping[utterance.speaker] || '#E3F2FD';
+                    const isAdult = speakerLabel.includes('Adult');
+                    const pcitTag = utterance.tag;
+                    const skillType = getSkillType(pcitTag);
+                    const shouldShowFeedback = isMiddle && isAdult && utterance.feedback && skillType !== 'neutral';
+
+                    return (
+                      <View key={idx} style={[styles.utteranceContainer, isMiddle && styles.utteranceHighlighted]}>
+                        <View style={styles.utteranceHeader}>
+                          <View style={[styles.speakerBadge, { backgroundColor: speakerColor }]}>
+                            <Text style={styles.speakerBadgeText}>{speakerLabel}</Text>
+                          </View>
+                          {isMiddle && isAdult && pcitTag && (
+                            <View style={[styles.tag, { backgroundColor: getTagColor(pcitTag) }]}>
+                              <Text style={styles.tagText}>{pcitTag}</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={styles.utteranceText}>{utterance.text}</Text>
+                        {shouldShowFeedback && (
+                          <View style={[
+                            styles.feedbackContainer,
+                            skillType === 'desirable' ? styles.feedbackDesirable : styles.feedbackUndesirable
+                          ]}>
+                            <Text style={[
+                              styles.feedbackText,
+                              skillType === 'desirable' ? styles.feedbackTextDesirable : styles.feedbackTextUndesirable
+                            ]}>
+                              {skillType === 'desirable' ? '✓ Great!\n' : '💡 '}
+                              {utterance.feedback}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              );
+            })()}
+
+            {!reportData.tip && reportData.tips && typeof reportData.tips === 'object' && (
+              <View>
+                <Text style={styles.observationTitle}>{reportData.tips.observation}</Text>
+                <View style={styles.whySection}>
+                  <Text style={styles.whyLabel}>Why it matters:</Text>
+                  <Text style={styles.whyText}>{reportData.tips.why}</Text>
+                </View>
+                <Text style={styles.exampleLabel}>Example from the session:</Text>
+                <View style={styles.exampleSection}>
+                  <Text style={styles.exampleQuote}>"{reportData.tips.example}"</Text>
+                  <View style={styles.tipSection}>
+                    <Text style={styles.tipText}>💡 {reportData.tips.actionableTip}</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+          </View>
+          )}
+        </View> */}
+
+        {/* What We Learned About Child */}
+        {/* {reportData.childReaction && (
+          <View>
+            <Text style={styles.cardTitle}>What We Learned About {childName}</Text>
+            <View style={styles.card}>
+              <Text style={styles.childReactionText}>{formatWithLineBreaks(reportData.childReaction)}</Text>
+            </View>
+          </View>
+        )} */}
+
+        {/* Reminder */}
+        {/* {reportData.reminder && (
+          <View style={styles.headerSection}>
+            <View style={styles.dragonIconContainer}>
+              <Image
+                source={DRAGON_PURPLE}
+                style={styles.dragonIcon}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.headerTextBox}>
+              <Text style={styles.headerText}>{reportData.reminder}</Text>
+            </View>
+          </View>
+        )} */}
+
+        {/* Report Feedback */}
+        {feedbackSubmitted ? (
+          <View style={styles.feedbackCard}>
+            <View style={styles.feedbackThankYou}>
+              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+              <Text style={styles.feedbackThankYouText}>{t('report.feedback.thankYou')}</Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.feedbackCard}>
+            <Text style={styles.feedbackTitle}>{t('report.feedback.question')}</Text>
+
+            <View style={styles.feedbackSentimentRow}>
+              <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
+                <TrackedTouchable analyticsId="report.feedbackYes"
+                  style={[
+                    styles.feedbackPill,
+                    styles.feedbackPillNegative,
+                    feedbackSentiment === 'positive' && styles.feedbackPillPositiveActive,
+                  ]}
+                  onPress={() => handleSentimentPress('positive')}
+                >
+                  <Ionicons
+                    name={feedbackSentiment === 'positive' ? 'thumbs-up' : 'thumbs-up-outline'}
+                    size={18}
+                    color={feedbackSentiment === 'positive' ? '#FFFFFF' : '#9CA3AF'}
+                  />
+                  <Text style={[
+                    styles.feedbackPillText,
+                    styles.feedbackPillTextNegative,
+                    feedbackSentiment === 'positive' && styles.feedbackPillTextActive,
+                  ]}>{t('report.feedbackYes')}</Text>
+                </TrackedTouchable>
+              </Animated.View>
+
+              <TrackedTouchable analyticsId="report.feedbackNotReally"
+                style={[
+                  styles.feedbackPill,
+                  styles.feedbackPillNegative,
+                  feedbackSentiment === 'negative' && styles.feedbackPillNegativeActive,
+                ]}
+                onPress={() => handleSentimentPress('negative')}
+              >
+                <Ionicons
+                  name={feedbackSentiment === 'negative' ? 'thumbs-down' : 'thumbs-down-outline'}
+                  size={18}
+                  color={feedbackSentiment === 'negative' ? '#FFFFFF' : '#9CA3AF'}
+                />
+                <Text style={[
+                  styles.feedbackPillText,
+                  styles.feedbackPillTextNegative,
+                  feedbackSentiment === 'negative' && styles.feedbackPillTextActive,
+                ]}>{t('report.feedbackNotReally')}</Text>
+              </TrackedTouchable>
+            </View>
+
+            {feedbackSentiment === 'negative' && (
+              <View style={styles.feedbackFollowUp}>
+                <Text style={styles.feedbackFollowUpLabel}>{t('report.feedbackWhatBetter')}</Text>
+
+                <View style={styles.feedbackChipsRow}>
+                  {NEGATIVE_REASONS.map(reason => {
+                    const reasonKeyMap: Record<string, string> = {
+                      'Too generic': t('report.negativeReasons.tooGeneric'),
+                      'Not accurate': t('report.negativeReasons.notAccurate'),
+                      'Hard to understand': t('report.negativeReasons.hardToUnderstand'),
+                      'Missing something': t('report.negativeReasons.missingSomething'),
+                    };
+                    return (
+                      <TrackedTouchable analyticsId={`Feedback Reason: ${reason}`}
+                        key={reason}
+                        style={[
+                          styles.feedbackChip,
+                          feedbackReasons.includes(reason) && styles.feedbackChipActiveNegative,
+                        ]}
+                        onPress={() => toggleReason(reason)}
+                      >
+                        <Text style={[
+                          styles.feedbackChipText,
+                          feedbackReasons.includes(reason) && styles.feedbackChipTextActive,
+                        ]}>{reasonKeyMap[reason] || reason}</Text>
+                      </TrackedTouchable>
+                    );
+                  })}
+                </View>
+
+                <TextInput
+                  style={styles.feedbackInput}
+                  placeholder={t('report.feedbackPlaceholder')}
+                  placeholderTextColor="#9CA3AF"
+                  value={feedbackText}
+                  onChangeText={setFeedbackText}
+                  multiline
+                  numberOfLines={2}
+                  textAlignVertical="top"
+                />
+
+                <TrackedTouchable analyticsId="report.feedbackSubmit" style={styles.feedbackSubmitButton} onPress={handleSubmitFeedback}>
+                  <Text style={styles.feedbackSubmitText}>{t('report.feedbackSubmit')}</Text>
+                </TrackedTouchable>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Back to Home Button */}
+        {/* <View style={styles.buttonContainer}>
+          <Button onPress={handleBackToHome} variant="primary">
+            Back to Home
+          </Button>
+        </View> */}
+      </ScrollView>
+
+      {false && showChatDemo && ( // temporarily hidden
+        <Animated.View
+          style={[
+            styles.chatDemoBubble,
+            {
+              opacity: chatDemoAnim,
+              transform: [{ translateY: chatDemoAnim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
+            },
+          ]}
+        >
+          {showChatDemoMessage && (
+            <View style={styles.chatDemoMessageRow}>
+              <Text style={styles.chatDemoText}>{t('report.chatDemo.message')}</Text>
+              <TrackedTouchable analyticsId="dismissChatDemoMessage" onPress={dismissChatDemoMessage} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close" size={18} color="#6B7280" />
+              </TrackedTouchable>
+            </View>
+          )}
+          <Animated.View style={{ transform: [{ translateY: chatDemoJump }], alignSelf: 'flex-end' }}>
+            <TrackedTouchable analyticsId="Dismiss Chat Demo" style={styles.chatDemoIconCircle} activeOpacity={0.85} onPress={() => dismissChatDemo(true)}>
+              <Ionicons name="chatbox-ellipses" size={26} color="#fff" />
+            </TrackedTouchable>
+          </Animated.View>
+        </Animated.View>
+      )}
+
+      <PhaseCelebrationModal
+        visible={showPhaseCelebration}
+        onClose={() => setShowPhaseCelebration(false)}
+        childName={childName}
+      />
+      <DomainMilestoneModal
+        visible={showDomainModal}
+        domain={selectedDomain}
+        milestones={domainMilestones}
+        profiling={domainProfiling}
+        childName={domainChildName}
+        loading={loadingDomainMilestones}
+        onClose={handleCloseDomainModal}
+      />
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  headerTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: COLORS.textDark,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  loadingText: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginTop: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorText: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: '#E74C3C',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 100,
+  },
+  headerSection: {
+    paddingTop: 4,
+    marginBottom: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dragonIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    overflow: 'hidden',
+    backgroundColor: '#F5F0FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 26,
+  },
+  dragonIcon: {
+    width: 90,
+    height: 90,
+    marginLeft: 25,
+  },
+  headerTextBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    borderRadius: 24,
+    minHeight: 80,
+  },
+  headerText: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: '#364153',
+    lineHeight: 24,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  cardTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    color: COLORS.textDark,
+    marginTop: 8,
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  scoreSection: {
+    marginBottom: 24,
+  },
+  scoreTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 12,
+  },
+  scoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  scoreValue: {
+    fontFamily: FONTS.bold,
+    fontSize: 32,
+    color: COLORS.mainPurple,
+    minWidth: 100,
+  },
+  scoreBarContainer: {
+    flex: 1,
+    height: 12,
+    backgroundColor: '#E8E8E8',
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  scoreBar: {
+    height: '100%',
+    backgroundColor: '#CEA4FC', 
+    borderRadius: 6,
+  },
+  skillsSection: {
+    marginBottom: 24,
+  },
+  avoidSection: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 0,
+  },
+  skillRatingBadge: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+  },
+  sectionTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 16,
+  },
+  totalText: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#666666',
+  },
+  skillsContainer: {
+    gap: 4,
+  },
+  echoFootnote: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 18,
+    marginTop: 8,
+  },
+  avoidContainer: {
+    gap: 16,
+  },
+  avoidItem: {
+    gap: 8,
+  },
+  avoidRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  avoidLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.textDark,
+  },
+  avoidRightContainer: {
+    alignItems: 'flex-start',
+    gap: 4,
+  },
+  countText: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: '#666666',
+  },
+  countTextClickable: {
+    //textDecorationLine: 'underline',
+  },
+  circlesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    maxWidth: 180,
+    alignSelf: 'flex-start',    
+  },
+  circle: {
+    width: 18,
+    height: 18,
+    borderRadius: 18,
+    backgroundColor: '#852221',
+  },
+  circleAttention: {
+    backgroundColor: '#852221',
+  },
+  countTextAttention: {
+    color: '#852221',
+  },
+  countTextExcellent: {
+    color: '#6750A4',
+  },
+  quoteText: {
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    color: COLORS.textDark,
+    fontStyle: 'italic',
+    //lineHeight: 24,
+    //marginBottom: 24,
+    textAlign: 'center',
+  },
+  waveformContainer: {
+    marginTop: 8,
+    marginBottom: -10,
+  },
+  tipsText: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  observationTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: COLORS.textDark,
+    marginBottom: 16,
+  },
+  whySection: {
+    marginBottom: 22,
+  },
+  whyLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 6,
+  },
+  whyText: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 20,
+  },
+  exampleSection: {
+    marginTop:8,
+    marginBottom: 16,
+    backgroundColor: '#F9FAFB',
+    padding: 12,
+    borderRadius: 8,
+    //borderColor: '#0059DB',
+    //borderWidth: 2,
+    //borderLeftWidth: 3,
+    //borderLeftColor: '#9CA3AF',
+  },
+  exampleLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.textDark,
+    marginBottom: 6,
+  },
+  exampleQuote: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: COLORS.textDark,
+    fontStyle: 'italic',
+    lineHeight: 20,
+  },
+  tipSection: {
+    backgroundColor: '#FAF5FF',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    marginTop: 16,
+    //borderLeftWidth: 3,
+    //borderLeftColor: '#9333EA',
+  },
+  tipText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#7E22CE',
+    lineHeight: 20,
+  },
+  moreTipsText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#666666',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  divider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: '#E8E8E8',
+    marginBottom: 0,
+  },
+  learnMoreButton: {
+    alignSelf: 'center',
+    marginTop: 0,
+  },
+  learnMoreText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#0059DB',
+    textAlign: 'center',
+  },
+  goalCard: {
+    backgroundColor: COLORS.cardPurple,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  goalTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 8,
+  },
+  goalText: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: COLORS.textDark,
+    marginBottom: 16,
+  },
+  dragonContainer: {
+    width: 120,
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dragonImage: {
+    width: '100%',
+    height: '100%',
+  },
+  buttonContainer: {
+    marginTop: 8,
+  },
+  // Session summary styles
+  summaryText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: COLORS.textDark,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  summaryLabel: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#666666',
+  },
+  summaryValue: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: COLORS.textDark,
+  },
+  // Celebration text under top moment
+  celebrationText: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: '#364153',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  // New tip main text
+  tipMainText: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: COLORS.textDark,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  // Transition text between tip and example
+  transitionText: {
+    fontFamily: FONTS.regular,
+    fontSize: 16,
+    color: COLORS.textDark,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  childReactionText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: COLORS.textDark,
+    lineHeight: 22,
+  },
+  // Example utterances container
+  exampleUtterancesContainer: {
+    marginBottom: 15,
+    marginTop: 15,
+    backgroundColor: '#f2f2f7',
+    padding: 15,
+    borderRadius: 16,
+    //borderColor: '#0059DB',
+    //borderWidth: 2,
+
+
+  },
+  // Utterance styles (matching TranscriptScreen)
+  utteranceContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    //borderWidth: 1,
+    //borderColor: '#E5E7EB',
+    marginBottom: 12,
+  },
+  utteranceHighlighted: {
+    //borderColor: '#0059DB',
+    //borderWidth: 2,
+  },
+  utteranceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  speakerBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  speakerBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: COLORS.textDark,
+  },
+  tag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  tagText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 11,
+    color: '#FFFFFF',
+  },
+  utteranceText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: COLORS.textDark,
+    lineHeight: 22,
+  },
+  // Feedback styles
+  feedbackContainer: {
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+  },
+  feedbackDesirable: {
+    backgroundColor: '#F0FDF4', // Light green
+  },
+  feedbackUndesirable: {
+    backgroundColor: '#FAF5FF', // Light purple
+  },
+  feedbackText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  feedbackTextDesirable: {
+    color: '#15803D', // Dark green
+  },
+  feedbackTextUndesirable: {
+    color: '#7E22CE', // Dark purple
+  },
+  // Silent slot styles
+  silentSlotContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  silentSlotHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  silentSlotBadge: {
+    backgroundColor: '#FDE047',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  silentSlotBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+    color: '#854D0E',
+  },
+  silentSlotDuration: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#854D0E',
+  },
+  silentSlotFeedback: {
+    backgroundColor: '#FAF5FF',
+    borderRadius: 8,
+    padding: 12,
+  },
+  silentSlotFeedbackText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#7E22CE',
+  },
+  // Coach's Corner styles
+  coachCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 20,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  coachTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    gap: 12,
+  },
+  coachIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  coachTipTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 17,
+    color: COLORS.textDark,
+    flex: 1,
+  },
+  coachDescription: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#4B5563',
+    lineHeight: 22,
+    marginBottom: 4,
+    marginTop: 12,
+  },
+  coachLabelBold: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: '#4B5563',
+  },
+  coachSuggestion: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#4B5563',
+    lineHeight: 22,
+  },
+  coachExampleContainer: {
+    marginTop: 12,
+    //backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 0,
+  },
+  coachExampleContext: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 6,
+  },
+  coachInsteadOfRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  coachExampleInsteadOf: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#4B5563',
+    flex: 1,
+    lineHeight: 20,
+    marginBottom: 6,
+  },
+  coachExampleInsteadOfLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: '#4B5563',
+  },
+  coachExampleImproved: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#16A34A',
+    lineHeight: 20,
+    marginLeft: 24,
+  },
+  coachExampleImprovedLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: '#16A34A',
+  },
+  cardLinkButton: {
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    marginTop: 16,
+    marginHorizontal: -20,
+    paddingTop: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  cardLinkText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#0059DB',
+  },
+  // About Child section styles
+  learnSubsectionLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 11,
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 10,
+  },
+  aboutChildTitleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: '#EDE9FE',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 14,
+  },
+  aboutChildTitleText: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    color: '#7C3AED',
+  },
+  aboutChildDescription: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    lineHeight: 24,
+    marginBottom: 4,
+  },
+  aboutChildDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 14,
+  },
+  aboutChildDetails: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 22,
+  },
+  // Tomorrow's Goal styles
+  nextDayGoalSection: {
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  nextDayGoalGradientBorder: {
+    borderRadius: 24,
+    padding: 10,
+  },
+  nextDayGoalInner: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 21,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  nextDayGoalDragonContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    overflow: 'hidden',
+    backgroundColor: '#E0F2F1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  nextDayGoalDragonImage: {
+    width: 140,
+    height: 140,
+    marginLeft: 30,
+  },
+  nextDayGoalLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  nextDayGoalLabelText: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: '#6750A4',
+  },
+  nextDayGoalHighlight: {
+    backgroundColor: '#FDE047',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  nextDayGoalHighlightText: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  nextDayGoalText: {
+    fontFamily: FONTS.bold,
+    fontSize: 22,
+    color: COLORS.textDark,
+    textAlign: 'center',
+    lineHeight: 30,
+  },
+  // Milestone Celebration styles
+  milestoneCelebrationSection: {
+    marginBottom: 16,
+  },
+  milestoneCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  milestoneHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  milestoneContent: {
+    flex: 1,
+  },
+  milestoneTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom:8,
+  },
+  milestoneBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexShrink: 0,
+  },
+  milestoneBadgeAchieved: {
+    backgroundColor: '#FEF3C7',
+  },
+  milestoneBadgeEmerging: {
+    backgroundColor: '#EDE9FE',
+  },
+  milestoneBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+  },
+  milestoneBadgeTextAchieved: {
+    color: '#D97706',
+  },
+  milestoneBadgeTextEmerging: {
+    color: '#7C3AED',
+  },
+  milestonePersonalizedText: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    lineHeight: 24,
+    flex: 1,
+  },
+  milestoneCategory: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  milestoneEvidenceSummary: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#6B7280',
+    fontStyle: 'italic',
+    marginTop: 4,
+    lineHeight: 20,
+  },
+  milestoneActionTip: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 4,
+    marginTop: 8,
+    paddingTop: 12,
+    //borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  milestoneActionTipText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#4B5563',
+    flex: 1,
+    lineHeight: 20,
+  },
+  // Feedback widget styles
+  feedbackCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 20,
+    marginTop: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  feedbackTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.textDark,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  feedbackSentimentRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  feedbackPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    borderWidth: 2,
+  },
+  feedbackPillPositiveActive: {
+    backgroundColor: '#6750A4',
+    borderColor: '#6750A4',
+  },
+  feedbackPillNegative: {
+    borderColor: '#9CA3AF',
+  },
+  feedbackPillNegativeActive: {
+    backgroundColor: '#852221',
+    borderColor: '#852221',
+  },
+  feedbackPillText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+  },
+  feedbackPillTextNegative: {
+    color: '#9CA3AF',
+  },
+  feedbackPillTextActive: {
+    color: '#FFFFFF',
+  },
+  feedbackFollowUp: {
+    marginTop: 20,
+  },
+  feedbackFollowUpLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.textDark,
+    marginBottom: 12,
+  },
+  feedbackChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  feedbackChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F9FAFB',
+  },
+  feedbackChipActiveNegative: {
+    borderColor: '#852221',
+    backgroundColor: '#FEF2F2',
+  },
+  feedbackChipText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  feedbackChipTextActive: {
+    color: COLORS.textDark,
+    fontFamily: FONTS.semiBold,
+  },
+  feedbackInput: {
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    padding: 14,
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: COLORS.textDark,
+    minHeight: 60,
+    marginBottom: 16,
+  },
+  feedbackSubmitButton: {
+    backgroundColor: '#6750A4',
+    borderRadius: 24,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  feedbackSubmitText: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: '#FFFFFF',
+  },
+  feedbackThankYou: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  feedbackThankYouText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: '#10B981',
+  },
+  // PDI Two Choices Flow styles
+  pdiSummaryText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: '#4B5563',
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  pdiSectionSubtitle: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: '#6B7280',
+    marginBottom: 12,
+  },
+  pdiSkillItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  pdiSkillTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  pdiSkillName: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    color: COLORS.textDark,
+    flex: 1,
+  },
+  pdiPerformanceBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  pdiPerformanceText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+  },
+  pdiSkillItem: {
+    paddingVertical: 12,
+  },
+  pdiSkillFeedback: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+    marginTop: 4,
+  },
+  // Command sequence styles
+  pdiSeqBlock: {
+    paddingVertical: 14,
+  },
+  pdiSeqHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  pdiSeqTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: COLORS.textDark,
+    flex: 1,
+  },
+  pdiSeqLabelBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  pdiSeqLabelText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12,
+  },
+  pdiSeqBullet: {
+    flexDirection: 'row',
+    paddingLeft: 4,
+    marginBottom: 6,
+  },
+  pdiSeqBulletText: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 21,
+    flex: 1,
+  },
+  pdiSeqBold: {
+    fontFamily: FONTS.bold,
+    color: COLORS.textDark,
+  },
+  pdiSeqWhatHappened: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 21,
+    marginBottom: 10,
+    fontStyle: 'italic',
+  },
+  milestoneLockedCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 8,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  milestoneLockedTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: '#1E2939',
+    marginBottom: 8,
+  },
+  milestoneLockedBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#F5F0FF',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginBottom: 12,
+  },
+  milestoneLockedBadgeText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: '#8C49D5',
+  },
+  milestoneLockedDesc: {
+    fontFamily: FONTS.regular,
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 21,
+  },
+  chatDemoBubble: {
+    position: 'absolute',
+    bottom: 100,
+    right: 20,
+    width: 260,
+  },
+  chatDemoMessageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingLeft: 14,
+    paddingRight: 10,
+    marginBottom: 10,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
+    borderWidth: 1.5,
+    borderColor: '#EDE9FE',
+  },
+  chatDemoText: {
+    flex: 1,
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#1F2937',
+    lineHeight: 20,
+  },
+  chatDemoIconCircle: {
+    alignSelf: 'flex-end',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#8C49D5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+});
