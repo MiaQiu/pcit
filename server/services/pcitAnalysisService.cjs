@@ -835,7 +835,9 @@ async function generateCdiCoaching(utterances, childInfo, tagCounts = {}, childS
   const { name, userId: childUserId } = childInfo;
 
   console.log(`📊 [CDI-COACHING] Step 1: Computing goal payload...`);
-  const preSessionProgress = await getParentSkillProgress(childUserId);
+  // childInfo.preSessionProgress: rerun scripts only — the level as it was before
+  // this session, since ParentSkillProgress has already moved past it.
+  const preSessionProgress = childInfo.preSessionProgress || await getParentSkillProgress(childUserId);
   const parentProgress = projectLevelForGoal(preSessionProgress, 'CDI', tagCounts);
   const leveledUpThisSession = parentProgress.currentLevel > preSessionProgress.currentLevel;
   const goalPayload = generateGoalForLevel(parentProgress.currentLevel, tagCounts, 'CDI', parentProgress, language);

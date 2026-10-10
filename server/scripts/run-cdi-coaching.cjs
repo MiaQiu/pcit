@@ -13,6 +13,8 @@
  *
  *   --write   Persist coachingSummary + coachingCards onto the session row.
  *   --first   Treat as a first session (default: forced non-first).
+ *   --pre-level <n>  Run as if the parent was at level n before this session
+ *             (keeps level-up framing once ParentSkillProgress has moved on).
  */
 
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
@@ -70,6 +72,8 @@ const formatGender = (g) => ({ BOY: 'boy', GIRL: 'girl', OTHER: 'child' }[g] || 
 const sessionId = process.argv[2];
 const DO_WRITE = process.argv.includes('--write');
 const AS_FIRST = process.argv.includes('--first');
+const PRE_LEVEL_IDX = process.argv.indexOf('--pre-level');
+const PRE_LEVEL = PRE_LEVEL_IDX > -1 ? Number(process.argv[PRE_LEVEL_IDX + 1]) : null;
 if (!sessionId) {
   console.error('Usage: node server/scripts/run-cdi-coaching.cjs <sessionId> [--write] [--first]');
   process.exit(1);
@@ -137,6 +141,9 @@ async function main() {
     achievedMilestoneKeys: [],
     childId: child?.id || null,
     userId,
+    preSessionProgress: PRE_LEVEL
+      ? { currentLevel: PRE_LEVEL, level6QualifyingCount: parentProgress?.level6QualifyingCount ?? 0, level7QualifyingCount: parentProgress?.level7QualifyingCount ?? 0 }
+      : undefined,
   };
 
   const primaryLanguage = session.elevenLabsJson?.language_code || null;
