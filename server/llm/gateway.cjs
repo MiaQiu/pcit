@@ -22,7 +22,7 @@ const { anthropicCall }   = require('./providers/anthropic.cjs');
 const { deepseekCall }    = require('./providers/deepseek.cjs');
 const { qwenCall }        = require('./providers/qwen.cjs');
 const { openaiCall }      = require('./providers/openai.cjs');
-const { getOrCreateCache } = require('./providers/geminiCache.cjs');
+const { getOrCreateCache, invalidateCache } = require('./providers/geminiCache.cjs');
 const { parseJSON }       = require('./repair.cjs');
 const { logLLMCall }      = require('./logger.cjs');
 const { sanitizeOutput }  = require('./sanitize.cjs');
@@ -94,20 +94,28 @@ async function llmCall(prompt, options = {}) {
   // combining cachedContent with ordinary prompt/contents text.
   const effectiveSystemPrompt = systemPrompt || cache?.systemPrompt || null;
   const cacheFilesOnly = !!cache?.filesOnly;
-  let cachedContent = null;
-  if (cache && modelDef.supportsCache) {
-    try {
-      cachedContent = await getOrCreateCache(
-        cache.key,
-        cache.primaryFile,
-        cacheFilesOnly ? null : (cache.systemPrompt || systemPrompt),
-        modelDef.primary,
-        cache.extraFiles || []
-      );
-    } catch (cacheErr) {
-      console.warn(`[gateway:${label}] cache miss, proceeding without: ${cacheErr.message}`);
-    }
-  }
+  // Resolved per attempt (see _callWithRetry), not once up front: retries of a
+  // long call can outlive the cache's 600s TTL, and re-sending the stale name
+  // 403s ("CachedContent not found") with no fallback.
+  const cachedContent = (cache && modelDef.supportsCache)
+    ? {
+        get: async () => {
+          try {
+            return await getOrCreateCache(
+              cache.key,
+              cache.primaryFile,
+              cacheFilesOnly ? null : (cache.systemPrompt || systemPrompt),
+              modelDef.primary,
+              cache.extraFiles || []
+            );
+          } catch (cacheErr) {
+            console.warn(`[gateway:${label}] cache miss, proceeding without: ${cacheErr.message}`);
+            return null;
+          }
+        },
+        invalidate: () => invalidateCache(cache.key),
+      }
+    : null;
 
   // Mutable tracking state — populated during execution, read in finally
   const track = {
@@ -200,6 +208,10 @@ function _isRetryable(err) {
     || err.code === 'ETIMEDOUT';
 }
 
+function _isCacheMissing(err) {
+  return (err.status === 403 || err.status === 404) && /CachedContent not found/i.test(err.message);
+}
+
 /**
  * Returns the fallback modelDef for a given primary modelDef, or null if none.
  * Uses modelDef.fallback when defined (both Gemini and Claude).
@@ -226,10 +238,18 @@ async function _callWithRetry(modelDef, prompt, systemPrompt, maxTokens, tempera
       console.warn(`[gateway:${label}] retryable error, attempt ${attempt + 1}/${_RETRY_DELAYS.length + 1} in ${delay}ms (${lastErr.message.substring(0, 80)})`);
       await new Promise(r => setTimeout(r, delay));
     }
+    // cachedContent is either null or a { get, invalidate } resolver (see llmCall).
+    const cacheName = cachedContent ? await cachedContent.get() : null;
     try {
-      return await _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cachedContent, cacheFilesOnly);
+      return await _call(modelDef, prompt, systemPrompt, maxTokens, temperature, timeout, geminiConfig, cacheName, cacheFilesOnly);
     } catch (err) {
       lastErr = err;
+      // Cache expired/evicted under us — forget it so the next attempt recreates it.
+      if (cachedContent && _isCacheMissing(err)) {
+        console.warn(`[gateway:${label}] cache ${cacheName} gone, recreating on next attempt`);
+        cachedContent.invalidate();
+        err.retryable = true;
+      }
       if (!_isRetryable(err)) throw err;
     }
   }
