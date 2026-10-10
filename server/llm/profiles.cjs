@@ -54,9 +54,13 @@ const PROFILES = {
   'coaching-format': {
     model:       'gemini',
     temperature: 0,
-    maxTokens:   8192,
+    // Thinking tokens count against maxOutputTokens. Uncapped, flash spent
+    // 7.8k of 8k thinking on this verbatim-extraction pass (prod session
+    // 2e99ba82), truncating the JSON after did_well → empty growthFocus.
+    maxTokens:   16384,
     timeout:     120_000,
     output:      'json',
+    _geminiConfig: { thinkingConfig: { thinkingBudget: 1024 } },
   },
 
   'coaching-notifications': {

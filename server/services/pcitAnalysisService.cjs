@@ -986,7 +986,10 @@ ${variables.LANGUAGE_INSTRUCTION}`;
         alertOnFailure: false,
       });
       const cc = formatted?.coach_corner;
-      if (cc && typeof cc === 'object' && cc.did_well) {
+      // Require growth_focus too: a truncated response that JSON repair closed
+      // after did_well would otherwise ship an empty "Grow next" tab — keep the
+      // raw-report string fallback instead.
+      if (cc && typeof cc === 'object' && cc.did_well && cc.growth_focus) {
         coachingPart1 = {
           didWell: {
             theme:      cc.did_well.theme || '',
