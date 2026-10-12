@@ -1,0 +1,46 @@
+{
+  "myPlan": {
+    "crisisTool": {
+      "title": "Bedtime Meltdown Support",
+      "action": "Sit close to her, take deep breaths to stay calm yourself, and hold the limit without giving extra screen time.",
+      "script": "You are so mad the tablet is done. It is hard to stop. I am right here with you.",
+      "isNeeded": true
+    },
+    "whyItWorks": "Anya's 3-year-old brain struggles to switch from a high-dopamine tablet to 'nothing' at bedtime. Having a comforting, predictable next step ready helps her transition smoothly without triggering a behavior challenge.",
+    "protocolSteps": [
+      "Plan a specific, calming bedtime activity before screen time even starts.",
+      "Give a 2-minute warning paired with a choice about the upcoming activity.",
+      "Turn off the device confidently and immediately invite her into the new activity."
+    ],
+    "activeStrategy": "Pre-Planned Positive Transitions"
+  },
+  "generatedAt": "2026-10-12T05:32:37.807Z",
+  "coachingReport": {
+    "topMoment": {
+      "quote": "",
+      "title": "Consistent Communication",
+      "explanation": "Even in the midst of Anya's protests, you take the time to explain why she needs to stop and repeat the instruction. This shows your deep commitment to helping her understand the rules and expectations, which is a wonderful and loving foundation for building secure boundaries."
+    },
+    "introduction": "Welcome! Thank you for taking the time to share your questionnaire answers with me. I completely understand how exhausting and overwhelming it is when bedtime screen endings turn into screaming matches. It is incredibly hard to stay calm in those high-stress moments, but please know you are not alone in this. You are in the right place, and we are going to work through this together to bring peace back to your evenings.",
+    "whatWeLearned": {
+      "title": "What We Learned About Anya",
+      "description": "We learned that bedtime is a particularly vulnerable time for Anya's nervous system, making transitions much harder. To help her feel more secure and cooperative, we will eventually introduce 'emotional massage' into your daily routine. This dedicated, child-led connection time will make a steady deposit into her emotional bank account, making it much easier for her to trust your leadership and accept your limits when she is tired."
+    },
+    "nextGrowthFocus": {
+      "title": "Creating a Bridge to the Next Activity",
+      "rationale": "By giving her a clear, appealing next step and a sense of control through a choice, you reduce the shock of the transition. This helps her brain shift gears smoothly without feeling like she is just losing something she loves.",
+      "strategies": [
+        {
+          "name": "Pre-Planned Positive Transitions",
+          "description": "Decide on a highly engaging or soothing activity to happen immediately after the screen turns off, so she isn't transitioning to 'nothing'."
+        },
+        {
+          "name": "Hold the Limit Firmly",
+          "description": "Avoid giving extra time when she protests, as intermittent reinforcement actually increases the length and intensity of future tantrums."
+        }
+      ],
+      "explanation": "At 3 years old, Anya's brain is still developing the executive functioning required to switch tasks. When the tablet turns off abruptly, especially when she is tired at bedtime, her nervous system experiences a sudden drop in dopamine and stimulation. Because she doesn't know what is happening next, this feels like a shock, which triggers her behavior challenges and tantrums.",
+      "exampleQuote": "Anya, the tablet is going to sleep in two minutes. When it turns off, are we going to read the dinosaur book or the bear book together?"
+    }
+  }
+}

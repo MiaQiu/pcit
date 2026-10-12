@@ -143,7 +143,7 @@ async function sendExpoPushNotification(pushToken, notification) {
  * @param {string} [sessionType] - Type of session (e.g., "play session")
  * @returns {Promise<Object>} - Result of the notification
  */
-async function sendReportReadyNotification(userId, sessionId, sessionType = 'play session') {
+async function sendReportReadyNotification(userId, sessionId, sessionType = 'play session', extraData = {}) {
   return sendPushNotificationToUser(userId, {
     title: 'Session Report Ready!',
     body: `Your ${sessionType} report is ready to view`,
@@ -152,7 +152,8 @@ async function sendReportReadyNotification(userId, sessionId, sessionType = 'pla
     data: {
       type: 'new_report',
       recordingId: sessionId,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      ...extraData
     }
   });
 }

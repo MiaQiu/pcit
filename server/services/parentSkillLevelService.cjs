@@ -175,7 +175,7 @@ async function updateParentSkillLevel(userId, sessionId) {
   // and caps at level 6). Running the incremental +1 gate here too would let
   // a flawless first session jump straight to PDI. This runs after the
   // session is marked COMPLETED, so count === 1 means "this is the first".
-  const completedCount = await prisma.session.count({ where: { userId, analysisStatus: 'COMPLETED' } });
+  const completedCount = await prisma.session.count({ where: { userId, analysisStatus: 'COMPLETED', moduleKey: null } });
   if (completedCount <= 1) return;
 
   let progress = await prisma.parentSkillProgress.findUnique({ where: { userId } });

@@ -111,6 +111,16 @@ const PROFILES = {
     output:      'json',
   },
 
+  // Learn module sessions (e.g. screen-time endings) — one call produces both
+  // the module report and the "My Plan" payload.
+  'module-coaching': {
+    model:       'gemini',
+    temperature: 0.5,
+    maxTokens:   16384,
+    timeout:     180_000,
+    output:      'json',
+  },
+
   'crisis-coaching': {
     model:       'gemini',
     temperature: 0.5,

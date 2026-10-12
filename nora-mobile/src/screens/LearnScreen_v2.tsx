@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 import amplitudeService from '../services/amplitudeService';
 import { CONTENT_V2_MODULES } from '../constants/contentV2Modules';
 import { TrackedTouchable } from '../components/TrackedTouchable';
+import { LEARN_MODULES, LEARN_MODULE_KEYS, LearnModuleKey } from '../constants/learnModules';
 
 const H_PAD = 20;
 const CARD_GAP = 10;
@@ -118,6 +119,41 @@ const LessonCard: React.FC<LessonCardProps> = ({
         <Text style={styles.lessonTitle} numberOfLines={3}>{lesson.title}</Text>
       </View>
     </TrackedTouchable>
+  );
+};
+
+// ─── Modules section ─────────────────────────────────────────────────────────
+
+interface ModulesSectionProps {
+  cardWidth: number;
+  onModulePress: (moduleKey: LearnModuleKey) => void;
+}
+
+const ModulesSection: React.FC<ModulesSectionProps> = ({ cardWidth, onModulePress }) => {
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.demoVideoGrid}>
+      {LEARN_MODULE_KEYS.map(moduleKey => (
+        <TrackedTouchable analyticsId={`Learn Module: ${moduleKey}`}
+          key={moduleKey}
+          style={[styles.noraCardShadow, { width: cardWidth }]}
+          onPress={() => onModulePress(moduleKey)}
+          activeOpacity={0.75}
+        >
+          <View style={styles.noraCardInner}>
+            <View style={styles.lessonImageWrap}>
+              <Image source={LEARN_MODULES[moduleKey].cardImage} style={styles.lessonIcon} resizeMode="cover" />
+            </View>
+            <View style={styles.lessonCardText}>
+              <Text style={[styles.lessonTitle, styles.noraCardTitle]} numberOfLines={2}>
+                {t(`learnV2.modules.${moduleKey}.title`)}
+              </Text>
+            </View>
+          </View>
+        </TrackedTouchable>
+      ))}
+    </View>
   );
 };
 
@@ -679,7 +715,15 @@ export const LearnScreen_v2: React.FC = () => {
 
         {/* Module sections — all modules other than Nora Foundations are hidden for now */}
         <View style={styles.sections}>
-          <Text style={styles.sectionTitle}>{t('learnV2.gettingStartedTitle')}</Text>
+          <Text style={styles.sectionTitle}>{t('learnV2.modulesTitle')}</Text>
+          <ModulesSection
+            cardWidth={demoVideoCardWidth}
+            onModulePress={moduleKey => {
+              amplitudeService.trackEvent('Learn Module Tapped', { moduleKey });
+              navigation.push('LearnModule', { moduleKey });
+            }}
+          />
+          <Text style={[styles.sectionTitle, styles.sectionTitleBelow]}>{t('learnV2.gettingStartedTitle')}</Text>
           <NoraFoundationsSection
             cardWidth={demoVideoCardWidth}
             onPress={() => {

@@ -282,6 +282,7 @@ router.get('/developmental-progress', requireAuth, async (req, res) => {
       where: {
         userId,
         analysisStatus: 'COMPLETED',
+        moduleKey: null,
         ...(asOf ? { createdAt: { lte: asOf } } : {})
       }
     });

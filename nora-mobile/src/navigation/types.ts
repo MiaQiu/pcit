@@ -7,6 +7,8 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NavigatorScreenParams } from '@react-navigation/native';
 import { Quiz, User, DemoVideo, ParentSkillLevel, SkillImproveResult } from '@nora/core';
+import type { LearnModuleKey, LearnModuleTabKey } from '../constants/learnModules';
+import type { SurveyVariant } from '../constants/learnModuleSurveys';
 
 export type RootTabParamList = {
   Home: { showModulePicker?: boolean; refreshAt?: number } | undefined;
@@ -196,6 +198,33 @@ export type RootStackParamList = {
   };
   QuickGuide: {
     guide: 'why5mins' | 'whyRecord';
+  };
+  LearnModule: {
+    moduleKey: LearnModuleKey;
+    // Defaults to 1.
+    day?: number;
+    // Bottom-bar tab to open on (defaults to 'today').
+    initialTab?: LearnModuleTabKey;
+  };
+  LearnModuleSurvey: {
+    moduleKey: LearnModuleKey;
+    // 'followup' = Day 2+ check-in on `strategy` (defaults to the Day 1 survey);
+    // strategyId (Knowledge Base 1-10) picks its strategy-specific questions.
+    variant?: SurveyVariant;
+    strategy?: string;
+    strategyId?: number;
+  };
+  // A Learn module help guide (copy: learnV2.modules.<moduleKey>.guides.<guide>).
+  ModuleGuide: {
+    moduleKey: LearnModuleKey;
+    guide: 'howToRecord' | 'whyRecord';
+  };
+  ModuleReport: {
+    recordingId: string;
+    moduleKey: LearnModuleKey;
+    leveledUp?: boolean;
+    fromLevel?: ParentSkillLevel;
+    toLevel?: ParentSkillLevel;
   };
 };
 

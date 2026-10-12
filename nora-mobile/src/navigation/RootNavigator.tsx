@@ -45,6 +45,10 @@ import { ABCLogScreen } from '../screens/ABCLogScreen';
 import { HomeCardDetailScreen } from '../screens/HomeCardDetailScreen';
 import { GetReadyToPlayScreen } from '../screens/GetReadyToPlayScreen';
 import { QuickGuideScreen } from '../screens/QuickGuideScreen';
+import { LearnModuleScreen } from '../screens/LearnModuleScreen';
+import { LearnModuleSurveyScreen } from '../screens/LearnModuleSurveyScreen';
+import { ModuleReportScreen } from '../screens/ModuleReportScreen';
+import { ModuleGuideScreen } from '../screens/ModuleGuideScreen';
 import { GetReadySectionScreen } from '../screens/GetReadySectionScreen';
 import { RootStackParamList, OnboardingStackParamList } from './types';
 import { useAuthService, useLessonService } from '../contexts/AppContext';
@@ -515,6 +519,35 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="QuickGuide"
         component={QuickGuideScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="LearnModule"
+        component={LearnModuleScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="LearnModuleSurvey"
+        component={LearnModuleSurveyScreen}
+        options={{
+          animation: 'slide_from_right',
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="ModuleReport"
+        component={ModuleReportScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleGuide"
+        component={ModuleGuideScreen}
         options={{
           animation: 'slide_from_right',
         }}

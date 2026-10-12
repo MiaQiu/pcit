@@ -339,6 +339,19 @@ model Session {
   milestoneCelebrations  Json?
   userFeedback           Json?
   codingReviewedAt       DateTime?
+  // Set when the recording was made from a Learn module (e.g. "screenTime");
+  // such sessions skip PCIT coding and get moduleCoaching instead
+  // ({ coachingReport, myPlan } from prompts/coaching-screentime.txt).
+  moduleKey              String?
+  moduleCoaching         Json?
+  // Set when the module report was generated from a "Tell Nora" survey
+  // instead of a recording (no audio/transcript).
+  moduleSurveyId         String?
+  // Day 2+ module recordings: how the parent said practicing the active
+  // strategy went ('success' | 'struggle' | 'not_attempted'), asked when the
+  // recording stops. Fed to the follow-up prompt alongside the transcript.
+  moduleSelfReport       String?
+  LearnModuleSurvey      LearnModuleSurvey? @relation(fields: [moduleSurveyId], references: [id], onDelete: SetNull)
   User                   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   Utterance              Utterance[]
   ChildProfiling         ChildProfiling?
@@ -349,6 +362,7 @@ model Session {
   @@index([flaggedForReview])
   @@index([mode])
   @@index([userId])
+  @@index([userId, moduleKey])
 }
 
 model SubscriptionEvent {
@@ -483,6 +497,7 @@ model User {
   WeeklyReport              WeeklyReport[]
   CoachChatMessage          CoachChatMessage[]
   AbcLog                    AbcLog[]
+  LearnModuleSurvey         LearnModuleSurvey[]
   AbcInsight                AbcInsight[]
   HomeCardLike              HomeCardLike[]
   HomeCardUserInputResponse HomeCardUserInputResponse[]
@@ -1475,6 +1490,32 @@ model AbcLog {
   @@index([userId])
   @@index([userId, recordedAt])
   @@index([childId, recordedAt])
+}
+
+// Parent-input survey for a Learn module ("Tell Nora what happens instead"),
+// e.g. how screen-time endings usually go. One row per submission. Questions
+// are defined client-side (nora-mobile src/constants/learnModuleSurveys.ts),
+// so answers are stored as JSON keyed by question key: a string (single
+// choice / free text) or string[] (multi-select), plus `<questionKey>Other`
+// for "Other" free text.
+model LearnModuleSurvey {
+  id              String    @id @default(uuid())
+  userId          String
+  moduleKey       String
+  answers         Json
+  // Questions + answers as the parent saw them, in their language:
+  // [{ question, answers: string[] }]. Fed to the module coaching prompt.
+  readableAnswers Json?
+  language        String?
+  // 'initial' = Day 1 "how it usually goes" survey; 'followup' = Day 2+
+  // check-in on the strategy being practiced.
+  variant         String    @default("initial")
+  submittedAt     DateTime  @default(now())
+  User            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Report + plan generated from this survey (parent chose not to record).
+  Session         Session[]
+
+  @@index([userId, moduleKey, submittedAt])
 }
 
 enum AbcLogType {

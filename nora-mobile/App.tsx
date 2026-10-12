@@ -37,6 +37,7 @@ import amplitudeService from './src/services/amplitudeService';
 import { getSafeRouteParams } from './src/utils/getSafeRouteParams';
 import { REVENUECAT_CONFIG } from './src/config/revenuecat';
 import { getTodaySingapore } from './src/utils/timezone';
+import type { LearnModuleKey } from './src/constants/learnModules';
 
 // Deep linking configuration
 const linking = {
@@ -159,7 +160,12 @@ const AppContent: React.FC = () => {
     amplitudeService.trackNotificationOpened(notificationType);
 
     whenInApp(() => {
-      if (data.type === 'new_report' || data.type === 'weekly_report') {
+      if (data.type === 'new_report' && data.moduleKey && data.recordingId) {
+        // Learn module recording (e.g. screen-time ending) — its report isn't
+        // surfaced on Home, so open it directly.
+        console.log('[App] Navigating to ModuleReport for', data.moduleKey, data.recordingId);
+        navigation.navigate('ModuleReport', { recordingId: data.recordingId as string, moduleKey: data.moduleKey as LearnModuleKey });
+      } else if (data.type === 'new_report' || data.type === 'weekly_report') {
         // Land on Home, where the report surfaces on the home card. refreshAt
         // makes Home reload: if the user left the app on Home, this navigate
         // doesn't refocus it, so its focus-based reload never runs.

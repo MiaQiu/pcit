@@ -4,7 +4,7 @@
  */
 const fetch = require('node-fetch');
 const prisma = require('./db.cjs');
-const { analyzePCITCoding, SessionQualityError, PermanentFailureError } = require('./pcitAnalysisService.cjs');
+const { analyzePCITCoding, generateSurveyModuleSession, SessionQualityError, PermanentFailureError } = require('./pcitAnalysisService.cjs');
 const { transcribeRecording } = require('./transcriptionService.cjs');
 const { sendReportReadyNotification, sendPushNotificationToUser, sendMilestonesUnlockedNotification } = require('./pushNotifications.cjs');
 const { decryptSensitiveData } = require('../utils/encryption.cjs');
@@ -204,8 +204,14 @@ async function processRecordingWithRetry(sessionId, userId, storagePath, duratio
     // Transcription — skip if already done (transcribedAt checkpoint)
     const sessionState = await prisma.session.findUnique({
       where: { id: sessionId },
-      select: { transcribedAt: true }
+      select: { transcribedAt: true, moduleSurveyId: true }
     });
+    // Learn module report generated from a "Tell Nora" survey (no audio) —
+    // reached here only via an admin retry.
+    if (sessionState.moduleSurveyId) {
+      await generateSurveyModuleSession(sessionId);
+      return;
+    }
     if (!sessionState.transcribedAt) {
       console.log(`🎤 [PROCESSING] Session ${sessionId.substring(0, 8)} - Starting transcription...`);
       await transcribeRecording(sessionId, userId, storagePath, durationSeconds);
@@ -232,10 +238,19 @@ async function processRecordingWithRetry(sessionId, userId, storagePath, duratio
       data: { analysisStatus: 'COMPLETED' }
     });
 
-    // Re-evaluate parent skill level progress (non-blocking)
-    updateParentSkillLevel(userId, sessionId).catch(err => {
-      console.error(`❌ [PARENT-SKILL-LEVEL] Error updating progress for session ${sessionId.substring(0, 8)}:`, err.message);
+    const { moduleKey } = await prisma.session.findUnique({
+      where: { id: sessionId },
+      select: { moduleKey: true }
     });
+
+    // Re-evaluate parent skill level progress (non-blocking). Learn module
+    // recordings (e.g. screen-time endings) aren't play sessions, so they
+    // don't count toward the CDI skill ladder.
+    if (!moduleKey) {
+      updateParentSkillLevel(userId, sessionId).catch(err => {
+        console.error(`❌ [PARENT-SKILL-LEVEL] Error updating progress for session ${sessionId.substring(0, 8)}:`, err.message);
+      });
+    }
 
     // Log enrichment outcome (non-blocking)
     try {
@@ -251,7 +266,13 @@ async function processRecordingWithRetry(sessionId, userId, storagePath, duratio
     // Send push notification to user that report is ready
     console.log(`📱 [PUSH-NOTIFICATION] Sending report ready notification for session ${sessionId.substring(0, 8)}`);
     try {
-      const result = await sendReportReadyNotification(userId, sessionId, 'play session');
+      const result = await sendReportReadyNotification(
+        userId,
+        sessionId,
+        moduleKey ? 'session' : 'play session',
+        // Lets the app open the Learn module report instead of the play report.
+        moduleKey ? { moduleKey } : {}
+      );
       if (result.success) {
         console.log(`✅ [PUSH-NOTIFICATION] Push notification sent successfully for session ${sessionId.substring(0, 8)}`);
       } else {

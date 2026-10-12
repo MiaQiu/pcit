@@ -496,6 +496,108 @@ const MILESTONE_DETECTION = {
   required: ['detected_milestones'],
 };
 
+// ── module-coaching-screentime ────────────────────────────────────────────────
+// Screen-time ending session → coaching report + "My Plan" payload
+// (prompts/coaching-screentime.txt). Keys match the prompt's snake_case JSON.
+const SCREENTIME_COACHING = {
+  type: 'object',
+  properties: {
+    coaching_report: {
+      type: 'object',
+      properties: {
+        introduction: { type: 'string' },
+        top_moment: {
+          type: 'object',
+          properties: {
+            title:       { type: 'string' },
+            quote:       { type: 'string' },
+            explanation: { type: 'string' },
+          },
+          required: ['title', 'quote', 'explanation'],
+        },
+        next_growth_focus: {
+          type: 'object',
+          properties: {
+            title:       { type: 'string' },
+            explanation: { type: 'string' },
+            strategies: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name:        { type: 'string' },
+                  description: { type: 'string' },
+                },
+                required: ['name', 'description'],
+              },
+            },
+            example_quote: { type: 'string' },
+            rationale:     { type: 'string' },
+          },
+          required: ['title', 'explanation', 'strategies', 'example_quote', 'rationale'],
+        },
+        what_we_learned: {
+          type: 'object',
+          properties: {
+            title:       { type: 'string' },
+            description: { type: 'string' },
+          },
+          required: ['title', 'description'],
+        },
+      },
+      required: ['introduction', 'top_moment', 'next_growth_focus', 'what_we_learned'],
+    },
+    my_plan: {
+      type: 'object',
+      properties: {
+        // Number of the strategy in the prompt's Knowledge Base (1-10) — picks
+        // the app's strategy-specific Day 2+ check-in questions.
+        active_strategy_id: { type: 'integer' },
+        active_strategy:    { type: 'string' },
+        why_it_works:       { type: 'string' },
+        protocol_steps:  { type: 'array', items: { type: 'string' } },
+        crisis_tool: {
+          type: 'object',
+          properties: {
+            is_needed: { type: 'boolean' },
+            title:     { type: 'string' },
+            action:    { type: 'string' },
+            script:    { type: 'string' },
+          },
+          required: ['is_needed', 'title', 'action', 'script'],
+        },
+      },
+      required: ['active_strategy_id', 'active_strategy', 'why_it_works', 'protocol_steps', 'crisis_tool'],
+    },
+  },
+  required: ['coaching_report', 'my_plan'],
+};
+
+// ── module-coaching-screentime (Day 2+) ───────────────────────────────────────
+// prompts/coaching-screentime-followup.txt: today's outcome against the active
+// strategy, then the same report + plan. propertyOrdering puts `progress`
+// first (Gemini otherwise orders alphabetically) so the plan is written after
+// the outcome/mastery call it depends on.
+const SCREENTIME_FOLLOWUP_COACHING = {
+  type: 'object',
+  properties: {
+    progress: {
+      type: 'object',
+      properties: {
+        todays_outcome:    { type: 'string', enum: ['Success', 'Struggle', 'Did Not Attempt'] },
+        outcome_reason:    { type: 'string' },
+        strategy_mastered: { type: 'boolean' },
+      },
+      required: ['todays_outcome', 'outcome_reason', 'strategy_mastered'],
+      propertyOrdering: ['todays_outcome', 'outcome_reason', 'strategy_mastered'],
+    },
+    coaching_report: SCREENTIME_COACHING.properties.coaching_report,
+    my_plan:         SCREENTIME_COACHING.properties.my_plan,
+  },
+  required: ['progress', 'coaching_report', 'my_plan'],
+  propertyOrdering: ['progress', 'coaching_report', 'my_plan'],
+};
+
 module.exports = {
   PCIT_CODING,
   REVIEW_FEEDBACK,
@@ -510,4 +612,6 @@ module.exports = {
   COACHING_FORMAT_LEGACY,
   MILESTONE_DETECTION,
   SKILL_IMPROVE,
+  SCREENTIME_COACHING,
+  SCREENTIME_FOLLOWUP_COACHING,
 };

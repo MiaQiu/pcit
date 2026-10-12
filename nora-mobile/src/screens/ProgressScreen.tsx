@@ -31,6 +31,7 @@ import amplitudeService from '../services/amplitudeService';
 import { DevelopmentalProgress, DomainType, DomainMilestone, DomainProfiling } from '@nora/core';
 import { useTranslation } from 'react-i18next';
 import { TrackedTouchable } from '../components/TrackedTouchable';
+import type { LearnModuleKey } from '../constants/learnModules';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -61,9 +62,10 @@ interface VisibleWeeklyReport {
 const CalendarView: React.FC<{
   recordingDates: Date[];
   lessonCompletionDates: Date[];
-  recordings: Array<{ id: string; createdAt: string; mode: string; overallScore?: number | null; analysisStatus?: string | null }>;
+  // moduleKey set → a Learn module report (e.g. screen-time ending), not a play session.
+  recordings: Array<{ id: string; createdAt: string; mode?: string; overallScore?: number | null; analysisStatus?: string | null; moduleKey?: LearnModuleKey }>;
   weeklyReports: VisibleWeeklyReport[];
-  onReportPress: (recordingId: string) => void;
+  onReportPress: (recordingId: string, moduleKey?: LearnModuleKey) => void;
   onWeeklyReportPress: (reportId: string) => void;
 }> = ({ recordingDates, lessonCompletionDates, recordings, weeklyReports, onReportPress, onWeeklyReportPress }) => {
   const { t, i18n } = useTranslation();
@@ -270,18 +272,20 @@ const CalendarView: React.FC<{
               <TrackedTouchable analyticsId="progress.sessionReport"
                 key={recording.id}
                 style={styles.dayReportItem}
-                onPress={() => onReportPress(recording.id)}
+                onPress={() => onReportPress(recording.id, recording.moduleKey)}
                 activeOpacity={0.7}
               >
                 <View style={styles.dayReportItemLeft}>
                   <View style={styles.dayReportDot} />
                   <View>
-                    <Text style={styles.dayReportItemTitle}>{formatMode(recording.mode)}</Text>
+                    <Text style={styles.dayReportItemTitle}>
+                      {recording.moduleKey ? t(`learnV2.modules.${recording.moduleKey}.title`) : formatMode(recording.mode ?? 'CDI')}
+                    </Text>
                     <Text style={styles.dayReportItemSub}>{t('progress.sessionReport')}</Text>
                   </View>
                 </View>
                 <View style={styles.dayReportItemRight}>
-                  {recording.overallScore ? (
+                  {recording.moduleKey ? null : recording.overallScore ? (
                     <Text style={styles.dayReportScore}>{recording.overallScore}</Text>
                   ) : (
                     <Text style={styles.dayReportNoScore}>--</Text>
@@ -457,6 +461,8 @@ export const ProgressScreen: React.FC = () => {
   const [showDomainModal, setShowDomainModal] = useState(false);
   const [loadingDomainMilestones, setLoadingDomainMilestones] = useState(false);
   const [recordings, setRecordings] = useState<any[]>([]);
+  // Completed Learn module reports — calendar only, kept out of play stats.
+  const [moduleRecordings, setModuleRecordings] = useState<Array<{ id: string; createdAt: string; moduleKey: LearnModuleKey; analysisStatus: string }>>([]);
   const [weeklyReports, setWeeklyReports] = useState<VisibleWeeklyReport[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -515,6 +521,7 @@ export const ProgressScreen: React.FC = () => {
 
       const { recordings } = recordingsResponse;
       setRecordings(recordings || []);
+      setModuleRecordings((recordingsResponse as { moduleRecordings?: typeof moduleRecordings }).moduleRecordings || []);
       const { lessons } = lessonsResponse;
 
       // Extract completed lesson dates
@@ -819,13 +826,14 @@ export const ProgressScreen: React.FC = () => {
 
         {/* Calendar */}
         <CalendarView
-          recordingDates={recordingDates}
+          recordingDates={[...recordingDates, ...moduleRecordings.map(r => new Date(r.createdAt))]}
           lessonCompletionDates={lessonCompletionDates}
-          recordings={recordings}
+          recordings={[...recordings, ...moduleRecordings]}
           weeklyReports={weeklyReports}
-          onReportPress={(recordingId) => {
-            amplitudeService.trackReportViewed(recordingId, undefined, { source: 'progress_calendar' });
-            navigation.navigate('ReportV3', { recordingId });
+          onReportPress={(recordingId, moduleKey) => {
+            amplitudeService.trackReportViewed(recordingId, undefined, { source: 'progress_calendar', ...(moduleKey ? { moduleKey } : {}) });
+            if (moduleKey) navigation.navigate('ModuleReport', { recordingId, moduleKey });
+            else navigation.navigate('ReportV3', { recordingId });
           }}
           onWeeklyReportPress={(reportId) => {
             navigation.navigate('WeeklyReport', { reportId });

@@ -187,6 +187,10 @@ export const RecordScreen: React.FC = () => {
   // identical to "a report just finished" and bounce the user straight to Home).
   const initialReportTimestampRef = useRef<number | null>(null);
   const hasCapturedBaselineRef = useRef(false);
+  // True once this screen has started an upload. UploadProcessingContext is
+  // shared — a Learn module records and uploads in place on LearnModuleScreen —
+  // so a report finishing for someone else's upload must not reset to Home.
+  const startedUploadRef = useRef(false);
 
   useEffect(() => {
     if (uploadProcessing.hasHydrated && !hasCapturedBaselineRef.current) {
@@ -205,6 +209,7 @@ export const RecordScreen: React.FC = () => {
   useEffect(() => {
     if (
       hasCapturedBaselineRef.current &&
+      startedUploadRef.current &&
       uploadProcessing.reportCompletedTimestamp !== null &&
       uploadProcessing.reportCompletedTimestamp !== initialReportTimestampRef.current
     ) {
@@ -216,6 +221,7 @@ export const RecordScreen: React.FC = () => {
         baseline: initialReportTimestampRef.current,
         current: uploadProcessing.reportCompletedTimestamp,
       });
+      startedUploadRef.current = false;
       navigation.reset({ index: 0, routes: [{ name: 'MainTabs', params: { screen: 'Home' } }] });
     }
   }, [uploadProcessing.reportCompletedTimestamp, navigation]);
@@ -660,6 +666,7 @@ export const RecordScreen: React.FC = () => {
       const uploadMode = sessionMode === 'discipline' ? 'PDI' : 'CDI';
       if (uri) {
         try {
+          startedUploadRef.current = true;
           await uploadProcessing.startUpload(uri, durationSeconds, uploadMode);
           // Upload completed successfully - end background task
           await endBackgroundTask();
@@ -682,6 +689,7 @@ export const RecordScreen: React.FC = () => {
                   text: t('record.retry'),
                   onPress: async () => {
                     try {
+                      startedUploadRef.current = true;
                       await uploadProcessing.startUpload(uri, durationSeconds, uploadMode);
                     } catch (retryError) {
                       console.error('Retry upload failed:', retryError);
@@ -763,6 +771,7 @@ export const RecordScreen: React.FC = () => {
       const uploadMode = sessionMode === 'discipline' ? 'PDI' : 'CDI';
       if (uri) {
         try {
+          startedUploadRef.current = true;
           await uploadProcessing.startUpload(uri, durationSeconds, uploadMode);
         } catch (error) {
           reportError(error, 'RecordScreen.stopRecording');
@@ -781,6 +790,7 @@ export const RecordScreen: React.FC = () => {
                   text: t('record.retry'),
                   onPress: async () => {
                     try {
+                      startedUploadRef.current = true;
                       await uploadProcessing.startUpload(uri, durationSeconds, uploadMode);
                     } catch (retryError) {
                       console.error('Retry upload failed:', retryError);
