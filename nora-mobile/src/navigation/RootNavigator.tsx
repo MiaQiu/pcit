@@ -49,6 +49,7 @@ import { LearnModuleScreen_v2 } from '../screens/LearnModuleScreen_v2';
 import { LearnModuleSurveyScreen } from '../screens/LearnModuleSurveyScreen';
 import { ModuleReportScreen } from '../screens/ModuleReportScreen';
 import { ModuleGuideScreen } from '../screens/ModuleGuideScreen';
+import { ModuleRecordGuideScreen } from '../screens/ModuleRecordGuideScreen';
 import { ModulePlanDetailScreen } from '../screens/ModulePlanDetailScreen';
 import { ModuleCheatSheetScreen } from '../screens/ModuleCheatSheetScreen';
 import { ModuleChatScreen } from '../screens/ModuleChatScreen';
@@ -571,6 +572,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="ModuleGuide"
         component={ModuleGuideScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleRecordGuide"
+        component={ModuleRecordGuideScreen}
         options={{
           animation: 'slide_from_right',
         }}

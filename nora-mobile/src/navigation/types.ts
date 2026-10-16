@@ -224,6 +224,9 @@ export type RootStackParamList = {
     day?: number;
     // Bottom-bar tab to open on (defaults to 'today').
     initialTab?: LearnModuleTabKey;
+    // Set by ModuleRecordGuide's "Start recording": start recording on arrival
+    // (a timestamp, so each tap is a new request).
+    startRecordingAt?: number;
   };
   LearnModuleSurvey: {
     moduleKey: LearnModuleKey;
@@ -249,6 +252,14 @@ export type RootStackParamList = {
   ModuleGuide: {
     moduleKey: LearnModuleKey;
     guide: 'howToRecord' | 'whyRecord';
+  };
+  // Screen Time's illustrated "How to record?" / "Why record?" guides
+  // (copy: learnV2.modules.<moduleKey>.recordGuides.<guide>).
+  ModuleRecordGuide: {
+    moduleKey: LearnModuleKey;
+    guide: 'howToRecord' | 'whyRecord';
+    // Show "Start recording" (false when today's recording is done or in progress).
+    canRecord?: boolean;
   };
   ModuleReport: {
     recordingId: string;

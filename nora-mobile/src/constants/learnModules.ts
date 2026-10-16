@@ -21,7 +21,7 @@ export type LearnModuleAction = 'record' | 'howToRecord' | 'whatToRecord' | 'tel
 export const LEARN_MODULE_TABS = [
   { key: 'today', icon: 'sunny-outline', activeIcon: 'sunny' },
   { key: 'plan', icon: 'map-outline', activeIcon: 'map' },
-  { key: 'collection', icon: 'documents-outline', activeIcon: 'documents' },
+  { key: 'learn', icon: 'book-outline', activeIcon: 'book' },
   { key: 'profile', icon: 'person-outline', activeIcon: 'person' },
 ] as const satisfies readonly { key: string; icon: IconName; activeIcon: IconName }[];
 
@@ -41,7 +41,6 @@ export interface LearnModuleHelpLink {
 export interface LearnModuleDay {
   heroImage: ReturnType<typeof require>;
   heroAspectRatio: number;
-  practiceIcon: IconName;
   tags: LearnModuleTag[];
   primaryAction: { icon: IconName; action: LearnModuleAction };
   helpLinks: LearnModuleHelpLink[];
@@ -83,10 +82,9 @@ export const LEARN_MODULES = {
       1: {
         heroImage: require('../../assets/images/modules/module_screentime.jpeg'),
         heroAspectRatio: 1456 / 720,
-        practiceIcon: 'mic-outline',
         tags: [
           { key: 'duration', icon: 'time-outline' },
-          { key: 'place', icon: 'home-outline' },
+          { key: 'voice', icon: 'mic-outline' },
           { key: 'device', icon: 'phone-portrait-outline' },
         ],
         primaryAction: { icon: 'mic-outline', action: 'record' },

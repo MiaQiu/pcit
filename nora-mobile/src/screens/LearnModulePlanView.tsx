@@ -1,6 +1,6 @@
 /**
  * LearnModulePlanView
- * "My plan" tab of LearnModuleScreen: the parent's custom plan for a Learn
+ * Plan detail (ModulePlanDetailScreen): the parent's custom plan for a Learn
  * module — active strategy, why it works, today's step-by-step protocol and
  * a crisis tool. Layout is shared across modules; icons/colors come from
  * LEARN_MODULES[moduleKey].plan. Copy is the parent's generated plan
@@ -54,7 +54,7 @@ const splitLead = (raw: string) => {
  * The parent's generated plan for a module (myPlan of their latest analyzed
  * report), plus the child's name for template copy. generatedPlan is
  * undefined until the first response, null when there's no plan yet.
- * Shared by the "My plan" tab and LearnModuleScreen's Day 2+ "Today" view.
+ * Shared by the module screen, plan views, cheat sheet and module chat.
  * Refetches when refreshKey changes (e.g. the day advanced after a new report).
  */
 export const useModulePlan = (moduleKey: LearnModuleKey, refreshKey?: unknown) => {

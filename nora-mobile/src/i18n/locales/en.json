@@ -1288,14 +1288,14 @@
           "1": {
             "title": "Let's see what happens",
             "subtitle": "Record a real screen-time ending today\n(just as it normally happens).",
-            "practiceTitle": "Record a real screen-time ending",
+            "practiceTitle": "Record a real screen-time ending at home",
             "tags": {
               "duration": "10–30 min",
-              "place": "At home",
+              "voice": "Voice only",
               "device": "Phone/Tablet/TV"
             },
             "primaryCta": "Start recording",
-            "primaryNote": "Don't change your usual routine. Just parent as you normally would.",
+            "primaryNote": "Voice only, no video. Just parent as you normally would.",
             "helpLinks": {
               "howTo": {
                 "title": "How to record?",
@@ -1303,7 +1303,7 @@
               },
               "whatTo": {
                 "title": "Why record?",
-                "subtitle": "How recording helps you"
+                "subtitle": "What Nora learns from it"
               }
             },
             "alternative": {
@@ -1680,6 +1680,52 @@
             "title": "Why Record?",
             "subtitle": "How recording helps you",
             "body": "Screen-time endings happen fast, and in the moment it's hard to notice what helped and what didn't. A short recording lets Nora see the moment the way it really happened.\n\n### 🔍 See What Really Happens\nNora listens for the small things that make a big difference — when the warning came, the exact words used, and how your child responded. These are hard to remember accurately afterward.\n\n### 🎯 A Plan Built for Your Family\nInstead of generic tips, your report highlights **what already worked for you** and gives you **one strategy** to practice next — with steps and words that fit your child.\n\n### 📈 Track Real Progress\nEach day builds on the last. Recording helps Nora notice when a strategy is working, so you can move on — or when it's time to try something easier.\n\n### 💜 It's Not a Test\nThere's no pass or fail. A messy ending is just as helpful as a smooth one — often more. Every recording is a step toward calmer transitions.\n\n### 🔒 Your Recordings Are Private\n* **Coaching Use Only:** Audio is analyzed strictly to give you insights.\n* **Encrypted & Secure:** All session data is encrypted and stored securely.\n* **Never Sold:** Your recordings and data are never sold to third parties.\n* **Full Control:** You can delete your data or account at any time in your settings."
+          }
+        },
+        "recordGuides": {
+          "howToRecord": {
+            "title": "Let’s record a\nscreentime moment",
+            "subtitle": "Nora will listen and help you understand what’s happening.",
+            "steps": {
+              "1": {
+                "title": "5 minutes before screentime ends",
+                "body": "Tap record in Nora."
+              },
+              "2": {
+                "title": "Tap record and lock your phone",
+                "body": "Place it nearby. Nora will keep recording in the background."
+              },
+              "3": {
+                "title": "Handle screentime as usual",
+                "body": "Use the steps you normally use. Nora will listen to how your child responds."
+              },
+              "4": {
+                "title": "Nora stops automatically",
+                "body": "Recording will stop after 30 minutes, or you can stop anytime."
+              },
+              "5": {
+                "title": "Get your report",
+                "body": "Nora will generate a report based on what has happened, with insights about your child and your response."
+              }
+            },
+            "cta": "Start recording"
+          },
+          "whyRecord": {
+            "title": "Why record a\nreal-life moment?",
+            "subtitle": "Nora transcribes and analyzes your real interaction so you get customized feedback with zero form-filling.",
+            "exampleLabel": "Example:",
+            "steps": {
+              "1": {
+                "title": "Child Dynamics",
+                "body": "Tracks real-time emotional shifts and triggers.",
+                "example": "Amy’s emotion spikes from calm to yelling at 3:42 after screentime ended. She didn’t explode because of the screen—rapid questions and repeat explanations overloaded her dysregulated brain."
+              },
+              "2": {
+                "title": "Actionable Feedback",
+                "body": "Pins exact moments where a small adjustment in tone or timing turns a meltdown into cooperation.",
+                "example": "Say “Screentime ends when this timer dings.” then silently wait—no questions, no explanations."
+              }
+            }
           }
         },
         "goal": {
