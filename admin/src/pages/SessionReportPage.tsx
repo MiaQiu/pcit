@@ -3,6 +3,16 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getSessionReport, SessionReport, SessionReportResult } from '../api/adminApi';
 import { useEnv, PROD_API_URL } from '../context/EnvContext';
 
+// Renders **bold** spans inside plain text — the subset of markdown the
+// legacy coaching sections use (mobile renders them with MarkdownText).
+function renderBold(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith('**') && part.endsWith('**') && part.length > 4
+      ? <strong key={i}>{part.slice(2, -2)}</strong>
+      : part
+  );
+}
+
 export default function SessionReportPage() {
   const { userId, sessionId } = useParams<{ userId: string; sessionId: string }>();
   const navigate = useNavigate();
@@ -139,9 +149,8 @@ export default function SessionReportPage() {
             </div>
           </div>
 
-          {/* Top Moment — hidden on the first-session report (see mobile's
-              ReportDetailScreen.tsx showFirstSession branch) */}
-          {!report.isFirstSession && (report.topMoment || report.audioUrl) && (
+          {/* Top Moment */}
+          {(report.topMoment || report.audioUrl) && (
             <div className="wr-card">
               <div className="wr-section-title" style={{ marginBottom: 8 }}>Top Moment</div>
               {report.topMomentCelebration && (
@@ -158,9 +167,26 @@ export default function SessionReportPage() {
             </div>
           )}
 
-          {/* Coach's Corner — also hidden on the first-session report; it's
-              replaced by "Skills Underneath the Issues" / "How We'll Practice
-              Together" below */}
+          {/* Coach's Corner (first session) — old ReportScreen.tsx format:
+              legacy coaching sections ({title, content}), falling back to the
+              raw coachingSummary when sections are absent */}
+          {report.isFirstSession && (report.coachingCards?.length || report.coachingSummary) ? (
+            <div className="wr-card">
+              <div className="wr-section-title" style={{ marginBottom: 12 }}>Coach's Corner</div>
+              {report.coachingCards?.length ? (
+                report.coachingCards.map((section, i) => (
+                  <div key={i} style={{ marginTop: i > 0 ? 16 : 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: '#1E2939', marginBottom: 4 }}>{section.title}</div>
+                    <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{renderBold(section.content)}</div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{report.coachingSummary}</div>
+              )}
+            </div>
+          ) : null}
+
+          {/* Coach's Corner (later sessions) */}
           {!report.isFirstSession && (report.coachCorner || report.skillCoaching) && (
             <div className="wr-card">
               <div className="wr-section-title" style={{ marginBottom: 12 }}>Coach's Corner</div>
@@ -243,8 +269,19 @@ export default function SessionReportPage() {
             </div>
           )}
 
-          {/* Learning Moments / Crisis Moment */}
-          {report.learningMoments ? (
+          {/* How We'll Practice Together — first-session only; sits right after
+              Coach's Corner, as in the old ReportScreen.tsx */}
+          {report.isFirstSession && report.firstSessionInsights?.howWePracticeTogether.sentences.length ? (
+            <div className="wr-card">
+              <div className="wr-section-title" style={{ marginBottom: 8 }}>How We'll Practice Together</div>
+              {report.firstSessionInsights.howWePracticeTogether.sentences.map((sentence, i) => (
+                <div key={i} style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, marginBottom: 8 }}>{renderBold(sentence)}</div>
+              ))}
+            </div>
+          ) : null}
+
+          {/* Learning Moments / Crisis Moment — not part of the first-session report */}
+          {report.isFirstSession ? null : report.learningMoments ? (
             <div className="wr-card">
               <div className="wr-section-title" style={{ marginBottom: 8 }}>Learning Moment</div>
               {report.learningMoments.summary && (
@@ -276,78 +313,35 @@ export default function SessionReportPage() {
             </div>
           ) : null}
 
-          {/* What We Learned About the Child — on the first session this prefers
-              firstSessionInsights.whatWeLearned (strengths + the normalizing
-              challenge note) over the standard aboutChild extraction, same as
-              mobile's childInsightBodyJsx */}
-          {report.isFirstSession && (report.firstSessionInsights?.whatWeLearned.strengths.length || report.firstSessionInsights?.whatWeLearned.challenge) ? (
-            <div className="wr-card">
-              <div className="wr-section-title" style={{ marginBottom: 8 }}>What We Learned About the Child</div>
-              {report.firstSessionInsights!.whatWeLearned.strengths.map((s, i) => (
-                s.name ? (
-                  <div key={i} style={{ marginBottom: 8 }}>
-                    <span style={{ padding: '4px 10px', borderRadius: 10, background: '#DDF3E4', fontSize: 13, fontWeight: 600, color: '#3BA55D' }}>
-                      {s.name}
-                    </span>
-                    {s.explanation && (
-                      <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, marginTop: 4 }}>{s.explanation}</div>
-                    )}
-                  </div>
-                ) : null
-              ))}
-              {report.firstSessionInsights!.whatWeLearned.challenge && (
-                <div style={{ background: '#FBE7D2', borderRadius: 10, padding: 10, marginTop: 4 }}>
-                  <div style={{ fontSize: 14, color: '#1E2939', lineHeight: 1.5 }}>{report.firstSessionInsights!.whatWeLearned.challenge}</div>
-                </div>
-              )}
-            </div>
-          ) : (
-            report.aboutChild && report.aboutChild.length > 0 && report.aboutChild[0]?.Description && (
+          {/* About the Child — the server-selected item (selectedAboutChild),
+              same as mobile; falls back to the first extracted one for older
+              sessions predating selection */}
+          {(() => {
+            const item = report.selectedAboutChild || report.aboutChild?.[0];
+            if (!item?.Description) return null;
+            return (
               <div className="wr-card">
-                <div className="wr-section-title" style={{ marginBottom: 8 }}>About the Child</div>
-                {report.aboutChild[0].Title && (
-                  <div style={{ fontWeight: 700, fontSize: 14, color: '#1E2939', marginBottom: 4 }}>{report.aboutChild[0].Title}</div>
+                <div className="wr-section-title" style={{ marginBottom: 8 }}>
+                  {report.isFirstSession ? 'What We Learned About the Child' : 'About the Child'}
+                </div>
+                {item.Title && (
+                  <div style={{ fontWeight: 700, fontSize: 14, color: '#1E2939', marginBottom: 4 }}>{item.Title}</div>
                 )}
-                <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5 }}>
-                  {report.aboutChild[0].Details || report.aboutChild[0].Description}
-                </div>
-              </div>
-            )
-          )}
-
-          {/* Skills Underneath the Issues — first-session only */}
-          {report.isFirstSession && report.firstSessionInsights?.skillsUnderneath && (
-            <div className="wr-card">
-              <div className="wr-section-title" style={{ marginBottom: 8 }}>Skills Underneath the Issues</div>
-              {report.firstSessionInsights.skillsUnderneath.openingSentence && (
-                <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, marginBottom: 10 }}>
-                  {report.firstSessionInsights.skillsUnderneath.openingSentence}
-                </div>
-              )}
-              {report.firstSessionInsights.skillsUnderneath.skills.map((skill, i) => (
-                skill.name ? (
-                  <div key={i} style={{ marginBottom: 8 }}>
-                    <span style={{ padding: '4px 10px', borderRadius: 10, background: '#F5EAFB', fontSize: 13, fontWeight: 600, color: '#8C49D5' }}>
-                      {skill.name.replace(/\*\*/g, '')}
-                    </span>
-                    {skill.definition && (
-                      <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, marginTop: 4 }}>{skill.definition}</div>
+                {/* Old ReportScreen.tsx (first session) shows Description then
+                    Details; ReportDetailScreen shows Details || Description */}
+                {report.isFirstSession ? (
+                  <>
+                    <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5 }}>{item.Description}</div>
+                    {item.Details && (
+                      <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, marginTop: 8 }}>{item.Details}</div>
                     )}
-                  </div>
-                ) : null
-              ))}
-            </div>
-          )}
-
-          {/* How We'll Practice Together — first-session only */}
-          {report.isFirstSession && report.firstSessionInsights?.howWePracticeTogether.sentences.length ? (
-            <div className="wr-card">
-              <div className="wr-section-title" style={{ marginBottom: 8 }}>How We'll Practice Together</div>
-              {report.firstSessionInsights.howWePracticeTogether.sentences.map((sentence, i) => (
-                <div key={i} style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, marginBottom: 8 }}>{sentence}</div>
-              ))}
-            </div>
-          ) : null}
+                  </>
+                ) : (
+                  <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.5 }}>{item.Details || item.Description}</div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Tomorrow's Goal */}
           {(report.tomorrowGoalDirective || report.tomorrowGoal) && (
