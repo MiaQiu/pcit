@@ -17,6 +17,8 @@ router.use(requireAuth);
  * recording in this module (session.moduleCoaching). plan is null until the
  * first module recording has been analyzed. masteredStrategies lists the
  * strategies a Day 2+ report judged mastered, first mastery only, in order.
+ * suggestedStrategies are the latest report's "Next Growth Focus" strategies
+ * ({ name, description }) — the module chat's suggested ideas.
  */
 router.get('/:moduleKey/plan', async (req, res) => {
   try {
@@ -62,6 +64,7 @@ router.get('/:moduleKey/plan', async (req, res) => {
       recordingId: session?.id || null,
       createdAt: session?.createdAt || null,
       masteredStrategies,
+      suggestedStrategies: session?.moduleCoaching?.coachingReport?.nextGrowthFocus?.strategies || [],
     });
   } catch (error) {
     logError(error, { route: 'learn-modules#Get module plan error', userId: req.userId });

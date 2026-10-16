@@ -57,11 +57,22 @@ export interface LearnModulePlan {
   crisisItemCount: number;
 }
 
+// A goal on the "My plan" roadmap: a group of Knowledge Base strategies
+// (strategyIds = myPlan.activeStrategyId values). Progress = how many of them
+// are mastered; the current goal is the first one not yet complete. Copy:
+// learnV2.modules.<moduleKey>.goals.<key>.{title,description}.
+export interface LearnModuleGoal {
+  key: string;
+  strategyIds: number[];
+  image: ReturnType<typeof require>;
+}
+
 export interface LearnModuleConfig {
   cardImage: ReturnType<typeof require>;
   totalDays: number;
   days: Record<number, LearnModuleDay>;
   plan?: LearnModulePlan;
+  goals?: LearnModuleGoal[];
 }
 
 export const LEARN_MODULES = {
@@ -95,6 +106,16 @@ export const LEARN_MODULES = {
       ],
       crisisItemCount: 2,
     },
+    goals: [
+      // 1 routine, 2 plan the transition, 3 natural stopping point, 4 countdown warnings, 5 timer
+      { key: 'predictable', strategyIds: [1, 2, 3, 4, 5], image: require('../../assets/images/modules/plan1.png') },
+      // 6 effective command, 7 follow-through, 10 stay consistent
+      { key: 'boundary', strategyIds: [6, 7, 10], image: require('../../assets/images/modules/plan2.png') },
+      // 8 co-regulate first
+      { key: 'tantrumSkills', strategyIds: [8], image: require('../../assets/images/modules/plan3.png') },
+      // 9 bridging activity & modeling
+      { key: 'backToScreen', strategyIds: [9], image: require('../../assets/images/modules/plan4.png') },
+    ],
   },
 } satisfies Record<string, LearnModuleConfig>;
 
@@ -114,6 +135,8 @@ export interface ModulePlanData {
   activeStrategy: string;
   whyItWorks: string;
   protocolSteps: string[];
+  // 3 focus areas for the next ending (Cheat Sheet); absent on older plans.
+  focusAreas?: { title: string; detail: string }[];
   crisisTool: { isNeeded: boolean; title: string; action: string; script: string };
 }
 
@@ -161,4 +184,41 @@ export interface MasteredStrategy {
   strategyId: number | null;
   dayNumber: number;
   reportId: string;
+}
+
+export type GoalStatus = 'completed' | 'current' | 'next' | 'later';
+
+export interface GoalProgress extends LearnModuleGoal {
+  number: number;
+  mastered: number;
+  total: number;
+  status: GoalStatus;
+}
+
+// Goals with progress from the mastered strategies: complete when all of a
+// goal's strategies are mastered; the first incomplete goal is current, the
+// one after it next, the rest later.
+export const getGoalProgress = (
+  moduleKey: LearnModuleKey,
+  masteredStrategyIds: (number | null)[],
+): GoalProgress[] => {
+  const goals = (LEARN_MODULES[moduleKey] as LearnModuleConfig).goals ?? [];
+  const mastered = new Set(masteredStrategyIds.filter((id): id is number => id != null));
+  let currentIndex = -1;
+  return goals.map((goal, i) => {
+    const done = goal.strategyIds.filter(id => mastered.has(id)).length;
+    const complete = done === goal.strategyIds.length;
+    let status: GoalStatus;
+    if (complete && currentIndex === -1) status = 'completed';
+    else if (currentIndex === -1) { currentIndex = i; status = 'current'; }
+    else status = i === currentIndex + 1 ? 'next' : 'later';
+    return { ...goal, number: i + 1, mastered: done, total: goal.strategyIds.length, status };
+  });
+};
+
+// A strategy from the latest report's "Next Growth Focus" (GET
+// /api/learn-modules/:moduleKey/plan suggestedStrategies) — module chat ideas.
+export interface SuggestedStrategy {
+  name: string;
+  description: string;
 }

@@ -1672,6 +1672,69 @@
             "subtitle": "How recording helps you",
             "body": "Screen-time endings happen fast, and in the moment it's hard to notice what helped and what didn't. A short recording lets Nora see the moment the way it really happened.\n\n### 🔍 See What Really Happens\nNora listens for the small things that make a big difference — when the warning came, the exact words used, and how your child responded. These are hard to remember accurately afterward.\n\n### 🎯 A Plan Built for Your Family\nInstead of generic tips, your report highlights **what already worked for you** and gives you **one strategy** to practice next — with steps and words that fit your child.\n\n### 📈 Track Real Progress\nEach day builds on the last. Recording helps Nora notice when a strategy is working, so you can move on — or when it's time to try something easier.\n\n### 💜 It's Not a Test\nThere's no pass or fail. A messy ending is just as helpful as a smooth one — often more. Every recording is a step toward calmer transitions.\n\n### 🔒 Your Recordings Are Private\n* **Coaching Use Only:** Audio is analyzed strictly to give you insights.\n* **Encrypted & Secure:** All session data is encrypted and stored securely.\n* **Never Sold:** Your recordings and data are never sold to third parties.\n* **Full Control:** You can delete your data or account at any time in your settings."
           }
+        },
+        "goal": {
+          "title": "Making screentime endings predictable",
+          "subtitle": "Let's keep practising so your child knows what comes next."
+        },
+        "goals": {
+          "predictable": {
+            "title": "Making screentime endings predictable",
+            "description": "Help your child know what comes next before screen time ends."
+          },
+          "boundary": {
+            "title": "Hold the boundary calmly",
+            "description": "Stay calm, keep it short and consistent even when there is protest."
+          },
+          "tantrumSkills": {
+            "title": "Build the skills behind the tantrum",
+            "description": "Strengthen your child's ability to manage big feelings and frustration."
+          },
+          "backToScreen": {
+            "title": "Building the skills back to screentime",
+            "description": "Practice and reinforce the new skills so screen time goes more smoothly."
+          }
+        },
+        "cheatSheet": {
+          "title": "Quick Cheat Sheet",
+          "subtitle": "What to Say & Do",
+          "focusTitle": "Your {{count}} Focus Areas",
+          "focusSubtitle": "Based on your last recording",
+          "routineHeading": "Other steps in your screen-time routine",
+          "routine": {
+            "1": {
+              "moment": "Before screen time",
+              "action": "Share the plan. “After screen time, we're going to build with blocks. What would you like to play?”"
+            },
+            "2": {
+              "moment": "5 minutes left",
+              "action": "“5 minutes left, then screen time is finished.” Use a timer."
+            },
+            "3": {
+              "moment": "2 minutes left",
+              "action": "“2 minutes left. Finish this episode, then we stop.” Aim for a natural stopping point when possible."
+            },
+            "4": {
+              "moment": "Time to stop",
+              "action": "Give one clear command: “Please turn off the TV.”"
+            },
+            "5": {
+              "moment": "If your child ignores you",
+              "action": "Offer two choices: “You turn it off, or Mama turns it off for you.” Wait 5 seconds."
+            },
+            "6": {
+              "moment": "If your child still refuses",
+              "action": "Turn it off calmly. Say once: “You didn't turn it off, so I turned it off for you.”"
+            },
+            "7": {
+              "moment": "During the crying",
+              "action": "“You're upset because screen time is finished.” Stay nearby, hold the limit, and start the next activity yourself."
+            },
+            "8": {
+              "moment": "When your child joins",
+              "action": "Praise specifically: “You started playing with the blocks! Great job joining me.”"
+            }
+          }
         }
       }
     },
@@ -1705,7 +1768,8 @@
         "today": "Today",
         "plan": "My plan",
         "collection": "Collection",
-        "profile": "Profile"
+        "profile": "Profile",
+        "learn": "Learn"
       },
       "yourChild": "your child",
       "plan": {
@@ -1757,6 +1821,34 @@
       "leaveTitle": "Recording in progress",
       "leaveMessage": "Stop the recording before leaving this screen.",
       "keepRecording": "Keep recording"
+    },
+    "moduleScreenV2": {
+      "goalLabel": "Goal {{number}}",
+      "checkInEyebrow": "Daily check in",
+      "checkInTitle": "Daily check in with your coach",
+      "checkInBody": "Share how things have been, ask questions, or get quick advice.",
+      "openChat": "Open chat with Nora",
+      "practiceNextTitle": "Record the next screen time ending",
+      "practiceBody": "Nora will be there for you.",
+      "cheatSheet": "Cheat Sheet from Last Session",
+      "planOverview": {
+        "title": "My plan",
+        "subtitle": "A step-by-step plan based on what we found in your last session.",
+        "focusEyebrow": "Our focus",
+        "focusTitle": "Helping your child with screen time transitions",
+        "focusBody": "{{count}} goals to build calmer, more predictable screen time endings and stronger skills over time.",
+        "status": {
+          "completed": "Completed",
+          "current": "Current goal",
+          "next": "Next goal",
+          "later": "Later"
+        },
+        "inProgress": "In progress",
+        "done": "Done",
+        "locked": "Locked",
+        "lockedToast": "Finish your current goal to unlock this one.",
+        "detailTitle": "Current plan"
+      }
     }
   },
   "learnV3": {
@@ -2651,5 +2743,9 @@
     "nextGrowthFocus": "Next Growth Focus",
     "trySaying": "Try saying",
     "seeMyPlan": "See my plan"
+  },
+  "moduleChat": {
+    "strategyPrompt": "How can I use “{{strategy}}” at our next screen-time ending?",
+    "suggestedLabel": "Strategies suggested based on your last session"
   }
 }

@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { COLORS, FONTS } from '../constants/assets';
 import { useAuthService } from '../contexts/AppContext';
-import { LEARN_MODULES, LearnModuleConfig, LearnModuleKey, MasteredStrategy, ModulePlanData } from '../constants/learnModules';
+import { LEARN_MODULES, LearnModuleConfig, LearnModuleKey, MasteredStrategy, ModulePlanData, SuggestedStrategy } from '../constants/learnModules';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -26,6 +26,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 // server said there's no generated plan yet.
 const planCache = new Map<LearnModuleKey, ModulePlanData | null>();
 const masteredCache = new Map<LearnModuleKey, MasteredStrategy[]>();
+const suggestedCache = new Map<LearnModuleKey, SuggestedStrategy[]>();
 
 export interface PlanDisplay {
   strategy: string;
@@ -68,6 +69,10 @@ export const useModulePlan = (moduleKey: LearnModuleKey, refreshKey?: unknown) =
   const [masteredStrategies, setMasteredStrategies] = useState<MasteredStrategy[]>(
     masteredCache.get(moduleKey) ?? [],
   );
+  // The latest report's "Next Growth Focus" strategies (module chat ideas).
+  const [suggestedStrategies, setSuggestedStrategies] = useState<SuggestedStrategy[]>(
+    suggestedCache.get(moduleKey) ?? [],
+  );
 
   useEffect(() => {
     authService.getCurrentUser()
@@ -85,6 +90,9 @@ export const useModulePlan = (moduleKey: LearnModuleKey, refreshKey?: unknown) =
         const mastered: MasteredStrategy[] = data?.masteredStrategies ?? [];
         masteredCache.set(moduleKey, mastered);
         setMasteredStrategies(mastered);
+        const suggested: SuggestedStrategy[] = data?.suggestedStrategies ?? [];
+        suggestedCache.set(moduleKey, suggested);
+        setSuggestedStrategies(suggested);
       })
       .catch(err => {
         console.error('Failed to load module plan:', err);
@@ -93,7 +101,7 @@ export const useModulePlan = (moduleKey: LearnModuleKey, refreshKey?: unknown) =
       });
   }, [authService, moduleKey, refreshKey]);
 
-  return { generatedPlan, childName, masteredStrategies };
+  return { generatedPlan, childName, masteredStrategies, suggestedStrategies };
 };
 
 // What the plan screens render: the generated plan, or the module's template

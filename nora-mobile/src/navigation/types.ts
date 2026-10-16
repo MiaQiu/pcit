@@ -120,6 +120,9 @@ export type RootStackParamList = {
   LessonViewerV2: {
     lessonId: string;
     moduleKey?: string;
+  // Per-module rows of horizontally-scrolling lesson cards; opened from a
+  // Learn module's "Learn" tab.
+  ModuleLearn: undefined;
     moduleTitle?: string;
     nextLessonId?: string;
     // Defaults to true. Only applies to the lesson opened initially.
@@ -230,6 +233,18 @@ export type RootStackParamList = {
 
 export type RootTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;
 export type RootStackNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+  // A Learn module's coach chat ("Daily check in"), copy of CoachChat.
+  ModuleChat: {
+    moduleKey: LearnModuleKey;
+  };
+  // "Quick Cheat Sheet" (focus areas from the last session + fixed routine).
+  ModuleCheatSheet: {
+    moduleKey: LearnModuleKey;
+  };
+  // A Learn module's detailed current plan, opened from the "My plan" roadmap.
+  ModulePlanDetail: {
+    moduleKey: LearnModuleKey;
+  };
 export type OnboardingStackNavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
 declare global {

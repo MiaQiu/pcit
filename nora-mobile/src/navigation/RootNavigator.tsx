@@ -45,10 +45,14 @@ import { ABCLogScreen } from '../screens/ABCLogScreen';
 import { HomeCardDetailScreen } from '../screens/HomeCardDetailScreen';
 import { GetReadyToPlayScreen } from '../screens/GetReadyToPlayScreen';
 import { QuickGuideScreen } from '../screens/QuickGuideScreen';
-import { LearnModuleScreen } from '../screens/LearnModuleScreen';
+import { LearnModuleScreen_v2 } from '../screens/LearnModuleScreen_v2';
 import { LearnModuleSurveyScreen } from '../screens/LearnModuleSurveyScreen';
 import { ModuleReportScreen } from '../screens/ModuleReportScreen';
 import { ModuleGuideScreen } from '../screens/ModuleGuideScreen';
+import { ModulePlanDetailScreen } from '../screens/ModulePlanDetailScreen';
+import { ModuleCheatSheetScreen } from '../screens/ModuleCheatSheetScreen';
+import { ModuleChatScreen } from '../screens/ModuleChatScreen';
+import { ModuleLearnScreen } from '../screens/ModuleLearnScreen';
 import { GetReadySectionScreen } from '../screens/GetReadySectionScreen';
 import { RootStackParamList, OnboardingStackParamList } from './types';
 import { useAuthService, useLessonService } from '../contexts/AppContext';
@@ -525,7 +529,7 @@ export const RootNavigator: React.FC = () => {
       />
       <Stack.Screen
         name="LearnModule"
-        component={LearnModuleScreen}
+        component={LearnModuleScreen_v2}
         options={{
           animation: 'slide_from_right',
         }}
@@ -571,5 +575,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
+      <Stack.Screen
+        name="ModulePlanDetail"
+        component={ModulePlanDetailScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleCheatSheet"
+        component={ModuleCheatSheetScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleChat"
+        component={ModuleChatScreen}
+        options={{
+          animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="ModuleLearn"
+        component={ModuleLearnScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
   },
 });

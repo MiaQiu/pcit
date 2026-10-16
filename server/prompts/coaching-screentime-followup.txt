@@ -88,6 +88,12 @@ Return your response ONLY as a valid JSON object matching the exact structure be
       "String (Step 2 - Max 20 words)",
       "String (Step 3 - Max 20 words)"
     ],
+    "focus_areas": [
+      {
+        "title": "String (Max 6 words: one specific thing to do differently at the next ending, drawn from what happened in this session, e.g. Give one clear command)",
+        "detail": "String (Max 15 words: the exact words to say in quotes, or a short how-to, e.g. \"Please turn off the TV.\")"
+      }
+    ] (EXACTLY 3 items, most important first — the parent's 3 focus areas for the next screen-time ending),
     "crisis_tool": {
       "is_needed": true/false,
       "title": "String (e.g., High-Tension Meltdowns)",

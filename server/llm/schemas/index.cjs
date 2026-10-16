@@ -556,6 +556,18 @@ const SCREENTIME_COACHING = {
         active_strategy:    { type: 'string' },
         why_it_works:       { type: 'string' },
         protocol_steps:  { type: 'array', items: { type: 'string' } },
+        // The parent's 3 focus areas for the next ending (Cheat Sheet screen).
+        focus_areas: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title:  { type: 'string' },
+              detail: { type: 'string' },
+            },
+            required: ['title', 'detail'],
+          },
+        },
         crisis_tool: {
           type: 'object',
           properties: {
@@ -567,7 +579,7 @@ const SCREENTIME_COACHING = {
           required: ['is_needed', 'title', 'action', 'script'],
         },
       },
-      required: ['active_strategy_id', 'active_strategy', 'why_it_works', 'protocol_steps', 'crisis_tool'],
+      required: ['active_strategy_id', 'active_strategy', 'why_it_works', 'protocol_steps', 'focus_areas', 'crisis_tool'],
     },
   },
   required: ['coaching_report', 'my_plan'],

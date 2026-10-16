@@ -908,6 +908,8 @@ async function generateModuleCoaching(moduleKey, transcriptText, childInfo, sess
   if (isFollowup && !raw.progress) throw new Error('Module coaching follow-up response missing progress');
 
   const result = snakeToCamelKeys(raw);
+  // The prompt asks for exactly 3; keep the Cheat Sheet to 3 if it returns more.
+  result.myPlan.focusAreas = (result.myPlan.focusAreas || []).slice(0, 3);
   const strategyId = result.myPlan.activeStrategyId;
   if (!Number.isInteger(strategyId) || strategyId < 1 || strategyId > config.strategyCount) {
     console.warn(`⚠️ [MODULE-COACHING] Invalid active_strategy_id ${strategyId} — stored as null`);
