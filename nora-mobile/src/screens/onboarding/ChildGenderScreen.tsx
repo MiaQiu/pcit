@@ -6,6 +6,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 
 export const ChildGenderScreen: React.FC = () => {
   const { data } = useOnboarding();
@@ -29,6 +30,7 @@ export const ChildGenderScreen: React.FC = () => {
       totalStepsInPhase={7}
       screenName="child_gender"
       screenStep={15}
+      renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}
     />
   );
 };

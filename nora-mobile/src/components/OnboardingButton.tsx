@@ -52,6 +52,7 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 18,
     color: '#FFFFFF',
+    textAlign: 'center', // keeps wrapped (two-line) labels centered
   },
   buttonTextDisabled: {
     color: '#9CA3AF',

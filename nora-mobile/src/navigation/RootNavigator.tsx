@@ -61,6 +61,7 @@ import { useUploadProcessing } from '../contexts/UploadProcessingContext';
 import { User } from '@nora/core';
 import amplitudeService from '../services/amplitudeService';
 import { checkOnboardingStep } from '../utils/onboardingCheck';
+import { loadDraft, OnboardingDraft } from '../utils/onboardingDraft';
 import { prefetchDemoVideoThumbnails } from '../services/demoVideoThumbnailCache';
 import i18n from '../i18n';
 
@@ -71,6 +72,10 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 // force-land there past a Fast Refresh full reload, skipping auth/onboarding
 // status checks. Has no effect in production builds. Revert to null before committing.
 const DEV_FORCE_ONBOARDING_SCREEN: keyof OnboardingStackParamList | null = null;
+// DEV ONLY: params for that forced screen, e.g. { stepId: 'context' } to open a
+// screen-time step (ids in screenTimeFlow.ts); devSample fills in sample answers and a
+// gender if missing. Revert to undefined before committing.
+const DEV_FORCE_ONBOARDING_PARAMS: Record<string, unknown> | undefined = undefined;
 
 function isVersionBelow(current: string, minimum: string): boolean {
   const parse = (v: string) => v.split('.').map(Number);
@@ -92,6 +97,8 @@ export const RootNavigator: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<string | null>(null);
   const [resumeUserData, setResumeUserData] = useState<User | null>(null);
+  // Logged-out parent with an unfinished account-last onboarding on this device
+  const [onboardingDraft, setOnboardingDraft] = useState<OnboardingDraft | null>(null);
   const [updateRequired, setUpdateRequired] = useState(false);
   const [softUpdate, setSoftUpdate] = useState<{ version: string; whatsNew: string[] } | null>(null);
 
@@ -194,7 +201,8 @@ export const RootNavigator: React.FC = () => {
           const { step: incompleteStep, user } = await checkOnboardingCompletion();
           console.log('[Auth] Onboarding step:', incompleteStep);
           setOnboardingStep(incompleteStep);
-          if (incompleteStep) {
+          // A dev-forced screen also gets the user's profile, so name/gender/age render
+          if (incompleteStep || (__DEV__ && DEV_FORCE_ONBOARDING_SCREEN)) {
             setResumeUserData(user);
           }
           // Sync detected/saved UI language to server (covers first-launch device locale)
@@ -224,6 +232,11 @@ export const RootNavigator: React.FC = () => {
           setIsLoading(false);
           return;
         }
+      }
+
+      // No account yet: resume an account-last onboarding draft if there is one
+      if (!authenticated) {
+        setOnboardingDraft(await loadDraft());
       }
 
       // Show app after subscription check completes
@@ -286,10 +299,16 @@ export const RootNavigator: React.FC = () => {
             component={OnboardingNavigator}
             initialParams={
               devForceOnboardingScreen
-                ? { initialStep: devForceOnboardingScreen }
+                ? { initialStep: devForceOnboardingScreen, initialStepParams: DEV_FORCE_ONBOARDING_PARAMS, resumeUserData: resumeUserData ?? undefined }
                 : onboardingStep
                   ? { initialStep: onboardingStep, resumeUserData: resumeUserData ?? undefined }
-                  : undefined
+                  : !isAuthenticated && onboardingDraft
+                    ? {
+                        initialStep: onboardingDraft.lastStep.name,
+                        initialStepParams: onboardingDraft.lastStep.params,
+                        draftData: onboardingDraft.data as Record<string, unknown>,
+                      }
+                    : undefined
             }
           />
           <Stack.Screen name="MainTabs" component={TabNavigator} />
@@ -556,25 +575,6 @@ export const RootNavigator: React.FC = () => {
           animation: 'slide_from_right',
         }}
       />
-    </Stack.Navigator>
-    {softUpdate && (
-      <WhatsNewModal
-        visible
-        version={softUpdate.version}
-        whatsNew={softUpdate.whatsNew}
-        onDismiss={dismissSoftUpdate}
-      />
-    )}
-    </>
-  );
-};
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
       <Stack.Screen
         name="ModulePlanDetail"
         component={ModulePlanDetailScreen}
@@ -603,5 +603,24 @@ const styles = StyleSheet.create({
           animation: 'slide_from_right',
         }}
       />
+    </Stack.Navigator>
+    {softUpdate && (
+      <WhatsNewModal
+        visible
+        version={softUpdate.version}
+        whatsNew={softUpdate.whatsNew}
+        onDismiss={dismissSoftUpdate}
+      />
+    )}
+    </>
+  );
+};
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
   },
 });

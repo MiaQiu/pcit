@@ -16,10 +16,10 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Purchases from 'react-native-purchases';
-import { OnboardingStackNavigationProp } from '../../navigation/types';
+import { OnboardingStackNavigationProp, OnboardingStackParamList } from '../../navigation/types';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAuthService } from '../../contexts/AppContext';
 import { ErrorMessages, getErrorMessage } from '../../utils/errorMessages';
@@ -29,12 +29,17 @@ import { useTranslation } from 'react-i18next';
 import { TrackedTouchable } from '../../components/TrackedTouchable';
 import { reportError } from '../../utils/reportError';
 import * as userStorage from '../../lib/userStorage';
+import { buildProfilePayload, clearDraft } from '../../utils/onboardingDraft';
 
 export const CreateAccountScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<OnboardingStackNavigationProp>();
-  const { updateData } = useOnboarding();
+  const route = useRoute<RouteProp<OnboardingStackParamList, 'CreateAccount'>>();
+  const { data, updateData } = useOnboarding();
   const authService = useAuthService();
+  // Account-last signup: this screen comes at the end of onboarding, then continues here
+  const next = route.params?.next ?? 'ReminderTime';
+  const nextParams = route.params?.nextParams;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -85,17 +90,28 @@ export const CreateAccountScreen: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // For now, we'll create a temporary account with minimal data
-      // The full profile will be filled in during the next steps
+      // Account-last signup: every onboarding answer is already collected, so the account
+      // is created with the real profile; fields signup doesn't take follow right after
+      const birthday = data.childBirthday ? new Date(data.childBirthday) : null;
       const response = await authService.signup({
         email: email.toLowerCase().trim(),
         password,
-        name: '', // Placeholder — updated in NameInputScreen
-        childName: '', // Placeholder — updated in ChildNameScreen
-        childBirthYear: new Date().getFullYear() - 5, // Placeholder
-        childConditions: ['none'],// Placeholder
+        name: data.name,
+        childName: data.childName,
+        childBirthYear: birthday ? birthday.getFullYear() : new Date().getFullYear() - 5,
+        ...(birthday ? { childBirthday: birthday.toISOString() } : {}),
+        ...(typeof data.issue === 'string' && data.issue ? { issue: data.issue } : {}),
+        childConditions: ['none'],
       });
       handleApiSuccess(); // Mark server as up
+
+      try {
+        await authService.completeOnboarding(buildProfilePayload(data));
+      } catch (profileError) {
+        // The account exists; don't strand the parent over the follow-up save
+        reportError(profileError, 'CreateAccountScreen.saveProfile');
+      }
+      await clearDraft();
 
       // Without this, userStorage has no userId yet this session, so every
       // setItem/getItem call during onboarding (reminder prefs, etc.) no-ops.
@@ -135,9 +151,27 @@ export const CreateAccountScreen: React.FC = () => {
       // Store email in onboarding context
       updateData({ email: email.toLowerCase().trim() });
 
-      // Navigate to next step
-      navigation.navigate('OB1V2');
+      // Continue the onboarding flow (reminder, or the screen-time plan)
+      navigation.navigate(next as any, nextParams as any);
     } catch (error: any) {
+      if (error?.code === 'CONFLICT') {
+        // Email already registered: start over with another email (new account), or log
+        // in to that account and overwrite its child profile with these answers
+        Alert.alert(t('createAccount.emailInUseTitle'), t('createAccount.emailInUseMessage'), [
+          { text: t('createAccount.emailInUseNewAccount'), style: 'cancel' },
+          {
+            text: t('createAccount.emailInUseUpdateExisting'),
+            onPress: () =>
+              navigation.navigate('Login', {
+                overrideWithOnboarding: true,
+                email: email.toLowerCase().trim(),
+                next,
+                nextParams,
+              }),
+          },
+        ]);
+        return;
+      }
       reportError(error, 'CreateAccountScreen.handleSignup');
       console.error('Signup error:', error);
       const errorMessage = getErrorMessage(error, ErrorMessages.AUTH.SIGNUP_FAILED);

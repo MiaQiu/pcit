@@ -41,7 +41,10 @@
     "termsPrefix": "點擊繼續即表示您同意 Nora 的\n",
     "termsOfService": "服務條款",
     "termsAnd": " 與 ",
-    "privacyPolicy": "隱私權政策"
+    "privacyPolicy": "隱私權政策",
+    "welcomeTitle": "不只育兒建議，更是真正的技能。",
+    "welcomeSubtitle": "個人化 AI 輔導，幫助您應對孩子發脾氣、提升傾聽能力，並培養孩子的專注力。",
+    "letsStart": "開始吧"
   },
   "login": {
     "title": "登入您的帳號",
@@ -74,7 +77,11 @@
     "weakPasswordTitle": "密碼強度不足",
     "weakPasswordMessage": "密碼必須至少 8 個字元，並包含 1 個大寫字母、1 個小寫字母和 1 個數字",
     "passwordMismatchTitle": "密碼不相符",
-    "signupFailedTitle": "註冊失敗"
+    "signupFailedTitle": "註冊失敗",
+    "emailInUseTitle": "此電子郵件已註冊帳戶",
+    "emailInUseMessage": "您可以使用其他電子郵件建立新帳戶，或登入該帳戶並用剛才填寫的資料更新它。更新會取代該帳戶中的孩子資料。",
+    "emailInUseNewAccount": "使用其他電子郵件",
+    "emailInUseUpdateExisting": "登入並更新"
   },
   "forgotPassword": {
     "title": "忘記密碼？",
@@ -252,6 +259,7 @@
       "confidence": "自信",
       "developmental_concerns": "發展相關擔憂",
       "parenting_strategies": "學習更有效的教養策略",
+      "screen_time": "螢幕時間管理",
       "defiance": "反抗行為",
       "aggression": "攻擊性行為",
       "emotional": "情緒調節",
@@ -655,6 +663,7 @@
         "adhd": "{{childName}}的注意力和過動",
         "developmental_concerns": "{{childName}}的發展情況",
         "parenting_strategies": "找到真正有效的教養方法",
+        "screen_time": "管理{{childName}}的螢幕時間",
         "behavior_challenges": "{{childName}}的發脾氣和對抗",
         "big_emotions": "應對{{childName}}的強烈情緒",
         "frustration_tolerance": "{{childName}}很容易感到挫敗",
@@ -2119,8 +2128,8 @@
       "ageSuitabilityNote": "* 年齡適用說明：Nora 的方法經臨床證實對 2 至 7 歲的孩子最有效。然而，這裡教導的核心技能（如正向強化和情緒調節）可以靈活調整，並對任何年齡的孩子都有幫助。"
     },
     "childIssue": {
-      "headerText": "答案沒有對錯。請選擇所有適用的選項。",
-      "title": "是什麼帶您來到這裡？",
+      "headerText": "答案沒有對錯。請選擇最符合的一項。",
+      "title": "現在感覺最難的是什麼？",
       "bigFeelingsTantrums": "強烈情緒與發脾氣",
       "behaviorChallenges": "行為挑戰",
       "listeningCooperation": "聆聽與配合",
@@ -2131,6 +2140,7 @@
       "adhd": "ADHD 支持",
       "developmentalConcerns": "發展相關擔憂",
       "parentingStrategies": "成為更自信的家長",
+      "screenTime": "螢幕時間管理",
       "other": "其他",
       "otherPlaceholder": "請描述該問題..."
     },
@@ -2526,6 +2536,248 @@
       "other": "其他",
       "none": "沒有",
       "preferNotToSay": "我不想說"
+    },
+    "screenTime": {
+      "continue": "繼續",
+      "selectAll": "請選擇所有適用的選項。",
+      "agreement": {
+        "strongly_disagree": "非常不同意",
+        "somewhat_disagree": "有點不同意",
+        "somewhat_agree": "有點同意",
+        "agree": "同意"
+      },
+      "frequency": {
+        "almost_never": "幾乎從不",
+        "rarely": "很少",
+        "quite_often": "經常",
+        "almost_always": "幾乎總是"
+      },
+      "yesNo": {
+        "yes": "是",
+        "no": "否"
+      },
+      "intro": {
+        "title": "您並不孤單。",
+        "p1_other": "很多家長在孩子{{count}}歲時都面臨螢幕時間過長的問題。",
+        "p1NoAge": "很多家長在孩子這個年齡都面臨螢幕時間過長的問題。",
+        "p2": "這往往不只是行為問題，而是<hl>表面之下更深層的原因。</hl>",
+        "p3": "我們一起來看看能否找到一些規律。",
+        "cta": "開始吧"
+      },
+      "hardest": {
+        "title": "目前螢幕時間最難的是什麼？",
+        "options": {
+          "stop": "讓{{name}}停下來",
+          "more": "{{name}}一直要求再玩一下",
+          "more_boy": "他一直要求再玩一下",
+          "more_girl": "她一直要求再玩一下",
+          "upset": "結束時{{name}}非常難過",
+          "upset_boy": "結束時他非常難過",
+          "upset_girl": "結束時她非常難過",
+          "after": "結束後{{name}}什麼都不想做",
+          "after_boy": "結束後他什麼都不想做",
+          "after_girl": "結束後她什麼都不想做",
+          "argue": "最後我總是和孩子爭吵或吼叫"
+        }
+      },
+      "pmum": {
+        "prompt": "您是否同意以下說法？",
+        "statement0": "我的孩子很難停止使用螢幕媒體。",
+        "statement1": "螢幕媒體似乎是唯一能激勵我孩子的東西。",
+        "statement2": "我的孩子似乎滿腦子都是螢幕媒體。",
+        "statement3": "我孩子使用螢幕媒體影響了家庭活動。",
+        "statement4": "我孩子使用螢幕媒體為家庭帶來了問題。",
+        "statement5": "我的孩子不能使用螢幕媒體時會感到沮喪。",
+        "statement6": "我的孩子想使用螢幕媒體的時間越來越長。",
+        "statement7": "我的孩子會偷偷使用螢幕媒體。",
+        "statement8": "當我的孩子過得不順時，似乎只有螢幕媒體能讓他/她感覺好一些。"
+      },
+      "stops": {
+        "title": "到了該停下的時候，通常會發生什麼？",
+        "options": {
+          "asks": "{{name}}要求再玩一下",
+          "asks_boy": "他要求再玩一下",
+          "asks_girl": "她要求再玩一下",
+          "ignores": "{{name}}不理我，繼續看",
+          "ignores_boy": "他不理我，繼續看",
+          "ignores_girl": "她不理我，繼續看",
+          "whines": "{{name}}哼哼唧唧或哭鬧",
+          "whines_boy": "他哼哼唧唧或哭鬧",
+          "whines_girl": "她哼哼唧唧或哭鬧",
+          "meltdown": "{{name}}尖叫或情緒崩潰",
+          "meltdown_boy": "他尖叫或情緒崩潰",
+          "meltdown_girl": "她尖叫或情緒崩潰",
+          "hits": "{{name}}打人、踢人或丟東西",
+          "hits_boy": "他打人、踢人或丟東西",
+          "hits_girl": "她打人、踢人或丟東西"
+        }
+      },
+      "dopamine": {
+        "title": "您聽說過多巴胺循環嗎？"
+      },
+      "context": {
+        "title": "螢幕的刺激性極強。",
+        "lead": "它不斷帶來新鮮感和興奮感，這是其他活動很難比擬的。",
+        "p1": "<b>這讓很多孩子真的很難停下來。</b>",
+        "p2": "當刺激突然停止時，孩子的神經系統需要迅速切換狀態，而這種切換會讓人非常不舒服。",
+        "callout1": "這就是<b>多巴胺循環。</b>",
+        "callout2": "情緒崩潰不是故意對抗或操控——<hl>而是大腦還沒跟上這次轉換。</hl>",
+        "cta": "聽起來很熟悉"
+      },
+      "differences": {
+        "title": "{{name}}是否有學習或思考方面的差異？",
+        "options": {
+          "none": "據我所知沒有",
+          "developmental_delays": "發展遲緩",
+          "adhd": "過動症（ADHD）",
+          "asd": "自閉症類群障礙（ASD）",
+          "anxiety": "焦慮",
+          "another": "其他未列出的差異",
+          "suspected": "我懷疑有其中一種，但還沒有確診"
+        }
+      },
+      "strategies": {
+        "title": "為了讓螢幕時間更順利地結束，您已經嘗試過哪些方法？",
+        "options": {
+          "warning": "時間到之前先提醒",
+          "timer": "使用計時器",
+          "rules": "事先訂好螢幕時間規則",
+          "activity": "提供其他活動",
+          "explaining": "解釋為什麼該停下了",
+          "extra": "多給一點時間",
+          "away": "直接拿走裝置"
+        }
+      },
+      "worked": {
+        "title": "這些方法效果如何？",
+        "options": {
+          "smoothly": "螢幕時間通常能順利結束",
+          "improvement": "有一些改善",
+          "sometimes": "只是有時有用",
+          "no_change": "沒有明顯變化",
+          "harder": "越來越難了"
+        }
+      },
+      "stress": {
+        "title": "結束螢幕時間對您來說有多難？",
+        "options": {
+          "manageable": "還能應付",
+          "somewhat": "有點壓力",
+          "very": "壓力很大",
+          "overwhelming": "難以承受"
+        }
+      },
+      "teen": {
+        "title": "您是否擔心孩子進入青春期後，這些挑戰會變得更難？",
+        "options": {
+          "yes": "是",
+          "no": "否",
+          "not_sure": "不確定"
+        }
+      },
+      "barriers": {
+        "title": "是什麼讓您難以做到？",
+        "options": {
+          "resistance": "孩子的抗拒",
+          "burnout": "我自己精疲力盡",
+          "meltdowns": "無法預料的情緒崩潰",
+          "consistency": "缺乏一致性",
+          "progress": "進展緩慢"
+        }
+      },
+      "goal": {
+        "title": "您最希望改變的是什麼？",
+        "options": {
+          "meltdowns": "減少情緒崩潰",
+          "recovery": "更快恢復平靜",
+          "yelling": "少一些吼叫",
+          "transitions": "更順利地轉換活動",
+          "confidence": "更有信心堅守界線"
+        }
+      },
+      "why": {
+        "title": "為什麼之前的方法沒有奏效？",
+        "p1": "大多數螢幕時間策略都只關注如何讓{{name}}放下裝置。",
+        "p2": "<hl>但那只是表面。</hl>",
+        "p3": "在那一刻，{{name}}實際上需要轉移注意力、應對失望，然後繼續下一件事。",
+        "callout1": "<b>這些能力還在發展中。</b>",
+        "p4": "我們來看看您可能忽略的一些隱藏訊號，了解孩子實際上是如何應對的。"
+      },
+      "signals": {
+        "question0": "您的孩子多常把玩東西（筆、衣服或頭髮）？",
+        "question1": "您的孩子多常啃咬鉛筆、玩具或袖子等東西？",
+        "question2": "您的孩子是否有強迫性小習慣（咬指甲、咬嘴唇或挖鼻孔）？",
+        "question3": "您的孩子在難過時多常迴避眼神接觸或社交？",
+        "question4": "當孩子知道隔天會很難熬時，是否更抗拒睡覺？",
+        "question4_boy": "當孩子知道隔天會很難熬時，他是否更抗拒睡覺？",
+        "question4_girl": "當孩子知道隔天會很難熬時，她是否更抗拒睡覺？",
+        "question5": "您孩子的挫折感多常演變成大吼大叫的情緒崩潰？"
+      },
+      "cortex": {
+        "title": "您聽說過前額葉皮質嗎？",
+        "options": {
+          "yes": "聽說過",
+          "not_really": "不太了解"
+        }
+      },
+      "cortexHelp": {
+        "title": "前額葉皮質能幫助孩子做什麼？",
+        "p1": "它幫助孩子<hl>專注、暫停、調整計畫，並思考接下來該做什麼。</hl>這些能力需要很多年才能發展成熟，並隨著經驗和練習不斷成長。所以當{{name}}很難放下螢幕時，問題不只是「我要怎樣才能讓孩子聽話？」",
+        "callout1": "還有<b>「我要怎樣幫助孩子練習這一刻所需要的能力？」</b>",
+        "cta": "我能怎麼幫忙？"
+      },
+      "windows": {
+        "title": "機會之窗。",
+        "p1": "在{{name}}這個年齡，前額葉皮質仍在發育中。",
+        "p2": "這是練習<hl>專注力、自制力和管理挫折感</hl>的關鍵時期。",
+        "callout1": "<b>而您對孩子的學習影響最大。</b>"
+      },
+      "practice": {
+        "title": "您是{{name}}學習過程中的重要一環。",
+        "p1": "和您相處的每個小時刻，都給了{{name}}機會去<hl>等待、接受「不行」、換個方法、在事情不順時重新振作</hl>。",
+        "callout1": "這些正是結束螢幕時間所需要的能力。",
+        "cta": "我們從哪裡開始？"
+      },
+      "transition": {
+        "title": "我們會先了解螢幕時間轉換時發生了什麼，並指導您運用策略，讓孩子對螢幕時間有可預期的安排。",
+        "callout1": "當螢幕時間變得可預期後，如果{{name}}仍覺得困難，我們會指導您在每天的遊戲時間裡和{{name}}一起練習相關技巧。"
+      },
+      "playAwareness": {
+        "title": "您聽說過遊戲是孩子學習的主要方式之一嗎？"
+      },
+      "play": {
+        "title": "為什麼從遊戲開始？",
+        "p1": "想像一下，{{name}}堆了一座塔，結果塔倒了。孩子很失望——但<hl>這時風險很低，而且您就在身邊。</hl>",
+        "p1_boy": "想像一下，{{name}}堆了一座塔，結果塔倒了。他很失望——但<hl>這時風險很低，而且您就在身邊。</hl>",
+        "p1_girl": "想像一下，{{name}}堆了一座塔，結果塔倒了。她很失望——但<hl>這時風險很低，而且您就在身邊。</hl>",
+        "callout1": "遊戲給了{{name}}練習重新嘗試或改變計畫的空間。",
+        "p2": "它也給了您一個更平靜的時刻去練習如何回應，這樣在情緒激動時，您就有熟悉的方法可以依靠。",
+        "cta": "Nora 如何幫助我？"
+      },
+      "nora": {
+        "tagline": "Nora 與您一起，培養應對<hl>困難時刻</hl>的能力。",
+        "advisorAlt": "Yi-Chuen Chen 教授，博士。臨床兒童心理學家，Nora 臨床顧問。",
+        "cta": "建立帳戶，查看您的8週計畫"
+      },
+      "plan": {
+        "title": "{{name}}的起步計畫。",
+        "twoMonthGoal": "我們的兩個月目標：幫助{{name}}管理螢幕時間，不再哭鬧。",
+        "before": "之前",
+        "after": "之後——我們的目標",
+        "imageAlt": "目標示意圖：孩子在螢幕時間結束時很難過；之後，同一個孩子在家長的陪伴下平靜地收起平板。",
+        "imageAlt_boy": "目標示意圖：男孩在螢幕時間結束時很難過；之後，同一個男孩在家長的陪伴下平靜地收起平板。",
+        "imageAlt_girl": "目標示意圖：女孩在螢幕時間結束時很難過；之後，同一個女孩在家長的陪伴下平靜地收起平板。",
+        "disclaimer": "每個孩子的進展各不相同；這是一個目標，而非保證的結果。",
+        "yourGoal": "您的目標",
+        "hardMoment": "困難時刻",
+        "tried": "您已嘗試過的",
+        "startWith": "從這裡開始",
+        "startWithBody": "透過一起度過的小時刻，幫助{{name}}練習<b>轉換、應對和繼續前進</b>。",
+        "closing": "您不只是在讓螢幕時間更順利地結束，更是在培養<b>重要的生活技能</b>，建立<b>更穩固的親子關係</b>，讓孩子受益多年。",
+        "free": "開始無需付費，前三次免費！",
+        "listSeparator": "、",
+        "cta": "開始"
+      }
     }
   },
   "quizFeedback": {

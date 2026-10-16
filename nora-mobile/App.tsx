@@ -17,6 +17,9 @@ import {
   PlusJakartaSans_700Bold,
   PlusJakartaSans_700Bold_Italic,
 } from '@expo-google-fonts/plus-jakarta-sans';
+// Outfit + DM Sans: screen-time onboarding screens styled after the Nora-Onboarding-1 prototype
+import { Outfit_700Bold, Outfit_800ExtraBold } from '@expo-google-fonts/outfit';
+import { DMSans_400Regular, DMSans_600SemiBold, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
 import crashlytics from '@react-native-firebase/crashlytics';
 import Purchases from 'react-native-purchases';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -227,6 +230,11 @@ export default function App() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
     PlusJakartaSans_700Bold_Italic,
+    Outfit_700Bold,
+    Outfit_800ExtraBold,
+    DMSans_400Regular,
+    DMSans_600SemiBold,
+    DMSans_700Bold,
   });
   const [langReady, setLangReady] = useState(false);
   const [rcReady, setRcReady] = useState(false);

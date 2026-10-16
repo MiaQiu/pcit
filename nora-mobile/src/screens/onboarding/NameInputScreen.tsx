@@ -12,9 +12,10 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { OnboardingLayout } from '../../components/OnboardingLayout';
 import { OnboardingProgressHeader } from '../../components/OnboardingProgressHeader';
 import { OnboardingTextInput } from '../../components/OnboardingTextInput';
-import { OnboardingButtonRow } from '../../components/OnboardingButtonRow';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 import amplitudeService from '../../services/amplitudeService';
 import { useAuthService } from '../../contexts/AppContext';
+import { saveOnboardingFields } from '../../utils/onboardingDraft';
 
 export const NameInputScreen: React.FC = () => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
@@ -29,7 +30,7 @@ export const NameInputScreen: React.FC = () => {
     if (name.trim()) {
       updateData({ name: name.trim() });
       amplitudeService.trackOnboardingStepCompleted('name_input', 12);
-      authService.completeOnboarding({ name: name.trim() }).catch(() => {});
+      saveOnboardingFields(authService, { name: name.trim() });
       navigation.navigate('Relationship');
     }
   };
@@ -49,15 +50,13 @@ export const NameInputScreen: React.FC = () => {
 
       <View style={styles.spacer} />
 
-      <OnboardingButtonRow
+      <OnboardingFooter
+        parentPadding={20}
         onBack={() => {
           if (navigation.canGoBack()) {
             navigation.goBack();
           } else {
-            navigation.reset({
-              index: 2,
-              routes: [{ name: 'OB1V2' }, { name: 'OB2V2' }, { name: 'OB3V2' }],
-            });
+            navigation.reset({ index: 0, routes: [{ name: 'Start' }] });
           }
         }}
         onContinue={handleContinue}

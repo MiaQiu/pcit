@@ -41,7 +41,10 @@
     "termsPrefix": "By continuing, you agree to Nora's\n",
     "termsOfService": "Terms of Service",
     "termsAnd": " and ",
-    "privacyPolicy": "Privacy Policy"
+    "privacyPolicy": "Privacy Policy",
+    "welcomeTitle": "Beyond Parenting Advice. Build Real Skills.",
+    "welcomeSubtitle": "Personalised AI coaching to help you navigate tantrums, build better listening and develop your child’s focus.",
+    "letsStart": "Let's start"
   },
   "login": {
     "title": "Let's get you logged in",
@@ -74,7 +77,11 @@
     "weakPasswordTitle": "Weak Password",
     "weakPasswordMessage": "Password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number",
     "passwordMismatchTitle": "Password Mismatch",
-    "signupFailedTitle": "Signup Failed"
+    "signupFailedTitle": "Signup Failed",
+    "emailInUseTitle": "This email already has an account",
+    "emailInUseMessage": "Use a different email to create a new account, or log in to update that account with the answers you just gave. Updating replaces its child profile.",
+    "emailInUseNewAccount": "Use a different email",
+    "emailInUseUpdateExisting": "Log in and update it"
   },
   "forgotPassword": {
     "title": "Forgot Password?",
@@ -252,6 +259,7 @@
       "confidence": "Confidence",
       "developmental_concerns": "Developmental Concerns",
       "parenting_strategies": "Learning More Effective Parenting Strategies",
+      "screen_time": "Screen-Time Management",
       "defiance": "Defiance",
       "aggression": "Aggression",
       "emotional": "Emotional Regulation",
@@ -656,6 +664,7 @@
         "adhd": "{{childName}}'s attention and hyperactivity",
         "developmental_concerns": "{{childName}}'s development",
         "parenting_strategies": "finding parenting approaches that actually work",
+        "screen_time": "managing {{childName}}'s screen time",
         "behavior_challenges": "{{childName}}'s tantrums and pushback",
         "big_emotions": "handling {{childName}}'s big emotions",
         "frustration_tolerance": "how quickly {{childName}} gets frustrated",
@@ -2077,8 +2086,8 @@
       "ageSuitabilityNote": "* Note on Age Suitability: Nora's method is clinically evidenced to be most effective for children between 2 and 7 years old. However, the foundational skills taught here, such as positive reinforcement and emotional regulation, can be adapted and beneficial for children of any age."
     },
     "childIssue": {
-      "headerText": "There are no right or wrong answers. Select all that applies.",
-      "title": "What Brings You Here?",
+      "headerText": "There are no right or wrong answers. Pick the one that fits best.",
+      "title": "What feels hardest right now?",
       "bigFeelingsTantrums": "Big Feelings & Tantrums",
       "behaviorChallenges": "Behavior Challenges",
       "listeningCooperation": "Listening & Cooperation",
@@ -2089,6 +2098,7 @@
       "adhd": "ADHD Support",
       "developmentalConcerns": "Developmental Concerns",
       "parentingStrategies": "Become a More Confident Parent",
+      "screenTime": "Screen-time management",
       "other": "Other",
       "otherPlaceholder": "Please describe the issue..."
     },
@@ -2486,6 +2496,249 @@
       "other": "Other",
       "none": "None",
       "preferNotToSay": "I'd rather not say"
+    },
+    "screenTime": {
+      "continue": "Continue",
+      "selectAll": "Select all that apply.",
+      "agreement": {
+        "strongly_disagree": "Strongly disagree",
+        "somewhat_disagree": "Somewhat disagree",
+        "somewhat_agree": "Somewhat agree",
+        "agree": "Agree"
+      },
+      "frequency": {
+        "almost_never": "Almost never",
+        "rarely": "Rarely",
+        "quite_often": "Quite often",
+        "almost_always": "Almost always"
+      },
+      "yesNo": {
+        "yes": "Yes",
+        "no": "No"
+      },
+      "intro": {
+        "title": "You’re not alone.",
+        "p1_one": "Many parents face excessive screen time at {{count}} year old.",
+        "p1_other": "Many parents face excessive screen time at {{count}} years old.",
+        "p1NoAge": "Many parents face excessive screen time at this age.",
+        "p2": "It’s often less about behavior and more about <hl>something deeper beneath the surface.</hl>",
+        "p3": "Let’s look at whether we can find any patterns.",
+        "cta": "Let's start"
+      },
+      "hardest": {
+        "title": "What's hardest about screen time right now?",
+        "options": {
+          "stop": "Getting {{name}} to stop",
+          "more": "{{name}} keeps asking for more",
+          "more_boy": "He keeps asking for more",
+          "more_girl": "She keeps asking for more",
+          "upset": "{{name}} gets very upset when it ends",
+          "upset_boy": "He gets very upset when it ends",
+          "upset_girl": "She gets very upset when it ends",
+          "after": "{{name}} won't do anything else afterward",
+          "after_boy": "He won't do anything else afterward",
+          "after_girl": "She won't do anything else afterward",
+          "argue": "I end up arguing or yelling"
+        }
+      },
+      "pmum": {
+        "prompt": "Do you agree with the following statement?",
+        "statement0": "It is hard for my child to stop using screen media.",
+        "statement1": "Screen media is the only thing that seems to motivate my child.",
+        "statement2": "Screen media is all that my child seems to think about.",
+        "statement3": "My child’s screen media use interferes with family activities.",
+        "statement4": "My child’s screen media use causes problems for the family.",
+        "statement5": "My child becomes frustrated when he/she cannot use screen media.",
+        "statement6": "The amount of time my child wants to use screen media keeps increasing.",
+        "statement7": "My child sneaks using screen media.",
+        "statement8": "When my child has had a bad day, screen media seems to be the only thing that helps him/her feel better."
+      },
+      "stops": {
+        "title": "When it's time to stop, what usually happens?",
+        "options": {
+          "asks": "{{name}} asks for more",
+          "asks_boy": "He asks for more",
+          "asks_girl": "She asks for more",
+          "ignores": "{{name}} ignores me and keeps watching",
+          "ignores_boy": "He ignores me and keeps watching",
+          "ignores_girl": "She ignores me and keeps watching",
+          "whines": "{{name}} whines or cries",
+          "whines_boy": "He whines or cries",
+          "whines_girl": "She whines or cries",
+          "meltdown": "{{name}} screams or has a meltdown",
+          "meltdown_boy": "He screams or has a meltdown",
+          "meltdown_girl": "She screams or has a meltdown",
+          "hits": "{{name}} hits, kicks or throws things",
+          "hits_boy": "He hits, kicks or throws things",
+          "hits_girl": "She hits, kicks or throws things"
+        }
+      },
+      "dopamine": {
+        "title": "Have you heard about the dopamine loop?"
+      },
+      "context": {
+        "title": "Screens are incredibly stimulating.",
+        "lead": "They deliver constant novelty and excitement in a way that few other activities can match.",
+        "p1": "<b>This makes stopping genuinely hard for many kids.</b>",
+        "p2": "When the stimulation suddenly stops, their nervous system has to shift gears quickly, and that shift can feel really uncomfortable.",
+        "callout1": "This is called <b>the dopamine loop.</b>",
+        "callout2": "The meltdown isn't defiance or manipulation-<hl>it's a brain that hasn't caught up to the transition yet.</hl>",
+        "cta": "Sounds familiar"
+      },
+      "differences": {
+        "title": "Does {{name}} have any learning and thinking differences?",
+        "options": {
+          "none": "None that I know of",
+          "developmental_delays": "Developmental delays",
+          "adhd": "ADHD",
+          "asd": "ASD",
+          "anxiety": "Anxiety",
+          "another": "Another difference not listed here",
+          "suspected": "I suspect one of those, but haven’t gotten a diagnosis yet"
+        }
+      },
+      "strategies": {
+        "title": "What have you already tried to make screen time easier to end?",
+        "options": {
+          "warning": "Giving a warning before time is up",
+          "timer": "Using a timer",
+          "rules": "Setting screen-time rules in advance",
+          "activity": "Offering another activity",
+          "explaining": "Explaining why it’s time to stop",
+          "extra": "Giving a little extra time",
+          "away": "Taking the device away"
+        }
+      },
+      "worked": {
+        "title": "How well have those approaches worked?",
+        "options": {
+          "smoothly": "Screen time usually ends smoothly",
+          "improvement": "Some improvement",
+          "sometimes": "Helps only sometimes",
+          "no_change": "No real change",
+          "harder": "It’s getting harder"
+        }
+      },
+      "stress": {
+        "title": "How hard are screen-time endings on you?",
+        "options": {
+          "manageable": "Manageable",
+          "somewhat": "Somewhat stressful",
+          "very": "Very stressful",
+          "overwhelming": "Overwhelming"
+        }
+      },
+      "teen": {
+        "title": "Do you worry those challenges might get harder as your child becomes a teenager?",
+        "options": {
+          "yes": "Yes",
+          "no": "No",
+          "not_sure": "Not sure"
+        }
+      },
+      "barriers": {
+        "title": "What’s holding you back?",
+        "options": {
+          "resistance": "Child’s resistance",
+          "burnout": "My own burnout",
+          "meltdowns": "Unpredictable meltdowns",
+          "consistency": "Lack of consistency",
+          "progress": "Slow progress"
+        }
+      },
+      "goal": {
+        "title": "What would you most like to change?",
+        "options": {
+          "meltdowns": "Fewer meltdowns",
+          "recovery": "Faster recovery",
+          "yelling": "Less yelling",
+          "transitions": "Easier transitions",
+          "confidence": "More confidence holding the limit"
+        }
+      },
+      "why": {
+        "title": "Why hasn’t it worked so far?",
+        "p1": "Most screen-time strategies focus on getting {{name}} to put the device down.",
+        "p2": "<hl>But that’s only the surface.</hl>",
+        "p3": "Underneath, at that moment, {{name}} has to switch attention, cope with disappointment, and move on.",
+        "callout1": "<b>Those skills are still developing.</b>",
+        "p4": "Let’s look at the hidden signals you might have missed to understand how they are really coping."
+      },
+      "signals": {
+        "question0": "How often does your child fidget with objects (pens, clothes, or hair)?",
+        "question1": "How often does your child chew on things like pencils, toys or shirt sleeves?",
+        "question2": "Does your child have compulsive habits (nail-biting, lip-chewing, or nose-picking)?",
+        "question3": "How often does your child avoid eye contact or socializing when upset?",
+        "question4": "Does your child fight sleep more when they know a hard day is coming?",
+        "question4_boy": "Does your child fight sleep more when he knows a hard day is coming?",
+        "question4_girl": "Does your child fight sleep more when she knows a hard day is coming?",
+        "question5": "How often do your child’s frustrations turn into meltdowns with yelling?"
+      },
+      "cortex": {
+        "title": "Have you heard of the prefrontal cortex?",
+        "options": {
+          "yes": "Yes",
+          "not_really": "Not really"
+        }
+      },
+      "cortexHelp": {
+        "title": "What does the prefrontal cortex help children do?",
+        "p1": "It helps children <hl>focus, pause, switch plans, and think about what to do next.</hl> These abilities develop over many years and grow with experience and practice. So when {{name}} struggles to stop a screen, the question isn’t just “How do I get them to listen?”",
+        "callout1": "It’s also <b>“How can I help them practise what this moment asks of them?”</b>",
+        "cta": "How can I help?"
+      },
+      "windows": {
+        "title": "The windows of opportunity.",
+        "p1": "At {{name}}’s age, the prefrontal cortex is still developing.",
+        "p2": "This is a key time to practise <hl>focus, self-control, and managing frustration.</hl>",
+        "callout1": "<b>And you have the greatest influence on their learning.</b>"
+      },
+      "practice": {
+        "title": "You’re part of how {{name}} learns.",
+        "p1": "Small moments with you give {{name}} chances to <hl>wait, handle “no,” try a different plan, and recover</hl> when something doesn’t work.",
+        "callout1": "Those are the same kinds of skills screen-time endings ask for.",
+        "cta": "Where do we start?"
+      },
+      "transition": {
+        "title": "We will start with understanding what’s happening during the screen-time transition first, and coach you on how to apply strategies to make screen time predictable for your child.",
+        "callout1": "Once screen time becomes predictable, we will coach you on techniques to practise with {{name}} during your daily play time if {{name}} still finds it challenging."
+      },
+      "playAwareness": {
+        "title": "Have you heard before that play is one of the main ways children learn?"
+      },
+      "play": {
+        "title": "Why start with play?",
+        "p1": "Imagine {{name}} builds a tower and it falls. They feel disappointed—but <hl>the stakes are low, and you’re right there.</hl>",
+        "p1_boy": "Imagine {{name}} builds a tower and it falls. He feels disappointed—but <hl>the stakes are low, and you’re right there.</hl>",
+        "p1_girl": "Imagine {{name}} builds a tower and it falls. She feels disappointed—but <hl>the stakes are low, and you’re right there.</hl>",
+        "callout1": "Play gives {{name}} room to practise trying again or changing plans.",
+        "p2": "It also gives you a calmer moment to practise how you respond, so you have something familiar to draw on when emotions run high.",
+        "cta": "How does Nora help?"
+      },
+      "nora": {
+        "tagline": "Nora helps you build the skills for <hl>hard moments</hl>, together.",
+        "advisorAlt": "Prof. Yi-Chuen Chen, PhD. Clinical Child Psychologist. Clinical Advisor to Nora.",
+        "cta": "Create an account to see your 8-week plan"
+      },
+      "plan": {
+        "title": "{{name}}’s starting plan.",
+        "twoMonthGoal": "Our two-month goal: Help {{name}} manage screen time without tantrums.",
+        "before": "Before",
+        "after": "After — our goal",
+        "imageAlt": "Illustrated goal: a child upset at the end of screen time, followed by the same child calmly putting the tablet away with a supportive parent.",
+        "imageAlt_boy": "Illustrated goal: a boy upset at the end of screen time, followed by the same boy calmly putting the tablet away with a supportive parent.",
+        "imageAlt_girl": "Illustrated goal: a girl upset at the end of screen time, followed by the same girl calmly putting the tablet away with a supportive parent.",
+        "disclaimer": "Progress varies from child to child; this is a goal, not a guaranteed outcome.",
+        "yourGoal": "Your goal",
+        "hardMoment": "The hard moment",
+        "tried": "What you’ve tried",
+        "startWith": "Start with",
+        "startWithBody": "Helping {{name}} practise <b>switching, coping, and moving on</b> in small moments together.",
+        "closing": "You’re not just making screen-time endings easier. You’re building <b>essential life skills</b> and a <b>stronger parent-child bond</b> that will last for years.",
+        "free": "No payment required to start. The first three times are free!",
+        "listSeparator": ", ",
+        "cta": "Get started"
+      }
     }
   },
   "quizFeedback": {

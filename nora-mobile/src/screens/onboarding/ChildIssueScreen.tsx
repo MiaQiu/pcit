@@ -7,13 +7,22 @@ import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { useAuthService } from '../../contexts/AppContext';
 import { hasAdhdOrDevelopmentalConcern } from '../../utils/onboardingBranch';
+import amplitudeService from '../../services/amplitudeService';
+import { saveOnboardingFields } from '../../utils/onboardingDraft';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 
 export const ChildIssueScreen: React.FC = () => {
   const { t } = useTranslation();
   const authService = useAuthService();
 
-  const handleBeforeNavigate = async (selectedValue: any) => {
-    authService.completeOnboarding({ issue: selectedValue }).catch(() => {});
+  const handleBeforeNavigate = async (selectedValue: any, _updateData: any, navigation: any) => {
+    saveOnboardingFields(authService, { issue: selectedValue });
+    if (selectedValue === 'screen_time') {
+      // Explicit step 0 so a dev-forced ScreenTimeStep stepId (initialParams) can't apply here
+      amplitudeService.trackOnboardingStepCompleted('child_issue', 17);
+      navigation.navigate('ScreenTimeStep', { step: 0 });
+      return false;
+    }
   };
 
   return (
@@ -21,6 +30,7 @@ export const ChildIssueScreen: React.FC = () => {
       headerText={t('onboarding.childIssue.headerText')}
       title={t('onboarding.childIssue.title')}
       options={[
+        { value: 'screen_time', label: t('onboarding.childIssue.screenTime') },
         { value: 'big_feelings_tantrums', label: t('onboarding.childIssue.bigFeelingsTantrums') },
         { value: 'behavior_challenges', label: t('onboarding.childIssue.behaviorChallenges') },
         { value: 'listening_cooperation', label: t('onboarding.childIssue.listeningCooperation') },
@@ -34,9 +44,11 @@ export const ChildIssueScreen: React.FC = () => {
         { value: 'other', label: t('onboarding.childIssue.other') },
       ]}
       dataField="issue"
-      nextScreen={(selectedValue) => hasAdhdOrDevelopmentalConcern(selectedValue) ? 'DiagnosisStatus' : 'ParentGoal'}
+      nextScreen={(selectedValue) =>
+        selectedValue === 'screen_time' ? 'ScreenTimeStep'
+          : hasAdhdOrDevelopmentalConcern(selectedValue) ? 'DiagnosisStatus'
+          : 'ParentGoal'}
       prevScreen="ChildBirthday"
-      multiSelect={true}
       allowOtherOption={true}
       otherOptionValue="other"
       otherOptionPlaceholder={t('onboarding.childIssue.otherPlaceholder')}
@@ -45,6 +57,7 @@ export const ChildIssueScreen: React.FC = () => {
       totalStepsInPhase={7}
       screenName="child_issue"
       screenStep={17}
+      renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}
       onBeforeNavigate={handleBeforeNavigate}
     />
   );

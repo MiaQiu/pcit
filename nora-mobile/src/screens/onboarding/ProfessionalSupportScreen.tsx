@@ -10,6 +10,8 @@ import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { PersonalizingProgressHeader } from '../../components/PersonalizingProgressHeader';
 import { useAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { saveOnboardingFields } from '../../utils/onboardingDraft';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 
 export const ProfessionalSupportScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -18,7 +20,7 @@ export const ProfessionalSupportScreen: React.FC = () => {
   const childName = data.childName || 'your child';
 
   const handleBeforeNavigate = async (selectedValue: any) => {
-    authService.completeOnboarding({ professionalSupport: selectedValue }).catch(() => {});
+    saveOnboardingFields(authService, { professionalSupport: selectedValue });
   };
 
   return (
@@ -42,6 +44,7 @@ export const ProfessionalSupportScreen: React.FC = () => {
       multiSelect={true}
       screenName="professional_support"
       screenStep={47}
+      renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}
       onBeforeNavigate={handleBeforeNavigate}
     />
   );

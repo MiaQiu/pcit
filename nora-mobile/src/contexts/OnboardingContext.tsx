@@ -22,6 +22,10 @@ export interface OnboardingData {
   diagnosisStatus: string;
   professionalSupport: string | string[];
 
+  // Answers from the screen-time branch (see screens/onboarding/screenTime),
+  // keyed by step field, e.g. { hardest: 'stop', stops: ['asks'] }
+  screenTime?: Record<string, string | string[]>;
+
   // WACB Survey data
   wacb?: {
     parentingStressLevel?: number;

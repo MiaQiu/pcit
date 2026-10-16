@@ -33,6 +33,9 @@ import { useUploadProcessing } from '../../contexts/UploadProcessingContext';
 import { useTranslation } from 'react-i18next';
 import { TrackedTouchable } from '../../components/TrackedTouchable';
 import { reportError } from '../../utils/reportError';
+import { useOnboarding } from '../../contexts/OnboardingContext';
+import { buildProfilePayload, clearDraft } from '../../utils/onboardingDraft';
+import * as userStorage from '../../lib/userStorage';
 
 const PENDING_REFERRAL_KEY = '@nora_pending_referral_code';
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -44,7 +47,11 @@ export const LoginScreen: React.FC = () => {
   const authService = useAuthService();
   const socialAuthService = useSocialAuthService();
 
-  const [email, setEmail] = useState('');
+  const { data: onboardingData } = useOnboarding();
+  // Account-last signup: the parent's email was already registered and they chose to
+  // log in and overwrite that account's child profile with their onboarding answers
+  const overrideWithOnboarding = !!route.params?.overrideWithOnboarding;
+  const [email, setEmail] = useState(route.params?.email ?? '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -66,6 +73,12 @@ export const LoginScreen: React.FC = () => {
   }, [route.params?.referralCode]);
 
   const navigateAfterAuth = async () => {
+    if (overrideWithOnboarding) {
+      await overrideProfileAndContinue();
+      return;
+    }
+    // Logged into an existing account: a half-finished account-last draft no longer applies
+    await clearDraft();
     const { step, user } = await checkOnboardingStep(authService);
     reinitializeUnread(user.id);
     await reinitializeUpload();
@@ -81,6 +94,24 @@ export const LoginScreen: React.FC = () => {
         CommonActions.reset({ index: 0, routes: [{ name: 'MainTabs' as any }] })
       );
     }
+  };
+
+  // Writes the onboarding answers over the logged-in account's child profile, then
+  // continues onboarding where CreateAccount would have (reminder, or the screen-time plan)
+  const overrideProfileAndContinue = async () => {
+    const user = await authService.getCurrentUser(true);
+    await userStorage.setCurrentUserId(String(user.id));
+    await userStorage.migrateLegacyDeviceKeys();
+    reinitializeUnread(user.id);
+    await reinitializeUpload();
+    try {
+      await authService.completeOnboarding(buildProfilePayload(onboardingData));
+    } catch (error) {
+      reportError(error, 'LoginScreen.overrideProfile');
+    }
+    await clearDraft();
+    const next = route.params?.next ?? 'ReminderTime';
+    navigation.navigate(next as any, route.params?.nextParams as any);
   };
 
   const applyPendingReferral = async () => {

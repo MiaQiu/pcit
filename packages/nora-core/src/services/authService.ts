@@ -72,7 +72,15 @@ class AuthService {
     });
 
     if (!response.ok) {
-      throw new Error(await parseErrorResponse(response, 'Signup failed'));
+      // Keep the server's error code (e.g. 'CONFLICT' = email already registered) so
+      // callers can branch on it instead of matching the message text
+      const text = await response.text();
+      let body: { error?: string; code?: string } = {};
+      try { body = JSON.parse(text); } catch { /* non-JSON error body */ }
+      const error = new Error(body.error || 'Signup failed') as Error & { code?: string; status?: number };
+      error.code = body.code;
+      error.status = response.status;
+      throw error;
     }
 
     const data: SignupResponse = await response.json();
@@ -473,6 +481,7 @@ class AuthService {
     parentGoal?: string | string[];
     diagnosisStatus?: string;
     professionalSupport?: string | string[];
+    screenTimeIntake?: Record<string, unknown>;
   }): Promise<User> {
     const response = await this.authenticatedRequest(
       `${this.apiUrl}/api/auth/complete-onboarding`,

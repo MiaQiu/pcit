@@ -6,13 +6,15 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { useAuthService } from '../../contexts/AppContext';
+import { saveOnboardingFields } from '../../utils/onboardingDraft';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 
 export const ParentGoalScreen: React.FC = () => {
   const { t } = useTranslation();
   const authService = useAuthService();
 
   const handleBeforeNavigate = async (selectedValue: any) => {
-    authService.completeOnboarding({ parentGoal: selectedValue }).catch(() => {});
+    saveOnboardingFields(authService, { parentGoal: selectedValue });
   };
 
   return (
@@ -37,6 +39,7 @@ export const ParentGoalScreen: React.FC = () => {
       totalStepsInPhase={7}
       screenName="parent_goal"
       screenStep={18}
+      renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}
       onBeforeNavigate={handleBeforeNavigate}
     />
   );

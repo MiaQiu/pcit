@@ -14,6 +14,9 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  StyleProp,
+  TextStyle,
+  ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -59,6 +62,20 @@ export interface MultipleChoiceScreenProps {
   screenName?: string; // For amplitude tracking
   screenStep?: number; // Onboarding step number for amplitude funnel
   headerOverride?: React.ReactNode; // Replaces the default OnboardingProgressHeader when provided
+  subtitle?: string; // Shown under the title
+  exclusiveValues?: (string | number)[]; // Multi-select: picking one of these clears the rest (e.g. "None")
+  // Text style overrides (e.g. the screen-time branch's prototype fonts)
+  titleStyle?: StyleProp<TextStyle>;
+  subtitleStyle?: StyleProp<TextStyle>;
+  optionLabelStyle?: StyleProp<TextStyle>;
+  optionCardStyle?: StyleProp<ViewStyle>;
+  // Replaces the default OnboardingButtonRow; rendered edge to edge (outside the side padding)
+  renderButtons?: (props: {
+    onBack: () => void;
+    onContinue: () => void;
+    continueDisabled: boolean;
+    continueText?: string;
+  }) => React.ReactNode;
 }
 
 export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
@@ -82,6 +99,13 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
   screenName,
   screenStep,
   headerOverride,
+  subtitle,
+  exclusiveValues = [],
+  titleStyle,
+  subtitleStyle,
+  optionLabelStyle,
+  optionCardStyle,
+  renderButtons,
 }) => {
   const navigation = useNavigation<OnboardingStackNavigationProp>();
   const { data, updateData } = useOnboarding();
@@ -117,14 +141,21 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
       setSelectedValue((prev: any[]) => {
         if (prev.includes(value)) {
           return prev.filter((v) => v !== value);
+        } else if (exclusiveValues.includes(value)) {
+          return [value];
         } else {
-          return [...prev, value];
+          return [...prev.filter((v) => !exclusiveValues.includes(v)), value];
         }
       });
     } else {
       setSelectedValue(value);
-      // Auto-navigate for single-select after a short delay to show selection feedback
-      if (!disableAutoNavigate) {
+      // Auto-navigate for single-select after a short delay to show selection feedback.
+      // Picking "Other" waits for the free-text input instead.
+      const isOther = allowOtherOption && value === otherOptionValue;
+      if (isOther && autoNavigateTimerRef.current) {
+        clearTimeout(autoNavigateTimerRef.current);
+      }
+      if (!disableAutoNavigate && !isOther) {
         if (autoNavigateTimerRef.current) {
           clearTimeout(autoNavigateTimerRef.current);
         }
@@ -150,6 +181,10 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
         // Don't allow continuing if "other" is selected but no text is provided
         return;
       }
+    } else if (allowOtherOption && valueToUse === otherOptionValue) {
+      // Single-select: the custom text replaces the generic "other" value
+      if (!otherText.trim()) return;
+      valueToUse = otherText.trim();
     }
 
     // Validate the value
@@ -217,13 +252,15 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
     return selectedValue === value;
   };
 
-  const isOtherSelected = allowOtherOption && multiSelect &&
-    Array.isArray(selectedValue) && selectedValue.includes(otherOptionValue);
+  const isOtherSelected = allowOtherOption && (multiSelect
+    ? Array.isArray(selectedValue) && selectedValue.includes(otherOptionValue)
+    : selectedValue === otherOptionValue);
 
   const isValid = multiSelect
     ? Array.isArray(selectedValue) && selectedValue.length > 0 &&
       (!isOtherSelected || otherText.trim().length > 0)
-    : selectedValue !== null && selectedValue !== undefined;
+    : selectedValue !== null && selectedValue !== undefined &&
+      (!isOtherSelected || otherText.trim().length > 0);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -237,7 +274,8 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
 
           {/* Title */}
           <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
+            <Text style={[styles.title, titleStyle]}>{title}</Text>
+            {subtitle ? <Text style={[styles.subtitle, subtitleStyle]}>{subtitle}</Text> : null}
           </View>
 
           {/* Options */}
@@ -254,6 +292,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
                   style={[
                     styles.optionCard,
                     selected && styles.optionCardSelected,
+                    optionCardStyle,
                   ]}
                   onPress={() => handleSelect(option.value)}
                   activeOpacity={0.8}
@@ -262,6 +301,7 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
                     style={[
                       styles.optionLabel,
                       selected && styles.optionLabelSelected,
+                      optionLabelStyle,
                     ]}
                   >
                     {option.label}
@@ -296,6 +336,15 @@ export const MultipleChoiceScreen: React.FC<MultipleChoiceScreenProps> = ({
           {isLoading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator color="#8C49D5" />
+            </View>
+          ) : renderButtons ? (
+            <View style={styles.customButtons}>
+              {renderButtons({
+                onBack: handleBack,
+                onContinue: () => handleContinue(),
+                continueDisabled: !isValid,
+                continueText,
+              })}
             </View>
           ) : (
             <OnboardingButtonRow
@@ -332,6 +381,15 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#4A5565',
     marginBottom: 12,
+    textAlign: 'center',
+  },
+  customButtons: {
+    marginHorizontal: -20, // cancels styles.content's side padding
+  },
+  subtitle: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 16,
+    color: '#6B7280',
     textAlign: 'center',
   },
   scrollView: {

@@ -453,6 +453,7 @@ model User {
   parentGoal                String?
   diagnosisStatus           String?
   professionalSupport       String?
+  screenTimeIntake          Json? // answers from the screen-time onboarding branch
   profileImageUrl           String?
   subscriptionEndDate       DateTime?
   subscriptionPlan          SubscriptionPlan            @default(FREE)

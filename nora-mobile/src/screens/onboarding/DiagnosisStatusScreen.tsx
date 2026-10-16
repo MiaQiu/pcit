@@ -11,6 +11,8 @@ import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { PersonalizingProgressHeader } from '../../components/PersonalizingProgressHeader';
 import { useAuthService } from '../../contexts/AppContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { saveOnboardingFields } from '../../utils/onboardingDraft';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 
 export const DiagnosisStatusScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -19,7 +21,7 @@ export const DiagnosisStatusScreen: React.FC = () => {
   const childName = data.childName || 'your child';
 
   const handleBeforeNavigate = async (selectedValue: any) => {
-    authService.completeOnboarding({ diagnosisStatus: selectedValue }).catch(() => {});
+    saveOnboardingFields(authService, { diagnosisStatus: selectedValue });
   };
 
   return (
@@ -39,6 +41,7 @@ export const DiagnosisStatusScreen: React.FC = () => {
       multiSelect={false}
       screenName="diagnosis_status"
       screenStep={46}
+      renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}
       onBeforeNavigate={handleBeforeNavigate}
     />
   );

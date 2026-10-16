@@ -32,6 +32,7 @@ export interface User {
   professionalSupport?: string | string[];
   profileImageUrl?: string;
   relationshipToChild?: RelationshipToChild;
+  childGender?: 'BOY' | 'GIRL' | 'OTHER';
   therapistId?: string | null;
   currentStreak?: number;
   lastSessionDate?: Date | null;
@@ -113,7 +114,9 @@ export interface SignupRequest {
   name: string;
   childName: string;
   childBirthYear?: number;
-  childConditions?: string;
+  childBirthday?: string;
+  childConditions?: string | string[];
+  issue?: string;
 }
 
 // Session types

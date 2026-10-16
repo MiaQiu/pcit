@@ -3,8 +3,9 @@
  * Shared text input for onboarding screens
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, TextInput, StyleSheet, Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 interface OnboardingTextInputProps {
   title: string;
@@ -23,6 +24,23 @@ export const OnboardingTextInput: React.FC<OnboardingTextInputProps> = ({
   placeholder = '',
   autoCapitalize = 'words',
 }) => {
+  const navigation = useNavigation();
+  const inputRef = useRef<TextInput>(null);
+
+  // Focus once the screen has finished sliding in. autoFocus opened the keyboard
+  // mid-transition, and the keyboard-avoiding layout jumped while the screen animated.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('transitionEnd' as any, (e: any) => {
+      if (!e?.data?.closing) inputRef.current?.focus();
+    });
+    // No transition (e.g. the first screen shown): focus shortly after mount
+    const fallback = setTimeout(() => inputRef.current?.focus(), 600);
+    return () => {
+      unsubscribe();
+      clearTimeout(fallback);
+    };
+  }, [navigation]);
+
   return (
     <>
       <View style={styles.header}>
@@ -32,8 +50,8 @@ export const OnboardingTextInput: React.FC<OnboardingTextInputProps> = ({
         style={styles.input}
         placeholder={placeholder}
         value={value}
+        ref={inputRef}
         onChangeText={onChangeText}
-        autoFocus
         autoCapitalize={autoCapitalize}
         autoCorrect={false}
         returnKeyType="next"

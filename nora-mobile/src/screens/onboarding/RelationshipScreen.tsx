@@ -6,6 +6,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultipleChoiceScreen } from '../../components/MultipleChoiceScreen';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { OnboardingFooter } from '../../components/OnboardingFooter';
 
 export const RelationshipScreen: React.FC = () => {
   const { data } = useOnboarding();
@@ -31,6 +32,7 @@ export const RelationshipScreen: React.FC = () => {
       totalStepsInPhase={7}
       screenName="relationship"
       screenStep={13}
+      renderButtons={(buttonProps) => <OnboardingFooter {...buttonProps} />}
     />
   );
 };
